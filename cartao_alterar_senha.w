@@ -10,6 +10,9 @@ Autor    : Evandro
 Data     : Janeiro 2010
 
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
+                
+                  15/10/2015 - Ajustes para TAA PRJ 215, incluido verificacao
+                               de senhas (Jean Michel).  
 
 ............................................................................... */
 
@@ -144,20 +147,20 @@ DEFINE FRAME f_cartao_alterar_senha
      ed_dsdsencf AT ROW 16 COL 112 COLON-ALIGNED NO-LABEL WIDGET-ID 144 PASSWORD-FIELD 
      Btn_G AT ROW 19.1 COL 94.4 WIDGET-ID 130
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 132
-     "         NOVA SENHA:" VIEW-AS TEXT
-          SIZE 89 BY 2.05 AT ROW 12.91 COL 15 WIDGET-ID 150
+     "  SENHA ATUAL:" VIEW-AS TEXT
+          SIZE 62 BY 2.38 AT ROW 9.62 COL 41 WIDGET-ID 152
           FGCOLOR 1 FONT 13
-     "Para continuar, tecle ENTRA" VIEW-AS TEXT
-          SIZE 63.4 BY 1.67 AT ROW 24.81 COL 16 WIDGET-ID 154
-          FGCOLOR 0 FONT 8
-     "ALTERAÇÃO DE SENHA" VIEW-AS TEXT
-          SIZE 105 BY 3.33 AT ROW 1.48 COL 28.6 WIDGET-ID 128
-          FGCOLOR 1 FONT 10
      "REPITA A NOVA SENHA:" VIEW-AS TEXT
           SIZE 88 BY 2.05 AT ROW 16 COL 15 WIDGET-ID 148
           FGCOLOR 1 FONT 13
-     "  SENHA ATUAL:" VIEW-AS TEXT
-          SIZE 62 BY 2.38 AT ROW 9.62 COL 41 WIDGET-ID 152
+     "ALTERAÇÃO DE SENHA" VIEW-AS TEXT
+          SIZE 105 BY 3.33 AT ROW 1.48 COL 28.6 WIDGET-ID 128
+          FGCOLOR 1 FONT 10
+     "Para continuar, tecle ENTRA" VIEW-AS TEXT
+          SIZE 63.4 BY 1.67 AT ROW 24.81 COL 16 WIDGET-ID 154
+          FGCOLOR 0 FONT 8
+     "         NOVA SENHA:" VIEW-AS TEXT
+          SIZE 89 BY 2.05 AT ROW 12.91 COL 15 WIDGET-ID 150
           FGCOLOR 1 FONT 13
      RECT-3 AT ROW 9.57 COL 113 WIDGET-ID 136
      RECT-4 AT ROW 12.67 COL 113 WIDGET-ID 138
@@ -194,10 +197,10 @@ IF SESSION:DISPLAY-TYPE = "GUI":U THEN
          TITLE              = ""
          HEIGHT             = 28.57
          WIDTH              = 160
-         MAX-HEIGHT         = 33.14
-         MAX-WIDTH          = 204.8
-         VIRTUAL-HEIGHT     = 33.14
-         VIRTUAL-WIDTH      = 204.8
+         MAX-HEIGHT         = 34.33
+         MAX-WIDTH          = 272
+         VIRTUAL-HEIGHT     = 34.33
+         VIRTUAL-WIDTH      = 272
          SHOW-IN-TASKBAR    = no
          CONTROL-BOX        = no
          MIN-BUTTON         = no
@@ -305,6 +308,59 @@ DO:
 
     aux_flgderro = NO.
     
+    /* Verifica se usuario informou a senha atual */
+    IF LENGTH(ed_dsdsenan:SCREEN-VALUE) < 6 THEN
+        DO:
+           RUN mensagem.w (INPUT NO,
+                           INPUT "    ATENÇÃO  ",
+                           INPUT "",
+                           INPUT "",
+                           INPUT "Informe a senha atual.",
+                           INPUT "",
+                           INPUT "").
+    
+           PAUSE 3 NO-MESSAGE.
+           h_mensagem:HIDDEN = YES.
+    
+           APPLY "ENTRY" TO ed_dsdsenan.
+           RETURN NO-APPLY.
+       END.
+
+    /* Verifica se usuario informou a nova senha */
+    IF LENGTH(ed_dsdsennv:SCREEN-VALUE) < 6 THEN
+        DO:
+           RUN mensagem.w (INPUT NO,
+                           INPUT "    ATENÇÃO  ",
+                           INPUT "",
+                           INPUT "",
+                           INPUT "Informe a nova senha.",
+                           INPUT "",
+                           INPUT "").
+    
+           PAUSE 3 NO-MESSAGE.
+           h_mensagem:HIDDEN = YES.
+    
+           APPLY "ENTRY" TO ed_dsdsenan.
+           RETURN NO-APPLY.
+       END.
+
+    /* Verifica se usuario informou a confirmacao de senha */
+    IF LENGTH(ed_dsdsencf:SCREEN-VALUE) < 6 THEN
+        DO:
+           RUN mensagem.w (INPUT NO,
+                           INPUT "    ATENÇÃO  ",
+                           INPUT "",
+                           INPUT "",
+                           INPUT "Informe a senha de confirmação.",
+                           INPUT "",
+                           INPUT "").
+    
+           PAUSE 3 NO-MESSAGE.
+           h_mensagem:HIDDEN = YES.
+    
+           APPLY "ENTRY" TO ed_dsdsenan.
+           RETURN NO-APPLY.
+       END.
     /* valida a digitacao das senhas */
     IF  ed_dsdsenan:SCREEN-VALUE = ed_dsdsennv:SCREEN-VALUE  THEN
         DO: 
@@ -434,8 +490,27 @@ DO:
 
     IF  KEY-FUNCTION(LASTKEY) = "RETURN"  THEN
         DO:
-            APPLY "ENTRY" TO ed_dsdsennv.
-            RETURN NO-APPLY.
+            IF LENGTH(ed_dsdsenan:SCREEN-VALUE) < 6 THEN
+                DO:
+                   RUN mensagem.w (INPUT NO,
+                                   INPUT "    ATENÇÃO  ",
+                                   INPUT "",
+                                   INPUT "",
+                                   INPUT "Informe a senha atual.",
+                                   INPUT "",
+                                   INPUT "").
+        
+                   PAUSE 3 NO-MESSAGE.
+                   h_mensagem:HIDDEN = YES.
+        
+                   APPLY "ENTRY" TO ed_dsdsenan.
+                   RETURN NO-APPLY.
+               END.
+             ELSE
+                DO:
+                    APPLY "ENTRY" TO ed_dsdsennv.
+                    RETURN NO-APPLY.
+                END.
         END.
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "BACKSPACE"  THEN
@@ -470,8 +545,27 @@ DO:
 
     IF  KEY-FUNCTION(LASTKEY) = "BACKSPACE"  THEN
         DO:
-            RUN limpa.
-            RETURN NO-APPLY.
+            IF LENGTH(ed_dsdsencf:SCREEN-VALUE) < 6 THEN
+                DO:
+                   RUN mensagem.w (INPUT NO,
+                                   INPUT "    ATENÇÃO  ",
+                                   INPUT "",
+                                   INPUT "",
+                                   INPUT "Informe a senha de confirmação.",
+                                   INPUT "",
+                                   INPUT "").
+        
+                   PAUSE 3 NO-MESSAGE.
+                   h_mensagem:HIDDEN = YES.
+        
+                   APPLY "ENTRY" TO ed_dsdsencf.
+                   RETURN NO-APPLY.
+               END.
+             ELSE
+                DO:
+                    RUN limpa.
+                    RETURN NO-APPLY.
+                END.
         END.
     ELSE
     /* se não foram digitados números, despreza */
@@ -498,8 +592,27 @@ DO:
 
     IF  KEY-FUNCTION(LASTKEY) = "RETURN"  THEN
         DO:
-            APPLY "ENTRY" TO ed_dsdsencf.
-            RETURN NO-APPLY.
+            IF LENGTH(ed_dsdsennv:SCREEN-VALUE) < 6 THEN
+                DO:
+                   RUN mensagem.w (INPUT NO,
+                                   INPUT "    ATENÇÃO  ",
+                                   INPUT "",
+                                   INPUT "",
+                                   INPUT "Informe a nova senha.",
+                                   INPUT "",
+                                   INPUT "").
+        
+                   PAUSE 3 NO-MESSAGE.
+                   h_mensagem:HIDDEN = YES.
+        
+                   APPLY "ENTRY" TO ed_dsdsennv.
+                   RETURN NO-APPLY.
+               END.
+             ELSE
+                DO:
+                    APPLY "ENTRY" TO ed_dsdsencf.
+                    RETURN NO-APPLY.
+                END.
         END.
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "BACKSPACE"  THEN

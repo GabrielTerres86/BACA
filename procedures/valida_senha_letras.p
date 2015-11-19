@@ -1,12 +1,12 @@
 /* ..............................................................................
 
-Procedure: valida_senha_letras.p 
+Procedure: aux_idtipcar.p 
 Objetivo : Verificar se a senha de letras esta ok
 Autor    : Evandro
 Data     : Dezembro 2011
 
 
-Ultima alteração: 
+Ultima alteração: 27/08/2015 - Enviar como parametro o tipo do cartao (James).
 
 ............................................................................... */
 
@@ -140,7 +140,13 @@ DO:
     xText:NODE-VALUE = par_dsdgrup3.
     xField:APPEND-CHILD(xText).
             
-
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"IDTIPCAR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(glb_idtipcar).
+    xField:APPEND-CHILD(xText).
 
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     

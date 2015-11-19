@@ -8,6 +8,7 @@ Data     : Janeiro 2010
 
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
+                  27/08/2015 - Incluido a variavel de retorno "glb_idtipcar". (James)
 ............................................................................... */
 
 DEFINE INPUT  PARAMETER par_dscartao    AS CHARACTER                NO-UNDO.
@@ -179,6 +180,9 @@ DO:
             ELSE
             IF  xField:NAME = "TPUSUCAR" THEN
                 glb_tpusucar = INTE(xText:NODE-VALUE).
+            ELSE
+            IF  xField:NAME = "IDTIPCAR" THEN
+                glb_idtipcar = INTE(xText:NODE-VALUE).    
             ELSE
             IF  xField:NAME = "DSCRITIC"  THEN
                 DO:

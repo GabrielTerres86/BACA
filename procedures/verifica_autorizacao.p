@@ -14,6 +14,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado
                               
                   27/08/2015 - Detalhamento de log na inicialização do TAA
                                Lucas Lunelli (SD 291639)            
+                               
+                  27/08/2015 - Remoção do Detalhamento de log Lucas Lunelli 
+                               (SD 343869)            
 
 ............................................................................... */
 
@@ -29,8 +32,6 @@ DEFINE         VARIABLE xField          AS HANDLE               NO-UNDO.
 DEFINE         VARIABLE xText           AS HANDLE               NO-UNDO.
 
 DEFINE         VARIABLE aux_dtmvtocd    AS DATE                 NO-UNDO.
-
-RUN procedures/grava_log.p (INPUT "Verificando autorização...").
 
 REQUISICAO:
 DO:
@@ -264,7 +265,6 @@ IF  aux_dtmvtocd <> ?             AND
             RETURN "NOK".
     END.
 
-    RUN procedures/grava_log.p (INPUT "Autorizações Verificadas.").
 
 RETURN "OK".
 
@@ -318,8 +318,6 @@ PROCEDURE carrega_ultima_data:
     
     IF  resultado = ?  THEN
         DO:
-            RUN procedures/grava_log.p (INPUT "Autorização - Erro no comando SQL.").
-
             /* fechar e liberar a conexao */
             conexao:CLOSE()          NO-ERROR.
             RELEASE OBJECT conexao   NO-ERROR.

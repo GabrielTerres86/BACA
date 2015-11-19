@@ -9,6 +9,8 @@ Data     : Janeiro 2010
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   21/12/2011 - Receber indicador de senha de letras (Evandro).
+                  
+                  27/08/2015 - Enviar como parametro o tipo do cartao (James).
 
 ............................................................................... */
 
@@ -108,7 +110,14 @@ DO:
             xField:APPEND-CHILD(xText).
         END.
 
-
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"IDTIPCAR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(glb_idtipcar).
+    xField:APPEND-CHILD(xText).
+  
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     
     DELETE OBJECT xDoc.

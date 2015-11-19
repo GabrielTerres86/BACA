@@ -9,7 +9,8 @@ Objetivo : Tela oculta para controle do PAINOP
 Autor    : Evandro
 Data     : Agosto 2011
 
-Ultima alteração: 
+Ultima alteração: 27/08/2015 - Adicionado condicao para verificar se o cartao
+                               eh magnetico. (James)
 
 ............................................................................... */
 
@@ -1312,8 +1313,8 @@ DEF OUTPUT PARAM par_flgderro   AS LOGICAL  INIT YES        NO-UNDO.
                 IF  par_flgderro  THEN
                     NEXT.
 
-                /* somente cartão de operador */
-                IF  SUBSTRING(STRING(glb_nrcartao),1,1) <> "9"  THEN
+                /* Verifica se eh cartao magnetico e somente cartão de operador */
+                IF  glb_idtipcar = 2 OR (glb_idtipcar = 1 AND SUBSTRING(STRING(glb_nrcartao),1,1) <> "9")  THEN /* cartão de usuário */
                     DO:
                         ASSIGN buff[5]      = "           CARTAO INVALIDO"
                                par_flgderro = YES.

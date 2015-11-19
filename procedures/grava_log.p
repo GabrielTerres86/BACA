@@ -8,6 +8,8 @@ Data     : Fevereiro 2010
 
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
+                  27/08/2015 - Adicionado condicao para verificar se o cartao
+                               eh magnetico. (James)
 ............................................................................... */
 
 
@@ -42,8 +44,8 @@ IF  glb_nrcartao <> 0  THEN
     DO:
         PUT " - CARTAO: " STRING(glb_nrcartao,"9999,9999,9999,9999") FORMAT "x(20)".
 
-        /* cartão de operador */
-        IF  SUBSTRING(STRING(glb_nrcartao),1,1) = "9"  THEN
+        /* Verifica se o cartao eh o magnetico e o cartão eh de operador */
+        IF  glb_idtipcar = 1 AND SUBSTRING(STRING(glb_nrcartao),1,1) = "9"  THEN
             PUT " - OPERADOR: ".
         ELSE
             PUT " - CONTA: ".

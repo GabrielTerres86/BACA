@@ -4,7 +4,7 @@
    Sistema : TAA - Cooperativa de Credito
    Sigla   : TAA
    Autor   : Edson/Evandro
-   Data    : Janeiro/2010                         Ultima atualizacao: 14/10/2015
+   Data    : Janeiro/2010                         Ultima atualizacao: 17/11/2015
    
    Dados referentes ao programa:
 
@@ -70,11 +70,15 @@
                28/05/2015 - Criado variavel glb_flmsgtaa, referente a mensagem
                             de atraso em operacao de credito. (Jorge/Rodrigo)
 							
+			   27/08/2015 - Incluido a variavel glb_idtipcar. (James)
+							
 			   16/09/2015 - Atualização para versão 7.8 (David).
 			   
 			   30/09/2015 - Atualização para versão 7.9 (David).
 			   
 			   14/10/2015 - Atualização para versão 8.0 (David).
+			   
+			   17/11/2015 - Atualização para versão 8.1 (David).
                             
 .............................................................................. */
 
@@ -88,7 +92,7 @@ DEF {1} SHARED VAR glb_cdagetfn AS INT                                   NO-UNDO
 DEF {1} SHARED VAR glb_ipterfin AS CHAR                                  NO-UNDO.
 DEF {1} SHARED VAR glb_nmserver AS CHAR                                  NO-UNDO. /* Servidor */
 DEF {1} SHARED VAR glb_nmservic AS CHAR                                  NO-UNDO. /* Serviço WebSpeed */
-DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v8.0"                NO-UNDO.
+DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v8.1"                NO-UNDO.
 
 /* Temporizador */
 DEF {1} SHARED VAR glb_nrtempor AS INT                                   NO-UNDO.
@@ -125,6 +129,7 @@ DEF {1} SHARED VAR glb_idsenlet AS LOG                                   NO-UNDO
 DEF {1} SHARED VAR glb_flgmigra AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_flgdinss AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_tpusucar AS INT                                   NO-UNDO.
+DEF {1} SHARED VAR glb_idtipcar AS INT                                   NO-UNDO.
 
 /* Handle para a mensagem ao usuario */
 DEF {1} SHARED VAR h_mensagem   AS HANDLE                                NO-UNDO.

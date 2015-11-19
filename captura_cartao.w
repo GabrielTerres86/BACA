@@ -17,12 +17,14 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   14/05/2013 - Transferencia intercooperativa (Gabriel).
                   
                   29/05/2015 - Adicionado atribuicao da variavel glb_flmsgtaa = NO
-                               em procedure verifica_cartao_lido. (Jorge/Rodrigo)             
+                               em procedure verifica_cartao_lido. (Jorge/Rodrigo)
+                               
+                  27/08/2015 - Adicionado condicao para verificar se o cartao
+                               eh magnetico. (James)
                                
                   18/09/2015 - Corrigida implementação da utilização do 
                                PAINOP (traseiro) para TAAs sem depositário
-                               (Lucas Lunelli SD 314201)
-
+                               (Lucas Lunelli SD 314201)              
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -151,15 +153,11 @@ DEFINE FRAME f_captura_cartao
          AT COL 1 ROW 1
          SIZE 160 BY 28.57 WIDGET-ID 100.
 
-DEFINE FRAME f_mensagem
-     ed_forma_cartao AT ROW 1 COL 2.4 NO-LABEL WIDGET-ID 90 NO-TAB-STOP 
-     "SEU CARTÃO" VIEW-AS TEXT
-          SIZE 39 BY 1.71 AT ROW 1 COL 30.2 WIDGET-ID 86
-          FONT 15
+DEFINE FRAME f_encobre_cartao
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
-         AT COL 43 ROW 24.33
-         SIZE 72 BY 2 WIDGET-ID 300.
+         AT COL 8 ROW 25.05
+         SIZE 19 BY 2.38 WIDGET-ID 400.
 
 DEFINE FRAME f_depositario
      "OU" VIEW-AS TEXT
@@ -177,11 +175,15 @@ DEFINE FRAME f_depositario
          AT COL 35 ROW 24.33
          SIZE 97 BY 4.52 WIDGET-ID 200.
 
-DEFINE FRAME f_encobre_cartao
+DEFINE FRAME f_mensagem
+     ed_forma_cartao AT ROW 1 COL 2.4 NO-LABEL WIDGET-ID 90 NO-TAB-STOP 
+     "SEU CARTÃO" VIEW-AS TEXT
+          SIZE 39 BY 1.71 AT ROW 1 COL 30.2 WIDGET-ID 86
+          FONT 15
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
-         AT COL 8 ROW 25.05
-         SIZE 19 BY 2.38 WIDGET-ID 400.
+         AT COL 43 ROW 24.33
+         SIZE 72 BY 2 WIDGET-ID 300.
 
 
 /* *********************** Procedure Settings ************************ */
@@ -518,7 +520,7 @@ PROCEDURE temporizador2.timer.Tick .
                         END.
                 END.
             ELSE
-                DO:                                       
+                DO:
                     /* se tem depositario */
                     IF  FRAME f_depositario:VISIBLE  THEN
                         DO:
@@ -551,7 +553,6 @@ PROCEDURE temporizador2.timer.Tick .
                                     /* ativa o controle de foco */
                                     RUN procedures/controle_foco.p (INPUT YES).
                                 END.
-
                             ELSE
                             /* verifica se apertou PAUSA no PAINOP */
                             IF  aux_dsdtecla = "P"  THEN
@@ -566,7 +567,7 @@ PROCEDURE temporizador2.timer.Tick .
                                     ASSIGN FRAME f_depositario:VISIBLE = NO
                                            FRAME f_mensagem:VISIBLE    = NO
                                            xfs_painop_em_uso           = YES.
-
+                                        
                                     RUN  manutencao_painop.w.
 
                                     xfs_painop_em_uso = NO.
@@ -608,7 +609,7 @@ PROCEDURE temporizador2.timer.Tick .
                                 END.
 
                             aux_dsdtecla = "".
-                        END.
+                        END.    
                     
                     /* libera memória */
                     SET-SIZE(tbuff1) = 0.
@@ -961,52 +962,52 @@ PROCEDURE verifica_cartao_lido :
             FRAME f_mensagem:VISIBLE = NO.
 
             /* verifica se tem senha de letras ou não */
-            IF  SUBSTRING(STRING(glb_nrcartao),1,1) <> "9"  THEN /* cartão de usuário */
+            IF  glb_idtipcar = 2 OR (glb_idtipcar = 1 AND SUBSTRING(STRING(glb_nrcartao),1,1) <> "9")  THEN /* cartão de usuário */
                 DO:
                     /* para quem nao tem letras, pede cpf */
                     IF  NOT glb_idsenlet  THEN
                         DO:
-                                                        RUN procedures/grava_log.p (INPUT "Solicitacao CPF").
+                            RUN procedures/grava_log.p (INPUT "Solicitacao CPF").
                                                         
                             RUN senha_cpf.w (OUTPUT aux_flgderro).
                                                         
-                                                        RUN procedures/grava_log.p (INPUT "CPF - " + STRING(aux_flgderro,"NOK/OK")).
+                            RUN procedures/grava_log.p (INPUT "CPF - " + STRING(aux_flgderro,"NOK/OK")).
 
                             /* se pasosu a senha com CPF, informa sobre as letras */
                             IF  NOT aux_flgderro  THEN
-                                                                DO:
-                                                                        RUN procedures/grava_log.p (INPUT "Solicitacao Letras").                                                                        
-                                                                        
-                                                                        RUN senha_letras_mensagem.w (OUTPUT aux_flgderro).
-                                                                        
-                                                                        RUN procedures/grava_log.p (INPUT "Letras - " + STRING(aux_flgderro,"NOK/OK")).
-                                                                END.
+                                DO:
+                                    RUN procedures/grava_log.p (INPUT "Solicitacao Letras").                                                                        
+                                    
+                                    RUN senha_letras_mensagem.w (OUTPUT aux_flgderro).
+                                    
+                                    RUN procedures/grava_log.p (INPUT "Letras - " + STRING(aux_flgderro,"NOK/OK")).
+                                END.
                         END.
                     ELSE
                         DO:
-                                                        RUN procedures/grava_log.p (INPUT "Solicitacao Senha Numérica").
+                            RUN procedures/grava_log.p (INPUT "Solicitacao Senha Numérica").
                                                         
                             RUN senha.w (OUTPUT aux_flgderro).
                                                         
-                                                        RUN procedures/grava_log.p (INPUT "Senha Numérica - " + STRING(aux_flgderro,"NOK/OK")).
+                            RUN procedures/grava_log.p (INPUT "Senha Numérica - " + STRING(aux_flgderro,"NOK/OK")).
 
                             /* como eh o "login", solicita senha de letras */
                             IF  NOT aux_flgderro  THEN
-                                                                DO:
-                                                                        RUN procedures/grava_log.p (INPUT "Solicitacao Letras").                                                                        
-                                                                        
-                                                                        RUN senha_letras.w (OUTPUT aux_flgderro).
-                                                                        
-                                                                        RUN procedures/grava_log.p (INPUT "Letras - " + STRING(aux_flgderro,"NOK/OK")).
-                                                                END.
+                                DO:
+                                    RUN procedures/grava_log.p (INPUT "Solicitacao Letras").                                                                        
+                                    
+                                    RUN senha_letras.w (OUTPUT aux_flgderro).
+                                    
+                                    RUN procedures/grava_log.p (INPUT "Letras - " + STRING(aux_flgderro,"NOK/OK")).
+                                END.
                                                                         
                     END.
                 END.
     
             IF  NOT aux_flgderro  THEN
                 DO:
-                    /* cartão de operador  */
-                    IF  SUBSTRING(STRING(glb_nrcartao),1,1) = "9"  THEN
+                    /* Verifica se eh Cartao Magnetico e Cartão de operador */
+                    IF  glb_idtipcar = 1 AND SUBSTRING(STRING(glb_nrcartao),1,1) = "9"  THEN
                         DO:
                             RUN senha.w (OUTPUT aux_flgderro).
 

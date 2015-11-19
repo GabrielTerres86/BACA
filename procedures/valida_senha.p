@@ -8,6 +8,8 @@ Data     : Janeiro 2010
 
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
+                  27/08/2015 - Enviar como parametro o tipo do cartao (James).
+
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_dssencar    AS CHAR                     NO-UNDO.
@@ -92,6 +94,14 @@ DO:
     
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = par_dssencar.
+    xField:APPEND-CHILD(xText).
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"IDTIPCAR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(glb_idtipcar).
     xField:APPEND-CHILD(xText).
     
     xDoc:SAVE("MEMPTR",ponteiro_xml).
