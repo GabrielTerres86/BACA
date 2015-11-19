@@ -45,7 +45,7 @@ IF  glb_nrcartao <> 0  THEN
         PUT " - CARTAO: " STRING(glb_nrcartao,"9999,9999,9999,9999") FORMAT "x(20)".
 
         /* Verifica se o cartao eh o magnetico e o cartão eh de operador */
-        IF  glb_idtipcar = 1 AND SUBSTRING(STRING(glb_nrcartao),1,1) = "9"  THEN
+        IF  SUBSTRING(STRING(glb_nrcartao),1,1) = "9"  THEN
             PUT " - OPERADOR: ".
         ELSE
             PUT " - CONTA: ".
