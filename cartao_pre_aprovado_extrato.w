@@ -45,10 +45,10 @@ DEFINE INPUT-OUTPUT PARAMETER par_flgretur AS CHAR                NO-UNDO.
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                    NO-UNDO.
 DEFINE VARIABLE aux_conteudo        AS CHAR                       NO-UNDO.
+DEFINE VARIABLE aux_idastcjt        AS INTE                       NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-
 
 &ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
 
@@ -316,27 +316,50 @@ DO:
                                                       INPUT par_vlemprst,
                                                       INPUT par_dtdpagto,
                                                       INPUT par_percetop,
+                                                      INPUT par_txmensal,
+                                                      INPUT par_vlrtarif,
+                                                      INPUT par_vltaxiof,
+                                                      INPUT par_vltariof,
+                                                      OUTPUT aux_idastcjt,
                                                       OUTPUT aux_flgderro).
 
             /*h_principal:MOVE-TO-BOTTOM().*/
 
             IF NOT aux_flgderro THEN
                DO:
-                   RUN cartao_pre_aprovado_sucesso.w (INPUT-OUTPUT par_flgretur).
-                           
-                   IF  par_flgretur = "OK"  THEN
-                       DO:
+               
+                   IF   aux_idastcjt = 1 THEN
+                        DO:
+                            RUN mensagem.w (INPUT NO,
+                                            INPUT "    ATENÇÃO  ",
+                                            INPUT "",
+                                            INPUT "Crédito Pré-Aprovado registrado com sucesso.",
+                                            INPUT "Aguardando aprovaçao dos demais responsáveis.",
+                                            INPUT "",
+                                            INPUT "").
+                                            
+                           PAUSE 1 NO-MESSAGE.
+                            
                            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-                           RETURN "OK".
-                       END.
+                           RETURN "OK".                           
+                        END.
                    ELSE
-                      DO:
-                          /* joga o frame frente */
-                          FRAME f_pre_aprovado_extrato:MOVE-TO-TOP().
-                          APPLY "ENTRY" TO Btn_H.
-                          RETURN NO-APPLY.
-                      END.
-                   
+                        DO:                        
+                           RUN cartao_pre_aprovado_sucesso.w (INPUT-OUTPUT par_flgretur).
+                                   
+                           IF  par_flgretur = "OK"  THEN
+                               DO:
+                                   APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
+                                   RETURN "OK".
+                               END.
+                           ELSE
+                              DO:
+                                  /* joga o frame frente */
+                                  FRAME f_pre_aprovado_extrato:MOVE-TO-TOP().
+                                  APPLY "ENTRY" TO Btn_H.
+                                  RETURN NO-APPLY.
+                              END.
+                        END.                   
                END.
             ELSE
                DO:

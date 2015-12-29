@@ -6,7 +6,9 @@ Autor    : Henrique
 Data     : Abril 2011
 
 
-Ultima alteração: 
+Ultima alteração: 24/12/2015 - Adicionado tratamento para contas com assinatura 
+                               conjunta. (Reinert)                           
+
 
 ............................................................................... */
 
@@ -18,6 +20,7 @@ DEFINE  INPUT PARAMETER par_qtdmeses    AS INTEGER                  NO-UNDO.
 DEFINE  INPUT PARAMETER par_lsdataqd    AS CHAR                     NO-UNDO.
 DEFINE  INPUT PARAMETER par_tpoperac    AS INTE                     NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
+DEFINE OUTPUT PARAMETER par_idastcjt    AS INT                      NO-UNDO.
 
 { includes/var_taa.i }
 
@@ -366,6 +369,9 @@ DO:
             IF  xField:NAME = "TRANSFERENCIA"  AND
                 xText:NODE-VALUE = "OK"        THEN
                 par_flgderro = NO.
+            ELSE
+            IF  xField:NAME = "IDASTCJT"     THEN
+                par_idastcjt = INT(xText:NODE-VALUE).
             ELSE
             IF  xField:NAME = "DSCRITIC"  THEN
                 DO:

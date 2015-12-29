@@ -16,6 +16,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
 
+                  24/12/2015 - Adicionado comunicado de prova de vida do INSS
+                               no comprovante do saque. (Reinert)
+
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_vldsaque    AS DECIMAL                  NO-UNDO.
@@ -459,7 +462,20 @@ IF  aux_flgcompr  THEN
                        "DOCUMENTO.....: "    + STRING(aux_hrtransa,"zzz,zz9")   +
                                               "                         "       +
                        "SEQUENCIAL....: "    + STRING(aux_nrsequni,"zzz,zz9")   + 
-                                              "                         " +
+                                              "                         ".
+                                              
+        IF glb_flgdinss THEN
+          ASSIGN par_tximpres = par_tximpres +
+                        "                                                " +
+                        "     Convocamos voce a comparecer em qualquer   " +
+                        "     Posto de Atendimento da sua cooperativa,   " +
+                        " levando consigo um documento oficial com foto, " +
+                        " para realizar sua Prova de Vida, em cumprimento" +
+                        "   da norma do INSS. O procedimento e simples,  " +
+                        "       rapido e deve ser feito para que o       " +
+                        "        seu beneficio nao seja bloqueado.       ".
+                                
+        ASSIGN par_tximpres = par_tximpres +                                              
                        "                                                " +
                        "    SAC - Servico de Atendimento ao Cooperado   " +
 

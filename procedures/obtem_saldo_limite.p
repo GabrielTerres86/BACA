@@ -12,6 +12,10 @@ Ultima alteração: 13/10/2010 - Ajustes para TAA compartilhado
                                  1 - Consulta com log
                                  2 - Impressao com log
                                (Evandro).
+                               
+                  24/12/2015 - Adicionado tratamento para contas com assinatura 
+                               conjunta. (Reinert)                           
+
 
 ............................................................................... */
 
@@ -24,6 +28,7 @@ DEFINE OUTPUT PARAMETER par_vlsdblpr    AS DECIMAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vlsdblfp    AS DECIMAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vlsdchsl    AS DECIMAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vllimcre    AS DECIMAL                  NO-UNDO.
+DEFINE OUTPUT PARAMETER par_idastcjt    AS INTEGER                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 
 { includes/var_taa.i }
@@ -343,6 +348,9 @@ DO:
             ELSE
             IF  xField:NAME = "VLLIMCRE"  THEN
                 par_vllimcre = DEC(xText:NODE-VALUE).
+            ELSE
+            IF  xField:NAME = "IDASTCJT"  THEN
+                par_idastcjt = INT(xText:NODE-VALUE).
 
         END. /* Fim DO..TO.. */
 
