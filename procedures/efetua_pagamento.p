@@ -51,7 +51,7 @@ DEFINE VARIABLE     aux_dsdpagto    AS CHAR             NO-UNDO.
 DEFINE VARIABLE     aux_nrsequni    AS INT              NO-UNDO.
 DEFINE VARIABLE     aux_dsoperac    AS CHAR             NO-UNDO.
 DEFINE VARIABLE     aux_tpdtrans    AS INT              NO-UNDO.
-
+DEFINE VARIABLE     aux_idastcjt    AS INT              NO-UNDO.
 
 /* para o saldo */
 DEFINE VARIABLE     tmp_vlsddisp    AS DECIMAL          NO-UNDO.    
@@ -87,6 +87,7 @@ IF  NOT par_flagenda THEN
                                              OUTPUT tmp_vlsdblfp,
                                              OUTPUT tmp_vlsdchsl,
                                              OUTPUT tmp_vllimcre,
+                                             OUTPUT aux_idastcjt,
                                              OUTPUT par_flgderro).
         
         IF  par_flgderro   OR

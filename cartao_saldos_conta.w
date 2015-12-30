@@ -37,6 +37,7 @@ CREATE WIDGET-POOL.
 { includes/var_taa.i }
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL              NO-UNDO.
+DEFINE VARIABLE aux_idastcjt        AS INTEGER              NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -435,6 +436,7 @@ DO:
                                          OUTPUT ed_vlsdblfp,
                                          OUTPUT ed_vlsdchsl,
                                          OUTPUT ed_vllimcre,
+                                         OUTPUT aux_idastcjt,
                                          OUTPUT aux_flgderro).
     
     /* monta o comprovante do saldo */
@@ -568,6 +570,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                          OUTPUT ed_vlsdblfp,
                                          OUTPUT ed_vlsdchsl,
                                          OUTPUT ed_vllimcre,
+                                         OUTPUT aux_idastcjt,                                         
                                          OUTPUT aux_flgderro).
 
     IF  aux_flgderro  THEN
