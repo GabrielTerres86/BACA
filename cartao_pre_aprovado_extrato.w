@@ -333,12 +333,15 @@ DO:
                             RUN mensagem.w (INPUT NO,
                                             INPUT "    ATENÇÃO  ",
                                             INPUT "",
-                                            INPUT "Crédito Pré-Aprovado registrado com sucesso.",
-                                            INPUT "Aguardando aprovaçao dos demais responsáveis.",
-                                            INPUT "",
-                                            INPUT "").
+                                            INPUT "Crédito Pré-Aprovado",
+                                            INPUT "registrado com sucesso.",
+                                            INPUT "Aguardando aprovação dos",
+                                            INPUT "demais responsáveis.").
                                             
-                           PAUSE 1 NO-MESSAGE.
+                           PAUSE 3 NO-MESSAGE.
+						   h_mensagem:HIDDEN = YES.
+						   
+						   par_flgretur = "OK".
                             
                            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
                            RETURN "OK".                           
