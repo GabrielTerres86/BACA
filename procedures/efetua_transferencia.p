@@ -535,12 +535,12 @@ ELSE
       RUN mensagem.w (INPUT NO,
                       INPUT "    ATENÇÃO",
                       INPUT "",
-                      INPUT "Transfêrencia",
-                      INPUT "Efetuado com sucesso.",
-                      INPUT "",
-                      INPUT "").
-  
+                      INPUT "Transfêrencia registrada com",
+                      INPUT "sucesso. Aguardando aprovação",
+                      INPUT "dos demais responsáveis.",
+                      INPUT "").  
   END.
+  
 PAUSE 3 NO-MESSAGE.
 h_mensagem:HIDDEN = YES.
 
