@@ -13,7 +13,10 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   20/08/2015 - Tratamento para Extrato em Tela (apenas
                                para opção dos últimos 30 dias)
-                               (Lucas Lunelli - Melhoria 83 [SD 279180])               
+                               (Lucas Lunelli - Melhoria 83 [SD 279180])        
+                               
+                 22/01/2015 - Adicionado botão de DEMONSTRATIVO INSS 
+                              (Reinert - Projeto 255)
 
 ............................................................................... */
 

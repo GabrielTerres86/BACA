@@ -646,7 +646,14 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
            Btn_H:LABEL IN FRAME f_beneficiarios = "VOLTAR".
 
-    RUN inicializa_beneficiarios.
+    FIND NEXT tt-dcb NO-LOCK NO-ERROR.
+    
+    IF  AVAIL tt-dcb THEN
+        /* Se existe mais de um beneficiario mostra-os*/
+        RUN inicializa_beneficiarios.
+    ELSE
+        /* Esconder os botoes onde nao tem beneficiario a ser mostrado */
+        RUN esconde_botoes (INPUT 1).
                
     /* coloca o foco no botao H */
     APPLY "ENTRY" TO Btn_H.
@@ -855,7 +862,7 @@ IF   NOT aux_flgregis  THEN
          /* Mostrar todos os botoes novamente */
         RUN mostra_botoes.
 
-        /* Chamada recursiva pra mostrar as cooperativas iniciais */
+        /* Chamada recursiva pra mostrar os beneficiarios iniciais */
         RUN inicializa_beneficiarios.
 
         RETURN.
@@ -952,12 +959,12 @@ chtemporizador:t_beneficiarios:INTERVAL = 0.
 
     chtemporizador:t_beneficiarios:INTERVAL = glb_nrtempor.
 
-    /* repassa o retorno */
+    /* repassa o retorno 
     IF  RETURN-VALUE = "OK"  THEN
         DO:
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
             RETURN "OK".
-        END.
+        END.             */
 
 END PROCEDURE.
 

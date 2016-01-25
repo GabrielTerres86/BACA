@@ -39,6 +39,8 @@ DEFINE         VARIABLE aux_nrsequni    AS INT                      NO-UNDO.
 DEFINE         VARIABLE aux_dscomand    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_nrtelsac    AS CHARACTER                NO-UNDO.
 DEFINE         VARIABLE aux_nrtelouv    AS CHARACTER                NO-UNDO.
+DEFINE         VARIABLE aux_mensagem    AS CHARACTER                NO-UNDO.
+
 
 
 /* verifica se pode sacar */
@@ -382,12 +384,10 @@ aux_dscomand = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                              "VLLANMTO = " + STRING(aux_dsdsaque)  + " AND " +
                              "CDSITATU = 0".
 
-
 RUN procedures/dispensa_notas.p ( INPUT par_vldsaque,
                                   INPUT YES, /* pagar */
                                   INPUT aux_dscomand,
                                  OUTPUT par_flgderro).
-
 
 /* em caso de erros, ja verifica as pendencias de saque */
 IF  par_flgderro  THEN
@@ -418,6 +418,23 @@ RUN procedures/atualiza_saldo.p (OUTPUT par_flgderro).
 
 IF  par_flgderro  THEN
     RETURN "NOK".
+
+IF  glb_flgdinss THEN
+    DO:
+        ASSIGN aux_mensagem = "Convocamos voce a comparecer em qualquer " +
+                              "Posto de Atendimento da sua cooperativa, " +
+                              "levando consigo um documento oficial com foto, " +
+                              "para realizar sua Prova de Vida, em cumprimento " +
+                              "da norma do INSS.".
+                                        
+        RUN mensagem2.w (INPUT YES,
+                         INPUT "         Atenção!",
+                         INPUT aux_mensagem,
+                         INPUT "",
+                         INPUT "",
+                         INPUT "",
+                         INPUT "").
+    END.
 
 
 /* impressao do comprovante de saque */
@@ -462,18 +479,7 @@ IF  aux_flgcompr  THEN
                        "DOCUMENTO.....: "    + STRING(aux_hrtransa,"zzz,zz9")   +
                                               "                         "       +
                        "SEQUENCIAL....: "    + STRING(aux_nrsequni,"zzz,zz9")   + 
-                                              "                         ".
-                                              
-        IF glb_flgdinss THEN
-          ASSIGN par_tximpres = par_tximpres +
-                        "                                                " +
-                        "     Convocamos voce a comparecer em qualquer   " +
-                        "     Posto de Atendimento da sua cooperativa,   " +
-                        " levando consigo um documento oficial com foto, " +
-                        " para realizar sua Prova de Vida, em cumprimento" +
-                        "   da norma do INSS. O procedimento e simples,  " +
-                        "       rapido e deve ser feito para que o       " +
-                        "        seu beneficio nao seja bloqueado.       ".
+                                              "                         ".                                              
                                 
         ASSIGN par_tximpres = par_tximpres +                                              
                        "                                                " +
@@ -497,3 +503,4 @@ RETURN "OK".
 
 
 /* ............................................................................ */
+
