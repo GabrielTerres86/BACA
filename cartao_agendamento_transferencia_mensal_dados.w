@@ -38,6 +38,9 @@
               24/12/2015 - Adicionado tratamento para contas com assinatura 
                            conjunta. (Reinert)                           
 
+		      27/01/2016 - Adicionado novo parametro na chamada da procedure
+					       busca_associado. (Reinert)
+	
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
@@ -672,6 +675,7 @@ DEF VAR tmp_tximpres    AS CHAR                     NO-UNDO.
 DEF VAR aux_nmtitula    AS CHAR     EXTENT 2        NO-UNDO.
 DEF VAR aux_flgmigra    AS LOGICAL                  NO-UNDO.
 DEF VAR aux_flgdinss    AS LOGICAL                  NO-UNDO.
+DEF VAR aux_flgbinss    AS LOGICAL                  NO-UNDO.
 
 DEFINE VARIABLE    aux_nrtelsac     AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE    aux_nrtelouv     AS CHARACTER                NO-UNDO.
@@ -687,6 +691,7 @@ RUN procedures/busca_associado.p (INPUT  par_nrtransf,
                                   OUTPUT aux_nmtransf,
                                   OUTPUT aux_flgmigra,
                                   OUTPUT aux_flgdinss,
+                                  OUTPUT aux_flgbinss,
                                   OUTPUT aux_flgderro).
 
 /* São 48 caracteres */

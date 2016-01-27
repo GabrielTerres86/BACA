@@ -386,7 +386,8 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_C w_cartao_extrato
 ON CHOOSE OF Btn_C IN FRAME f_cartao_extrato /* DEMONSTRATIVO INSS */
 DO:
-    RUN cartao_inss_extrato.w.
+    IF  Btn_C:VISIBLE IN FRAME f_cartao_extrato  THEN
+        RUN cartao_inss_extrato.w.
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -534,6 +535,10 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
     Btn_E:LABEL = aux_nomedmes[MONTH(glb_dtmvtolt)] + "/" +
                   STRING(YEAR(glb_dtmvtolt),"9999").
+
+    IF  NOT glb_flgbinss THEN
+        ASSIGN Btn_C:VISIBLE IN FRAME f_cartao_extrato = FALSE
+               IMAGE-41:VISIBLE IN FRAME f_cartao_extrato = FALSE.
 
     
     /* verifica se o extrato sera tarifado */

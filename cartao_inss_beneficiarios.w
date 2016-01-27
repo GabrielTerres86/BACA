@@ -37,6 +37,7 @@ DEFINE INPUT  PARAM par_dtcompet        AS CHAR                       NO-UNDO.
 DEFINE VARIABLE aux_novoben             AS INTEGER  INIT 1            NO-UNDO.
 DEFINE VARIABLE aux_flgderro            AS LOGICAL                    NO-UNDO.
 DEFINE VARIABLE aux_dsextrat            AS CHAR                       NO-UNDO.
+DEFINE VARIABLE aux_qtdbenef            AS INTEGER                    NO-UNDO.
 
 DEFINE TEMP-TABLE tt-dcb NO-UNDO
        FIELD nrrecben AS DECI  /* Numero do recebimento do beneficiario    */
@@ -436,7 +437,8 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_beneficiarios
 ON CHOOSE OF Btn_D IN FRAME f_beneficiarios
 DO:
-   RUN inicializa_beneficiarios.
+    IF  Btn_D:VISIBLE IN FRAME f_beneficiarios  THEN
+        RUN inicializa_beneficiarios.
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -618,8 +620,12 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                             OUTPUT aux_flgderro,
                                             OUTPUT TABLE tt-dcb).
 
-    FOR FIRST tt-dcb NO-LOCK BY tt-dcb.nrrecben:
+    FOR EACH tt-dcb NO-LOCK:
+        ASSIGN aux_qtdbenef = aux_qtdbenef + 1.
+    END.
 
+
+    FOR FIRST tt-dcb NO-LOCK BY tt-dcb.nrrecben:
         ASSIGN  Btn_A:LABEL IN FRAME f_beneficiarios
                             = STRING(tt-dcb.nrrecben).
     END.
@@ -645,6 +651,10 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                    "OUTROS BENEFICIÁRIOS"
 
            Btn_H:LABEL IN FRAME f_beneficiarios = "VOLTAR".
+
+    IF  aux_qtdbenef < 6 THEN
+        ASSIGN Btn_D:VISIBLE IN FRAME f_beneficiarios = FALSE
+               IMAGE-37:VISIBLE IN FRAME f_beneficiarios = FALSE.
 
     FIND NEXT tt-dcb NO-LOCK NO-ERROR.
     
