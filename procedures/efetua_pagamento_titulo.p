@@ -12,7 +12,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   28/03/2012 - Dados de banco e agencia no comprovante de pagto
                                (Guilherme/Fabricio).
-
+                               
+                  30/12/2015 - Adicionado parametro aux_idastcjt na chamada da 
+                               procedure obtem_saldo_limite.p                               
 ............................................................................... */
 
 DEFINE  INPUT PARAM par_cdbarra1    AS CHAR             NO-UNDO.     
@@ -39,6 +41,7 @@ DEFINE VARIABLE     aux_dsdtoday    AS CHAR             NO-UNDO.
 DEFINE VARIABLE     aux_hrtransa    AS INT              NO-UNDO.
 DEFINE VARIABLE     aux_dsdpagto    AS CHAR             NO-UNDO.
 DEFINE VARIABLE     aux_nrsequni    AS INT              NO-UNDO.
+DEFINE VARIABLE     aux_idastcjt    AS INT              NO-UNDO.
 
 /* para o saldo */
 DEFINE VARIABLE     tmp_vlsddisp    AS DECIMAL          NO-UNDO.    
@@ -69,6 +72,7 @@ IF  NOT par_flagenda THEN
                                              OUTPUT tmp_vlsdblfp,
                                              OUTPUT tmp_vlsdchsl,
                                              OUTPUT tmp_vllimcre,
+                                             OUTPUT aux_idastcjt,
                                              OUTPUT par_flgderro).
         
         IF  par_flgderro   OR

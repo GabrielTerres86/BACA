@@ -18,6 +18,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                
                   20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
+                               
+                  24/12/2015 - Adicionado comunicado de prova de vida do INSS
+                               no extrato da conta. (Reinert)
 
 ............................................................................... */
 
@@ -40,6 +43,8 @@ DEFINE VARIABLE aux_vlsdchsl            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllimcre            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vlstotal            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_tximpres            AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE aux_idastcjt            AS INTEGER                  NO-UNDO.
+
 
 /* para controle de deposito TAA */
 DEFINE VARIABLE aux_fldeptaa            AS LOGICAL      INIT NO     NO-UNDO.
@@ -522,6 +527,7 @@ RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                      OUTPUT aux_vlsdblfp,
                                      OUTPUT aux_vlsdchsl,
                                      OUTPUT aux_vllimcre,
+                                     OUTPUT aux_idastcjt,
                                      OUTPUT par_flgderro).
 
 aux_vlstotal = aux_vlsddisp - aux_vllautom + aux_vlsdbloq +
@@ -548,24 +554,37 @@ RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
                                                 OUTPUT aux_nrtelouv,
                                                 OUTPUT aux_flgderro).
 
-
 par_tximpres = par_tximpres +
-               aux_tximpres +
-               "    SAC - Servico de Atendimento ao Cooperado   " +
+               aux_tximpres.
+               
+IF glb_flgdinss THEN
+  ASSIGN par_tximpres = par_tximpres +
+                        "                                                " +
+                        "     Convocamos voce a comparecer em qualquer   " +
+                        "     Posto de Atendimento da sua cooperativa,   " +
+                        " levando consigo um documento oficial com foto, " +
+                        " para realizar sua Prova de Vida, em cumprimento" +
+                        "   da norma do INSS. O procedimento e simples,  " +
+                        "       rapido e deve ser feito para que o       " +
+                        "        seu beneficio nao seja bloqueado.       " +
+                        "                                                ".
+               
+ASSIGN par_tximpres = par_tximpres +
+       "    SAC - Servico de Atendimento ao Cooperado   " +
 
-             FILL(" ", 14) + STRING(aux_nrtelsac, "x(20)") + FILL(" ", 14) +
+     FILL(" ", 14) + STRING(aux_nrtelsac, "x(20)") + FILL(" ", 14) +
 
-               "     Atendimento todos os dias das 6h as 22h    " +
-               "                                                " +
-               "                   OUVIDORIA                    " +
+       "     Atendimento todos os dias das 6h as 22h    " +
+       "                                                " +
+       "                   OUVIDORIA                    " +
 
-             FILL(" ", 14) + STRING(aux_nrtelouv, "x(20)") + FILL(" ", 14) +               
-    
-               "    Atendimento nos dias uteis das 8h as 17h    " +
-               "                                                " +
-               "            **  FIM DA IMPRESSAO  **            " +
-               "                                                " +
-               "                                                ".
+     FILL(" ", 14) + STRING(aux_nrtelouv, "x(20)") + FILL(" ", 14) +               
+
+       "    Atendimento nos dias uteis das 8h as 17h    " +
+       "                                                " +
+       "            **  FIM DA IMPRESSAO  **            " +
+       "                                                " +
+       "                                                ".
 
 RUN procedures/grava_log.p (INPUT "Extrato de Conta Corrente obtido com sucesso.").
 

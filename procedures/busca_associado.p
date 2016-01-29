@@ -27,6 +27,7 @@ DEFINE OUTPUT PARAMETER par_nmrescop    AS CHAR                     NO-UNDO.
 DEFINE OUTPUT PARAMETER par_nmtitula    AS CHAR         EXTENT 2    NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgmigra    AS LOGICAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgdinss    AS LOGICAL                  NO-UNDO.
+DEFINE OUTPUT PARAMETER par_flgbinss    AS LOGICAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 
 { includes/var_taa.i }
@@ -207,6 +208,9 @@ DO:
             ELSE
             IF  xField:NAME = "FLGDINSS"  THEN
                 par_flgdinss = LOGICAL(xText:NODE-VALUE).
+            ELSE
+            IF  xField:NAME = "FLGBINSS"  THEN
+                par_flgbinss = LOGICAL(xText:NODE-VALUE).                
 
         END. /* Fim DO..TO.. */
 

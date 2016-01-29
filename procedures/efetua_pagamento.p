@@ -17,6 +17,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                efetua_pagamento_convenio e incluido novos parametros
                                par_tpcptdoc e par_idtpdpag Melhoria-21 SD278322 (Odirlei - AMcom)
 
+                  24/12/2015 - Adicionado tratamento para contas com assinatura 
+                               conjunta. (Reinert)
+
 ............................................................................... */
 
 DEFINE  INPUT PARAM par_cdbarra1    AS CHAR             NO-UNDO.     
@@ -34,6 +37,7 @@ DEFINE  INPUT PARAM par_tpcptdoc    AS INTE             NO-UNDO.
 DEFINE OUTPUT PARAM par_dsprotoc    AS CHAR             NO-UNDO.     
 DEFINE OUTPUT PARAM par_cdbcoctl    AS CHAR             NO-UNDO.     
 DEFINE OUTPUT PARAM par_cdagectl    AS CHAR             NO-UNDO.     
+DEFINE OUTPUT PARAM par_idastcjt    AS INTEGER          NO-UNDO.
 DEFINE OUTPUT PARAM par_flgderro    AS LOGICAL          NO-UNDO.
 
 
@@ -47,7 +51,7 @@ DEFINE VARIABLE     aux_dsdpagto    AS CHAR             NO-UNDO.
 DEFINE VARIABLE     aux_nrsequni    AS INT              NO-UNDO.
 DEFINE VARIABLE     aux_dsoperac    AS CHAR             NO-UNDO.
 DEFINE VARIABLE     aux_tpdtrans    AS INT              NO-UNDO.
-
+DEFINE VARIABLE     aux_idastcjt    AS INT              NO-UNDO.
 
 /* para o saldo */
 DEFINE VARIABLE     tmp_vlsddisp    AS DECIMAL          NO-UNDO.    
@@ -83,6 +87,7 @@ IF  NOT par_flagenda THEN
                                              OUTPUT tmp_vlsdblfp,
                                              OUTPUT tmp_vlsdchsl,
                                              OUTPUT tmp_vllimcre,
+                                             OUTPUT aux_idastcjt,
                                              OUTPUT par_flgderro).
         
         IF  par_flgderro   OR
@@ -531,6 +536,8 @@ DO:
             IF  xField:NAME = "CDAGECTL"  THEN
                 ASSIGN par_cdagectl = xText:NODE-VALUE.
             ELSE
+            IF  xField:NAME = "IDASTCJT"  THEN
+                par_idastcjt = INT(xText:NODE-VALUE).
             IF  xField:NAME = "DSCRITIC"  THEN
                 DO:
                     RUN procedures/grava_log.p (INPUT "Pagamento de " + aux_dsoperac + " - " + xText:NODE-VALUE).
@@ -601,11 +608,48 @@ IF  resultado = ?  THEN
         RETURN "NOK".
     END.
 
-
-IF par_flagenda THEN
-    RUN procedures/grava_log.p (INPUT "Agendamento de " + LC(aux_dsoperac) + " efetuado com sucesso.").
-ELSE
-    RUN procedures/grava_log.p (INPUT "Pagamento de " + LC(aux_dsoperac) + " efetuado com sucesso.").
+IF  par_idastcjt = 0 THEN
+    DO:
+      IF  par_flagenda THEN
+          DO:
+              RUN procedures/grava_log.p (INPUT "Agendamento de " + LC(aux_dsoperac) + " efetuado com sucesso.").
+              
+              RUN mensagem.w (INPUT NO,
+                              INPUT "    ATENÇÃO",
+                              INPUT "",
+                              INPUT "Agendamento de " + LC(aux_dsoperac),
+                              INPUT "Efetuado com sucesso.",
+                              INPUT "",
+                              INPUT "").    
+          END.
+      ELSE
+          DO:
+              RUN procedures/grava_log.p (INPUT "Pagamento de " + LC(aux_dsoperac) + " efetuado com sucesso.").
+              
+              RUN mensagem.w (INPUT NO,
+                              INPUT "    ATENÇÃO",
+                              INPUT "",
+                              INPUT "Pagamento de " + LC(aux_dsoperac),
+                              INPUT "Efetuado com sucesso.",
+                              INPUT "",
+                              INPUT "").    
+          END.
+    END.
+ELSE       
+    DO:
+        RUN procedures/grava_log.p (INPUT "Pagamento registrado com sucesso. Aguardando aprovaçao dos demais responsáveis.").
+        
+		RUN mensagem.w (INPUT NO,
+                        INPUT "    ATENÇÃO",
+                        INPUT "",
+                        INPUT "Pagamento registrado com",
+                        INPUT "sucesso. Aguardando aprovação",
+                        INPUT "dos demais responsáveis.",
+                        INPUT "").    
+    END.
+	
+PAUSE 3 NO-MESSAGE.
+h_mensagem:HIDDEN = YES.	
 
 RETURN "OK".
 

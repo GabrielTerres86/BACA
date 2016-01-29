@@ -38,6 +38,10 @@
   21/10/2015 - Correção de Navegação na impressão de comprovante
                (Lunelli)                          
 
+  24/12/2015 - Adicionado tratamento para contas com assinatura 
+               conjunta. (Reinert)
+
+
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
@@ -68,6 +72,7 @@ DEFINE OUTPUT PARAMETER par_flgderro AS LOGI.
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_dsprotoc        AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE aux_idastcjt        AS INTE                     NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -425,17 +430,20 @@ DO:
                                                    INPUT  par_tpoperac,
                                                    INPUT  par_flagenda,
                                                    OUTPUT aux_flgderro,
-                                                   OUTPUT aux_dsprotoc).
+                                                   OUTPUT aux_dsprotoc,
+                                                   OUTPUT aux_idastcjt).
                         IF  NOT aux_flgderro THEN
                 DO:                                                                        
                             RUN procedures/inicializa_dispositivo.p ( INPUT 6,
                                                              OUTPUT aux_flgderro).
             
                     /* se a impressora estiver habilitada, com papel e 
-                       transferencia efetuada com sucesso */
+                       transferencia efetuada com sucesso e nao exigir
+                       assinatura conjunta */
                     IF  xfs_impressora       AND
                         NOT xfs_impsempapel  AND
-                        NOT aux_flgderro     THEN
+                        NOT aux_flgderro     AND 
+                        aux_idastcjt = 0     THEN
                         RUN imprime_comprovante.
                 END.
             ELSE /* Erro na rotina */

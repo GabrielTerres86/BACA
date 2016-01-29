@@ -1,34 +1,33 @@
+
 /* ............................................................................
 
-Procedure: grava_dados_pre_aprovado.p
-Objetivo : Grava os dados do Pre-Aprovado
-Autor    : James Prust Junior
-Data     : Setembro/2014
+Procedure: carrega_beneficiarios.p 
+Objetivo : Obter os beneficiarios
+Autor    : Lucas Reinert
+Data     : Dezembro 2015
 
-Ultima alteração:   
+
+Ultima alteração: 
 
 ............................................................................ */
 
-DEFINE INPUT  PARAMETER par_qtpreemp AS INTE                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_vlpreemp AS DECI                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_vlemprst AS DECI                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_dtdpagto AS DATE                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_percetop AS DECI                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_txmensal AS DECI                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_vlrtarif AS DECI                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_vltaxiof AS DECI                         NO-UNDO.
-DEFINE INPUT  PARAMETER par_vltariof AS DECI                         NO-UNDO.
-DEFINE OUTPUT PARAMETER par_idastcjt AS INT                          NO-UNDO.
-DEFINE OUTPUT PARAMETER par_flgderro AS LOG                          NO-UNDO.
+DEFINE TEMP-TABLE tt-dcb NO-UNDO
+       FIELD nrrecben AS DECI  /* Numero do recebimento do beneficiario    */
+       FIELD nmbenefi AS CHAR  /* Nome do beneficiario*/
+       FIELD dtcompet AS CHAR  /* Data de competencia */
+       FIELD vlliquid AS DECI. /* Valor liquido */
 
+
+DEFINE INPUT  PARAMETER par_dtcompet AS CHAR    NO-UNDO.
+DEFINE OUTPUT PARAMETER par_flgderro AS LOGICAL NO-UNDO.
+DEFINE OUTPUT PARAMETER TABLE FOR tt-dcb.
 
 { includes/var_taa.i }
 
-
+DEFINE         VARIABLE aux_contador    AS INTEGER                  NO-UNDO.  
 DEFINE         VARIABLE aux_dsdtoday    AS CHAR                     NO-UNDO.     
 DEFINE         VARIABLE aux_dsmvtolt    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_hrtransa    AS INT                      NO-UNDO.
-  
 
 DEFINE         VARIABLE xml_req         AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE xDoc            AS HANDLE                   NO-UNDO.  
@@ -37,27 +36,22 @@ DEFINE         VARIABLE xRoot2          AS HANDLE                   NO-UNDO.
 DEFINE         VARIABLE xField          AS HANDLE                   NO-UNDO.
 DEFINE         VARIABLE xText           AS HANDLE                   NO-UNDO.
 
-
 /* grava no log local - FireBird */
 DEFINE VARIABLE conexao                 AS COM-HANDLE               NO-UNDO.
 DEFINE VARIABLE resultado               AS COM-HANDLE               NO-UNDO.
 DEFINE VARIABLE comando                 AS COM-HANDLE               NO-UNDO.
 
-
-RUN procedures/grava_log.p (INPUT "Grava os dados do pre-aprovado...").
-
-
 aux_hrtransa = TIME.
+
+RUN procedures/grava_log.p (INPUT "Obtendo beneficiarios...").
                      
-
-
 /* processo que pode demorar bastante devido aos produtos que o
    associado possui */
 RUN mensagem.w (INPUT NO,
                 INPUT "  AGUARDE...",
                 INPUT "",
                 INPUT "",
-                INPUT "Efetuando Contratacao...",
+                INPUT "Obtendo beneficiarios...",
                 INPUT "",
                 INPUT "").
 
@@ -89,12 +83,11 @@ IF  ERROR-STATUS:NUM-MESSAGES > 0  THEN
 
         par_flgderro = YES.
         RETURN "NOK".
-    END.
+    END.   
 
 CREATE "ADODB.Command" comando.
 CREATE "ADODB.RecordSet" resultado.
 comando:ActiveConnection = conexao.
-
 
        /* 'MM/DD/YYYY' */
 ASSIGN aux_dsdtoday = "'" + SUBSTRING(STRING(TODAY,"99999999"),3,2) + "/" +
@@ -127,7 +120,7 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
                               STRING(aux_hrtransa)  + ", " +
                               aux_dsdtoday          + ", " +
                               STRING(aux_hrtransa)  + ", " +
-                              "27"                  + ", " + 
+                              "55"                  + ", " + 
                               STRING(glb_nrcartao)  + ", " +
                               "0"                   + ", " +
                               "0)".
@@ -148,7 +141,6 @@ IF  resultado = ?  THEN
         h_mensagem:HIDDEN = YES.
         RETURN "NOK".
     END.
-
 
 REQUISICAO:
 DO:
@@ -192,7 +184,23 @@ DO:
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "49".    
+    xText:NODE-VALUE = "55".    
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"DTCOMPET","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_dtcompet).
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"NRDCONTA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(glb_nrdconta).
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
@@ -212,101 +220,13 @@ DO:
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
-    xDoc:CREATE-NODE(xField,"TPUSUCAR","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(glb_tpusucar).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
     xDoc:CREATE-NODE(xField,"DTMVTOLT","ELEMENT").
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_dtmvtolt).
     xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"DTMVTOPR","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
     
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(glb_dtmvtopr).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"QTPREEMP","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_qtpreemp).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"VLPREEMP","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_vlpreemp).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"VLEMPRST","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_vlemprst).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"DTDPAGTO","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_dtdpagto).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"PERCETOP","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_percetop).
-    xField:APPEND-CHILD(xText).
-    
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"TXMENSAL","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_txmensal).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"VLRTARIF","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_vlrtarif).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"VLTAXIOF","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_vltaxiof).
-    xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"VLTARIOF","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_vltariof).
-    xField:APPEND-CHILD(xText).
-
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     
     DELETE OBJECT xDoc.
@@ -326,10 +246,9 @@ DO:
 
 END. /* Fim REQUISICAO */
 
-
 RESPOSTA:
 DO:
-    DEFINE VARIABLE aux_contador  AS INTEGER                          NO-UNDO.
+    DEFINE VARIABLE  aux_qtbenefi AS INTEGER     NO-UNDO.   
     
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
@@ -345,14 +264,14 @@ DO:
 
         /* limpa a mensagem de aguarde.. */
         h_mensagem:HIDDEN = YES.
-
+                           
         xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
     
-        IF  xDoc:NUM-CHILDREN = 0 OR xRoot:NAME <> "TAA" THEN
+        IF  xDoc:NUM-CHILDREN = 0  OR
+            xRoot:NAME <> "TAA"    THEN
             DO:
-                RUN procedures/grava_log.p 
-                    (INPUT "Pre-Aprovado - Sem comunicação com o servidor.").
-
+                RUN procedures/grava_log.p (INPUT "Beneficiarios - Sem comunicação com o servidor.").
+                
                 RUN mensagem.w (INPUT YES,
                                 INPUT "      ERRO!",
                                 INPUT "",
@@ -368,43 +287,62 @@ DO:
                 LEAVE.
             END.
 
-        DO  aux_contador = 1 TO xRoot:NUM-CHILDREN:
-
-            xRoot:GET-CHILD(xField,aux_contador).
-
-            IF  xField:SUBTYPE <> "ELEMENT"  THEN
+        DO  aux_qtbenefi = 1 TO xRoot:NUM-CHILDREN:
+            
+            xRoot:GET-CHILD(xRoot2,aux_qtbenefi).
+            
+            IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN  
                 NEXT.
 
-            xField:GET-CHILD(xText,1).
-
-            IF  xField:NAME = "IDASTCJT"     THEN
-                par_idastcjt = INT(xText:NODE-VALUE).
-            ELSE
-            IF  xField:NAME = "DSCRITIC" THEN
+            IF  xRoot2:NAME = "DSCRITIC"  THEN
                 DO:
-                    RUN procedures/grava_log.p 
-                        (INPUT "Pre-Aprovado - " + xText:NODE-VALUE).
-                                    
-                    RUN mensagem.w (INPUT NO,
-                                    INPUT "    ATENÇÃO  ",
+                    RUN procedures/grava_log.p (INPUT "Beneficiarios - " + xText:NODE-VALUE).
+
+                    RUN mensagem.w (INPUT YES,
+                                    INPUT "      ERRO!",
                                     INPUT "",
                                     INPUT xText:NODE-VALUE,
                                     INPUT "",
                                     INPUT "",
                                     INPUT "").
 
-                    PAUSE 5 NO-MESSAGE.
+                    PAUSE 3 NO-MESSAGE.
                     h_mensagem:HIDDEN = YES.
-        
-                    ASSIGN par_flgderro = YES.
+
+                    par_flgderro = YES.
                 END.
 
+           CREATE tt-dcb. 
+
+           DO  aux_contador = 1 TO xRoot2:NUM-CHILDREN:
+
+               xRoot2:GET-CHILD(xField,aux_contador).
+
+                IF  xField:SUBTYPE <> "ELEMENT"  THEN
+                    NEXT.
+
+                xField:GET-CHILD(xText,1).
+           
+                IF   xField:NAME = "NRRECBEN"   THEN
+                     ASSIGN tt-dcb.nrrecben = DECI(xText:NODE-VALUE).
+                ELSE
+                IF   xField:NAME = "NMBENEFI"   THEN
+                     ASSIGN tt-dcb.nmbenefi = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "DTCOMPET"   THEN
+                     ASSIGN tt-dcb.dtcompet = xText:NODE-VALUE.
+                ELSE
+                IF   xField:NAME = "VLLIQUID"   THEN
+                     ASSIGN tt-dcb.vlliquid = DECI(xText:NODE-VALUE).
+
+           END.
+
         END. /* Fim DO..TO.. */
-        
+
         LEAVE.
 
     END. /* Fim WHILE */
-
+        
     DELETE OBJECT xDoc.
     DELETE OBJECT xRoot.
     DELETE OBJECT xRoot2.
@@ -412,10 +350,9 @@ DO:
     DELETE OBJECT xText.
 
 END. /* Fim RESPOSTA */
-
+  
 IF  par_flgderro  THEN
-    RETURN "NOK".
-
+    RETURN "NOK".    
 
 /* atualiza o log local */
 comando:CommandText = "UPDATE CRAPLTL SET CDSITATU = 1 " +
@@ -426,7 +363,7 @@ comando:CommandText = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                                   "NRDOCMTO = " + STRING(aux_hrtransa)  + " AND " +
                                   "DTTRANSA = " + aux_dsdtoday          + " AND " +
                                   "HRTRANSA = " + STRING(aux_hrtransa)  + " AND " +
-                                  "TPDTRANS = 27 "                      + " AND " +
+                                  "TPDTRANS = 55 "                      + " AND " +
                                   "NRCARTAO = " + STRING(glb_nrcartao)  + " AND " +
                                   "VLLANMTO = 0 "                       + " AND " +
                                   "CDSITATU = 0".
@@ -448,13 +385,12 @@ IF  resultado = ?  THEN
         par_flgderro = YES.
         RETURN "NOK".
     END.
+    
 
-
-
-RUN procedures/grava_log.p 
-    (INPUT "Gravado os dados do pre-aprovado com sucesso.").
+RUN procedures/grava_log.p (INPUT "Beneficiarios obtidos com sucesso.").
 
 RETURN "OK".
 
 /* ......................................................................... */
+
 

@@ -1,4 +1,4 @@
-&ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI
+&ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI1
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME w_cartao_pagto_convenio_dados
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_cartao_pagto_convenio_dados 
@@ -37,6 +37,8 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                e visualização de impressão
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
 
+                  24/12/2015 - Adicionado tratamento para contas com assinatura 
+                               conjunta. (Reinert)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -95,6 +97,7 @@ DEFINE VARIABLE aux_vllimcre        AS DECIMAL      NO-UNDO.
 DEFINE VARIABLE aux_cdempcon        AS INTEGER      NO-UNDO.  
 DEFINE VARIABLE aux_cdsegmto        AS INTEGER      NO-UNDO.
 DEFINE VARIABLE aux_nmextcon        AS CHARACTER    NO-UNDO.
+DEFINE VARIABLE aux_idastcjt        AS INTEGER      NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -479,24 +482,29 @@ DO:
                                                  OUTPUT aux_vlsdblfp,
                                                  OUTPUT aux_vlsdchsl,
                                                  OUTPUT aux_vllimcre,
+                                                 OUTPUT aux_idastcjt,
                                                  OUTPUT aux_flgderro).
             
-            IF  aux_flgderro   OR
-                par_vldpagto > (aux_vlsddisp + aux_vllimcre)  THEN
-                DO:
-                    RUN mensagem.w (INPUT YES,
-                                    INPUT "    ATENÇÃO",
-                                    INPUT "",
-                                    INPUT "",
-                                    INPUT "Não há saldo suficiente",
-                                    INPUT "para a operação",
-                                    INPUT "").
-            
-                    PAUSE 4 NO-MESSAGE.
-                    h_mensagem:HIDDEN = YES.
-            
-                    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-                    RETURN "NOK".
+            /* Operacao nao eh em conjunto */
+            IF  aux_idastcjt = 0 THEN
+                DO:            
+                  IF  aux_flgderro   OR
+                      par_vldpagto > (aux_vlsddisp + aux_vllimcre)  THEN
+                      DO:
+                          RUN mensagem.w (INPUT YES,
+                                          INPUT "    ATENÇÃO",
+                                          INPUT "",
+                                          INPUT "",
+                                          INPUT "Não há saldo suficiente",
+                                          INPUT "para a operação",
+                                          INPUT "").
+                  
+                          PAUSE 4 NO-MESSAGE.
+                          h_mensagem:HIDDEN = YES.
+                  
+                          APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
+                          RETURN "NOK".
+                      END.
                 END.
         END.   
 
@@ -527,6 +535,7 @@ DO:
                                                 OUTPUT aux_dsprotoc,
                                                 OUTPUT aux_cdbcoctl,
                                                 OUTPUT aux_cdagectl,
+                                                OUTPUT aux_idastcjt,
                                                 OUTPUT aux_flgderro).
                                                                                                                 
             IF  NOT aux_flgderro THEN
@@ -535,7 +544,8 @@ DO:
                                                              OUTPUT aux_flgderro).
                     IF  NOT aux_flgderro     AND
                         xfs_impressora       AND /* se a impressora estiver habilitada e com papel */
-                        NOT xfs_impsempapel  THEN
+                        NOT xfs_impsempapel  AND 
+                        aux_idastcjt = 0     THEN
                         RUN imprime_comprovante (INPUT aux_dsprotoc,
                                                  INPUT aux_cdbcoctl,
                                                  INPUT aux_cdagectl).

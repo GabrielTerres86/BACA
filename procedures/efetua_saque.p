@@ -16,6 +16,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
 
+                  24/12/2015 - Adicionado comunicado de prova de vida do INSS
+                               no comprovante do saque. (Reinert)
+
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_vldsaque    AS DECIMAL                  NO-UNDO.
@@ -36,6 +39,8 @@ DEFINE         VARIABLE aux_nrsequni    AS INT                      NO-UNDO.
 DEFINE         VARIABLE aux_dscomand    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_nrtelsac    AS CHARACTER                NO-UNDO.
 DEFINE         VARIABLE aux_nrtelouv    AS CHARACTER                NO-UNDO.
+DEFINE         VARIABLE aux_mensagem    AS CHARACTER                NO-UNDO.
+
 
 
 /* verifica se pode sacar */
@@ -379,12 +384,10 @@ aux_dscomand = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                              "VLLANMTO = " + STRING(aux_dsdsaque)  + " AND " +
                              "CDSITATU = 0".
 
-
 RUN procedures/dispensa_notas.p ( INPUT par_vldsaque,
                                   INPUT YES, /* pagar */
                                   INPUT aux_dscomand,
                                  OUTPUT par_flgderro).
-
 
 /* em caso de erros, ja verifica as pendencias de saque */
 IF  par_flgderro  THEN
@@ -415,6 +418,23 @@ RUN procedures/atualiza_saldo.p (OUTPUT par_flgderro).
 
 IF  par_flgderro  THEN
     RETURN "NOK".
+
+IF  glb_flgdinss THEN
+    DO:
+        ASSIGN aux_mensagem = "Convocamos voce a comparecer em qualquer " +
+                              "Posto de Atendimento da sua cooperativa, " +
+                              "levando consigo um documento oficial com foto, " +
+                              "para realizar sua Prova de Vida, em cumprimento " +
+                              "da norma do INSS.".
+                                        
+        RUN mensagem2.w (INPUT YES,
+                         INPUT "         Atenção!",
+                         INPUT aux_mensagem,
+                         INPUT "",
+                         INPUT "",
+                         INPUT "",
+                         INPUT "").
+    END.
 
 
 /* impressao do comprovante de saque */
@@ -459,7 +479,9 @@ IF  aux_flgcompr  THEN
                        "DOCUMENTO.....: "    + STRING(aux_hrtransa,"zzz,zz9")   +
                                               "                         "       +
                        "SEQUENCIAL....: "    + STRING(aux_nrsequni,"zzz,zz9")   + 
-                                              "                         " +
+                                              "                         ".                                              
+                                
+        ASSIGN par_tximpres = par_tximpres +                                              
                        "                                                " +
                        "    SAC - Servico de Atendimento ao Cooperado   " +
 
@@ -481,3 +503,4 @@ RETURN "OK".
 
 
 /* ............................................................................ */
+

@@ -4,7 +4,7 @@
    Sistema : TAA - Cooperativa de Credito
    Sigla   : TAA
    Autor   : Edson/Evandro
-   Data    : Janeiro/2010                         Ultima atualizacao: 17/11/2015
+   Data    : Janeiro/2010                         Ultima atualizacao: 27/01/2016
    
    Dados referentes ao programa:
 
@@ -79,6 +79,8 @@
 			   14/10/2015 - Atualização para versão 8.0 (David).
 			   
 			   17/11/2015 - Atualização para versão 8.1 (David).
+
+			   27/01/2016 - Adicionado variavel global glb_flgbinss. (Reinert)
                             
 .............................................................................. */
 
@@ -128,6 +130,7 @@ DEF {1} SHARED VAR glb_inpessoa AS INT                                   NO-UNDO
 DEF {1} SHARED VAR glb_idsenlet AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_flgmigra AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_flgdinss AS LOG                                   NO-UNDO.
+DEF {1} SHARED VAR glb_flgbinss AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_tpusucar AS INT                                   NO-UNDO.
 DEF {1} SHARED VAR glb_idtipcar AS INT                                   NO-UNDO.
 
