@@ -9,7 +9,7 @@ Objetivo : Tela para apresentar o resumo do pre-aprovado
 Autor    : James Prust Junior
 Data     : Setembro 2014
 
-Ultima alteração: 
+Ultima alteração: 27/01/2016 - Adicionado campo de Valor Líquido (Lucas Lunelli - PRJ261)
 
 ............................................................................ */
 
@@ -45,6 +45,7 @@ DEFINE VARIABLE aux_vlrtarif    AS DECIMAL  INIT 0                   NO-UNDO.
 DEFINE VARIABLE aux_percetop    AS DECIMAL  INIT 0                   NO-UNDO.
 DEFINE VARIABLE aux_vltaxiof    AS DECIMAL  INIT 0                   NO-UNDO.
 DEFINE VARIABLE aux_vltariof    AS DECIMAL  INIT 0                   NO-UNDO.
+DEFINE VARIABLE aux_vlliquid    AS DECIMAL  INIT 0                   NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -62,10 +63,10 @@ DEFINE VARIABLE aux_vltariof    AS DECIMAL  INIT 0                   NO-UNDO.
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS IMAGE-40 IMAGE-37 Btn_D Btn_H ed_vlemprst ~
-ed_nrparepr ed_vlparepr ed_dtvencto ed_vlrtarif ed_txmensal ed_percetop ~
-ed_vltariof 
-&Scoped-Define DISPLAYED-OBJECTS ed_vlemprst ed_nrparepr ed_vlparepr ~
-ed_dtvencto ed_vlrtarif ed_txmensal ed_percetop ed_vltariof 
+ed_vlliquid ed_nrparepr ed_vlparepr ed_dtvencto ed_vlrtarif ed_txmensal ~
+ed_percetop ed_vltariof 
+&Scoped-Define DISPLAYED-OBJECTS ed_vlemprst ed_vlliquid ed_nrparepr ~
+ed_vlparepr ed_dtvencto ed_vlrtarif ed_txmensal ed_percetop ed_vltariof 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -120,6 +121,11 @@ DEFINE VARIABLE ed_vlemprst AS DECIMAL FORMAT "zzz,zz9.99":U INITIAL 0
      SIZE 30 BY 1.19
      FONT 20 NO-UNDO.
 
+DEFINE VARIABLE ed_vlliquid AS DECIMAL FORMAT "zzz,zz9.99":U INITIAL 0 
+      VIEW-AS TEXT 
+     SIZE 30 BY 1.19
+     FONT 20 NO-UNDO.
+
 DEFINE VARIABLE ed_vlparepr AS DECIMAL FORMAT "zzz,zz9.99":U INITIAL 0 
       VIEW-AS TEXT 
      SIZE 30 BY 1.19
@@ -165,45 +171,49 @@ DEFINE FRAME f_pre_aprovado_resumo
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
      ed_vlemprst AT ROW 7.81 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 258 NO-TAB-STOP 
-     ed_nrparepr AT ROW 9.62 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 280 NO-TAB-STOP 
-     ed_vlparepr AT ROW 11.43 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 272 NO-TAB-STOP 
-     ed_dtvencto AT ROW 13.24 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 282 NO-TAB-STOP 
-     ed_vlrtarif AT ROW 15.05 COL 103 NO-LABEL WIDGET-ID 274 NO-TAB-STOP 
-     ed_txmensal AT ROW 16.86 COL 103 NO-LABEL WIDGET-ID 276 NO-TAB-STOP 
-     ed_percetop AT ROW 18.67 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 278 NO-TAB-STOP 
-     ed_vltariof AT ROW 20.52 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 284 NO-TAB-STOP 
-     "Taxa:" VIEW-AS TEXT
-          SIZE 13.4 BY 1.19 AT ROW 16.86 COL 79.6 WIDGET-ID 268
-          FONT 20
-     "Tarifa: R$" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 15.05 COL 74 WIDGET-ID 266
-          FONT 20
-     "Número de parcelas:" VIEW-AS TEXT
-          SIZE 52.8 BY 1.19 AT ROW 9.62 COL 40.2 WIDGET-ID 260
-          FONT 20
+     ed_vlliquid AT ROW 9.62 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 292 NO-TAB-STOP 
+     ed_nrparepr AT ROW 11.48 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 280 NO-TAB-STOP 
+     ed_vlparepr AT ROW 13.29 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 272 NO-TAB-STOP 
+     ed_dtvencto AT ROW 15.1 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 282 NO-TAB-STOP 
+     ed_vlrtarif AT ROW 16.91 COL 103 NO-LABEL WIDGET-ID 274 NO-TAB-STOP 
+     ed_txmensal AT ROW 18.71 COL 103 NO-LABEL WIDGET-ID 276 NO-TAB-STOP 
+     ed_percetop AT ROW 20.52 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 278 NO-TAB-STOP 
+     ed_vltariof AT ROW 22.38 COL 101 COLON-ALIGNED NO-LABEL WIDGET-ID 284 NO-TAB-STOP 
      "% a.m." VIEW-AS TEXT
-          SIZE 17 BY 1.38 AT ROW 16.86 COL 133 WIDGET-ID 290
+          SIZE 17 BY 1.38 AT ROW 18.71 COL 133 WIDGET-ID 290
           FONT 20
      "% a.a." VIEW-AS TEXT
-          SIZE 16 BY 1.19 AT ROW 18.67 COL 133 WIDGET-ID 288
+          SIZE 16 BY 1.19 AT ROW 20.52 COL 133 WIDGET-ID 288
           FONT 20
      "CET:" VIEW-AS TEXT
-          SIZE 10.6 BY 1.19 AT ROW 18.67 COL 82.4 WIDGET-ID 270
+          SIZE 10.6 BY 1.19 AT ROW 20.52 COL 82.4 WIDGET-ID 270
           FONT 20
      "PRÉ-APROVADO" VIEW-AS TEXT
           SIZE 76.4 BY 2.95 AT ROW 1.95 COL 43 WIDGET-ID 92
           FGCOLOR 1 FONT 10
-     "IOF: R$" VIEW-AS TEXT
-          SIZE 19.6 BY 1.19 AT ROW 20.52 COL 82.4 WIDGET-ID 286
+     "Vencimento da 1ª parcela:" VIEW-AS TEXT
+          SIZE 69.4 BY 1.19 AT ROW 15.1 COL 23.6 WIDGET-ID 264
           FONT 20
      "Valor da parcela: R$" VIEW-AS TEXT
-          SIZE 56 BY 1.19 AT ROW 11.43 COL 46 WIDGET-ID 262
+          SIZE 56 BY 1.19 AT ROW 13.29 COL 46 WIDGET-ID 262
           FONT 20
-     "Vencimento da 1ª parcela:" VIEW-AS TEXT
-          SIZE 69.4 BY 1.19 AT ROW 13.24 COL 23.6 WIDGET-ID 264
+     "Valor Líquido Liberado: R$" VIEW-AS TEXT
+          SIZE 73.2 BY 1.19 AT ROW 9.62 COL 29.2 WIDGET-ID 294
+          FONT 20
+     "IOF: R$" VIEW-AS TEXT
+          SIZE 19.6 BY 1.19 AT ROW 22.38 COL 82.4 WIDGET-ID 286
           FONT 20
      "Valor Financiado: R$" VIEW-AS TEXT
           SIZE 56 BY 1.19 AT ROW 7.81 COL 46 WIDGET-ID 234
+          FONT 20
+     "Taxa:" VIEW-AS TEXT
+          SIZE 13.4 BY 1.19 AT ROW 18.71 COL 79.6 WIDGET-ID 268
+          FONT 20
+     "Tarifa: R$" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 16.91 COL 74 WIDGET-ID 266
+          FONT 20
+     "Número de parcelas:" VIEW-AS TEXT
+          SIZE 52.8 BY 1.19 AT ROW 11.48 COL 40.2 WIDGET-ID 260
           FONT 20
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
      RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 118
@@ -446,6 +456,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                                OUTPUT aux_percetop,
                                                OUTPUT aux_vltaxiof,
                                                OUTPUT aux_vltariof,
+                                               OUTPUT aux_vlliquid,
                                                OUTPUT aux_flgderro).
 
     RUN enable_UI.
@@ -460,7 +471,9 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                   ed_txmensal:SCREEN-VALUE = STRING(par_txmensal)
                   ed_vlrtarif:SCREEN-VALUE = STRING(aux_vlrtarif)
                   ed_percetop:SCREEN-VALUE = STRING(aux_percetop)
-                  ed_vltariof:SCREEN-VALUE = STRING(aux_vltariof).
+                  ed_vltariof:SCREEN-VALUE = STRING(aux_vltariof)
+                  ed_vlliquid:SCREEN-VALUE = STRING(aux_vlliquid)
+                  .
        END.
 
     /* deixa o mouse transparente */
@@ -548,11 +561,12 @@ PROCEDURE enable_UI :
                Settings" section of the widget Property Sheets.
 ------------------------------------------------------------------------------*/
   RUN control_load.
-  DISPLAY ed_vlemprst ed_nrparepr ed_vlparepr ed_dtvencto ed_vlrtarif 
-          ed_txmensal ed_percetop ed_vltariof 
+  DISPLAY ed_vlemprst ed_vlliquid ed_nrparepr ed_vlparepr ed_dtvencto 
+          ed_vlrtarif ed_txmensal ed_percetop ed_vltariof 
       WITH FRAME f_pre_aprovado_resumo.
-  ENABLE IMAGE-40 IMAGE-37 Btn_D Btn_H ed_vlemprst ed_nrparepr ed_vlparepr 
-         ed_dtvencto ed_vlrtarif ed_txmensal ed_percetop ed_vltariof 
+  ENABLE IMAGE-40 IMAGE-37 Btn_D Btn_H ed_vlemprst ed_vlliquid ed_nrparepr 
+         ed_vlparepr ed_dtvencto ed_vlrtarif ed_txmensal ed_percetop 
+         ed_vltariof 
       WITH FRAME f_pre_aprovado_resumo.
   {&OPEN-BROWSERS-IN-QUERY-f_pre_aprovado_resumo}
   VIEW w_pre_aprovado_resumo.

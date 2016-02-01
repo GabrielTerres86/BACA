@@ -11,7 +11,7 @@ Objetivo : Tela para apresentar as parcelas do pre-aprovado
 Autor    : James Prust Junior
 Data     : Setembro 2014
 
-Ultima alteração: 
+Ultima alteração: 26/01/2016 - Reformulação crítica (Lucas Lunelli - PRJ261)
 
 ............................................................................ */
 
@@ -192,12 +192,12 @@ DEFINE FRAME f_pre_aprovado_parcela
      "VALOR" VIEW-AS TEXT
           SIZE 14 BY 1.19 AT ROW 6.71 COL 81 WIDGET-ID 236
           BGCOLOR 15 FONT 21
-     "PRÉ-APROVADO" VIEW-AS TEXT
-          SIZE 75.2 BY 2.95 AT ROW 1.95 COL 43 WIDGET-ID 92
-          FGCOLOR 1 FONT 10
      "PARCELA" VIEW-AS TEXT
           SIZE 19 BY 1.19 AT ROW 6.71 COL 38 WIDGET-ID 234
           BGCOLOR 15 FONT 21
+     "PRÉ-APROVADO" VIEW-AS TEXT
+          SIZE 75.2 BY 2.95 AT ROW 1.95 COL 43 WIDGET-ID 92
+          FGCOLOR 1 FONT 10
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
      RECT-101 AT ROW 5.05 COL 18 WIDGET-ID 118
      RECT-102 AT ROW 5.52 COL 18 WIDGET-ID 120
@@ -522,8 +522,8 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                    INPUT "    ATENÇÃO",
                                    INPUT "",
                                    INPUT "",
-                                   INPUT "Não existem parcelas",
-                                   INPUT "para serem listados.",
+                                   INPUT "Não é possível calcular parcela para o vencimento/valor informado, realize alteração no vencimento/valor.",
+                                   INPUT "",
                                    INPUT "").
                    
                    PAUSE 4 NO-MESSAGE.

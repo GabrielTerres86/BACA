@@ -13,7 +13,8 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   08/05/2013 - Transferencia intercooperativa (Gabriel).
 
-                    
+                  27/01/2016 - Novo parâmetro na chamada imprime_saldo_limite.p
+                               (Lucas Lunelli - PRJ261)
 
 ............................................................................... */
 
@@ -37,7 +38,6 @@ CREATE WIDGET-POOL.
 { includes/var_taa.i }
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL              NO-UNDO.
-DEFINE VARIABLE aux_idastcjt        AS INTEGER              NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -186,11 +186,17 @@ DEFINE FRAME f_cartao_saldos_conta
      "CONSULTA DE SALDOS" VIEW-AS TEXT
           SIZE 106 BY 3.33 AT ROW 1.48 COL 28 WIDGET-ID 166
           FGCOLOR 1 FONT 10
-     "Limite Cheque Especial:" VIEW-AS TEXT
-          SIZE 42.8 BY 1.19 AT ROW 25.52 COL 27 WIDGET-ID 118
+     "Em Cheques Fora Praça:" VIEW-AS TEXT
+          SIZE 44 BY 1.19 AT ROW 20.76 COL 68 RIGHT-ALIGNED WIDGET-ID 116
           FONT 14
      "Saldo Total:" VIEW-AS TEXT
           SIZE 21 BY 1.19 AT ROW 24.1 COL 48 WIDGET-ID 114
+          FONT 14
+     "Débitos Programados:" VIEW-AS TEXT
+          SIZE 38 BY 1.19 AT ROW 15.05 COL 30.8 WIDGET-ID 128
+          FONT 14
+     "Limite Cheque Especial:" VIEW-AS TEXT
+          SIZE 42.8 BY 1.19 AT ROW 25.52 COL 27 WIDGET-ID 118
           FONT 14
      "Em Cheques da Praça:" VIEW-AS TEXT
           SIZE 40 BY 1.19 AT ROW 19.33 COL 29 WIDGET-ID 142
@@ -198,20 +204,14 @@ DEFINE FRAME f_cartao_saldos_conta
      "Cheque Salário:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 22.19 COL 41 WIDGET-ID 120
           FONT 14
-     "Depósitos TAA a Confirmar:" VIEW-AS TEXT
-          SIZE 47 BY 1.19 AT ROW 17.91 COL 21.6 WIDGET-ID 124
+     "Empréstimos a Liberar:" VIEW-AS TEXT
+          SIZE 39.8 BY 1.19 AT ROW 16.48 COL 29.2 WIDGET-ID 122
           FONT 14
      "Disponível para Saque:" VIEW-AS TEXT
           SIZE 40 BY 1.19 AT ROW 13.62 COL 29 WIDGET-ID 126
           FONT 14
-     "Empréstimos a Liberar:" VIEW-AS TEXT
-          SIZE 39.8 BY 1.19 AT ROW 16.48 COL 29.2 WIDGET-ID 122
-          FONT 14
-     "Débitos Programados:" VIEW-AS TEXT
-          SIZE 38 BY 1.19 AT ROW 15.05 COL 30.8 WIDGET-ID 128
-          FONT 14
-     "Em Cheques Fora Praça:" VIEW-AS TEXT
-          SIZE 44 BY 1.19 AT ROW 20.76 COL 68 RIGHT-ALIGNED WIDGET-ID 116
+     "Depósitos TAA a Confirmar:" VIEW-AS TEXT
+          SIZE 47 BY 1.19 AT ROW 17.91 COL 21.6 WIDGET-ID 124
           FONT 14
      RECT-15 AT ROW 9.1 COL 11 WIDGET-ID 92
      RECT-16 AT ROW 23.62 COL 13 WIDGET-ID 94
@@ -436,7 +436,6 @@ DO:
                                          OUTPUT ed_vlsdblfp,
                                          OUTPUT ed_vlsdchsl,
                                          OUTPUT ed_vllimcre,
-                                         OUTPUT aux_idastcjt,
                                          OUTPUT aux_flgderro).
     
     /* monta o comprovante do saldo */
@@ -448,7 +447,8 @@ DO:
                                             INPUT ed_vlsdblpr, 
                                             INPUT ed_vlsdblfp, 
                                             INPUT ed_vlsdchsl, 
-                                            INPUT ed_vllimcre, 
+                                            INPUT ed_vllimcre,
+                                            INPUT 0, /* pré-aprovado */
                                             INPUT ed_vlstotal,
                                            OUTPUT tmp_tximpres).
 
@@ -570,7 +570,6 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                          OUTPUT ed_vlsdblfp,
                                          OUTPUT ed_vlsdchsl,
                                          OUTPUT ed_vllimcre,
-                                         OUTPUT aux_idastcjt,                                         
                                          OUTPUT aux_flgderro).
 
     IF  aux_flgderro  THEN

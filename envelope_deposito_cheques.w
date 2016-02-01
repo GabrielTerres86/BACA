@@ -23,8 +23,10 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                e visualização de impressão
                                (Lucas Lunelli - Melhoria 83 [SD 279180])               
 
-				  27/01/2016 - Adicionado novo parametro na chamada da procedure
-							   busca_associado. (Reinert)
+                  27/01/2016 - Adicionado novo parametro na chamada da procedure
+                               busca_associado. (Reinert)
+                               
+                  29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
 
 ............................................................................... */
 
@@ -56,7 +58,6 @@ DEFINE VARIABLE aux_cdagectl        AS INT                      NO-UNDO.
 DEFINE VARIABLE aux_nmrescop        AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_nmtitula        AS CHARACTER    EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_flgmigra        AS LOGICAL                  NO-UNDO.
-DEFINE VARIABLE aux_flgdinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgbinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
 
@@ -493,8 +494,7 @@ DO:
                                               OUTPUT aux_cdagectl,
                                               OUTPUT aux_nmrescop,
                                               OUTPUT aux_nmtitula,
-                                              OUTPUT aux_flgmigra,
-                                              OUTPUT aux_flgdinss,
+                                              OUTPUT aux_flgmigra,                                              
                                               OUTPUT aux_flgbinss,
                                               OUTPUT par_flgderro).
 

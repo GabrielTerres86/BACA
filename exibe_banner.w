@@ -1,19 +1,19 @@
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI
 &ANALYZE-RESUME
-&Scoped-define WINDOW-NAME w_pre_aprovado_resumo
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_pre_aprovado_resumo 
-/* ...........................................................................
+&Scoped-define WINDOW-NAME w_exibe_banner
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_exibe_banner 
+/* ..............................................................................
 
-Procedure: credito_pre_aprovado_sucesso.w
-Objetivo : Tela para apresentar que foi realizado com sucesso o pre-aprovado
-Autor    : James Prust Junior
-Data     : Setembro 2014
+Procedure: exibe_banner.w
+Objetivo : Exibição genérica de banners     
+Autor    : Lucas Lunelli [PRJ261]
+Data     : Janeiro/2016
 
-Ultima alteração: 27/01/2016 - Alterada mensagem de sucesso (Lucas Lunelli - PRJ261)
+Ultima alteração: 
 
-............................................................................ */
+............................................................................... */
 
-/*------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
 
@@ -26,15 +26,16 @@ Ultima alteração: 27/01/2016 - Alterada mensagem de sucesso (Lucas Lunelli - PRJ
 CREATE WIDGET-POOL.
 
 /* ***************************  Definitions  ************************** */
+DEFINE INPUT  PARAM par_idbanner     AS INTE         NO-UNDO.
+DEFINE OUTPUT PARAM par_flgderro     AS LOGI         NO-UNDO.
 
 /* Parameters Definitions ---                                           */
 
 /* Local Variable Definitions ---                                       */
+
 { includes/var_taa.i }
 
-DEFINE INPUT-OUTPUT PARAMETER par_flgretur AS CHAR                NO-UNDO.
-
-DEFINE VARIABLE aux_flgderro               AS LOGICAL             NO-UNDO.
+DEFINE VARIABLE aux_flgretur        AS CHAR    INIT "NOK"   NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -48,10 +49,10 @@ DEFINE VARIABLE aux_flgderro               AS LOGICAL             NO-UNDO.
 &Scoped-define DB-AWARE no
 
 /* Name of designated FRAME-NAME and/or first browse and/or first query */
-&Scoped-define FRAME-NAME f_pre_aprovado_sucesso
+&Scoped-define FRAME-NAME f_exibe_banner
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS IMAGE-40 Btn_H 
+&Scoped-Define ENABLED-OBJECTS IMAGE-37 IMAGE-40 banner Btn_D-1 Btn_H 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -64,68 +65,47 @@ DEFINE VARIABLE aux_flgderro               AS LOGICAL             NO-UNDO.
 /* ***********************  Control Definitions  ********************** */
 
 /* Define the widget handle for the window                              */
-DEFINE VAR w_pre_aprovado_resumo AS WIDGET-HANDLE NO-UNDO.
+DEFINE VAR w_exibe_banner AS WIDGET-HANDLE NO-UNDO.
 
 /* Definitions of handles for OCX Containers                            */
 DEFINE VARIABLE temporizador AS WIDGET-HANDLE NO-UNDO.
 DEFINE VARIABLE chtemporizador AS COMPONENT-HANDLE NO-UNDO.
 
 /* Definitions of the field level widgets                               */
-DEFINE BUTTON Btn_H 
-     LABEL "SAIR" 
+DEFINE BUTTON Btn_D-1 
+     LABEL "DESEJO CONTRATAR" 
      SIZE 61 BY 3.33
      FONT 8.
+
+DEFINE BUTTON Btn_H 
+     LABEL "FECHAR" 
+     SIZE 61 BY 3.33
+     FONT 8.
+
+DEFINE IMAGE banner
+     SIZE 146 BY 17.14.
+
+DEFINE IMAGE IMAGE-37
+     FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
+     SIZE 5 BY 3.05.
 
 DEFINE IMAGE IMAGE-40
      FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
-DEFINE RECTANGLE RECT-101
-     EDGE-PIXELS 2 GRAPHIC-EDGE    
-     SIZE 123 BY .24
-     BGCOLOR 14 .
-
-DEFINE RECTANGLE RECT-102
-     EDGE-PIXELS 2 GRAPHIC-EDGE    
-     SIZE 123 BY .24
-     BGCOLOR 14 .
-
-DEFINE RECTANGLE RECT-103
-     EDGE-PIXELS 2 GRAPHIC-EDGE    
-     SIZE 123 BY .24
-     BGCOLOR 2 .
-
 
 /* ************************  Frame Definitions  *********************** */
 
-DEFINE FRAME f_pre_aprovado_sucesso
+DEFINE FRAME f_exibe_banner
+     Btn_D-1 AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
-     "da sua Cooperativa." VIEW-AS TEXT
-          SIZE 43.6 BY 1.19 AT ROW 18.81 COL 59.2 WIDGET-ID 166
-          FONT 8
-     "Operação realizada com sucesso." VIEW-AS TEXT
-          SIZE 74.8 BY 1.19 AT ROW 8.38 COL 45.6 WIDGET-ID 156
-          FONT 8
-     "O Crédito já esta disponível em sua conta corrente." VIEW-AS TEXT
-          SIZE 114.6 BY 1.19 AT ROW 13.86 COL 25.8 WIDGET-ID 160
-          FONT 8
-     "O Demonstrativo desta operação e o extrato do CET" VIEW-AS TEXT
-          SIZE 113 BY 1.19 AT ROW 15.52 COL 24.2 WIDGET-ID 162
-          FONT 8
-     "PRÉ-APROVADO" VIEW-AS TEXT
-          SIZE 76.4 BY 2.95 AT ROW 1.95 COL 43 WIDGET-ID 92
-          FGCOLOR 1 FONT 10
-     "estão disponíveis no site ou nos Postos de Atendimento" VIEW-AS TEXT
-          SIZE 119.8 BY 1.19 AT ROW 17.19 COL 20.4 WIDGET-ID 164
-          FONT 8
+     IMAGE-37 AT ROW 24.24 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
-     RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 118
-     RECT-102 AT ROW 5.52 COL 19.6 WIDGET-ID 120
-     RECT-103 AT ROW 5.29 COL 19.6 WIDGET-ID 116
+     banner AT ROW 4.33 COL 8.2 WIDGET-ID 194
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
-         SIZE 160.2 BY 28.57 WIDGET-ID 100.
+         SIZE 160 BY 28.57 WIDGET-ID 100.
 
 
 /* *********************** Procedure Settings ************************ */
@@ -143,15 +123,15 @@ DEFINE FRAME f_pre_aprovado_sucesso
 &ANALYZE-SUSPEND _CREATE-WINDOW
 /* SUPPRESS Window definition (used by the UIB) 
 IF SESSION:DISPLAY-TYPE = "GUI":U THEN
-  CREATE WINDOW w_pre_aprovado_resumo ASSIGN
+  CREATE WINDOW w_exibe_banner ASSIGN
          HIDDEN             = YES
          TITLE              = ""
          HEIGHT             = 28.57
          WIDTH              = 160
-         MAX-HEIGHT         = 34.24
-         MAX-WIDTH          = 272.8
-         VIRTUAL-HEIGHT     = 34.24
-         VIRTUAL-WIDTH      = 272.8
+         MAX-HEIGHT         = 33.14
+         MAX-WIDTH          = 204.8
+         VIRTUAL-HEIGHT     = 33.14
+         VIRTUAL-WIDTH      = 204.8
          SHOW-IN-TASKBAR    = no
          CONTROL-BOX        = no
          MIN-BUTTON         = no
@@ -169,7 +149,7 @@ ELSE {&WINDOW-NAME} = CURRENT-WINDOW.
                                                                         */
 /* END WINDOW DEFINITION                                                */
 &ANALYZE-RESUME
-ASSIGN w_pre_aprovado_resumo = CURRENT-WINDOW.
+ASSIGN w_exibe_banner = CURRENT-WINDOW.
 
 
 
@@ -177,16 +157,10 @@ ASSIGN w_pre_aprovado_resumo = CURRENT-WINDOW.
 /* ***********  Runtime Attributes and AppBuilder Settings  *********** */
 
 &ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
-/* SETTINGS FOR WINDOW w_pre_aprovado_resumo
+/* SETTINGS FOR WINDOW w_exibe_banner
   VISIBLE,,RUN-PERSISTENT                                               */
-/* SETTINGS FOR FRAME f_pre_aprovado_sucesso
+/* SETTINGS FOR FRAME f_exibe_banner
    FRAME-NAME                                                           */
-/* SETTINGS FOR RECTANGLE RECT-101 IN FRAME f_pre_aprovado_sucesso
-   NO-ENABLE                                                            */
-/* SETTINGS FOR RECTANGLE RECT-102 IN FRAME f_pre_aprovado_sucesso
-   NO-ENABLE                                                            */
-/* SETTINGS FOR RECTANGLE RECT-103 IN FRAME f_pre_aprovado_sucesso
-   NO-ENABLE                                                            */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
 
@@ -200,16 +174,16 @@ ASSIGN w_pre_aprovado_resumo = CURRENT-WINDOW.
 &IF "{&OPSYS}" = "WIN32":U AND "{&WINDOW-SYSTEM}" NE "TTY":U &THEN
 
 CREATE CONTROL-FRAME temporizador ASSIGN
-       FRAME           = FRAME f_pre_aprovado_sucesso:HANDLE
+       FRAME           = FRAME f_exibe_banner:HANDLE
        ROW             = 1.71
-       COLUMN          = 7
+       COLUMN          = 4
        HEIGHT          = 1.67
        WIDTH           = 7
        TAB-STOP        = no
        WIDGET-ID       = 76
        HIDDEN          = yes
        SENSITIVE       = yes.
-/* temporizador OCXINFO:CREATE-CONTROL from: {F0B88A90-F5DA-11CF-B545-0020AF6ED35A} type: t_pre_aprovado_sucesso */
+/* temporizador OCXINFO:CREATE-CONTROL from: {F0B88A90-F5DA-11CF-B545-0020AF6ED35A} type: t_exibe_banner */
 
 &ENDIF
 
@@ -218,9 +192,9 @@ CREATE CONTROL-FRAME temporizador ASSIGN
 
 /* ************************  Control Triggers  ************************ */
 
-&Scoped-define SELF-NAME w_pre_aprovado_resumo
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_pre_aprovado_resumo w_pre_aprovado_resumo
-ON END-ERROR OF w_pre_aprovado_resumo
+&Scoped-define SELF-NAME w_exibe_banner
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_exibe_banner w_exibe_banner
+ON END-ERROR OF w_exibe_banner
 OR ENDKEY OF {&WINDOW-NAME} ANYWHERE DO:
   /* This case occurs when the user presses the "Esc" key.
      In a persistently run window, just ignore this.  If we did not, the
@@ -232,8 +206,8 @@ END.
 &ANALYZE-RESUME
 
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_pre_aprovado_resumo w_pre_aprovado_resumo
-ON WINDOW-CLOSE OF w_pre_aprovado_resumo
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_exibe_banner w_exibe_banner
+ON WINDOW-CLOSE OF w_exibe_banner
 DO:
   /* This event will close the window and terminate the procedure.  */
   APPLY "CLOSE":U TO THIS-PROCEDURE.
@@ -244,9 +218,9 @@ END.
 &ANALYZE-RESUME
 
 
-&Scoped-define SELF-NAME Btn_H
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_pre_aprovado_resumo
-ON ANY-KEY OF Btn_H IN FRAME f_pre_aprovado_sucesso /* SAIR */
+&Scoped-define SELF-NAME Btn_D-1
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D-1 w_exibe_banner
+ON ANY-KEY OF Btn_D-1 IN FRAME f_exibe_banner /* DESEJO CONTRATAR */
 DO:
     RUN tecla.
 END.
@@ -255,8 +229,37 @@ END.
 &ANALYZE-RESUME
 
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_pre_aprovado_resumo
-ON CHOOSE OF Btn_H IN FRAME f_pre_aprovado_sucesso /* SAIR */
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D-1 w_exibe_banner
+ON CHOOSE OF Btn_D-1 IN FRAME f_exibe_banner /* DESEJO CONTRATAR */
+DO:
+    IF  Btn_D-1:VISIBLE IN FRAME f_exibe_banner  THEN
+        DO:
+            /* Abre a tela do pre-aprovado */
+            RUN cartao_pre_aprovado.w (INPUT-OUTPUT aux_flgretur).
+
+            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
+            RETURN "OK".
+
+        END.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Btn_H
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_exibe_banner
+ON ANY-KEY OF Btn_H IN FRAME f_exibe_banner /* FECHAR */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_exibe_banner
+ON CHOOSE OF Btn_H IN FRAME f_exibe_banner /* FECHAR */
 DO:
     APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
     RETURN "OK".
@@ -267,9 +270,9 @@ END.
 
 
 &Scoped-define SELF-NAME temporizador
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_pre_aprovado_resumo OCX.Tick
-PROCEDURE temporizador.t_pre_aprovado_sucesso.Tick .
-APPLY "CHOOSE" TO Btn_H IN FRAME f_pre_aprovado_sucesso.
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_exibe_banner OCX.Tick
+PROCEDURE temporizador.t_exibe_banner.Tick .
+APPLY "CHOOSE" TO Btn_H IN FRAME f_exibe_banner.
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -278,7 +281,7 @@ END PROCEDURE.
 
 &UNDEFINE SELF-NAME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w_pre_aprovado_resumo 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w_exibe_banner 
 
 
 /* ***************************  Main Block  *************************** */
@@ -303,15 +306,36 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
     RUN enable_UI.
 
-    /* deixa o mouse transparente */
-    FRAME f_pre_aprovado_sucesso:LOAD-MOUSE-POINTER("blank.cur").
+    /* Esconder botões, controle de exibição feito posteriormente */
+    ASSIGN Btn_D-1:VISIBLE IN FRAME f_exibe_banner = FALSE
+           IMAGE-37:VISIBLE IN FRAME f_exibe_banner = FALSE.
 
-    chtemporizador:t_pre_aprovado_sucesso:INTERVAL = glb_nrtempor.
+    /* Prova de Vida */
+    IF  par_idbanner = 1 THEN
+        DO:
+            /* escolhe a imagem conforme a cooperativa */
+            IF  CAN-DO("2,6,8,9,10,11,12,13,14",STRING(glb_cdcooper))  THEN
+                banner:LOAD-IMAGE("Imagens\banner_inss_verde.jpg").
+            ELSE
+                banner:LOAD-IMAGE("Imagens\banner_inss_azul.jpg").
+        END.
+    ELSE
+    /* Pré-Aprovado */
+    IF  par_idbanner = 2 THEN
+        DO:
+            banner:LOAD-IMAGE("Imagens\banner_preaprovado.jpg").
+            ASSIGN Btn_D-1:VISIBLE IN FRAME f_exibe_banner = TRUE
+                   IMAGE-37:VISIBLE IN FRAME f_exibe_banner = TRUE.
+        END.
+
+    
+    /* deixa o mouse transparente */
+    FRAME f_exibe_banner:LOAD-MOUSE-POINTER("blank.cur").
+
+    RUN inicia_temporizador.
 
     /* coloca o foco no botao H */
     APPLY "ENTRY" TO Btn_H.
-
-    ASSIGN par_flgretur = "OK".
 
     IF  NOT THIS-PROCEDURE:PERSISTENT  THEN
         WAIT-FOR CLOSE OF THIS-PROCEDURE.
@@ -323,7 +347,7 @@ END.
 
 /* **********************  Internal Procedures  *********************** */
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE control_load w_pre_aprovado_resumo  _CONTROL-LOAD
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE control_load w_exibe_banner  _CONTROL-LOAD
 PROCEDURE control_load :
 /*------------------------------------------------------------------------------
   Purpose:     Load the OCXs    
@@ -336,7 +360,7 @@ PROCEDURE control_load :
 DEFINE VARIABLE UIB_S    AS LOGICAL    NO-UNDO.
 DEFINE VARIABLE OCXFile  AS CHARACTER  NO-UNDO.
 
-OCXFile = SEARCH( "cartao_pre_aprovado_sucesso.wrx":U ).
+OCXFile = SEARCH( "exibe_banner.wrx":U ).
 IF OCXFile = ? THEN
   OCXFile = SEARCH(SUBSTRING(THIS-PROCEDURE:FILE-NAME, 1,
                      R-INDEX(THIS-PROCEDURE:FILE-NAME, ".":U), "CHARACTER":U) + "wrx":U).
@@ -350,7 +374,7 @@ DO:
   .
   RUN initialize-controls IN THIS-PROCEDURE NO-ERROR.
 END.
-ELSE MESSAGE "cartao_pre_aprovado_sucesso.wrx":U SKIP(1)
+ELSE MESSAGE "exibe_banner.wrx":U SKIP(1)
              "The binary control file could not be found. The controls cannot be loaded."
              VIEW-AS ALERT-BOX TITLE "Controls Not Loaded".
 
@@ -361,7 +385,7 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI w_pre_aprovado_resumo  _DEFAULT-DISABLE
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI w_exibe_banner  _DEFAULT-DISABLE
 PROCEDURE disable_UI :
 /*------------------------------------------------------------------------------
   Purpose:     DISABLE the User Interface
@@ -372,14 +396,14 @@ PROCEDURE disable_UI :
                we are ready to "clean-up" after running.
 ------------------------------------------------------------------------------*/
   /* Hide all frames. */
-  HIDE FRAME f_pre_aprovado_sucesso.
+  HIDE FRAME f_exibe_banner.
   IF THIS-PROCEDURE:PERSISTENT THEN DELETE PROCEDURE THIS-PROCEDURE.
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI w_pre_aprovado_resumo  _DEFAULT-ENABLE
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI w_exibe_banner  _DEFAULT-ENABLE
 PROCEDURE enable_UI :
 /*------------------------------------------------------------------------------
   Purpose:     ENABLE the User Interface
@@ -391,27 +415,49 @@ PROCEDURE enable_UI :
                Settings" section of the widget Property Sheets.
 ------------------------------------------------------------------------------*/
   RUN control_load.
-  ENABLE IMAGE-40 Btn_H 
-      WITH FRAME f_pre_aprovado_sucesso.
-  {&OPEN-BROWSERS-IN-QUERY-f_pre_aprovado_sucesso}
-  VIEW w_pre_aprovado_resumo.
+  ENABLE IMAGE-37 IMAGE-40 banner Btn_D-1 Btn_H 
+      WITH FRAME f_exibe_banner.
+  {&OPEN-BROWSERS-IN-QUERY-f_exibe_banner}
+  VIEW w_exibe_banner.
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE tecla w_pre_aprovado_resumo 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE inicia_temporizador w_exibe_banner 
+PROCEDURE inicia_temporizador :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+
+/* Prova de Vida */
+IF  par_idbanner = 1 THEN 
+    chtemporizador:t_exibe_banner:INTERVAL = 20000. /* 20 segundos */
+ELSE
+    chtemporizador:t_exibe_banner:INTERVAL = glb_nrtempor.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE tecla w_exibe_banner 
 PROCEDURE tecla :
-chtemporizador:t_pre_aprovado_sucesso:INTERVAL = 0.
+chtemporizador:t_exibe_banner:INTERVAL = 0.
 
-    IF  KEY-FUNCTION(LASTKEY) = "H"                     AND
-        Btn_H:SENSITIVE IN FRAME f_pre_aprovado_sucesso THEN
+    IF  KEY-FUNCTION(LASTKEY) = "H"              AND
+        Btn_H:SENSITIVE IN FRAME f_exibe_banner  THEN
         APPLY "CHOOSE" TO Btn_H.
+    ELSE   
+    IF  KEY-FUNCTION(LASTKEY) = "D"                AND
+        Btn_D-1:SENSITIVE IN FRAME f_exibe_banner  THEN
+        APPLY "CHOOSE" TO Btn_D-1.
+    ELSE
+        RETURN NO-APPLY.
 
-    chtemporizador:t_pre_aprovado_sucesso:INTERVAL = glb_nrtempor.
-
-    IF NOT CAN-DO("H",KEY-FUNCTION(LASTKEY)) THEN
-       RETURN NO-APPLY.
+    RUN inicia_temporizador.
 
 END PROCEDURE.
 

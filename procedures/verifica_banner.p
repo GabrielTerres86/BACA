@@ -1,34 +1,17 @@
 /* ..............................................................................
 
-Procedure: busca_associado.p 
-Objetivo : Verificar se o associado existe e retornar o nome
-Autor    : Evandro
-Data     : Janeiro 2010
+Procedure: verifica_banner.p
+Objetivo : Verificar se deve ser exibido algum banner ao cooperado
+Autor    : Lucas Lunelli [PRJ261]
+Data     : Janeiro/2016
 
-
-Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
-
-                  17/01/2013 - Adicionado campo para indicar conta migrada
-                               (Evandro).
-                               
-                  06/02/2013 - Adicionado campo para indicar prova de vida
-                               para o INSS (Evandro).
-                               
-                  14/05/2013 - Permitir pesquisar cooperados de outra
-                               cooperativa que nao seja a que esta logada
-                               (Gabriel)         
-                               
-                  29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)     
+Ultima alteração: 
 
 ............................................................................... */
 
-DEFINE INPUT  PARAMETER par_nrtransf    AS INTEGER                  NO-UNDO.
-DEFINE INPUT  PARAMETER par_cdagetra    AS INTE                     NO-UNDO.
-DEFINE OUTPUT PARAMETER par_cdagectl    AS INT                      NO-UNDO.
-DEFINE OUTPUT PARAMETER par_nmrescop    AS CHAR                     NO-UNDO.
-DEFINE OUTPUT PARAMETER par_nmtitula    AS CHAR         EXTENT 2    NO-UNDO.
-DEFINE OUTPUT PARAMETER par_flgmigra    AS LOGICAL                  NO-UNDO.
-DEFINE OUTPUT PARAMETER par_flgbinss    AS LOGICAL                  NO-UNDO.
+DEFINE INPUT  PARAMETER par_nrdconta    AS INTEGER                  NO-UNDO.
+DEFINE INPUT  PARAMETER par_tpusucar    AS INTEGER                  NO-UNDO.
+DEFINE OUTPUT PARAMETER par_idbanner    AS CHARACTER                NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 
 { includes/var_taa.i }
@@ -82,7 +65,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "3".
+    xText:NODE-VALUE = "57".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
@@ -94,19 +77,27 @@ DO:
     xField:APPEND-CHILD(xText).
     
     /* ---------- */
-    xDoc:CREATE-NODE(xField,"NRTRANSF","ELEMENT").
+    xDoc:CREATE-NODE(xField,"NRDCONTA","ELEMENT").
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_nrtransf).
+    xText:NODE-VALUE = STRING(par_nrdconta).
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
-    xDoc:CREATE-NODE(xField,"CDAGETRA","ELEMENT").
+    xDoc:CREATE-NODE(xField,"NRCARTAO","ELEMENT").
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_cdagetra).
+    xText:NODE-VALUE = STRING(glb_nrcartao).
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"TPUSUCAR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_tpusucar).
     xField:APPEND-CHILD(xText).
 
 
@@ -191,24 +182,8 @@ DO:
                     h_mensagem:HIDDEN = YES.
                 END.
             ELSE
-
-            IF  xField:NAME = "CDAGECTL"  THEN
-                par_cdagectl = INT(xText:NODE-VALUE).
-            ELSE
-            IF  xField:NAME = "NMRESCOP"  THEN
-                par_nmrescop = xText:NODE-VALUE.
-            ELSE
-            IF  xField:NAME = "NMTITULA1"  THEN
-                par_nmtitula[1] = xText:NODE-VALUE.
-            ELSE
-            IF  xField:NAME = "NMTITULA2"  THEN
-                par_nmtitula[2] = xText:NODE-VALUE.
-            ELSE
-            IF  xField:NAME = "FLGMIGRA"  THEN
-                par_flgmigra = LOGICAL(xText:NODE-VALUE).
-            ELSE
-            IF  xField:NAME = "FLGBINSS"  THEN
-                par_flgbinss = LOGICAL(xText:NODE-VALUE).                
+            IF  xField:NAME = "IDBANNER"  THEN
+                par_idbanner = xText:NODE-VALUE.
 
         END. /* Fim DO..TO.. */
 

@@ -26,8 +26,11 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                PAINOP (traseiro) para TAAs sem depositário
                                (Lucas Lunelli SD 314201)              
 
-				  27/01/2016 - Adicionado novo parametro na chamada da procedure
-						       busca_associado. (Reinert)
+                  27/01/2016 - Adicionado novo parametro na chamada da procedure
+                               busca_associado. (Reinert)
+                               
+                  29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
+                  
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -53,8 +56,10 @@ CREATE WIDGET-POOL.
 DEFINE VARIABLE aux_flgderro        AS LOGICAL      NO-UNDO.
 DEFINE VARIABLE aux_flgderr2        AS LOGICAL      NO-UNDO.
 DEFINE VARIABLE aux_contador        AS INTEGER      NO-UNDO.
+DEFINE VARIABLE aux_contbann        AS INTEGER      NO-UNDO.
 DEFINE VARIABLE aux_flcartao        AS LOGICAL      NO-UNDO.
 DEFINE VARIABLE aux_dsdtecla        AS CHARACTER    NO-UNDO.
+DEFINE VARIABLE aux_idbanner        AS CHARACTER    NO-UNDO.
 
 
 /* Leitora de insercao */
@@ -156,11 +161,15 @@ DEFINE FRAME f_captura_cartao
          AT COL 1 ROW 1
          SIZE 160 BY 28.57 WIDGET-ID 100.
 
-DEFINE FRAME f_encobre_cartao
+DEFINE FRAME f_mensagem
+     ed_forma_cartao AT ROW 1 COL 2.4 NO-LABEL WIDGET-ID 90 NO-TAB-STOP 
+     "SEU CARTÃO" VIEW-AS TEXT
+          SIZE 39 BY 1.71 AT ROW 1 COL 30.2 WIDGET-ID 86
+          FONT 15
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
-         AT COL 8 ROW 25.05
-         SIZE 19 BY 2.38 WIDGET-ID 400.
+         AT COL 43 ROW 24.33
+         SIZE 72 BY 2 WIDGET-ID 300.
 
 DEFINE FRAME f_depositario
      "OU" VIEW-AS TEXT
@@ -178,15 +187,11 @@ DEFINE FRAME f_depositario
          AT COL 35 ROW 24.33
          SIZE 97 BY 4.52 WIDGET-ID 200.
 
-DEFINE FRAME f_mensagem
-     ed_forma_cartao AT ROW 1 COL 2.4 NO-LABEL WIDGET-ID 90 NO-TAB-STOP 
-     "SEU CARTÃO" VIEW-AS TEXT
-          SIZE 39 BY 1.71 AT ROW 1 COL 30.2 WIDGET-ID 86
-          FONT 15
+DEFINE FRAME f_encobre_cartao
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
-         AT COL 43 ROW 24.33
-         SIZE 72 BY 2 WIDGET-ID 300.
+         AT COL 8 ROW 25.05
+         SIZE 19 BY 2.38 WIDGET-ID 400.
 
 
 /* *********************** Procedure Settings ************************ */
@@ -1025,9 +1030,8 @@ PROCEDURE verifica_cartao_lido :
                                                               OUTPUT glb_cdagectl,  
                                                               OUTPUT glb_nmrescop,  
                                                               OUTPUT glb_nmtitula,
-                                                              OUTPUT glb_flgmigra,
-                                                              OUTPUT glb_flgdinss,
-															  OUTPUT glb_flgbinss,
+                                                              OUTPUT glb_flgmigra,                                                              
+                                                              OUTPUT glb_flgbinss,
                                                               OUTPUT aux_flgderro).
 
                             IF  aux_flgderro  THEN
@@ -1049,25 +1053,37 @@ PROCEDURE verifica_cartao_lido :
                                     RETURN.
                                 END.
 
-                            /* verifica se deve mostrar o banner do INSS */
-                            IF  glb_flgdinss  THEN
-                                RUN banner_inss.w.
-                            
-                                                        DO WHILE TRUE:
-                                                        
-                                                                RUN cartao_opcoes.w.
-                                                                
-                                                                IF  RETURN-VALUE = "OK"  THEN
-                                                                        DO:
-                                                                                RUN cartao_aviso_continuar.w.
+                            /* verifica se existem banner a ser exibido ao cooperado */
+                            RUN procedures/verifica_banner.p (INPUT glb_nrdconta,
+                                                              INPUT glb_tpusucar,
+                                                             OUTPUT aux_idbanner,
+                                                             OUTPUT aux_flgderro).
 
-                                                                                IF  RETURN-VALUE = "OK"  THEN
-                                                                                        NEXT.
-                                                                        END.
-                                                                        
-                                                                LEAVE.
-                                                                
-                                                        END.
+                            /* verifica se deve mostrar banner  */
+                            DO aux_contbann = 1 TO NUM-ENTRIES(aux_idbanner, ","):
+                                
+                                /* Se retornar ID da Prova de Vida, associa var global */
+                                IF  INTE(ENTRY(aux_contbann, aux_idbanner, ",")) = 1 THEN 
+                                    ASSIGN glb_flgdinss = YES.
+
+                                RUN exibe_banner.w (INPUT INTEGER(ENTRY(aux_contbann, aux_idbanner, ",")),
+                                                   OUTPUT aux_flgderro).
+                            END.
+                            
+                            DO WHILE TRUE:
+
+                                RUN cartao_opcoes.w.
+                                    
+                                IF  RETURN-VALUE = "OK"  THEN
+                                    DO:
+                                        RUN cartao_aviso_continuar.w.
+
+                                        IF  RETURN-VALUE = "OK"  THEN
+                                            NEXT.
+                                    END.
+                                LEAVE.
+                                    
+                            END.
                         END.
                 END.
 

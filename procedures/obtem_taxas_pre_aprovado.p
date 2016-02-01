@@ -5,7 +5,7 @@
  Autor    : James Prust Junior
  Data     : Setembro 2014
 
-Ultima alteração: 
+Ultima alteração: 26/01/2016 - Adicionado par de Vl. Líquido (Lucas Lunelli - PRJ261)
 
 ............................................................................... */
 DEFINE INPUT  PARAMETER par_vlemprst    AS DECIMAL              NO-UNDO.
@@ -17,6 +17,7 @@ DEFINE OUTPUT PARAMETER par_vlrtarif    AS DECIMAL  INIT 0      NO-UNDO.
 DEFINE OUTPUT PARAMETER par_percetop    AS DECIMAL  INIT 0      NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vltaxiof    AS DECIMAL  INIT 0      NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vltariof    AS DECIMAL  INIT 0      NO-UNDO.
+DEFINE OUTPUT PARAMETER par_vlliquid    AS DECIMAL  INIT 0      NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL  INIT NO     NO-UNDO.
 
 { includes/var_taa.i }
@@ -360,6 +361,11 @@ DO:
                 DO:
                     ASSIGN par_vltariof = DECI(xText:NODE-VALUE).
                 END.        
+
+            IF  xField:NAME = "VLLIQUID"  THEN
+                DO:
+                    ASSIGN par_vlliquid = DECI(xText:NODE-VALUE).
+                END.
 
         END. /* Fim DO..TO.. */
         

@@ -9,7 +9,8 @@ Objetivo : Tela para apresentar o menu do Pre-Aprovado
 Autor    : James Prust Junior
 Data     : Setembro 2014
 
-Ultima alteração: 
+Ultima alteração: 26/01/2016 - Alteração texto do campo
+                               de valor a ser contratado (Lucas Lunelli - PRJ261)
 
 ............................................................................ */
 
@@ -151,32 +152,35 @@ DEFINE FRAME f_pre_aprovado
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
      ed_vllimdis AT ROW 8 COL 84 COLON-ALIGNED NO-LABEL WIDGET-ID 258 NO-TAB-STOP 
      ed_txmensal AT ROW 10.86 COL 84 COLON-ALIGNED NO-LABEL WIDGET-ID 256 NO-TAB-STOP 
-     "automática em sua conta corrente)." VIEW-AS TEXT
-          SIZE 72 BY .71 AT ROW 21 COL 11.2 WIDGET-ID 252
-          FONT 0
+     "Taxa Mensal:" VIEW-AS TEXT
+          SIZE 33.2 BY 1.19 AT ROW 11.24 COL 50 WIDGET-ID 236
+          FONT 20
+     "Dia do Vencimento:" VIEW-AS TEXT
+          SIZE 50.2 BY 1.19 AT ROW 17.91 COL 33 WIDGET-ID 128
+          FONT 20
      "Valor da Operação:" VIEW-AS TEXT
           SIZE 50.2 BY 1.19 AT ROW 14.38 COL 33 WIDGET-ID 126
           FONT 20
      "PRÉ-APROVADO" VIEW-AS TEXT
           SIZE 76.4 BY 2.71 AT ROW 2.19 COL 43 WIDGET-ID 92
           FGCOLOR 1 FONT 10
-     "Taxa Mensal:" VIEW-AS TEXT
-          SIZE 33.2 BY 1.19 AT ROW 11.24 COL 50 WIDGET-ID 236
-          FONT 20
-     "O débito das parcelas ocorrerá mensalmente de forma" VIEW-AS TEXT
+     "ocorrerá mensalmente de forma automática em sua conta" VIEW-AS TEXT
+          SIZE 96 BY .71 AT ROW 21 COL 11.2 WIDGET-ID 252
+          FONT 0
+     "entre os dias 01 a 27 do mês. O débito das parcelas " VIEW-AS TEXT
           SIZE 72 BY .71 AT ROW 20.05 COL 11.2 WIDGET-ID 250
           FONT 0
-     "Dia do Vencimento:" VIEW-AS TEXT
-          SIZE 50.2 BY 1.19 AT ROW 17.91 COL 33 WIDGET-ID 128
-          FONT 20
-     "(Informe a melhor data para vencimento das parcelas." VIEW-AS TEXT
-          SIZE 72 BY .71 AT ROW 19.1 COL 11.2 WIDGET-ID 248
+     "corrente)." VIEW-AS TEXT
+          SIZE 96 BY .71 AT ROW 21.86 COL 11.2 WIDGET-ID 260
+          FONT 0
+     "(Informe o valor que deseja contratar)" VIEW-AS TEXT
+          SIZE 53.2 BY .71 AT ROW 15.52 COL 30 WIDGET-ID 246
           FONT 0
      "Limite Disponível:" VIEW-AS TEXT
           SIZE 50.2 BY 1.19 AT ROW 8.38 COL 33 WIDGET-ID 234
           FONT 20
-     "(Informe o valor que deseja contratar)" VIEW-AS TEXT
-          SIZE 53.2 BY .71 AT ROW 15.52 COL 30 WIDGET-ID 246
+     "(Informe a melhor data para vencimento das parcelas " VIEW-AS TEXT
+          SIZE 72 BY .71 AT ROW 19.1 COL 11.2 WIDGET-ID 248
           FONT 0
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
      RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 118
