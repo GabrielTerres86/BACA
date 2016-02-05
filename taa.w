@@ -17,6 +17,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   08/12/2014 - Instância de novo handle de frame para melhor
                                controle de navegação de tela em caso de erros
                                (Lunelli)
+                               
+                  29/12/2015 - Inserção da chamada 10 (nagios) para a procedure
+                               inicializa_dispositivo (Lunelli - SD 359409)
 
 ............................................................................... */
 
@@ -467,6 +470,11 @@ DEFINE VARIABLE aux_interval AS INTEGER                 NO-UNDO.
         ELSE
             ed_status:INSERT-STRING("OK" + CHR(13)).
 
+
+        /* ---------- */
+        RUN procedures/inicializa_dispositivo.p (INPUT 10,
+                                                 OUTPUT aux_flgderro).
+    
                 /*****************************************************************/
         /** Solução temporária para alterar nome do domínio do WebSpeed **/
         /** de pkgprod.cecred.coop.br para taa.cecred.coop.br.          **/

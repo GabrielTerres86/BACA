@@ -20,6 +20,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   13/04/2015 - Adicionado procedure de verificacao de mensagem
                                (emprestimo em atraso) (Jorge/Rodrigo)
+                  
+                  29/12/2015 - Inserção da chamada 10 (nagios) para a procedure
+                               inicializa_dispositivo (Lunelli - SD 359409)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -540,6 +543,9 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     RUN procedures/inicializa_dispositivo.p ( INPUT 2,
                                              OUTPUT aux_flgderro).
 
+    RUN procedures/inicializa_dispositivo.p ( INPUT 10,
+                                             OUTPUT aux_flgderro).
+
     /* Verifica bloqueio de saque */
     RUN procedures/verifica_bloqueio_saque.p(OUTPUT aux_flgblsaq,
                                              OUTPUT aux_flgderro).
@@ -562,7 +568,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
         /* Saque bloqueado */
         aux_flgblsaq                                         THEN
         DISABLE Btn_A WITH FRAME f_cartao_opcoes.
-    
+
     IF NOT glb_flmsgtaa THEN
     DO:
         /* verifica mensagem de alerta ( operacao de credito em atraso) */

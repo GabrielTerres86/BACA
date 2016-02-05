@@ -9,6 +9,8 @@ Data     : Janeiro 2010
 
 Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
+                  29/12/2015 - Inserção da chamada 10 (nagios) para a procedure
+                               inicializa_dispositivo (Lunelli - SD 359409)
 ............................................................................... */
 
 
@@ -295,8 +297,10 @@ DO:
     DELETE OBJECT xField.
     DELETE OBJECT xText.
 
-END. /* Fim RESPOSTA */
+    RUN procedures/inicializa_dispositivo.p ( INPUT 10,
+                                             OUTPUT par_flgderro).
 
+END. /* Fim RESPOSTA */
 
 
 IF  par_flgderro  THEN

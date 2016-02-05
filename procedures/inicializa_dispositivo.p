@@ -14,6 +14,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                
                   27/08/2015 - Detalhamento de log na inicialização do TAA
                                Lucas Lunelli (SD 291639)
+                               
+                 29/12/2015 - Composição da linha de log para monitoração
+                              via Nagios (Lunelli - SD 359409)
 
 ............................................................................... */
 
@@ -507,6 +510,46 @@ IF  par_cdoperac = 9  THEN
         RUN procedures/grava_log.p (INPUT "TECLADO PAINOP - RETORNO: " + STRING(LT_Resp) + " P32TCATM.DLL (WinLeConfiguraTeclados)").
     END.
 /* Fim Operação 9 - Verificar Teclado PAINOP */
+
+ELSE
+
+/* Operação 10 - Logar para o Nagios */
+IF  par_cdoperac = 10 THEN
+    DO:
+        DEFINE VARIABLE aux_cdsittfn        AS LOGICAL              NO-UNDO.
+        DEFINE VARIABLE aux_flgblsaq        AS LOGICAL              NO-UNDO.
+        DEFINE VARIABLE aux_flgderro        AS LOGICAL              NO-UNDO.
+        DEFINE VARIABLE aux_totnotas        AS INTEGER              NO-UNDO.
+
+        IF  glb_cdsittfn = 2 /* Fechado */ THEN
+            ASSIGN aux_cdsittfn = NO.
+        ELSE
+            ASSIGN aux_cdsittfn = YES.
+        
+        /* Verifica bloqueio de saque */
+        RUN procedures/verifica_bloqueio_saque.p(OUTPUT aux_flgblsaq,
+                                                 OUTPUT aux_flgderro).
+
+        ASSIGN aux_totnotas = glb_qtnotk7A + glb_qtnotk7B + glb_qtnotk7C + glb_qtnotk7D + glb_qtnotk7R.
+
+        RUN procedures/grava_log.p (INPUT "NOTAS TA - K7A: " + STRING(glb_qtnotk7A,'zz,zz9') +
+                                                    " K7B: " + STRING(glb_qtnotk7B,'zz,zz9') +
+                                                    " K7C: " + STRING(glb_qtnotk7C,'zz,zz9') +
+                                                    " K7D: " + STRING(glb_qtnotk7D,'zz,zz9') +
+                                                    " K7R: " + STRING(glb_qtnotk7R,'zz,zz9') +
+                                                    " TOTAL: " + STRING(aux_totnotas,'zz,zz9')).
+
+        RUN procedures/grava_log.p (INPUT "STATUS SAQUE - K7A: " + STRING(glb_cassetes[1],"OK/NOK") + 
+                                                        " K7B: " + STRING(glb_cassetes[2],"OK/NOK") + 
+                                                        " K7C: " + STRING(glb_cassetes[3],"OK/NOK") + 
+                                                        " K7D: " + STRING(glb_cassetes[4],"OK/NOK") + 
+                                                        " K7R: " + STRING(glb_cassetes[5],"OK/NOK") + 
+                                                        " SUPRIDO: "    + STRING(glb_flgsupri,"OK/NOK") +
+                                                        " ABERTO: "     + STRING(aux_cdsittfn,"OK/NOK") +
+                                                         /* Inversão do sentido, pois campo no banco se refere à BLOQUEADO */
+                                                        " HABILITADO: " + STRING(aux_flgblsaq,"NOK/OK")).
+    END.
+/* Fim Operação 10 - Logar para o Nagios */
 
 ELSE
     par_flgderro = YES.
