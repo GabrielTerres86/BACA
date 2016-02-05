@@ -9,26 +9,29 @@ Objetivo : Tela para transferencia de valores
 Autor    : Evandro
 Data     : Janeiro 2010
 
-Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
+Ultima alteraçao: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   29/08/2011 - Imprimir protocolo (Gabriel)
                   
                   08/05/2013 - Transferencia intercooperativa (Gabriel).
                   
-                  18/07/2013 - Correção número da agencia da cooperativa (Lucas).
+                  18/07/2013 - Correçao número da agencia da cooperativa (Lucas).
                   
                   07/11/2013 - Alterado Posto de Atendimento ao Cooperado para
                                Posto de Atendimento "PA". (Jorge)
                                
-                  05/12/2014 - Correção para não gerar comprovante sem efetivar
-                               a operação (Lunelli SD 230613)
+                  05/12/2014 - Correçao para nao gerar comprovante sem efetivar
+                               a operaçao (Lunelli SD 230613)
                                
                   20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
-                               e visualização de impressão
+                               e visualizaçao de impressao
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
                                
-                  21/10/2015 - Correção de Navegação na impressão de comprovante
+                  21/10/2015 - Correçao de Navegaçao na impressao de comprovante
                                (Lunelli)
+
+                  24/12/2015 - Adicionado tratamento para contas com assinatura 
+                               conjunta. (Reinert)
 
 ............................................................................... */
 
@@ -63,6 +66,7 @@ DEFINE VARIABLE aux_dttransf        AS DATE                     NO-UNDO.
 DEFINE VARIABLE aux_flgmigra        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgdinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_tpoperac        AS INTE                     NO-UNDO.
+DEFINE VARIABLE aux_idastcjt        AS INTE                     NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -239,7 +243,7 @@ DEFINE FRAME f_cartao_transferencia
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28.6 BY 1.19 AT ROW 10.33 COL 7.4 WIDGET-ID 258
           FONT 8
-     "Transferência:" VIEW-AS TEXT
+     "Transferencia:" VIEW-AS TEXT
           SIZE 31.2 BY 1.14 AT ROW 22.38 COL 4 WIDGET-ID 256
           FONT 8
      "ENTRE" VIEW-AS TEXT
@@ -251,7 +255,7 @@ DEFINE FRAME f_cartao_transferencia
      "Valor:" VIEW-AS TEXT
           SIZE 13 BY 1.67 AT ROW 18.71 COL 22.2 WIDGET-ID 110
           FONT 8
-     "TRANSFERÊNCIA" VIEW-AS TEXT
+     "TRANSFERENCIA" VIEW-AS TEXT
           SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 136
           FGCOLOR 1 FONT 10
      "Conta:" VIEW-AS TEXT
@@ -431,10 +435,10 @@ DO:
         INT(ed_nrtransf:SCREEN-VALUE) = glb_nrdconta  THEN
         DO:
             RUN mensagem.w (INPUT YES,
-                            INPUT "    Atenção!",
+                            INPUT "    Atençao!",
                             INPUT "",
                             INPUT "A conta de origem e destino",
-                            INPUT "não podem ser iguais.",
+                            INPUT "nao podem ser iguais.",
                             INPUT "",
                             INPUT "").
 
@@ -447,7 +451,7 @@ DO:
     IF  INT(ed_nrtransf:SCREEN-VALUE) = 0  THEN
         DO:
             RUN mensagem.w (INPUT YES,
-                            INPUT "    Atenção!",
+                            INPUT "    Atençao!",
                             INPUT "",
                             INPUT "",
                             INPUT "A conta deve ser informada.",
@@ -463,7 +467,7 @@ DO:
     IF  DEC(ed_vltransf:SCREEN-VALUE) = 0  THEN
         DO:    
             RUN mensagem.w (INPUT YES,
-                            INPUT "    Atenção!",
+                            INPUT "    Atençao!",
                             INPUT "",
                             INPUT "",
                             INPUT "O valor deve ser informado.",
@@ -481,7 +485,7 @@ DO:
     IF  ERROR-STATUS:ERROR THEN
         DO:
             RUN mensagem.w (INPUT YES,
-                            INPUT "    Atenção!",
+                            INPUT "    Atençao!",
                             INPUT "",
                             INPUT "",
                             INPUT "Data inválida.",
@@ -498,7 +502,7 @@ DO:
     IF  aux_dttransf = ? THEN
         DO:
             RUN mensagem.w (INPUT YES,
-                            INPUT "    Atenção!",
+                            INPUT "    Atençao!",
                             INPUT "",
                             INPUT "",
                             INPUT "A data deve ser informada.",
@@ -516,7 +520,7 @@ DO:
             IF  aux_dttransf <= TODAY THEN
                 DO:
                     RUN mensagem.w (INPUT YES,
-                                    INPUT "    Atenção!",
+                                    INPUT "    Atençao!",
                                     INPUT "",
                                     INPUT "",
                                     INPUT "A data deve ser superior",
@@ -594,7 +598,8 @@ DO:
                                                            INPUT  aux_tpoperac,
                                                            INPUT  par_flagenda,
                                                            OUTPUT aux_flgderro,
-                                                           OUTPUT aux_dsprotoc).
+                                                           OUTPUT aux_dsprotoc,
+                                                           OUTPUT aux_idastcjt).
                                                                                                                    
                     IF  NOT aux_flgderro THEN
                         DO:
@@ -602,10 +607,12 @@ DO:
                                                                      OUTPUT aux_flgderro).
     
                             /* se a impressora estiver habilitada, com papel e 
-                               transferencia efetuada com sucesso */
+                               transferencia efetuada com sucesso e nao exigir
+                               assinatura conjunta */
                             IF  xfs_impressora       AND
                                 NOT xfs_impsempapel  AND
-                                NOT aux_flgderro     THEN
+                                NOT aux_flgderro     AND 
+                                aux_idastcjt = 0     THEN
                                 RUN imprime_comprovante.
                         END.
                    ELSE /* Erro na rotina */
@@ -987,7 +994,7 @@ DEFINE VARIABLE    aux_nrtelsac     AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE    aux_nrtelouv     AS CHARACTER                NO-UNDO.
 
 
-/* São 48 caracteres */
+/* Sao 48 caracteres */
 
 RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
                                                 OUTPUT aux_nrtelouv,
@@ -1132,4 +1139,5 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
+
 

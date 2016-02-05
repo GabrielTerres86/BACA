@@ -14,6 +14,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   16/05/2013 - Transferencia interCooperativa (Gabriel).
 
+                  24/12/2015 - Adicionado tratamento para contas com assinatura 
+                               conjunta. (Reinert)
+
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_cdagetra   AS INTEGER                  NO-UNDO.
@@ -24,6 +27,7 @@ DEFINE  INPUT PARAMETER par_tpoperac    AS INTE                     NO-UNDO.
 DEFINE  INPUT PARAMETER par_flagenda    AS LOGICAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 DEFINE OUTPUT PARAMETER par_dsprotoc    AS CHAR                     NO-UNDO.
+DEFINE OUTPUT PARAMETER par_idastcjt    AS INT                      NO-UNDO.
 
 { includes/var_taa.i }
   
@@ -33,7 +37,6 @@ DEFINE         VARIABLE aux_dsmvtolt    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_dstransf    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_hrtransa    AS INT                      NO-UNDO.
 DEFINE         VARIABLE aux_nrsequni    AS INT                      NO-UNDO.
-
 
 
 /* verifica se a transferencia pode ser realizada */
@@ -408,6 +411,9 @@ DO:
             ELSE
             IF  xField:NAME = "PROTOCOLO"     THEN
                 par_dsprotoc = xText:NODE-VALUE.
+            ELSE
+            IF  xField:NAME = "IDASTCJT"     THEN
+                par_idastcjt = INT(xText:NODE-VALUE).
             ELSE    
             IF  xField:NAME = "DSCRITIC"  THEN
                 DO:
@@ -495,32 +501,46 @@ IF  resultado = ?  THEN
     END.
 
 
-
-IF par_flagenda THEN
-    DO:
-        RUN procedures/grava_log.p (INPUT "Agendamento de Transferência efetuada com sucesso.").
-        
-        RUN mensagem.w (INPUT NO,
-                        INPUT "    ATENÇÃO",
-                        INPUT "",
-                        INPUT "Agendamento de Transfêrencia",
-                        INPUT "Efetuado com sucesso.",
-                        INPUT "",
-                        INPUT "").
-    END.
+IF par_idastcjt = 0 THEN
+  DO:
+    IF par_flagenda THEN
+        DO:
+            RUN procedures/grava_log.p (INPUT "Agendamento de Transferência efetuada com sucesso.").
+            
+            RUN mensagem.w (INPUT NO,
+                            INPUT "    ATENÇÃO",
+                            INPUT "",
+                            INPUT "Agendamento de Transfêrencia",
+                            INPUT "Efetuado com sucesso.",
+                            INPUT "",
+                            INPUT "").
+        END.
+    ELSE
+        DO:   
+            RUN procedures/grava_log.p (INPUT "Transferência efetuada com sucesso.").
+            
+            RUN mensagem.w (INPUT NO,
+                            INPUT "    ATENÇÃO",
+                            INPUT "",
+                            INPUT "Transfêrencia",
+                            INPUT "Efetuada com sucesso.",
+                            INPUT "",
+                            INPUT "").
+        END.
+  END.
 ELSE
-    DO:   
-        RUN procedures/grava_log.p (INPUT "Transferência efetuada com sucesso.").
-        
-        RUN mensagem.w (INPUT NO,
-                        INPUT "    ATENÇÃO",
-                        INPUT "",
-                        INPUT "Transfêrencia",
-                        INPUT "Efetuada com sucesso.",
-                        INPUT "",
-                        INPUT "").
-    END.
-
+  DO:
+      RUN procedures/grava_log.p (INPUT "Transferencia registrada com sucesso. Aguardando aprovaçao dos demais responsáveis..").
+      
+      RUN mensagem.w (INPUT NO,
+                      INPUT "    ATENÇÃO",
+                      INPUT "",
+                      INPUT "Transfêrencia",
+                      INPUT "Efetuado com sucesso.",
+                      INPUT "",
+                      INPUT "").
+  
+  END.
 PAUSE 3 NO-MESSAGE.
 h_mensagem:HIDDEN = YES.
 

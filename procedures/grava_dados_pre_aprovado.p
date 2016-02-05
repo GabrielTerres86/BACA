@@ -14,6 +14,11 @@ DEFINE INPUT  PARAMETER par_vlpreemp AS DECI                         NO-UNDO.
 DEFINE INPUT  PARAMETER par_vlemprst AS DECI                         NO-UNDO.
 DEFINE INPUT  PARAMETER par_dtdpagto AS DATE                         NO-UNDO.
 DEFINE INPUT  PARAMETER par_percetop AS DECI                         NO-UNDO.
+DEFINE INPUT  PARAMETER par_txmensal AS DECI                         NO-UNDO.
+DEFINE INPUT  PARAMETER par_vlrtarif AS DECI                         NO-UNDO.
+DEFINE INPUT  PARAMETER par_vltaxiof AS DECI                         NO-UNDO.
+DEFINE INPUT  PARAMETER par_vltariof AS DECI                         NO-UNDO.
+DEFINE OUTPUT PARAMETER par_idastcjt AS INT                          NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro AS LOG                          NO-UNDO.
 
 
@@ -269,6 +274,38 @@ DO:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(par_percetop).
     xField:APPEND-CHILD(xText).
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"TXMENSAL","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_txmensal).
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLRTARIF","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_vlrtarif).
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLTAXIOF","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_vltaxiof).
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLTARIOF","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_vltariof).
+    xField:APPEND-CHILD(xText).
 
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     
@@ -340,6 +377,9 @@ DO:
 
             xField:GET-CHILD(xText,1).
 
+            IF  xField:NAME = "IDASTCJT"     THEN
+                par_idastcjt = INT(xText:NODE-VALUE).
+            ELSE
             IF  xField:NAME = "DSCRITIC" THEN
                 DO:
                     RUN procedures/grava_log.p 
