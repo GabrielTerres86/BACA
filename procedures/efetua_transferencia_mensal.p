@@ -442,15 +442,30 @@ IF  resultado = ?  THEN
     END.
 
 
-RUN procedures/grava_log.p (INPUT "Agendamento de transferência mensal efetuado com sucesso.").
+IF  par_idastcjt = 0  THEN
+	DO:
+		RUN procedures/grava_log.p (INPUT "Agendamento de transferência mensal efetuado com sucesso.").
 
-RUN mensagem.w (INPUT NO,
-                INPUT "    ATENÇÃO",
-                INPUT "",
-                INPUT "Agendamento de Transfêrencia",
-                INPUT "Mensal Efetuado com sucesso.",
-                INPUT "",
-                INPUT "").
+		RUN mensagem.w (INPUT NO,
+						INPUT "    ATENÇÃO",
+						INPUT "",
+						INPUT "Agendamento de Transfêrencia",
+						INPUT "Mensal Efetuado com sucesso.",
+						INPUT "",
+						INPUT "").
+	END.
+ELSE
+	DO:
+        RUN procedures/grava_log.p (INPUT "Transferencia registrada com sucesso. Aguardando aprovaçao dos demais responsáveis..").
+      
+        RUN mensagem.w (INPUT NO,
+                        INPUT "    ATENÇÃO",
+                        INPUT "",
+                        INPUT "Transfêrencia registrada com",
+                        INPUT "sucesso. Aguardando aprovação",
+                        INPUT "dos demais responsáveis.",
+                        INPUT "").
+	END.
 
 PAUSE 3 NO-MESSAGE.
 h_mensagem:HIDDEN = YES.

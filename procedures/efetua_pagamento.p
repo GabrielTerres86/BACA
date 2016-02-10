@@ -639,14 +639,17 @@ ELSE
     DO:
         RUN procedures/grava_log.p (INPUT "Pagamento registrado com sucesso. Aguardando aprovaçao dos demais responsáveis.").
         
-        RUN mensagem.w (INPUT NO,
+		RUN mensagem.w (INPUT NO,
                         INPUT "    ATENÇÃO",
                         INPUT "",
-                        INPUT "Pagamento registrado com sucesso.",
-                        INPUT "Aguardando aprovaçao dos demais",
-                        INPUT "Responsáveis.",
+                        INPUT "Pagamento registrado com",
+                        INPUT "sucesso. Aguardando aprovação",
+                        INPUT "dos demais responsáveis.",
                         INPUT "").    
     END.
+	
+PAUSE 3 NO-MESSAGE.
+h_mensagem:HIDDEN = YES.	
 
 RETURN "OK".
 
