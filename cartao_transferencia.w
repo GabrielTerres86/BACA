@@ -33,6 +33,9 @@ Ultima alteraçao: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   24/12/2015 - Adicionado tratamento para contas com assinatura 
                                conjunta. (Reinert)
 
+				  27/01/2016 - Adicionado novo parametro na chamada da procedure
+							   busca_associado. (Reinert)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -65,6 +68,7 @@ DEFINE VARIABLE aux_nmtransf        AS CHAR         EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_dttransf        AS DATE                     NO-UNDO.
 DEFINE VARIABLE aux_flgmigra        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgdinss        AS LOGICAL                  NO-UNDO.
+DEFINE VARIABLE aux_flgbinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_tpoperac        AS INTE                     NO-UNDO.
 DEFINE VARIABLE aux_idastcjt        AS INTE                     NO-UNDO.
 
@@ -734,6 +738,7 @@ DO:
                                               OUTPUT aux_nmtransf,
                                               OUTPUT aux_flgmigra,
                                               OUTPUT aux_flgdinss,
+                                              OUTPUT aux_flgbinss,
                                               OUTPUT aux_flgderro).
 
             IF  aux_flgderro  THEN

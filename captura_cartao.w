@@ -25,6 +25,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   18/09/2015 - Corrigida implementação da utilização do 
                                PAINOP (traseiro) para TAAs sem depositário
                                (Lucas Lunelli SD 314201)              
+
+				  27/01/2016 - Adicionado novo parametro na chamada da procedure
+						       busca_associado. (Reinert)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -1024,6 +1027,7 @@ PROCEDURE verifica_cartao_lido :
                                                               OUTPUT glb_nmtitula,
                                                               OUTPUT glb_flgmigra,
                                                               OUTPUT glb_flgdinss,
+															  OUTPUT glb_flgbinss,
                                                               OUTPUT aux_flgderro).
 
                             IF  aux_flgderro  THEN

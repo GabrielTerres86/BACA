@@ -26,6 +26,8 @@
               05/12/2014 - Correção para não gerar comprovante sem efetivar
                            a operação (Lunelli SD 230613)             
 
+		      27/01/2016 - Adicionado novo parametro na chamada da procedure
+					       busca_associado. (Reinert)
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
@@ -58,6 +60,7 @@ DEFINE VARIABLE aux_nmtransf        AS CHAR         EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_dttransf        AS DATE FORMAT "99/99/99"   NO-UNDO.
 DEFINE VARIABLE aux_flgmigra        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgdinss        AS LOGICAL                  NO-UNDO.
+DEFINE VARIABLE aux_flgbinss        AS LOGICAL                  NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -853,6 +856,7 @@ DO:
                                               OUTPUT aux_nmtransf,
                                               OUTPUT aux_flgmigra,
                                               OUTPUT aux_flgdinss,
+                                              OUTPUT aux_flgbinss,
                                               OUTPUT aux_flgderro).
 
             IF  aux_flgderro  THEN

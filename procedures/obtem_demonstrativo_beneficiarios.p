@@ -424,25 +424,28 @@ FOR FIRST tt-demonst-dcb:
                           "               CREDITO DE BENEFICIO             " +
                           "                                                " +
                           "Fonte Pagadora:" + STRING(tt-demonst-dcb.nmemisso,"x(7)") + " / CNPJ:" + STRING(STRING(tt-demonst-dcb.cnpjemis),"xx.xxx.xxx/xxxx-xx") +
-                          "Beneficiario:........." + STRING(tt-demonst-dcb.nmbenefi,"x(26)") +
+                          "Beneficiario:........." + FILL(".", 26 - LENGTH(TRIM(STRING(tt-demonst-dcb.nmbenefi,"x(26)")))) 
+                                                   + TRIM(STRING(tt-demonst-dcb.nmbenefi,"x(26)")) +
                           "Competencia:............................." + SUBSTRING(STRING(DATE(par_dtcompet), "99/99/9999"),4,8) + 
                           "Modalidade Pagamento:......................Conta" +
                           "NB:............" + STRING(STRING(tt-demonst-dcb.nrrecben), "x(11)") + "  / NIT:" + STRING(STRING(tt-demonst-dcb.nrnitins), "x(14)") +
-                          "OP:......." + STRING(STRING(tt-demonst-dcb.cdorgins), "x(6)") + " / Cooperativa:......" + STRING(tt-demonst-dcb.nmrescop, "x(11)") + 
+                          "OP:......." + STRING(STRING(tt-demonst-dcb.cdorgins), "x(6)") + " / Cooperativa:......" + FILL(".", 11 - LENGTH(TRIM(STRING(tt-demonst-dcb.nmrescop,"x(11)")))) 
+                                                                                                                   + TRIM(STRING(tt-demonst-dcb.nmrescop, "x(11)")) + 
                           "                                                " +
                           "------------------------------------------------" +
-                          "COD    DESCRICAO                 VALOR          " +
+                          "COD    DESCRICAO                          VALOR " +
                           "                                                ".
                         
     FOR EACH tt-demonst-ldcb:
       ASSIGN par_dsextrat = par_dsextrat
                           + STRING(STRING(tt-demonst-ldcb.cdrubric), "x(5)") + "  " 
                           + STRING(tt-demonst-ldcb.dsrubric,"x(26)") + "  " 
-                          + STRING(TRIM(STRING(tt-demonst-ldcb.vlrubric,"zzzzz,zz9.99-")), "x(13)").
+                          + STRING(tt-demonst-ldcb.vlrubric,"zzzzz,zz9.99-").
     END.
     ASSIGN par_dsextrat = par_dsextrat +
                           "                                                " +
-                          "TOTAL.............................." + STRING(TRIM(STRING(tt-demonst-dcb.vlliquid,"zzzzz,zz9.99-")),"x(13)") +
+                          "TOTAL.............................." + FILL(".", 13 - LENGTH(LEFT-TRIM(STRING(tt-demonst-dcb.vlliquid,"zzzzz,zz9.99-"))))
+                                                                + LEFT-TRIM(STRING(tt-demonst-dcb.vlliquid,"zzzzz,zz9.99-")) +
                           "                                                " +
                           "                                                " +
                           "                                                " +

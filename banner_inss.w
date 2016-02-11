@@ -272,8 +272,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     /* deixa o mouse transparente */
     FRAME f_banner_inss:LOAD-MOUSE-POINTER("blank.cur").
 
-
-    chtemporizador:t_banner_inss:INTERVAL = glb_nrtempor.
+    RUN reset_temporizador.
 
     /* coloca o foco no botao H */
     APPLY "ENTRY" TO Btn_H.
@@ -365,6 +364,20 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE reset_temporizador w_banner_inss 
+PROCEDURE reset_temporizador :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+chtemporizador:t_banner_inss:INTERVAL = 20000. /* 20 segundos */
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE tecla w_banner_inss 
 PROCEDURE tecla :
 chtemporizador:t_banner_inss:INTERVAL = 0.
@@ -375,7 +388,7 @@ chtemporizador:t_banner_inss:INTERVAL = 0.
     ELSE
         RETURN NO-APPLY.
 
-    chtemporizador:t_banner_inss:INTERVAL = glb_nrtempor.
+    RUN reset_temporizador.
 
 END PROCEDURE.
 

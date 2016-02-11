@@ -37,6 +37,7 @@ DEFINE INPUT  PARAM par_dtcompet        AS CHAR                       NO-UNDO.
 DEFINE VARIABLE aux_novoben             AS INTEGER  INIT 1            NO-UNDO.
 DEFINE VARIABLE aux_flgderro            AS LOGICAL                    NO-UNDO.
 DEFINE VARIABLE aux_dsextrat            AS CHAR                       NO-UNDO.
+DEFINE VARIABLE aux_qtdbenef            AS INTEGER                    NO-UNDO.
 
 DEFINE TEMP-TABLE tt-dcb NO-UNDO
        FIELD nrrecben AS DECI  /* Numero do recebimento do beneficiario    */
@@ -436,7 +437,8 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_beneficiarios
 ON CHOOSE OF Btn_D IN FRAME f_beneficiarios
 DO:
-   RUN inicializa_beneficiarios.
+    IF  Btn_D:VISIBLE IN FRAME f_beneficiarios  THEN
+        RUN inicializa_beneficiarios.
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -618,8 +620,12 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                             OUTPUT aux_flgderro,
                                             OUTPUT TABLE tt-dcb).
 
-    FOR FIRST tt-dcb NO-LOCK BY tt-dcb.nrrecben:
+    FOR EACH tt-dcb NO-LOCK:
+        ASSIGN aux_qtdbenef = aux_qtdbenef + 1.
+    END.
 
+
+    FOR FIRST tt-dcb NO-LOCK BY tt-dcb.nrrecben:
         ASSIGN  Btn_A:LABEL IN FRAME f_beneficiarios
                             = STRING(tt-dcb.nrrecben).
     END.
@@ -646,7 +652,18 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
            Btn_H:LABEL IN FRAME f_beneficiarios = "VOLTAR".
 
-    RUN inicializa_beneficiarios.
+    IF  aux_qtdbenef < 6 THEN
+        ASSIGN Btn_D:VISIBLE IN FRAME f_beneficiarios = FALSE
+               IMAGE-37:VISIBLE IN FRAME f_beneficiarios = FALSE.
+
+    FIND NEXT tt-dcb NO-LOCK NO-ERROR.
+    
+    IF  AVAIL tt-dcb THEN
+        /* Se existe mais de um beneficiario mostra-os*/
+        RUN inicializa_beneficiarios.
+    ELSE
+        /* Esconder os botoes onde nao tem beneficiario a ser mostrado */
+        RUN esconde_botoes (INPUT 1).
                
     /* coloca o foco no botao H */
     APPLY "ENTRY" TO Btn_H.
@@ -855,7 +872,7 @@ IF   NOT aux_flgregis  THEN
          /* Mostrar todos os botoes novamente */
         RUN mostra_botoes.
 
-        /* Chamada recursiva pra mostrar as cooperativas iniciais */
+        /* Chamada recursiva pra mostrar os beneficiarios iniciais */
         RUN inicializa_beneficiarios.
 
         RETURN.
@@ -952,12 +969,12 @@ chtemporizador:t_beneficiarios:INTERVAL = 0.
 
     chtemporizador:t_beneficiarios:INTERVAL = glb_nrtempor.
 
-    /* repassa o retorno */
+    /* repassa o retorno 
     IF  RETURN-VALUE = "OK"  THEN
         DO:
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
             RETURN "OK".
-        END.
+        END.             */
 
 END PROCEDURE.
 

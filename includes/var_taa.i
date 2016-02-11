@@ -79,7 +79,9 @@
 			   14/10/2015 - Atualização para versão 8.0 (David).
 			   
 			   17/11/2015 - Atualização para versão 8.1 (David).
-
+                            
+			   27/01/2016 - Adicionado variavel global glb_flgbinss. (Reinert)
+                            
 			   10/02/2016 - Atualização para versão 8.2 (David).
                             
 .............................................................................. */
@@ -130,6 +132,7 @@ DEF {1} SHARED VAR glb_inpessoa AS INT                                   NO-UNDO
 DEF {1} SHARED VAR glb_idsenlet AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_flgmigra AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_flgdinss AS LOG                                   NO-UNDO.
+DEF {1} SHARED VAR glb_flgbinss AS LOG                                   NO-UNDO.
 DEF {1} SHARED VAR glb_tpusucar AS INT                                   NO-UNDO.
 DEF {1} SHARED VAR glb_idtipcar AS INT                                   NO-UNDO.
 

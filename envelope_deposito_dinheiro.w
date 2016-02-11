@@ -23,6 +23,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                e visualização de impressão
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
 
+				  27/01/2016 - Adicionado novo parametro na chamada da procedure
+							   busca_associado. (Reinert)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -54,6 +57,7 @@ DEFINE VARIABLE aux_nmrescop        AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_nmtitula        AS CHARACTER    EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_flgmigra        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgdinss        AS LOGICAL                  NO-UNDO.
+DEFINE VARIABLE aux_flgbinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
@@ -492,6 +496,7 @@ DO:
                                               OUTPUT aux_nmtitula,
                                               OUTPUT aux_flgmigra,
                                               OUTPUT aux_flgdinss,
+                                              OUTPUT aux_flgbinss,
                                               OUTPUT par_flgderro).
 
             /* Controle para impedir depósito em contas migradas para outra cooperativa */
