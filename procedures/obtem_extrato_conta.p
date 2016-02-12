@@ -44,6 +44,7 @@ DEFINE VARIABLE aux_vllimcre            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vldiscrd            AS DECIMAL   INIT 0         NO-UNDO.
 DEFINE VARIABLE aux_vlstotal            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_tximpres            AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE aux_idastcjt        	AS INTEGER      			NO-UNDO.
 
 /* para controle de deposito TAA */
 DEFINE VARIABLE aux_fldeptaa            AS LOGICAL      INIT NO     NO-UNDO.
@@ -530,6 +531,7 @@ RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                      OUTPUT aux_vlsdblfp,
                                      OUTPUT aux_vlsdchsl,
                                      OUTPUT aux_vllimcre,
+									 OUTPUT aux_idastcjt,
                                      OUTPUT par_flgderro).
 
 aux_vlstotal = aux_vlsddisp - aux_vllautom + aux_vlsdbloq +

@@ -38,6 +38,7 @@ CREATE WIDGET-POOL.
 { includes/var_taa.i }
 
 DEFINE VARIABLE aux_flgderro        AS LOGICAL              NO-UNDO.
+DEFINE VARIABLE aux_idastcjt        AS INTEGER     			NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -420,7 +421,7 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_saldos_conta
 ON CHOOSE OF Btn_G IN FRAME f_cartao_saldos_conta /* IMPRIMIR */
 DO:
-    DEF VAR tmp_tximpres    AS CHAR         NO-UNDO.
+    DEF VAR tmp_tximpres    AS CHAR         NO-UNDO.	
 
     
     h_principal:MOVE-TO-TOP().
@@ -436,6 +437,7 @@ DO:
                                          OUTPUT ed_vlsdblfp,
                                          OUTPUT ed_vlsdchsl,
                                          OUTPUT ed_vllimcre,
+										 OUTPUT aux_idastcjt,
                                          OUTPUT aux_flgderro).
     
     /* monta o comprovante do saldo */
@@ -570,6 +572,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                                          OUTPUT ed_vlsdblfp,
                                          OUTPUT ed_vlsdchsl,
                                          OUTPUT ed_vllimcre,
+										 OUTPUT aux_idastcjt,
                                          OUTPUT aux_flgderro).
 
     IF  aux_flgderro  THEN
