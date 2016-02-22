@@ -28,6 +28,9 @@ Ultima alteração: 05/06/2010 - Correcao de ortografia da mensagem de
                   
                   24/09/2015 - Alterado termo 'impressão' para 'visualização'
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
+                               
+                  22/02/2016 - Adicionado informacoes adicionais no log. 
+                               (Jorge/Thiago) - SD 399030
 ............................................................................... */
 
 
@@ -148,7 +151,10 @@ IF  LT_resp <> 0   THEN
 
 IF  par_flgderro  THEN
     DO:
-        RUN procedures/grava_log.p (INPUT "Erro no recebimento do envelope.").
+        RUN procedures/grava_log.p (INPUT "Erro no recebimento do envelope. "    +
+                                          "RETORNO:" + STRING(LT_Resp) + " - "   +
+                                          "DETALHE:" + STRING(cnt_detalhe) + " " + 
+                                          "P32CONTA.DLL (" + (IF glb_tpenvelo = 1 THEN "WinDepositaDepIbold" ELSE "WinDeposita") + ").").
 
         RUN mensagem.w (INPUT YES,
                         INPUT "      ERRO!",
