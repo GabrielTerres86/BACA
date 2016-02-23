@@ -154,7 +154,8 @@ IF  par_flgderro  THEN
         RUN procedures/grava_log.p (INPUT "Erro no recebimento do envelope. "    +
                                           "RETORNO:" + STRING(LT_Resp) + " - "   +
                                           "DETALHE:" + STRING(cnt_detalhe) + " " + 
-                                          "P32CONTA.DLL (" + (IF glb_tpenvelo = 1 THEN "WinDepositaDepIbold" ELSE "WinDeposita") + ").").
+                                          (IF glb_tpenvelo = 1 THEN "P32DEPIB.DLL (WinDepositaDepIbold)." 
+                                           ELSE                     "P32DEPPS.DLL (WinDeposita).")).
 
         RUN mensagem.w (INPUT YES,
                         INPUT "      ERRO!",
