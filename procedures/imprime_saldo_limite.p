@@ -15,6 +15,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
+                               
+                  27/01/2016 - Imprimir valor disponível de pré-aprovado
+                               (Lucas Lunelli - PRJ261)
 
 ............................................................................... */
 
@@ -27,6 +30,7 @@ DEFINE  INPUT PARAM par_vlsdblpr    AS DECIMAL                      NO-UNDO.
 DEFINE  INPUT PARAM par_vlsdblfp    AS DECIMAL                      NO-UNDO.
 DEFINE  INPUT PARAM par_vlsdchsl    AS DECIMAL                      NO-UNDO.
 DEFINE  INPUT PARAM par_vllimcre    AS DECIMAL                      NO-UNDO.
+DEFINE  INPUT PARAM par_vldiscrd    AS DECIMAL                      NO-UNDO. /* PRÉ-APROVADO */
 DEFINE  INPUT PARAM par_vlstotal    AS DECIMAL                      NO-UNDO.
 DEFINE OUTPUT PARAM par_tximpres    AS CHARACTER                    NO-UNDO.
 
@@ -94,6 +98,12 @@ par_tximpres = par_tximpres +
                "        LIMITE DE CREDITO:    " + STRING(par_vllimcre,"zz,zzz,zzz,zz9.99-") +
                "                                                ".
 
+IF  par_vldiscrd > 0 THEN
+    par_tximpres = par_tximpres +
+                   "     CREDITO PRE-APROVADO                       " 							+
+                   "        LIMITE DISPONIVEL:    " + STRING(par_vldiscrd,"zz,zzz,zzz,zz9.99-") +
+                   " *CREDITO SUJEITO A ALTERACAO ATE O FINAL DO DIA"                           +
+                   "                                                ".
 
 /* Saldo na magrugada */
 IF   glb_dtmvtolt <> glb_dtmvtocd   THEN

@@ -26,8 +26,11 @@
               05/12/2014 - Correção para não gerar comprovante sem efetivar
                            a operação (Lunelli SD 230613)             
 
-		      27/01/2016 - Adicionado novo parametro na chamada da procedure
-					       busca_associado. (Reinert)
+              27/01/2016 - Adicionado novo parametro na chamada da procedure
+                           busca_associado. (Reinert)
+                           
+              29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
+              
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
@@ -59,7 +62,6 @@ DEFINE VARIABLE aux_nmrescop        AS CHAR                     NO-UNDO.
 DEFINE VARIABLE aux_nmtransf        AS CHAR         EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_dttransf        AS DATE FORMAT "99/99/99"   NO-UNDO.
 DEFINE VARIABLE aux_flgmigra        AS LOGICAL                  NO-UNDO.
-DEFINE VARIABLE aux_flgdinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgbinss        AS LOGICAL                  NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
@@ -245,15 +247,6 @@ DEFINE FRAME f_cartao_agen_transf_mensal
      "TRANSFERÊNCIA" VIEW-AS TEXT
           SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 128
           FGCOLOR 1 FONT 10
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 190
-          FONT 8
-     "(Mês/Ano)" VIEW-AS TEXT
-          SIZE 18.2 BY 1.67 AT ROW 18.86 COL 68.2 WIDGET-ID 218
-          FONT 14
-     "Conta:" VIEW-AS TEXT
-          SIZE 13.4 BY 1.33 AT ROW 13.19 COL 16 WIDGET-ID 108
-          FONT 8
      "meses" VIEW-AS TEXT
           SIZE 18.6 BY 1.67 AT ROW 15.81 COL 110.6 WIDGET-ID 200
           FONT 8
@@ -283,6 +276,15 @@ DEFINE FRAME f_cartao_agen_transf_mensal
           FGCOLOR 1 FONT 14
      "No dia" VIEW-AS TEXT
           SIZE 15 BY 1.67 AT ROW 15.81 COL 16.2 WIDGET-ID 196
+          FONT 8
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 190
+          FONT 8
+     "(Mês/Ano)" VIEW-AS TEXT
+          SIZE 18.2 BY 1.67 AT ROW 18.86 COL 68.2 WIDGET-ID 218
+          FONT 14
+     "Conta:" VIEW-AS TEXT
+          SIZE 13.4 BY 1.33 AT ROW 13.19 COL 16 WIDGET-ID 108
           FONT 8
      RECT-127 AT ROW 12.57 COL 32.2 WIDGET-ID 94
      RECT-128 AT ROW 21.24 COL 32.2 WIDGET-ID 96
@@ -854,8 +856,7 @@ DO:
                                               OUTPUT aux_cdagectl,
                                               OUTPUT aux_nmrescop,
                                               OUTPUT aux_nmtransf,
-                                              OUTPUT aux_flgmigra,
-                                              OUTPUT aux_flgdinss,
+                                              OUTPUT aux_flgmigra,                                              
                                               OUTPUT aux_flgbinss,
                                               OUTPUT aux_flgderro).
 

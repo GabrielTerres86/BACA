@@ -38,9 +38,11 @@
               24/12/2015 - Adicionado tratamento para contas com assinatura 
                            conjunta. (Reinert)                           
 
-		      27/01/2016 - Adicionado novo parametro na chamada da procedure
-					       busca_associado. (Reinert)
-	
+              27/01/2016 - Adicionado novo parametro na chamada da procedure
+                           busca_associado. (Reinert)
+                           
+              29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
+        
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
@@ -78,6 +80,7 @@ DEFINE VARIABLE aux_nmrescop        AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_lsdataqd        AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_tpoperac        AS INTEGER                  NO-UNDO.
 DEFINE VARIABLE aux_idastcjt        AS INTE                     NO-UNDO.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -213,36 +216,36 @@ DEFINE FRAME f_cartao_agen_trans_mensal_dados
      "A quitação efetiva deste agendamento" VIEW-AS TEXT
           SIZE 82.6 BY 1.29 AT ROW 19.48 COL 38 WIDGET-ID 196
           FGCOLOR 1 FONT 8
-     "Data da Agendamento:" VIEW-AS TEXT
-          SIZE 48.2 BY 1.67 AT ROW 15.48 COL 20 WIDGET-ID 194
-          FONT 8
-     "AGENDAMENTO" VIEW-AS TEXT
-          SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 128
-          FGCOLOR 1 FONT 10
-     "Conta:" VIEW-AS TEXT
-          SIZE 13.8 BY 1.33 AT ROW 8 COL 96.6 WIDGET-ID 108
-          FONT 8
-     "TRANSFERÊNCIAS" VIEW-AS TEXT
-          SIZE 42 BY 1.1 AT ROW 3.14 COL 101 WIDGET-ID 130
-          FGCOLOR 1 FONT 14
-     "conta corrente na data escolhida para débito." VIEW-AS TEXT
-          SIZE 96 BY 1.1 AT ROW 22 COL 31.8 WIDGET-ID 200
-          FGCOLOR 1 FONT 8
-     "Titular:" VIEW-AS TEXT
-          SIZE 16 BY 1.19 AT ROW 9.95 COL 19.6 WIDGET-ID 112
-          FONT 8
-     "Valor:" VIEW-AS TEXT
-          SIZE 13 BY 1.67 AT ROW 13.52 COL 19.6 WIDGET-ID 110
-          FONT 8
-     "dependerá da existencia de saldo na sua" VIEW-AS TEXT
-          SIZE 88.6 BY 1.1 AT ROW 20.81 COL 35 WIDGET-ID 198
-          FGCOLOR 1 FONT 8
      "DE" VIEW-AS TEXT
           SIZE 15 BY 1.1 AT ROW 1.95 COL 101.2 WIDGET-ID 132
           FGCOLOR 1 FONT 14
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 8 COL 19.4 WIDGET-ID 190
           FONT 8
+     "Conta:" VIEW-AS TEXT
+          SIZE 13.8 BY 1.33 AT ROW 8 COL 96.6 WIDGET-ID 108
+          FONT 8
+     "Titular:" VIEW-AS TEXT
+          SIZE 16 BY 1.19 AT ROW 9.95 COL 19.6 WIDGET-ID 112
+          FONT 8
+     "AGENDAMENTO" VIEW-AS TEXT
+          SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 128
+          FGCOLOR 1 FONT 10
+     "Data da Agendamento:" VIEW-AS TEXT
+          SIZE 48.2 BY 1.67 AT ROW 15.48 COL 20 WIDGET-ID 194
+          FONT 8
+     "Valor:" VIEW-AS TEXT
+          SIZE 13 BY 1.67 AT ROW 13.52 COL 19.6 WIDGET-ID 110
+          FONT 8
+     "conta corrente na data escolhida para débito." VIEW-AS TEXT
+          SIZE 96 BY 1.1 AT ROW 22 COL 31.8 WIDGET-ID 200
+          FGCOLOR 1 FONT 8
+     "TRANSFERÊNCIAS" VIEW-AS TEXT
+          SIZE 42 BY 1.1 AT ROW 3.14 COL 101 WIDGET-ID 130
+          FGCOLOR 1 FONT 14
+     "dependerá da existencia de saldo na sua" VIEW-AS TEXT
+          SIZE 88.6 BY 1.1 AT ROW 20.81 COL 35 WIDGET-ID 198
+          FGCOLOR 1 FONT 8
      IMAGE-37 AT ROW 24.24 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
@@ -674,7 +677,6 @@ PROCEDURE imprime_comprovante :
 DEF VAR tmp_tximpres    AS CHAR                     NO-UNDO.
 DEF VAR aux_nmtitula    AS CHAR     EXTENT 2        NO-UNDO.
 DEF VAR aux_flgmigra    AS LOGICAL                  NO-UNDO.
-DEF VAR aux_flgdinss    AS LOGICAL                  NO-UNDO.
 DEF VAR aux_flgbinss    AS LOGICAL                  NO-UNDO.
 
 DEFINE VARIABLE    aux_nrtelsac     AS CHARACTER                NO-UNDO.
@@ -689,8 +691,7 @@ RUN procedures/busca_associado.p (INPUT  par_nrtransf,
                                   OUTPUT aux_cdagectl,
                                   OUTPUT aux_nmrescop,
                                   OUTPUT aux_nmtransf,
-                                  OUTPUT aux_flgmigra,
-                                  OUTPUT aux_flgdinss,
+                                  OUTPUT aux_flgmigra,                                  
                                   OUTPUT aux_flgbinss,
                                   OUTPUT aux_flgderro).
 

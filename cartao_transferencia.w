@@ -33,8 +33,10 @@ Ultima alteraçao: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   24/12/2015 - Adicionado tratamento para contas com assinatura 
                                conjunta. (Reinert)
 
-				  27/01/2016 - Adicionado novo parametro na chamada da procedure
-							   busca_associado. (Reinert)
+                  27/01/2016 - Adicionado novo parametro na chamada da procedure
+                               busca_associado. (Reinert)
+                               
+                  29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
 
 ............................................................................... */
 
@@ -67,7 +69,6 @@ DEFINE VARIABLE aux_nmrescop        AS CHAR                     NO-UNDO.
 DEFINE VARIABLE aux_nmtransf        AS CHAR         EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_dttransf        AS DATE                     NO-UNDO.
 DEFINE VARIABLE aux_flgmigra        AS LOGICAL                  NO-UNDO.
-DEFINE VARIABLE aux_flgdinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_flgbinss        AS LOGICAL                  NO-UNDO.
 DEFINE VARIABLE aux_tpoperac        AS INTE                     NO-UNDO.
 DEFINE VARIABLE aux_idastcjt        AS INTE                     NO-UNDO.
@@ -238,21 +239,6 @@ DEFINE FRAME f_cartao_transferencia
      "CONTAS-CORRENTES" VIEW-AS TEXT
           SIZE 42 BY .86 AT ROW 3.38 COL 101 WIDGET-ID 140
           FGCOLOR 1 FONT 14
-     "Para" VIEW-AS TEXT
-          SIZE 11 BY 1.19 AT ROW 9.1 COL 23.6 WIDGET-ID 114
-          FONT 8
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 240
-          FONT 8
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28.6 BY 1.19 AT ROW 10.33 COL 7.4 WIDGET-ID 258
-          FONT 8
-     "Transferencia:" VIEW-AS TEXT
-          SIZE 31.2 BY 1.14 AT ROW 22.38 COL 4 WIDGET-ID 256
-          FONT 8
-     "ENTRE" VIEW-AS TEXT
-          SIZE 15 BY 1.14 AT ROW 1.95 COL 101.2 WIDGET-ID 138
-          FGCOLOR 1 FONT 14
      "Titular:" VIEW-AS TEXT
           SIZE 16 BY 1.19 AT ROW 14.43 COL 20 WIDGET-ID 112
           FONT 8
@@ -271,6 +257,21 @@ DEFINE FRAME f_cartao_transferencia
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 238
           FONT 8
+     "Para" VIEW-AS TEXT
+          SIZE 11 BY 1.19 AT ROW 9.1 COL 23.6 WIDGET-ID 114
+          FONT 8
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 240
+          FONT 8
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28.6 BY 1.19 AT ROW 10.33 COL 7.4 WIDGET-ID 258
+          FONT 8
+     "Transferencia:" VIEW-AS TEXT
+          SIZE 31.2 BY 1.14 AT ROW 22.38 COL 4 WIDGET-ID 256
+          FONT 8
+     "ENTRE" VIEW-AS TEXT
+          SIZE 15 BY 1.14 AT ROW 1.95 COL 101.2 WIDGET-ID 138
+          FGCOLOR 1 FONT 14
      RECT-127 AT ROW 11.52 COL 39 WIDGET-ID 94
      RECT-128 AT ROW 18.19 COL 39 WIDGET-ID 96
      RECT-142 AT ROW 14.24 COL 39 WIDGET-ID 100
@@ -737,7 +738,6 @@ DO:
                                               OUTPUT aux_nmrescop,
                                               OUTPUT aux_nmtransf,
                                               OUTPUT aux_flgmigra,
-                                              OUTPUT aux_flgdinss,
                                               OUTPUT aux_flgbinss,
                                               OUTPUT aux_flgderro).
 
@@ -1144,5 +1144,4 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-
 
