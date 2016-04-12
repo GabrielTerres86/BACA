@@ -24,6 +24,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   30/09/2015 - Ajuste para na saida do campo dscodbar sempre ir para o campo
                                de valor caso seja um titulo (Odirlei-AMcom)  
+							   
+			      24/03/2015 - Ajustes referentes aos chamados 373337 e 416733, linha digitavel
+				               incompleta e pagamento de fatura com valor zerado (Tiago/Fabricio).
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -218,24 +221,24 @@ DEFINE FRAME f_cartao_pagamento
      "Valor:" VIEW-AS TEXT
           SIZE 11 BY 1.19 AT ROW 15.76 COL 34.8 WIDGET-ID 152
           FONT 14
-     "Cod. Barras /" VIEW-AS TEXT
-          SIZE 26 BY 1.19 AT ROW 9.81 COL 7 WIDGET-ID 178
-          FONT 14
-     "Linha Digitável:" VIEW-AS TEXT
-          SIZE 26 BY 1.19 AT ROW 11 COL 7 WIDGET-ID 176
-          FONT 14
-     "Conta/Titular:" VIEW-AS TEXT
-          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
+     "        PAGAMENTO" VIEW-AS TEXT
+          SIZE 100 BY 3.33 AT ROW 1.48 COL 31 WIDGET-ID 214
+          FGCOLOR 1 FONT 10
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
           FONT 8
      "Data do Pagamento:" VIEW-AS TEXT
           SIZE 35 BY 1.19 AT ROW 17.62 COL 10.4 WIDGET-ID 250
           FONT 14
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+     "Conta/Titular:" VIEW-AS TEXT
+          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
           FONT 8
-     "        PAGAMENTO" VIEW-AS TEXT
-          SIZE 100 BY 3.33 AT ROW 1.48 COL 31 WIDGET-ID 214
-          FGCOLOR 1 FONT 10
+     "Linha Digitável:" VIEW-AS TEXT
+          SIZE 26 BY 1.19 AT ROW 11 COL 7 WIDGET-ID 176
+          FONT 14
+     "Cod. Barras /" VIEW-AS TEXT
+          SIZE 26 BY 1.19 AT ROW 9.81 COL 7 WIDGET-ID 178
+          FONT 14
      RECT-132 AT ROW 10.52 COL 34 WIDGET-ID 170
      RECT-133 AT ROW 15.29 COL 45.8 WIDGET-ID 172
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
@@ -725,6 +728,16 @@ DO:
                   ELSE 
                     RETURN NO-APPLY.
             END.
+        ELSE
+        DO:
+            IF ed_tpcptdoc:SCREEN-VALUE = "2"   AND  
+               ed_idtpdpag:SCREEN-VALUE = "2"   AND 
+               KEY-FUNCTION(LASTKEY) = "RETURN" THEN
+            DO:
+                APPLY "LEAVE" TO ed_dscodbar.
+            END.                             
+        END.
+
 
         APPLY KEY-FUNCTION(LASTKEY).
 
@@ -819,7 +832,7 @@ DO:
     DO:
         ed_dscodbar:FORMAT = "x(44)".
     END.
-    
+
     /* validar o codigo de barras/linha digitavel*/
     RUN valida_codbar.
 
@@ -1181,6 +1194,23 @@ PROCEDURE extrai_valor_codbar :
                DO:                  
                   ASSIGN aux_valor = SUBSTR(aux_sfcodbar,5,7) + SUBSTR(aux_sfcodbar,13,4).
                   
+                  IF DECIMAL(aux_valor) = 0 THEN
+                  DO:
+                      RUN mensagem.w (INPUT YES,
+                                      INPUT "    ATENÇÃO",
+                                      INPUT "",
+                                      INPUT "",
+                                      INPUT "Documento Inválido",
+                                      INPUT "Valor Incorreto",
+                                      INPUT "").
+                      PAUSE 3 NO-MESSAGE.
+                      h_mensagem:HIDDEN = YES.
+                      aux_flgderro = YES.
+
+                      /*APPLY "CHOOSE" TO Btn_C.*/
+                      RETURN NO-APPLY.
+                  END.
+
                END. /* Titulos */
                ELSE IF ed_idtpdpag:SCREEN-VALUE = "2"  THEN
                DO:
@@ -1308,13 +1338,17 @@ PROCEDURE valida_codbar :
         ELSE /* Se for linha Digitavel*/
             IF ed_tpcptdoc:SCREEN-VALUE = "2" THEN
             DO:
+                  /*TITULO*/
+               IF (ed_idtpdpag:SCREEN-VALUE = "2" AND LENGTH(aux_sfcodbar) <> 47) THEN
+               DO: 
+                  ASSIGN aux_sfcodbar = aux_sfcodbar + FILL("0", (47 - LENGTH(aux_sfcodbar))).     
+                  ASSIGN ed_dscodbar:SCREEN-VALUE = aux_sfcodbar.
+               END.
+
                    /* CONVENIO */
-               IF (ed_idtpdpag:SCREEN-VALUE = "1" AND LENGTH(aux_sfcodbar) <> 48) OR
-                   /* TITULO */
-                  (ed_idtpdpag:SCREEN-VALUE = "2" AND LENGTH(aux_sfcodbar) <> 47)  THEN
+               IF (ed_idtpdpag:SCREEN-VALUE = "1" AND LENGTH(aux_sfcodbar) <> 48) THEN
                DO:
-                  ASSIGN aux_dscritic = 'Linha digitavel inválida.'.
-                  
+                  ASSIGN aux_dscritic = 'Linha digitavel inválida.'.  
                END. 
              END.
 
