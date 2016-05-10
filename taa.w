@@ -21,6 +21,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   29/12/2015 - Inserção da chamada 10 (nagios) para a procedure
                                inicializa_dispositivo (Lunelli - SD 359409)
 
+		          10/05/2016 - Implementacao da espera de 100seg para 
+				               inicializacao do TAA por solicitacao da
+							   Diebold (Tiago/Elton SD425359).
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -242,7 +245,11 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_taa OCX.Tick
 PROCEDURE temporizador.timer.Tick .
 DEFINE VARIABLE aux_interval AS INTEGER                 NO-UNDO.
-    DEFINE VARIABLE aux_flgderro AS LOGICAL     INIT NO     NO-UNDO.
+DEFINE VARIABLE aux_flgderro AS LOGICAL     INIT NO     NO-UNDO.
+DEFINE VARIABLE aux_tempoini AS INTEGER                 NO-UNDO.
+DEFINE VARIABLE aux_tempofim AS INTEGER                 NO-UNDO.
+DEFINE VARIABLE aux_tempoctrl AS INTEGER                 NO-UNDO.
+
     
     /* coloca a janela no canto superior esquerdo */
     ASSIGN CURRENT-WINDOW:X = 0
@@ -272,6 +279,24 @@ DEFINE VARIABLE aux_interval AS INTEGER                 NO-UNDO.
 
 
     RUN procedures/grava_log.p (INPUT "Inicializando sistema...").
+
+    /*Solicitacao Dieblod para esperar 100 seg antes de iniciar*/
+    ASSIGN aux_tempoini  = TIME
+           aux_tempoctrl = TIME - 1
+           aux_tempofim  = TIME + 100.
+
+    DO WHILE(aux_tempoini < aux_tempofim) :
+
+        aux_tempoini = TIME.
+
+        IF aux_tempoctrl < aux_tempoini THEN
+        DO:
+            ed_status:DELETE-LINE().
+            ed_status:INSERT-STRING("Inicializando em " + STRING( aux_tempofim - aux_tempoini ) + " segundos..." ).
+            aux_tempoctrl = aux_tempoini. 
+        END.
+        
+    END.
     
     DO  WHILE TRUE:
         
