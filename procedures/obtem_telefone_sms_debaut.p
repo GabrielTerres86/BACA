@@ -1,32 +1,18 @@
 /* ............................................................................
 
-Procedure: obtem_autorizacoes_debito.p
-Objetivo : Obter as autorizações de débito automático do cooperado
+Procedure: obtem_telefone_sms_debaut.p
+Objetivo : Obter telefone cadastrado para SMS DEBAUT [PROJ320]
 Autor    : Lucas Lunelli
-Data     : Agosto/2014
+Data     : Abril/2016
 
-Ultima alteração:   30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+Ultima alteração:   
 
 ............................................................................ */
 
-DEFINE TEMP-TABLE tt-debaut-consulta NO-UNDO
-       FIELD nmempres AS CHAR
-       FIELD cdempcon AS INTE
-       FIELD cdsegmto AS INTE
-       FIELD cdhistor AS INTE
-       FIELD cdrefere AS CHAR
-       FIELD desmaxdb AS CHAR
-       FIELD nrsequen AS INTE
-       FIELD inaltera AS CHAR.
-
-EMPTY TEMP-TABLE tt-debaut-consulta.
-
-DEFINE INPUT  PARAMETER par_cdoperac AS CHARACTER.
-DEFINE INPUT  PARAMETER par_cdempcon AS INTEGER.
-DEFINE INPUT  PARAMETER par_cdsegmto AS INTEGER.
-DEFINE OUTPUT PARAMETER par_flgdbaut AS LOGICAL.
-DEFINE OUTPUT PARAMETER par_flgderro AS LOGICAL.
-DEFINE OUTPUT PARAMETER TABLE FOR tt-debaut-consulta.
+DEFINE OUTPUT PARAM par_nrDDD        AS DECI                        NO-UNDO.
+DEFINE OUTPUT PARAM par_nrtelefo     AS DECI                        NO-UNDO.
+DEFINE OUTPUT PARAM par_dsmsgsms     AS CHAR                        NO-UNDO.
+DEFINE OUTPUT PARAM par_flgderro     AS LOGI        INIT NO         NO-UNDO.
 
 { includes/var_taa.i }
 
@@ -39,7 +25,6 @@ DEFINE         VARIABLE aux_hrtransa    AS INT                      NO-UNDO.
 DEFINE         VARIABLE xml_req         AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE xDoc            AS HANDLE                   NO-UNDO.  
 DEFINE         VARIABLE xRoot           AS HANDLE                   NO-UNDO. 
-DEFINE         VARIABLE xRoot2          AS HANDLE                   NO-UNDO. 
 DEFINE         VARIABLE xField          AS HANDLE                   NO-UNDO.
 DEFINE         VARIABLE xText           AS HANDLE                   NO-UNDO.
 
@@ -50,7 +35,7 @@ DEFINE VARIABLE resultado               AS COM-HANDLE               NO-UNDO.
 DEFINE VARIABLE comando                 AS COM-HANDLE               NO-UNDO.
 
 
-RUN procedures/grava_log.p (INPUT "Obtendo autorizações de débito...").
+RUN procedures/grava_log.p (INPUT "Obtendo telefone de envio SMS DEBAUT...").
 
 
 aux_hrtransa = TIME.
@@ -63,7 +48,7 @@ RUN mensagem.w (INPUT NO,
                 INPUT "  AGUARDE...",
                 INPUT "",
                 INPUT "",
-                INPUT "Obtendo autorizações de débito...",
+                INPUT "Obtendo telefone para envio de SMS...",
                 INPUT "",
                 INPUT "").
 
@@ -133,7 +118,7 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
                               STRING(aux_hrtransa)  + ", " +
                               aux_dsdtoday          + ", " +
                               STRING(aux_hrtransa)  + ", " +
-                              "41"                  + ", " + 
+                              "59"                  + ", " + 
                               STRING(glb_nrcartao)  + ", " +
                               "0"                   + ", " +
                               "0)".
@@ -198,7 +183,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "41".    
+    xText:NODE-VALUE = "59".    
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
@@ -224,26 +209,7 @@ DO:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_dtmvtolt).
     xField:APPEND-CHILD(xText).
-
-    /* ---------- */
-    xDoc:CREATE-NODE(xField,"CDOPERAC","ELEMENT").
-    xRoot:APPEND-CHILD(xField).
-    
-    xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(par_cdoperac).
-    xField:APPEND-CHILD(xText).
-
-    IF  par_cdoperac = "E" THEN /* Exclusão, listar apenas da data atual */
-        DO:
-            /* ---------- */
-            xDoc:CREATE-NODE(xField,"DTAUTORI","ELEMENT").
-            xRoot:APPEND-CHILD(xField).
-            
-            xDoc:CREATE-NODE(xText,"","TEXT").
-            xText:NODE-VALUE = STRING(glb_dtmvtolt).
-            xField:APPEND-CHILD(xText).
-        END.
-    
+       
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     
     DELETE OBJECT xDoc.
@@ -266,12 +232,10 @@ END. /* Fim REQUISICAO */
 
 RESPOSTA:
 DO:
-    DEFINE VARIABLE  aux_qtcompro AS INTEGER     NO-UNDO.
-    DEFINE VARIABLE  aux_ifcompro AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_contador  AS INTEGER     NO-UNDO.
     
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
-    CREATE X-NODEREF  xRoot2.
     CREATE X-NODEREF  xField.
     CREATE X-NODEREF  xText.
 
@@ -289,7 +253,7 @@ DO:
         IF  xDoc:NUM-CHILDREN = 0  OR
             xRoot:NAME <> "TAA"    THEN
             DO:
-                RUN procedures/grava_log.p (INPUT "Autorizações de Débito - Sem comunicação com o servidor.").
+                RUN procedures/grava_log.p (INPUT "Obtendo telefone de envio SMS DEBAUT - Sem comunicação com o servidor.").
 
                 RUN mensagem.w (INPUT YES,
                                 INPUT "      ERRO!",
@@ -306,125 +270,50 @@ DO:
                 LEAVE.
             END.
 
-        DO  aux_qtcompro = 1 TO xRoot:NUM-CHILDREN:
-
-            xRoot:GET-CHILD(xField,aux_qtcompro).
-
+        DO  aux_contador = 1 TO xRoot:NUM-CHILDREN:
+            
+            xRoot:GET-CHILD(xField,aux_contador).
+            
             IF  xField:SUBTYPE <> "ELEMENT"  THEN
                 NEXT.
-
+    
             xField:GET-CHILD(xText,1).
 
-            IF  xField:NAME = "DSCRITIC" THEN
+            IF  xField:NAME = "DSCRITIC"  THEN
                 DO:
-                    IF  par_cdoperac <> "P" THEN
-                        DO:
-                            RUN procedures/grava_log.p (INPUT "Autorizações de Débito - " + xText:NODE-VALUE).
-                                    
-                            RUN mensagem.w (INPUT YES,
-                                            INPUT "      ERRO!",
-                                            INPUT "",
-                                            INPUT xText:NODE-VALUE,
-                                            INPUT "",
-                                            INPUT "",
-                                            INPUT "").
-        
-                            PAUSE 5 NO-MESSAGE.
-                            h_mensagem:HIDDEN = YES.
-        
-                            ASSIGN par_flgderro = YES.
+                    RUN procedures/grava_log.p (INPUT "Obtendo telefone de envio SMS DEBAUT - " + xText:NODE-VALUE).
+                    
+                    RUN mensagem.w (INPUT YES,
+                                    INPUT "      ERRO!",
+                                    INPUT "",
+                                    INPUT xText:NODE-VALUE,
+                                    INPUT "",
+                                    INPUT "",
+                                    INPUT "").
 
-                        END.
+                    PAUSE 3 NO-MESSAGE.
+                    h_mensagem:HIDDEN = YES.
+
+                    par_flgderro = YES.
                 END.
             ELSE
-                DO:
-                    xRoot:GET-CHILD(xRoot2,aux_qtcompro).
-                    
-                    IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN
-                        NEXT.
-        
-                    IF  xRoot2:NAME = "DSCRITIC" THEN
-                        DO:
-                            IF  par_cdoperac <> "P" THEN
-                                DO:
-                                    RUN procedures/grava_log.p (INPUT "Autorizações de Débito - " + xText:NODE-VALUE).
+            IF  xField:NAME = "NRDDD"  THEN
+                par_nrDDD = DEC(xText:NODE-VALUE).
+            ELSE
+            IF  xField:NAME = "NRTELEFO"  THEN
+                par_nrtelefo = DEC(xText:NODE-VALUE).                                                   
+            ELSE
+            IF  xField:NAME = "DSMSGSMS"  THEN
+                par_dsmsgsms = xText:NODE-VALUE.
                 
-                                    RUN mensagem.w (INPUT YES,
-                                                    INPUT "      ERRO!",
-                                                    INPUT "",
-                                                    INPUT xText:NODE-VALUE,
-                                                    INPUT "",
-                                                    INPUT "",
-                                                    INPUT "").
-                
-                                    PAUSE 3 NO-MESSAGE.
-                                    h_mensagem:HIDDEN = YES.
-                
-                                    par_flgderro = YES.
-                                END.
-                        END.
-                    ELSE
-                        DO:
-                           CREATE tt-debaut-consulta. 
-                
-                           DO  aux_ifcompro = 1 TO xRoot2:NUM-CHILDREN:
-                
-                               xRoot2:GET-CHILD(xField,aux_ifcompro).
-                
-                                IF  xField:SUBTYPE <> "ELEMENT"  THEN
-                                    NEXT.
-                
-                                xField:GET-CHILD(xText,1).
-                
-                                IF   xField:NAME = "NMEMPRES"   THEN
-                                     ASSIGN tt-debaut-consulta.nmempres = xText:NODE-VALUE.
-                                ELSE                
-                                IF   xField:NAME = "CDEMPCON"   THEN
-                                     ASSIGN tt-debaut-consulta.cdempcon = INTE(xText:NODE-VALUE).
-                                ELSE
-                                IF   xField:NAME = "CDSEGMTO"   THEN
-                                     ASSIGN tt-debaut-consulta.cdsegmto = INTE(xText:NODE-VALUE).
-                                ELSE
-                                IF   xField:NAME = "CDHISTOR"   THEN
-                                     ASSIGN tt-debaut-consulta.cdhistor = INTE(xText:NODE-VALUE).
-                                ELSE
-                                IF   xField:NAME = "CDREFERE"   THEN
-                                     ASSIGN tt-debaut-consulta.cdrefere = xText:NODE-VALUE.
-                                ELSE
-                                IF   xField:NAME = "INALTERA"   THEN
-                                     ASSIGN tt-debaut-consulta.inaltera = xText:NODE-VALUE.
-                                ELSE
-                                IF   xField:NAME = "DESMAXDB"   THEN
-                                    IF  DECI(xText:NODE-VALUE) > 0 THEN
-                                        ASSIGN tt-debaut-consulta.desmaxdb = xText:NODE-VALUE.
-                
-                                ASSIGN tt-debaut-consulta.nrsequen = aux_qtcompro.
-                
-                                par_flgderro = NO.
-                
-                           END. /* Fim DO..TO.. */
-                        END.
-                END.
-
         END. /* Fim DO..TO.. */
         
         LEAVE.
 
     END. /* Fim WHILE */
 
-    IF  par_cdoperac = "P" THEN
-        DO:
-            ASSIGN par_flgdbaut = FALSE.
-            
-            FOR EACH tt-debaut-consulta WHERE tt-debaut-consulta.cdempcon = par_cdempcon AND
-                                              tt-debaut-consulta.cdsegmto = par_cdsegmto NO-LOCK:
-                ASSIGN par_flgdbaut = TRUE.
-            END.
-        END.
-        
     DELETE OBJECT xDoc.
     DELETE OBJECT xRoot.
-    DELETE OBJECT xRoot2.
     DELETE OBJECT xField.
     DELETE OBJECT xText.
 
@@ -444,7 +333,7 @@ comando:CommandText = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                                   "NRDOCMTO = " + STRING(aux_hrtransa)  + " AND " +
                                   "DTTRANSA = " + aux_dsdtoday          + " AND " +
                                   "HRTRANSA = " + STRING(aux_hrtransa)  + " AND " +
-                                  "TPDTRANS = 41 "                      + " AND " +
+                                  "TPDTRANS = 59 "                      + " AND " +
                                   "NRCARTAO = " + STRING(glb_nrcartao)  + " AND " +
                                   "VLLANMTO = 0 "                       + " AND " +
                                   "CDSITATU = 0".
@@ -469,7 +358,7 @@ IF  resultado = ?  THEN
 
 
 
-RUN procedures/grava_log.p (INPUT "Autorizações de Débito obtidas com sucesso.").
+RUN procedures/grava_log.p (INPUT "Obtido telefone de envio SMS DEBAUT com sucesso.").
 
 RETURN "OK".
 

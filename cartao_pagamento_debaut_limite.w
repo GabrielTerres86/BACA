@@ -11,6 +11,8 @@ Data     : Setembro/2014
 
 Ultima alteração: 05/11/2014 - Inclusão de mensagem de sucesso (Lunelli)
 
+                  30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -39,7 +41,10 @@ DEFINE INPUT PARAM par_cdrefere     AS CHAR         NO-UNDO.
 /* Local Variable Definitions ---                                       */
 { includes/var_taa.i }
 
-DEFINE VARIABLE aux_flgderro        AS LOGICAL      NO-UNDO.
+DEFINE VARIABLE aux_nrDDD           AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_nrtelefo        AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_dsmsgsms        AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE aux_flgderro        AS LOGICAL                  NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -152,24 +157,24 @@ DEFINE FRAME f_debaut_limite
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 242 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.43 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.43 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 240 NO-TAB-STOP 
-     "Conta/Titular:" VIEW-AS TEXT
-          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
-          FONT 8
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
-          FONT 8
-     "DESEJA CADASTRAR LIMITE" VIEW-AS TEXT
-          SIZE 109 BY 2.38 AT ROW 10.76 COL 26.8 WIDGET-ID 274
+     "MÁXIMO PARA DÉBITO?" VIEW-AS TEXT
+          SIZE 97.2 BY 2.38 AT ROW 13.81 COL 33.2 WIDGET-ID 276
           FGCOLOR 1 FONT 19
      "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
           SIZE 100 BY 3.33 AT ROW 1.48 COL 32 WIDGET-ID 272
           FGCOLOR 1 FONT 10
+     "DESEJA CADASTRAR LIMITE" VIEW-AS TEXT
+          SIZE 109 BY 2.38 AT ROW 10.76 COL 26.8 WIDGET-ID 274
+          FGCOLOR 1 FONT 19
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+          FONT 8
+     "Conta/Titular:" VIEW-AS TEXT
+          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
+          FONT 8
      "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
           SIZE 100 BY 3.33 AT ROW 1.48 COL 32 WIDGET-ID 214
           FGCOLOR 1 FONT 10
-     "MÁXIMO PARA DÉBITO?" VIEW-AS TEXT
-          SIZE 97.2 BY 2.38 AT ROW 13.81 COL 33.2 WIDGET-ID 276
-          FGCOLOR 1 FONT 19
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-99 AT ROW 5.52 COL 19.6 WIDGET-ID 120
      RECT-100 AT ROW 5.29 COL 19.6 WIDGET-ID 116
@@ -320,12 +325,11 @@ DO:
                                                    INPUT par_nmempres, 
                                                    INPUT par_cdrefere,
                                                   OUTPUT aux_flgderro).
-    IF  aux_flgderro   THEN
+    IF  aux_flgderro    THEN
         DO:
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-            RETURN "NOK".
+            RETURN "OK".
         END.
-
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -347,30 +351,21 @@ END.
 ON CHOOSE OF Btn_G IN FRAME f_debaut_limite /* NÃO */
 DO:
 
-     /* puxa o frame principal */
-     h_principal:MOVE-TO-TOP().
+     RUN cartao_pagamento_debaut_cadastrar_aceite.w (INPUT par_dscodbar, 
+                                                     INPUT par_cdbarra1, 
+                                                     INPUT par_cdbarra2, 
+                                                     INPUT par_cdbarra3, 
+                                                     INPUT par_cdbarra4,                                                
+                                                     INPUT par_cdrefere,
+                                                     INPUT 0,  /* vlrmaxdb*/
+                                                    OUTPUT aux_flgderro).
 
-    RUN procedures/inclui_autorizacao_debito.p (INPUT par_dscodbar, 
-                                                INPUT par_cdbarra1, 
-                                                INPUT par_cdbarra2, 
-                                                INPUT par_cdbarra3, 
-                                                INPUT par_cdbarra4, 
-                                                INPUT par_cdrefere,
-                                                INPUT 0,  /* vlrmaxdb*/
-                                               OUTPUT aux_flgderro).
-    IF  aux_flgderro   THEN
-        DO:      
-            w_debaut_limite:MOVE-TO-TOP().
-            
-            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-            RETURN "NOK".
-        END.
-    ELSE
+    IF  aux_flgderro    THEN
         DO:
-            /* puxa o frame principal pra frente */
-            h_principal:MOVE-TO-TOP().            
+            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
+            RETURN "OK".
         END.
-  
+
     /* verifica se finalizou a operacao */
     IF  RETURN-VALUE = "OK"  THEN
         DO:

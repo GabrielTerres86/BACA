@@ -5,7 +5,7 @@ Objetivo : Excluir autorização de débito da conta do cooperado
 Autor    : Lucas Lunelli
 Data     : Agosto/2014
 
-Ultima alteração:   
+Ultima alteração:   30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 ............................................................................ */
 
@@ -14,6 +14,7 @@ DEFINE INPUT  PARAM par_cdrefere     AS CHAR         NO-UNDO.
 DEFINE INPUT  PARAM par_cdhistor     AS INTE         NO-UNDO.
 DEFINE INPUT  PARAM par_cdempcon     AS INTE         NO-UNDO.
 DEFINE INPUT  PARAM par_cdsegmto     AS INTE         NO-UNDO.
+DEFINE INPUT  PARAM par_idmotivo     AS INTE         NO-UNDO.
 DEFINE OUTPUT PARAM par_flgderro     AS LOGI         NO-UNDO.
 
 { includes/var_taa.i }
@@ -121,7 +122,7 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
                               STRING(aux_hrtransa)  + ", " +
                               aux_dsdtoday          + ", " +
                               STRING(aux_hrtransa)  + ", " +
-                              "21"                  + ", " + 
+                              "43"                  + ", " + 
                               STRING(glb_nrcartao)  + ", " +
                               "0"                   + ", " +
                               "0)".
@@ -245,6 +246,14 @@ DO:
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(par_cdsegmto).
     xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"IDMOTIVO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(par_idmotivo).
+    xField:APPEND-CHILD(xText).   
     
     xDoc:SAVE("MEMPTR",ponteiro_xml).
     
@@ -369,7 +378,7 @@ comando:CommandText = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                                   "NRDOCMTO = " + STRING(aux_hrtransa)  + " AND " +
                                   "DTTRANSA = " + aux_dsdtoday          + " AND " +
                                   "HRTRANSA = " + STRING(aux_hrtransa)  + " AND " +
-                                  "TPDTRANS = 21 "                      + " AND " +
+                                  "TPDTRANS = 43 "                      + " AND " +
                                   "NRCARTAO = " + STRING(glb_nrcartao)  + " AND " +
                                   "VLLANMTO = 0 "                       + " AND " +
                                   "CDSITATU = 0".
@@ -395,6 +404,22 @@ IF  resultado = ?  THEN
 
 
 RUN procedures/grava_log.p (INPUT "Autorizações de Débito excluidas com sucesso.").
+
+IF  NOT par_flgderro THEN
+    DO:
+        RUN procedures/grava_log.p (INPUT "Autorização de Débito excluída com sucesso.").
+
+        RUN mensagem.w (INPUT NO,
+                        INPUT "    ATENÇÃO",
+                        INPUT "",
+                        INPUT "Autorização de débito",
+                        INPUT "excluída com sucesso.",
+                        INPUT "",
+                        INPUT "").
+                        
+        PAUSE 3 NO-MESSAGE.
+        h_mensagem:HIDDEN = YES.
+    END.
 
 RETURN "OK".
 

@@ -9,7 +9,7 @@ Objetivo : Tela de confirmar exclusao de débito automático
 Autor    : Lucas Lunelli
 Data     : Setembro/2014
 
-Ultima alteração: 
+Ultima alteração: 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 ............................................................................... */
 
@@ -32,6 +32,7 @@ DEFINE INPUT  PARAM par_cdrefere     AS CHAR         NO-UNDO.
 DEFINE INPUT  PARAM par_cdhistor     AS INTE         NO-UNDO.
 DEFINE INPUT  PARAM par_cdempcon     AS INTE         NO-UNDO.
 DEFINE INPUT  PARAM par_cdsegmto     AS INTE         NO-UNDO.
+DEFINE INPUT  PARAM par_idmotivo     AS INTE         NO-UNDO.
 DEFINE OUTPUT PARAM par_flgderro     AS LOGI         NO-UNDO.
 
 /* Local Variable Definitions ---                                       */
@@ -133,6 +134,12 @@ DEFINE FRAME f_debaut_exclusao_confirmar
      ed_cdrefere AT ROW 19.05 COL 126 RIGHT-ALIGNED NO-LABEL WIDGET-ID 254
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 156
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 158
+     "DESEJA EXCLUIR A AUTORIZAÇÃO" VIEW-AS TEXT
+          SIZE 138 BY 3.33 AT ROW 6.91 COL 12.2 WIDGET-ID 286
+          FGCOLOR 1 FONT 19
+     "Identificador:" VIEW-AS TEXT
+          SIZE 22 BY 1.19 AT ROW 19.05 COL 29 WIDGET-ID 262
+          FONT 14
      "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
           SIZE 100 BY 3.33 AT ROW 1.48 COL 32 WIDGET-ID 214
           FGCOLOR 1 FONT 10
@@ -142,15 +149,6 @@ DEFINE FRAME f_debaut_exclusao_confirmar
      "DE DÉBITO AUTOMÁTICO?" VIEW-AS TEXT
           SIZE 106 BY 3.33 AT ROW 10.71 COL 28.2 WIDGET-ID 288
           FGCOLOR 1 FONT 19
-     "DESEJA EXCLUIR A AUTORIZAÇÃO" VIEW-AS TEXT
-          SIZE 138 BY 3.33 AT ROW 6.91 COL 12.2 WIDGET-ID 286
-          FGCOLOR 1 FONT 19
-     "Consumidor:" VIEW-AS TEXT
-          SIZE 22.6 BY 1.19 AT ROW 19.29 COL 28.2 WIDGET-ID 262
-          FONT 14
-     "Identificação do" VIEW-AS TEXT
-          SIZE 27.2 BY 1.19 AT ROW 18.24 COL 22.8 WIDGET-ID 252
-          FONT 14
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-99 AT ROW 5.52 COL 19.6 WIDGET-ID 120
      RECT-100 AT ROW 5.29 COL 19.6 WIDGET-ID 116
@@ -301,12 +299,12 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_debaut_exclusao_confirmar
 ON CHOOSE OF Btn_D IN FRAME f_debaut_exclusao_confirmar /* CONFIRMAR */
 DO:
-
     RUN procedures/exclui_autorizacao_debito.p (INPUT par_nmempres, 
                                                 INPUT par_cdrefere,
                                                 INPUT par_cdhistor,
                                                 INPUT par_cdempcon,
                                                 INPUT par_cdsegmto,
+                                                INPUT par_idmotivo,
                                                OUTPUT par_flgderro).
     IF  par_flgderro   THEN
         DO:

@@ -11,6 +11,8 @@ Data     : Setembro/2014
 
 Ultima alteração: 10/11/2014 - Correção hint do campo Identif. Consumidor e 
                                Validação temporária para erro de ? (Lunelli)
+                               
+                  30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 ............................................................................... */
 
@@ -239,30 +241,27 @@ DEFINE FRAME f_debaut_incluir
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
           FONT 8
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
-          FONT 8
-     "Empresa:" VIEW-AS TEXT
-          SIZE 16.8 BY 1.19 AT ROW 15 COL 16.8 WIDGET-ID 264
-          FONT 14
-     "Consumidor:" VIEW-AS TEXT
-          SIZE 22.6 BY 1.19 AT ROW 17.38 COL 11.2 WIDGET-ID 262
-          FONT 14
-     "Identificação do" VIEW-AS TEXT
-          SIZE 27.2 BY 1.19 AT ROW 16.33 COL 5.8 WIDGET-ID 252
-          FONT 14
-     "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
-          SIZE 100 BY 3.33 AT ROW 1.48 COL 32 WIDGET-ID 214
-          FGCOLOR 1 FONT 10
-     "Linha Digitável:" VIEW-AS TEXT
-          SIZE 26 BY 1.19 AT ROW 13 COL 8 WIDGET-ID 180
+     "Barras:" VIEW-AS TEXT
+          SIZE 12 BY 1.19 AT ROW 11 COL 21 WIDGET-ID 176
           FONT 14
      "Código de" VIEW-AS TEXT
           SIZE 18 BY 1.19 AT ROW 9.81 COL 15 WIDGET-ID 178
           FONT 14
-     "Barras:" VIEW-AS TEXT
-          SIZE 12 BY 1.19 AT ROW 11 COL 21 WIDGET-ID 176
+     "Linha Digitável:" VIEW-AS TEXT
+          SIZE 26 BY 1.19 AT ROW 13 COL 8 WIDGET-ID 180
           FONT 14
+     "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
+          SIZE 100 BY 3.33 AT ROW 1.48 COL 32 WIDGET-ID 214
+          FGCOLOR 1 FONT 10
+     "Identificador:" VIEW-AS TEXT
+          SIZE 22.6 BY 1.19 AT ROW 17.1 COL 11.2 WIDGET-ID 262
+          FONT 14
+     "Empresa:" VIEW-AS TEXT
+          SIZE 16.8 BY 1.19 AT ROW 15 COL 16.8 WIDGET-ID 264
+          FONT 14
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+          FONT 8
      RECT-127 AT ROW 12.52 COL 34 WIDGET-ID 168
      RECT-132 AT ROW 10.52 COL 34 WIDGET-ID 170
      RECT-136 AT ROW 12.52 COL 63 WIDGET-ID 184
