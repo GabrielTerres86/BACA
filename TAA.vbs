@@ -1,4 +1,4 @@
-' ----------------------------------------------------------
+' ----------------------------------------------------------------
 ' 
 '     Objetivo: Inicializar o sistema TAA.
 '		Verificar se o sistema TAA está em execução.
@@ -11,7 +11,9 @@
 '		Caso não, finaliza os processos P32 e inicia o sistema.
 '		A cada 2 minutos, verifica se a aplicação possui foco.
 '   
-' ----------------------------------------------------------
+'     03/06/2016 - Retornada a versão do arquivo para a 
+'                  anterior (Elton)
+' ----------------------------------------------------------------
 
 Set WshShell = WScript.CreateObject("WScript.Shell")
 Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
