@@ -89,6 +89,8 @@
 			   22/04/2016 - Atualização para versão 8.4 (Paulo Samuel).
 
 			   19/05/2016 - Atualização para versão 8.5 (Paulo Samuel).
+			   
+			   15/06/2016 - Atualização para versão 8.6 (Paulo Samuel).
 .............................................................................. */
 
                             
@@ -101,7 +103,7 @@ DEF {1} SHARED VAR glb_cdagetfn AS INT                                   NO-UNDO
 DEF {1} SHARED VAR glb_ipterfin AS CHAR                                  NO-UNDO.
 DEF {1} SHARED VAR glb_nmserver AS CHAR                                  NO-UNDO. /* Servidor */
 DEF {1} SHARED VAR glb_nmservic AS CHAR                                  NO-UNDO. /* Serviço WebSpeed */
-DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v8.5"                NO-UNDO.
+DEF {1} SHARED VAR glb_dsvertaa AS CHAR     INIT "  v8.6"                NO-UNDO.
 
 /* Temporizador */
 DEF {1} SHARED VAR glb_nrtempor AS INT                                   NO-UNDO.
