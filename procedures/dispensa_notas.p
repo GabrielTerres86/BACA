@@ -635,6 +635,8 @@ PROCEDURE entregar_notas:
     
         IF  LT_Resp <> 0  THEN
             DO:
+                RUN procedures/grava_log.p (INPUT "Entrega de Notas: Retorno " + STRING(LT_Resp) + " (WinEntregarCedulas).").
+
                 IF  LT_Resp = 16  THEN  /* 16 - Nao retiradas */
                     DO:
                         /* chegando nesta mensagem, o dinheiro ja é considerado sacado
@@ -803,6 +805,8 @@ PROCEDURE atualiza_saque:
             par_flgderro = YES.
             RETURN "NOK".
         END.
+
+    RUN procedures/grava_log.p (INPUT "Entrega de Notas: Atualiza saque como Efetivado.").
     
     CREATE "ADODB.Command" comando.
     comando:ActiveConnection = conexao.
