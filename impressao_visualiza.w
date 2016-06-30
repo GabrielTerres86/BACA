@@ -11,6 +11,9 @@ Data     : Agosto 2015
 
 Ultima alteração: 
 
+29/06/2016 #413717 Desabilitado o botao imprimir (Btn_G) quando houver problema 
+           na impressora. Alterado o label de "Voltar" para "Finalizar" (Carlos)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -98,7 +101,7 @@ DEFINE BUTTON Btn_G
      FONT 8.
 
 DEFINE BUTTON Btn_H 
-     LABEL "VOLTAR" 
+     LABEL "FINALIZAR" 
      SIZE 41 BY 3.33
      FONT 8.
 
@@ -334,7 +337,7 @@ END.
 
 &Scoped-define SELF-NAME Btn_H
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_impressao
-ON ANY-KEY OF Btn_H IN FRAME f_impressao /* VOLTAR */
+ON ANY-KEY OF Btn_H IN FRAME f_impressao /* FINALIZAR */
 DO:
     RUN tecla.
 END.
@@ -344,7 +347,7 @@ END.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_impressao
-ON CHOOSE OF Btn_H IN FRAME f_impressao /* VOLTAR */
+ON CHOOSE OF Btn_H IN FRAME f_impressao /* FINALIZAR */
 DO:
     APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
     RETURN "NOK".
@@ -392,6 +395,13 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     /* deixa o mouse transparente */
     FRAME f_impressao:LOAD-MOUSE-POINTER("blank.cur").
 
+    /* Se a impressora nao estiver disponivel, 
+       desabilita o botao de impressao */
+    IF    xfs_painop_em_uso OR 
+      NOT xfs_impressora    OR
+          xfs_impsempapel  THEN    
+    DISABLE Btn_G WITH FRAME f_impressao.
+
     IF  LENGTH(par_tximpres) > 1872 THEN
         ASSIGN Btn_E:VISIBLE IN FRAME f_impressao = TRUE
                Btn_F:VISIBLE IN FRAME f_impressao = TRUE.
@@ -412,7 +422,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     APPLY "ENTRY" TO Btn_H.
 
     IF  NOT THIS-PROCEDURE:PERSISTENT  THEN
-        WAIT-FOR CLOSE OF THIS-PROCEDURE.
+        WAIT-FOR CLOSE OF THIS-PROCEDURE.        
 END.
 
 /* _UIB-CODE-BLOCK-END */

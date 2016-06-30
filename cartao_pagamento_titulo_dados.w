@@ -266,8 +266,8 @@ DEFINE FRAME f_cartao_pagamento_titulo_dados
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 246 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.38 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 248 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.38 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
-     "Banco:" VIEW-AS TEXT
-          SIZE 13 BY .95 AT ROW 10.29 COL 33 WIDGET-ID 184
+     "Valor do Pagamento:" VIEW-AS TEXT
+          SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
           FONT 14
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 140
@@ -281,12 +281,12 @@ DEFINE FRAME f_cartao_pagamento_titulo_dados
      "Linha Digitável:" VIEW-AS TEXT
           SIZE 26 BY .95 AT ROW 12.19 COL 20 WIDGET-ID 156
           FONT 14
-     "Valor do Pagamento:" VIEW-AS TEXT
-          SIZE 36 BY .95 AT ROW 17.95 COL 10 WIDGET-ID 192
-          FONT 14
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
           FONT 8
+     "Banco:" VIEW-AS TEXT
+          SIZE 13 BY .95 AT ROW 10.29 COL 33 WIDGET-ID 184
+          FONT 14
      RECT-132 AT ROW 9.81 COL 46 WIDGET-ID 198
      RECT-134 AT ROW 11.71 COL 46 WIDGET-ID 152
      RECT-135 AT ROW 13.62 COL 46 WIDGET-ID 154
@@ -576,13 +576,10 @@ DO:
 
             IF  NOT aux_flgderro THEN
                 DO:
-                                RUN procedures/inicializa_dispositivo.p ( INPUT 6,
-                                                             OUTPUT aux_flgderro).
-        
-                    IF  NOT aux_flgderro     AND
-                        xfs_impressora       AND /* se a impressora estiver habilitada e com papel */
-                        NOT xfs_impsempapel  AND 
-                        aux_idastcjt = 0    THEN
+                                        RUN procedures/inicializa_dispositivo.p ( INPUT 6,
+                                                              OUTPUT aux_flgderro).
+
+                    IF  aux_idastcjt = 0    THEN
                         RUN imprime_comprovante (INPUT aux_dsprotoc,
                                                  INPUT aux_cdbcoctl,
                                                  INPUT aux_cdagectl).

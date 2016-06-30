@@ -18,6 +18,12 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                  22/01/2015 - Adicionado botão de DEMONSTRATIVO INSS 
                               (Reinert - Projeto 255)
 
+                 29/06/2016 - #413717 Verificado o status da impressao para
+                              desabilitar os botoes de extratos, menos o extrato
+                              dos ultimos 30 dias pois este eh exibido em tela
+                              (Carlos)
+                              
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -557,6 +563,16 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     ELSE
         /* extrato isento */
         aux_inisenta = 1.
+
+    /* se a impressora estiver desabilitada ou sem papel */
+    IF  NOT xfs_impressora  OR 
+        xfs_impsempapel     THEN
+    DO:
+        DISABLE Btn_A WITH FRAME f_cartao_extrato.
+        DISABLE Btn_B WITH FRAME f_cartao_extrato.
+        DISABLE Btn_C WITH FRAME f_cartao_extrato.
+        DISABLE Btn_E WITH FRAME f_cartao_extrato.
+    END.
 
     /* coloca o foco no botao H */
     APPLY "ENTRY" TO Btn_H.

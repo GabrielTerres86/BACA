@@ -25,6 +25,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                e visualização de impressão
                                (Lucas Lunelli - Melhoria 83 [SD 279180])
 
+                  14/06/2016 - #413717 Retirada a verificacao de impressora antes
+                               da chamada da visualizacao da impressao (Carlos)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -202,8 +205,8 @@ DEFINE FRAME f_agen_exclusao_transf
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 246 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.43 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 248 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.43 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
-     "Valor:" VIEW-AS TEXT
-          SIZE 10.6 BY 1 AT ROW 14.52 COL 17.8 WIDGET-ID 110
+     "Para" VIEW-AS TEXT
+          SIZE 11 BY 1.19 AT ROW 9.05 COL 19.6 WIDGET-ID 114
           FONT 14
      "EXCLUSÃO DE AGENDAMENTO" VIEW-AS TEXT
           SIZE 143 BY 3.57 AT ROW 1.24 COL 9.6 WIDGET-ID 224
@@ -223,12 +226,12 @@ DEFINE FRAME f_agen_exclusao_transf
      "CONFIRMA A EXCLUSÃO DO AGENDAMENTO?" VIEW-AS TEXT
           SIZE 107 BY 1.1 AT ROW 21.52 COL 27.6 WIDGET-ID 228
           FGCOLOR 1 FONT 8
-     "Para" VIEW-AS TEXT
-          SIZE 11 BY 1.19 AT ROW 9.05 COL 19.6 WIDGET-ID 114
-          FONT 14
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 240
           FONT 8
+     "Valor:" VIEW-AS TEXT
+          SIZE 10.6 BY 1 AT ROW 14.52 COL 17.8 WIDGET-ID 110
+          FONT 14
      RECT-127 AT ROW 11.62 COL 31.4 WIDGET-ID 94
      RECT-128 AT ROW 14.05 COL 31.4 WIDGET-ID 96
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
@@ -400,21 +403,16 @@ DO:
                                                  INPUT  par_vllanaut,
                                                  OUTPUT aux_flgderro).
                                                                                                  
-             IF  NOT aux_flgderro THEN
-                 DO:
-                                RUN procedures/inicializa_dispositivo.p ( INPUT 6,
-                                                             OUTPUT aux_flgderro).
-                     /* se a impressora estiver habilitada, com papel e 
-                       transferencia efetuada com sucesso */
-                    IF  xfs_impressora       AND
-                        NOT xfs_impsempapel  AND
-                        NOT aux_flgderro     THEN
-                        RUN imprime_comprovante.        
+            IF  NOT aux_flgderro THEN
+                DO:
+                    RUN procedures/inicializa_dispositivo.p ( INPUT 6,
+                                                              OUTPUT aux_flgderro).
+                    RUN imprime_comprovante.
                 END.
             ELSE /* Erro na rotina */
                 DO:
-                     h_principal:MOVE-TO-BOTTOM().
-                     h_inicializando:MOVE-TO-BOTTOM().
+                    h_principal:MOVE-TO-BOTTOM().
+                    h_inicializando:MOVE-TO-BOTTOM().
                 END.                      
         END.    
 
@@ -691,10 +689,7 @@ tmp_tximpres = tmp_tximpres +
                "            **  FIM DA IMPRESSAO  **            " +
                "                                                " +
                "                                                ".
-                                                                                 
-/* se a impressora estiver habilitada e com papel */
-IF  xfs_impressora       AND
-    NOT xfs_impsempapel  THEN
+
     RUN impressao_visualiza.w (INPUT "Comprovante...",
                                INPUT  tmp_tximpres,
                                INPUT 0, /*Comprovante*/

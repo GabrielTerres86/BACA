@@ -38,6 +38,9 @@ Ultima alteraçao: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                
                   29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
 
+                  14/06/2016 - #413717 Retirada a verificacao de impressora antes
+                               da chamada da visualizacao da impressao (Carlos)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -239,21 +242,6 @@ DEFINE FRAME f_cartao_transferencia
      "CONTAS-CORRENTES" VIEW-AS TEXT
           SIZE 42 BY .86 AT ROW 3.38 COL 101 WIDGET-ID 140
           FGCOLOR 1 FONT 14
-     "Titular:" VIEW-AS TEXT
-          SIZE 16 BY 1.19 AT ROW 14.43 COL 20 WIDGET-ID 112
-          FONT 8
-     "Valor:" VIEW-AS TEXT
-          SIZE 13 BY 1.67 AT ROW 18.71 COL 22.2 WIDGET-ID 110
-          FONT 8
-     "TRANSFERENCIA" VIEW-AS TEXT
-          SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 136
-          FGCOLOR 1 FONT 10
-     "Conta:" VIEW-AS TEXT
-          SIZE 17 BY 1.33 AT ROW 12.1 COL 21 WIDGET-ID 108
-          FONT 8
-     "Data da" VIEW-AS TEXT
-          SIZE 18.2 BY 1.38 AT ROW 21.29 COL 17 WIDGET-ID 254
-          FONT 8
      "Conta/Titular:" VIEW-AS TEXT
           SIZE 29 BY 1.19 AT ROW 7.38 COL 17 WIDGET-ID 238
           FONT 8
@@ -272,6 +260,21 @@ DEFINE FRAME f_cartao_transferencia
      "ENTRE" VIEW-AS TEXT
           SIZE 15 BY 1.14 AT ROW 1.95 COL 101.2 WIDGET-ID 138
           FGCOLOR 1 FONT 14
+     "Titular:" VIEW-AS TEXT
+          SIZE 16 BY 1.19 AT ROW 14.43 COL 20 WIDGET-ID 112
+          FONT 8
+     "Valor:" VIEW-AS TEXT
+          SIZE 13 BY 1.67 AT ROW 18.71 COL 22.2 WIDGET-ID 110
+          FONT 8
+     "TRANSFERENCIA" VIEW-AS TEXT
+          SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 136
+          FGCOLOR 1 FONT 10
+     "Conta:" VIEW-AS TEXT
+          SIZE 17 BY 1.33 AT ROW 12.1 COL 21 WIDGET-ID 108
+          FONT 8
+     "Data da" VIEW-AS TEXT
+          SIZE 18.2 BY 1.38 AT ROW 21.29 COL 17 WIDGET-ID 254
+          FONT 8
      RECT-127 AT ROW 11.52 COL 39 WIDGET-ID 94
      RECT-128 AT ROW 18.19 COL 39 WIDGET-ID 96
      RECT-142 AT ROW 14.24 COL 39 WIDGET-ID 100
@@ -609,15 +612,10 @@ DO:
                     IF  NOT aux_flgderro THEN
                         DO:
                             RUN procedures/inicializa_dispositivo.p ( INPUT 6,
-                                                                     OUTPUT aux_flgderro).
+                                                                      OUTPUT aux_flgderro).
     
-                            /* se a impressora estiver habilitada, com papel e 
-                               transferencia efetuada com sucesso e nao exigir
-                               assinatura conjunta */
-                            IF  xfs_impressora       AND
-                                NOT xfs_impsempapel  AND
-                                NOT aux_flgderro     AND 
-                                aux_idastcjt = 0     THEN
+                            /* se nao exigir assinatura conjunta */
+                            IF  aux_idastcjt = 0     THEN
                                 RUN imprime_comprovante.
                         END.
                    ELSE /* Erro na rotina */
@@ -1092,11 +1090,7 @@ tmp_tximpres = tmp_tximpres +
                "            **  FIM DA IMPRESSAO  **            " +
                "                                                " +
                "                                                ".
-                                                                             
-/* se a impressora estiver habilitada e com papel */
-IF  xfs_impressora       AND
-    NOT xfs_impsempapel  THEN
-    DO: 
+
         RUN impressao_visualiza.w (INPUT "Comprovante...",
                                    INPUT  tmp_tximpres,
                                    INPUT 0, /*Comprovante*/
@@ -1104,8 +1098,6 @@ IF  xfs_impressora       AND
 
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
-    END.
-    
 
 END PROCEDURE.
 

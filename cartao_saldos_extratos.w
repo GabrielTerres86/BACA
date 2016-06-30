@@ -4,19 +4,17 @@
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_saldos_extratos 
 /*------------------------------------------------------------------------
 
-  File: 
+Procedure: cartao_saldos_extratos.w
+Objetivo : Visualização EM TELA
+Autor    : 
+Data     : 
 
-  Description: 
+Ultima alteração: 
 
-  Input Parameters:
-      <none>
+29/06/2016 #413717 Retirada a desabilitacao do botao de extratos quando a
+           impressora nao estiver disponivel pois esta verificacao sera
+           feita na tela seguinte (Carlos)
 
-  Output Parameters:
-      <none>
-
-  Author: 
-
-  Created: 
 
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -378,12 +376,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
         END.
                 
         RUN procedures/inicializa_dispositivo.p ( INPUT 6,
-                                             OUTPUT aux_flgderro).
-
-    /* se a impressora estiver desabilitada ou sem papel */
-    IF  NOT xfs_impressora  OR 
-        xfs_impsempapel     THEN
-        DISABLE Btn_B WITH FRAME f_saldos_extratos.
+                                                 OUTPUT aux_flgderro).
 
     /* coloca o foco no botao H */
     APPLY "ENTRY" TO Btn_H.
