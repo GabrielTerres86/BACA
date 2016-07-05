@@ -392,7 +392,11 @@ RUN procedures/dispensa_notas.p ( INPUT par_vldsaque,
 /* em caso de erros, ja verifica as pendencias de saque */
 IF  par_flgderro  THEN
     DO:
+        RUN procedures/grava_log.p (INPUT "Dispensador de Notas ERRO: " + STRING(par_flgderro) + " | " + STRING(RETURN-VALUE) + ".").
+
         RUN procedures/verifica_pendencias.p (OUTPUT par_flgderro).
+
+        RUN procedures/grava_log.p (INPUT "Dispensador de Notas > Verifica Pendencias: " + STRING(par_flgderro) + " | " + STRING(RETURN-VALUE) + ".").
 
         /* atualiza os saldos, principalmente neste caso, rejeitados */
         RUN procedures/atualiza_saldo.p (OUTPUT par_flgderro).
