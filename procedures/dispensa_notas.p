@@ -783,13 +783,15 @@ PROCEDURE atualiza_saque:
        1-Conexao ODBC criada em Ferramentas ADM do Windows
        2-Usuario
        3-Senha */
+	   
+	RUN procedures/grava_log.p (INPUT "Entrega de Notas: Conexao para atualizar saque como Efetivado.").   
     
     CREATE "ADODB.Connection" conexao.
     conexao:OPEN("data source=TAA;server=localhost", "taa", "taa", 0) NO-ERROR. 
     
     IF  ERROR-STATUS:NUM-MESSAGES > 0  THEN
         DO:
-            RUN procedures/grava_log.p (INPUT "Erro na conexão com o banco de dados FireBird").
+            RUN procedures/grava_log.p (INPUT "Erro na conexao com o banco de dados FireBird").
     
             RUN mensagem.w (INPUT YES,
                             INPUT "    ATENÇÃO",
@@ -806,7 +808,7 @@ PROCEDURE atualiza_saque:
             RETURN "NOK".
         END.
 
-    RUN procedures/grava_log.p (INPUT "Entrega de Notas: Atualiza saque como Efetivado.").
+    RUN procedures/grava_log.p (INPUT "Entrega de Notas: Atualizando saque como Efetivado.").
     
     CREATE "ADODB.Command" comando.
     comando:ActiveConnection = conexao.
@@ -830,7 +832,7 @@ PROCEDURE atualiza_saque:
             RETURN "NOK".
         END.
 
-	RUN procedures/grava_log.p (INPUT "Entrega de Notas: Atualiza saque como Efetivado FINALIZADO.").
+	RUN procedures/grava_log.p (INPUT "Entrega de Notas: Atualizado saque como Efetivado.").
 
 END PROCEDURE.
 /* Fim atualiza_saque */
