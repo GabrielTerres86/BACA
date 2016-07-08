@@ -11,6 +11,9 @@ Data     : Agosto 2011
 
 Ultima alteração: 27/08/2015 - Adicionado condicao para verificar se o cartao
                                eh magnetico. (James)
+                               
+                  04/07/2016 - #447974 Adicionada a mensagem IMPRESSORA INOPERANTE
+                               quando houver esta ocorrencia (Carlos)
 
 ............................................................................... */
 
@@ -1039,6 +1042,19 @@ buff[4] = "     TECLADO FRONTAL DESABILITADO".
 RUN procedures/atualiza_painop.p (INPUT buff).
 
 PAUSE 2 NO-MESSAGE.
+
+IF NOT xfs_impressora  OR
+   xfs_impsempapel  THEN
+DO:
+    ASSIGN buff = "".
+    RUN procedures/atualiza_painop.p (INPUT buff).
+    
+    ASSIGN buff[2] = "             AGUARDE..."
+           buff[4] = "       IMPRESSORA INOPERANTE".
+    RUN procedures/atualiza_painop.p (INPUT buff).
+    
+    PAUSE 3 NO-MESSAGE.
+END.
 
 
 /* verifica o status da impressora */
