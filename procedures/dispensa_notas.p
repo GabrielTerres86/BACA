@@ -830,6 +830,8 @@ PROCEDURE atualiza_saque:
             RETURN "NOK".
         END.
 
+	RUN procedures/grava_log.p (INPUT "Entrega de Notas: Atualiza saque como Efetivado FINALIZADO.").
+
 END PROCEDURE.
 /* Fim atualiza_saque */
 
