@@ -39,6 +39,11 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   24/12/2015 - Adicionado tratamento para contas com assinatura 
                                conjunta. (Reinert)
+                               
+                  30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+                  
+                  14/06/2016 - #413717 Retirada a verificacao de impressora antes
+                               da chamada da visualizacao da impressao (Carlos)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -542,10 +547,7 @@ DO:
                 DO:
                     RUN procedures/inicializa_dispositivo.p ( INPUT 6,
                                                              OUTPUT aux_flgderro).
-                    IF  NOT aux_flgderro     AND
-                        xfs_impressora       AND /* se a impressora estiver habilitada e com papel */
-                        NOT xfs_impsempapel  AND 
-                        aux_idastcjt = 0     THEN
+                    IF  aux_idastcjt = 0     THEN
                         RUN imprime_comprovante (INPUT aux_dsprotoc,
                                                  INPUT aux_cdbcoctl,
                                                  INPUT aux_cdagectl).

@@ -28,6 +28,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                
                   29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
 
+                  14/06/2016 - #413717 Retirada a verificacao de impressora antes
+                               da chamada da visualizacao da impressao (Carlos)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -194,17 +197,17 @@ DEFINE FRAME f_envelope_deposito_cheques
      "Titular:" VIEW-AS TEXT
           SIZE 15 BY 1.19 AT ROW 13.62 COL 35 WIDGET-ID 112
           FONT 8
-     "Para a Conta:" VIEW-AS TEXT
-          SIZE 29 BY 1.19 AT ROW 10.95 COL 22 WIDGET-ID 114
+     "Valor:" VIEW-AS TEXT
+          SIZE 13 BY 1.67 AT ROW 17.43 COL 37 WIDGET-ID 110
+          FONT 8
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 8.86 COL 23.2 WIDGET-ID 134
           FONT 8
      "DEPÓSITO EM CHEQUES" VIEW-AS TEXT
           SIZE 111.4 BY 3.33 AT ROW 1.48 COL 25.4 WIDGET-ID 234
           FGCOLOR 1 FONT 10
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 8.86 COL 23.2 WIDGET-ID 134
-          FONT 8
-     "Valor:" VIEW-AS TEXT
-          SIZE 13 BY 1.67 AT ROW 17.43 COL 37 WIDGET-ID 110
+     "Para a Conta:" VIEW-AS TEXT
+          SIZE 29 BY 1.19 AT ROW 10.95 COL 22 WIDGET-ID 114
           FONT 8
      RECT-127 AT ROW 10.52 COL 51 WIDGET-ID 94
      RECT-128 AT ROW 16.95 COL 51 WIDGET-ID 96
@@ -411,11 +414,9 @@ DO:
     RUN procedures/inicializa_dispositivo.p ( INPUT 6,
                                              OUTPUT aux_flgderro).              
 
-    /* se a impressora estiver habilitada e com papel */
-    IF  xfs_impressora       AND
-        NOT xfs_impsempapel  THEN
-        RUN imprime_comprovante (INPUT aux_nrdocmto,
-                                 INPUT aux_dsprotoc).
+    /* visualizar impressao */
+    RUN imprime_comprovante (INPUT aux_nrdocmto,
+                             INPUT aux_dsprotoc).
 
     ASSIGN par_flgderro = NO
            par_vlretorn = "OK".

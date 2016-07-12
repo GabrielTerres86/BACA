@@ -41,6 +41,8 @@
   24/12/2015 - Adicionado tratamento para contas com assinatura 
                conjunta. (Reinert)
 
+  14/06/2016 - #413717 Retirada a verificacao de impressora antes
+               da chamada da visualizacao da impressao (Carlos)
 
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -209,36 +211,36 @@ DEFINE FRAME f_cartao_agen_trans_dados
      "AGENDAMENTO" VIEW-AS TEXT
           SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 128
           FGCOLOR 1 FONT 10
-     "conta corrente na data escolhida para débito." VIEW-AS TEXT
-          SIZE 96 BY 1.14 AT ROW 21.14 COL 31.8 WIDGET-ID 200
-          FGCOLOR 1 FONT 8
-     "Titular:" VIEW-AS TEXT
-          SIZE 16 BY 1.19 AT ROW 10.67 COL 19.6 WIDGET-ID 112
-          FONT 8
-     "Valor:" VIEW-AS TEXT
-          SIZE 13 BY 1.67 AT ROW 14.95 COL 21 WIDGET-ID 110
-          FONT 8
-     "Data da Transferência:" VIEW-AS TEXT
-          SIZE 48.2 BY 1.67 AT ROW 14.95 COL 67.6 WIDGET-ID 194
-          FONT 8
-     "A quitação efetiva deste agendamento" VIEW-AS TEXT
-          SIZE 82.6 BY 1.52 AT ROW 18.62 COL 38 WIDGET-ID 196
-          FGCOLOR 1 FONT 8
-     "Conta:" VIEW-AS TEXT
-          SIZE 13.8 BY 1.33 AT ROW 8.62 COL 96.6 WIDGET-ID 108
-          FONT 8
-     "TRANSFERÊNCIAS" VIEW-AS TEXT
-          SIZE 42 BY 1.14 AT ROW 3.14 COL 101 WIDGET-ID 130
-          FGCOLOR 1 FONT 14
-     "dependerá da existencia de saldo na sua" VIEW-AS TEXT
-          SIZE 88.6 BY 1.14 AT ROW 19.95 COL 35 WIDGET-ID 198
-          FGCOLOR 1 FONT 8
      "DE" VIEW-AS TEXT
           SIZE 15 BY 1.14 AT ROW 1.95 COL 101.2 WIDGET-ID 132
           FGCOLOR 1 FONT 14
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 8.62 COL 19.4 WIDGET-ID 190
           FONT 8
+     "Valor:" VIEW-AS TEXT
+          SIZE 13 BY 1.67 AT ROW 14.95 COL 21 WIDGET-ID 110
+          FONT 8
+     "Conta:" VIEW-AS TEXT
+          SIZE 13.8 BY 1.33 AT ROW 8.62 COL 96.6 WIDGET-ID 108
+          FONT 8
+     "Titular:" VIEW-AS TEXT
+          SIZE 16 BY 1.19 AT ROW 10.67 COL 19.6 WIDGET-ID 112
+          FONT 8
+     "conta corrente na data escolhida para débito." VIEW-AS TEXT
+          SIZE 96 BY 1.14 AT ROW 21.14 COL 31.8 WIDGET-ID 200
+          FGCOLOR 1 FONT 8
+     "TRANSFERÊNCIAS" VIEW-AS TEXT
+          SIZE 42 BY 1.14 AT ROW 3.14 COL 101 WIDGET-ID 130
+          FGCOLOR 1 FONT 14
+     "A quitação efetiva deste agendamento" VIEW-AS TEXT
+          SIZE 82.6 BY 1.52 AT ROW 18.62 COL 38 WIDGET-ID 196
+          FGCOLOR 1 FONT 8
+     "Data da Transferência:" VIEW-AS TEXT
+          SIZE 48.2 BY 1.67 AT ROW 14.95 COL 67.6 WIDGET-ID 194
+          FONT 8
+     "dependerá da existencia de saldo na sua" VIEW-AS TEXT
+          SIZE 88.6 BY 1.14 AT ROW 19.95 COL 35 WIDGET-ID 198
+          FGCOLOR 1 FONT 8
      IMAGE-37 AT ROW 24.29 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.29 COL 156 WIDGET-ID 154
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
@@ -432,18 +434,13 @@ DO:
                                                    OUTPUT aux_flgderro,
                                                    OUTPUT aux_dsprotoc,
                                                    OUTPUT aux_idastcjt).
-                        IF  NOT aux_flgderro THEN
+            IF  NOT aux_flgderro THEN
                 DO:                                                                        
-                            RUN procedures/inicializa_dispositivo.p ( INPUT 6,
+                    RUN procedures/inicializa_dispositivo.p ( INPUT 6,
                                                              OUTPUT aux_flgderro).
             
-                    /* se a impressora estiver habilitada, com papel e 
-                       transferencia efetuada com sucesso e nao exigir
-                       assinatura conjunta */
-                    IF  xfs_impressora       AND
-                        NOT xfs_impsempapel  AND
-                        NOT aux_flgderro     AND 
-                        aux_idastcjt = 0     THEN
+                    /* se transferencia efetuada com sucesso e nao exigir assinatura conjunta */
+                    IF  aux_idastcjt = 0     THEN
                         RUN imprime_comprovante.
                 END.
             ELSE /* Erro na rotina */
@@ -737,18 +734,13 @@ tmp_tximpres = tmp_tximpres +
                "            **  FIM DA IMPRESSAO  **            " +
                "                                                " +
                "                                                ".                           
-                                                                                 
-/* se a impressora estiver habilitada e com papel */
-IF  xfs_impressora       AND
-    NOT xfs_impsempapel  THEN
-    DO: 
-        RUN impressao_visualiza.w (INPUT "Comprovante...",
-                                   INPUT  tmp_tximpres,
-                                   INPUT 0, /*Comprovante*/
-                                   INPUT "").
-        APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-        RETURN "OK".
-    END.
+
+    RUN impressao_visualiza.w (INPUT "Comprovante...",
+                               INPUT  tmp_tximpres,
+                               INPUT 0, /*Comprovante*/
+                               INPUT "").
+    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
+    RETURN "OK".
 
 END PROCEDURE.
 

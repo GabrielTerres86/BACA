@@ -42,6 +42,9 @@
                            busca_associado. (Reinert)
                            
               29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
+
+                          14/06/2016 - #413717 Retirada a verificacao de impressora antes
+                           da chamada da visualizacao da impressao (Carlos)
         
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -216,35 +219,35 @@ DEFINE FRAME f_cartao_agen_trans_mensal_dados
      "A quitação efetiva deste agendamento" VIEW-AS TEXT
           SIZE 82.6 BY 1.29 AT ROW 19.48 COL 38 WIDGET-ID 196
           FGCOLOR 1 FONT 8
-     "DE" VIEW-AS TEXT
-          SIZE 15 BY 1.1 AT ROW 1.95 COL 101.2 WIDGET-ID 132
-          FGCOLOR 1 FONT 14
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 8 COL 19.4 WIDGET-ID 190
-          FONT 8
-     "Conta:" VIEW-AS TEXT
-          SIZE 13.8 BY 1.33 AT ROW 8 COL 96.6 WIDGET-ID 108
-          FONT 8
-     "Titular:" VIEW-AS TEXT
-          SIZE 16 BY 1.19 AT ROW 9.95 COL 19.6 WIDGET-ID 112
-          FONT 8
-     "AGENDAMENTO" VIEW-AS TEXT
-          SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 128
-          FGCOLOR 1 FONT 10
-     "Data da Agendamento:" VIEW-AS TEXT
-          SIZE 48.2 BY 1.67 AT ROW 15.48 COL 20 WIDGET-ID 194
-          FONT 8
-     "Valor:" VIEW-AS TEXT
-          SIZE 13 BY 1.67 AT ROW 13.52 COL 19.6 WIDGET-ID 110
-          FONT 8
-     "conta corrente na data escolhida para débito." VIEW-AS TEXT
-          SIZE 96 BY 1.1 AT ROW 22 COL 31.8 WIDGET-ID 200
-          FGCOLOR 1 FONT 8
      "TRANSFERÊNCIAS" VIEW-AS TEXT
           SIZE 42 BY 1.1 AT ROW 3.14 COL 101 WIDGET-ID 130
           FGCOLOR 1 FONT 14
      "dependerá da existencia de saldo na sua" VIEW-AS TEXT
           SIZE 88.6 BY 1.1 AT ROW 20.81 COL 35 WIDGET-ID 198
+          FGCOLOR 1 FONT 8
+     "Conta:" VIEW-AS TEXT
+          SIZE 13.8 BY 1.33 AT ROW 8 COL 96.6 WIDGET-ID 108
+          FONT 8
+     "Data da Agendamento:" VIEW-AS TEXT
+          SIZE 48.2 BY 1.67 AT ROW 15.48 COL 20 WIDGET-ID 194
+          FONT 8
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 8 COL 19.4 WIDGET-ID 190
+          FONT 8
+     "DE" VIEW-AS TEXT
+          SIZE 15 BY 1.1 AT ROW 1.95 COL 101.2 WIDGET-ID 132
+          FGCOLOR 1 FONT 14
+     "Valor:" VIEW-AS TEXT
+          SIZE 13 BY 1.67 AT ROW 13.52 COL 19.6 WIDGET-ID 110
+          FONT 8
+     "AGENDAMENTO" VIEW-AS TEXT
+          SIZE 75 BY 3.33 AT ROW 1.48 COL 25 WIDGET-ID 128
+          FGCOLOR 1 FONT 10
+     "Titular:" VIEW-AS TEXT
+          SIZE 16 BY 1.19 AT ROW 9.95 COL 19.6 WIDGET-ID 112
+          FONT 8
+     "conta corrente na data escolhida para débito." VIEW-AS TEXT
+          SIZE 96 BY 1.1 AT ROW 22 COL 31.8 WIDGET-ID 200
           FGCOLOR 1 FONT 8
      IMAGE-37 AT ROW 24.24 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
@@ -452,15 +455,11 @@ DO:
                     
                     IF  NOT aux_flgderro THEN
                         DO:
-                                                RUN procedures/inicializa_dispositivo.p ( INPUT 6,
-                                                                     OUTPUT aux_flgderro).
-                
-                            /* se a impressora estiver habilitada, com papel e 
-                               transferencia efetuada com sucesso */
-                            IF  xfs_impressora       AND
-                                NOT xfs_impsempapel  AND
-                                NOT aux_flgderro     AND 
-                                aux_idastcjt = 0     THEN
+                            RUN procedures/inicializa_dispositivo.p ( INPUT 6,
+                                                                      OUTPUT aux_flgderro).
+
+                            /* se transferencia efetuada com sucesso */
+                            IF  aux_idastcjt = 0     THEN
                                 RUN imprime_comprovante.
                         END.
                     ELSE /* Erro na rotina */
@@ -772,18 +771,13 @@ tmp_tximpres = tmp_tximpres +
                "            **  FIM DA IMPRESSAO  **            " +
                "                                                " +
                "                                                ".
-                                                                                 
-/* se a impressora estiver habilitada e com papel */
-IF  xfs_impressora       AND
-    NOT xfs_impsempapel  THEN
-    DO: 
+
         RUN impressao_visualiza.w (INPUT "Comprovante...",
-                                   INPUT  tmp_tximpres,
-                                   INPUT 0, /*Comprovante*/
-                                   INPUT "").
+                                                           INPUT  tmp_tximpres,
+                                                           INPUT 0, /*Comprovante*/
+                                                           INPUT "").
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
-    END.
 
 END PROCEDURE.
 

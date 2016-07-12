@@ -9,7 +9,7 @@ Objetivo : Tela para depoistos em dinheiro
 Autor    : Evandro
 Data     : Janeiro 2010
 
-Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
+Alterações:       15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   18/07/2013 - Correção número da agencia da cooperativa (Lucas).
                   
@@ -26,7 +26,10 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   27/01/2016 - Adicionado novo parametro na chamada da procedure
                                busca_associado. (Reinert)
                                            
-                  29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)     
+                  29/01/2016 - Tratamento banners (Lucas Lunelli - PRJ261)
+
+                  14/06/2016 - #413717 Retirada a verificacao de impressora antes
+                               da chamada da visualizacao da impressao (Carlos)
 
 ............................................................................... */
 
@@ -407,15 +410,14 @@ DO:
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
             RETURN NO-APPLY.        
         END.
-    
-   RUN procedures/inicializa_dispositivo.p ( INPUT 6,
+
+    /* Operação 6 - Verificar a Impressora */
+    RUN procedures/inicializa_dispositivo.p ( INPUT 6,
                                              OUTPUT aux_flgderro).
     
-    /* se a impressora estiver habilitada e com papel */
-    IF  xfs_impressora       AND
-        NOT xfs_impsempapel  THEN
-        RUN imprime_comprovante (INPUT aux_nrdocmto,
-                                 INPUT aux_dsprotoc).
+    /* visualiza impressao */
+    RUN imprime_comprovante (INPUT aux_nrdocmto,
+                             INPUT aux_dsprotoc).
     
     ASSIGN par_flgderro = NO
            par_vlretorn = "OK".
