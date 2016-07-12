@@ -11,6 +11,8 @@ Data     : Setembro/2014
 
 Ultima alteração: 05/11/2014 - Ajuste de navegação na inclusão 
                                de mensagem de sucesso (Lunelli)
+                               
+                  30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 ............................................................................... */
 
@@ -48,8 +50,9 @@ DEFINE VARIABLE aux_flgderro        AS LOGICAL      NO-UNDO.
 &Scoped-define FRAME-NAME f_cartao_pagamento_debaut
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS IMAGE-36 IMAGE-37 IMAGE-40 IMAGE-50 Btn_A ~
-Btn_E Btn_D Btn_H ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
+&Scoped-Define ENABLED-OBJECTS IMAGE-36 IMAGE-37 IMAGE-40 IMAGE-50 IMAGE-51 ~
+IMAGE-52 Btn_A Btn_E Btn_C Btn_G Btn_D Btn_H ed_cdagectl ed_nmrescop ~
+ed_nrdconta ed_nmextttl 
 &Scoped-Define DISPLAYED-OBJECTS ed_cdagectl ed_nmrescop ed_nrdconta ~
 ed_nmextttl 
 
@@ -76,6 +79,11 @@ DEFINE BUTTON Btn_A
      SIZE 61 BY 3.33
      FONT 8.
 
+DEFINE BUTTON Btn_C 
+     LABEL "ALTERAR" 
+     SIZE 61 BY 3.33
+     FONT 8.
+
 DEFINE BUTTON Btn_D 
      LABEL "INCLUIR" 
      SIZE 61 BY 3.33
@@ -83,6 +91,11 @@ DEFINE BUTTON Btn_D
 
 DEFINE BUTTON Btn_E 
      LABEL "EXCLUIR" 
+     SIZE 61 BY 3.33
+     FONT 8.
+
+DEFINE BUTTON Btn_G 
+     LABEL "SMS" 
      SIZE 61 BY 3.33
      FONT 8.
 
@@ -127,6 +140,14 @@ DEFINE IMAGE IMAGE-50
      FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
+DEFINE IMAGE IMAGE-51
+     FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
+     SIZE 5 BY 3.05.
+
+DEFINE IMAGE IMAGE-52
+     FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
+     SIZE 5 BY 3.05.
+
 DEFINE RECTANGLE RECT-100
      EDGE-PIXELS 2 GRAPHIC-EDGE    
      SIZE 123 BY .24
@@ -148,20 +169,22 @@ DEFINE RECTANGLE RECT-99
 DEFINE FRAME f_cartao_pagamento_debaut
      Btn_A AT ROW 9.67 COL 6 WIDGET-ID 154
      Btn_E AT ROW 9.67 COL 94.4 WIDGET-ID 246
+     Btn_C AT ROW 19.1 COL 6 WIDGET-ID 254
+     Btn_G AT ROW 19.1 COL 94.4 WIDGET-ID 250
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 156
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 158
      ed_cdagectl AT ROW 6 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 238 NO-TAB-STOP 
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 242 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.43 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.43 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 240 NO-TAB-STOP 
-     "Conta/Titular:" VIEW-AS TEXT
-          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
+     "Cooperativa:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
           FONT 8
      "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
           SIZE 100 BY 3.33 AT ROW 1.48 COL 31 WIDGET-ID 214
           FGCOLOR 1 FONT 10
-     "Cooperativa:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
+     "Conta/Titular:" VIEW-AS TEXT
+          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
           FONT 8
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-99 AT ROW 5.52 COL 19.6 WIDGET-ID 120
@@ -170,6 +193,8 @@ DEFINE FRAME f_cartao_pagamento_debaut
      IMAGE-37 AT ROW 24.24 COL 1 WIDGET-ID 148
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 218
      IMAGE-50 AT ROW 9.81 COL 156 WIDGET-ID 248
+     IMAGE-51 AT ROW 19.24 COL 156 WIDGET-ID 252
+     IMAGE-52 AT ROW 19.24 COL 1 WIDGET-ID 256
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -313,6 +338,27 @@ END.
 &ANALYZE-RESUME
 
 
+&Scoped-define SELF-NAME Btn_C
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_C w_cartao_pagamento_debaut
+ON ANY-KEY OF Btn_C IN FRAME f_cartao_pagamento_debaut /* ALTERAR */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_C w_cartao_pagamento_debaut
+ON CHOOSE OF Btn_C IN FRAME f_cartao_pagamento_debaut /* ALTERAR */
+DO: 
+    RUN cartao_pagamento_debaut_alterar.w.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
 &Scoped-define SELF-NAME Btn_D
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_pagamento_debaut
 ON ANY-KEY OF Btn_D IN FRAME f_cartao_pagamento_debaut /* INCLUIR */
@@ -327,6 +373,7 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_pagamento_debaut
 ON CHOOSE OF Btn_D IN FRAME f_cartao_pagamento_debaut /* INCLUIR */
 DO:
+    
     RUN cartao_pagamento_debaut_incluir.w (INPUT "I",
                                            INPUT "",
                                            INPUT "",
@@ -359,6 +406,27 @@ END.
 ON CHOOSE OF Btn_E IN FRAME f_cartao_pagamento_debaut /* EXCLUIR */
 DO:
     RUN cartao_pagamento_debaut_exclusao.w.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Btn_G
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_pagamento_debaut
+ON ANY-KEY OF Btn_G IN FRAME f_cartao_pagamento_debaut /* SMS */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_pagamento_debaut
+ON CHOOSE OF Btn_G IN FRAME f_cartao_pagamento_debaut /* SMS */
+DO:
+    RUN cartao_pagamento_debaut_sms_cadastrar.w (INPUT 1).
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -521,8 +589,9 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
       WITH FRAME f_cartao_pagamento_debaut.
-  ENABLE IMAGE-36 IMAGE-37 IMAGE-40 IMAGE-50 Btn_A Btn_E Btn_D Btn_H 
-         ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
+  ENABLE IMAGE-36 IMAGE-37 IMAGE-40 IMAGE-50 IMAGE-51 IMAGE-52 Btn_A Btn_E 
+         Btn_C Btn_G Btn_D Btn_H ed_cdagectl ed_nmrescop ed_nrdconta 
+         ed_nmextttl 
       WITH FRAME f_cartao_pagamento_debaut.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_pagamento_debaut}
   VIEW w_cartao_pagamento_debaut.
@@ -539,6 +608,10 @@ chtemporizador:t_cartao_pagamento_debaut:INTERVAL = 0.
         Btn_A:SENSITIVE IN FRAME f_cartao_pagamento_debaut  THEN
         APPLY "CHOOSE" TO Btn_A.
     ELSE
+    IF  KEY-FUNCTION(LASTKEY) = "C"                           AND
+        Btn_C:SENSITIVE IN FRAME f_cartao_pagamento_debaut  THEN
+        APPLY "CHOOSE" TO Btn_C.
+    ELSE
     IF  KEY-FUNCTION(LASTKEY) = "D"                           AND
         Btn_D:SENSITIVE IN FRAME f_cartao_pagamento_debaut  THEN
         APPLY "CHOOSE" TO Btn_D.
@@ -547,9 +620,13 @@ chtemporizador:t_cartao_pagamento_debaut:INTERVAL = 0.
         Btn_E:SENSITIVE IN FRAME f_cartao_pagamento_debaut  THEN
         APPLY "CHOOSE" TO Btn_E.
     ELSE
+    IF  KEY-FUNCTION(LASTKEY) = "G"                           AND
+        Btn_G:SENSITIVE IN FRAME f_cartao_pagamento_debaut  THEN
+        APPLY "CHOOSE" TO Btn_G.
+    ELSE
     IF  KEY-FUNCTION(LASTKEY) = "H"                           AND
         Btn_H:SENSITIVE IN FRAME f_cartao_pagamento_debaut  THEN
-        APPLY "CHOOSE" TO Btn_H.
+        APPLY "CHOOSE" TO Btn_H.    
     ELSE
         RETURN NO-APPLY.
 

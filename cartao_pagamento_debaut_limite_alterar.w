@@ -1,17 +1,15 @@
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI
 &ANALYZE-RESUME
-&Scoped-define WINDOW-NAME w_debaut_limite_cadastrar
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_debaut_limite_cadastrar 
+&Scoped-define WINDOW-NAME w_debaut_limite_alterar
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_debaut_limite_alterar 
 /* ..............................................................................
 
-Procedure: cartao_pagamento_debaut_limite_cadastrar.w
-Objetivo : Tela de cadastro de limite de débito automático
+Procedure: cartao_pagamento_debaut_limite_alterar.w
+Objetivo : Tela de alteração de limite de débito automático [PROJ320]
 Autor    : Lucas Lunelli
-Data     : Setembro/2014
+Data     : Maio/2016
 
-Ultima alteração: 05/11/2014 - Inclusão de mensagem de sucesso (Lunelli)
-
-                  30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+Ultima alteração:
 
 ............................................................................... */
 
@@ -29,13 +27,12 @@ CREATE WIDGET-POOL.
 
 /* ***************************  Definitions  ************************** */
 
-DEFINE INPUT  PARAM par_dscodbar     AS CHAR         NO-UNDO.
-DEFINE INPUT  PARAM par_cdbarra1     AS CHAR         NO-UNDO.
-DEFINE INPUT  PARAM par_cdbarra2     AS CHAR         NO-UNDO.
-DEFINE INPUT  PARAM par_cdbarra3     AS CHAR         NO-UNDO.
-DEFINE INPUT  PARAM par_cdbarra4     AS CHAR         NO-UNDO.
 DEFINE INPUT  PARAM par_nmempres     AS CHAR         NO-UNDO.
 DEFINE INPUT  PARAM par_cdrefere     AS CHAR         NO-UNDO.
+DEFINE INPUT  PARAM par_cdhistor     AS INTE         NO-UNDO.
+DEFINE INPUT  PARAM par_cdempcon     AS INTE         NO-UNDO.
+DEFINE INPUT  PARAM par_cdsegmto     AS INTE         NO-UNDO.
+DEFINE INPUT  PARAM par_desmaxdb     AS CHAR         NO-UNDO.
 DEFINE OUTPUT PARAM par_flgderro     AS LOGI         NO-UNDO.
 
 /* Local Variable Definitions ---                                       */
@@ -53,7 +50,7 @@ DEFINE OUTPUT PARAM par_flgderro     AS LOGI         NO-UNDO.
 &Scoped-define DB-AWARE no
 
 /* Name of designated FRAME-NAME and/or first browse and/or first query */
-&Scoped-define FRAME-NAME f_debaut_limite_cadastrar
+&Scoped-define FRAME-NAME f_debaut_limite_alterar
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS IMAGE-37 IMAGE-40 RECT-133 RECT-134 RECT-135 ~
@@ -72,7 +69,7 @@ ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl
 /* ***********************  Control Definitions  ********************** */
 
 /* Define the widget handle for the window                              */
-DEFINE VAR w_debaut_limite_cadastrar AS WIDGET-HANDLE NO-UNDO.
+DEFINE VAR w_debaut_limite_alterar AS WIDGET-HANDLE NO-UNDO.
 
 /* Definitions of handles for OCX Containers                            */
 DEFINE VARIABLE temporizador AS WIDGET-HANDLE NO-UNDO.
@@ -162,7 +159,7 @@ DEFINE RECTANGLE RECT-99
 
 /* ************************  Frame Definitions  *********************** */
 
-DEFINE FRAME f_debaut_limite_cadastrar
+DEFINE FRAME f_debaut_limite_alterar
      ed_nmempres AT ROW 10.76 COL 56 COLON-ALIGNED NO-LABEL WIDGET-ID 256
      ed_cdrefere AT ROW 14.24 COL 132 RIGHT-ALIGNED NO-LABEL WIDGET-ID 254
      ed_vlrmaxdb AT ROW 17.24 COL 131.6 RIGHT-ALIGNED NO-LABEL WIDGET-ID 272
@@ -172,24 +169,24 @@ DEFINE FRAME f_debaut_limite_cadastrar
      ed_nmrescop AT ROW 6 COL 62 COLON-ALIGNED NO-LABEL WIDGET-ID 242 NO-TAB-STOP 
      ed_nrdconta AT ROW 7.43 COL 46 COLON-ALIGNED NO-LABEL WIDGET-ID 244 NO-TAB-STOP 
      ed_nmextttl AT ROW 7.43 COL 72 COLON-ALIGNED NO-LABEL WIDGET-ID 240 NO-TAB-STOP 
+     "Empresa:" VIEW-AS TEXT
+          SIZE 16.8 BY 1.19 AT ROW 11 COL 39.8 WIDGET-ID 264
+          FONT 14
      "Cooperativa:" VIEW-AS TEXT
           SIZE 28 BY 1.19 AT ROW 6 COL 18.6 WIDGET-ID 134
           FONT 8
-     "Conta/Titular:" VIEW-AS TEXT
-          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
-          FONT 8
-     "Empresa:" VIEW-AS TEXT
-          SIZE 16.8 BY 1.19 AT ROW 11 COL 39.8 WIDGET-ID 264
+     "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
+          SIZE 100 BY 3.33 AT ROW 1.48 COL 32 WIDGET-ID 214
+          FGCOLOR 1 FONT 10
+     "Limite Máximo para Débito:" VIEW-AS TEXT
+          SIZE 45.6 BY 1.19 AT ROW 17.29 COL 11.2 WIDGET-ID 270
           FONT 14
      "Identificador:" VIEW-AS TEXT
           SIZE 22 BY 1.19 AT ROW 14.19 COL 35 WIDGET-ID 262
           FONT 14
-     "Limite Máximo para Débito:" VIEW-AS TEXT
-          SIZE 45.6 BY 1.19 AT ROW 17.29 COL 11.2 WIDGET-ID 270
-          FONT 14
-     "DÉBITO AUTOMÁTICO" VIEW-AS TEXT
-          SIZE 100 BY 3.33 AT ROW 1.48 COL 32 WIDGET-ID 214
-          FGCOLOR 1 FONT 10
+     "Conta/Titular:" VIEW-AS TEXT
+          SIZE 29 BY 1.19 AT ROW 7.43 COL 17 WIDGET-ID 140
+          FONT 8
      RECT-98 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-99 AT ROW 5.52 COL 19.6 WIDGET-ID 120
      RECT-100 AT ROW 5.29 COL 19.6 WIDGET-ID 116
@@ -219,7 +216,7 @@ DEFINE FRAME f_debaut_limite_cadastrar
 &ANALYZE-SUSPEND _CREATE-WINDOW
 /* SUPPRESS Window definition (used by the UIB) 
 IF SESSION:DISPLAY-TYPE = "GUI":U THEN
-  CREATE WINDOW w_debaut_limite_cadastrar ASSIGN
+  CREATE WINDOW w_debaut_limite_alterar ASSIGN
          HIDDEN             = YES
          TITLE              = ""
          HEIGHT             = 28.57
@@ -245,7 +242,7 @@ ELSE {&WINDOW-NAME} = CURRENT-WINDOW.
                                                                         */
 /* END WINDOW DEFINITION                                                */
 &ANALYZE-RESUME
-ASSIGN w_debaut_limite_cadastrar = CURRENT-WINDOW.
+ASSIGN w_debaut_limite_alterar = CURRENT-WINDOW.
 
 
 
@@ -253,24 +250,24 @@ ASSIGN w_debaut_limite_cadastrar = CURRENT-WINDOW.
 /* ***********  Runtime Attributes and AppBuilder Settings  *********** */
 
 &ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
-/* SETTINGS FOR WINDOW w_debaut_limite_cadastrar
+/* SETTINGS FOR WINDOW w_debaut_limite_alterar
   VISIBLE,,RUN-PERSISTENT                                               */
-/* SETTINGS FOR FRAME f_debaut_limite_cadastrar
+/* SETTINGS FOR FRAME f_debaut_limite_alterar
    FRAME-NAME                                                           */
-/* SETTINGS FOR FILL-IN ed_cdrefere IN FRAME f_debaut_limite_cadastrar
+/* SETTINGS FOR FILL-IN ed_cdrefere IN FRAME f_debaut_limite_alterar
    NO-ENABLE ALIGN-R                                                    */
-/* SETTINGS FOR FILL-IN ed_nmempres IN FRAME f_debaut_limite_cadastrar
+/* SETTINGS FOR FILL-IN ed_nmempres IN FRAME f_debaut_limite_alterar
    NO-ENABLE                                                            */
 ASSIGN 
-       ed_nmempres:READ-ONLY IN FRAME f_debaut_limite_cadastrar        = TRUE.
+       ed_nmempres:READ-ONLY IN FRAME f_debaut_limite_alterar        = TRUE.
 
-/* SETTINGS FOR FILL-IN ed_vlrmaxdb IN FRAME f_debaut_limite_cadastrar
+/* SETTINGS FOR FILL-IN ed_vlrmaxdb IN FRAME f_debaut_limite_alterar
    ALIGN-R                                                              */
-/* SETTINGS FOR RECTANGLE RECT-100 IN FRAME f_debaut_limite_cadastrar
+/* SETTINGS FOR RECTANGLE RECT-100 IN FRAME f_debaut_limite_alterar
    NO-ENABLE                                                            */
-/* SETTINGS FOR RECTANGLE RECT-98 IN FRAME f_debaut_limite_cadastrar
+/* SETTINGS FOR RECTANGLE RECT-98 IN FRAME f_debaut_limite_alterar
    NO-ENABLE                                                            */
-/* SETTINGS FOR RECTANGLE RECT-99 IN FRAME f_debaut_limite_cadastrar
+/* SETTINGS FOR RECTANGLE RECT-99 IN FRAME f_debaut_limite_alterar
    NO-ENABLE                                                            */
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
@@ -285,7 +282,7 @@ ASSIGN
 &IF "{&OPSYS}" = "WIN32":U AND "{&WINDOW-SYSTEM}" NE "TTY":U &THEN
 
 CREATE CONTROL-FRAME temporizador ASSIGN
-       FRAME           = FRAME f_debaut_limite_cadastrar:HANDLE
+       FRAME           = FRAME f_debaut_limite_alterar:HANDLE
        ROW             = 1.71
        COLUMN          = 17
        HEIGHT          = 1.67
@@ -294,7 +291,7 @@ CREATE CONTROL-FRAME temporizador ASSIGN
        WIDGET-ID       = 76
        HIDDEN          = yes
        SENSITIVE       = yes.
-/* temporizador OCXINFO:CREATE-CONTROL from: {F0B88A90-F5DA-11CF-B545-0020AF6ED35A} type: t_debaut_limite_cadastrar */
+/* temporizador OCXINFO:CREATE-CONTROL from: {F0B88A90-F5DA-11CF-B545-0020AF6ED35A} type: t_debaut_limite_alterar */
 
 &ENDIF
 
@@ -303,9 +300,9 @@ CREATE CONTROL-FRAME temporizador ASSIGN
 
 /* ************************  Control Triggers  ************************ */
 
-&Scoped-define SELF-NAME w_debaut_limite_cadastrar
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_debaut_limite_cadastrar w_debaut_limite_cadastrar
-ON END-ERROR OF w_debaut_limite_cadastrar
+&Scoped-define SELF-NAME w_debaut_limite_alterar
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_debaut_limite_alterar w_debaut_limite_alterar
+ON END-ERROR OF w_debaut_limite_alterar
 OR ENDKEY OF {&WINDOW-NAME} ANYWHERE DO:
   /* This case occurs when the user presses the "Esc" key.
      In a persistently run window, just ignore this.  If we did not, the
@@ -317,8 +314,8 @@ END.
 &ANALYZE-RESUME
 
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_debaut_limite_cadastrar w_debaut_limite_cadastrar
-ON WINDOW-CLOSE OF w_debaut_limite_cadastrar
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w_debaut_limite_alterar w_debaut_limite_alterar
+ON WINDOW-CLOSE OF w_debaut_limite_alterar
 DO:
   /* This event will close the window and terminate the procedure.  */
   APPLY "CLOSE":U TO THIS-PROCEDURE.
@@ -330,8 +327,8 @@ END.
 
 
 &Scoped-define SELF-NAME Btn_D
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_debaut_limite_cadastrar
-ON ANY-KEY OF Btn_D IN FRAME f_debaut_limite_cadastrar /* CONFIRMAR */
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_debaut_limite_alterar
+ON ANY-KEY OF Btn_D IN FRAME f_debaut_limite_alterar /* CONFIRMAR */
 DO:
     RUN tecla.
 END.
@@ -340,8 +337,8 @@ END.
 &ANALYZE-RESUME
 
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_debaut_limite_cadastrar
-ON CHOOSE OF Btn_D IN FRAME f_debaut_limite_cadastrar /* CONFIRMAR */
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_debaut_limite_alterar
+ON CHOOSE OF Btn_D IN FRAME f_debaut_limite_alterar /* CONFIRMAR */
 DO:
     IF  DECI(ed_vlrmaxdb:SCREEN-VALUE) <= 0 THEN
         DO:
@@ -360,18 +357,25 @@ DO:
             RETURN NO-APPLY.
         END.
 
-    RUN cartao_pagamento_debaut_cadastrar_aceite.w (INPUT par_dscodbar, 
-                                                    INPUT par_cdbarra1, 
-                                                    INPUT par_cdbarra2, 
-                                                    INPUT par_cdbarra3, 
-                                                    INPUT par_cdbarra4,                                                
-                                                    INPUT par_cdrefere,
-                                                    INPUT DECI(ed_vlrmaxdb:SCREEN-VALUE),
-                                                   OUTPUT par_flgderro).
+    /* puxa o frame principal */
+     h_principal:MOVE-TO-TOP().
+
+    RUN procedures/altera_autorizacao_debito.p (INPUT par_cdrefere,
+                                                INPUT par_cdhistor,                                                
+                                                INPUT DECI(ed_vlrmaxdb:SCREEN-VALUE),
+                                               OUTPUT par_flgderro).
+
     IF  par_flgderro   THEN
-        DO:            
+        DO:
+            w_debaut_limite_alterar:MOVE-TO-TOP().
+
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-            RETURN "OK".
+            RETURN "NOK".
+        END.
+    ELSE
+        DO:
+            /* puxa o frame principal pra frente */
+            h_principal:MOVE-TO-TOP().           
         END.
 
     /* verifica se finalizou a operacao */
@@ -392,8 +396,8 @@ END.
 
 
 &Scoped-define SELF-NAME Btn_H
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_debaut_limite_cadastrar
-ON ANY-KEY OF Btn_H IN FRAME f_debaut_limite_cadastrar /* VOLTAR */
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_debaut_limite_alterar
+ON ANY-KEY OF Btn_H IN FRAME f_debaut_limite_alterar /* VOLTAR */
 DO:
     RUN tecla.
 END.
@@ -402,8 +406,8 @@ END.
 &ANALYZE-RESUME
 
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_debaut_limite_cadastrar
-ON CHOOSE OF Btn_H IN FRAME f_debaut_limite_cadastrar /* VOLTAR */
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_debaut_limite_alterar
+ON CHOOSE OF Btn_H IN FRAME f_debaut_limite_alterar /* VOLTAR */
 DO:
     APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
     RETURN "NOK".
@@ -414,8 +418,8 @@ END.
 
 
 &Scoped-define SELF-NAME ed_vlrmaxdb
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_vlrmaxdb w_debaut_limite_cadastrar
-ON ANY-KEY OF ed_vlrmaxdb IN FRAME f_debaut_limite_cadastrar
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_vlrmaxdb w_debaut_limite_alterar
+ON ANY-KEY OF ed_vlrmaxdb IN FRAME f_debaut_limite_alterar
 DO:
     RUN tecla.
 
@@ -450,9 +454,9 @@ END.
 
 
 &Scoped-define SELF-NAME temporizador
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_debaut_limite_cadastrar OCX.Tick
-PROCEDURE temporizador.t_debaut_limite_cadastrar.Tick .
-APPLY "CHOOSE" TO Btn_H IN FRAME f_debaut_limite_cadastrar.
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_debaut_limite_alterar OCX.Tick
+PROCEDURE temporizador.t_debaut_limite_alterar.Tick .
+APPLY "CHOOSE" TO Btn_H IN FRAME f_debaut_limite_alterar.
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -461,7 +465,7 @@ END PROCEDURE.
 
 &UNDEFINE SELF-NAME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w_debaut_limite_cadastrar 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w_debaut_limite_alterar 
 
 
 /* ***************************  Main Block  *************************** */
@@ -487,9 +491,9 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     RUN enable_UI.
 
     /* deixa o mouse transparente */
-    FRAME f_debaut_limite_cadastrar:LOAD-MOUSE-POINTER("blank.cur").
+    FRAME f_debaut_limite_alterar:LOAD-MOUSE-POINTER("blank.cur").
 
-    ASSIGN chtemporizador:t_debaut_limite_cadastrar:INTERVAL = glb_nrtempor
+    ASSIGN chtemporizador:t_debaut_limite_alterar:INTERVAL = glb_nrtempor
 
            /* Dados do associado */
            ed_cdagectl = glb_cdagectl
@@ -499,10 +503,11 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
     DISPLAY ed_cdagectl  ed_nmrescop
             ed_nrdconta  ed_nmextttl
-            WITH FRAME f_debaut_limite_cadastrar.
+            WITH FRAME f_debaut_limite_alterar.
 
     ASSIGN ed_nmempres:SCREEN-VALUE = par_nmempres
-           ed_cdrefere:SCREEN-VALUE = par_cdrefere.
+           ed_cdrefere:SCREEN-VALUE = par_cdrefere
+           ed_vlrmaxdb:SCREEN-VALUE = par_desmaxdb.
 
     APPLY "ENTRY" TO ed_vlrmaxdb.
 
@@ -516,7 +521,7 @@ END.
 
 /* **********************  Internal Procedures  *********************** */
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE control_load w_debaut_limite_cadastrar  _CONTROL-LOAD
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE control_load w_debaut_limite_alterar  _CONTROL-LOAD
 PROCEDURE control_load :
 /*------------------------------------------------------------------------------
   Purpose:     Load the OCXs    
@@ -529,7 +534,7 @@ PROCEDURE control_load :
 DEFINE VARIABLE UIB_S    AS LOGICAL    NO-UNDO.
 DEFINE VARIABLE OCXFile  AS CHARACTER  NO-UNDO.
 
-OCXFile = SEARCH( "cartao_pagamento_debaut_limite_cadastrar.wrx":U ).
+OCXFile = SEARCH( "cartao_pagamento_debaut_limite_alterar.wrx":U ).
 IF OCXFile = ? THEN
   OCXFile = SEARCH(SUBSTRING(THIS-PROCEDURE:FILE-NAME, 1,
                      R-INDEX(THIS-PROCEDURE:FILE-NAME, ".":U), "CHARACTER":U) + "wrx":U).
@@ -543,7 +548,7 @@ DO:
   .
   RUN initialize-controls IN THIS-PROCEDURE NO-ERROR.
 END.
-ELSE MESSAGE "cartao_pagamento_debaut_limite_cadastrar.wrx":U SKIP(1)
+ELSE MESSAGE "cartao_pagamento_debaut_limite_alterar.wrx":U SKIP(1)
              "The binary control file could not be found. The controls cannot be loaded."
              VIEW-AS ALERT-BOX TITLE "Controls Not Loaded".
 
@@ -554,7 +559,7 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI w_debaut_limite_cadastrar  _DEFAULT-DISABLE
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI w_debaut_limite_alterar  _DEFAULT-DISABLE
 PROCEDURE disable_UI :
 /*------------------------------------------------------------------------------
   Purpose:     DISABLE the User Interface
@@ -565,14 +570,14 @@ PROCEDURE disable_UI :
                we are ready to "clean-up" after running.
 ------------------------------------------------------------------------------*/
   /* Hide all frames. */
-  HIDE FRAME f_debaut_limite_cadastrar.
+  HIDE FRAME f_debaut_limite_alterar.
   IF THIS-PROCEDURE:PERSISTENT THEN DELETE PROCEDURE THIS-PROCEDURE.
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI w_debaut_limite_cadastrar  _DEFAULT-ENABLE
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI w_debaut_limite_alterar  _DEFAULT-ENABLE
 PROCEDURE enable_UI :
 /*------------------------------------------------------------------------------
   Purpose:     ENABLE the User Interface
@@ -586,32 +591,32 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_nmempres ed_cdrefere ed_vlrmaxdb ed_cdagectl ed_nmrescop 
           ed_nrdconta ed_nmextttl 
-      WITH FRAME f_debaut_limite_cadastrar.
+      WITH FRAME f_debaut_limite_alterar.
   ENABLE IMAGE-37 IMAGE-40 RECT-133 RECT-134 RECT-135 ed_vlrmaxdb Btn_D Btn_H 
          ed_cdagectl ed_nmrescop ed_nrdconta ed_nmextttl 
-      WITH FRAME f_debaut_limite_cadastrar.
-  {&OPEN-BROWSERS-IN-QUERY-f_debaut_limite_cadastrar}
-  VIEW w_debaut_limite_cadastrar.
+      WITH FRAME f_debaut_limite_alterar.
+  {&OPEN-BROWSERS-IN-QUERY-f_debaut_limite_alterar}
+  VIEW w_debaut_limite_alterar.
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE tecla w_debaut_limite_cadastrar 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE tecla w_debaut_limite_alterar 
 PROCEDURE tecla :
-chtemporizador:t_debaut_limite_cadastrar:INTERVAL = 0.
+chtemporizador:t_debaut_limite_alterar:INTERVAL = 0.
 
     IF  KEY-FUNCTION(LASTKEY) = "D"                           AND
-        Btn_D:SENSITIVE IN FRAME f_debaut_limite_cadastrar  THEN
+        Btn_D:SENSITIVE IN FRAME f_debaut_limite_alterar  THEN
         APPLY "CHOOSE" TO Btn_D.
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "H"                           AND
-        Btn_H:SENSITIVE IN FRAME f_debaut_limite_cadastrar  THEN
+        Btn_H:SENSITIVE IN FRAME f_debaut_limite_alterar  THEN
         APPLY "CHOOSE" TO Btn_H.
     ELSE
         RETURN NO-APPLY.
 
-    chtemporizador:t_debaut_limite_cadastrar:INTERVAL = glb_nrtempor.
+    chtemporizador:t_debaut_limite_alterar:INTERVAL = glb_nrtempor.
     
     
     IF  RETURN-VALUE = "OK"  THEN

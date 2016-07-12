@@ -11,7 +11,7 @@ Objetivo : Tela de exclusao de débito automático
 Autor    : Lucas Lunelli
 Data     : Setembro/2014
 
-Ultima alteração: 
+Ultima alteração: 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 ------------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -39,7 +39,8 @@ DEFINE TEMP-TABLE tt-debaut-consulta NO-UNDO
        FIELD cdhistor AS INTE
        FIELD cdrefere AS CHAR
        FIELD desmaxdb AS CHAR
-       FIELD nrsequen AS INTE.
+       FIELD nrsequen AS INTE
+       FIELD inaltera AS CHAR.
 
 EMPTY TEMP-TABLE tt-debaut-consulta.
 
@@ -359,33 +360,49 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_debaut_exclusao
 ON CHOOSE OF Btn_D IN FRAME f_debaut_exclusao /* EXCLUIR */
 DO:
-    RUN cartao_pagamento_debaut_exclusao_confirmar.w(INPUT tt-debaut-consulta.nmempres,
-                                                     INPUT tt-debaut-consulta.cdrefere,
-                                                     INPUT tt-debaut-consulta.cdhistor,
-                                                     INPUT tt-debaut-consulta.cdempcon,
-                                                     INPUT tt-debaut-consulta.cdsegmto,                                                     
-                                                    OUTPUT aux_flgderro).
 
-    APPLY "ENTRY" TO Btn_H.
-
-    IF  RETURN-VALUE = "OK"  THEN
+    IF  tt-debaut-consulta.inaltera = "N" THEN
+        DO:            
+            RUN mensagem2.w (INPUT YES,
+                             INPUT "         ATENÇÃO",
+                             INPUT "",
+                             INPUT "",
+                             INPUT "Esta autorização de débito deve ser alterada através do próprio parceiro. Em caso de dúvidas, entre em contato com o SAC.",
+                             INPUT "",
+                             INPUT "").
+       
+            PAUSE 5 NO-MESSAGE.
+        END.
+    ELSE 
         DO:
-            DELETE tt-debaut-consulta.
-            b_debaut_exclusao:DELETE-CURRENT-ROW().
+            RUN cartao_pagamento_debaut_motivo_exclusao.w(INPUT tt-debaut-consulta.nmempres,
+                                                  INPUT tt-debaut-consulta.cdrefere,
+                                                  INPUT tt-debaut-consulta.cdhistor,
+                                                  INPUT tt-debaut-consulta.cdempcon,
+                                                  INPUT tt-debaut-consulta.cdsegmto,                                                     
+                                                 OUTPUT aux_flgderro).
 
-            IF  NOT TEMP-TABLE tt-debaut-consulta:HAS-RECORDS THEN
+            APPLY "ENTRY" TO Btn_H.
+        
+            IF  RETURN-VALUE = "OK"  THEN
                 DO:
-                    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
-                    RETURN "NOK".
+                    DELETE tt-debaut-consulta.
+                    b_debaut_exclusao:DELETE-CURRENT-ROW().
+        
+                    IF  NOT TEMP-TABLE tt-debaut-consulta:HAS-RECORDS THEN
+                        DO:
+                            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
+                            RETURN "NOK".
+                        END.
+        
+                    /* joga o frame frente */
+                    FRAME f_debaut_exclusao:MOVE-TO-TOP().
+                END.            
+            ELSE
+                DO:
+                   /* joga o frame frente */
+                    FRAME f_debaut_exclusao:MOVE-TO-TOP().
                 END.
-
-            /* joga o frame frente */
-            FRAME f_debaut_exclusao:MOVE-TO-TOP().
-        END.            
-    ELSE
-        DO:
-           /* joga o frame frente */
-            FRAME f_debaut_exclusao:MOVE-TO-TOP().
         END.
 END.
 
