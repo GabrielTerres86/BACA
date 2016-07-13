@@ -1,4 +1,4 @@
-&ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI1
+&ANALYZE-SUSPEND _VERSION-NUMBER AB_v10r12 GUI
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME w_cartao_pagto_convenio_dados
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w_cartao_pagto_convenio_dados 
@@ -67,7 +67,8 @@ DEFINE TEMP-TABLE tt-debaut-consulta NO-UNDO
        FIELD cdhistor AS INTE
        FIELD cdrefere AS CHAR
        FIELD desmaxdb AS CHAR
-       FIELD nrsequen AS INTE.
+       FIELD nrsequen AS INTE
+       FIELD inaltera AS CHAR.
 
 EMPTY TEMP-TABLE tt-debaut-consulta.
 
