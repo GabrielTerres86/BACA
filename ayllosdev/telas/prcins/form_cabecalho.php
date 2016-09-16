@@ -1,0 +1,34 @@
+<?php
+	/*!
+	 * FONTE        : form_cabecalho.php
+	 * CRIAÇÃO      : Douglas Quisinski
+	 * DATA CRIAÇÃO : 24/09/2015
+	 * OBJETIVO     : Cabecalho para a tela PRCINS
+	 * --------------
+	 * ALTERAÇÕES   : 
+	 * --------------
+	 */
+	 
+	session_start();
+	require_once('../../includes/config.php');
+	require_once('../../includes/funcoes.php');
+	require_once('../../includes/controla_secao.php');		
+	isPostMethod();	
+	
+?>
+<form id="frmCab" name="frmCab" class="formulario cabecalho" style="display:none;">
+	<table width="100%">
+		<tr>
+			<td>
+				<label for="cddopcao"><? echo utf8ToHtml("Op&ccedil;&atilde;o:"); ?></label>
+				<select class="campo" id="cddopcao" name="cddopcao">
+					<option value="E"><? echo utf8ToHtml("E - Exclus&atildeo de cr&eacute;dito") ?></option> 
+					<option value="P"><? echo utf8ToHtml("P - Processar Planilha de Benef&iacute;cios") ?></option> 
+					<option value="R"><? echo utf8ToHtml("R - Resumo dos Lan&ccedil;amentos") ?></option> 
+					<option value="S"><? echo utf8ToHtml("S - Solicita&ccedil;&atilde;o") ?></option> 
+				</select>
+				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>
+			</td>
+		</tr>
+	</table>
+</form>

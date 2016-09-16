@@ -1,0 +1,16 @@
+.labeltab-form {
+	width: 215px;
+	display: inline-block;
+	float: left;
+}
+
+.label-operacional {
+	float:left;
+	display: inline-block;
+	width: 140px;
+	text-align: center;
+}
+
+.campo-txt-contrato {
+	width: 360px;
+}

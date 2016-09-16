@@ -1,0 +1,57 @@
+<? 
+/*!
+ * FONTE        : valida_novo_calculo.php
+ * CRIAÇÃO      : Marcelo L. Pereira (GATI)
+ * DATA CRIAÇÃO : 16/11/2011 
+ * OBJETIVO     : Faz verificação para a tela de simulação
+ */
+?>
+ 
+<?
+	session_start();
+	require_once('../../../includes/config.php');
+	require_once('../../../includes/funcoes.php');
+	require_once('../../../includes/controla_secao.php');	
+	require_once('../../../class/xmlfile.php');
+	isPostMethod();		
+	
+	// Guardo os parâmetos do POST em variáveis	
+	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
+		
+	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
+	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '1';
+			
+	// Monta o xml de requisição
+	$xml .= "<Root>";
+	$xml .= "	<Cabecalho>";
+	$xml .= "		<Bo>b1wgen0097.p</Bo>";
+	$xml .= "		<Proc>valida_simulacao</Proc>";
+	$xml .= "	</Cabecalho>";
+	$xml .= "	<Dados>";
+	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+	$xml .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
+	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<idseqtll>".$idseqtll."</idseqtll>";
+	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	$xml .= "		<flgerlog>FALSE</flgerlog>";
+	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+	
+	// Executa script para envio do XML
+	$xmlResult = getDataXML($xml);
+	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObj = getObjectXML($xmlResult);
+	
+	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'))',false);
+	}
+	
+	echo 'mostraTabelaSimulacao(\'TS\');';
+
+?>
