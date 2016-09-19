@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="496" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="690"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/raiz/agencia/operaca/finalida/linhcred]]>
+	</queryString>
+	<field name="cdfinemp" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::finalida/@cdfinemp]]></fieldDescription>
+	</field>
+	<field name="dsfinemp" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::finalida/@dsfinemp]]></fieldDescription>
+	</field>
+	<field name="cdlcremp" class="java.lang.String">
+		<fieldDescription><![CDATA[cdlcremp]]></fieldDescription>
+	</field>
+	<field name="dslcremp" class="java.lang.String">
+		<fieldDescription><![CDATA[dslcremp]]></fieldDescription>
+	</field>
+	<field name="qtassoci" class="java.lang.Double">
+		<fieldDescription><![CDATA[qtassoci]]></fieldDescription>
+	</field>
+	<field name="qtctremp" class="java.lang.Double">
+		<fieldDescription><![CDATA[qtctremp]]></fieldDescription>
+	</field>
+	<field name="txmensal" class="java.lang.Double">
+		<fieldDescription><![CDATA[txmensal]]></fieldDescription>
+	</field>
+	<field name="vlslddev" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlslddev]]></fieldDescription>
+	</field>
+	<field name="vlratras" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlratras]]></fieldDescription>
+	</field>
+	<field name="peratras" class="java.lang.Double">
+		<fieldDescription><![CDATA[peratras]]></fieldDescription>
+	</field>
+	<variable name="vr_qtassoci_finalida" class="java.lang.Double" resetType="Group" resetGroup="gr_finalida" calculation="Sum">
+		<variableExpression><![CDATA[$F{qtassoci}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_qtctremp_finalida" class="java.lang.Double" resetType="Group" resetGroup="gr_finalida" calculation="Sum">
+		<variableExpression><![CDATA[$F{qtctremp}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_vlslddev_finalida" class="java.lang.Double" resetType="Group" resetGroup="gr_finalida" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlslddev}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_vlratras_finalida" class="java.lang.Double" resetType="Group" resetGroup="gr_finalida" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlratras}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_peratras_finalida" class="java.lang.Double" resetType="Group" resetGroup="gr_finalida">
+		<variableExpression><![CDATA[(100*$V{vr_vlratras_finalida})/($V{vr_vlslddev_finalida})]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_qtassoci_pa" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{qtassoci}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_qtctremp_pa" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{qtctremp}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_vlslddev_pa" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlslddev}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_vlratras_pa" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlratras}]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<variable name="vr_peratras_pa" class="java.lang.Double">
+		<variableExpression><![CDATA[((100*$V{vr_vlratras_pa})/($V{vr_vlslddev_pa}))]]></variableExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
+	</variable>
+	<group name="gr_finalida">
+		<groupExpression><![CDATA[$F{cdfinemp}]]></groupExpression>
+		<groupHeader>
+			<band height="32">
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="421" y="24" width="77" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[VLR ATRASO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="6498975b-66dc-44cd-83fd-d657a42ee3a4" mode="Transparent" x="68" y="8" width="5" height="8" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Center" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[-]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="700926a3-273b-422e-b74d-b55a1dac67c6" x="50" y="8" width="14" height="8"/>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{cdfinemp}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="275" y="24" width="51" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[TAXA MENSAL]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="164" y="24" width="47" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[ASSOCIADOS]]></text>
+				</staticText>
+				<textField>
+					<reportElement uuid="727fc434-685d-4c7a-ba64-5dbea2dba79d" x="77" y="8" width="140" height="8"/>
+					<textElement>
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{dsfinemp}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="219" y="24" width="51" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[CONTRATOS]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="2" y="24" width="154" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[LINHA DE CREDITO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="330" y="24" width="81" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[SALDO DEVEDOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="2" y="8" width="45" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[FINALIDADE:]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="16">
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="421" y="0" width="77" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[--------------]]></text>
+				</staticText>
+				<textField pattern="#,##0;-#,##0" isBlankWhenNull="false">
+					<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="219" y="8" width="51" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_qtctremp_finalida}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="164" y="0" width="47" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[-------]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="219" y="0" width="51" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[-------]]></text>
+				</staticText>
+				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
+					<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="421" y="8" width="77" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_vlratras_finalida}]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="330" y="0" width="81" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[----------------------]]></text>
+				</staticText>
+				<staticText>
+					<reportElement uuid="da6d797a-d52b-4a8f-9df0-efcbc7b55a14" mode="Transparent" x="2" y="8" width="154" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<text><![CDATA[T O T A I S ==>]]></text>
+				</staticText>
+				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
+					<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="330" y="8" width="81" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_vlslddev_finalida}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0;-#,##0" isBlankWhenNull="false">
+					<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="164" y="8" width="47" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+						<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+						<paragraph lineSpacing="Single"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_qtassoci_finalida}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField pattern="" isBlankWhenNull="false">
+				<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="2" y="0" width="154" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdlcremp}+" - "+$F{dslcremp}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
+				<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="421" y="0" width="77" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlratras}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.000000;-#,##0.000000" isBlankWhenNull="false">
+				<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="275" y="0" width="51" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{txmensal}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0" isBlankWhenNull="false">
+				<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="164" y="0" width="47" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtassoci}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0;-#,##0" isBlankWhenNull="false">
+				<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="219" y="0" width="51" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtctremp}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
+				<reportElement uuid="7072d18c-a27a-445a-b044-f06e6070cae1" mode="Transparent" x="330" y="0" width="81" height="8" forecolor="#000000" backcolor="#FFFFFF"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+					<font fontName="Courier New" size="6" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+					<paragraph lineSpacing="Single"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlslddev}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

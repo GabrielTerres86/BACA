@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel132" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isFloatColumnFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl698/sumario]]>
+	</queryString>
+	<field name="qttardeb" class="java.lang.String">
+		<fieldDescription><![CDATA[qttardeb]]></fieldDescription>
+	</field>
+	<field name="vltardeb" class="java.lang.String">
+		<fieldDescription><![CDATA[vltardeb]]></fieldDescription>
+	</field>
+	<field name="qttarndb" class="java.lang.String">
+		<fieldDescription><![CDATA[qttarndb]]></fieldDescription>
+	</field>
+	<field name="vltarndb" class="java.lang.String">
+		<fieldDescription><![CDATA[vltarndb]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="55" splitType="Stretch">
+			<textField>
+				<reportElement uuid="f64a652f-a742-4af7-8a9e-a05433b68800" x="378" y="31" width="45" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qttardeb}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement uuid="5061f7a9-0379-416b-9e5e-ec03cf795c4e" x="5" y="27" width="586" height="1"/>
+				<graphicElement>
+					<pen lineWidth="0.5"/>
+				</graphicElement>
+			</line>
+			<staticText>
+				<reportElement uuid="30d5b162-b3a1-4476-9be4-a6849007a27c" x="233" y="31" width="143" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[TOTAL DE TARIFAS DEBITADAS]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="c5887fa5-f427-4af2-8f42-ba6d7fe51387" x="425" y="31" width="100" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltardeb}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="30d5b162-b3a1-4476-9be4-a6849007a27c" x="233" y="42" width="143" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[TOTAL DE TARIFAS NÃO DEBITADAS]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="afd69c68-b29f-4b70-ada4-62e128683011" x="378" y="42" width="45" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qttarndb}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="e9e942fa-9fa6-4d35-8894-e045b41d98a2" x="425" y="42" width="100" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltarndb}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>

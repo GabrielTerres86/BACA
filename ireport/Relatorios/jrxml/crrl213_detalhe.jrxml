@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel132" language="groovy" pageWidth="595" pageHeight="672" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="3.3000000000000047"/>
+	<property name="ireport.x" value="1277"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl213/agencia/seguros]]>
+	</queryString>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="dsmodelo" class="java.lang.String">
+		<fieldDescription><![CDATA[dsmodelo]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nrtelefo" class="java.lang.String">
+		<fieldDescription><![CDATA[nrtelefo]]></fieldDescription>
+	</field>
+	<field name="dsveicul" class="java.lang.String">
+		<fieldDescription><![CDATA[dsveicul]]></fieldDescription>
+	</field>
+	<field name="nrdplaca" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdplaca]]></fieldDescription>
+	</field>
+	<field name="nmresseg" class="java.lang.String">
+		<fieldDescription><![CDATA[nmresseg]]></fieldDescription>
+	</field>
+	<field name="dtfimvig" class="java.lang.String">
+		<fieldDescription><![CDATA[dtfimvig]]></fieldDescription>
+	</field>
+	<variable name="qtdtotreg" class="java.lang.Integer" calculation="Count">
+		<variableExpression><![CDATA[$F{nrdconta}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="ed9a7af5-8541-43e5-99e4-1039ef5b42f1" x="116" y="0" width="55" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrtelefo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="b7844721-dc92-49bf-8b2f-2a44255cdae7" x="58" y="0" width="56" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="aa8d572a-0de2-4a3b-b1cf-e64461017c3c" x="8" y="0" width="48" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtfimvig}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="173" y="0" width="160" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="401" y="0" width="98" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsveicul}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="335" y="0" width="64" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmresseg}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="505" y="0" width="40" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsmodelo}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="558" y="0" width="37" height="8"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdplaca}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="50">
+			<textField isBlankWhenNull="false">
+				<reportElement uuid="f79181b7-3045-4f06-a9d0-cd9e10c4f8ff" x="180" y="10" width="84" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{qtdtotreg}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="13638ad0-8996-43e0-bc7d-904e4576afdd" x="68" y="10" width="113" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[QUANTIDADE DE SEGUROS:]]></text>
+			</staticText>
+		</band>
+	</pageFooter>
+</jasperReport>
