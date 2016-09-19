@@ -1,0 +1,3 @@
+DEF VAR tab_dtiniiof AS DATE    FORMAT "99/99/9999" NO-UNDO.
+DEF VAR tab_dtfimiof AS DATE    FORMAT "99/99/9999" NO-UNDO.
+DEF VAR tab_txccdiof AS DECIMAL NO-UNDO.

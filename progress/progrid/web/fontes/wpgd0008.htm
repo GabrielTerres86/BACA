@@ -1,0 +1,786 @@
+<!--
+        Alteracoes: 22/10/2012 - Inclusão limitação tamanho maximo campo Frequência exigida(%) (Daniel).
+                
+                10/09/2013 - Nova forma de chamar as agências, de PAC agora 
+                             a escrita será PA (André Euzébio - Supero).
+                                                      
+                29/06/2015 - Melhorias OQS (Gabriel-RKAM). 	
+				
+			    11/08/2015 - Inclusao do campo qtdiaeve (Vanessa)
+				
+				24/08/2015 - Correção do código do eixo temático, estava fixo.(Vanessa)
+				
+				05/10/2015 - Alteração do maxLength do qtmaxtur e qtmintur de 3 para 5 (aAnessa)
+                                                                                                          
+-->
+<html>
+    <head>
+        <meta name="AUTHOR" content="Solusoft/Bt wpgd0008">
+        <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+        <meta name="wsoptions" content="no-output">
+        <meta http-equiv="Cache-Control" content="No-Cache">
+        <meta http-equiv="Pragma"        content="No-Cache">
+        <meta http-equiv="Expires"       content="0">
+        <title>Cadastro de Eventos</title>
+        <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+        <script SRC="/cecred/jsbiblio/sorttable.js"></script>
+        <script SRC="/cecred/jsbiblio/biblio.js"></script>
+        <script SRC="/cecred/jsbiblio/frcod.js"></script>
+        <script SRC="/modelo/js/funcoes.js"></script>
+        <style type="text/css">
+            <!--
+            .style1 {color: #FF00FF}
+            .style2 {color: #FFFFFF}
+            -->
+        </style>
+    </head>
+    <body onunload="FechaMens()" style="margin-left: 3px; ">
+        <script language="JavaScript">
+            NomeDoProgramaPrincipal = '/wpgd0008.w';
+            NomeDoProgramaDeListagem = '/wpgd0008ls.w';
+            NomeDoProgramaDeAjuda = '/wpgd0008aj.w';
+            NomeDoProgramaDeZoom = '/zoom/zwpgd0008.w';
+        </script>
+        <form action="#." method="POST" name="form">
+            <input name="aux_cdevento" type="hidden" value="">
+            <input name="aux_idevento" type="hidden" value="">
+            <input name="aux_cdorigem" type="hidden" value="">
+            <input name="aux_nmpagina" type="hidden" value="">      
+            <input name="aux_cddopcao" type="hidden" value="">
+            <input name="aux_lspermis" type="hidden" value="">      
+            <input name="aux_nrdrowid" type="hidden" value="">      
+            <input name="aux_dsretorn" type="hidden" value="">
+            <input name="aux_stdopcao" type="hidden" value="">      
+            <input name="aux_dsendurl" type="hidden" value="">
+            <input name="aux_nrseqdig" type="hidden" value="">
+            <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom">        </div>
+            <table width="760px" height="360"  border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+                <tr>
+                    <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                    <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+                    <td width="228" height="20" align="left" class="linkGuia">Cadastro de Eventos</td>
+                    <td width="700px" height="20" align="right" class="linkGuia">wpgd0008</td>          
+                    <td width="13" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+                </tr>        
+                <tr bgcolor="#FFFFFF">
+                    <td valign="top" align="left" colspan="5">
+                        <table width="760px" height="335" border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+                            <tr>
+                                <td valign="top" bgcolor="#FFFFFF">
+                                    <table width="760px" height="337" border="0" cellpadding="0" cellspacing="0">
+                                        <tr valign="bottom">
+                                            <td rowspan="2" align="left">&nbsp;</td>
+                                            <td align="left"><br>
+                                                <table height="15" border="0" align="left" cellpadding="0" cellspacing="0">
+                                                    <tr align="center">
+                                                        <td width="90" height="15" style="cursor:hand">
+                                                            <table id="AbaEvento" border="0" cellpadding="0" cellspacing="0">
+                                                                <tr>
+                                                                    <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
+                                                                    <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divEvento')">Evento</td>
+                                                                    <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                        <td width="90" height="15" style="cursor:hand">
+                                                            <table id="AbaRecurso" border="0" cellpadding="0" cellspacing="0">
+                                                                <tr>
+                                                                    <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
+                                                                    <td width="80" align="center" class="txtTituloHid" onclick="mostraDiv('divRecurso')">Recurso</td>
+                                                                    <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                        <!-- Links de Adicionar -->
+                                                        <td width="395" align="right" class="txtTituloHid">                                                
+                                                            <div id="adicionar"> <a href="#." onclick="AdRecurso();">Adicionar</a> </div>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="3" width="200" height="2" align="left" background="/cecred/images/menu/mnu_slc.gif"></td>
+                                                    </tr>                                          
+                                                </table>
+                                            </td>                                
+                                        </tr>
+                                        <tr>
+                                            <td valign="bottom" bgcolor="#F5F5F5">
+                                                <div id="divEvento">
+                                                    <table width="100%" height="275" border="0" align="center" cellpadding="0" cellspacing="0">
+                                                        <tr>
+                                                            <td align="right" class="NomeCampo">&nbsp;</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td align="right" class="NomeCampo">
+                                                                <div align="right">Evento:</div></td>
+                                                            <td colspan="3">
+                                                                <input name="nmevento" type="text" class="Campo" size="40" maxlength="50" value=""> 
+                                                                <div align="right">
+                                                                    <div class="NomeCampo">
+                                                                        <div align="left"></div>
+                                                                    </div>
+                                                                </div></td>
+                                                            <td nowrap class="NomeCampo"><div id="Progrid" align="right">Ativo
+                                                                    <input type="checkbox" value="on" name="flgativo" onFocus="window.status = 'Permite Incluir.'">
+                                                                </div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td align="right" class="NomeCampo">
+                                                                <div align="right">Tipo de evento: </div>
+                                                            </td>
+                                                            <td colspan="2">                  
+                                                                <select name="aux_tpevento" class="Campo" style="width:190px;">
+                                                                </select>             
+                                                            </td>
+                                                            <td class="NomeCampo">
+                                                                <div id="Progrid" align="right">Tema:</div>
+                                                            </td>
+                                                            <td colspan="2">
+                                                                <div id="Progrid">  
+                                                                    <select name="aux_nrseqtem" class="Campo" style="width:350px" onchange="selecionaEixo();
+                                                                            this.blur();">
+                                                                    </select>
+
+                                                                </div>
+                                                            </td>
+
+                                                        </tr>
+                                                        <tr id="Progrid">
+
+                                                            <td align="right" class="NomeCampo">
+                                                                <div align="right">Parceria institucional: </div>
+                                                            </td>
+                                                            <td colspan="2">                  
+                                                                <select name="aux_nrseqpri" class="Campo" style="width:190px;">
+                                                                </select>             
+                                                            </td>
+
+                                                            <td class="NomeCampo">
+                                                                <div id="Progrid" align="right">Eixo tem&aacute;tico:</div>
+                                                            </td>
+                                                            <td colspan="2">
+                                                                <div id="Progrid">                            
+                                                                    <select name="aux_cdeixtem" class="Campo" style="width:350px">
+                                                                    </select>
+                                                                </div>
+                                                            </td>
+
+                                                        </tr>	  
+                                                        <tr>
+                                                            <td class="NomeCampo" nowrap>
+                                                                <div id="Progrid" align="right">Participantes por turma:</div></td>
+                                                            <td width="97">
+                                                                <div id="Progrid">
+                                                                    <input name="qtmaxtur" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+                                                                </div></td>
+                                                            <td width="2">&nbsp;</td>
+                                                            <td class="NomeCampo" nowrap>
+                                                                <div id="Progrid" align="right">Minimo por turma:</div></td>
+                                                            <td colspan="2" class="NomeCampo">
+                                                                <div id="Progrid">
+                                                                    <input name="qtmintur" id="qtmintur" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+                                                                </div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="NomeCampo">
+                                                                <div id="Progrid" align="right">Participa&ccedil;&atilde;o permitida:</div></td>
+                                                            <td>
+                                                                <div id="Progrid">
+                                                                    <select name="aux_tppartic" class="Campo" onChange="AlteraLimite();" style="width:190px;">
+                                                                    </select>
+                                                                </div></td>
+                                                            <td>&nbsp;</td>
+                                                            <td class="NomeCampo" nowrap>
+                                                            <td class="NomeCampo" nowrap>
+                                                                <div id="divqtpar" align="right">Limite por conta:</div></td>
+                                                            <td colspan="2" class="NomeCampo">
+                                                                <div>
+                                                                    <input name="qtparcta" type="text" class="Campo" size="3" maxlength="3" onKeyDown="validaInteiro(event)">
+                                                                </div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="NomeCampo">
+                                                                <div id="Progrid" align="right">Frequ&ecirc;ncia exigida(%):</div></td>
+                                                            <td>
+                                                                <div id="Progrid">
+                                                                    <input name="prfreque" type="text" class="Campo" size="3" maxlength="3" onKeyUp="formataNum(this, event, '.,')" value="">
+                                                                </div></td>
+                                                            <td>&nbsp;</td>
+                                                            <td class="NomeCampo">
+                                                            <div id="Progrid" align="right" >Idade minima:</div></td>
+                                                            <td class="NomeCampo" style="width:10px;">
+															  <div id="Progrid"   style="width:10px;">
+																<input name="nridamin" type="text" class="Campo" size="3" maxlength="3" onKeyDown="validaInteiro(event)">
+                                                              </div>
+														    </td>
+															<td class="NomeCampo">
+															 <div id="Progrid" align="left" style=" float:left;margin-top:3px;"> Qt.Dias Evento:</div>
+															 <div id="Progrid" align="right" style="width:10px;">
+																<input name="qtdiaeve" type="text" class="Campo" size="5" maxlength="5" onKeyDown="validaInteiro(event)">
+                                                             </div>
+														    </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;</td>
+                                                            <td class="NomeCampo" colspan="5">
+                                                                <div id="Progrid">
+                                                                    <input type="checkbox" value="on" name="flgtdpac" checked onFocus="window.status = 'Permite Alterar.'">
+                                                                    Obrigat&oacute;rio a todos os PAs </div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;</td>
+                                                            <td class="NomeCampo" colspan="5">
+                                                                <div id="Progrid">
+                                                                    <input type="checkbox" value="on" name="flgrestr" checked onFocus="window.status = 'Permite Excluir.'">
+                                                                    Pr&eacute;-inscri&ccedil;&atilde;o somente para associados do PA </div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;</td>
+                                                            <td class="NomeCampo" colspan="5">
+                                                                <div id="Progrid">
+                                                                    <input type="checkbox" value="on" name="flgcompr" checked onFocus="window.status = 'Permite Excluir.'">
+                                                                    Termo de compromisso </div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;</td>
+                                                            <td class="NomeCampo" colspan="5">
+                                                                <div id="Progrid">
+                                                                    <input type="checkbox" value="on" name="flgcerti" checked onFocus="window.status = 'Permite Incluir.'">
+                                                                    Certifica </div></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>&nbsp;</td>
+                                                            <td class="NomeCampo" colspan="5">
+                                                                <div id="Progrid">
+                                                                    <input type="checkbox" value="on" name="flgsorte" checked onFocus="window.status = 'Permite Incluir.'">
+                                                                    Sorteio de brindes </div></td>
+                                                        </tr>
+
+                                                        <tr id="Progrid">
+                                                            <td align="right" class="NomeCampo">
+                                                                <div align="right">Justificativa:</div>
+                                                            </td>
+                                                            <td colspan="3">
+                                                                <textarea name="aux_dsjustif" class="NomeCampo" style="width:300px;" rows="4"> </textarea>               
+                                                             </td>
+                                                        </tr>  
+                                                        
+                                                        <tr id="Progrid">
+                                                            <td align="right" class="NomeCampo">
+                                                                <div align="right">Operador:</div>
+                                                            </td>
+                                                            <td colspan="3">
+                                                              <input name="aux_cdoperad" type="text" class="Campo" style="width:300px;" disabled readonly>
+
+                                                            </td>
+                                                            
+                                                        </tr>
+
+
+                                                        <tr style="height:100px">
+                                                            <td colspan="6" align="center">
+                                                                <table border="0" align="center" cellpadding="1" cellspacing="1">
+                                                                    <tr>
+                                                                        <th scope="col"><div class="style2" id="Incluir"><img style="cursor:hand" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></div></th>
+                                                                    <th scope="col"><div class="style2" id="Salvar"><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif" onClick="return Salvar()"></div></th>
+                                                                    <th scope="col"><div class="style2" id="Excluir"><img style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir();"></div></th>
+                                                                    <th scope="col"><div class="style2" id="Pesquisar"><img style="cursor:hand" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom, parent.mainFrame.NomeDoProgramaPrincipal, '', 'P', document.form.aux_idevento.value)"></div></th>
+                                                        </tr>
+                                                    </table>
+                                            </td>                          
+                                        </tr>
+                                    </table>
+                                    </div>
+                                    <div id="divRecurso" align="center" style="vertical-align: top; ">
+                                        <table border="0" style="height:290px; width:100%;">
+                                            <tr>
+                                                <td>
+                                                    <table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                                        <tr>
+                                                            <td id="separador1" width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
+                                                            <td id="tbrecurso_col1" width="525" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Recurso</td>
+                                                            <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                                            <td id="tbrecurso_col2" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos"><div align="center">&nbsp;</div></td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <div style="overflow: auto; height:260px;">
+                                                        <table id="tbrecurso" width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
+                                                            <!-- Linhas removidas, para não aparecer nada em branco. -->
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </td>
+                                <td align="left">&nbsp;</td>
+                            </tr>
+                        </table>            
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</form>
+<script language="JavaScript">
+
+    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal + ' ?idevento=' + document.form.aux_idevento.value;
+    document.form.action = NomeDoProgramaPrincipal;
+	
+	var dsjustif = '';
+
+//Se a tela foi aberta a partir da 'Análise de sugestões', 'Seleção de Sugestões' ou 'Agenda do Ano'
+    if (document.form.aux_cdorigem.value == "2" ||
+            document.form.aux_cdorigem.value == "3" ||
+            document.form.aux_cdorigem.value == "4")
+    {
+
+        // esconde todos os botões menos o de salvar
+        document.all.Incluir.style.visibility = "hidden";
+        document.all.Excluir.style.visibility = "hidden";
+        document.all.Pesquisar.style.visibility = "hidden";
+
+        // se for 'Seleção de Sugetões' esconde e desabilita alguns campos
+        if (document.form.aux_cdorigem.value == "3") {
+            document.all.AbaRecurso.style.visibility = "hidden";
+            //document.form.nmevento.disabled=true;
+            document.form.flgativo.disabled = true;
+            //document.form.aux_cdeixtem.disabled=true;
+            //document.form.aux_tpevento.disabled=true;
+        }
+    }
+
+// Se for 'Agenda do Ano', nem salvar pode
+    if (document.form.aux_cdorigem.value == "4")
+        document.all.Salvar.style.visibility = "hidden";
+
+    /* Agnaldo - 25/11 - Desabilita campos e links, forçando a tela somente para consulta
+     somente quando vem da 'Agenda do Ano (wpgd0026)' */
+    if (document.form.aux_cdorigem.value == "4")
+    {
+        for (i = 0; i < document.form.length; i++)
+            document.form.elements[i].disabled = true;
+        document.all.adicionar.innerHTML = "";
+    }
+
+// Se vier do menu de Assembléia, esconde os campos que não se aplicam
+    CamposdoEvento();
+
+// Exibe os campos de acordo com a participação permitida
+    AlteraLimite();
+
+// Exibe os campos de acordo com a participação permitida
+    function AlteraLimite()
+    {
+        // Se a participação permitida não for "Limitado por conta", esconde os campos de 
+        // limite de participantes
+        if (document.form.aux_tppartic.value != "3")
+        {
+            document.form.qtparcta.style.visibility = "hidden";
+            document.all.divqtpar.style.visibility = "hidden";
+            document.form.qtparcta.value = "";
+        }
+        // Se a participação permitida for "Limitado por conta", mostra os campos de 
+        // limite de participantes
+        else
+        {
+            document.form.qtparcta.style.visibility = "visible";
+            document.all.divqtpar.style.visibility = "visible";
+        }
+    }
+
+    function ValidaDados(form)
+    {
+        var msg = "";
+
+        //Se for Tipo de Evento = Progrid
+        if (document.form.aux_idevento.value == "1")
+        {
+
+            msg = msg + VE("ca", form.nmevento, "O nome do evento", "nao");
+            msg = msg + VE("in", form.qtmaxtur, "A quantidade de participantes", "nao", parseInt(document.form.qtmintur.value), 999999);
+            //msg = msg + VE("in",form.prfreque,"A frequencia exigida","sim",1,100);
+
+            if (document.form.aux_tpevento.value == "")
+                msg = msg + " Tipo de Evento deve ser selecionado. ";
+
+            if (document.form.aux_tppartic.value == "")
+                msg = msg + " Tipo de Participação deve ser selecionado. ";
+
+            if (document.form.aux_cdeixtem.value == "")
+                msg = msg + " Eixo Temático deve ser selecionado. ";
+
+            if (document.form.qtmintur.value <= 0)
+                msg = msg + " O Mínimo por Turma deve ser maior que 0.";
+
+            if (document.form.flgcerti.checked == true &&
+                    document.form.prfreque.value == 0)
+                msg = msg + " Para certificar, a frequência tem que ser maior que 0.";
+		
+            if ((document.form.aux_tppartic.value == 3) &&
+                    document.form.qtparcta.value <= 0)
+                msg = msg + " O limite de participantes por conta deve ser maior do que zero.";
+			
+			if (document.form.qtdiaeve.value == 0)
+                msg = msg + " A Qt.Dias Evento deve ser maior que zero.";
+        }
+
+        if (document.form.aux_idevento.value == "2")
+        {
+            msg = msg + VE("ca", form.nmevento, "O nome do evento", "nao");
+        }
+
+        if (msg == "")
+            return true
+        else
+        {
+            MostraResultado('1', msg);
+            return false
+        }
+    }
+
+    function LimparCampos()
+    {
+        document.form.aux_cdevento.value = '';
+        document.form.nmevento.value = '';
+        document.form.qtmaxtur.value = '';
+        document.form.qtmintur.value = '';
+        document.form.qtparcta.value = '';
+        document.form.prfreque.value = '';
+        document.form.nridamin.value = '';
+		document.form.qtdiaeve.value = '';		
+        document.form.flgativo.checked = true;
+        document.form.flgcerti.checked = false;
+        document.form.flgcompr.checked = false;
+        document.form.flgrestr.checked = false;
+        document.form.flgsorte.checked = false;
+        document.form.flgtdpac.checked = false;
+        document.form.aux_tpevento.value = "";
+        document.form.aux_tppartic.value = "";
+        document.form.aux_cdeixtem.value = "";
+        document.form.nmevento.focus();
+        document.form.nmevento.select();
+
+        // Limpar a tabela de recursos
+        for (var i = document.all.tbrecurso.rows.length; i > 0; i--)
+            document.all.tbrecurso.deleteRow(i - 1);
+
+
+    }
+
+    function CarregaPrincipal() {
+       
+        if (document.form.aux_cdorigem.value == "")
+        {
+            //top.topFrame.document.all.titulo.innerHTML = 'Cadastro de Eventos - ' + document.form.aux_idevento.value;
+        }
+        window.status = "";
+       
+    }
+
+    function Recarrega() {
+        document.form.submit();
+    }
+
+    function Incluir()
+    {
+        ZeraModoExclusao();
+        var vaux = document.form.aux_lspermis.value;
+        if (vaux.substring(0, 1) == 'I')
+        {
+            if (document.form.aux_stdopcao.value == 'i')
+            {
+                MostraResultado('1', 'Você já esta no modo de inclusão');
+                return false
+            }
+            else
+            {
+                document.form.aux_cddopcao.value = 'in';
+                document.form.aux_stdopcao.value = 'i'
+                LimparCampos();
+                return true
+            }
+        }
+        else
+        {
+            MostraResultado('1', 'Desculpe, mas você não tem permissão para executar esta função.');
+            return false
+        }
+    }
+
+    function Salvar() {
+
+        ZeraModoExclusao();
+        var vaux = document.form.aux_lspermis.value;
+        if ((vaux.substring(1, 2) == 'A') || (document.form.aux_stdopcao.value == 'i')) {
+            
+            // Se alteracao
+            if (document.form.aux_stdopcao.value != 'i') {
+                				
+                if ((document.form.aux_dsjustif.value == dsjustif || document.form.aux_dsjustif.value == "") &&
+     				 document.form.aux_idevento.value == "1") {
+                    alert ("O campo de justificativa é obrigatório.");
+                    document.form.aux_dsjustif.value = "";
+					document.form.aux_dsjustif.focus();
+	
+                    return false;
+                }
+                
+            } 
+                
+            
+            if (document.form.aux_cddopcao.value != 'sa') {
+                if (ValidaDados(document.forms[0])) {
+                    document.form.aux_cddopcao.value = 'sa';
+                    status = 'Salvando. Por favor, aguarde ...';
+
+                    // se for 'Seleção de Sugetões' habilita os campos para salvar
+                    if (document.form.aux_cdorigem.value == "3") {
+                        document.form.nmevento.disabled = false;
+                        document.form.flgativo.disabled = false;
+                        document.form.aux_cdeixtem.disabled = false;
+                        document.form.aux_tpevento.disabled = false;
+                    }
+                                  
+                    document.form.submit();
+                    return true;
+                }
+                else {
+                    return false;
+                }
+            }
+        }
+        else {
+            MostraResultado('1', 'Desculpe, mas você não tem permissão para executar esta função.');
+            return false;
+        }
+    }
+
+// Se vier do menu de Assembléia, esconde os campos que não se aplicam
+    function CamposdoEvento()
+    {
+        if (document.form.aux_idevento.value == "2")
+        {
+            for (i = 0; i < document.all.Progrid.length; i++)
+                document.all.Progrid[i].style.visibility = "hidden";
+        }
+    }
+
+// Funcoes declaradas para manter compatilibidade com as funcoes da biblioteca padrão
+    function Habilita() {
+    }
+// Funcoes declaradas para manter compatilibidade com as funcoes da biblioteca padrão
+    function HabilitaSalvar() {
+    }
+
+    function FechaZoom(campo, valor, valor2, valor3, valor4, valor5, valor6, valor7, valor8)
+    {
+        ZeraModoExclusao();
+        if (window.WZoom != null)
+        {
+            alert('1');
+            if (WZoom.closed != true)
+            {
+                alert('2');
+                WZoom.close();
+            }
+        }
+    }
+
+    function mostraDiv(nomediv)
+    {
+        var nomeaba = '';
+
+        if (nomediv == '') {
+            nomediv = 'divEvento';
+        }
+
+        if (nomediv == 'divEvento') {
+            nomeaba = 'AbaEvento';
+        }
+        if (nomediv == 'divRecurso') {
+            nomeaba = 'AbaRecurso';
+        }
+
+        // guarda a página atual
+        document.form.aux_nmpagina.value = nomediv;
+
+        // Define todas as abas como não selecionadas
+        document.all.AbaEvento.rows[0].cells[0].background = "/cecred/images/menu/mnu_nle.gif";
+        document.all.AbaEvento.rows[0].cells[1].background = "/cecred/images/menu/mnu_nlc.gif";
+        document.all.AbaEvento.rows[0].cells[2].background = "/cecred/images/menu/mnu_nld.gif";
+        document.all.AbaEvento.rows[0].cells[1].className = "txtTituloHid";
+
+        document.all.AbaRecurso.rows[0].cells[0].background = "/cecred/images/menu/mnu_nle.gif";
+        document.all.AbaRecurso.rows[0].cells[1].background = "/cecred/images/menu/mnu_nlc.gif";
+        document.all.AbaRecurso.rows[0].cells[2].background = "/cecred/images/menu/mnu_nld.gif";
+        document.all.AbaRecurso.rows[0].cells[1].className = "txtTituloHid";
+
+        // Altera a imagem da aba selecionada
+        document.all[nomeaba].rows[0].cells[0].background = "/cecred/images/menu/mnu_sle.gif";
+        document.all[nomeaba].rows[0].cells[1].background = "/cecred/images/menu/mnu_slc.gif";
+        document.all[nomeaba].rows[0].cells[2].background = "/cecred/images/menu/mnu_sld.gif";
+        document.all[nomeaba].rows[0].cells[1].className = "txtTituloVis";
+
+        // apaga todas as DIV 
+        document.all.divEvento.style.display  = 'none';
+        document.all.divRecurso.style.display = 'none';
+        document.all.adicionar.style.visibility = 'hidden';
+
+        if (nomeaba == 'AbaRecurso')
+            document.all.adicionar.style.visibility = 'visible';
+            
+        
+        // ativa a DIV escolhida
+        if (nomediv == 'divRecurso' || nomediv == 'divEvento') {
+            document.all[nomediv].style.display = 'block';
+        } else {
+            document.all[nomediv].style.visibility = 'visible';
+        }
+
+    }
+
+    function mostraRecursos()
+    {
+        var row;
+        var cell;
+
+        var cor = '#F7F7F7';
+
+        // limpa a tabela de Recursos, menos a 1ª linha - linha do cabecalho
+        for (var i = document.all.tbrecurso.rows.length; i > 0; i--)
+            document.all.tbrecurso.deleteRow(i - 1);
+
+        for (i = 0; i < mrecurso.length; i++) {      // insere linhas na tabela de recursos
+            row = tbrecurso.insertRow();  // nova linha 
+
+            if (cor == '#FFFFFF')
+                cor = '#F7F7F7';
+            else
+                cor = '#FFFFFF';
+
+            row.bgColor = cor;
+
+            cell = row.insertCell();   // Separador
+            cell.className = 'txtNormal';
+            cell.align = 'left';
+            cell.width = document.all.separador1.width;
+            cell.innerText = '';
+
+            cell = row.insertCell();      // primeira celula da linha (descricao do recurso)
+            cell.className = 'txtNormal';
+            cell.width = "93%";
+            cell.height = 20;
+            cell.align = 'left';
+            cell.width = document.all.tbrecurso_col1.width;
+            cell.innerText = mrecurso[i].dsrecurs; // fim primeira celula (descricao do recurso)
+
+            cell = row.insertCell();   // Separador
+            cell.className = 'txtNormal';
+            cell.align = 'left';
+            cell.width = document.all.separador1.width;
+            cell.innerText = '';
+
+            cell = row.insertCell();   // segunda celula da linha (excluir)
+            cell.className = 'txtNormal';
+            cell.align = 'center';
+            cell.width = document.all.tbrecurso_col2.width;
+            cell.height = 20;
+
+            /* Agnaldo - 25/11 - Desabilita links, forçando a tela somente para consulta somente quando vem da 'Agenda do Ano (wpgd0026)' */
+            if (document.form.aux_cdorigem.value == "4")
+                linky = "";
+            else
+                linky = '<a href="#." onClick=ExRecurso(' + mrecurso[i].nrseqdig + '); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+
+            cell.innerHTML = linky; // fim segunda celula (excluir)
+        }
+
+    }
+
+    function AdRecurso() {
+
+        // Verifica se o usuário tem permissão de inclusao
+        if (document.form.aux_lspermis.value.substring(0, 1) != 'I') {
+            alert('Desculpe, mas você não tem permissão para executar esta função.');
+            return false;
+        }
+
+        if (document.form.aux_cdorigem.value == "4")
+            alert("Tela em modo de consulta. Alteraões não permitidas")
+
+        if (document.form.aux_cddopcao.value == "in") {
+            alert("O Evento deve ser gravado antes de inserir Recursos. ");
+        }
+        else {
+            VarURL = document.form.aux_dsendurl.value + '/wpgd0008a.htm' + '?aux_cdevento=' + document.form.aux_cdevento.value + '&aux_idevento=' + document.form.aux_idevento.value;
+            window.open(VarURL, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=no,width=550,height=500,top=10,left=10');
+        }
+    }
+
+    function ExRecurso(recurso) {
+
+        // Verifica se o usuário tem permissão de exclusao
+        if (document.form.aux_lspermis.value.substring(2, 3) != 'E') {
+            alert('Desculpe, mas você não tem permissão para executar esta função.');
+            return false;
+        }
+
+        if (recurso != "") {
+            if (!confirm('Confirma Exclusão do Recurso?')) {
+                return false;
+            }
+
+            document.form.aux_nrseqdig.value = recurso;
+            document.form.aux_cddopcao.value = "exr";
+            document.form.submit();
+        }
+    }
+
+    function selecionaEixo() {
+
+        var nrseqtem = document.form.aux_nrseqtem.value;
+        var cdeixtem = 0;
+       var aux_cdeixtem = document.form.aux_cdeixtem; 
+		//var aux_cdeixtem = document.getElementsByName(aux_cdeixtem);
+
+        // Limpar eixos tematicos
+        aux_cdeixtem.length = 0;
+
+        // Obter o eixo tematico a partir do tema
+        for (var i = 0; i < vetorTema.length; i++) {
+
+            if (nrseqtem == vetorTema[i].nrseqtem) {
+                cdeixtem = vetorTema[i].cdeixtem;
+				
+                break;
+            }
+
+        }
+
+        // Criar pcao no select do Eixto tematico
+        for (var i = 0; i < vetorEixo.length; i++) {
+
+            if (cdeixtem == vetorEixo[i].cdeixtem) {
+                var option = document.createElement("option");
+                option.text = vetorEixo[i].dseixtem;
+                option.value = vetorEixo[i].cdeixtem;
+                aux_cdeixtem.add(option);
+            }
+
+        }
+
+    }
+
+    mostraDiv(document.form.aux_nmpagina.value);
+    mostraRecursos();
+    selecionaEixo();
+
+</script>
+</body>
+</html>
+

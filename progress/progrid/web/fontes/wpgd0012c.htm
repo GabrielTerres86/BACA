@@ -1,0 +1,464 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<title>Propostas (wpgd0012c)</title>
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<form action="#." method="POST" name="form">
+<input name="aux_cddopcao" type="hidden" value="">
+<input name="aux_lspermis" type="hidden" value="">
+<input name="aux_nrdrowid" type="hidden" value="">
+<input name="aux_dsretorn" type="hidden" value="">
+<input name="aux_stdopcao" type="hidden" value="">
+<input name="aux_dsendurl" type="hidden" value="">
+<input name="aux_nrcpfcgc" type="hidden" value="">
+<input name="aux_idevento" type="hidden" value="">
+<input name="aux_idexclui" type="hidden" value="">
+<input name="aux_nmpagina" type="hidden" value="">
+<input name="aux_lsfacili" type="hidden" value="">
+<input name="cdevento"     type="hidden" value="">
+<input name="cdeixtem"     type="hidden" value="">
+  <table border="0" cellpadding="0" cellspacing="0">
+    <tr valign="botton">
+      <td>
+	    <table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+		  <tr>
+            <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+            <td align="center" nowrap width="150" class="linkGuia">Adicionar Proposta</td>
+            <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+          </tr>
+        </table>
+      <td>
+    </tr>
+    <tr valign="top">
+      <td>
+        <table cellpadding="0" cellspacing="1" bgColor="#999999">
+	      <tr bgColor="#FFFFFF">
+	        <td>
+              <table align="center" border="0">  
+                <tr>
+                  <td colspan="6" height="8"></td>
+                </tr>
+                <tr>
+                  <td width="200" align="right" class="NomeCampo">Proposta:</td>
+                  <td width="63"><input name="nrpropos" type="text" class="Campo" size="10" readonly></td>
+                  <td width="83" class="NomeCampo" align="right">Recebimento:</td>
+                  <td width="72"><input name="dtmvtolt" type="text" class="Campo" size="10" onkeypress="FormataData(this.name, this.value)"></td>
+                  <td width="51" class="NomeCampo" align="right">Validade:</td>
+                  <td width="203"><input name="dtvalpro" type="text" class="Campo" size="10" onkeypress="FormataData(this.name, this.value)" value=""></td>
+                </tr>
+              </table>
+              <div id="divProposta">
+			    <br>
+                <table border="0" align="center" cellspacing="1">
+                  <tr>
+                    <td class="NomeCampo" align="right">Eixo tem&aacute;tico:</td>
+                    <td colspan="2">
+                      <select name="aux_cdeixtem" size="1" class="Campo" onChange="MostraEventos();">
+                        <option>Selecione um eixo tem&aacute;tico</option>
+                      </select>
+                    </td>
+                    <td >&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Vincular ao evento:</td>
+                    <td colspan="2" >
+		              <select name="aux_cdevento" size="1" class="Campo" id="aux_cdevento">
+                        <option selected>Selecione um evento</option>
+                      </select>
+		            </td>
+                    <td >&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Evento:</td>
+                    <td colspan="3"><input name="nmevefor" type="text" class="Campo" size=50></td>
+                  </tr>
+                  <tr>
+                    <td width="141" class="NomeCampo" align="right">Objetivo:</td>
+                    <td colspan="4" ><textarea name="dsobjeti" cols="80" rows="2" class="TextoFormulario"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Conte&uacute;do:</td>
+                    <td colspan="4" ><textarea name="dsconteu" cols="80" rows="2" class="TextoFormulario"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Metodologia:</td>
+                    <td colspan="4" ><textarea name="dsmetodo" cols="80" rows="2" class="TextoFormulario"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">P&uacute;blico Alvo:</td>
+                    <td colspan="4" ><textarea name="dspublic" cols="80" rows="2" class="TextoFormulario"></textarea></td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Observa&ccedil;&otilde;es:</td>
+                    <td colspan="4" ><textarea name="dsobserv" cols="80" rows="2" class="TextoFormulario"></textarea></td>
+                  </tr>		
+                  <tr>
+                    <td align="right" colspan="4" class="txtTituloHid" height="30" valign="bottom">
+                      <a href="#." onClick="mostraDiv('divFacili')">Selecionar Facilitadores</a>
+                    </td>
+				  </tr>	
+				  <tr>
+					<td class="NomeCampo" align="right">Facilitadores:</td>
+						<td colspan="4">
+						  <textarea name="txfacili" class="TextoFormulario" rows="3" cols="80" readonly="true"></textarea>
+					</td>
+				  </tr>				
+				  <tr>
+					<td class="NomeCampo" align="right">Investimento(R$):</td>
+						<td width="121" ><input name="vlinvest" type="text" class="Campo" size="5"></td>
+						<td class="NomeCampo" align="right">Carga hor&aacute;ria:</td>
+						<td width="41"><input name="qtcarhor" type="text" class="Campo" size="5"></td>
+				  </tr>
+					  <tr>
+								<td colspan="6" align="center">
+						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar()">
+						</td>
+					  </tr>
+			    </table>
+      		  </div>
+				
+	      <div id="divFacili">
+	      	<table border="0" align="center" width="90%" height="400">
+	      	  <tr valign="top">
+	      	    <td>
+					<table width="100%" border="0" align="center" cellspacing="0">
+					  <tr>
+					    <td height="20" colspan="2">&nbsp;</td>
+					  <tr>
+                        <td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Facilitador(es) do Fornecedor</td>
+                        <td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
+                        <a href="#." onclick="AdFacili();">Cadastrar</a>
+                        </td>							
+                      </tr>
+                    </table>
+                </td>					
+              </tr>
+			  <tr valign="top">
+	      	    <td>
+	              <div style="overflow: auto; height:'347';">
+					<table width="100%" id="tbfacili" border="1" bordercolor="#CCCCCC" align="center" cellspacing="0">
+					  <!-- INCUI DADOS -->
+                    </table>
+                  </div>
+                </td>					
+              </tr>
+              <tr align="center">
+                <td>
+                  <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaFacili(); mostraDiv('divProposta');">
+                  <img style="cursor:hand;" src="/cecred/images/botoes/btn_restaurar.gif" onClick="restaurar();">
+                </td>
+              </tr>
+            </table>			    
+	      </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>  
+</form>
+</body>
+</html>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0012c.w';
+   NomeDoProgramaDeListagem = '/wpgd0012cls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0012caj.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+   // Formata a carga horária
+   document.form.qtcarhor.value = document.form.qtcarhor.value.replace(",",":");
+
+function ValidaDados(form){
+   var msg=""; 
+
+   if (document.form.dtmvtolt.value == "") {
+      msg = msg + "Data de Recebimento não pode ser vazia. ";
+   }
+
+   if (document.form.dtvalpro.value == "") {
+      msg = msg + "Data de Validade não pode ser vazia. ";
+   }
+   
+   // valida carga horaria com 99:99
+   if (document.form.qtcarhor.value.length > 5)
+       msg = msg + "Carga horária incorreta";
+   
+   if ((document.form.qtcarhor.value != '') &&
+   	   (document.form.qtcarhor.value.substring(2,3) != ','))
+   	   msg = msg + "Formato da hora invalido. Utilize HH:MM";	   
+
+      
+   if(msg == "")
+     return true
+   else{
+     alert(msg);
+     return false
+   }
+}
+
+function LimparCampos()
+{
+   document.form.cdevento.value = '';
+   document.form.cdeixtem.value = '';
+}
+
+function Recarrega(){
+  document.form.cdeixtem.value = document.form.aux_cdeixtem.value;
+  document.form.cdevento.value = document.form.aux_cdevento.value;
+
+  document.form.aux_cddopcao.value='rec';
+  
+  armazenaFacili();  
+  document.form.submit();  
+}
+
+function CarregaPrincipal()
+{  
+} 
+
+function Incluir()
+{
+   var vaux = document.form.aux_lspermis.value; 
+   if (vaux.substring(0,1) == 'I'){ 
+          if (document.form.aux_stdopcao.value == 'i'){ 
+                   alert('Você já esta no modo de inclusão'); 
+                   return false
+                } 
+             else{ 
+                   document.form.aux_cddopcao.value ='in'; 
+                   document.form.aux_stdopcao.value ='i';
+                   LimparCampos(); 
+                   return true
+                } 
+       } 
+    else{ 
+          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+          return false
+       }
+}
+
+function Salvar(){
+   //ZeraModoExclusao();
+
+   // Formata a carga horária
+   document.form.qtcarhor.value = document.form.qtcarhor.value.replace(":",",");
+   
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
+      if (ValidaDados(document.forms[0])) {
+         document.form.aux_cddopcao.value='sa';
+
+		 document.form.cdeixtem.value = document.form.aux_cdeixtem.value;
+         document.form.cdevento.value = document.form.aux_cdevento.value;
+
+		 armazenaFacili(); 
+         status = 'Salvando. Por favor, aguarde ...';
+         document.form.nrpropos.disabled = false;
+         document.form.submit(); 
+         return true;
+      } 
+      else { 
+            return false;
+      }  
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
+
+
+function MostraEventos(){
+   for (var i=document.all.aux_cdevento.options.length; i>=0; i--)
+      document.all.aux_cdevento.remove(i); 
+
+   var oOption;
+
+   oOption = document.createElement("OPTION");
+   document.all.aux_cdevento.options.add(oOption);
+   oOption.innerText = "Sem vínculo";
+   oOption.value = 0;
+   
+   for(i=0;i<mevento.length;i++){    
+      if (mevento[i].cdeixtem == document.form.aux_cdeixtem.value){	  
+         oOption = document.createElement("OPTION");
+         document.all.aux_cdevento.options.add(oOption);
+         oOption.innerText = mevento[i].nmevento;
+         oOption.value = mevento[i].cdevento;
+      }
+   }
+}
+
+
+function AdFacili(){
+
+  document.form.aux_cddopcao.value='';
+  
+  VarURL = document.form.aux_dsendurl.value  + '/wpgd0016.htm?aux_idevento=' + document.form.aux_idevento.value + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value;
+  window.open(VarURL,'Facili','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=no,width=470,height=360,top=10,left=10');
+}
+
+
+function PosicionaEvento(){
+   MostraEventos();      
+   document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
+   document.form.aux_cdevento.value = document.form.cdevento.value;
+}
+
+function mostraFacili(){
+  var row;var cell;
+
+  for(var i=document.all.tbfacili.rows.length; i>1; i--)
+     document.all.tbfacili.deleteRow(i-1); 
+
+  for(i=0;i<mfacili.length;i++)
+  {
+
+     row=tbfacili.insertRow();	 
+     row.onclick=mudaCor;
+     row.checked = false;
+     row.value=mfacili[i].nmfacili;
+     row.title="Clique para vinculá-lo à esta proposta."
+	 
+     if(mfacili[i].flgescol=='yes')
+     {
+        row.bgColor = '#CCCCCC';
+        row.checked = true;
+     }
+
+     cell=row.insertCell();   
+     cell.className = 'txtNormal';
+     cell.height = 20;
+     cell.width = '100%';
+     cell.align = 'left';
+     cell.style.cursor = 'hand';
+     cell.innerText= '  ' + mfacili[i].nmfacili;
+	 
+     // gastar 1 célula
+     //cell=row.insertCell();	  
+  }
+}
+
+function mudaCor(){
+
+  if (this.checked==false){
+      this.bgColor = '#CCCCCC';
+      this.checked = true; 
+  }
+  else{
+      this.bgColor = '#FFFFFF';
+      this.checked = false;
+  }
+}
+
+
+function mostraDiv(nomediv){   
+  if(nomediv=='')
+     nomediv='divProposta';
+
+  document.form.aux_nmpagina.value=nomediv;
+  document.all.divProposta.style.display = 'none';
+  document.all.divFacili.style.display = 'none';
+  document.all[nomediv].style.display = 'block';
+
+  if(nomediv != 'divProposta')
+  {
+     document.form.nrpropos.readOnly = true;
+     document.form.dtmvtolt.readOnly = true;
+     document.form.dtvalpro.readOnly = true;
+  }
+  else
+  {
+     if(document.form.aux_nrdrowid.value != "?")
+        document.form.nrpropos.readOnly = false;
+     document.form.dtmvtolt.readOnly = false;
+     document.form.dtvalpro.readOnly = false;
+
+  }
+
+}
+
+function montaFacili(){
+  
+  // mostra os facilitadores na textarea
+  document.form.txfacili.value = '';  
+  for(var i=0;i<tbfacili.rows.length; i++)
+  {
+     if(tbfacili.rows[i].checked)
+        if(document.form.txfacili.value=='')
+          document.form.txfacili.value = '- ' + tbfacili.rows[i].value;
+        else
+          document.form.txfacili.value = document.form.txfacili.value + '\n- ' + tbfacili.rows[i].value;	    
+  }
+}
+
+function armazenaFacili(){
+
+  document.form.aux_lsfacili.value = '';
+
+  for(var i=0;i<tbfacili.rows.length; i++)
+	 if(tbfacili.rows[i].checked)
+	   if(document.form.aux_lsfacili.value=='')
+	     document.form.aux_lsfacili.value = mfacili[i].idfacili;
+	   else
+	     document.form.aux_lsfacili.value = document.form.aux_lsfacili.value  + ',' + mfacili[i].idfacili;
+}
+
+function restaurar(){
+  mostraFacili();
+  montaFacili();
+  mostraDiv('divProposta');
+}
+
+
+// tira as barras caso não tiver valor na data
+if (document.form.dtvalpro.value == '/  /')
+    document.form.dtvalpro.value = '';
+
+PosicionaEvento();
+mostraFacili();
+montaFacili();
+
+mostraDiv(document.form.aux_nmpagina.value);
+
+
+// Funcao: FormataData
+// Objetivo: Preenche o campo de data com as barras, possibilitando que o usuário digite apenas 
+//    os números correspondentes à data
+// Parametros de Entrada: 
+//    campo: indica qual campo da tela deve ser formatado para data
+//    teclapress: qual tecla o usuário pressionou
+// Parametros de Saida: 
+//    campo já com a data formatada
+function FormataData(campo,teclapress)  {
+   
+   var tecla = teclapress.keycode;
+   vr = teclapress;
+  
+   vr = vr.replace(".",""); 
+   vr = vr.replace("/",""); 
+   tam = vr.length ;
+           
+   if ( tecla != 9 && tecla != 8 )   {
+   
+      if ( tam > 2 && tam < 5 )   
+	     document.form[campo].value = vr.substr(0, tam - 2) + '/' + vr.substr( tam - 2, tam );
+	  if ( tam > 5 && tam < 8 )  
+	     document.form[campo].value = vr.substr(0, 2) + '/' +
+		    vr.substr( 2, 2) + '/' + vr.substr( 4, 4);
+	}	  
+}
+
+
+// Desabilita os campos chaves, se estiver posicionado em algum registro
+if(document.form.aux_nrdrowid.value != "?")
+{
+   document.form.nrpropos.disabled = true;
+}
+
+</SCRIPT>

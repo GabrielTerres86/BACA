@@ -1,0 +1,259 @@
+/* ...........................................................................
+   
+   /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      ESTA INCLUDES ESTA DESATIVADA , FOI SUBSTIDUIDA PELA 
+                includes/gera_dados_inform.i
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   */
+   
+   Programa: includes/gera_dados_inform_1_postmix.i
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Elton
+   Data    : Novembro/2008                     Ultima atualizacao: 10/12/2013 
+
+   Dados referentes ao programa:
+
+   Frequencia:
+   Objetivo  : Gerar os dados para a frente e verso dos informativos gerados
+               atraves do FORMPRINT. Um formulario por pagina (frente e verso)
+
+   Alteracoes: 04/03/2009 - Incrementar somente em 1 documento a cada registro
+                            (Evandro).
+               
+               10/12/2013 - Alteracao referente a integracao Progress X 
+                            Dataserver Oracle 
+                            Inclusao do VALIDATE ( André Euzébio / SUPERO) 
+............................................................................ */ 
+
+FIND craptab WHERE craptab.cdcooper = glb_cdcooper  AND
+                   craptab.nmsistem = "CRED"        AND
+                   craptab.tptabela = "USUARI"      AND
+                   craptab.cdempres = 11            AND
+                   craptab.cdacesso = aux_cdacesso  AND
+                   craptab.tpregist = 1             NO-LOCK NO-ERROR.
+
+IF   NOT AVAILABLE craptab   THEN      
+     ASSIGN aux_dsmsgext = "".
+ELSE
+     ASSIGN aux_dsmsgext[1] = SUBSTRING(craptab.dstextab,001,50)
+            aux_dsmsgext[2] = SUBSTRING(craptab.dstextab,051,50)
+            aux_dsmsgext[3] = SUBSTRING(craptab.dstextab,101,50)
+            aux_dsmsgext[4] = SUBSTRING(craptab.dstextab,151,50)
+            aux_dsmsgext[5] = SUBSTRING(craptab.dstextab,201,50)
+            aux_dsmsgext[6] = SUBSTRING(craptab.dstextab,251,50)
+            aux_dsmsgext[7] = SUBSTRING(craptab.dstextab,301,50).
+
+FIND LAST cratext NO-LOCK USE-INDEX cratext1 NO-ERROR.
+
+IF   AVAILABLE cratext   THEN
+     ASSIGN aux_nrseqesq = 0
+            aux_nrpagina = 0.
+
+FOR EACH cratext BY cratext.nrseqint:
+
+    ASSIGN aux_nrpagina     = aux_nrpagina + 1
+           aux_nrseqesq     = aux_nrseqesq + 1
+           cratext.dsladopg = "E"
+           cratext.nrsequen = aux_nrseqesq 
+           cratext.nrpagina = aux_nrpagina.
+
+END.
+
+IF   aux_qtmaxarq = 0   THEN
+     OUTPUT STREAM str_1 TO VALUE(aux_nmarqdat).
+ELSE
+     OUTPUT STREAM str_1 TO VALUE(aux_nmarqdat + "01.dat").
+
+FOR EACH cratext WHERE cratext.dsladopg = "E" NO-LOCK BY cratext.nrpagina:
+
+    IF   (aux_qtmaxarq > 0) AND (cratext.nrpagina MODULO aux_qtmaxarq = 0) THEN
+         DO:
+             OUTPUT STREAM str_1 CLOSE.
+             ASSIGN aux_nrarquiv = aux_nrarquiv + 1.
+             OUTPUT STREAM str_1 TO VALUE(aux_nmarqdat +  
+                                          STRING(aux_nrarquiv, "99") + 
+                                          ".dat").
+             
+             DO TRANSACTION:
+                
+                aux_nomedarq = SUBSTR(aux_nmarqdat,R-INDEX(aux_nmarqdat,"/") +
+                               1,14) + "_" + STRING(aux_nrarquiv - 1,"99")   +
+                               ".dat".
+                
+                FIND LAST gndcimp WHERE 
+                          gndcimp.cdcooper = glb_cdcooper   AND
+                          gndcimp.dtmvtolt = glb_dtmvtolt   AND
+                          gndcimp.nmarquiv = aux_nomedarq
+                          EXCLUSIVE-LOCK NO-ERROR.
+                
+                IF   AVAILABLE gndcimp   THEN
+                     DO:
+                         IF   gndcimp.flgenvio   THEN
+                              DO:
+                                  /* proximo sequencial */
+                                  ASSIGN aux_numerseq = gndcimp.nrsequen + 1.
+                                  
+                                  CREATE gndcimp.
+                                  ASSIGN gndcimp.cdcooper = glb_cdcooper
+                                         gndcimp.dtmvtolt = glb_dtmvtolt
+                                         gndcimp.nmarquiv = aux_nomedarq
+                                         gndcimp.qtdoctos = aux_numberdc
+                                         gndcimp.nrsequen = aux_numerseq
+                                         aux_numberdc     = 0.
+                                  VALIDATE gndcimp.
+                              END.
+                         ELSE
+                              ASSIGN gndcimp.qtdoctos = aux_numberdc
+                                     aux_numberdc     = 0.
+                        
+                     END.     
+                ELSE            
+                     DO:
+                         CREATE gndcimp.          
+                         ASSIGN gndcimp.cdcooper = glb_cdcooper
+                                gndcimp.dtmvtolt = glb_dtmvtolt
+                                gndcimp.qtdoctos = aux_numberdc
+                                gndcimp.nmarquiv = aux_nomedarq
+                                gndcimp.nrsequen = 1
+                                aux_numberdc     = 0.
+                     END. 
+                     VALIDATE gndcimp.
+             END.
+             
+         END.
+    
+    IF   cratext.tpdocmto = 5  THEN
+         ASSIGN aux_dsultlin = "ORDEM:" + STRING(cratext.nrdordem, "999") +
+                               "   TIPO:" + STRING(cratext.tpdocmto, "999") + 
+                               " - " + STRING(cratext.nrdconta, "99999999") +
+                               "  SEQUENCIA:" + 
+                               STRING(cratext.nrsequen,"999,999").
+    ELSE 
+         ASSIGN aux_dsultlin = "ORDEM:" + STRING(cratext.nrdordem, "999") +
+                               "        TIPO:" + 
+                               STRING(cratext.tpdocmto, "999") + 
+                               "        SEQUENCIA:" + 
+                               STRING(cratext.nrsequen,"999,999").
+
+    IF   cratext.indespac = 1   THEN /***** CORREIO *******/
+         DO:
+            PUT STREAM str_1 cratext.nmprimtl     FORMAT "x(50)"       SKIP
+                             cratext.dsender1     FORMAT "x(50)"       SKIP
+                            "COMPLEMENTO:" cratext.complend FORMAT "x(50)" SKIP 
+                             "BAIRRO: " cratext.dsender2 FORMAT "x(50)" SKIP
+                             "CEP: " cratext.nrcepend FORMAT "99,999,999"  
+                             FILL(" ", 11)
+                             "EMISSAO: " STRING(cratext.dtemissa,"99/99/9999")
+                             FORMAT "x(10)"                            SKIP
+                             aux_dsultlin          FORMAT "x(50)"      SKIP
+                             TRIM(aux_dsmsgext[1]) FORMAT "x(50)"      SKIP
+                             TRIM(aux_dsmsgext[2]) FORMAT "x(50)"      SKIP
+                             TRIM(aux_dsmsgext[3]) FORMAT "x(50)"      SKIP
+                             TRIM(aux_dsmsgext[4]) FORMAT "x(50)"      SKIP
+                             TRIM(aux_dsmsgext[5]) FORMAT "x(50)"      SKIP
+                             TRIM(aux_dsmsgext[6]) FORMAT "x(50)"      SKIP
+                             TRIM(aux_dsmsgext[7]) FORMAT "x(50)"      SKIP
+                             TRIM(aux_imlogoex) FORMAT "x(80)"         SKIP
+                             TRIM(aux_impostal) FORMAT "x(80)"         SKIP
+                             TRIM(aux_imcorre1) FORMAT "x(80)"         SKIP
+                             SKIP.
+         END.
+    ELSE     
+         DO:  /****** SECAO *******/
+            PUT STREAM str_1 cratext.nmempres         FORMAT "x(20)"
+                             cratext.nmsecext         FORMAT "x(25)"  SKIP
+                             cratext.nmagenci         FORMAT "x(24)"  
+                             "CONTA/DV: " 
+                             STRING(cratext.nrdconta,"zzzz,zz9,9")
+                             FORMAT "x(10)"                               SKIP
+                             FILL(" ", 50)                                SKIP
+                             STRING(cratext.nmprimtl,"x(47)") 
+                             FORMAT "x(47)"                               SKIP
+                             "EMISSAO:" STRING(cratext.dtemissa,"99/99/9999")   
+                             FORMAT "x(10)"                               SKIP
+                             aux_dsultlin          FORMAT "x(60)"      SKIP
+                             TRIM(aux_dsmsgext[1]) FORMAT "x(60)"      SKIP
+                             TRIM(aux_dsmsgext[2]) FORMAT "x(60)"      SKIP
+                             TRIM(aux_dsmsgext[3]) FORMAT "x(60)"      SKIP
+                             TRIM(aux_dsmsgext[4]) FORMAT "x(60)"      SKIP
+                             TRIM(aux_dsmsgext[5]) FORMAT "x(60)"      SKIP
+                             TRIM(aux_dsmsgext[6]) FORMAT "x(60)"      SKIP
+                             TRIM(aux_dsmsgext[7]) FORMAT "x(60)"      SKIP
+                             TRIM(aux_imlogoex)    FORMAT "x(80)"      SKIP
+                             TRIM(aux_imgvazio)    FORMAT "x(80)"      SKIP(1).
+         END.
+
+    ASSIGN aux_qtintern = 1.
+    
+    /* INTERNO LADO ESQUERDO */
+    PUT STREAM str_1 TRIM(aux_imlogoin)              FORMAT "x(50)"  SKIP.
+    DO WHILE cratext.dsintern[aux_qtintern] <> "#" AND aux_qtintern < 82:
+      
+       PUT STREAM str_1 cratext.dsintern[aux_qtintern]  FORMAT "x(100)"  SKIP. 
+                         
+       ASSIGN aux_qtintern = aux_qtintern + 1.
+    END.
+    
+    aux_numberdc = aux_numberdc + 1.
+    
+END. /* FOR EACH cratext.... */
+
+OUTPUT STREAM str_1 CLOSE.
+
+DO TRANSACTION:
+
+   IF   aux_numberdc > 0   THEN
+        DO:               
+            aux_nomedarq = IF   aux_qtmaxarq <> 0   THEN
+                                SUBSTR(aux_nmarqdat,R-INDEX(aux_nmarqdat,"/") +
+                                1,14) + "_" + STRING(aux_nrarquiv,"99") + ".dat"
+                           ELSE 
+                                SUBSTR(aux_nmarqdat,R-INDEX(
+                                                    aux_nmarqdat,"/") + 1).
+            
+            FIND LAST gndcimp WHERE
+                      gndcimp.cdcooper = glb_cdcooper   AND
+                      gndcimp.dtmvtolt = glb_dtmvtolt   AND
+                      gndcimp.nmarquiv = aux_nomedarq               
+                      EXCLUSIVE-LOCK NO-ERROR.
+   
+            IF   AVAILABLE gndcimp   THEN
+                 DO:
+                     IF   gndcimp.flgenvio   THEN
+                          DO:                
+                              /* proximo sequencial */
+                              ASSIGN aux_numerseq = gndcimp.nrsequen + 1.
+                     
+                              CREATE gndcimp.
+                              ASSIGN gndcimp.cdcooper = glb_cdcooper
+                                     gndcimp.dtmvtolt = glb_dtmvtolt
+                                     gndcimp.qtdoctos = aux_numberdc
+                                     gndcimp.nmarquiv = aux_nomedarq
+                                     gndcimp.nrsequen = aux_numerseq
+                                     aux_numberdc     = 0.
+                          END.  
+                     ELSE
+                          ASSIGN gndcimp.qtdoctos = aux_numberdc
+                                 aux_numberdc     = 0.
+                     VALIDATE gndcimp.
+                 END.
+    
+            ELSE   
+                 DO:
+                     CREATE gndcimp.
+                     ASSIGN gndcimp.cdcooper = glb_cdcooper  
+                            gndcimp.dtmvtolt = glb_dtmvtolt
+                            gndcimp.qtdoctos = aux_numberdc
+                            gndcimp.nmarquiv = aux_nomedarq
+                            gndcimp.nrsequen = 1
+                            aux_numberdc     = 0.
+                 END.
+                 VALIDATE gndcimp.
+        END.
+END.
+
+
+
+/* ......................................................................... */
+

@@ -1,0 +1,166 @@
+<!--
+	Alteracoes: 18/10/2012 - Limitar campo do item para 50 caracteres (Gabriel).
+-->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<title>Itens de Avaliação</title>
+<base target="mainFrame">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body style=" margin-left: 3px; ">
+<form action="#." method="POST" name="form">
+    <input name="aux_idevento" type="hidden" value="">
+    <input name="cditeava"     type="hidden" value="">
+    <input name="cdgruava"     type="hidden" value="">
+    <input name="aux_cddopcao" type="hidden" id="aux_cddopcao"  value="">
+    <input name="aux_lspermis" type="hidden" id="aux_lspermis"  value="">
+    <input name="aux_nrdrowid" type="hidden" id="aux_nrdrowid"  value="">    
+    <input name="aux_dsretorn" type="hidden" id="aux_dsretorn"  value="">    
+    <input name="aux_stdopcao" type="hidden" id="aux_stdopcao"  value="">    
+    <input name="aux_dsendurl" type="hidden" id="aux_dsendurl"  value="">    
+<script language="JavaScript">
+NomeDoProgramaPrincipal  = '/wpgd0032.w';
+NomeDoProgramaDeZoom     = '/zoom/zwpgd0032.w';
+</script>
+<!-- Início do modelo geral -->
+<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom">	</div>
+  <table width="575" height="360" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+    <tr>
+      <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+      <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+      <td width="399" height="20" align="left" class="linkGuia">Cadastro de Itens para Avaliação </td>
+      <td width="98" height="20" align="right" class="linkGuia">wpgd0032</td>	  
+      <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+    </tr>
+    <tr valign="top" bgcolor="#FFFFFF">
+      <td colspan="5">
+        <table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+          <tr>
+            <td height="200" valign="top" bgcolor="#FFFFFF">
+              <table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="left">&nbsp;</td>
+                  <td align="left" valign="middle">
+                  <!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+                    <table width="450"  border="0" align="center" cellspacing="0">
+                      <tr>
+                        <td width="90" align="right" class="NomeCampo">Grupo:</td>
+                        <td width="310" class="NomeCampo">
+                          <select name="aux_cdgruava" class="NomeCampo" onChange="document.form.cdgruava.value = document.form.aux_cdgruava.value;">
+                          </select>
+						</td>
+                      </tr>
+                      <tr>
+                        <td align="right" class="NomeCampo">Item:</td>
+                        <td><input name="dsiteava" type="text" class="Campo" onFocus="window.status = ''" size="50" maxlength="50" value=""></td>
+                      </tr>
+                    </table>
+                  <!-- Fim dos dados específicos da tela, reinício do modelo geral -->
+                  </td>
+                </tr>
+                <tr>
+                  <td height="10" align="left">&nbsp;</td>
+                  <td align="left" valign="bottom"><table border="0" align="center" cellpadding="1" cellspacing="1">
+                    <tr>
+                      <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></th>
+                      <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif"  onClick="return top.frcod.Salvar()"></th>
+                      <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></th>
+                      <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P',document.form.aux_idevento.value)"></th>
+                    </tr>
+                  </table></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+<!-- Fim do modelo geral -->
+</form>
+</body>
+</html>
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0032.w';
+   NomeDoProgramaDeListagem = '/wpgd0032ls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0032aj.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+
+function Habilita()
+{
+  
+}
+function HabilitaSalvar()
+{
+   // Habilita o campo
+   document.form.aux_cdgruava.disabled = false;  
+}
+function ValidaDados(form)
+    { 
+        var msg="";
+         
+	msg = msg + top.frcod.VE("ca",form.dsiteava,"A descrição do item de avaliação","nao");
+         
+        if (msg == "")
+                return true
+            else
+                {
+                    top.frcod.MostraResultado('1',msg);
+                    return false
+                }
+    }
+
+function LimparCampos()
+    {	
+	    // Habilita os campos chave
+        document.form.aux_cdgruava.disabled = false;
+		document.form.aux_cdgruava.value = '';
+		document.form.cdgruava.value = '';
+		document.form.aux_nrdrowid.value = '?';		
+		
+        document.form.cditeava.value = '';
+	    document.form.dsiteava.value = '';
+        focus();
+        document.form.dsiteava.focus();
+        document.form.dsiteava.select();
+    }
+
+function ExaminaCampo(Campo)
+    {
+       if (document.form.aux_stdopcao.value != 'i' & Campo == 'cditeava' )  {
+           document.form.dsiteava.focus();
+           document.form.dsiteava.select();
+       }      
+    }
+ 
+function CarregaPrincipal()
+    {  
+      //top.topFrame.document.all.titulo.innerHTML = 'Cadastro de Itens de Avaliação';
+    }    
+
+function MostraGrupo()
+{
+   if (document.form.cdgruava.value != '')
+      document.form.aux_cdgruava.value = document.form.cdgruava.value;
+   else
+      document.form.cdgruava.value = document.form.aux_cdgruava.value;  
+	  	  
+}
+
+
+MostraGrupo();
+
+// Desabilita os campos chaves, se estiver posicionado em algum registro
+if(document.form.aux_nrdrowid.value != "?")
+{
+   document.form.aux_cdgruava.disabled = true;
+}
+
+</SCRIPT>
+
+

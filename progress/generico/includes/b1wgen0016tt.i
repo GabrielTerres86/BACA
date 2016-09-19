@@ -1,0 +1,131 @@
+/*..............................................................................
+
+   Programa: b1wgen0016tt.i                  
+   Autor   : David
+   Data    : Abril/2008                         Ultima atualizacao: 18/12/2015
+   Dados referentes ao programa:
+
+   Objetivo  : Arquivo com variaveis utlizadas na BO b1wgen0016.p
+
+   Alteracoes: 04/10/2011 - Adicionado em tt-dados-agendamento os campos:
+                            nmprepos, nrcpfpre, nmoperad e nrcpfope (Jorge)
+                            
+               11/10/2011 - Incluir tt-transacoes_operadores 
+                            Incluir tt-criticas_transacoes_oper (Guilherme)
+                            
+               09/01/2012 - Adicionado campo idtitdda em tt-dados-agendamento
+                            (Jorge)
+                            
+               14/05/2012 - Projeto TED Internet (David).             
+               
+               12/11/2012 - Melhoria pagamento em lote Internet (David).
+               
+               05/04/2013 - Inclusão de campos da tt-convenios_aceitos para
+                            horário dos convenios SICREDI (Lucas).
+                            
+               19/04/2013 - Transferencia intercooperativa (Gabriel)  
+               
+               22/10/2014 - Novos campos na tela PARMON. Chamado 198702.
+                            (Jonata-RKAM).                                                     
+                            
+               18/12/2015 - Inclusao de nova temp-table tt-vlrdat, Prj.
+                            Assinatura Conjunta (Jean Michel).
+..............................................................................*/
+
+DEF TEMP-TABLE tt-convenios_aceitos NO-UNDO
+    FIELD nmextcon AS CHAR
+    FIELD nmrescon AS CHAR
+    FIELD cdempcon AS INTE
+    FIELD cdsegmto AS INTE
+    FIELD hhoraini AS CHAR
+    FIELD hhorafim AS CHAR
+    FIELD hhoracan AS CHAR.
+        
+DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
+    FIELD dtmvtage AS DATE
+    FIELD dtmvtopg AS DATE
+    FIELD vllanaut AS DECI
+    FIELD dttransa AS DATE
+    FIELD hrtransa AS INTE
+    FIELD nrdocmto AS INTE
+    FIELD dssitlau AS CHAR
+    FIELD dslindig AS CHAR
+    FIELD dscedent AS CHAR
+    FIELD dtvencto AS DATE
+    FIELD dsageban AS CHAR
+    FIELD nrctadst AS CHAR
+    FIELD cdtiptra AS INTE
+    FIELD dstiptra AS CHAR
+    FIELD incancel AS INTE
+    FIELD nmprimtl AS CHAR
+    FIELD nmprepos AS CHAR
+    FIELD nrcpfpre AS DECI
+    FIELD nmoperad AS CHAR
+    FIELD nrcpfope AS DECI
+    FIELD idtitdda AS DECI.
+
+DEF TEMP-TABLE tt-transacoes_operadores NO-UNDO
+    FIELD dtmvtolt AS DATE
+    FIELD dtmvtopg AS DATE
+    FIELD vllantra AS DECI
+    FIELD dscedent AS CHAR
+    FIELD nrcpfope AS DECI
+    FIELD nmoperad AS CHAR
+    FIELD insittra AS INTE
+    FIELD idagenda AS INTE
+    FIELD dtaltsit AS DATE
+    FIELD idtpdpag AS INTE
+    FIELD cdtiptra AS INTE
+    FIELD cddbanco AS INTE
+    FIELD dsdbanco AS CHAR
+    FIELD cdageban AS INTE
+    FIELD dsageban AS CHAR
+    FIELD nrctadst AS CHAR
+    FIELD nmtitdst AS CHAR
+    FIELD nrcpfdst AS CHAR
+    FIELD dttransa AS DATE
+    FIELD hrtransa AS INTE
+    FIELD dslindig AS CHAR
+    FIELD dscodbar AS CHAR
+    FIELD dscritic AS CHAR
+    FIELD dtcritic AS DATE
+    FIELD nrcpfpre AS DECI
+    FIELD nmprepos AS CHAR
+    FIELD vlrdocto AS DECI
+    FIELD dtvencto AS DATE
+    FIELD cdfinali AS INTE
+    FIELD dsfinali AS CHAR
+    FIELD dstransf AS CHAR
+    FIELD nrdrowid AS ROWID
+    FIELD dsoperac AS CHAR
+    INDEX tt-transacoes_operadores1 dttransa DESC hrtransa DESC.
+
+DEF TEMP-TABLE tt-criticas_transacoes_oper NO-UNDO
+    FIELD dtcritic AS CHAR
+    FIELD vllantra AS DECI
+    FIELD dscedent AS CHAR
+    FIELD dstiptra AS CHAR
+    FIELD dscritic AS CHAR
+    FIELD flgtrans AS LOGICAL
+    FIELD nrdrowid AS CHAR.
+
+DEF TEMP-TABLE tt-parmon
+    FIELD vlinimon LIKE crapcop.vlinimon
+    FIELD vllmonip LIKE crapcop.vllmonip
+    FIELD vlinisaq LIKE crapcop.vlinisaq
+    FIELD vlinitrf LIKE crapcop.vlinitrf
+    FIELD vlsaqind LIKE crapcop.vlsaqind
+    FIELD insaqlim LIKE crapcop.insaqlim
+    FIELD inaleblq LIKE crapcop.inaleblq
+    FIELD vlmnlmtd LIKE crapcop.vlmnlmtd
+    FIELD vlinited LIKE crapcop.vlinited
+    FIELD flmstted LIKE crapcop.flmstted
+    FIELD flnvfted LIKE crapcop.flnvfted
+    FIELD flmobted LIKE crapcop.flmobted
+    FIELD dsestted LIKE crapcop.dsestted.
+
+DEF TEMP-TABLE tt-vlrdat NO-UNDO
+    FIELD dattrans AS DATE
+    FIELD vlronlin AS DEC.
+                       
+/*............................................................................*/
