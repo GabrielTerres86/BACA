@@ -1,0 +1,11 @@
+CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPSRW_NRSEQSOL
+  BEFORE INSERT ON crapsrw
+  FOR EACH ROW
+BEGIN
+  -- Buscar sequencia para PK da tabela caso nao foi passada
+  IF :new.nrseqsol IS NULL THEN
+    :NEW.NRSEQSOL := SEQSRW_NRSEQSOL.NEXTVAL;
+  END IF;
+END TRG_CRAPSRW_NRSEQSOL;
+/
+
