@@ -1,0 +1,450 @@
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <meta name="wsoptions" content="no-output">
+    <title>Adicionar Custo EAD (wpgd0018h)</title>
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+      <script SRC="/cecred/jsbiblio/sorttable.js"></script>
+      <script SRC="/cecred/jsbiblio/biblio.js"></script>
+      <script SRC="/cecred/jsbiblio/frcod.js"></script>
+      <script SRC="/cecred/js/funcoes.js"></script>
+      <script type="text/javascript" src="/web/scripts/ajax.js" charset="utf-8"></script>
+      <script type="text/javascript" src="/web/scripts/scripts.js" charset="utf-8"></script>
+      <script type="text/javascript" src="/web/scripts/funcoes.js"></script>
+      <script type="text/javascript" src="/web/scripts/mascara.js"></script>
+      <script type="text/javascript" src="/web/includes/pesquisa/pesquisa.js"></script>		
+      <script type="text/javascript" src="/web/scripts/dimensions.js"></script>		
+      <script type="text/javascript" src="/web/scripts/ui/jquery.ui.core.js"></script>
+      <script type="text/javascript" src="/web/scripts/ui/jquery.ui.datepicker.js"></script>
+      <script type="text/javascript" src="/web/scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>
+      <script type="text/javascript" src="/web/scripts/tooltip.js"></script>	
+  </head>
+  <body>
+    <form action="#." method="POST" name="form" id="form">
+      <input type="hidden" name="aux_idevento" id="aux_idevento" value="">
+      <input type="hidden" name="aux_cdcooper" id="aux_cdcooper" value="">
+      <input type="hidden" name="aux_dtanoage" id="aux_dtanoage" value="">
+      <input type="hidden" name="aux_cdoperad" id="aux_cdoperad" value="">
+      <input type="hidden" name="aux_cdcopope" id="aux_cdcopope" value="">
+      <input type="hidden" name="aux_cddopcao" id="aux_cddopcao" value="">
+      <input type="hidden" name="aux_lspermis" id="aux_lspermis" value="">
+      <input type="hidden" name="aux_strsalva" id="aux_strsalva" value="">
+      <table class="dataTable" width="100%" border="0" cellspacing="0" cellpadding="0">
+        <tr>
+          <td align="left" valign="bottom">
+            <table align="left" border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+              <tr>
+                <td>
+                  <table align="left" border="0" cellpadding="0" cellspacing="0" style="cursor:hand;">
+                    <tr>            
+                      <td width="4" height="21" background="/cecred/images/menu/mnu_sle.gif"></td>
+                      <td align="center" nowrap width="150" class="txtTituloVis" background="/cecred/images/menu/mnu_slc.gif">Adicionar Custo EAD</td>
+                      <td width="4" height="21" background="/cecred/images/menu/mnu_sld.gif"></td>
+                    <tr>
+                  </table>
+                </td>                     
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td width="200" height="2" align="left" background="/cecred/images/menu/mnu_slc.gif"></td>
+        </tr>
+        <tr>
+          <td valign="top" bgcolor="#FFFFFF">
+            <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" class="dataTable">
+              <tr>
+                <td width="47" align="right" class="NomeCampo"><div align="right">Evento:</div></td>
+                <td width="240">
+                  <select name="aux_cdevento" id="aux_cdevento" style="width: 500px;">
+                  </select>
+                </td>
+              </tr>
+            </table>           
+            <table width="100%"  border="0" cellpadding="0" cellspacing="0" class="dataTable">
+              <tr>
+                <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="tbpa_col0">&nbsp;</td>
+                <td width="24%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbpa_col1" style="text-align: center;">PA</td>
+                <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador1" ><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                <td width="9%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbpa_col2" title="Quantidade de Eventos" style="text-align: center;">Qtde. Evento</td>
+                <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador2" ><img src="/cecred/images/geral/div.gif" id="some" width="2" height="15"></td>
+                <td width="12%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbpa_col3" title="Quantidade de Participantes por Evento" style="text-align: center;">Part. por Evento</td>
+                <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador3" ><img src="/cecred/images/geral/div.gif" id="some" width="2" height="15"></td>
+                <td width="14%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbpa_col4" title="Valor por Inscri&ccedil;&atilde;o" style="text-align: center;">Vlr. por Inscri&ccedil;&atilde;o</td>                                                
+                <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador4" ><img src="/cecred/images/geral/div.gif" id="some" width="2" height="15"></td>
+                <td width="14%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbpa_col5" title="Valor do Desenvolvimento do Evento" style="text-align: center;">Vlr. Desenvolvimento</td>                                                
+                <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador5" ><img src="/cecred/images/geral/div.gif" id="some" width="2" height="15"></td>
+                <td width="10%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbpa_col6" title="Valor Total do Evento" style="text-align: center;">Total</td>                                                
+                <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador6" ><img src="/cecred/images/geral/div.gif" id="some" width="2" height="15"></td>
+                <td width="10%" height="25" colspan="2" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbpa_col7" title="Valor a ser pago por cada participante" style="text-align: center;">Visto</td>                                                
+              </tr>
+              <tr style="background-color:#CECF63;">
+                <td width="1%">&nbsp;</td>
+                <td width="24%" height="25"></td>
+                <td width="1%"></td>
+                <td width="9%"  height="25" style="text-align: right;"><input class="inteiro" type="text" onblur="calculaValorTotal(0,0);" name="aux_qtocoeve" id="aux_qtocoeve" style="width: 100px; text-align: right;" value="" /></td>
+                <td width="1%"></td>
+                <td width="12%" height="25" style="text-align: right;"><input class="inteiro" type="text" onblur="calculaValorTotal(0,1);" name="aux_qtpareve" id="aux_qtpareve" style="width: 100px; text-align: right;" value="" /></td>
+                <td width="1%"></td>
+                <td width="14%" height="25" style="text-align: right;"><input class="moeda_15" type="text" onblur="calculaValorTotal(0,2);" name="aux_vlporins" id="aux_vlporins" style="width: 100px; text-align: right;" value="" /></td>
+                <td width="1%"></td>
+                <td width="14%" height="25" style="text-align: right;"><input class="moeda_15" type="text" onblur="calculaValorTotal(0,3);" name="aux_vldeseve" id="aux_vldeseve" style="width: 100px; text-align: right;" value="" /></td>  
+                <td width="1%"></td>
+                <td width="10%" height="25" style="text-align: right;"><input class="moeda_15" type="text" readonly name="aux_vlrtotal" id="aux_vlrtotal" style="width: 100px; text-align: right;" value="" /></td> 
+                <td width="1%"></td>
+                <td width="10%" height="25" style="text-align: center;"><img src="/cecred/images/icones/financeiro.gif" width="14" height="14" onclick="replicarValores();" style="cursor:hand;"></td> 
+              </tr>
+            </table>
+            
+            <div style="height:'300';">
+              <table width="100%"  border="0" cellpadding="0" cellspacing="0" class="dataTable" id="tbpa">
+                <!-- INCLUI DADOS -->
+              </table>
+            </div>                  
+            <table width="100%" align="center">
+              <tr>
+                <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif"  onClick="salvarPA();"></th>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </form>
+  </body>
+  <script language="JavaScript">
+        
+    function carregaPA(){
+      var row;
+      var cell;
+      var cor='#F7F7F7';
+      
+      var aux_qtocoeve;
+      var aux_qtpareve;
+      var aux_vlporins;
+      var aux_vldeseve;
+      var aux_vlrtotal;
+      var aux_cddopcao = document.form.aux_cddopcao.value;
+      
+      var aux_paiguais = false;
+            
+      if(aux_cddopcao == 'co'){
+        document.getElementById("aux_cdevento").disabled = true;
+      }
+    
+      // limpa a tabela de Eventos, menos a 1ª linha - linha do cabecalho
+      for(var i=document.all.tbpa.rows.length; i > 0; i--){
+        document.all.tbpa.deleteRow(i-1);
+      }
+           
+      for(i = 0;i<mpa.length;i++){ // insere linhas na tabela de eventos
+        // verifica se os dados são da cooperativa selecionada na tela 
+        
+        aux_paiguais = false;
+        aux_qtocoeve = 0;
+        aux_qtpareve = 0;
+        aux_vlporins = 0;
+        aux_vldeseve = 0;
+        aux_vlrtotal = 0;
+          
+        if(meadcons.length > 0){
+                              
+          for(j = 0;j<meadcons.length;j++){
+            if(meadcons[j].cdagenci == mpa[i].cdagenci){
+              aux_qtocoeve = meadcons[j].qtocoeve;
+              aux_qtpareve = meadcons[j].qtpareve;
+              aux_vlporins = meadcons[j].vlporins;
+              aux_vldeseve = meadcons[j].vldeseve;
+              aux_vlrtotal = meadcons[j].vlrtotal;
+              aux_paiguais = true;
+              break;
+            }
+          }
+        }
+          
+        row = tbpa.insertRow();
+          
+        if (cor == '#FFFFFF'){
+          cor = '#F7F7F7';
+        }else{
+          cor = '#FFFFFF';
+        }
+        
+        row.bgColor = cor;
+          
+        //tbpa_col0          
+        cell = row.insertCell();         // Primeira celula da linha
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'left';
+        cell.width = document.all.tbpa_col0.width;
+        
+        //tbpa_col1
+        cell = row.insertCell();         // Nome do PA
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'left';
+        cell.title = mpa[i].nmresage;
+        cell.id = mpa[i].nmresage;
+        cell.width = document.all.tbpa_col1.width;
+        linky = mpa[i].nmresage;
+        cell.innerHTML = linky;
+        
+        //separador1
+        cell = row.insertCell();         // Separador
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'left';
+        cell.width = document.all.separador1.width;
+        
+        //tbpa_col2
+        cell = row.insertCell();         // Quantidade do Evento - qtocoeve
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'right';
+        cell.width = document.all.tbpa_col2.width;
+        linky = "<input type='text' class='inteiro' value='" + aux_qtocoeve + "' id='qtocoeve" + mpa[i].cdagenci + "' name='qtocoeve" + mpa[i].cdagenci + "' onblur='calculaValorTotal(" + mpa[i].cdagenci + ",0);' style='width:100px; text-align: right;'>";
+        cell.innerHTML = linky;
+                
+        //separador2
+        cell = row.insertCell();         // Separador
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.width = document.all.separador2.width;
+        
+        //tbpa_col3
+        cell = row.insertCell();         // Participantes por Evento -  qtpareve
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'right';
+        cell.width = document.all.tbpa_col3.width;
+        linky = "<input type='text' class='inteiro' value='" + aux_qtpareve + "' id='qtpareve" + mpa[i].cdagenci + "' name='qtpareve" + mpa[i].cdagenci + "' onblur='calculaValorTotal(" + mpa[i].cdagenci + ",1);' style='width:100px; text-align: right;'>";
+        cell.innerHTML = linky;
+                
+        //separador3
+        cell = row.insertCell();         // Separador
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.width = document.all.separador3.width;
+        
+        //tbpa_col4
+        cell = row.insertCell();         // Valor por Inscricao - vlporins
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'right';
+        cell.width = document.all.tbpa_col4.width;
+        linky = "<input type='text' class='moeda_15' value='" + aux_vlporins + "' id='vlporins" + mpa[i].cdagenci + "' name='vlporins" + mpa[i].cdagenci + "' onblur='calculaValorTotal(" + mpa[i].cdagenci + ",2);' style='width:100px; text-align: right;'>";
+        cell.innerHTML = linky;
+                
+        //separador4
+        cell = row.insertCell();         // Separador
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'left';
+        cell.width = document.all.separador4.width;
+        
+        //tbpa_col5
+        cell = row.insertCell();         // Valor Desenvolvimento - vldeseve
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'right';
+        cell.width = document.all.tbpa_col5.width;
+        linky = "<input type='text' class='moeda_15' value='" + aux_vldeseve + "' id='vldeseve" + mpa[i].cdagenci + "' name='vldeseve" + mpa[i].cdagenci + "' onblur='calculaValorTotal(" + mpa[i].cdagenci + ",3);' style='width:100px; text-align: right;'>";
+        cell.innerHTML = linky;
+               
+        //separador5
+        cell = row.insertCell();         // Separador
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'left';
+        cell.width = document.all.separador5.width;
+                
+        //tbpa_col6 
+        cell = row.insertCell();         // Total
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'right';
+        cell.width = document.all.tbpa_col6.width;
+        linky = "<input type='text' class='moeda_15' value='" + aux_vlrtotal + "' readonly value='' id='vlrtotal" + mpa[i].cdagenci + "' name='vlrtotal" + mpa[i].cdagenci + "' style='width:100px; text-align: right;'>";
+        cell.innerHTML = linky;
+        
+        //separador6
+        cell = row.insertCell();         // Separador
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'left';
+        cell.onclick = "";
+        cell.width = document.all.separador6.width;
+        
+        //tbpa_col7        
+        cell = row.insertCell();         // Checkboxes
+        cell.className = 'txtNormal';
+        cell.height = 26;
+        cell.align = 'center';
+        cell.width = document.all.tbpa_col7.width;
+        
+        if(aux_paiguais){
+          linky = "<input type='checkbox' id='aux_replicar" + mpa[i].cdagenci + "' name='aux_replicar" + mpa[i].cdagenci + "' checked='checked'/>&nbsp;<input type='checkbox' id='aux_salvar" + mpa[i].cdagenci + "' name='aux_salvar" + mpa[i].cdagenci + "' checked='checked' disabled=\"disabled\" />";
+        }else{
+          linky = "<input type='checkbox' id='aux_replicar" + mpa[i].cdagenci + "' name='aux_replicar" + mpa[i].cdagenci + "' checked='checked'/>&nbsp;<input type='checkbox' id='aux_salvar" + mpa[i].cdagenci + "' name='aux_salvar" + mpa[i].cdagenci + "' checked='checked' />";
+        }
+        cell.innerHTML = linky;
+                  
+      } // for(i=0;i<mpa.length;i++)
+      
+      document.form.aux_qtocoeve.value = 0;
+      document.form.aux_qtpareve.value = 0;
+      document.form.aux_vlporins.value = 0;
+      document.form.aux_vldeseve.value = 0;
+      document.form.aux_vlrtotal.value = 0;
+      
+    }
+        
+    function calculaValorTotal(cdagenci,codcampo){
+      
+      var aux_qtocoeve = 0;
+      var aux_qtpareve = 0;
+      var aux_vlporins = 0;
+      var aux_vldeseve = 0;
+      var aux_vlrtotal = "";
+      
+      
+      
+      if(cdagenci == 0){
+        aux_qtocoeve = document.form.aux_qtocoeve.value;
+        aux_qtpareve = document.form.aux_qtpareve.value;
+        aux_vlporins = document.form.aux_vlporins.value;
+        aux_vldeseve = document.form.aux_vldeseve.value;        
+        
+        if(aux_qtocoeve == null || aux_qtpareve == null || aux_vlporins == null || aux_vldeseve == null ||
+          aux_qtocoeve == undefined || aux_qtpareve == undefined || aux_vlporins == undefined || aux_vldeseve == undefined ||
+          aux_qtocoeve == "" || aux_qtpareve == "" || aux_vlporins == "" || aux_vldeseve == ""){
+          
+          alert("Valor nao pode ser nulo.");
+          
+          if(codcampo == 0){
+            document.getElementById("aux_qtocoeve").value = 0;
+          }else if(codcampo == 1){
+            document.getElementById("aux_qtpareve").value = 0;
+          }else if(codcampo == 2){
+            document.getElementById("aux_vlporins").value = 0;
+          }else if(codcampo == 3){
+            document.getElementById("aux_vldeseve").value = 0;
+          }
+          return false;
+        }
+        
+        aux_vlrtotal = parseFloat(parseFloat(aux_qtocoeve.replace(",",".")) * (parseFloat(aux_qtpareve.replace(",",".")) * parseFloat(aux_vlporins.replace(",","."))) + parseFloat(aux_vldeseve.replace(",",".")));
+        document.getElementById("aux_vlrtotal").value = number_format(aux_vlrtotal, 2, ",", ".");
+      }else{
+        aux_qtocoeve = document.getElementById("qtocoeve"+cdagenci).value;
+        aux_qtpareve = document.getElementById("qtpareve"+cdagenci).value;
+        aux_vlporins = document.getElementById("vlporins"+cdagenci).value;
+        aux_vldeseve = document.getElementById("vldeseve"+cdagenci).value;
+        
+        if(aux_qtocoeve == null || aux_qtpareve == null || aux_vlporins == null || aux_vldeseve == null ||
+          aux_qtocoeve == undefined || aux_qtpareve == undefined || aux_vlporins == undefined || aux_vldeseve == undefined ||
+          aux_qtocoeve == "" || aux_qtpareve == "" || aux_vlporins == "" || aux_vldeseve == ""){
+          
+          alert("Valor nao pode ser nulo.");
+          
+          if(codcampo == 0){
+            document.getElementById("qtocoeve"+cdagenci).value = 0;
+          }else if(codcampo == 1){
+            document.getElementById("qtpareve"+cdagenci).value = 0;
+          }else if(codcampo == 2){
+            document.getElementById("vlporins"+cdagenci).value = 0;
+          }else if(codcampo == 3){
+            document.getElementById("vldeseve"+cdagenci).value = 0;
+          }
+          return false;
+        }
+        
+        aux_vlrtotal = parseFloat(parseFloat(aux_qtocoeve.replace(",",".")) * (parseFloat(aux_qtpareve.replace(",",".")) * parseFloat(aux_vlporins.replace(",","."))) + parseFloat(aux_vldeseve.replace(",",".")));     
+        document.getElementById("vlrtotal"+cdagenci).value = number_format(aux_vlrtotal, 2, ",", ".");
+      }
+      
+    }
+    
+    function replicarValores(){
+      
+      var aux_qtocoeve = document.form.aux_qtocoeve.value;
+      var aux_qtpareve = document.form.aux_qtpareve.value;
+      var aux_vlporins = document.form.aux_vlporins.value;
+      var aux_vldeseve = document.form.aux_vldeseve.value;
+      var aux_vlrtotal = document.form.aux_vlrtotal.value;
+      
+      if(aux_qtocoeve <= 0){
+        alert("Informe a quantidade de eventos.");
+        return false;
+      }else if(aux_qtpareve <= 0){
+        alert("Informe a quantidade de participantes do evento.");
+        return false;
+      }else if(aux_vlporins <= 0){
+        alert("Informe o valor por inscriçao para o evento.");
+        return false;
+      }else if(aux_vldeseve <= 0){
+        alert("Informe o valor de desenvolvimento do evento.");
+        return false;
+      }
+            
+      for(i=0;i<mpa.length;i++){
+        if(document.getElementById("aux_replicar"+mpa[i].cdagenci).checked == true){
+          document.getElementById("qtocoeve"+mpa[i].cdagenci).value = aux_qtocoeve;
+          document.getElementById("qtpareve"+mpa[i].cdagenci).value = aux_qtpareve;
+          document.getElementById("vlporins"+mpa[i].cdagenci).value = aux_vlporins;
+          document.getElementById("vldeseve"+mpa[i].cdagenci).value = aux_vldeseve;
+          document.getElementById("vlrtotal"+mpa[i].cdagenci).value = aux_vlrtotal;
+        }
+      }
+    }
+
+    function salvarPA(){
+      
+      var strSalvar = "";
+      var aux_qtocoeve = 0;
+      var aux_qtpareve = 0;
+      var aux_vlporins = 0;
+      var aux_vldeseve = 0;      
+      
+      if(document.getElementById("aux_cdevento").value == 0 || document.getElementById("aux_cdevento").value == "" ||
+        document.getElementById("aux_cdevento").value == undefined){
+        alert("Informe o evento.");
+        document.getElementById("aux_cdevento").focus();
+        return false;
+      }
+      
+      for(i=0;i<mpa.length;i++){
+        if(document.getElementById("aux_salvar"+mpa[i].cdagenci).checked == true){
+        
+          aux_qtocoeve = 0;
+          aux_qtpareve = 0;
+          aux_vlporins = 0;
+          aux_vldeseve = 0;
+          
+          if(strSalvar != ""){
+             strSalvar = strSalvar + "|";
+          }
+          
+          aux_qtocoeve = document.getElementById("qtocoeve" + mpa[i].cdagenci).value;
+          aux_qtpareve = document.getElementById("qtpareve" + mpa[i].cdagenci).value;
+          aux_vlporins = document.getElementById("vlporins" + mpa[i].cdagenci).value;
+          aux_vldeseve = document.getElementById("vldeseve" + mpa[i].cdagenci).value;
+                    
+          strSalvar = strSalvar + mpa[i].cdagenci   + '#'
+                    + aux_qtocoeve + '#'
+                    + aux_qtpareve + '#'
+                    + aux_vlporins + '#'
+                    + aux_vldeseve;
+        }
+      }
+      document.getElementById("aux_cdevento").disabled = false;
+      document.getElementById("aux_strsalva").value = strSalvar;
+      document.getElementById("aux_cddopcao").value = 'sa';
+      document.form.submit();
+    }
+    
+    carregaPA();
+    layoutPadrao();        
+  </script>
+</html>
