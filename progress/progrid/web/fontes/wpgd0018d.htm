@@ -1,0 +1,232 @@
+<!--
+	Alteracoes: 18/10/2012 - Ajuste do tamanho do custo para 30 posicoes (Gabriel).
+-->
+
+<html>
+<head>
+<title>Custos (wpgd0018d)</title>
+</head>
+<body>
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+<script SRC="/cecred/jsbiblio/biblio.js"></script>
+<script SRC="/cecred/jsbiblio/frcod.js"></script>
+<form action="#." method="POST" name="form">
+  <input name="aux_cddopcao" type="hidden" value="">    
+  <input name="aux_lspermis" type="hidden" value="">    
+  <input name="aux_nrdrowid" type="hidden" value="">
+  <input name="aux_dsretorn" type="hidden" value="">    
+  <input name="aux_stdopcao" type="hidden" value="">
+  <input name="aux_dsendurl" type="hidden" value="">    
+  <input name="aux_idevento" type="hidden" value="">  
+  <input name="aux_cdfacili" type="hidden" value="">
+
+  <!-- Início do modelo geral -->
+  <table width="450" border="0" align="left" cellpadding="0" cellspacing="0">
+    <tr valign="botton">
+      <td>
+	    <table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+		  <tr>
+            <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+            <td align="center" nowrap width="150" class="linkGuia">Adicionar Custo</td>
+            <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr valign="botton">
+      <td bgcolor="#999999" height="1"></td>
+    </tr>
+    <tr valign="top" bgcolor="#FFFFFF">
+      <td colspan="4">
+        <table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+          <tr>
+            <td valign="top" bgcolor="#FFFFFF">
+              <table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+                <tr bgcolor="#FFFFFF">
+                  <td>&nbsp;
+                    
+                  </td>
+                </tr>
+                <tr>
+                  <td height="15" align="left">&nbsp;</td>
+                  <td height="15" align="left">
+                    <!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+                    <table border="0" align="center" cellspacing="0">
+                      <tr>
+                        <td align="right" class="NomeCampo">Custo:</td>
+                        <td align="left">
+                          <input name="dscusind" type="text" class="Campo" onFocus="window.status = 'Descrição do Custo.'" size="61" maxlength="30" value="">
+                        </td>
+                      </tr>
+                    </table>
+		    <br>
+                    <table width="200" align="center">
+                      <tr>
+                        <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_cadastrar.gif" width="58" height="20" onClick="return Incluir()"></th>
+                        <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20" onClick="return Salvar()"></th>
+                        <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_excluir_botao.gif" width="53" height="20" onClick="return Excluir()"></th>
+                        <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_procurar.gif" width="61" height="20" onClick="return AbreZoom(NomeDoProgramaDeZoom,NomeDoProgramaPrincipal,'','P',document.form.aux_idevento.value)"></th>
+                      </tr>
+                    </table>					
+                    <!-- Fim dos dados específicos da tela, reinício do modelo geral -->
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  <!-- Fim do modelo geral -->
+</form>
+</body>
+<script language="JavaScript">
+   NomeDoProgramaPrincipal  = '/wpgd0018d.w';
+   NomeDoProgramaDeListagem = '/wpgd0018dls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0018daj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zwpgd0018d.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+   
+function Incluir(){
+  ZeraModoExclusao()
+  var vaux = document.form.aux_lspermis.value; 
+  if(vaux.substring(0,1) == 'I'){ 
+    if(document.form.aux_stdopcao.value == 'i'){ 
+      MostraResultado('1','Você já esta no modo de inclusão.'); 
+      return false
+    } 
+    else{ 
+      document.form.aux_cddopcao.value='in'; 
+      document.form.aux_stdopcao.value='i'
+      LimparCampos(); 
+      return true
+    } 
+  } 
+  else{ 
+    MostraResultado('1','Desculpe, mas você não tem permissão para executar esta função.'); 
+    return false
+  }
+}
+
+function Salvar(){
+  ZeraModoExclusao();
+  
+  var vaux = document.form.aux_lspermis.value; 
+  if((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
+    if(document.form.aux_cddopcao.value!='sa')  {	
+      if(ValidaDados(document.forms[0])){
+        document.form.aux_cddopcao.value='sa'; 
+        status = 'Salvando. Por favor, aguarde ...';  
+        document.form.submit(); 
+        return true;
+      } 
+      else{ 
+        return false;
+      }  
+    } 
+  }
+  else{ 
+    MostraResultado('1','Desculpe, mas você não tem permissão para executar esta função.'); 
+    return false;
+  }
+}
+
+function Excluir(){
+  ZeraModoExclusao();  
+  var vaux = document.form.aux_lspermis.value;
+   
+  if(vaux.substring(2,3) == 'E') { 
+    if(document.form.aux_stdopcao.value=='i') { 
+      MostraResultado('1','Você esta no modo de inclusão.Selecione o registro apropriado e então selecione a opção exclusão.'); 
+      return false
+    } 
+    else {
+      if (!confirm('Confirma Exclusão do Custo?')){
+         return false;
+      }
+	  else{
+         document.form.aux_cddopcao.value = "ex";
+         document.form.submit();
+	  }
+    } 
+  } 
+  else { 
+    MostraResultado('1','Desculpe, mas você não tem permissão para executar esta função.'); 
+    return false
+  }	
+}
+
+function AbreZoom(ProgramaDeZoom,ProgramaPrincipal,NomeDoCampo,TipoDeZoom,ValorCampo,ValorCampo2,ValorCampo3,ValorCampo4,ValorCampo5,ValorCampo6)
+   {
+      ZeraModoExclusao()   
+      status = 'Processando pesquisa. Por favor, aguarde ...'; 
+      if (ValorCampo == null)  ValorCampo = "";
+      if (ValorCampo2 == null) ValorCampo2 = "";
+      if (ValorCampo3 == null) ValorCampo3 = "";
+      if (ValorCampo4 == null) ValorCampo4 = "";
+      if (ValorCampo5 == null) ValorCampo5 = "";
+      if (ValorCampo6 == null) ValorCampo6 = "";
+      if (ValorCampo != "" )  ValorCampo = Substituir(ValorCampo);  
+      if (ValorCampo2 != "" ) ValorCampo2 = Substituir(ValorCampo2);  
+      if (ValorCampo3 != "" ) ValorCampo3 = Substituir(ValorCampo3);  
+      if (ValorCampo4 != "" ) ValorCampo4 = Substituir(ValorCampo4);  
+      if (ValorCampo5 != "" ) ValorCampo5 = Substituir(ValorCampo5);  
+      if (ValorCampo6 != "" ) ValorCampo6 = Substituir(ValorCampo6);  
+      ProgramaPrincipal = Substituir(ProgramaPrincipal);   
+      ProgramaDeZoom = document.form.aux_dsendurl.value + ProgramaDeZoom;   
+      varurl = ProgramaDeZoom + '?Pesquisa='    + TipoDeZoom  + 
+                                '&vprograma='   + ProgramaPrincipal + 
+                                '&NomeDoCampo=' + NomeDoCampo + 
+                                '&ValorCampo='  + ValorCampo  + 
+                                '&ValorCampo2=' + ValorCampo2 + 
+                                '&ValorCampo3=' + ValorCampo3 + 
+                                '&ValorCampo4=' + ValorCampo4 + 
+                                '&ValorCampo5=' + ValorCampo5 + 
+                                '&ValorCampo6=' + ValorCampo6;
+      WZoom = window.open(varurl,'WZoom','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=560,height=350,screenX=0,screenY=0,top=10,left=10');
+      WZoom.focus();	  
+   }
+   
+function FechaZoom(campo,valor,valor2,valor3,valor4,valor5,valor6,valor7,valor8)
+{
+   ZeraModoExclusao()   
+   if (window.WZoom != null)
+         {	
+            if (WZoom.closed != true)
+                  {
+                     if (valor != null)
+                           top.mainFrame.RetornoDoZoom(campo,valor,valor2,valor3,valor4,valor5,valor6,valor7,valor8);
+                     WZoom.close();
+                  }
+         }
+}    
+   
+function ValidaDados(form){ 
+   var msg="";
+         
+   msg = msg + VE("ca",form.dscusind,"A descrição do custo","nao");
+         
+   if (msg == "")
+      return true
+   else{
+      MostraResultado('1',msg);
+      return false
+   }
+}
+
+function LimparCampos(){
+    document.form.dscusind.value = "";
+
+    document.form.dscusind.focus();
+    document.form.dscusind.select();
+}
+
+function CarregaPrincipal()
+{
+}
+</SCRIPT>
+
+</html>

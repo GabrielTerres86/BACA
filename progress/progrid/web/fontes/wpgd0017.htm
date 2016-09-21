@@ -1,0 +1,521 @@
+<!--
+
+     Alteracoes: 23/11/2009 - Aumento do campo referente Verba Total (Diego).
+     
+                 29/08/2013 - Nova forma de chamar as agências, de ~PAC agora 
+                            a escrita será PA (André Euzébio - Supero).
+
+-->
+<html>
+<head>
+<meta name="AUTHOR" content="Solusoft/Bt - wpgd0017 - C.18">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta http-equiv="Cache-Control" content="No-Cache">
+<meta http-equiv="Pragma"        content="No-Cache">
+<meta http-equiv="Expires"       content="0">
+<title>Distribuição de Verbas</title>
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+<!--script SRC="/cecred/jsbiblio/sorttable.js"></script-->
+</head>
+<body style="margin-left: 3px; ">
+
+<script language="JavaScript">
+   NomeDoProgramaPrincipal  = '/wpgd0017.w';
+   NomeDoProgramaDeListagem = '/wpgd0017ls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0017aj.w';
+   NomeDoProgramaDeZoom     = '/zoom/zoei04.w';
+</script>
+<form action="#." method="POST" name="form"><div align="right">
+  <input type="hidden" name="aux_dsendurl" value="">
+  <input type="hidden" name="aux_idevento" value="">
+  <input type="hidden" name="aux_cddopcao" value="">
+  <input type="hidden" name="aux_nrdrowid" value="">
+  <input type="hidden" name="aux_lspermis" value="">
+  <input type="hidden" name="aux_dsretorn" value="">
+  <input type="hidden" name="aux_stdopcao" value="">
+  <input type="hidden" name="aux_idexclui" value="">
+  <input type="hidden" name="aux_vlrselec" value="">
+  <!-- Inicio do modelo com abas -->
+  <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 18px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"> </div>
+  <table width="575" height="360"  border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+    <tr>
+      <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+      <td width="56"><img src="/cecred/images/geral/spacer.gif" width="48" height="10"></td>
+      <td width="400" height="20" class="linkGuia">Distribuição de Verbas </td>
+      <td width="100" class="linkGuia"> <div align="right">wpgd0017 </div></td>
+      <td width="11" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+    </tr>
+    <tr valign="top" bgcolor="#FFFFFF">
+      <td colspan="5">
+        <table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+          <tr>
+            <td height="200" valign="top" bgcolor="#FFFFFF">
+              <table width="100%" height="100%"  border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td height="15" align="center" valign="bottom">
+                    <!-- Interrupcao do modelo - início das abas -->
+                    <table width="100%" border="0" align="center" cellspacing="1">
+                      <tr>
+                        <td width="14%" align="right" class="NomeCampo"> Agenda: </td>
+                        <td width="12%" align="right" class="NomeCampo"><div align="left">
+                          <input name="aux_dtanoage" type="text" class="Campo" size="8" onChange="PesquisaCooper();">
+                        </div></td>
+                        <td width="18%" class="NomeCampo"><div align="right">Cooperativa: 
+                        </div></td>
+                        <td width="11%" class="NomeCampo"><select name="aux_cdcooper" class="Campo" id="select" onChange="document.form.aux_dtanoage.value = ''; PesquisaCooper();">
+                        </select></td>
+                        <td width="17%" align="right" class="NomeCampo"><div align="left">
+                        </div>                          <div align="right">Verba total:
+                          </div>                          <div align="left">                          </div></td>
+                        <td class="NomeCampo"><input name="aux_vlverbat" type="text" class="CampoNumerico" id="aux_vlverbat" onChange="CalculaPAC('1','valor');" size="11"></td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" align="right" class="NomeCampo">Despesas diversas: </td>
+                        <td class="NomeCampo"><input name="aux_vlverbad" type="text" class="CampoNumerico" id="aux_vlverbad" onChange="CalculaPAC('1','valor');" onFocus="this.select()" size="11"></td>
+                        <td colspan="2" class="NomeCampo"><div align="right"> Distribuir entre os PAs: </div></td>
+                        <td width="28%" class="NomeCampo"><input name="aux_vlverbap" type="text" disabled="true" class="CampoNumerico" onChange="CalculaPAC('1','valor');" size="11" readonly="true"></td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" align="right" class="NomeCampo"> M&eacute;dia por PA: </td>
+                        <td colspan="2">
+                          <input name="aux_vlmedpac" type="text" disabled="true" class="CampoNumerico" size="11" readonly>
+                          <span class="NomeCampo">
+                          <input name="aux_pemedpac" type="text" disabled="true" class="CampoNumerico" size="6" readonly>
+                          %</span>                        </td>
+                        <td align="right" class="NomeCampo">Distribu&iacute;do:  </td>
+                        <td class="NomeCampo"><input name="aux_vldispac" type="text" disabled="true" class="CampoNumerico" size="9" readonly>
+                          <input name="aux_pedispac" type="text" disabled="true" class="CampoNumerico" size="4" readonly>
+                          %</td>
+                      </tr>
+                      <tr>
+                        <td colspan="2" align="right" class="NomeCampo"> Saldo(distribuir - distribu&iacute;do): </td>
+                        <td colspan="4">
+                          <input name="aux_vlrsaldo" type="text" disabled="true" class="CampoNumerico" size="11" readonly>                          
+                          <span class="NomeCampo">
+                          <input name="aux_persaldo" type="text" disabled="true" class="CampoNumerico" size="6" readonly>
+                           %</span>
+                         </td>
+                        </tr>
+                    </table>
+                    <div id="divVerba" align="left">
+                      <table width="570" border="0" align="center">
+                         <tr>
+                           <td>
+                              <table width="100%" border="0" cellspacing="0" cellpadding="0" class="dataTable">
+                                 <tr>
+                                                    <td width="5" height="5" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="separador1">&nbsp;</td>
+                                    <td id="tbpac_col1" width="200" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">PA</td>
+                                    <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                    <td id="tbpac_col2" width="160" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Valor</td>
+                                    <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                    <td id="tbpac_col3" width="150" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">% sobre a verba total</td>
+                                    <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                    <td id="tbpac_col4" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">&nbsp;</td>
+                                 </tr>
+                              </table>      
+                           </td>
+                         </tr>
+                                                 <tr>
+                           <td>
+                              <div style="overflow: auto; height:'150';">
+                              <table id="tbpac" width="100%" border="0" cellspacing="0" cellpadding="0" class="dataTable">
+                                 <!-- INCLUI DADOS -->
+                              </table>      
+                              </div>
+                           </td>
+                         </tr>
+                      </table>
+                    </div>
+                    <br>
+                    <table border="0" cellspacing="1" cellpadding="1" align="center">
+                      <tr>
+                        <td><img src="/cecred/images/botoes/btn_salvar.gif" style="cursor: hand; " onClick="Salvar()"></td>
+                      </tr>
+                    </table>
+                    <!-- Fim dos dados do programa - retorno ao modelo -->                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+<!-- fim do modelo -->
+</form>
+<script language="JavaScript">
+NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+document.form.action = NomeDoProgramaPrincipal;
+
+function mostraPACs(){
+ var row;var cell;
+
+ // Apaga todas as linhas, menos a do cabeçalho
+ for (var i=document.all.tbpac.rows.length; i>0; i--)
+      document.all.tbpac.deleteRow(i-1); 
+
+ for(i=0;i<mpac.length;i++){      
+   row=tbpac.insertRow(); 
+   row.id=mpac[i].cdagenci;
+
+   if(row.id == "0")
+      /*row.bgColor='blue';*/
+          row.bgColor='#CCCC66';
+   
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 30;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+        
+   // PAC
+   cell=row.insertCell();   
+   cell.className = 'txtNormal';
+   cell.height = 6;
+   cell.align = 'left';
+   cell.title = mpac[i].nmresage;
+   cell.width= document.all.tbpac_col1.width;
+   linky='<in' + 'put type="hidden" name="aux_cdagenci" value="' + mpac[i].cdagenci + '">' + mpac[i].nmresage.substring(0,20);
+   cell.innerHTML=linky;
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 30;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   // Valor
+   cell=row.insertCell();    
+   cell.className = 'txtNormal';
+   cell.height = 6;
+   cell.align = 'left';
+   cell.width= document.all.tbpac_col2.width;
+   linky='<in' + 'put ' + 'type="text" name="aux_vlprogri" size="10" class="Campo" style="text-align:right;" value="' + mpac[i].vlprogri + '" onChange="CalculaPAC(' + "'" + (i + 1) + "'" + ",'valor');" + '">';
+   cell.innerHTML=linky; 
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 30;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   // % do Total
+   cell=row.insertCell();    
+   cell.className = 'txtNormal';
+   cell.height = 6;
+   cell.align = 'left';
+   cell.width= document.all.tbpac_col3.width;
+   linky='<in' + 'put ' + 'type="text" name="aux_peprogri" size="10" class="Campo" style="text-align:right;" value="' + mpac[i].peprogri + '" onChange="CalculaPAC(' + "'" + (i + 1) + "'" + ",'percent');" + '">';
+   cell.innerHTML=linky; 
+
+   cell=row.insertCell();   // Separador
+   cell.className = 'txtNormal';
+   cell.height = 30;
+   cell.align = 'left';
+   cell.width= document.all.separador1.width;
+   cell.innerText='';
+
+   // Botão de propagação dos valores para os PACs
+   if(row.id==0)
+   {
+      cell=row.insertCell();   
+      cell.className = 'txtNormal';
+      cell.align = 'left';
+      cell.height = 20;         
+          cell.width= document.all.tbpac_col4.width;
+      linky='<a href="#." onClick=Propaga(); class="linkGuia"><img src="/cecred/images/icones/financeiro.gif" border="0" title="Propagar valores para os PAs"></a>';
+      cell.innerHTML=linky; 
+   } // if(row.id==0)
+   // Flag que indica se o PAC vai receber os valores de propagação ou não
+   else 
+   {
+      cell=row.insertCell();   
+      cell.className = 'txtNormal';
+      cell.align = 'left';
+      cell.height = 20; 
+          cell.width= document.all.tbpac_col4.width;
+      cell.title='Selecione para que esta linha receba a propagação de valores';
+      linky='<in' + 'put type="checkbox" name="aux_flpropag" checked>';
+      cell.innerHTML=linky;
+   }
+ }  
+
+}
+
+function CarregaPrincipal () {
+   //top.topFrame.document.all.titulo.innerHTML = 'Distribuição de Verbas - ' + document.form.aux_idevento.value;
+   jan3 = open('wpgd0017a.htm','fraux');
+   window.status = "";
+}
+
+function LimparCampos()
+{
+}
+
+function Habilita(){}
+function HabilitaSalvar(){}
+
+function ValidaDados(form)
+{ 
+      var msg="";
+          
+      msg = msg + top.frcod.VE("de",form.aux_vlverbat,"Valor Total","sim", "0", "99999999");
+      msg = msg + top.frcod.VE("de",form.aux_vlverbad,"Valor Despesas","sim", "0", "99999999");
+      //msg = msg + top.frcod.VE("de",form.aux_vlverbap,"Valor Distribuido","sim", "0", "99999999");
+      
+      if (msg == "")
+          return true
+      else
+      {
+         top.frcod.MostraResultado('1',msg);
+         return false
+      }
+}
+
+function Recarrega()
+{
+   document.form.submit();
+}
+
+// Para os campos com a flag marcada, copiará o valor que estiver na primeira linha
+function Propaga()
+{
+  var row; var cell;
+
+  if (document.all.tbpac.rows.length <= 1)  return true;
+
+  // Para todas as linhas de PAC
+  for(i=1;i<mpac.length;i++)      
+  {
+     // Se tem mais de um PAC
+     if(document.form.aux_flpropag.length > 1)
+     {
+        // Se o campo de checkbox estiver marcado
+        if(document.form.aux_flpropag[i-1].checked)
+        {
+           // Substitui os valores antigos pelos valores que estão na primeira linha
+           document.all.tbpac.rows[i].cells[3].innerHTML='<in' + 'put ' + 'type="text" name="aux_vlprogri" size="10" class="Campo" style="text-align:right;" value="' + document.form.aux_vlprogri[0].value + '" onChange="CalculaPAC(' + "'" + (i + 1) + "'" + ",'valor');" + '">';
+           document.all.tbpac.rows[i].cells[5].innerHTML='<in' + 'put ' + 'type="text" name="aux_peprogri" size="10" class="Campo" style="text-align:right;" value="' + document.form.aux_peprogri[0].value + '">';
+        }
+     }
+     // Se tem um PAC apenas
+     else
+     {
+        // Se o campo de checkbox estiver marcado
+        if(document.form.aux_flpropag.checked)
+        {
+           document.all.tbpac.rows[i].cells[3].innerHTML='<in' + 'put ' + 'type="text" name="aux_vlprogri" size="10" class="Campo" style="text-align:right;" value="' + document.form.aux_vlprogri[0].value + '">';
+           document.all.tbpac.rows[i].cells[5].innerHTML='<in' + 'put ' + 'type="text" name="aux_peprogri" size="10" class="Campo" style="text-align:right;" value="' + document.form.aux_peprogri[0].value + '">';
+        }
+
+     }
+  } //for(i=1;i<mpac.length;i++)
+
+  CalculaPAC('1', 'valor');
+}
+
+// Guardar os valores da tabela para que sejam salvos no banco de dados
+function ArmazenaValores()
+{
+   document.form.aux_vlrselec.value = '0;' + document.form.aux_vlverbat.value;
+
+   if (document.all.tbpac.rows.length <= 1)  return true;
+
+   // Se tem mais de um PAC
+   if(document.all.tbpac.rows.length > 1)
+   {
+      for(i=0;i<document.form.aux_vlprogri.length;i++)
+         // Grava os valores em forma de lista, separados por ";", para que seja lido pelo progress
+         if (document.form.aux_vlrselec.value == '') 
+         {
+            document.form.aux_vlrselec.value = document.form.aux_cdagenci[i].value + ';'
+                                             + document.form.aux_vlprogri[i].value ;
+         }
+         else
+         {
+            document.form.aux_vlrselec.value = document.form.aux_vlrselec.value    + ';'
+                                             + document.form.aux_cdagenci[i].value + ';'
+                                             + document.form.aux_vlprogri[i].value ;
+         }
+    }
+    else
+    {
+       document.form.aux_vlrselec.value = document.form.aux_cdagenci.value + ';'
+                                        + document.form.aux_vlprogri.value ;
+    }
+    
+}
+
+function Salvar()
+{
+   if (document.form.aux_cdcooper.value == "") {
+      return false;
+   }
+   //ZeraModoExclusao();
+   document.form.aux_stdopcao.value = 'al';
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
+        if ( document.form.aux_cddopcao.value!='sa')  {
+           if (ValidaDados(document.forms[0])) {
+               Habilita(); 
+               HabilitaSalvar(); 
+               ArmazenaValores();
+               document.form.aux_cddopcao.value='sa'; 
+               status = 'Salvando. Por favor, aguarde ...'; 
+               document.form.submit(); 
+               return true;
+               
+            } 
+            else { 
+              return false;
+            }  
+        } 
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
+
+// Efetua os cálculos necessários na tela
+function Calcula(linha)
+{
+   var msg = "";
+
+   if (document.all.tbpac.rows.length <= 1)  return true;
+    
+   msg = msg + top.frcod.VE("de",form.aux_vlverbat,"Valor Total","sim", "0", "99999999");
+   msg = msg + top.frcod.VE("de",form.aux_vlverbad,"Valor Despesas","sim", "0", "99999999");
+   msg = msg + top.frcod.VE("de",form.aux_vlprogri[linha - 1],"Valor PA","sim", "0", "99999999");
+
+   if (msg == "")
+      top.frames[1].PesquisaDados('media',
+                                  'media',
+                                  '',
+                                  document.form.aux_vlverbat.value,
+                                  '',
+                                  document.all.tbpac.rows.length -1,
+                                  '', 
+                                  document.form.aux_vldispac.value,
+                                  '',
+                                  linha,
+                                  '',
+                                  document.form.aux_vlprogri[linha - 1].value,
+                                  '',
+                                  document.form.aux_vlverbad.value
+                                  );
+   else
+      alert(msg);
+}
+
+function RetornoDaPesquisa(campo,valor,valor2,valor3,valor4,valor5,valor6,valor7,valor8,valor9,valor10,valor11,valor12)
+{
+   var aux_perc=0;
+   if(campo == "media")
+   {
+      document.form.aux_vlverbat.value = valor;  // Valor Total (retorna por causa da formatação)
+      document.form.aux_vlmedpac.value = valor2; // Média por PAC(R$)
+      document.form.aux_pemedpac.value = valor3; // Média por PAC(%)
+      document.form.aux_vldispac.value = valor4; // Distribuído (R$)
+      document.form.aux_pedispac.value = valor5; // Distribuído (%)
+      document.form.aux_vlrsaldo.value = valor6; // Saldo (R$)
+      document.form.aux_persaldo.value = valor7; // Saldo (%)
+      document.form.aux_vlverbad.value = valor11; // Verba para Despesa (retorna por causa da formatação
+      document.form.aux_vlverbap.value = valor12; // Verba para os PACS
+      document.form.aux_vlprogri[parseInt(valor8) - 1].value = valor9;
+      document.form.aux_peprogri[parseInt(valor8) - 1].value = valor10;
+      if (valor8 == '1') {
+         for (i=0;i<document.form.aux_peprogri.length;i++) {
+            aux_perc = 
+            document.form.aux_peprogri[i].value = 
+            ((parseFloat(ConverteDec(document.form.aux_vlprogri[i].value,"1")) / parseFloat(ConverteDec(document.form.aux_vlverbap.value,"1"))) * 100)
+            document.form.aux_peprogri[i].value =  ConverteDec(aux_perc.toFixed(2),"2");
+         }
+      }
+
+   }
+}
+
+// Atualiza as médias da Cooperativa de acordo com o PAC que foi alterado
+function CalculaPAC(linha, tipo)
+{
+   var aux_vlrsoma = 0;
+   var aux_vlratua = "";
+   var aux_vllinha = "";
+   var aux_vltotal = "";
+   var aux_vldespe = "";
+
+   if (document.all.tbpac.rows.length <= 1)  return true;
+   
+   aux_vltotal = ConverteDec(document.form.aux_vlverbat.value, "1");
+   
+   aux_vldespe = ConverteDec(document.form.aux_vlverbap.value, "1");
+   
+   if(tipo == 'valor')
+      document.form.aux_vlprogri[linha - 1].value = ConverteDec(document.form.aux_vlprogri[linha - 1].value, "1");
+   else
+   {
+      aux_vllinha = ConverteDec(document.form.aux_peprogri[linha - 1].value, "1");
+      document.form.aux_vlprogri[linha - 1].value = (parseFloat(aux_vldespe)) * parseFloat(aux_vllinha) / 100;
+   }
+   document.form.aux_vlprogri[linha - 1].value = ConverteDec(document.form.aux_vlprogri[linha - 1].value, "2");
+   for(i=1; i < document.all.tbpac.rows.length; i++)
+   {
+      aux_vlratua = ConverteDec(document.form.aux_vlprogri[i].value, "1");
+      aux_vlrsoma = parseFloat(aux_vlrsoma) + parseFloat(aux_vlratua);
+   }
+
+   aux_vlrsoma = aux_vlrsoma.toFixed(2);
+   
+   document.form.aux_vldispac.value = aux_vlrsoma;
+
+   document.form.aux_vldispac.value = ConverteDec(document.form.aux_vldispac.value, "2");
+   
+   Calcula(linha);
+
+}
+
+// Converte um valor com decimal separado por "," para separado por "."
+function ConverteDec(str, tipo)
+{ 
+   if(tipo == "1")
+   {  
+      str = str.replace(/\./g,"");  /* para substituir TODOS os pontos */ 
+          str = str.replace(",",".");
+          return str;
+   }
+   else
+   {
+      str = str.replace(",","");
+      str = str.replace(".",",");
+      return str;
+   }
+}
+
+function PesquisaCooper()
+{
+   document.form.aux_vlverbad.value = '';
+   document.form.aux_vlverbat.value = '';
+   document.form.aux_vldispac.value = '';
+   document.form.aux_cddopcao.value = 'pe'; 
+   status = 'Pesquisando. Por favor, aguarde ...'; 
+   document.form.submit(); 
+   return true;
+}
+
+// valida os parâmetros da agenda
+if(document.form.aux_dtanoage.value == ''){
+   alert('Parâmetro da Agenda Não Encontrado!!!');
+   
+   document.form.aux_dtanoage.value = '';
+   document.form.aux_cdcooper.value = '';
+}
+
+</script>
+</body>
