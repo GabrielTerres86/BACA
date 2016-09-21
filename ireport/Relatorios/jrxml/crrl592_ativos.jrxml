@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl592_ativos" language="groovy" pageWidth="595" pageHeight="640" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isSummaryWithPageHeaderAndFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_PAGE_NUMBER" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl592/tipos/tipo/ativos/ativo]]>
+	</queryString>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="vllanmto" class="java.lang.String">
+		<fieldDescription><![CDATA[vllanmto]]></fieldDescription>
+	</field>
+	<field name="totativo" class="java.lang.String">
+		<fieldDescription><![CDATA[totativo]]></fieldDescription>
+	</field>
+	<field name="vlativos" class="java.lang.String">
+		<fieldDescription><![CDATA[vlativos]]></fieldDescription>
+	</field>
+	<field name="dstipo" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::tipo/@dstipo]]></fieldDescription>
+	</field>
+	<field name="dspessoa" class="java.lang.String">
+		<fieldDescription><![CDATA[dspessoa]]></fieldDescription>
+	</field>
+	<field name="qtatvfis" class="java.lang.String">
+		<fieldDescription><![CDATA[qtatvfis]]></fieldDescription>
+	</field>
+	<field name="vlatvfis" class="java.lang.String">
+		<fieldDescription><![CDATA[vlatvfis]]></fieldDescription>
+	</field>
+	<field name="qtatvjur" class="java.lang.String">
+		<fieldDescription><![CDATA[qtatvjur]]></fieldDescription>
+	</field>
+	<field name="vlatvjur" class="java.lang.String">
+		<fieldDescription><![CDATA[vlatvjur]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="24">
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="8" width="63" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[ATIVOS]]></text>
+			</staticText>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="16">
+			<printWhenExpression><![CDATA[$F{cdagenci}.isEmpty()?false:true]]></printWhenExpression>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="1" width="14" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[PA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="266" y="0" width="47" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Tipo Pessoa]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="79" y="0" width="180" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Nome]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="324" y="0" width="76" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Dt.Integralizacao]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="409" y="0" width="76" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Valor]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="8" width="14" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[---]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="22" y="8" width="45" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[----------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="79" y="8" width="180" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[-----------------------------------------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="324" y="8" width="76" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[-----------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="409" y="8" width="76" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[--------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="22" y="1" width="45" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Conta/DV]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="266" y="8" width="47" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[-------------]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="8">
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="5458336c-de1a-4559-9bda-4ed6bf0363ea" x="0" y="0" width="14" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdagenci}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="5458336c-de1a-4559-9bda-4ed6bf0363ea" x="22" y="0" width="45" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="5458336c-de1a-4559-9bda-4ed6bf0363ea" x="79" y="0" width="180" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="5458336c-de1a-4559-9bda-4ed6bf0363ea" x="324" y="0" width="76" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
+			</textField>
+			<textField pattern="" isBlankWhenNull="true">
+				<reportElement uuid="5458336c-de1a-4559-9bda-4ed6bf0363ea" x="409" y="0" width="76" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vllanmto}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="a9ea587b-56a3-416c-805f-d85f2e46ef2b" x="266" y="0" width="47" height="8" isRemoveLineWhenBlank="true"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dspessoa}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="80">
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="24" width="152" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Quantidade Total de lanctos Ativos:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="56" width="120" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Total de valores Ativos:]]></text>
+			</staticText>
+			<textField pattern="#,##0;-#,##0" isBlankWhenNull="true">
+				<reportElement uuid="5458336c-de1a-4559-9bda-4ed6bf0363ea" stretchType="RelativeToBandHeight" x="120" y="56" width="82" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlativos}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="245b7d2b-0780-4332-9710-cb95c9ade0f3" x="152" y="24" width="50" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{totativo}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="40" width="120" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Total de valores Ativos PF:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="48" width="120" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Total de valores Ativos PJ:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="edb3d14b-736d-416d-860a-df062826a32e" x="120" y="40" width="82" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlatvfis}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="fd2772da-c844-4d41-94e8-74dbd0fbab70" x="120" y="48" width="82" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlatvjur}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="16" width="152" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Quantidade de lancamentos Ativos PJ:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="713357c2-95a7-4535-b8dd-65f85e92c637" x="0" y="8" width="152" height="8" isPrintWhenDetailOverflows="true"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[Quantidade de lancamentos Ativos PF:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="2111971b-377d-4f3d-bd44-656e13f759d3" x="152" y="8" width="50" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtatvfis}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="d80ed598-ac00-41ac-89f1-33102474c090" x="152" y="16" width="50" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtatvjur}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

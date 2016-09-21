@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl007_cheque" language="groovy" pageWidth="592" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="592" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="127"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_CDAGENCI" class="java.lang.String"/>
+	<parameter name="PR_NMRESAGE" class="java.lang.String"/>
+	<parameter name="PR_VLREFERE" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/raiz/devedor]]>
+	</queryString>
+	<field name="dsarquiv" class="java.lang.String">
+		<fieldDescription><![CDATA[dsarquiv]]></fieldDescription>
+	</field>
+	<field name="dsdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[dsdconta]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nmdaval1" class="java.lang.String">
+		<fieldDescription><![CDATA[nmdaval1]]></fieldDescription>
+	</field>
+	<field name="nmdaval2" class="java.lang.String">
+		<fieldDescription><![CDATA[nmdaval2]]></fieldDescription>
+	</field>
+	<field name="dsrefere" class="java.lang.String">
+		<fieldDescription><![CDATA[dsrefere]]></fieldDescription>
+	</field>
+	<columnHeader>
+		<band height="24">
+			<staticText>
+				<reportElement uuid="dddda9dc-988e-42f1-8272-3e0f82f2e889" x="32" y="16" width="52" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[ARQUIVO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="dddda9dc-988e-42f1-8272-3e0f82f2e889" x="173" y="16" width="92" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[DEVEDOR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="dddda9dc-988e-42f1-8272-3e0f82f2e889" x="360" y="16" width="45" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[AVALISTAS]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="dddda9dc-988e-42f1-8272-3e0f82f2e889" x="10" y="0" width="52" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[REFERENCIA:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="62" y="0" width="111" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsrefere}]]></textFieldExpression>
+			</textField>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="32" splitType="Prevent">
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="173" y="16" width="50" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsdconta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="32" y="8" width="141" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsarquiv}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="173" y="8" width="187" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="360" y="8" width="232" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmdaval1}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="360" y="16" width="232" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmdaval2}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="8">
+			<subreport>
+				<reportElement uuid="077556d9-5c78-4f71-832c-d91d18eaa63b" x="0" y="0" width="595" height="8"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//devedor/promissoria")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl202_promissoria.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+</jasperReport>

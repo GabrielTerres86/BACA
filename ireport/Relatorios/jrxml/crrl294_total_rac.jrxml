@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl294_n_rac" language="groovy" pageWidth="442" pageHeight="22" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isSummaryNewPage="true" uuid="c26ca434-d6e9-4b43-8f84-02465f011d51">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/base/totalGeralRAC]]>
+	</queryString>
+	<field name="faixa" class="java.lang.String">
+		<fieldDescription><![CDATA[faixa]]></fieldDescription>
+	</field>
+	<field name="qtaplica" class="java.lang.Integer">
+		<fieldDescription><![CDATA[qtaplica]]></fieldDescription>
+	</field>
+	<field name="vlsldtot" class="java.lang.String">
+		<fieldDescription><![CDATA[vlsldtot]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="22" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="bc059b18-252c-488c-a47b-554a8aaf2167" x="0" y="0" width="144" height="11" isRemoveLineWhenBlank="true"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{faixa}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="aca3728b-d932-4a9f-8c27-3a11ab3675a9" x="217" y="0" width="100" height="11" isRemoveLineWhenBlank="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtaplica}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="7f1b2a44-d304-4949-8ad8-c6d5b888e899" x="326" y="0" width="100" height="11" isRemoveLineWhenBlank="true"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlsldtot}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
