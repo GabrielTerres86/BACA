@@ -1,0 +1,43 @@
+<?php
+/* !
+ * FONTE        : form_cabecalho.php
+ * CRIAÇÃO      : Rogerius Militão (DB1)
+ * DATA CRIAÇÃO : 26/12/2011
+ * OBJETIVO     : Cabeçalho para a tela DESCTO
+ * --------------
+	* ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ * --------------
+ */
+
+session_start();
+require_once('../../includes/config.php');
+require_once('../../includes/funcoes.php');
+require_once('../../includes/controla_secao.php');
+require_once('../../class/xmlfile.php');
+isPostMethod();
+?>
+
+
+<form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;">
+
+    <label for="cddopcao">Op&ccedil;&atilde;o</label>
+    <select id="cddopcao" name="cddopcao">
+        <option value="A" <?php echo $cddopcao == 'A' ? 'selected' : '' ?>>A - Alterar dados do cheque.</option>
+        <option value="C" <?php echo $cddopcao == 'C' ? 'selected' : '' ?>>C - Consultar cheques descontados por conta corrente ou por CPF/CNPJ.</option>
+        <option value="F" <?php echo $cddopcao == 'F' ? 'selected' : '' ?>>F - Consultar libera&ccedil;&otilde;es e resgates de cheques.</option>
+        <option value="M" <?php echo $cddopcao == 'M' ? 'selected' : '' ?>>M - Imprimir cheques resgatados.</option>
+        <option value="P" <?php echo $cddopcao == 'P' ? 'selected' : '' ?>>P - Pesquisar CMC7 de cheques a serem liberados.</option>
+        <option value="Q" <?php echo $cddopcao == 'Q' ? 'selected' : '' ?>>Q - Pesquisar cheques a serem liberados.</option>
+        <option value="R" <?php echo $cddopcao == 'R' ? 'selected' : '' ?>>R - Imprimir relat&oacute;rio de lotes.</option>
+        <option value="S" <?php echo $cddopcao == 'S' ? 'selected' : '' ?>>S - Pesquisar dados para concilia&ccedil;&atilde;o cont&aacute;bil.</option>
+        <option value="T" <?php echo $cddopcao == 'T' ? 'selected' : '' ?>>T - Pesquisar datas de libera&ccedil;&atilde;o e loteamento de cheques.</option>
+        <option value="O" <?php echo $cddopcao == 'O' ? 'selected' : '' ?>>O - Imprimir relat&oacute;rio para confer&ecirc;ncia de cheques a serem liberados.</option>
+    </select>
+
+
+    <a href="#" class="botao" id="btnOk1">Ok</a>
+    <br style="clear:both" />	
+
+</form>
+
+
