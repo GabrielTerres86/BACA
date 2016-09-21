@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl044_retencoes" language="groovy" pageWidth="442" pageHeight="950" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.657341500000001"/>
+	<property name="ireport.x" value="92"/>
+	<property name="ireport.y" value="0"/>
+	<subDataset name="dataset1" uuid="0695e938-6a20-48a5-9cc2-5c0937dbf294"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl044/contas/conta/retencoes/retencao]]>
+	</queryString>
+	<field name="nmmesref" class="java.lang.String">
+		<fieldDescription><![CDATA[nmmesref]]></fieldDescription>
+	</field>
+	<field name="cdretenc" class="java.lang.String">
+		<fieldDescription><![CDATA[cdretenc]]></fieldDescription>
+	</field>
+	<field name="dsretenc" class="java.lang.String">
+		<fieldDescription><![CDATA[dsretenc]]></fieldDescription>
+	</field>
+	<field name="vlrentot" class="java.lang.String">
+		<fieldDescription><![CDATA[vlrentot]]></fieldDescription>
+	</field>
+	<field name="vlirfont" class="java.lang.String">
+		<fieldDescription><![CDATA[vlirfont]]></fieldDescription>
+	</field>
+	<columnHeader>
+		<band height="22">
+			<staticText>
+				<reportElement uuid="6b990f5e-afb9-4189-aae6-fbc91f32bca4" x="63" y="0" width="225" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[DESCRICAO COD.RETENCAO]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="31" y="0" width="30" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[COD.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="0" y="0" width="30" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[MES]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6b990f5e-afb9-4189-aae6-fbc91f32bca4" x="292" y="0" width="80" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[RENDIMENTOS]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="6b990f5e-afb9-4189-aae6-fbc91f32bca4" x="376" y="0" width="65" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<text><![CDATA[IRRF]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="11" splitType="Stretch">
+			<textField>
+				<reportElement uuid="beb6d6c8-a779-442c-9dbe-635c467df072" x="0" y="0" width="30" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmmesref}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="058f6262-ddba-4f36-90df-946ea4bcebbf" x="63" y="0" width="225" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dsretenc}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement uuid="c0ab0380-b02a-4de7-a884-d2f1ba6b5c95" x="31" y="0" width="30" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdretenc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="058f6262-ddba-4f36-90df-946ea4bcebbf" x="292" y="0" width="80" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlrentot}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="058f6262-ddba-4f36-90df-946ea4bcebbf" x="376" y="0" width="65" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlirfont}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
