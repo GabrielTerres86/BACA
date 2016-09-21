@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl123_debito" language="groovy" pageWidth="595" pageHeight="672" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="93544e74-91fe-4834-b73c-0d1de78cdf4e">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/base/debitos/debito]]>
+	</queryString>
+	<field name="vr_rel_dtdebito" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_rel_dtdebito]]></fieldDescription>
+	</field>
+	<field name="vr_rel_qtdebito" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_rel_qtdebito]]></fieldDescription>
+	</field>
+	<field name="vr_rel_vldebito" class="java.lang.String">
+		<fieldDescription><![CDATA[vr_rel_vldebito]]></fieldDescription>
+	</field>
+	<field name="vr_tot_qtdebito" class="java.lang.String">
+		<fieldDescription><![CDATA[/base/totalDebito/vr_tot_qtdebito]]></fieldDescription>
+	</field>
+	<field name="vr_tot_vldebito" class="java.lang.String">
+		<fieldDescription><![CDATA[/base/totalDebito/vr_tot_vldebito]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="33">
+			<staticText>
+				<reportElement uuid="470145c9-07ca-4626-8ad0-ac7a71040c8f" x="214" y="0" width="143" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[PROGRAMACAO DOS PROXIMOS DEBITOS]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="470145c9-07ca-4626-8ad0-ac7a71040c8f" x="214" y="8" width="143" height="8"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[-----------------------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="185" y="17" width="46" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[DATA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="185" y="25" width="46" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[-------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="250" y="17" width="49" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[QUANTIDADE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="250" y="25" width="49" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[--------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="312" y="17" width="82" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[VALOR]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="312" y="25" width="82" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[---------------------]]></text>
+			</staticText>
+		</band>
+	</pageHeader>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField>
+				<reportElement uuid="882bc0fc-35bf-4c44-a1a4-137a1d9d45b8" x="185" y="0" width="46" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_rel_dtdebito}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="52d026c3-8b55-4f82-a680-2b97fe285e99" x="250" y="0" width="49" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_rel_qtdebito}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="77789d74-6324-4bb1-b4a4-85e7378c8ad5" x="312" y="0" width="82" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_rel_vldebito}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="18" splitType="Stretch">
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="250" y="0" width="49" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[--------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="261123d8-8b7d-4ecc-a0ed-ff0df2055e21" x="312" y="0" width="82" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<text><![CDATA[---------------------]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="453b96c8-af07-42bc-8a68-1738801ddb39" x="250" y="8" width="49" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_tot_qtdebito}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="4667282d-05a0-4a2e-8442-d8b3bc86a346" x="312" y="8" width="82" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vr_tot_vldebito}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>
