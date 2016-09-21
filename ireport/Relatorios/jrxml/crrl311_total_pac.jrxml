@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl311_total_pac" language="groovy" pageWidth="595" pageHeight="672" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="b07c3b29-54d5-410f-ace4-b70edde8abc0">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<queryString language="xPath">
+		<![CDATA[/base/registros1/totSumario/totalPrimeiro]]>
+	</queryString>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="qtd_utiliza" class="java.lang.String">
+		<fieldDescription><![CDATA[qtd_utiliza]]></fieldDescription>
+	</field>
+	<field name="vlr_utiliza" class="java.lang.String">
+		<fieldDescription><![CDATA[vlr_utiliza]]></fieldDescription>
+	</field>
+	<field name="qtd_naoutili" class="java.lang.String">
+		<fieldDescription><![CDATA[qtd_naoutili]]></fieldDescription>
+	</field>
+	<field name="vlr_naoutili" class="java.lang.String">
+		<fieldDescription><![CDATA[vlr_naoutili]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField>
+				<reportElement uuid="7cc8846d-5fd5-4715-b996-206344025da9" x="0" y="0" width="20" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdagenci}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="4ac3b3bd-52a5-4ffb-96f1-622e7d197db3" x="25" y="0" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtd_utiliza}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="6a35b5ab-4ce0-4021-961b-60290782a960" x="90" y="0" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlr_utiliza}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="1dd66c45-ad42-408b-ba92-d6447dab2b90" x="155" y="0" width="83" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtd_naoutili}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="92550175-46dc-4d4a-bdca-c5a265b87be6" x="243" y="0" width="60" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlr_naoutili}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
