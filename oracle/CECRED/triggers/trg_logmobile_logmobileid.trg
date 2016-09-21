@@ -1,0 +1,11 @@
+CREATE OR REPLACE TRIGGER CECRED.TRG_LogMobile_LogMobileId
+	BEFORE INSERT 
+	ON LogMobile 
+	FOR EACH ROW 
+	BEGIN 
+		SELECT CECRED.SEQ_LogMobile_LogMobileId.NEXTVAL 
+		INTO :NEW.LogMobileId 
+		FROM DUAL; 
+	END;
+/
+
