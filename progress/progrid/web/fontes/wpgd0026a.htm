@@ -1,0 +1,186 @@
+<!--
+	29/06/2015 - Incluido os campos de Dados do Fornecedor e Dados do Evento (Jean Michel).
+
+    19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanholi).
+	
+	31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05(Vanessa)
+-->
+
+<html>
+	<head>
+		<title>Informações do Evento (wpgd0026a)</title>
+	</head>
+	<body>
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+		<script SRC="/cecred/jsbiblio/biblio.js"></script>
+		<script SRC="/cecred/jsbiblio/frcod.js"></script>
+		<form action="#." method="POST" name="form">			
+			<input name="aux_idevento" type="hidden" value="">
+			<input name="aux_dtanoage" type="hidden" value="">
+			<input name="aux_dsendurl" type="hidden" value="">
+			<input name="aux_stdopcao" type="hidden" value="">
+			<input name="aux_dsretorn" type="hidden" value="">
+			<input name="aux_nrdrowid" type="hidden" value="">
+			<input name="aux_lspermis" type="hidden" value="">
+			<input name="aux_cddopcao" type="hidden" value="">
+			<input name="aux_cdcooper" type="hidden" value="">
+			<input name="aux_cdagenci" type="hidden" value="">
+			<input name="aux_cdevento" type="hidden" value="">
+			<input name="aux_nrseqeve" type="hidden" value="">			
+			<!-- Botoes de fechar e imprimir -->
+			<div align="right" id="botoes">
+				<table border="0" cellspacing="0" cellpadding="0" width="100%" >
+					<tr>
+						<td align="right">
+							<img src="/cecred/images/botoes/btn_fechar.gif" alt="Fechar esta janela" style="cursor: hand" onClick="top.close()">
+							<img src="/cecred/images/botoes/btn_imprimir.gif" alt="Imprimir" style="cursor: hand" onClick="document.all.botoes.style.visibility = 'hidden'; print(); document.all.botoes.style.visibility = 'visible';">
+						</td>
+					</tr>
+				</table>
+			</div>
+			<!-- Início do modelo geral -->
+			<table width="100%" border="0" align="left" bgcolor="#FFFFFF" cellpadding="0" cellspacing="0" style="float: left;">
+				<thead>
+					<tr valign="botton" background="/cecred/images/geral/guia_fundo.gif">
+						<th bgcolor="#6B7984" width="11px"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></th>
+						<th align="center" nowrap width="150px" class="linkGuia" bgcolor="#6B7984" valign="middle" >Informa&ccedil;&otilde;es do Evento </th>
+						<th bgcolor="#6B7984" width="1px" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="2" height="21"></th>
+						<th width="798px" bgcolor="#DEE3D6">&nbsp; </th>
+					</tr>
+				</thead>
+			</table>
+			<table width="100%" border="0" align="left" bgcolor="#FFFFFF" cellpadding="2" cellspacing="2">	
+				<tbody>
+					  <tr height="10px" style="text-align:center;background-color:#CCCCCC">
+							<td align="left" colspan="4" class="NomeCampo" style="text-align:center"><b>Dados do Evento</b></td>
+					  </tr>
+					<!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+					<tr>
+						<td align="right" width="172" colspan="3" class="NomeCampo">Evento:</td>
+						<td align="left" >
+							<input  width="172" name="aux_nmevento" type="text" readOnly class="Campo" id="aux_evento" size="98" maxlength="65">
+						</td>
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Objetivo:</td>
+						<td align="left">
+							<textarea name="dsobjeti" id="dsobjeti" cols="99" rows="7" class="CampoTextArea" readOnly>
+							</textarea>
+							
+						</td>
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Conte&uacute;do Program&aacute;tico: </td>
+						<td align="left" height="20">
+							<textarea name="dsconteu" cols="99" rows="10" class="CampoTextArea" readOnly></textarea>
+						</td>
+					</tr>
+          <tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Forma Realiza&ccedil;&atilde;o Evento:</td>
+						<td align="left" height="20"><input type="text" size="98" class="Campo" readOnly name="aux_idforrev" id="aux_idforrev"></td>    
+					</tr>
+          <tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Pr&eacute;-Requisito:</td>
+						<td align="left" height="20"><textarea name="txaPreRequisito" id="txaPreRequisito" cols="99" rows="7" class="CampoTextArea" readOnly></textarea></td>    
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Carga Hor&aacute;ria: </td>
+						<td align="left" height="20"><input name="qtcarhor" type="text" readOnly class="Campo" size="10" maxlength="65"></td>
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Qtde M&aacute;xima Turma: </td>
+						<td align="left" height="20" class="NomeCampo">
+              <input type="text"  size="10" class="Campo" readOnly name="txtQtdMaxTurma" id="txtQtdMaxTurma" >
+              Qtde M&iacute;nima Turma:
+              <input type="text"  size="10" class="Campo" readOnly name="txtQtdMinTurma" id="txtQtdMinTurma" >
+            </td>
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Metodologia Aplicada: </td>
+						<td align="left" height="20"><textarea name="dsmetodo" cols="99" rows="10" class="CampoTextArea" readOnly></textarea></td>
+					</tr>
+					
+					<!--tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >P&uacute;blico Alvo:</td>
+						<td align="left" height="20"><input  width="172" name="txaPublicoAlvo" type="text" readOnly class="Campo" id="txaPublicoAlvo" size="98" maxlength="100"></td> 
+						   
+					</tr-->
+					<!--tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Idade P&uacute;blico Alvo:</td>
+						<td align="left" height="20"><input type="text" size="98" class="Campo" readOnly name="txtIdadePublicoAlvo" id="txtIdadePublicoAlvo" ></td>    
+					</tr-->
+          
+          
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Observa&ccedil;&otilde;es:</td>
+						<td align="left" height="20"><textarea name="txaObservacoes" id="txaObservacoes" cols="99" rows="5" class="CampoTextArea" readOnly></textarea></td>    
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Data In&iacute;cio:</td>
+						<td align="left" height="20"><input name="aux_dtinieve" type="text" readOnly class="Campo" size="10"></td>
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Data Fim:</td>
+						<td align="left" height="20"><input name="aux_dtfineve" type="text" readOnly class="Campo" size="10"></td>
+					</tr>
+					<tr height="20px" style="text-align:center;background-color:#CCCCCC">
+							<td align="left" colspan="4" class="NomeCampo" style="text-align:center;"><b>Dados do Fornecedor</b></td>
+					  </tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Dados do Fornecedor:</td>
+						<td align="left" height="20"><textarea name="dsfornec" cols="99" rows="4" class="CampoTextArea" readOnly></textarea></td>    
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Facilitador:</td>
+						<td align="left" height="20"><textarea name="nmfacili" cols="99" rows="4" class="CampoTextArea" readOnly></textarea></td>
+					</tr>
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Curriculum do Facilitador:</td>
+						<td align="left" height="20"><textarea name="dscurric" cols="99" rows="8" class="CampoTextArea" readOnly></textarea></td>    
+					</tr>	
+					<tr>
+						<td align="right" class="NomeCampo" width="172" colspan="3" >Honor&aacute;rios:</td>
+						<td align="left" height="20"><input type="text"  size="10" class="Campo" readOnly name="txtHonorarios" id="txtHonorarios" ></td>    
+					</tr>
+					
+					
+					
+					
+				<tbody>	
+			</table>
+		<!-- Fim do modelo geral -->
+		</form>
+		<script language="JavaScript">
+
+			// Coloca a cor da fonte para cinza
+			document.form.aux_nmevento.style.color='#868686';
+			document.form.dsobjeti.style.color    ='#868686';
+			document.form.dsconteu.style.color    ='#868686';
+			/*document.form.dsconteu2.style.color    ='#868686';*/
+			document.form.qtcarhor.style.color    ='#868686';
+			document.form.dscurric.style.color    ='#868686';    
+			document.form.aux_dtinieve.style.color='#868686';
+			document.form.aux_dtfineve.style.color='#868686';
+			document.form.dsmetodo.style.color    ='#868686';
+			document.form.nmfacili.style.color    ='#868686';
+			document.form.dsfornec.style.color    ='#868686';			
+			document.form.txaObservacoes.style.color     	='#868686';
+			document.form.txaPreRequisito.style.color    	='#868686';
+			/*document.form.txtIdadePublicoAlvo.style.color	='#868686';*/
+			document.form.aux_idforrev.style.color	      ='#868686';
+			/*document.form.txaPublicoAlvo.style.color    	='#868686';*/
+			document.form.txtHonorarios.style.color    		='#868686';
+			document.form.txtQtdMaxTurma.style.color    	='#868686';
+			document.form.txtQtdMinTurma.style.color    	='#868686';
+			
+			document.form.aux_idforrev.style.color    ='#868686';
+			document.form.txtQtdMaxTurma.style.color    ='#868686';
+			document.form.txtQtdMinTurma.style.color    ='#868686';
+			
+			// Formatar a carga horária
+			document.form.qtcarhor.value = document.form.qtcarhor.value.replace(",",":");
+			document.form.dsobjeti.disabled = false;
+      
+		</script>
+	</body>
+</html>
