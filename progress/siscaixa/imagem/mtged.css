@@ -1,0 +1,15 @@
+body {
+  background-color: white;
+  color: blue;
+}
+
+a {
+  color: blue;
+  text-decoration: none;
+}
+
+a:hover, a:active {
+  color: blue;
+  text-decoration: underline;
+}
+

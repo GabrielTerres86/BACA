@@ -1,0 +1,201 @@
+<!--
+  Programa: crap030.htm
+
+  Alteracoes: 
+
+-->
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="pt-br">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="Pragma"        content="No-Cache">
+<meta http-equiv="Expires"       content="0">
+<script language=JavaScript src="/script/formatadadosie.js"></script>
+<link rel=StyleSheet type="text/css" href="/script/viacredi.css">
+<title>INCLUSÃO DE AUTORIZAÇÃO DE DÉBITO</title>
+</head>
+
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: controlaCampos(); mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);"> 
+<form onKeyDown="change_page(event)" method=post>
+<input type="hidden" name="vh_foco" id="vh_foco">
+<input type="hidden" name="vh_nome" id="vh_nome">
+<input type="hidden" name="v_msg">
+<input type="hidden" name="v_indempre">
+<input type="hidden" name="v_cntanter" id="v_cntanter">
+
+<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
+<div align="center">
+  <center>
+  <table width="100%" class=cabtab>
+    <tr>
+      <td width="15%" align="center"> <input type="text" name="v_coop" size="11" class="transp" readOnly>
+      </td>
+      <td width="20%" align="center"> PA&nbsp; <input type="text" name="v_pac" size="1" class="transp"  readOnly>
+      </td>
+      <td width="20%" align="center"> CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readOnly>
+      </td>
+      <td width="30%" align="center"> OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readOnly>
+      </td>
+      <td width="15%" align="center"> <input type="text" name="v_data" size="10" class="transp" readOnly>
+      </td>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
+  <center>
+	  <table width="100%" class=cabtab>
+		<tr>
+		  <td class=titulo>INCLUSÃO DE AUTORIZAÇÃO DE DÉBITO</td>
+		  <td width="21%" class=programa align="right">P.030&nbsp; V.1.00</td>
+		</tr>
+	  </table>
+  </center>
+</div>
+
+<div align="center">
+	<center>
+		<table cellspacing = 0 cellpadding= 0 width=100%>
+			<tr>
+				<td width="100%" valign="middle" align="center">
+					<div align="center">
+						<center>
+							<table valign="middle" align="center" width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>
+								<tr><td width=100% >&nbsp;</td></tr>								
+								<tr><td width=100% >&nbsp;</td></tr>								
+								 <tr height=40 valign="bottom"> 
+									<td align="center" width=100%>Conta/DV:
+											<input type="text" name="v_conta" id="v_conta" onChange="document.forms[0].submit(); for(var i=0;i<document.forms[0].length;i++){document.forms[0].elements[i].disabled=true;}" onKeyDown="JavaScript:if(event.keyCode == 13) {document.forms[0].elements[10].focus();} validaInteiro(event); FormataConta(this,8,event);" maxlength="10" size="10" class="input" style="text-align: right">
+										&nbsp;<input type="button" value="Nome" name="v_zoom" id="v_zoom" class="button1" onClick=location="crap002a.htm?v_tela=crap030.htm" nowrap >
+											&nbsp;<input type="text" name="v_nome" id="v_nome" size="40" class=input style="font-weight: bold" disabled></td>
+							   </tr>							   
+							</table>
+							<table valign="middle" id = "tab_form" align="center" width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>								
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr><td align="right" class="linhaform" width="100%" colspan="2"><hr class="input"></td></tr>
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr>
+									<td width=50% align="right">Segmento:&nbsp;</td>
+									<td width=50% align="left"  class="linhaform" >
+										<select name="v_segmento" id="v_segmento" size="1" style="width: 310px" onchange = "document.getElementById('v_indempre').value = 0; document.forms[0].submit();"></select>
+									</td>
+								</tr>
+								<tr>
+									<td width=50% align="right">Empresa Conveniada:&nbsp;</td>
+									<td width=50% align="left">
+										<select name="v_cdempcon" id="v_cdempcon" size="1" style="width: 310px"></select>
+									</td>
+								</tr>								
+								<tr>
+									<td width=50% align="right">Identificação do Consumidor:&nbsp;</td>
+									<td width=50% align="left" ><input type="text" name="v_cdrefere" size="20" class="input" maxlength="17" onKeyDown="JavaScript:validaInteiro(event);" style="text-align: right"></td>
+								</tr>								
+								<tr>
+									<td width=50% align="right">Limite máximo para débito: &nbsp;</td>
+									<td width=50% align="left">
+										Sim <input type="radio" value="1" name="inlimite" id="inlimite" onClick="mudaLimite();" checked >&nbsp; &nbsp;
+										Não <input type="radio" value="2" name="inlimite" id="inlimite" onClick="mudaLimite();" >
+									</td>
+								</tr>								
+								<tr>
+									<td width=50% align="right">Autorizo o débito até o valor máximo de &nbsp;</td>
+									<td width=50% align="left" ><input type="text" name="v_vlrmaxdb" id="v_vlrmaxdb" size="16" class="input" maxlength="14" onKeyDown="JavaScript:validaInteiro(event); FormataValor(this,11,event);" style="text-align: right"></td>
+								</tr>								
+								<tr>
+									<td width=50% align="right">Histórico Complementar para Extrato: &nbsp;</td>
+									<td width=50% align="left" ><input type="text" name="v_dshisext" id="v_dshisext" size="20" maxlength="20" class="input" style="text-align: right">  &nbsp; (opcional) </td>
+								</tr>								
+								<tr>
+									<td width=50% align="right">Senha: &nbsp;</td>
+									<td width=50% align="left" ><input class=input type="password" name="v_cddsenha" size="7" maxlength="6" onKeyDown="JavaScript:validaInteiro(event);"></td>
+								</tr>
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr>
+									<td width=50% align="right" >
+										<input type="submit" id="Ok" name="sok" value="Ok" ondblclick="return false;" onClick="document.getElementById('v_indempre').value = document.getElementById('v_cdempcon').selectedIndex; submit();" class="button">&nbsp;&nbsp;&nbsp;
+									</td>
+									<td width=50% align="left" >
+										&nbsp;&nbsp;&nbsp;<input type="submit" value="Cancelar" name="cancela" class="button"></td>
+									</td>
+								</tr>							
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+								<tr><td width=50% >&nbsp;</td><td width=50% >&nbsp;</td></tr>
+							</table>   
+						</center>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</center>
+</div>
+
+</form>
+</body>
+</html>
+
+<script language="JavaScript">
+
+function controlaCampos(){
+
+	document.getElementById('v_cntanter').value = document.getElementById('v_conta').value;
+	document.getElementById('vh_nome').value = document.getElementById('v_nome').value;
+		
+	if (document.getElementById("v_nome").value == "") {	
+		for (var i=0;i<document.forms[0].length;i++){
+			document.forms[0].elements[i].disabled=true;			
+		}
+		
+		document.getElementById("v_conta").disabled = false;
+		document.getElementById("v_nome").disabled = false;
+		document.getElementById("v_zoom").disabled = false;
+		document.getElementById("v_caixa").disabled = false;
+		document.getElementById("v_coop").disabled = false;
+		document.getElementById("v_data").disabled = false;
+		document.getElementById("v_operador").disabled = false;
+		document.getElementById("v_pac").disabled = false;
+		
+		document.getElementById('vh_foco').value = "10";
+		
+		return false;
+	} else {	
+		for (var i=0;i<document.forms[0].length;i++){
+			document.forms[0].elements[i].disabled=false;
+		}
+		document.getElementById("v_nome").disabled = true;
+	}
+	
+	if (document.getElementById("v_indempre").value > 0){
+		document.getElementById("v_cdempcon").selectedIndex = document.getElementById("v_indempre").value;
+	}
+	
+	if (document.getElementById("v_cdempcon").value == 0) {
+		document.getElementById("v_cdempcon").disabled = true;
+	}
+	
+	mudaLimite();
+	
+	return true;
+
+}
+
+function mudaLimite(){
+
+	if  (document.getElementById("inlimite").checked == false) {
+		document.getElementById("v_vlrmaxdb").value = ""
+		document.getElementById("v_vlrmaxdb").disabled = true;
+		document.getElementById("v_dshisext").focus();
+	} else {
+		document.getElementById("v_vlrmaxdb").disabled = false;
+		document.getElementById("v_vlrmaxdb").focus();
+	}	
+}
+
+</script>

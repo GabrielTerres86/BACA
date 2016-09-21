@@ -1,0 +1,799 @@
+
+/*.............................................................................
+
+  Programa: generico/procedures/b1wgen0183.p
+  Sistema : Conta-Corrente - Cooperativa de Credito
+  Sigla   : CRED
+  Autor   : Tiago
+  Data    : Fevereiro/14                           Ultima alteracao: 25/07/2014
+
+  Objetivo  : Procedures referentes a tela HRCOMP.
+
+  Alteracao : 25/07/2014 - Incluido opcao TODAS para alteração de horarios
+                           para todas cooperativas de uma vez so 
+                           (Tiago/Elton SD172634).
+                           
+............................................................................ */
+
+{ sistema/generico/includes/b1wgen0183tt.i }
+{ sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/gera_erro.i }   
+
+PROCEDURE busca_dados:
+
+    DEF INPUT  PARAM par_cdcooper    LIKE crapcop.cdcooper              NO-UNDO.
+    DEF INPUT  PARAM par_cdagenci    LIKE crapope.cdagenci              NO-UNDO.
+    DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
+    DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
+    DEF INPUT  PARAM par_cdcoopex    AS   INT                           NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-processos.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEFINE VARIABLE  aux_cdcritic AS    INTEGER                         NO-UNDO.
+    DEFINE VARIABLE  aux_dscritic AS    CHARACTER                       NO-UNDO.
+
+
+    ASSIGN  aux_cdcritic = 0
+            aux_dscritic = "".
+
+
+    /*tratamento para quando for mudanca de horario
+      para todas as cooperativas*/
+    IF  par_cdcoopex = 0 THEN
+        par_cdcoopex = 1. /*assume como viacredi*/
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-craphec.
+    EMPTY TEMP-TABLE tt-processos.
+
+    RUN cria_reg_proc(INPUT par_cdcooper,
+                      INPUT par_cdagenci,
+                      INPUT par_nrdcaixa,
+                      INPUT par_cdoperad,
+                      INPUT par_nmdatela,
+                      INPUT par_dsdepart,
+                      INPUT par_idorigem,
+                      INPUT par_dtmvtolt,
+                      INPUT-OUTPUT TABLE tt-processos,
+                      OUTPUT TABLE tt-erro).
+
+    FOR EACH craphec WHERE craphec.cdcooper = par_cdcoopex NO-LOCK:
+        CREATE tt-craphec.
+        BUFFER-COPY craphec TO tt-craphec.
+    END.
+    
+    FIND FIRST tt-craphec WHERE tt-craphec.cdcooper = par_cdcoopex 
+                                NO-LOCK NO-ERROR.
+    
+    IF  NOT AVAIL(tt-craphec) THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Erro na consulta dos dados".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,
+                           INPUT 1,     /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+        END.
+
+
+    FOR EACH tt-craphec NO-LOCK:
+
+        FIND tt-processos WHERE tt-processos.nmproces = tt-craphec.dsprogra
+                                NO-LOCK NO-ERROR.
+
+        IF  AVAIL(tt-processos) THEN
+            DO:
+                ASSIGN tt-processos.ageinihr = 
+                        INTE( SUBSTR(STRING(tt-craphec.hriniexe,"HH:MM"),1,2) )
+                       tt-processos.ageinimm = 
+                        INTE( SUBSTR(STRING(tt-craphec.hriniexe,"HH:MM"),4,2) )
+                       tt-processos.hrageini = 
+                        SUBSTR(STRING(tt-craphec.hriniexe,"HH:MM"),1,2) + 
+                        ":" +
+                        SUBSTR(STRING(tt-craphec.hriniexe,"HH:MM"),4,2)
+                       tt-processos.agefimhr = 
+                        INTE( SUBSTR(STRING(tt-craphec.hrfimexe,"HH:MM"),1,2) )
+                       tt-processos.agefimmm = 
+                        INTE( SUBSTR(STRING(tt-craphec.hrfimexe,"HH:MM"),4,2) )
+                       tt-processos.hragefim = 
+                        SUBSTR(STRING(tt-craphec.hrfimexe,"HH:MM"),1,2) + 
+                        ":" +
+                        SUBSTR(STRING(tt-craphec.hrfimexe,"HH:MM"),4,2)
+                       tt-processos.flgativo = tt-craphec.flgativo.
+            END.
+        ELSE
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Erro na consulta dos dados".
+    
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT 0,
+                               INPUT 1,     /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+    
+                RETURN "NOK".
+            END.
+    END.
+
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE carrega_cooperativas:
+
+    DEF INPUT  PARAM par_cdcooper    LIKE crapcop.cdcooper              NO-UNDO.
+    DEF INPUT  PARAM par_cdagenci    LIKE crapope.cdagenci              NO-UNDO.
+    DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
+    DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-coop.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEFINE VARIABLE  aux_cdcritic AS    INTEGER                         NO-UNDO.
+    DEFINE VARIABLE  aux_dscritic AS    CHARACTER                       NO-UNDO.
+
+
+    ASSIGN  aux_cdcritic = 0
+            aux_dscritic = "".
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-coop.
+
+    CREATE tt-coop.
+    ASSIGN tt-coop.cdcooper = 0
+           tt-coop.nmrescop = "TODAS".
+
+    FOR EACH crapcop NO-LOCK:
+
+        IF  crapcop.cdcooper = 3 THEN
+            NEXT.
+
+        CREATE tt-coop.
+        ASSIGN tt-coop.cdcooper = crapcop.cdcooper
+               tt-coop.nmrescop = crapcop.nmrescop.
+
+    END.
+
+    RETURN "OK".
+END PROCEDURE.
+
+PROCEDURE grava_dados:
+
+    DEF INPUT  PARAM par_cdcooper    LIKE crapcop.cdcooper              NO-UNDO.
+    DEF INPUT  PARAM par_cdagenci    LIKE crapope.cdagenci              NO-UNDO.
+    DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
+    DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
+    DEF INPUT  PARAM par_cdcoopex    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_dsprogra    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_flgativo    AS   LOGICAL                       NO-UNDO.
+    DEF INPUT  PARAM par_ageinihr    AS   INTE                          NO-UNDO.
+    DEF INPUT  PARAM par_ageinimm    AS   INTE                          NO-UNDO.
+    DEF INPUT  PARAM par_agefimhr    AS   INTE                          NO-UNDO.
+    DEF INPUT  PARAM par_agefimmm    AS   INTE                          NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    
+
+    DEF VAR aux_hriniexe    AS   INTEGER                                NO-UNDO.
+    DEF VAR aux_hrfimexe    AS   INTEGER                                NO-UNDO.
+    DEF VAR aux_cdcritic    AS   INTEGER                                NO-UNDO.
+    DEF VAR aux_dscritic    AS   CHAR                                   NO-UNDO.      
+
+    DEF VAR aux_flgtodas    AS   LOGICAL                                NO-UNDO.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    /* Validacoes */
+
+    /* indica que a gravacao vai ser para 
+       todas coops ou nao*/
+    IF par_cdcoopex = 0 THEN 
+       ASSIGN aux_flgtodas = TRUE.
+    ELSE
+       ASSIGN aux_flgtodas = FALSE.
+
+    IF  par_ageinihr = 00 AND
+        par_ageinimm = 00 THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "O horario de inicio deve ser maior que zero.".
+    
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,
+                           INPUT 1,     /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+    
+            RETURN "NOK".
+        END.
+
+    IF  par_agefimhr = 00 AND
+        par_agefimmm = 00 THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "O horario final deve ser maior que zero.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,
+                           INPUT 1,     /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+        END.
+
+
+    IF  (par_ageinihr > 23  OR
+         par_ageinimm > 59) THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Horario de inicio errado.".
+    
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,
+                           INPUT 1,     /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+    
+            RETURN "NOK".
+        END.
+
+    IF  (par_agefimhr > 23 OR
+         par_agefimmm > 59) THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Horario final errado.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,
+                           INPUT 1,     /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+
+        END.
+
+
+    ASSIGN aux_hriniexe = (par_ageinihr * 3600) + (par_ageinimm * 60)
+           aux_hrfimexe = (par_agefimhr * 3600) + (par_agefimmm * 60).
+
+
+    /*horario final não pode ser menor ou igual ao inicial*/
+    IF  aux_hriniexe >= aux_hrfimexe THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Horario final deve ser maior que horario inicial.".
+    
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,
+                           INPUT 1,     /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+    
+            RETURN "NOK".
+        END.
+    /* Fim Validacoes */
+
+    /*gravar para todas coops*/
+    IF  aux_flgtodas = TRUE THEN
+        DO:
+
+            FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK:
+                /*Valida sequencia da execucao dos processos para nao deixar cadastrar
+                  horarios de forma que altere essa sequencia de execucao. */
+                RUN valida_seq_execucao(INPUT crapcop.cdcooper,
+                                        INPUT par_dsprogra,
+                                        INPUT aux_hriniexe,
+                                        INPUT aux_hrfimexe,
+                                        OUTPUT TABLE tt-erro).
+
+                FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                IF  AVAIL(tt-erro) THEN
+                    RETURN "NOK".
+
+                FIND craphec WHERE craphec.cdcooper = crapcop.cdcooper  AND
+                                   craphec.dsprogra = par_dsprogra  
+                                   EXCLUSIVE-LOCK NO-ERROR.
+
+                IF  AVAIL(craphec) THEN
+                    DO: 
+
+                        IF  craphec.hriniexe <> aux_hriniexe THEN
+                            DO:   
+                                UNIX SILENT
+                                      VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") +
+                                      " " + STRING(TIME,"HH:MM:SS") + "' --> '"         +
+                                      "Operador " + par_cdoperad                        +
+                                      " alterou o campo Horario de inicio "             +
+                                      " do Arquivo " + par_dsprogra + " da Coop "       +
+                                      crapcop.nmrescop + " de "                         +
+                                      TRIM(STRING(craphec.hriniexe,"HH:MM")) + " para  " +
+                                      TRIM(STRING(aux_hriniexe,"HH:MM")) +
+                                      " >> /usr/coop/cecred/log/hrcomp.log"). 
+                            END.
+
+                        IF  craphec.hrfimexe <> aux_hrfimexe THEN
+                            DO:
+                                UNIX SILENT
+                                      VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") +
+                                      " " + STRING(TIME,"HH:MM:SS") + "' --> '"         +
+                                      "Operador " + par_cdoperad                        +
+                                      " alterou o campo Horario de fim " +
+                                      " do Arquivo " + par_dsprogra + " da Coop "       +
+                                      crapcop.nmrescop + " de "                         +
+                                      TRIM(STRING(craphec.hrfimexe,"HH:MM")) + " para  " +
+                                      TRIM(STRING(aux_hrfimexe,"HH:MM")) +
+                                      " >> /usr/coop/cecred/log/hrcomp.log").
+                            END.
+
+                        IF  craphec.flgativo <> par_flgativo THEN
+                            DO:
+                                UNIX SILENT
+                                      VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") +
+                                      " " + STRING(TIME,"HH:MM:SS") + "' --> '"         +
+                                      "Operador " + par_cdoperad                        +
+                                      " alterou o campo Ativo " +
+                                      " do Arquivo " + par_dsprogra + " da Coop "       +
+                                      crapcop.nmrescop + " de "                         +
+                                      STRING(craphec.flgativo,"Sim/Nao")  + " para  "   +
+                                      STRING(par_flgativo,"Sim/Nao")                    +
+                                      " >> /usr/coop/cecred/log/hrcomp.log").
+                            END.  
+
+                        ASSIGN  craphec.hriniexe =   (par_ageinihr * 3600) 
+                                                   + (par_ageinimm * 60)
+                                craphec.hrfimexe =   (par_agefimhr * 3600) 
+                                                   + (par_agefimmm * 60)
+                                craphec.flgativo = par_flgativo.
+
+                        VALIDATE craphec.
+
+                    END.
+                ELSE
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Problema na gravacao dos dados.".
+
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT par_cdagenci,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+
+                        RETURN "NOK".
+
+                    END.
+
+
+            END.
+
+        END.
+    ELSE
+        DO:
+            /*Valida sequencia da execucao dos processos para nao deixar cadastrar
+              horarios de forma que altere essa sequencia de execucao. */
+            RUN valida_seq_execucao(INPUT par_cdcoopex,
+                                    INPUT par_dsprogra,
+                                    INPUT aux_hriniexe,
+                                    INPUT aux_hrfimexe,
+                                    OUTPUT TABLE tt-erro).
+    
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+    
+            IF  AVAIL(tt-erro) THEN
+                RETURN "NOK".
+    
+    
+            FIND craphec WHERE craphec.cdcooper = par_cdcoopex  AND
+                               craphec.dsprogra = par_dsprogra  
+                               EXCLUSIVE-LOCK NO-ERROR.
+    
+            IF  AVAIL(craphec) THEN
+                DO:     
+    
+                    FIND crapcop WHERE crapcop.cdcooper = par_cdcoopex
+                                       NO-LOCK NO-ERROR.
+    
+                    IF  NOT AVAIL(crapcop) THEN
+                        RETURN "NOK".
+    
+                    IF  craphec.hriniexe <> aux_hriniexe THEN
+                        DO:   
+                            UNIX SILENT
+                                  VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") +
+                                  " " + STRING(TIME,"HH:MM:SS") + "' --> '"         +
+                                  "Operador " + par_cdoperad                        +
+                                  " alterou o campo Horario de inicio "             +
+                                  " do Arquivo " + par_dsprogra + " da Coop "       +
+                                  crapcop.nmrescop + " de "                         +
+                                  TRIM(STRING(craphec.hriniexe,"HH:MM")) + " para  " +
+                                  TRIM(STRING(aux_hriniexe,"HH:MM")) +
+                                  " >> /usr/coop/cecred/log/hrcomp.log"). 
+                        END.
+    
+                    IF  craphec.hrfimexe <> aux_hrfimexe THEN
+                        DO:
+                            UNIX SILENT
+                                  VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") +
+                                  " " + STRING(TIME,"HH:MM:SS") + "' --> '"         +
+                                  "Operador " + par_cdoperad                        +
+                                  " alterou o campo Horario de fim " +
+                                  " do Arquivo " + par_dsprogra + " da Coop "       +
+                                  crapcop.nmrescop + " de "                         +
+                                  TRIM(STRING(craphec.hrfimexe,"HH:MM")) + " para  " +
+                                  TRIM(STRING(aux_hrfimexe,"HH:MM")) +
+                                  " >> /usr/coop/cecred/log/hrcomp.log").
+                        END.
+    
+                    IF  craphec.flgativo <> par_flgativo THEN
+                        DO:
+                            UNIX SILENT
+                                  VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") +
+                                  " " + STRING(TIME,"HH:MM:SS") + "' --> '"         +
+                                  "Operador " + par_cdoperad                        +
+                                  " alterou o campo Ativo " +
+                                  " do Arquivo " + par_dsprogra + " da Coop "       +
+                                  crapcop.nmrescop + " de "                         +
+                                  STRING(craphec.flgativo,"Sim/Nao")  + " para  "   +
+                                  STRING(par_flgativo,"Sim/Nao")                    +
+                                  " >> /usr/coop/cecred/log/hrcomp.log").
+                        END.  
+    
+                    ASSIGN  craphec.hriniexe =   (par_ageinihr * 3600) 
+                                               + (par_ageinimm * 60)
+                            craphec.hrfimexe =   (par_agefimhr * 3600) 
+                                               + (par_agefimmm * 60)
+                            craphec.flgativo = par_flgativo.
+    
+                    VALIDATE craphec.
+    
+                END.
+            ELSE
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Problema na gravacao dos dados.".
+    
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT 0,
+                                   INPUT 1,     /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+    
+                    RETURN "NOK".
+    
+                END.
+    
+        END.
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE acesso_opcao:
+
+    DEF INPUT  PARAM par_cdcooper    AS  INTEGER                        NO-UNDO.
+    DEF INPUT  PARAM par_cdagenci    AS  INTEGER                        NO-UNDO.
+    DEF INPUT  PARAM par_dsdepart    AS  CHARACTER                      NO-UNDO.
+    DEF INPUT  PARAM par_cddopcao    AS  CHARACTER                      NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEFINE VARIABLE  aux_cdcritic    AS  INTEGER                        NO-UNDO.
+    DEFINE VARIABLE  aux_dscritic    AS  CHARACTER                      NO-UNDO.
+
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    IF  par_dsdepart <> "COMPE"  AND
+        par_dsdepart <> "TI"     AND
+        par_cddopcao <> "C"      THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Permissao de acesso negada.".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,
+                           INPUT 1,     /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+
+        END.
+        
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE valida_seq_execucao:
+
+    DEF INPUT PARAM par_cdcooper    LIKE crapcop.cdcooper               NO-UNDO.
+    DEF INPUT PARAM par_dsprogra    AS   CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_hriniexe    AS   INTEGER                        NO-UNDO.
+    DEF INPUT PARAM par_hrfimexe    AS   INTEGER                        NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF BUFFER crabhec FOR craphec.
+
+    DEF VAR aux_cdcritic    AS  INTE                                    NO-UNDO.
+    DEF VAR aux_dscritic    AS  CHAR                                    NO-UNDO.
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    IF  TRIM(par_dsprogra) <> "DEVOLUCAO VLB"     AND
+        (TRIM(par_dsprogra) =  "DEVOLUCAO DIURNA"  OR
+         TRIM(par_dsprogra) =  "DEVOLUCAO NOTURNA") THEN
+        DO:
+            FIND FIRST crabhec WHERE crabhec.cdcooper  = par_cdcooper   AND
+                                     crabhec.dsprogra  = "DEVOLUCAO VLB" 
+                                     NO-LOCK NO-ERROR.
+    
+            IF  AVAIL(crabhec) THEN
+                DO:
+                    IF (crabhec.hriniexe >= par_hriniexe OR
+                        crabhec.hrfimexe >= par_hrfimexe) THEN
+                        DO: 
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = "Devolucao VLB deve ser o primeiro processo.".
+    
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT 0,
+                                           INPUT 0,
+                                           INPUT 1,     /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+    
+                            RETURN "NOK".
+                        END.
+                END.
+        END.
+
+    CASE par_dsprogra:
+        WHEN "DEVOLUCAO VLB" THEN /*executado antes de todos outros processos*/
+            DO: 
+                        
+                FIND FIRST crabhec WHERE crabhec.cdcooper  = par_cdcooper AND
+                                         crabhec.dsprogra <> par_dsprogra AND
+                                         (crabhec.dsprogra = "DEVOLUCAO DIURNA" OR
+                                          crabhec.dsprogra = "DEVOLUCAO NOTURNA") AND
+                                         (crabhec.hriniexe <= par_hriniexe OR
+                                          crabhec.hrfimexe <= par_hrfimexe)
+                                         NO-LOCK NO-ERROR.
+
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Devolucao VLB deve ser o primeiro processo.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+
+                    END.
+            END.
+
+        WHEN "DEVOLUCAO DIURNA" THEN
+            DO:
+                FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper        AND
+                                   crabhec.dsprogra  = "DEVOLUCAO NOTURNA" AND
+                                  (crabhec.hriniexe <= par_hriniexe OR
+                                   crabhec.hrfimexe <= par_hrfimexe)
+                                   NO-LOCK NO-ERROR.
+
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Devolucao Diurna deve rodar antes da Devolucao Noturna.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+
+                    END.
+            END.
+
+        WHEN "DEVOLUCAO NOTURNA" THEN
+            DO:
+                FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
+                                   crabhec.dsprogra  = "DEVOLUCAO DIURNA" AND
+                                  ((crabhec.hriniexe >= par_hriniexe   OR
+                                   crabhec.hrfimexe >= par_hrfimexe)   OR
+                                   crabhec.hrfimexe >= par_hriniexe)
+                                   NO-LOCK NO-ERROR.
+
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Devolucao Nortuna deve rodar apos Devolucao Diurna.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+
+                    END.
+            END.
+
+        WHEN "REMCOB" THEN
+            DO:
+            
+                FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
+                                   crabhec.dsprogra  = "ARQUIVOS NOTURNOS" AND
+                                  (crabhec.hriniexe >= par_hriniexe OR
+                                   crabhec.hrfimexe >= par_hrfimexe)
+                                   NO-LOCK NO-ERROR.
+    
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "REMCOB deve rodar apos Arquivos Noturnos.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+                    END.
+
+                /*se for menor ou igual a 18:31*/
+                IF  par_hriniexe <= ((18 * 3600)+(31 * 60)) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "REMCOB deve rodar apos as 18:31.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+                    END. 
+            END.
+
+        WHEN "DEBNET" THEN
+            DO:
+                FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
+                                   crabhec.dsprogra  = "TAA E INTERNET" AND
+                                  (crabhec.hriniexe <= par_hriniexe OR
+                                   crabhec.hrfimexe <= par_hrfimexe)
+                                   NO-LOCK NO-ERROR.
+    
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "DEBNET deve rodar antes do TAA E INTERNET.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+                    END.
+            END.
+
+        WHEN "TAA E INTERNET" THEN
+            DO:
+                FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
+                                   crabhec.dsprogra  = "DEBNET" AND
+                                  (crabhec.hriniexe >= par_hriniexe OR
+                                   crabhec.hrfimexe >= par_hrfimexe)
+                                   NO-LOCK NO-ERROR.
+    
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "TAA E INTERNET deve rodar depois do DEBNET.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+                    END.
+            END.
+
+
+    END CASE.
+
+    RETURN "OK".
+END PROCEDURE.
+
+PROCEDURE cria_reg_proc:
+
+    DEF INPUT  PARAM par_cdcooper    LIKE crapcop.cdcooper              NO-UNDO.
+    DEF INPUT  PARAM par_cdagenci    LIKE crapope.cdagenci              NO-UNDO.
+    DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
+    DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
+    DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
+
+    DEF INPUT-OUTPUT PARAM TABLE FOR tt-processos.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+
+    DEFINE VARIABLE  aux_cdcritic    AS  INTEGER                        NO-UNDO.
+    DEFINE VARIABLE  aux_dscritic    AS  CHARACTER                      NO-UNDO.
+
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".
+
+    EMPTY TEMP-TABLE tt-processos.
+    EMPTY TEMP-TABLE tt-erro.
+
+    FOR EACH craphec WHERE craphec.cdcooper = 1 NO-LOCK:
+        CREATE tt-processos.
+        ASSIGN tt-processos.nmproces = craphec.dsprogra
+               tt-processos.hrageini = "00:00"
+               tt-processos.hragefim = "00:00"
+               tt-processos.nrseqexe = craphec.nrseqexe.
+    END.
+
+    RETURN "OK".
+END PROCEDURE.
