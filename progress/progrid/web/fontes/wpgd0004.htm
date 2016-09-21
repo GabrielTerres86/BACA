@@ -1,0 +1,126 @@
+<html>
+<head>
+<title></title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+<script language="SpeedScript">
+
+/*...............................................................................
+
+  Programa: wpgd0004.htm
+
+Alterações: 10/12/2008 - Tratamento para vmdesen (David).
+                       - Melhoria de performance para a tabela gnapses (Evandro).
+					   
+			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+
+		    25/06/2013 - Incluir redireciomento para pkghomol e pkglibera (David).
+			
+        24/05/2016 - Adicionar redirecionamento para todos os ambientes (Lucas Ranghetti #451390)
+			
+...............................................................................*/
+
+def var pesquisa                as char              no-undo.
+def var identificacao-da-sessao as char form "x(47)" no-undo.
+def var i                       as int               no-undo.
+def var dias                    as char format "x(14)" 
+    initial "domingo,segunda-feira,terça-feira,quarta-feira,quinta-feira,sexta-feira,sábado".
+def var diasem                  as char              no-undo.
+def var aux_usuario             as char              no-undo.
+def var aux_dsurlout            as char              no-undo.
+  
+ASSIGN identificacao-da-sessao = get-cookie("cookie-usuario-em-uso").
+IF identificacao-da-sessao <> "" THEN DO: 
+
+	/* Usado FOR EACH para poder utilizar o CONTAINS e WORD-INDEX, alterado para MATCHES */
+    FOR EACH gnapses WHERE gnapses.idsessao MATCHES "*" + identificacao-da-sessao + "*" NO-LOCK:
+        LEAVE.
+    END.
+
+    IF NOT AVAILABLE gnapses THEN DO:
+      DELETE-COOKIE("cookie-usuario-em-uso",?,?).
+    END.
+    ELSE DO:
+      assign i = weekday(today)
+             diasem = entry(i,dias).
+    end.
+end.
+
+find first crapope where crapope.cdoperad = gnapses.cdoperad    AND
+                         crapope.cdcooper = gnapses.cdcooper    NO-LOCK NO-WAIT NO-ERROR.
+IF avail crapope THEN
+    assign aux_usuario = crapope.nmoperad.
+else
+    assign aux_usuario = "".
+
+IF OS-GETENV("PKGNAME") = "pkgdesen3" THEN
+    ASSIGN aux_dsurlout = "http://intranetdev3.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkgdesen2" THEN
+    ASSIGN aux_dsurlout = "http://intranetdev2.cecred.coop.br/login_sistemas.php".
+ELSE        
+IF OS-GETENV("PKGNAME") = "pkgdesen1" THEN
+    ASSIGN aux_dsurlout = "http://intranetdev1.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkghomol1" THEN
+    ASSIGN aux_dsurlout = "http://intranethomol1.cecred.coop.br/login_sistemas.php".
+ELSE
+IF OS-GETENV("PKGNAME") = "pkghomol2" THEN
+    ASSIGN aux_dsurlout = "http://intranethomol2.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkghomol3" THEN
+    ASSIGN aux_dsurlout = "http://intranethomol3.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkghomol4" THEN
+    ASSIGN aux_dsurlout = "http://intranethomol4.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkgqa1" THEN
+    ASSIGN aux_dsurlout = "http://intranetqa1.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkgqa2" THEN
+    ASSIGN aux_dsurlout = "http://intranetqa2.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkgtreina2" THEN
+    ASSIGN aux_dsurlout = "http://intranettreina2.cecred.coop.br/login_sistemas.php".
+ELSE 
+IF OS-GETENV("PKGNAME") = "pkglibera1" THEN
+    ASSIGN aux_dsurlout = "http://intranetlibera1.cecred.coop.br/login_sistemas.php".
+ELSE
+    ASSIGN aux_dsurlout = "http://intranet.cecred.coop.br/login_sistemas.php".
+       
+</script>
+<table width="100%" height="30"  border="0" cellpadding="0" cellspacing="0" class="bgNavTopo">
+  <tr>
+    <td width="100" valign="top"><div align="center"><a href="principal.php" target="principal">
+        <img src="/cecred/images/geral/logo_intranet_cecred.gif" width="84" height="29" border="0">
+        </a></div></td>    
+        <td nowrap class="txtTituloHid" align="center" width="405">
+           <div id="titulo">
+           </div>
+        </td>   
+    </td>          
+    <td width="1%" align="left"><img src="/cecred/images/geral/logo_cecred.gif" width="86" height="28"></td>
+  </tr>
+  <tr>
+    <td colspan="3" valign="top" bgcolor="#DFE0D6">
+                <table width="100%" height="22"  border="0" cellpadding="0" cellspacing="0" bgcolor="#91957B">
+                  <tr>
+                        <!--<td width="93%" class="txtNormal"><strong><font color="#FFFFFF">&nbsp;&nbsp;Usu&aacute;rio:</font></strong><font color="#FFFFFF"> `gnapses.cdoperad format "x(20)"`</font></td> -->
+                            <td width="93%" class="txtNormal"><strong><font color="#FFFFFF">&nbsp;&nbsp;Usu&aacute;rio:</font></strong><font color="#FFFFFF"> `aux_usuario format "x(50)"`</font></td>
+                        <!--
+                        <td width="2%" class="txtNormal"><a href="#." onClick="top.window.location='`AppURL`/wpgd0001.htm?aux_cdcooper=`gnapses.cdcooper`'"><font color="#FFFFFF">Sair</font></a></td>
+                        <td width="3%" align="left" class="txtNormal"><img src="/cecred/images/botoes/btn_excluir.gif" width="17" height="17" border="0" style="cursor:hand" onClick="top.window.location='`AppURL`/wpgd0001.htm?aux_cdcooper=`gnapses.cdcooper`'"></td>
+                        -->
+                        <td width="2%" class="txtNormal"><a href="#." onClick="top.window.location='`aux_dsurlout`'"><font color="#FFFFFF">Sair</font></a></td>
+                        <td width="3%" align="left" class="txtNormal"><img src="/cecred/images/botoes/btn_excluir.gif" width="17" height="17" border="0" style="cursor:hand" onClick="top.window.location='`aux_dsurlout`'"></td>                        
+                  </tr>
+                </table>
+        </td>
+  </tr>
+</table>
+</body>
+</html>

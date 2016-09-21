@@ -1,0 +1,120 @@
+<html>
+<head>
+<meta name="AUTHOR" content="Evandro">
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<meta http-equiv="Cache-Control" content="No-Cache">
+<meta http-equiv="Pragma"        content="No-Cache">
+<meta http-equiv="Expires"       content="0">
+<title>Liberação para Internet</title>
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+<script SRC="/cecred/jsbiblio/sorttable.js"></script>
+</head>
+<body style="margin-left: 3px; ">
+<script language="JavaScript">
+  NomeDoProgramaPrincipal  = '/wpgd0039a.w';
+  NomeDoProgramaDeListagem = '/wpgd0039als.w';
+  NomeDoProgramaDeAjuda    = '/wpgd0039aaj.w';
+  NomeDoProgramaDeZoom     = '/zoom/zwpgd0039a.w';
+</script>
+<form method="POST" name="form">
+          <!-- Inicio do modelo com abas -->
+          <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 18px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"> </div>
+          <table width="330" height="325"  border="0" align="center" cellpadding="0" cellspacing="0">
+    <tr>
+      <td height="20">
+        <table width="330" border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td>
+              <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="11" height="20"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                  <td width="56" height="20" align="center" nowrap background="/cecred/images/geral/guia_fundo.gif" class="linkGuia">&nbsp;</td>
+                                  <td width="180" height="20" align="left" nowrap background="/cecred/images/geral/guia_fundo.gif" class="linkGuia">Liberação para Internet </td>
+                  <td width="70" height="20" align="right" nowrap background="/cecred/images/geral/guia_fundo.gif" class="linkGuia">wpgd0039a</td>
+                  <td width="11" height="20" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr valign="top" bgcolor="#FFFFFF">
+          <td>          
+            <table width="330" border="0">
+                  <tr>
+                    <td width="55" align="right" class="NomeCampo">
+                          PA:
+                        </td>
+                        <td>
+                          <input type="text" name="nmresage" class="Campo" size="49" value="">
+                        </td>
+                  </tr>
+                  <tr>
+                    <td width="55" align="right" class="NomeCampo">
+                          Evento:
+                        </td>
+                        <td>
+                          <input type="text" name="nmevento" class="Campo" size="49" value="">
+                        </td>
+                  </tr>
+                  <tr>
+                    <td colspan="4">
+                          <table id="tbitens" width="320" border="0">
+                            <tr>
+                                  <td height="2" bgColor="#737373" class="NomeCampo" colspan="2">                                    
+                                  </td>
+                                </tr>
+                            <tr>
+                                  <td height="26" colspan="2" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">
+                                    &nbsp;&nbsp;&nbsp;Incompleto
+                                  </td>
+                                </tr>
+                          </table>
+                        </td>
+                  </tr>                  
+                </table>                             
+      </td>
+    </tr>        
+</table>
+<script language="JavaScript">
+
+function carregaItens(){
+
+  var row; var cell;  
+  var cor = '#FFFFFF';
+  
+  // limpa a tabela de Itens
+  for (var i=document.all.tbitens.rows.length; i>2; i--)
+      document.all.tbitens.deleteRow(i-1);
+                    
+  // cria as linhas com as células...
+  for(var i=0;i<mitens.length;i++){    
+     row=tbitens.insertRow();
+         
+         if(cor == '#FFFFFF')
+        cor = '#F7F7F7';
+     else
+        cor = '#FFFFFF';
+
+     row.bgColor = cor;
+         
+     cell=row.insertCell();
+     cell.className = 'txtNormal';                
+     linky='&nbsp;&nbsp;&nbsp;' + mitens[i].campo;  
+     cell.innerHTML=linky;
+     cell.align="left";
+  }    
+}
+
+
+// coloca as molduras para branco
+document.form.nmresage.style.borderColor="#FFFFFF";
+document.form.nmevento.style.borderColor="#FFFFFF";
+
+carregaItens();
+
+</script>
+</body>
+</html>
