@@ -1,0 +1,3204 @@
+/*.............................................................................
+
+    Programa: sistema/generico/procedures/b1wgen0052v.p                  
+    Autor(a): Jose Luis Marchezoni (DB1)
+    Data    : Junho/2010                      Ultima atualizacao: 21/01/2016
+  
+    Dados referentes ao programa:
+  
+    Objetivo  : BO com regras de negocio refente a tela MATRIC.
+                Baseado em fontes/matric.p.
+                Rotinas de Validacao de Dados
+                
+  
+    Alteracoes: 21/10/2010 - Bloquear geracao de nova matricula se o CPF ja
+                             estiver cadastrado - Tarefa 35233 (David).
+                             
+                24/11/2010 - Voltar versao da alteracao acima (David).
+                
+                24/01/2011 - Ajuste na validacao do tipo de pessoa (David).
+    
+                27/01/2011 - Criado procedure para verificar se ha Produto ou
+                             Servico Ativo vinculado ao cooperado (Jorge).
+                      
+                18/02/2011 - Adicionado criterio de validacao do
+                             Digito Verificador, validando ou nao, conforme
+                             a empresa. (Jorge)
+                
+                24/02/2011 - Alterado condicao de entrada de validacao de data
+                             e motivo de demissao em Criticas_Alteracao. (Jorge)
+                
+                21/03/2011 - Alterada a procedure ValidaNome (Henrique).
+                
+                25/03/2011 - Adicionado verificacao de produto/servico DDA 
+                             (sacado eletronico) em procedure 
+                             Produtos_Servicos_Ativos. (Jorge) 
+                             
+                18/04/2011 - Incluida validaçao para CEP na valida_dados.
+                             (André - DB1)           
+                             
+                17/05/2011 - Alteraçao na validacao criada para o DDA no dia
+                             25/03/2011 (David).
+                             
+                06/06/2011 - Comentar critica 342 referente ao tamanho dos
+                             nomes dos titutales (David).
+                             
+                27/10/2011 - Tratamento seguro renovado (Diego).
+                
+                05/12/2011 - Validado na procedure Valida_Jur, se existe
+                             convenio PAMCARD ativo para caso de demissao
+                             do cooperado. (Fabricio)
+                             
+                08/02/2012 - Validado na procedure Produtos_Servicos_Ativos, se existe
+                             convenio PAMCARD ativo para caso de demissao
+                             do cooperado. (Adriano)       
+                             
+                13/04/2012 - Incluido na procedure Produtos_Servicos_Ativos 
+                             a validacao para Procuradores e Responsavel Legal
+                             (Adriano).
+                 
+                26/04/2012 - Alteracao na procedure Valida_Inicio_Inclusao para                             
+                             tratamento de criacao de novas contas nos PAC que
+                             serao migrados para Viacredi Alto Vale.
+                             (David Kruger).
+                             
+                15/06/2012 - Ajustes referente ao projeto GP - Socios Menores
+                            (Adriano).
+                            
+                28/08/2012 - Incluir alertas da Viacredi AltoVale (Gabriel).           
+                
+                10/12/2012 - Incluido restricao de Pac migrado alto vale
+                             (David Kruger).
+                             
+                08/08/2013 - Incluida validacao do campo cdufnatu. (Reinert)
+                
+                13/08/2013 - Incluido restricao de Pac migrado da Acredi para 
+                             Viacredi. (Carlos).
+                             
+                01/10/2013 - Retirada a validaçao: "Se foi tirada a data de 
+                             demissao, verifica se ha conta salario ativa para
+                             o CPF" em Criticas_Alteracao (Carlos)
+                             
+                02/10/2013 - Retirada da procedure Valida_Fis a validacao 
+                             par_dtmvtolt - par_dtnasctl > 38716 para permitir
+                             qualquer data de nascimento passada (Carlos)
+                
+                12/11/2013 - Nova forma de chamar as agencias, de PAC agora 
+                             a escrita será PA (Guilherme Gielow)
+                
+                10/01/2014 - Corrigida mensagem de usuario eliminado
+                             demonstrando cpf e nro conta (Tiago).
+                             
+                26/02/2014 - Nao permitir digitacao do caracter " no nome do
+                             cooperado (David).
+                             
+                14/07/2014 - Verificar propostas de cartao de crédito em aberto
+                             (Lucas Lunelli - Projeto Cartoes Bancoob)
+                             
+                15/07/2014 - Retirada da Validaçao para inclusao de  matrícula para 
+                            cooperada que possui conta CTASAL ativa.(Vanessa Klein - SD175963)
+                
+                30/07/2014 - Incluido restricao faixa de contas, migrado Concredi
+                             (Daniel - Chamado  184333).
+							 
+                12/08/2014 - Adicionado tratamento para a craprac. (Reinert)			 
+                             
+                25/08/2014 - Incluido restricao faixa de contas, migrado Credimilsul
+                             (Daniel - Chamado  190663).
+                             
+                30/10/2014 - Incluso bloqueio de criacao de novas contas nas cooperativas
+                            Credimilsul e Concredi (Daniel - Chamado - 217482)
+                            
+                18/11/2014 - Removido bloqueio de criacao de novas contas na
+                             SCRCRED com faixa de valores entre 700000 - 730000.
+                             (Reinert)
+                                                           			             
+                02/12/2014 - De acordo com a circula 3.656 do Banco Central, substituir nomenclaturas 
+                             Cedente por Beneficiário e  Sacado por Pagador 
+                             Chamado 229313 (Jean Reddiga - RKAM).
+                             
+                28/01/2015 - Retirado logica de validacao na inclusao do registro
+                             Chamado SD-204406 - (Andre Santos - SUPERO)
+                           
+                27/04/2015 - Retirado o comentário que foi feito na validaçao 
+                             das cotas. (Douglas - Chamado 269526)
+                                                          
+                10/07/2015 - Projeto reformulacao Cadastral (Gabriel-RKAM).
+                
+                05/10/2015 - Adicionado nova opçao "J" para alteraçao apenas do cpf/cnpj e 
+                             removido a possibilidade de alteraçao pela opçao "X", conforme 
+                             solicitado no chamado 321572 (Kelvin). 
+                             
+                14/01/2016 - (Chamado 375823) Incluido na validacao de conjuge a conta 
+                             (Tiago Castro - RKAM).
+                             
+                21/01/2016 - Para a opcao "X" (Alteracao do Nome) nao deve mais
+                             validar as criticas de inclusao
+                             (Douglas - Chamado 369449)
+........................................................................*/
+
+
+/*............................... DEFINICOES ................................*/
+
+{ sistema/generico/includes/b1wgen0003tt.i }
+{ sistema/generico/includes/b1wgen0052tt.i }
+{ sistema/generico/includes/b1wgen0079tt.i }
+{ sistema/generico/includes/var_internet.i }
+
+DEF VAR aux_contador AS INTE                                        NO-UNDO.
+DEF VAR aux_inpessoa AS INTE                                        NO-UNDO.
+DEF VAR aux_tpctrato1 AS LOGICAL NO-UNDO.
+DEF VAR aux_tpctrato2 AS LOGICAL NO-UNDO.
+DEF VAR aux_tpctrato3 AS LOGICAL NO-UNDO.
+DEF VAR aux_tpctrato4 AS LOGICAL NO-UNDO.
+DEF VAR aux_tpctrato8 AS LOGICAL NO-UNDO.
+DEF VAR h-b1wgen0060 AS HANDLE                                      NO-UNDO.
+
+FUNCTION ConverteCpfCnpj RETURNS DECIMAL PRIVATE
+  ( INPUT par_nrcpfcgc AS CHARACTER )  FORWARD.
+
+FUNCTION ValidaCpfCnpj RETURNS LOGICAL PRIVATE
+    ( INPUT par_cdcooper AS INTEGER,
+      INPUT par_nrcpfcgc AS CHARACTER ) FORWARD.
+
+FUNCTION ValidaDigFun RETURNS LOGICAL PRIVATE
+    ( INPUT par_cdcooper AS INTEGER,
+      INPUT par_cdagenci AS INTEGER,
+      INPUT par_nrdcaixa AS INTEGER,
+      INPUT par_nrdconta AS INTEGER) FORWARD.
+
+FUNCTION ValidaNome RETURNS LOGICAL PRIVATE
+    ( INPUT  par_nomedttl AS CHARACTER,
+      INPUT  par_inpessoa AS INTE,
+      OUTPUT par_cdcritic AS INTEGER,
+      OUTPUT par_dscritic AS CHARACTER )  FORWARD.
+
+FUNCTION ValidaUF RETURNS LOGICAL PRIVATE
+    ( INPUT par_cdunidfe AS CHARACTER )  FORWARD.
+
+/* Pre-Processador para controle de erros 'Progress' */
+&SCOPED-DEFINE GET-MSG ERROR-STATUS:GET-MESSAGE(1)
+
+/*........................... PROCEDURES EXTERNAS ...........................*/
+
+
+/* ------------------------------------------------------------------------ */
+/*                        REALIZA A VALIDACAO DOS DADOS                     */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Valida_Dados :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmprimtl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcadass AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmsegntl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdsitcpf AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdtipcta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpdocptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdocptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoedptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufdptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtemdptl AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmmaettl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmpaittl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdsexotl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmconjug AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmbairro AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcadast AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmfansia AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_natjurid AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtiniatv AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdseteco AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdrmativ AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdddtfc AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrtelefo AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_inmatric AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtdemiss AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdmotdem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inhabmen AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
+    
+    DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-alertas.
+    DEF OUTPUT PARAM TABLE FOR tt-prod_serv_ativos.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR hb1wgen0052b AS HANDLE                                  NO-UNDO.
+    DEF VAR aux_inpessoa AS INTE                                    NO-UNDO.
+    
+    ASSIGN par_dscritic = ""
+           par_cdcritic = 0
+           aux_returnvl = "NOK"
+           aux_inpessoa = par_inpessoa.
+
+    EMPTY TEMP-TABLE tt-alertas.
+    EMPTY TEMP-TABLE tt-prod_serv_ativos.
+
+    Valida: DO ON ERROR UNDO Valida, LEAVE Valida:
+        /* Nome Titular */ 
+        IF  NOT ValidaNome( INPUT par_nmprimtl, 
+                            INPUT par_inpessoa,
+                           OUTPUT par_cdcritic,
+                           OUTPUT par_dscritic ) THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmprimtl".
+               LEAVE Valida.
+            END.
+
+        IF  par_nmprimtl = "" THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nmprimtl"
+                   par_cdcritic = 16.
+               LEAVE Valida.
+            END.
+
+        /* Nome Fantasia - mantem a sequencia de validacao original */
+        IF  par_inpessoa > 1 AND par_nmfansia = "" AND
+            CAN-DO("I,A",par_cddopcao) THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nmfansia"
+                   par_cdcritic = 375.
+               LEAVE Valida.
+            END.
+        
+        /* C.P.F. ou C.N.P.J. */
+        IF  NOT ValidaCpfCnpj(par_cdcooper,par_nrcpfcgc) THEN
+            DO:
+               ASSIGN
+                   par_nmdcampo = "nrcpfcgc"
+                   par_cdcritic = 27.
+
+               LEAVE Valida.
+            END.
+        
+        /* verificar se o tipo de pessoa confere c/ o cpf/cnpj */
+        IF  ((aux_inpessoa  = 3             AND
+            par_inpessoa = 1)               OR
+            (aux_inpessoa <> 3              AND 
+            aux_inpessoa <> par_inpessoa))  AND 
+            CAN-DO("I,X,J",par_cddopcao)      THEN
+            DO: 
+               IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
+                   RUN sistema/generico/procedures/b1wgen0060.p 
+                       PERSISTENT SET h-b1wgen0060.
+
+               ASSIGN 
+                   par_nmdcampo = "nrcpfcgc"
+                   par_dscritic = DYNAMIC-FUNCTION("BuscaCritica" IN
+                                                    h-b1wgen0060, INPUT 27)
+                   par_dscritic = par_dscritic + 
+                                  (IF par_idorigem = 1 THEN "|" ELSE "<br>") + 
+                                  DYNAMIC-FUNCTION("BuscaCritica" IN
+                                                   h-b1wgen0060, INPUT 436).
+
+               LEAVE Valida.
+            END.
+
+        /* realiza a verificacao dos dados */
+        IF  NOT VALID-HANDLE(hb1wgen0052b) THEN
+            RUN sistema/generico/procedures/b1wgen0052b.p
+                PERSISTENT SET hb1wgen0052b.
+
+        /* realiza a mesma verificacao feita na busca dos dados */
+        RUN Verifica_Dados IN hb1wgen0052b
+            (  INPUT par_cdcooper,
+               INPUT par_nrdconta,
+               INPUT par_cddopcao,
+               INPUT par_idorigem,
+              OUTPUT par_cdcritic,
+              OUTPUT par_dscritic ) NO-ERROR.
+
+        IF  ERROR-STATUS:ERROR THEN
+            DO:
+               ASSIGN par_dscritic = par_dscritic + {&GET-MSG}.
+               LEAVE Valida.
+            END.
+
+        IF  RETURN-VALUE <> "OK" THEN
+            LEAVE Valida.
+        
+        
+
+        /* validacao especifica por operacao */
+        CASE par_cddopcao:
+            WHEN "J" THEN DO:
+
+                /* Procura propostas de Cartao de Crédito ativas */
+                FOR EACH crapttl WHERE crapttl.cdcooper = par_cdcooper
+                                   AND crapttl.nrdconta = par_nrdconta NO-LOCK,
+                   FIRST crawcrd WHERE crawcrd.cdcooper = crapttl.cdcooper
+                                   AND crawcrd.nrdconta = crapttl.nrdconta
+                                   AND crawcrd.nrcpftit = crapttl.nrcpfcgc
+                                   AND (crawcrd.cdadmcrd >= 10
+                                   AND  crawcrd.cdadmcrd <= 80) NO-LOCK:
+                END.
+    
+                IF  AVAIL crawcrd THEN
+                    DO:
+                        ASSIGN par_nmdcampo = "nrcpfcgc".
+                        CREATE tt-alertas.
+                        ASSIGN tt-alertas.cdalerta = par_cdcritic
+                               tt-alertas.dsalerta = "Titular possui cartoes Bancoob. " +
+                                                     "Verificar situacao no SipagNET.".
+                               tt-alertas.tpalerta = "N".
+                    END.
+            END.
+            WHEN "I" OR WHEN "A" THEN DO:
+                
+                CASE par_inpessoa:
+                    WHEN 1 THEN DO:
+                        
+                        RUN Valida_Fis
+                            ( INPUT par_cdcooper,
+                              INPUT par_nrdconta,
+                              INPUT par_cddopcao,
+                              INPUT par_nmprimtl,
+                              INPUT par_dtmvtolt,
+                              INPUT par_dtcadass,
+                              INPUT par_nrcpfcgc,
+                              INPUT par_dtcnscpf,
+                              INPUT par_tpdocptl,
+                              INPUT par_nrdocptl,
+                              INPUT par_cdoedptl,
+                              INPUT par_cdufdptl,
+                              INPUT par_dtemdptl,
+                              INPUT par_nmmaettl,
+                              INPUT par_nmpaittl,
+                              INPUT par_dtnasctl,
+                              INPUT par_cdsexotl,
+                              INPUT par_tpnacion,
+                              INPUT par_dsnacion,
+                              INPUT par_dsnatura,
+                              INPUT par_cdufnatu,
+                              INPUT par_cdestcvl,
+                              INPUT par_nmconjug,
+                              INPUT par_nrcepend,
+                              INPUT par_dsendere,
+                              INPUT par_nmbairro,
+                              INPUT par_nmcidade,
+                              INPUT par_cdufende,
+                              INPUT par_cdempres,
+                              INPUT par_nrcadast,
+                              INPUT par_cdocpttl,
+                              INPUT par_inhabmen,
+                              INPUT par_dthabmen,
+                             OUTPUT par_nmdcampo,
+                             OUTPUT par_cdcritic,
+                             OUTPUT par_dscritic ) NO-ERROR.
+
+                        IF  ERROR-STATUS:ERROR THEN
+                            DO:
+                               ASSIGN par_dscritic = par_dscritic + {&GET-MSG}.
+                               LEAVE Valida.
+                            END.
+
+                        IF  RETURN-VALUE <> "OK" THEN
+                            LEAVE Valida.
+
+                    END.
+                    WHEN 2 OR WHEN 3 THEN DO:
+                        
+                        RUN Valida_Jur
+                            ( INPUT par_cdcooper,
+                              INPUT par_nmfansia,
+                              INPUT par_natjurid,
+                              INPUT par_dtiniatv,
+                              INPUT par_cdseteco,
+                              INPUT par_cdrmativ,
+                              INPUT par_nrdddtfc,
+                              INPUT par_nrtelefo,
+                              INPUT par_nrcepend,
+                              INPUT par_dsendere,
+                              INPUT par_nmbairro,
+                              INPUT par_nmcidade,
+                              INPUT par_cdufende,
+                             OUTPUT par_nmdcampo,
+                             OUTPUT par_cdcritic,
+                             OUTPUT par_dscritic ) NO-ERROR.
+
+                        IF  ERROR-STATUS:ERROR THEN
+                            DO:
+                               ASSIGN par_dscritic = par_dscritic + {&GET-MSG}.
+                               LEAVE Valida.
+                            END.
+
+                        IF  RETURN-VALUE <> "OK" THEN
+                            LEAVE Valida.
+
+                    END.
+                    OTHERWISE DO:
+                        /* Tp.Natureza */
+                        ASSIGN par_nmdcampo = "inpessoa"
+                               par_cdcritic = 436.
+                        LEAVE Valida.
+
+                    END.
+                END CASE.
+                
+                /* roda a verificacao de produtos ou servicos ativos 
+                   em caso de demisso */
+                IF par_cddopcao = "A" AND 
+                   par_dtdemiss <> ?  AND 
+                   par_cdmotdem <> 0  THEN
+                DO: 
+                    RUN Produtos_Servicos_Ativos
+                        ( INPUT par_cdcooper,
+                          INPUT par_dtdemiss,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT par_cdoperad,
+                          INPUT par_nmdatela,
+                          INPUT par_idorigem,
+                          INPUT par_nrdconta,
+                          INPUT par_idseqttl,
+                          INPUT par_flgerlog,
+                          INPUT par_dtmvtolt,
+                          
+                         OUTPUT par_cdcritic,
+                         OUTPUT par_dscritic,
+                         OUTPUT TABLE tt-prod_serv_ativos
+                        ) NO-ERROR.
+                    IF  ERROR-STATUS:ERROR THEN
+                    DO:
+                       ASSIGN par_dscritic = par_dscritic + {&GET-MSG}.
+                       LEAVE Valida.
+                    END.
+        
+                    IF  par_cdcritic <> 0 OR par_dscritic <> "" THEN
+                        LEAVE Valida.
+               
+                END.
+            END.
+        END CASE.
+
+        /* Realiza criticas dos dados informados */
+        RUN Criticas
+            ( INPUT par_cdcooper,
+              INPUT par_nrdconta,
+              INPUT par_cddopcao,
+              INPUT par_dtmvtolt,
+              INPUT par_inpessoa,
+              INPUT par_inmatric,
+              INPUT par_cdagepac,
+              INPUT par_nrcpfcgc,
+              INPUT par_nmprimtl,
+              INPUT IF par_inpessoa = 1 THEN par_dtnasctl ELSE par_dtiniatv,
+              INPUT par_nmmaettl,
+              INPUT par_dtdemiss,
+              INPUT par_cdmotdem,
+              INPUT par_dtcnscpf,
+              INPUT par_cdsitcpf,
+             OUTPUT par_msgretor,
+             OUTPUT par_nmdcampo,
+             OUTPUT par_cdcritic,
+             OUTPUT par_dscritic,
+             OUTPUT TABLE tt-alertas ) NO-ERROR.
+
+        IF  ERROR-STATUS:ERROR THEN
+            DO:
+               ASSIGN par_dscritic = par_dscritic + {&GET-MSG}.
+               LEAVE Valida.
+            END.
+
+        IF RETURN-VALUE <> "OK" THEN
+            LEAVE Valida.
+        
+        IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
+            RUN sistema/generico/procedures/b1wgen0060.p 
+                PERSISTENT SET h-b1wgen0060.
+
+        /* mensagem de confirmacao - 078 - Confirma a operacao? (S/N) */
+        IF  par_msgretor <> "" AND par_idorigem <> 1 THEN
+            ASSIGN par_msgretor = par_msgretor + "<br>" + 
+                                  DYNAMIC-FUNCTION("BuscaCritica" IN 
+                                                   h-b1wgen0060,78).
+        ELSE
+            IF  NOT par_msgretor BEGINS("ATENCAO!!! Esta sendo criada ") THEN
+                ASSIGN par_msgretor = par_msgretor + 
+                                      DYNAMIC-FUNCTION("BuscaCritica" IN 
+                                                       h-b1wgen0060,78).
+        
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE Valida.
+
+    END.
+
+    IF  VALID-HANDLE(h-b1wgen0060) THEN
+        DELETE OBJECT h-b1wgen0060.
+
+    IF  VALID-HANDLE(hb1wgen0052b) THEN
+        DELETE OBJECT hb1wgen0052b.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Valida_Dados */
+
+/* ------------------------------------------------------------------------ */
+/*                VALIDA INICIO DO PROCEDIMENTO PARA INCLUSAO               */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Valida_Inicio_Inclusao:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    DEF VAR aux_dsagepac AS CHAR                                    NO-UNDO.
+   
+    IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
+        RUN sistema/generico/procedures/b1wgen0060.p 
+            PERSISTENT SET h-b1wgen0060.
+
+    ASSIGN par_cdcritic = 0
+           par_dscritic = "".
+
+    DO WHILE TRUE:
+
+        /* Validar informacoes da conta somente no Caracter */
+        /* Pois na web ela e' gerada automaticamente */
+        IF   par_idorigem = 1   THEN
+             DO:
+                 IF  NOT ValidaDigFun(INPUT par_cdcooper,
+                                      INPUT 0,
+                                      INPUT 0,
+                                      INPUT par_nrdconta)  THEN
+                     DO:
+                         ASSIGN par_nmdcampo = "nrdconta"
+                                par_cdcritic = 8.
+                         LEAVE.
+                     END.                   
+             END.
+
+        IF  ( /*Concredi*/
+            par_cdcooper  = 4                     AND
+            par_dtmvtolt >= DATE("14/11/2014") )  THEN
+            DO:    
+                ASSIGN par_dscritic = "Operacao Invalida! " +
+                                       "Incorporacao de Cooperativa!".
+                       par_nmdcampo = "nrdconta".
+                LEAVE.
+
+           END.
+    
+        IF  ( /*Credimilsul*/
+            par_cdcooper  = 15                 AND
+            par_dtmvtolt >= DATE("11/11/2014") )
+            THEN
+            DO:    
+                ASSIGN par_dscritic = "Operacao Invalida! " +
+                                       "Incorporacao de Cooperativa!".
+                       par_nmdcampo = "nrdconta".
+                LEAVE.
+            END.
+
+        IF  NOT DYNAMIC-FUNCTION("BuscaPac" IN h-b1wgen0060,
+                                            INPUT par_cdcooper,
+                                            INPUT par_cdagepac,
+                                            INPUT "nmresage",
+                                           OUTPUT aux_dsagepac,
+                                           OUTPUT par_dscritic) THEN
+            DO:
+                ASSIGN par_nmdcampo = "cdagenci".
+                LEAVE.
+            END.
+
+        IF par_cdcooper = 1   AND
+          (par_cdagepac = 07  OR
+           par_cdagepac = 33  OR
+           par_cdagepac = 38  OR
+           par_cdagepac = 60  OR
+           par_cdagepac = 62  OR
+           par_cdagepac = 66) THEN
+           DO:
+               ASSIGN par_nmdcampo = "cdagenci"
+                      par_cdcritic = 0
+                      par_dscritic = "PA nao permitido. Motivo: " + 
+                                     "Transferencia de PA".
+                
+                LEAVE.
+           END.
+
+        /*******************************************************/
+        /** Bloqueio PAC 5 da Creditextil, para transferencia **/
+        /** de PAC. Remover critica em Janeiro/2011.          **/
+        /*******************************************************/
+        IF  par_cdcooper = 2 AND par_cdagepac = 5  THEN
+            DO:
+                ASSIGN par_dscritic = "Opcao nao permitida. Transferencia " +
+                                      "do PA!"
+                       par_nmdcampo = "cdagenci".
+                LEAVE.
+            END.
+        
+        IF  NOT CAN-DO("1,2",STRING(par_inpessoa))  THEN
+            DO:
+                ASSIGN par_cdcritic = 436
+                       par_nmdcampo = "inpessoa".
+                LEAVE.
+            END.
+
+        LEAVE.
+
+    END. /** Fim do DO WHILE TRUE **/
+
+    IF  VALID-HANDLE(h-b1wgen0060)  THEN
+        DELETE OBJECT h-b1wgen0060.
+
+    IF  par_cdcritic > 0 OR par_dscritic <> ""  THEN
+        RETURN "NOK".
+
+    RETURN "OK".
+
+END PROCEDURE. /* Valida_Inicio_Inclusao */
+
+/* ------------------------------------------------------------------------ */
+/*                   VALIDA O PARCELAMENTO DE CAPITAL                       */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Valida_Parcelamento :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtdebito AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_qtparcel AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlparcel AS DECI                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-parccap.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_vlparsub AS DECI                                    NO-UNDO.
+    DEF VAR aux_qtparcap AS INTE                                    NO-UNDO.
+    DEF VAR aux_dtultdia AS DATE                                    NO-UNDO.
+    DEF VAR aux_vlparcel AS DECI                                    NO-UNDO.
+    DEF VAR aux_vldsobra AS DECI                                    NO-UNDO.
+    DEF VAR aux_dtdebito AS DATE                                    NO-UNDO.
+    DEF VAR aux_contareg AS INTE                                    NO-UNDO.
+    DEF VAR h-b1wgen0008 AS HANDLE                                  NO-UNDO.
+
+    ASSIGN
+        par_dscritic = ""
+        par_cdcritic = 0
+        aux_returnvl = "NOK".
+
+    Parcelamento: DO ON ERROR UNDO Parcelamento, LEAVE Parcelamento:
+
+        FOR FIRST crapmat FIELDS(vlcapsub vlcapini qtparcap)
+                          WHERE crapmat.cdcooper = par_cdcooper NO-LOCK:
+        END.
+
+        IF  NOT AVAILABLE crapmat THEN
+            DO:
+               ASSIGN par_cdcritic = 71.
+               LEAVE Parcelamento.
+            END.
+
+        ASSIGN 
+            aux_vlparsub = (IF crapmat.vlcapsub <> crapmat.vlcapini
+                            THEN crapmat.vlcapsub - crapmat.vlcapini
+                            ELSE crapmat.vlcapsub)
+            aux_qtparcap = crapmat.qtparcap
+            aux_dtultdia = ((DATE(MONTH(par_dtmvtolt),28,
+                                   YEAR(par_dtmvtolt)) + 4) -
+                                    DAY(DATE(MONTH(par_dtmvtolt),28,
+                                             YEAR(par_dtmvtolt)) + 4)) + 1
+            aux_dtultdia = ((DATE(MONTH(aux_dtultdia),28,
+                                   YEAR(aux_dtultdia)) + 4) -
+                                    DAY(DATE(MONTH(aux_dtultdia),28,
+                                             YEAR(aux_dtultdia)) + 4)).
+
+        DO WHILE TRUE:       
+
+           IF  CAN-DO("1,7",STRING(WEEKDAY(aux_dtultdia)))             OR
+               CAN-FIND(crapfer WHERE crapfer.cdcooper = par_cdcooper  AND
+                                      crapfer.dtferiad = aux_dtultdia) THEN
+               DO:
+                  ASSIGN aux_dtultdia = aux_dtultdia - 1.
+                  NEXT.
+               END.
+               
+           LEAVE.
+               
+        END.  /*  Fim do DO .. TO  */
+
+        /* inicio das validacoes */
+        IF  par_dtdebito < par_dtmvtolt OR
+            par_dtdebito = ?            OR
+            par_dtdebito > aux_dtultdia THEN
+            DO:
+               ASSIGN par_dscritic = "13 - Data errada. Deve ser entre " + 
+                                     STRING(par_dtmvtolt,"99/99/9999") + 
+                                     " e " +
+                                     STRING(aux_dtultdia,"99/99/9999") + ".".
+               LEAVE Parcelamento.
+            END.
+
+        IF  par_vlparcel < aux_vlparsub THEN
+            DO:
+               ASSIGN par_dscritic = "269 - Valor errado. Deve ser no minimo" +
+                                     " R$ " + 
+                                     TRIM(STRING(aux_vlparsub,"zzz,zz9.99"))  +
+                                     ".".
+               LEAVE Parcelamento.
+            END.
+
+        IF  par_qtparcel > aux_qtparcap OR par_qtparcel = 0 THEN
+            DO:
+               ASSIGN par_dscritic = "26 - Quantidade errada. Maximo de " +
+                                     TRIM(STRING(aux_qtparcap,"z9"))  +
+                                     " parcelas.".
+               LEAVE Parcelamento.
+            END.
+
+        EMPTY TEMP-TABLE tt-parccap.
+        
+        ASSIGN 
+            aux_vlparcel = TRUNCATE(par_vlparcel / par_qtparcel,2).
+            aux_vldsobra = par_vlparcel - (aux_vlparcel * par_qtparcel).
+
+        IF  NOT VALID-HANDLE(h-b1wgen0008) THEN
+            RUN sistema/generico/procedures/b1wgen0008.p
+                PERSISTENT SET h-b1wgen0008.
+
+        DO aux_contador = 1 TO par_qtparcel:
+        
+           IF  aux_contador = 1 THEN 
+               ASSIGN aux_dtdebito = par_dtdebito.
+           ELSE
+               RUN calcdata IN h-b1wgen0008
+                   ( INPUT par_cdcooper,
+                     INPUT 0,
+                     INPUT 0,
+                     INPUT "",
+                     INPUT par_dtdebito,
+                     INPUT aux_contador - 1,
+                     INPUT "M",
+                     INPUT 0,
+                    OUTPUT aux_dtdebito,
+                    OUTPUT TABLE tt-erro ).
+
+           FIND FIRST tt-erro NO-ERROR.
+
+           IF  AVAILABLE tt-erro THEN
+               DO:
+                  ASSIGN par_dscritic = tt-erro.dscritic.
+                  EMPTY TEMP-TABLE tt-erro.
+                  UNDO Parcelamento, LEAVE Parcelamento.
+               END.
+
+           IF  aux_contador > 0 AND aux_contador < 4  THEN
+               ASSIGN aux_contareg = 1.
+           ELSE
+           IF  aux_contador > 3 AND aux_contador < 7  THEN
+               ASSIGN aux_contareg = 2.
+           ELSE
+           IF  aux_contador > 6 AND aux_contador < 10 THEN
+               ASSIGN aux_contareg = 3.
+           ELSE
+           IF  aux_contador > 9 AND aux_contador < 13 THEN
+               ASSIGN aux_contareg = 4.
+
+           IF  aux_contador = par_qtparcel THEN
+               ASSIGN aux_vlparcel = aux_vlparcel + aux_vldsobra.
+
+           CREATE tt-parccap.
+           ASSIGN 
+               tt-parccap.dtrefere = aux_dtdebito
+               tt-parccap.vlparcel = aux_vlparcel
+               tt-parccap.nrseqdig = aux_contador.
+
+        END.  /*  Fim do DO .. TO  */
+
+        IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
+            RUN sistema/generico/procedures/b1wgen0060.p 
+                PERSISTENT SET h-b1wgen0060.
+
+        /* mensagem de confirmacao - 078 - Confirma a operacao? (S/N) */
+        ASSIGN
+            par_msgretor = DYNAMIC-FUNCTION("BuscaCritica" IN h-b1wgen0060,78).
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE Parcelamento.
+    END.
+
+    IF  VALID-HANDLE(h-b1wgen0008) THEN
+        DELETE OBJECT h-b1wgen0008.
+
+    IF  VALID-HANDLE(h-b1wgen0060) THEN
+        DELETE OBJECT h-b1wgen0060.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Valida_Parcelamento */
+
+/* ------------------------------------------------------------------------ */
+/*                 REALIZA A VALIDACAO DOS PROCURADORES                     */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Valida_Procurador :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM TABLE FOR tt-crapavt.
+
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrdeanos AS INT                                     NO-UNDO.
+    DEF VAR aux_nrdmeses AS INT                                     NO-UNDO.
+    DEF VAR aux_dsdidade AS CHAR                                    NO-UNDO.
+    DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
+
+    DEF BUFFER btt-crapavt FOR tt-crapavt.
+
+    &SCOPED-DEFINE CPF-AVT STRING(STRING(tt-crapavt.nrcpfcgc,"99999999999"),"999.999.999-99")
+
+    ASSIGN par_dscritic = ""
+           par_cdcritic = 0
+           aux_returnvl = "NOK".
+
+    Procurador: DO ON ERROR UNDO Procurador, LEAVE Procurador:
+
+        FOR EACH tt-crapavt WHERE tt-crapavt.deletado = NO AND
+                                  tt-crapavt.cddopcao <> "C"
+            ON ERROR UNDO Procurador, RETURN "NOK":
+
+            IF  tt-crapavt.cddopcao = "E" THEN
+                NEXT.
+
+            IF NOT VALID-HANDLE(h-b1wgen9999) THEN
+               RUN sistema/generico/procedures/b1wgen9999.p 
+                   PERSISTENT SET h-b1wgen9999.
+          
+            RUN idade IN h-b1wgen9999
+                 ( INPUT tt-crapavt.dtnascto,
+                   INPUT par_dtmvtolt,
+                  OUTPUT aux_nrdeanos,
+                  OUTPUT aux_nrdmeses,
+                  OUTPUT aux_dsdidade ).
+          
+            DELETE PROCEDURE h-b1wgen9999.
+
+            /* Realiza checagem do CPF */
+            IF  NOT ValidaCpfCnpj(par_cdcooper,
+                                  STRING(tt-crapavt.nrcpfcgc)) THEN
+                DO:
+                   ASSIGN par_nmdcampo = "nrcpfcgc"
+                          par_cdcritic = 27.
+
+                   LEAVE Procurador.
+
+                END.
+
+            /* variavel alimentada no ValidaCpfCnpj(), somente pessoa fisica */
+            IF  aux_inpessoa <> 1 THEN
+                DO:
+                   ASSIGN par_nmdcampo = "nrcpfcgc"
+                          par_cdcritic = 833.
+
+                   LEAVE Procurador.
+
+                END.
+
+            IF  CAN-FIND(FIRST crapavt WHERE                     
+                         crapavt.cdcooper = par_cdcooper         AND
+                         crapavt.tpctrato = 6 /* jur */          AND
+                         crapavt.nrdconta = par_nrdconta         AND
+                         crapavt.nrctremp = 0                    AND
+                         crapavt.nrcpfcgc = tt-crapavt.nrcpfcgc  AND
+                         ROWID(crapavt)  <> tt-crapavt.rowidavt) AND 
+                tt-crapavt.cddopcao <> "A"                       THEN
+                DO:                         
+                   /* procura por um registro que esteje deletado apenas 
+                      na memoria */
+                   IF  NOT CAN-FIND(FIRST btt-crapavt WHERE
+                                    btt-crapavt.nrcpfcgc = tt-crapavt.nrcpfcgc
+                                    AND btt-crapavt.deletado = YES) THEN
+                   DO:
+                      ASSIGN par_dscritic = "Procurador com CPF " + {&CPF-AVT} 
+                                          + " ja cadastrado para o associado.".
+
+                      LEAVE Procurador.
+
+                   END.
+                END.
+
+            IF  CAN-FIND(FIRST btt-crapavt WHERE
+                         btt-crapavt.nrcpfcgc = tt-crapavt.nrcpfcgc     AND
+                         btt-crapavt.deletado = NO                      AND
+                         (ROWID(btt-crapavt)   <> ROWID(tt-crapavt)     OR
+                          btt-crapavt.rowidavt <> tt-crapavt.rowidavt)) AND 
+                tt-crapavt.cddopcao <> "A"                              THEN
+                DO:
+                   
+                   ASSIGN par_dscritic = " Ja existe Procurador cadastrado " +
+                                         "com o CPF " + {&CPF-AVT}.
+                   LEAVE Procurador.
+
+                END.
+
+            /* Data de vigencia */
+            IF tt-crapavt.dtvalida <= par_dtmvtolt OR 
+               tt-crapavt.dtvalida = ?             THEN
+               DO:
+                  ASSIGN par_nmdcampo = "dtvalida"         
+                         par_dscritic = "Data da vigencia do Procurador CPF " + 
+                                        {&CPF-AVT} + " incorreta.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            /* Cargo */
+            IF NOT CAN-DO("SOCIO/PROPRIETARIO,DIRETOR/ADMINISTRADOR,PROCURADOR," +
+                          "SOCIO COTISTA,SOCIO ADMINISTRADOR,SINDICO,"           + 
+                          "TESOUREIRO,ADMINISTRADOR",
+                          tt-crapavt.dsproftl) THEN
+               DO:
+                  ASSIGN par_nmdcampo = "dsproftl"         
+                         par_dscritic = "Cargo do Procurador CPF " + 
+                                        {&CPF-AVT} + " invalido.".
+                  LEAVE Procurador.
+
+               END.
+
+            /* para associado os demais dados nao precisam ser revistos */
+            IF tt-crapavt.nrdctato <> 0 THEN
+               NEXT.
+
+            /* Nome do Avalista */
+            IF tt-crapavt.nmdavali = "" THEN
+               DO:
+                  ASSIGN par_nmdcampo = "nmdavali"
+                         par_dscritic = "O nome do Procurador com CPF " + 
+                                        {&CPF-AVT} + " deve ser informado.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            /* Tipo do documento */
+            IF NOT CAN-DO("CH,CI,CP,CT",tt-crapavt.tpdocava) THEN  
+               DO:                                      
+                  ASSIGN par_nmdcampo = "tpdocava"         
+                         par_dscritic = "O tipo de documento do Procurador " +
+                                        "CPF " + {&CPF-AVT} + " nao e valido.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            /* Numero do documento */
+            IF tt-crapavt.nrdocava = "" THEN  
+               DO:                                      
+                  ASSIGN par_nmdcampo = "nrdocava"         
+                         par_dscritic = "O numero do documento do Procurador " +
+                                        "CPF " + {&CPF-AVT} + " deve ser " +
+                                        "preenchido.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            /* Numero do documento */
+            IF tt-crapavt.cdoeddoc = "" THEN  
+               DO:                                      
+                  ASSIGN par_nmdcampo = "cdoeddoc"         
+                         par_dscritic = "O orgao emissor do Procurador " +
+                                        "CPF " + {&CPF-AVT} + " deve ser " +
+                                        "preenchido.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            /* Unidade da Federacao do documento */
+            IF NOT ValidaUf(tt-crapavt.cdufddoc) THEN
+               DO:
+                  ASSIGN par_nmdcampo = "cdufddoc"         
+                         par_dscritic = "Unidade da Federacao do documento do " +
+                                        "Procurador CPF " + {&CPF-AVT} + 
+                                        " invalida.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            /* Data de emissao do documento */
+            IF tt-crapavt.dtemddoc = ? THEN
+               DO:
+                  ASSIGN par_nmdcampo = "dtemddoc"         
+                         par_dscritic = "Data da emissao do documento do " + 
+                                        "Procurador CPF " + {&CPF-AVT} + 
+                                        " deve ser informada.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            ERROR-STATUS:ERROR = FALSE.
+
+            DATE(tt-crapavt.dtemddoc) NO-ERROR.
+
+            IF ERROR-STATUS:ERROR THEN
+               DO:
+                  ASSIGN par_nmdcampo = "dtemddoc"         
+                         par_dscritic = "Data da emissao do documento do " + 
+                                        "Procurador CPF " + {&CPF-AVT} + 
+                                        " possui formato invalido.".
+
+                  LEAVE Procurador.
+
+               END.
+
+            /* Data de emissao do documento */
+            IF (tt-crapavt.dtemddoc > par_dtmvtolt)          OR
+               (par_dtmvtolt - tt-crapavt.dtemddoc >= 38716) THEN
+               DO:
+                  ASSIGN par_nmdcampo = "dtemddoc"         
+                         par_dscritic = "Data da emissao do documento do " + 
+                                        "Procurador CPF " + {&CPF-AVT} + 
+                                        " incorreta.".
+
+                  LEAVE Procurador.
+
+               END.
+
+        END. /* FOR EACH tt-crapavt  */
+
+        IF NOT CAN-FIND(FIRST tt-crapavt WHERE
+                                         tt-crapavt.deletado = NO    AND
+                                         tt-crapavt.cddopcao <> "E") AND 
+           NOT CAN-FIND(FIRST crapepa WHERE
+                         crapepa.cdcooper = par_cdcooper             AND
+                         crapepa.nrdconta = par_nrdconta)            THEN
+           DO:
+               FIND crapjur WHERE crapjur.cdcooper = par_cdcooper AND
+                                  crapjur.nrdconta = par_nrdconta 
+                                  NO-LOCK NO-ERROR.
+
+               IF AVAIL crapjur THEN
+                  DO:
+                     FIND gncdntj WHERE gncdntj.cdnatjur = crapjur.natjurid AND
+                                        gncdntj.flgprsoc = TRUE 
+                                        NO-LOCK NO-ERROR.
+
+                     IF AVAIL gncdntj THEN
+                        DO: 
+                           ASSIGN par_dscritic = "Deve existir pelo menos um " +
+                                                 "representante/procurador!".
+
+                           LEAVE Procurador.
+                        
+                        END.
+
+                  END.
+
+           END.
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE Procurador.
+
+    END.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Valida_Procurador */
+
+/* ------------------------------------------------------------------------ */
+/*                    CALCULA O PARCELAMENTO DE CAPITAL                     */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Calcula_Parcelamento :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_qtparcel AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_vlparcel AS DECI                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+
+    ASSIGN
+        par_dscritic = ""
+        par_cdcritic = 0
+        aux_returnvl = "NOK".
+
+    Parcelamento: DO ON ERROR UNDO Parcelamento, LEAVE Parcelamento:
+
+        FOR FIRST crapcop FIELDS(nrdocnpj)
+                          WHERE crapcop.cdcooper = par_cdcooper NO-LOCK:
+        END.
+
+        IF  NOT AVAILABLE crapcop THEN
+            DO:
+               ASSIGN par_cdcritic = 651.
+               LEAVE Parcelamento.
+            END.
+
+        IF  crapcop.nrdocnpj = par_nrcpfcgc THEN
+            DO:
+               ASSIGN aux_returnvl = "OK".
+               LEAVE Parcelamento.
+            END.
+
+        FOR FIRST crapmat FIELDS(vlcapsub vlcapini qtparcap)
+                          WHERE crapmat.cdcooper = par_cdcooper NO-LOCK:
+        END.
+
+        IF  NOT AVAILABLE crapmat THEN
+            DO:
+               ASSIGN par_cdcritic = 71.
+               LEAVE Parcelamento.
+            END.
+
+        ASSIGN 
+            par_vlparcel = (IF crapmat.vlcapsub <> crapmat.vlcapini
+                            THEN crapmat.vlcapsub - crapmat.vlcapini
+                            ELSE crapmat.vlcapsub)
+            par_qtparcel = crapmat.qtparcap.
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE Parcelamento.
+    END.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+        
+END PROCEDURE. /* Calcula_Parcelamento */
+
+/*........................ PROCEDURES INTERNAS/PRIVADAS ....................*/
+
+/* ------------------------------------------------------------------------ */
+/*                     VERIFICA PRODUTOS/SERVICOS ATIVOS                    */
+/* ------------------------------------------------------------------------ */
+
+PROCEDURE Produtos_Servicos_Ativos PRIVATE :
+    
+    /* entrada e saida */
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtdemiss AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOG                            NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-prod_serv_ativos.
+
+    /* variaveis auxiliares */
+    DEF VAR aux_tpctrlim LIKE craplim.tpctrlim                      NO-UNDO.
+    DEF VAR aux_dtanoasb AS INTEGER                                 NO-UNDO. 
+    DEF VAR aux_dtanopgd AS INTEGER                                 NO-UNDO.
+    DEF VAR aux_nmctrato AS CHAR                                    NO-UNDO.
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdseqcia AS INTE                                    NO-UNDO.
+
+    DEF VAR h-b1wgen0003 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0079 AS HANDLE                                  NO-UNDO.
+
+    /* inicializando e zerando */
+    ASSIGN  aux_cdseqcia = 0
+            aux_tpctrlim = 0
+            aux_nmctrato = ""
+            par_dscritic = ""
+            par_cdcritic = 0
+            aux_returnvl = "NOK".
+
+    EMPTY TEMP-TABLE tt-prod_serv_ativos.
+
+    Produtos_Servicos_Ativos: 
+
+        DO WHILE TRUE ON ERROR UNDO Produtos_Servicos_Ativos, 
+        LEAVE Produtos_Servicos_Ativos:
+
+        /*----------------------   VERIFICACOES -----------------------------*/
+
+    
+        /********************* Limite de Credito *****************************/
+        IF CAN-FIND(FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
+                                        craplim.nrdconta = par_nrdconta AND
+                                        craplim.tpctrlim = 1            AND
+                                        craplim.insitlim = 2        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Limite de Credito".
+        END.
+    
+        /********************** Plano de Cotas *******************************/
+        IF CAN-FIND(FIRST crappla WHERE crappla.cdcooper = par_cdcooper AND
+                                        crappla.nrdconta = par_nrdconta AND
+                                        crappla.cdsitpla = 1        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Plano de Cotas".
+        END.
+
+        /********************** Poupanca Programada **************************/
+        IF CAN-FIND(FIRST craprpp WHERE craprpp.cdcooper = par_cdcooper AND
+                                        craprpp.nrdconta = par_nrdconta AND
+                                        craprpp.cdsitrpp = 1        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Poupanca Programada".
+        END.
+    
+        /***************** Limite de Desconto de Cheques *********************/
+        IF CAN-FIND(FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
+                                        craplim.nrdconta = par_nrdconta AND
+                                        craplim.tpctrlim = 2            AND
+                                        craplim.insitlim = 2        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                tt-prod_serv_ativos.nmproser = "Limite de Desconto de Cheques".
+        END. 
+    
+        /****************** Limite de Desconto de Titulos ********************/
+        IF CAN-FIND(FIRST craplim WHERE craplim.cdcooper = par_cdcooper  AND
+                                         craplim.nrdconta = par_nrdconta AND
+                                         craplim.tpctrlim = 3            AND
+                                         craplim.insitlim = 2        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                tt-prod_serv_ativos.nmproser = "Limite de Desconto de Titulos".
+        END.
+
+        /************************ Cartao de Credito **************************/
+        IF CAN-FIND(FIRST crawcrd WHERE crawcrd.cdcooper = par_cdcooper AND
+                                        crawcrd.nrdconta = par_nrdconta AND
+                                        crawcrd.insitcrd = 4        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Cartao de Credito".
+        END.
+
+        /******************** Cartao Magnetico *******************************/
+        IF CAN-FIND(FIRST crapcrm WHERE crapcrm.cdcooper  = par_cdcooper AND
+                                        crapcrm.nrdconta  = par_nrdconta AND
+                                        crapcrm.cdsitcar  = 2            AND
+                                        crapcrm.dtvalcar >= par_dtmvtolt 
+                                        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Cartao Magnetico".
+        END.
+
+        /************************ Internet ***********************************/
+        IF CAN-FIND(FIRST crapsnh WHERE crapsnh.cdcooper = par_cdcooper AND
+                                        crapsnh.nrdconta = par_nrdconta AND
+                                        crapsnh.tpdsenha = 1            AND
+                                        crapsnh.cdsitsnh = 1        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Internet".
+        END.
+
+        /************************** Seguro ***********************************/
+        IF CAN-FIND(FIRST crapseg WHERE crapseg.cdcooper = par_cdcooper AND
+                                        crapseg.nrdconta = par_nrdconta AND
+                                        crapseg.cdsitseg = 1        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Seguro".
+        END.
+        /* Seguro CASA Renovado */ 
+        IF CAN-FIND(FIRST crapseg WHERE crapseg.cdcooper = par_cdcooper AND
+                                        crapseg.nrdconta = par_nrdconta AND
+                                        crapseg.cdsitseg = 3            AND
+                                        crapseg.tpseguro = 11      NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Seguro".
+        END.
+        /* Seguro AUTO Substiuido */ 
+        IF CAN-FIND(FIRST crapseg WHERE crapseg.cdcooper = par_cdcooper AND
+                                        crapseg.nrdconta = par_nrdconta AND
+                                        crapseg.cdsitseg = 3            AND
+                                        crapseg.tpseguro = 2            AND
+                                        crapseg.dtfimvig >= par_dtmvtolt
+                                        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Seguro".
+        END.
+
+        /************************* Cheque ************************************/
+        IF CAN-FIND(FIRST crapfdc WHERE crapfdc.cdcooper  = par_cdcooper AND
+                                        crapfdc.nrdconta  = par_nrdconta AND
+                                        crapfdc.dtliqchq  = ?            AND 
+                                        crapfdc.dtretchq <> ?            AND
+                                        crapfdc.incheque <> 8            
+                                        NO-LOCK USE-INDEX crapfdc4)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Cheque".
+        END. 
+
+        /************************ Emprestimo *********************************/
+        IF CAN-FIND(FIRST crapepr WHERE crapepr.cdcooper = par_cdcooper AND
+                                        crapepr.nrdconta = par_nrdconta AND
+                                        crapepr.inliquid = 0        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Emprestimo".
+        END. 
+
+        /************************ Aplicacao **********************************/
+        IF CAN-FIND(FIRST craprda WHERE craprda.cdcooper = par_cdcooper AND
+                                        craprda.nrdconta = par_nrdconta AND
+                                        craprda.insaqtot = 0        NO-LOCK) OR
+		   CAN-FIND(FIRST craprac WHERE craprac.cdcooper = par_cdcooper AND
+                                        craprac.nrdconta = par_nrdconta AND
+                                        craprac.idsaqtot = 0        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Aplicacao".
+        END.
+
+        /******************** Inscricao Progrid ******************************/
+        /** Agenda PROGRID **/
+        
+        FIND LAST gnpapgd WHERE gnpapgd.cdcooper = par_cdcooper AND
+                                gnpapgd.idevento = 1        NO-LOCK NO-ERROR.
+        
+        IF AVAIL gnpapgd THEN 
+        DO:
+            IF  YEAR(TODAY) = gnpapgd.dtanonov  THEN 
+                ASSIGN aux_dtanopgd = gnpapgd.dtanonov.
+            ELSE
+            IF  YEAR(TODAY) < gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanopgd = gnpapgd.dtanoage.
+            ELSE
+            IF  YEAR(TODAY) > gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanopgd = 0.
+        END.
+
+        /** Agenda Assembleias **/
+        FIND LAST gnpapgd WHERE gnpapgd.cdcooper = par_cdcooper AND    
+                                gnpapgd.idevento = 2        NO-LOCK NO-ERROR.
+        IF AVAIL gnpapgd THEN 
+        DO:
+            IF  YEAR(TODAY) = gnpapgd.dtanonov  THEN 
+                ASSIGN aux_dtanoasb = gnpapgd.dtanonov.
+            ELSE
+            IF  YEAR(TODAY) < gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanoasb = gnpapgd.dtanoage.
+            ELSE
+            IF  YEAR(TODAY) > gnpapgd.dtanonov  THEN
+                ASSIGN aux_dtanoasb = 0.
+        END.
+        FOR EACH crapidp WHERE crapidp.cdcooper = par_cdcooper AND
+                               crapidp.nrdconta = par_nrdconta AND
+                             ((crapidp.dtanoage = aux_dtanopgd AND
+                               crapidp.idevento = 1)           OR
+                              (crapidp.dtanoage = aux_dtanoasb AND
+                               crapidp.idevento = 2))          AND
+           /** PENDENTE   **/ (crapidp.idstains = 1            OR        
+           /** CONFIRMADO **/  crapidp.idstains = 2)           NO-LOCK:  
+           
+            FIND crapadp WHERE crapadp.cdcooper = crapidp.cdcooper AND   
+                               crapadp.idevento = crapidp.idevento AND 
+                               crapadp.dtanoage = crapidp.dtanoage AND
+                               crapadp.cdevento = crapidp.cdevento AND
+                               crapadp.nrseqdig = crapidp.nrseqeve 
+                               NO-LOCK NO-ERROR.
+           
+            IF  NOT AVAILABLE crapadp  THEN
+                NEXT.
+            IF  crapadp.idstaeve = 1  OR   /** AGENDADO    **/
+                crapadp.idstaeve = 3  OR   /** TRANSFERIDO **/
+                crapadp.idstaeve = 6  THEN /** ACRESCIDO   **/
+                DO:
+                    ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                    CREATE tt-prod_serv_ativos.
+                    ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                           tt-prod_serv_ativos.nmproser = "Inscricao Progrid".
+                    LEAVE.
+                END.
+        END.
+    
+        /***************************** Convenio ******************************/
+        IF CAN-FIND(FIRST crapatr WHERE crapatr.cdcooper = par_cdcooper AND
+                                        crapatr.nrdconta = par_nrdconta AND
+                                        crapatr.dtfimatr = ?        NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Convenio".
+        END.
+
+        
+        /*********************** Lancamento Futuro ***************************/
+        RUN sistema/generico/procedures/b1wgen0003.p 
+            PERSISTENT SET h-b1wgen0003.
+        RUN consulta-lancamento IN 
+            h-b1wgen0003 (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT par_cdoperad,
+                          INPUT par_nrdconta,
+                          INPUT par_idorigem,
+                          INPUT par_idseqttl,
+                          INPUT par_nmdatela,
+                          INPUT par_flgerlog,
+                         OUTPUT TABLE tt-totais-futuros,
+                         OUTPUT TABLE tt-erro,
+                         OUTPUT TABLE tt-lancamento_futuro).
+
+        IF  RETURN-VALUE = "NOK"  THEN
+            DO:
+                FIND FIRST tt-erro.
+                ASSIGN par_cdcritic = tt-erro.cdcritic.
+            END.
+
+        DELETE PROCEDURE h-b1wgen0003.
+        IF  CAN-FIND(FIRST tt-lancamento_futuro NO-LOCK)  
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Lancamento Futuro".    
+        END.
+
+        /************************* Informativo *******************************/
+        IF CAN-FIND(FIRST crapcra WHERE crapcra.cdcooper = par_cdcooper AND
+                                       crapcra.nrdconta = par_nrdconta NO-LOCK)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Informativo".
+        END.
+
+        /*************************** Avalista ********************************/
+        FOR EACH crapavl WHERE 
+                 crapavl.cdcooper = par_cdcooper AND
+                 crapavl.nrdconta = par_nrdconta AND
+                (crapavl.tpctrato = 1            OR        /** EMPRESTIMO  **/
+                 crapavl.tpctrato = 2            OR        /** DSC.CHEQUES **/
+                 crapavl.tpctrato = 3            OR        /** LIM.CREDITO **/
+                 crapavl.tpctrato = 4            OR        /** CAR.CREDITO **/
+                 crapavl.tpctrato = 8)           NO-LOCK:  /** DSC.TITULOS **/
+
+            IF  crapavl.tpctrato = 1  THEN
+            DO:               
+                FIND crapepr WHERE crapepr.cdcooper = crapavl.cdcooper AND
+                                   crapepr.nrdconta = crapavl.nrctaavd AND
+                                   crapepr.nrctremp = crapavl.nrctravd 
+                                   NO-LOCK NO-ERROR.
+       
+                IF  AVAILABLE crapepr     AND
+                    crapepr.inliquid = 0  THEN
+                    DO:
+                        IF aux_tpctrato1 THEN
+                           NEXT.
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                          tt-prod_serv_ativos.nmproser = "Avalista Emprestimo"
+                          aux_tpctrato1 = TRUE.
+                    END.
+
+            END.
+            ELSE
+            IF  crapavl.tpctrato = 4  THEN
+            DO:
+                FIND crawcrd WHERE crawcrd.cdcooper = crapavl.cdcooper AND
+                                   crawcrd.nrdconta = crapavl.nrctaavd AND
+                                   crawcrd.nrctrcrd = crapavl.nrctravd 
+                                   NO-LOCK NO-ERROR.
+       
+                IF  AVAILABLE crawcrd     AND
+                    crawcrd.insitcrd = 4  THEN
+                    DO:
+                        IF aux_tpctrato4 THEN
+                            NEXT.
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista Car. Credito"
+                        aux_tpctrato4 = TRUE.
+                    END.
+            END.
+            ELSE
+            DO:
+                IF  crapavl.tpctrato = 8  THEN
+                    ASSIGN aux_tpctrlim = 3
+                           aux_nmctrato = "Dsc. Titulos".
+                ELSE
+                IF  crapavl.tpctrato = 2  THEN
+                    ASSIGN aux_tpctrlim = 2
+                           aux_nmctrato = "Dsc. Cheques".
+                ELSE
+                IF  crapavl.tpctrato = 3  THEN
+                    ASSIGN aux_tpctrlim = 1
+                           aux_nmctrato = "Lim. Credito".
+                FIND craplim WHERE craplim.cdcooper = crapavl.cdcooper AND
+                                   craplim.nrdconta = crapavl.nrctaavd AND
+                                   craplim.tpctrlim = aux_tpctrlim     AND
+                                   craplim.nrctrlim = crapavl.nrctravd 
+                                   NO-LOCK NO-ERROR.
+       
+                IF  AVAILABLE craplim     AND
+                    craplim.insitlim = 2  THEN
+                    DO:
+                        IF ((crapavl.tpctrato = 2 AND aux_tpctrato2) OR
+                            (crapavl.tpctrato = 3 AND aux_tpctrato3) OR
+                            (crapavl.tpctrato = 8 AND aux_tpctrato8)) THEN
+                            NEXT.
+                        
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista "+ aux_nmctrato.
+
+                        CASE crapavl.tpctrato:
+                            WHEN 2 THEN
+                                ASSIGN aux_tpctrato2 = TRUE.
+                            WHEN 3 THEN
+                                ASSIGN aux_tpctrato3 = TRUE.
+                            WHEN 8 THEN
+                                ASSIGN aux_tpctrato8 = TRUE.
+                        END CASE.
+                    END.
+            END.
+        END.
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND             
+                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        
+        ASSIGN aux_tpctrato1 = FALSE
+               aux_tpctrato2 = FALSE
+               aux_tpctrato3 = FALSE
+               aux_tpctrato4 = FALSE
+               aux_tpctrato8 = FALSE.
+
+        FOR EACH crapavt WHERE 
+                 crapavt.cdcooper = par_cdcooper     AND
+                 crapavt.nrcpfcgc = crapass.nrcpfcgc AND
+                (crapavt.tpctrato = 1                OR       /* EMPRESTIMO  */
+                 crapavt.tpctrato = 2                OR       /* DSC.CHEQUES */
+                 crapavt.tpctrato = 3                OR       /* LIM.CREDITO */
+                 crapavt.tpctrato = 4                OR       /* CAR.CREDITO */
+                 crapavt.tpctrato = 8)               NO-LOCK: /* DSC.TITULOS */
+
+            IF  crapavt.tpctrato = 1  THEN
+            DO:
+                FIND crapepr WHERE crapepr.cdcooper = crapavt.cdcooper AND
+                                   crapepr.nrdconta = crapavt.nrdconta AND
+                                   crapepr.nrctremp = crapavt.nrctremp 
+                                   NO-LOCK NO-ERROR.
+       
+                IF  AVAILABLE crapepr AND crapepr.inliquid = 0  THEN
+                DO:
+                    IF aux_tpctrato1 THEN
+                        NEXT.
+                    ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                    CREATE tt-prod_serv_ativos.
+                    ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                           tt-prod_serv_ativos.nmproser = "Avalista Emprestimo"
+                           aux_tpctrato1 = TRUE.
+                END.
+            END.
+            ELSE
+            IF  crapavt.tpctrato = 4  THEN
+            DO:
+                    FIND crawcrd WHERE crawcrd.cdcooper = crapavt.cdcooper AND
+                                       crawcrd.nrdconta = crapavt.nrdconta AND
+                                       crawcrd.nrctrcrd = crapavt.nrctremp 
+                                       NO-LOCK NO-ERROR.
+           
+                    IF  AVAILABLE crawcrd AND crawcrd.insitcrd = 4  THEN
+                    DO:
+                        IF aux_tpctrato4 THEN
+                            NEXT.
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista Car. Credito"
+                        aux_tpctrato4 = TRUE.
+                    END.
+            END.
+            ELSE
+            DO:
+                    IF  crapavt.tpctrato = 8  THEN
+                        ASSIGN aux_tpctrlim = 3
+                               aux_nmctrato = "Dsc. Titulos".
+                    ELSE
+                    IF  crapavt.tpctrato = 2  THEN
+                        ASSIGN aux_tpctrlim = 2
+                               aux_nmctrato = "Dsc. Cheques".
+                    ELSE
+                    IF  crapavt.tpctrato = 3  THEN
+                        ASSIGN aux_tpctrlim = 1
+                               aux_nmctrato = "Lim. Credito".
+    
+                    FIND craplim WHERE craplim.cdcooper = crapavt.cdcooper AND
+                                       craplim.nrdconta = crapavt.nrdconta AND
+                                       craplim.tpctrlim = aux_tpctrlim     AND
+                                       craplim.nrctrlim = crapavt.nrctremp 
+                                       NO-LOCK NO-ERROR.
+           
+                    IF  AVAILABLE craplim AND craplim.insitlim = 2  THEN
+                    DO:
+                        IF ((crapavl.tpctrato = 2 AND aux_tpctrato2) OR
+                            (crapavl.tpctrato = 3 AND aux_tpctrato3) OR
+                            (crapavl.tpctrato = 8 AND aux_tpctrato8)) THEN
+                            NEXT.
+
+                        ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                        CREATE tt-prod_serv_ativos.
+                        ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                        tt-prod_serv_ativos.nmproser = "Avalista "+ aux_nmctrato.
+
+                        CASE crapavt.tpctrato:
+                            WHEN 2 THEN
+                                ASSIGN aux_tpctrato2 = TRUE.
+                            WHEN 3 THEN
+                                ASSIGN aux_tpctrato3 = TRUE.
+                            WHEN 8 THEN
+                                ASSIGN aux_tpctrato8 = TRUE.
+                        END CASE.
+                    END.
+            END.
+        END.
+    
+        /*************************** Cobranca ********************************/
+        FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper NO-LOCK:
+            IF CAN-FIND(
+                FIRST crapcob WHERE crapcob.cdcooper = crapcco.cdcooper AND
+                                    crapcob.cdbandoc = crapcco.cdbccxlt AND
+                                    crapcob.nrdctabb = crapcco.nrdctabb AND
+                                    crapcob.nrcnvcob = crapcco.nrconven AND
+                                    crapcob.nrdconta = par_nrdconta     AND
+                                    crapcob.incobran = 0                AND
+                                    crapcob.dtdpagto = ?                NO-LOCK
+            ) THEN DO:
+                ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                CREATE tt-prod_serv_ativos.
+                ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                       tt-prod_serv_ativos.nmproser = "Cobranca".
+                LEAVE.
+            END.
+        END.
+
+        /********************** Deposito Bloqueado ***************************/
+        IF CAN-FIND(FIRST crapdpb WHERE crapdpb.cdcooper  = par_cdcooper AND
+                                        crapdpb.nrdconta  = par_nrdconta AND
+                                        crapdpb.dtliblan >= par_dtmvtolt AND
+                                        crapdpb.inlibera  = 1
+                                        NO-LOCK USE-INDEX crapdpb2)
+        THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Deposito Bloqueado".
+        END.
+             
+     
+        /********************** Custodia de Cheques **************************/
+        IF CAN-FIND(
+            FIRST crapcst WHERE crapcst.cdcooper = par_cdcooper AND
+                                crapcst.nrdconta = par_nrdconta AND
+                                crapcst.dtlibera > par_dtmvtolt AND
+                                crapcst.insitchq = 0            NO-LOCK
+        ) THEN DO:
+            ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+            CREATE tt-prod_serv_ativos.
+            ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                   tt-prod_serv_ativos.nmproser = "Custodia de Cheques".
+        END.
+
+        /********************** DDA (Pagador eletronico) **********************/
+        RUN sistema/generico/procedures/b1wgen0079.p PERSISTENT 
+            SET h-b1wgen0079.
+        RUN requisicao-consulta-situacao IN h-b1wgen0079 
+                                        (INPUT par_cdcooper,
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_cdoperad,
+                                         INPUT par_nmdatela,
+                                         INPUT par_idorigem,
+                                         INPUT par_nrdconta,
+                                         INPUT par_idseqttl,
+                                         INPUT FALSE,
+                                        OUTPUT TABLE tt-erro,
+                                        OUTPUT TABLE tt-consulta-situacao).
+        DELETE PROCEDURE h-b1wgen0079.
+
+        IF  CAN-FIND(FIRST tt-consulta-situacao WHERE
+                           tt-consulta-situacao.flgativo = TRUE NO-LOCK)  THEN
+            DO:
+                ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                CREATE tt-prod_serv_ativos.
+                ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                       tt-prod_serv_ativos.nmproser = "DDA (Pagador Eletronico)".
+            END.
+
+        
+        /********************** PAMCARD  *********************************/
+        IF par_dtdemiss <> ? THEN
+        DO:
+            IF CAN-FIND(FIRST crappam WHERE crappam.cdcooper = par_cdcooper AND
+                                            crappam.nrdconta = par_nrdconta AND
+                                            crappam.flgpamca = TRUE) THEN
+               DO:
+                  ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+                  CREATE tt-prod_serv_ativos.
+                  ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                         tt-prod_serv_ativos.nmproser = "PAMCARD".
+
+                        /*
+                   ASSIGN par_dscritic = "Convenio PAMCARD esta ativo."
+                          par_nmdcampo = "flgpamca".*/
+             
+               END.
+
+        END.
+        
+
+        /*************************  PROCURADOR  *****************************/
+        IF CAN-FIND(FIRST crapavt WHERE crapavt.cdcooper = par_cdcooper AND
+                                        crapavt.nrdctato = par_nrdconta AND
+                                        crapavt.tpctrato = 6 /*proc*/
+                                        NO-LOCK) THEN
+           DO:  
+              ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+              CREATE tt-prod_serv_ativos.
+              ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                     tt-prod_serv_ativos.nmproser = "Procurador em outras " + 
+                                                    "contas".
+
+           END.
+
+        /**********************  RESPONSAVEL LEGAL  ************************/
+        IF CAN-FIND(FIRST crapcrl WHERE crapcrl.cdcooper = par_cdcooper AND
+                                        crapcrl.nrdconta = par_nrdconta 
+                                        NO-LOCK) THEN
+
+            DO:
+               ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
+               CREATE tt-prod_serv_ativos.
+               ASSIGN tt-prod_serv_ativos.cdseqcia = aux_cdseqcia
+                      tt-prod_serv_ativos.nmproser = "Responsavel Legal em " +
+                                                     "outras contas".
+
+           END.
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE Produtos_Servicos_Ativos.
+    END.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Produtos Servicos Ativos */
+
+
+
+/* ------------------------------------------------------------------------ */
+/*                     REALIZA A CRITICA DOS DADOS                          */
+/*     { criticas_dados_matrici.i } e { criticas_dados_matrica.i }          */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Criticas PRIVATE :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inmatric AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmprimtl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmmaettl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtdemiss AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdmotdem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdsitcpf AS INTE                           NO-UNDO.
+    
+    DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-alertas.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsagepac AS CHAR                                    NO-UNDO.
+
+    ASSIGN
+        par_dscritic = ""
+        par_cdcritic = 0
+        aux_returnvl = "NOK".
+
+    Criticas: DO ON ERROR UNDO Criticas, LEAVE Criticas:
+
+        IF  par_cddopcao = "D" THEN
+            DO:
+               ASSIGN aux_returnvl = "OK".
+               LEAVE Criticas.
+            END.
+
+        /* Agencia - PAC */
+        IF  NOT CAN-FIND(crapage WHERE
+                         crapage.cdcooper = par_cdcooper AND
+                         crapage.cdagenci = par_cdagepac) THEN
+            DO:
+               ASSIGN
+                   par_nmdcampo = "cdagenci"
+                   par_cdcritic = 15.
+               LEAVE Criticas.
+            END.
+
+        IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
+            RUN sistema/generico/procedures/b1wgen0060.p
+                PERSISTENT SET h-b1wgen0060.
+
+        /* fontes/valida_situacao_pac.p */
+        IF  NOT DYNAMIC-FUNCTION("BuscaPac" IN h-b1wgen0060,
+                                 INPUT par_cdcooper,
+                                 INPUT par_cdagepac,
+                                 INPUT "nmresage",
+                                OUTPUT aux_dsagepac,
+                                OUTPUT par_dscritic) THEN
+            DO:
+                ASSIGN
+                   par_nmdcampo = "cdagenci".
+                LEAVE Criticas.
+            END.
+        
+        /* Situacao - CPF */
+        IF  par_dtcnscpf <> ?                     AND 
+           (par_cdsitcpf < 1 OR par_cdsitcpf > 5) THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "cdsitcpf"
+                   par_cdcritic = 444.
+               LEAVE Criticas.
+            END.
+
+        CASE par_cddopcao:
+            /* Validar as criticas de Inclusao
+              quando Incluir ("I") ou alterar o CPF/CNPJ ("J") */
+            WHEN "I" OR WHEN "J" THEN DO:
+                RUN Criticas_Inclusao 
+                    ( INPUT par_cdcooper,
+                      INPUT par_nrdconta,
+                      INPUT par_cddopcao,
+                      INPUT par_inpessoa,
+                      INPUT par_inmatric,
+                      INPUT par_cdagepac,
+                      INPUT par_nrcpfcgc,
+                      INPUT par_nmprimtl,
+                      INPUT par_dtnasctl,
+                      INPUT par_nmmaettl,
+                      INPUT par_dtdemiss,
+                     OUTPUT par_msgretor,
+                     OUTPUT par_nmdcampo,
+                     OUTPUT par_cdcritic,
+                     OUTPUT par_dscritic,
+                     OUTPUT TABLE tt-alertas ) NO-ERROR.
+
+                IF  ERROR-STATUS:ERROR THEN
+                    DO:
+                       ASSIGN par_dscritic = par_dscritic + {&GET-MSG}.
+                       LEAVE Criticas.
+                    END.
+
+                IF  RETURN-VALUE <> "OK" THEN
+                    LEAVE Criticas.
+            END.
+            WHEN "A" THEN DO:
+                RUN Criticas_Alteracao 
+                    ( INPUT par_cdcooper,
+                      INPUT par_nrdconta,
+                      INPUT par_inpessoa,
+                      INPUT par_dtmvtolt,
+                      INPUT par_cdagepac,
+                      INPUT par_dtdemiss,
+                      INPUT par_cdmotdem,
+                     OUTPUT par_nmdcampo,
+                     OUTPUT par_cdcritic,
+                     OUTPUT par_dscritic,
+                     OUTPUT TABLE tt-alertas ) NO-ERROR.
+
+                IF  ERROR-STATUS:ERROR THEN
+                    DO:
+                       ASSIGN par_dscritic = par_dscritic + {&GET-MSG}.
+                       LEAVE Criticas.
+                    END.
+
+                IF  RETURN-VALUE <> "OK" THEN
+                    LEAVE Criticas.
+            END.
+        END CASE.
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE Criticas.
+    END.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Criticas */
+
+/* ------------------------------------------------------------------------ */
+/*        REALIZA A CRITICA DOS DADOS  { criticas_dados_matrica.i }         */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Criticas_Alteracao PRIVATE :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtdemiss AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdmotdem AS INTE                           NO-UNDO.
+    
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-alertas.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsagepac AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsmotdem AS CHAR                                    NO-UNDO.
+
+    DEF BUFFER crabass FOR crapass.
+
+    ASSIGN
+        par_dscritic = ""
+        par_cdcritic = 0
+        aux_returnvl = "NOK".
+
+    CriticasA: DO ON ERROR UNDO CriticasA, LEAVE CriticasA:
+
+        IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
+            RUN sistema/generico/procedures/b1wgen0060.p 
+                PERSISTENT SET h-b1wgen0060.
+
+        /* fontes/valida_situacao_pac.p */
+        IF  NOT DYNAMIC-FUNCTION("BuscaPac" IN h-b1wgen0060,
+                                 INPUT par_cdcooper,
+                                 INPUT par_cdagepac,
+                                 INPUT "nmresage",
+                                OUTPUT aux_dsagepac,
+                                OUTPUT par_dscritic) THEN 
+            LEAVE CriticasA.
+
+        FOR FIRST crabass FIELDS(dtdemiss nrcpfcgc)
+                          WHERE crabass.cdcooper = par_cdcooper AND
+                                crabass.nrdconta = par_nrdconta NO-LOCK:
+        END.
+
+        IF  NOT AVAILABLE crabass THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nrcpfcgc"
+                   par_cdcritic = 9.
+
+               LEAVE CriticasA.
+            END.
+
+        /* consistencias em caso de demissao */
+        IF  ((par_dtdemiss <> ?) OR (par_cdmotdem <> 0)) THEN
+            DO:
+               IF  par_dtdemiss <> crabass.dtdemiss THEN
+                   DO:
+                      IF  par_dtdemiss >= DATE(MONTH(par_dtmvtolt),01,
+                                               YEAR(par_dtmvtolt)) AND
+                          par_dtdemiss <= par_dtmvtolt THEN
+                          ASSIGN par_cdcritic = 0.
+                      ELSE
+                          DO:
+                             ASSIGN 
+                                 par_nmdcampo = "dtdemiss"
+                                 par_cdcritic = 13.
+                             LEAVE CriticasA.
+                          END.
+                   END.
+
+               IF  par_cdmotdem = 0 THEN
+                   DO:
+                       ASSIGN 
+                          par_nmdcampo = "cdmotdem"
+                          par_dscritic = "Motivo da demissao deve ser " + 
+                                         "informado.".
+                      LEAVE CriticasA.
+                   END.
+               ELSE
+                   DO:
+                      IF par_dtdemiss = ? THEN
+                      DO:
+                          ASSIGN par_nmdcampo = "dtdemiss"
+                                 par_dscritic = "Data de demissao deve ser "+
+                                                "informado".
+                          LEAVE CriticasA.
+                      END.
+                   END.
+
+
+               /* fontes/le_motivo_demissao.p  */
+               DYNAMIC-FUNCTION("BuscaMotivoDemi" IN h-b1wgen0060,
+                                INPUT par_cdcooper,
+                                INPUT par_cdmotdem,
+                                OUTPUT aux_dsmotdem,
+                                OUTPUT par_dscritic).
+
+               IF  par_dscritic <> "" THEN
+                   DO:
+                      ASSIGN par_nmdcampo = "cdmotdem".
+                      LEAVE CriticasA.
+                   END.
+            END.
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE CriticasA.
+    END.
+
+    IF  VALID-HANDLE(h-b1wgen0060) THEN
+        DELETE OBJECT h-b1wgen0060.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Criticas_Alteracao */
+
+/* ------------------------------------------------------------------------ */
+/*        REALIZA A CRITICA DOS DADOS  { criticas_dados_matrici.i }         */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Criticas_Inclusao PRIVATE :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inmatric AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmprimtl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmmaettl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtdemiss AS DATE                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-alertas.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dsalerta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrctaass AS INTE                                    NO-UNDO.
+    DEF VAR aux_sqalerta AS INTE                                    NO-UNDO.
+    DEF VAR aux_dtdemsoc AS DATE                                    NO-UNDO.
+     
+    DEF VAR h-b1wgen0031 AS HANDLE                                  NO-UNDO.
+
+    DEF BUFFER crabass FOR crapass.
+
+    ASSIGN
+        par_dscritic = ""
+        par_cdcritic = 0
+        aux_returnvl = "NOK".
+
+    CriticasI: DO ON ERROR UNDO CriticasI, LEAVE CriticasI:
+        
+        /* C.P.F. ou C.N.P.J. */
+        IF  NOT ValidaCpfCnpj(par_cdcooper,par_nrcpfcgc) THEN
+            DO:
+               ASSIGN
+                   par_nmdcampo = "nrcpfcgc"
+                   par_cdcritic = 27.
+               LEAVE CriticasI.
+            END.
+        ELSE
+            ASSIGN aux_nrcpfcgc = ConverteCpfCnpj(INPUT par_nrcpfcgc).
+
+        FOR FIRST crapcop FIELDS(nrdocnpj)
+                          WHERE crapcop.cdcooper = par_cdcooper NO-LOCK:
+        END.
+
+        IF  NOT AVAILABLE crapcop THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nrcpfcgc"
+                   par_cdcritic = 651.
+               LEAVE CriticasI.
+            END.
+
+        /*  Verifica se eh uma conta administrativa  .................... */
+        IF  (crapcop.nrdocnpj = aux_nrcpfcgc) AND par_cddopcao = "I" THEN
+            ASSIGN 
+               par_inpessoa = 3
+               par_msgretor = "ATENCAO!!! Esta sendo criada uma conta " + 
+                              "administrativa!".
+
+        IF  NOT(par_inpessoa <> 3 AND par_inmatric <> 2) THEN
+            DO:
+               ASSIGN aux_returnvl = "OK".
+               LEAVE CriticasI.
+            END.
+
+        IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
+            RUN sistema/generico/procedures/b1wgen0060.p 
+                PERSISTENT SET h-b1wgen0060.
+
+        ASSIGN par_cdcritic = 0
+               par_dscritic = ""
+               aux_nrctaass = 0
+               aux_dtdemsoc = ?.
+
+        /* Testa se ha associados com mesmo cpf */  
+        CpfCnpj: 
+        FOR EACH crabass FIELDS(cdcooper cdsitdtl nrdconta dtdemiss)
+                         WHERE crabass.cdcooper =  par_cdcooper AND
+                               crabass.nrcpfcgc =  aux_nrcpfcgc AND
+                               crabass.inmatric =  1            AND
+                               crabass.nrdconta <> par_nrdconta NO-LOCK:
+
+            IF  crabass.cdsitdtl > 4 AND crabass.cdsitdtl < 9 THEN
+                DO:
+                   ASSIGN 
+                       par_nmdcampo = "nrcpfcgc"
+                       par_cdcritic = 621
+                       aux_nrctaass = crabass.nrdconta
+                       aux_dtdemsoc = ?.
+                   LEAVE CpfCnpj.
+                END.
+
+            /* Essa regra de negocio foi removida porque foi
+            considerada desnecessaria para atualizacao do 
+            cadastro */
+
+            /* Conforme solicitaçao do Chamado 269526 esta
+               validaçao deve ser executada */
+
+            FOR FIRST crapcot FIELDS(vldcotas)
+                              WHERE crapcot.cdcooper = par_cdcooper AND
+                                    crapcot.nrdconta = crabass.nrdconta 
+                                    NO-LOCK:
+
+                IF  crapcot.vldcotas > 0 THEN
+                    DO:
+                       /*** Tarefa 31059 Viacredi ***/
+                       IF  crabass.cdcooper = 1 AND
+                           crabass.nrdconta = 859010 THEN.
+                       ELSE 
+                           DO:     
+                              ASSIGN 
+                                  par_nmdcampo = "nrcpfcgc"
+                                  par_cdcritic = 620 
+                                  aux_nrctaass = crabass.nrdconta
+                                  aux_dtdemsoc = ?.
+                              LEAVE CpfCnpj.
+                           END.
+                    END.
+            END.
+
+            /* cria o alerta */
+            IF  aux_dtdemsoc = ? OR crabass.dtdemiss > aux_dtdemsoc THEN
+                ASSIGN 
+                    par_nmdcampo = "nrcpfcgc"
+                    aux_dtdemsoc = crabass.dtdemiss
+                    aux_nrctaass = crabass.nrdconta
+                    par_cdcritic = 741.
+
+        END.  /*  Fim do FOR EACH CpfCnpj */
+
+        IF  par_cdcritic = 741 THEN
+            DO: 
+               ASSIGN 
+                   par_nmdcampo = "nrcpfcgc"
+                   aux_dsalerta = DYNAMIC-FUNCTION("BuscaCritica" IN 
+                                                   h-b1wgen0060,par_cdcritic).
+
+               IF  aux_dtdemsoc = ? THEN
+                   ASSIGN aux_dsalerta = aux_dsalerta + " " +  
+                                         TRIM(STRING(aux_nrctaass,
+                                                     "zzzz,zz9,9")).
+               ELSE 
+                   ASSIGN aux_dsalerta = aux_dsalerta + " " + 
+                                         TRIM(STRING(aux_nrctaass,
+                                                     "zzzz,zz9,9")) +
+                                         " saida em " + 
+                                         STRING(aux_dtdemsoc,"99/99/9999"). 
+
+               FIND FIRST tt-alertas WHERE tt-alertas.dsalerta = aux_dsalerta
+                                           NO-ERROR.
+
+               IF  NOT AVAILABLE tt-alertas THEN 
+                   DO:
+                      CREATE tt-alertas.
+                      ASSIGN 
+                          tt-alertas.cdalerta = aux_sqalerta
+                          tt-alertas.dsalerta = aux_dsalerta
+                          aux_sqalerta        = aux_sqalerta + 1
+                          par_cdcritic        = 0.
+                   END.
+            END.
+        ELSE
+        IF  par_cdcritic > 0 THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nrcpfcgc"
+                   par_dscritic = DYNAMIC-FUNCTION("BuscaCritica" IN 
+                                                    h-b1wgen0060,par_cdcritic) 
+                                  + " " + 
+                                  TRIM(STRING(aux_nrctaass,"zzzz,zz9,9"))
+                   par_cdcritic = 0.
+    
+               LEAVE CriticasI. 
+            END.
+
+        ASSIGN par_cdcritic = 0.
+
+        /* Testa se ha demitidos com mesmo cpf - alerta */
+        FOR FIRST crapdem FIELDS(nrdconta nrcpfcgc)
+                          WHERE crapdem.cdcooper = par_cdcooper AND
+                                crapdem.nrcpfcgc = aux_nrcpfcgc NO-LOCK:
+
+            ASSIGN par_nmdcampo = "nrcpfcgc".
+
+            CREATE tt-alertas.
+            ASSIGN 
+                tt-alertas.cdalerta = aux_sqalerta
+                tt-alertas.dsalerta = DYNAMIC-FUNCTION("BuscaCritica" IN 
+                                                       h-b1wgen0060,618) +
+                STRING(STRING(crapdem.nrcpfcgc,"99999999999"),"999.999.999-99") +
+                                      " CONTA "                        +
+                                      STRING(crapdem.nrdconta,"zzzz,zz9,9")
+                aux_sqalerta        = aux_sqalerta + 1.
+        END.
+
+        IF   par_cdcooper = 16   THEN /* Se Viacredi Alto Vale */
+             DO:
+                 RUN sistema/generico/procedures/b1wgen0031.p
+                     PERSISTENT SET h-b1wgen0031.
+
+                 RUN Criticas_AltoVale IN h-b1wgen0031 
+                                       (INPUT par_cdcooper,
+                                        INPUT aux_nrcpfcgc,
+                                        INPUT-OUTPUT aux_sqalerta,
+                                        INPUT-OUTPUT TABLE tt-alertas).
+
+                 DELETE PROCEDURE h-b1wgen0031.
+
+             END.
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE CriticasI.
+    END.
+
+    IF  VALID-HANDLE(h-b1wgen0060) THEN
+        DELETE OBJECT h-b1wgen0060.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Criticas_Inclusao */
+
+
+/* ------------------------------------------------------------------------ */
+/*             REALIZA A VALIDACAO DOS DADOS DA PESSOA FISICA               */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Valida_Fis PRIVATE :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmprimtl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcadass AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcnscpf AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpdocptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdocptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoedptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufdptl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtemdptl AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmmaettl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmpaittl AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtnasctl AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdsexotl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpnacion AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dsnacion AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dsnatura AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufnatu AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdestcvl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmconjug AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmbairro AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdempres AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcadast AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdocpttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inhabmen AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dthabmen AS DATE                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrdeanos AS INT                                     NO-UNDO.
+    DEF VAR aux_nrdmeses AS INT                                     NO-UNDO.
+    DEF VAR aux_dsdidade AS CHAR                                    NO-UNDO.
+    DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
+
+
+    ASSIGN par_dscritic = ""
+           par_cdcritic = 0
+           aux_returnvl = "NOK".
+
+    ValidaFis: DO ON ERROR UNDO ValidaFis, LEAVE ValidaFis:
+        
+        /* Consulta - CPF */
+        IF  par_cddopcao = "I" THEN
+            DO:
+               IF  par_dtcnscpf <> par_dtmvtolt AND
+                   par_dtcnscpf <> ? THEN 
+                   DO:
+                      ASSIGN par_nmdcampo = "dtcnscpf"
+                             par_cdcritic = 13.
+                      LEAVE ValidaFis.
+                   END.
+            END.
+        ELSE
+        IF  par_cddopcao = "A" THEN
+            DO:
+               IF  par_dtcnscpf > par_dtmvtolt OR 
+                   par_dtcnscpf < par_dtcadass OR 
+                   par_dtcnscpf = ? THEN 
+                   DO:
+                      ASSIGN  par_nmdcampo = "dtcnscpf"
+                              par_cdcritic = 13.
+                      LEAVE ValidaFis.
+                   END.
+            END.
+
+        /* Documento - tipo */
+        IF  LOOKUP(par_tpdocptl,"CI,CH,CP,CT") = 0 THEN
+            DO:
+               ASSIGN par_nmdcampo = "tpdocptl"
+                      par_cdcritic = 21.
+               LEAVE ValidaFis.
+            END.
+
+        /* Documento - numero */
+        IF  par_nrdocptl = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nrdocptl"
+                      par_cdcritic = 22.
+               LEAVE ValidaFis.
+            END.
+
+        /* Org.Emi. */
+        IF  par_cdoedptl = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdoedptl"
+                      par_cdcritic = 375.
+               LEAVE ValidaFis.
+            END.
+
+        /* U.F. - emissao do documento */
+        IF  NOT ValidaUF(par_cdufdptl) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdufdptl"
+                      par_cdcritic = 33.
+               LEAVE ValidaFis.
+            END.
+
+        /* Mae - Pai */
+        IF  (CAPS(par_nmmaettl) = CAPS(par_nmpaittl)) OR par_nmmaettl = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmmaettl"
+                      par_cdcritic = 30.
+               LEAVE ValidaFis.
+            END.
+
+        /* Data Nascimento */
+        IF  par_dtnasctl = ?              OR 
+            par_dtnasctl >= par_dtmvtolt  THEN
+            DO:
+               ASSIGN par_nmdcampo = "dtnasctl"
+                      par_cdcritic = 13.
+               LEAVE ValidaFis.
+            END.
+
+        /* Data Emi. */
+        IF  par_dtemdptl < par_dtnasctl THEN 
+            DO:
+               ASSIGN par_nmdcampo = "dtemdptl"
+                      par_cdcritic = 13.
+               LEAVE ValidaFis.
+            END.
+        ELSE
+            IF  par_dtemdptl = ? THEN
+                DO:
+                   ASSIGN par_nmdcampo = "dtemdptl"
+                          par_cdcritic = 13.
+                   LEAVE ValidaFis.
+                END.
+
+        /* Sexo */
+        IF  NOT CAN-DO("1,2",STRING(par_cdsexotl,"9")) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdsexotl"
+                      par_cdcritic = 86.
+               LEAVE ValidaFis.
+            END.
+
+        /* Tipo Nacionalidade */
+        IF  NOT CAN-FIND(gntpnac WHERE gntpnac.tpnacion = par_tpnacion) THEN
+            DO:
+               ASSIGN par_nmdcampo = "tpnacion"
+                      par_dscritic = "Tipo de nacionalidade nao cadastrada.".
+               LEAVE ValidaFis.
+            END.
+
+        /* Nacionalidade */
+        IF  NOT CAN-FIND(crapnac WHERE crapnac.dsnacion = par_dsnacion) THEN
+            DO:
+               ASSIGN par_nmdcampo = "dsnacion"
+                      par_cdcritic = 28.
+               LEAVE ValidaFis.
+            END.
+
+        /* Natural De */
+          IF  NOT CAN-FIND(crapnat WHERE crapnat.dsnatura = par_dsnatura) AND 
+              par_tpnacion = 1   THEN
+              DO:
+                 ASSIGN par_nmdcampo = "dsnatura"
+                        par_cdcritic = 29.
+                 LEAVE ValidaFis.
+              END.
+
+        IF  NOT ValidaUF(par_cdufnatu) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdufnatu"
+                      par_cdcritic = 33.
+               LEAVE ValidaFis.
+            END.
+
+        IF   par_cdufnatu <> "EX" THEN
+             DO:
+                 FIND FIRST crapmun WHERE crapmun.dscidade = par_dsnatura AND 
+                                          crapmun.cdestado = par_cdufnatu 
+                                          NO-LOCK NO-ERROR.
+             
+                 IF   NOT AVAIL crapmun   THEN
+                      DO:
+                          ASSIGN par_nmdcampo = "cdufnatu"
+                                 par_dscritic = "U.F nao corresponde a cidade informada.".
+                          LEAVE ValidaFis.
+                      END.
+             END.
+             
+        /* Habilitacao - Responsab. Legal */
+        IF par_inhabmen > 2 THEN
+           DO:
+              ASSIGN par_nmdcampo = "inhabmen"
+                     par_dscritic = "Responsab. Legal invalida.".
+
+              LEAVE ValidaFis.
+           END.
+        
+        /* Habilitacao - Responsab. Legal */
+        IF par_inhabmen = 1 AND par_dthabmen = ? THEN
+           DO:
+              ASSIGN par_nmdcampo = "dthabmen"
+                     par_dscritic = "E necessario preencher a data da " +
+                                    "emancipacao".
+              LEAVE ValidaFis.
+           END.
+    
+
+        IF NOT VALID-HANDLE(h-b1wgen9999) THEN
+           RUN sistema/generico/procedures/b1wgen9999.p
+               PERSISTENT SET h-b1wgen9999.
+
+        /* validar pela procedure generica do b1wgen9999.p */
+        RUN idade IN h-b1wgen9999 ( INPUT par_dtnasctl,
+                                    INPUT par_dtmvtolt,
+                                    OUTPUT aux_nrdeanos,
+                                    OUTPUT aux_nrdmeses,
+                                    OUTPUT aux_dsdidade ).
+
+        IF VALID-HANDLE(h-b1wgen9999) THEN
+           DELETE PROCEDURE(h-b1wgen9999).
+
+        IF par_inhabmen = 0   AND
+           par_cdestcvl <> 1  AND
+           par_cdestcvl <> 12 AND 
+           aux_nrdeanos < 18  THEN
+           DO:
+              IF par_dthabmen = ? THEN
+                 DO:
+                    ASSIGN par_nmdcampo = "dthabmen"
+                           par_dscritic = "Estado Civil obriga ser " + 
+                                          "Emancipado.".
+
+                    LEAVE ValidaFis.
+
+                 END.
+
+           END.
+        ELSE
+           /* Habilitacao - Responsab. Legal */
+           IF par_inhabmen <> 1 AND par_dthabmen <> ? THEN
+              DO: 
+                 ASSIGN par_nmdcampo = "dthabmen"
+                        par_dscritic = "Data da emancipacao nao pode " + 
+                                       "ser preenchida.".
+
+                 LEAVE ValidaFis.
+
+              END.
+        
+        /* Habilitacao - Responsab. Legal */
+        IF par_dthabmen < par_dtnasctl THEN
+           DO:
+              ASSIGN par_nmdcampo = "dthabmen"
+                     par_dscritic = "Data da emancipacao menor que a data " + 
+                                    "de nascimento.".
+
+              LEAVE ValidaFis.
+
+           END.
+
+        IF par_dthabmen > par_dtmvtolt THEN
+           DO:
+              ASSIGN par_nmdcampo = "dthabmen"
+                     par_dscritic = "Data da emancipacao maior que a data " + 
+                                    "atual.".
+
+              LEAVE ValidaFis.
+               
+           END.
+
+        /* Estado Civil */
+        IF  NOT CAN-FIND(gnetcvl WHERE gnetcvl.cdestcvl = par_cdestcvl) THEN 
+            DO:
+               ASSIGN par_nmdcampo = "cdestcvl"
+                      par_cdcritic = 35.
+               LEAVE ValidaFis.
+            END.
+
+        /* Conjuge */
+        IF  NOT CAN-DO("1,5,6,7",STRING(par_cdestcvl)) AND 
+            par_nmconjug = "" THEN
+            DO:
+               /* Buscar conta do conjuge, caso exista*/
+               FOR FIRST crapcje FIELDS(nrctacje)
+                                 WHERE crapcje.cdcooper = par_cdcooper AND
+                                       crapcje.nrdconta = par_nrdconta AND
+                                       crapcje.idseqttl = 1       
+                                       NO-LOCK:
+               END.
+               IF  AVAILABLE crapcje THEN  /*Veficicacao para casos do conjuge ser um cooperado*/
+               DO:
+                IF crapcje.nrctacje = 0 AND  par_nmconjug = ""  THEN
+                DO:
+                  ASSIGN par_nmdcampo = "nmconjug"
+                         par_cdcritic = 38.
+                  LEAVE ValidaFis.
+                END.
+               END.
+               ELSE
+               DO:
+                ASSIGN par_nmdcampo = "nmconjug"
+                       par_cdcritic = 38.
+                LEAVE ValidaFis.
+               END.
+            END.
+
+            
+        /* CEP */
+        IF  par_nrcepend = 0 THEN
+            DO:
+               ASSIGN par_nmdcampo = "nrcepend"
+                      par_cdcritic = 34.
+               LEAVE ValidaFis.
+            END.
+        ELSE
+        IF  NOT CAN-FIND(FIRST crapdne 
+                         WHERE crapdne.nrceplog = par_nrcepend)  THEN
+            DO:
+                ASSIGN par_nmdcampo = "nrcepend"
+                       par_dscritic = "CEP nao cadastrado.".
+                LEAVE ValidaFis.
+            END.
+
+        /* End.Residencial */
+        IF  par_dsendere = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "dsendere"
+                      par_cdcritic = 31.
+               LEAVE ValidaFis.
+            END.
+
+        /* Bairro */
+        IF  par_nmbairro = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmbairro"
+                      par_cdcritic = 47.
+               LEAVE ValidaFis.
+            END.
+
+        /* Cidade */
+        IF  par_nmcidade = "" THEN
+            DO:
+               ASSIGN par_nmdcampo = "nmcidade"
+                      par_cdcritic = 32.
+               LEAVE ValidaFis.
+            END.
+
+        /* unidade da federacao - endereco */
+        IF  NOT ValidaUF(par_cdufende) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdufende"
+                      par_cdcritic = 33.
+               LEAVE ValidaFis.
+            END.
+
+        IF  NOT CAN-FIND(FIRST crapdne
+                         WHERE crapdne.nrceplog = par_nrcepend  
+                           AND (TRIM(par_dsendere) MATCHES 
+                               ("*" + TRIM(crapdne.nmextlog) + "*")
+                            OR TRIM(par_dsendere) MATCHES
+                               ("*" + TRIM(crapdne.nmreslog) + "*"))) THEN
+            DO:
+                ASSIGN par_dscritic = "Endereco nao pertence ao CEP."
+                       par_nmdcampo = "nrcepend".
+                LEAVE ValidaFis.
+            END.
+
+        /* Empresa */
+        IF  NOT CAN-FIND(crapemp WHERE crapemp.cdcooper = par_cdcooper AND
+                                       crapemp.cdempres = par_cdempres) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdempres"
+                      par_cdcritic = 40.
+               LEAVE ValidaFis.
+            END.
+
+        /* Cad.Emp */
+        IF  par_cdcooper <> 5 THEN
+        DO:
+            /* verifica se a empresa correspondente verifica o D.V. */
+            IF CAN-FIND ( crapemp WHERE crapemp.cdcooper = par_cdcooper
+                                  AND   crapemp.cdempres = par_cdempres
+                                  AND   crapemp.flgvlddv = TRUE) THEN
+            DO:
+                /* verificar o digito do cadastro */
+                IF  NOT ValidaDigFun(INPUT par_cdcooper,
+                                     INPUT 0,
+                                     INPUT 0,
+                                     INPUT par_nrcadast) 
+                    AND par_nrcadast <> 0   THEN
+                DO:
+                    ASSIGN par_nmdcampo = "nrcadast"
+                           par_cdcritic = 41.
+                    LEAVE ValidaFis.
+                END.
+            END.
+        END.
+
+        /* Ocupacao */
+        IF  NOT CAN-FIND(gncdocp WHERE gncdocp.cdocupa = par_cdocpttl) THEN
+            DO:
+               ASSIGN par_nmdcampo = "cdocpttl"
+                      par_dscritic = "Codigo de ocupacao nao cadastrado.".
+               LEAVE ValidaFis.
+            END.
+
+        /* Retirado no SD175963 - Verifica se ja existe o numero da conta como conta salario */
+        /*IF  par_cddopcao = "I" AND CAN-FIND(crapccs WHERE 
+                     crapccs.cdcooper = par_cdcooper                  AND
+                     crapccs.nrcpfcgc = ConverteCpfCnpj(par_nrcpfcgc) AND
+                     crapccs.cdsitcta = 1 /* Ativa */)                THEN
+            DO:
+               ASSIGN par_nmdcampo = "nrcpfcgc"
+                      par_dscritic = "CPF possui conta salario ativa.".
+               LEAVE ValidaFis.
+            END.*/
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE ValidaFis.
+    END.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Valida_Fis */
+
+/* ------------------------------------------------------------------------ */
+/*            REALIZA A VALIDACAO DOS DADOS DA PESSOA JURIDICA              */
+/* ------------------------------------------------------------------------ */
+PROCEDURE Valida_Jur PRIVATE :
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmfansia AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_natjurid AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtiniatv AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdseteco AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdrmativ AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdddtfc AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrtelefo AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcepend AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dsendere AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmbairro AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmcidade AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdufende AS CHAR                           NO-UNDO.
+
+    DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
+    
+    ASSIGN
+        par_dscritic = ""
+        par_cdcritic = 0
+        aux_returnvl = "NOK".
+
+    ValidaJur: DO ON ERROR UNDO ValidaJur, LEAVE ValidaJur:
+
+        /* Nome Fantasia */
+        IF  par_nmfansia = "" THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nmfansia"
+                   par_cdcritic = 375.
+               LEAVE ValidaJur.
+            END.
+
+        /* Natureza Juridica */
+        IF  NOT CAN-FIND(gncdntj WHERE gncdntj.cdnatjur = par_natjurid) THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "natjurid"
+                   par_dscritic = "Natureza Juridica nao cadastrada.".
+               LEAVE ValidaJur.
+            END.
+
+        /* Inicio Atividade */
+        IF  par_dtiniatv > TODAY OR par_dtiniatv = ? THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "dtiniatv"
+                   par_cdcritic = 13.
+               LEAVE ValidaJur.
+            END.
+
+        /* Setor Economico */
+        IF  NOT CAN-FIND(craptab WHERE craptab.cdcooper = par_cdcooper   AND
+                                       craptab.nmsistem = "CRED"         AND
+                                       craptab.tptabela = "GENERI"       AND
+                                       craptab.cdempres = 0              AND
+                                       craptab.cdacesso = "SETORECONO"   AND
+                                       craptab.tpregist = par_cdseteco) THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "cdseteco"
+                   par_dscritic = "Setor economico nao encontrado.".
+               LEAVE ValidaJur.
+            END.
+
+        /* Ramo */
+        IF  NOT CAN-FIND(gnrativ WHERE gnrativ.cdseteco = par_cdseteco AND
+                                       gnrativ.cdrmativ = par_cdrmativ) THEN
+            DO:
+               ASSIGN
+                   par_nmdcampo = "cdrmativ"
+                   par_dscritic = "Ramo de atividade nao encontrado.".
+               LEAVE ValidaJur.
+            END.
+
+        /* DDD */
+        IF  par_nrdddtfc = 0 THEN
+            DO:
+               ASSIGN
+                   par_nmdcampo = "nrdddtfc"
+                   par_dscritic = "DDD deve ser preenchido.".
+               LEAVE ValidaJur.
+            END.
+
+        /* Telefone */
+        IF  par_nrtelefo = 0 THEN
+            DO:
+               ASSIGN
+                   par_nmdcampo = "nrtelefo"
+                   par_cdcritic = 45.
+               LEAVE ValidaJur.
+            END.
+
+        /* CEP */
+        IF  par_nrcepend = 0 THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nrcepend"
+                   par_cdcritic = 34.
+               LEAVE ValidaJur.
+            END.
+        ELSE
+        IF  NOT CAN-FIND(FIRST crapdne 
+                         WHERE crapdne.nrceplog = par_nrcepend)  THEN
+            DO:
+                ASSIGN
+                    par_nmdcampo = "nrcepend"
+                    par_dscritic = "CEP nao cadastrado.".
+                LEAVE ValidaJur.
+            END.
+
+        /* End.Residencial */
+        IF  par_dsendere = "" THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "dsendere"
+                   par_cdcritic = 31.
+               LEAVE ValidaJur.
+            END.
+
+        /* Bairro */
+        IF  par_nmbairro = "" THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nmbairro"
+                   par_cdcritic = 47.
+               LEAVE ValidaJur.
+            END.
+
+        /* Cidade */
+        IF  par_nmcidade = "" THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "nmcidade"
+                   par_cdcritic = 32.
+               LEAVE ValidaJur.
+            END.
+
+        /* unidade da federacao - endereco */
+        IF  NOT ValidaUF(par_cdufende) THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "cdufende"
+                   par_cdcritic = 33.
+               LEAVE ValidaJur.
+            END.
+
+        IF  NOT CAN-FIND(FIRST crapdne
+                         WHERE crapdne.nrceplog = par_nrcepend  
+                           AND (TRIM(par_dsendere) MATCHES 
+                               ("*" + TRIM(crapdne.nmextlog) + "*")
+                            OR TRIM(par_dsendere) MATCHES
+                               ("*" + TRIM(crapdne.nmreslog) + "*"))) THEN
+            DO:
+                ASSIGN 
+                    par_dscritic = "Endereco nao pertence ao CEP."
+                    par_nmdcampo = "nrcepend".
+                LEAVE ValidaJur.
+            END.
+        
+        
+
+        ASSIGN aux_returnvl = "OK".
+
+        LEAVE ValidaJur.
+    END.
+
+    IF  par_dscritic <> "" OR par_cdcritic <> 0 THEN
+        ASSIGN aux_returnvl = "NOK".
+
+    RETURN aux_returnvl.
+
+END PROCEDURE. /* Valida_Jur */
+
+/*........................... FUNCOES INTERNAS/PRIVADAS .....................*/
+
+FUNCTION ConverteCpfCnpj RETURNS DECIMAL PRIVATE
+  ( INPUT par_nrcpfcgc AS CHARACTER ) :
+/*-----------------------------------------------------------------------------
+  Objetivo:  Converter o Cpf ou Cnpj de string para decimal
+     Notas:  
+-----------------------------------------------------------------------------*/
+
+  RETURN DEC(REPLACE(REPLACE(REPLACE(par_nrcpfcgc,".",""),"-",""),"/","")).
+
+END FUNCTION.
+
+FUNCTION ValidaCpfCnpj RETURNS LOGICAL PRIVATE
+    ( INPUT par_cdcooper AS INTEGER,
+      INPUT par_nrcpfcgc AS CHARACTER ):
+/*-----------------------------------------------------------------------------
+  Objetivo:  Valida o Cpf ou Cnpj
+     Notas:  
+-----------------------------------------------------------------------------*/
+
+    DEFINE VARIABLE h-b1wgen9999 AS HANDLE      NO-UNDO.
+    DEFINE VARIABLE aux_stsnrcal AS LOGICAL     NO-UNDO.
+    DEFINE VARIABLE aux_nrcpfcgc AS CHARACTER   NO-UNDO.
+
+    DEFINE BUFFER crabcop FOR crapcop.
+
+    ASSIGN 
+        aux_inpessoa = 0
+        aux_nrcpfcgc = REPLACE(REPLACE(REPLACE(par_nrcpfcgc,
+                                               ".",""),"/",""),"-","").
+
+    /* Se houve erro na conversao para DEC, faz a critica */
+    DEC(aux_nrcpfcgc) NO-ERROR.
+    
+    IF   ERROR-STATUS:ERROR   THEN
+         RETURN FALSE.
+
+    IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
+        RUN sistema/generico/procedures/b1wgen9999.p 
+            PERSISTENT SET h-b1wgen9999.
+
+    RUN valida-cpf-cnpj IN h-b1wgen9999 
+        ( INPUT aux_nrcpfcgc,
+         OUTPUT aux_stsnrcal,
+         OUTPUT aux_inpessoa ).
+
+    DELETE OBJECT h-b1wgen9999.
+
+    /* verifica se e conta administrativa */
+    IF  aux_inpessoa > 1 THEN
+        IF  CAN-FIND(FIRST crabcop
+                     WHERE crabcop.cdcooper = par_cdcooper
+                       AND crabcop.nrdocnpj = DEC(aux_nrcpfcgc)) THEN
+            ASSIGN aux_inpessoa = 3.
+
+    RETURN aux_stsnrcal.
+
+END FUNCTION.
+
+FUNCTION ValidaDigFun RETURNS LOGICAL PRIVATE
+    ( INPUT par_cdcooper AS INTEGER,
+      INPUT par_cdagenci AS INTEGER,
+      INPUT par_nrdcaixa AS INTEGER,
+      INPUT par_nrdconta AS INTEGER):
+/*-----------------------------------------------------------------------------
+  Objetivo:  Valida o digito verificador
+     Notas:  
+-----------------------------------------------------------------------------*/
+
+    DEFINE VARIABLE h-b1wgen9999 AS HANDLE      NO-UNDO.
+    DEFINE VARIABLE aux_nrdconta AS DECIMAL     NO-UNDO.
+    DEFINE VARIABLE aux_vlresult AS LOGICAL     NO-UNDO.
+
+    IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
+        RUN sistema/generico/procedures/b1wgen9999.p 
+            PERSISTENT SET h-b1wgen9999.
+
+    ASSIGN 
+        aux_nrdconta = par_nrdconta
+        aux_vlresult = TRUE.
+
+
+    RUN dig_fun IN h-b1wgen9999 
+    ( INPUT STRING(par_cdcooper),
+      INPUT par_cdagenci,
+      INPUT par_nrdcaixa,
+      INPUT-OUTPUT aux_nrdconta,
+     OUTPUT TABLE tt-erro ).
+
+    EMPTY TEMP-TABLE tt-erro.
+    DELETE OBJECT h-b1wgen9999.
+
+    /* verifica se o digito foi informado corretamente */
+    IF  RETURN-VALUE <> "OK" THEN
+        ASSIGN aux_vlresult = FALSE.
+
+    FIND FIRST tt-erro NO-ERROR.
+
+    IF  AVAILABLE tt-erro THEN
+        ASSIGN aux_vlresult = FALSE.
+
+    IF  aux_nrdconta <> par_nrdconta THEN
+        ASSIGN aux_vlresult = FALSE.
+
+   RETURN aux_vlresult.
+        
+END FUNCTION.
+
+FUNCTION ValidaNome RETURNS LOGICAL PRIVATE
+    ( INPUT  par_nomedttl AS CHARACTER,
+      INPUT  par_inpessoa  AS INTE,
+      OUTPUT par_cdcritic AS INTEGER,
+      OUTPUT par_dscritic AS CHARACTER ) :
+/*-----------------------------------------------------------------------------
+  Objetivo:  Valida o nome - caracteres invalidos
+     Notas:  
+-----------------------------------------------------------------------------*/
+
+    DEF VAR aux_listachr AS CHAR            NO-UNDO.
+    DEF VAR aux_listanum AS CHAR            NO-UNDO.
+    DEF VAR aux_nrextent AS HANDLE EXTENT   NO-UNDO.
+    DEF VAR aux_nrextnum AS HANDLE EXTENT   NO-UNDO.
+
+    /* Verificacoes para o nome */
+    ASSIGN aux_listachr = "=,%,&,#,+,?,',','.',/,;,[,],!,@,$,(,),*,|,\,:,<,>," +
+                          "~{,~},~," + '",'
+           aux_listanum = "0,1,2,3,4,5,6,7,8,9".
+    
+    EXTENT(aux_nrextent) = NUM-ENTRIES(aux_listachr).
+
+    DO aux_contador = 1 TO EXTENT(aux_nrextent):
+        IF  INDEX(par_nomedttl,ENTRY(aux_contador,aux_listachr)) <> 0 THEN
+            DO:
+               ASSIGN par_dscritic = "O Caracter " + TRIM(ENTRY(aux_contador,
+                                                                aux_listachr))
+                                     + " nao e permitido! " + 
+                                     "Caracteres invalidos: " + 
+                                     "=%&#+?',./;][!@$()*|\:<>{}" + '"'.
+               RETURN FALSE.
+            END.
+    END.
+
+    IF  par_inpessoa = 1 THEN
+        DO:
+           
+            EXTENT(aux_nrextnum) = NUM-ENTRIES(aux_listanum).
+            
+            DO aux_contador = 1 TO EXTENT(aux_nrextnum):
+                IF  INDEX(par_nomedttl,ENTRY(aux_contador,aux_listanum)) <> 0 THEN
+                    DO:
+                        ASSIGN par_dscritic = "Nao sao permitidos numeros no nome" +
+                                              " do titular".
+                        RETURN FALSE.
+                    END.
+            END.
+        END.
+
+    RETURN TRUE.
+
+END FUNCTION.
+
+
+FUNCTION ValidaUF RETURNS LOGICAL PRIVATE
+    ( INPUT par_cdunidfe AS CHARACTER ) :
+/*-----------------------------------------------------------------------------
+  Objetivo:  Valida a Unidade da Federacao
+     Notas:  
+-----------------------------------------------------------------------------*/
+
+    RETURN CAN-DO("RS,SC,PR,SP,RJ,ES,MG,MS,MT,GO,DF,BA,PE,PA,PI,MA,RO,RR," +
+                  "AC,AM,TO,AM,CE,SE,AL,RN,PB,AP,EX",par_cdunidfe).
+
+END FUNCTION.
+
+
+
+
+
