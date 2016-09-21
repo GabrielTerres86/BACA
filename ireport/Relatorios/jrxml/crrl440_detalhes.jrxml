@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl440_detalhes" language="groovy" pageWidth="595" pageHeight="672" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" uuid="7ee7dbc4-bcb8-439c-b2d4-23c63fff09bc">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="412"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_CONTROLE" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/dados/dado/detalhe]]>
+	</queryString>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nrctava1" class="java.lang.String">
+		<fieldDescription><![CDATA[nrctava1]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrctremp" class="java.lang.String">
+		<fieldDescription><![CDATA[nrctremp]]></fieldDescription>
+	</field>
+	<field name="dstpctra" class="java.lang.String">
+		<fieldDescription><![CDATA[dstpctra]]></fieldDescription>
+	</field>
+	<field name="ccdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[ccdagenci]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="lindcred" class="java.lang.String">
+		<fieldDescription><![CDATA[lindcred]]></fieldDescription>
+	</field>
+	<field name="slddeved" class="java.lang.String">
+		<fieldDescription><![CDATA[slddeved]]></fieldDescription>
+	</field>
+	<field name="nmdavali" class="java.lang.String">
+		<fieldDescription><![CDATA[nmdavali]]></fieldDescription>
+	</field>
+	<field name="nrcpfcg1" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcg1]]></fieldDescription>
+	</field>
+	<field name="tpctrato" class="java.lang.String">
+		<fieldDescription><![CDATA[tpctrato]]></fieldDescription>
+	</field>
+	<variable name="vr_dstpctra" class="java.lang.String">
+		<variableExpression><![CDATA[$F{dstpctra}.length() > 6 ? $F{dstpctra}.substring(0, 6) : $F{dstpctra}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<textField>
+				<reportElement uuid="2267c6db-5639-4d15-b6ca-5918b0139e61" x="1" y="0" width="18" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdagenci}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="b2c9df5f-0190-47de-a16f-732dd3cc081a" x="24" y="0" width="48" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrctava1}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement uuid="0a3d0e64-6653-4c40-aed4-2ccb97e82513" x="77" y="0" width="43" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement uuid="6ee182ca-e92c-4891-a3ce-1146f3299a8b" x="126" y="0" width="42" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrctremp}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="f35f88eb-1b18-41a5-a650-cefbbd71946f" x="173" y="0" width="52" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dstpctra}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="aa9b43c2-bec0-4e50-b24b-56e2ada7771e" x="230" y="0" width="13" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{ccdagenci}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="99c5199f-398a-41f6-b974-dd5354f575c5" x="248" y="0" width="153" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}.length() > 34 ? $F{nmprimtl}.substring(0,34) : $F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="5f432c99-a736-47c0-8901-ef5cbd2b45e0" x="406" y="0" width="117" height="8"/>
+				<textElement>
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{lindcred}]]></textFieldExpression>
+			</textField>
+			<textField pattern="">
+				<reportElement uuid="3ce68f66-bb9f-4043-8627-e0cd2831197c" x="528" y="0" width="67" height="8"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{slddeved}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
