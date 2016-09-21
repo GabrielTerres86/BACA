@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="3.0"/>
+	<property name="ireport.x" value="415"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/crrl676/agencia/rejeitados]]>
+	</queryString>
+	<field name="cdagencia" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagencia]]></fieldDescription>
+	</field>
+	<field name="nmtitcrd" class="java.lang.String">
+		<fieldDescription><![CDATA[nmtitcrd]]></fieldDescription>
+	</field>
+	<field name="cdpesqbb" class="java.lang.String">
+		<fieldDescription><![CDATA[cdpesqbb]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrdctitg" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdctitg]]></fieldDescription>
+	</field>
+	<field name="cdtipope" class="java.lang.String">
+		<fieldDescription><![CDATA[cdtipope]]></fieldDescription>
+	</field>
+	<field name="cdcritic" class="java.lang.String">
+		<fieldDescription><![CDATA[cdcritic]]></fieldDescription>
+	</field>
+	<field name="nrdocmto" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdocmto]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="11" splitType="Stretch">
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="693" y="0" width="148" height="11"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdcritic}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement uuid="ed9a7af5-8541-43e5-99e4-1039ef5b42f1" x="193" y="0" width="88" height="11"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdpesqbb}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="b7844721-dc92-49bf-8b2f-2a44255cdae7" x="63" y="0" width="121" height="11"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmtitcrd}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="aa8d572a-0de2-4a3b-b1cf-e64461017c3c" x="15" y="0" width="49" height="11"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="280" y="0" width="106" height="11"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdctitg}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="516" y="0" width="157" height="11"/>
+				<textElement textAlignment="Justified" verticalAlignment="Middle">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdtipope}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="2188fce6-761e-49cb-89c1-010db0dedbf8" x="386" y="0" width="106" height="11"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdocmto}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
