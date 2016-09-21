@@ -1,0 +1,177 @@
+<!--
+Programa: siscaixa/web/crap011.htm
+Sistema : CAIXA ON-LINE                                       
+                                             Ultima atualizacao: 30/04/2009
+   
+Dados referentes ao programa:
+
+Frequencia: Diario ON-LINE
+Objetivo  : Lancamento Inclusao - Boletim de Caixa (Rotina 11).
+
+Alteracoes: 30/04/2009 - Diminuido o tamanho do campo "Descricao Complemento"
+                         (Elton).
+						 
+            06/07/2009 - Aumento do campo Operador (Diego).
+			
+			21/08/2009 - Aumento do campo Código(operador) (Diego).
+            
+            23/11/2009 - Alteracao Codigo Historico (Kbase).
+            
+            04/09/2013 - Nova forma de chamar as agências, de PAC agora 
+                         a escrita será PA (André Euzébio - Supero).
+
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
+------------------------------------------------------------------------------->
+
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="pt-br">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 4.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="cache-control" content="no-cache">
+<meta http-equiv="Pragma"        content="No-Cache">
+<meta http-equiv="Expires"       content="0">
+<script language=JavaScript src="/script/formatadadosie.js"></script>
+<link rel=StyleSheet type="text/css" href="/script/viacredi.css">
+<title>LAN€AMENTO INCLUSÇO - BOLETIM CAIXA</title>
+</head>
+
+
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);"> 
+<form name="action" onKeyDown="change_page(event)" method=post>
+<input type="hidden" name="vh_foco" value="7">
+<input type="hidden" name="v_msg">
+
+<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
+<div align="center">
+  <center>
+  <table width="100%" class=cabtab>
+    <tr>
+      <td width="15%" align="center"> <input type="text" name="v_coop" size="11" class="transp" readOnly>
+      </td>
+      <td width="20%" align="center"> PA&nbsp; <input type="text" name="v_pac" size="1" class="transp"  readOnly>
+      </td>
+      <td width="20%" align="center"> CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readOnly>
+      </td>
+      <td width="30%" align="center"> OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readOnly>
+      </td>
+      <td width="15%" align="center"> <input type="text" name="v_data" size="10" class="transp" readOnly>
+      </td>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
+  <center>
+  <table width="100%" class=cabtab>
+    <tr>
+      <td class=titulo>LANÇAMENTO INCLUSÃO - BOLETIM DE CAIXA</td>
+      <td width="21%" class=programa align="right">P.011&nbsp; V.1.00</td>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
+  <center>
+<table cellspacing = 0 cellpadding= 0 width=100%>
+  <tr>
+    <td width="100%" valign="middle" align="center">
+      <div align="center">
+        <center>
+      <table width="101%" cellspacing = 0 cellpadding = 1 class=tcampo>
+        <tr>
+          <td width="34%" align="right" class="linhaform">&nbsp;</td>
+          <td width="67%"></td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" class="linhaform">Histórico:</td>
+          <td width="67%">
+          <input type="text" name="v_hist" size="5" class="input" maxlength="4" onKeyDown="JavaScript:validaInteiro(event)"
+          onChange="document.forms[0].submit(); for(var i=0;i<document.forms[0].length;i++){document.forms[0].elements[i].disabled=true;}"></td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" class="linhaform">Descrição Histórico:</td>
+          <td width="67%"><input type="text" name="v_deschist" size="50" class="input" disabled></td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" class="linhaform" nowrap>Cód. Histórico
+            Contabil.:</td>
+          <td width="67%"><input type="text" name="v_chistcont" size="5" class="input" disabled></td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" class="linhaform">Conta Débito:</td>
+          <td width="67%"><input type="text" name="v_cdeb" size="4" class="input" disabled></td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" class="linhaform">Conta Crédito:</td>
+          <td width="67%"><input type="text" name="v_ccred" size="4" class="input" disabled></td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" nowrap class="linhaform">Descrição Complemento:</td>
+          <td class="linhaform"><input type="text" name="v_complem1" size="28" maxlength="26" class="input"  style="font-weight: bold" onkeyup="validaDescricao(this.name,this.value)"></td>
+                          
+                <tr>
+          <td width="34%" align="right" nowrap class="linhaform"> </td>
+         <td class="linhaform"><input type="text" name="v_complem2" size="28" maxlength="26" class="input"  style="font-weight: bold" onkeyup="validaDescricao(this.name,this.value)"></td>
+        </tr>
+                <tr>
+          <td width="34%" align="right" nowrap class="linhaform"> </td>
+         <td class="linhaform"><input type="text" name="v_complem3" size="28" maxlength="26" class="input"  style="font-weight: bold" onkeyup="validaDescricao(this.name,this.value)"></td>
+        </tr>             
+        
+        <tr>          
+          <td width="34%" align="right" class="linhaform">Valor:</td>
+          <td width="67%"><input type="text" name="v_valor" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,11,event)" size="17" class="input" maxlength="14" style="text-align: right"></td>
+        </tr>
+                
+                  <tr>
+          <td width="34%" align="right" class="linhaform">Documento:<br><br></td>
+          <td width="67%"><input type="text" name="v_doc" maxlength="6" onKeyDown="JavaScript:validaInteiro(event)" size="8" class="input"><br><br></td>
+        </tr>
+                
+        <tr>
+          <td class=linhaform align="right">Código:</td>
+          <td ><input class=input type="text" name="v_cod" size="12" maxlength="10"></td>
+        </tr>
+          <tr>
+        <td class=linhaform align="right">Senha:</td>
+          <td ><input class=input type="password" name="v_senha" size="12" maxlength="10"></td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" class="linhaform"></td>
+          <td width="67%">&nbsp;</td>
+        </tr>
+        <tr>
+          <td width="100%" align="center" class="linhaform" colspan="2">
+            <input type="submit" value="Ok" name="sok" class="button" onClick="desabok()">
+            <input type="submit" value="Cancelar" name="cancela" class="button">
+            <input type="hidden" name="ok"  VALUE="">
+          </td>
+        </tr>
+        <tr>
+          <td width="34%" align="right" class="linhaform"></td>
+          <td width="67%">&nbsp;</td>
+        </tr>
+      </table>
+        </center>
+      </div>
+      </td>
+      </tr>
+</table>      
+  </center>
+</div>
+ <div align="center">
+  <table width="100%">
+        <tr>
+           <td align="right" class="linhaform">
+           <input type="button" value="Estorno" name="estorno" class="button" onClick="JavaScript:redir_login('crap010.w')">
+           <input type="button" value="Consulta" name="consul" class="button" onClick="location='crap009.p'"></td>
+        </tr>
+  </table>      
+</div>
+</form>
+</body>
+
+</html>
