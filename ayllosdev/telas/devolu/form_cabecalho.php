@@ -1,0 +1,32 @@
+<?php
+/*!
+ * FONTE        : DEVOLU.php
+ * CRIAÇÃO      : Andre Santos - SUPERO
+ * DATA CRIAÇÃO : 25/09/2013
+ * OBJETIVO     : Formulário tela DEVOLU
+ * --------------
+ * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *					   
+ * --------------
+ */
+ 	require_once('../../includes/config.php');
+	require_once('../../includes/funcoes.php');		
+	require_once('../../includes/controla_secao.php');
+	require_once('../../class/xmlfile.php');
+    isPostMethod();
+?>
+
+<form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none">
+	<table width ="100%">
+		<tr>		
+			<td> 
+				<label for="nrdconta">Conta/dv:</label>
+                <input name="nrdconta" id="nrdconta" type="text" value="<? echo $nrdconta ?>" />
+                <input name="nmprimtl" id="nmprimtl" type="text" value="<? echo $nmprimtl ?>" />    
+			</td>
+		</tr>
+	</table>
+</form>
+<br style="clear:both" />
+<div id="divResultado" style="display:block;">
+</div>
