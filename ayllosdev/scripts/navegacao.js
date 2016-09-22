@@ -100,13 +100,12 @@ onload = function () {
             case 13://ENTER   			
                 TituloWindow = $(".SetWindow").text();//Capta titulo da janela modal
                 if (TituloWindow) { // Se abrir janela modal
-                    // 
                 }
                 else {
                     var simulaClick = $('.SetFocus:focus');
                     simulaClick.trigger('click');
                 };
-                break;
+            break;
 
             case 27://ESC			    				
                 $(".FirstInput:first").focus();
@@ -115,9 +114,10 @@ onload = function () {
                 var CaptaIdRetornoFoco = '';
                 CaptaIdRetornoFoco = $(".SetFoco").attr("id");
                 var DefaultFoco = CaptaIdRetornoFoco.substring(0, 9);
-                if (CaptaIdRetornoFoco) {
+                if (CaptaIdRetornoFoco) { 
                     $('#divError').css('display', 'none');
                     if (DefaultFoco == '#labelRot') {
+                        $('#divConfirm').css('display','none');
                         $(CaptaIdRetornoFoco).focus();
                         unblockBackground().click();
                         encerraRotina().click();

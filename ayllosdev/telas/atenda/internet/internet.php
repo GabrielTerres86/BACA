@@ -13,7 +13,7 @@
 	 				
 	  			      11/12/2012 - Alterado tamanho tabela (Daniel)
 	
-					  04/10/2015 - Reformulacao cadastral (Gabriel-RKAM). 
+					      04/10/2015 - Reformulacao cadastral (Gabriel-RKAM). 
                 
 					      07/09/2016 - Adicionado classe SetFoco(Evandro - RKAM)
 	**************************************************************************/
@@ -41,6 +41,7 @@
 	}	
 	
 	$cdproduto = $_POST['cdproduto'];
+    $labelRot  = $_POST['labelRot'];	
 
 	// Carrega permiss�es do operador
 	include("../../../includes/carrega_permissoes.php");	

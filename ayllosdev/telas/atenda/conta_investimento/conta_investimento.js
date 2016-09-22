@@ -246,6 +246,19 @@ function controlaFoco(opcao) {
             };
         });
     }
+
+    //Se estiver com foco na classe LastInputModal
+    $(".LastInputModal").focus(function () {
+        $(this).bind('keydown', function (e) {
+            if (e.keyCode == 13) {
+                $(this).click();
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        });
+    });
+
+    $(".FirstInputModal").focus();
 }
 
 // Função que formata o layout em tableless
