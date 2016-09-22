@@ -61,7 +61,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 038: [11/07/2016] Carlos Rafael Tanholi: Removi o codigo da funcao mensageria que registrava as requisicoes nos arquivo da pasta xml/(in.xml | out.xml).
  * 039: [20/07/2016] Carlos Rafael Tanholi: Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
  * 040: [25/07/2016] Carlos Rafael Tanholi: Correcao na expressao regular da funcao formatar(). SD 479874. 
- */
+ * 041: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
 ?>
 <?php
 // Função para requisição de dados através de XML 
@@ -1289,12 +1289,12 @@ function dbOracle() {
 
 /* Funcao para criptografar o texto enviado conforme chave secreta */
 function cecredCript($texto) {
-	return mcrypt_cbc(MCRYPT_BLOWFISH,KEY,$texto,MCRYPT_ENCRYPT,IV);
+	return mcrypt_encrypt(MCRYPT_BLOWFISH, KEY, $texto, MCRYPT_MODE_CBC, IV);
 }
 
 /* Funcao para descriptografar o texto enviado conforme chave secreta */
 function cecredDecript($texto) {
-	return mcrypt_cbc(MCRYPT_BLOWFISH,KEY,$texto,MCRYPT_DECRYPT,IV);
+	return mcrypt_decrypt(MCRYPT_BLOWFISH, KEY, $texto, MCRYPT_MODE_CBC, IV);
 }
 
 /* Funcao para separar a connect string OCI em User, Pwd e Senha */
