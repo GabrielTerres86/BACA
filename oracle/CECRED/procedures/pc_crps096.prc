@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Setembro/94.                     Ultima atualizacao: 15/10/2015
+       Data    : Setembro/94.                     Ultima atualizacao: 22/09/2016
 
        Dados referentes ao programa:
 
@@ -49,8 +49,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
                                 Tabela a ser limpa: crapcti(Registro com mais de 31
                                 dias) (Andre Santos - SUPERO)
                                 
-                   15/10/2015 - Desenvolvimento do projeto 126. (James)              
-
+                   15/10/2015 - Desenvolvimento do projeto 126. (James)     
+                   
+                   22/09/2016 - Removi do proc_bath e passei para o proc_message
+                                o log 661, SD 402979. (Carlos Rafael Tanholi)
     ............................................................................ */
 
     DECLARE
@@ -381,45 +383,52 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic|| 
-                                                     ' CCH = '|| TRIM(to_char(vr_qtcchdel,'9G999G990'))); 
+                                                     ' CCH = '|| TRIM(to_char(vr_qtcchdel,'9G999G990'))
+                                 ,pr_nmarqlog     => 'proc_message'); 
      
       /*Mostra CRAPCRD e CRAWCRD*/                                                                                                    
       btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic|| 
-                                                     ' CRD = '|| TRIM(to_char(vr_qtcrddel,'9G999G990'))); 
+                                                     ' CRD = '|| TRIM(to_char(vr_qtcrddel,'9G999G990'))
+                                 ,pr_nmarqlog     => 'proc_message');                                                      
                                                      
       btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic|| 
-                                                     ' WRD = '|| TRIM(to_char(vr_qtwrddel,'9G999G990'))); 
+                                                     ' WRD = '|| TRIM(to_char(vr_qtwrddel,'9G999G990'))
+                                 ,pr_nmarqlog     => 'proc_message');                                                      
                                                      
       /*Mostra CRAPHDP e filhas CRAPDDP e CRAPMDP*/
       btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic|| 
-                                                     ' HDP = '|| TRIM(to_char(vr_qthdpdel,'9G999G990'))); 
-                                                     
+                                                     ' HDP = '|| TRIM(to_char(vr_qthdpdel,'9G999G990'))
+                                 ,pr_nmarqlog     => 'proc_message');
+                                                                                      
       btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic|| 
-                                                     ' DDP = '|| TRIM(to_char(vr_qtddpdel,'9G999G990')));
+                                                     ' DDP = '|| TRIM(to_char(vr_qtddpdel,'9G999G990'))
+                                 ,pr_nmarqlog     => 'proc_message');                                                     
       
       btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic|| 
-                                                     ' MDP = '|| TRIM(to_char(vr_qtmdpdel,'9G999g990')));
+                                                     ' MDP = '|| TRIM(to_char(vr_qtmdpdel,'9G999g990'))
+                                 ,pr_nmarqlog     => 'proc_message');                                                     
                                                      
       btch0001.pc_gera_log_batch( pr_cdcooper    => pr_cdcooper
                                 ,pr_ind_tipo_log => 1 -- processo normal
                                 ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '||
                                                     vr_cdprogra || ' --> ' || vr_dscritic|| 
-                                                    ' CTI = '|| TRIM(to_char(vr_qtctidel,'9G999g990')));
+                                                    ' CTI = '|| TRIM(to_char(vr_qtctidel,'9G999g990'))
+                                ,pr_nmarqlog     => 'proc_message');                                                    
                                                                                                                    
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
@@ -474,4 +483,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps096 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps096;
 /
-

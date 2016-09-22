@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Abril/97                           Ultima atualizacao: 22/03/2016
+       Data    : Abril/97                           Ultima atualizacao: 22/09/2016
 
        Dados referentes ao programa:
 
@@ -64,6 +64,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
                                 que define limite para limpeza.
                                 PRJ207 - Esteira (Odirlei-AMcom)
 
+                   22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
+                                o proc_message SD 402979. (Carlos Rafael Tanholi)
     ............................................................................ */
 
     DECLARE
@@ -326,7 +328,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
+                                                 || vr_dscritic 
+                                ,pr_nmarqlog     => 'proc_message'); 
 
       -- limpando as variaveis de controle de critica
       vr_cdcritic := 0;
@@ -363,7 +366,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
+                                                 || vr_dscritic 
+                                ,pr_nmarqlog     => 'proc_message');                                                  
 
       -- limpando as variaveis de controle de critica
       vr_cdcritic := 0;
@@ -493,7 +497,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
+                                                 || vr_dscritic 
+                                ,pr_nmarqlog     => 'proc_message'); 
 
       -- limpando as variaveis de controle de critica
       vr_cdcritic := 0;

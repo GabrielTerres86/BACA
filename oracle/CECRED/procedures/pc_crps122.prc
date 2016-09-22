@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Junho/95                     Ultima atualizacao: 22/06/2016
+       Data    : Junho/95                     Ultima atualizacao: 22/09/2016
 
        Dados referentes ao programa:
 
@@ -36,6 +36,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
                    22/06/2016 - Correcao para o uso da function fn_busca_dstextab 
                                 da TABE0001. (Carlos Rafael Tanholi).
+                                
+                   22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
+                                o proc_message SD 402979. (Carlos Rafael Tanholi)                                
     ............................................................................ */
 
     DECLARE
@@ -206,7 +209,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                               || vr_cdprogra || ' --> '
-                              || vr_dscritic || ' AVS = '||to_char(vr_qtavsdel,'fm999,990.990') );
+                              || vr_dscritic || ' AVS = '||to_char(vr_qtavsdel,'fm999,990.990') 
+                                ,pr_nmarqlog     => 'proc_message'); 
 
 
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------

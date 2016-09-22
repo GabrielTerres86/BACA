@@ -12,7 +12,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2012                   Ultima atualizacao:
+   Data    : Julho/2012                   Ultima atualizacao: 22/09/2016
 
    Dados referentes ao programa:
 
@@ -20,9 +20,10 @@ BEGIN
    Objetivo  : Atende a solicitacao 013.
                Faz a conexao com o banco progrid para limpeza da gnapses.
 
-   Alteracoes:
-               03/07/2014 - Conversão Progress >> Oracle (Renato - Supero)
+   Alteracoes:     03/07/2014 - Conversão Progress >> Oracle (Renato - Supero)
 
+                   22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
+                                o proc_message SD 402979. (Carlos Rafael Tanholi)   
   ............................................................................. */
   DECLARE
 
@@ -156,7 +157,8 @@ BEGIN
                               ,pr_ind_tipo_log => 1 -- PROCESSO NORMAL
                               ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
                                                   ' - ' || vr_cdprogra ||
-                                                  ' --> ' || vr_dscritic);
+                                                  ' --> ' || vr_dscritic
+                              ,pr_nmarqlog     => 'proc_message'); 
 
     -- PROCESSO OK, DEVEMOS CHAMAR A FIMPRG
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
@@ -212,4 +214,3 @@ BEGIN
 
 END pc_crps623;
 /
-

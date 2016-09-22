@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah
-       Data    : Julho/95.                        Ultima atualizacao: 24/03/2014
+       Data    : Julho/95.                        Ultima atualizacao: 22/09/2016
 
        Dados referentes ao programa:
 
@@ -28,6 +28,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    16/02/2006 - Unificacao dos Bancos de Dados - SQLWorks - Andre
                    
                    24/03/2014 - Conversão PROGRESS >>> ORACLE. (Reinert)
+                   
+                   22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
+                                o proc_message SD 402979. (Carlos Rafael Tanholi)                   
     ............................................................................. */
 
 
@@ -190,7 +193,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')|| ' - '
                                                                   || vr_cdprogra || ' --> '
                                                                   || vr_dscritic || ' ATR = '
-                                                                  || gene0002.fn_mask(vr_qtdelatr, 'z.zzz.zz9'));
+                                                                  || gene0002.fn_mask(vr_qtdelatr, 'z.zzz.zz9')
+                                ,pr_nmarqlog     => 'proc_message'); 
 
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
@@ -243,5 +247,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
     END;
 
   END pc_crps127;
-/
-

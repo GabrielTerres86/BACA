@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah/Edson
-       Data    : Dezembro/93                         Ultima atualizacao: 20/05/2016
+       Data    : Dezembro/93                         Ultima atualizacao: 22/09/2016
 
        Dados referentes ao programa:
 
@@ -55,7 +55,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
                    20/05/2016 - Incluido nas consultas da craplau
                                 craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
-
+                                
+                   22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
+                                o proc_message SD 402979. (Carlos Rafael Tanholi)
     ............................................................................ */
 
     DECLARE
@@ -286,14 +288,16 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic||
-                                                     ' LAU = '|| trim(to_char(vr_qtlaudel,'9G999G990')));
+                                                     ' LAU = '|| trim(to_char(vr_qtlaudel,'9G999G990'))
+                                 ,pr_nmarqlog     => 'proc_message');                                                      
 
       /*Mostra CRAPCRD e CRAPLOT*/
       btch0001.pc_gera_log_batch( pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 1 -- processo normal
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||
                                                      vr_cdprogra || ' --> ' || vr_dscritic||
-                                                     ' LOT = '|| trim(to_char(vr_qtlotdel,'9G999G990')));
+                                                     ' LOT = '|| trim(to_char(vr_qtlotdel,'9G999G990'))
+                                 ,pr_nmarqlog     => 'proc_message');                                                      
      
 
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
