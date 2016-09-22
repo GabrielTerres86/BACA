@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 12/04/2016
+   Data    : Novembro/2009.                   Ultima atualizacao: 22/09/2016
 
    Dados referentes ao programa:
 
@@ -284,6 +284,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
                12/04/2016 - Ajustado a data de movimento para a baixa de titulo
                             (Douglas - Chamado 424571)
+
+               22/09/2016 - Ajuste nos cursores e alteração da lógica para obtenção de títulos (Rodrigo)
    .............................................................................*/
 
      DECLARE
@@ -1248,8 +1250,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                  ,crapceb ceb
                  ,crapcco cco
             WHERE ret.cdcooper = pr_cdcooper
---              AND ret.dtocorre > pr_dtmvtopr
-              AND ret.dtcredit IS NOT NULL
+              AND ret.dtcredit BETWEEN pr_dtmvtopr AND (pr_dtmvtopr + 10)
               AND ret.cdocorre IN (6,17,76,77)
               AND ret.vlrpagto < 250000
               AND cco.cdcooper = ret.cdcooper
