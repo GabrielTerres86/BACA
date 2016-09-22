@@ -1,11 +1,11 @@
 <?php
 /* !
  * FONTE        : tab019.php
- * CRIAÇÃO      : Daniel Zimmermann
+ * CRIAÇÃO      : Daniel Zimmermann/Odirlei Busana - AMcom
  * DATA CRIAÇÃO : 06/04/2016
  * OBJETIVO     : Mostrar tela TAB019
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :
  * --------------
  */
 ?>

@@ -3,9 +3,9 @@
  * FONTE        : form_tab019.php
  * CRIAÇÃO      : Daniel Zimmermann/Odirlei Busana - AMcom
  * DATA CRIAÇÃO : 06/04/2016
- * OBJETIVO     : Formulário de exibição da tela TAB019
+ * OBJETIVO     : Formulário de exibição da tela TAB019 
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :
  * --------------
  */
 ?>

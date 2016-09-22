@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB019 IS
   --  Programa : TELA_CONPRO
   --  Sistema  : Rotinas utilizadas pela Tela COMPRO
   --  Sigla    : EMPR
-  --  Autor    : Daniel Zimmermann
+  --  Autor    : Daniel Zimmermann/Odirlei Busana - AMcom
   --  Data     : Março - 2016.                   Ultima atualizacao:
   --
   -- Dados referentes ao programa:

@@ -1,11 +1,11 @@
 <?php
 /* !
  * FONTE        : form_cabecalho.php
- * CRIAÇÃO      : Daniel Zimmermann 
+ * CRIAÇÃO      : Daniel Zimmermann/Odirlei Busana - AMcom
  * DATA CRIAÇÃO : 06/04/2016
  * OBJETIVO     : Cabeçalho para a tela TAB019
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :
  * --------------
  */
 ?>

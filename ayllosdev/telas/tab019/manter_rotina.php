@@ -4,9 +4,9 @@
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Daniel Zimmermann/Odirlei Busana - AMcom
  * DATA CRIAÇÃO : 24/03/2016 
- * OBJETIVO     : Rotina para controlar as operações da tela TAB019
+ * OBJETIVO     : Rotina para controlar as operações da tela TAB019 
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   :
  * -------------- 
  */
 ?> 

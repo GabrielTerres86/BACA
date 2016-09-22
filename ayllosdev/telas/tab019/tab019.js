@@ -2,9 +2,9 @@
  * FONTE        : tab019.js
  * CRIAÇÃO      : Daniel Zimmermann/Odirlei Busana - AMcom
  * DATA CRIAÇÃO : 24/03/2016
- * OBJETIVO     : Biblioteca de funções da tela TAB019
+ * OBJETIVO     : Biblioteca de funções da tela TAB019 
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 
  * --------------
  */
 
