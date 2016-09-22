@@ -1080,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 17/06/2016
+   Data    : 29/11/2010                        Ultima atualizacao: 22/09/2016
 
    Dados referentes ao programa:
 
@@ -1268,7 +1268,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              (Douglas - Chamado 454248)
 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
-                          
+                  
+                22/09/2016 - Alterar ordem da chamada da procedure pc_ver_valor_blq_judicial na
+                             procedure pc_cad_resgate_aplica, pois estava validando o bloqueio 
+                             judicial antes de validar se o valor a ser resgatado é superior 
+                             a disponivel (Lucas Ranghetti #492125)        
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -17952,7 +17956,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              a exeção de forma correta 
                              (Adriano).              
                             
-                
+                22/09/2016 - Alterar ordem da chamada da procedure pc_ver_valor_blq_judicial
+                             pois estava validando o bloqueio judicial antes de validar se
+                             o valor a ser resgatado é superior a disponivel (Lucas Ranghetti #492125)
   .......................................................................................*/
   PROCEDURE pc_cad_resgate_aplica(pr_cdcooper    IN NUMBER
                                  ,pr_cdagenci    IN NUMBER
@@ -18115,68 +18121,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
        vr_flgsenha := 0;
     END IF;                           
     
-    -- obter os valores Bloqueados Judicialmente
-    pc_ver_valor_blq_judicial(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_cdoperad => vr_cdoperad
-                             ,pr_nmdatela => pr_nmdatela
-                             ,pr_idorigem => pr_idorigem
-                             ,pr_nrdconta => pr_nrdconta
-                             ,pr_nraplica => pr_nraplica
-                             ,pr_idseqttl => pr_idseqttl
-                             ,pr_cdprogra => pr_cdprogra
-                             ,pr_dtmvtolt => pr_dtmvtolt
-                             ,pr_vlresgat => pr_vlresgat
-                             ,pr_flgerlog => 0 -- false
-                             ,pr_des_reto => vr_des_reto
-                             ,pr_tab_erro => pr_tab_erro);
-    
-    -- Verifica se houve retorno de erros
-    IF NVL(vr_des_reto,'OK') = 'NOK' THEN
-      -- Se retornou na tab de erros
-      IF pr_tab_erro.COUNT() > 0 THEN
-        -- Guarda o código e descrição do erro
-        vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
-        vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
-      ELSE
-        -- Definir o código do erro
-        vr_cdcritic := 0;
-        vr_dscritic := 'Nao foi possivel cadastrar o resgate.';
-        
-        -- Chamar rotina de gravacao de erro
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
-                       
-      END IF;
-      
-      -- Se deve gerar log                                      
-      IF pr_flgerlog = 1 THEN
-        -- Gerar registro de log
-        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic
-                            ,pr_dsorigem => vr_dsorigem
-                            ,pr_dstransa => vr_dstransa
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 0 --> FALSE
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                            ,pr_idseqttl => pr_idseqttl
-                            ,pr_nmdatela => pr_nmdatela
-                            ,pr_nrdconta => pr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
-      END IF; 
-      
-      -- Levantar excecao
-      RAISE vr_exc_erro;
-          
-    END IF;
-    
     -- verificar permissao de resgate da aplicacao  ( popular variável global vr_glb_sldpresg )
     pc_valid_acesso_opcao_resg(pr_cdcooper   => pr_cdcooper
                               ,pr_cdagenci   => pr_cdagenci
@@ -18267,7 +18211,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
        -- Levantar excecao
        RAISE vr_exc_erro;
     END IF;     
-    
     
     -- Buscar informações da aplicação
     OPEN  cr_craprda(pr_cdcooper    -- pr_cdcooper
@@ -18444,6 +18387,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       -- Fechar o cursor
       IF cr_craplap%ISOPEN THEN
         CLOSE cr_craplap;
+      END IF;
+      
+      -- obter os valores Bloqueados Judicialmente
+      pc_ver_valor_blq_judicial(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_cdoperad => vr_cdoperad
+                               ,pr_nmdatela => pr_nmdatela
+                               ,pr_idorigem => pr_idorigem
+                               ,pr_nrdconta => pr_nrdconta
+                               ,pr_nraplica => pr_nraplica
+                               ,pr_idseqttl => pr_idseqttl
+                               ,pr_cdprogra => pr_cdprogra
+                               ,pr_dtmvtolt => pr_dtmvtolt
+                               ,pr_vlresgat => pr_vlresgat
+                               ,pr_flgerlog => 0 -- false
+                               ,pr_des_reto => vr_des_reto
+                               ,pr_tab_erro => pr_tab_erro);
+      
+      -- Verifica se houve retorno de erros
+      IF NVL(vr_des_reto,'OK') = 'NOK' THEN
+        -- Se retornou na tab de erros
+        IF pr_tab_erro.COUNT() > 0 THEN
+          -- Guarda o código e descrição do erro
+          vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+          vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
+        ELSE
+          -- Definir o código do erro
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel cadastrar o resgate.';
+          
+          -- Chamar rotina de gravacao de erro
+          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cdagenci
+                               ,pr_nrdcaixa => pr_nrdcaixa
+                               ,pr_nrsequen => 1 --> Fixo
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic
+                               ,pr_tab_erro => pr_tab_erro);
+                         
+        END IF;
+        
+        -- Se deve gerar log                                      
+        IF pr_flgerlog = 1 THEN
+          -- Gerar registro de log
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic
+                              ,pr_dsorigem => vr_dsorigem
+                              ,pr_dstransa => vr_dstransa
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0 --> FALSE
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+        END IF; 
+        
+        -- Levantar excecao
+        RAISE vr_exc_erro;
+            
       END IF;
       
     EXCEPTION 
