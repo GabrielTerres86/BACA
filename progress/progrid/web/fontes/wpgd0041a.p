@@ -709,104 +709,107 @@ FUNCTION Tabulada RETURNS LOGICAL ():
     '<br>'      SKIP.
   END.
   
-  ASSIGN aux_flgexist = NO.
-  
-  /* Sugestões Analisadas Modelo Antigo*/
-  {&out} '<div id="div_analisadas_' + STRING(aux_conttema) + '" name="div_analisadas_' + STRING(aux_conttema) + '">' SKIP
-  '<table cellspacing="0" cellpadding="0" width="100%">' SKIP
-  '  <tr>'                                               SKIP
-  '    <td colspan="2">'                                 SKIP
-  '      SUGESTÕES ANALISADAS - EVENTOS'                 SKIP
-  '    </td>'                                            SKIP
-  '  </tr>'                                              SKIP
-  '  <tr>'                                               SKIP
-  '    <td colspan="2">'                                 SKIP
-  '      &nbsp;'                                         SKIP
-  '    </td>'                                            SKIP
-  '  </tr>'                                              SKIP
-  '  <tr>' SKIP
-  '    <td width="15">' SKIP
-  '     &nbsp;' SKIP
-  '    </td>' SKIP
-  '    <td>' SKIP
-  '      <table class="tab2" border="1" borderColor="#000000" width="300">' SKIP
-  '        <tr>' SKIP
-  '          <td class="tdCab3">' SKIP
-  '            &nbsp;EVENTO' SKIP
-  '          </td>' SKIP
-  '          <td class="tdCab3" align="center">' SKIP
-  '            QTD' SKIP
-  '          </td>' SKIP
-  '        </tr>'  SKIP.
-  
-  /* Respostas das avaliações - para pegar todos os nrseqdig envolvidos */
-  FOR EACH  craprap WHERE craprap.idevento = aux_idEvento      AND
-    craprap.cdcooper = aux_cdCooper      AND
-    (craprap.cdagenci = aux_cdAgenci      OR
-    aux_cdagenci     = 0) /*TODOS*/      AND
-    craprap.dtanoage = aux_dtAnoAge      AND
-    (craprap.nrseqeve = aux_nrseqdig      OR
-    (aux_nrseqdig = 0 AND craprap.cdevento = aux_cdEvento)) NO-LOCK
-    BREAK BY craprap.nrseqeve:
-    
-    IF   NOT FIRST-OF(craprap.nrseqeve)   THEN
-    NEXT.
-    
-    /* Sugestões de origem 7 onde a sugestão era analisada por evento (modelo antigo)*/
-    FOR EACH crapsdp  WHERE crapsdp.idevento = craprap.idevento          AND
-      crapsdp.cdcooper = craprap.cdcooper          AND
-      crapsdp.cdagenci = craprap.cdagenci          AND
-      crapsdp.nrmsgint = craprap.nrseqeve          AND
-      crapsdp.cdevento <> ?                        AND
-      crapsdp.cdevento <> 0                        AND
-      (crapsdp.nrseqtem = ? or crapsdp.nrseqtem = 0) AND /*Adicionado Márcio*/
-      crapsdp.cdorisug = 7  /*Avaliação evento*/   AND
-      crapsdp.flgsugca <> YES                  NO-LOCK,
+  IF NOT aux_todosrel OR (aux_todosrel AND aux_tprelato = 1) THEN
+    DO:
+      ASSIGN aux_flgexist = NO.
       
-      /* Busca o nome do EVENTO que a sugestão foi associada */
-      FIRST crapedp WHERE crapedp.idevento = craprap.idevento   AND
-      crapedp.cdcooper = 0                  AND
-      crapedp.dtanoage = 0                  AND
-      crapedp.cdevento = crapsdp.cdevento   NO-LOCK
+      /* Sugestões Analisadas Modelo Antigo*/
+      {&out} '<div id="div_analisadas_eve_' + STRING(aux_conttema) + '" name="div_analisadas_' + STRING(aux_conttema) + '">' SKIP
+      '<table cellspacing="0" cellpadding="0" width="100%">' SKIP
+      '  <tr>'                                               SKIP
+      '    <td colspan="2">'                                 SKIP
+      '      SUGESTÕES ANALISADAS - EVENTOS'                 SKIP
+      '    </td>'                                            SKIP
+      '  </tr>'                                              SKIP
+      '  <tr>'                                               SKIP
+      '    <td colspan="2">'                                 SKIP
+      '      &nbsp;'                                         SKIP
+      '    </td>'                                            SKIP
+      '  </tr>'                                              SKIP
+      '  <tr>' SKIP
+      '    <td width="15">' SKIP
+      '     &nbsp;' SKIP
+      '    </td>' SKIP
+      '    <td>' SKIP
+      '      <table class="tab2" border="1" borderColor="#000000" width="300">' SKIP
+      '        <tr>' SKIP
+      '          <td class="tdCab3">' SKIP
+      '            &nbsp;EVENTO' SKIP
+      '          </td>' SKIP
+      '          <td class="tdCab3" align="center">' SKIP
+      '            QTD' SKIP
+      '          </td>' SKIP
+      '        </tr>'  SKIP.
       
-      BREAK BY crapedp.nmevento:
-      
-      IF   FIRST-OF(crapedp.nmevento)   THEN
-      tot_qtsugeve = 0.
-      
-      tot_qtsugeve =  tot_qtsugeve + crapsdp.qtsugeve.
-      
-      IF   LAST-OF(crapedp.nmevento)    THEN
-      DO:
-        {&out} '  <tr>'                                  SKIP
-        '    <td class="tab2">'                   SKIP
-        '      &nbsp;' crapedp.nmevento             SKIP
-        '    </td>' SKIP
-        '    <td class="tab2" align="center">' SKIP
-        tot_qtsugeve SKIP
-        '    </td>' SKIP
-        '  </tr>' SKIP.
+      /* Respostas das avaliações - para pegar todos os nrseqdig envolvidos */
+      FOR EACH  craprap WHERE craprap.idevento = aux_idEvento      AND
+        craprap.cdcooper = aux_cdCooper      AND
+        (craprap.cdagenci = aux_cdAgenci      OR
+        aux_cdagenci     = 0) /*TODOS*/      AND
+        craprap.dtanoage = aux_dtAnoAge      AND
+        (craprap.nrseqeve = aux_nrseqdig      OR
+        (aux_nrseqdig = 0 AND craprap.cdevento = aux_cdEvento)) NO-LOCK
+        BREAK BY craprap.nrseqeve:
         
-        ASSIGN aux_flgexist = YES.
+        IF   NOT FIRST-OF(craprap.nrseqeve)   THEN
+        NEXT.
+        
+        /* Sugestões de origem 7 onde a sugestão era analisada por evento (modelo antigo)*/
+        FOR EACH crapsdp  WHERE crapsdp.idevento = craprap.idevento          AND
+          crapsdp.cdcooper = craprap.cdcooper          AND
+          crapsdp.cdagenci = craprap.cdagenci          AND
+          crapsdp.nrmsgint = craprap.nrseqeve          AND
+          crapsdp.cdevento <> ?                        AND
+          crapsdp.cdevento <> 0                        AND
+          (crapsdp.nrseqtem = ? or crapsdp.nrseqtem = 0) AND /*Adicionado Márcio*/
+          crapsdp.cdorisug = 7  /*Avaliação evento*/   AND
+          crapsdp.flgsugca <> YES                  NO-LOCK,
+          
+          /* Busca o nome do EVENTO que a sugestão foi associada */
+          FIRST crapedp WHERE crapedp.idevento = craprap.idevento   AND
+          crapedp.cdcooper = 0                  AND
+          crapedp.dtanoage = 0                  AND
+          crapedp.cdevento = crapsdp.cdevento   NO-LOCK
+          
+          BREAK BY crapedp.nmevento:
+          
+          IF   FIRST-OF(crapedp.nmevento)   THEN
+          tot_qtsugeve = 0.
+          
+          tot_qtsugeve =  tot_qtsugeve + crapsdp.qtsugeve.
+          
+          IF   LAST-OF(crapedp.nmevento)    THEN
+          DO:
+            {&out} '  <tr>'                                  SKIP
+            '    <td class="tab2">'                   SKIP
+            '      &nbsp;' crapedp.nmevento             SKIP
+            '    </td>' SKIP
+            '    <td class="tab2" align="center">' SKIP
+            tot_qtsugeve SKIP
+            '    </td>' SKIP
+            '  </tr>' SKIP.
+            
+            ASSIGN aux_flgexist = YES.
 
+          END.
+        END.
+        
       END.
+      
+      {&out} '      </table>' SKIP
+      '    </td>'      SKIP
+      '  </tr>'        SKIP
+      '</table>'       SKIP
+      '<br>'           SKIP
+      '<br>'           SKIP
+      '</div>'         SKIP.
     END.
     
-  END.
-  
-  {&out} '      </table>' SKIP
-  '    </td>'      SKIP
-  '  </tr>'        SKIP
-  '</table>'       SKIP
-  '<br>'           SKIP
-  '<br>'           SKIP
-  '</div>'         SKIP.
-  
   /* Se não houveram sugestões, esconde a div */
   IF NOT aux_flgexist THEN
   DO:
     {&out} '<script language="JavaScript">' SKIP
-    'document.getElementById("div_analisadas_' + STRING(aux_conttema) + '").style.display = "none";' SKIP
+    'document.getElementById("div_analisadas_eve_' + STRING(aux_conttema) + '").style.display = "none";' SKIP
     '</script>' SKIP.
     ASSIGN aux_conttema = aux_conttema + 1.
   END.
@@ -818,7 +821,7 @@ FUNCTION Tabulada RETURNS LOGICAL ():
   DO:
     /* Início Alteracao Márcio*/
     /* Sugestões Analisadas Modelo Antigo*/
-    {&out} '<div id="div_analisadas_' + STRING(aux_conttema) + '" name="div_analisadas_' + STRING(aux_conttema) + '">'                              SKIP
+    {&out} '<div id="div_analisadas_tema_' + STRING(aux_conttema) + '" name="div_analisadas_' + STRING(aux_conttema) + '">'                              SKIP
     '<table cellspacing="0" cellpadding="0" width="100%">'    SKIP
     '  <tr>'                                                  SKIP
     '    <td colspan="2">'                                                SKIP
@@ -909,7 +912,7 @@ FUNCTION Tabulada RETURNS LOGICAL ():
   IF NOT aux_flgexist THEN
   DO:
     {&out} '<script language="JavaScript">' SKIP
-    'document.getElementById("div_analisadas_' + STRING(aux_conttema) + '").style.display = "none";' SKIP
+    'document.getElementById("div_analisadas_tema_' + STRING(aux_conttema) + '").style.display = "none";' SKIP
     '</script>' SKIP.
     ASSIGN aux_conttema = aux_conttema + 1.
   END.

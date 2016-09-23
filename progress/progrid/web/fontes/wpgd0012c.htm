@@ -246,18 +246,6 @@
 							  <!-- INCUI DADOS -->
             </table>			    
 	      </div>
-			  
-				<div id="divRecurso">
-					<table border="0" align="center" width="90%" height="585">
-					  <tr valign="top">
-						<td>
-							<table width="100%" border="0" align="center" cellspacing="0">
-							  <tr>
-								<td height="20" colspan="2">&nbsp;</td>
-							  <tr>
-								<td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Recurso</td>
-								<td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
-								<a href="#." onclick="AdRecurso();">Adicionar</a>
             </td>
           </tr>
 					  <tr align="center">
@@ -270,11 +258,6 @@
 				</div>
       </td>
     </tr>
-					  <tr valign="top">
-						<td>
-						  <div style="overflow: auto; height:'347';">
-							<table width="100%" id="tbrecurs" border="0" bordercolor="#CCCCCC" align="center" cellspacing="0">
-							  <!-- INCUI DADOS -->
   </table>  
       </td>
     </tr>
@@ -390,9 +373,10 @@ function Salvar(){
    if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
       if (ValidaDados(document.forms[0])) {
          document.form.aux_cddopcao.value='sa';
-
 		 document.form.cdeixtem.value = document.form.aux_cdeixtem.value;
+         
          document.form.cdevento.value = document.form.aux_cdevento.value;
+         document.form.idforrev.value = document.form.aux_idforrev.value; 
 
 		 armazenaFacili(); 
          status = 'Salvando. Por favor, aguarde ...';
@@ -448,6 +432,7 @@ function MostraEixos(){
 }
 
 function MostraEventos(arrayDados){
+
   for (var i=document.all.aux_cdevento.options.length; i>=0; i--){
       document.all.aux_cdevento.remove(i); 
   }
@@ -477,53 +462,11 @@ function MostraEventos(arrayDados){
       }
       
       }
-
-function MostraFormaRealizacao(){
-   for (var i=document.all.aux_idforrev.options.length; i>=0; i--)
-      document.all.aux_idforrev.remove(i); 
-
-   var oOption;
-  
-   idforrev = document.form.idforrev.value;
-   
-   oOption = document.createElement("OPTION");
-   document.all.aux_idforrev.options.add(oOption);
-   oOption.innerText = "-- Selecionar --";
-   oOption.value = 0;
-   if (idforrev == 0){ 
-		oOption.selected = idforrev;
-	}	
-   	    
-    oOption = document.createElement("OPTION");
-	document.all.aux_idforrev.options.add(oOption);
-	oOption.innerText ="PRESENCIAL";
-	oOption.value = 1;
-	
-	if (idforrev == 1){ 
-		oOption.selected = idforrev;
-	}
-	
-	oOption = document.createElement("OPTION");
-	document.all.aux_idforrev.options.add(oOption);
-	oOption.innerText ="EAD";
-	oOption.value = 2;
-	
-	if (idforrev == 2){ 
-		oOption.selected = idforrev;
-	}
-	
-	oOption = document.createElement("OPTION");
-	document.all.aux_idforrev.options.add(oOption);
-	oOption.innerText ="HIBRIDO";
-	oOption.value = 3;
-	
-	if (idforrev == 3){ 
-		oOption.selected = idforrev;
-   }
-      
+  }
 }
 
 function MostraPublico(){
+
    for (var i=document.all.aux_dspublic.options.length; i>=0; i--)
       document.all.aux_dspublic.remove(i); 
 
@@ -550,6 +493,7 @@ function MostraPublico(){
 }
 
 function MostraFormaRealizacao(){
+
    for (var i=document.all.aux_idforrev.options.length; i>=0; i--)
       document.all.aux_idforrev.remove(i); 
 
@@ -642,14 +586,15 @@ function AdRecurso(){
 
 function PosicionaEvento(){
 
-   document.form.aux_cdtemeix.value = document.form.cdeixtem.value;
+   document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
+
    document.form.aux_cdevento.value = document.form.cdevento.value;
    //setTimeout(function(){MostraEixos;},1000);   
    MostraEixos(); 
    MostraFormaRealizacao();      
    //MostraPublico();
  
-   setTimeout(function(){MostraEventos(document.form.cdeixtem.value);},2000);
+   setTimeout(function(){MostraEventos(document.form.aux_cdtemeix.value);},2000);
 }
 function mostraFacili(){
   var row;var cell;
@@ -826,12 +771,7 @@ function montaRecurso(){
 
 function armazenaFacili(){
 
-	if(document.form.txrecurs.value=='')
-	  document.form.txrecurs.value = '- ' + tbrecurs.rows[i].value;
-	else
-	  document.form.txrecurs.value = document.form.txrecurs.value + '\n- ' + tbrecurs.rows[i].value;	    
-  }
-}
+   document.form.aux_lsfacili.value = '';
 
    for(var i=0;i<tbfacili.rows.length; i++){ 
 	 if(tbfacili.rows[i].checked)
@@ -839,9 +779,7 @@ function armazenaFacili(){
 	     document.form.aux_lsfacili.value = mfacili[i].idfacili;
 	   else
 	     document.form.aux_lsfacili.value = document.form.aux_lsfacili.value  + ',' + mfacili[i].idfacili;
-}
-
-}
+   }
 
 }
 
@@ -875,9 +813,6 @@ function restaurar(){ //alert('restaurar');
 function excluido(){ 
  alert('Atualizacao executada com sucesso');
  window.opener.mostraDiv('divRecurso');
- 
-
-}
 
 
 }
@@ -891,6 +826,8 @@ mostraFacili();
 montaFacili();
 mostraRecurso();
 montaRecurso();
+
+
 
 if (document.form.idtrainc.value == 'S') {
 	document.getElementById("aux_flgtrinc").checked = true;
