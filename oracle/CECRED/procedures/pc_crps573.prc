@@ -277,7 +277,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
                     
                     24/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.(Carlos Rafael Tanholi).
-                    
+
                     20/07/2016 - Resolucao dos chamados 491068, 488220 e 486570. (James)
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
@@ -628,7 +628,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
-             AND crapbpr.tpctrpro = pr_tpctrpro             
+             AND crapbpr.tpctrpro = pr_tpctrpro
              AND crapbpr.flgalien = 1;
 
 
@@ -2415,11 +2415,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
                    -- Condicao para verificar se o bem estah baixado ou cancelado
                    IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
-                     -- Informação do Empréstimo
-                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                            ,pr_texto_completo => vr_xml_3040_temp
-                                            ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                               || rw_crapbpr.dschassi || '" />' || chr(10));
+                  -- Informação do Empréstimo
+                  gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                         ,pr_texto_completo => vr_xml_3040_temp
+                                         ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
+                                                            || rw_crapbpr.dschassi || '" />' || chr(10));
                    ELSE
                    	 -- Informação do Empréstimo
                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
@@ -3689,7 +3689,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Traz o intervalo válido para a parcela em atrazo 
             vr_flgatras := 1;
             -- Para empréstimo / financiamentos
-            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
+            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499,301,302) THEN
               vr_stdiasat := ' DiaAtraso = "' || vr_tab_individ(vr_idx_individ).qtdiaatr || '"';
 
               IF vr_tab_venc(vr_indice_venc).cdvencto = 205 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 1  OR
