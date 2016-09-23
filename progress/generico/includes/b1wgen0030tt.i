@@ -2,7 +2,7 @@
 
    Programa: b1wgen0030tt.i
    Autor   : Guilherme
-   Data    : Julho/2008                  Ultima atualizacao: 28/06/2016
+   Data    : Julho/2008                  Ultima atualizacao: 23/09/2016
    Dados referentes ao programa:
 
    Objetivo  : Temp-tables utlizadas na BO b1wgen0030.p - Desconto de Titulos
@@ -62,6 +62,11 @@
 
                28/06/2016 - Criacao dos campos flaprcoo e dsdetres na 
                             tt-dsctit_bordero_restricoes. (Jaison/James)
+
+                            
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_cecred_dsctit (Oscar).
+                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_dsctit_cr (Oscar).
+               
 
 ..............................................................................*/
     
@@ -222,8 +227,8 @@ DEF TEMP-TABLE tt-dados_dsctit NO-UNDO
     FIELD qtnaopag AS INTE FORMAT "zzz9"
     FIELD qtprotes AS INTE FORMAT "zzz9".
 
-DEF TEMP-TABLE tt-dados_cecred_dsctit LIKE tt-dados_dsctit.  
-DEF TEMP-TABLE tt-dados_dsctit_cr LIKE tt-dados_dsctit. /* Dados Cob. Reg. */
+DEF TEMP-TABLE tt-dados_cecred_dsctit NO-UNDO LIKE tt-dados_dsctit.  
+DEF TEMP-TABLE tt-dados_dsctit_cr NO-UNDO LIKE tt-dados_dsctit. /* Dados Cob. Reg. */
     
 /* TAB053 */
 DEF TEMP-TABLE tt-tarifas_dsctit NO-UNDO

@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 06/07/2016
+   Data    : 14/09/2005                        Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -622,6 +622,10 @@
                            pois estava somando 2x o numero calculado de parcelas, impactando
                            na qualificacao da operacao
                            Andrey (RKAM) - Chamado 473364
+
+              23/09/2016 - Correçao deletar o Handle da b1wgen0114 esta gerando erro na geraçao
+                           do PDF para envio da esteira (Oscar).
+                           
 
  ..............................................................................*/
 
@@ -7676,6 +7680,9 @@ PROCEDURE excluir-proposta:
 														   OUTPUT aux_dscritic,                                  /* Descrição da crítica  */ 
 														   OUTPUT TABLE tt-dados-portabilidade).                 /* TT com dados de portabilidade */   
                                 
+					IF VALID-HANDLE(h-b1wgen0114) THEN
+             DELETE PROCEDURE h-b1wgen0114.
+          
 					FIND FIRST tt-dados-portabilidade.
                 
 					/* Se nao encontrou portabilidade ou houve algum erro */
