@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 03/08/2016
+   Data    : Abril/2004                        Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -333,7 +333,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                03/08/2016 - Ajustes para garantir que o rw_crapatr não fique com lixo do registro
                             anterior. PRJ320 - Oferta DebAut (Odirlei-AMcom)      
-                             
+                         
+               23/09/2016 - Tratar registros de vr_nro_conta_dec < 9000000000 para tratar
+                            agencia(cdagectl) do debito (Lucas Ranghetti#527719)
 ............................................................................ */
 
     DECLARE
@@ -2368,15 +2370,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     ELSE
                       vr_nrdconta := vr_nro_conta_dec;
                     END IF;
+                    
+                    IF pr_cdcooper = 3 AND (vr_cdagedeb < 100 OR vr_cdagedeb > vr_cdultage) 
+                       AND vr_cdagedeb <> 1 THEN
 
-                    -- Se a cooperativa do processo for diferente da cooperativa do convenio e se for diferente de Viacredi
+                      -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
+                      IF vr_tpregist <> 'C' THEN
+                        pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
+                      END IF;
+                      continue;
+                    END IF;
+                    
+                    -- Se a agencia de debito for diferente da agencia de controle
+                    -- e agencia de debito for diferente de 001(viacredi) ou cooperativa do processo
+                    -- for diferente de Viacredi então vamos ignorar o registro
+                    IF vr_cdagedeb <> rw_crapcop.cdagectl 
+                       AND (vr_cdagedeb <> 1 OR rw_crapcop.cdcooper <> 1) THEN
+                      continue;
+                    END IF;
+                    
+                  /*  -- Se a cooperativa do processo for diferente da cooperativa do convenio e se for diferente de Viacredi
                     -- ignora o registro
                     IF rw_crapcop.cdcooper <> rw_gnconve.cdcooper AND
                        rw_crapcop.cdcooper <> 1 THEN
                       continue;
                     ELSIF rw_crapcop.cdcooper = 3 THEN -- Se for Cecred
                       continue;
-                    END IF;
+                    END IF; */
 
                     /**** Tratamento migracao ****/
                     OPEN cr_craptco(vr_nrdconta);
