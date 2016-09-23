@@ -2256,7 +2256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('PACodigo'                , rw_crawepr.cdagenci_efet);    
     vr_obj_efetivar.put('operadorEfetivacaoPA'   , vr_obj_agencia);    
     vr_obj_agencia := json();   
-    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(rw_craplem.dthrtran)) ; 
+    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(COALESCE(rw_craplem.dthrtran, SYSDATE))) ; 
     vr_obj_efetivar.put('contratoNumero'         , pr_nrctremp);
     vr_obj_efetivar.put('valor'                  , rw_crawepr.vlemprst);
     vr_obj_efetivar.put('parcelaQuantidade'      , rw_crawepr.qtpreemp);
