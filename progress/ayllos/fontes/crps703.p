@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odirlei Busana - AMcom
-   Data    : Março/2016.                    Ultima atualizacao: 22/09/2016
+   Data    : Março/2016.                    Ultima atualizacao: 20/09/2016
 
    Dados referentes ao programa:
 
@@ -12,12 +12,8 @@
    Objetivo  : Envio da efetivaçao da proposta de emprestimo 
                para a Esteira de Credito.
                
-   Alteracoes : 20/09/2016 - Atualizacao da data de envio da efetivação da esteira foi movida para o Oracle 
-                estava gerando erro no Progress (Oscar).
-                
-                22/09/2016 - Executar apenas de 100 em 100 o programa será executado mais vezes
-                durante o dia estava causando estouro de memória da area de temp-table no PROGRESS
-                na geracao do PDF (Oscar).
+   Alteracoes : 20/09/2016 - Atualizacao da data de envio da efetivação da esteira foi 
+                movida para o Oracle estava gerando erro no Progress (Oscar).
    
    
    
@@ -29,7 +25,7 @@ DEF VAR aux_cdcritic AS INTEGER                                    NO-UNDO.
 DEF VAR aux_dscritic AS CHARACTER                                  NO-UNDO.
 DEF VAR aux_qtsucess AS INTEGER                                    NO-UNDO.
 DEF VAR aux_qtderros AS INTEGER                                    NO-UNDO.
-DEF VAR aux_qtlimite AS INTEGER           INIT 100                 NO-UNDO.
+
 
 DEF VAR h-b1wgen0195  AS HANDLE                                    NO-UNDO.
 
@@ -60,8 +56,7 @@ UNIX SILENT VALUE("echo " + STRING(TODAY, "99/99/9999") + " - " +
                         
 /* Captura o nome do servidor da variavel de ambiente HOST */ 
 ASSIGN glb_hostname = OS-GETENV("HOST").
-
-      
+         
 /* Buscar cooperativas ativas*/         
 FOR EACH crapcop FIELDS (cdcooper)
    WHERE crapcop.flgativo = TRUE
@@ -96,7 +91,7 @@ FOR EACH crapcop FIELDS (cdcooper)
        END.
        
   RUN sistema/generico/procedures/b1wgen0195.p
-           PERSISTENT SET h-b1wgen0195.     
+           PERSISTENT SET h-b1wgen0195.
            
   RUN verifica_regras_esteira IN h-b1wgen0195
            ( INPUT crapcop.cdcooper,
@@ -119,7 +114,7 @@ FOR EACH crapcop FIELDS (cdcooper)
             aux_dscritic = "".
      NEXT.
   END. 
-  
+  DELETE OBJECT h-b1wgen0195.
 
 
   ASSIGN glb_dtmvtolt = crapdat.dtmvtolt
@@ -145,11 +140,9 @@ FOR EACH crapcop FIELDS (cdcooper)
        BY crawepr.cdcooper
           BY crawepr.nrdconta
             BY crawepr.nrctremp:     
-            
-        IF  aux_qtlimite = 0 THEN
-            LEAVE.
-            
-        aux_qtlimite = aux_qtlimite - 1.
+
+        RUN sistema/generico/procedures/b1wgen0195.p
+           PERSISTENT SET h-b1wgen0195.
    
         /* Enviar efetivacao da proposta para esteira*/
         RUN Enviar_proposta_esteira IN h-b1wgen0195        
@@ -170,8 +163,8 @@ FOR EACH crapcop FIELDS (cdcooper)
                           OUTPUT aux_cdcritic, 
                           OUTPUT aux_dscritic).
        
-        
-        
+        DELETE OBJECT h-b1wgen0195.
+       
         IF  RETURN-VALUE = "NOK"  THEN
           DO:
               IF aux_cdcritic = 0 AND 
@@ -213,8 +206,6 @@ FOR EACH crapcop FIELDS (cdcooper)
                           " >> log/proc_message.log").
 
 END. /* Fim loop ccrapcop */                      
-
-DELETE OBJECT h-b1wgen0195.
 
 UNIX SILENT VALUE("echo " + STRING(TODAY, "99/99/9999") + " - " +
                         STRING(TIME,"HH:MM:SS") +
