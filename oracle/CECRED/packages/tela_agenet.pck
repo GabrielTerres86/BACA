@@ -177,7 +177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             ,lau.nrdocmto
             ,ass.cdagenci
             ,darf_das.tppagamento -- Tipo pagamento (1-DARF, 2-DAS)
-            ,darf_das.tpcaptura -- Tipo de Captura
+            ,darf_das.tpcaptura -- Tipo de Captura (1 – Com Código de Barras / 2 – Sem Código de Barras)
             ,DECODE(darf_das.tpcaptura,1,'COM','SEM') || ' CODIGO DE BARRAS' dstpcaptura -- Descricao do Tipo de Captura
             ,darf_das.dslinha_digitavel -- Linha Digitável
             ,darf_das.dsnome_fone -- Nome / Telefone
@@ -571,6 +571,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
           ELSIF rw_craplau.cdtiptra = 10 THEN --Pagamentos de DARF/DAS
             
             vr_dstiptra := 'PAGAMENTO-' || CASE rw_craplau.tppagamento WHEN 1 THEN 'DARF' ELSE 'DAS' END;
+            
+            IF rw_craplau.tpcaptura = 1 THEN -- 1 - Com códiog de barras
+              
+               vr_dstransa := rw_craplau.dslinha_digitavel;
+            
+            ELSE -- 2 - Sem códiog de barras
+              
+               vr_dstransa := rw_craplau.dsnome_fone;
+            
+            END IF;
                                 
           END IF;
                   
