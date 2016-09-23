@@ -2072,8 +2072,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por gerar a efetivacao da proposta para a esteira
       Alteração : 20/09/2016 - Atualizar a data de envio da efetivação da proposta 
-      no Oracle, no Progress estava gerando erro (Oscar).
-        
+                  no Oracle, no Progress estava gerando erro (Oscar).
+                  
                   22/09/2016 - Enviar a data em que a proposta foi efetivada ao invés
                   da data do dia.
         
@@ -2136,7 +2136,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
          AND wepr.nrdconta = pr_nrdconta
          AND wepr.nrctremp = pr_nrctremp
          ; 
-    rw_crawepr cr_crawepr%ROWTYPE;    
+    rw_crawepr cr_crawepr%ROWTYPE;   
     
     
    CURSOR cr_craplem (pr_cdcooper craplem.cdcooper%TYPE,
@@ -2198,7 +2198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
       RAISE vr_exc_erro;
     END IF;
-    CLOSE cr_crawepr;    
+    CLOSE cr_crawepr;
     
     --> Buscar dados da proposta de emprestimo
     OPEN cr_craplem(pr_cdcooper => pr_cdcooper,
@@ -2256,7 +2256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('PACodigo'                , rw_crawepr.cdagenci_efet);    
     vr_obj_efetivar.put('operadorEfetivacaoPA'   , vr_obj_agencia);    
     vr_obj_agencia := json();   
-    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(rw_craplem.dthrtran)) ; 
+    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(COALESCE(rw_craplem.dthrtran, SYSDATE))) ; 
     vr_obj_efetivar.put('contratoNumero'         , pr_nrctremp);
     vr_obj_efetivar.put('valor'                  , rw_crawepr.vlemprst);
     vr_obj_efetivar.put('parcelaQuantidade'      , rw_crawepr.qtpreemp);
