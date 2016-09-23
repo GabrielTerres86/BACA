@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 30/05/2016
+  --  Data    : Abril/2006                     Ultima Atualizacao: 22/09/2016
   --
   --  Dados referentes ao programa:
   --
@@ -248,6 +248,8 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --					 (Adriano - M117).
   --
   --        30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  --
+  --		22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -20079,7 +20081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 29/01/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -20133,8 +20135,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            (Douglas - Chamado 384140)
 	--
 	--               29/01/2016 - Ajuste que seja considerado no relacionamento entre
-     --                   as tabelas craprtc e crapret as datas de movimento e ocorrencia
-  --                     (Adriano - SD 391157).    
+    --                            as tabelas craprtc e crapret as datas de movimento e ocorrencia
+    --                            (Adriano - SD 391157).
+    --
+    --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
     -- .........................................................................
 
   BEGIN
@@ -20241,9 +20245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Selecionar Cobrancas
       CURSOR cr_crapcob2 (pr_cdcooper IN crapcob.cdcooper%type
                          ,pr_nrdconta IN crapcob.nrdconta%type
-                         ,pr_nrcnvcob IN crapcob.nrcnvcob%type
-                         ,pr_cdbandoc IN crapcob.cdbandoc%type
-                         ,pr_nrdctabb IN crapcob.nrdctabb%type
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
                          ,pr_incobran IN crapcob.incobran%type) IS
         SELECT  count(*) qtdreg
                ,nvl(sum(nvl(crapcob.vltitulo,0)),0) vltitulo
@@ -20251,8 +20253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
-        AND   crapcob.cdbandoc = pr_cdbandoc
-        AND   crapcob.nrdctabb = pr_nrdctabb
+        AND   crapcob.dtdpagto IS NULL
         AND   crapcob.incobran = pr_incobran;
       --Selecionar Cadastro Email
       CURSOR cr_crapcem (pr_cdcooper IN crapcem.cdcooper%type
@@ -20687,9 +20688,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           --Contar as cobrancas e somar
           FOR rw_crapcob2 IN cr_crapcob2 (pr_cdcooper => rw_craprtc.cdcooper
                                          ,pr_nrdconta => rw_craprtc.nrdconta
-                                         ,pr_nrcnvcob => rw_craprtc.nrcnvcob
-                                         ,pr_cdbandoc => rw_crapcco.cddbanco
-                                         ,pr_nrdctabb => rw_crapcco.nrdctabb
+                                         ,pr_nrcnvcob => rw_craprtc.nrcnvcob                                         
                                          ,pr_incobran => 0) LOOP
             --Incrementar quantidade e valor
             vr_qtcobsim:= nvl(vr_qtcobsim,0) + rw_crapcob2.qtdreg;
@@ -20864,7 +20863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 29/01/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -20899,9 +20898,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            SD358050 (Odirlei-AMcom))
 	--
     --               29/01/2016 - Ajuste que seja considerado no relacionamento entre
-    --                           as tabelas craprtc e crapret as datas de movimento e ocorrencia
-  --                      (Adriano - SD 391157).
+    --                            as tabelas craprtc e crapret as datas de movimento e ocorrencia
+    --                            (Adriano - SD 391157).
     --
+    --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
     -- .........................................................................
 
   BEGIN
@@ -21012,17 +21012,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Selecionar Cobrancas
       CURSOR cr_crapcob2 (pr_cdcooper IN crapcob.cdcooper%type
                          ,pr_nrdconta IN crapcob.nrdconta%type
-                         ,pr_nrcnvcob IN crapcob.nrcnvcob%type
-                         ,pr_nrdctabb IN crapcob.nrdctabb%type
-                         ,pr_cdbandoc IN crapcob.cdbandoc%type
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
                          ,pr_incobran IN crapcob.incobran%type) IS
         SELECT crapcob.vltitulo
         FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
-        AND   crapcob.cdbandoc = pr_cdbandoc
-        AND   crapcob.nrdctabb = pr_nrdctabb
+        AND   crapcob.dtdpagto IS NULL
         AND   crapcob.incobran = pr_incobran;
       --Selecionar Cadastro Email
       CURSOR cr_crapcem (pr_cdcooper IN crapcem.cdcooper%type
@@ -21551,8 +21548,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           FOR rw_crapcob2 IN cr_crapcob2 (pr_cdcooper => rw_craprtc.cdcooper
                                          ,pr_nrdconta => rw_craprtc.nrdconta
                                          ,pr_nrcnvcob => rw_craprtc.nrcnvcob
-                                         ,pr_nrdctabb => rw_crapcco.nrdctabb
-                                         ,pr_cdbandoc => rw_crapcco.cddbanco
                                          ,pr_incobran => 0) LOOP
             --Incrementar quantidade e valor
             vr_qtcobsim:= nvl(vr_qtcobsim,0) + 1;

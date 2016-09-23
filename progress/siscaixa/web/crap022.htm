@@ -155,14 +155,6 @@ function selectOpcao (opcao) {
     formataOpcao(opcao,true);
 }
 
-function enviaFormularioPinPad(strInput, strEvent) { 
-    var strSenha = document.getElementById('v_dssencrd').value;
-    
-    if (window.event.keyCode == 13 && strSenha != "" && strSenha != " ") { 
-        doIt();
-    }        
-}
-
 function doIt() {
 
 	var opcao = (document.getElementById('v_opcao1').checked ) ? "R" : "C";
@@ -542,7 +534,7 @@ function solicitaSenhaPinpadNovo(oPinpad, valor) {
 		</tr>
 		<tr id="divSenhaCartao">
 		  <td class="linhaform"  >Senha Cartão:</td>
-		  <td ><input type="password" name="v_dssencrd" id="v_dssencrd" size="10" class="input" maxlength="6" onmousedown="return false;" onBlur="if (this.value != '') { document.getElementById('divProcessando').style.display = 'block'; document.form1.ok.click(); } else { v_dsimpvia1.focus(); }"  onFocus="solicitaSenhaPinpadNovo('', this.value);" onKeyDown="JavaScript:validaInteiro(event);" onkeyup="JavaScript:enviaFormularioPinPad(this, event);" style="text-align: right"></td>
+		  <td ><input type="password" name="v_dssencrd" id="v_dssencrd" size="10" class="input" maxlength="6" onmousedown="return false;" onBlur="if (this.value != '') { } else { v_dsimpvia1.focus(); }"  onFocus="solicitaSenhaPinpadNovo('', this.value);" onKeyDown="JavaScript:validaInteiro(event);" style="text-align: right"></td>
 		</tr>				
 		<tr>
 		  <td class="linhaform"  >Código:</td>
