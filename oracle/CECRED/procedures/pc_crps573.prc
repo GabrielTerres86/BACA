@@ -3617,7 +3617,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Traz o intervalo válido para a parcela em atrazo 
             vr_flgatras := 1;
             -- Para empréstimo / financiamentos
-            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
+            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499,301,302) THEN
               vr_stdiasat := ' DiaAtraso = "' || vr_tab_individ(vr_idx_individ).qtdiaatr || '"';
 
               IF vr_tab_venc(vr_indice_venc).cdvencto = 205 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 1  OR

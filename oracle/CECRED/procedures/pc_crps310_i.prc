@@ -4028,7 +4028,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_vldiv180 := 0;
                 vr_vldiv360 := 0;
                 vr_vldiv999 := 0;
-                
+                vr_qtdiaatr := 0;
                 vr_dtprxpar := null;
                 vr_vlprxpar := 0;
                 vr_dtvencop := NULL;
@@ -4052,6 +4052,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   -- Calcular prazo de vencimento do bordero do cheque para crédito
                   -- em conta e da data de liberação do borderô para crédito em conta
                   vr_qtdprazo := vr_aux_reg_cdb.dtlibera - pr_rw_crapdat.dtmvtolt;
+                  -- Grava a quantidade de dias que estah mais em atraso
+                  IF vr_qtdiaatr >= vr_qtdprazo THEN  
+                    IF vr_qtdprazo = 0 THEN
+                      vr_qtdiaatr := -1;
+                    ELSE
+                      vr_qtdiaatr := vr_qtdprazo;
+                    END IF;
+                  END IF;
                   -- Armazenar a data mais próxima de vencimento para o Fluxo Financeiro
                   -- Desde que seja superior a data de referência
                   IF vr_aux_reg_cdb.dtlibera > vr_dtrefere THEN
@@ -4136,7 +4144,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   pc_grava_crapris(  pr_nrdconta => rw_crapass.nrdconta                             
                                     ,pr_dtrefere => vr_dtrefere
                                     ,pr_innivris => vr_risco_rating
-                                    ,pr_qtdiaatr => 0                  
+                                    ,pr_qtdiaatr => ABS(vr_qtdiaatr)
                                     ,pr_vldivida => vr_vldeschq
                                     ,pr_vlvec180 => nvl(vr_vldes180,0)
                                     ,pr_vlvec360 => nvl(vr_vldes360,0)
@@ -4240,6 +4248,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_vldiv999 := 0;
                 vr_dtprxpar := null;
                 vr_vlprxpar := 0;
+                vr_qtdiaatr := 0;
                 vr_qtparcel := 1; -- Para desconto de duplicata sempre gera 1 parcela do Fluxo Financeiro
                 vr_dtvencop := NULL;
                 -- Limpar a temp-table
@@ -4357,6 +4366,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                       vr_tab_vlavence(11) := vr_tab_vlavence(11)  + vr_vlsrisco;
                   END CASE;
                 ELSE
+                  -- Grava a quantidade de dias que estah mais em atraso
+                  IF vr_qtdiaatr >= vr_qtdprazo THEN
+                    IF vr_qtdprazo = 0 THEN
+                      vr_qtdiaatr := -1;
+                    ELSE
+                      vr_qtdiaatr := vr_qtdprazo;
+                    END IF;
+                  END IF;
+                  
                   -- Negativar a diferença de dias pois o valor já está vencido
                   -- e o calculo retornou o valor negativo
                   vr_qtdprazo := vr_qtdprazo * -1;
@@ -4395,7 +4413,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 pc_grava_crapris(  pr_nrdconta => rw_crapass.nrdconta                             
                                   ,pr_dtrefere => vr_dtrefere
                                   ,pr_innivris => vr_risco_rating
-                                  ,pr_qtdiaatr => 0                  
+                                  ,pr_qtdiaatr => ABS(vr_qtdiaatr)
                                   ,pr_vldivida => vr_vldestit
                                   ,pr_vlvec180 => nvl(vr_vltit180,0)
                                   ,pr_vlvec360 => nvl(vr_vltit360,0)
