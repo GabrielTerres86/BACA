@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 22/03/2016
+   Data    : Agosto/2007                      Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -167,8 +167,12 @@
               17/11/2015 - Incluso novo campo dtapgoib na tt-dados-epr e
 			               cdorigem na tt-extrato_epr (Daniel) 
 
-			  22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
-			               (Projeto Esteira de Credito - Daniel/Oscar) 	
+              22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
+                           (Projeto Esteira de Credito - Daniel/Oscar) 	
+                           
+              23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
+                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
+                           
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
     FIELD nrdconta LIKE crapass.nrdconta
@@ -273,7 +277,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD qtimpctr LIKE crapepr.qtimpctr
     FIELD dtapgoib AS DATE    FORMAT "99/99/9999".
     
-DEF TEMP-TABLE tt-dados-epr-out LIKE tt-dados-epr.
+DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
 DEF TEMP-TABLE tt-dados-coope NO-UNDO
     FIELD vlmaxleg LIKE crapcop.vlmaxleg
@@ -581,7 +585,7 @@ DEF TEMP-TABLE tt-fiadores NO-UNDO
     FIELD inavalis AS INTE
     FIELD dsestcvl AS CHAR.
 
-DEF TEMP-TABLE tt-intervenientes LIKE tt-fiadores.
+DEF TEMP-TABLE tt-intervenientes  NO-UNDO LIKE tt-fiadores.
 
 DEF TEMP-TABLE tt-bens-contratos NO-UNDO
     FIELD cdcooper LIKE crapbpr.cdcooper

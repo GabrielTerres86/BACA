@@ -2,7 +2,7 @@
 
    Programa: b1wgen0028tt.i                  
    Autor   : Guilherme
-   Data    : Marco/2008                        Ultima atualizacao: 28/04/2016
+   Data    : Marco/2008                        Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -68,6 +68,10 @@
                
                28/04/2016 - Adicionar o campo flgdebit na temp-table tt-dados-cartao
                             (Douglas - Chamado 415437)
+                            
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-motivos_2via (Oscar).
+                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt_dados_promissoria_imp (Oscar).
+               
 ....................................................................................*/
 
 DEF TEMP-TABLE tt-lim_total NO-UNDO
@@ -229,7 +233,7 @@ DEF TEMP-TABLE tt-dtvencimento_cartao NO-UNDO
     FIELD diasdadm AS CHAR
     FIELD dddebito AS INTE.
     
-DEF TEMP-TABLE tt-motivos_2via
+DEF TEMP-TABLE tt-motivos_2via NO-UNDO
     FIELD dsmotivo AS CHAR
     FIELD cdmotivo AS INTE.
 
@@ -534,7 +538,7 @@ DEF TEMP-TABLE tt_dados_promissoria NO-UNDO
    FIELD dsendav2 AS CHAR EXTENT 3
    FIELD dsmvtolt AS CHAR.
 
-DEF TEMP-TABLE tt_dados_promissoria_imp LIKE tt_dados_promissoria.
+DEF TEMP-TABLE tt_dados_promissoria_imp NO-UNDO LIKE tt_dados_promissoria.
 
 DEFINE TEMP-TABLE tt-termo-entreg-pj NO-UNDO
     FIELD nome     AS CHAR FORMAT "x(50)"

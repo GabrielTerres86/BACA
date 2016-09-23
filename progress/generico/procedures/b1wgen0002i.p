@@ -2,7 +2,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 16/12/2015
+   Data    : 23/03/2011                        Ultima atualizacao: 23/09/2016
     
    Dados referentes ao programa:
 
@@ -210,7 +210,7 @@
                17/09/2015 - Ajuste no topico 3.1 da proposta pois estava invertido
                             a linha de credito com a finalidade (Lombardi/Jaison)
 
-			   14/09/2015 - Projeto Reformulacao cadastral
+               14/09/2015 - Projeto Reformulacao cadastral
                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                             
                20/11/2015 - Ajustado para que a seja utilizado a procedure
@@ -223,11 +223,17 @@
                             nao conta como uma pagina nova SD366647 (Odirlei-AMcom)
                                                    
                26/01/2016 - Alteracao da procedure gera-impressao-empr para gerar o
-							relatorio para o InternetBank. (Projeto Pre-Aprovado 
-							Fase 2 - Carlos Rafael Tanholi)
-			   10/03/2016 - Ajuste para impressao da proposta para a Esteira
-			                PRJ207 - Esteira (Odirlei-AMcom)
-
+                            relatorio para o InternetBank. (Projeto Pre-Aprovado 
+                            Fase 2 - Carlos Rafael Tanholi)
+              
+               10/03/2016 - Ajuste para impressao da proposta para a Esteira
+                           PRJ207 - Esteira (Odirlei-AMcom)
+                            
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
+                            Correçao deletar o Handle da b1wgen0001 esta gerando erro na geraçao
+                            do PDF para envio da esteira (Oscar).
+                            Correçao deletar o Handle da b1wgen0024 esta gerando erro na geraçao
+                            do PDF para envio da esteira (Oscar).
                                                    
 .............................................................................*/
 
@@ -393,9 +399,9 @@ DEF VAR aux_vlsldrgt AS DEC                                            NO-UNDO.
 DEF VAR aux_vlsldtot AS DEC                                            NO-UNDO.
 DEF VAR aux_vlsldapl AS DEC                                            NO-UNDO.
 
-DEF TEMP-TABLE w-co-responsavel LIKE tt-dados-epr. 
+DEF TEMP-TABLE w-co-responsavel  NO-UNDO LIKE tt-dados-epr.  
 
-DEF TEMP-TABLE tt-crapavl 
+DEF TEMP-TABLE tt-crapavl NO-UNDO
     FIELD nrdconta  LIKE crapavl.nrdconta.
 
 DEF TEMP-TABLE tt-operati                                              NO-UNDO
@@ -556,12 +562,11 @@ PROCEDURE busca-dados-impressao:
                                            OUTPUT TABLE tt-erro,
                                            OUTPUT TABLE tt-medias,
                                            OUTPUT TABLE tt-comp_medias).
-
+        
+        DELETE PROCEDURE h-b1wgen0001.     
+        
         IF  RETURN-VALUE <> "OK"  THEN
-            DO:
-                DELETE PROCEDURE h-b1wgen0001. 
-                RETURN "NOK".
-            END.
+            RETURN "NOK".
 
         FIND FIRST tt-comp_medias NO-LOCK NO-ERROR.
        
@@ -1392,6 +1397,10 @@ PROCEDURE gera-impressao-empr:
                         DO:
                             ASSIGN aux_dscritic = "Handle invalido para BO " +
                                                   "b1wgen0024.".
+                                                  
+                            IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                DELETE PROCEDURE h-b1wgen0024.    
+                      
                             LEAVE Gera.
                         END.
                     
@@ -1405,6 +1414,10 @@ PROCEDURE gera-impressao-empr:
                                 DO:
                                     ASSIGN aux_dscritic = "Nao foi possivel " +
                                                           "gerar a impressao.".
+                                                          
+                                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                        DELETE PROCEDURE h-b1wgen0024.    
+                                                         
                                     LEAVE Gera.                      
                                 END.
 
@@ -1422,6 +1435,9 @@ PROCEDURE gera-impressao-empr:
                         DO:
                             ASSIGN aux_dscritic = "Nao foi possivel " +
                                                   "gerar a impressao.".
+                                                  
+                            IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                DELETE PROCEDURE h-b1wgen0024.    
                             
                             LEAVE Gera.                      
                         END.
@@ -1445,6 +1461,9 @@ PROCEDURE gera-impressao-empr:
     
                         IF  aux_dscritic <> ""  THEN
                         DO:                                
+                           IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                               DELETE PROCEDURE h-b1wgen0024.    
+                            
                             LEAVE Gera.
                         END.            
                     
@@ -1483,9 +1502,15 @@ PROCEDURE gera-impressao-empr:
                                     UNIX SILENT VALUE ("rm " + aux_nmarquiv + 
                                                        "* 2>/dev/null"). 
                                    
+                                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                                        DELETE PROCEDURE h-b1wgen0024.    
+                                    
                                     LEAVE Gera.
                                 END.
                         END.
+                        
+                    IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                        DELETE PROCEDURE h-b1wgen0024.    
 
                     LEAVE Email.
 

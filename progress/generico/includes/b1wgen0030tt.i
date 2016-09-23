@@ -2,7 +2,7 @@
 
    Programa: b1wgen0030tt.i
    Autor   : Guilherme
-   Data    : Julho/2008                  Ultima atualizacao: 26/02/2016
+   Data    : Julho/2008                  Ultima atualizacao: 23/09/2016
    Dados referentes ao programa:
 
    Objetivo  : Temp-tables utlizadas na BO b1wgen0030.p - Desconto de Titulos
@@ -58,7 +58,12 @@
                            (Chamado 130880) - (Tiago Castro - RKAM)
 
                26/02/2016 - Inclusao do campo dias carencia na temptable
-			                melhoria 116 (Tiago/Rodrigo).
+                            melhoria 116 (Tiago/Rodrigo).
+                            
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_cecred_dsctit (Oscar).
+                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_dsctit_cr (Oscar).
+               
+
 ..............................................................................*/
     
 DEF TEMP-TABLE crawljt NO-UNDO
@@ -213,8 +218,8 @@ DEF TEMP-TABLE tt-dados_dsctit NO-UNDO
     FIELD qttitprt AS INTE FORMAT "zz9"
     FIELD cardbtit AS INTE FORMAT "zz9".
 
-DEF TEMP-TABLE tt-dados_cecred_dsctit LIKE tt-dados_dsctit.  
-DEF TEMP-TABLE tt-dados_dsctit_cr LIKE tt-dados_dsctit. /* Dados Cob. Reg. */
+DEF TEMP-TABLE tt-dados_cecred_dsctit NO-UNDO LIKE tt-dados_dsctit.  
+DEF TEMP-TABLE tt-dados_dsctit_cr NO-UNDO LIKE tt-dados_dsctit. /* Dados Cob. Reg. */
     
 /* TAB053 */
 DEF TEMP-TABLE tt-tarifas_dsctit NO-UNDO

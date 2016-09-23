@@ -2,7 +2,7 @@
 
   Programa: b1wgen0191tt.i 
   Autor   : Jonata-RKAM
-  Data    : Outubro/2014                      Ultima atualizacao:  
+  Data    : Outubro/2014                      Ultima atualizacao: 23/09/2016 
   
   Dados referentes ao programa:
   
@@ -12,6 +12,8 @@
   
   Alteracoes: 11/12/2015 - Inclusao do campo dsmotivo na tt-crapcsf
                            Chamado 363148 (Heitor - RKAM)
+                           
+              23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-msg-orgaos (Oscar).                             
 .............................................................................*/
 
 DEF TEMP-TABLE tt-xml-geral                                            NO-UNDO
@@ -124,7 +126,7 @@ DEF TEMP-TABLE tt-crappsa                                               NO-UNDO
     FIELD pertotal AS INTE
     FIELD nmvincul AS CHAR.
 
-DEF TEMP-TABLE tt-msg-orgaos
+DEF TEMP-TABLE tt-msg-orgaos NO-UNDO
     FIELD dsmensag AS CHAR.
 
 
