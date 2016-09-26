@@ -4052,14 +4052,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   -- Calcular prazo de vencimento do bordero do cheque para crédito
                   -- em conta e da data de liberação do borderô para crédito em conta
                   vr_qtdprazo := vr_aux_reg_cdb.dtlibera - pr_rw_crapdat.dtmvtolt;
-                  -- Grava a quantidade de dias que estah mais em atraso
-                  IF vr_qtdiaatr >= vr_qtdprazo THEN  
-                    IF vr_qtdprazo = 0 THEN
-                      vr_qtdiaatr := -1;
-                    ELSE
-                      vr_qtdiaatr := vr_qtdprazo;
-                    END IF;
-                  END IF;
                   -- Armazenar a data mais próxima de vencimento para o Fluxo Financeiro
                   -- Desde que seja superior a data de referência
                   IF vr_aux_reg_cdb.dtlibera > vr_dtrefere THEN

@@ -277,10 +277,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
                     
                     24/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.(Carlos Rafael Tanholi).
+.............................................................................*/
 
                     20/07/2016 - Resolucao dos chamados 491068, 488220 e 486570. (James)
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
+
+					26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+                                 da data de vencimento e quantidade de dias atraso.
+                                 SD488220 (Odirlei-AMcom)
 .............................................................................................................................*/
 
     DECLARE
@@ -1248,6 +1253,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_dtprxpar crapris.dtprxpar%TYPE;
         vr_vlprxpar crapris.vlprxpar%TYPE;
         vr_qtparcel crapris.qtparcel%TYPE;
+        vr_dtvencop crapris.dtvencop%TYPE;
+        vr_qtdiaatr crapris.qtdiaatr%TYPE;
              
       BEGIN
         -- Efetua loop sobre os dados da central de risco (Exceto 301 - Dsc Titulos)
@@ -1287,6 +1294,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_dtprxpar := NULL;
             vr_vlprxpar := 0;
             vr_qtparcel := 0;
+            vr_dtvencop := rw_crapris_dsctit.dtvencop;
+            vr_qtdiaatr := 0;
           END IF;
           -- Sempre acumularemos a maior quantidade de parcelas 
           vr_qtparcel := greatest(vr_qtparcel,rw_crapris_dsctit.qtparcel);
@@ -1304,6 +1313,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- mesmo mÊs da próxima parcela mais próxima.
             vr_vlprxpar := vr_vlprxpar + rw_crapris_dsctit.vlprxpar;
           END IF;          
+          --Guardar a maior data de vencimento
+          vr_dtvencop := GREATEST(rw_crapris_dsctit.dtvencop,vr_dtvencop);
+          vr_qtdiaatr := GREATEST(rw_crapris_dsctit.qtdiaatr,vr_qtdiaatr);
+          
           -- Se for o ultimo registro da conta / contrato de limite do bordero, grava os valores
           IF rw_crapris_dsctit.nrseq = rw_crapris_dsctit.qtreg THEN
             -- Incrementar contador
@@ -1313,7 +1326,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_tab_ris(vr_indice_ris).nrdconta := rw_crapris_dsctit.nrdconta;
             vr_tab_ris(vr_indice_ris).dtrefere := rw_crapris_dsctit.dtrefere;
             vr_tab_ris(vr_indice_ris).innivris := rw_crapris_dsctit.innivris;
-            vr_tab_ris(vr_indice_ris).qtdiaatr := rw_crapris_dsctit.qtdiaatr;
+            vr_tab_ris(vr_indice_ris).qtdiaatr := vr_qtdiaatr;
             vr_tab_ris(vr_indice_ris).vldivida := vr_vldivida_0301;
             vr_tab_ris(vr_indice_ris).vlvec180 := rw_crapris_dsctit.vlvec180;
             vr_tab_ris(vr_indice_ris).vlvec360 := rw_crapris_dsctit.vlvec360;
@@ -1349,7 +1362,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_tab_ris(vr_indice_ris).dtprxpar := rw_crapris_dsctit.dtprxpar;
             vr_tab_ris(vr_indice_ris).vlprxpar := rw_crapris_dsctit.vlprxpar;
             vr_tab_ris(vr_indice_ris).qtparcel := rw_crapris_dsctit.qtparcel;
-            vr_tab_ris(vr_indice_ris).dtvencop := rw_crapris_dsctit.dtvencop;
+            vr_tab_ris(vr_indice_ris).dtvencop := vr_dtvencop;
             -- Zera a variavel acumuladora
             vr_vldivida_0301 := 0;
           END IF;
