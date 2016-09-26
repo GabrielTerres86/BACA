@@ -232,7 +232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 09/11/2015
+  --  Data     : Julho/2013.                   Ultima atualizacao: 22/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -244,6 +244,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --             09/11/2015 - Ajustar a atualização do lote para gravar vr_qtinfoln
   --                          na qtinfoln nas procedures pc_trfsal_opcao_b e 
   --                          pc_trfsal_opcao_x (Douglas - Chamado 356338)
+  --
+  --             22/09/2016 - Arrumar validacao para horario limite de envio de ted na 
+  --                          procedure pc_trfsal_opcao_b (Lucas Ranghetti #500917)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -3153,7 +3156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Evandro
-      Data     : Dezembro/2006.                   Ultima atualizacao: 09/11/2015
+      Data     : Dezembro/2006.                   Ultima atualizacao: 22/09/2016
 
 
       Dados referentes ao programa:
@@ -3168,6 +3171,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
                   09/11/2015 - Ajustar a atualização do lote para gravar vr_qtinfoln
                                na qtinfoln (Douglas - Chamado 356338)
+                               
+                  22/09/2016 - Arrumar validacao para horario limite de envio de ted (Lucas Ranghetti #500917)
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -3304,7 +3309,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrctrlat   craplcs.idopetrf%TYPE  := '';
     vr_nrdcomto craplcs.nrdocmto%TYPE := 0;
     vr_inestcri INTEGER;
-    vr_clobxmlc CLOB;
+    vr_clobxmlc CLOB;    
+    vr_hrlimted NUMBER;
+
   BEGIN
 
     /* Busca dados da cooperativa */
@@ -3371,7 +3378,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     vr_horalimb := gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HOR_LIM_PORTAB');
 
-    IF vr_horalimb < TO_CHAR(SYSDATE, 'HH:MM') THEN
+    vr_hrlimted := to_char(to_date(vr_horalimb,'hh24:mi'),'sssss');
+    
+    IF vr_hrlimted < to_char(SYSDATE, 'sssss') THEN
        vr_cdcritic := 0;
        vr_dscritic := 'Horario limite para envio de ted --> ' || vr_horalimb;
        --Levantar Excecao

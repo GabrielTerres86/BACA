@@ -24,7 +24,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Dezembro/2006                      Ultima alteracao: 02/03/2016
+   Data    : Dezembro/2006                      Ultima alteracao: 22/09/2016
    
    Dados referentes ao programa:
 
@@ -146,7 +146,9 @@
 						   
               02/03/2016 - Ajuste no nrdocmto devido a problema com exibicao
                            de valores do Folha IB (Marcos-Supero). 						   
-                            
+                  
+              22/09/2016 - Alterar para exibir o glb_dscritic ao invés do glb_cdcritic
+                           (Lucas Ranghetti #500917)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1167,7 +1169,7 @@ PROCEDURE opcao_b:
           
   IF (glb_dscritic <> ? AND glb_dscritic <> "")  THEN
      DO:
-         MESSAGE glb_cdcritic. 
+         MESSAGE glb_dscritic. 
          DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
               PAUSE 3 NO-MESSAGE. 
               RETURN.            
