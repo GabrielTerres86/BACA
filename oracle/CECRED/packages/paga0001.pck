@@ -17846,7 +17846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 							'-usr '         || vr_user_ftp                               || ' ' || -- Usuario
 							'-pass '        || vr_pass_ftp                               || ' ' || -- Senha
 							'-arq '         || CHR(39) || vr_nmarqcnv || CHR(39)         || ' ' || -- Arquivo de cobrança
-							'-dir_local '   || vr_dir_coop || 'arq'                  || ' ' || -- /usr/coop/<cooperativa>/arq
+							'-dir_local '   || vr_dir_coop || '/arq'                  || ' ' || -- /usr/coop/<cooperativa>/arq
 							'-dir_remoto '  || vr_dir_retorno                            || ' ' || -- /<conta do cooperado>/RETORNO 
 							'-salvar '      || vr_dir_coop || '/salvar'                  || ' ' || -- /usr/coop/<cooperativa>/salvar  
 							'-log '         || vr_dir_coop || '/log/envio_arq_cob_ftp.log';          -- /usr/coop/<cooperativa>/log/cst_por_arquivo.log
