@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 30/05/2016
+  --  Data    : Abril/2006                     Ultima Atualizacao: 22/09/2016
   --
   --  Dados referentes ao programa:
   --
@@ -264,6 +264,8 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --					 (Adriano - M117).
   --
   --        30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  --
+  --		22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -861,7 +863,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                      ,pr_cdcritic OUT INTEGER      --Codigo da Critica
                                      ,pr_dscritic OUT VARCHAR2);  --Descricao da critica);
 
-  
+
 
   /* Procedure para processar liquidacao de titulos apos baixa */
   PROCEDURE pc_proc_liquid_apos_baixa (pr_idtabcob IN ROWID    --Rowid da Cobranca
@@ -889,7 +891,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                       ,pr_dscritic OUT VARCHAR2 --Descricao Critica
                                       ,pr_tab_lcm_consolidada IN OUT PAGA0001.typ_tab_lcm_consolidada); --Tabela lancamentos consolidada
 
-  
+
 
   /* Procedure para gerar arquivo para Cooperado */
   PROCEDURE pc_gera_arq_cooperado (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
@@ -957,7 +959,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                 ,pr_cdcritic OUT INTEGER              --Codigo Critica
                                 ,pr_dscritic OUT VARCHAR2);           --Descricao Critica
 
- 
+								  
   /* Procedure que gera dados para tt-lcm-consolidada  */
   PROCEDURE pc_prep_tt_lcm_consolidada (pr_idtabcob IN ROWID       -- ROWID da cobranca
                                        ,pr_cdocorre IN INTEGER     -- Codigo Ocorrencia
@@ -979,7 +981,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                       ,pr_cdcritic OUT INTEGER   --Codigo Critica
                                       ,pr_dscritic OUT VARCHAR2);--Descricao Critica
 
- 
+                                       
   /* Procedure para gravar retorno */
   PROCEDURE pc_grava_retorno (pr_cdcooper IN INTEGER                    --Codigo Cooperativa
                              ,pr_nrcnvcob IN INTEGER                    --Numero Convenio Cobranca
@@ -1069,7 +1071,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                            ,pr_cdcritic OUT INTEGER --Codigo Critica
                                            ,pr_dscritic OUT VARCHAR2);
 
-  
+										    
 										    
   /* Procedure para obter agendamento debitos */
   PROCEDURE pc_PAGA0001_obtem_agen_deb (pr_cdcooper  IN crapcop.cdcooper%TYPE -- Cooperativa
@@ -1113,7 +1115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 23/08/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 13/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1384,14 +1386,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        15/07/2016 - #433568 na procedure pc_executa_transferencia da PAGA0001 permitir que se gere o 
                     protocolo para os agendamentos feitos através do TAA (Carlos)
 
-	   18/07/2016 - Ajuste para incluir end if perdido no merge
-				    (Adriano)
-                                                                              
+	     18/07/2016 - Ajuste para incluir end if perdido no merge
+			   	          (Adriano)
+                    
 			 04/08/2016 - Alterado rotinas pc_gera_arq_coop_cnab240 e pc_gera_arq_coop_cnab400
 			              para tratar envio via ftp. (Reinert)
                     
        23/08/2016 - Incluir tratamento para autorizações suspensas na procedure
                     pc_debita_convenio_cecred (Lucas Ranghetti #499496)
+       13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
+                   (Adriano - SD 495293). 
+                                                                              
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -2250,7 +2255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                    ||   '<cdfinali>'||TO_CHAR(vr_tab_finalidades(vr_index).cdfinali)    ||'</cdfinali>'
                                                    ||   '<dsfinali>'||TO_CHAR(vr_tab_finalidades(vr_index).dsfinali)    ||'</dsfinali>'
                                                    ||   '<flgselec>'||TO_CHAR(vr_tab_finalidades(vr_index).flgselec)    ||'</flgselec>'
-                                                  || '</FINALIDADE>');
+                                                  || '</FINALIDADE>');	
 
       vr_index := vr_tab_finalidades.NEXT(vr_index);
       
@@ -11472,49 +11477,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                    ,pr_tab_agendto OUT typ_tab_agendto      --tabela de agendamento
                                    ,pr_cdcritic OUT INTEGER   --Codigo da Critica
                                    ,pr_dscritic OUT VARCHAR2) IS --Descricao da critica
-    -- ..........................................................................
-    --
-    --  Programa : pc_obtem_agend_debitos        Antiga: crps509.i -- obtem-agendamentos-debito
-    --  Sistema  : Rotinas Internet
-    --  Sigla    : INET
-    --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 01/02/2016
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Obter agendamentos de debitos.
+    /* ..........................................................................
+    
+      Programa : pc_obtem_agend_debitos        Antiga: crps509.i -- obtem-agendamentos-debito
+      Sistema  : Rotinas Internet
+      Sigla    : INET
+      Autor    : Alisson C. Berrido - AMcom
+      Data     : Junho/2013.                   Ultima atualizacao: 13/09/2016
+    
+      Dados referentes ao programa:
+    
+       Frequencia: Sempre que for chamado
+       Objetivo  : Obter agendamentos de debitos.
 
-    --   Alteracoes: 11/07/2013 - Alterada procedure 'obtem-agendamentos-debito' para
-    --                            informar cooperativa de origem da conta da transferencia
-    --                           (Lucas).
-    --
-    --               03/09/2014 - Implementado ajusta para migracao da Concredi -> Viacredi,
-    --                            Credimilsul -> Scrcred (Jean Michel).
-    --
-    --               15/01/2015 - Tratamento para considerar os lancamentos de debitos de
-    --                            convenios CECRED (apenas quando o processo nao estiver
-    --                            rodando).
-    --                            (Chamado 229249 # PRJ Melhoria) - (Fabricio)
-    --
-    --               16/09/2015 - Melhoria de performace, buscar dados do cooperado junto
-    --                            com a qury da craplau(Odirlei-Amcom)
-    --
-    --               03/11/2015 - Ajsutado cursor cr_craplau para mehorar performance
-    --                            Adicionado parametro de entrada pr_dtmovini.
-    --                            (Jorge/Fabricio) SD - 331331
-    --
-    --               18/11/2015 - Removido tratamento usando inproces, pois deve pegar todos
-    --                            os registros independente do inproces SD358495 (Odirlei-AMcom)
-    --
-    --               25/05/2016 - Ajuste para inclusão de novo parametro e ajustado leitura
-    --                            da craplau
-    --                            (Adriano - M117).
-    --
-    --               02/06/2016 - Corrigido leitura da craplau para buscar agendamentos 
-    --                            por tipo de acordo com programa origem
-    --                            (Adriano - M117).
-    -----------------------------------------------------------------------------
+       Alteracoes: 11/07/2013 - Alterada procedure 'obtem-agendamentos-debito' para
+                                informar cooperativa de origem da conta da transferencia
+                               (Lucas).
+    
+                   03/09/2014 - Implementado ajusta para migracao da Concredi -> Viacredi,
+                                Credimilsul -> Scrcred (Jean Michel).
+    
+                   15/01/2015 - Tratamento para considerar os lancamentos de debitos de
+                                convenios CECRED (apenas quando o processo nao estiver
+                                rodando).
+                                (Chamado 229249 # PRJ Melhoria) - (Fabricio)
+    
+                   16/09/2015 - Melhoria de performace, buscar dados do cooperado junto
+                                com a qury da craplau(Odirlei-Amcom)
+    
+                   03/11/2015 - Ajsutado cursor cr_craplau para mehorar performance
+                                Adicionado parametro de entrada pr_dtmovini.
+                                (Jorge/Fabricio) SD - 331331
+    
+                   18/11/2015 - Removido tratamento usando inproces, pois deve pegar todos
+                                os registros independente do inproces SD358495 (Odirlei-AMcom)
+    
+                   25/05/2016 - Ajuste para inclusão de novo parametro e ajustado leitura
+                                da craplau
+                                (Adriano - M117).
+    
+                   02/06/2016 - Corrigido leitura da craplau para buscar agendamentos 
+                                por tipo de acordo com programa origem
+                                (Adriano - M117).
+                
+                   13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
+                               (Adriano - SD 495293).       
+                                
+    -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
       --Cursores Locais
@@ -11559,6 +11568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               ,craplau.nrdconta
               ,craplau.cdtiptra
               ,craplau.nrctadst
+              ,craplau.cddbanco
               ,craplau.dslindig
               ,craplau.dscedent
               ,craplau.vllanaut
@@ -11608,14 +11618,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         AND   craptco.tpctatrf = pr_tpctatrf;
       rw_craptco cr_craptco%ROWTYPE;
 
+      --Cursor responsável por buscar contas favorecidas referente ao processo de TED
       CURSOR cr_crapcti (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
-                        ,pr_nrctatrf IN craplau.nrctadst%TYPE) IS
+                        ,pr_cddbanco IN craplau.cddbanco%TYPE
+                        ,pr_nrctatrf IN craplau.nrctadst%TYPE
+                        ,pr_cdageban IN craplau.cdageban%TYPE) IS
       SELECT c.nmtitula
         FROM crapcti c
        WHERE c.cdcooper = pr_cdcooper
          AND c.nrdconta = pr_nrdconta
-         AND c.nrctatrf = pr_nrctatrf;
+         AND c.cddbanco = pr_cddbanco
+         AND c.nrctatrf = pr_nrctatrf
+         AND c.cdageban = pr_cdageban;
       rw_crapcti cr_crapcti%ROWTYPE;
 
       --Variaveis Locais
@@ -11737,10 +11752,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             vr_dstransa := gene0002.fn_mask(rw_craplau.cdageban,'9999') || '/' ||
                            ltrim(gene0002.fn_mask_conta(rw_craplau.nrctadst));
             
-            --Selecionar o associado conta destino
+            --Verificar a conta de destino
             OPEN cr_crapcti(pr_cdcooper => rw_crapcop.cdcooper
                            ,pr_nrdconta => rw_craplau.nrdconta
-                           ,pr_nrctatrf => rw_craplau.nrctadst);
+                           ,pr_cddbanco => rw_craplau.cddbanco
+                           ,pr_nrctatrf => rw_craplau.nrctadst
+                           ,pr_cdageban => rw_craplau.cdageban);
+                                                        
             FETCH cr_crapcti INTO rw_crapcti;
             
             --Se encontrou
@@ -14179,7 +14197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   END pc_prep_tt_lcm_consolidada;
 
   /* Procedure que prepara retorno para cooperado  */
-  
+
 
   /* Procedure que prepara retorno para cooperado  */
   PROCEDURE pc_prep_retorno_cooperado (pr_idregcob IN ROWID --ROWID da cobranca
@@ -14341,7 +14359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END;
   END pc_prep_retorno_cooperado;
 
-  
+
 
   /* Procedure que prepara retorno para cooperativa */
   PROCEDURE pc_prepara_retorno_cooperativa (pr_idtabcob IN ROWID    --ROWID da cobranca
@@ -15535,7 +15553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END;
   END pc_cria_log_cobranca;
 
-  
+
 
   /* Procedure para preparar a remessa para banco */
   PROCEDURE pc_prep_remessa_banco (pr_cdcooper IN crapcob.cdcooper%TYPE  --Codigo Cooperativa
@@ -15828,7 +15846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END;
   END pc_cria_tab_remessa;
 
-  
+
 
   /* Procedure para processar liquidacao de titulos apos baixa */
   PROCEDURE pc_proc_liquid_apos_baixa (pr_idtabcob IN ROWID    --Rowid da Cobranca
@@ -16131,7 +16149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END;
   END pc_proc_liquid_apos_baixa;
 
-  
+
 
   /* Procedure para Gerar arquivo para cooperado cnab240 */
   PROCEDURE pc_gera_arq_coop_cnab240 (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
@@ -16151,7 +16169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 29/01/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -16205,8 +16223,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            (Douglas - Chamado 384140)
 	--
 	--               29/01/2016 - Ajuste que seja considerado no relacionamento entre
-     --                   as tabelas craprtc e crapret as datas de movimento e ocorrencia
-  --                     (Adriano - SD 391157).    
+    --                            as tabelas craprtc e crapret as datas de movimento e ocorrencia
+    --                            (Adriano - SD 391157).
+    --
+    --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
     -- .........................................................................
 
   BEGIN
@@ -16313,9 +16333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Selecionar Cobrancas
       CURSOR cr_crapcob2 (pr_cdcooper IN crapcob.cdcooper%type
                          ,pr_nrdconta IN crapcob.nrdconta%type
-                         ,pr_nrcnvcob IN crapcob.nrcnvcob%type
-                         ,pr_cdbandoc IN crapcob.cdbandoc%type
-                         ,pr_nrdctabb IN crapcob.nrdctabb%type
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
                          ,pr_incobran IN crapcob.incobran%type) IS
         SELECT  count(*) qtdreg
                ,nvl(sum(nvl(crapcob.vltitulo,0)),0) vltitulo
@@ -16323,8 +16341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
-        AND   crapcob.cdbandoc = pr_cdbandoc
-        AND   crapcob.nrdctabb = pr_nrdctabb
+        AND   crapcob.dtdpagto IS NULL
         AND   crapcob.incobran = pr_incobran;
       --Selecionar Cadastro Email
       CURSOR cr_crapcem (pr_cdcooper IN crapcem.cdcooper%type
@@ -16771,8 +16788,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           FOR rw_crapcob2 IN cr_crapcob2 (pr_cdcooper => rw_craprtc.cdcooper
                                          ,pr_nrdconta => rw_craprtc.nrdconta
                                          ,pr_nrcnvcob => rw_craprtc.nrcnvcob
-                                         ,pr_cdbandoc => rw_crapcco.cddbanco
-                                         ,pr_nrdctabb => rw_crapcco.nrdctabb
                                          ,pr_incobran => 0) LOOP
             --Incrementar quantidade e valor
             vr_qtcobsim:= nvl(vr_qtcobsim,0) + rw_crapcob2.qtdreg;
@@ -16874,7 +16889,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 							'-usr '         || vr_user_ftp                               || ' ' || -- Usuario
 							'-pass '        || vr_pass_ftp                               || ' ' || -- Senha
 							'-arq '         || CHR(39) || vr_nmarqcnv || CHR(39)         || ' ' || -- Arquivo de cobrança
-							'-dir_local '   || vr_dir_coop || '/upload'                  || ' ' || -- /usr/coop/<cooperativa>/upload
+							'-dir_local '   || vr_dir_coop || '/arq'                  || ' ' || -- /usr/coop/<cooperativa>/arq
 							'-dir_remoto '  || vr_dir_retorno                            || ' ' || -- /<conta do cooperado>/RETORNO 
 							'-salvar '      || vr_dir_coop || '/salvar'                  || ' ' || -- /usr/coop/<cooperativa>/salvar  
 							'-log '         || vr_dir_coop || '/log/envio_arq_cob_ftp.log';          -- /usr/coop/<cooperativa>/log/cst_por_arquivo.log
@@ -17033,7 +17048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 29/01/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -17068,9 +17083,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                            SD358050 (Odirlei-AMcom))
 	--
     --               29/01/2016 - Ajuste que seja considerado no relacionamento entre
-    --                           as tabelas craprtc e crapret as datas de movimento e ocorrencia
-  --                      (Adriano - SD 391157).
+    --                            as tabelas craprtc e crapret as datas de movimento e ocorrencia
+    --                            (Adriano - SD 391157).
     --
+    --		         22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
     -- .........................................................................
 
   BEGIN
@@ -17182,17 +17198,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       --Selecionar Cobrancas
       CURSOR cr_crapcob2 (pr_cdcooper IN crapcob.cdcooper%type
                          ,pr_nrdconta IN crapcob.nrdconta%type
-                         ,pr_nrcnvcob IN crapcob.nrcnvcob%type
-                         ,pr_nrdctabb IN crapcob.nrdctabb%type
-                         ,pr_cdbandoc IN crapcob.cdbandoc%type
+                         ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
                          ,pr_incobran IN crapcob.incobran%type) IS
         SELECT crapcob.vltitulo
         FROM crapcob
         WHERE crapcob.cdcooper = pr_cdcooper
         AND   crapcob.nrdconta = pr_nrdconta
         AND   crapcob.nrcnvcob = pr_nrcnvcob
-        AND   crapcob.cdbandoc = pr_cdbandoc
-        AND   crapcob.nrdctabb = pr_nrdctabb
+        AND   crapcob.dtdpagto IS NULL
         AND   crapcob.incobran = pr_incobran;
       --Selecionar Cadastro Email
       CURSOR cr_crapcem (pr_cdcooper IN crapcem.cdcooper%type
@@ -17731,8 +17744,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           FOR rw_crapcob2 IN cr_crapcob2 (pr_cdcooper => rw_craprtc.cdcooper
                                          ,pr_nrdconta => rw_craprtc.nrdconta
                                          ,pr_nrcnvcob => rw_craprtc.nrcnvcob
-                                         ,pr_nrdctabb => rw_crapcco.nrdctabb
-                                         ,pr_cdbandoc => rw_crapcco.cddbanco
                                          ,pr_incobran => 0) LOOP
             --Incrementar quantidade e valor
             vr_qtcobsim:= nvl(vr_qtcobsim,0) + 1;
@@ -17835,7 +17846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 							'-usr '         || vr_user_ftp                               || ' ' || -- Usuario
 							'-pass '        || vr_pass_ftp                               || ' ' || -- Senha
 							'-arq '         || CHR(39) || vr_nmarqcnv || CHR(39)         || ' ' || -- Arquivo de cobrança
-							'-dir_local '   || vr_dir_coop || '/upload'                  || ' ' || -- /usr/coop/<cooperativa>/upload
+							'-dir_local '   || vr_dir_coop || 'arq'                  || ' ' || -- /usr/coop/<cooperativa>/arq
 							'-dir_remoto '  || vr_dir_retorno                            || ' ' || -- /<conta do cooperado>/RETORNO 
 							'-salvar '      || vr_dir_coop || '/salvar'                  || ' ' || -- /usr/coop/<cooperativa>/salvar  
 							'-log '         || vr_dir_coop || '/log/envio_arq_cob_ftp.log';          -- /usr/coop/<cooperativa>/log/cst_por_arquivo.log
@@ -20441,63 +20452,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           
           -- GERAR PROTOCOLO
           -->Campos gravados na crappro para visualizacao na internet
-          OPEN cr_gnconve (rw_craplau.cdhistor);
-            FETCH cr_gnconve INTO rw_gnconve;
-          CLOSE cr_gnconve;
+            OPEN cr_gnconve (rw_craplau.cdhistor);
+              FETCH cr_gnconve INTO rw_gnconve;
+            CLOSE cr_gnconve;
 
-          vr_dsinfor1 := 'Pagamento';
-          vr_dsinfor2 := ' ';
-          vr_dsinfor3 := 'Convênio: '||rw_gnconve.nmempres||
-                  '#Número Identificador:'||rw_crapatr.cdrefere ||'#'|| rw_crapatr.dshisext;
+            vr_dsinfor1 := 'Pagamento';
+            vr_dsinfor2 := ' ';
+            vr_dsinfor3 := 'Convênio: '||rw_gnconve.nmempres||
+                           '#Número Identificador:'||rw_crapatr.cdrefere ||'#'|| rw_crapatr.dshisext;
 
-          --> Se TAA 
-          IF rw_craplau.dsorigem= 'TAA' THEN
-            vr_dsinfor3:= vr_dsinfor3 ||'#TAA: '||gene0002.fn_mask(rw_craplau.cdcoptfn,'9999')||'/'||
-                              gene0002.fn_mask(rw_craplau.cdagetfn,'9999')||'/'||
-                              gene0002.fn_mask(rw_craplau.nrterfin,'9999');
-          END IF;
-                
-          --> Gera um protocolo para o pagamento
-          GENE0006.pc_gera_protocolo(pr_cdcooper => rw_craplau.cdcooper  --> Código da cooperativa
-                        ,pr_dtmvtolt => rw_craplot.dtmvtolt  --> Data movimento
-                        ,pr_hrtransa => gene0002.fn_busca_time --> Hora da transação
-                        ,pr_nrdconta => rw_craplau.nrdconta  --> Número da conta
-                        ,pr_nrdocmto => vr_nrdocmto          --> Número do documento
-                        ,pr_nrseqaut => vr_nrautdoc          --> Número da sequencia
-                        ,pr_vllanmto => rw_craplau.vllanaut  --> Valor lançamento
-                        ,pr_nrdcaixa => 900                  --> Número do caixa
-                        ,pr_gravapro => TRUE                 --> Controle de gravação do crappro
-                        ,pr_cdtippro => 15 -- convenio       --> Código do tipo protocolo
-                        ,pr_dsinfor1 => vr_dsinfor1          --> Descrição 1
-                        ,pr_dsinfor2 => vr_dsinfor2          --> Descrição 2
-                        ,pr_dsinfor3 => vr_dsinfor3          --> Descrição 3
-                        ,pr_dscedent => rw_gnconve.nmempres  --> Descritivo Cedente
-                        ,pr_flgagend => FALSE                --> Controle de agenda
-                        ,pr_nrcpfope => rw_craplau.nrcpfope  --> Número de operação
-                        ,pr_nrcpfpre => rw_craplau.nrcpfpre  --> Número pré operação
-                        ,pr_nmprepos => rw_craplau.nmprepos  --> Nome
-                        ,pr_dsprotoc => vr_dsprotoc          --> Descrição do protocolo
-                        ,pr_dscritic => vr_dscritic          --> Descrição crítica
-                        ,pr_des_erro => vr_des_erro);        --> Descrição dos erros de processo
-          --Se ocorreu erro
-          IF vr_dscritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END IF;
-                
-          --> Armazena protocolo na autenticacao 
-          BEGIN
-            UPDATE crapaut 
-              SET crapaut.dsprotoc = vr_dsprotoc
-            WHERE crapaut.ROWID = vr_nrdrecid;
-          EXCEPTION
-            WHEN OTHERS THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao atualizar registro da autenticacao. '||sqlerrm;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-          END;
-
+            --> Se TAA 
+            IF rw_craplau.dsorigem= 'TAA' THEN
+              vr_dsinfor3:= vr_dsinfor3 ||'#TAA: '||gene0002.fn_mask(rw_craplau.cdcoptfn,'9999')||'/'||
+                                                    gene0002.fn_mask(rw_craplau.cdagetfn,'9999')||'/'||
+                                                    gene0002.fn_mask(rw_craplau.nrterfin,'9999');
+            END IF;
+            
+            --> Gera um protocolo para o pagamento
+            GENE0006.pc_gera_protocolo(pr_cdcooper => rw_craplau.cdcooper  --> Código da cooperativa
+                                      ,pr_dtmvtolt => rw_craplot.dtmvtolt  --> Data movimento
+                                      ,pr_hrtransa => gene0002.fn_busca_time --> Hora da transação
+                                      ,pr_nrdconta => rw_craplau.nrdconta  --> Número da conta
+                                      ,pr_nrdocmto => vr_nrdocmto          --> Número do documento
+                                      ,pr_nrseqaut => vr_nrautdoc          --> Número da sequencia
+                                      ,pr_vllanmto => rw_craplau.vllanaut  --> Valor lançamento
+                                      ,pr_nrdcaixa => 900                  --> Número do caixa
+                                      ,pr_gravapro => TRUE                 --> Controle de gravação do crappro
+                                      ,pr_cdtippro => 15 -- convenio       --> Código do tipo protocolo
+                                      ,pr_dsinfor1 => vr_dsinfor1          --> Descrição 1
+                                      ,pr_dsinfor2 => vr_dsinfor2          --> Descrição 2
+                                      ,pr_dsinfor3 => vr_dsinfor3          --> Descrição 3
+                                      ,pr_dscedent => rw_gnconve.nmempres  --> Descritivo Cedente
+                                      ,pr_flgagend => FALSE                --> Controle de agenda
+                                      ,pr_nrcpfope => rw_craplau.nrcpfope  --> Número de operação
+                                      ,pr_nrcpfpre => rw_craplau.nrcpfpre  --> Número pré operação
+                                      ,pr_nmprepos => rw_craplau.nmprepos  --> Nome
+                                      ,pr_dsprotoc => vr_dsprotoc          --> Descrição do protocolo
+                                      ,pr_dscritic => vr_dscritic          --> Descrição crítica
+                                      ,pr_des_erro => vr_des_erro);        --> Descrição dos erros de processo
+            --Se ocorreu erro
+            IF vr_dscritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+            
+            --> Armazena protocolo na autenticacao 
+            BEGIN
+              UPDATE crapaut 
+                 SET crapaut.dsprotoc = vr_dsprotoc
+               WHERE crapaut.ROWID = vr_nrdrecid;
+            EXCEPTION
+              WHEN OTHERS THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Erro ao atualizar registro da autenticacao. '||sqlerrm;
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END;
+          
         END IF;
       END IF;
     EXCEPTION
@@ -20791,7 +20802,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       Sistema  : Rotinas Pagamento
       Sigla    : PAGA
       Autor    : 
-      Data     :                                 Ultima atualizacao: 16/06/2016
+      Data     :                                 Ultima atualizacao: 13/09/2016
 
       Dados referentes ao programa:
 
@@ -20812,15 +20823,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                 variável vr_dscritic
                                 (Adriano).
                                 
+                   13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
+                               (Adriano - SD 495293).                                            
+                                
      ..........................................................................*/
 
 
   BEGIN
     DECLARE
      
+      --Cursor responsável por buscar contas favorecidas referente ao processo de TED
       CURSOR cr_crapcti (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
-                        ,pr_nrctatrf IN craplau.nrctadst%TYPE) IS
+                        ,pr_cddbanco IN craplau.cddbanco%TYPE
+                        ,pr_nrctatrf IN craplau.nrctadst%TYPE
+                        ,pr_cdageban IN craplau.cdageban%TYPE) IS
       SELECT c.nmtitula
             ,c.nrcpfcgc
             ,c.inpessoa
@@ -20828,17 +20845,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         FROM crapcti c
        WHERE c.cdcooper = pr_cdcooper
          AND c.nrdconta = pr_nrdconta
-         AND c.nrctatrf = pr_nrctatrf;
-      rw_crapcti cr_crapcti%ROWTYPE;
-          
+         AND c.cddbanco = pr_cddbanco
+         AND c.nrctatrf = pr_nrctatrf
+         AND c.cdageban = pr_cdageban;
+      rw_crapcti cr_crapcti%ROWTYPE;          
       
       --Selecionar informacoes dos bancos
       CURSOR cr_crapban (pr_cdbccxlt IN crapban.cdbccxlt%type) IS
-        SELECT crapban.nmresbcc
-              ,crapban.nmextbcc
-              ,crapban.nrispbif
-        FROM crapban
-        WHERE crapban.cdbccxlt = pr_cdbccxlt;
+      SELECT crapban.nmresbcc
+            ,crapban.nmextbcc
+            ,crapban.nrispbif
+      FROM crapban
+      WHERE crapban.cdbccxlt = pr_cdbccxlt;
       rw_crapban cr_crapban%ROWTYPE;
       
       --Selecionar informacoes dos lancamentos automaticos
@@ -21099,7 +21117,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               --Verificar a conta de destino
               OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => rw_craplau.nrdconta
-                             ,pr_nrctatrf => rw_craplau.nrctadst);
+                             ,pr_cddbanco => rw_craplau.cddbanco
+                             ,pr_nrctatrf => rw_craplau.nrctadst
+                             ,pr_cdageban => rw_craplau.cdageban);
                                
               FETCH cr_crapcti INTO rw_crapcti;
 
@@ -21259,7 +21279,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             --Verificar a conta de destino
             OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
                            ,pr_nrdconta => rw_craplau.nrdconta
-                           ,pr_nrctatrf => rw_craplau.nrctadst);
+                           ,pr_cddbanco => rw_craplau.cddbanco
+                           ,pr_nrctatrf => rw_craplau.nrctadst
+                           ,pr_cdageban => rw_craplau.cdageban);
                                  
             FETCH cr_crapcti INTO rw_crapcti;
 
@@ -21380,7 +21402,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           --Verificar a conta de destino
           OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => rw_craplau.nrdconta
-                         ,pr_nrctatrf => rw_craplau.nrctadst);
+                         ,pr_cddbanco => rw_craplau.cddbanco
+                         ,pr_nrctatrf => rw_craplau.nrctadst
+                         ,pr_cdageban => rw_craplau.cdageban);
                                            
           FETCH cr_crapcti INTO rw_crapcti;
 
