@@ -15,10 +15,10 @@
                             
 				14/03/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
 							 PinPad Novo (Lucas Lunelli - [PROJ290])			  
-
+  
 			   05/09/2016 - Melhoria para usar copiar e colar o numero de conta
 			                nas rotinas do caixa online SD 474875 (Tiago/Elton).                                          
-  
+
               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).  
 -->
 
@@ -549,7 +549,7 @@ function solicitaSenhaPinpadNovo(oPinpad, valor) {
 		</tr>
 		<tr id="divSenhaCartao">
 		  <td class="linhaform"  >Senha Cartão:</td>
-		  <td ><input type="password" name="v_dssencrd" id="v_dssencrd" size="10" class="input" maxlength="6" onmousedown="return false;" onBlur="if (this.value != '') { document.getElementById('divProcessando').style.display = 'block'; document.form1.ok.click(); } else { v_dsimpvia1.focus(); }"  onFocus="solicitaSenhaPinpadNovo('', this.value);" onKeyDown="JavaScript:validaInteiro(event);" onkeyup="JavaScript:enviaFormularioPinPad(this, event);" style="text-align: right"></td>
+		  <td ><input type="password" name="v_dssencrd" id="v_dssencrd" size="10" class="input" maxlength="6" onmousedown="return false;" onBlur="if (this.value != '') { } else { v_dsimpvia1.focus(); }"  onFocus="solicitaSenhaPinpadNovo('', this.value);" onKeyDown="JavaScript:validaInteiro(event);" style="text-align: right"></td>
 		</tr>				
 		<tr>
 		  <td class="linhaform"  >Código:</td>

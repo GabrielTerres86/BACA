@@ -5,7 +5,7 @@
   
               04/09/2013 - Nova forma de chamar as agências, de PAC agora 
                            a escrita será PA (André Euzébio - Supero).
-
+						   
 			  27/06/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                            PinPad Novo (Lucas Lunelli - [PROJ290])						   
 
@@ -13,6 +13,8 @@
 			               nas rotinas do caixa online SD 474875 (Tiago/Elton).               
     
               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).             
+				
+			  22/09/2016 - Correção botão pinpad (Lucas Lunelli - [PROJ290])	
 -->
 
 <html>
@@ -380,311 +382,311 @@ function submitForm(limpa_sel) {
 
 <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onload="JavaScript:initPage();" onkeyup="callBlass(event); callBLini(event); callBLsal(event);">
     <form name="form1" onkeydown="change_page(event)" method=post>
+	
+		<input type="hidden" name="v_msg">
+		<input type="hidden" name="vh_foco">
+		<input type="hidden" name="v_btn_ok" value="false">
+		<input type="hidden" name="v_btn_cancela" value="false">
+		
+		<input type="hidden" name="v_infocry">
+		<input type="hidden" name="v_chvcry">
+		<input type="hidden" name="v_talao_sel">
+		<input type="hidden" name="v_nrini_sel">
+		<input type="hidden" name="v_nrfin_sel">
+		<input type="hidden" name="v_nrdocard" id="v_nrdocard">
 
-        <input type="hidden" name="v_msg">
-        <input type="hidden" name="vh_foco">
-        <input type="hidden" name="v_btn_ok" value="false">
-        <input type="hidden" name="v_btn_cancela" value="false">
+		<input type="hidden" name="v_nrtalao">
+		<input type="hidden" name="v_nrinicial">
+		<input type="hidden" name="v_nrfinal">
 
-        <input type="hidden" name="v_infocry">
-        <input type="hidden" name="v_chvcry">
-        <input type="hidden" name="v_talao_sel">
-        <input type="hidden" name="v_nrini_sel">
-        <input type="hidden" name="v_nrfin_sel">
-        <input type="hidden" name="v_nrdocard" id="v_nrdocard">
-
-        <input type="hidden" name="v_nrtalao">
-        <input type="hidden" name="v_nrinicial">
-        <input type="hidden" name="v_nrfinal">
-
-        <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
-        <div align="center">
-            <center>
-                <table width="100%" class=cabtab>
-                    <tr>
+<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
+<div align="center">
+  <center>
+  <table width="100%" class=cabtab>
+    <tr>
                         <td width="15%" align="center"> <input type="text" name="v_coop" size="11" class="transp" readonly></td>
                         <td width="20%" align="center"> PA&nbsp; <input type="text" name="v_pac" size="1" class="transp" readonly></td>
                         <td width="20%" align="center"> CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readonly></td>
                         <td width="30%" align="center"> OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readonly></td>
                         <td width="15%" align="center"> <input type="text" name="v_data" size="10" class="transp" readonly></td>
-                    </tr>
-                </table>
-            </center>
-        </div>
-        <div align="center">
-            <center>
-                <table width="100%" class=cabtab>
-                    <tr>
-                        <td class=titulo>SOLICITAÇÃO TALÕES</td>
-                        <td width="21%" class=programa align="right">P.005&nbsp; V.1.00</td>
-                    </tr>
-                </table>
-            </center>
-        </div>
-        <div align="center">
-            <center>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
+  <center>
+  <table width="100%" class=cabtab>
+    <tr>
+      <td class=titulo>SOLICITAÇÃO TALÕES</td>
+      <td width="21%" class=programa align="right">P.005&nbsp; V.1.00</td>
+    </tr>
+  </table>
+  </center>
+</div>
+<div align="center">
+  <center>
                 <table cellspacing=0 cellpadding=0 width=100% class=tcampo>
-                    <tr>
-                        <td width="100%" valign="middle">
-
-                            <div id="divTpEntrega">
+					<tr>						
+						<td width="100%" valign="middle">
+						
+							<div id="divTpEntrega">
                                 <table cellspacing="0" cellpadding="1" width="100%">
-                                    <tr>
-                                        <td height="10px"></td>
-                                        <td height="10px"></td>
-                                        <td height="10px"></td>
-                                        <td height="10px"></td>
-                                    </tr>
-                                    <tr>
-                                        <td width="250px">&nbsp;</td>
+									<tr>											
+										<td height="10px"></td>
+										<td height="10px"></td>
+										<td height="10px"></td>
+										<td height="10px"></td>
+									</tr>
+									<tr>
+										<td width="250px">&nbsp;</td>
                                         <td align="left" class="linhaform" width="200px"><input type="radio" name="v_tpentrega" id="v_tpentrega1" value="yes" onclick="JavaScript: eliminaDivTaloes(); formataTpEntrega(this.value, true);" checked> Titular/Procurador </td>
-                                        <td style="width:50px">&nbsp;</td>
+										<td style="width:50px">&nbsp;</td>
                                         <td align="left" class="linhaform"><input type="radio" name="v_tpentrega" id="v_tpentrega2" value="no" onclick="JavaScript: eliminaDivTaloes(); formataTpEntrega(this.value, true);"> Terceiro </td>
-                                    </tr>
-                                    <tr>
-                                        <td height="10px"></td>
-                                        <td height="10px"></td>
-                                        <td height="10px"></td>
-                                        <td height="10px"></td>
-                                    </tr>
-                                </table>
-
-                            </div>
-
-                            <div id="divOpcoes">
-                                <center>
+									</tr>
+									<tr>											
+										<td height="10px"></td>
+										<td height="10px"></td>
+										<td height="10px"></td>
+										<td height="10px"></td>
+									</tr>
+								</table>
+								
+							</div>
+														
+							<div id="divOpcoes">
+								<center>								
                                     <table cellspacing="0" cellpadding="1" class=tcampo width="100%">
-                                        <tr>
-                                            <td width="250px">&nbsp;</td>
+										<tr>
+											<td width="250px">&nbsp;</td>
                                             <td align="left" class="linhaform" width="200px"><input type="radio" name="v_opcao" id="v_opcao1" value="R" onclick="JavaScript: eliminaDivTaloes(); selectOpcao('R');" checked> Requisição </td>
                                             <td style="width:50px">&nbsp;</td>
                                             <td align="left" class="linhaform"><input type="radio" name="v_opcao" id="v_opcao2" value="C" onclick="JavaScript: eliminaDivTaloes(); selectOpcao('C');"> Cartão</td>
-                                        </tr>
-                                    </table>
-                                </center>
-                            </div>
-
-                            <div align="center" id="divCamposTerceiro" style="display:none;">
-                                <center>
+										</tr>
+									</table>
+								</center>
+							</div>
+							
+							<div align="center" id="divCamposTerceiro" style="display:none;">
+								<center>
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">&nbsp;</td>
-                                            <td width="71%" colspan="3">&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">CPF Terceiro:</td>
-                                            <td width="71%" colspan="3">
+										<tr>											
+											<td width="20%" align="right" class="linhaform">&nbsp;</td>
+											<td width="71%" colspan="3">&nbsp;</td>
+										</tr>
+										<tr>
+											<td width="20%" align="right" class="linhaform">CPF Terceiro:</td>
+											<td width="71%" colspan="3">
                                                 <input type="text" name="v_nrcpfcgc" onkeydown="JavaScript:validaInteiro(event);" onchange="limpaNomeTerceiro(); submitForm(true);" style="text-align: right" maxlength="11" size="20" class="input">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">Nome Terceiro:</td>
-                                            <td width="71%" colspan="3">
-                                                <input type="text" name="v_dsnomter" size="40" class=input style="font-weight: bold">
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </center>
-                            </div>
-
-                            <div align="center">
-                                <center>
+											</td>
+										</tr>		
+  <tr>
+											<td width="20%" align="right" class="linhaform">Nome Terceiro:</td>
+											<td width="71%" colspan="3">
+												<input type="text" name="v_dsnomter" size="40" class=input style="font-weight: bold">
+											</td>
+										</tr>		
+									</table>
+								</center>
+							</div>
+													
+      <div align="center">
+        <center>
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">&nbsp;</td>
-                                            <td width="71%" colspan="3">&nbsp;</td>
-                                        </tr>
-                                        <tr id="trCartao">
-                                            <td class="linhaform" align="right" width="20%">Cartão:</td>
+        <tr>
+          <td width="20%" align="right" class="linhaform">&nbsp;</td>
+          <td width="71%" colspan="3">&nbsp;</td>
+        </tr>
+										<tr id="trCartao">
+											<td class="linhaform" align="right" width="20%">Cartão:</td>
                                             <td><input type="password" name="v_cartao" id="v_cartao" size="54" class="input" maxlength="36" onfocus="if(this.value.length <= 0) { lerCartaoPinpadNovo(''); } " onblur="if(this.value.length <= 0) { v_opcao2.focus(); }" onkeydown="JavaScript:validaInteiro(event);" onkeyup="if (this.value.length == 36){submitForm(true);}" onchange="JavaScript: limpaCampos(); submitForm(true);" onclick="lerCartaoPinpadNovo('');" style="text-align: right"></td>
-                                        </tr>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">Cta.Cheque/Dv:</td>
-                                            <td width="71%" colspan="3">
+										</tr>
+        <tr>
+          <td width="20%" align="right" class="linhaform">Cta.Cheque/Dv:</td>
+											<td width="71%" colspan="3">
                                                 <input type="text" id="v_conta" name="v_conta" style="text-align: right"
                                                        maxlength="10" size="10" class="input">
-                                                <input type="text" name="v_nome" size="40" class=input style="font-weight: bold" disabled>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>&nbsp; </td>
-                                            <td>&nbsp; </td>
-                                        </tr>
-                                    </table>
-                                </center>
-                            </div>
-
-                            <div align="center">
-                                <center>
+            <input type="text" name="v_nome" size="40" class=input style="font-weight: bold" disabled>
+          </td>
+        </tr>		
+		<tr>
+											<td>&nbsp; </td>
+											<td>&nbsp; </td>
+		</tr>		
+									</table>
+								</center>
+							</div>		
+							
+							<div align="center">
+								<center>	
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
-                                        <tr>
-                                            <td>&nbsp; </td>
-                                            <td>&nbsp; </td>
-                                        </tr>
-                                        <tr>
-                                            <td width="20%" align="right"><input type="radio" value="yes" name="radio" onclick="submitForm(true);" checked></td>
-                                            <td width="71%" class="linhaform" colspan="3">Normal</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="20%" align="right"><input type="radio" value="no" name="radio" onclick="submitForm(true);"></td>
-                                            <td width="71%" class="linhaform" colspan="3">TB</td>
-                                        </tr>
-                                    </table>
-                                </center>
-                            </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                            <div align="center" id="divBanco">
-                                <center>
+		<tr>
+											<td>&nbsp; </td>
+											<td>&nbsp; </td>
+		</tr>		
+        <tr>
+											<td width="20%" align="right"><input type="radio" value="yes" name="radio" onclick="submitForm(true);" checked></td>
+          <td width="71%" class="linhaform" colspan="3">Normal</td>
+        </tr>
+        <tr>
+											<td width="20%" align="right"><input type="radio" value="no" name="radio" onclick="submitForm(true);"></td>
+          <td width="71%" class="linhaform" colspan="3">TB</td>
+        </tr>
+									</table>
+								</center>
+							</div>		
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							<div align="center" id="divBanco">
+								<center>	
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">Talonários a solicitar:</td>
+        <tr>
+											<td width="20%" align="right" class="linhaform">Talonários a solicitar:</td>
                                             <td width="71%" colspan="3"><input type="text" name="v_talao" onkeydown="JavaScript:validaInteiro(event)" maxlength="3" size="10" class="input"></td>
-                                        </tr>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">&nbsp;Banco:</td>
-                                            <td width="11%">
+        </tr>
+        <tr>
+          <td width="20%" align="right" class="linhaform">&nbsp;Banco:</td>
+          <td width="11%">
                                                 <input type="text" name="v_banco" onkeydown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input" onchange="submitForm(true);">
-                                            </td>
-                                            <td width="10%" align="right" class="linhaform"> &nbsp;Agencia:</td>
-                                            <td>
+		  </td>
+											<td width="10%" align="right" class="linhaform"> &nbsp;Agencia:</td>
+		  <td> 
                                                 <input type="text" name="v_agencia" onkeydown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input" disabled>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>&nbsp; </td>
-                                            <td>&nbsp; </td>
-                                        </tr>
-                                    </table>
-                                </center>
-                            </div>
-
-
-
-
-                            <div align="center" id="divTaloes" style="display:none;">
-                                <center>
+		  </td>
+        </tr>
+										<tr>
+											<td>&nbsp; </td>
+											<td>&nbsp; </td>
+										</tr>
+									</table>
+								</center>
+							</div>
+							
+							
+			
+							
+							<div align="center" id="divTaloes" style="display:none;">
+								<center>	
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo id="taloes_cab">
-                                        <tr>
-                                            <td width="22%" align="right" class="linhaform">&nbsp;</td>
-                                            <td class="linhaform">&nbsp;</td>
-                                            <td class="linhaform">&nbsp;</td>
-                                            <td class="linhaform">&nbsp;</td>
-                                            <td class="linhaform">&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="22%" align="right" class="linhaform">Talon&aacute;rios a entregar:</td>
-                                            <td width="12%" align="center" class="linhaform"><b>Tal&atilde;o</b></td>
-                                            <td width="12%" align="center" class="linhaform"><b>Inicial</b></td>
-                                            <td width="12%" align="center" class="linhaform"><b>Final</b></td>
-                                            <td align="center" class="linhaform">&nbsp;</td>
-                                        </tr>
-                                    </table>
+        <tr>
+											<td width="22%" align="right" class="linhaform">&nbsp;</td>
+											<td class="linhaform">&nbsp;</td>
+											<td class="linhaform">&nbsp;</td>
+											<td class="linhaform">&nbsp;</td>
+											<td class="linhaform">&nbsp;</td>
+										</tr>
+										<tr>
+											<td width="22%" align="right" class="linhaform">Talon&aacute;rios a entregar:</td>
+											<td width="12%" align="center" class="linhaform"><b>Tal&atilde;o</b></td>
+											<td width="12%" align="center" class="linhaform"><b>Inicial</b></td>
+											<td width="12%" align="center" class="linhaform"><b>Final</b></td>
+											<td align="center" class="linhaform">&nbsp;</td>
+										</tr>																				
+									</table>
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo id="taloes"></table>
-                                </center>
-                            </div>
-
-                            <div align="center" id="divFormularioContinuo">
-                                <center>
+								</center>
+							</div>
+			
+							<div align="center" id="divFormularioContinuo">
+								<center>	
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="20%" align="right" class="linhaform">&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td align="right" width="22%">&nbsp;Para Formul&aacute;rio Cont&iacute;nuo:</td>
-                                            <td align="right" width="8%">&nbsp;Inicial:</td>
+										<tr>
+											<td width="20%" align="right" class="linhaform">&nbsp;</td>
+										</tr>
+										<tr>
+											<td width="20%" align="right" class="linhaform">&nbsp;</td>
+										</tr>
+        <tr>
+											<td align="right" width="22%">&nbsp;Para Formul&aacute;rio Cont&iacute;nuo:</td>
+											<td align="right" width="8%">&nbsp;Inicial:</td>
                                             <td align="left" width="8%">
                                                 <input type="text" name="v_numini" onkeydown="JavaScript:validaInteiro(event);" onkeyup="desabilitaTaloes();" maxlength="8" size="10" class="input">
-                                            </td>
-                                            <td align="right" width="7%"> Final:</td>
-                                            <td align="left">
+		  </td>
+											<td align="right" width="7%"> Final:</td>
+											<td align="left">
                                                 <input type="text" name="v_numfin" onkeydown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input">
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </center>
-                            </div>
-
-
-                            <div align="center" id="divSenhaCartao">
-                                <center>
+	      </td>
+        </tr>
+									</table>
+								</center>
+							</div>
+							
+							
+							<div align="center" id="divSenhaCartao">
+								<center>	
                                     <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
-                                        <tr>
-                                            <td width="22%" align="right" class="linhaform">&nbsp;</td>
-                                            <td align="right" class="linhaform">&nbsp;</td>
-                                        </tr>
-                                        <tr>
-                                            <td width="22%" class="linhaform" align="right">Senha Cartão:</td>
-                                            <td> <input type="password" name="v_dssencrd" id="v_dssencrd" size="10" class="input" maxlength="6" onmousedown="return false;" onfocus="solicitaSenhaPinpadNovo('', this.value);" onblur="if (this.value != '') { document.getElementById('divProcessando').style.display = 'block'; document.form1.ok.click(); }" onkeydown="JavaScript:validaInteiro(event);" onkeyup="JavaScript:enviaFormularioPinPad(this, event);" style="text-align: right"></td>
-                                        </tr>
-                                    </table>
-                                </center>
-                            </div>
-
-
-                            <div id="divBotao" style="display:block">
-                                <table width="100%">
-                                    <tr>
-                                        <td>&nbsp; </td>
-                                    </tr>
-                                    <tr>
-                                        <td width="100%" align="middle" class="linhaform" colspan="2">
-                                            <input type="button" value="Ok" name="ok" class="button" onclick="document.form1.ok.disabled='true';document.form1.v_btn_ok.value='true'; submitForm(false);">
-                                            <input type="button" value="Cancelar" name="cancela" class="button" onclick="document.form1.cancela.disabled='true'; document.form1.v_btn_cancela.value='true'; submitForm(false);">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="linhaform" colspan="2"><hr></td>
-                                    </tr>
-                                </table>
-                            </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        </td>
-                    </tr>
-                </table>
-            </center>
+        <tr>
+											<td width="22%" align="right" class="linhaform">&nbsp;</td>
+											<td align="right" class="linhaform">&nbsp;</td>
+        </tr>
+        <tr>
+											<td width="22%" class="linhaform" align="right">Senha Cartão:</td>
+											<td> <input type="password" name="v_dssencrd" id="v_dssencrd" size="10" class="input" maxlength="6" onmousedown="return false;" onFocus="solicitaSenhaPinpadNovo('', this.value);" onBlur="if (this.value != '') { }" onKeyDown="JavaScript:validaInteiro(event);" style="text-align: right"></td>											
+        </tr>
+									</table>
+								</center>
+							</div>
+							
+							
+							<div id="divBotao" style="display:block">
+								<table width="100%">
+        <tr>
+										<td>&nbsp; </td>
+        </tr>
+        <tr>
+										<td width="100%" align="middle" class="linhaform" colspan="2">
+											<input type="button" value="Ok" name="ok" class="button" onclick="document.form1.ok.disabled='true';document.form1.v_btn_ok.value='true'; submitForm(false);">
+											<input type="button" value="Cancelar" name="cancela" class="button" onclick="document.form1.cancela.disabled='true'; document.form1.v_btn_cancela.value='true'; submitForm(false);">
+										</td>
+        </tr>
+        <tr>
+										<td class="linhaform" colspan="2"><hr></td>
+        </tr>
+      </table>
         </div>
-        <div align="center">
-            <table width="100%">
-                <tr>
-                    <td align="right" class="linhaform">
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+							
+						</td>
+					</tr>
+</table>      
+  </center>
+</div>
+ <div align="center">
+  <table width="100%">
+      <tr>
+         <td align="right" class="linhaform">
                         <input type="button" value="Estorno" name="estorno" class="button" onclick="location='crap006.html'">
-                    </td>
-                </tr>
-            </table>
-        </div>
-    </form>
+					</td>
+      </tr>
+  </table>      
+</div>
+</form>
 </body>
 </html>
 
