@@ -1920,7 +1920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).cdufsaca,
                 pr_tab_crapcob(vr_idx_cob).nrcepsac,
                 nvl(trim(pr_tab_crapcob(vr_idx_cob).nmdavali),' '),
-                pr_tab_crapcob(vr_idx_cob).nrinsava,
+                nvl(pr_tab_crapcob(vr_idx_cob).nrinsava,0),
                 pr_tab_crapcob(vr_idx_cob).cdtpinav,
                 nvl(trim(pr_tab_crapcob(vr_idx_cob).dsdinstr),' '),
                 pr_tab_crapcob(vr_idx_cob).dsusoemp,
