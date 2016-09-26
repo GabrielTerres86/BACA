@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 11/01/2013
  * OBJETIVO     : Mostrar tela MANCCF
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 29/08/2016 - #481330 Ajustes de navegação, validações e layout (Carlos)
  * --------------
  */
 ?>
@@ -36,7 +36,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="<? echo $nometela ?>.js"></script>
+		<script type="text/javascript" src="<? echo $nometela ?>.js?key=<?php echo time();?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
