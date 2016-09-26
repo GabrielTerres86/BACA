@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 06/09/2016
+     Data    : Junho/2014                       Ultima atualizacao: 20/09/2016
 
      Dados referentes ao programa:
 
@@ -126,6 +126,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                               
                  06/09/2016 - Incluir tratamento para lock do lote na procedure 
                               pc_cria_lancamentos_deb (Lucas Ranghetti #518312)
+                              
+                 20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt na procedure 
+                              pc_cria_lancamentos_deb (Lucas Ranghetti/Fabricio #524588)
   ......................................................................................................... */
 
   -- VARIAVEIS A UTILIZAR
@@ -394,7 +397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : 
-   Data    :                        Ultima atualizacao: 06/09/2016
+   Data    :                        Ultima atualizacao: 20/09/2016
   
    Dados referentes ao programa:
   
@@ -413,6 +416,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                             e buscar a data do movimento da cooperativa para geração do lote e lcm (Odirlei-AMcom)
                             
                06/09/2016 - Incluir tratamento para lock do lote (Lucas Ranghetti #518312)
+               
+               20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt (Lucas Ranghetti/Fabricio #524588)
   --------------------------------------------------------------------------------------------------------------------*/ 
   
    ---------->>> CURSORES <<<--------
@@ -491,7 +496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
       BEGIN
         -- Leitura do lote
         OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
-                         pr_dtmvtolt  => pr_dtmvtolt,
+                         pr_dtmvtolt  => rw_crapdat.dtmvtolt,
                          pr_cdagenci  => pr_cdagenci);
         FETCH cr_craplot INTO rw_craplot;
         vr_dscritic := NULL;
@@ -506,7 +511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           IF i = 50 THEN
             vr_dscritic:= 'Registro de lote 6651 em uso. Tente novamente.';
           END IF;
-          -- aguardar 0,5 seg. antes de tentar novamente
+          -- aguardar 0,1 seg. antes de tentar novamente
           sys.dbms_lock.sleep(0.1);
       END;
     END LOOP;
@@ -680,22 +685,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
           RAISE vr_exc_erro;
       END;
       
-        -- ATUALIZACAO DE REGISTROS DE LOTES
-        BEGIN
-          UPDATE craplot
-             SET qtcompln = nvl(qtcompln,0) + 1,
-                 vlcompdb = nvl(vlcompdb,0) + nvl(pr_vllanaut,0),
-                 qtinfoln = nvl(qtinfoln,0) + 1,
-                 vlinfodb = nvl(vlinfodb,0) + nvl(pr_vllanaut,0),
-                 nrseqdig = nvl(nrseqdig,0) + 1
-           WHERE craplot.rowid = rw_craplot.rowid;
-        -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
-        EXCEPTION
-          WHEN OTHERS THEN
+      -- ATUALIZACAO DE REGISTROS DE LOTES
+      BEGIN
+        UPDATE craplot
+           SET qtcompln = nvl(qtcompln,0) + 1,
+               vlcompdb = nvl(vlcompdb,0) + nvl(pr_vllanaut,0),
+               qtinfoln = nvl(qtinfoln,0) + 1,
+               vlinfodb = nvl(vlinfodb,0) + nvl(pr_vllanaut,0),
+               nrseqdig = nvl(nrseqdig,0) + 1
+         WHERE craplot.rowid = rw_craplot.rowid;
+      -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+      EXCEPTION
+        WHEN OTHERS THEN
           -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
           vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLOT: ' || SQLERRM;
           RAISE vr_exc_erro;
-        END;
+      END;
       
       BEGIN
         -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS CONFORME PARAMETROS
