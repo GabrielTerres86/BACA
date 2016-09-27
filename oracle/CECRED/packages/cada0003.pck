@@ -5344,7 +5344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
     vr_cdcritic       crapcri.cdcritic%TYPE;
     vr_dscritic       VARCHAR2(10000);
-    vr_cdconsul       NUMBER(5);
+    vr_cdconsul       NUMBER(7);
     vr_dttransa       DATE;
     vr_hrtransa       VARCHAR2(5);
     vr_cdagenci       crapage.cdagenci%TYPE;
