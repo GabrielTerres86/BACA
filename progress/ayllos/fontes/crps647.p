@@ -4,7 +4,7 @@ Programa: Fontes/crps647.p
 Sistema : Conta-Corrente - Cooperativa de Credito
 Sigla   : CRED
 Autora  : Lucas R.
-Data    : Setembro/2013                        Ultima atualizacao: 14/09/2016
+Data    : Setembro/2013                        Ultima atualizacao: 27/09/2016
 
 Dados referentes ao programa:
 
@@ -107,9 +107,12 @@ Alteracoes: 27/11/2013 - Incluido o RUN do fimprg no final do programa e onde
              
             03/08/2016 - Incluir crapndb para a critica 103 (Lucas Ranghetti #490987)
              
-	        14/09/2016 - Ajuste para somente verificar valor maximo para debito
-			             caso lancamento nao seja de Consorcio (J5).
-						 (Chamado 519962) - (Fabrício)
+	          14/09/2016 - Ajuste para somente verificar valor maximo para debito
+			                   caso lancamento nao seja de Consorcio (J5).
+						             (Chamado 519962) - (Fabrício)
+                         
+            27/09/2016 - Ajuste para somente criar crapndb se nao for os registros "C" e "D"
+                         (Lucas Ranghetti #507171)
                             
 ............................................................................*/
 
@@ -595,49 +598,53 @@ DO  i = 1 TO aux_contador:
                 IF  NOT AVAIL tt-crapass THEN
                     DO: 
                         ASSIGN aux_nrdconta = 0.
-
-                        CREATE crapndb.
-                        ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
-                               crapndb.nrdconta = aux_nrdconta
-                               crapndb.cdhistor = aux_cdhistor
-                               crapndb.flgproce = FALSE
-                               crapndb.dstexarq = "F" +
-                                                  SUBSTR(aux_setlinha,2,66)   +
-                                                  "15" +
-                                                  SUBSTR(aux_setlinha,70,60)  +
-                                                  FILL(" ",16)                +
-                                                  SUBSTR(aux_setlinha,140,2)  +
-                                                  SUBSTR(aux_setlinha,148,10) +
-                                                  SUBSTR(aux_setlinha,158,1)  +
-                                                  FILL(" ", 2) 
-                               crapndb.cdcooper = glb_cdcooper.
-                        VALIDATE crapndb.
-
-                        /* nao existe conta consorcio */
-                        ASSIGN glb_cdcritic = 961.
-                        RUN fontes/critic.p.
                         
-                        CREATE w-relato.
-                        ASSIGN w-relato.cdcooper = glb_cdcooper
-                               w-relato.nrdconta = aux_nrdconta
-                               w-relato.nrctacns = DEC(SUBSTR(aux_setlinha,
-                                                   31,14))
-                               w-relato.cdrefere = aux_cdrefere
-                               w-relato.vlparcns = IF aux_tpregist = "E" THEN
-                                                      (DEC(SUBSTR(aux_setlinha,
-                                                       53,15)) / 100)
-                                                   ELSE 0
-                               w-relato.dtdebito = IF aux_tpregist = "E" THEN
-                                                      aux_dtrefere
-                                                   ELSE ?
-                               w-relato.cdcritic = glb_cdcritic
-                               w-relato.dscritic = glb_dscritic
-                               w-relato.nmempres = aux_nmempres
-                               w-relato.tpdebito = aux_tpdebito
-                               w-relato.cdagenci = 0. /* nao precisa ter agencia
-                                                         quando nao encontra 
-                                                         associado */
+                        IF  aux_tpregist <> "D" AND 
+                            aux_tpregist <> "C" THEN
+                            DO:
+                                CREATE crapndb.
+                                ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
+                                       crapndb.nrdconta = aux_nrdconta
+                                       crapndb.cdhistor = aux_cdhistor
+                                       crapndb.flgproce = FALSE
+                                       crapndb.dstexarq = "F" +
+                                                          SUBSTR(aux_setlinha,2,66)   +
+                                                          "15" +
+                                                          SUBSTR(aux_setlinha,70,60)  +
+                                                          FILL(" ",16)                +
+                                                          SUBSTR(aux_setlinha,140,2)  +
+                                                          SUBSTR(aux_setlinha,148,10) +
+                                                          SUBSTR(aux_setlinha,158,1)  +
+                                                          FILL(" ", 2) 
+                                       crapndb.cdcooper = glb_cdcooper.
+                                VALIDATE crapndb.
 
+                                /* nao existe conta consorcio */
+                                ASSIGN glb_cdcritic = 961.
+                                RUN fontes/critic.p.
+                                
+                                CREATE w-relato.
+                                ASSIGN w-relato.cdcooper = glb_cdcooper
+                                       w-relato.nrdconta = aux_nrdconta
+                                       w-relato.nrctacns = DEC(SUBSTR(aux_setlinha,
+                                                           31,14))
+                                       w-relato.cdrefere = aux_cdrefere
+                                       w-relato.vlparcns = IF aux_tpregist = "E" THEN
+                                                              (DEC(SUBSTR(aux_setlinha,
+                                                               53,15)) / 100)
+                                                           ELSE 0
+                                       w-relato.dtdebito = IF aux_tpregist = "E" THEN
+                                                              aux_dtrefere
+                                                           ELSE ?
+                                       w-relato.cdcritic = glb_cdcritic
+                                       w-relato.dscritic = glb_dscritic
+                                       w-relato.nmempres = aux_nmempres
+                                       w-relato.tpdebito = aux_tpdebito
+                                       w-relato.cdagenci = 0. /* nao precisa ter agencia
+                                                                 quando nao encontra 
+                                                                 associado */
+                            END.
+                            
                         NEXT TRANS_1.
                     END.
                 ELSE /* se achou conta na crapass */
@@ -645,7 +652,9 @@ DO  i = 1 TO aux_contador:
                         ASSIGN aux_nrdconta = tt-crapass.nrdconta.
                         
                         /* Caso o cooperado esteja demitido */
-                        IF  tt-crapass.dtdemiss <> ? THEN
+                        IF  tt-crapass.dtdemiss <> ? AND 
+                            (aux_tpregist <> "D"     AND 
+                            aux_tpregist <> "C")     THEN 
                             DO:
                                 CREATE crapndb.
                                 ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
@@ -704,47 +713,51 @@ DO  i = 1 TO aux_contador:
 
                         IF  NOT AVAIL crapatr THEN
                             DO:
-                               CREATE crapndb.
-                               ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
-                                      crapndb.nrdconta = aux_nrdconta
-                                      crapndb.cdhistor = aux_cdhistor 
-                                      crapndb.flgproce = FALSE
-                                      crapndb.dstexarq = "F" +
-                                              SUBSTR(aux_setlinha,2,66)   + 
-                                              "30"                        +
-                                              SUBSTR(aux_setlinha,70,60)  +
-                                              FILL(" ",16)                +
-                                              SUBSTR(aux_setlinha,140,2)  +
-                                              SUBSTR(aux_setlinha,148,10) +
-                                              SUBSTR(aux_setlinha,158,1)  +
-                                              FILL(" ", 2)
-                                      crapndb.cdcooper = glb_cdcooper.
-                               VALIDATE crapndb.
-                               
-                               glb_cdcritic = 484.
-                               RUN fontes/critic.p. 
-                               
-                               CREATE w-relato.
-                               ASSIGN w-relato.cdcooper = glb_cdcooper
-                                      w-relato.nrdconta = aux_nrdconta
-                                      w-relato.nrctacns = 
-                                               DEC(SUBSTR(aux_setlinha,31,14))
-                                      w-relato.cdrefere = aux_cdrefere
-                                      w-relato.vlparcns = 
-                                               IF aux_tpregist = "E" THEN
-                                                  (DEC(SUBSTR(aux_setlinha,
-                                                   53,15)) / 100)
-                                               ELSE 0
-                                      w-relato.dtdebito = 
-                                               IF aux_tpregist = "E" THEN
-                                                  aux_dtrefere
-                                               ELSE ?
-                                      w-relato.cdcritic = glb_cdcritic
-                                      w-relato.dscritic = glb_dscritic
-                                      w-relato.nmempres = aux_nmempres
-                                      w-relato.tpdebito = aux_tpdebito
-                                      w-relato.cdagenci = tt-crapass.cdagenci.
-                               
+                               IF  aux_tpregist <> "D" AND  
+                                   aux_tpregist <> "C" THEN
+                                   DO:
+                                      CREATE crapndb.
+                                      ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
+                                              crapndb.nrdconta = aux_nrdconta
+                                              crapndb.cdhistor = aux_cdhistor 
+                                              crapndb.flgproce = FALSE
+                                              crapndb.dstexarq = "F" +
+                                                      SUBSTR(aux_setlinha,2,66)   + 
+                                                      "30"                        +
+                                                      SUBSTR(aux_setlinha,70,60)  +
+                                                      FILL(" ",16)                +
+                                                      SUBSTR(aux_setlinha,140,2)  +
+                                                      SUBSTR(aux_setlinha,148,10) +
+                                                      SUBSTR(aux_setlinha,158,1)  +
+                                                      FILL(" ", 2)
+                                              crapndb.cdcooper = glb_cdcooper.
+                                      VALIDATE crapndb.
+                                      
+                                      glb_cdcritic = 484.
+                                      RUN fontes/critic.p. 
+                                      
+                                      CREATE w-relato.
+                                      ASSIGN w-relato.cdcooper = glb_cdcooper
+                                              w-relato.nrdconta = aux_nrdconta
+                                              w-relato.nrctacns = 
+                                                      DEC(SUBSTR(aux_setlinha,31,14))
+                                              w-relato.cdrefere = aux_cdrefere
+                                              w-relato.vlparcns = 
+                                                      IF aux_tpregist = "E" THEN
+                                                          (DEC(SUBSTR(aux_setlinha,
+                                                          53,15)) / 100)
+                                                      ELSE 0
+                                              w-relato.dtdebito = 
+                                                      IF aux_tpregist = "E" THEN
+                                                          aux_dtrefere
+                                                      ELSE ?
+                                              w-relato.cdcritic = glb_cdcritic
+                                              w-relato.dscritic = glb_dscritic
+                                              w-relato.nmempres = aux_nmempres
+                                              w-relato.tpdebito = aux_tpdebito
+                                              w-relato.cdagenci = tt-crapass.cdagenci.
+                                   END.
+                                   
                                NEXT TRANS_1.
                             END. /* Fim do find crapatr */
                     END.
@@ -759,48 +772,51 @@ DO  i = 1 TO aux_contador:
     
                     IF  NOT AVAIL crapcns THEN
                         DO: 
+                            IF  aux_tpregist <> "D" AND 
+                                aux_tpregist <> "C" THEN
+                                DO:
+                                    CREATE crapndb.
+                                    ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
+                                           crapndb.nrdconta = aux_nrdconta
+                                           crapndb.cdhistor = aux_cdhistor
+                                           crapndb.flgproce = FALSE
+                                           crapndb.dstexarq = "F" +
+                                                   SUBSTR(aux_setlinha,2,66)   + 
+                                                   "30"                        +
+                                                   SUBSTR(aux_setlinha,70,60)  +
+                                                   FILL(" ",16)                +
+                                                   SUBSTR(aux_setlinha,140,2)  +
+                                                   SUBSTR(aux_setlinha,148,10) +
+                                                   SUBSTR(aux_setlinha,158,1)  +
+                                                   FILL(" ", 2)
+                                           crapndb.cdcooper = glb_cdcooper.
+                                    VALIDATE crapndb.
                             
-                            CREATE crapndb.
-                            ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
-                                   crapndb.nrdconta = aux_nrdconta
-                                   crapndb.cdhistor = aux_cdhistor
-                                   crapndb.flgproce = FALSE
-                                   crapndb.dstexarq = "F" +
-                                           SUBSTR(aux_setlinha,2,66)   + 
-                                           "30"                        +
-                                           SUBSTR(aux_setlinha,70,60)  +
-                                           FILL(" ",16)                +
-                                           SUBSTR(aux_setlinha,140,2)  +
-                                           SUBSTR(aux_setlinha,148,10) +
-                                           SUBSTR(aux_setlinha,158,1)  +
-                                           FILL(" ", 2)
-                                   crapndb.cdcooper = glb_cdcooper.
-                            VALIDATE crapndb.
-                    
-                            glb_cdcritic = 484.
-                            RUN fontes/critic.p. 
-                          
-                            CREATE w-relato.
-                            ASSIGN w-relato.cdcooper = glb_cdcooper
-                                   w-relato.nrdconta = aux_nrdconta
-                                   w-relato.nrctacns = DEC(SUBSTR(aux_setlinha,
-                                                                  31,14))
-                                   w-relato.cdrefere = aux_cdrefere
-                                   w-relato.vlparcns = 
-                                            IF aux_tpregist = "E" THEN
-                                               (DEC(SUBSTR(aux_setlinha,
-                                                53,15)) / 100)
-                                            ELSE 0
-                                   w-relato.dtdebito = 
-                                            IF aux_tpregist = "E" THEN
-                                               aux_dtrefere
-                                            ELSE ?
-                                   w-relato.cdcritic = glb_cdcritic
-                                   w-relato.dscritic = glb_dscritic
-                                   w-relato.nmempres = aux_nmempres
-                                   w-relato.tpdebito = aux_tpdebito
-                                   w-relato.cdagenci = tt-crapass.cdagenci.
-                    
+                                    glb_cdcritic = 484.
+                                    RUN fontes/critic.p. 
+                                  
+                                    CREATE w-relato.
+                                    ASSIGN w-relato.cdcooper = glb_cdcooper
+                                           w-relato.nrdconta = aux_nrdconta
+                                           w-relato.nrctacns = DEC(SUBSTR(aux_setlinha,
+                                                                          31,14))
+                                           w-relato.cdrefere = aux_cdrefere
+                                           w-relato.vlparcns = 
+                                                    IF aux_tpregist = "E" THEN
+                                                       (DEC(SUBSTR(aux_setlinha,
+                                                        53,15)) / 100)
+                                                    ELSE 0
+                                           w-relato.dtdebito = 
+                                                    IF aux_tpregist = "E" THEN
+                                                       aux_dtrefere
+                                                    ELSE ?
+                                           w-relato.cdcritic = glb_cdcritic
+                                           w-relato.dscritic = glb_dscritic
+                                           w-relato.nmempres = aux_nmempres
+                                           w-relato.tpdebito = aux_tpdebito
+                                           w-relato.cdagenci = tt-crapass.cdagenci.
+                                END.
+                                
                             NEXT TRANS_1.
                         END.
                     ELSE
