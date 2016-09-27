@@ -4,7 +4,7 @@ Programa: Fontes/crps647.p
 Sistema : Conta-Corrente - Cooperativa de Credito
 Sigla   : CRED
 Autora  : Lucas R.
-Data    : Setembro/2013                        Ultima atualizacao: 20/05/2016
+Data    : Setembro/2013                        Ultima atualizacao: 14/09/2016
 
 Dados referentes ao programa:
 
@@ -100,6 +100,16 @@ Alteracoes: 27/11/2013 - Incluido o RUN do fimprg no final do programa e onde
 
             20/05/2016 - Incluido nas consultas da craplau
                          craplau.dsorigem <> "TRMULTAJUROS". (Jaison/James)
+                            
+            25/07/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 
+                         um hifen no final, iremos despresar este hifen e seguir normalmente 
+                         com o programa (Lucas Ranghetti #453337)
+             
+            03/08/2016 - Incluir crapndb para a critica 103 (Lucas Ranghetti #490987)
+             
+	        14/09/2016 - Ajuste para somente verificar valor maximo para debito
+			             caso lancamento nao seja de Consorcio (J5).
+						 (Chamado 519962) - (Fabrício)
                             
 ............................................................................*/
 
@@ -562,6 +572,14 @@ DO  i = 1 TO aux_contador:
                     ASSIGN aux_nmempres = ""
                            aux_cdempres = "".
         
+                /* Se for o convenio 14 BRT CELULAR - FEBRABAN, vamos ignorar o 
+                   hifen no final da referencia caso exista */
+                IF  aux_cdempres = "045" THEN
+                    DO:
+                        IF  TRIM(aux_cdrefere) MATCHES "*-" THEN
+                            ASSIGN aux_cdrefere = REPLACE(aux_cdrefere,"-","").
+                    END.
+        
                 IF  TRIM(SUBSTR(aux_setlinha,148,10)) = "J5" THEN /* Consorcios */
                     ASSIGN aux_tpdebito = 1
                            aux_cdhistor = 1230.
@@ -890,7 +908,6 @@ DO  i = 1 TO aux_contador:
     
                         IF  AVAIL craplau THEN
                             DO:
-
                                 CREATE crapndb.
                                 ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
                                        crapndb.nrdconta = aux_nrdconta
@@ -991,6 +1008,22 @@ DO  i = 1 TO aux_contador:
                                        NEXT.
                                     END.
     
+                                CREATE crapndb.
+                                ASSIGN crapndb.dtmvtolt = verificaUltDia(glb_cdcooper, glb_dtmvtopr)
+                                       crapndb.nrdconta = aux_nrdconta
+                                       crapndb.cdhistor = aux_cdhistor
+                                       crapndb.flgproce = FALSE
+                                       crapndb.dstexarq = "F" +
+                                               SUBSTR(aux_setlinha,2,66)   + 
+                                               "04"                        +
+                                               SUBSTR(aux_setlinha,70,60)  +
+                                               FILL(" ",16)                +
+                                               SUBSTR(aux_setlinha,140,2)  +
+                                               SUBSTR(aux_setlinha,148,10) +
+                                               SUBSTR(aux_setlinha,158,1)  +
+                                               FILL(" ", 2)
+                                       crapndb.cdcooper = glb_cdcooper.
+    
                                 ASSIGN glb_cdcritic = 103.
                                 RUN fontes/critic.p.
 
@@ -1009,7 +1042,7 @@ DO  i = 1 TO aux_contador:
                                        w-relato.tpdebito = aux_tpdebito
                                        w-relato.cdagenci = tt-crapass.cdagenci.
 
-                                NEXT TRANS_1.
+                                ASSIGN aux_flgdupli = TRUE.                                
                             END.
                         ELSE
                             DO:
@@ -1027,6 +1060,12 @@ DO  i = 1 TO aux_contador:
                                        w-relato.nmempres = aux_nmempres
                                        w-relato.tpdebito = aux_tpdebito
                                        w-relato.cdagenci = tt-crapass.cdagenci.
+                            END.
+    
+                        IF  glb_cdcritic > 0 THEN
+                            DO:
+                               glb_cdcritic  = 0.
+                               NEXT TRANS_1.
                             END.
     
                         ASSIGN aux_vllanaut = SUBSTR(aux_setlinha,53,15)                                
@@ -1064,6 +1103,9 @@ DO  i = 1 TO aux_contador:
                                craplot.vlinfodb = craplot.vlcompdb
                                craplot.vlinfocr = 0.
                         
+					    /* nao e consorcio <> J5 */
+						IF  TRIM(SUBSTR(aux_setlinha,148,10)) <> "J5" THEN
+                        DO:
                         /* Validar valor maior que o limite parametrizado*/
                         IF crapatr.flgmaxdb AND 
                            craplau.vllanaut > crapatr.vlrmaxdb THEN  
@@ -1098,6 +1140,7 @@ DO  i = 1 TO aux_contador:
                                      aux_nrdolote_sms = pc_notif_cooperado_DEBAUT.pr_idlote_sms
                                                         WHEN pc_notif_cooperado_DEBAUT.pr_idlote_sms <> ?.                               
                           END.
+						END.
                         
                     END.
                 ELSE /* CANCELAMENTO */
