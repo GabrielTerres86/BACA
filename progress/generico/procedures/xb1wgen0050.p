@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0050.p
     Autor   : David
-    Data    : Novembro/2009                   Ultima atualizacao: 09/11/2015
+    Data    : Novembro/2009                   Ultima atualizacao: 27/09/2016
 
    Dados referentes ao programa:
 
@@ -19,6 +19,11 @@
                             
                09/11/2015 - Adicionado campo "Crise" inestcri em proc. 
                             obtem-log-spb (Jorge/Andrino)
+                            
+               27/09/2016 - M211 - Adicionado parametros par_cdifconv nas procs 
+                            obtem-log-spb, impressao-log-pdf e impressao-log-csv
+                            (Evandro-RKAM)
+                            
 ..............................................................................*/
 
 
@@ -32,6 +37,7 @@ DEF VAR aux_numedlog AS INTE                                           NO-UNDO.
 DEF VAR aux_nriniseq AS INTE                                           NO-UNDO.
 DEF VAR aux_nrregist AS INTE                                           NO-UNDO.
 DEF VAR aux_inestcri AS INTE                                           NO-UNDO.
+DEF VAR aux_cdifconv AS INTE                                           NO-UNDO.
 DEF VAR aux_vlrdated AS DECI                                           NO-UNDO.
 
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
@@ -84,6 +90,7 @@ PROCEDURE valores_entrada:
             WHEN "dsiduser" THEN aux_dsiduser = tt-param.valorCampo.
             WHEN "datmigra" THEN aux_datmigra = DATE(tt-param.valorCampo).
             WHEN "inestcri" THEN aux_inestcri = INTE(tt-param.valorCampo).
+            WHEN "cdifconv" THEN aux_cdifconv = INTE(tt-param.valorCampo).
             WHEN "vlrdated" THEN aux_vlrdated = DECI(tt-param.valorCampo).
         END CASE.
 
@@ -113,6 +120,7 @@ PROCEDURE obtem-log-spb:
                               INPUT 5, /* idorigem = 5 Ayllos WEB */
                               INPUT aux_dsiduser,
                               INPUT aux_inestcri,
+                              INPUT aux_cdifconv,
                               INPUT aux_vlrdated,
                              OUTPUT aux_nmarqimp,
                              OUTPUT aux_nmarqpdf,
@@ -199,6 +207,7 @@ PROCEDURE impressao-log-pdf:
                                   INPUT aux_vlrdated,
                                   INPUT aux_dsiduser,
                                   INPUT aux_inestcri,
+                                  INPUT aux_cdifconv,
                                  OUTPUT aux_nmarqpdf,                                                            
                                  OUTPUT TABLE tt-erro).                            
 
@@ -241,6 +250,7 @@ PROCEDURE impressao-log-csv:
                                   INPUT aux_vlrdated,
                                   INPUT aux_dsiduser,
                                   INPUT aux_inestcri,
+                                  INPUT aux_cdifconv,
                                  OUTPUT aux_nmarqimp,                                                            
                                  OUTPUT TABLE tt-erro).                            
 
