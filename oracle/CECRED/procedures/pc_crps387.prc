@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 03/08/2016
+   Data    : Abril/2004                        Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -226,10 +226,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             concessionarias quando cdcritic = 502.
                             (Chamado 86247) - (Fabricio).
 
- 							 01/04/2014 - incluido nas consultas da craplau
+                01/04/2014 - incluido nas consultas da craplau
                             craplau.dsorigem <> "DAUT BANCOOB" (Lucas).
 
- 							 30/05/2014 - Erros de leitura de linha devem ser gerados no arquivo
+                30/05/2014 - Erros de leitura de linha devem ser gerados no arquivo
                             crps387.log e enviado por email no final do processo (Andrino-RKAM)
 
                23/06/2014 - SD144925 - Erros de Arquivos fora de Sequencia (Critica 476) devem
@@ -243,49 +243,49 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                30/09/2014 - Correcao nº da conta do relatorio de criticas. (Fabricio)
 
                13/10/2014 - #199162 ajustes para incorporação concredi e credimilsul (Carlos)
-               
-			         30/10/2014 - Ajustar rotina para não causar a parada do processo quando ocorrer
-			                      erro na leitura do arquivo. ( Renato - Supero )
-                            
+
+               30/10/2014 - Ajustar rotina para não causar a parada do processo quando ocorrer
+                            erro na leitura do arquivo. ( Renato - Supero )
+
                12/01/2015 - Tratamento para desprezar registro no arquivo que contem o codigo
                             da cooperativa diferente da cooperativa que esta rodando no
                             momento (migracao/incorporacao - ajuste).
                             (Chamados 235642/239398) - (Fabricio)
-                            
-               13/01/2015 - Alimentado mais tres campos na criacao do lau 
+
+               13/01/2015 - Alimentado mais tres campos na criacao do lau
                             (dsorigem, cdtiptra e dscedent).
                             (Chamado 229249 # PRJ Melhoria) - (Fabricio)
-                            
+
                24/03/2015 - Criada function fn_verifica_ult_dia e chamado
                             sempre que for inserir um registro nas tabelas
                             crapndb ou craplau (SD245218 - Tiago).
-                            
+
                08/04/2015 - Gerar o log do processo/integração dos arquivos no
                             crps387.log (Lucas R. #273211 )
-                            
+
                21/05/2015 - Remover arquivos de erro com mais de 7 dias no
                             diretorio integra e desviar logs que nao
                             afetam o processo para o proc_message.log
-                            (Tiago #283886).             
-               
+                            (Tiago #283886).
+
                03/08/2015 - Chamar a procedure pc_critica_debito_cooperativa somente
                             se o vr_tpregist for diferente de 'C' (Lucas Ranghetti #306537)
-                            
+
                06/08/2015 - Retirado RAISE vr_exc_saida para a critica "57" (Lucas Ranghetti #316932)
-               
-               03/09/2015 - Caso a referencia do arquivo vier zerada, devera gerar crapndb para 
+
+               03/09/2015 - Caso a referencia do arquivo vier zerada, devera gerar crapndb para
                             registros 'E' (Lucas Ranghetti #317736)
-                            
+
                15/09/2015 - Quando for cecred verificar na gncontr se ha registro para
                             outra cooperativa primeiro antes de importar senao
-                            nao tomar acao nenhuma quanto a este arquivo 
-                            (Tiago/Fabricio #297250).             
-                            
+                            nao tomar acao nenhuma quanto a este arquivo
+                            (Tiago/Fabricio #297250).
+
                17/09/2015 - Corrigido problemas com erros nao tratados e que
                             deixavam de enviar email para compe qdo o processo
                             de importacao nao havia ocorrido com sucesso
                             (Tiago/Fabricio #289858).
-                            
+
                19/10/2015 - Incluido nas consultas da craplau
                             craplau.dsorigem <> "CAIXA" (Lombardi).
 
@@ -334,6 +334,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                03/08/2016 - Ajustes para garantir que o rw_crapatr não fique com lixo do registro
                             anterior. PRJ320 - Oferta DebAut (Odirlei-AMcom)      
                              
+               30/08/2016 - Alterar data de cancelamento da autorização para gravar com a data
+                            do sistema dtmvtolt (Lucas Ranghetti #493282)             
+                            
+               23/09/2016 - Tratar registros de vr_nro_conta_dec < 9000000000 para tratar
+                            agencia(cdagectl) do debito (Lucas Ranghetti#527719)
 ............................................................................ */
 
     DECLARE
@@ -587,7 +592,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            AND  craplau.dsorigem <> 'PG555'
            AND  craplau.dsorigem <> 'CARTAOBB'
            AND  craplau.dsorigem <> 'BLOQJUD'
-					 AND  craplau.dsorigem <> 'DAUT BANCOOB';
+           AND  craplau.dsorigem <> 'DAUT BANCOOB';
       rw_craplau cr_craplau%ROWTYPE;
 
       -- Busca os lancamentos automaticos
@@ -766,26 +771,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
-      FUNCTION fn_verifica_ult_dia(pr_cdcooper crapcop.cdcooper%TYPE, pr_dtrefere  IN DATE) RETURN DATE IS        
-      BEGIN  
+      FUNCTION fn_verifica_ult_dia(pr_cdcooper crapcop.cdcooper%TYPE, pr_dtrefere  IN DATE) RETURN DATE IS
+      BEGIN
         DECLARE
           CURSOR cr_ultdia(pr_cdcooper crapcop.cdcooper%TYPE) IS
-            SELECT TRUNC(add_months(dat.dtmvtolt,12),'RRRR')-1 AS ultimdia 
+            SELECT TRUNC(add_months(dat.dtmvtolt,12),'RRRR')-1 AS ultimdia
               FROM crapdat dat
              WHERE dat.cdcooper = pr_cdcooper;
-          
-          rw_ultdia cr_ultdia%ROWTYPE;  
-        
+
+          rw_ultdia cr_ultdia%ROWTYPE;
+
         BEGIN
           IF pr_dtrefere IS NOT NULL THEN
-          
+
              OPEN cr_ultdia(pr_cdcooper => pr_cdcooper);
-             
+
              FETCH cr_ultdia INTO rw_ultdia;
-             
+
              IF cr_ultdia%FOUND THEN
                CLOSE cr_ultdia;
-               
+
                IF pr_dtrefere = rw_ultdia.ultimdia THEN
                   rw_ultdia.ultimdia := rw_ultdia.ultimdia + 1;
                   RETURN gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, pr_dtmvtolt => rw_ultdia.ultimdia);
@@ -794,11 +799,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                CLOSE cr_ultdia;
                RETURN pr_dtrefere;
              END IF;
-          END IF;  
-          
+          END IF;
+
           RETURN pr_dtrefere;
         END;
-      END fn_verifica_ult_dia;
+      END fn_verifica_ult_dia;     
       
       -- Rotina para envio de criticas de email para o grupo convenios@cecred.coop.br
       PROCEDURE pc_envia_critica_email(pr_cdprogra crapprg.cdprogra%TYPE,
@@ -902,15 +907,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
         IF pr_flgtxtar = 3 THEN
           vr_par_dstextar := 18; -- Data do debito anterior a do processamento
-          vr_par_cdcritic := 13; -- Data errada
+          vr_par_cdcritic := 13; -- Data errada          
         END IF;
-
-        IF pr_flgtxtar = 1 THEN           
+        
+        IF pr_flgtxtar = 1 THEN
            vr_dtmvtopr := fn_verifica_ult_dia(rw_crapcop.cdcooper, rw_crapdat.dtmvtopr);
         ELSE
            vr_dtmvtopr := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
-        END IF;     
-
+        END IF;
+        
         vr_par_dscritic := gene0001.fn_busca_critica(vr_par_cdcritic);
 
         -- Para cada regitro D rejeitado, retornamos o H        
@@ -1018,7 +1023,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
             FROM gnconve
            WHERE cdconven = pr_cdconven;
         rw_gnconve_2 cr_gnconve_2%ROWTYPE;
-        
+
         -- Variaveis gerais
         TYPE typ_arquivos IS TABLE OF VARCHAR2(1000) INDEX BY PLS_INTEGER;
 
@@ -1111,8 +1116,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   --Levantar Excecao
                   RAISE vr_exc_saida;
               END;
-              
-              
+
+
               -- Envio centralizado de log de erro
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -1138,9 +1143,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               RAISE vr_exc_saida;
           END;
 
-          BEGIN          
+          BEGIN
             vr_nrseqgen := SUBSTR(vr_setlinha,74,6);
-            
+
             -- Popula a temp/table com os dados da primeira linha do arquivo de debito
             vr_tab_crawarq(SUBSTR(vr_setlinha,74,6)||vr_tab_arquivos(idx)).nrsequen := SUBSTR(vr_setlinha,74,6);
             vr_tab_crawarq(SUBSTR(vr_setlinha,74,6)||vr_tab_arquivos(idx)).nmarquiv := vr_tab_arquivos(idx);
@@ -1153,9 +1158,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
               -- Acrescenta "err" no inicio do nome do arquivo
               gene0001.pc_oscommand_shell(pr_des_comando => 'mv '||pr_nmdirdeb||'/'||vr_tab_arquivos(idx)|| ' ' || vr_nmarquiv);
-              
-            
-              vr_cdcritic := 0; 
+
+
+              vr_cdcritic := 0;
               vr_dscritic := to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
                           || vr_cdprogra || ' --> '
                           ||'Problemas com header do arquivo: '||vr_tab_arquivos(idx);
@@ -1172,13 +1177,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               vr_dscritic := vr_dscritic  || '\n' ||
                              'Convenio: ' || pr_cdconven || '\n' ||
                              'NSA: '      || vr_nrseqgen;
-              
+
               pc_envia_critica_email('CRPS387A',
                                      pr_cdcooper,
                                      vr_dscritic,
-                                     NULL);              
+                                     NULL);
               CONTINUE;
-          END;  
+          END;
 
         END LOOP;
 
@@ -1345,7 +1350,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                             pr_nrdocmto craplau.nrdocmto%TYPE) IS
 
 
-    BEGIN
+      BEGIN
 
     BEGIN
           UPDATE craplau
@@ -1551,8 +1556,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                    rw_gnconve.nmempres,
                                    vr_contador);
 
-          vr_dtcancel := rw_crapdat.dtmvtolt - to_char(rw_crapdat.dtmvtolt,'dd');
-          vr_dtcancel := vr_dtcancel - to_char(vr_dtcancel,'dd');
+          /* Data de cancelamento da autorizacao */
+          vr_dtcancel := rw_crapdat.dtmvtolt;
 
           vr_nrseqarq := vr_nrseqarq - 1; /* p/incrementar Seq.  */
 
@@ -2135,8 +2140,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   END IF; --vr_tpregist = 'Z'
 
                   /*-- Identificar a cooperativa no codigo da conta.
-                       Quando brancos assumir cooperativa VIACREDI --*/
-
+                       Quando brancos assumir cooperativa VIACREDI --*/                
+                  
                   vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
                   -- Validar caracteres especiais
                   BEGIN
@@ -2193,7 +2198,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                   -- Validar caracteres especiais
                   BEGIN                      
-                  vr_nro_conta_dec := SUBSTR(vr_setlinha,31,14);
+                      vr_nro_conta_dec := SUBSTR(vr_setlinha,31,14);
                   EXCEPTION
                       WHEN OTHERS THEN
                         vr_cdcritic := 564; -- Conta nao cadastrada.
@@ -2308,7 +2313,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   ELSE
                     vr_cdrefere := 0;
                   END IF;  
-
+                  
                   -- Verifica se o convenio usa agencias no arquivo enviado
                   IF rw_gnconve.flgagenc = 1 THEN
                     /* Verificacao para tratar recebimento de agencia invalida
@@ -2357,9 +2362,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_nrdconta := rw_craptco.nrdconta;
                         vr_nrdolote := vr_dstextab_2;
                       ELSE -- Se nao for uma conta transferida
-                      vr_cdcooper := pr_cdcooper;
-                      vr_nrdolote := vr_dstextab;
-                    END IF;
+                        vr_cdcooper := pr_cdcooper;
+                        vr_nrdolote := vr_dstextab;
+                      END IF;
                       CLOSE cr_craptco;
                     END IF;
                   ELSIF vr_nro_conta_dec < 9000000000 THEN /* Tratar erro, Maior que 10 nao pode converter para INT - ZE */
@@ -2369,14 +2374,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_nrdconta := vr_nro_conta_dec;
                     END IF;
 
-                    -- Se a cooperativa do processo for diferente da cooperativa do convenio e se for diferente de Viacredi
+                    IF pr_cdcooper = 3 AND (vr_cdagedeb < 100 OR vr_cdagedeb > vr_cdultage) 
+                       AND vr_cdagedeb <> 1 THEN
+
+                      -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
+                      IF vr_tpregist <> 'C' THEN
+                        pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
+                      END IF;
+                      continue;
+                    END IF;
+                    
+                    -- Se a agencia de debito for diferente da agencia de controle
+                    -- e agencia de debito for diferente de 001(viacredi) ou cooperativa do processo
+                    -- for diferente de Viacredi então vamos ignorar o registro
+                    IF vr_cdagedeb <> rw_crapcop.cdagectl 
+                       AND (vr_cdagedeb <> 1 OR rw_crapcop.cdcooper <> 1) THEN
+                      continue;
+                    END IF;
+                    
+                  /*  -- Se a cooperativa do processo for diferente da cooperativa do convenio e se for diferente de Viacredi
                     -- ignora o registro
                     IF rw_crapcop.cdcooper <> rw_gnconve.cdcooper AND
                        rw_crapcop.cdcooper <> 1 THEN
                       continue;
                     ELSIF rw_crapcop.cdcooper = 3 THEN -- Se for Cecred
                       continue;
-                    END IF;
+                    END IF; */
 
                     /**** Tratamento migracao ****/
                     OPEN cr_craptco(vr_nrdconta);
@@ -2418,21 +2441,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                      END IF;
 
                      IF rw_crapcop.cdcooper <> vr_cdcooper THEN
-                       
+
                        /**** Tratamento incorporacao ****/
                        IF cr_craptco_conta_incorporada%ISOPEN THEN
                          CLOSE cr_craptco_conta_incorporada;
                        END IF;
 
-                       OPEN cr_craptco_conta_incorporada(pr_cdcooper => pr_cdcooper, 
-                                                         pr_cdcopant => vr_cdcooper, 
+                       OPEN cr_craptco_conta_incorporada(pr_cdcooper => pr_cdcooper,
+                                                         pr_cdcopant => vr_cdcooper,
                                                          pr_nrdconta => vr_nrdconta);
                        FETCH cr_craptco_conta_incorporada INTO rw_craptco_conta_incorporada;
 
                        IF cr_craptco_conta_incorporada%FOUND THEN -- Se for uma conta transferida
-                         vr_flg_ctamigra := TRUE;                      
+                         vr_flg_ctamigra := TRUE;
                          vr_nrdconta := rw_craptco_conta_incorporada.nrdconta;
-                       ELSE 
+                       ELSE
                           continue; /* Nao pertence a Cooperativa que estou rodando...*/
                        END IF;
                      END IF;
@@ -2441,13 +2464,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     OPEN cr_craptco(vr_nrdconta);
                     FETCH cr_craptco INTO rw_craptco;
                     IF cr_craptco%FOUND THEN -- Se for uma conta transferida
-                      /* Se a cooperativa do registro atual eh diferente da cooperativa 
+                      /* Se a cooperativa do registro atual eh diferente da cooperativa
                          que esta rodando no momento, entao despreza o registro. */
                       IF rw_craptco.cdcooper <> vr_cdcooper THEN
                         CLOSE cr_craptco;
                         continue;
                       END IF;
-                      
+
                       -- Busca o numero do lote
                       vr_dstextab_2 := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_craptco.cdcooper
                                                                  ,pr_nmsistem => 'CRED'
@@ -2594,13 +2617,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       END IF;
                     END IF;
                   END IF;
-
+                  
 
                   
                   IF vr_tpregist = 'E' THEN
                     /*** Tratamento para codigo de referencia zerado ***/
                     IF to_number(SUBSTR(vr_setlinha,02,25)) = 0 THEN
-                      -- Caso a referencia do arquivo vier zerada, devera gerar crapndb                                       
+                      -- Caso a referencia do arquivo vier zerada, devera gerar crapndb
                       vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
                       -- Arquivo com os registros de debito com referencia zeradas
                       BEGIN
@@ -2623,7 +2646,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
                           RAISE vr_exc_saida;
                       END;
-                            
+
                       -- monta a chave para a pl_table vr_tab_relato
                       vr_nrseq := vr_nrseq + 1;
                       vr_ind := lpad(vr_cdcritic,5,'0')||'00003'|| lpad(vr_nrdconta,10,'0') ||
@@ -2647,7 +2670,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       continue; -- Vai para a proxima linha do arquivo
                     END IF;
                   END IF;
-                      
+                                    
                   -- Cadastro das autorizacoes de debito em conta
                   IF cr_crapatr%ISOPEN THEN
                     CLOSE cr_crapatr;
@@ -2663,7 +2686,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     IF rw_gnconve.flgindeb = 1 AND
                        vr_tpregist     = 'E'   AND
                        cr_crapass%FOUND           AND
-                       cr_crapatr%NOTFOUND        THEN                                                                   
+                       cr_crapatr%NOTFOUND        THEN
 
                          -- Insere no Cadastro das autorizacoes de debito em conta
                          BEGIN
@@ -2710,13 +2733,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                        rw_crapatr.vlrmaxdb,
                                        rw_crapatr.cdrefere,
                                        rw_crapatr.cdhistor,
-                                       rw_crapatr.ROWID;
+                                       rw_crapatr.ROWID;                                       
                          EXCEPTION
                            WHEN OTHERS THEN
                               vr_dscritic := 'Erro ao inserir na crapatr: '||SQLERRM;
                               RAISE vr_exc_saida;
                          END;
-                         
+
                       -- monta a chave para a pl_table vr_tab_relato
                       vr_nrseq := vr_nrseq + 1;
                       vr_ind := '0000000004'|| lpad(vr_nrdconta,10,'0') ||
@@ -2789,7 +2812,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       IF vr_tpregist = 'E' THEN
 
                         vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
-                        
+
                         -- Arquivo com os registros de debito em conta nao efetuados (via febraban).
                         BEGIN
                           INSERT INTO crapndb
@@ -2844,7 +2867,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                     IF cr_crapatr%FOUND THEN
                       IF SUBSTR(vr_setlinha,150,1) <> '1' THEN
-                        rw_crapatr.dtfimatr := rw_crapatr.dtiniatr;
+                        rw_crapatr.dtfimatr := vr_dtcancel;
                         BEGIN
                           UPDATE crapatr
                              SET crapatr.dtfimatr = crapatr.dtiniatr
@@ -2974,7 +2997,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                            AND dsorigem <> 'PG555'
                            AND dsorigem <> 'CARTAOBB'
                            AND dsorigem <> 'BLOQJUD'
-													 AND dsorigem <> 'DAUT BANCOOB';
+                           AND dsorigem <> 'DAUT BANCOOB';
                       EXCEPTION
                         WHEN OTHERS THEN
                           vr_dscritic := 'Erro ao atualizar craplau: '||SQLERRM;
@@ -2984,8 +3007,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     continue; -- Vai para a proxima linha do arquivo
 
                   ELSIF vr_tpregist = 'E' THEN -- Corpo do arquivo
-                    IF vr_cdcritic = 0 THEN                      
-                      
+                    IF vr_cdcritic = 0 THEN
+
                       IF SUBSTR(vr_setlinha,53,15) = 0 THEN
                         vr_cdcritic := 502;
 
@@ -3290,7 +3313,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
                               RAISE vr_exc_saida;
                           END;
-                        ELSE
+                          ELSE
                             vr_inserir_lancamento := 'S';
                           END IF;
                         END IF;
@@ -3457,10 +3480,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             ELSE
                               vr_cdcritic_tmp := 0;
                             END IF;
-                            
+
                             /*Pega proximo dia util se for ultimo dia do ano ou devolve
                               a propria data passada como referencia*/
-                            vr_dtrefere := fn_verifica_ult_dia(vr_cdcooper, vr_dtrefere); 
+                            vr_dtrefere := fn_verifica_ult_dia(vr_cdcooper, vr_dtrefere);
 
                             -- Cria registro na tabela de lancamentos automaticos
                             BEGIN
@@ -3580,7 +3603,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                             /**** Tratamento migracao Migracao ***/
                             IF vr_flg_ctamigra THEN
-                              
+
                               IF vr_cdcooper <> pr_cdcooper THEN /* migracao */
                               vr_doc_gravado_migrado := vr_doc_gravado_migrado + 1;
                               vr_vlr_gravado_migrado := vr_vlr_gravado_migrado + vr_vllanmto;
@@ -3709,9 +3732,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                          cr_crapass%FOUND THEN
                         /*** Tratamento para codigo de referencia zerado ***/
                         IF to_number(SUBSTR(vr_setlinha,02,25)) = 0 THEN
-                          continue;  
+                          continue;
                         END IF;
-                          
+
                         BEGIN
                           INSERT INTO crapatr
                             (nrdconta,
@@ -3788,7 +3811,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                     -- Envio centralizado de log de erro
                     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                              ,pr_ind_tipo_log => 2 -- Erro tratato                                              
+                                              ,pr_ind_tipo_log => 2 -- Erro tratato
                                               ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
                                                                || vr_cdprogra || ' --> '
                                                                || vr_tab_erro(vr_tab_erro.count)
@@ -3826,41 +3849,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                                          || vr_cdprogra || ' --> '
                                                          || vr_dscritic );
             ELSE
-            -- Move o arquivo para o diretorio salvar
-            gene0001.pc_oscommand_shell(pr_des_comando => 'mv '||vr_nmdirdeb||'/'||vr_tab_nmarquiv(i)|| ' ' ||
-                                                  gene0001.fn_diretorio(pr_tpdireto => 'C'
-                                                                       ,pr_cdcooper => pr_cdcooper
-                                                                       ,pr_nmsubdir => 'salvar'));
+              -- Move o arquivo para o diretorio salvar
+              gene0001.pc_oscommand_shell(pr_des_comando => 'mv '||vr_nmdirdeb||'/'||vr_tab_nmarquiv(i)|| ' ' ||
+                                                    gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                                                         ,pr_cdcooper => pr_cdcooper
+                                                                         ,pr_nmsubdir => 'salvar'));
 
-            -- Se possuir rejeitados
-            IF vr_flgrejei THEN
-              vr_cdcritic := 191; -- Arquivo integrado com rejeitados
-            ELSE
-              vr_cdcritic := 190; -- Arquivo integrado com sucesso
-            END IF;
+              -- Se possuir rejeitados
+              IF vr_flgrejei THEN
+                vr_cdcritic := 191; -- Arquivo integrado com rejeitados
+              ELSE
+                vr_cdcritic := 190; -- Arquivo integrado com sucesso
+              END IF;
 
 
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 1 -- Processo normal
-                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || gene0001.fn_busca_critica(vr_cdcritic) ||
-                                                       ' --> ' || vr_tab_nmarquiv(i));
-
-            -- Se possui registros duplicados
-            IF vr_flgdupli THEN
-              vr_cdcritic := 740; -- Lancamento de Debito ja Existente.
               -- Envio centralizado de log de erro
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 1 -- Processo normal
                                         ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                        ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
                                                          || vr_cdprogra || ' --> '
                                                          || gene0001.fn_busca_critica(vr_cdcritic) ||
                                                          ' --> ' || vr_tab_nmarquiv(i));
-            END IF;
+
+              -- Se possui registros duplicados
+              IF vr_flgdupli THEN
+                vr_cdcritic := 740; -- Lancamento de Debito ja Existente.
+                -- Envio centralizado de log de erro
+                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                          ,pr_ind_tipo_log => 1 -- Processo normal
+                                          ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                           || vr_cdprogra || ' --> '
+                                                           || gene0001.fn_busca_critica(vr_cdcritic) ||
+                                                           ' --> ' || vr_tab_nmarquiv(i));
+              END IF;
             END IF;
 
 
