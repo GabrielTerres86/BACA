@@ -4674,7 +4674,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    Data de vencimento conta como data pro protesto */
                IF (rw_crapcob.dtvencto + rw_crapcob.qtdiaprt) <= vr_dtmvtaux THEN          
                  /* Gerar Protesto */
-                 PAGA0001.pc_inst_protestar (pr_cdcooper => pr_cdcooper           --Codigo Cooperativa
+                 COBR0007.pc_inst_protestar (pr_cdcooper => pr_cdcooper           --Codigo Cooperativa
                                             ,pr_nrdconta => rw_crapcob.nrdconta   --Numero da Conta
                                             ,pr_nrcnvcob => rw_crapcob.nrcnvcob   --Numero Convenio
                                             ,pr_nrdocmto => rw_crapcob.nrdocmto   --Numero Documento
@@ -4752,7 +4752,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                  END IF;
 
                  --Baixar titulo por decurso de prazo
-                 PAGA0001.pc_inst_pedido_baixa_decurso (pr_cdcooper => rw_crapcob.cdcooper   --Codigo Cooperativa
+                 COBR0007.pc_inst_pedido_baixa_decurso (pr_cdcooper => rw_crapcob.cdcooper   --Codigo Cooperativa
                                                        ,pr_nrdconta => rw_crapcob.nrdconta   --Numero da Conta
                                                        ,pr_nrcnvcob => rw_crapcob.nrcnvcob   --Numero Convenio
                                                        ,pr_nrdocmto => rw_crapcob.nrdocmto   --Numero Documento
