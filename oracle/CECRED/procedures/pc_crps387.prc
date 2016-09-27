@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 23/09/2016
+   Data    : Abril/2004                        Ultima atualizacao: 27/09/2016
 
    Dados referentes ao programa:
 
@@ -339,6 +339,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                23/09/2016 - Tratar registros de vr_nro_conta_dec < 9000000000 para tratar
                             agencia(cdagectl) do debito (Lucas Ranghetti#527719)
+                            
+               27/09/2016 - Alterado gravacao na crapatr no campo dtiniatr para gravar
+                            a data com o dia do processo (Lucas Ranghetti #506501)
 ............................................................................ */
 
     DECLARE
@@ -2709,7 +2712,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                vr_cdrefere,
                                0,
                                1,
-                               to_date(substr(vr_setlinha,45,08),'YYYYMMDD'),
+                               rw_crapdat.dtmvtolt,
                                NULL,
                                rw_crapass.nmprimtl,
                                NULL,
