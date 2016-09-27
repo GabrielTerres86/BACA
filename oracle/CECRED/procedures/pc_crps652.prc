@@ -154,9 +154,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             multa e juros de mora em emprestimos. Estava buscando indevidamente da
                             tabela craplem, quando o correto deveria ser craplcm (Heitor - RKAM)
 
-                            
                26/07/2016 - Correção não estava trazendo o nome da acessoria de cobrança
-                            na manutenção cadastral. (Oscar)             
+                            na manutenção cadastral. (Oscar)
+			   
+			   27/09/2016 - Correcao na chamada da gene0007 para remocao de caracteres especiais.
+			                Nao deve remover o @ devido ao campo de email.
+							Heitor (RKAM) - Chamado 521909
      ............................................................................. */
 
      DECLARE
@@ -756,7 +759,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Concatena os espaços em branco e o novo texto
          vr_linha := vr_linha || rpad(' ', vr_qtd_brancos, ' ') || pr_text;
          --Modificar vetor com a linha atualizada
-         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,1),1,'`´','  ');
+         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,0),1,'`´#$&%¹²³ªº°*!?<>/\|','                    ');
        END pc_monta_linha;
 
        --Procedure para incrementar contador linha
