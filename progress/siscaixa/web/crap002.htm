@@ -17,6 +17,11 @@
                           03/10/2014 - Adicionado link para consulta do cartao
                                        de assinatura do cooperado.
                                        (Chamado 174180) - (Fabricio)
+
+                          05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			                           nas rotinas do caixa online SD 474875 (Tiago/Elton).
+
+                          12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).
 -->
 
 <html>
@@ -29,12 +34,16 @@
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/funcoes.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/mascara.js"></script>
+<script language=JavaScript src="/script/formataconta.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>CONSULTA CONTA ASSOCIADO</title>
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event);" method=post>
         <input type="hidden" name="v_msg">
         <input type="hidden" name="vh_foco" value="9">
@@ -81,7 +90,7 @@
             <table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>
               <tr>
                 <td align="right" class="linhaform">Conta/DV:</td>
-                <td align="left"  class="linhaform"><input type="text" name="v_conta" id="v_conta" onChange="document.forms[0].submit();for(var i=0;i<document.forms[0].length;i++){document.forms[0].elements[i].disabled=true;}" onKeyDown="JavaScript:if(event.keyCode == 13) {document.forms[0].elements[10].focus();} validaInteiro(event); FormataConta(this,8,event);" maxlength="10" size="10" class="input" style="text-align: right">&nbsp;<input type="button" value="Nome" name="v_zoom" class="button1" onClick=location="crap002a.htm?v_tela=crap002.htm" nowrap></td>
+                <td align="left"  class="linhaform"><input type="text" name="v_conta" id="v_conta" onChange="document.forms[0].submit();for(var i=0;i<document.forms[0].length;i++){document.forms[0].elements[i].disabled=true;}" onKeyDown="JavaScript:if(event.keyCode == 13) {document.forms[0].elements[10].focus();} " maxlength="10" size="10" class="input" style="text-align: right">&nbsp;<input type="button" value="Nome" name="v_zoom" class="button1" onClick=location="crap002a.htm?v_tela=crap002.htm" nowrap></td>
                 <td align="left"  class="linhaform" width="50px">
                   <input type="text" name="v_nome" id="v_nome" size="40" class=input style="font-weight: bold" disabled>
                 </td>

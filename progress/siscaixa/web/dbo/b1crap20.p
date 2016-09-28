@@ -232,7 +232,7 @@
 			                 comprovantes, melhoria 112 (Tiago/Elton).				
 							 
 				27/04/2016 - Adicionado tratamento para verificar isencao ou nao
-                             de tarifa no envio de DOC/TED. PRJ 218/2 (Reinert).	
+                             de tarifa no envio de DOC/TED. PRJ 218/2 (Reinert).			 
 							 
 			    25/08/2016 - Ajustado para gerar o log de cartão no envio da TED antes de 
 				             chamar a rotina que envia as informações para a Cabine,
@@ -1161,24 +1161,8 @@ PROCEDURE valida-valores:
             IF (p-tipo-doc = 'TEDD' OR p-tipo-doc = 'TEDC') AND
                (crapcop.flgoppag = FALSE AND crapcop.flgopstr = FALSE) THEN
                 DO: 
-                    IF  INT(SUBSTR(craptab.dstextab,13,1)) <> 0 THEN
-                        DO:
-                            ASSIGN i-cod-erro  = 677
-                                   c-desc-erro = "". 
-                            RUN cria-erro (INPUT p-cooper,
-                                           INPUT p-cod-agencia,
-                                           INPUT p-nro-caixa,
-                                           INPUT i-cod-erro,
-                                           INPUT c-desc-erro,
-                                           INPUT YES).
-                        END.                    
-                    ELSE
-                        DO:
-                           IF INT(SUBSTR(craptab.dstextab,15,5)) <= TIME
-                              THEN 
-                              DO:
-                                    ASSIGN i-cod-erro  = 676
-                                           c-desc-erro = "". 
+                    ASSIGN i-cod-erro  = 0
+                           c-desc-erro = "Cooperativa está inoperante no SPB.". 
                                     RUN cria-erro (INPUT p-cooper,
                                                    INPUT p-cod-agencia,
                                                    INPUT p-nro-caixa,
@@ -1186,8 +1170,6 @@ PROCEDURE valida-valores:
                                                    INPUT c-desc-erro,
                                                    INPUT YES).
                               END.
-                        END.                        
-                END.
             ELSE  /* DOC */ 
                 DO:
                     IF  p-tipo-doc = 'D' OR p-tipo-doc = 'C' THEN
@@ -2047,67 +2029,67 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                                                INPUT YES).
                                  RETURN "NOK".
                              END.
-
+    
                         IF  aux_fliseope <> 1 THEN
                             DO:
-                                IF NOT VALID-HANDLE(h-b1wgen0153) THEN
-                                    RUN sistema/generico/procedures/b1wgen0153.p PERSISTENT SET h-b1wgen0153.
+                        IF NOT VALID-HANDLE(h-b1wgen0153) THEN
+                            RUN sistema/generico/procedures/b1wgen0153.p PERSISTENT SET h-b1wgen0153.
+
+                        RUN lan-tarifa-online IN h-b1wgen0153
+                                   (INPUT crapcop.cdcooper,
+                                    INPUT 1,
+                                    INPUT p-nro-conta-rm,            
+                                    INPUT 100,             /* cdbccxlt */         
+                                    INPUT 7999,            /* nrdolote */        
+                                    INPUT i-tipo-lote,     /* tpdolote */         
+                                    INPUT p-cod-operador,
+                                    INPUT crapdat.dtmvtolt,
+                                    INPUT crapdat.dtmvtocd,
+                                    INPUT p-nro-conta-rm,
+                                    INPUT STRING(p-nro-conta-rm,"99999999"),
+                                    INPUT tar_cdhistor,
+                                    INPUT "CRAP020",  
+                                    INPUT 0,     /* cdbanchq */
+                                    INPUT 0,     /* cdagechq */
+                                    INPUT 0,     /* nrctachq */
+                                    INPUT FALSE, /* flgaviso */
+                                    INPUT 0,     /* tpdaviso */
+                                    INPUT tar_vllanmto,
+                                    INPUT i-nro-docto,     /* nrdocmto */
+                                    INPUT crapcop.cdcooper,
+                                    INPUT crapass.cdagenci,
+                                    INPUT 0, /* aux_nrterfin */
+                                    INPUT 0,
+                                    INPUT p-ult-sequencia-lcm,
+                                    INPUT "",
+                                    INPUT aux_cdfvlcop,
+                                    INPUT crapdat.inproces,
+                                   OUTPUT p-cdlantar,
+                                   OUTPUT TABLE tt-erro).
+
+                        IF  VALID-HANDLE(h-b1wgen0153) THEN
+                                DELETE PROCEDURE h-b1wgen0153.
+                                      
+                        IF  RETURN-VALUE = "NOK"  THEN
+                        DO:
+                            FIND FIRST tt-erro NO-LOCK NO-ERROR.
         
-                                RUN lan-tarifa-online IN h-b1wgen0153
-                                           (INPUT crapcop.cdcooper,
-                                            INPUT 1,
-                                            INPUT p-nro-conta-rm,            
-                                            INPUT 100,             /* cdbccxlt */         
-                                            INPUT 7999,            /* nrdolote */        
-                                            INPUT i-tipo-lote,     /* tpdolote */         
-                                            INPUT p-cod-operador,
-                                            INPUT crapdat.dtmvtolt,
-                                            INPUT crapdat.dtmvtocd,
-                                            INPUT p-nro-conta-rm,
-                                            INPUT STRING(p-nro-conta-rm,"99999999"),
-                                            INPUT tar_cdhistor,
-                                            INPUT "CRAP020",  
-                                            INPUT 0,     /* cdbanchq */
-                                            INPUT 0,     /* cdagechq */
-                                            INPUT 0,     /* nrctachq */
-                                            INPUT FALSE, /* flgaviso */
-                                            INPUT 0,     /* tpdaviso */
-                                            INPUT tar_vllanmto,
-                                            INPUT i-nro-docto,     /* nrdocmto */
-                                            INPUT crapcop.cdcooper,
-                                            INPUT crapass.cdagenci,
-                                            INPUT 0, /* aux_nrterfin */
-                                            INPUT 0,
-                                            INPUT p-ult-sequencia-lcm,
-                                            INPUT "",
-                                            INPUT aux_cdfvlcop,
-                                            INPUT crapdat.inproces,
-                                           OUTPUT p-cdlantar,
-                                           OUTPUT TABLE tt-erro).
-        
-                                IF  VALID-HANDLE(h-b1wgen0153) THEN
-                                        DELETE PROCEDURE h-b1wgen0153.
-                                              
-                                IF  RETURN-VALUE = "NOK"  THEN
-                                    DO:
-                                        FIND FIRST tt-erro NO-LOCK NO-ERROR.
-                    
-                                        IF AVAIL tt-erro THEN
-                                            ASSIGN i-cod-erro  = 0
-                                                   c-desc-erro = tt-erro.dscritic.
-                                        ELSE
-                                            ASSIGN i-cod-erro  = 0
-                                                   c-desc-erro = "Nao foi possivel " +
-                                                                 "lancar a tarifa.".
-                
-                                         RUN cria-erro (INPUT p-cooper,
-                                                        INPUT p-cod-agencia,
-                                                        INPUT p-nro-caixa,
-                                                        INPUT i-cod-erro,
-                                                        INPUT c-desc-erro,
-                                                        INPUT YES).
-                                         RETURN "NOK".
-                                    END.
+                            IF AVAIL tt-erro THEN
+                                ASSIGN i-cod-erro  = 0
+                                       c-desc-erro = tt-erro.dscritic.
+                            ELSE
+                                ASSIGN i-cod-erro  = 0
+                                       c-desc-erro = "Nao foi possivel " +
+                                                     "lancar a tarifa.".
+    
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                        END.
 							END.	
                         
                     END.
@@ -2863,7 +2845,7 @@ PROCEDURE atualiza-doc-ted: /* Caixa on line*/
                            INPUT i-cod-erro,
                            INPUT c-desc-erro,
                            INPUT NO).
-         END.    
+         END.
 
     RELEASE craplot.
     RELEASE craptvl.

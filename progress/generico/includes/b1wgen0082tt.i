@@ -2,7 +2,7 @@
    
    Programa: b1wgen0082tt.i
    Autor   : Gabriel
-   Data    : Dezembro/2010                  Ultima atualizacao: 07/04/2016
+   Data    : Dezembro/2010                  Ultima atualizacao: 04/08/2016
    
    Dados referentes ao programa:
    
@@ -25,6 +25,8 @@
 
                07/04/2016 - PRJ 213 - Reciprocidade. (Jaison/Marcos)
 
+			   04/08/2016 - Adicionado campo inenvcob na temp-table 
+							tt-cadastro-bloqueto (Reinert).
 ............................................................................ */
 
 
@@ -53,7 +55,8 @@ DEF TEMP-TABLE tt-cadastro-bloqueto
     FIELD qtdfloat LIKE crapceb.qtdfloat
     FIELD flprotes LIKE crapceb.flprotes
     FIELD qtdecprz LIKE crapceb.qtdecprz
-    FIELD idrecipr LIKE crapceb.idrecipr.
+    FIELD idrecipr LIKE crapceb.idrecipr
+    FIELD inenvcob LIKE crapceb.inenvcob.
 
 DEF TEMP-TABLE tt-crapcco 
     FIELD nrconven AS CHAR

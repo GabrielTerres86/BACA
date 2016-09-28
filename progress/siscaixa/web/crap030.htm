@@ -3,6 +3,8 @@
 
   Alteracoes: 31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
+  Alteracoes: 
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
 -->
 <html>
 
@@ -110,7 +112,7 @@ function submitForm() {
 </script>
 </head>
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: controlaCampos(); mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: controlaCampos(); mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);"> 
 <form onKeyDown="change_page(event)" method=post>
 
 <input type="hidden" name="vh_foco" id="vh_foco">
@@ -279,7 +281,7 @@ function submitForm() {
 				<td colspan="2" id="divProcessando"><font style="font-family: Arial, Verdana, sans-serif; font-size:11pt;">Processando...</font></td>
 			</tr>
 		</table>        
-	</form>
+</form>
 </div>
 
 </body>

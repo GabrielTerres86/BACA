@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odirlei Busana - AMcom
-   Data    : Março/2016.                    Ultima atualizacao: 18/03/2016
+   Data    : Março/2016.                    Ultima atualizacao: 20/09/2016
 
    Dados referentes ao programa:
 
@@ -12,9 +12,10 @@
    Objetivo  : Envio da efetivaçao da proposta de emprestimo 
                para a Esteira de Credito.
                
-   Alteracoes :
+   Alteracoes : 20/09/2016 - Atualizacao da data de envio da efetivação da esteira foi 
+                movida para o Oracle estava gerando erro no Progress (Oscar).
    
-   
+
    
 .............................................................................*/   
 
@@ -46,7 +47,7 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                         glb_cdprogra + " - " + crapprg.dsprogra[1] + 
                         " >> log/proc_batch.log").
                         
-UNIX SILENT VALUE("echo " + STRING(TODAY, "99/99/9999") +
+UNIX SILENT VALUE("echo " + STRING(TODAY, "99/99/9999") + " - " +
                         STRING(TIME,"HH:MM:SS") +
                         " - " + glb_cdprogra + "' --> '"  +
                         "Inicio da execucao: " +  
@@ -129,7 +130,7 @@ FOR EACH crapcop FIELDS (cdcooper)
        AND crawepr.insitest = 3      
        AND crawepr.dtenefes = ?
        AND crawepr.dtenvest <> ?
-       EXCLUSIVE-LOCK,
+       NO-LOCK,
       EACH crapepr FIELDS(cdagenci)
      WHERE crapepr.cdcooper = crawepr.cdcooper
        AND crapepr.nrdconta = crawepr.nrdconta
@@ -184,9 +185,7 @@ FOR EACH crapcop FIELDS (cdcooper)
               NEXT.
           END. 
         
-        /* Atualizar data de envio da efetivacao */
-        ASSIGN crawepr.dtenefes = TODAY. 
-               aux_qtsucess     = aux_qtsucess + 1.
+          aux_qtsucess     = aux_qtsucess + 1.
         
   END. /* fim loop crawepr */     
 

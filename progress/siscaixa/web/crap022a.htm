@@ -1,14 +1,16 @@
 <!--
    Programa: crap022a.htm                  
    Autora  : Andre Santos - Supero
-   Data    : 11/06/2014                      Ultima atualizacao:
+   Data    : 11/06/2014                      Ultima atualizacao: 05/09/2016
 
    Dados referentes ao programa:
 
    Objetivo  : Transferencia e Deposito entre Cooperativas
    
-   Alteracoes:              
-  
+   Alteracoes: 05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			                nas rotinas do caixa online SD 474875 (Tiago/Elton).
+                   
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).  
 -->
 
 <html>
@@ -22,6 +24,10 @@
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/funcoes.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/mascara.js"></script>
+<script language=JavaScript src="/script/formataconta.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>DEPOSITO E TRANSFERENCIA ENTRE COOPERATIVAS </title>
 
@@ -97,7 +103,7 @@ function initPage() {
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:initPage();" onKeyUp="callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: initPage();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
 
 <form name="form1" onKeyDown="change_page(event)" method=post>
 
@@ -198,7 +204,7 @@ function initPage() {
                 </tr>
                 <tr>
                   <td align="right" class="linhaform">Conta:</td>
-                  <td><input type="text" name="v_nroconta" size="10" class="input" maxlength="10" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);" onChange="JavaScript:changeContaPara();"style="text-align: right" disabled></td>
+                  <td><input type="text" id="v_conta" name="v_nroconta" size="10" class="input" maxlength="10" onChange="JavaScript:changeContaPara();"style="text-align: right" disabled></td>
                 </tr>
                 <tr>
                   <td align="right" class="linhaform">Tit1:&nbsp;</td>

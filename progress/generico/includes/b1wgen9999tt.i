@@ -2,7 +2,7 @@
 
    Programa: b1wgen9999tt.i                  
    Autor   : David
-   Data    : Marco/2008                  Ultima atualizacao: 06/06/2014
+   Data    : Marco/2008                  Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -21,10 +21,13 @@
                21/08/2013 - Incluir tt-listal (André E / Supero)
                
                06/06/2014 - Incluso campos inpessoa e dtnascto na
-                            TEMP-TABLE tt-dados-avais (Daniel/Thiago).             
+                            TEMP-TABLE tt-dados-avais (Daniel/Thiago).  
+                            
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-cooper (Oscar).                             
+                            
 ..............................................................................*/
 
-DEF TEMP-TABLE tt-cooper
+DEF TEMP-TABLE tt-cooper NO-UNDO
     FIELD cdcooper AS INT
     FIELD nmrescop AS CHAR.
 

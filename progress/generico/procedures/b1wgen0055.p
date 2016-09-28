@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 07/06/2016
+    Data    : Janeiro/2010                   Ultima atualizacao: 09/09/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -131,6 +131,8 @@
                 16/03/2016 - Incluir validacao para nao criar crapdoc para pessoa juridica
                              tipos(1,2,4,5) (Lucas Ranghetti #391492)
 
+                09/09/2016 - Adicionar validacao para o relacionamento com o primeiro titular
+                             cdgraupr = 0 e for segundo titular (Lucas Ranghetti #500760)
 .............................................................................*/
 
 
@@ -3421,6 +3423,15 @@ PROCEDURE Valida_Dados:
                ASSIGN par_nmdcampo = "cdgraupr"
                       aux_cdcritic = 23.
 
+               LEAVE Valida.
+            END.
+        
+        IF  NOT CAN-DO("1,2,3,4,6",STRING(par_cdgraupr,"9")) AND 
+            par_idseqttl <> 1 THEN
+            DO:
+               ASSIGN 
+                   par_nmdcampo = "cdgraupr"
+                   aux_cdcritic = 23.
                LEAVE Valida.
             END.
         

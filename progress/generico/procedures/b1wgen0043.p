@@ -5417,7 +5417,7 @@ PROCEDURE calcula_rating_juridica:
     DEF OUTPUT PARAM aux_vlutiliz AS DECI                            NO-UNDO.
     
     /* Variaveis para o calculo do Rating */
-    DEF  VAR         aux_nranoope AS INTE                            NO-UNDO. 
+    DEF  VAR         aux_nranoope AS DECI                            NO-UNDO. 
     DEF  VAR         aux_qtdiapra AS INTE                            NO-UNDO.
     DEF  VAR         aux_vlendivi AS DECI                            NO-UNDO.
     DEF  VAR         aux_vlmedfat AS DECI                            NO-UNDO.

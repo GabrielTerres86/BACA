@@ -8,8 +8,9 @@ Alteracoes: 22/03/2010 - Repassar o parametro v_nrsequni e v_dtenvelo
                          para as telas chamadas (Evandro).
                          
             11/11/2013 - Nova forma de chamar as agências, de PAC agora 
-                         a escrita será PA (Guilherme Gielow)             
-                            
+                         a escrita será PA (Guilherme Gielow)  
+						            
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                
                             
                             
 ------------------------------------------------------------------------*/
@@ -268,7 +269,7 @@ PROCEDURE process-web-request :
     '<link rel=StyleSheet type="text/css" href="/script/viacredi.css">' SKIP
     '<title>DEPÓSITO COM CAPTURA</title>' SKIP
     "</HEAD>":U SKIP
-    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">' SKIP
+    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">' SKIP
     '<form onKeyDown="change_page(event)" method=post>' SKIP.
   {&OUT}
     '<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>'

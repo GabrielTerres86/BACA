@@ -30,6 +30,8 @@
                             a escrita será PA (Guilherme Gielow)
    
                13/12/2013 - Adicionado validate para tabela craptab (Tiago).
+
+			   12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
    ......................................................................... */
 
 /*--------------------------------------------------------------------------*/
@@ -472,7 +474,7 @@ PROCEDURE process-web-request :
 
   {&OUT}
     "</HEAD>":U SKIP
-    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">' SKIP
+    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">' SKIP
     '<form onKeyDown="change_page(event)" method=post>' SKIP
     '<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>'
     '<input type="hidden" name="vh_foco" value="">'

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 04/02/2016
+   Data    : Marco/2007                        Ultima atualizacao: 15/08/2016
 
    Dados referentes ao programa:
 
@@ -45,6 +45,10 @@
                             do XML. (Projeto Boleto formato carne - Douglas)
 
                04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel) 
+			   
+			   15/08/2016 - Removido validacao de convenio na consulta da tela
+							manutencao, conforme solicitado no chamado 497079.
+							(Kelvin)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -236,14 +240,6 @@ RUN verifica-convenios IN h-b1wnet0001 (INPUT par_cdcooper,
                                        OUTPUT par_intipcob,
                                        OUTPUT par_intipemi).
 DELETE PROCEDURE h-b1wnet0001.
-
-IF par_intipcob = 0 THEN
-DO:
-    ASSIGN aux_dscritic = "Convenio nao cadastrado.".
-           xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
-            
-    RETURN "NOK".
-END.
 
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<DADOS><intipcob>" + 

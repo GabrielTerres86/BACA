@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0126.p
     Autor   : Rogerius Militao (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 01/12/2015
+    Data    : Dezembro/2011                     Ultima atualizacao: 15/08/2016
 
     Objetivo  : Tranformacao BO tela ALTAVA
 
@@ -71,6 +71,10 @@
                 01/12/2015 - Incluir busca do pa de trabalho na procedure 
                              Cria_Aditivo na gravacao dos aditivos 
                              (Lucas Ranghetti #366888 )
+                             
+                15/08/2016 - Na PROCEDURE Grava_dados, incluir validacao para 
+                             que caso nao exista proposta de emprestimo, continue
+                             com o procedimento (Lucas Ranghetti #484366)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -1068,7 +1072,8 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_nrcpfcg2 AS DECI                                     NO-UNDO.
     DEF VAR aux_flgaval1 AS LOGICAL                                  NO-UNDO.
     DEF VAR aux_flgaval2 AS LOGICAL                                  NO-UNDO.
-    DEF VAR aux_dsrotina AS CHAR                                     NO-UNDO.
+    DEF VAR aux_dsrotina AS CHAR                                     NO-UNDO.    
+    DEF VAR aux_flgpropo AS LOG                                      NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                   NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                   NO-UNDO.
     
@@ -1084,7 +1089,9 @@ PROCEDURE Grava_Dados:
            aux_cdcritic = 0
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_returnvl = "NOK"
-           aux_dsrotina = "".
+           aux_dsrotina = ""           
+           aux_flgpropo = TRUE.
+           
 
     Grava: DO TRANSACTION ON ERROR UNDO Grava, LEAVE Grava:
         
@@ -1235,7 +1242,8 @@ PROCEDURE Grava_Dados:
                        END.
                    ELSE
                        DO:
-                           ASSIGN aux_cdcritic = 356.
+                            
+                           ASSIGN aux_cdcritic = 356.                                  
                            LEAVE Contador.
                        END.
                END.
@@ -1255,7 +1263,7 @@ PROCEDURE Grava_Dados:
                              crawepr.nrctremp = par_nrctremp
                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
        
-          IF  NOT AVAIL crawepr THEN
+          IF  NOT AVAIL crawepr THEN 
               DO:
                   IF  LOCKED crawepr   THEN
                       DO:
@@ -1271,18 +1279,19 @@ PROCEDURE Grava_Dados:
                               END.
                       END.
                   ELSE
-                      DO:
-                          ASSIGN aux_cdcritic = 356.
+                      DO:                          
+                          ASSIGN aux_flgpropo = FALSE.
                           LEAVE Contador.
                       END.
               END.
           ELSE
               LEAVE Contador.
        
-       END.  /*  Contador  */
-       
+       END.  /*  Contador  */       
+    
        IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
            UNDO Grava, LEAVE Grava.
+       
        IF  crapepr.nrctaav1 <> 0 THEN
            DO:
               FOR EACH crapavl WHERE crapavl.cdcooper = par_cdcooper      AND
@@ -1406,64 +1415,67 @@ PROCEDURE Grava_Dados:
               VALIDATE crapavt.
            END.
               
-       ASSIGN  crawepr.nrctaav1    = par_nrctaav1
-               crawepr.nrctaav2    = par_nrctaav2
-               crawepr.nmdaval1    = CAPS(par_nmdaval1)
-               crawepr.dscpfav1    = CAPS(par_dscpfav1)
-               crawepr.nmcjgav1    = CAPS(par_nmcjgav1)
-               crawepr.dscfcav1    = CAPS(par_dscfcav1)
-       
-               crawepr.dsendav1[1] = CAPS(par_dsenda11) + " " +
-                                     STRING(par_nrendere1)
-               crawepr.dsendav1[2] = STRING(CAPS(par_dsenda12) + " - " +
-                                            CAPS(par_nmcidade1) + " - " +
-                                     STRING(par_nrcepend1,"99,999,999"))
-       
-               crawepr.nmdaval2    = CAPS(par_nmdaval2)
-               crawepr.dscpfav2    = CAPS(par_dscpfav2)
-               crawepr.nmcjgav2    = CAPS(par_nmcjgav2)
-               crawepr.dscfcav2    = CAPS(par_dscfcav2)
-               crawepr.dsendav2[1] = CAPS(par_dsenda21) + " " +
-                                     STRING(par_nrendere2)
-               crawepr.dsendav2[2] = STRING(CAPS(par_dsenda22) + " - " +
-                                     CAPS(par_nmcidade2) + " - " +
-                                     STRING(par_nrcepend2,"99,999,999"))
-               crawepr.cdcooper    = par_cdcooper.
-       
-       IF  par_nrctaav1 = 0         AND  
-           TRIM(par_nmdaval1) <> "" THEN
+       /* Se achou proposta de emprestimo */
+       IF  aux_flgpropo THEN
            DO:
-              ASSIGN crawepr.dscpfav1 = " "
-                     crawepr.dscfcav1 = " "
-                     crawepr.dscpfav1 = TRIM(CAPS(par_tpdocav1)) + " " +
-                                        TRIM(CAPS(par_dscpfav1)) + " C.P.F. " +
-                                        STRING(par_cpfcgc1).
-              IF  par_cpfccg1 > 0 THEN
-                  DO:    
-                     ASSIGN crawepr.dscfcav1 =
-                            TRIM(CAPS(par_tpdoccj1)) + " " +
-                            TRIM(CAPS(par_dscfcav1)) + " C.P.F. " +
-                            STRING(par_cpfccg1).
-                  END.
-           END.        
-       
-       IF  par_nrctaav2 = 0         AND  
-           TRIM(par_nmdaval2) <> "" THEN
-           DO:
-              ASSIGN crawepr.dscpfav2 = " "
-                     crawepr.dscfcav2 = " "
-                     crawepr.dscpfav2 = TRIM(CAPS(par_tpdocav2)) + " " +
-                                        TRIM(CAPS(par_dscpfav2)) + " C.P.F. " +
-                                        STRING(par_cpfcgc2).
-              IF  par_cpfccg2 > 0 THEN
-                  DO:    
-                    ASSIGN crawepr.dscfcav2 = TRIM(CAPS(par_tpdoccj2)) + " " +
-                                              TRIM(CAPS(par_dscfcav2)) +
-                                              " C.P.F. " +
-                                              STRING(par_cpfcgc2).
-                  END.
-           END.       
-       
+               ASSIGN  crawepr.nrctaav1    = par_nrctaav1
+                       crawepr.nrctaav2    = par_nrctaav2
+                       crawepr.nmdaval1    = CAPS(par_nmdaval1)
+                       crawepr.dscpfav1    = CAPS(par_dscpfav1)
+                       crawepr.nmcjgav1    = CAPS(par_nmcjgav1)
+                       crawepr.dscfcav1    = CAPS(par_dscfcav1)
+               
+                       crawepr.dsendav1[1] = CAPS(par_dsenda11) + " " +
+                                             STRING(par_nrendere1)
+                       crawepr.dsendav1[2] = STRING(CAPS(par_dsenda12) + " - " +
+                                                    CAPS(par_nmcidade1) + " - " +
+                                             STRING(par_nrcepend1,"99,999,999"))
+               
+                       crawepr.nmdaval2    = CAPS(par_nmdaval2)
+                       crawepr.dscpfav2    = CAPS(par_dscpfav2)
+                       crawepr.nmcjgav2    = CAPS(par_nmcjgav2)
+                       crawepr.dscfcav2    = CAPS(par_dscfcav2)
+                       crawepr.dsendav2[1] = CAPS(par_dsenda21) + " " +
+                                             STRING(par_nrendere2)
+                       crawepr.dsendav2[2] = STRING(CAPS(par_dsenda22) + " - " +
+                                             CAPS(par_nmcidade2) + " - " +
+                                             STRING(par_nrcepend2,"99,999,999"))
+                       crawepr.cdcooper    = par_cdcooper.
+               
+               IF  par_nrctaav1 = 0         AND  
+                   TRIM(par_nmdaval1) <> "" THEN
+                   DO:
+                      ASSIGN crawepr.dscpfav1 = " "
+                             crawepr.dscfcav1 = " "
+                             crawepr.dscpfav1 = TRIM(CAPS(par_tpdocav1)) + " " +
+                                                TRIM(CAPS(par_dscpfav1)) + " C.P.F. " +
+                                                STRING(par_cpfcgc1).
+                      IF  par_cpfccg1 > 0 THEN
+                          DO:    
+                             ASSIGN crawepr.dscfcav1 =
+                                    TRIM(CAPS(par_tpdoccj1)) + " " +
+                                    TRIM(CAPS(par_dscfcav1)) + " C.P.F. " +
+                                    STRING(par_cpfccg1).
+                          END.
+                   END.        
+               
+               IF  par_nrctaav2 = 0         AND  
+                   TRIM(par_nmdaval2) <> "" THEN
+                   DO:
+                      ASSIGN crawepr.dscpfav2 = " "
+                             crawepr.dscfcav2 = " "
+                             crawepr.dscpfav2 = TRIM(CAPS(par_tpdocav2)) + " " +
+                                                TRIM(CAPS(par_dscpfav2)) + " C.P.F. " +
+                                                STRING(par_cpfcgc2).
+                      IF  par_cpfccg2 > 0 THEN
+                          DO:    
+                            ASSIGN crawepr.dscfcav2 = TRIM(CAPS(par_tpdoccj2)) + " " +
+                                                      TRIM(CAPS(par_dscfcav2)) +
+                                                      " C.P.F. " +
+                                                      STRING(par_cpfcgc2).
+                          END.
+                   END.       
+           END.
        
        IF par_nrctaav1 > 0     OR 
          (par_nrctaav1 = 0     AND  

@@ -9,7 +9,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Dezembro/2001                      Ultima atualizacao: 10/06/2013
+   Data    : Dezembro/2001                      Ultima atualizacao: 26/08/2016
 
    Dados referentes ao programa:
 
@@ -86,6 +86,9 @@
                 
                 10/06/2013 - Alteração função enviar_email_completo para
                              nova versão (Jean Michel).
+                                            
+                26/08/2016 - Realiza envio das cartas para a Engecopy de todas
+                             as cooperativas (Elton - SD 494092 ).
                                             
 ............................................................................. */
 
@@ -320,13 +323,8 @@ IF   aux_flgfxser THEN
                            SUBSTRING(aux_nmarqdat, 5)).
                        
          ASSIGN aux_nmarqdat = "salvar/" + SUBSTRING(aux_nmarqdat, 5)
-                
-                aux_nmdatspt = aux_nmarqdat.
-                
-         /* COOPERATIVAS QUE TRABALHAM COM A ENGECOPY */
-         IF   CAN-DO("1,2,4",STRING(glb_cdcooper))  THEN
-              DO:
-                  ASSIGN aux_nmarqeml = SUBSTR(aux_nmdatspt,
+                 aux_nmdatspt = aux_nmarqdat
+                 aux_nmarqeml = SUBSTR(aux_nmdatspt,
                                                R-INDEX(aux_nmdatspt,"/") + 1,
                                                LENGTH(aux_nmdatspt)).
                                                
@@ -376,13 +374,6 @@ IF   aux_flgfxser THEN
                   DELETE PROCEDURE b1wgen0011.            
                     
               END.
-         ELSE
-              DO:                     
-                   { includes/envia_dados_postmix.i }
-                                                 
-              END.
-         
-     END. 
 
 ASSIGN glb_nmarqimp = "rl/crrl269.lst"
        glb_nrcopias = 1

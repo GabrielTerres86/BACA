@@ -40,7 +40,7 @@
 
    Programa: b1wgen0001.p                  
    Autora  : Mirtes.
-   Data    : 12/09/2005                      Ultima atualizacao: 02/08/2016
+   Data    : 12/09/2005                      Ultima atualizacao: 31/08/2016
 
    Dados referentes ao programa:
 
@@ -361,7 +361,7 @@
                              (Douglas - Chamado 285228)
                 
                 10/12/2015 - Ajustes na gera_extrato_tarifas (Dionathan)              
-				
+
                 13/05/2016 - Ajuste na carrega_medias para leitura da crapsda utilizando a 
                              chave primaria, pois devida mah interpretacao da query pelo 
                              DataServer a leitura esta sendo feita sem o filtro de data 
@@ -370,13 +370,28 @@
                 27/05/2016 - Incluido verificacao de origem na procedure valida-impressao-extrato
 							 antes da chamada da procedure pc_verifica_pacote_tarifas,
 							 para verificacao do tipo de servico, Prj. Tarifas Fase 2 (Jean Michel).
-				
+                             
 				29/07/2016 - Ajuste na leitura da tabela craptex para utilizar o 
 				             index craptex1 (Daniel)   
 
 				02/08/2016 - Nao tratar parametro de isencao de extrato na cooperativa
                              quando cooperado possuir servico de extrato no pacote de 
                              tarifas (Diego).
+
+                             
+                23/08/2016 - Alteracao da procedure obtem-saldo para uso da procedure 
+                             Oracle pc_obtem_saldo_car criada para tratar e retornar
+                             os dados da pc_obtem_saldo para rotinas PROGRESS. 
+                             (Carlos Rafael Tanholi. SD 513352)
+                             
+                31/08/2016 - Correcao na forma de calculo da procedure carrega_medias
+                             agora levando em consideracao apenas as datas validas para
+                             consultar os dados que formam a media. 
+                             (Carlos Rafael Tanholi. SD 513352)
+
+                05/09/2016 - Correcao no comando usado para consulta do campo dtmvtoan 
+							 da CRAPDAT e na logica usada para calculo da media
+							 procedute carrega_medias.(Carlos Rafael Tanholi. SD 513352).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -2673,101 +2688,163 @@ PROCEDURE obtem-saldo:
     DEF OUTPUT       PARAM TABLE FOR tt-erro.
     DEF OUTPUT       PARAM TABLE FOR tt-saldos. 
 
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO.	
+	
+	
     EMPTY TEMP-TABLE tt-saldos.
     EMPTY TEMP-TABLE tt-erro.
+	
       
-    ASSIGN aux_sequen = 0.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_obtem_saldo_car 
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper, /* Cooperativa */
+                          INPUT par_cdagenci, /* Agencia */
+                          INPUT par_nrdcaixa, /* Nr. Caixa */
+                          INPUT par_cdoperad, /* Operador */
+                          INPUT par_nrdconta, /* Nr. Conta */
+                          INPUT par_dtrefere, /* Dt. Referencia */
+                         OUTPUT "", /* (OK|NOK) */
+                         OUTPUT ?). /* Tabela Extrato da Conta */
+
+    CLOSE STORED-PROC pc_obtem_saldo_car 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dscritic = pc_obtem_saldo_car.pr_des_reto
+                          WHEN pc_obtem_saldo_car.pr_des_reto <> ?.
         
-    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-   
-    IF  NOT AVAIL crapdat  THEN
-        DO:
-            ASSIGN aux_cdcritic = 1
-                   aux_dscritic = "".
-            
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).      
+    IF  aux_dscritic <> ""  THEN
+    DO:                                  
+        CREATE tt-erro.
+        ASSIGN tt-erro.dscritic = aux_dscritic.
 
-            RETURN "NOK".
-        END. 
+        RETURN "NOK".
+    END.      
+    ELSE 
+    DO:
+      
+      CREATE tt-saldos.
+      
+      EMPTY TEMP-TABLE tt-saldos.
 
-    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                       crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+      /*Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
+       para visualizacao dos registros na tela */
 
-    IF  NOT AVAILABLE crapass  THEN
-        DO:
-            ASSIGN aux_cdcritic = 9
-                   aux_dscritic = "".
-            
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).      
+      /* Buscar o XML na tabela de retorno da procedure Progress */ 
+      ASSIGN xml_req = pc_obtem_saldo_car.pr_clob_ret. 
 
-            RETURN "NOK".
-        END.
+      /* Efetuar a leitura do XML*/ 
+      SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+      PUT-STRING(ponteiro_xml,1) = xml_req. 
 
-    FIND LAST crapsda WHERE crapsda.cdcooper = par_cdcooper AND
-                            crapsda.dtmvtolt < par_dtrefere AND
-                            crapsda.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
-   
-    IF  NOT AVAIL crapsda  THEN
-        FIND FIRST crapsda WHERE crapsda.cdcooper  = par_cdcooper AND
-                                 crapsda.dtmvtolt >= par_dtrefere AND
-                                 crapsda.nrdconta  = par_nrdconta 
-                                 NO-LOCK NO-ERROR.
+      /* Inicializando objetos para leitura do XML */ 
+      CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+      CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+      CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+      CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+      CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
-    IF  AVAIL crapsda  THEN
-        DO: 
-            
-            ASSIGN aux_vlblqjud = 0
-                   aux_vlresblq = 0.
+      IF ponteiro_xml <> ? THEN
+          DO:
+              xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+              xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 
-            /*** Busca Saldo Bloqueado Judicial ***/
-            FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
-                               NO-LOCK NO-ERROR.
-        
-            RUN sistema/generico/procedures/b1wgen0155.p 
-                           PERSISTENT SET h-b1wgen0155.
-        
-            RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
-                                                     INPUT par_nrdconta,
-                                                     INPUT 0, /* nrcpfcgc */
-                                                     INPUT 1, /* 1 - Bloqueio */
-                                                     INPUT 1, /* 1 - Dep.Vista*/
-                                                     INPUT crapdat.dtmvtolt,
-                                                     OUTPUT aux_vlblqjud,
-                                                     OUTPUT aux_vlresblq).
-        
-            DELETE PROCEDURE h-b1wgen0155.
-            /*** Fim Busca Saldo Bloqueado Judicial ***/
+              DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
 
-            CREATE tt-saldos.
-            ASSIGN tt-saldos.vlblqjud = aux_vlblqjud.
-            BUFFER-COPY crapsda to tt-saldos.
-        END.   
-    ELSE
-        DO:
-            ASSIGN aux_cdcritic = 853
-                   aux_dscritic = "".
-            
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).      
+                  xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
 
-            RETURN "NOK".
-        END.
-        
-    RETURN "OK".  
+                  IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                      NEXT. 
+
+                  IF xRoot2:NUM-CHILDREN > 0 THEN
+                      CREATE tt-extrato_conta.
+
+                  DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+                      xRoot2:GET-CHILD(xField,aux_cont).
+
+                      IF xField:SUBTYPE <> "ELEMENT" THEN 
+                          NEXT. 
+
+                      xField:GET-CHILD(xText,1).
+
+                      ASSIGN tt-saldos.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "nrdconta".
+                      ASSIGN tt-saldos.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt".
+                      ASSIGN tt-saldos.vlsddisp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsddisp".
+                      ASSIGN tt-saldos.vlsdchsl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdchsl".
+                      ASSIGN tt-saldos.vlsdbloq = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdbloq".
+                      ASSIGN tt-saldos.vlsdblpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdblpr".
+                      ASSIGN tt-saldos.vlsdblfp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdblfp".
+                      ASSIGN tt-saldos.vlsdindi = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdindi".
+                      ASSIGN tt-saldos.vllimcre = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimcre".
+                      ASSIGN tt-saldos.cdcooper = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "cdcooper".
+                      ASSIGN tt-saldos.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved".
+                      ASSIGN tt-saldos.vldeschq = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vldeschq".
+                      ASSIGN tt-saldos.vllimutl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimutl".
+                      ASSIGN tt-saldos.vladdutl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vladdutl".
+                      ASSIGN tt-saldos.vlsdrdca = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdrdca".
+                      ASSIGN tt-saldos.vlsdrdpp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdrdpp".
+                      ASSIGN tt-saldos.vllimdsc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimdsc".
+                      ASSIGN tt-saldos.vlprepla = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprepla".
+                      ASSIGN tt-saldos.vlprerpp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprerpp".
+                      ASSIGN tt-saldos.vlcrdsal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlcrdsal".
+                      ASSIGN tt-saldos.qtchqliq = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "vlcrdsal".
+                      ASSIGN tt-saldos.qtchqass = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "vlcrdsal".
+                      ASSIGN tt-saldos.dtdsdclq = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdclq".
+                      ASSIGN tt-saldos.vltotpar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vltotpar".
+                      ASSIGN tt-saldos.vlopcdia = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlopcdia".
+                      ASSIGN tt-saldos.vlavaliz = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlavaliz".
+                      ASSIGN tt-saldos.vlavlatr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlavlatr".
+                      ASSIGN tt-saldos.qtdevolu = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "qtdevolu".
+                      ASSIGN tt-saldos.vltotren = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vltotren". 
+                      ASSIGN tt-saldos.vldestit = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vldestit".
+                      ASSIGN tt-saldos.vllimtit = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimtit".
+                      ASSIGN tt-saldos.vlsdempr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdempr".
+                      ASSIGN tt-saldos.vlsdfina = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdfina".
+                      ASSIGN tt-saldos.vlsrdc30 = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdc30".
+                      ASSIGN tt-saldos.vlsrdc60 = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdc60".
+                      ASSIGN tt-saldos.vlsrdcpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdcpr".
+                      ASSIGN tt-saldos.vlsrdcpo = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdcpo".
+                      ASSIGN tt-saldos.vlsdcota = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdcota".
+                      ASSIGN tt-saldos.vlblqtaa = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqtaa".
+                      ASSIGN tt-saldos.vlstotal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlstotal".
+                      ASSIGN tt-saldos.vlsaqmax = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsaqmax".
+                      ASSIGN tt-saldos.vlacerto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlacerto".
+                      ASSIGN tt-saldos.dslimcre = xText:NODE-VALUE WHEN xField:NAME			  = "dslimcre".
+                      ASSIGN tt-saldos.vlipmfpg = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlipmfpg".
+                      ASSIGN tt-saldos.dtultlcr = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtultlcr".
+                      ASSIGN tt-saldos.vlblqjud = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqjud".
+
+                  END. 
+
+              END.
+
+              SET-SIZE(ponteiro_xml) = 0. 
+
+          END.
+
+      /*Elimina os objetos criados*/
+      DELETE OBJECT xDoc. 
+      DELETE OBJECT xRoot. 
+      DELETE OBJECT xRoot2. 
+      DELETE OBJECT xField. 
+      DELETE OBJECT xText.    
+      
+	  RETURN "OK".
+
+    END.
 
 END PROCEDURE.
 
@@ -3631,25 +3708,40 @@ PROCEDURE carrega_medias:
                           ELSE 0.
                            
     /* Primeiro dia do mes atual */
-    ASSIGN aux_dtmvtolt = DATE("01/" + 
-                               STRING(MONTH(par_dtmvtolt)) + "/" + 
-                               STRING(YEAR(par_dtmvtolt))).
-    /* Primeiro dia do proximo mes */
-    ASSIGN aux_dtmvtfim = ADD-INTERVAL(aux_dtmvtolt,1,"months").
+    ASSIGN aux_dtmvtolt = DATE("01/" + STRING(MONTH(par_dtmvtolt)) + "/" +  STRING(YEAR(par_dtmvtolt))).
 
-    /* Loop do periodo do mes */
-    DO WHILE aux_dtmvtolt < aux_dtmvtfim :
-        FIND FIRST crapsda WHERE crapsda.cdcooper = par_cdcooper 
-                             AND crapsda.nrdconta = par_nrdconta 
-                             AND crapsda.dtmvtolt = aux_dtmvtolt
-                           NO-LOCK NO-ERROR.
-        IF AVAILABLE crapsda THEN
-        DO:
-        ASSIGN aux_vltsddis = aux_vltsddis + crapsda.vlsddisp
-               aux_qtdiauti = aux_qtdiauti + 1.
+    /* Busca pela data do movimento do dia anterior */
+	FOR FIRST crapdat FIELDS(dtmvtoan) WHERE crapdat.cdcooper = par_cdcooper NO-LOCK: END.
+		IF AVAILABLE crapdat THEN 
+		DO:
+			ASSIGN aux_dtmvtfim = crapdat.dtmvtoan.
+		END.
+
+    /* Loop do periodo do mes, do dia 1 ate a data do movimento anterior */
+    DO WHILE aux_dtmvtolt <= aux_dtmvtfim :
+
+		/* filtra a data na tabela de feriados */
+		FOR FIRST crapfer FIELDS(dtferiad) WHERE crapfer.cdcooper = par_cdcooper AND crapfer.dtferiad = aux_dtmvtolt NO-LOCK: END.
+
+		/* Se for sabado ou domingo ou feriado */
+		IF ((weekday(aux_dtmvtolt) = 1) OR (weekday(aux_dtmvtolt) = 7) OR (AVAIL(crapfer))) THEN
+		DO:
+			ASSIGN aux_dtmvtolt = aux_dtmvtolt + 1.
+		END.
+		ELSE
+		DO:
+			FIND FIRST crapsda WHERE crapsda.cdcooper = par_cdcooper 
+								 AND crapsda.nrdconta = par_nrdconta 
+								 AND crapsda.dtmvtolt = aux_dtmvtolt
+							   NO-LOCK NO-ERROR.
+			IF AVAILABLE crapsda THEN
+			DO:
+				ASSIGN aux_vltsddis = aux_vltsddis + crapsda.vlsddisp.
+			END.
+
+			ASSIGN aux_qtdiauti = aux_qtdiauti + 1  /* incrementa a quantidade de dias uteis */
+				   aux_dtmvtolt = aux_dtmvtolt + 1. /* atualiza a data do movimento */
         END.
-        
-        aux_dtmvtolt = aux_dtmvtolt + 1.
     END.
 
     CREATE tt-comp_medias.

@@ -5,6 +5,10 @@
               30/06/2010 - Cod e Senha do Coordenador (Guilherme).
               08/11/2013 - Nova forma de chamar as agências, de PAC agora 
                            a escrita será PA (Guilherme Gielow).
+              05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			               nas rotinas do caixa online SD 474875 (Tiago/Elton).  
+
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                 
 -->
 
 <html>
@@ -18,12 +22,16 @@
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/funcoes.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/mascara.js"></script>
+<script language=JavaScript src="/script/formataconta.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>INCLUSÃO CHEQUE LIBERADO</title>
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco();click();" onKeyUp="callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event)" method=post>
          <input type="hidden" name="v_msg"><input type="hidden" name="vh_foco" value="7">
 
@@ -67,7 +75,7 @@
         <tr>
           <td width="18%" align="right" class="linhaform">Conta/DV:</td>
           <td width="67%">
-          <input type="text" name="v_conta" size="11" class="input" maxlength="11" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,9,event);"  
+          <input type="text" id="v_conta" name="v_conta" size="11" class="input" maxlength="11"   
           onChange="document.forms[0].submit();for(var i=0;i<document.forms[0].length;i++){document.forms[0].elements[i].disabled=true;}" style="text-align: right">
 		   <input type="text" name="v_nome" size="40" class="input" disabled maxlength="40" style="font-weight: bold">
           </td>

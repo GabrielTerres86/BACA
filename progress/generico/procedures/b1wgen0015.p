@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 25/07/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 21/09/2016
     
     Dados referentes ao programa:
 
@@ -373,6 +373,10 @@
 			   25/07/2016 - Ajuste na rotina executa-envio-ted para corrigir nomenclatura 
 			                das tags do xml
 							(Adriano).
+               30/08/2016 - Inclusao dos campos de último acesso via Mobile na procedure 
+                            obtem-dados-titulares - PRJ286.5 - Cecred Mobile (Dionathan)
+
+               21/09/2016 - Ajuste na validacao do horario de envio da TED (Diego).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -664,22 +668,34 @@ PROCEDURE horario_operacao:
             ELSE
               DO:
                 /*-- Operando com mensagens STR --*/
-                IF crapcop.flgopstr THEN
-                   IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
-                       ASSIGN aux_flgutstr = TRUE.
+                IF   crapcop.flgopstr THEN
+                     IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
+                        ASSIGN aux_flgutstr = TRUE.
                   
                  /*-- Operando com mensagens PAG --*/
-            IF  crapcop.flgoppag  THEN 
-                    IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
+                IF   crapcop.flgoppag  THEN 
+                     IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
                         ASSIGN aux_flgutpag = TRUE.
 
-                IF aux_flgutpag THEN  
-                ASSIGN aux_hrinipag = crapcop.inioppag
-                       aux_hrfimpag = crapcop.fimoppag.
-            ELSE
-                ASSIGN aux_hrinipag = crapcop.iniopstr
-                       aux_hrfimpag = crapcop.fimopstr.
-                END.
+                /* Se opera com PAG e está dentro do horario permitido */
+                IF   aux_flgutpag THEN 
+                     ASSIGN aux_hrinipag = crapcop.inioppag
+                            aux_hrfimpag = crapcop.fimoppag.
+                ELSE
+                    DO:
+					    /* Se opera com STR */
+                        IF   crapcop.flgopstr THEN 
+                             /* independente de estar ou não dentro do horário 
+                                permitido, mostra hora do STR. Por regra, o STR 
+                                sempre terá um período maior */ 
+                             ASSIGN aux_hrinipag = crapcop.iniopstr
+						            aux_hrfimpag = crapcop.fimopstr.
+                        ELSE
+                             /* Só opera com PAG e está fora do horário */
+                             ASSIGN aux_hrinipag = crapcop.inioppag
+                                    aux_hrfimpag = crapcop.fimoppag.
+                    END. 
+			  END.
 
             CREATE tt-limite.
             ASSIGN tt-limite.idtpdpag = 4
@@ -8563,6 +8579,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = ?
                    tt-dados-titular.dtultace = ?
                    tt-dados-titular.hrultace = ""
+                   tt-dados-titular.dtacemob = ?
+                   tt-dados-titular.hracemob = ""
                    tt-dados-titular.nmoperad = ""
                    tt-dados-titular.vllimweb = 0
                    tt-dados-titular.vllimtrf = 0
@@ -8627,6 +8645,9 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = cratsnh.dtaltsit
                    tt-dados-titular.dtultace = cratsnh.dtultace
                    tt-dados-titular.hrultace = STRING(cratsnh.hrultace,
+                                                      "HH:MM:SS")
+                   tt-dados-titular.dtacemob = cratsnh.dtacemob
+                   tt-dados-titular.hracemob = STRING(cratsnh.hracemob,
                                                       "HH:MM:SS")
                    tt-dados-titular.vllimweb = cratsnh.vllimweb
                    tt-dados-titular.vllimtrf = cratsnh.vllimtrf

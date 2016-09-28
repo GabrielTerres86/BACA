@@ -25,6 +25,9 @@ Alterações:  17/03/2010 - Incluida a rotina 61 (Evandro).
                           rotina 89 (Guilherme/SUPERO)
 						  
 			 31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+
+    	     23/08/2016 - Adicionado chamada da função "callBlass(event)", para cartão assinatura (Evandro - RKAM).							  
+
 -->
 
 <head>
@@ -167,9 +170,12 @@ if(browser) onload=init;
 <en><b><font face="Arial" size="2">Rotina:</font></b></en>
 <input type='text' name='v_rotina' width=2 maxlength=3 size="4" class="input">
 &nbsp;
-<p><a OnClick="window.open('blini.p','wbl','width=500,height=320,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0')" target="pane" class="clSubb" style="cursor:hand" ONMOUSEOVER="window.status='BL';return true;" ONMOUSEOUT="window.status='';return true;">BL - Iniciar (F8)</a><br>
-</a>
-<a style="cursor: hand" OnClick="window.open('blsal.p','wbl','width=500,height=270,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0')" target="pane" class="clSubb" ONMOUSEOVER="window.status='BL';return true;" ONMOUSEOUT="window.status='';return true;">BL - Saldo (F7)</a>
+<p>
+    <a OnClick="window.open('blass.p','wbl','width=500,height=150,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0')" target="pane" class="clSubb" style="cursor:hand" ONMOUSEOVER="window.status='BL';return true;" ONMOUSEOUT="window.status='';return true;">BL - Cartão Assinatura (F9)</a><br>
+
+    <a OnClick="window.open('blini.p','wbl','width=500,height=320,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0')" target="pane" class="clSubb" style="cursor:hand" ONMOUSEOVER="window.status='BL';return true;" ONMOUSEOUT="window.status='';return true;">BL - Iniciar (F8)</a><br>
+
+    <a OnClick="window.open('blsal.p','wbl','width=500,height=270,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0')" target="pane" class="clSubb" style="cursor: hand" ONMOUSEOVER="window.status='BL';return true;" ONMOUSEOUT="window.status='';return true;">BL - Saldo (F7)</a>
 </p>
 </form>
 <div id="divCont">

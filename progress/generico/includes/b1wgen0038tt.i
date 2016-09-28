@@ -63,7 +63,7 @@ DEF TEMP-TABLE tt-endereco                                              NO-UNDO
     FIELD dsendcmp AS CHAR FORMAT "x(50)"    
     FIELD cdufende AS CHAR FORMAT "!(2)"
     FIELD nmbairro AS CHAR FORMAT "x(40)"
-    FIELD nmcidade AS CHAR FORMAT "x(25)"
+    FIELD nmcidade AS CHAR FORMAT "x(50)"
     FIELD dsoricad AS CHAR FORMAT "x(40)"
     FIELD dstiplog AS CHAR FORMAT "x(25)"
     FIELD idoricad AS INTE FORMAT "9"

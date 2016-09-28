@@ -10,6 +10,8 @@
                            
               19/11/2014 - #219595 Bloqueio do pagamento a partir do dia 28/11/2014 
                            na CONCREDI devido a incorporação da cooperativa (Carlos)
+
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
 -->
 
 <html>
@@ -28,7 +30,7 @@
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: controlaCampos(); mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);"> 
 <form name="action" onKeyDown="change_page(event)" method=post>
 <input type="hidden" name="vh_foco" value="7">
 <input type="hidden" name="v_msg">

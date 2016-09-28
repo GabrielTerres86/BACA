@@ -4,7 +4,7 @@
    Sistema : CAIXA ON-LINE
    Sigla   : CRED
    Autor   : 
-   Data    :                                    Ultima atualizacao : 05/03/2014
+   Data    :                                    Ultima atualizacao : 23/08/2016
    
    Dados referentes ao programa:
 
@@ -20,7 +20,9 @@
                             espécie criadas na rotina 20 (a partir da
                             craptvl). (Fernando)       
                             
-               05/03/2014 - Incluso VALIDATE (Daniel)          
+               05/03/2014 - Incluso VALIDATE (Daniel)
+			   
+			   23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).          
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -622,7 +624,7 @@ PROCEDURE process-web-request :
                               ELSE DO:
  
                                    {&OUT}
-                              "<script>alert('Fehamento Efetuado com Sucesso')
+                              "<script>alert('Fechamento efetuado com sucesso.')
                                     </script>".   
                                   
                               END.

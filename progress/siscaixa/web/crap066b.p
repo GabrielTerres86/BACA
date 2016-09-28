@@ -7,7 +7,9 @@ Objetivo  : Lançamento de cheques (adaptacao da rotina 51 + lanchq)
 Alteracoes: 29/07/2011 - Adaptado da rotina 51 (Guilherme).
                             
             11/11/2013 - Nova forma de chamar as agências, de PAC agora 
-                         a escrita será PA (Guilherme Gielow)                
+                         a escrita será PA (Guilherme Gielow) 
+						 
+			12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).			                
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with the Progress AppBuilder.     */
@@ -269,7 +271,7 @@ PROCEDURE process-web-request :
     '<link rel=StyleSheet type="text/css" href="/script/viacredi.css">' SKIP
     '<title>LANÇAMENTO DE CHEQUES</title>' SKIP
     "</HEAD>":U SKIP
-    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">' SKIP
+    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">' SKIP
     '<form onKeyDown="change_page(event)" method=post>' SKIP.
   {&OUT}
     '<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>'

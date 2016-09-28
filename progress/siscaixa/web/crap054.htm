@@ -3,7 +3,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/02/2016
+   Data    : Marco/2001                      Ultima atualizacao: 05/09/2016
 
   Alteracoes: 	03/07/2009 - Aumento do campo Operador (Diego).
   
@@ -23,6 +23,10 @@
 				23/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                              PinPad Novo (Lucas Lunelli - [PROJ290])
 
+                05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			                 nas rotinas do caixa online SD 474875 (Tiago/Elton).               
+    
+                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                 
 ----------------------------------------------------------------------------------------------->
 
 <html>
@@ -34,9 +38,12 @@
 <meta http-equiv="Expires"       content="0">
 <OBJECT  classid="clsid:7F8735B1-EC41-4134-9083-E059B3F56262" codebase=".\edimpbmp20ci.ocx#version=2,1,3,1" width=0 height=0 align=CENTER hspace=0 vspace=0 id=bematech></OBJECT>
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/funcoes.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/mascara.js"></script>
+<script language=JavaScript src="/script/formataconta.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 
-<script language=JavaScript src="/script/jquery.js"></script>
 <script language="JavaScript">
 
 var cnxPinpad; 		/* COMUNICAÇÃO PINPAD NOVO */
@@ -538,8 +545,8 @@ function cancelFormulario() {
 function enviaFormularioPinPad(strInput, strEvent) { 
     var strSenha = document.getElementById('v_senhaCartao').value;
     
-    if (window.event.keyCode == 13 && strSenha != "" && strSenha != " ") { 
-		fechaConexaoPinpadNovo(cnxPinpad);
+    if (window.event.keyCode == 13 && strSenha != "" && strSenha != " ") {
+        fechaConexaoPinpadNovo(cnxPinpad);
         submitFormulario(); 
     }
 	
@@ -575,10 +582,42 @@ function verificaCartao(){
     }
 }
 
+
+// Evento onKeyDown no campo "nrdconta"
+$("#v_conta").bind("keydown", function (e) {
+    //Verificar tecla ENTER para realizar acao
+    var code = (e.keyCode ? e.keyCode : e.which);
+    if (code == 13) {
+        changeConta();
+        e.preventDefault();
+    }
+
+    // Seta máscara ao campo
+    return $("#v_conta").setMaskOnKeyDown("INTEGER", "zzzz.zzz.z", ".", e);
+});
+
+$(document).ready(function () {
+
+    // Evento onKeyDown no campo "nrdconta"
+    $("#v_conta").unbind("keydown").bind("keydown", function (e) {
+        //Verificar tecla ENTER para realizar acao
+        var code = (e.keyCode ? e.keyCode : e.which);
+        if (code == 13 || code == 9) {
+            changeConta();
+            e.preventDefault();
+        }
+
+        // Seta máscara ao campo
+        return $("#v_conta").setMaskOnKeyDown("INTEGER", "zzzz.zzz.z", ".", e);
+    });
+
+});
+
+
 </script>
 <title>LANÇAMENTO INCLUSÃO - BOLETIM CAIXA</title></head>
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: mudaFoco(); inicializa();" onKeyUp="verificaBackspace(event); callBLini(event); callBLsal(event);" oncontextmenu="return false;" onunload="bematech.PinpadLimpaTela(0);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: mudaFoco(); inicializa();" onKeyUp="verificaBackspace(event); callBlass(event); callBLini(event); callBLsal(event);" oncontextmenu="    return false;" onunload="    bematech.PinpadLimpaTela(0);"> 
 
 <div>
 	<form name="action" onKeyDown="change_page(event)" method=post name="frmSaque" id="frmSaque" >
@@ -670,7 +709,7 @@ function verificaCartao(){
         <tr>
           <td align="right" class="linhaform" style="width:14%">Conta/DV:</td>
           <td>
-            <input type="text" id="v_conta" name="v_conta" size="10" class="input" maxlength="10" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);" onChange="JavaScript:changeConta();" style="text-align: right">
+            <input type="text" id="v_conta" name="v_conta" size="10" class="input" maxlength="10" onChange="JavaScript:changeConta();" style="text-align: right">
             <input type="text" id="v_nome" name="v_nome" size="40" class=input disabled style="font-weight: bold">
           </td>
         </tr>

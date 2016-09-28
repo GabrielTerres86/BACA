@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 20/04/2016
+    Data    : 07/02/2013                     Ultima atualizacao: 29/08/2016
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -41,6 +41,10 @@
         20/04/2016 - Alterada a Valida_Conta_Salario para validar diretamente
                      no Oracle(pc_valida_lancto_folha) quando for banco 085
                      (Guilherme/SUPERO)
+
+		29/08/2016 - Ajuste na procedure Gera_Impressao: aumento do format
+		             do campo rel_nrctatrf, pois nao estava imprimindo o 
+					 dv do numero da conta. (Chamado 499004) - (Fabricio)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -940,7 +944,7 @@ PROCEDURE Gera_Impressao:
          "Agencia "         
          crapccs.cdagetrf   FORMAT "z,zz9"
          ", Conta-Corrente no"
-         rel_nrctatrf       FORMAT "x(18)"
+         rel_nrctatrf       FORMAT "x(20)"
          "da qual sou titular." 
          SKIP(3)
          WITH COLUMN 3 NO-BOX NO-LABELS SIDE-LABELS WIDTH 80 FRAME f_solicitacao.    
@@ -969,8 +973,8 @@ PROCEDURE Gera_Impressao:
          ",  Agencia" crapccs.cdagetrf   FORMAT "z,zz9"
          "," 
          "Conta-Corrente" 
-         rel_nrctatrf       FORMAT "x(18)"
-         ", tambem de minha  titularidade,  quando  do"
+         rel_nrctatrf       FORMAT "x(20)"
+         ", tambem de minha  titularidade, quando do"
          SKIP
          "credito das verbas salariais pela Empresa " 
          rel_nmextemp       FORMAT "x(35)"
@@ -1067,10 +1071,10 @@ PROCEDURE Gera_Impressao:
                  ASSIGN aux_cdcritic = 15
                         aux_dscritic = "".
              END.
-
+		 
          ASSIGN aux_dsmesref = "JANEIRO,FEVEREIRO,MARCO,ABRIL,MAIO,JUNHO," +
                         "JULHO,AGOSTO,SETEMBRO,OUTUBRO,NOVEMBRO,DEZEMBRO"
-
+				
                 rel_nrcpfcgc = STRING(STRING(crapccs.nrcpfcgc,
                                                 "99999999999"),"999.999.999-99")
                 rel_nrctatrf = STRING(crapccs.nrctatrf,"zz,zzz,zzz,zzz,9") 

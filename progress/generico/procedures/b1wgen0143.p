@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0143.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/12/2012                     Ultima atualizacao:13/01/2016.
+    Data    : 07/12/2012                     Ultima atualizacao:11/08/2016.
 
     Objetivo  : Tranformacao BO tela MANCCF.
 
@@ -19,6 +19,14 @@
     
                 13/01/2016 - Ajustes pra impressao da carta na tela manccf web
                              (Tiago/Elton SD379410)
+                             
+                09/08/2016 - #480588 Ajuste da rotina Imprime_Carta para 
+                             atualizar os campos dtimpreg e cdopeimp (Carlos)
+                             
+                11/08/2016 - #481330 Ajuste da procedure Refaz_Regulariza para
+                             atualizar os campos flgctitg, dtfimest e cdoperad;
+                             Melhoria do retorno de erros (Carlos)
+                             
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -964,27 +972,15 @@ PROCEDURE Refaz_Regulariza:
         IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
         UNDO LimpaData, LEAVE LimpaData.
 
-        IF  crapneg.dtfimest <> ? THEN
-        ASSIGN crapneg.dtfimest = ?.
+        IF crapneg.flgctitg = 1 THEN
+        DO:
+            ASSIGN crapneg.flgctitg = 6
+                   crapneg.dtfimest = par_dtmvtolt
+                   crapneg.cdoperad = par_cdoperad.
+        END.
 
         RELEASE crapneg.
 
-        RUN Grava_Regulariza (INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT par_nrdcaixa,
-                              INPUT par_cdoperad,
-                              INPUT par_idorigem,
-                              INPUT par_dtmvtolt,
-                              INPUT par_nrdconta,
-                              INPUT par_nrseqdig,
-                              INPUT par_nmoperad,
-                              INPUT par_dtfimest,
-                              INPUT par_flgctitg,
-                             OUTPUT aux_msgconfi,
-                             OUTPUT aux_nmoperad,
-                             OUTPUT aux_dtfimest,
-                             OUTPUT aux_flgctitg,
-                             OUTPUT TABLE tt-erro).
         LEAVE LimpaData.
     END. /* fim LimpaData*/
 
@@ -995,7 +991,7 @@ PROCEDURE Refaz_Regulariza:
         TEMP-TABLE tt-erro:HAS-RECORDS THEN
     ASSIGN aux_returnvl = "NOK".
 
-    IF aux_returnvl <> "NOK" THEN
+    IF aux_returnvl = "OK" THEN
     DO:
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
                aux_dstransa = "Refaz regularizacao do chq na MANCCF".
@@ -1172,11 +1168,13 @@ PROCEDURE Imprime_Carta:
                        tt-crapneg.nrctachq = crapneg.nrctachq
                        tt-crapneg.vlestour = crapneg.vlestour
                        tt-crapneg.idseqttl = crapneg.idseqttl
-                       tt-crapneg.nrdctabb = crapneg.nrdctabb. 
-                                      
+                       tt-crapneg.nrdctabb = crapneg.nrdctabb
+                       aux_qtchqbob = aux_qtchqbob + 1
+                       crapneg.dtimpreg    = par_dtmvtolt
+                       crapneg.cdopeimp    = par_cdoperad.
 
-                            ASSIGN aux_qtchqbob = aux_qtchqbob + 1.
-                        
+                VALIDATE crapneg.
+
             END. /* FOR EACH crapneg */
                 
         END. /* FIM DO TO  */

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 29/06/2016
+   Data    : Marco/2007                        Ultima atualizacao: 03/08/2016
 
    Dados referentes ao programa:
 
@@ -39,14 +39,19 @@
                             informações do IR de PJ (Douglas - Chamado 263905)
 
                12/02/2016 - Ajustes no FOR EACH  da craplct pois a funcao
-                            YEAR do Progress ocasionava problema quando
-                            repitida mais de uma vez dentro do where
-                           (Tiago/Thiago).
+			                YEAR do Progress ocasionava problema quando
+							repitida mais de uma vez dentro do where
+							(Tiago/Thiago).
 
                29/06/2016 - M325 - Tributacao de Juros ao Capital
                             Alterado tratamento para cod.retencao 5706 p/ 3277
                             Novos parametros de entrada
                             (Guilherme/SUPERO)
+
+
+               03/08/2016 - Inclusao de novos historicos de retorno de Sobras 
+			                e de sobras na Conta Corrente (Marcos-Supero).
+
 
 ............................................................................*/
     
@@ -179,11 +184,26 @@ FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper      AND
                        craplct.cdbccxlt = 100                AND
                        craplct.nrdolote = 8005               AND 
                        craplct.nrdconta = par_nrdconta       AND
-                       (craplct.cdhistor = 64 OR craplct.cdhistor = 1801) 
+                       (craplct.cdhistor = 1940 OR craplct.cdhistor = 2172 OR
+					    craplct.cdhistor = 2174 OR craplct.cdhistor = 2173 OR
+					    craplct.cdhistor = 1801 OR craplct.cdhistor = 64) 
                        NO-LOCK:
     ASSIGN aux_vlsobras = aux_vlsobras + craplct.vllanmto.
 END.
 
+/* Credito Retorno de Sobras em CC */
+FOR EACH craplcm WHERE craplcm.cdcooper = par_cdcooper      AND
+                       YEAR(craplcm.dtmvtolt) = par_anorefer AND
+                       craplcm.cdagenci = 1                  AND
+                       craplcm.cdbccxlt = 100                AND
+                       craplcm.nrdolote = 8005               AND 
+                       craplcm.nrdconta = par_nrdconta       AND
+                       (craplcm.cdhistor = 2175 OR craplcm.cdhistor = 2176 OR
+					    craplcm.cdhistor = 2177 OR craplcm.cdhistor = 2178 OR
+					    craplcm.cdhistor = 2179 OR craplcm.cdhistor = 2189) 
+                       NO-LOCK:
+    ASSIGN aux_vlsobras = aux_vlsobras + craplcm.vllanmto.
+END.
 
 IF  crapass.inpessoa = 1  THEN
     DO: 
@@ -208,14 +228,14 @@ IF  crapass.inpessoa = 2  THEN DO:
         RUN proc_ir_juridica_trimestral.
 
     IF  RETURN-VALUE = "NOK"  THEN DO:
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                              "</dsmsgerr>".
-                         
-        RUN proc_geracao_log (INPUT FALSE).                      
-        
-        RETURN "NOK".
+                ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+                                      "</dsmsgerr>".
+                                 
+                RUN proc_geracao_log (INPUT FALSE).                      
+                
+                RETURN "NOK".
+            END.
     END.
-END.
                 
 RUN proc_geracao_log (INPUT TRUE).
 
@@ -539,7 +559,7 @@ PROCEDURE proc_ir_juridica:
             RETURN "NOK".
         END.
     ASSIGN aux_dsre5706 = gnrdirf.dsretenc.
-
+    
     /* pegar descricao do codigo retencao 3277 */
     FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 3277 NO-ERROR.
     IF  NOT AVAILABLE gnrdirf THEN DO:
@@ -599,7 +619,7 @@ PROCEDURE proc_ir_juridica:
                             TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
                             "</vlirfont></vlrenmes>".
 
-               END.
+                  END.
 
                ASSIGN aux_vlirfont = 0.
 
@@ -625,26 +645,26 @@ PROCEDURE proc_ir_juridica:
                           aux_dsretenc = aux_dsre3277.
 
                    IF  par_anorefer < 2004 THEN
-                       ASSIGN aux_vlirfont = 0.
-
-                   ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml     +
-                          "<vlrenmes><nmmesref>"                            +
-                          aux_nomedmes                                      +
-                          "</nmmesref><cdretenc>"                           +
-                          STRING(aux_cdretenc)                              +
-                          "</cdretenc><dsretenc>"                           +
-                          aux_dsretenc                                      +
-                          "</dsretenc><vlrentot>"                           +
-                          TRIM(STRING(aux_vlrentot,"zzz,zzz,zz9.99-"))      +
-                          "</vlrentot><vlirfont>"                           +
-                          TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
-                          "</vlirfont></vlrenmes>".
-               END.
+                         ASSIGN aux_vlirfont = 0.
+                     
+                      ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml     +
+                            "<vlrenmes><nmmesref>"                            +
+                            aux_nomedmes                                      +
+                            "</nmmesref><cdretenc>"                           +
+                            STRING(aux_cdretenc)                              +
+                            "</cdretenc><dsretenc>"                           +
+                            aux_dsretenc                                      +
+                            "</dsretenc><vlrentot>"                           +
+                            TRIM(STRING(aux_vlrentot,"zzz,zzz,zz9.99-"))      +
+                            "</vlrentot><vlirfont>"                           +
+                            TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
+                            "</vlirfont></vlrenmes>".
+                   END.
             END. /* do to */
         END. /* se for ano vigente */
     ELSE
         DO:  /* senao for ano vigente */
-
+            
             ASSIGN aux_nrmesref = 12.
 
             FIND FIRST crapdir WHERE
@@ -677,23 +697,23 @@ PROCEDURE proc_ir_juridica:
 
                 IF  aux_vlirfont > 0 THEN DO:
 
-                    IF par_anorefer < 2004 THEN
-                        ASSIGN aux_vlirfont = 0.
+                        IF par_anorefer < 2004 THEN
+                           ASSIGN aux_vlirfont = 0.
                         
-                    ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml  +
-                        "<vlrenmes><nmmesref>"                            +
-                        aux_nomedmes                                      +
-                        "</nmmesref><cdretenc>"                           +
-                        STRING(aux_cdretenc)                              +
-                        "</cdretenc><dsretenc>"                           +
-                        aux_dsretenc                                      +
-                        "</dsretenc><vlrentot>"                           +
-                        TRIM(STRING(aux_vlrentot,"zzz,zzz,zz9.99-"))      +
-                        "</vlrentot><vlirfont>"                           +
-                        TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
-                        "</vlirfont></vlrenmes>".
+                        ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml  +
+                            "<vlrenmes><nmmesref>"                            +
+                            aux_nomedmes                                      +
+                            "</nmmesref><cdretenc>"                           +
+                            STRING(aux_cdretenc)                              +
+                            "</cdretenc><dsretenc>"                           +
+                            aux_dsretenc                                      +
+                            "</dsretenc><vlrentot>"                           +
+                            TRIM(STRING(aux_vlrentot,"zzz,zzz,zz9.99-"))      +
+                            "</vlrentot><vlirfont>"                           +
+                            TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
+                            "</vlirfont></vlrenmes>".
                     
-                END.
+                    END.
 
                 ASSIGN aux_vlirfont = 0.
 
@@ -725,27 +745,27 @@ PROCEDURE proc_ir_juridica:
 
                     END.
                     ELSE DO:
-                        ASSIGN aux_cdretenc = 5706
-                               aux_dsretenc = aux_dsre5706.
-
+                      ASSIGN aux_cdretenc = 5706
+                             aux_dsretenc = aux_dsre5706.
+                      
                         IF  par_anorefer < 2004 THEN
-                            ASSIGN aux_vlirfont = 0.
+                           ASSIGN aux_vlirfont = 0.
 
                     END. /* FIM DO par_anorefer >= 2016 */
 
                     ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml  +
-                        "<vlrenmes><nmmesref>"                            +
-                        aux_nomedmes                                      +
-                        "</nmmesref><cdretenc>"                           +
-                        STRING(aux_cdretenc)                              +
-                        "</cdretenc><dsretenc>"                           +
-                        aux_dsretenc                                      +
-                        "</dsretenc><vlrentot>"                           +
-                        TRIM(STRING(aux_vlrentot,"zzz,zzz,zz9.99-"))      +
-                        "</vlrentot><vlirfont>"                           +
-                        TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
-                        "</vlirfont></vlrenmes>".
-                END.
+                            "<vlrenmes><nmmesref>"                            +
+                            aux_nomedmes                                      +
+                            "</nmmesref><cdretenc>"                           +
+                            STRING(aux_cdretenc)                              +
+                            "</cdretenc><dsretenc>"                           +
+                            aux_dsretenc                                      +
+                            "</dsretenc><vlrentot>"                           +
+                            TRIM(STRING(aux_vlrentot,"zzz,zzz,zz9.99-"))      +
+                            "</vlrentot><vlirfont>"                           +
+                            TRIM(STRING(aux_vlirfont,"zzz,zzz,zz9.99-"))      +
+                            "</vlirfont></vlrenmes>".
+                   END.
             END. /* DO TO */
             
             /* Rendimentos Liquidos - Aplicacoes de Renda Fixa*/

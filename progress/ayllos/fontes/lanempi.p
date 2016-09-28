@@ -91,7 +91,11 @@
                              das parcelas de emprestimo. SD 317004 (Kelvin)
                           
              06/11/2015 - Adicionado tratamento para pagamento de emprestimos por
-                          boleto. (Reinert)                                                                               
+                          boleto. (Reinert)   
+                          
+             15/08/2016 - Controlar o preenchimento da data de pagamento do prejuízo,
+                          no momento da liquidaçao do mesmo. (Renato Darosci - M176)
+                          
 ............................................................................. */
 
 { includes/var_online.i }
@@ -525,7 +529,10 @@ DO WHILE TRUE:
                     END.
                ELSE
                     NEXT.
-                       
+                   
+               /* Guardar o valor de saldo de prejuizo (Renato Darosci - 15/08/2016) */ 
+               ASSIGN ant_vlsdprej = crapepr.vlsdprej.
+                   
                IF   tab_inusatab           AND
                     crapepr.inliquid = 0   THEN
                     DO:
@@ -848,7 +855,11 @@ DO WHILE TRUE:
                          END.
 
                   END. /* END IF aux_indebcre = "C"   THEN */
-
+                  
+               /* Setar a data de liquidaçao do prejuízo (Renato Darosci - 15/08/2016) */
+               IF ant_vlsdprej > 0 AND crapepr.vlsdprej = 0 THEN
+                   ASSIGN crapepr.dtliqprj = glb_dtmvtolt.
+                  
            END. /* END IF   crapepr.inprejuz <> 0   THEN */
       ELSE  
            DO:                                                   

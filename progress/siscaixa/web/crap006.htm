@@ -5,6 +5,11 @@
               
               04/09/2013 - Nova forma de chamar as agências, de PAC agora 
                            a escrita será PA (André Euzébio - Supero).
+
+              05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			               nas rotinas do caixa online SD 474875 (Tiago/Elton). 
+    
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                 
 -->
 
 <html>
@@ -17,12 +22,16 @@
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/funcoes.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/mascara.js"></script>
+<script language=JavaScript src="/script/formataconta.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>ESTORNO TALÕES</title>
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form name="action" onKeyDown="change_page(event)" method=post>
          <input type="hidden" name="v_msg"><input type="hidden" name="vh_foco" value="6">
 
@@ -57,7 +66,7 @@
 </div>
 <div align="center">
 <center>
-<table cellspacing = 0 cellpadding= 0 width=100%>
+<table cellspacing = 0 cellpadding= 0 width="100%">
   <tr>
     <td width="100%" valign="middle" align="center">
       <div align="center">
@@ -69,7 +78,7 @@
         </tr>
         <tr>
           <td width="20%" align="right" class="linhaform">Cta.Cheque/Dv:</td>
-          <td width="71%" colspan="3"><input type="text" name="v_conta" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);" style="text-align: right"
+          <td width="71%" colspan="3"><input type="text" id="v_conta" name="v_conta" style="text-align: right"
            maxlength="10" size="10" class="input">
             <input type="text" name="v_nome" size="40" class=input style="font-weight: bold" disabled>
           </td>

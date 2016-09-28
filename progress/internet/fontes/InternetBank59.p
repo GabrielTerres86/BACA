@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2009                        Ultima atualizacao: 04/05/2015
+   Data    : Marco/2009                        Ultima atualizacao: 04/08/2016
 
    Dados referentes ao programa:
 
@@ -45,6 +45,10 @@
                             beneficiarios, Movimento de Cobranca Com Registro
                             e Movimento de liquidacoes SD 257997 (Kelvin).
                             
+               04/08/2016 - Adicionado tratamento para envio de relatorio de 
+                            movimento de cobranca por email para convenios com
+                            inenvcob = 2 (envio de arquivo por FTP) (Reinert).
+                            
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -61,6 +65,9 @@ DEF VAR i            AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dslinxml AS CHAR                                           NO-UNDO.
 DEF VAR vr_flgfirst  AS LOGI                                           NO-UNDO.
+DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
+DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
+DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcob.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
@@ -302,6 +309,119 @@ IF  par_idrelato = 1 OR
         END.
         ELSE IF par_idrelato = 5 THEN
         DO:
+            FOR FIRST crapceb
+               FIELDS (cddemail)
+                WHERE crapceb.cdcooper = par_cdcooper
+                  AND crapceb.nrdconta = par_nrdconta
+                  AND crapceb.insitceb = 1 /* Ativo */
+                  AND crapceb.inenvcob = 2 /* FTP */
+              NO-LOCK:
+            END.
+            
+            IF AVAILABLE crapceb THEN
+               DO:
+            
+                  RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT 
+                      SET h-b1wgen0010.
+
+                  IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
+                      DO:
+                          ASSIGN aux_dscritic = "Handle invalido para BO b1wgen0010.".
+                                 xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + 
+                                                "</dsmsgerr>".  
+                          
+                          RETURN "NOK".
+                      END.
+                      
+                  FOR FIRST crapdat 
+                     FIELDS (dtmvtolt)
+                      WHERE crapdat.cdcooper = par_cdcooper
+                      NO-LOCK:
+                  END.
+                  
+                  IF  NOT AVAILABLE crapdat  THEN
+                      DO:
+                                              
+                        ASSIGN xml_dsmsgerr = "<dsmsgerr>Sistema sem data de movimento.</dsmsgerr>".   
+                            
+                        RUN proc_geracao_log (INPUT FALSE).  
+                                             
+                        RETURN "NOK".
+                        
+                      END.            
+                      
+                  FOR FIRST crapass
+                     FIELDS (nmprimtl cdagenci)
+                      WHERE crapass.cdcooper = par_cdcooper
+                        AND crapass.nrdconta = par_nrdconta
+                        NO-LOCK:
+                  END.
+                      
+                  IF  NOT AVAILABLE crapass  THEN
+                      DO:
+                          FIND crapcri WHERE crapcri.cdcritic = 9 NO-LOCK NO-ERROR.
+
+                          IF  AVAILABLE crapcri  THEN
+                              ASSIGN aux_dscritic = crapcri.dscritic.
+                          ELSE
+                              ASSIGN aux_dscritic = "Nao foi possivel obter dados para o " +
+                                                    "relatorio.".
+                                                    
+                          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".   
+                            
+                          RUN proc_geracao_log (INPUT FALSE).  
+                                               
+                          RETURN "NOK".
+                      END.
+                      
+                  ASSIGN aux_dsiduser = STRING(par_nrdconta) + STRING(TIME).
+                                            
+                  RUN gera_relatorio IN h-b1wgen0010 
+                               ( INPUT par_cdcooper,
+                                 INPUT 90,
+                                 INPUT 900,
+                                 INPUT 3, /* idorigem */
+                                 INPUT "INTERNETBANK",
+                                 INPUT "",
+                                 INPUT crapdat.dtmvtolt,
+                                 INPUT par_nrdconta,
+                                 INPUT crapass.nmprimtl,
+                                 INPUT 6,
+                                 INPUT par_iniemiss,
+                                 INPUT par_fimemiss,
+                                 INPUT 0,
+                                 INPUT crapass.cdagenci,
+                                 INPUT aux_dsiduser,
+                                 INPUT 0,
+                                 INPUT crapceb.cddemail,
+                                OUTPUT aux_nmarqimp,
+                                OUTPUT aux_nmarqpdf,
+                                OUTPUT TABLE tt-erro).
+
+                  DELETE PROCEDURE h-b1wgen0010.
+                  
+                  IF  RETURN-VALUE = "NOK"  THEN
+                      DO:
+                          FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                          
+                          IF  AVAILABLE tt-erro  THEN
+                              aux_dscritic = tt-erro.dscritic.
+                          ELSE
+                              aux_dscritic = "Nao foi possivel obter dados para o " +
+                                             "relatorio.".
+                              
+                          xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+                          
+                          RETURN "NOK".
+                      END.    
+                  ELSE
+                      DO:
+                          ASSIGN xml_dsmsgerr = "<dsmsgerr>Relatorio solicitado enviado por e-mail.</dsmsgerr>".  
+                          
+                          RETURN "OK".
+                      END.
+               END.       
+        
             FOR EACH tt-consulta-blt NO-LOCK BREAK BY tt-consulta-blt.nrcnvcob
                                                    BY tt-consulta-blt.cdocorre
                                                    BY tt-consulta-blt.nrdconta
@@ -487,7 +607,7 @@ ELSE IF par_idrelato = 2 THEN
         END.
            
     END.
-            
+
 RETURN "OK".
 
 /*............................................................................*/

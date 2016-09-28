@@ -6,9 +6,10 @@ Data de criação: 09/09/2015
 
 Objetivo.......: Tela de Agendamentos de GPS - SICREDI
 
-Alteracoes.....:
-
-
+Alteracoes.....: 05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			                  nas rotinas do caixa online SD 474875 (Tiago/Elton).  
+    
+                 12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).              
 -->
 <html>
     <head>
@@ -22,12 +23,15 @@ Alteracoes.....:
         <meta http-equiv="Pragma" content="No-Cache" />
         <meta http-equiv="Expires" content="0" />
         <script language="JavaScript" src="/script/formatadadosie.js"></script>
+        <script language=JavaScript src="/script/funcoes.js"></script>
         <script language=JavaScript src="/script/jquery.js"></script>
+        <script language=JavaScript src="/script/mascara.js"></script>
+        <script language=JavaScript src="/script/formataconta.js"></script>
         <script language=JavaScript src="/script/jquery.mask.mv.js"></script>
         <link rel="StyleSheet" type="text/css" href="/script/viacredi.css" />
         <title>AGENDAMENTO GPS SICREDI</title>
     </head>
-    <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();">
+    <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
         <form  method=post>
         <input type="hidden" name="vh_foco"     id="vh_foco"     value="" >
         <input type="hidden" name="vh_nome"     id="vh_nome"     value="" >
@@ -85,7 +89,7 @@ Alteracoes.....:
                                                 <td align="left" class="linhaform">
                                                     <input type="text" name="v_conta" id="v_conta"
                                                            onchange="document.forms[0].submit();"
-                                                           onkeydown="JavaScript:if(event.keyCode == 13) {document.forms[0].elements[12].focus();} validaInteiro(event); FormataConta(this,8,event);"
+                                                           onkeydown="JavaScript:if(event.keyCode == 13) {document.forms[0].elements[12].focus();}"
                                                            maxlength="10" size="10" class="input" style="text-align: right" />
                                                     <input type="text" name="v_nome" id="v_nome" size="40" class="input"
                                                            style="font-weight: bold; background: #DFDFDF;" readonly />

@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 14/07/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 04/08/2016
 
    Dados referentes ao programa:
 
@@ -588,6 +588,7 @@
                               plataformas de autoatendimento. E alteracao do retorno
                               da operacao 13 com o novo campo recidepr.
                               (Carlos Rafael Tanholi - Prj 216 - Pré-aprovado fase 2)								                                    
+
 				 11/03/2016 - Inclusao da operacao 166 para buscar as permissoes
 				              dos itens do menu do mobile. Projeto 286_3 - Mobile
                               (Lombardi)   
@@ -621,6 +622,16 @@
 
                  14/07/2016 - M325 Informe de Rendimentos - Novos parametros
                               operacao7. (Guilherme/SUPERO)
+				 04/08/2016 - Adicionado tratamento para envio de arquivos de 
+							  cobranca por e-mail nas operacoes 36 e 59. (Reinert)
+               
+				 17/08/2016 - Adição da coluna nomconta e remoção da tabela
+							  xml_operacao11 para utilizacao da tabela generica
+							  na operacao 11.
+							  PRJ286.5 - Cecred Mobile (Dionathan)
+         
+				 22/08/2016 - Adicao do parametro par_indlogin nas operacoes 2 e 18
+							  PRJ286.5 - Cecred Mobile (Dionathan)
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -2098,7 +2109,8 @@ PROCEDURE proc_operacao2:
            aux_dssenlet = GET-VALUE("dssenlet")   
            aux_vldshlet = LOGICAL(GET-VALUE("vldshlet"))
            aux_inaceblq = INTE(GET-VALUE("inaceblq"))
-           aux_dsorigip = GET-VALUE("dsorigip").
+           aux_dsorigip = GET-VALUE("dsorigip")
+           aux_indlogin = INTE(GET-VALUE("indlogin")).
 
     IF  aux_vldshlet  THEN
         DO:
@@ -2128,7 +2140,9 @@ PROCEDURE proc_operacao2:
                                                  INPUT aux_nripuser,
                                                  INPUT aux_dsorigip,
                                                  INPUT aux_flmobile,
-                                                OUTPUT aux_dsmsgerr).
+                                                 INPUT aux_indlogin,
+                                                OUTPUT aux_dsmsgerr,
+												OUTPUT TABLE xml_operacao).
     
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -2136,6 +2150,12 @@ PROCEDURE proc_operacao2:
             
             RETURN "NOK".
         END.
+	ELSE
+	    FOR EACH xml_operacao NO-LOCK:
+
+            {&out} xml_operacao.dslinxml. 
+                
+        END.	
 
     RETURN "OK".
         
@@ -2499,7 +2519,7 @@ PROCEDURE proc_operacao11:
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_flmobile,
                                                  OUTPUT aux_dsmsgerr,
-                                                 OUTPUT TABLE xml_operacao11).
+                                                 OUTPUT TABLE xml_operacao).
 
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -2507,16 +2527,9 @@ PROCEDURE proc_operacao11:
             RETURN.
         END.
 
-    FOR EACH xml_operacao11 NO-LOCK: 
+    FOR EACH xml_operacao NO-LOCK: 
 
-        {&out} xml_operacao11.dscabini 
-               xml_operacao11.nmtitula
-               xml_operacao11.incadsen
-               xml_operacao11.idseqttl
-               xml_operacao11.inbloque
-               xml_operacao11.nrcpfope
-               xml_operacao11.inpessoa
-               xml_operacao11.dscabfim.
+        {&out} xml_operacao.dslinxml.
                 
     END.
 
@@ -2766,7 +2779,8 @@ PROCEDURE proc_operacao18:
            aux_cdsenrep = GET-VALUE("cdsenrep")
            aux_dssennew = GET-VALUE("dssennew")
            aux_dssenrep = GET-VALUE("dssenrep")
-           aux_dsorigip = GET-VALUE("dsorigip").
+           aux_dsorigip = GET-VALUE("dsorigip")
+           aux_indlogin = INTE(GET-VALUE("indlogin")).
 
     IF  aux_flgcript  THEN /** Utiliza criptografia **/
         DO:
@@ -2806,12 +2820,27 @@ PROCEDURE proc_operacao18:
                                                   INPUT aux_inaceblq,
                                                   INPUT aux_nripuser,
                                                   INPUT aux_dsorigip,
-                                                 OUTPUT aux_dsmsgerr).
+                                                  INPUT aux_flmobile,
+                                                  INPUT aux_indlogin,
+                                                 OUTPUT aux_dsmsgerr,
+												OUTPUT TABLE xml_operacao).
                 
     IF  RETURN-VALUE = "NOK"  THEN
-        {&out} aux_dsmsgerr.
+        DO:
+            {&out} aux_dsmsgerr aux_tgfimprg.
+            
+            RETURN "NOK".
+        END.
+	ELSE
+	    FOR EACH xml_operacao NO-LOCK:
+    
+            {&out} xml_operacao.dslinxml. 
+                
+        END.
             
     {&out} aux_tgfimprg.
+
+	RETURN "OK".
 
 END PROCEDURE.
 
@@ -3469,6 +3498,10 @@ PROCEDURE proc_operacao36:
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr.
     ELSE
+        DO:
+          IF TRIM(aux_dsmsgerr) <> "" THEN
+             {&out} aux_dsmsgerr.
+
         FOR EACH xml_operacao36 NO-LOCK:
         
             {&out} xml_operacao36.dscabini
@@ -3477,6 +3510,7 @@ PROCEDURE proc_operacao36:
                    xml_operacao36.dscabfim.
 
         END.  
+        END.
         
     {&out} aux_tgfimprg.
 
@@ -4083,11 +4117,16 @@ PROCEDURE proc_operacao59:
     IF  RETURN-VALUE = "NOK"  THEN
         {&out} aux_dsmsgerr. 
     ELSE
+    DO: 
+        IF TRIM(aux_dsmsgerr) <> "" THEN
+           {&out} aux_dsmsgerr.
+             
         FOR EACH xml_operacao NO-LOCK: 
 
             {&out} xml_operacao.dslinxml.
         
         END.
+    END.
     
     {&out} aux_tgfimprg.
 

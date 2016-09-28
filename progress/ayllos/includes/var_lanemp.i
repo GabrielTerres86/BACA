@@ -54,6 +54,8 @@
 
              10/03/2015 - Alterado o formato do campo nrdocmto para 10
                           posicoes. (Jaison/Gielow - SD: 263692)
+                          
+             15/08/2016 - Inclusa a declaracao da variavel ant_vlsdprej (Renato Darosci - M176).
 
 ............................................................................. */
 
@@ -112,6 +114,7 @@ DEF {1} SHARED VAR aux_nrdocmto AS INT                                  NO-UNDO.
 DEF {1} SHARED VAR aux_vllanmto AS DECIMAL                              NO-UNDO.
 DEF {1} SHARED VAR aux_indebcre AS CHAR                                 NO-UNDO.
 DEF {1} SHARED VAR aux_inhistor AS INT                                  NO-UNDO.
+DEF {1} SHARED VAR ant_vlsdprej AS DECIMAL                              NO-UNDO.
 
 DEF {1} SHARED VAR aux_dtcalcul AS DATE                                 NO-UNDO.
 DEF {1} SHARED VAR aux_dtultdia AS DATE                                 NO-UNDO.

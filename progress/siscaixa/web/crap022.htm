@@ -1,7 +1,7 @@
 <!--
    Programa: crap022.htm                  
    Autora  : Elton
-   Data    : 30/11/2011                      Ultima atualizacao: 04/06/2014
+   Data    : 30/11/2011                      Ultima atualizacao: 05/09/2016
 
    Dados referentes ao programa:
 
@@ -15,8 +15,11 @@
                             
 				14/03/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
 							 PinPad Novo (Lucas Lunelli - [PROJ290])			  
-                            
   
+			   05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			                nas rotinas do caixa online SD 474875 (Tiago/Elton).                                          
+
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).  
 -->
 
 
@@ -31,10 +34,14 @@
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/funcoes.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/mascara.js"></script>
+<script language=JavaScript src="/script/formataconta.js"></script>
+
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>DEPOSITO E TRANSFERENCIA ENTRE COOPERATIVAS</title>
 
-<script language=JavaScript src="/script/jquery.js"></script>
 <script language="JavaScript">
 
 var cnxPinpad; 		/* COMUNICAÇÃO PINPAD NOVO */
@@ -153,6 +160,14 @@ function selectOpcao (opcao) {
 	}
 		
     formataOpcao(opcao,true);
+}
+
+function enviaFormularioPinPad(strInput, strEvent) { 
+    var strSenha = document.getElementById('v_dssencrd').value;
+    
+    if (window.event.keyCode == 13 && strSenha != "" && strSenha != " ") { 
+        doIt();
+    }        
 }
 
 function doIt() {
@@ -306,7 +321,7 @@ function solicitaSenhaPinpadNovo(oPinpad, valor) {
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:initPage();" onKeyUp="callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: initPage();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
 
 <form name="form1" onKeyDown="change_page(event)" method=post>
 
@@ -408,7 +423,7 @@ function solicitaSenhaPinpadNovo(oPinpad, valor) {
 			</tr>
         <tr>
 			  <td class="linhaform" width="300px">Conta:</td>
-          <td><input type="text" name="v_nrocontade" size="10" class="input" maxlength="10" onKeyDown="JavaScript:validaInteiro(event);  FormataConta(this,8,event);" onChange="JavaScript:changeContaDe();"  style="text-align: right"></td>
+          <td><input type="text" id="v_conta" name="v_nrocontade" size="10" class="input" maxlength="10" onChange="JavaScript:changeContaDe();"  style="text-align: right"></td>
         </tr>
         <tr>
 			  <td class="linhaform">Nome:&nbsp;</td>
@@ -454,7 +469,7 @@ function solicitaSenhaPinpadNovo(oPinpad, valor) {
                 </tr>
                 <tr>
 		  <td class="linhaform">Conta:</td>
-                  <td><input type="text" name="v_nrocontapara" size="10" class="input" maxlength="10" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);" onChange="JavaScript:changeContaPara();"style="text-align: right"></td>
+                  <td><input type="text" id="v_conta" name="v_nrocontapara" size="10" class="input conta" maxlength="10" onChange="JavaScript:changeContaPara();"style="text-align: right"></td>
                 </tr>
                 <tr>
 		  <td class="linhaform">Tit1:&nbsp;</td>

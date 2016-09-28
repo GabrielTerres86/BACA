@@ -12,7 +12,7 @@
    Objetivo  : Cancelar Agendamentos GPS INSS
 
    Alteracoes: 
-   
+               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).   
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -351,7 +351,7 @@ PROCEDURE process-web-request :
     '       <link rel=StyleSheet type="text/css" href="/script/viacredi.css">' SKIP
     '       <title>GPS - Agendamentos Guias da Previdência Social</title>' SKIP
     "   </HEAD>":U SKIP
-    '   <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:click();" onKeyUp="callBLini(event); callBLsal(event);">' SKIP
+    '   <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">' SKIP
     '       <form name="frmAction" id="frmAction" onKeyDown="change_page(event)" method=post>' SKIP.
   
   {&OUT}

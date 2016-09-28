@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0010.p
     Autor   : Gabriel Capoia
-    Data    : 26/01/2012                       Ultima atualizacao: 09/12/2015
+    Data    : 26/01/2012                       Ultima atualizacao: 04/08/2016
 
     Objetivo  : BO de Comunicacao XML x BO - BO CONSULTA BLOQUETOS DE COBRANCA
 
@@ -14,6 +14,7 @@
    
                 09/12/2015 - Adicionado parametro inserasa (Daniel) 
    
+				04/08/2016 - Adicionado parametro cddemail (Reinert).
 .............................................................................*/
 
 /*...........................................................................*/
@@ -77,6 +78,7 @@ DEF VAR aux_hrrecebi AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_inestcri AS INTE                                           NO-UNDO.
 DEF VAR aux_inserasa AS CHAR                                           NO-UNDO.
+DEF VAR aux_cddemail AS INTE                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -146,7 +148,7 @@ DEF VAR aux_inserasa AS CHAR                                           NO-UNDO.
 
             WHEN "inestcri" THEN aux_inestcri = INTE(tt-param.valorCampo).
             WHEN "inserasa" THEN aux_inserasa = tt-param.valorCampo.   
-                
+            WHEN "cddemail" THEN aux_cddemail = INTE(tt-param.valorCampo).
                 
         END CASE.
 
@@ -493,6 +495,7 @@ PROCEDURE gera_relatorio:
                        INPUT aux_cdagencx,
                        INPUT aux_dsiduser,
                        INPUT aux_inserasa,
+                       INPUT aux_cddemail,
                       OUTPUT aux_nmarqimp,
                       OUTPUT aux_nmarqpdf,
                       OUTPUT TABLE tt-erro).

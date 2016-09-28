@@ -414,9 +414,10 @@ PROCEDURE lista_protocolos:
                               par_dtfimpro
            par_qttotreg = 0.
                
+    /*Validaçao removida em 31/08/2016 - PRJ386.5 - CECRED MOBILE (Dionathan)
     IF  par_dtfimpro > aux_datdodia  THEN
-        ASSIGN par_dtfimpro = aux_datdodia.
-
+        ASSIGN par_dtfimpro = aux_datdodia.*/
+                  
 
     FIND FIRST crapdat
 	     WHERE crapdat.cdcooper = par_cdcooper
@@ -440,7 +441,7 @@ PROCEDURE lista_protocolos:
         IF  par_cdtippro <> 8     AND 
             crappro.cdtippro = 8  THEN /** Protocolo Favorecido **/
             NEXT.
-
+                           
         /** Nao carregar Protocolo pagamento fatura 
 		    caso seje o dia de geracao, devido o pagamento
 			ainda poder ser extornado. **/

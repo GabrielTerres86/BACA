@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Maio/2013                       Ultima atualizacao: 30/09/2015
+   Data    : Maio/2013                       Ultima atualizacao: 05/09/2016
 
    Dados referentes ao programa:
 
@@ -40,7 +40,10 @@
                             
                30/09/2015 - Alterada para Oracle a consulta da craplft na procedure 
                            'retorna-valores-fatura' pois DataServer não suporta as mais
-                            de 34 posições do campo cdseqfat (Lunelli - SD. 328945)
+                            de 34 posições do campo cdseqfat (Lunelli - SD. 328945)
+               
+               05/09/2016 - Incluir validacao de cpf/cnpj aqui nesta rotina e nao mais na 
+                            pcrap06.p como fazia antes (Lucas Ranghetti #503544)
                                  
 ............................................................................ */
 
@@ -91,7 +94,7 @@ PROCEDURE valida-cpfcnpj-cdtrib:
     DEF OUTPUT PARAM par_foco       AS CHAR               NO-UNDO.
 
     DEF VAR aux_flgretor          AS LOGI                 NO-UNDO.
-    DEF VAR aux_tppessoa          AS INTE                 NO-UNDO.
+    DEF VAR aux_tppessoa          AS INTE                 NO-UNDO.    
 
     RUN elimina-erro (INPUT par_nmrescop,
                       INPUT par_cdagenci,
@@ -114,7 +117,7 @@ PROCEDURE valida-cpfcnpj-cdtrib:
 
             RETURN "NOK".
         END.
-
+    
     FIND crapstb WHERE crapstb.cdtribut = INTE(par_cdtribut) NO-LOCK NO-ERROR.
 
     IF  NOT AVAIL crapstb THEN
@@ -171,11 +174,43 @@ PROCEDURE valida-cpfcnpj-cdtrib:
                 END.
         END.
 
-    /* Valida CPF/CNPJ */
-    RUN dbo/pcrap06.p (INPUT  DECI(par_nrcpfcgc),
-                       OUTPUT aux_flgretor,
-                       OUTPUT aux_tppessoa).
+     /* Valida CPF/CNPJ 
+       Rotina do programa - pcrap06.p */
+    IF  DEC(par_nrcpfcgc) = 9571   THEN
+        ASSIGN aux_flgretor = FALSE
+               aux_tppessoa  = 1.       /*  Valor default  */      
 
+    IF  LENGTH(par_nrcpfcgc) = 11 OR LENGTH(par_nrcpfcgc) = 10 OR
+        LENGTH(par_nrcpfcgc) =  9 OR LENGTH(par_nrcpfcgc) =  8 OR
+        LENGTH(par_nrcpfcgc) =  7 THEN 
+        DO:
+            ASSIGN aux_tppessoa = 1.          /*  Pessoa fisica  */
+            RUN dbo/pcrap07.p (INPUT DEC(par_nrcpfcgc),
+                              OUTPUT aux_flgretor).
+
+            IF  NOT aux_flgretor THEN 
+                DO:
+                   ASSIGN aux_tppessoa = 2.                      
+                   RUN dbo/pcrap08.p (INPUT DEC(par_nrcpfcgc),
+                                     OUTPUT aux_flgretor).
+             
+                END.
+        END.
+        ELSE
+        DO:        
+             IF  LENGTH(STRING(par_nrcpfcgc)) < 15 AND
+                 LENGTH(STRING(par_nrcpfcgc)) > 2   THEN  
+                 DO:             
+                     ASSIGN aux_tppessoa = 2.   /*  Pessoa juridica  */                 
+                     RUN dbo/pcrap08.p (INPUT DEC(par_nrcpfcgc),
+                                       OUTPUT aux_flgretor).
+                 END.
+             ELSE
+                 ASSIGN aux_flgretor = FALSE
+                        aux_tppessoa = 1.       /*  Valor default  */
+        END.
+    /* pcrap06.p */
+    
     IF  NOT aux_flgretor THEN
         DO:
             ASSIGN i-cod-erro  = 27
@@ -656,11 +691,43 @@ PROCEDURE valida-pagamento-darf:
                     END.
             END.
 
-   /* Valida CPF/CNPJ */
-    RUN dbo/pcrap06.p (INPUT  DECI(par_nrcpfcgc),
-                       OUTPUT aux_flgretor,
-                       OUTPUT aux_tppessoa).
-     
+    /* Valida CPF/CNPJ 
+       Rotina do programa - pcrap06.p */
+    IF  DEC(par_nrcpfcgc) = 9571   THEN
+        ASSIGN aux_flgretor = FALSE
+               aux_tppessoa  = 1.       /*  Valor default  */      
+
+    IF  LENGTH(par_nrcpfcgc) = 11 OR LENGTH(par_nrcpfcgc) = 10 OR
+        LENGTH(par_nrcpfcgc) =  9 OR LENGTH(par_nrcpfcgc) =  8 OR
+        LENGTH(par_nrcpfcgc) =  7 THEN 
+        DO:
+            ASSIGN aux_tppessoa = 1.          /*  Pessoa fisica  */
+            RUN dbo/pcrap07.p (INPUT DEC(par_nrcpfcgc),
+                              OUTPUT aux_flgretor).
+
+            IF  NOT aux_flgretor THEN 
+                DO:
+                   ASSIGN aux_tppessoa = 2.                      
+                   RUN dbo/pcrap08.p (INPUT DEC(par_nrcpfcgc),
+                                     OUTPUT aux_flgretor).
+             
+                END.
+        END.
+        ELSE
+        DO:        
+             IF  LENGTH(STRING(par_nrcpfcgc)) < 15 AND
+                 LENGTH(STRING(par_nrcpfcgc)) > 2   THEN  
+                 DO:             
+                     ASSIGN aux_tppessoa = 2.   /*  Pessoa juridica  */                 
+                     RUN dbo/pcrap08.p (INPUT DEC(par_nrcpfcgc),
+                                       OUTPUT aux_flgretor).
+                 END.
+             ELSE
+                 ASSIGN aux_flgretor = FALSE
+                        aux_tppessoa = 1.       /*  Valor default  */
+        END.
+    /* pcrap06.p */
+    
     IF  NOT aux_flgretor THEN 
         DO:
             ASSIGN i-cod-erro  = 27

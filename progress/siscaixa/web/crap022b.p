@@ -11,7 +11,7 @@
    Objetivo  :  Transferencia e deposito entre cooperativas.
 
    Alteracoes:   
-                          
+               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                          
 -----------------------------------------------------------------------------*/
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
 &ANALYZE-RESUME
@@ -459,7 +459,7 @@ PROCEDURE process-web-request :
     '<link rel=StyleSheet type="text/css" href="/script/viacredi.css">' SKIP
     '<title>DEPÓSITO COM CAPTURA</title>' SKIP
     "</HEAD>":U SKIP
-    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: click();" onKeyUp="callBLini(event); callBLsal(event);">' SKIP
+    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">' SKIP
     '<form onKeyDown="change_page(event)" method=post>' SKIP.
   {&OUT}
     '<p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>'

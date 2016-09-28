@@ -21,12 +21,16 @@
                02/06/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM).
                             
+			   24/03/2016 - Ajuste para chamar rotina convertida ao PL SQL
+							(Andrei - RKAM).
+
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
    
 ............................................................................. */
 
 { includes/var_online.i }
 { sistema/generico/includes/b1wgen0010tt.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_2.
 
@@ -37,6 +41,8 @@ DEF        VAR aux_dscriti2 AS CHAR    FORMAT "x(40)"                NO-UNDO.
 DEF        VAR aux_erronume AS LOGICAL                               NO-UNDO.
 DEF        VAR aux_nmprimtl AS CHAR                                  NO-UNDO.
 DEF        VAR aux_nmarqimp AS CHAR                                  NO-UNDO.
+DEF        VAR aux_cdcritic AS INT                                   NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF        VAR aux_nrcnvcob AS INT                                   NO-UNDO.
 DEF        VAR aux_nrdconta AS INT                                   NO-UNDO.
@@ -50,7 +56,16 @@ DEF        VAR tel_nmarqint AS CHAR    FORMAT "x(68)"                NO-UNDO.
 DEF        VAR tel_dsdopcao AS LOGICAL FORMAT "Arquivo/Tela"         NO-UNDO.
 DEF        VAR tel_diretori AS CHAR    FORMAT "x(50)"                NO-UNDO.
 
-DEF        VAR h-b1wgen0010 AS HANDLE                                NO-UNDO.
+/* Variaveis para o XML */ 
+DEF VAR xDoc          AS HANDLE                                      NO-UNDO.   
+DEF VAR xRoot         AS HANDLE                                      NO-UNDO.  
+DEF VAR xRoot2        AS HANDLE                                      NO-UNDO.  
+DEF VAR xField        AS HANDLE                                      NO-UNDO. 
+DEF VAR xText         AS HANDLE                                      NO-UNDO. 
+DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
+DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
+DEF VAR ponteiro_xml  AS MEMPTR                                      NO-UNDO. 
+DEF VAR xml_req       AS LONGCHAR                                    NO-UNDO.
 
 FORM SKIP(1)
      glb_cddopcao  AT  2  LABEL "Opcao"
@@ -134,39 +149,128 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
    UNIX SILENT VALUE("dos2ux " + tel_nmarqint + " > " + aux_nmarqint +
                      " 2> /dev/null").
                      
-   RUN sistema/generico/procedures/b1wgen0010.p PERSISTENT SET h-b1wgen0010.
+   MESSAGE "Aguarde, validando arquivo...".
 
-   IF  NOT VALID-HANDLE(h-b1wgen0010)  THEN
-       DO:
-           BELL.
-           MESSAGE "Handle invalido para BO b1wgen0010.".
-           PAUSE 3 NO-MESSAGE.
-        
-           NEXT.
-       END.
-   ELSE
-       DO:
-           RUN valida-arquivo-cobranca IN h-b1wgen0010
-                                         (INPUT glb_cdcooper,
-                                          INPUT aux_nmarqint,
-                                          OUTPUT TABLE tt-rejeita).
-           DELETE PROCEDURE h-b1wgen0010.
-           
-           FIND FIRST tt-rejeita NO-LOCK NO-ERROR.
-           IF NOT AVAIL tt-rejeita THEN
-              DO:
-                  MESSAGE "Arquivo encontra-se CORRETO !" VIEW-AS ALERT-BOX.
-                  LEAVE.
-              END.
-           ELSE   
-              DO:
-                  HIDE tel_diretori IN FRAME f_opcao.
-                  UPDATE tel_dsdopcao WITH FRAME f_opcao.   
+	EMPTY TEMP-TABLE tt-rejeita.
+		  
+	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+		  							  
+	/* Efetuar a chamada da rotina Oracle */ 
+	RUN STORED-PROCEDURE pc_valida_arquivo_cobranca_car
+		aux_handproc = PROC-HANDLE NO-ERROR(INPUT glb_cdcooper, 
+											INPUT aux_nmarqint, 
+											OUTPUT "", /*Retorno OK/NOK*/
+											OUTPUT ?, /*Dados invalidados*/
+											OUTPUT 0, /*Codigo da critica*/
+											OUTPUT ""). /*Descricao da critica*/ 												 
+		  
+	/* Fechar o procedimento para buscarmos o resultado */ 
+	CLOSE STORED-PROC pc_valida_arquivo_cobranca_car
+			aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+		  
+	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+	
+	/* Elimina o arquivo temporario*/                            
+    UNIX SILENT VALUE("rm " + aux_nmarqint + " 2> /dev/null").  
+   	  
+	/* Busca possíveis erros */ 
+	ASSIGN aux_cdcritic = 0
+			aux_dscritic = ""
+			aux_cdcritic = pc_valida_arquivo_cobranca_car.pr_cdcritic 
+						WHEN pc_valida_arquivo_cobranca_car.pr_cdcritic <> ?
+			aux_dscritic = pc_valida_arquivo_cobranca_car.pr_dscritic 
+						WHEN pc_valida_arquivo_cobranca_car.pr_dscritic <> ?.
+		  
+	IF aux_cdcritic <> 0  OR
+		aux_dscritic <> "" THEN
+		DO:
+		BELL.
+		HIDE MESSAGE NO-PAUSE.
+		MESSAGE aux_dscritic.
+		PAUSE 3 NO-MESSAGE.
+			
+		NEXT.
+		   
+		END.			 
+
+	/*Leitura do XML de retorno da proc e criacao dos registros na tt-rejeita
+	para visualizacao dos registros na tela */
+		   
+	/* Buscar o XML na tabela de retorno da procedure Progress */ 
+	ASSIGN xml_req = pc_valida_arquivo_cobranca_car.pr_clob_ret. 
+			  
+	/* Efetuar a leitura do XML*/ 
+	SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+	PUT-STRING(ponteiro_xml,1) = xml_req. 
+		  
+	/* Inicializando objetos para leitura do XML */ 
+	CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+	CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+	CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+	CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+	CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+		  
+	IF ponteiro_xml <> ? THEN
+		DO:
+		xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+		xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+			 
+		DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+			 
+			xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+			 
+			IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+				NEXT. 
+				   
+			IF xRoot2:NUM-CHILDREN > 0 THEN
+				CREATE tt-rejeita.
+			 
+			DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+					   
+				xRoot2:GET-CHILD(xField,aux_cont).
+						  
+				IF xField:SUBTYPE <> "ELEMENT" THEN 
+					NEXT. 
+					  
+				xField:GET-CHILD(xText,1).					  		  
+			     
+				ASSIGN tt-rejeita.tpcritic = INT(xText:NODE-VALUE) WHEN xField:NAME = "tpcritic".
+				ASSIGN tt-rejeita.nrlinseq = xText:NODE-VALUE WHEN xField:NAME = "nrlinseq".
+				ASSIGN tt-rejeita.cdseqcri = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdseqcri".
+				ASSIGN tt-rejeita.dscritic = xText:NODE-VALUE WHEN xField:NAME = "dscritic".
+				ASSIGN tt-rejeita.seqdetal = xText:NODE-VALUE WHEN xField:NAME = "seqdetal".
+					
+			END. 
+					
+		END.
+			 
+		SET-SIZE(ponteiro_xml) = 0. 
+		  
+		END.
+			 
+	/*Elimina os objetos criados*/
+	DELETE OBJECT xDoc. 
+	DELETE OBJECT xRoot. 
+	DELETE OBJECT xRoot2. 
+	DELETE OBJECT xField. 
+	DELETE OBJECT xText.
+		  
+	HIDE MESSAGE NO-PAUSE.
+		   		  
+	FIND FIRST tt-rejeita NO-LOCK NO-ERROR.
+	IF NOT AVAIL tt-rejeita THEN
+		DO:			
+			MESSAGE "Arquivo encontra-se CORRETO !" VIEW-AS ALERT-BOX.
+			LEAVE.
+		END.
+	ELSE   
+		DO:
+			HIDE tel_diretori IN FRAME f_opcao.
+			UPDATE tel_dsdopcao WITH FRAME f_opcao.   
             
-                  IF   tel_dsdopcao  THEN  /* Arquivo  */
-                       UPDATE tel_diretori WITH FRAME f_opcao.
-              END.
-       END.
+			IF   tel_dsdopcao  THEN  /* Arquivo  */
+				UPDATE tel_diretori WITH FRAME f_opcao.
+		END.    
 
    IF   KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN    /*   F4 OU FIM   */
         DO:

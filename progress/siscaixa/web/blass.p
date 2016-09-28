@@ -1,37 +1,17 @@
 /*..............................................................................
 
-   Programa: siscaixa/web/blini.p
+   Programa: siscaixa/web/blass.p
    Sistema : CAIXA ON-LINE - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Mirtes/Evandro
-   Data    : Marco/2007                        Ultima atualizacao: 05/09/2016
+   Autor   : Evandro - (RKAM)
+   Data    : Agosto/2016                        Ultima atualizacao: 23/08/2016
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
-   Objetivo  : Exibie a tela do BL.
+   Objetivo  : Exibie a tela do BL - Cartão Assinatura.
 
-   Alteracoes: 21/03/2007 - Nao permitir iniciar um novo BL caso o BL anterior
-                            nao tenha sido finalizado (Evandro).
-                            
-               31/07/2007 - Colocar o TIME ao final do nome do BL para evitar
-                            que seja possível FECHAR e ABRIR um BL com o mesmo
-                            nome e fazendo com que os valores nao "batam"
-                            (Evandro).
-               
-               18/11/2008 - Incluido cdcooper na leitura do crapcbl (Elton).
-
-               16/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
-               
-               04/09/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).
-                  
-               13/12/2013 - Adicionado validate para tabela crapcbl (Tiago).
-               
-               18/03/2015 - Melhoria SD 260475 (Lunelli).
-
-			   05/09/2016 - Melhoria para usar copiar e colar o numero de conta
-			                nas rotinas do caixa online SD 474875 (Tiago/Elton).               
+   Alteracoes: 
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -272,17 +252,16 @@ PROCEDURE process-web-request:
         '<meta http-equiv="Pragma"        content="No-Cache">'
         '<meta http-equiv="Expires"       content="0">'
         '<script language=JavaScript src="/script/formatadadosie.js"></script>' SKIP
-        '<script language=JavaScript src="/script/funcoes.js"></script>' SKIP
         '<script language=JavaScript src="/script/jquery.js"></script>' SKIP
-        '<script language=JavaScript src="/script/mascara.js"></script>' SKIP       
+        '<script language=JavaScript src="/script/jquery.mask.mv.js"></script>' SKIP
         '<script language=JavaScript src="/script/formataconta.js"></script>' SKIP
         '<link rel=StyleSheet type="text/css" href="/script/viacredi.css">' SKIP
-        '<title>BL - Inicialização</title>' SKIP
+        '<title>BL - Cartão Assinatura</title>' SKIP
         "</HEAD>":U SKIP.
 
 
       {&OUT}
-        '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyDown="JavaScript:onKey(event)">' SKIP
+        '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="SetFocus(event); JavaScript:mudaFoco(); click();" onKeyDown="JavaScript:onKey(event)">' SKIP
         '<form method=post>' SKIP
         '<input type="hidden" name="vh_foco" value="' vh_foco '">'.
 
@@ -312,7 +291,7 @@ PROCEDURE process-web-request:
          '<center>' SKIP
           '<table width="100%" class=cabtab>' SKIP
            ' <tr>' SKIP
-             '  <td class=titulo>BL - Inicialização</td>' SKIP
+             '  <td class=titulo>BL - Cartão Assinatura</td>' SKIP
              '  <td width="21%" class=programa align="right">P.BL&nbsp; V.1.10</td>' SKIP
            ' </tr>' SKIP
           '</table>' SKIP
@@ -330,55 +309,23 @@ PROCEDURE process-web-request:
               '<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>' SKIP
                '<tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP
                '<tr>' SKIP
-                '<td width="15%"> </td>' SKIP
-                '<td>' SKIP
-                    '<input type="radio" value="1" checked name="incooper" onClick="mudaCooperado(this.value);" > Cooperado' SKIP
-                '</td>' SKIP                
+                '<td><input type="hidden" value="1" checked name="incooper" ></td>' SKIP                
                '</tr>' SKIP               
                '<tr>' SKIP
-                '<td width="15%"> </td>' SKIP
-                '<td>' SKIP
-                    '<input type="radio" value="2" name="incooper" onClick="mudaCooperado(this.value);" > Não Cooperado' SKIP
-                '</td>' SKIP                
-               '</tr>' SKIP
-               '<tr>' SKIP
                 '<td width="15%">&nbsp;</td>' SKIP
                 '<td width="15%">&nbsp;</td>' SKIP
                '</tr>' SKIP
                '<tr>' SKIP
-                '<td width="15%" align="right" class="linhaform" nowrap>&nbsp;Conta/DV:</td>' SKIP
-                '<td width="35%" align="left" class="linhaform"><input type="text" id="v_conta" name="v_conta" size="15" maxlength="12" class="input" onChange = "submit();" value="'get-value("v_conta")'" ></td>' SKIP
+                '<td width="20%" align="right" class="linhaform" nowrap>&nbsp;Conta/DV:</td>' SKIP
+                '<td width="35%" align="left" class="linhaform"><input type="text" id="v_conta" name="v_conta" size="15" maxlength="12" class="input" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);" onChange = "submit();" value="'get-value("v_conta")'" ></td>' SKIP
                '</tr>' SKIP
-               '<tr>' SKIP
-                '<td width="15%" align="right" class="linhaform" nowrap>&nbsp;Identificação:</td>' SKIP
-                '<td width="35%" align="left" class="linhaform"><input type="text" name="v_ident" size="52" maxlength="50" class="input" value="'get-value("v_ident")'" disabled ></td>' SKIP                
-               '</tr>' SKIP
-               '<tr>' SKIP
-                '<td width="15%">&nbsp;</td>' SKIP
-                '<td width="35%" align="left" class="linhaform" style="font-size: 9px;font-style: italic; font-weight: bold;">&nbsp;Ex.: João; 9999-9999</td>' SKIP          
-               '</tr>' SKIP               
-               '<tr>' SKIP
-                '<td width="15%" align="right" class="linhaform" nowrap>&nbsp;Saldo Inicial:</td>' SKIP
-                '<td width="35%" align="left" class="linhaform"><input type="text" name="v_sldini" size="19" class="input" value="'trim(string(crapcbl.vlinicial,">>>,>>>,>>>,>>9.99-"))'" disabled></td>' SKIP
-               '</tr>' SKIP
-               '<tr>' SKIP
-                '<td width="15%" align="right" class="linhaform" nowrap>&nbsp;Pagamentos:</td>' SKIP
-                '<td width="35%" align="left" class="linhaform"><input type="text" name="v_pagamentos" size="19" class="input" value="'TRIM(string(crapcbl.vlcompdb,">>>,>>>,>>>,>>9.99-"))'" disabled></td>' SKIP
-               '</tr>' SKIP
-               '<tr>' SKIP
-                '<td width="15%" align="right" class="linhaform" nowrap>&nbsp;Recebimentos:</td>' SKIP
-                '<td width="35%" align="left" class="linhaform"><input type="text" name="v_recebimentos" size="19" class="input" value="'trim(string(crapcbl.vlcompcr,">>>,>>>,>>>,>>9.99-"))'" disabled></td>' SKIP
-               '</tr>' SKIP
-               '<tr>' SKIP
-                '<td width="15%" align="right" class="linhaform" nowrap>&nbsp;Troco:</td>' SKIP
-                '<td width="35%" align="left" class="linhaform"><input type="text" name="v_troco" size="19" class="input" value="'TRIM(string(de_troco,">>>,>>>,>>>,>>9.99-"))'" disabled></td>' SKIP
-               '</tr>' SKIP
-               '<tr><td align="right" style="BACKGROUND-COLOR:#FFFFCE; border=0" colspan=5>&nbsp;</td></tr>' SKIP 
+			   
                '<tr>' SKIP
                 '<td align="center" class="linhaform" colspan="2">' SKIP
-                 '<input type="submit" value="Iniciar" name="ok" class="button" disabled>' SKIP
+                 '<input type="submit" value="OK" name="ok" class="button" disabled>' SKIP
                 '</td>' SKIP
                '</tr>' SKIP 
+			   
                '<tr><td align="right" class="linhaform">&nbsp;&nbsp;</td></tr>' SKIP 
               '<table>' SKIP
              '</center>' SKIP
@@ -396,33 +343,6 @@ PROCEDURE process-web-request:
       ELSE
       IF  get-value("v_val") = "yes" THEN
           {&OUT} "<script language='JavaScript'>" "document.forms[0].ok.disabled=false;" "</script>".
-
-       /* Tratamento de erros */
-       IF   de_troco < 0   THEN
-            DO:
-                {&OUT} "<script language='JavaScript'>"
-                       "alert('Troco Negativo - Verifique BL');"
-                       "window.close();"
-                       "</script>".
-            END.
-       ELSE 
-            DO:
-                /* Verifica se o BL esta fechado para poder iniciar um novo */
-                IF   crapcbl.vlcompcr  <> 0   OR
-                     crapcbl.vlcompdb  <> 0   OR
-                     crapcbl.vlinicial <> 0   THEN
-                     DO:
-                         {&OUT} "<script language='JavaScript'>"
-                                "alert('O BL atual deve ser finalizado antes de ' +
-                                       'iniciar um novo BL.');"
-                                "window.close();"
-                                "</script>".
-                     END.
-            END.
-
-       {&out} 
-          '</BODY>':U SKIP
-          '</HTML>':U SKIP.
   END.
   /* POST */
   ELSE DO:
@@ -452,19 +372,21 @@ PROCEDURE process-web-request:
       ASSIGN crapcbl.vlinicial = 0
              crapcbl.vlcompcr  = 0
              crapcbl.vlcompdb  = 0
-             crapcbl.blidenti  = SUBSTRING(get-value("v_ident"),1,40) + " " + STRING(TIME,"HH:MM:SS").
+             crapcbl.blidenti  = SUBSTRING(get-value("v_ident"),1,40) + " " + STRING(TIME,"HH:MM:SS")
+			 aux_nrdconta = get-value("v_conta").
 
       IF  get-value("incooper") = "1" THEN
           ASSIGN crapcbl.nrdconta  = DECI(REPLACE(get-value("v_conta"), ".", "")).
 
       VALIDATE crapcbl.
 
-    /* Direciona o opener da janela de  BL. Caso forem usadas as teclas F8/F7, o elemento opener assumido
+    /* Direciona o opener da janela de  BL. Caso forem usadas as teclas F9/F8/F7, o elemento opener assumido
        não é o menu, e sim o próprio frame das rotinas (pane), portanto existem alguns parâmetros para controle.
        - Quando chamado via mouse (opener = menu) ele irá executar o evento onLoad do frame menu.
-       - Quando chamado via teclado (opener = pane) ele irá direcionar para a rotina 2, e lá há um tratamento. */
-      {&OUT} '<script>opener.location.href = "crap002.w?opener="+opener.name+"&rotina="+opener.location.href.replace(/=/g, "|")</script>'.
-
+       - Quando chamado via teclado (opener = pane) ele irá direcionar para a rotina 2, e lá há um tratamento.
+    */
+	 {&OUT} '<script>window.open("http://0303hmlged01/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=' + aux_nrdconta + '&cooperativa=1", "_blank", "width=800,height=600");</script>'.
+	
      END.
      /* Se não pressionou o botão (eventos de submit();) */
      ELSE DO:
@@ -488,7 +410,7 @@ PROCEDURE process-web-request:
                                "</script>".
                     END.
         
-                 {&OUT} '<script> window.location = "blini.p?v_conta=" + "' aux_nrdconta '" +
+                 {&OUT} '<script> window.location = "blass.p?v_conta=" + "' aux_nrdconta '" +
                                                            "&v_ident=" + "' aux_dsindent '" +
                                                            "&v_val=" + "' string(AVAIL crapass) '"</script>'.
              END.
@@ -502,7 +424,7 @@ PROCEDURE process-web-request:
                        "alert('Informe a Conta/DV do cooperado!');"
                        "</script>".
 
-                {&OUT} '<script> window.location = "blini.p?v_conta=" + "' aux_nrdconta '" +
+                {&OUT} '<script> window.location = "blass.p?v_conta=" + "' aux_nrdconta '" +
                                                           "&v_ident=" + "' aux_dsindent '" +
                                                           "&v_val="   + "no"</script>'.
              END.
@@ -514,7 +436,7 @@ PROCEDURE process-web-request:
        '<meta http-equiv="cache-control" content="no-cache">' SKIP
        '<meta http-equiv="Pragma"        content="No-Cache">'
        '<meta http-equiv="Expires"       content="0">'
-       '<title>BL - Inicialização</title>' SKIP
+       '<title>BL - Cartão Assinatura</title>' SKIP
        '</HEAD>':U SKIP
        '</BODY>':U SKIP.
 

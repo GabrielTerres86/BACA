@@ -13,6 +13,8 @@ Alteracoes: 16/12/2008 - Ajustes para unificacao dos bancos de dados (Evandro).
                          
             05/05/2015 - (Chamado 279202) Retirar impressao durante a abertura 
                          de caixa (Tiago Castro - RKAM).
+
+		    23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).
 ............................................................................. */
 
 
@@ -77,15 +79,26 @@ DEF TEMP-TABLE tt-consulta
     FIELD saldo-final     LIKE crapbcx.vldsdfin   
     FIELD nro-lacre       LIKE crapbcx.nrdlacre.
 
-DEF VAR  h-b1crap00 AS HANDLE     NO-UNDO.
-DEF VAR  h-b1crap13 AS HANDLE     NO-UNDO.
-DEF VAR  h-b2crap13 AS HANDLE     NO-UNDO.
-DEF VAR  h-b3crap13 AS HANDLE     NO-UNDO.
+DEF VAR  h-b1crap00   AS HANDLE     NO-UNDO.
+DEF VAR  h-b1crap13   AS HANDLE     NO-UNDO.
+DEF VAR  h-b2crap13   AS HANDLE     NO-UNDO.
+DEF VAR  h-b3crap13   AS HANDLE     NO-UNDO.
+DEF VAR  h-b1wgen0120 AS HANDLE     NO-UNDO.
 
 DEF VAR  p-nome-arquivo     AS CHAR NO-UNDO.
 DEF VAR  p-valor-credito    AS DEC  NO-UNDO.
 DEF VAR  p-valor-debito     AS DEC  NO-UNDO.
 DEF VAR  p-nome-arquivo-url AS CHAR NO-UNDO.
+
+DEF VAR aux_flgsemhi AS LOGI                                    NO-UNDO.
+DEF VAR aux_vlrttcrd AS DECI                                    NO-UNDO.
+DEF VAR aux_vlrttdeb AS DECI                                    NO-UNDO.
+DEF VAR aux_sdfinbol LIKE crapbcx.vldsdfin                      NO-UNDO.
+DEF VAR aux_nmarqimp AS CHAR                                    NO-UNDO.
+DEF VAR aux_nmarqpdf AS CHAR                                    NO-UNDO.
+
+DEF TEMP-TABLE tt-erro NO-UNDO LIKE craperr.
+
 
 /* Local Variable Definitions ---                                       */
 
@@ -480,79 +493,121 @@ PROCEDURE process-web-request :
          AVAIL tt-consulta THEN DO:   
                               /* Visualizar Boletim Tela */
          
-         RUN dbo/b2crap13.p PERSISTENT SET h-b2crap13.                   
-         
+         RUN sistema/generico/procedures/b1wgen0120.p PERSISTENT 
+             SET h-b1wgen0120.
+
          FIND crapcop WHERE crapcop.nmrescop = v_coop NO-LOCK NO-ERROR.
-
-         ASSIGN p-nome-arquivo = "/usr/coop/sistema/siscaixa/web/spool/" + 
-                                 crapcop.dsdircop + string(v_pac) + string(v_caixa) + 
-                                 "b2013.txt"  /* Nome Fixo  */
-                p-nome-arquivo-url = "spool/" + crapcop.dsdircop + 
-                                     string(v_pac) + 
-                                     string(v_caixa) + "b2013.txt".
-
-         RUN disponibiliza-dados-boletim-caixa 
-                   IN h-b2crap13 (INPUT  v_coop,
-                                  INPUT  v_operador,
-                                  INPUT  INT(v_pac),
-                                  INPUT  INT(v_caixa),
-                                  INPUT  tt-consulta.registro,
-                                  INPUT  p-nome-arquivo,
-                                  INPUT  NO,  /* Impressao */
-                                  INPUT "CRAP013",
-                                  OUTPUT p-valor-credito,
-                                  OUTPUT p-valor-debito).
+         
+         FIND crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper AND
+                            crapbcx.dtmvtolt = DATE(v_data)         AND
+                            crapbcx.cdagenci = INT(v_pac)      AND
+                            crapbcx.nrdcaixa = INT(v_caixa)     AND
+                            crapbcx.cdopecxa = STRING(v_operador) NO-LOCK NO-ERROR.
+         
+         
+         RUN Gera_Boletim IN h-b1wgen0120 (INPUT crapcop.cdcooper,       
+                                           INPUT INT(v_pac),
+                                           INPUT INT(v_caixa),
+                                           INPUT 2,
+                                           INPUT "CRAP013",
+                                           INPUT v_data,       
+                                           INPUT STRING(RANDOM(1,10000)),
+                                           INPUT YES, /* tipconsu */
+                                           INPUT RECID(crapbcx),
+                                          OUTPUT aux_flgsemhi,
+                                          OUTPUT aux_sdfinbol,
+                                          OUTPUT aux_vlrttcrd,
+                                          OUTPUT aux_vlrttdeb,
+                                          OUTPUT aux_nmarqimp,
+                                          OUTPUT aux_nmarqpdf,
+                                          OUTPUT TABLE tt-erro).
+                                          
+          DELETE PROCEDURE h-b1wgen0120.
           
-         DELETE PROCEDURE h-b2crap13.       
-         IF RETURN-VALUE = "NOK" THEN  DO:
-            {include/i-erro.i}
-         END.
-         ELSE DO: 
-             ASSIGN vh_arquivo = HostURL + "/" + p-nome-arquivo-url.
-
-         END.
+          IF TEMP-TABLE tt-erro:HAS-RECORDS THEN 
+             DO:
+             
+                FIND FIRST tt-erro NO-LOCK NO-ERROR.  
+             
+                IF AVAIL tt-erro THEN
+                   DO:
+                      CREATE craperr.
+                      ASSIGN craperr.cdcooper = crapcop.cdcooper
+                             craperr.cdagenci = INT(v_pac)
+                             craperr.nrdcaixa = INT(v_caixa)
+                             craperr.nrsequen = tt-erro.nrsequen
+                             craperr.cdcritic = tt-erro.cdcritic
+                             craperr.dscritic = tt-erro.dscritic.
+                      VALIDATE craperr.
+                      {include/i-erro.i}
+                   END.
+          END.
+          
+          ASSIGN p-nome-arquivo     = aux_nmarqimp
+                 p-nome-arquivo-url = "spool/" + ENTRY(8,aux_nmarqimp,"/")
+                 vh_arquivo         = HostURL + "/" + p-nome-arquivo-url
+                 p-valor-credito    = aux_vlrttcrd
+                 p-valor-debito     = aux_vlrttdeb.
+         
      END.
-
-     /*ELSE IF  get-value("b2") <> "" and
-          AVAIL tt-consulta THEN DO:       
-                /* Impress∆o Abertura */
-       
-         RUN dbo/b3crap13.p PERSISTENT SET h-b3crap13.
-         RUN impressao-abertura IN h-b3crap13 (INPUT v_coop,
-                                               INPUT v_operador,
-                                               INPUT INT(v_pac),
-                                               INPUT INT(v_caixa),
-                                               INPUT tt-consulta.registro,
-                                               INPUT "CRAP013").
-         DELETE PROCEDURE h-b3crap13.
-         ASSIGN vh_arquivo = " " .
-         IF RETURN-VALUE = "NOK" THEN  DO:
-            {include/i-erro.i}
-         END.
-    
-     END.*/
 
      ELSE IF  get-value("b3") <> ""  and
          AVAIL tt-consulta THEN DO:                
                               /* Impressao Boletim */
 
-         RUN dbo/b2crap13.p PERSISTENT SET h-b2crap13.
-         RUN disponibiliza-dados-boletim-caixa 
-               IN h-b2crap13 (INPUT  v_coop,
-                              INPUT  v_operador,
-                              INPUT  INT(v_pac),
-                              INPUT  INT(v_caixa),
-                              INPUT  tt-consulta.registro,
-                              INPUT  " ", /* bo ir† gerar Nome de arquivo */
-                              INPUT  yes, /* Impressao */
-                              INPUT "CRAP013",
-                              OUTPUT p-valor-credito,
-                              OUTPUT p-valor-debito).
-         DELETE PROCEDURE h-b2crap13.
-         ASSIGN vh_arquivo = " ".
-         IF RETURN-VALUE = "NOK" THEN  DO:
-            {include/i-erro.i}
-         END.
+     RUN sistema/generico/procedures/b1wgen0120.p PERSISTENT 
+             SET h-b1wgen0120.
+
+         FIND crapcop WHERE crapcop.nmrescop = v_coop NO-LOCK NO-ERROR.
+         
+         FIND crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper AND
+                            crapbcx.dtmvtolt = DATE(v_data)         AND
+                            crapbcx.cdagenci = INT(v_pac)      AND
+                            crapbcx.nrdcaixa = INT(v_caixa)     AND
+                            crapbcx.cdopecxa = STRING(v_operador) NO-LOCK NO-ERROR.
+         
+         
+         RUN Gera_Boletim IN h-b1wgen0120 (INPUT crapcop.cdcooper,       
+                                           INPUT INT(v_pac),
+                                           INPUT INT(v_caixa),
+                                           INPUT 2,
+                                           INPUT "CRAP013",
+                                           INPUT v_data,       
+                                           INPUT STRING(RANDOM(1,10000)),
+                                           INPUT NO, /* tipconsu */
+                                           INPUT RECID(crapbcx),
+                                          OUTPUT aux_flgsemhi,
+                                          OUTPUT aux_sdfinbol,
+                                          OUTPUT aux_vlrttcrd,
+                                          OUTPUT aux_vlrttdeb,
+                                          OUTPUT aux_nmarqimp,
+                                          OUTPUT aux_nmarqpdf,
+                                          OUTPUT TABLE tt-erro).
+                                          
+          DELETE PROCEDURE h-b1wgen0120.
+          
+          IF TEMP-TABLE tt-erro:HAS-RECORDS THEN 
+             DO:
+             
+                FIND FIRST tt-erro NO-LOCK NO-ERROR.  
+             
+                IF AVAIL tt-erro THEN
+                   DO:
+                      CREATE craperr.
+                      ASSIGN craperr.cdcooper = crapcop.cdcooper
+                             craperr.cdagenci = INT(v_pac)
+                             craperr.nrdcaixa = INT(v_caixa)
+                             craperr.nrsequen = tt-erro.nrsequen
+                             craperr.cdcritic = tt-erro.cdcritic
+                             craperr.dscritic = tt-erro.dscritic.
+                      VALIDATE craperr.
+                      {include/i-erro.i}
+                   END.
+          END.
+     
+     
+     
+     
      END.
      ELSE IF  get-value("b4") <> ""  and
          AVAIL tt-consulta THEN DO:   

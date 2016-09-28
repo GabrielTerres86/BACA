@@ -2197,7 +2197,7 @@ PROCEDURE gravar-endereco-cep:
            par_nmextcid = CAPS(TRIM(par_nmextcid))
            par_nmextlog = CAPS(TRIM(par_nmextlog))
            par_nmresbai = CAPS(TRIM(par_nmresbai))
-           par_nmrescid = CAPS(TRIM(par_nmrescid))
+           par_nmrescid = SUBSTRING(CAPS(TRIM(par_nmrescid)),1,25)
            par_nmreslog = CAPS(TRIM(par_nmreslog)).
 
     IF  par_flgalter THEN
@@ -2968,10 +2968,10 @@ PROCEDURE trata-busca-endereco:
             ELSE
                 ASSIGN tt-endereco.nmbairro = par_nmresbai.
                 
-            IF  LENGTH(par_nmextcid) <= 25  THEN
+            /*IF  LENGTH(par_nmextcid) <= 25  THEN*/
                 ASSIGN tt-endereco.nmcidade = par_nmextcid.
-            ELSE
-                ASSIGN tt-endereco.nmcidade = par_nmrescid. 
+            /*ELSE
+                ASSIGN tt-endereco.nmcidade = par_nmrescid. */
 
             IF  par_idoricad = 1  THEN
                 ASSIGN tt-endereco.dsoricad = "ENDERECO OBTIDO NOS CORREIOS".

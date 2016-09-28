@@ -11,6 +11,10 @@
    
    Alteracoes: 20/05/2016 - Carregar protocolo 15-pagamento debito automatico
                             PRJ320 - Oferta DebAut (Odirlei-AMcom)
+
+               09/09/2016 - Ajustar tamanho da formatacao do campo nrdocmto,
+                            pois nao esta sendo formatado corretamente quando
+                            o numero possuir muitas casas (Anderson).
 .............................................................................*/
  
 create widget-pool.
@@ -95,7 +99,7 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                 RETURN "NOK".
             END.
         
-          
+
         FOR EACH cratpro NO-LOCK:
             
             CREATE xml_operacao25.
@@ -116,7 +120,7 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
                               TRIM(STRING(cratpro.vldocmto,"zzz,zzz,zz9.99")) +
                                              "</vldocmto>"
                    xml_operacao25.nrdocmto = "<nrdocmto>" +
-                                    TRIM(STRING(cratpro.nrdocmto,"zzzzzzzzzzzzzz9")) +
+                                    TRIM(STRING(cratpro.nrdocmto,"zzzzzzzzzzzzzzzzzzzzzzzz9")) +
                                              "</nrdocmto>"
                    xml_operacao25.nrseqaut = "<nrseqaut>" +
                                     TRIM(STRING(cratpro.nrseqaut,"zzzzzzz9")) +

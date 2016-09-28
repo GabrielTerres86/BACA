@@ -29,6 +29,8 @@
                 
                 27/02/2012 - Alteracao para que todas as coops possam 
                              digitalizar cheques da propria cooperativa (ZE).
+			    
+				23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).
 ------------------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -44,6 +46,7 @@ DEF VAR p-valor-debito  AS DEC                                  NO-UNDO.
 DEF VAR de-diferenca    AS DEC                                  NO-UNDO.
 
 DEF VAR  h-b2crap13     AS HANDLE                               NO-UNDO.
+DEF TEMP-TABLE tt-erro NO-UNDO LIKE craperr.
 
 PROCEDURE retorna-dados-fechamento:
     DEF INPUT  PARAM p-cooper        AS CHAR.
@@ -111,11 +114,19 @@ PROCEDURE fechamento-boletim-caixa:
     DEF INPUT  PARAM p-saldo-final   AS DEC.
     DEF INPUT  PARAM p-lacre         AS INTE.                             
 
-    DEF VAR aux_vlctrmve AS DECIMAL NO-UNDO.
-    DEF VAR i-nrseqdig   AS INTE    NO-UNDO.
+    DEF VAR aux_vlctrmve        AS DECIMAL            NO-UNDO.
+    DEF VAR i-nrseqdig          AS INTE               NO-UNDO.
+
+    DEF VAR h-b1wgen0120        AS HANDLE             NO-UNDO.
+    DEF VAR aux_flgsemhi        AS LOGI               NO-UNDO.
+    DEF VAR aux_vlrttcrd        AS DECI               NO-UNDO.
+    DEF VAR aux_vlrttdeb        AS DECI               NO-UNDO.
+    DEF VAR aux_sdfinbol        LIKE crapbcx.vldsdfin NO-UNDO.
+    DEF VAR aux_nmarqimp        AS CHAR               NO-UNDO.
+    DEF VAR aux_nmarqpdf        AS CHAR               NO-UNDO.
          
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
-     
+	
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
                       INPUT p-nro-caixa).
@@ -377,25 +388,50 @@ PROCEDURE fechamento-boletim-caixa:
 
     END. /* Fim do FOR EACH - craptvl */
     
-    RUN disponibiliza-dados-boletim-caixa IN h-b2crap13 
-                (INPUT  p-cooper,
-                 INPUT  p-cod-operador,
-                 INPUT  p-cod-agencia,
-                 INPUT  p-nro-caixa,
-                 INPUT  r-crapbcx,
-                 INPUT  " ", /* Arquivo - Utiliz.p/ visualizacao Tela */
-                 INPUT  NO,   /* Impressao */
-                 INPUT  "CRAP12",
-                 OUTPUT p-valor-credito,
-                 OUTPUT p-valor-debito).
-                 
-    DELETE PROCEDURE h-b2crap13.
-
-    IF  RETURN-VALUE = "NOK" THEN
-        RETURN "NOK".
-                                              
-    ASSIGN aux_saldo_final = crapbcx.vldsdini +
-                             p-valor-credito - p-valor-debito.
+    RUN sistema/generico/procedures/b1wgen0120.p PERSISTENT 
+             SET h-b1wgen0120.
+    
+    RUN Gera_Boletim IN h-b1wgen0120 (INPUT crapcop.cdcooper,       
+                                      INPUT p-cod-agencia,
+                                      INPUT p-nro-caixa,
+                                      INPUT 2,
+                                      INPUT "CRAP012",
+                                      INPUT crapdat.dtmvtolt,       
+                                      INPUT STRING(RANDOM(1,10000)),
+                                      INPUT NO, /* tipconsu */
+                                      INPUT RECID(crapbcx),
+                                     OUTPUT aux_flgsemhi,
+                                     OUTPUT aux_sdfinbol,
+                                     OUTPUT aux_vlrttcrd,
+                                     OUTPUT aux_vlrttdeb,
+                                     OUTPUT aux_nmarqimp,
+                                     OUTPUT aux_nmarqpdf,
+                                     OUTPUT TABLE tt-erro).
+                                          
+    DELETE PROCEDURE h-b1wgen0120.
+    
+    IF TEMP-TABLE tt-erro:HAS-RECORDS THEN 
+       DO:
+          FIND FIRST tt-erro NO-LOCK NO-ERROR.  
+       
+          IF AVAIL tt-erro THEN
+             DO:
+                ASSIGN i-cod-erro  = tt-erro.cdcritic
+                       c-desc-erro = tt-erro.dscritic.
+                
+                RUN cria-erro (INPUT crapcop.cdcooper,
+                               INPUT p-cod-agencia,
+                               INPUT p-nro-caixa,
+                               INPUT i-cod-erro,
+                               INPUT c-desc-erro,
+                               INPUT YES).
+                RETURN "NOK".
+             END.
+       END.
+	
+    ASSIGN p-valor-credito = aux_vlrttcrd
+           p-valor-debito  = aux_vlrttdeb
+           aux_saldo_final = crapbcx.vldsdini + p-valor-credito - p-valor-debito.
     
     IF  aux_saldo_final <> p-saldo-final  THEN 
         DO:
@@ -444,12 +480,22 @@ PROCEDURE atualiza-fechamento:
     DEF INPUT  PARAM p-saldo-final   AS DEC.
     DEF INPUT  PARAM p-nro-lacre     AS INTE.
     DEF INPUT  PARAM p-autenticacoes AS INTE.
-
+    
+    DEF VAR h-b1wgen0120        AS HANDLE             NO-UNDO.
+    DEF VAR aux_flgsemhi        AS LOGI               NO-UNDO.
+    DEF VAR aux_vlrttcrd        AS DECI               NO-UNDO.
+    DEF VAR aux_vlrttdeb        AS DECI               NO-UNDO.
+    DEF VAR aux_sdfinbol        LIKE crapbcx.vldsdfin NO-UNDO.
+    DEF VAR aux_nmarqimp        AS CHAR               NO-UNDO.
+    DEF VAR aux_nmarqpdf        AS CHAR               NO-UNDO.
+    DEF VAR aux_bcxrecid        AS RECID              NO-UNDO.
+    
 /*  Esta Sendo alterado pelo ELTON
     DEF INPUT  PARAM p-username      AS CHAR.
     DEF INPUT  PARAM p-compname      AS CHAR. */
   
     FIND crapcop WHERE crapcop.nmrescop = p-cooper  NO-LOCK NO-ERROR.
+    
     
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -485,32 +531,59 @@ PROCEDURE atualiza-fechamento:
            crapbcx.vldsdfin  = p-saldo-final.
     
     /* - Impressao Boletim Caixa --*/
-    ASSIGN r-crapbcx = ROWID(crapbcx).
-    
+    ASSIGN r-crapbcx    = ROWID(crapbcx)
+           aux_bcxrecid = RECID(crapbcx).
+           
     RELEASE crapbcx.
     
-    RUN dbo/b2crap13.p PERSISTENT SET h-b2crap13.
-    RUN disponibiliza-dados-boletim-caixa IN h-b2crap13 
-                (INPUT  p-cooper,
-                 INPUT  p-cod-operador,
-                 INPUT  p-cod-agencia,
-                 INPUT  p-nro-caixa,
-                 INPUT  r-crapbcx,
-                 INPUT  " ", /* Nome arquivo - Bo gera Nome */ 
-                 INPUT  yes,  /* Impressao */
-                 INPUT  "CRAP12",
-                 OUTPUT p-valor-credito,
-                 OUTPUT p-valor-debito).
-    DELETE PROCEDURE h-b2crap13.
+    RUN sistema/generico/procedures/b1wgen0120.p PERSISTENT 
+             SET h-b1wgen0120.
     
-    IF  RETURN-VALUE = "NOK" THEN
-        RETURN "NOK".
+    RUN Gera_Boletim IN h-b1wgen0120 (INPUT crapcop.cdcooper,       
+                                      INPUT p-cod-agencia,
+                                      INPUT p-nro-caixa,
+                                      INPUT 2,
+                                      INPUT "CRAP012",
+                                      INPUT crapdat.dtmvtolt,       
+                                      INPUT STRING(RANDOM(1,10000)),
+                                      INPUT YES, /* tipconsu */
+                                      INPUT aux_bcxrecid,
+                                     OUTPUT aux_flgsemhi,
+                                     OUTPUT aux_sdfinbol,
+                                     OUTPUT aux_vlrttcrd,
+                                     OUTPUT aux_vlrttdeb,
+                                     OUTPUT aux_nmarqimp,
+                                     OUTPUT aux_nmarqpdf,
+                                     OUTPUT TABLE tt-erro).
 
+    DELETE PROCEDURE h-b1wgen0120.
+    
+    IF TEMP-TABLE tt-erro:HAS-RECORDS THEN 
+       DO:
+          FIND FIRST tt-erro NO-LOCK NO-ERROR.  
+
+          IF AVAIL tt-erro THEN
+
+             DO:
+                ASSIGN i-cod-erro  = tt-erro.cdcritic
+                       c-desc-erro = tt-erro.dscritic.
+                
+                RUN cria-erro (INPUT p-cooper,
+                               INPUT p-cod-agencia,
+                               INPUT p-nro-caixa,
+                               INPUT i-cod-erro,
+                               INPUT c-desc-erro,
+                               INPUT YES).
+                RETURN "NOK".
+             END.
+       END.
+    
+    ASSIGN p-valor-credito = aux_vlrttcrd
+           p-valor-debito  = aux_vlrttdeb.
+    
 /*  Esta sendo alterado pelo ELTON
     UNIX SILENT VALUE ("rm /usr/coop/ctr_ayllos/" + p-username + "." + 
                        p-compname). */
-
-
 
     RETURN "OK".       
 

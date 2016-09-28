@@ -23,7 +23,8 @@
                
                07/11/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (Guilherme Gielow)                                                         
-                            
+
+               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                            
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -253,7 +254,7 @@ PROCEDURE process-web-request :
     '<link rel=StyleSheet type="text/css" href="/script/viacredi.css">' SKIP
     '<title>EXTRATO</title>' SKIP
     "</HEAD>":U SKIP
-    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">' SKIP
+    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">' SKIP
     '<form onKeyDown="change_page(event)" method=post>' SKIP.
   
   {&OUT}

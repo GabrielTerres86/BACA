@@ -71,7 +71,9 @@
                           
              18/03/2015 - (Chamado 260201) - Inclusao de um log para lancamentos 
                           manuais na craplem (Tiago Castro - RKAM).
-                          
+               
+             16/08/2016 - Controlar o preenchimento da data de pagamento do prejuízo,
+                          no momento da liquidaçao do mesmo. (Renato Darosci - M176)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -430,6 +432,8 @@ DO WHILE TRUE:
          IF   glb_cdcritic > 0   THEN
               NEXT.
          
+         /* Guardar o valor de saldo de prejuizo (Renato Darosci - 16/08/2016) */ 
+         ASSIGN ant_vlsdprej = crapepr.vlsdprej.         
          
          RUN sistema/generico/procedures/b1wgen0134.p 
                               PERSISTENT SET h-b1wgen0134.
@@ -660,6 +664,17 @@ DO WHILE TRUE:
 
                 END.
            
+      /* Verificacao para atualizar a data do saldo do prejuizo apenas quando 
+         foi pago neste momento, evitando que a data seja alterada novamente 
+         a cada atualizacao da tela (Renato Darosci - 16/08/2016) */
+      IF crapepr.inprejuz = 1 THEN 
+        DO:
+            IF ant_vlsdprej > 0 AND crapepr.vlsdprej = 0 THEN
+                ASSIGN crapepr.dtliqprj = glb_dtmvtolt.
+            ELSE
+                ASSIGN crapepr.dtliqprj = ?.
+        END.
+          
       IF   aux_indebcre = "D"   THEN
            ASSIGN craplot.vlcompdb = craplot.vlcompdb + tel_vllanmto.
       ELSE

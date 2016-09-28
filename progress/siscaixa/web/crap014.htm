@@ -20,7 +20,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             11/09/2015 - Melhoria 21 (Tiago/Fabricio).
     
             12/02/2016 - Ajustes para nao editar o campo de valor quando
-                         for pagamento de fatura (Tiago/Fabricio SD385720)           
+                         for pagamento de fatura (Tiago/Fabricio SD385720)
+
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                
 -->
 
 <html>
@@ -418,7 +420,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event)" method=post >
 <input type="hidden" name="v_msg">
 <input type="hidden" name="vh_foco" value="6">

@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 16/06/2016
+    Data      : Abril/2012                      Ultima Atualizacao: 31/08/2016
     
     Dados referentes ao programa:
 
@@ -284,6 +284,14 @@
                 16/06/2016 - Na procedure efetua_batimento_ged_termos, ajustado a
                              descricao do LABEL do Operador que estava "OPEERADOR"
                              (Lucas Ranghetti #467779)   
+                             
+                26/08/2016 - Retirado verificacao do inliquid = 0 na procedure 
+                             efetua_batimento_ged_gredito (Lucas Ranghetti #501523)
+                             
+                31/08/2016 - Alterar busca da agencia para buscar a agencia do operador
+                             na procedure efetua_batimento_termos para o tpdocmto 37 - PEP
+                             (Lucas Ranghetti #491441)
+                             
 .............................................................................*/
 
 
@@ -1955,7 +1963,6 @@ PROCEDURE efetua_batimento_ged_credito:
                                WHERE crapepr.cdcooper = crapadt.cdcooper AND
                                      crapepr.nrdconta = crapadt.nrdconta AND
                                      crapepr.nrctremp = crapadt.nrctremp AND
-                                     crapepr.inliquid = 0                AND
                                      NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905",
                                                STRING(crapepr.cdlcremp)) NO-LOCK:
 
@@ -2376,7 +2383,6 @@ PROCEDURE efetua_batimento_ged_credito:
         /* Emprestimo - Data de Liberacao */
         FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper   AND
                                crapepr.dtmvtolt = aux_data       AND
-                               crapepr.inliquid = 0              AND
                      NOT CAN-DO("3,4", STRING(crapepr.cdorigem)) AND
                      NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
                                 STRING(crapepr.cdlcremp)) 
@@ -3171,10 +3177,16 @@ PROCEDURE efetua_batimento_ged_termos:
 
             /*Verifica se registro existe*/
             IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                     
+                    /* Buscar agencia em que o operador trabalha */
+                    FIND FIRST crapope WHERE crapope.cdcooper = crapdoc.cdcooper
+                                         AND crapope.cdoperad = crapdoc.cdoperad
+                                         NO-LOCK NO-ERROR.
+                     
                 /* Criar registro para listar no relatorio */
                 CREATE tt-documentos-termo.
                 ASSIGN tt-documentos-termo.cdcooper = crapdoc.cdcooper
-                       tt-documentos-termo.cdagenci = crapass.cdagenci 
+                           tt-documentos-termo.cdagenci = crapope.cdpactra WHEN AVAILABLE crapope 
                        tt-documentos-termo.dstpterm = "DECLARACAOPEP"
                            tt-documentos-termo.dsempres = crapass.nmprimtl
                        tt-documentos-termo.nrdconta = crapdoc.nrdconta

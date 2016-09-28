@@ -8,6 +8,11 @@
 						   
 			  27/06/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                            PinPad Novo (Lucas Lunelli - [PROJ290])						   
+
+              05/09/2016 - Melhoria para usar copiar e colar o numero de conta
+			               nas rotinas do caixa online SD 474875 (Tiago/Elton).               
+    
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).             
 				
 			  22/09/2016 - Correção botão pinpad (Lucas Lunelli - [PROJ290])	
 -->
@@ -21,6 +26,10 @@
 <meta http-equiv="Pragma"        content="No-Cache">
 <meta http-equiv="Expires"       content="0">
 <script language=JavaScript src="/script/formatadadosie.js"></script>
+<script language=JavaScript src="/script/funcoes.js"></script>
+<script language=JavaScript src="/script/jquery.js"></script>
+<script language=JavaScript src="/script/mascara.js"></script>
+<script language=JavaScript src="/script/formataconta.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>SOLICITAÇÃO TALÕES</title>
 
@@ -371,8 +380,8 @@ function submitForm(limpa_sel) {
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:initPage();" onKeyUp="callBLini(event); callBLsal(event);">
-	<form name="form1" onKeyDown="change_page(event)" method=post>
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onload="JavaScript:initPage();" onkeyup="callBlass(event); callBLini(event); callBLsal(event);">
+    <form name="form1" onkeydown="change_page(event)" method=post>
 	
 		<input type="hidden" name="v_msg">
 		<input type="hidden" name="vh_foco">
@@ -395,11 +404,11 @@ function submitForm(limpa_sel) {
   <center>
   <table width="100%" class=cabtab>
     <tr>
-					  <td width="15%" align="center"> <input type="text" name="v_coop" size="11" class="transp" readOnly></td>
-					  <td width="20%" align="center"> PA&nbsp; <input type="text" name="v_pac" size="1" class="transp"  readOnly></td>
-					  <td width="20%" align="center"> CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readOnly></td>
-					  <td width="30%" align="center"> OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readOnly></td>
-					  <td width="15%" align="center"> <input type="text" name="v_data" size="10" class="transp" readOnly></td>
+                        <td width="15%" align="center"> <input type="text" name="v_coop" size="11" class="transp" readonly></td>
+                        <td width="20%" align="center"> PA&nbsp; <input type="text" name="v_pac" size="1" class="transp" readonly></td>
+                        <td width="20%" align="center"> CAIXA&nbsp; <input type="text" name="v_caixa" size="1" class="transp" readonly></td>
+                        <td width="30%" align="center"> OPERADOR&nbsp; <input type="text" name="v_operador" size="7" class="transp" readonly></td>
+                        <td width="15%" align="center"> <input type="text" name="v_data" size="10" class="transp" readonly></td>
     </tr>
   </table>
   </center>
@@ -416,12 +425,12 @@ function submitForm(limpa_sel) {
 </div>
 <div align="center">
   <center>
-				<table cellspacing = 0 cellpadding= 0 width=100% class=tcampo>
+                <table cellspacing=0 cellpadding=0 width=100% class=tcampo>
 					<tr>						
 						<td width="100%" valign="middle">
 						
 							<div id="divTpEntrega">
-								<table cellspacing = "0" cellpadding = "1" width="100%">
+                                <table cellspacing="0" cellpadding="1" width="100%">
 									<tr>											
 										<td height="10px"></td>
 										<td height="10px"></td>
@@ -430,9 +439,9 @@ function submitForm(limpa_sel) {
 									</tr>
 									<tr>
 										<td width="250px">&nbsp;</td>
-										<td align="left" class="linhaform" width="200px"><input type="radio" name="v_tpentrega" id="v_tpentrega1" value="yes" onClick="JavaScript: eliminaDivTaloes(); formataTpEntrega(this.value, true);" checked> Titular/Procurador </td>
+                                        <td align="left" class="linhaform" width="200px"><input type="radio" name="v_tpentrega" id="v_tpentrega1" value="yes" onclick="JavaScript: eliminaDivTaloes(); formataTpEntrega(this.value, true);" checked> Titular/Procurador </td>
 										<td style="width:50px">&nbsp;</td>
-										<td align="left" class="linhaform"><input type="radio" name="v_tpentrega" id="v_tpentrega2" value="no" onClick="JavaScript: eliminaDivTaloes(); formataTpEntrega(this.value, true);"> Terceiro </td> 
+                                        <td align="left" class="linhaform"><input type="radio" name="v_tpentrega" id="v_tpentrega2" value="no" onclick="JavaScript: eliminaDivTaloes(); formataTpEntrega(this.value, true);"> Terceiro </td>
 									</tr>
 									<tr>											
 										<td height="10px"></td>
@@ -446,12 +455,12 @@ function submitForm(limpa_sel) {
 														
 							<div id="divOpcoes">
 								<center>								
-									<table cellspacing = "0" cellpadding = "1" class=tcampo width="100%">
+                                    <table cellspacing="0" cellpadding="1" class=tcampo width="100%">
 										<tr>
 											<td width="250px">&nbsp;</td>
-											<td align="left" class="linhaform" width="200px"><input type="radio" name="v_opcao" id="v_opcao1" value="R" onClick="JavaScript: eliminaDivTaloes(); selectOpcao('R');" checked> Requisição </td>
-											<td style = "width:50px">&nbsp;</td> 
-											<td align="left" class="linhaform"><input type="radio" name="v_opcao" id="v_opcao2" value="C" onClick="JavaScript: eliminaDivTaloes(); selectOpcao('C');"> Cartão</td>
+                                            <td align="left" class="linhaform" width="200px"><input type="radio" name="v_opcao" id="v_opcao1" value="R" onclick="JavaScript: eliminaDivTaloes(); selectOpcao('R');" checked> Requisição </td>
+                                            <td style="width:50px">&nbsp;</td>
+                                            <td align="left" class="linhaform"><input type="radio" name="v_opcao" id="v_opcao2" value="C" onclick="JavaScript: eliminaDivTaloes(); selectOpcao('C');"> Cartão</td>
 										</tr>
 									</table>
 								</center>
@@ -459,7 +468,7 @@ function submitForm(limpa_sel) {
 							
 							<div align="center" id="divCamposTerceiro" style="display:none;">
 								<center>
-									<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
 										<tr>											
 											<td width="20%" align="right" class="linhaform">&nbsp;</td>
 											<td width="71%" colspan="3">&nbsp;</td>
@@ -467,7 +476,7 @@ function submitForm(limpa_sel) {
 										<tr>
 											<td width="20%" align="right" class="linhaform">CPF Terceiro:</td>
 											<td width="71%" colspan="3">
-												<input type="text" name="v_nrcpfcgc" onKeyDown="JavaScript:validaInteiro(event);" onchange="limpaNomeTerceiro(); submitForm(true);" style="text-align: right" maxlength="11" size="20" class="input">
+                                                <input type="text" name="v_nrcpfcgc" onkeydown="JavaScript:validaInteiro(event);" onchange="limpaNomeTerceiro(); submitForm(true);" style="text-align: right" maxlength="11" size="20" class="input">
 											</td>
 										</tr>		
   <tr>
@@ -482,19 +491,20 @@ function submitForm(limpa_sel) {
 													
       <div align="center">
         <center>
-									<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
         <tr>
           <td width="20%" align="right" class="linhaform">&nbsp;</td>
           <td width="71%" colspan="3">&nbsp;</td>
         </tr>
 										<tr id="trCartao">
 											<td class="linhaform" align="right" width="20%">Cartão:</td>
-											<td><input type="password" name="v_cartao" id="v_cartao" size="54" class="input" maxlength="36" onFocus="if(this.value.length <= 0) { lerCartaoPinpadNovo(''); } " onBlur="if(this.value.length <= 0) { v_opcao2.focus(); }" onKeyDown="JavaScript:validaInteiro(event);"  onkeyup="if (this.value.length == 36){submitForm(true);}" onChange="JavaScript: limpaCampos(); submitForm(true);" onClick="lerCartaoPinpadNovo('');" style="text-align: right"></td>
+                                            <td><input type="password" name="v_cartao" id="v_cartao" size="54" class="input" maxlength="36" onfocus="if(this.value.length <= 0) { lerCartaoPinpadNovo(''); } " onblur="if(this.value.length <= 0) { v_opcao2.focus(); }" onkeydown="JavaScript:validaInteiro(event);" onkeyup="if (this.value.length == 36){submitForm(true);}" onchange="JavaScript: limpaCampos(); submitForm(true);" onclick="lerCartaoPinpadNovo('');" style="text-align: right"></td>
 										</tr>
         <tr>
           <td width="20%" align="right" class="linhaform">Cta.Cheque/Dv:</td>
 											<td width="71%" colspan="3">
-												<input type="text" name="v_conta" onKeyDown="JavaScript:validaInteiro(event); FormataConta(this,8,event);" onchange="limpaCampos(); submitForm(true);" style="text-align: right" maxlength="10" size="10" class="input">
+                                                <input type="text" id="v_conta" name="v_conta" style="text-align: right"
+                                                       maxlength="10" size="10" class="input">
             <input type="text" name="v_nome" size="40" class=input style="font-weight: bold" disabled>
           </td>
         </tr>		
@@ -508,7 +518,7 @@ function submitForm(limpa_sel) {
 							
 							<div align="center">
 								<center>	
-									<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
 		<tr>
 											<td>&nbsp; </td>
 											<td>&nbsp; </td>
@@ -540,19 +550,19 @@ function submitForm(limpa_sel) {
 							
 							<div align="center" id="divBanco">
 								<center>	
-									<table  width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>	
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
         <tr>
 											<td width="20%" align="right" class="linhaform">Talonários a solicitar:</td>
-											<td width="71%" colspan="3"><input type="text" name="v_talao" onKeyDown="JavaScript:validaInteiro(event)" maxlength="3" size="10" class="input"></td>
+                                            <td width="71%" colspan="3"><input type="text" name="v_talao" onkeydown="JavaScript:validaInteiro(event)" maxlength="3" size="10" class="input"></td>
         </tr>
         <tr>
           <td width="20%" align="right" class="linhaform">&nbsp;Banco:</td>
           <td width="11%">
-												<input type="text" name="v_banco" onKeyDown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input" onchange="submitForm(true);">
+                                                <input type="text" name="v_banco" onkeydown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input" onchange="submitForm(true);">
 		  </td>
 											<td width="10%" align="right" class="linhaform"> &nbsp;Agencia:</td>
 		  <td> 
-            <input type="text" name="v_agencia" onKeyDown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input" disabled>
+                                                <input type="text" name="v_agencia" onkeydown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input" disabled>
 		  </td>
         </tr>
 										<tr>
@@ -568,7 +578,7 @@ function submitForm(limpa_sel) {
 							
 							<div align="center" id="divTaloes" style="display:none;">
 								<center>	
-									<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo id="taloes_cab">
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo id="taloes_cab">
         <tr>
 											<td width="22%" align="right" class="linhaform">&nbsp;</td>
 											<td class="linhaform">&nbsp;</td>
@@ -584,14 +594,13 @@ function submitForm(limpa_sel) {
 											<td align="center" class="linhaform">&nbsp;</td>
 										</tr>																				
 									</table>
-									<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo id="taloes">																													
-									</table>
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo id="taloes"></table>
 								</center>
 							</div>
 			
 							<div align="center" id="divFormularioContinuo">
 								<center>	
-									<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
 										<tr>
 											<td width="20%" align="right" class="linhaform">&nbsp;</td>
 										</tr>
@@ -601,12 +610,12 @@ function submitForm(limpa_sel) {
         <tr>
 											<td align="right" width="22%">&nbsp;Para Formul&aacute;rio Cont&iacute;nuo:</td>
 											<td align="right" width="8%">&nbsp;Inicial:</td>
-											<td align="left"  width="8%">
-												<input type="text" name="v_numini" onKeyDown="JavaScript:validaInteiro(event);" onkeyup="desabilitaTaloes();" maxlength="8" size="10" class="input">
+                                            <td align="left" width="8%">
+                                                <input type="text" name="v_numini" onkeydown="JavaScript:validaInteiro(event);" onkeyup="desabilitaTaloes();" maxlength="8" size="10" class="input">
 		  </td>
 											<td align="right" width="7%"> Final:</td>
 											<td align="left">
-		    <input type="text" name="v_numfin" onKeyDown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input">
+                                                <input type="text" name="v_numfin" onkeydown="JavaScript:validaInteiro(event)" maxlength="8" size="10" class="input">
 	      </td>
         </tr>
 									</table>
@@ -616,7 +625,7 @@ function submitForm(limpa_sel) {
 							
 							<div align="center" id="divSenhaCartao">
 								<center>	
-									<table width="100%" cellspacing = 0 cellpadding = 1 class=tcampo>
+                                    <table width="100%" cellspacing=0 cellpadding=1 class=tcampo>
         <tr>
 											<td width="22%" align="right" class="linhaform">&nbsp;</td>
 											<td align="right" class="linhaform">&nbsp;</td>
@@ -672,7 +681,7 @@ function submitForm(limpa_sel) {
   <table width="100%">
       <tr>
          <td align="right" class="linhaform">
-						<input type="button" value="Estorno" name="estorno" class="button" onClick="location='crap006.html'">
+                        <input type="button" value="Estorno" name="estorno" class="button" onclick="location='crap006.html'">
 					</td>
       </tr>
   </table>      

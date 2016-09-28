@@ -50,6 +50,8 @@
              18/03/2015 - (Chamado 260201) - Inclusao de um log para lancamentos 
                           manuais na craplem (Tiago Castro - RKAM).
                           
+             16/08/2016 - Controlar o preenchimento da data de pagamento do prejuízo,
+                          no momento da liquidaçao do mesmo. (Renato Darosci - M176)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -673,7 +675,14 @@ DO WHILE TRUE:
       END.  /*  Fim do FOR EACH  --  Pesquisa do ultimo pagamento  */
 
       crapepr.dtultpag = aux_dtultpag.
-
+      
+      /* Retorna a situacao para antes de ter pago o 
+         prejuizo (Renato Darosci - 16/08/2016) */
+      IF crapepr.inprejuz = 1  AND 
+         crapepr.vlsdprej > 0  AND 
+         crapepr.dtliqprj <> ? THEN
+          ASSIGN crapepr.dtliqprj = ?.
+          
    END.   /*  Fim da transacao.  */
 
    RELEASE craplot.

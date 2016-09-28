@@ -25,7 +25,7 @@
 
   Programa: b1wgen0082.p
   Autor   : Gabriel
-  Data    : 08/12/2010                        Ultima Alteracao: 07/04/2016
+  Data    : 08/12/2010                        Ultima Alteracao: 04/08/2016
   
   Dados referentes ao programa:
   
@@ -130,6 +130,8 @@
 
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
+			  04/08/2016 - Alterado rotina carrega-convenios-ceb para trazer a 
+						   forma de envio de arquivo de cobranca na tt. (Reinert)
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }    
@@ -277,7 +279,8 @@ PROCEDURE carrega-convenios-ceb:
                tt-cadastro-bloqueto.qtdfloat = crapceb.qtdfloat 
                tt-cadastro-bloqueto.flprotes = crapceb.flprotes
                tt-cadastro-bloqueto.qtdecprz = crapceb.qtdecprz
-               tt-cadastro-bloqueto.idrecipr = crapceb.idrecipr.
+               tt-cadastro-bloqueto.idrecipr = crapceb.idrecipr
+               tt-cadastro-bloqueto.inenvcob = crapceb.inenvcob.
 
         IF   AVAIL crapcem   AND   crapceb.cddemail > 0  THEN
              ASSIGN tt-cadastro-bloqueto.cddemail = crapcem.cddemail

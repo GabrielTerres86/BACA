@@ -48,6 +48,7 @@ Alteracoes: 15/12/2008 - Alteracoes para unificacao dos bancos de dados (Evandro
 
 			31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
+           23/08/2016  - Adicionado funções "setFocus()" e "callBlass()", para chamada do cartão assinatura (Evandro - RKAM).
 */
 
 // < ! --
@@ -736,7 +737,6 @@ function change_location() {
     }
     else if(document.forms[0].v_rotina.value == 79) {
         top.frames[1].window.location.href='login.w?v_prog=crap079.w';
-
     }
     else if(document.forms[0].v_rotina.value == 80) {
         top.frames[1].window.location.href="crap080.html?v_sangria=S";
@@ -762,9 +762,11 @@ function change_location() {
     else if(document.forms[0].v_rotina.value == 'ip' || document.forms[0].v_rotina.value == 'IP') {
         top.frames[1].window.location.href='impressora.w';
     }
-
     else if(document.forms[0].v_rotina.value == 'aa' || document.forms[0].v_rotina.value == 'AA') {
         top.frames[1].window.location.href='logingerente.w?v_prog=autantmenu.w';
+    }
+    else if (document.forms[0].v_rotina.value == 'bla' || document.forms[0].v_rotina.value == 'BLA') {
+        window.open('blass.p', 'werro', 'width=500,height=150,scrollbars=auto,alwaysRaised=true,left=0,top=0');
     }
     else if(document.forms[0].v_rotina.value == 'bli' || document.forms[0].v_rotina.value == 'BLI') {
         window.open('blini.p','werro','width=500,height=320,scrollbars=auto,alwaysRaised=true,left=0,top=0') ;
@@ -867,10 +869,35 @@ function onKey(e) {
    }
 }
 
+/*
 function callCalc(e, obj) {
         if (e.keyCode == 120) {
-                window.open("calc.htm?elem=" + obj.name, "wincalc", "resizable=no, height=190, width=270, left=0, top=0");
+            window.open("calc.htm?elem=" + obj.name, "wincalc", "resizable=no, height=190, width=270, left=0, top=0");
         }
+}
+*/
+
+function Setenter(e) {
+    if (e.keyCode == 13) { //alert('teste');
+        $(".button").focus(function () {
+            $(this).click();
+        });
+    }
+}
+
+function SetFocus(e) {
+    document.getElementById("v_conta").focus();
+    $(".button").focus(function () {
+        $(this).click();
+    });
+
+    return false;
+}
+
+function callBlass(e) {
+    if (e.keyCode == 120) {
+        window.open('blass.p', 'wbl', 'width=500,height=150,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0');
+    }
 }
 
 function callBLini(e) {

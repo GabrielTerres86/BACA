@@ -27,6 +27,10 @@
                
                02/06/2015 - Adição da coluna inpessoa na xml_operacao11
                             (Dionathan)
+               
+               17/08/2016 - Adição da coluna nomconta e remoção da tabela
+                            xml_operacao11 para utilizacao da tabela generica.
+                            PRJ286.5 - Cecred Mobile (Dionathan)
                             
 ..............................................................................*/
     
@@ -42,6 +46,8 @@ DEF VAR h-b1wgen0032 AS HANDLE                                         NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_flsenlet AS LOGI                                           NO-UNDO.
 DEF VAR aux_nrctanov AS INTE                                           NO-UNDO.
+DEF VAR aux_qtdiaace AS INTE                                           NO-UNDO.
+DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcob.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
@@ -49,7 +55,8 @@ DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
-DEF OUTPUT PARAM TABLE FOR xml_operacao11.
+DEF OUTPUT PARAM TABLE FOR xml_operacao.
+
 
 RUN sistema/internet/procedures/b1wnet0002.p PERSISTENT SET h-b1wnet0002.
 
@@ -72,7 +79,9 @@ RUN carrega-titulares IN h-b1wnet0002 (INPUT par_cdcooper,
                                        INPUT TRUE,           /** Logar    **/  
                                        INPUT par_flmobile,
                                       OUTPUT TABLE tt-erro,
-                                      OUTPUT TABLE tt-titulares).
+                                      OUTPUT TABLE tt-titulares,
+                                      OUTPUT aux_qtdiaace,
+                                      OUTPUT aux_nmprimtl).
     
 DELETE PROCEDURE h-b1wnet0002.
            
@@ -108,6 +117,9 @@ ASSIGN aux_nrctanov = IF AVAILABLE craptco THEN craptco.nrdconta ELSE 0.
 
 RUN sistema/generico/procedures/b1wgen0032.p PERSISTENT SET h-b1wgen0032.
 
+CREATE xml_operacao.
+ASSIGN xml_operacao.dslinxml = "<TITULARES>".
+
 FOR EACH tt-titulares NO-LOCK:
 
     ASSIGN aux_flsenlet = FALSE.
@@ -119,36 +131,60 @@ FOR EACH tt-titulares NO-LOCK:
                                       INPUT tt-titulares.idseqttl,
                                      OUTPUT aux_flsenlet).
             
-    CREATE xml_operacao11.
-    ASSIGN xml_operacao11.dscabini = "<TITULAR>"
-           xml_operacao11.nmtitula = "<nmtitula>" +
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<TITULAR>".
+    
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<nmtitula>" +
                                      tt-titulares.nmtitula +
-                                     "</nmtitula>"
-           xml_operacao11.incadsen = "<incadsen>" + 
+                                     "</nmtitula>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<incadsen>" + 
                                      STRING(tt-titulares.incadsen) +
-                                     "</incadsen>"
-           xml_operacao11.idseqttl = "<idseqttl>" +
+                                     "</incadsen>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<idseqttl>" +
                                      STRING(tt-titulares.idseqttl) +
-                                     "</idseqttl>"
-           xml_operacao11.inbloque = "<inbloque>" +
+                                     "</idseqttl>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<inbloque>" +
                                      STRING(tt-titulares.inbloque) +
-                                     "</inbloque>"
-           xml_operacao11.nrcpfope = "<nrcpfope>" +
+                                     "</inbloque>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<nrcpfope>" +
                                      STRING(tt-titulares.nrcpfope) +
                                      "</nrcpfope><flsenlet>" +
                                      STRING(aux_flsenlet,"SIM/NAO") +
                                      "</flsenlet><nrctanov>" + 
                                      STRING(aux_nrctanov) + 
-                                     "</nrctanov>"
-           xml_operacao11.inpessoa = "<inpessoa>" +
+                                     "</nrctanov>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<inpessoa>" +
                                      STRING(tt-titulares.inpessoa) +
-                                     "</inpessoa>"
-           xml_operacao11.dscabfim = "</TITULAR>".
+                                     "</inpessoa>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "</TITULAR>".
 
 END. /** Fim do FOR EACH tt-titulares **/
 
+CREATE xml_operacao.
+ASSIGN xml_operacao.dslinxml = "</TITULARES>".
+
 IF  VALID-HANDLE(h-b1wgen0032)  THEN
     DELETE PROCEDURE h-b1wgen0032.
+
+/* Verificar se a conta pertence a um PAC sobreposto */
+FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                   crapass.nrdconta = par_nrdconta
+                   NO-LOCK NO-ERROR.
+
+CREATE xml_operacao.
+ASSIGN xml_operacao.dslinxml = "<nomconta>" +
+                               STRING(crapass.nmprimtl) + " " + STRING(crapass.nmsegntl) +
+                               "</nomconta>".
+
+CREATE xml_operacao.
+ASSIGN xml_operacao.dslinxml = "<qtdiaace>" + STRING(aux_qtdiaace) + "</qtdiaace>".
 
 RETURN "OK".
 

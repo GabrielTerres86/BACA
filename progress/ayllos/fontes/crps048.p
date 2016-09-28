@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Marco/93.                         Ultima atualizacao: 29/04/2008
+   Data    : Marco/93.                         Ultima atualizacao: 03/08/2016
 
    Dados referentes ao programa:
 
@@ -64,15 +64,10 @@
                29/04/2008 - criacao da include crps048.i com a logica deste 
                             programa para possibilitar chamada on-line
                             atraves do programa crps510.p (Sidnei - Precise)
+
+               03/08/2016 - Chamada a nova rotina (Marcos-Supero)
                             
 ............................................................................. */
-
-
-DEF STREAM str_1.  /*  Para relatorio dos juros calculados  */
-DEF STREAM str_3.  /*  Para entrada/saida de incorporacao/retorno  */
-DEF STREAM str_4.  /*  Para demonstrativo detalhado  */
-
-/* O STREAM STR_2 EH UTILIZADO NO SUB-PROGRAMA CRPS048_2.P  */
 
 { includes/var_batch.i }
 { sistema/generico/includes/var_oracle.i }
@@ -91,7 +86,7 @@ ETIME(TRUE).
 
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-RUN STORED-PROCEDURE pc_emite_retorno_sobras aux_handproc = PROC-HANDLE
+RUN STORED-PROCEDURE pc_calculo_retorno_sobras aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,                                                  
     INPUT glb_cdprogra,
     OUTPUT 0, 
@@ -110,14 +105,14 @@ IF  ERROR-STATUS:ERROR  THEN DO:
     RETURN.
 END.
 
-CLOSE STORED-PROCEDURE pc_emite_retorno_sobras WHERE PROC-HANDLE = aux_handproc.
+CLOSE STORED-PROCEDURE pc_calculo_retorno_sobras WHERE PROC-HANDLE = aux_handproc.
 
 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
 ASSIGN glb_cdcritic = 0
        glb_dscritic = ""
-       glb_cdcritic = pc_emite_retorno_sobras.pr_cdcritic WHEN pc_emite_retorno_sobras.pr_cdcritic <> ?
-       glb_dscritic = pc_emite_retorno_sobras.pr_dscritic WHEN pc_emite_retorno_sobras.pr_dscritic <> ?.
+       glb_cdcritic = pc_calculo_retorno_sobras.pr_cdcritic WHEN pc_calculo_retorno_sobras.pr_cdcritic <> ?
+       glb_dscritic = pc_calculo_retorno_sobras.pr_dscritic WHEN pc_calculo_retorno_sobras.pr_dscritic <> ?.
 
 
 IF  glb_cdcritic <> 0   OR
@@ -137,7 +132,3 @@ UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    +
                   " >> log/proc_batch.log").
                   
 RUN fontes/fimprg.p.
-
-
-
-

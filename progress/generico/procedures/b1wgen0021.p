@@ -21,7 +21,7 @@
 
    Programa: b1wgen0021.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                     Ultima atualizacao: 07/06/2016
+   Data    : 21/06/2007                     Ultima atualizacao: 03/08/2016
 
    Objetivo  : BO CAPITAL
 
@@ -127,7 +127,11 @@
                17/11/2015 - Ajuste para utilizar a procedure obtem_saldo_dia
                             do Oracle (Douglas - Chamado 285228)
                
-               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+               17/06/2016 - Inclusão de campos de controle de vendas - M181 
+                                        ( Rafael Maciel - RKAM)
+
+                           03/08/2016 - Chamada da extrato_cotas convertida (Marcos-Supero)
+
 ..............................................................................*/
 
 
@@ -257,97 +261,125 @@ PROCEDURE extrato_cotas:
     
     DEF OUTPUT PARAM TABLE FOR tt-extrato_cotas.
     
-    DEF VAR aux_vlsldtot AS DECI INIT 0                             NO-UNDO.
-    DEF VAR aux_dtprmsld AS DATE INIT ?                             NO-UNDO.
-    DEF VAR aux_flgusdir AS LOGI INIT NO                            NO-UNDO.
+        /* Retorno do Oracle */
+        DEF VAR aux_des_reto  AS CHAR     NO-UNDO.
+        DEF VAR aux_dscritic  AS CHAR     NO-UNDO.
+
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+    DEF VAR xField        AS HANDLE   NO-UNDO. 
+    DEF VAR xText         AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR NO-UNDO. 
     
-    EMPTY TEMP-TABLE tt-extrato_cotas.
-
-    FOR EACH crapdir WHERE crapdir.cdcooper = par_cdcooper 
-                       AND crapdir.nrdconta = par_nrdconta
-                       NO-LOCK BY crapdir.dtmvtolt DESCENDING:
-
-        IF crapdir.dtmvtolt <= par_dtiniper OR
-           crapdir.dtmvtolt = 12/31/2004 THEN 
-           DO:
-             ASSIGN aux_dtprmsld = crapdir.dtmvtolt
-                    aux_vlsldtot = crapdir.vlttccap
-                    aux_flgusdir = YES.
-             LEAVE.
-           END.
-    END.  /* Fim for each crapdir*/
-
-    IF  aux_dtprmsld = ? THEN
+     /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */     
+                                     
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                 
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_extrato_cotas_xml
+       aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT par_cdoperad,
+                                           INPUT par_nmdatela,
+                                           INPUT par_idorigem,
+                                           INPUT par_nrdconta,
+                                           INPUT par_idseqttl,
+                                           INPUT par_dtmvtolt,
+                                           INPUT par_dtiniper,
+                                           INPUT par_dtfimper,
+                                           INPUT IF par_flgerlog THEN 1 ELSE 0,
+                                           OUTPUT 0,   /*pr_vlsldant*/
+                                           OUTPUT ?,   /*pr_xml_extrato_cotas*/
+                                           OUTPUT "",  /*pr_des_reto*/
+                                           OUTPUT ""). /*pr_dscritic*/
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_extrato_cotas_xml
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+    
+    /* Buscar o XML na tabela de retorno da procedure Progress e o Saldo Total */ 
+    ASSIGN par_vlsldant = pc_extrato_cotas_xml.pr_vlsldant
+	       xml_req = pc_extrato_cotas_xml.pr_xml_extrato_cotas.
+    
+    ASSIGN aux_des_reto = ""
+           aux_dscritic = ""
+           aux_des_reto = pc_extrato_cotas_xml.pr_des_reto 
+                          WHEN pc_extrato_cotas_xml.pr_des_reto <> ?
+           aux_dscritic = pc_extrato_cotas_xml.pr_dscritic 
+                          WHEN pc_extrato_cotas_xml.pr_dscritic <> ?.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+    
+    IF  aux_des_reto <> "OK" OR
+        aux_dscritic <> ""  THEN
         DO:
-            FIND FIRST craplct WHERE craplct.cdcooper = par_cdcooper AND
-                              craplct.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
-
-            ASSIGN aux_dtprmsld = IF  AVAILABLE craplct  THEN 
-                                      craplct.dtmvtolt
-                                  ELSE
-                                      par_dtmvtolt
-                   aux_flgusdir = NO. /* Dia de abertura da conta */
-        END.
-               
-    ASSIGN par_vlsldant = aux_vlsldtot. /* Saldo inicial */
-
-    FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper
-                       AND craplct.nrdconta = par_nrdconta
-                       AND craplct.dtmvtolt >= aux_dtprmsld
-                       NO-LOCK:
-                
-        IF aux_flgusdir AND
-           craplct.dtmvtolt = aux_dtprmsld THEN 
-           NEXT.
-
-        FIND craphis WHERE craphis.cdcooper = craplct.cdcooper 
-                       AND craphis.cdhistor = craplct.cdhistor
-                       NO-LOCK NO-ERROR.
-                       
-        IF  NOT AVAILABLE craphis THEN
-            NEXT.
+            /*Nao havia tratamento de erro na rotina 
+                          Progress anterior portanto apenas retornamos 
+                          NOK */
+                        RETURN "NOK".
             
-        IF craphis.inhistor >= 6 AND
-           craphis.inhistor <= 8 THEN
-           ASSIGN aux_vlsldtot = aux_vlsldtot + craplct.vllanmto.
-        ELSE
-            IF craphis.inhistor >= 16 AND
-               craphis.inhistor <= 19 THEN
-                 ASSIGN aux_vlsldtot = aux_vlsldtot - craplct.vllanmto.
-        CREATE tt-extrato_cotas.
-        ASSIGN tt-extrato_cotas.dtmvtolt = craplct.dtmvtolt
-               tt-extrato_cotas.cdagenci = craplct.cdagenci
-               tt-extrato_cotas.cdbccxlt = craplct.cdbccxlt
-               tt-extrato_cotas.nrdolote = craplct.nrdolote
-               tt-extrato_cotas.dshistor = craphis.dshistor
-               tt-extrato_cotas.indebcre = craphis.indebcre
-               tt-extrato_cotas.nrdocmto = 
-                      INT(SUBSTR(STRING(craplct.nrdocmto,
-                                "9999999999999999999999999"),17,9))
-               tt-extrato_cotas.nrctrpla = craplct.nrctrpla
-               tt-extrato_cotas.vllanmto = craplct.vllanmto
-               tt-extrato_cotas.vlsldtot = aux_vlsldtot
-               tt-extrato_cotas.dsextrat = craphis.dsextrat.
-    END. /* Fim for each craplct*/                    
-                              
-    IF  par_flgerlog THEN
-        DO:
-
-            ASSIGN  aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-                    aux_dstransa = "Busca Extrato de Capital".
-
-            RUN proc_gerar_log (INPUT par_cdcooper,
-                                INPUT par_cdoperad,
-                                INPUT "",
-                                INPUT aux_dsorigem,
-                                INPUT aux_dstransa,
-                                INPUT TRUE,
-                                INPUT par_idseqttl,
-                                INPUT par_nmdatela,
-                                INPUT par_nrdconta,
-                               OUTPUT aux_nrdrowid).
+        END.       
+        
+    EMPTY TEMP-TABLE tt-extrato_cotas.
     
-        END.
+    /********** BUSCAR LANCAMENTOS **********/
+    
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req.    
+    
+    IF  ponteiro_xml <> ? THEN
+        DO: 
+           xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
+           xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
+            
+           DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+               
+               xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
+
+               IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN 
+                   NEXT.            
+
+               IF xRoot2:NUM-CHILDREN > 0 THEN
+                  CREATE tt-extrato_cotas.
+                  
+               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
+
+                   xRoot2:GET-CHILD(xField,aux_cont). 
+
+                   IF xField:SUBTYPE <> "ELEMENT" THEN 
+                       NEXT. 
+
+                   xField:GET-CHILD(xText,1).                    
+                        
+                 ASSIGN tt-extrato_cotas.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt"         
+                        tt-extrato_cotas.cdagenci = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci"
+                        tt-extrato_cotas.cdbccxlt = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbccxlt"
+                        tt-extrato_cotas.nrdolote = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdolote"
+                        tt-extrato_cotas.dshistor = xText:NODE-VALUE WHEN xField:NAME = "dshistor"                        
+                        tt-extrato_cotas.indebcre = xText:NODE-VALUE WHEN xField:NAME = "indebcre"                 
+                        tt-extrato_cotas.nrdocmto = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdocmto"
+                        tt-extrato_cotas.nrctrpla = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctrpla"
+                        tt-extrato_cotas.vllanmto = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vllanmto"
+                        tt-extrato_cotas.vlsldtot = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vlsldtot"
+                        tt-extrato_cotas.dsextrat = xText:NODE-VALUE  WHEN xField:NAME = "dsextrat".
+               END.              
+             
+           END.    
+           
+           SET-SIZE(ponteiro_xml) = 0.    
+        END.           
 
     RETURN "OK".
     
@@ -1412,18 +1444,18 @@ PROCEDURE cria-plano:
         END.  /*  Fim do DO WHILE TRUE  */
         
         /* Busca a proxima sequencia do campo crapmat.nrseqcar */
-    	RUN STORED-PROCEDURE pc_sequence_progress
-    	aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPMAT"
-    										,INPUT "NRCTRPLA"
-    										,INPUT STRING(par_cdcooper)
-    										,INPUT "N"
-    										,"").
-    	
-    	CLOSE STORED-PROC pc_sequence_progress
-    	aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-    			  
-    	ASSIGN aux_nrctrpla = INTE(pc_sequence_progress.pr_sequence)
-    						  WHEN pc_sequence_progress.pr_sequence <> ?.
+            RUN STORED-PROCEDURE pc_sequence_progress
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPMAT"
+                                                                                    ,INPUT "NRCTRPLA"
+                                                                                    ,INPUT STRING(par_cdcooper)
+                                                                                    ,INPUT "N"
+                                                                                    ,"").
+            
+            CLOSE STORED-PROC pc_sequence_progress
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                              
+            ASSIGN aux_nrctrpla = INTE(pc_sequence_progress.pr_sequence)
+                                                      WHEN pc_sequence_progress.pr_sequence <> ?.
 
         CREATE craplpl.
         ASSIGN craplpl.dtmvtolt = par_dtmvtolt
@@ -2001,11 +2033,11 @@ PROCEDURE cancelar-plano-atual:
 
         /* cancela o plano de cotas */
         ASSIGN crappla.cdsitpla = 2
-			   /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                           /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                crappla.cdopeexc = par_cdoperad
                crappla.cdageexc = par_cdagenci
                crappla.dtinsexc = TODAY
-			   /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                           /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                crappla.dtcancel = crapdat.dtmvtolt.
 
         /* Exclui registro de lancamento de plano de capital para nao ter

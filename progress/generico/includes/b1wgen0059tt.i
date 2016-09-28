@@ -2,7 +2,7 @@
 
     Programa: b1wgen0059tt.i
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 25/03/2015
+    Data    : Marco/2010                   Ultima atualizacao: 23/09/2016
 
     Objetivo  : Definicao das Temp-Tables para telas de PESQUISA/ZOOM
                 
@@ -76,8 +76,13 @@
                              (Carlos Rafael Tanholi - Projeto Portabilidade) 
                              
                 17/08/2015 - Projeto Reformulacao cadastral
-                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).  						                              
+                             Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                              
+                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-gncmapr (Oscar).                
+                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt-craplcr (Oscar).                
+                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt-crapfin (Oscar).                
+                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt-relacionamento2 (Oscar).                
+                                              
 ............................................................................*/
 
 &IF DEFINED(VAR-AMB) <> 0 &THEN
@@ -143,7 +148,7 @@
         FIELD cdmodali LIKE gnmodal.cdmodali
         FIELD dsmodali LIKE gnmodal.dsmodali.
 
-    DEFINE TEMP-TABLE tt-gncmapr LIKE gncmapr.
+    DEFINE TEMP-TABLE tt-gncmapr  NO-UNDO LIKE gncmapr.
 
 &ENDIF
 
@@ -259,13 +264,13 @@ DEFINE TEMP-TABLE tt-craplrt      NO-UNDO LIKE craplrt
     FIELD dsdtplin AS CHAR FORMAT "X(11)"
     FIELD dsdtxfix AS CHAR FORMAT "X(12)".
 
-DEF TEMP-TABLE tt-crapcco 
+DEF TEMP-TABLE tt-crapcco NO-UNDO
     FIELD nrconven AS CHAR
     FIELD flgativo AS CHAR
     FIELD dsorgarq AS CHAR
     FIELD flgregis AS CHAR.
 
-DEF TEMP-TABLE tt-craplcr
+DEF TEMP-TABLE tt-craplcr NO-UNDO
     FIELD cdlcremp AS INTE
     FIELD dslcremp AS CHAR
     FIELD flgstlcr AS LOGI
@@ -276,7 +281,7 @@ DEF TEMP-TABLE tt-craplcr
     FIELD dsgarant AS CHAR.
 
 
-DEF TEMP-TABLE tt-crapfin
+DEF TEMP-TABLE tt-crapfin NO-UNDO
     FIELD cdfinemp AS INTE
     FIELD dsfinemp AS CHAR
     FIELD flgstfin AS LOGI
@@ -337,7 +342,7 @@ DEF TEMP-TABLE tt-relacionamento NO-UNDO
     FIELD cdcooper  AS INTE
     FIELD codigo    AS INTE
     FIELD descricao AS CHAR.
-DEF TEMP-TABLE tt-relacionamento2 LIKE tt-relacionamento.
+DEF TEMP-TABLE tt-relacionamento2  NO-UNDO LIKE tt-relacionamento.
 
 /*
 DEFINE TEMP-TABLE tt-crappfo NO-UNDO LIKE crappfo.

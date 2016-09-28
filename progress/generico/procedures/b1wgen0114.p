@@ -1943,6 +1943,7 @@ PROCEDURE cria_temporaria.
 
     DEF  VAR aux_contador AS INT                                    NO-UNDO.    
     DEF  VAR aux_nrctrliq AS CHAR                                   NO-UNDO.
+	DEF  VAR aux_dsobscmt AS CHAR                                   NO-UNDO.
     DEF  VAR aux_dsaprova AS CHAR                                   NO-UNDO.
     DEF  VAR aux_nmoperad AS CHAR                                   NO-UNDO.
     DEF  VAR aux_instatus AS INTE                                   NO-UNDO.
@@ -1988,6 +1989,9 @@ PROCEDURE cria_temporaria.
                   ASSIGN aux_dsaprova = "Refazer".
              ELSE
                   ASSIGN aux_dsaprova = "".
+
+			 ASSIGN aux_dsobscmt = crawepr.dsobscmt.
+			 RUN fontes/substitui_caracter.p (INPUT-OUTPUT aux_dsobscmt).
            
              IF   crapcop.flgcmtlc       AND
                   crawepr.insitapr > 0 THEN
@@ -2033,7 +2037,7 @@ PROCEDURE cria_temporaria.
                     tt-cmaprv.qtpreemp = crawepr.qtpreemp
                     tt-cmaprv.vlpreemp = crawepr.vlpreemp
                     tt-cmaprv.nmprimtl = crapass.nmprimtl
-                    tt-cmaprv.dsobscmt = crawepr.dsobscmt
+                    tt-cmaprv.dsobscmt = aux_dsobscmt
                     tt-cmaprv.cdcomite = crawepr.cdcomite
                     tt-cmaprv.instatus = aux_instatus
                     tt-cmaprv.dsstatus = aux_dsstatus

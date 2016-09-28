@@ -38,6 +38,8 @@
 			  29/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                            PinPad Novo (Lucas Lunelli - [PROJ290])			  
 						   
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 	
+    					   
 			  22/09/2016 - Correção botão pinpad (Lucas Lunelli - [PROJ290])	
 			  
 -->
@@ -524,7 +526,7 @@ function validaHistorico(obj,e,valid_value,replace){
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:initPage();" onKeyUp="callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: initPage();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
 
 <form name="action" onKeyDown="change_page(event)" method=post>
 

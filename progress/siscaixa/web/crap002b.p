@@ -12,7 +12,8 @@ Alteracoes: 27/03/2009 - Acerto para o uso do zoom, na chamada da tela crap002
                          o form principal da rotina 2, devido a consulta do
                          do cartao de assinatura utilizar o nº de conta c/
                          format. (Chamado 174180) - (Fabricio)
-            
+ 
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).           
 ............................................................................. */
 
 
@@ -229,7 +230,7 @@ PROCEDURE process-web-request :
     '<link rel=StyleSheet type="text/css" href="/script/viacredi.css">' SKIP
     '<title>Pesquisa Conta</title>' SKIP
     "</HEAD>":U SKIP
-    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">' SKIP
+    '<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">' SKIP
     '<form onKeyDown="change_page(event)" method=post>' SKIP.
   
   {&OUT}

@@ -119,3 +119,4 @@ ASSIGN xml_operacao.dslinxml = "<HORARIOLIMITE>" +
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = '</DADOSHORARIOLIMITE>'.
 
+RETURN "OK".

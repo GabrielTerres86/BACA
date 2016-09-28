@@ -48,6 +48,9 @@
                             
                10/02/2016 - Inclusao do campo nmageban na tt tt-contas-cadastradas
                             (Jean Michel).
+               
+               30/08/2016 - Inclusao dos campos de último acesso via Mobile na
+                            tt-dados-titular - PRJ286.5 - Cecred Mobile (Dionathan)
 
 ..............................................................................*/
 
@@ -148,7 +151,9 @@ DEF TEMP-TABLE tt-dados-titular NO-UNDO
     FIELD dtlimtrf AS DATE
     FIELD vllimvrb AS DECI 
     FIELD dtlimvrb AS DATE
-    FIELD dtblutsh AS DATE.
+    FIELD dtblutsh AS DATE
+    FIELD dtacemob AS DATE
+    FIELD hracemob AS CHAR.
 
 DEF TEMP-TABLE tt-contas-pendentes NO-UNDO
     FIELD flgselec AS LOGICAL

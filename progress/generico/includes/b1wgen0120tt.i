@@ -2,13 +2,13 @@
 
     Programa: sistema/generico/includes/b1wgen0120tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                      Ultima atualizacao:
+    Data    : Outubro/2011                      Ultima atualizacao: 23/08/2016
   
     Dados referentes ao programa:
   
     Objetivo  : Include com Temp-Tables para a BO b1wgen0120.
   
-    Alteracoes: 
+    Alteracoes: 23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).
     
 .............................................................................*/ 
 DEF TEMP-TABLE tt-boletimcx NO-UNDO
@@ -45,7 +45,15 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD qtlanmto-recibo AS INTEGER
     FIELD vllanmto-recibo LIKE craplcm.vllanmto
     FIELD qtlanmto-cartao AS INTEGER
-    FIELD vllanmto-cartao LIKE craplcm.vllanmto.
+    FIELD vllanmto-cartao LIKE craplcm.vllanmto
+	FIELD vlarccon LIKE craplcm.vllanmto
+    FIELD vlarcdar LIKE craplcm.vllanmto
+    FIELD vlarcgps LIKE craplcm.vllanmto
+    FIELD vlarcnac LIKE craplcm.vllanmto    
+    FIELD qtarccon AS INTEGER
+    FIELD qtarcdar AS INTEGER
+    FIELD qtarcgps AS INTEGER
+    FIELD qtarcnac AS INTEGER.
 
 DEF TEMP-TABLE tt-empresa NO-UNDO
     FIELD cdempres LIKE crapccs.cdempres

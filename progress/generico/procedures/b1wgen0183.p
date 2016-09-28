@@ -15,8 +15,13 @@
                            
 			  10/06/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET,688)
 			               (Tiago/Thiago SD402010)             
+						           
               13/06/2016 - Incluir flgativo na busca das cooperativas na PROCEDURE
                            grava_dados (Lucas Ranghetti #462237)
+
+	          25/08/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET) e
+			               nao permitir alterar o horario para antes do horario
+						   atual (Tiago/Thiago #493693).
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -382,6 +387,25 @@ PROCEDURE grava_dados:
                                       STRING(par_flgativo,"Sim/Nao")                    +
                                       " >> /usr/coop/cecred/log/hrcomp.log").
                             END.  
+							
+						IF (craphec.cdprogra = "CRPS688" OR 
+						    craphec.cdprogra = "DEBNET"  OR 
+						    craphec.cdprogra = "DEBSIC") AND
+						    aux_hriniexe < TIME THEN
+						   DO:
+								ASSIGN aux_cdcritic = 0
+									   aux_dscritic = "O horario do reagendamento deve ser superior a hora atual.".
+    
+								RUN gera_erro (INPUT par_cdcooper,
+										       INPUT par_cdagenci,
+											   INPUT 0,
+											   INPUT 1,     /** Sequencia **/
+											   INPUT aux_cdcritic,
+											   INPUT-OUTPUT aux_dscritic).
+    
+								RETURN "NOK".
+						   END.
+
 
                         ASSIGN  craphec.hriniexe =   (par_ageinihr * 3600) 
                                                    + (par_ageinimm * 60)
@@ -391,9 +415,12 @@ PROCEDURE grava_dados:
 
                         VALIDATE craphec.
 
-    						IF craphec.cdprogra = "CRPS688" THEN
+    					IF  craphec.cdprogra = "CRPS688" OR 
+						    craphec.cdprogra = "DEBNET"  OR 
+						    craphec.cdprogra = "DEBSIC"  THEN
     						DO:                                
                                 RUN reagenda_job(INPUT crapcop.cdcooper
+								                ,INPUT craphec.cdprogra
                                                 ,INPUT par_dtmvtolt
                                                 ,INPUT par_ageinihr
                                                 ,INPUT par_ageinimm
@@ -506,6 +533,25 @@ PROCEDURE grava_dados:
                                   " >> /usr/coop/cecred/log/hrcomp.log").
                         END.  
     
+					IF (craphec.cdprogra = "CRPS688" OR 
+						craphec.cdprogra = "DEBNET"  OR 
+						craphec.cdprogra = "DEBSIC") AND
+						aux_hriniexe < TIME THEN
+						DO:
+							ASSIGN aux_cdcritic = 0
+									aux_dscritic = "O horario do reagendamento deve ser superior a hora atual.".
+    
+							RUN gera_erro (INPUT par_cdcooper,
+										    INPUT par_cdagenci,
+											INPUT 0,
+											INPUT 1,     /** Sequencia **/
+											INPUT aux_cdcritic,
+											INPUT-OUTPUT aux_dscritic).
+    
+							RETURN "NOK".
+						END.
+
+
                     ASSIGN  craphec.hriniexe =   (par_ageinihr * 3600) 
                                                + (par_ageinimm * 60)
                             craphec.hrfimexe =   (par_agefimhr * 3600) 
@@ -514,13 +560,13 @@ PROCEDURE grava_dados:
     
                     VALIDATE craphec.
     
-    					IF craphec.cdprogra = "CRPS688" THEN
+    					IF craphec.cdprogra = "CRPS688" OR 
+						   craphec.cdprogra = "DEBNET"  OR 
+						   craphec.cdprogra = "DEBSIC"  THEN
     					DO:                           
 
-    						ASSIGN aux_dscritic = pc_reagenda_job.pr_dscritic
-    												WHEN pc_reagenda_job.pr_dscritic <> ?.
-    
                             RUN reagenda_job(INPUT craphec.cdcooper
+							                ,INPUT craphec.cdprogra
                                             ,INPUT par_dtmvtolt
                                             ,INPUT par_ageinihr
                                             ,INPUT par_ageinimm
@@ -863,6 +909,7 @@ END PROCEDURE.
 PROCEDURE reagenda_job:
 
     DEF INPUT PARAM par_cdcooper    LIKE    crapcop.cdcooper    NO-UNDO.
+	DEF INPUT PARAM par_cdprogra    LIKE    craphec.cdprogra    NO-UNDO.
     DEF INPUT PARAM par_dtmvtolt    LIKE    crapdat.dtmvtolt    NO-UNDO.
     DEF INPUT PARAM par_ageinihr    AS      INTEGER             NO-UNDO.
     DEF INPUT PARAM par_ageinimm    AS      INTEGER             NO-UNDO.
@@ -875,7 +922,7 @@ PROCEDURE reagenda_job:
 
     /* Efetuar a chamada a rotina Oracle */ 
     RUN STORED-PROCEDURE pc_reagenda_job
-     aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRPS688_" + TRIM(STRING(crapcop.cdcooper,"zz")) + "\_DIA", /* jobname */
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"zz")) + "\_DIA", /* jobname */
                                           INPUT par_dtmvtolt, /* data */
                                           INPUT par_ageinihr, /* hora  */
                                           INPUT par_ageinimm, /* minuto */

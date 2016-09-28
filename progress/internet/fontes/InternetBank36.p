@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 22/10/2015
+   Data    : Marco/2007                        Ultima atualizacao: 04/08/2016
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Carregar dados para gerar arquivo de retorno de cobranca.
@@ -27,6 +27,9 @@
                22/10/2015 - Ajuste para alterar a chamada das rotinas progress
                             para suas respectivas conversoes PLSQL
                             (Adriano - SD 335749).
+
+			   04/08/2016 - Alterado para enviar arquivo de cobranca por e-mail
+							para convenios com forma de envio via FTP. (Reinert)
                
  ............................................................................ */
  
@@ -48,6 +51,7 @@ DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_flgregis AS LOG                                            NO-UNDO.
 DEF VAR aux_dtmvtolt AS DATE                                           NO-UNDO.
+DEF VAR aux_inenvcob AS INTEGER                                        NO-UNDO.
 
 /* Variaveis para o XML */                                            
 DEF VAR xDoc          AS HANDLE                                        NO-UNDO.
@@ -229,7 +233,7 @@ IF aux_flgregis THEN
                      
                      ASSIGN tt-arq-cobranca.cdseqlin = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdseqlin".
                      ASSIGN tt-arq-cobranca.dslinha =  xText:NODE-VALUE WHEN xField:NAME = "dsdlinha".
-                                                        
+                     ASSIGN aux_inenvcob = INT(xText:NODE-VALUE) WHEN xField:NAME = "inenvcob".
                   END. 
                    
                END.
@@ -247,6 +251,10 @@ IF aux_flgregis THEN
       
          FOR EACH tt-arq-cobranca NO-LOCK BY tt-arq-cobranca.cdseqlin:
       
+             IF tt-arq-cobranca.cdseqlin = 0 OR
+                tt-arq-cobranca.dslinha = "" THEN
+                NEXT.
+                
              CREATE xml_operacao36.
                  
              ASSIGN xml_operacao36.dscabini = "<DADOS>"
@@ -262,8 +270,12 @@ IF aux_flgregis THEN
       
          RUN proc_geracao_log (INPUT TRUE).
       
-         RETURN "OK".
-      
+         IF aux_inenvcob = 2 THEN
+           DO:
+             ASSIGN xml_dsmsgerr = "<dsmsgerr>Relatorio solicitado enviado por e-mail.</dsmsgerr>".
+          
+             RETURN "OK".
+           END.
       END. /* FIM do DO de Datas */
           
    END. /* FIM do IF avail CRAPCOB */

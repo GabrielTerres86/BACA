@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0109.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 08/04/2015
+    Data    : Agosto/2011                        Ultima atualizacao: 31/08/2016
 
     Objetivo  : Tranformacao BO tela IMPREL
 
@@ -70,6 +70,9 @@
                              "concatena_relatorios.sh". Alteração feita para ajustar 
                              o problema que ocorria ao imprimir os relatórios
                              na opção "D", conforme chamado 264577. (Kelvin/Adriano)
+                             
+                31/08/2016 - #500713 Inclusao do relatorio 626 (Relac. de 
+                             ocorrencias TIC) (Carlos)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -87,16 +90,16 @@ DEF VAR aux_returnvl AS CHAR                                        NO-UNDO.
 
 DEF VAR aux_lsrelato AS CHAR                                        NO-UNDO.
 DEF VAR aux_qtrelato AS INT                                         NO-UNDO.
-DEF VAR cmd          AS CHAR    FORMAT "x(37)" EXTENT 41            NO-UNDO.
-DEF VAR proglist     AS CHAR                   EXTENT 41            NO-UNDO.
-DEF VAR pac          AS LOGICAL                EXTENT 41 INIT TRUE  NO-UNDO.
+DEF VAR cmd          AS CHAR    FORMAT "x(37)" EXTENT 42            NO-UNDO.
+DEF VAR proglist     AS CHAR                   EXTENT 42            NO-UNDO.
+DEF VAR pac          AS LOGICAL                EXTENT 42 INIT TRUE  NO-UNDO.
 
 /* relatorios que aparecem na opcao D */
 ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
                       "crrl156,crrl211,crrl229,crrl266,crrl272," +
                       "crrl280,crrl294,crrl309,crrl345,crrl352,crrl353," +
                       "crrl362,crrl372,crrl426,crrl456,crrl458,crrl481," +
-                      "crrl529,crrl597,crrl598,crrl599,crrl668,crrl620," +
+                      "crrl529,crrl597,crrl598,crrl599,crrl626,crrl668,crrl620," +
                       "crrl276,crrl593"
        
        proglist[01] = "crrl007"
@@ -135,11 +138,12 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        proglist[34] = "crrl597"
        proglist[35] = "crrl598"
        proglist[36] = "crrl599"
-       proglist[37] = "crrl668"
-       proglist[38] = "crrl620_credito"
-       proglist[39] = "crrl620_matric"
-       proglist[40] = "crrl620_cadastro"
-       proglist[41] = "crrl692"
+       proglist[37] = "crrl626"
+       proglist[38] = "crrl668"
+       proglist[39] = "crrl620_credito"
+       proglist[40] = "crrl620_matric"
+       proglist[41] = "crrl620_cadastro"
+       proglist[42] = "crrl692"
       
        aux_qtrelato = EXTENT(proglist)
        
@@ -179,11 +183,12 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        cmd[34] = "597-Contratacao Seguro Prestamista   "
        cmd[35] = "598-Emprestimos Sem Seg.Prestamista  "
        cmd[36] = "599-Relac. Chq Compe p/PA apos proc  "
-       cmd[37] = "668-Emprestimos prefixados em atraso "
-       cmd[38] = "620-Docs nao Digitalizados_Credito   "
-       cmd[39] = "620-Docs nao Digitalizados_Matricula "
-       cmd[40] = "620-Docs nao Digitalizados_Cadastro  "
-       cmd[41] = "692-Limites de Credito Vencidos".
+       cmd[37] = "626-Relac. de ocorrencias TIC "
+       cmd[38] = "668-Emprestimos prefixados em atraso "
+       cmd[39] = "620-Docs nao Digitalizados_Credito   "
+       cmd[40] = "620-Docs nao Digitalizados_Matricula "
+       cmd[41] = "620-Docs nao Digitalizados_Cadastro  "
+       cmd[42] = "692-Limites de Credito Vencidos".
 
        pac[08] = FALSE.
 
@@ -464,6 +469,3 @@ FUNCTION CriticaArquivo RETURNS CHARACTER PRIVATE
     RETURN aux_dscriarq + " " + aux_nmarqimp.
 
 END FUNCTION. /* CriticaArquivo */
-
-
-
