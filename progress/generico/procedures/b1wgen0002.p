@@ -6418,8 +6418,7 @@ PROCEDURE altera-valor-proposta:
        END.
 
     Grava_valor:
-    DO WHILE TRUE TRANSACTION
-       ON ERROR UNDO Grava_valor, LEAVE Grava_valor:
+    DO WHILE TRUE TRANSACTION ON ERROR UNDO Grava_valor, LEAVE Grava_valor:
 
         DO  aux_contador = 1 TO 10:
 
@@ -6516,7 +6515,7 @@ PROCEDURE altera-valor-proposta:
                      ASSIGN tt-msg-confirma.inconfir = 1
                             tt-msg-confirma.dsmensag =
                                        "Essa proposta foi aprovada automaticamente.".
-                  END.
+                  END. /* IF AVAIL craplcr AND craplcr.flgdisap THEN */
                ELSE
                   DO:
         /* Verificar se é contrato de portabilidade */
@@ -6611,7 +6610,7 @@ PROCEDURE altera-valor-proposta:
                                             crawepr.hraprova = 0
                                             crawepr.insitest = 0.
             END.                
-           END.
+                       END. /* IF AVAIL crapfin AND crapfin.tpfinali = 2 THEN */
         ELSE
              DO:
                              IF  par_dsdopcao = "SVP" THEN
@@ -6637,8 +6636,11 @@ PROCEDURE altera-valor-proposta:
                       END.
                  ELSE
                                         DO: /* Dimuniu o valor da proposta e ja foi para esteira perde aprovaçao */
-                                          IF  (crawepr.insitest <> 3) /* Análise nao finalizada */
-                                          AND (crawepr.dtenvest <> ?) THEN /* Enviada para esteira */
+                                        IF  ( (crawepr.insitest <> 3) /* Nao finalizou analise */
+                                         /* OU Finalizou analise como "2 - Nao aprovado" ou "4 - Refazer" */
+                                         OR ( (crawepr.insitest =  3) AND CAN-DO("2,4", STRING(crawepr.insitapr)) ) ) 
+                                         /* E Enviada para esteira */
+                                        AND (crawepr.dtenvest <> ?) THEN 
              DO:
                  ASSIGN crawepr.insitapr = 0
                         crawepr.cdopeapr = ""
@@ -6658,7 +6660,7 @@ PROCEDURE altera-valor-proposta:
 
                                         END.
                                         END.
-                               END.
+                              END. /* IF par_dsdopcao = "SVP" THEN */
                  ELSE
                       DO:
               IF NOT aux_contigen THEN
@@ -6673,11 +6675,12 @@ PROCEDURE altera-valor-proposta:
                                    ASSIGN tt-msg-confirma.inconfir = 1
                        tt-msg-confirma.dsmensag = "Essa proposta deve ser" +
                                                              " aprovada pela Esteira de Credito".      
+                                     END. /* IF NOT aux_contigen THEN */
                                END.
                                END.
                       END.
              END.
-            END.
+
 
         ASSIGN aux_vlemprst     = crawepr.vlemprst
                aux_vlpreemp     = crawepr.vlpreemp
@@ -12137,6 +12140,92 @@ PROCEDURE atualiza_dados_avalista_proposta:
                             INPUT par_nrdconta,
                            OUTPUT aux_nrdrowid).
     
+    RETURN "OK".
+    
+END PROCEDURE.
+
+PROCEDURE leitura_lem:
+
+    DEF INPUT        PARAM par_cdcooper AS INTE         NO-UNDO.
+    DEF INPUT        PARAM par_cdprogra AS CHAR         NO-UNDO.
+    DEF INPUT        PARAM par_nrdconta AS INTE         NO-UNDO.
+    DEF INPUT        PARAM par_nrctremp AS INTE         NO-UNDO.
+    DEF INPUT        PARAM par_dtcalcul AS DATE         NO-UNDO.
+    DEF INPUT        PARAM par_qtprecal AS DECI         NO-UNDO.
+
+    DEF INPUT-OUTPUT PARAM par_diapagto AS INTE         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_txdjuros AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_qtprepag AS INTE         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vlprepag AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vljurmes AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vljuracu AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vlsdeved AS DECI         NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_dtultpag AS DATE         NO-UNDO.
+
+    DEF OUTPUT       PARAM par_qtmesdec AS INTE         NO-UNDO.
+    DEF OUTPUT       PARAM par_vlpreapg AS DECI         NO-UNDO.
+    DEF OUTPUT       PARAM par_cdcritic AS INTE         NO-UNDO.
+    DEF OUTPUT       PARAM par_dscritic AS CHAR         NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_leitura_lem_car
+      aux_handproc = PROC-HANDLE NO-ERROR (INPUT        par_cdcooper, /* Cooperativa conectada */
+                                           INPUT        par_cdprogra, /* Codigo do programa corrente */
+                                           INPUT        par_nrdconta, /* Conta do associado */
+                                           INPUT        par_nrctremp, /* Numero Contrato */
+                                           INPUT        par_dtcalcul, /* Data para calculo do emprestimo */
+                                           INPUT-OUTPUT par_diapagto, /* Dia para pagamento */
+                                           INPUT-OUTPUT par_txdjuros, /* Taxa de juros aplicada */
+                                           INPUT        par_qtprecal, /* Quantidade de prestacoes calculadas ate momento */
+                                           INPUT-OUTPUT par_qtprepag, /* Quantidade de prestacoes paga ate momento */
+                                           INPUT-OUTPUT par_vlprepag, /* Valor acumulado pago no mes */
+                                           INPUT-OUTPUT par_vljurmes, /* Juros no mes corrente */
+                                           INPUT-OUTPUT par_vljuracu, /* Juros acumulados total */
+                                           INPUT-OUTPUT par_vlsdeved, /* Saldo devedor acumulado */
+                                           INPUT-OUTPUT par_dtultpag, /* Ultimo dia de pagamento das prestacoes */
+                                           OUTPUT 0,                  /* Quantidade de meses decorridos */
+                                           OUTPUT 0,                  /* Valor a pagar */
+                                           OUTPUT 0,                  /* Codigo da critica  */
+                                           OUTPUT "").                /* Descricao da critica */
+                                    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_leitura_lem_car
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN par_cdcritic = 0
+           par_dscritic = ""
+           par_cdcritic = pc_leitura_lem_car.pr_cdcritic
+                             WHEN pc_leitura_lem_car.pr_cdcritic <> ?
+           par_dscritic = pc_leitura_lem_car.pr_dscritic
+                             WHEN pc_leitura_lem_car.pr_dscritic <> ?
+           par_diapagto = pc_leitura_lem_car.pr_diapagto
+                             WHEN pc_leitura_lem_car.pr_diapagto <> ?
+           par_txdjuros = pc_leitura_lem_car.pr_txdjuros
+                             WHEN pc_leitura_lem_car.pr_txdjuros <> ?
+           par_qtprepag = pc_leitura_lem_car.pr_qtprepag
+                             WHEN pc_leitura_lem_car.pr_qtprepag <> ?
+           par_vlprepag = pc_leitura_lem_car.pr_vlprepag
+                             WHEN pc_leitura_lem_car.pr_vlprepag <> ?
+           par_vljurmes = pc_leitura_lem_car.pr_vljurmes
+                             WHEN pc_leitura_lem_car.pr_vljurmes <> ?
+           par_vljuracu = pc_leitura_lem_car.pr_vljuracu
+                             WHEN pc_leitura_lem_car.pr_vljuracu <> ?
+           par_vlsdeved = pc_leitura_lem_car.pr_vlsdeved
+                             WHEN pc_leitura_lem_car.pr_vlsdeved <> ?
+           par_dtultpag = pc_leitura_lem_car.pr_dtultpag
+                             WHEN pc_leitura_lem_car.pr_dtultpag <> ?
+           par_qtmesdec = pc_leitura_lem_car.pr_qtmesdec
+                             WHEN pc_leitura_lem_car.pr_qtmesdec <> ?
+           par_vlpreapg = pc_leitura_lem_car.pr_vlpreapg
+                             WHEN pc_leitura_lem_car.pr_vlpreapg <> ?.
+
+    IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
+       RETURN "NOK".
+
     RETURN "OK".
     
 END PROCEDURE.
