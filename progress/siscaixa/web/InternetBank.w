@@ -621,6 +621,10 @@
 
                  14/07/2016 - M325 Informe de Rendimentos - Novos parametros
                               operacao7. (Guilherme/SUPERO)
+
+                 21/09/2016 -  P169 Integralização de cotaas no IB
+                                adição das funções 176 e 177 (Ricardo Linhares)                              
+                              
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1076,7 +1080,7 @@ DEF VAR aux_vlpcttar AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlpacote AS DECI                                           NO-UNDO.
 DEF VAR aux_inconsul AS INTE										   NO-UNDO.
 
-/* InternetBank176 */
+/*  Operacao 176/177 */
 DEF VAR aux_vintegra AS DECIMAL                                        NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
@@ -2019,11 +2023,13 @@ PROCEDURE process-web-request :
 			IF  aux_operacao = 172 THEN /* Termo pacote de tarifas PDF */
 				RUN proc_operacao172.
 		ELSE
-            IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
-                RUN proc_operacao173. 
-        ELSE
-            IF  aux_operacao = 176 THEN /* Integralizar cotas de capital */
-                RUN proc_operacao176.                
+        IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
+            RUN proc_operacao173. 
+    ELSE
+        IF  aux_operacao = 176 THEN /* Integralizar cotas de capital */
+            RUN proc_operacao176.                
+    IF  aux_operacao = 177 THEN     /* Cancelar integralização */
+            RUN proc_operacao177.                             
 
     END.
 /*....................................................................*/
@@ -7529,7 +7535,6 @@ PROCEDURE proc_operacao176:
     
     MESSAGE "aux_vintegra:" aux_vintegra "aux_vintegra:" aux_vintegra.
       
-    
     RUN sistema/internet/fontes/InternetBank176.p (INPUT aux_cdcooper,
                            												 INPUT 90,             /* par_cdagenci */
                                                    INPUT 900,            /* par_nrdcaixa */
@@ -7540,6 +7545,34 @@ PROCEDURE proc_operacao176:
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_dtmvtolt,
                                                    INPUT aux_vintegra,   /* valor integralizacao */
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+        FOR EACH xml_operacao NO-LOCK:
+            {&out} xml_operacao.dslinxml.
+        END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Cancelar integralizacao de cotas de capital */
+PROCEDURE proc_operacao177:
+    
+    ASSIGN aux_nrdrowid = GET-VALUE("nrdrowid").    
+    
+    RUN sistema/internet/fontes/InternetBank177.p (INPUT aux_cdcooper,
+                           												 INPUT 90,             /* par_cdagenci */
+                                                   INPUT 900,            /* par_nrdcaixa */
+                                                   INPUT 996,            /* par_cdoperad */
+                                                   INPUT "INTERNETBANK", /* par_nmdatela */
+                                                   INPUT 3,              /* par_idorigem */
+                                                   INPUT aux_nrdconta,   /* par_nrdconta */
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_nrdrowid,   /* id do lancamento a ser excluído */
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
 

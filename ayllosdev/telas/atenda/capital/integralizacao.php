@@ -37,11 +37,11 @@ session_start();
 					<br/>
 					<label for="vintegra">Valor da Integralização:</label>
 					<input name="vintegra" id="vintegra" type="text"/>			
-					<input type="image" id="btnIntegra"  src="<?php echo $UrlImagens; ?>botoes/integralizar_cotas.gif" onClick="integralizaCotas(false);return false;">
+					<input type="image" id="btnIntegra"  src="<?php echo $UrlImagens; ?>botoes/integralizar_cotas.gif" onClick="integralizaCotas(true);return false;">
 				</form>	
 			</div>
 			
-			<div id="divEstorno" style="height: 160px; width: 200px;">
+			<div id="divEstorno" style="height: 160px; width: 100%;">
 			
 			</div>
 		</td>

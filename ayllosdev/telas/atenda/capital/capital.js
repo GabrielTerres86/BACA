@@ -70,7 +70,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			$("#imgAbaCen" + id).css("background-color","#969FA9");
 			
 			if (id == 5) {
-				$('#divIntegralizacao').css({'display': 'block'});
+				$('#divIntegralizacao').css({'display': 'block', 'height': '142px'});
 				$('#divEstorno').css({'display': 'none'});
 			} else
 			if (id == 6) {
@@ -464,6 +464,8 @@ function controlaLayout(operacao) {
 	} else if (in_array(operacao,['INTEGRALIZA'])) {
 	
 		altura  = '190px';
+
+		$('div.divIntegralizacao').css('height','142px');
 		
 		var rVintegra = $('label[for="vintegra"]','#frmIntegraliza');
 	
@@ -485,7 +487,8 @@ function controlaLayout(operacao) {
 		var divRegistro = $('div.divRegistros');		
 		var tabela      = $('table', divRegistro );
 		
-		divRegistro.css('height','120px');
+		divRegistro.css('height','93px');
+		$('#divEstorno').css('height','115px');
 		
 		var ordemInicial = new Array();
 		ordemInicial = [[0,0]];
@@ -499,8 +502,10 @@ function controlaLayout(operacao) {
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
 		arrayAlinha[2] = 'right';
-		
+
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '');
+
+		$('th.ordemInicial').css({'width':'6px'});
 	}
 	
 	callafterCapital = '';
@@ -524,7 +529,7 @@ function integralizaCotas(flgsaldo) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, realizando integraliza&ccedil;&atilde;o de cotas ...");
 	
-	if (!flgsaldo)
+	if (flgsaldo) // flgsaldo indica se é para validar ou não o limite de crédito	
 		vintegra = $('#vintegra','#divIntegralizacao').val().replace(/\./g,"");
 	
 	// Valida valor de integralizacao
@@ -566,24 +571,17 @@ function selecionaIntegralizacao(id) {
 	if (lstEstorno == "")
 		lstEstorno = new Array();
 	
-	lstLancamentos[id].nrdocmto = retiraCaracteres(lstLancamentos[id].nrdocmto,"0123456789",true);
-	
 	if($("#appest" + id).is(":checked")){
-		
 		var campos = new Object();
 		campos["auxidest"] = id;
-		campos["nrdocmto"] = lstLancamentos[id].nrdocmto;
-		campos["vllanmto"] = lstLancamentos[id].vllanmto;
-			
+		campos["lctrowid"] = lstLancamentos[id].lctrowid;
 		lstEstorno.push(campos);
-	}else{
-		for(i=0; i < lstEstorno.length; i++){
-			
+	} else {
+		for(i=0; i < lstEstorno.length; i++) {
 			if(lstEstorno[i]["auxidest"] == id)
 				lstEstorno.splice(i,1);
 		}
 	}
-
 }
 
 function estornaIntegralizacao() {

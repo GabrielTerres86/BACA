@@ -60,6 +60,7 @@ IF  NOT VALID-HANDLE(h-b1wgen0021)  THEN
                                         INPUT par_idseqttl,
                                         INPUT par_dtmvtolt,
                                         INPUT par_vintegra,
+                                        INPUT yes, /* indica que deve validar o limite de saldo da conta */
                                        OUTPUT TABLE tt-erro).
                                        
                                        

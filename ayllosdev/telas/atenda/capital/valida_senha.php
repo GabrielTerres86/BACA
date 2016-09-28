@@ -67,7 +67,7 @@
 	if ($opcao == "L")
 		echo "estornaIntegralizacao();";
 	else
-		echo "integralizaCotas(true);";
+		echo "integralizaCotas(false);";
 	
 	echo "fechaRotina($('#divRotina'));";
 	echo "acessaOpcaoAba(7, 5, 'I');";

@@ -27,6 +27,9 @@
                
                07/06/2013 - Incluir procedure retorna-valor-blqjud e tag xml
                             <vlblqjud> (Lucas R.).
+
+			   21/09/2013 - P169 Adicionada novas tags para o projeto de integralizacao
+							de cotas (Ricardo Linhares).
  
 ..............................................................................*/
  

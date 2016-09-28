@@ -129,6 +129,9 @@
                
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                
+               27/09/2016 - Ajuste das Rotinade Integralização/Estorno integralizaçao
+                            M169 (Ricardo Linhares)
+               
                
 ..............................................................................*/
 
@@ -316,6 +319,8 @@ PROCEDURE extrato_cotas:
         /* Se for histórico de lançamento de integralização e for do mesmo dia, é permitido cancelar */
         IF craphis.cdhistor = 2138 AND craplct.dtmvtolt = crapdat.dtmvtolt  THEN
           ASSIGN aux_flpercan = YES.
+        ELSE
+          ASSIGN aux_flpercan = NO.          
             
         IF craphis.inhistor >= 6 AND
            craphis.inhistor <= 8 THEN
@@ -2646,6 +2651,74 @@ PROCEDURE log_itens_plano:
 
 END PROCEDURE.
 
+PROCEDURE cancela_integralizacao:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdrowid AS CHAR                           NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF VARIABLE aux_cdcritic LIKE crapcri.cdcritic                 NO-UNDO.
+    DEF VARIABLE aux_dscritic LIKE crapcri.dscritic                 NO-UNDO.
+    
+    TRANSACAO:
+
+    DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
+    
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+        RUN STORED-PROCEDURE pc_cancela_integralizacao
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                 INPUT par_cdagenci,
+                                                 INPUT par_nrdcaixa,
+                                                 INPUT par_cdoperad,
+                                                 INPUT par_nmdatela,
+                                                 INPUT par_idorigem,
+                                                 INPUT par_nrdconta,
+                                                 INPUT par_idseqttl,
+                                                 INPUT par_dtmvtolt,
+                                                 INPUT par_nrdrowid,
+                                                 OUTPUT 0,
+                                                 OUTPUT "").
+        
+        CLOSE STORED-PROC pc_cancela_integralizacao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+  
+  
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+  
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = pc_cancela_integralizacao.pr_cdcritic 
+                                  WHEN pc_cancela_integralizacao.pr_cdcritic <> ?
+               aux_dscritic = pc_cancela_integralizacao.pr_dscritic
+                                  WHEN pc_cancela_integralizacao.pr_dscritic <> ?. 
+
+        IF aux_cdcritic <> 0  OR aux_dscritic <> "" THEN
+           DO: 
+               IF  aux_dscritic = "" THEN
+                   ASSIGN aux_dscritic =  "Nao foi cancelar possível integralizacao.".
+                
+               CREATE tt-erro.
+               ASSIGN tt-erro.cdcritic = aux_cdcritic
+                      tt-erro.dscritic = aux_dscritic.
+               
+               RETURN "NOK".
+           END.
+               
+       END. /* Transaçao */
+
+    RETURN "OK".
+
+
+END PROCEDURE.
+
 PROCEDURE integraliza_cotas:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
@@ -2655,12 +2728,19 @@ PROCEDURE integraliza_cotas:
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_idseqttl AS INTE                            NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_vintegra AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_flgsaldo AS LOGICAL                        NO-UNDO.    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF VARIABLE aux_cdcritic LIKE crapcri.cdcritic                 NO-UNDO.
     DEF VARIABLE aux_dscritic LIKE crapcri.dscritic                 NO-UNDO.
+    DEF VARIABLE aux_flgsaldo AS INTE                              NO-UNDO.
+  
+    IF par_flgsaldo = yes THEN
+      ASSIGN aux_flgsaldo = 1.
+    ELSE
+      ASSIGN aux_flgsaldo = 0.
     
     TRANSACAO:
 
@@ -2679,6 +2759,7 @@ PROCEDURE integraliza_cotas:
                                                  INPUT par_idseqttl,
                                                  INPUT par_dtmvtolt,
                                                  INPUT par_vintegra,
+                                                 INPUT aux_flgsaldo,
                                                  OUTPUT 0,
                                                  OUTPUT "").
         
@@ -2697,7 +2778,7 @@ PROCEDURE integraliza_cotas:
         IF aux_cdcritic <> 0  OR aux_dscritic <> "" THEN
            DO: 
                IF  aux_dscritic = "" THEN
-                   ASSIGN aux_dscritic =  "Nao foi integralizar cotas.".
+                   ASSIGN aux_dscritic =  "Nao foi possivel integralizar cotas.".
                 
                CREATE tt-erro.
                ASSIGN tt-erro.cdcritic = aux_cdcritic
@@ -2731,44 +2812,20 @@ PROCEDURE busca_integralizacoes:
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-lancamentos.
 
-    /* Busca estornos do dia */
-    FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper AND
-                           craplct.nrdconta = par_nrdconta AND
-                           craplct.dtmvtolt = par_dtmvtolt AND
-                           craplct.nrdolote = 10002        AND
-                           craplct.cdbccxlt = 100          AND
-                           craplct.cdhistor = 402  /* ESTORNO INTEGRALIZACAO */
-                           NO-LOCK:
-
-        CREATE tt-estornos.
-        ASSIGN tt-estornos.vllanmto = craplct.vllanmto.
-
-    END.
-
     /* Busca integralizacoes do dia */ 
     FOR EACH craplct WHERE craplct.cdcooper = par_cdcooper AND
                            craplct.nrdconta = par_nrdconta AND
                            craplct.dtmvtolt = par_dtmvtolt AND
                            craplct.nrdolote = 10002        AND
                            craplct.cdbccxlt = 100          AND
-                           craplct.cdhistor = 61   /* CR.COTAS */ 
+                           (craplct.cdhistor = 61 OR craplct.cdhistor = 2138)
                            NO-LOCK:
-        /* Verifica se existe um lancamento de estorno com o mesmo valor
-           do credito */
-        FIND FIRST tt-estornos WHERE tt-estornos.vllanmto = craplct.vllanmto
-                                                    EXCLUSIVE-LOCK NO-ERROR.
-        /* Se existe, deleta o registro da temp-table e busca o proximo
-           registro, pois podem haver mais lançamentos de estorno com o mesmo
-           valor */
-        IF AVAIL tt-estornos THEN
-        DO:
-            DELETE tt-estornos.
-            NEXT.
-        END.
         
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.nrdocmto = craplct.nrdocmto
-               tt-lancamentos.vllanmto = craplct.vllanmto.
+               tt-lancamentos.vllanmto = craplct.vllanmto
+               tt-lancamentos.lctrowid = RECID(craplct).
+
     END.
 
     RETURN "OK".
@@ -2785,15 +2842,11 @@ PROCEDURE estorna_integralizacao:
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-
     DEF  INPUT PARAM TABLE FOR tt-lancamentos.
-
     DEF OUTPUT PARAM TABLE FOR tt-erro.
-
-    DEF VARIABLE h-b1wgen0140     AS HANDLE                         NO-UNDO.
-    DEF VARIABLE aux_slcotnor     AS DECIMAL                        NO-UNDO.
-
     EMPTY TEMP-TABLE tt-erro.
+    DEF VARIABLE aux_cdcritic LIKE crapcri.cdcritic                 NO-UNDO.
+    DEF VARIABLE aux_dscritic LIKE crapcri.dscritic                 NO-UNDO.    
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Estorno de integralizacao de capital".
@@ -2819,292 +2872,29 @@ PROCEDURE estorna_integralizacao:
     DO TRANSACTION ON ERROR UNDO, LEAVE:
 
         FOR EACH tt-lancamentos NO-LOCK:
-    
-            FIND craplct WHERE craplct.cdcooper = par_cdcooper AND
-                               craplct.dtmvtolt = par_dtmvtolt AND
-                               craplct.cdagenci = 1            AND
-                               craplct.cdbccxlt = 100          AND
-                               craplct.nrdolote = 10002        AND
-                               craplct.nrdconta = par_nrdconta AND
-                               craplct.nrdocmto = tt-lancamentos.nrdocmto AND
-                               craplct.cdhistor = 402
-                               NO-LOCK NO-ERROR.
-                               
-            IF AVAILABLE craplct   THEN
-            DO:
-                ASSIGN aux_cdcritic = 92
-                       aux_dscritic = "".
-                
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-
-                UNDO TRANS_ESTORNA, LEAVE.
-                     
-            END.
+        
+            RUN cancela_integralizacao (INPUT par_cdcooper,
+                                        INPUT par_cdagenci,
+                                        INPUT par_nrdcaixa,
+                                        INPUT par_cdoperad,
+                                        INPUT par_nmdatela,
+                                        INPUT par_idorigem,
+                                        INPUT par_nrdconta,
+                                        INPUT 1, /* idseqttl */
+                                        INPUT par_dtmvtolt,
+                                        INPUT STRING(tt-lancamentos.lctrowid),
+                                        OUTPUT TABLE tt-erro).
                                         
-            RUN sistema/generico/procedures/b1wgen0140.p PERSISTENT SET h-b1wgen0140.
+            IF  RETURN-VALUE = "NOK"  THEN DO:
+                RETURN "NOK".
+            END.                                        
         
-            RUN saldo_cotas_normal IN h-b1wgen0140(INPUT par_cdcooper,
-                                                   INPUT par_nrdconta,
-                                                  OUTPUT aux_slcotnor).
-        
-            DELETE PROCEDURE h-b1wgen0140.
-        
-            /*** Busca Saldo Bloqueado Judicial ***/
-            RUN sistema/generico/procedures/b1wgen0155.p PERSISTENT SET h-b1wgen0155.
-        
-            RUN retorna-valor-blqjud IN h-b1wgen0155 (INPUT par_cdcooper,
-                                                      INPUT par_nrdconta,
-                                                      INPUT 0, /* fixo - nrcpfcgc */
-                                                      INPUT 3, /* Bloq. Capital   */
-                                                      INPUT 4, /* 4 - CAPITAL     */
-                                                      INPUT par_dtmvtolt,
-                                                     OUTPUT aux_vlblqjud,
-                                                     OUTPUT aux_vlresblq).
-        
-            DELETE PROCEDURE h-b1wgen0155.
-        
-            IF tt-lancamentos.vllanmto > (aux_slcotnor - aux_vlblqjud) THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Valor acima do disponivel! " + 
-                                      "Maximo de " + 
-                                      TRIM(STRING((aux_slcotnor - aux_vlblqjud),
-                                                  "zzz,zzz,zzz,zz9.99")).
-                
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-
-                UNDO TRANS_ESTORNA, LEAVE.
-                                                              
-            END.
-    
-            DO aux_contador = 1 TO 10:
-                                                                        
-                FIND craplot WHERE craplot.cdcooper = par_cdcooper AND
-                                   craplot.dtmvtolt = par_dtmvtolt AND
-                                   craplot.cdagenci = 1            AND
-                                   craplot.cdbccxlt = 100          AND
-                                   craplot.nrdolote = 10002        
-                                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-        
-                IF   NOT AVAIL  craplot   THEN
-                    IF  LOCKED craplot   THEN
-                        DO:
-                            PAUSE 1 NO-MESSAGE.
-                            ASSIGN aux_cdcritic = 77. 
-                            NEXT.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN aux_dscritic = "Registro de lote nao encontrado.".
-                            LEAVE.
-                        END.
-        
-                        ASSIGN aux_cdcritic = 0.
-                LEAVE.
-            END.  /*  Fim do DO...TO  */
-        
-            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-            DO:
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-
-                UNDO TRANS_ESTORNA, LEAVE.
-                                                              
-            END.
-            
-            CREATE craplct.
-    
-            ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
-                   craplot.qtcompln = craplot.qtcompln - 1
-                   craplot.qtinfoln = craplot.qtinfoln - 1
-                   craplot.vlcompdb = craplot.vlcompdb + tt-lancamentos.vllanmto
-                   craplot.vlinfodb = craplot.vlinfodb + tt-lancamentos.vllanmto
-    
-                   craplct.cdcooper = par_cdcooper
-                   craplct.dtmvtolt = par_dtmvtolt
-                   craplct.cdagenci = 1
-                   craplct.cdbccxlt = 100
-                   craplct.nrdolote = 10002
-                   craplct.nrdconta = par_nrdconta
-                   craplct.nrdocmto = craplot.nrseqdig
-                   craplct.cdhistor = 402
-                   craplct.nrseqdig = craplot.nrseqdig
-                   craplct.vllanmto = tt-lancamentos.vllanmto.
-    
-    
-            /* cria craplcm */
-            DO aux_contador = 1 TO 10:
-                                                                            
-               FIND craplot WHERE craplot.cdcooper = par_cdcooper AND
-                                  craplot.dtmvtolt = par_dtmvtolt AND
-                                  craplot.cdagenci = 1            AND
-                                  craplot.cdbccxlt = 100          AND
-                                  craplot.nrdolote = 10129        EXCLUSIVE-LOCK
-                                  NO-ERROR NO-WAIT.
-        
-               IF   NOT AVAIL  craplot   THEN
-                    IF  LOCKED craplot   THEN
-                        DO:
-                           PAUSE 1 NO-MESSAGE.
-                           ASSIGN aux_cdcritic = 77. 
-                           NEXT.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN aux_dscritic = "Registro de lote nao encontrado.".
-                            LEAVE.
-                        END.
-        
-                        ASSIGN aux_cdcritic = 0.
-               LEAVE.
-            END.  /*  Fim do DO...TO  */
-        
-            IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-            DO:
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-
-                UNDO TRANS_ESTORNA, LEAVE.
-                                                              
-            END.
-        
-            CREATE craplcm.
-            ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
-                   craplot.qtcompln = craplot.qtcompln - 1
-                   craplot.qtinfoln = craplot.qtcompln
-                   craplot.vlcompcr = craplot.vlcompcr + tt-lancamentos.vllanmto
-                   craplot.vlinfocr = craplot.vlcompcr
-                
-                   craplcm.cdagenci = craplot.cdagenci
-                   craplcm.cdbccxlt = craplot.cdbccxlt
-                   craplcm.cdhistor = 451
-                   craplcm.dtmvtolt = par_dtmvtolt
-                   craplcm.cdpesqbb = ""
-                   craplcm.nrdconta = par_nrdconta
-                   craplcm.nrdctabb = par_nrdconta
-                   craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                   craplcm.nrdocmto = craplot.nrseqdig
-                   craplcm.nrdolote = craplot.nrdolote
-                   craplcm.nrseqdig = craplot.nrseqdig
-                   craplcm.vllanmto = tt-lancamentos.vllanmto
-                   craplcm.cdcooper = par_cdcooper.
-    
-        
-            DO aux_contador = 1 TO 10 :
-                             
-               FIND crapcot WHERE 
-                    crapcot.cdcooper = par_cdcooper     AND
-                    crapcot.nrdconta = par_nrdconta
-                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-            
-               IF   NOT AVAILABLE crapcot   THEN
-                    IF   LOCKED crapcot   THEN
-                         DO:
-                             ASSIGN aux_cdcritic = 77.   
-                             PAUSE 2 NO-MESSAGE.
-                             NEXT.
-                         END.
-                     ELSE
-                     DO:
-                        ASSIGN aux_cdcritic = 55.
-                        LEAVE.
-                     END.
-               ELSE
-                   ASSIGN aux_cdcritic = 0.
-        
-               LEAVE.
-               
-            END.  /*  Fim do DO WHILE TRUE   */
-        
-            IF   aux_cdcritic > 0   THEN
-            DO:
-                ASSIGN aux_dscritic = "".
-        
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-
-                UNDO TRANS_ESTORNA, LEAVE.
-                                                              
-            END.
-                 
-            RUN sistema/generico/procedures/b1wgen0001.p PERSISTENT SET h-b1wgen0001.
-              
-             IF   VALID-HANDLE(h-b1wgen0001)   THEN
-                  DO:
-                       RUN ver_capital IN h-b1wgen0001
-                                      (INPUT  par_cdcooper,
-                                       INPUT  par_nrdconta,
-                                       INPUT  0, /*agencia*/
-                                       INPUT  0, /* caixa */
-                                       INPUT tt-lancamentos.vllanmto,
-                                       INPUT  par_dtmvtolt,
-                                       INPUT  "landpvi",
-                                       INPUT  1, /* AYLLOS */
-                                       OUTPUT TABLE tt-erro).
-                                       
-                       DELETE PROCEDURE h-b1wgen0001.
-                       
-                       /* Verifica se houve erro */
-                       FIND FIRST tt-erro  NO-LOCK NO-ERROR.
-                 
-                       IF   AVAILABLE tt-erro   THEN
-                           UNDO TRANS_ESTORNA, LEAVE.
-                           
-                  END.
-                                                     
-            ASSIGN crapcot.vldcotas = crapcot.vldcotas - tt-lancamentos.vllanmto.
-    
-    
-            RUN proc_gerar_log (INPUT par_cdcooper,
-                                INPUT par_cdoperad,
-                                INPUT "",
-                                INPUT aux_dsorigem,
-                                INPUT aux_dstransa,
-                                INPUT TRUE,
-                                INPUT 1,
-                                INPUT par_nmdatela,
-                                INPUT par_nrdconta,
-                               OUTPUT aux_nrdrowid).
-    
         END.
-
-        RELEASE craplot.
-        RELEASE craplct.
-        RELEASE craplcm.
-        RELEASE crapcot.
         
         RETURN "OK".
 
     END.
 
-    RELEASE craplot.
-    RELEASE craplct.
-    RELEASE craplcm.
-    RELEASE crapcot.
-
-    RETURN "NOK".
 
 END PROCEDURE.
 

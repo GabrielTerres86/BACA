@@ -65,6 +65,7 @@
 	$xmlIntegraliza .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xmlIntegraliza .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
 	$xmlIntegraliza .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xmlIntegraliza .= "		<idseqttl>1</idseqttl>";
 	$xmlIntegraliza .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlIntegraliza .= "		<vintegra>".$vintegra."</vintegra>";
 	$xmlIntegraliza .= "		<flgsaldo>".$flgsaldo."</flgsaldo>";
@@ -77,17 +78,20 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjIntegra = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra cr&iacute;tica
 	if (strtoupper($xmlObjIntegra->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjIntegra->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		
+		// se não houver saldo suficiente, verifica se quer negativar a conta 
+		if(strpos($xmlObjIntegra->roottag->tags[0]->tags[0]->tags[4]->cdata, 'saldo suficiente') > 0) {
+			$aux_flgsaldo = 'no'; // marca para não validar negativação de conta
+		} else {
+			exibeErro($xmlObjIntegra->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		}
 	} 	
-	
-	$aux_flgsaldo = $xmlObjIntegra->roottag->tags[0]->attributes["FLGSALDO"];
 	
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	
-	if ($aux_flgsaldo == "yes")
+	if ($aux_flgsaldo == "no")
 		// Mensagem para confirmar se realiza a integralizacao mesmo com saldo insuficiente
 		echo 'showConfirmacao("Saldo c/c insuficiente para esta opera&ccedil;&atilde;o. Confirma a opera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","mostraSenha()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	else {
