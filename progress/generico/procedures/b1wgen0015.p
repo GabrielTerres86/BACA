@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 02/09/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 28/09/2016
     
     Dados referentes ao programa:
 
@@ -338,7 +338,7 @@
 			   23/03/2016 - Ajuste para controlar o lock de tabelas de forma correta (Adriano).
 										    
                24/03/2016 - Adicionados parâmetros para geraçao de LOG
-                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)										    										    
+                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)										    										    
 
                29/03/2016 - Ajuste na rotina executa_transferencia para não validar mais
                             TED duplicadas considerando um valor x de tempo entre uma 
@@ -372,8 +372,18 @@
 			   25/07/2016 - Ajuste na rotina executa-envio-ted para corrigir nomenclatura 
 			                das tags do xml
 							(Adriano).
+               30/08/2016 - Inclusao dos campos de último acesso via Mobile na procedure 
+                            obtem-dados-titulares - PRJ286.5 - Cecred Mobile (Dionathan)
 
                02/09/2016 - Alteracao da procedure obtem-dados-titulares, SD 514239 (Jean Michel).
+
+               21/09/2016 - Ajuste na validacao do horario de envio da TED (Diego).
+			                  
+         28/09/2016 - #474660 Alterada a regra de impressao de termo de responsabilidade
+                      na rotina liberar-senha-internet para nao imprimir quando o cooperado
+                      estava com o acesso bloqueado ou quando o mesmo foi admitido na
+                      cooperativa depois de 11/2015 (Carlos)
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -665,22 +675,34 @@ PROCEDURE horario_operacao:
             ELSE
               DO:
                 /*-- Operando com mensagens STR --*/
-                IF crapcop.flgopstr THEN
-                   IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
-                       ASSIGN aux_flgutstr = TRUE.
+                IF   crapcop.flgopstr THEN
+                     IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
+                        ASSIGN aux_flgutstr = TRUE.
                   
                  /*-- Operando com mensagens PAG --*/
-            IF  crapcop.flgoppag  THEN 
-                    IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
+                IF   crapcop.flgoppag  THEN 
+                     IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
                         ASSIGN aux_flgutpag = TRUE.
 
-                IF aux_flgutpag THEN  
-                ASSIGN aux_hrinipag = crapcop.inioppag
-                       aux_hrfimpag = crapcop.fimoppag.
-            ELSE
-                ASSIGN aux_hrinipag = crapcop.iniopstr
-                       aux_hrfimpag = crapcop.fimopstr.
-                END.
+                /* Se opera com PAG e está dentro do horario permitido */
+                IF   aux_flgutpag THEN 
+                     ASSIGN aux_hrinipag = crapcop.inioppag
+                            aux_hrfimpag = crapcop.fimoppag.
+                ELSE
+                    DO:
+					    /* Se opera com STR */
+                        IF   crapcop.flgopstr THEN 
+                             /* independente de estar ou não dentro do horário 
+                                permitido, mostra hora do STR. Por regra, o STR 
+                                sempre terá um período maior */ 
+                             ASSIGN aux_hrinipag = crapcop.iniopstr
+						            aux_hrfimpag = crapcop.fimopstr.
+                        ELSE
+                             /* Só opera com PAG e está fora do horário */
+                             ASSIGN aux_hrinipag = crapcop.inioppag
+                                    aux_hrfimpag = crapcop.fimoppag.
+                    END. 
+			  END.
 
             CREATE tt-limite.
             ASSIGN tt-limite.idtpdpag = 4
@@ -5224,7 +5246,7 @@ PROCEDURE obtem-dados-titulares:
     EMPTY TEMP-TABLE tt-erro.
 
     DEF VAR h-b1wgen0058 AS HANDLE NO-UNDO.
-    DEF VAR aux_qtminast AS INTEGER NO-UNDO.
+
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter dados dos titulares".
@@ -5334,7 +5356,6 @@ PROCEDURE obtem-dados-titulares:
                                              INPUT ?,
                                             OUTPUT TABLE tt-crapavt,
                                             OUTPUT TABLE tt-bens,
-                                            OUTPUT aux_qtminast,
                                             OUTPUT TABLE tt-erro) NO-ERROR.
                 
                 /* Representantes Legais */
@@ -7016,7 +7037,13 @@ PROCEDURE liberar-senha-internet:
         crapass.idastcjt = 0 OR 
        (crapass.idastcjt > 0 AND crapass.idimprtr = 1) THEN
         ASSIGN par_flgimpte = TRUE.
- 
+
+    /* Cooperados admitidos após novembro/2015 ou desbloqueio de senha,
+       nao precisa imprimir termo de responsabilidade */
+    IF (crapass.dtadmiss > 11/30/2015) OR 
+       (aux_cdsitsnh = 2) THEN
+        ASSIGN par_flgimpte = FALSE. 
+
     IF  par_flgerlog  THEN
         DO:
             RUN proc_gerar_log (INPUT par_cdcooper,
@@ -8566,6 +8593,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = ?
                    tt-dados-titular.dtultace = ?
                    tt-dados-titular.hrultace = ""
+                   tt-dados-titular.dtacemob = ?
+                   tt-dados-titular.hracemob = ""
                    tt-dados-titular.nmoperad = ""
                    tt-dados-titular.vllimweb = 0
                    tt-dados-titular.vllimtrf = 0
@@ -8630,6 +8659,9 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = cratsnh.dtaltsit
                    tt-dados-titular.dtultace = cratsnh.dtultace
                    tt-dados-titular.hrultace = STRING(cratsnh.hrultace,
+                                                      "HH:MM:SS")
+                   tt-dados-titular.dtacemob = cratsnh.dtacemob
+                   tt-dados-titular.hracemob = STRING(cratsnh.hracemob,
                                                       "HH:MM:SS")
                    tt-dados-titular.vllimweb = cratsnh.vllimweb
                    tt-dados-titular.vllimtrf = cratsnh.vllimtrf
@@ -10650,8 +10682,6 @@ PROCEDURE gera-termo-responsabilidade:
                                          "DE  NOVEMBRO DE","DE  DEZEMBRO DE"]
                                                                      NO-UNDO.
 
-    DEF VAR aux_qtminast AS INTE									     NO-UNDO.
-
     FORM  
         /* Titulo em negrito inicio */
         "\033\105\TERMO DE RESPONSABILIDADE PARA ACESSO E " AT 10
@@ -11236,7 +11266,6 @@ PROCEDURE gera-termo-responsabilidade:
                                                      INPUT ?,
                                                     OUTPUT TABLE tt-crapavt,
                                                     OUTPUT TABLE tt-bens,
-													OUTPUT aux_qtminast,	
                                                     OUTPUT TABLE tt-erro) NO-ERROR.
                 
                     IF  RETURN-VALUE <> "OK"   THEN
