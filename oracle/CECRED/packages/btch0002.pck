@@ -138,7 +138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Margarete/Mirtes
-   Data    : Junho/2004.                     Ultima atualizacao: 10/02/2015
+   Data    : Junho/2004.                     Ultima atualizacao: 23/08/2016
 
    Dados referentes ao programa:
 
@@ -312,7 +312,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
 														
 							 10/02/2015 - Alterado para ignorar a data cadastrada na leitura da
 							              tabela de parâmetros 'EXEICMIRET' (Reinert)
-														
+               
+               23/08/2016 - M360 - Verificação de novos percentuais de retorno de 
+                            Sobras para ativação da flag sol30 (Marcos-Supero)
+               														
   ..............................................................................*/  
     ------------------------------- CURSORES ---------------------------------
 
@@ -916,7 +919,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     CLOSE cr_crapmfx;
     /*Fim TR*/
     
-    vr_dstextab := null;
     -- Buscar parametro na tabela generica CONVERREAL
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
@@ -951,7 +953,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END IF;
       CLOSE cr_craplau;
       
-      vr_dstextab := null;
       /* Verifica se foi gerado o arquivo de titulos recebidos */
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
@@ -983,7 +984,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       /* Fim dos titulos */
       
       /* Verificar se DOC'S e TED'S foram transmitidos */
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1034,7 +1034,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       /* Fim dos DOCS e TEDS */ 
       
       /* Verifica se foi gerado o arquivo de guias recebidas */
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1334,7 +1333,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     /*  Verifica se foram cadastradas as taxas (emprestimo) do mes  */
     -- Verificar se é virada de mês
     IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') <> TO_CHAR(rw_crapdat.dtmvtopr,'MM')   THEN
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1357,7 +1355,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END IF;
       
       /*  Leitura da tabela TAXASDOMES */
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1429,7 +1426,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         CLOSE cr_craptrd;
         
         /*  Leitura da tabela TAXASDOMES */
-        vr_dstextab := null;
         vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                    pr_nmsistem => 'CRED', 
                                                    pr_tptabela => 'USUARI', 
@@ -1527,7 +1523,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       CLOSE cr_craptrd;
     
       /*  Leitura da tabela TAXASDOMES */
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'USUARI', 
@@ -1558,7 +1553,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     END LOOP; -- Fim loop cr_craprpp 
     
     /* Verifica se houve movimentacoes que precisam ser registradas */
-    vr_dstextab := null;
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
                                                pr_tptabela => 'GENERI', 
@@ -1619,7 +1613,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     
     /* verifica se eh segunda-feira */
     IF to_char(rw_crapdat.dtmvtolt,'D') = 2 THEN
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1646,7 +1639,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     END LOOP;  
     
     /*** Verifica se deve solicitar o pedido de talonarios - sol27 ***/
-    vr_dstextab := null;
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
                                                pr_tptabela => 'USUARI', 
@@ -1662,7 +1654,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     END IF;  
     
     /* Verifica se deve solicitar acompanhamento dos talonarios - SOL16 */
-    vr_dstextab := null;
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
                                                pr_tptabela => 'GENERI', 
@@ -1682,7 +1673,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     /*** Ate o dia 10 o VAR precisa estar contabilizado ***/     
     IF to_char(rw_crapdat.dtmvtolt,'DD') > 10  THEN
       -- Buscar informação na craptab
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1705,7 +1695,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END IF;
       
       -- Buscar informação na craptab
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1726,7 +1715,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
          da baixa de talonarios e a execucao o resumo dos historicos  */
     IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') <> TO_CHAR(rw_crapdat.dtmvtoan,'MM') THEN
       -- Buscar informação na craptab
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1748,7 +1736,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         - roda sempre no primeiro dia util apos o dia 19 */  
     IF to_char(rw_crapdat.dtmvtolt,'DD') > 19  THEN    
       -- Buscar informação na craptab
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1765,11 +1752,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END IF;  
     END IF; --  Fim IF dtmvtolt > 19
     
-    /* Verifica se deve solicitar incorporacao da correcao monetaria e
-      calculo do retorno. - roda somente ate abril */
-    IF to_char(rw_crapdat.dtmvtolt,'MM') < 5  THEN 
+    /* Verifica se deve solicitar calculo do retorno das Sobras - roda somente ate abril */
+    IF to_char(rw_crapdat.dtmvtolt,'MM') <= to_number(gene0001.fn_param_sistema('CRED', pr_cdcooper, 'NRMES_LIM_JURO_SOBRA')) THEN
       -- Buscar informação na craptab
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1780,15 +1765,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       -- verificar se existe valor
       IF TRIM(vr_dstextab) is null THEN 
         pc_grava_critica(pr_dscritic => ' - Falta tabela de execucao do credito de retorno');
-      ELSIF SUBSTR(vr_dstextab,1,65) <> '0 0 000,00000000 0 000,00000000 000,00000000 0   0 0 000,00000000'  THEN
+      -- Se foi selecionado algum percentual a distribuir
+      ELSIF SUBSTR(vr_dstextab,03,63) <> '0 000,00000000 0 000,00000000 000,00000000 0   0 0 000,00000000'
+         OR SUBSTR(vr_dstextab,78,25) <> '000,00000000 000,00000000' THEN
         pr_flgsol30 := 1;--TRUE;
       END IF;       
     END IF; -- Fim IF Mês < 5    
+    
     /* Verifica se deve solicitar relacao de emprestimos em atraso - apos
        o dia 15 do mes e no mensal */
     IF to_char(rw_crapdat.dtmvtolt,'DD') > 15  THEN
       -- Buscar informação na craptab
-      vr_dstextab := null;
       vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                  pr_nmsistem => 'CRED', 
                                                  pr_tptabela => 'GENERI', 
@@ -1806,7 +1793,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     
     /*  Verifica se deve solicitar Central de Risco */
     -- Buscar informação na craptab
-    vr_dstextab := null;
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
                                                pr_tptabela => 'USUARI', 
@@ -1930,7 +1916,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     
     /* Verificar se ha saldo na conta para emprestimos com emissao de boletos */
     -- Buscar informação na craptab
-    vr_dstextab := null;
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
                                                pr_tptabela => 'GENERI', 
@@ -2050,7 +2035,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     END IF;  -- Fim CTAEMISBOL                
     
     /* Busca data para validaçao de borderos*/
-    vr_dstextab := null;
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED', 
                                                pr_tptabela => 'GENERI', 

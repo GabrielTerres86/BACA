@@ -4728,7 +4728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
     vr_fcraplim  BOOLEAN := FALSE;
     vr_fcrapjfn  BOOLEAN := FALSE;
     -- Tempo de operação da empresa no mercado
-    vr_nranoope PLS_INTEGER;
+    vr_nranoope NUMBER(6,2);
     vr_nrseqite PLS_INTEGER;
     -- Valor da nota
     vr_vldanota  NUMBER := 0;
@@ -4843,7 +4843,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
     *************************************************************************/
 
     -- Calcular a qtd de anos do associado na cooperativa
-    vr_nranoope := ((pr_rw_crapdat.dtmvtolt - rw_crapjur.dtiniatv) / 365);
+    vr_nranoope := trunc(((pr_rw_crapdat.dtmvtolt - rw_crapjur.dtiniatv) / 365),2);
     -- Gerar valor do item conforme o periodo de operação
     IF vr_nranoope > 8    THEN
       vr_nrseqite := 1;

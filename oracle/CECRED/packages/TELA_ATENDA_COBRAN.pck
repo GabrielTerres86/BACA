@@ -58,6 +58,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
+																,pr_inenvcob  IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança																
                                 ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -138,13 +139,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
   --  Programa : TELA_ATENDA_COBRAN
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Fevereiro - 2016                 Ultima atualizacao:
+  --  Data     : Fevereiro - 2016                 Ultima atualizacao: 04/08/2016
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela Cobranca dentro da ATENDA
   --
-  -- Alteracoes:
+  -- Alteracoes: 04/08/2016 - Adicionado parametro pr_inenvcob na procedure 
+  -- 						  pc_habilita_convenio (Reinert).
   --
   ---------------------------------------------------------------------------
 
@@ -1072,6 +1074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
+																,pr_inenvcob  IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança
                                 ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -1085,7 +1088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 24/08/2016
+    Data    : Fevereiro/2016                 Ultima atualizacao: 26/04/2016
 
     Dados referentes ao programa:
 
@@ -1095,8 +1098,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
     Alteracoes: 26/04/2016 - Ajustes projeto PRJ318 - Nova Plataforma cobrança
                              (Odirlei-AMcom)
-
-				24/08/2016 - Ajuste emergencial pós-liberação do projeto 318. (Rafael)
     ..............................................................................*/
     DECLARE
 
@@ -1176,6 +1177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flprotes
               ,crapceb.qtdecprz
               ,crapceb.qtdfloat
+							,crapceb.inenvcob
           FROM crapceb
          WHERE crapceb.cdcooper = pr_cdcooper
            AND crapceb.nrdconta = pr_nrdconta
@@ -1344,7 +1346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         vr_cdcritic := 9;
         RAISE vr_exc_saida;
       END IF;
-      
+
       vr_insitceb := pr_insitceb;
 
       -- Monta a mensagem da operacao para envio no e-mail
@@ -1507,6 +1509,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           RAISE vr_exc_saida;
         END IF;
       END IF;
+
+			/* Se forma de envio de arquivo de cobrança for por FTP e origem do convênio 
+			   não for "IMPRESSO PELO SOFTWARE", gerar crítica*/
+			IF pr_inenvcob = 2 AND rw_crapcco.dsorgarq <> 'IMPRESSO PELO SOFTWARE' THEN
+				  -- Atribuir descrição da crítica
+          vr_dscritic := 'Forma de envio de arquivo de cobrança não permitido para esta origem de convênio.';
+					-- Levantar exceção
+          RAISE vr_exc_saida;				
+			END IF;
 
       -- Seta como registro existente
       vr_blnewreg := FALSE;
@@ -1807,7 +1818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
             RAISE vr_exc_saida;
           END IF;
                     
-          --vr_insitceb := 3; -- PENDENTE          
+          vr_insitceb := 3; -- PENDENTE          
           vr_flgimpri := 0; -- nao imprimir o termo de adesao
           
         ELSE
@@ -1835,6 +1846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flprotes = pr_flprotes
               ,crapceb.qtdecprz = pr_qtdecprz
               ,crapceb.idrecipr = pr_idrecipr
+							,crapceb.inenvcob = pr_inenvcob
          WHERE crapceb.cdcooper = vr_cdcooper
            AND crapceb.nrdconta = pr_nrdconta
            AND crapceb.nrconven = pr_nrconven;
@@ -2051,6 +2063,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                  ,pr_dsdadant => CASE WHEN rw_crapceb.flgcruni = 1 THEN 'SIM' ELSE 'NAO' END
                                  ,pr_dsdadatu => CASE WHEN pr_flgcruni = 1 THEN 'SIM' ELSE 'NAO' END);
       END IF;
+      
+      -- Se alterou Forma de envio de arquivo de cobrança
+      IF rw_crapceb.inenvcob <> pr_inenvcob THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'inenvcob'
+                                 ,pr_dsdadant => CASE WHEN rw_crapceb.inenvcob = 1 THEN 'INTERNET BANK' ELSE 'FTP' END
+                                 ,pr_dsdadatu => CASE WHEN pr_inenvcob = 1 THEN 'INTERNET BANK' ELSE 'FTP' END);
+      END IF;
+
       
       -- Gera log das categorias e percentual de desconto
       FOR vr_idx IN 1..vr_lstdados.COUNT LOOP
@@ -2344,7 +2365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flprotes'
                             ,pr_tag_cont => rw_cco_prc.flprotes
                             ,pr_des_erro => vr_dscritic);
-                            
+
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
@@ -3082,7 +3103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         ROLLBACK;
 
   END pc_gera_arq_ajuda;
-  
+
   --> Rotina para ativar convenio
   PROCEDURE pc_ativar_convenio( pr_nrdconta  IN crapceb.nrdconta%TYPE --> Conta
                                ,pr_nrconven  IN crapceb.nrconven%TYPE --> Convenio

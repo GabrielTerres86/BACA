@@ -455,7 +455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 11/01/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 25/08/2016
   --
   -- Dados referentes ao programa:
   --
@@ -498,6 +498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --             11/01/2016 - Ajuste na leitura da tabela cracbf para utilizar UPPER nos campos VARCHAR
   --                          pois será incluido o UPPER no indice desta tabela - SD 375854
   --                          (Adriano).
+  --
+  --             25/08/2016 - #456682 Inclusao de ip na tentativa de pagamento de boleto incluido na crapcbf (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -646,6 +648,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
     FROM crapaut
     WHERE ROWID = pr_rowid;
   rw_crapaut cr_crapaut%ROWTYPE;
+
+  --Selecionar informacoes log transacoes no sistema
+  CURSOR cr_craplgm(pr_cdcooper IN craplgm.cdcooper%type,
+                    pr_nrdconta IN craplgm.nrdconta%type,
+                    pr_idseqttl IN craplgm.idseqttl%type,
+                    pr_dttransa IN craplgm.dttransa%type,
+                    pr_dsorigem IN craplgm.dsorigem%type,
+                    pr_cdoperad IN craplgm.cdoperad%type,
+                    pr_flgtrans IN craplgm.flgtrans%type,
+                    pr_dstransa IN craplgm.dstransa%TYPE) IS
+    SELECT m.hrtransa
+          ,i.dsdadatu
+      FROM craplgm m
+          ,craplgi i
+     WHERE m.cdcooper = pr_cdcooper
+       AND m.nrdconta = pr_nrdconta
+       AND m.idseqttl = pr_idseqttl
+       AND m.dsorigem = 'INTERNET'
+       AND m.cdoperad = '996'
+       AND m.dttransa = pr_dttransa
+       AND i.nmdcampo = 'IP'
+       AND m.cdcooper = i.cdcooper
+       AND m.nrdconta = i.nrdconta
+       AND m.idseqttl = i.idseqttl
+       AND m.dttransa = i.dttransa
+       AND m.hrtransa = i.hrtransa
+       AND m.nrsequen = i.nrsequen
+       AND m.dstransa = pr_dstransa
+     ORDER BY m.progress_recid DESC;
 
   --Tipo de registro do tipo data
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -4573,6 +4604,9 @@ END pc_gera_titulos_iptu_prog;
   --               22/06/2016 - Ajustado leitura da crapagb para buscar apenas as agencias ativas e
   --                            alterado a critica de agencia nao encontrada de 100 para 956
   --                            (Douglas - Chamado 417655)
+  --
+  --               25/08/2016 - Caso encontre o parâmetro pagadorvip permite pagar valor menor que o valor do
+  --                            documento (M271 - Kelvin)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -4683,10 +4717,11 @@ END pc_gera_titulos_iptu_prog;
       rw_crapcob cr_crapcob%ROWTYPE;
 
       -- Verificacao de codigo de barras fraudulento
-      CURSOR cr_crapcbf(pr_cd_barra crapcbf.dscodbar%TYPE) IS
+      CURSOR cr_crapcbf(pr_cd_barra crapcbf.dsfraude%TYPE) IS
         SELECT 1
           FROM crapcbf
-         WHERE UPPER(dscodbar) = UPPER(pr_cd_barra);
+         WHERE tpfraude = 1 -- boletos
+           AND UPPER(dsfraude) = UPPER(pr_cd_barra);
       rw_crapcbf cr_crapcbf%ROWTYPE;
 
       --Variaveis Locais
@@ -4712,6 +4747,8 @@ END pc_gera_titulos_iptu_prog;
       vr_des_corpo      VARCHAR2(1000);
       vr_inestcri       INTEGER;
       vr_clobxmlc       CLOB;
+
+      vr_nrdipatu VARCHAR2(1000);
 
       --Variaveis Erro
       vr_des_erro VARCHAR2(1000);
@@ -5031,8 +5068,22 @@ END pc_gera_titulos_iptu_prog;
         IF cr_crapcbf%FOUND THEN
           CLOSE cr_crapcbf;
 
+          -- Pegar ultimo ip
+          FOR rw_craplgm IN cr_craplgm(pr_cdcooper => pr_cooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_idseqttl => pr_idseqttl
+                                      ,pr_dttransa => trunc(SYSDATE)
+                                      ,pr_dsorigem => 'INTERNET'
+                                      ,pr_cdoperad => '996'
+                                      ,pr_flgtrans => 1
+                                      ,pr_dstransa => 'Efetuado login de acesso a conta on-line.') LOOP
+            vr_nrdipatu := rw_craplgm.dsdadatu;
+            exit;
+          END LOOP;-- Loop craplgm
+
           -- monta o corpo do email
           vr_des_corpo := '<b>Atencao! Houve tentativa de pagamento de codigo de barras fraudulento.<br>'||
+                          'IP: ' || vr_nrdipatu || '<br>' ||
                           'Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta)||'<br>'||
                           '<b>Cod. Barras: </b>'||pr_codigo_barras;
           -- Envio de e-mail informando que houve a tentativa
@@ -6095,11 +6146,23 @@ END pc_gera_titulos_iptu_prog;
               pr_vlfatura:= Nvl(pr_vlfatura,0) - pr_vldescto;
             END IF;
           END IF;
+                                       
           /* Para cobranca registrada nao permite pagar valor menor que o valor do docto
              calculando desconto juros abatimento e multa */
           IF ROUND(pr_valor_informado,2) < ROUND(pr_vlfatura,2) AND
              pr_cod_operador <> 'DDA' AND
              NOT (nvl(rw_crapcob.dsinform,' ') LIKE 'LIQAPOSBX%') THEN
+            
+            /*Caso encontre o pagadorvip permite pagar valor menor que o valor do documento*/
+            vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
+                                                     ,pr_nmsistem => 'CRED'
+                                                     ,pr_tptabela => 'GENERI'
+                                                      ,pr_cdempres => 0
+                                                     ,pr_cdacesso => 'PAGADORVIP'
+                                                     ,pr_tpregist => pr_nrdconta);
+            
+            IF TRIM(vr_dstextab) IS NULL THEN
+              
             --Montar mensagem de erro
             vr_des_erro:= 'Cob. Reg. - Valor informado '||
                           to_char(pr_valor_informado, 'fm999g999g990d00')||
@@ -6124,6 +6187,7 @@ END pc_gera_titulos_iptu_prog;
               vr_dscritic:= vr_des_erro;
               --Levantar Excecao
               RAISE vr_exc_erro;
+            END IF;
             END IF;
           -- se o valor informado for maior que o vlr do boleto, criticar - Projeto 210
           ELSIF ROUND(pr_valor_informado,2) > ROUND(pr_vlfatura,2) AND

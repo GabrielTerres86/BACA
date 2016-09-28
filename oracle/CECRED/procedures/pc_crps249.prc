@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 22/06/2016
+   Data    : Novembro/98                     Ultima atualizacao: 23/08/2016
 
    Dados referentes ao programa:
 
@@ -513,6 +513,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
+														
+							 23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+							              na leitura do cursor cr_crapepr. (Reinert)
                             
 ............................................................................ */
   -- Buscar os dados da cooperativa
@@ -1761,16 +1764,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           ,craplem lem
           ,craplcr lcr
           ,craphis his
+					,crapfin fin
      WHERE epr.cdcooper = lem.cdcooper
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND epr.cdcooper = lcr.cdcooper
        AND epr.cdlcremp = lcr.cdlcremp
+			 AND fin.cdcooper = epr.cdcooper
+ 			 AND fin.cdfinemp = epr.cdfinemp
        AND lem.cdcooper = pr_cdcooper
        AND ','|| GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => pr_cdcooper, pr_cdacesso => 'HISTOR_SEM_CRED_CC') ||',' LIKE ('%,' || lem.cdhistor || ',%') --> Produtos atuais
        AND lcr.cdlcremp != 100      --> LInha 100 eh tratava separadamente
        AND lem.dtmvtolt = pr_dtmvtolt
-       AND lcr.flgcrcta = 0
+       AND (lcr.flgcrcta = 0
+			  OR (lcr.flgcrcta = 1 AND fin.tpfinali = 2)) --> Operações de portabilidade
        AND his.cdcooper = epr.cdcooper
        AND his.cdhistor = lcr.cdhistor
      ORDER BY epr.nrdconta,epr.nrctremp;

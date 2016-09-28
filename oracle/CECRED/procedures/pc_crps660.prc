@@ -11,7 +11,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 20/04/2016
+     Data    : Outubro/9999                     Ultima atualizacao: 25/08/2016
 
      Dados referentes ao programa:
 
@@ -63,6 +63,9 @@ BEGIN
                  
                  20/04/2016 - Ajuste para buscar o valor de individualizacao das operacoes
                               da tabela crapprm. (James).
+                              
+                 25/08/2016 - Ajuste na rotina pc_verifica_motivo_saida ao definir modalidade 
+                              SD498470 (Odirlei-AMcom)              
   ............................................................................ */
 
   DECLARE
@@ -299,6 +302,8 @@ BEGIN
                                       ,pr_cdmodali IN crapris.cdmodali%TYPE    --> Modalidade
                                       ,pr_cdorgris IN crapris.cdorigem%TYPE    --> Código de origem
                                       ,pr_tab_crapebn IN OUT NOCOPY typ_tab_crapebn  --> PL Table da tabela
+                                      ,pr_dtultdma IN crapdat.dtultdma%TYPE     --> Ultimo dia do mes anterior
+                                      ,pr_dtvencop IN crapris.dtvencop%TYPE     --> data de vencimento do risco
                                       ,pr_nrctrnov  OUT crawepr.nrctremp%TYPE   --> Contrato novo
                                       ,pr_cdinfadi  OUT VARCHAR2                --> Código de informação
                                       ,pr_des_erro  OUT VARCHAR2) IS            --> Saída de erro
@@ -399,15 +404,14 @@ BEGIN
             vr_ixcrapepr := LPAD(pr_nrdconta, 15, '0') || LPAD(pr_nrctremp, 15, '0');
             IF vr_tab_crapepr.exists(vr_ixcrapepr) THEN
               -- Verifica volume mensal de emprétimos
-              IF vr_tab_crapepr(vr_ixcrapepr).qtmesdec >= vr_tab_crapepr(vr_ixcrapepr).qtpreemp THEN
+              IF pr_dtultdma >= pr_dtvencop THEN
                 pr_cdinfadi := '0301';
-                -- Encerrar processo
-                RETURN;
               ELSE
                 pr_cdinfadi := '0302';
-                -- Encerrar processo
-                RETURN;
               END IF;
+              -- Encerrar processo
+              RETURN;
+              
             END IF;
 						
             -- Verifica código do risco
@@ -420,7 +424,7 @@ BEGIN
         END IF;
         -- Valida desconto de cheque e de titulo
         IF pr_cdmodali IN(0302,0301) THEN
-          pr_cdinfadi := '0301';
+          pr_cdinfadi := '0301';          
           -- Encerrar processo
           RETURN;
         END IF;
@@ -437,6 +441,7 @@ BEGIN
     /* Processar saída da operação */
     PROCEDURE pc_cria_saida_operacao(pr_cdcooper    IN PLS_INTEGER                 --> Código da cooperativa
                                     ,pr_dtrefere    IN DATE                        --> Data de referencia
+                                    ,pr_rw_crapdat  IN btch0001.cr_crapdat%ROWTYPE --> Dados da crapdat
                                     ,pr_des_erro    OUT VARCHAR2) IS               --> Saída de erros
     BEGIN
       DECLARE
@@ -665,6 +670,8 @@ BEGIN
                                     ,pr_cdmodali    => rw_crapris.cdmodali
                                     ,pr_cdorgris    => rw_crapris.cdorigem
                                     ,pr_tab_crapebn => vr_tab_crapebn
+                                    ,pr_dtultdma    => pr_rw_crapdat.dtultdma
+                                    ,pr_dtvencop    => rw_crapris.dtvencop
                                     ,pr_nrctrnov    => vr_nrctrnov
                                     ,pr_cdinfadi    => vr_cdinfadi
                                     ,pr_des_erro    => pr_des_erro);
@@ -1146,6 +1153,7 @@ BEGIN
     -- Executar procedimento de saída de operação
     pc_cria_saida_operacao(pr_cdcooper    => pr_cdcooper
                           ,pr_dtrefere    => vr_dtrefere
+                          ,pr_rw_crapdat  => rw_crapdat
                           ,pr_des_erro    => vr_dscritic);
 
     -- Verifica se ocorreram erros

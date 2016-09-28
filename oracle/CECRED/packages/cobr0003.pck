@@ -29,7 +29,8 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0003 AS
 
   -- Procedure para consulta na tela CBRFRA
   PROCEDURE pc_consulta_cbrfra( pr_cdcooper IN crapcop.cdcooper%type     -- Codigo da cooperativa
-                               ,pr_dscodbar IN VARCHAR2                  -- Codigo de barras
+                               ,pr_tpfraude IN crapcbf.tpfraude%type     -- Tipo de fraude
+                               ,pr_dsfraude IN crapcbf.dsfraude%type     -- Codigo de barras/cpf/cnpj
                                ,pr_dtperini IN VARCHAR2                  -- Data de inicio do periodo
                                ,pr_dtfimper IN VARCHAR2                  -- Data de fim do periodo
                                ,pr_nriniseq IN PLS_INTEGER               -- Numero inicial do registro para enviar
@@ -43,7 +44,8 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0003 AS
 
   -- rotina para inserir na tabela CRAPCBF
   PROCEDURE pc_insere_cbrfra( pr_cdcooper IN crapcop.cdcooper%type     -- Codigo da cooperativa
-                             ,pr_dscodbar IN VARCHAR2                  -- Codigo de barras
+                             ,pr_tpfraude IN crapcbf.tpfraude%type     -- Tipo de fraude
+                             ,pr_dsfraude IN crapcbf.dsfraude%type     -- Codigo de barras/cpf/cnpj
                              ,pr_dtsolici IN VARCHAR2                  -- Data de inicio do periodo
                              ,pr_xmllog   IN VARCHAR2                  -- XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER              -- Código da crítica
@@ -54,7 +56,8 @@ CREATE OR REPLACE PACKAGE CECRED.cobr0003 AS
 
   -- rotina para excluir na tabela CRAPCBF
   PROCEDURE pc_exclui_cbrfra( pr_cdcooper IN crapcop.cdcooper%type     -- Codigo da cooperativa
-                             ,pr_dscodbar IN VARCHAR2                  -- Codigo de barras
+                             ,pr_tpfraude IN crapcbf.tpfraude%type     -- Tipo de fraude
+                             ,pr_dsfraude IN crapcbf.dsfraude%type     -- Codigo de barras/cpf/cnpj
                              ,pr_xmllog   IN VARCHAR2                  -- XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER              -- Código da crítica
                              ,pr_dscritic OUT VARCHAR2                 -- Descrição da crítica
@@ -182,12 +185,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
   --
   --              30/06/2016 - Ajuste na rotina pc_consulta_chqsin_fora que por falta de formato nas datas,
   --                           era gerado erros de mês invalidos, coforme relatado no chamado 474385. (Kelvin)
+  --
+  --              29/08/2016 - #456682 Alterações nas rotinas pc_consulta_cbrfra, pc_insere_cbrfra e 
+  --                           pc_excluir_cbrfra para atender a tela CBRFRA com controle de fraudes em TEDs (Carlos)
   --                             
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para consulta na tela CBRFRA
   PROCEDURE pc_consulta_cbrfra( pr_cdcooper IN crapcop.cdcooper%type     -- Codigo da cooperativa
-                               ,pr_dscodbar IN VARCHAR2                  -- Codigo de barras
+                               ,pr_tpfraude IN crapcbf.tpfraude%type     -- Tipo de fraude
+                               ,pr_dsfraude IN crapcbf.dsfraude%type     -- Codigo de barras/cpf/cnpj
                                ,pr_dtperini IN VARCHAR2                  -- Data de inicio do periodo
                                ,pr_dtfimper IN VARCHAR2                  -- Data de fim do periodo
                                ,pr_nriniseq IN PLS_INTEGER               -- Numero inicial do registro para enviar
@@ -202,12 +209,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
  
       -- Selecionar os codigos de barras fraudulentos
       CURSOR cr_crapcbf IS
-        SELECT dscodbar,
+        SELECT tpfraude, 
+               dsfraude,
                to_char(dtsolici,'dd/mm/yyyy') dtsolici,
                count(1) over() retorno
           FROM crapcbf
          WHERE cdcooper = pr_cdcooper
-           AND UPPER(dscodbar) = nvl(UPPER(pr_dscodbar),UPPER(dscodbar))
+           AND tpfraude = pr_tpfraude
+           AND UPPER(dsfraude) = nvl(UPPER(pr_dsfraude),UPPER(dsfraude))
            AND dtsolici BETWEEN nvl(to_date(pr_dtperini,'dd/mm/yyyy'),dtsolici) 
                             AND nvl(to_date(pr_dtfimper,'dd/mm/yyyy'),dtsolici)
          ORDER BY dtsolici;
@@ -239,9 +248,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
           
         -- Enviar somente se a linha for superior a linha inicial
         IF nvl(pr_nriniseq,0) <= vr_posreg THEN
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dscodbar', pr_tag_cont => rw_crapcbf.dscodbar, pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtsolici', pr_tag_cont => rw_crapcbf.dtsolici, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, 
+                                 pr_tag_pai => 'inf', 
+                                 pr_posicao => vr_contador, 
+                                 pr_tag_nova => 'tpfraude', 
+                                 pr_tag_cont => rw_crapcbf.tpfraude,
+                                 pr_des_erro => vr_dscritic);
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, 
+                                 pr_tag_pai => 'inf', 
+                                 pr_posicao => vr_contador, 
+                                 pr_tag_nova => 'dsfraude', 
+                                 pr_tag_cont => rw_crapcbf.dsfraude,
+                                 pr_des_erro => vr_dscritic);
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, 
+                                 pr_tag_pai => 'inf', 
+                                 pr_posicao => vr_contador, 
+                                 pr_tag_nova => 'dtsolici', 
+                                 pr_tag_cont => rw_crapcbf.dtsolici, 
+                                 pr_des_erro => vr_dscritic);
+
           vr_contador := vr_contador + 1;                                
         END IF;
           
@@ -270,7 +299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
     
   -- rotina para inserir na tabela CRAPCBF
   PROCEDURE pc_insere_cbrfra( pr_cdcooper IN crapcop.cdcooper%type     -- Codigo da cooperativa
-                             ,pr_dscodbar IN VARCHAR2                  -- Codigo de barras
+                             ,pr_tpfraude IN crapcbf.tpfraude%type     -- Tipo de fraude
+                             ,pr_dsfraude IN crapcbf.dsfraude%type     -- Codigo de barras/cpf/cnpj
                              ,pr_dtsolici IN VARCHAR2                  -- Data de inicio do periodo
                              ,pr_xmllog   IN VARCHAR2                  -- XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER              -- Código da crítica
@@ -282,10 +312,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
  
       -- Selecionar os codigos de barras fraudulentos
       CURSOR cr_crapcbf IS
-        SELECT dscodbar
+        SELECT dsfraude
           FROM crapcbf
          WHERE cdcooper = pr_cdcooper
-           AND UPPER(dscodbar) = UPPER(pr_dscodbar);
+           AND tpfraude = pr_tpfraude
+           AND UPPER(dsfraude) = UPPER(pr_dsfraude);
       rw_crapcbf cr_crapcbf%ROWTYPE;
       
       -- Variável de críticas
@@ -302,7 +333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
       FETCH cr_crapcbf INTO rw_crapcbf;
       IF cr_crapcbf%FOUND THEN
         CLOSE cr_crapcbf;
-        vr_dscritic := 'Codigo de barras ja existente!';
+        vr_dscritic := 'Registro de suspeita de fraude ja existente!';
         RAISE vr_exc_saida;
       END IF;
       CLOSE cr_crapcbf;
@@ -310,11 +341,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
       BEGIN
         INSERT INTO crapcbf
           (cdcooper, 
-           dscodbar, 
+           tpfraude,
+           dsfraude, 
            dtsolici)
          VALUES
           (pr_cdcooper,
-           pr_dscodbar,
+           pr_tpfraude,
+           pr_dsfraude,
            to_date(pr_dtsolici,'dd/mm/yyyy'));
       EXCEPTION
         WHEN OTHERS THEN
@@ -342,7 +375,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
 
   -- rotina para excluir na tabela CRAPCBF
   PROCEDURE pc_exclui_cbrfra( pr_cdcooper IN crapcop.cdcooper%type     -- Codigo da cooperativa
-                             ,pr_dscodbar IN VARCHAR2                  -- Codigo de barras
+                             ,pr_tpfraude IN crapcbf.tpfraude%type     -- Tipo de fraude
+                             ,pr_dsfraude IN crapcbf.dsfraude%type     -- Codigo de barras
                              ,pr_xmllog   IN VARCHAR2                  -- XML com informações de LOG
                              ,pr_cdcritic OUT PLS_INTEGER              -- Código da crítica
                              ,pr_dscritic OUT VARCHAR2                 -- Descrição da crítica
@@ -363,16 +397,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
       BEGIN
         DELETE crapcbf
          WHERE cdcooper = pr_cdcooper
-           AND UPPER(dscodbar) = UPPER(pr_dscodbar);
+           AND tpfraude = pr_tpfraude
+           AND UPPER(dsfraude) = UPPER(pr_dsfraude);
       EXCEPTION
         WHEN OTHERS THEN
+          
+          btch0001.pc_log_internal_exception(pr_cdcooper);  
+
           vr_dscritic := 'Erro ao excluir a CRAPCBF: ' ||SQLERRM;
           RAISE vr_exc_saida;
       END;
       
       -- Verifica se excluiu algo
       IF SQL%ROWCOUNT = 0 THEN
-        vr_dscritic := 'Codigo de barras inexistente!';
+        vr_dscritic := 'Registro de suspeita de fraude inexistente!';
         RAISE vr_exc_saida;
       END IF;
 
@@ -386,6 +424,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0003 AS
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || vr_dscritic || '</Erro></Root>');
 
       WHEN OTHERS THEN
+        
+        btch0001.pc_log_internal_exception(pr_cdcooper);
+      
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em CBRFRA: ' || SQLERRM;
 

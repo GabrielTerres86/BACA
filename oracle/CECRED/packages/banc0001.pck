@@ -13,7 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas genericas refente a BANCOS
 
-  -- Alteracoes:
+  -- Alteracoes: Incluido novos campos na tela: flgoppag, dtaltstr e dtaltpag. 
+  --             PRJ-312 (Reinert)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -39,7 +40,7 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                  ,pr_nmdcampo OUT VARCHAR2                       -->Nome do Campo
                                  ,pr_des_erro OUT VARCHAR2);                     -->Saida OK/NOK
 
-  /* Rotina referente a consulta de bancos Modo Caracter */
+  /*\* Rotina referente a consulta de bancos Modo Caracter *\
   PROCEDURE pc_consulta_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                  ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                  ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
@@ -61,10 +62,10 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                  ,pr_clob_ret OUT CLOB                 --> Tabela clob                                 
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Codigo Erro
                                  ,pr_dscritic OUT VARCHAR2);           --> Descricao Erro
-
+*/
 
   /* Rotina referente a inclusao de bancos Modo Caracter */
-  PROCEDURE pc_inclui_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
+  /*PROCEDURE pc_inclui_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
                                ,pr_idorigem IN INTEGER DEFAULT NULL  -->Origem Processamento                                 
@@ -82,7 +83,7 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                ,pr_des_erro OUT VARCHAR2             --Saida OK/NOK
                                ,pr_clob_ret OUT CLOB                 --Tabela XML                                 
                                ,pr_cdcritic OUT PLS_INTEGER          --Codigo Erro
-                               ,pr_dscritic OUT VARCHAR2);           --Descricao Erro
+                               ,pr_dscritic OUT VARCHAR2);           --Descricao Erro*/
 
   /* Rotina referente a inclusão de bancos Modo Web */
   PROCEDURE pc_inclui_banco_web(pr_dtmvtolt IN VARCHAR2 DEFAULT NULL            -->Data Movimento
@@ -91,8 +92,9 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                ,pr_cddopcao IN VARCHAR2 DEFAULT NULL            -->Codigo da Opção                   
                                ,pr_nmresbcc IN VARCHAR2                         -->Nome do banco Abreviado
                                ,pr_nmextbcc IN VARCHAR2                         -->Nome do banco por extenso
-                               ,pr_flgdispb IN VARCHAR2                         -->Operando no SPB
+                               ,pr_flgdispb IN INTEGER                          -->Operando no SPB-STR
                                ,pr_dtinispb IN VARCHAR2                         -->Inicio da operação
+                               ,pr_flgoppag IN INTEGER                          -->Operando no SPB-PAG															 
                                ,pr_xmllog   IN VARCHAR2 DEFAULT NULL            -->XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER                     -->Código da crítica
                                ,pr_dscritic OUT VARCHAR2                        -->Descrição da crítica
@@ -101,7 +103,7 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                ,pr_des_erro OUT VARCHAR2);                      -->Saida OK/NOK
 
   /* Rotina referente a inclusao de bancos Modo Caracter */
-  PROCEDURE pc_altera_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
+  /*PROCEDURE pc_altera_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
                                ,pr_idorigem IN INTEGER DEFAULT NULL  -->Origem Processamento                                 
@@ -119,7 +121,7 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                ,pr_des_erro OUT VARCHAR2             --Saida OK/NOK
                                ,pr_clob_ret OUT CLOB                 --Tabela XML                                 
                                ,pr_cdcritic OUT PLS_INTEGER          --Codigo Erro
-                               ,pr_dscritic OUT VARCHAR2);           --Descricao Erro
+                               ,pr_dscritic OUT VARCHAR2);           --Descricao Erro*/
 
   /* Rotina referente a alteração de bancos Modo Web */
   PROCEDURE pc_altera_banco_web(pr_dtmvtolt IN VARCHAR2 DEFAULT NULL            -->Data Movimento
@@ -128,8 +130,9 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                ,pr_cddopcao IN VARCHAR2 DEFAULT NULL            -->Codigo da opcao                   
                                ,pr_nmresbcc IN VARCHAR2                         -->Nome do banco abreviado          
                                ,pr_nmextbcc IN VARCHAR2                         -->Nome do banco por extenso
-                               ,pr_flgdispb IN VARCHAR2                         -->Operando no SPB
-                               ,pr_dtinispb IN VARCHAR2 DEFAULT NULL                         -->Inicio da operacao
+                               ,pr_flgdispb IN INTEGER                         -->Operando no SPB-STR
+                               ,pr_dtinispb IN VARCHAR2 DEFAULT NULL            -->Inicio da operacao
+															 ,pr_flgoppag IN INTEGER                          -->Operando no SPB-PAG															 															 
                                ,pr_xmllog   IN VARCHAR2 DEFAULT NULL            -->XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER                     -->Código da crítica
                                ,pr_dscritic OUT VARCHAR2                        -->Descrição da crítica
@@ -138,7 +141,7 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                ,pr_des_erro OUT VARCHAR2);                      -->Saida OK/NOK
   
   /* Rotina referente a pesquisa de bancos Modo Caracter */
-  PROCEDURE pc_pesquisa_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
+  /*PROCEDURE pc_pesquisa_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                  ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                  ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
                                  ,pr_idorigem IN INTEGER DEFAULT NULL  -->Origem Processamento                                 
@@ -148,22 +151,24 @@ CREATE OR REPLACE PACKAGE CECRED.BANC0001 AS
                                  ,pr_des_erro OUT VARCHAR2             --> Saida OK/NOK
                                  ,pr_clob_ret OUT CLOB                 --> Tabela clob                                 
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Codigo Erro
-                                 ,pr_dscritic OUT VARCHAR2);           --> Descricao Erro
+                                 ,pr_dscritic OUT VARCHAR2);           --> Descricao Erro*/
 
   /* Rotina referente a pesquisa de bancos Modo Web */
-  PROCEDURE pc_pesquisa_banco_web(pr_nrregist IN INTEGER             --Numero Registros
-                                 ,pr_nriniseq IN INTEGER             --Numero Sequencia Inicial                                     
+  PROCEDURE pc_pesquisa_banco_web(pr_cdbccxlt IN crapban.cdbccxlt%TYPE --Codigo do banco
+                                 ,pr_nmresbcc IN VARCHAR2              --Nome do banco
+                                 ,pr_nrispbif IN crapban.nrispbif%TYPE --Numero do SPB 
+                                 ,pr_nrregist IN INTEGER               --Numero Registros
+                                 ,pr_nriniseq IN INTEGER               --Numero Sequencia Inicial
                                  ,pr_xmllog   IN VARCHAR2 DEFAULT NULL --XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                                  ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
                                  ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
-                                 ,pr_des_erro OUT VARCHAR2);           --Saida OK/NOK
+                                 ,pr_des_erro OUT VARCHAR2);
   
 
 END BANC0001;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
 /*---------------------------------------------------------------------------------------------------------------
@@ -212,11 +217,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                              ,pr_nmextbcc OUT VARCHAR2    --> nome do banco por extenso
                              ,pr_auxnrisp OUT INTEGER     --> parametro auxiliar caso seja informado apenas o codigo do banco 
                              ,pr_auxcdbcc OUT INTEGER     --> parametro auxiliar caso seja informado apenas o numero do ISPB
-                             ,pr_flgdispb OUT VARCHAR2    --> operando no ISPB
+                             ,pr_flgdispb OUT INTEGER    --> operando no SPB-STR
                              ,pr_dtinispb OUT DATE        --> Inicio da Operação
+														 ,pr_flgoppag OUT INTEGER     --> operando no SPB-PAG
+														 ,pr_dtaltstr OUT DATE        --> Data última alteração do campo "Operando no SPB-STR"
+														 ,pr_dtaltpag OUT DATE        --> Data última alteração do campo "Operando no SPB-PAG"
                              ,pr_cdcritic OUT PLS_INTEGER -->Código da crítica
                              ,pr_dscritic OUT VARCHAR2    -->Descrição da crítica
-                             ,pr_nmdcampo OUT VARCHAR2    -->Nome do campo com erro
+                             ,pr_nmdcampo OUT VARCHAR2    -->Nome do campo com erro														 
                              ,pr_tab_erro OUT gene0001.typ_tab_erro -->Tabela Erros
                              ,pr_des_erro OUT VARCHAR2) IS -->Erros do processo
      /*---------------------------------------------------------------------------------------------------------------
@@ -255,6 +263,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
           ,crapban.nrispbif
           ,crapban.flgdispb
           ,crapban.dtinispb
+					,crapban.flgoppag
+					,crapban.dtaltstr
+					,crapban.dtaltpag
       FROM crapban
      WHERE crapban.cdbccxlt = pr_cdbccxlt;
     rw_crapban cr_crapban%ROWTYPE;
@@ -267,6 +278,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
           ,crapban.nrispbif
           ,crapban.flgdispb
           ,crapban.dtinispb
+					,crapban.flgoppag
+					,crapban.dtaltstr
+					,crapban.dtaltpag					
       FROM crapban
      WHERE crapban.nrispbif = pr_nrispbif;
     rw_crapban1 cr_crapban1%ROWTYPE;
@@ -326,13 +340,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
             pr_auxnrisp := rw_crapban.nrispbif;
             pr_flgdispb := rw_crapban.flgdispb;
             pr_dtinispb := rw_crapban.dtinispb;
+						pr_flgoppag := rw_crapban.flgoppag;
+						pr_dtaltstr := rw_crapban.dtaltstr;
+						pr_dtaltpag := rw_crapban.dtaltpag;						
                         
-            IF pr_flgdispb = 1 THEN
-              pr_flgdispb := 'SIM';
-            ELSE
-              pr_flgdispb := 'NAO';
-            END IF;
-
           ELSE
             -- Fechar o cursor pois haverá raise
             CLOSE cr_crapban;
@@ -363,12 +374,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
             pr_auxnrisp := rw_crapban1.nrispbif;            
             pr_flgdispb := rw_crapban1.flgdispb;
             pr_dtinispb := rw_crapban1.dtinispb;
-
-            IF pr_flgdispb = 1 THEN
-              pr_flgdispb := 'SIM';
-            ELSE
-              pr_flgdispb := 'NAO';
-            END IF;
+						pr_flgoppag := rw_crapban1.flgoppag;
+						pr_dtaltstr := rw_crapban1.dtaltstr;
+						pr_dtaltpag := rw_crapban1.dtaltpag;
 
           ELSE
             -- Fechar o cursor pois haverá raise
@@ -438,6 +446,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
   PROCEDURE pc_pesquisa_banco(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                              ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                              ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
+                             ,pr_cdbccxlt IN crapban.cdbccxlt%TYPE DEFAULT NULL--Codigo do banco
+                             ,pr_nmresbcc IN VARCHAR2 DEFAULT NULL             --Nome do banco
+                             ,pr_nrispbif IN crapban.nrispbif%TYPE DEFAULT NULL--Numero do SPB
                              ,pr_idorigem IN INTEGER DEFAULT NULL  -->Origem Processamento
                              ,pr_cdoperad IN crapnrc.cdoperad%TYPE DEFAULT NULL -->Operador
                              ,pr_nmdatela IN VARCHAR2 DEFAULT NULL -->Nome da tela                                                          
@@ -451,7 +462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
      Sigla   : CRED
 
      Autor   : Jéssica Laverde Gracino(DB1)
-     Data    : 23/06/2015                        Ultima atualizacao:
+     Data    : 23/06/2015                        Ultima atualizacao: 19/08/2016
 
      Dados referentes ao programa:
 
@@ -459,6 +470,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
      Objetivo  : Processar a rotina de pesquisa da tela BANCOS.
 
      Alteracoes: 23/06/2015 - Conversao Progress >> Oracle (PLSQL) - Jéssica (DB1)
+                 
+                 19/08/2016 - Adicionado dois novos filtros, codigo e nome do banco,
+                              conforme solicitado no chamado 5044701. (Kelvin)
     ---------------------------------------------------------------------------------------------------------------*/
 
 
@@ -474,12 +488,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     rw_crapcop cr_crapcop%ROWTYPE;
 
     -- Cursor para buscar o nome do banco
-    CURSOR cr_crapban IS
+    CURSOR cr_crapban(pr_cdbccxlt IN crapban.cdbccxlt%TYPE
+                     ,pr_nmresbcc IN crapban.nmresbcc%TYPE
+                     ,pr_nrispbif IN crapban.nrispbif%TYPE) IS
     SELECT substr(nmresbcc,1,15) nmresbcc
           ,crapban.cdbccxlt
           ,crapban.nrispbif
           ,crapban.flgdispb
       FROM crapban
+     WHERE ((crapban.cdbccxlt = pr_cdbccxlt) OR (pr_cdbccxlt IS NULL))
+       AND ((UPPER(crapban.nmresbcc) LIKE '%'|| UPPER(pr_nmresbcc) ||'%') OR (pr_nmresbcc IS NULL))
+       AND ((crapban.nrispbif = pr_nrispbif) OR (pr_nrispbif IS NULL))
      ORDER BY crapban.nmresbcc;
 
     rw_crapban cr_crapban%ROWTYPE;
@@ -527,7 +546,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         CLOSE cr_crapcop;
       END IF;
                   
-      FOR rw_crapban IN cr_crapban LOOP
+      FOR rw_crapban IN cr_crapban(pr_cdbccxlt
+                                  ,pr_nmresbcc
+                                  ,pr_nrispbif) LOOP
 
         vr_index:= vr_index + 1;
 
@@ -571,7 +592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
   END pc_pesquisa_banco;
 
-  /* Rotina referente a pesquisa de bancos Modo Caracter */
+  /*\* Rotina referente a pesquisa de bancos Modo Caracter *\
   PROCEDURE pc_pesquisa_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                  ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                  ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
@@ -583,7 +604,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                  ,pr_clob_ret OUT CLOB                 --> Tabela bancos                                 
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Codigo Erro
                                  ,pr_dscritic OUT VARCHAR2) IS         --> Descricao Erro
-  /*---------------------------------------------------------------------------------------------------------------
+  \*---------------------------------------------------------------------------------------------------------------
   
     Programa: pc_pesquisa_banco_car       Antiga: 
     Sistema : Conta-Corrente - Cooperativa de Credito
@@ -599,7 +620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
     Alteracoes: 28/07/2015 - Desenvolvimento - Jéssica (DB1)
                  
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------*\
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -727,11 +748,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Chamar rotina de gravação de erro
         pr_dscritic:= 'Erro na banc0001.pc_pesquisa_banco_car --> '|| SQLERRM;
 
-  END pc_pesquisa_banco_car;
+  END pc_pesquisa_banco_car;*/
 
   /* Rotina referente a pesquisa de bancos Modo Web */
-  PROCEDURE pc_pesquisa_banco_web(pr_nrregist IN INTEGER             --Numero Registros
-                                 ,pr_nriniseq IN INTEGER             --Numero Sequencia Inicial
+  PROCEDURE pc_pesquisa_banco_web(pr_cdbccxlt IN crapban.cdbccxlt%TYPE --Codigo do banco
+                                 ,pr_nmresbcc IN VARCHAR2              --Nome do banco
+                                 ,pr_nrispbif IN crapban.nrispbif%TYPE --Numero do SPB 
+                                 ,pr_nrregist IN INTEGER               --Numero Registros
+                                 ,pr_nriniseq IN INTEGER               --Numero Sequencia Inicial
                                  ,pr_xmllog   IN VARCHAR2 DEFAULT NULL --XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                                  ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -746,14 +770,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     Sigla   : CRED
 
     Autor   : Jéssica Laverde Gracino(DB1)
-    Data    : 28/07/2015                        Ultima atualizacao: 
+    Data    : 28/07/2015                        Ultima atualizacao: 19/08/2016
 
     Dados referentes ao programa:
 
     Frequencia: Diario (on-line)
     Objetivo  : Rotina referente a pesquisa de bancos modo Web
 
-    Alteracoes: 
+    Alteracoes: 19/08/2016 - Adicionado dois novos filtros, codigo e nome do banco,
+                             conforme solicitado no chamado 5044701. (Kelvin)
                  
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -827,6 +852,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                 ,pr_cdagenci => vr_cdagenci  --Codigo Agencia
                                 ,pr_nrdcaixa => vr_nrdcaixa  --Numero Caixa
                                 ,pr_idorigem => vr_idorigem  --Origem Processamento
+                                ,pr_cdbccxlt => pr_cdbccxlt  --Codigo do banco
+                                ,pr_nmresbcc => pr_nmresbcc  --Nome do banco
+                                ,pr_nrispbif => pr_nrispbif  --Numero do SPB
                                 ,pr_cdoperad => vr_cdoperad  --Operador
                                 ,pr_nmdatela => vr_nmdatela  --Nome da tela                                                                
                                 ,pr_nmdcampo => pr_nmdcampo  --Nome do Campo
@@ -976,7 +1004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
   END pc_pesquisa_banco_web;
 
   /* Rotina referente a consulta de bancos Modo Caracter */
-  PROCEDURE pc_consulta_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
+/*  PROCEDURE pc_consulta_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                  ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                  ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
                                  ,pr_idorigem IN INTEGER DEFAULT NULL  -->Origem Processamento                                 
@@ -997,7 +1025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                  ,pr_clob_ret OUT CLOB                 --> Tabela clob                                 
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Codigo Erro
                                  ,pr_dscritic OUT VARCHAR2) IS         --> Descricao Erro
-  /*---------------------------------------------------------------------------------------------------------------
+  \*---------------------------------------------------------------------------------------------------------------
   
     Programa: pc_consulta_banco_car       Antiga: 
     Sistema : Conta-Corrente - Cooperativa de Credito
@@ -1013,7 +1041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
     Alteracoes: 28/07/2015 - Desenvolvimento - Jéssica (DB1)
                  
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------*\
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -1098,7 +1126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Chamar rotina de gravação de erro
         pr_dscritic:= 'Erro na banc0001.pc_consulta_banco_car --> '|| SQLERRM;
 
-  END pc_consulta_banco_car;
+  END pc_consulta_banco_car;*/
 
   /* Rotina referente a consulta de bancos Modo Web */
   PROCEDURE pc_consulta_banco_web(pr_dtmvtolt IN VARCHAR2 DEFAULT NULL           -->Data Movimento
@@ -1151,8 +1179,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     vr_nmextbcc VARCHAR2(100);
     vr_auxnrisp INTEGER; 
     vr_auxcdbcc INTEGER; 
-    vr_flgdispb VARCHAR2(5);
+    vr_flgdispb INTEGER;
+    vr_flgoppag INTEGER;
     vr_dtinispb DATE;
+		vr_dtaltstr DATE;
+		vr_dtaltpag DATE;
     
     --Variaveis Arquivo Dados
     vr_dtmvtolt DATE;
@@ -1216,8 +1247,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                 ,pr_nmextbcc => vr_nmextbcc  --Nome do banco por extenso
                                 ,pr_auxnrisp => vr_auxnrisp  --parametro auxiliar caso seja informado apenas o código do banco
                                 ,pr_auxcdbcc => vr_auxcdbcc  --parametro auxiliar caso seja informado apenas o numero do ISPB
-                                ,pr_flgdispb => vr_flgdispb  --Operando no SPB
+                                ,pr_flgdispb => vr_flgdispb  --Operando no SPB-STR
                                 ,pr_dtinispb => vr_dtinispb  --Inicio da Operação
+                                ,pr_flgoppag => vr_flgoppag  --Operando no SPB-PAG
+																,pr_dtaltstr => vr_dtaltstr  --Data última alteração do campo "Operando no SPB-STR"
+																,pr_dtaltpag => vr_dtaltpag  --Data última alteração do campo "Operando no SPB-PAG"
                                 ,pr_cdcritic => pr_cdcritic  --Codigo Erro
                                 ,pr_dscritic => pr_dscritic  --Descrição do Erro
                                 ,pr_nmdcampo => pr_nmdcampo  --Nome do Campo
@@ -1256,9 +1290,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'auxcdbcc', pr_tag_cont => TO_CHAR(vr_auxcdbcc), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'flgdispb', pr_tag_cont => TO_CHAR(vr_flgdispb), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtinispb', pr_tag_cont => TO_CHAR(vr_dtinispb, 'dd/mm/YYYY'), pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'flgoppag', pr_tag_cont => TO_CHAR(vr_flgoppag), pr_des_erro => vr_dscritic);			
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtaltstr', pr_tag_cont => TO_CHAR(vr_dtaltstr, 'dd/mm/YYYY'), pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtaltpag', pr_tag_cont => TO_CHAR(vr_dtaltpag, 'dd/mm/YYYY'), pr_des_erro => vr_dscritic);						
           
-          
-                                        
       --Retorno
       pr_des_erro:= 'OK';    
 
@@ -1302,8 +1337,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                            ,pr_cddopcao IN VARCHAR2 DEFAULT NULL  -->Codigo da opção
                            ,pr_nmresbcc IN VARCHAR2               -->Nome do banco abreviado
                            ,pr_nmextbcc IN VARCHAR2               -->Nome do banco por extenso
-                           ,pr_flgdispb IN VARCHAR2               -->Operando no SPB
+                           ,pr_flgdispb IN INTEGER                -->Operando no SPB-STR
                            ,pr_dtinispb IN DATE                   -->Inicio da operação
+                           ,pr_flgoppag IN INTEGER                -->Operando no SPB-PAG
                            ,pr_cdcritic OUT PLS_INTEGER           -->Código da crítica
                            ,pr_dscritic OUT VARCHAR2              -->Descrição da crítica
                            ,pr_nmdcampo OUT VARCHAR2              -->Nome do campo com erro                           
@@ -1348,6 +1384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
           ,crapban.nrispbif
           ,crapban.flgdispb
           ,crapban.dtinispb
+					,crapban.flgoppag
       FROM crapban
      WHERE crapban.cdbccxlt = pr_cdbccxlt;
     rw_crapban cr_crapban%ROWTYPE;
@@ -1360,6 +1397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
           ,crapban.nrispbif
           ,crapban.flgdispb
           ,crapban.dtinispb
+					,crapban.flgoppag					
       FROM crapban
      WHERE crapban.nrispbif = pr_nrispbif;
     rw_crapban1 cr_crapban1%ROWTYPE;
@@ -1369,7 +1407,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(4000);
     
-    vr_flgdispb  VARCHAR2(3);
     vr_cdbccxlt  INTEGER;
     
 
@@ -1462,13 +1499,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
       END IF;
 
       CLOSE cr_crapban1;
+			
+			IF pr_nrispbif = 0 OR pr_nrispbif IS NULL THEN
+
+         -- Montar mensagem de critica
+        vr_cdcritic := 0;
+        -- Busca critica
+        vr_dscritic:= 'Informe o número ISPB.';
+
+        pr_nmdcampo:= 'nrispbif';
+
+        RAISE vr_exc_erro;
+                
+      END IF;
 
       IF TRIM(pr_nmresbcc) IS NULL THEN
 
         -- Montar mensagem de critica
         vr_cdcritic := 0;
         -- Busca critica
-        vr_dscritic:= 'Informe o nome abreviado do banco.';
+        vr_dscritic:= 'Informe o nome abreviado da IF.';
 
         pr_nmdcampo:= 'nmresbcc';
 
@@ -1481,43 +1531,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Montar mensagem de critica
         vr_cdcritic := 0;
         -- Busca critica
-        vr_dscritic:= 'Informe o nome extenso do banco.';
+        vr_dscritic:= 'Informe o nome extenso da IF.';
 
         pr_nmdcampo:= 'nmextbcc';
 
         RAISE vr_exc_erro;
 
-      END IF;          
-          
-      IF pr_nrispbif = 0 OR pr_nrispbif IS NULL THEN
-
-         -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        -- Busca critica
-        vr_dscritic:= 'Informe o ISPB do banco.';
-
-        pr_nmdcampo:= 'nrispbif';
-
-        RAISE vr_exc_erro;
-                
-      END IF;
-
-      vr_flgdispb := pr_flgdispb;
-
-      IF vr_flgdispb = 'SIM' THEN
-        vr_flgdispb := 1;
-      ELSE
-        vr_flgdispb := 0;
-      END IF;
+      END IF;                   
 
       IF vr_cdbccxlt <> 1 AND   /** Banco do Brasil **/
-         vr_flgdispb = 1  AND
+         pr_flgdispb = 1  AND
          (pr_nrispbif = 0 OR pr_nrispbif IS NULL)  THEN
 
         -- Montar mensagem de critica
         vr_cdcritic := 0;
         -- Busca critica
-        vr_dscritic:= 'E necessario informar o numero do ISPB.';
+        vr_dscritic:= 'É necessário informar o número do ISPB.';
 
         pr_nmdcampo:= 'cdbccxlt';
 
@@ -1551,16 +1580,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                  flgdispb,
                  cdoperad,
                  dtmvtolt,
-                 dtinispb)
+                 dtinispb,
+								 flgoppag,
+								 dtaltstr,
+								 dtaltpag)
                VALUES
                 (vr_cdbccxlt,   -- cdbccxlt
                  pr_nrispbif,   -- ispb
                  UPPER(pr_nmresbcc),    -- nome do banco abreviado
                  UPPER(pr_nmextbcc),    -- nome do banco por extenso
-                 vr_flgdispb,    -- Operando no SPB
+                 pr_flgdispb,    -- Operando no SPB-STR
                  pr_cdoperad,    -- codigo do operador
                  rw_crapdat.dtmvtolt, -- dtmvtolt
-                 pr_dtinispb    -- inicio da operação
+                 pr_dtinispb,    -- inicio da operação
+								 pr_flgoppag,    -- Operando no SPB-PAG
+								 rw_crapdat.dtmvtolt, -- Data última alteração SPB-STR
+								 rw_crapdat.dtmvtolt  -- Data última alteração SPB-PAG
                 );
       
       EXCEPTION
@@ -1575,9 +1610,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     -- Inclui mensagem no log
     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                pr_ind_tipo_log => 1, -- Somente mensagem
-                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||'  '
+                               pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '
                                                || 'Operador ' || pr_cdoperad 
-                                               || 'incluiu Banco/Caixa'
+                                               || ' | Incluiu Banco/Caixa'
                                                || to_char(pr_cdbccxlt));
 
     EXCEPTION
@@ -1619,7 +1654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
   END pc_inclui_banco;
 
   /* Rotina referente a inclusao de bancos Modo Caracter */
-  PROCEDURE pc_inclui_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
+/*  PROCEDURE pc_inclui_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
                                ,pr_idorigem IN INTEGER DEFAULT NULL  -->Origem Processamento                                 
@@ -1638,7 +1673,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                ,pr_clob_ret OUT CLOB                 --Tabela XML                                 
                                ,pr_cdcritic OUT PLS_INTEGER          --Codigo Erro
                                ,pr_dscritic OUT VARCHAR2) IS         --Descricao Erro
-  /*---------------------------------------------------------------------------------------------------------------
+  \*---------------------------------------------------------------------------------------------------------------
   
     Programa: pc_inclui_banco_car       Antiga: 
     Sistema : Conta-Corrente - Cooperativa de Credito
@@ -1654,7 +1689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
     Alteracoes: 
                  
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------*\
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -1736,7 +1771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Chamar rotina de gravação de erro
         pr_dscritic:= 'Erro na banc0001.pc_inclui_banco_car --> '|| SQLERRM;
 
-  END pc_inclui_banco_car;
+  END pc_inclui_banco_car;*/
 
   /* Rotina referente a inclusão de bancos Modo Web */
   PROCEDURE pc_inclui_banco_web(pr_dtmvtolt IN VARCHAR2 DEFAULT NULL            -->Data Movimento
@@ -1745,8 +1780,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                ,pr_cddopcao IN VARCHAR2 DEFAULT NULL            -->Codigo da Opção                   
                                ,pr_nmresbcc IN VARCHAR2                         -->Nome do banco Abreviado
                                ,pr_nmextbcc IN VARCHAR2                         -->Nome do banco por extenso
-                               ,pr_flgdispb IN VARCHAR2                         -->Operando no SPB
+                               ,pr_flgdispb IN INTEGER                          -->Operando no SPB-STR
                                ,pr_dtinispb IN VARCHAR2                         -->Inicio da operação
+                               ,pr_flgoppag IN INTEGER                          -->Operando no SPB-PAG
                                ,pr_xmllog   IN VARCHAR2 DEFAULT NULL            -->XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER                     -->Código da crítica
                                ,pr_dscritic OUT VARCHAR2                        -->Descrição da crítica
@@ -1852,16 +1888,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                               ,pr_cddopcao => pr_cddopcao  --Codigo da opção
                               ,pr_nmresbcc => pr_nmresbcc  --Nome do banco abreviado
                               ,pr_nmextbcc => pr_nmextbcc  --Nome do banco por extenso
-                              ,pr_flgdispb => pr_flgdispb  --Operando no SPB
+                              ,pr_flgdispb => pr_flgdispb  --Operando no SPB-STR
                               ,pr_dtinispb => vr_dtinispb  --Incio da operação
+                              ,pr_flgoppag => pr_flgoppag  -->Operando no SPB-PAG
                               ,pr_cdcritic => pr_cdcritic  --Codigo Erro
                               ,pr_dscritic => pr_dscritic  --Descrição do Erro
                               ,pr_nmdcampo => pr_nmdcampo  --Nome do Campo
                               ,pr_tab_erro => vr_tab_erro  --Tabela Erros
                               ,pr_des_erro => vr_des_reto); --Saida OK/NOK                                      
-
-
-     
 
       --Se Ocorreu erro
       IF vr_des_reto = 'NOK' THEN
@@ -1892,6 +1926,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'nmextbcc', pr_tag_cont => TO_CHAR(pr_nmextbcc), pr_des_erro => vr_dscritic);      
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'flgdispb', pr_tag_cont => TO_CHAR(pr_flgdispb), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'dtinispb', pr_tag_cont => TO_CHAR(pr_dtinispb), pr_des_erro => vr_dscritic);                
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_auxconta, pr_tag_nova => 'flgoppag', pr_tag_cont => TO_CHAR(pr_flgoppag), pr_des_erro => vr_dscritic);			
                                         
       --Retorno
       pr_des_erro:= 'OK';    
@@ -1936,8 +1971,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                            ,pr_cddopcao IN VARCHAR2 DEFAULT NULL  -->Codigo da opção
                            ,pr_nmresbcc IN OUT VARCHAR2           -->nome do banco abreviado
                            ,pr_nmextbcc IN OUT VARCHAR2           -->Nome do banco por extenso                     
-                           ,pr_flgdispb IN OUT VARCHAR2           -->Operando no SPb
+                           ,pr_flgdispb IN OUT INTEGER           -->Operando no SPb
                            ,pr_dtinispb IN OUT DATE               -->Incio da operação
+													 ,pr_flgoppag IN INTEGER                --Operando no SPB-STR
                            ,pr_cdcritic OUT PLS_INTEGER           -->Código da crítica
                            ,pr_dscritic OUT VARCHAR2              -->Descrição da crítica
                            ,pr_nmdcampo OUT VARCHAR2              -->Nome do campo com erro
@@ -1979,6 +2015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
           ,crapban.nrispbif
           ,crapban.flgdispb
           ,crapban.dtinispb
+					,crapban.flgoppag
       FROM crapban
      WHERE crapban.cdbccxlt = pr_cdbccxlt;
     rw_crapban cr_crapban%ROWTYPE;
@@ -1995,12 +2032,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
     vr_nmresbcc VARCHAR2(100); 
     vr_nmextbcc VARCHAR2(100);
-    vr_flgdispb VARCHAR2(3);
+		vr_flgoppag INTEGER;
+		vr_flgdispb INTEGER;
     vr_dtinispb DATE; 
+		vr_dtaltstr DATE;
+		vr_dtaltpag DATE;		
     
     vr_log_nmresbcc VARCHAR2(200);
     vr_log_nmextbcc VARCHAR2(200);
     vr_log_flgdispb VARCHAR2(200);
+		vr_log_flgoppag INTEGER;
     vr_log_dtinispb DATE;
     vr_log_nrispbif INTEGER;
     vr_retornvl  VARCHAR2(3):= 'NOK';
@@ -2017,7 +2058,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     vr_tab_locktab GENE0001.typ_tab_locktab;
     
     BEGIN
-
+			
+		  -- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+       INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+			
       --Inicializar Variaveis
       vr_cdcritic := 0;
       vr_dscritic := NULL;
@@ -2060,8 +2118,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                 ,pr_nmextbcc => vr_nmextbcc  --Nome do banco por extenso
                                 ,pr_auxnrisp => vr_auxnrisp  --parametro auxiliar caso seja informado apenas o codigo do banco
                                 ,pr_auxcdbcc => vr_auxcdbcc  --parametro auxiliar caso seja informado apenas o numero do ISPB
-                                ,pr_flgdispb => vr_flgdispb  --Operando no SPB
+                                ,pr_flgdispb => vr_flgdispb  --Operando no SPB-STR
                                 ,pr_dtinispb => vr_dtinispb  --Inicio da Operacao
+																,pr_flgoppag => vr_flgoppag  --Operando no SPB-PAG
+																,pr_dtaltstr => vr_dtaltstr  --Data última alteração do campo "Operando no SPB-STR"
+		                            ,pr_dtaltpag => vr_dtaltpag  --Data última alteração do campo "Operando no SPB-PAG"
                                 ,pr_cdcritic => pr_cdcritic  --Codigo Erro
                                 ,pr_dscritic => pr_dscritic  --Descrição do Erro
                                 ,pr_nmdcampo => pr_nmdcampo  --Nome do Campo
@@ -2098,19 +2159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
           vr_nmextbcc := UPPER(pr_nmextbcc);
         
         END IF;
-
-        IF TRIM(pr_flgdispb) IS NOT NULL THEN
-
-          vr_flgdispb := UPPER(pr_flgdispb);
         
-        END IF;
-        
-        IF TRIM(pr_dtinispb) IS NOT NULL THEN
-
-          vr_dtinispb := pr_dtinispb;
-                
-        END IF;
-
       END IF;
 
       -- Verifica se a cooperativa esta cadastrada
@@ -2125,13 +2174,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         vr_log_nmextbcc := rw_crapban.nmextbcc;
         vr_log_flgdispb := rw_crapban.flgdispb;
         vr_log_dtinispb := rw_crapban.dtinispb;
-
+        vr_log_flgoppag := rw_crapban.flgoppag;
         
-      ELSE
-        -- Apenas fechar o cursor
-        CLOSE cr_crapban;
       END IF;
-
+      -- Fecha cursor
       CLOSE cr_crapban;        
 
       BEGIN
@@ -2183,7 +2229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Montar mensagem de critica
         vr_cdcritic := 0;
         -- Busca critica
-        vr_dscritic:= 'Informe o nome abreviado do banco.';
+        vr_dscritic:= 'Informe o nome abreviado da IF.';
 
         pr_nmdcampo:= 'nmresbcc';
 
@@ -2196,29 +2242,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Montar mensagem de critica
         vr_cdcritic := 0;
         -- Busca critica
-        vr_dscritic:= 'Informe o nome extenso do banco.';
+        vr_dscritic:= 'Informe o nome extenso da IF.';
 
         pr_nmdcampo:= 'nmextbcc';
 
         RAISE vr_exc_erro;
 
       END IF;          
-          
-      
-      IF vr_flgdispb = 'SIM' THEN
-        vr_flgdispb := 1;
-      ELSE
-        vr_flgdispb := 0;
-      END IF;
-
+                
       IF pr_cdbccxlt <> 1 AND   /** Banco do Brasil **/
-         vr_flgdispb = 1  AND
+         pr_flgdispb = 1  AND
          (pr_nrispbif = 0 OR pr_nrispbif IS NULL)  THEN
 
         -- Montar mensagem de critica
         vr_cdcritic := 0;
         -- Busca critica
-        vr_dscritic:= 'E necessario informar o numero do ISPB.';
+        vr_dscritic:= 'É necessário informar o número do ISPB.';
 
         pr_nmdcampo:= 'nrispbif';
 
@@ -2233,13 +2272,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
          UPDATE crapban 
             SET crapban.nmresbcc = UPPER(vr_nmresbcc)
                ,crapban.nmextbcc = vr_nmextbcc
-               ,crapban.flgdispb = vr_flgdispb
-               ,crapban.dtinispb = vr_dtinispb
+               ,crapban.flgdispb = pr_flgdispb
+               ,crapban.dtinispb = pr_dtinispb
+							 ,crapban.flgoppag = pr_flgoppag
+							 ,crapban.dtaltstr = (CASE WHEN pr_flgdispb <> rw_crapban.flgdispb THEN 
+							                       rw_crapdat.dtmvtolt 
+																	 ELSE crapban.dtaltstr END)
+							 ,crapban.dtaltpag = (CASE WHEN pr_flgoppag <> rw_crapban.flgoppag THEN 
+							                       rw_crapdat.dtmvtolt 
+																	 ELSE crapban.dtaltstr END)
           WHERE crapban.cdbccxlt = pr_cdbccxlt;
+					
 
         EXCEPTION
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao atualizar Banco: '||SQLERRM;
+            vr_dscritic := 'Erro ao atualizar Banco: '||SQLERRM;
             RAISE vr_exc_erro;
         END;
 
@@ -2249,24 +2296,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
          UPDATE crapban 
             SET crapban.nmresbcc = UPPER(vr_nmresbcc)
                ,crapban.nmextbcc = vr_nmextbcc
-               ,crapban.flgdispb = vr_flgdispb
+               ,crapban.flgdispb = pr_flgdispb
                ,crapban.dtinispb = vr_dtinispb
+							 ,crapban.flgoppag = pr_flgoppag
+ 							 ,crapban.dtaltstr = (CASE WHEN pr_flgdispb <> rw_crapban.flgdispb THEN 
+							                       rw_crapdat.dtmvtolt 
+																	 ELSE crapban.dtaltstr END)
+							 ,crapban.dtaltpag = (CASE WHEN pr_flgoppag <> rw_crapban.flgoppag THEN 
+							                       rw_crapdat.dtmvtolt 
+																	 ELSE crapban.dtaltstr END)
           WHERE crapban.nrispbif = pr_nrispbif;
 
         EXCEPTION
           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao atualizar Banco: '||SQLERRM;
+            vr_dscritic := 'Erro ao atualizar Banco: '||SQLERRM;
             RAISE vr_exc_erro;
         END;
 
       END IF;
-
-      IF vr_flgdispb = 1 THEN
-        vr_flgdispb := 'SIM';
-      ELSE
-        vr_flgdispb := 'NAO';
-      END IF;
-                    
+			      
       --Retorno
       pr_des_erro:= 'OK';
       COMMIT;
@@ -2276,11 +2324,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Inclui mensagem no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                    pr_ind_tipo_log => 1, -- Somente mensagem
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||'  '
-                                                   || 'Operador ' || pr_cdoperad 
-                                                   || 'alterou o nome abreviado do banco de '
+                                   pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '
+                                                   || 'Operador: ' || pr_cdoperad || ' | '
+																									 || 'ISPB: ' || to_char(pr_nrispbif, '00000000') || ' | ' 
+                                                   || ' Alterou o nome abreviado do banco de '
                                                    || to_char(vr_log_nmresbcc) || ' para '
-                                                   || to_char(vr_nmresbcc) );
+                                                   || to_char(vr_nmresbcc),
+																	 pr_nmarqlog     => 'bancos.log' );
 
       END IF;
 
@@ -2289,11 +2339,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Inclui mensagem no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                    pr_ind_tipo_log => 1, -- Somente mensagem
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||'  '
-                                                   || 'Operador ' || pr_cdoperad 
-                                                   || 'alterou o nome completo do banco de '
+                                   pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '
+                                                   || 'Operador: ' || pr_cdoperad || ' | '
+																									 || 'ISPB: ' || to_char(pr_nrispbif, '00000000') || ' | ' 
+                                                   || ' Alterou o nome completo do banco de '
                                                    || to_char(vr_log_nmextbcc) || ' para '
-                                                   || to_char(vr_nmextbcc) );
+                                                   || to_char(vr_nmextbcc),
+                                   pr_nmarqlog     => 'bancos.log');
 
       END IF;  
                
@@ -2301,23 +2353,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Inclui mensagem no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                    pr_ind_tipo_log => 1, -- Somente mensagem
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||'  '
-                                                   || 'Operador ' || pr_cdoperad 
-                                                   || 'alterou o numero ISPB do banco de '
+                                   pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '
+                                                   || 'Operador: ' || pr_cdoperad || ' | '
+																									 || 'ISPB: ' || to_char(pr_nrispbif, '00000000') || ' | ' 
+                                                   || ' Alterou o numero ISPB do banco de '
                                                    || to_char(vr_log_nrispbif) || ' para '
-                                                   || to_char(pr_nrispbif) );
+                                                   || to_char(pr_nrispbif),
+																	 pr_nmarqlog     => 'bancos.log' );
 
       END IF;
                
-      IF vr_flgdispb <> vr_log_flgdispb   THEN 
+      IF pr_flgdispb <> vr_log_flgdispb   THEN 
         -- Inclui mensagem no log
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                    pr_ind_tipo_log => 1, -- Somente mensagem
-                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||'  '
-                                                   || 'Operador ' || pr_cdoperad 
-                                                   || 'alterou opcao Operando no SPB de '
-                                                   || to_char(vr_log_flgdispb) || ' para '
-                                                   || to_char(vr_flgdispb) );
+                                   pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '
+                                                   || 'Operador: ' || pr_cdoperad || ' | '
+																									 || 'ISPB: ' || to_char(pr_nrispbif, '00000000') || ' | ' 
+                                                   || ' Alterou opção Operando no SPB-STR de '
+                                                   || REPLACE(REPLACE(to_char(vr_log_flgdispb), '1','SIM'), '0', 'NÃO') 
+																									 || ' para '			
+                                                   || REPLACE(REPLACE(to_char(pr_flgdispb), '1','SIM'), '0', 'NÃO'),
+                                   pr_nmarqlog     => 'bancos.log');
+
+      END IF;
+			
+			IF pr_flgoppag <> vr_log_flgoppag   THEN
+        -- Inclui mensagem no log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                   pr_ind_tipo_log => 1, -- Somente mensagem
+                                   pr_des_log      => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '
+                                                   || 'Operador: ' || pr_cdoperad || ' | '
+																									 || 'ISPB: ' || to_char(pr_nrispbif, '00000000') || ' | ' 
+                                                   || ' Alterou opção Operando no SPB-PAG de '
+                                                   || REPLACE(REPLACE(to_char(vr_log_flgoppag), '1','SIM'), '0', 'NÃO') 
+																									 || ' para '			
+                                                   || REPLACE(REPLACE(to_char(pr_flgoppag), '1','SIM'), '0', 'NÃO'),
+																	 pr_nmarqlog     => 'bancos.log');
 
       END IF;
                
@@ -2359,7 +2431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
   END pc_altera_banco;
 
   /* Rotina referente a inclusao de bancos Modo Caracter */
-  PROCEDURE pc_altera_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
+/*  PROCEDURE pc_altera_banco_car(pr_cdcooper IN crapcop.cdcooper%type -->Codigo Cooperativa
                                ,pr_cdagenci IN crapage.cdagenci%TYPE DEFAULT NULL -->Codigo Agencia
                                ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE DEFAULT NULL -->Numero Caixa
                                ,pr_idorigem IN INTEGER DEFAULT NULL  -->Origem Processamento                                 
@@ -2378,7 +2450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                ,pr_clob_ret OUT CLOB                 --Tabela XML                                 
                                ,pr_cdcritic OUT PLS_INTEGER          --Codigo Erro
                                ,pr_dscritic OUT VARCHAR2) IS         --Descricao Erro
-  /*---------------------------------------------------------------------------------------------------------------
+  \*---------------------------------------------------------------------------------------------------------------
   
     Programa: pc_altera_banco_car       Antiga: 
     Sistema : Conta-Corrente - Cooperativa de Credito
@@ -2394,7 +2466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
     Alteracoes: 
                  
-  ---------------------------------------------------------------------------------------------------------------*/
+  ---------------------------------------------------------------------------------------------------------------*\
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -2488,7 +2560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
         -- Chamar rotina de gravação de erro
         pr_dscritic:= 'Erro na banc0001.pc_altera_banco_car --> '|| SQLERRM;
 
-  END pc_altera_banco_car;
+  END pc_altera_banco_car;*/
 
   /* Rotina referente a alteração de bancos Modo Web */
   PROCEDURE pc_altera_banco_web(pr_dtmvtolt IN VARCHAR2 DEFAULT NULL            -->Data Movimento
@@ -2497,8 +2569,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                                ,pr_cddopcao IN VARCHAR2 DEFAULT NULL            -->Codigo da opcao                   
                                ,pr_nmresbcc IN VARCHAR2                         -->Nome do banco abreviado          
                                ,pr_nmextbcc IN VARCHAR2                         -->Nome do banco por extenso
-                               ,pr_flgdispb IN VARCHAR2                         -->Operando no SPB
-                               ,pr_dtinispb IN VARCHAR2 DEFAULT NULL                         -->Inicio da operacao
+                               ,pr_flgdispb IN INTEGER                         -->Operando no SPB-STR
+                               ,pr_dtinispb IN VARCHAR2 DEFAULT NULL            -->Inicio da operacao
+															 ,pr_flgoppag IN INTEGER                          -->Operando no SPB-PAG
                                ,pr_xmllog   IN VARCHAR2 DEFAULT NULL            -->XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER                     -->Código da crítica
                                ,pr_dscritic OUT VARCHAR2                        -->Descrição da crítica
@@ -2511,7 +2584,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     Programa: pc_altera_banco_web      Antiga: 
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
-
     Autor   : Jéssica Laverde Gracino(DB1)
     Data    : 28/07/2015                        Ultima atualizacao: 
 
@@ -2543,7 +2615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
     
     vr_nmresbcc VARCHAR2(100);
     vr_nmextbcc VARCHAR2(100);
-    vr_flgdispb VARCHAR2(5);
+    vr_flgdispb INTEGER;
     vr_dtinispb DATE;
             
     --Variaveis Arquivo Dados
@@ -2609,8 +2681,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
                               ,pr_cddopcao => pr_cddopcao  --Codigo da opção
                               ,pr_nmresbcc => vr_nmresbcc  --Nome do banco abreviado
                               ,pr_nmextbcc => vr_nmextbcc  --Nome do banco por extenso
-                              ,pr_flgdispb => vr_flgdispb  --Operando no SPB
+                              ,pr_flgdispb => vr_flgdispb  --Operando no SPB-STR
                               ,pr_dtinispb => vr_dtinispb  --Incio da operação
+															,pr_flgoppag => pr_flgoppag  --Operando no SPB-PAG
                               ,pr_cdcritic => pr_cdcritic  --Codigo Erro
                               ,pr_dscritic => pr_dscritic  --Descrição do Erro
                               ,pr_nmdcampo => pr_nmdcampo  --Nome do Campo
@@ -2668,4 +2741,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANC0001 AS
 
 END BANC0001;
 /
-

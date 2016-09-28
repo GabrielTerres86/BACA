@@ -114,6 +114,9 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                             
                24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se 
                             possuir deve utilizar a agencia de destino (Douglas - Chamado 431378)
+
+               25/08/2016 - Permite integrar arquivos de cheques DVA615 devido
+                            aos cheques VLB (Elton - SD 476261)
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -872,8 +875,9 @@ BEGIN
       ww_nrlinha := ww_nrlinha + 1;
 
       -- Verifica se é final de arquivo
-      IF substr(vr_dstexto,1,10)  = '9999999999' AND
-         substr(vr_dstexto,48,06) = 'CEL615'     THEN
+      IF SUBSTR(vr_dstexto,1,10)  = '9999999999' AND
+        (SUBSTR(vr_dstexto,48,06) = 'CEL615'     OR
+         SUBSTR(vr_dstexto,48,06) = 'DVA615')    THEN -- Cheque VLB
          IF substr(vr_dstexto,151,10) <> ww_nrlinha THEN
             vr_cdcritic := 166;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -916,7 +920,8 @@ BEGIN
 
       -- Faz validacoes especificas para a primeira linha
       IF ww_nrlinha = 1 THEN
-        IF SUBSTR(vr_dstexto,48,06) <> 'CEL615' THEN
+        IF (SUBSTR(vr_dstexto,48,06) <> 'CEL615'  AND
+            SUBSTR(vr_dstexto,48,06) <> 'DVA615') THEN   -- Cheque VLB
           vr_cdcritic := 473; --Codigo de remessa invalido.
         ELSIF SUBSTR(vr_dstexto,151,10) <> ww_nrlinha THEN
           vr_cdcritic := 166; -- Sequencia errada
@@ -2171,4 +2176,3 @@ exception
     -- Efetuar rollback
     rollback;
 end;
-/

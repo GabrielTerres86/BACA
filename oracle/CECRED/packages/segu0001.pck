@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED."SEGU0001" AS 
+CREATE OR REPLACE PACKAGE CECRED."SEGU0001" AS
 
 /*..............................................................................
 
@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE CECRED."SEGU0001" AS
     
   -- Tipo de tabela dos planos de seguros
   TYPE typ_tab_plano_seg IS TABLE OF typ_rec_plano_seg INDEX BY PLS_INTEGER;
-  
+    
   -- Tabela DE/PARA de plano de seguros inativos
   TYPE typ_rec_pldepara IS RECORD
     (cdsegura craptsg.cdsegura%type
@@ -549,6 +549,19 @@ CREATE OR REPLACE PACKAGE CECRED."SEGU0001" AS
                            ,pr_crawseg   OUT ROWID                -- Registro Crawseg
                            ,pr_des_erro  OUT VARCHAR2             -- Retorno Erro OK/NOK 
                            ,pr_tab_erro  OUT gene0001.typ_tab_erro); --Tabela Erros                            
+                           
+  -- Rotina para verificar pacote de tarifas via web
+  PROCEDURE pc_buscar_plaseg_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da Conta                                 
+                                ,pr_cdsegura IN crapseg.cdsegura%type -- Codigo Seguradora
+                                ,pr_tpseguro IN craptsg.tpseguro%type -- Tipo Seguro
+                                ,pr_tpplaseg IN craptsg.tpplaseg%type -- Tipo Plano Seguro
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da Critica
+                                ,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);                           
+                           
 END SEGU0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED."SEGU0001" AS
@@ -559,13 +572,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED."SEGU0001" AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 22/08/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para busca de dados de seguros
-
+  --
+  -- Alteracao : 22/08/2016 - Criada procedure pc_buscar_plaseg_web que buscar o valor do plano
+  --                          de acordo com os parametros (Tiago/Thiago #462910)
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -3338,7 +3353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."SEGU0001" AS
                              ,pr_tab_erro => pr_tab_erro);                
     END;      
   END pc_atualizar_matricula;                             
-  
+
   /* Criacao dos registros da tabela DE/PARA de plano de seguros inativos */
   PROCEDURE pc_cria_tabela_depara (pr_tab_pldepara OUT typ_tab_pldepara) IS --
   BEGIN
@@ -4659,6 +4674,156 @@ CREATE OR REPLACE PACKAGE BODY CECRED."SEGU0001" AS
                              ,pr_tab_erro => pr_tab_erro);                
     END;      
   END pc_cria_seguro;                             
+
+  -- Rotina para verificar pacote de tarifas via web
+  PROCEDURE pc_buscar_plaseg_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da Conta                                 
+                                ,pr_cdsegura IN crapseg.cdsegura%type -- Codigo Seguradora
+                                ,pr_tpseguro IN craptsg.tpseguro%type -- Tipo Seguro
+                                ,pr_tpplaseg IN craptsg.tpplaseg%type -- Tipo Plano Seguro
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da Critica
+                                ,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+  BEGIN                              
+    DECLARE 
+    
+      --Tabelas de Dados
+      vr_tab_plano_seg  segu0001.typ_tab_plano_seg;
+    
+      --Variaveis Indice
+      vr_index_plano      PLS_INTEGER;
+      vr_achou_plano      BOOLEAN;
+      
+     -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      --Variaveis de Erro
+      vr_cdcritic integer;
+      vr_dscritic varchar2(4000);
+      vr_des_erro varchar2(3); 
+      vr_tab_erro GENE0001.typ_tab_erro;
+      
+      vr_exc_sair EXCEPTION;
+      vr_exc_erro EXCEPTION;
+    
+    BEGIN   
+  
+       -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log                              
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;       
+  
+        --Buscar Plano Seguro
+      pc_buscar_plano_seguro (pr_cdcooper => vr_cdcooper        -- Cooperativa
+                             ,pr_cdagenci => vr_cdagenci        -- Agencia
+                             ,pr_nrdcaixa => vr_nrdcaixa        -- Numero Caixa
+                             ,pr_cdoperad => Vr_cdoperad        -- Operador
+                             ,pr_dtmvtolt => SYSDATE --pr_dtmvtolt        -- Data Movimento
+                             ,pr_nrdconta => pr_nrdconta        -- Numero Conta
+                             ,pr_idseqttl => 1                  -- Sequencial Titular
+                             ,pr_idorigem => vr_idorigem        -- Origem Informacao
+                             ,pr_nmdatela => vr_nmdatela        -- Programa Chamador
+                             ,pr_flgerlog => TRUE               -- Escrever Erro Log
+                             ,pr_cdsegura => pr_cdsegura        -- Codigo Seguradora
+                             ,pr_tpseguro => pr_tpseguro        -- Tipo Seguro
+                             ,pr_tpplaseg => pr_tpplaseg        -- Tipo Plano Seguro
+                             ,pr_tab_plano_seg => vr_tab_plano_seg   -- Tabela Plano Seguros
+                             ,pr_des_erro => vr_des_erro        -- Descricao Erro
+                             ,pr_tab_erro => vr_tab_erro);      -- Tabela Erros
+      --Se ocorreu erro
+      IF vr_des_erro = 'NOK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao buscar plano seguro.';
+        END IF;
+        --Levantar Excecao
+        RAISE vr_exc_sair;
+      END IF; 
+         
+      --Encontrar o Primeiro Plano
+      vr_achou_plano := FALSE;
+      vr_index_plano := vr_tab_plano_seg.FIRST;
+      
+      WHILE vr_index_plano IS NOT NULL LOOP
+        
+        IF vr_tab_plano_seg(vr_index_plano).cdcooper = vr_cdcooper AND
+           vr_tab_plano_seg(vr_index_plano).cdsegura = pr_cdsegura AND
+           vr_tab_plano_seg(vr_index_plano).tpseguro = pr_tpseguro AND
+           vr_tab_plano_seg(vr_index_plano).tpplaseg = pr_tpplaseg THEN
+           
+           vr_achou_plano := TRUE;
+           EXIT; 
+           
+        END IF;   
+        
+        --Proximo Registro
+        vr_index_plano:= vr_tab_plano_seg.NEXT(vr_index_plano);
+      END LOOP;
+      
+      --Se encontrou o plano devolve os dados      
+      IF vr_achou_plano THEN
+         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?>' ||
+                                        '<dados/>');
+        
+         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dados', pr_posicao => 0, pr_tag_nova => 'vlplaseg', pr_tag_cont => To_Char(NVL(vr_tab_plano_seg(vr_index_plano).vlplaseg,0),'fm999g999g999g990d00'), pr_des_erro => vr_dscritic);  --valor do plano 
+      ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao buscar plano seguro.';
+          --Levantar Excecao
+          RAISE vr_exc_sair;           
+      END IF;
+                            
+      --Retorno OK
+      pr_des_erro:= 'OK';   
+    EXCEPTION
+      WHEN vr_exc_sair THEN
+        -- Retorno não OK          
+        pr_des_erro:= 'NOK';
+        
+        -- Erro
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+        
+        -- Existe para satisfazer exigência da interface. 
+      	pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');                     
+        
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_erro:= 'NOK';
+        
+        -- Erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_seguros. '||SQLERRM;
+        
+        -- Existe para satisfazer exigência da interface. 
+      	pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');        
+    END;      
+  END pc_buscar_plaseg_web;
+
 
 END SEGU0001;
 /

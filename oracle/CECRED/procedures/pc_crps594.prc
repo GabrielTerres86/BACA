@@ -160,6 +160,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                    07/05/2015 - Adicionado o valor default FALSE para o campo incoptco da 
                                 vr_tab_regimp (Douglas - Chamado 266731)
                                 
+                   11/01/2016 - Alterado procedures da package PAGA0001 para a COBR0007
+                                  - pc_inst_protestar
+                                  - pc_inst_sustar_baixar
+                                (Douglas - Importacao de Arquivos CNAB)
+                                
                    15/02/2016 - Inclusao do parametro conta na chamada da
 									              TARI0001.pc_carrega_dados_tarifa_cobr. (Jaison/Marcos)
 
@@ -3438,7 +3443,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                            boleto, o sistema recebeu a liquida¿¿o do boleto 085 */
                         IF vr_crapcob THEN      
                           /* Sustar a baixa */
-                          PAGA0001.pc_inst_sustar_baixar (pr_cdcooper => pr_tab_regimp(vr_index_reg).cdcooper    --Codigo Cooperativa
+                          COBR0007.pc_inst_sustar_baixar (pr_cdcooper => pr_tab_regimp(vr_index_reg).cdcooper    --Codigo Cooperativa
                                                          ,pr_nrdconta => pr_tab_regimp(vr_index_reg).nrdconta    --Numero da Conta
                                                          ,pr_nrcnvcob => pr_tab_regimp(vr_index_reg).nrcnvcob    --Numero Convenio
                                                          ,pr_nrdocmto => pr_tab_regimp(vr_index_reg).nrdocmto    --Numero Documento
@@ -4618,7 +4623,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
             END IF;  
                    
             /* se chegou na data de protesto, gera o protesto */
-            PAGA0001.pc_inst_protestar(pr_cdcooper => pr_cdcooper              --Codigo Cooperativa
+            COBR0007.pc_inst_protestar(pr_cdcooper => pr_cdcooper              --Codigo Cooperativa
                                       ,pr_nrdconta => rw_crapceb.nrdconta      --Numero da Conta
                                       ,pr_nrcnvcob => rw_crapceb.nrcnvcob      --Numero Convenio
                                       ,pr_nrdocmto => rw_crapceb.nrdocmto      --Numero Documento
@@ -4712,7 +4717,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                    || 'Fim Processo Lancamento Tarifas'); 
                                                    
       /* -------------------------     Geracao Log crapcol    ------------------------- */
-                                                   
+
       vr_dataflog := trunc(sysdate);
       vr_horaflog := gene0002.fn_busca_time;
       
@@ -4731,7 +4736,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
                                                    || vr_cdprogra || ' --> '|| rw_crapcol.dslogtit); 
                                                                                   
       END LOOP;                   
-                                                   
+
       /*-------------------------  Gera Relatorios Finais ----------------------*/
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- processo normal

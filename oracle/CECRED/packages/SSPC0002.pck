@@ -89,7 +89,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
   --
   --  Programa: SSPC0002
   --  Autor   : Andrino Carlos de Souza Junior
-  --  Data    : Novembro/2015                     Ultima Atualizacao: 18/02/2016
+  --  Data    : Novembro/2015                     Ultima Atualizacao: 13/03/2016
   --
   --  Dados referentes ao programa:
   --
@@ -97,6 +97,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
   --
   --  Alteracoes: 18/02/2016 - Incluido filtro de reciprocidade para geração do termo de convenio.
   --                           (Reinert)
+  --              
+  --              13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+  --             			   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+  --					 	   (Andrei - RKAM).
   --              
   ---------------------------------------------------------------------------------------------------------------
   -- Rotina para alterar o indicador do Serasa para envio do boleto
@@ -253,7 +257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       -- para o usuario no mesmo momento
       IF pr_nrremass > 0 THEN
         --Prepara retorno cooperado
-        PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
+        COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
                                            ,pr_cdocorre => 92  /* Ocorrencia Serasa*/   --Codigo Ocorrencia
                                            ,pr_cdmotivo => 'S1' /* "Pedido de Inclusao no Serasa Nao Permitido para o Titulo" */  --Codigo Motivo
                                            ,pr_vltarifa => 0
@@ -336,7 +340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       END IF;
 
       --Prepara retorno cooperado
-      PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
+      COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
                                          ,pr_cdocorre => 93  /* Negativacao Serasa */   --Codigo Ocorrencia
                                          ,pr_cdmotivo => 'S1' /* "Solicitado negativacao Serasa" */  --Codigo Motivo
                                          ,pr_vltarifa => 0
@@ -524,7 +528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       -- para o usuario no mesmo momento
       IF pr_nrremass > 0 THEN
         --Prepara retorno cooperado
-        PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
+        COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
                                            ,pr_cdocorre => 92  /* Ocorrencia Serasa */   --Codigo Ocorrencia
                                            ,pr_cdmotivo => 'S2' /* "Pedido de Cancelamento de Inclusao no Serasa Nao Permitido para o Titulo" */  --Codigo Motivo
                                            ,pr_vltarifa => 0
@@ -588,7 +592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0002 AS
       END IF;
       
       --Prepara retorno cooperado
-      PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
+      COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid --ROWID da cobranca
                                          ,pr_cdocorre => 94  /* Cancelar Negativacao Serasa */   --Codigo Ocorrencia
                                          ,pr_cdmotivo => 'S1' /* Solicitado cancel. negativacao Serasa */  --Codigo Motivo
                                          ,pr_vltarifa => 0

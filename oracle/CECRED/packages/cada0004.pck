@@ -43,6 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                 vltotpre NUMBER(32,8),
                 vltotccr NUMBER(32,8),
                 qtcarmag INTEGER,
+                qttotseg NUMBER(18),
                 vltotseg NUMBER(32,8),
                 vltotdsc NUMBER(32,8),
                 flgbloqt INTEGER,
@@ -487,7 +488,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 21/06/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/07/2016
   --
   -- Dados referentes ao programa:
   --
@@ -516,6 +517,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --
   --               21/06/2016 - Correcao para o uso correto do indice da CRAPTAB em procedures 
   --                            desta package.(Carlos Rafael Tanholi).    
+  --
+  --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
+  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).             
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -5386,7 +5390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 08/06/2016
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2016
     --
     --  Dados referentes ao programa:
     --
@@ -5407,6 +5411,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              08/06/2016 - Removido subrotina pc_carrega_temps_poupanca, pois as PL TABLES
     --                           carregadas nela nao influenciavam no retorno para a tela ATENDA
     --                           (Douglas - Chamado 454248)
+    --
+    --              23/06/2016 - P333.1 - Alteração no retorno de valor do seguro por quantidade 
+    --                           (Marcos-Supero)
+    -- 
     -- ..........................................................................*/
     
     ---------------> CURSORES <-----------------
@@ -6124,6 +6132,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                 ,pr_des_erro => vr_des_reto         -- Descricao Erro
                                 ,pr_tab_erro => vr_tab_erro);       -- Tabela Erros
     
+    --> Buscar seguros novos incrementando na quantidade total
+    vr_qtsegass := vr_qtsegass + tela_atenda_seguro.fn_qtd_seguros_novos(pr_cdcooper,pr_nrdconta);
+    
     --> Buscar a soma total de descontos (titulos + cheques)  */
     DSCT0001.pc_busca_total_descontos(pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
                                      ,pr_cdagenci => pr_cdagenci  --> Codigo da agencia
@@ -6175,6 +6186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_valores_conta(vr_idxval).vltotpre := nvl(vr_vltotpre,0);
     pr_tab_valores_conta(vr_idxval).vltotccr := vr_vltotccr;
     pr_tab_valores_conta(vr_idxval).qtcarmag := vr_qtcarmag;
+    pr_tab_valores_conta(vr_idxval).qttotseg := vr_qtsegass;
     pr_tab_valores_conta(vr_idxval).vltotseg := vr_vltotseg;
     pr_tab_valores_conta(vr_idxval).vltotdsc := vr_vltotdsc;
     pr_tab_valores_conta(vr_idxval).flgbloqt := vr_flgbloqt;
@@ -6313,7 +6325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Outubro/2015.                         Ultima atualizacao: 01/12/2015
+       Data    : Outubro/2015.                         Ultima atualizacao: 29/08/2016
 
        Dados referentes ao programa:
 
@@ -6326,6 +6338,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                 deixando o xml invalido. SD364357 (Odirlei-AMcom)
   
                    01/12/2015 - Adicionar o campo cdclcnae no retorno do xml (Jaison/Andrino)
+
+                   23/06/2016 - P333.1 - Alteração no retorno de valor do seguro por quantidade 
+                                (Marcos-Supero)
+
+                   
+                   29/08/2016 - Ajustado para adicionar os atributos flconven e dscritic
+                                na tag Anotacoes quando a conta nao possui observações
+                                (Douglas - Chamado 513666)
     ............................................................................. */
     -------------------> VARIAVEIS <----------------------
     vr_cdcritic          INTEGER;
@@ -6521,7 +6541,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                         '<vltotpre>'|| vr_tab_valores_conta(i).vltotpre ||'</vltotpre>'||
                         '<vltotccr>'|| vr_tab_valores_conta(i).vltotccr ||'</vltotccr>'||
                         '<qtcarmag>'|| vr_tab_valores_conta(i).qtcarmag ||'</qtcarmag>'||
-                        '<vltotseg>'|| vr_tab_valores_conta(i).vltotseg ||'</vltotseg>'||
+						'<flgsegur>'|| (CASE vr_tab_valores_conta(i).qttotseg 
+                                         WHEN 0 THEN 'no'
+                                         ELSE 'yes'
+                                       END)                             ||'</flgsegur>'||
                         '<vltotdsc>'|| vr_tab_valores_conta(i).vltotdsc ||'</vltotdsc>'||
                         '<flgbloqt>'|| (CASE vr_tab_valores_conta(i).flgbloqt
                                          WHEN 1 THEN 'yes'
@@ -6580,7 +6603,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       END LOOP;                                                      
       pc_escreve_xml ('</Anotacoes>');                                 
     ELSE
-      pc_escreve_xml ('<Anotacoes/>');
+      pc_escreve_xml ('<Anotacoes flconven="'|| vr_flconven||'" 
+                                  dscritic="'|| vr_dscritic||'" />');
     END IF;
     
     --> Descarregar buffer

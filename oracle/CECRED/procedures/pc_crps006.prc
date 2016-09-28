@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Novembro/91.                      Ultima atualizacao: 07/06/2016
+    Data    : Novembro/91.                      Ultima atualizacao: 12/09/2016
 
     Dados referentes ao programa:
 
@@ -181,9 +181,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                             (Adriano - SD 428923).
                             
 
-			   26/07/2016 - Ajuste para implementar sequencial (segundos) ao gerar relatorio crrl011
-			                que esta apresentando critica ao gerar mais de um relatorio com cdagenci 
-							nula (Daniel)
+              26/07/2016 - Ajuste para implementar sequencial (segundos) ao gerar relatorio crrl011
+                           que esta apresentando critica ao gerar mais de um relatorio com cdagenci 
+                           nula (Daniel)
+              
+              12/09/2016 - SD520894 - Correcao na chamada ao relatorio 011, pois está ocorrendo erro 
+                           na geracao devido a varios relatorios com o mesmo nome (Marcos-Supero)
 
     ............................................................................. */
     DECLARE
@@ -630,7 +633,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
       vr_flgimpri     VARCHAR2(10);
       vr_inddados     BOOLEAN;
 
-	  vr_cdagenci	  VARCHAR2(10);
+	    vr_cdagenci	  VARCHAR2(10);
 
 	    --Procedure que escreve linha no arquivo CLOB
 	    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
@@ -782,14 +785,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               vr_dsagenci := rw_craplot.cdagenci||
                              ' - '||
                              rw_crapage.nmresage;
-
-			  vr_cdagenci := LPAD(rw_craplot.cdagenci,3,'0');
+              vr_cdagenci := LPAD(rw_craplot.cdagenci,3,'0');
             -- se não encontrar preenche com "*"
             ELSE
               vr_dsagenci := lpad(rw_craplot.cdagenci,3,'0')||
                              ' - '||
                              '***************';
-			  vr_cdagenci := to_char(SYSDATE,'SSSSSSS');
+              vr_cdagenci := lpad(ROUND(DBMS_RANDOM.VALUE(1,99999999)),8,0);
             END IF;
             CLOSE cr_crapage;
 

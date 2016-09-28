@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0009 AS
           ,dsformato
           ,nrposicao_inicial
           ,qtdposicoes
-          ,power(10,qtddecimais) vldivisao --> definir valor de divisão conforme qtd de decimais
+          ,power(10,DECODE(tpdado,'N',NVL(qtddecimais,0),qtddecimais)) vldivisao --> definir valor de divisão conforme qtd de decimais
           ,dsidentificador_registro
       FROM tbgen_layout_campo campo_layout
      WHERE campo_layout.idlayout = pr_idlayout
@@ -66,7 +66,6 @@ CREATE OR REPLACE PACKAGE CECRED.gene0009 AS
   
 END  gene0009;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
 
   /*---------------------------------------------------------------------------------------------------------------
@@ -75,7 +74,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
       Sistema  : Rotinas genéricas
       Sigla    : GENE
       Autor    : Odirlei Busana - AMcom
-      Data     : Outubro/2015.                   Ultima atualizacao: 05/10/2015
+      Data     : Outubro/2015.                   Ultima atualizacao: 28/03/2016
 
       Dados referentes ao programa:
 
@@ -96,7 +95,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 05/10/2015
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 28/03/2016
     --
     --  Dados referentes ao programa:
     --
@@ -104,7 +103,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
     --   Objetivo  : Procedure para importar respeitando o layout cadastrado e retornar 
     --               temptable com as linhas do arquivo.
     --
-    --  Alteração : 
+    --  Alteração : 28/03/2016 - Ajuste para retornar corretamente a mensagem de erro pois a mesma, sera apresentada
+                                 ao cooperado 
+                                 (Andrei - RKAM ).
     --
     --
     -- ..........................................................................*/
@@ -127,11 +128,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
       vr_exc_erro   EXCEPTION;
       vr_tpregistro tbgen_layout_campo.tpregistro%TYPE;
       vr_tab_linhas typ_tab_linhas;
-        vr_nmcampo   VARCHAR2(100);
-        vr_dsformato tbgen_layout_campo.dsformato%TYPE;
-        vr_split     gene0002.typ_split;
-        
-      
+      vr_nmcampo    VARCHAR2(100);
+      vr_dsformato  tbgen_layout_campo.dsformato%TYPE;
+      vr_split      gene0002.typ_split;
+     
       -----------------> SUBPROGRAMAS <--------------
       --> Carregar layout que serao utilizados
       PROCEDURE pc_carrega_layouts(pr_idlayout IN tbgen_layout_campo.idlayout%TYPE) IS      
@@ -155,6 +155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
       
         vr_tpregistro    tbgen_layout_campo.tpregistro%TYPE;
         vr_idxreg        VARCHAR2(5);
+        vr_idxcmp        INTEGER;
         vr_dscampo_linha VARCHAR2(4000);
         vr_flgregra      BOOLEAN;
         
@@ -169,8 +170,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
         -- e comparar com a posicao no arquico
         vr_idxreg := vr_tab_regras.first;
         WHILE vr_idxreg IS NOT NULL LOOP
+          vr_idxcmp:= vr_tab_regras(vr_idxreg).first;
           -- verificar campos do tipo de registro
-          FOR vr_idxcmp IN vr_tab_regras(vr_idxreg).first..vr_tab_regras(vr_idxreg).last LOOP
+          WHILE vr_idxcmp IS NOT NULL LOOP
             -- buscar campo na linha
             vr_dscampo_linha := substr(pr_dslinha,vr_tab_regras(vr_idxreg)(vr_idxcmp).nrposicao_inicial ,
                                                   vr_tab_regras(vr_idxreg)(vr_idxcmp).qtdposicoes);
@@ -183,7 +185,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
               -- setar como falso e verificar o proximo tipo de registro
               vr_flgregra := FALSE;
               EXIT;  
-            END IF;                     
+            END IF;
+            vr_idxcmp := vr_tab_regras(vr_idxreg).next(vr_idxcmp);
           END LOOP;
          
           -- se já encontrou sair do loop
@@ -198,7 +201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
         RETURN TRIM(vr_tpregistro);
       EXCEPTION
         WHEN OTHERS THEN
-          pr_dscritic := 'Não foi possivel definir layout para a linha: '||SQLERRM;
+          pr_dscritic := 'Nao foi possivel definir layout para a linha: '||SQLERRM;
       END fn_retorna_tpregistro;
       
     BEGIN
@@ -210,7 +213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
       FETCH cr_layout INTO rw_layout; 
       IF cr_layout%NOTFOUND THEN
         -- critica layout deve ser enviado
-        vr_dscritic := 'Layout para importação não encontrado';
+        vr_dscritic := 'Layout para importacao nao encontrado';
         CLOSE cr_layout;
         RAISE vr_exc_erro;        
       END IF;
@@ -276,19 +279,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
                 BEGIN
                   CASE vr_tab_layouts(vr_tpregistro)(i).tpdado 
                     WHEN 'D' THEN
-                      -- tratar formato de data
-                      vr_tab_linhas(vr_contlin)(vr_nmcampo).data := to_date(vr_textarq,vr_dsformato);
+                      IF TRIM(REPLACE(vr_textarq,'0','')) IS NOT NULL THEN
+                        vr_tab_linhas(vr_contlin)(vr_nmcampo).data := to_date(vr_textarq,vr_dsformato);
+                      ELSE
+                        vr_tab_linhas(vr_contlin)(vr_nmcampo).data := NULL;
+                      END IF;
+                      
                     WHEN 'N' THEN
                       vr_textarq := nvl(LTRIM(vr_textarq),0);
                       -- tratar decimais
-                      vr_tab_linhas(vr_contlin)(vr_nmcampo).numero := to_number(vr_textarq) / to_number(vr_tab_layouts(vr_tpregistro)(i).vldivisao); --dividir para obter decimais
+                      vr_tab_linhas(vr_contlin)(vr_nmcampo).numero := nvl(to_number(vr_textarq) / to_number(vr_tab_layouts(vr_tpregistro)(i).vldivisao),0); --dividir para obter decimais
                     ELSE
                       -- Tratar texto 
-                      vr_tab_linhas(vr_contlin)(vr_nmcampo ).texto := (vr_textarq);  
+                      vr_tab_linhas(vr_contlin)(vr_nmcampo ).texto := trim(vr_textarq);  
                   END CASE;
                 EXCEPTION 
                   WHEN OTHERS THEN
-                      vr_tab_linhas(vr_contlin)('$ERRO$').texto := 'Erro ao ler o campo '||vr_nmcampo ||': '||SQLERRM;
+                      vr_tab_linhas(vr_contlin)('$ERRO$').texto := 'Erro na linha ' || vr_contlin || ' ao ler a informacao na posicao de '|| vr_tab_layouts(vr_tpregistro)(i).nrposicao_inicial || 
+                                                                   ' ate ' || ((vr_tab_layouts(vr_tpregistro)(i).nrposicao_inicial + vr_tab_layouts(vr_tpregistro)(i).qtdposicoes) -1 );
+                                                                   
+					  --Quando for exceção, armazenar nulo nas variáveis;                                                                   
+                      CASE vr_tab_layouts(vr_tpregistro)(i).tpdado 
+                        WHEN 'D' THEN
+                          vr_tab_linhas(vr_contlin)(vr_nmcampo).data := NULL;                      
+                        WHEN 'N' THEN
+                          vr_tab_linhas(vr_contlin)(vr_nmcampo).numero := NULL;
+                        ELSE                      -- Tratar texto 
+                          vr_tab_linhas(vr_contlin)(vr_nmcampo).texto := NULL;
+                      END CASE;  
                 END;                                
               END LOOP;
               --> Fim leitura posicional
@@ -354,9 +372,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
       WHEN vr_exc_erro  THEN
          pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-         pr_dscritic := 'Erro ao importar linhas do arquivo '||pr_nmarquiv||': '||SQLERRM;
+         pr_dscritic := 'Erro ao importar linhas do arquivo '||pr_nmarquiv||': '||SQLERRM||
+                        dbms_utility.format_error_backtrace || ' - ' ||
+                        dbms_utility.format_error_stack;
     END pc_importa_arq_layout;
     
 END  gene0009;
 /
-

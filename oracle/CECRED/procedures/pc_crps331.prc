@@ -11,7 +11,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Objetivo  : Envio de negativacoes para a Serasa
   --
-  --  Alteracoes: 20/06/2016 - Receber o numero da conta ja na primeira linha do arquivo.
+  --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+  --						   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+  --						  (Andrei - RKAM).
+  --
+  --		      20/06/2016 - Receber o numero da conta ja na primeira linha do arquivo.
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -91,7 +95,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           EXIT WHEN TRIM(substr(pr_dsretser,(vr_ind*3)+1)) IS NULL;
           
           -- Busca o codigo de erro, contendo 3 posicoes
-          vr_erros(vr_ind+1) := substr(pr_dsretser,(vr_ind*3)+1,3);
+          vr_erros(vr_ind+1) := trim(substr(pr_dsretser,(vr_ind*3)+1,3));
                     
           -- Conforme e-mail passado pela Marajoana (Serasa-17/03/2016), nos casos de remessa informacional
           -- vira apenas um erro
@@ -101,7 +105,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
             
           -- Vai para o proximo registro
           vr_ind := vr_ind + 1;
-
+		  EXIT;
         END LOOP;
       END IF;
       
@@ -262,7 +266,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           -- Se possuir motivo de erro, gera a ocorrencia
           IF rw_erro.cdmotivo IS NOT NULL THEN
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                                ,pr_cdocorre => rw_erro.cdocorre
                                                ,pr_cdmotivo => rw_erro.cdmotivo
                                                ,pr_vltarifa => 0
@@ -318,7 +322,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           -- Se for excecao, gera tarifa especifica
           IF pr_ufexceca = 'S' THEN
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                                ,pr_cdocorre => 93 -- Negativacao Serasa
                                                ,pr_cdmotivo => 'S4' -- Enviado a Serasa com sucesso (AR)
                                                ,pr_vltarifa => 0
@@ -354,7 +358,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
             
           ELSE -- Se for normal
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                                ,pr_cdocorre => 93 -- Negativacao Serasa
                                                ,pr_cdmotivo => 'S2' -- Enviado a Serasa com sucesso
                                                ,pr_vltarifa => 0
@@ -390,7 +394,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           END IF;
         ELSIF pr_intipret = 2 THEN -- Se for exclusao
           --Prepara retorno cooperado
-          PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+          COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                              ,pr_cdocorre => 94 -- Cancelamento Negativacao Serasa
                                              ,pr_cdmotivo => 'S2' -- Cancelado negativacao na Serasa
                                              ,pr_vltarifa => 0

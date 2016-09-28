@@ -1298,10 +1298,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         vr_dtfimpro := SYSDATE;
       END IF;
 
+      /* Validação removida em 31/08/2016 - PRJ386.5 - CECRED MOBILE (Dionathan)
       -- Validar data do dia
       IF vr_dtfimpro > to_date(SYSDATE, 'DD/MM/RRRR') THEN
         vr_dtfimpro := SYSDATE;
-      END IF;
+      END IF;*/
 
       -- Buscar dados dos protocolos
       FOR rw_crappro IN cr_crappro(pr_cdcooper => pr_cdcooper

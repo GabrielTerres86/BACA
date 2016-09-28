@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE cecred.SSPC0001 AS
   --
   --  Programa: SSPC0001         
   --  Autor   : Andrino Carlos de Souza Junior
-  --  Data    : Julho/2014                     Ultima Atualizacao: 08/09/2015
+  --  Data    : Julho/2014                     Ultima Atualizacao: 12/09/2016
   --
   --  Dados referentes ao programa:
   --
@@ -25,6 +25,16 @@ CREATE OR REPLACE PACKAGE cecred.SSPC0001 AS
   --              10/12/2015 - Inclusao do campo dsmotivo para receber informacoes textuais
   --                           Ex: Estava retornando SUSTADO no campo cdalinea que e numerico.
   -- 						               Chamado 363148 (Heitor - RKAM)
+  --
+  --              12/09/2016 - Correção do projeto 207 esteira de credito, ao efetuar a 
+  --                           consulta de uma proposta com análise finalizada o sistema 
+  --                           estava validando se a proposta tinha sido enviada para 
+  --                           esteira apresentando uma critica ao efetuar a consulta 
+  --                           automatizada somente pela opção "Somente consultas" 
+  --                           até mesmo nas cooperativas que não usam a esteira.
+  --                           (Oscar)
+  --              13/09/2016 - Quando a data vier vazia, nao gerar erro (Andrino-RKAM)
+  --
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -3087,7 +3097,7 @@ PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML
     ELSIF vr_tab_xml.count = 1 THEN -- Se encontrou, retornar o texto
       IF pr_indcampo = 'D' THEN -- Se o tipo de dado for Data, transformar para data
         -- Se for tudo zeros, desconsiderar
-        IF vr_tab_xml(0).tag IN ('00000000','0')  THEN
+        IF vr_tab_xml(0).tag IN ('00000000','0','')  THEN
           pr_retorno := NULL;
         ELSE
           pr_retorno := to_date(vr_tab_xml(0).tag,'yyyymmdd');
@@ -5116,7 +5126,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
              crawepr.inconcje, 
              crawepr.nrconbir,
              crawepr.vlemprst,
-             crawepr.insitest
+             crawepr.dtenvest
         FROM crawepr
        WHERE crawepr.cdcooper = pr_cdcooper
          AND crawepr.nrdconta = pr_nrdconta
@@ -5317,7 +5327,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     vr_dtconmax_scr DATE;                  --> Maior data de consulta no SCR
     vr_inreapro     PLS_INTEGER;           --> Indicador se ocorreu reaproveitamento nos avalistas
     
-    vr_insitest     crawepr.insitest%TYPE; --> Situalçao da proposta esteira
+    vr_dtenvest     crawepr.dtenvest%TYPE := NULL; --> Data de envio da proposta esteira
+    vr_contige_este VARCHAR2(500)         := '';
     
   BEGIN
    
@@ -5349,7 +5360,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                             vr_inconcje, 
                             vr_nrconbir_dct,
                             vr_vlprodut,
-                            vr_insitest;    
+                            vr_dtenvest;    
       
       -- Se nao encontrar o emprestimo, retorna com erro
       IF cr_crawepr%NOTFOUND THEN
@@ -5360,10 +5371,20 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       -- Fecha o cursor de emprestimo
       CLOSE cr_crawepr;
       
+      --> Verificar se a Esteira esta em contigencia para a cooperativa
+      vr_contige_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
+                                                    pr_cdcooper => pr_cdcooper, 
+                                                    pr_cdacesso => 'CONTIGENCIA_ESTEIRA_IBRA');
+      IF vr_contige_este IS NULL THEN
+        vr_dscritic := 'Parametro CONTIGENCIA_ESTEIRA_IBRA não encontrado.';
+        RAISE vr_exc_saida;      
+      END IF;
+      
       -- Verificar se deve realizar validacao Esteira
-      IF pr_flvalest = 1  AND 
+      IF vr_contige_este = '0' AND /* Usa esteira */
+         pr_flvalest = 1  AND /* Validar regra esteira */
          -- Verificar se ja foi enviado para esteira
-         vr_insitest <> 0 THEN
+         vr_dtenvest IS NOT NULL THEN
         vr_dscritic := 'Consulta não permitida. Proposta ja enviada para a Esteira de credito, '||
                        'para nova consulta deve ser realizado Alteracao Proposta Completa!';
         RAISE vr_exc_saida;

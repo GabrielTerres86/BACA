@@ -205,7 +205,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                          para migracao (Jean Michel).
 
             17/02/2016 - Excluido validacao de conta nao cadastrada para TED, 
-						 pc_verifica_operacao (Jean Michel).
+						             pc_verifica_operacao (Jean Michel).
 
             06/05/2016 - Incluido o campo nmtitul2 na typ_reg_contas_cadastradas.
                          (Jaison/Marcos - SUPERO)
@@ -269,7 +269,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
 
   --Tipo de tabela para limite internet
   TYPE typ_tab_internet IS TABLE OF typ_reg_internet INDEX BY PLS_INTEGER;
-
+  
   
   --Tipo de Registro para contas-cadastradas
   TYPE typ_reg_contas_cadastradas IS
@@ -405,8 +405,8 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                     ,pr_nmtitul2 OUT VARCHAR2              --Nome segundo titular
                                     ,pr_cddbanco OUT INTEGER               --Codigo banco
                                     ,pr_dscritic OUT VARCHAR2              --Retorno OK/NOK
-                                    ,pr_tab_erro OUT GENE0001.typ_tab_erro); --Tabela de retorno de erro
-  
+                                    ,pr_tab_erro OUT GENE0001.typ_tab_erro); --Tabela de retorno de erro  
+
   /* Procedure para consulta de contas de trnsf cadastradas */
   PROCEDURE pc_con_contas_cadastradas ( pr_cdcooper IN crapcop.cdcooper%TYPE  -- Codigo Cooperativa
                                        ,pr_cdagenci IN crapage.cdagenci%TYPE  -- Agencia do Associado
@@ -603,7 +603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 17/12/2015
+  --  Data     : Junho/2013.                   Ultima atualizacao: 21/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -615,6 +615,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --             17/12/2015 - Alterado idtpdpag de VRBOLETO de 3 para 6. 
   --                          Adicionado verificacao de horario para Debito Automatico Facil
   --                          (Jorge/David) Proj. 131 - Assinatura Multipla.
+  --
+  --			 21/09/2016 - Ajuste na validacao do horario para envio de TED (Diego).	          
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -897,7 +899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             vr_cdcritic:= 0;
             vr_dscritic:= 'Cooperativa nao esta operando no SPB.';
             --Levantar Excecao
-            RAISE vr_exc_erro;
+            RAISE vr_exc_erro;        
             
           ELSE
             --Determinar a hora atual
@@ -908,7 +910,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               IF rw_crapcop.iniopstr <= vr_hratual AND rw_crapcop.fimopstr >= vr_hratual THEN
                  vr_flgutstr := TRUE;
               END IF;
-          END IF;
+            END IF;          
             
             -- Operando com mensagens PAG  
             IF rw_crapcop.flgoppag = 1 THEN -- TRUE
@@ -917,14 +919,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               END IF;
             END IF;    
               
-            --Se opera no sistema pagamento
+			 --Se opera com PAG e está dentro do horario permitido
             IF vr_flgutpag THEN -- TRUE
               vr_hrinipag := rw_crapcop.inioppag;
               vr_hrfimpag := rw_crapcop.fimoppag;
               
             ELSE
+                -- Se opera com STR
+                 IF   rw_crapcop.flgopstr = 1 THEN -- TRUE
+                      -- independente de estar ou não dentro do horário 
+                      -- permitido, mostra hora do STR. Por regra, o STR 
+                      -- sempre terá um período maior
               vr_hrinipag := rw_crapcop.iniopstr;
               vr_hrfimpag := rw_crapcop.fimopstr;            
+                 ELSE
+                     -- Só opera com PAG e está fora do horário
+                      vr_hrinipag := rw_crapcop.inioppag;
+                      vr_hrfimpag := rw_crapcop.fimoppag;
+                 END IF;
+
             END IF;            
               
           END IF;
@@ -961,7 +974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           pr_tab_limite(vr_index_limite).qtmesrec:= vr_qtmesrec;
           pr_tab_limite(vr_index_limite).qtmesfut:= vr_qtmesfut;          
           pr_tab_limite(vr_index_limite).idtpdpag:= 4;
-
+                      
         END IF;
       END IF;
 
@@ -2385,8 +2398,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            pr_tpoperac = 4 AND 
            pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
            
-          vr_cdcritic := 0;
-          vr_dscritic := 'O envio de TED deve ser efetuado em dias uteis.';
+           vr_cdcritic := 0;
+           vr_dscritic := 'O envio de TED deve ser efetuado em dias uteis.';
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
@@ -2459,7 +2472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                END IF;
 
             END IF;
-
+      
           /** Verifica se a conta que ira receber o valor esta   **/
           /** cadastrada para a conta que ira transferir o valor **/
           OPEN cr_crapcti (pr_cdcooper => pr_cdcooper
@@ -2481,8 +2494,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            
             --Levantar Excecao
             RAISE vr_exc_erro;
-            END IF;
-
+          END IF;
+          
           --Fechar Cursor
           CLOSE cr_crapcti;
 
@@ -2530,7 +2543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
           
           --Fechar Cursor
-          CLOSE cr_crapcti;
+          CLOSE cr_crapcti;      
 
         END IF;
       ELSE
@@ -2645,7 +2658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             --Total disponivel recebe valor disponivel + limite credito
             vr_vlsldisp:= nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
             
-            --Se o saldo nao for suficiente
+			      --Se o saldo nao for suficiente
             IF pr_vllanmto > vr_vlsldisp THEN
               --Montar mensagem erro
               vr_cdcritic:= 0;
@@ -2724,7 +2737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
           --Somar valor tarifa no lancamento
           pr_vllanmto:= nvl(pr_vllanmto,0) + Nvl(vr_vltarifa,0);
-        END IF;
+        END IF;        
         
       ELSIF pr_idagenda >= 2  THEN /** Agendamento normal e recorrente **/
 
@@ -2803,8 +2816,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             --Dia limite recebe dia + quantidade de meses máximo para agendamento
             vr_dtdialim:= ADD_MONTHS(vr_datdodia,pr_tab_limite(pr_tab_limite.FIRST).qtmesfut);
           ELSE  
-          --Dia limite recebe dia + quantidade dias lancamento
-          vr_dtdialim:= vr_datdodia + rw_crapage.qtddaglf;
+            --Dia limite recebe dia + quantidade dias lancamento
+            vr_dtdialim:= vr_datdodia + rw_crapage.qtddaglf;
           END IF;
 
           --Se data agendamento > data Limite
@@ -3053,7 +3066,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       pr_dscritic := 'Não foi possivel verificar operacao:'|| SQLERRM;
       btch0001.pc_log_internal_exception(pr_cdcooper => pr_cdcooper);
   END pc_verifica_operacao_prog;
- 
+
 
   /* Procedure para consulta de contas de trnsf cadastradas */
   PROCEDURE pc_con_contas_cadastradas ( pr_cdcooper IN crapcop.cdcooper%TYPE  -- Codigo Cooperativa

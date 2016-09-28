@@ -2375,7 +2375,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
                crapepr.cdlcremp,
                crapepr.inliquid,
                crapepr.cdfinemp,
-               crawepr.dtvencto
+               crawepr.dtvencto,
+               crawepr.idquapro,
+               crawepr.dtlibera
 				  FROM crapepr
           
           JOIN crawepr ON crawepr.cdcooper = crapepr.cdcooper
@@ -2648,7 +2650,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       que no dia do vencimento não ocorreu nenhum pagamento, irá gerar residuo
       no contrato será avaliada uma solução definitiva posteriormente */  
       IF  (rw_crapdat.dtmvtolt > vr_dtvenmes)
-      AND (rw_crapepr.dtultpag < vr_dtvenmes) THEN 
+      AND (rw_crapepr.dtultpag < vr_dtvenmes) 
+      -- garantir que irá permitir estorno dentro da carencia - Rafael Maciel (RKAM)
+      AND ( (rw_crapepr.dtvencto < rw_crapdat.dtmvtolt) 
+          AND (rw_crapepr.tpemprst = 1)
+          AND (rw_crapepr.idquapro = 0)
+          AND (rw_crapepr.dtlibera > rw_crapdat.dtmvtolt)
+      ) THEN
           vr_dscritic := 'Contrato nao pode ser estornado.';
           RAISE vr_exc_saida;
       END IF; 

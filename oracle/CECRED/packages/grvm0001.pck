@@ -175,6 +175,8 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                               ,pr_nranobem IN crapbpr.nranobem%TYPE --Ano do bem
                               ,pr_nrmodbem IN crapbpr.nrmodbem%TYPE --Modelo do bem
                               ,pr_tpctrpro IN crapbpr.tpctrpro%TYPE --Tipo do contrato
+                              ,pr_cdsitgrv IN crapbpr.cdsitgrv%TYPE --Situação do Gravame
+                              ,pr_dsaltsit IN VARCHAR2              --Descrição do motivo da alteração da situação do Gravame
                               ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                               ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -1188,7 +1190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                
                  14/07/2016 - Ajuste para retornar corretamente o erro quando houver uma exceção
                               (Andrei - RKAM).               
-                    
+                               
 				         22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
                               pois em alguns casos ele foi gravado em minusculo e outros em maisculo
                               (Adriano - SD 527336)
@@ -2470,6 +2472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.tpctrpro
           ,crapbpr.dsjstbxa
           ,crapbpr.dsjstinc
+          ,crapbpr.tpinclus
           ,ROW_NUMBER() OVER(PARTITION BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp
                                ORDER BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp) nrseq_bem
       FROM crawepr
@@ -2522,6 +2525,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.tpctrpro
           ,crapbpr.dsjstinc
           ,crapbpr.dsjstbxa      
+          ,crapbpr.tpinclus      
           ,ROW_NUMBER() OVER(PARTITION BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp
                                ORDER BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp) nrseq_bem
       FROM crapbpr
@@ -2731,7 +2735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
             vr_tpjustif := 1;
             vr_dsjustif := nvl(TRIM(rw_propostas.dsjstinc),' ');  
             
-          ELSIF rw_crapbpr.cdsitgrv = 4 THEN
+          ELSIF rw_propostas.cdsitgrv = 4 THEN
             
             vr_tpjustif := 2;
             vr_dsjustif := nvl(TRIM(rw_propostas.dsjstbxa),' ');
@@ -2786,6 +2790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                                               WHEN 5 THEN
                                                                                 'Cancelado'
                                                                             END ) ||'</dssitgrv>'||                   
+                                                         '  <tpinclus>' || rw_propostas.tpinclus ||'</tpinclus>'|| 
                                                        '</ben>');
           
           --Diminuir registros
@@ -2928,6 +2933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                                               WHEN 5 THEN
                                                                                 'Cancelado'
                                                                             END ) ||'</dssitgrv>'||                   
+                                                         '  <tpinclus>' || rw_crapbpr.tpinclus ||'</tpinclus>'|| 
                                                        '</ben>');
             
           --Diminuir registros
@@ -3007,6 +3013,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               ,pr_nranobem IN crapbpr.nranobem%TYPE --Ano do bem
                               ,pr_nrmodbem IN crapbpr.nrmodbem%TYPE --Modelo do bem
                               ,pr_tpctrpro IN crapbpr.tpctrpro%TYPE --Tipo do contrato
+                              ,pr_cdsitgrv IN crapbpr.cdsitgrv%TYPE --Situação do Gravame
+                              ,pr_dsaltsit IN VARCHAR2              --Descrição do motivo da alteração da situação do Gravame
                               ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                               ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -3028,8 +3036,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Objetivo   : Realizar a alteração do gravame
     
     Alterações : 14/07/2016 - Ajuste para utilziar rotina de validação dos caracteres do chassi
-	               						 (Andrei - RKAM).
-  
+							 (Andrei - RKAM).
+
+                 19/08/2016 - Inclusão de novos campos "pr_cdsitgrv" e "pr_dsaltsit " para 
+                              alteração do GRAVAMES. Projeto 369(Lombardi).
+
      			       22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
                               pois em alguns casos ele foi gravado em minusculo e outros em maisculo
                              (Adriano - SD 527336)
@@ -3063,6 +3074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.dtatugrv
           ,crapbpr.flblqjud
           ,crapbpr.cdsitgrv  
+          ,crapbpr.tpinclus
           ,ROWID rowid_bpr                 
       FROM crapbpr
      WHERE crapbpr.cdcooper = pr_cdcooper
@@ -3138,6 +3150,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     ELSE
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    -- Validar campos 
+    IF pr_cdsitgrv IS NOT NULL AND pr_dsaltsit IS NULL THEN
+      vr_cdcritic:= 0;
+      vr_dscritic := 'Situacao foi alterada. Sera necessario informar MOTIVO';
+      pr_nmdcampo := 'dsaltsit';
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Validar campos
+    IF pr_cdsitgrv = 1 THEN
+      vr_cdcritic:= 0;
+      vr_dscritic := 'Situação não pode ser alterada para \"Em processamento\".';
+      pr_nmdcampo := 'cdsitgrv';
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;
     END IF;
     
     pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
@@ -3267,12 +3299,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       CLOSE cr_crapbpr;
     
+      IF rw_crapbpr.cdsitgrv = 1 AND 
+         rw_crapbpr.cdsitgrv <> pr_cdsitgrv THEN
+        vr_cdcritic:= 0;
+        vr_dscritic := 'Situação não pode ser alterada.';
+        pr_nmdcampo := 'cdsitgrv';
+        
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;  
+      
+    
       /* Apenas poder alterar chassi quando 
-         status for 0 ("nao enviado") ou 
-                    3 (processado com critica)  */
+         status for 0 ("nao enviado") ou 3 (Processado com critica)  
+         Ou se o tipo da inclusao for igual a M (Manual) com situação 
+         diferente de 1 (Em processamento) e 3 (Processado com critica).*/
       IF TRIM(UPPER(rw_crapbpr.dschassi)) <> TRIM(UPPER(pr_dschassi)) AND
-         rw_crapbpr.cdsitgrv <> 0                                     AND
-         rw_crapbpr.cdsitgrv <> 3                                     THEN
+       ((rw_crapbpr.tpinclus <> 'M'                     AND
+         rw_crapbpr.cdsitgrv <> 0                       AND
+         rw_crapbpr.cdsitgrv <> 3)                      OR
+        (rw_crapbpr.tpinclus = 'M'                      AND
+        (rw_crapbpr.cdsitgrv = 1                        OR
+         rw_crapbpr.cdsitgrv = 3)))                     THEN
          
         vr_cdcritic:= 0;
         vr_dscritic:= 'Alteracao de chassi nao permitida.';
@@ -3294,6 +3342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               ,crapbpr.nrrenovo = pr_nrrenava
               ,crapbpr.nranobem = pr_nranobem
               ,crapbpr.nrmodbem = pr_nrmodbem              
+              ,crapbpr.cdsitgrv = nvl(pr_cdsitgrv, cdsitgrv)
         WHERE ROWID = rw_crapbpr.rowid_bpr;
       EXCEPTION
         WHEN OTHERS THEN
@@ -3419,11 +3468,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       END IF;
       
+      IF pr_cdsitgrv IS NOT NULL THEN
+      
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'situacao', 
+                                  pr_dsdadant => CASE rw_crapbpr.cdsitgrv
+                                                   WHEN 0 THEN '0 – Nao enviado'
+                                                   WHEN 1 THEN '1 – Em processamento'
+                                                   WHEN 2 THEN '2 – Alienacao'
+                                                   WHEN 3 THEN '3 – Processado com Critica'
+                                                   WHEN 4 THEN '4 – Baixado'
+                                                   WHEN 5 THEN '5 – Cancelado'
+                                                 END, 
+                                  pr_dsdadatu => CASE pr_cdsitgrv
+                                                   WHEN 0 THEN '0 – Nao enviado'
+                                                   WHEN 1 THEN '1 – Em processamento'
+                                                   WHEN 2 THEN '2 – Alienacao'
+                                                   WHEN 3 THEN '3 – Processado com Critica'
+                                                   WHEN 4 THEN '4 – Baixado'
+                                                   WHEN 5 THEN '5 – Cancelado'
+                                                 END);
       
     END IF;
     
-                  
+      IF pr_dsaltsit IS NOT NULL THEN
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'MOTIVO ALT SITUACAO', 
+                                  pr_dsdadant => '', 
+                                  pr_dsdadatu => pr_dsaltsit);
+      END IF;
     
+    END IF;
                
     pr_des_erro := 'OK';
     

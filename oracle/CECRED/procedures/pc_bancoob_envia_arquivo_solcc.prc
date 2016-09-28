@@ -4,7 +4,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_ENVIA_ARQUIVO_SOLCC IS
    JOB: PC_BANCOOB_ENVIA_ARQUIVO_SOLCC
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : VANESSA KLEIN
-   Data    : Janeiro/2015.                     Ultima atualizacao: 10/08/2015
+   Data    : Janeiro/2015.                     Ultima atualizacao: 30/06/2016
 
    Dados referentes ao programa:
 
@@ -17,13 +17,35 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_BANCOOB_ENVIA_ARQUIVO_SOLCC IS
                             gene0004.pc_executa_job, caso não possa ser rodado
                             e reprogramado para rodar na proxima hora(Odirlei -AMcom)       
 
+               30/06/2016 - #454336 Incluído log de início, fim e erro na execução do job
+                            (Carlos)
+
   ..........................................................................*/
+  
     ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra   crapprg.cdprogra%TYPE;           --> Código do programa
     vr_infimsol   PLS_INTEGER;                     --> Variável de Retorno Nome do Campo
     vr_cdcritic   PLS_INTEGER;                     --> Variável de Retorno Nome do Campo
     vr_dserro varchar2(2000);
     vr_dtvalida DATE;                              --> Variavel que retorna o dia valido
+
+    vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcrd_bancoob_envia_solcc';
+    vr_flgerlog  BOOLEAN := FALSE;
+
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                  pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+    
+    --> Controlar geração de log de execução dos jobs 
+    BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                             ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                             ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                             ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                             ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                             ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      
+  END pc_controla_log_batch;
 
 
 BEGIN
@@ -49,6 +71,10 @@ BEGIN
                   
     -- senao retornou critica  chama rotina
     IF trim(vr_dserro) IS NULL THEN                      
+  
+      -- Início da execução do job
+      pc_controla_log_batch(pr_dstiplog => 'I');
+      
       pc_crps671(pr_cdcooper => 3,
                  pr_flgresta => 1,
                  pr_stprogra =>  vr_cdprogra,
@@ -58,17 +84,15 @@ BEGIN
                  pr_dscritic =>  vr_dserro );
                  
       IF TRIM(vr_dserro) IS NOT NULL THEN       
-        btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
-                                   pr_ind_tipo_log => 2, --> erro tratado 
-                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' - PC_BANCOOB_ENVIA_ARQUIVO_SOLCC --> ' || vr_dserro, 
-                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
-      END IF;
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dserro);
     END IF; 
               
+      -- Fim da execução do job
+      pc_controla_log_batch(pr_dstiplog => 'F');
   END IF;
 
+  END IF;
 
 END PC_BANCOOB_ENVIA_ARQUIVO_SOLCC;
 /
-

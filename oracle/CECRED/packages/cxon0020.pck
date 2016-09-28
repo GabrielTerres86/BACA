@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 25/07/2016
+    Data     : Junho/2013.                   Ultima atualizacao: 29/08/2016
   
     Dados referentes ao programa:
   
@@ -314,19 +314,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
     Alteração : 14/03/2016 - Removido save point da procedure e alterado por rollback em
                              toda a transação caso ocorra problemas. SD 417330 (Kelvin).
-
+    
                 27/04/2016 - Adicionado tratamento para verificar isencao ou nao                             
                              de tarifa no envio de TED Eletrônica. PRJ 218/2 (Reinert).
     
                 14/06/2016 - Ajuste para incluir o UPPER em campos de indice ao ler a tabela craptvl
                              (Adriano - SD 469449).
-                             
+                              
                 22/07/2016 - Correção de xml sendo limpo após execução da rotina pc_executa_envio_ted_prog (Carlos)
     
                 25/07/2016 - Ajuste para retornar corretamente o xml pois estava gerando problemas para
                              o progress receber os valores de data e nome de tags com o caracter "#"
                              (Adriano).
                                
+                29/08/2016 - #456682 Inclusão de verificação de fraude na rotina pc_validar_ted (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -609,6 +610,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          OR  (crapban.cdbccxlt = pr_cdbccxlt AND pr_cdbccxlt > 0);
     rw_crapban cr_crapban%ROWTYPE;
        
+    -- Verificacao de cpf/cnpj fraudulento
+    CURSOR cr_crapcbf(pr_tpfraude crapcbf.tpfraude%TYPE,
+                      pr_dsfraude crapcbf.dsfraude%TYPE) IS
+      SELECT 1
+        FROM crapcbf
+       WHERE tpfraude = pr_tpfraude 
+         AND UPPER(dsfraude) = UPPER(pr_dsfraude);
+    rw_crapcbf cr_crapcbf%ROWTYPE;
+
+    --Selecionar informacoes log transacoes no sistema
+    CURSOR cr_craplgm(pr_cdcooper IN craplgm.cdcooper%type,
+                      pr_nrdconta IN craplgm.nrdconta%type,
+                      pr_idseqttl IN craplgm.idseqttl%type,
+                      pr_dttransa IN craplgm.dttransa%type,
+                      pr_dsorigem IN craplgm.dsorigem%type,
+                      pr_cdoperad IN craplgm.cdoperad%type,
+                      pr_flgtrans IN craplgm.flgtrans%type,
+                      pr_dstransa IN craplgm.dstransa%TYPE) IS
+      SELECT m.hrtransa
+            ,i.dsdadatu
+        FROM craplgm m
+            ,craplgi i
+       WHERE m.cdcooper = pr_cdcooper
+         AND m.nrdconta = pr_nrdconta
+         AND m.idseqttl = pr_idseqttl
+         AND m.dsorigem = 'INTERNET'
+         AND m.cdoperad = '996'
+         AND m.dttransa = pr_dttransa
+         AND i.nmdcampo = 'IP'
+         AND m.cdcooper = i.cdcooper
+         AND m.nrdconta = i.nrdconta
+         AND m.idseqttl = i.idseqttl
+         AND m.dttransa = i.dttransa
+         AND m.hrtransa = i.hrtransa
+         AND m.nrsequen = i.nrsequen
+         AND m.dstransa = pr_dstransa
+       ORDER BY m.progress_recid DESC;
+
+      
     ------------> ESTRUTURAS DE REGISTRO <-----------
     
     --Tabela de memória de limites de horario
@@ -620,6 +660,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+    vr_tpfraude crapcbf.tpfraude%TYPE;
+    vr_nrdipatu  VARCHAR2(1000);
+    vr_des_corpo VARCHAR2(1000);
+    vr_cpfcnpj   VARCHAR2(40);
       
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -772,7 +816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     -- Verificar se banco esta em operação no SPB
     IF rw_crapban.flgdispb = 0 /*FALSE*/ THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Banco do favorecido nao opera no SPB.';
+      vr_dscritic := 'Banco do favorecido não opera no SPB.';
       RAISE vr_exc_erro;
     END IF;
     -- Validar agencia
@@ -811,7 +855,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       vr_dscritic := 'Tipo de pessoa do favorecido e incorreto.';
       RAISE vr_exc_erro;
     END IF;
+
+    IF vr_tppessoa = 1 THEN
+      vr_tpfraude := 2;
+    ELSE
+      vr_tpfraude := 3;
+    END IF;
+
+    vr_cpfcnpj := gene0002.fn_mask_cpf_cnpj(pr_nrcpffav, vr_tppessoa);
+
+    -- Verifica se o cpf/cnpj eh fraudulento
+    OPEN cr_crapcbf(vr_tpfraude, vr_cpfcnpj);
+    FETCH cr_crapcbf INTO rw_crapcbf;
+
+    IF cr_crapcbf%FOUND THEN
+
+      CLOSE cr_crapcbf;
+
+      -- Pegar ultimo ip de acesso
+      FOR rw_craplgm IN cr_craplgm(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_idseqttl => pr_idseqttl
+                                  ,pr_dttransa => trunc(SYSDATE)
+                                  ,pr_dsorigem => 'INTERNET'
+                                  ,pr_cdoperad => '996'
+                                  ,pr_flgtrans => 1
+                                  ,pr_dstransa => 'Efetuado login de acesso a conta on-line.') LOOP
+        vr_nrdipatu := rw_craplgm.dsdadatu;
+        exit;
+      END LOOP;
+
+      -- monta o corpo do email
+      vr_des_corpo := '<b>Atencao! Houve tentativa de TED fraudulento.<br>'||
+                      'IP: ' || vr_nrdipatu || '<br>' ||
+                      'Conta: </b>'||gene0002.fn_mask_conta(pr_nrdconta)||'<br>'||
+                      '<b>CPF/CNPJ destino: </b>'|| vr_cpfcnpj;
+      -- Envio de e-mail informando que houve a tentativa
+      gene0003.pc_solicita_email(pr_cdcooper => pr_cdcooper,
+                                 pr_cdprogra => 'CXON0020',
+                                 pr_des_destino => 'monitoracaodefraudes@cecred.coop.br',
+                                 pr_des_assunto => 'Atencao - Tentativa de TED para CPF/CNPJ em restritivo',
+                                 pr_des_corpo => vr_des_corpo,
+                                 pr_des_anexo => NULL,
+                                 pr_flg_enviar => 'S',
+                                 pr_des_erro => vr_dscritic);
+
+      --Se ocorreu erro
+      IF nvl(vr_cdcritic,0)<> 0 OR vr_dscritic IS NOT NULL THEN
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      ELSE
+        vr_dscritic := 'Dados inconsistentes. Impossibilidade de realizar a transação.';
+        RAISE vr_exc_erro;
+    END IF;
     
+    END IF;
+    CLOSE cr_crapcbf;
+
+
     -- Ler tabela generica -  Tipo de conta
     vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper 
                                               ,pr_nmsistem => 'CRED'           
@@ -1587,31 +1688,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       vr_dscritic := 'ERRO!!! NR. DOCUMENTO DUPLICADO, TENTE NOVAMENTE.';
       RAISE vr_exc_erro;    
     END IF; 
-
+    
     IF pr_idagenda = 1 THEN
 
-      /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
-      OPEN cr_craptvl_max( pr_cdcooper => rw_crapcop.cdcooper,
-                           pr_dtmvtocd => rw_crapdat.dtmvtocd,
-                           pr_cdageope => pr_cdageope,
-                           pr_nrdolote => vr_nrdolote,
-                           pr_nrdconta => pr_nrdconta,
-                           pr_cdbanfav => pr_cdbanfav,
-                           pr_cdagefav => pr_cdagefav,
-                           pr_nrctafav => pr_nrctafav,
-                           pr_vldocmto => pr_vldocmto);
-      FETCH cr_craptvl_max INTO rw_craptvl_max;
-      
-      -- se ja existe um lançamento com os mesmos dados em menos de 10 minutos (600 seg) apresentar alerta
-      IF cr_craptvl_max%FOUND AND 
-        (to_char(SYSDATE,'SSSSS') - nvl(rw_craptvl_max.hrtransa,0)) <= 600 THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Ja existe TED de mesmo valor e favorecido. ' ||
-                       'Consulte extrato ou tente novamente em 10 min.';
-        RAISE vr_exc_erro;
-      END IF;
-      CLOSE cr_craptvl_max;
-      
+    /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
+    OPEN cr_craptvl_max( pr_cdcooper => rw_crapcop.cdcooper,
+                         pr_dtmvtocd => rw_crapdat.dtmvtocd,
+                         pr_cdageope => pr_cdageope,
+                         pr_nrdolote => vr_nrdolote,
+                         pr_nrdconta => pr_nrdconta,
+                         pr_cdbanfav => pr_cdbanfav,
+                         pr_cdagefav => pr_cdagefav,
+                         pr_nrctafav => pr_nrctafav,
+                         pr_vldocmto => pr_vldocmto);
+    FETCH cr_craptvl_max INTO rw_craptvl_max;
+    
+    -- se ja existe um lançamento com os mesmos dados em menos de 10 minutos (600 seg) apresentar alerta
+    IF cr_craptvl_max%FOUND AND 
+      (to_char(SYSDATE,'SSSSS') - nvl(rw_craptvl_max.hrtransa,0)) <= 600 THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Ja existe TED de mesmo valor e favorecido. ' ||
+                     'Consulte extrato ou tente novamente em 10 min.';
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_craptvl_max;
+                         
     END IF;
     
     /* Grava uma autenticacao */
@@ -1920,7 +2021,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_craphis; 
-            
+
             
       --Limpar tabela saldo e erro
       vr_tab_saldo.DELETE;
@@ -1985,98 +2086,98 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	    -- Se não isenta cobrança da tarifa
       IF vr_fliseope <> 1 THEN
 
-        IF pr_idagenda = 1 OR
-           vr_debtarifa    THEN 
-          --Realizar lancamento tarifa
-          TARI0001.pc_lan_tarifa_online (pr_cdcooper => rw_crapcop.cdcooper  --Codigo Cooperativa
-                                        ,pr_cdagenci => 1                    --Codigo Agencia destino
-                                        ,pr_nrdconta => pr_nrdconta          --Numero da Conta Destino
-                                        ,pr_cdbccxlt => 100                  --Codigo banco/caixa
-                                        ,pr_nrdolote => 7999                 --Numero do Lote
-                                        ,pr_tplotmov => 1                    --Tipo Lote
-                                        ,pr_cdoperad => 888                  --Codigo Operador
-                                        ,pr_dtmvtlat => rw_crapdat.dtmvtolt  --Data Tarifa
-                                        ,pr_dtmvtlcm => rw_crapdat.dtmvtocd  --Data lancamento
-                                        ,pr_nrdctabb => pr_nrdconta         --Numero Conta BB
-                                        ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')         --Conta Integracao
-                                        ,pr_cdhistor => vr_cdhistar          --Codigo Historico
-                                        ,pr_cdpesqbb => 'CRAP020'            --Codigo pesquisa
-                                        ,pr_cdbanchq => 0                    --Codigo Banco Cheque
-                                        ,pr_cdagechq => 0                    --Codigo Agencia Cheque
-                                        ,pr_nrctachq => 0                    --Numero Conta Cheque
-                                        ,pr_flgaviso => FALSE                --Flag Aviso
-                                        ,pr_tpdaviso => 0                    --Tipo Aviso
-                                        ,pr_vltarifa => vr_vllantar          --Valor tarifa
-                                        ,pr_nrdocmto => pr_nrdocmto          --Numero Documento
-                                        ,pr_cdcoptfn => rw_crapcop.cdcooper  --Codigo Cooperativa Terminal
-                                        ,pr_cdagetfn => rw_crapass.cdagenci  --Codigo Agencia Terminal
-                                        ,pr_nrterfin => 0                    --Numero Terminal Financeiro
-                                        ,pr_nrsequni => 0                    --Numero Sequencial Unico
-                                        ,pr_nrautdoc => rw_craplot_lcm.nrseqdig + 1 --Numero Autenticacao Documento
-                                        ,pr_dsidenti => NULL                 --Descricao Identificacao
-                                        ,pr_cdfvlcop => vr_cdfvlcop          --Codigo Faixa Valor Cooperativa
-                                        ,pr_inproces => rw_crapdat.inproces  --Indicador Processo
-                                        ,pr_cdlantar => vr_cdlantar          --Codigo Lancamento tarifa
-                                        ,pr_tab_erro => vr_tab_erro          --Tabela de erro
-                                        ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                                        ,pr_dscritic => vr_dscritic);        --Descricao do erro
+      IF pr_idagenda = 1 OR
+         vr_debtarifa    THEN 
+        --Realizar lancamento tarifa
+        TARI0001.pc_lan_tarifa_online (pr_cdcooper => rw_crapcop.cdcooper  --Codigo Cooperativa
+                                      ,pr_cdagenci => 1                    --Codigo Agencia destino
+                                      ,pr_nrdconta => pr_nrdconta          --Numero da Conta Destino
+                                      ,pr_cdbccxlt => 100                  --Codigo banco/caixa
+                                      ,pr_nrdolote => 7999                 --Numero do Lote
+                                      ,pr_tplotmov => 1                    --Tipo Lote
+                                      ,pr_cdoperad => 888                  --Codigo Operador
+                                      ,pr_dtmvtlat => rw_crapdat.dtmvtolt  --Data Tarifa
+                                      ,pr_dtmvtlcm => rw_crapdat.dtmvtocd  --Data lancamento
+                                      ,pr_nrdctabb => pr_nrdconta         --Numero Conta BB
+                                      ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')         --Conta Integracao
+                                      ,pr_cdhistor => vr_cdhistar          --Codigo Historico
+                                      ,pr_cdpesqbb => 'CRAP020'            --Codigo pesquisa
+                                      ,pr_cdbanchq => 0                    --Codigo Banco Cheque
+                                      ,pr_cdagechq => 0                    --Codigo Agencia Cheque
+                                      ,pr_nrctachq => 0                    --Numero Conta Cheque
+                                      ,pr_flgaviso => FALSE                --Flag Aviso
+                                      ,pr_tpdaviso => 0                    --Tipo Aviso
+                                      ,pr_vltarifa => vr_vllantar          --Valor tarifa
+                                      ,pr_nrdocmto => pr_nrdocmto          --Numero Documento
+                                      ,pr_cdcoptfn => rw_crapcop.cdcooper  --Codigo Cooperativa Terminal
+                                      ,pr_cdagetfn => rw_crapass.cdagenci  --Codigo Agencia Terminal
+                                      ,pr_nrterfin => 0                    --Numero Terminal Financeiro
+                                      ,pr_nrsequni => 0                    --Numero Sequencial Unico
+                                      ,pr_nrautdoc => rw_craplot_lcm.nrseqdig + 1 --Numero Autenticacao Documento
+                                      ,pr_dsidenti => NULL                 --Descricao Identificacao
+                                      ,pr_cdfvlcop => vr_cdfvlcop          --Codigo Faixa Valor Cooperativa
+                                      ,pr_inproces => rw_crapdat.inproces  --Indicador Processo
+                                      ,pr_cdlantar => vr_cdlantar          --Codigo Lancamento tarifa
+                                      ,pr_tab_erro => vr_tab_erro          --Tabela de erro
+                                      ,pr_cdcritic => vr_cdcritic          --Codigo do erro
+                                      ,pr_dscritic => vr_dscritic);        --Descricao do erro
 
-          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            --Se tem informacoes no vetor erro
-            IF vr_tab_erro.Count > 0 THEN
-              vr_cdcritic:= 0;
-              vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
-            ELSE
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Nao foi possivel lancar a tarifa.';
-            END IF;
-            --Levantar Exececao
-            RAISE vr_exc_erro;
-          END IF;
-
+      IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        --Se tem informacoes no vetor erro
+        IF vr_tab_erro.Count > 0 THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
         ELSE
-          
-          --Inicializar variavel retorno erro
-          TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
-                                           ,pr_nrdconta => pr_nrdconta   --Numero da Conta
-                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --Data Lancamento
-                                           ,pr_cdhistor => vr_cdhistar   --Codigo Historico
-                                           ,pr_vllanaut => vr_vllantar   --Valor lancamento automatico
-                                           ,pr_cdoperad => 888   --Codigo Operador
-                                           ,pr_cdagenci => 1   --Codigo Agencia
-                                           ,pr_cdbccxlt => 100   --Codigo banco caixa
-                                           ,pr_nrdolote => 7999   --Numero do lote
-                                           ,pr_tpdolote => 1   --Tipo do lote
-                                           ,pr_nrdocmto => pr_nrdocmto   --Numero do documento
-                                           ,pr_nrdctabb => pr_nrdconta   --Numero da conta
-                                           ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')   --Numero da conta integracao
-                                           ,pr_cdpesqbb => 'CRAP020'   --Codigo pesquisa
-                                           ,pr_cdbanchq => 0   --Codigo Banco Cheque
-                                           ,pr_cdagechq => 0   --Codigo Agencia Cheque
-                                           ,pr_nrctachq => 0   --Numero Conta Cheque
-                                           ,pr_flgaviso => FALSE   --Flag aviso
-                                           ,pr_tpdaviso => 0   --Tipo aviso
-                                           ,pr_cdfvlcop => vr_cdfvlcop   --Codigo cooperativa
-                                           ,pr_inproces => rw_crapdat.inproces   --Indicador processo
-                                           ,pr_rowid_craplat => vr_rowid_craplat --Rowid do lancamento tarifa
-                                           ,pr_tab_erro => vr_tab_erro   --Tabela retorno erro
-                                           ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                           ,pr_dscritic => vr_dscritic); --Descricao Critica
-
-          IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            --Se tem informacoes no vetor erro
-            IF vr_tab_erro.Count > 0 THEN
-              vr_cdcritic:= 0;
-              vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
-            ELSE
-              vr_cdcritic:= 0;
-              vr_dscritic:= 'Nao foi possivel lancar a tarifa.';
-            END IF;
-              --Levantar Exececao
-            RAISE vr_exc_erro;
-          END IF;
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Nao foi possivel lancar a tarifa.';
         END IF;
+        --Levantar Exececao
+        RAISE vr_exc_erro;
       END IF;
+
+      ELSE
+        
+        --Inicializar variavel retorno erro
+        TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => pr_cdcooper   --Codigo Cooperativa
+                                         ,pr_nrdconta => pr_nrdconta   --Numero da Conta
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --Data Lancamento
+                                         ,pr_cdhistor => vr_cdhistar   --Codigo Historico
+                                         ,pr_vllanaut => vr_vllantar   --Valor lancamento automatico
+                                         ,pr_cdoperad => 888   --Codigo Operador
+                                         ,pr_cdagenci => 1   --Codigo Agencia
+                                         ,pr_cdbccxlt => 100   --Codigo banco caixa
+                                         ,pr_nrdolote => 7999   --Numero do lote
+                                         ,pr_tpdolote => 1   --Tipo do lote
+                                         ,pr_nrdocmto => pr_nrdocmto   --Numero do documento
+                                         ,pr_nrdctabb => pr_nrdconta   --Numero da conta
+                                         ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000')   --Numero da conta integracao
+                                         ,pr_cdpesqbb => 'CRAP020'   --Codigo pesquisa
+                                         ,pr_cdbanchq => 0   --Codigo Banco Cheque
+                                         ,pr_cdagechq => 0   --Codigo Agencia Cheque
+                                         ,pr_nrctachq => 0   --Numero Conta Cheque
+                                         ,pr_flgaviso => FALSE   --Flag aviso
+                                         ,pr_tpdaviso => 0   --Tipo aviso
+                                         ,pr_cdfvlcop => vr_cdfvlcop   --Codigo cooperativa
+                                         ,pr_inproces => rw_crapdat.inproces   --Indicador processo
+                                         ,pr_rowid_craplat => vr_rowid_craplat --Rowid do lancamento tarifa
+                                         ,pr_tab_erro => vr_tab_erro   --Tabela retorno erro
+                                         ,pr_cdcritic => vr_cdcritic   --Codigo Critica
+                                         ,pr_dscritic => vr_dscritic); --Descricao Critica
+                                         
+        IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          --Se tem informacoes no vetor erro
+          IF vr_tab_erro.Count > 0 THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Nao foi possivel lancar a tarifa.';
+          END IF;
+          --Levantar Exececao
+          RAISE vr_exc_erro;
+    END IF;
+      END IF;
+    END IF;
     END IF;
     
     -- Procedimento para envio do TED para o SPB
@@ -3220,7 +3321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 pr_tab_protocolo_ted => vr_tab_protocolo_ted, 
                 pr_cdcritic => pr_cdcritic, 
                 pr_dscritic => pr_dscritic);
-                
+
     -- se possui codigo, porém não possui descrição                     
     IF nvl(pr_cdcritic,0) > 0 AND 
        TRIM(pr_dscritic) IS NULL THEN
@@ -3239,7 +3340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>'); 
 
     FOR vr_contador IN nvl(vr_tab_protocolo_ted.FIRST,0)..nvl(vr_tab_protocolo_ted.LAST,-1) LOOP
-      
+
       -- Montar XML com registros de carencia
       gene0002.pc_escreve_xml(pr_xml            => pr_tab_protocolo_ted 
                              ,pr_texto_completo => vr_xml_temp 
@@ -3270,7 +3371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                            ,pr_texto_novo     => '</raiz>' 
                            ,pr_fecha_xml      => TRUE);
 
-    vr_xml_temp := NULL;
+    vr_xml_temp := NULL;     
 
     EXCEPTION 
       WHEN OTHERS THEN

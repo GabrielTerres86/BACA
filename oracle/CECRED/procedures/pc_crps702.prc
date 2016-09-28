@@ -427,8 +427,8 @@ BEGIN
           --                                            3 - Em Cartorio          
           IF rw_crapcob.insitcrt IN (1,2,3) THEN
             --> Sustar e Baixar  boleto 
-            paga0001.pc_inst_sustar_baixar
---            COBR0007.pc_inst_sustar_baixar 
+--            paga0001.pc_inst_sustar_baixar
+            COBR0007.pc_inst_sustar_baixar 
                               (pr_cdcooper => rw_crapcob.cdcooper    -- Codigo Cooperativa
                               ,pr_nrdconta => rw_crapcob.nrdconta    -- Numero da Conta
                               ,pr_nrcnvcob => rw_crapcob.nrcnvcob    -- Numero Convenio
@@ -447,8 +447,8 @@ BEGIN
             
           ELSE           
             --> Baixar  boleto 
-            paga0001.pc_inst_pedido_baixa
---            COBR0007.pc_inst_pedido_baixa 
+--            paga0001.pc_inst_pedido_baixa
+            COBR0007.pc_inst_pedido_baixa 
                               (pr_idregcob  => rw_crapcob.rowid         -- Rowid da Cobranca
                               ,pr_cdocorre  => 9                        -- Codigo Ocorrencia
                               ,pr_dtmvtolt  => rw_crapceb_nbloq.dat_dtmvtolt  -- Data movimento

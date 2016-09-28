@@ -43,11 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.IMUT0001 AS
                                       ,pr_tab_erro  OUT GENE0001.typ_tab_erro);--> Tabela erros
 END IMUT0001;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
-
-  --Tipo de Dados para cursor data
-  rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
   /* Procedure para verificar imunidade tributaria e inserir valor de insenção */
   PROCEDURE pc_verifica_imunidade_trib( pr_cdcooper  IN  INTEGER               --> Codigo Cooperativa
@@ -68,13 +64,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
   --  Sistema  : Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : outubro/2013.                   Ultima atualizacao: 24/10/2013
+  --  Data     : outubro/2013.                   Ultima atualizacao: 02/08/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para verificar a imunidade tributaria da conta
   --
+  -- Alteracoes: 02/08/2016 - Tratar data de gravação quando IR de Cotas na Origem (Marcos-Supero)
   ---------------------------------------------------------------------------------------------------------------
 
     --Buscar associados
@@ -99,7 +96,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
     rw_crapimt  cr_crapimt%rowtype;
 
     vr_exc_erro exception;
-    vr_dtmvtolt date;
     vr_cdcritic INTEGER;         --> Codigo Critica
     vr_dscritic VARCHAR2(1000);   --> Descricao Critica
 
@@ -161,23 +157,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
            RAISE vr_exc_erro;
          END IF;
 
-         /*  Tratamento para o debito do IR em cotas -
-             Nao grava com o ultimo dia do ano        */
-         IF pr_cdinsenc = 6 THEN
-           -- Leitura do calendario da cooperativa
-           OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-           FETCH btch0001.cr_crapdat
-            INTO rw_crapdat;
-           -- Se nao encontrar
-           IF btch0001.cr_crapdat%NOTFOUND THEN
-             -- Apenas fechar o cursor
-             CLOSE btch0001.cr_crapdat;
-           ELSE
-             vr_dtmvtolt := rw_crapdat.dtmvtolt;
-             CLOSE btch0001.cr_crapdat;
-           END IF;
-         END IF; -- fim pr_cdinsenc = 6
-
          BEGIN
            --Gravar cadastro dos valores insentos de IOF e IRRF
            INSERT INTO CRAPVIN
@@ -189,7 +168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
                      ,vlinsenc)
                   VALUES
                     ( pr_cdcooper -- cdcooper
-                     ,nvl(vr_dtmvtolt,pr_dtmvtolt) -- dtmvtolt
+                     ,pr_dtmvtolt -- dtmvtolt
                      ,pr_nrdconta -- nrdconta
                      ,rw_crapass.nrcpfcgc -- nrcpfcgc
                      ,pr_cdinsenc -- cdinsenc
@@ -364,4 +343,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.IMUT0001 AS
   END pc_verifica_periodo_imune;
 END IMUT0001;
 /
-

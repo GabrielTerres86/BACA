@@ -4880,7 +4880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Setembro/15.                    Ultima atualizacao: --/--/----
+      Data    : Setembro/15.                    Ultima atualizacao: 20/01/2016
 
       Dados referentes ao programa:
 
@@ -4891,7 +4891,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       Observacao: -----
 
-      Alteracoes: 
+      Alteracoes: 20/01/2016 - Alterado a chamada da procedure pc_inst_pedido_baixa da 
+                               PAGA0001 para COBR0007 (Douglas - Importacao de Arquivo CNAB)
   ..............................................................................*/																								
 		DECLARE
 		
@@ -4974,7 +4975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				END IF;
 				
 				-- Efetua baixa
-				PAGA0001.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
+				COBR0007.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
 				                             ,pr_cdocorre => 0
 																		 ,pr_dtmvtolt => pr_dtmvtolt
 																		 ,pr_cdoperad => pr_cdoperad

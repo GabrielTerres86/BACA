@@ -4249,7 +4249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 11/11/2015 - Alterado cursores que envolvem o envio de informações de alterações
                              nas contas para o SIPAG (cr_crapcrd_loop_alt), a fim de sanar a situação
                              que causou os problemas relatados nos chamados 333541 e 333541 ( Renato - Supero )
-                             
+
                 02/05/2016 - Adicionado validacao na solicitacao de UPGRADE/DOWNGRADE para nao gerar
                              solicitacao de cartao adicional nessa situacao (Douglas - Chamado 441407)             
      ..............................................................................*/
@@ -4410,7 +4410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
              age.cdagenci = ass.cdagenci
              -- Numero da conta utilizado para nao gerar linha de solicitacao de cartao adiciona quando eh 
              -- UPGRADE/DOWNGRADE, DEVE ficar como primeiro campo no ORDER BY (Douglas - Chamado 441407)             
-             ORDER BY pcr.nrdconta
+             ORDER BY pcr.nrdconta   
                     , pcr.nrctrcrd;  -- Ordena por conta, para incluir no arquivo as contas agrupadas( Renato - Supero )
       
       -- cursor para busca de cartões ativos para verificação
@@ -5391,7 +5391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       -- se for realizado operação de upgrade/downgrade
                       --deve mandar numero já existente
                       vr_nrctacrd := rw_crawcrd.nrcctitg;
-
+                      
                       -- Solicitacao de upgrade/downgrade no cartao do primeiro titular
                       vr_flupgrad := TRUE;
 
@@ -5428,7 +5428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   END IF;
 
                 ELSE -- outros titulares
-
+                  
                   -- Adicionar tratamento para quando for realizado Upgrade/Downgrade
                   -- nao gerar as informacoes dos cartoes adicionais
                   -- Verificar se o Tipo de Operacao eh a Modificacao de Conta Cartao (UPGRADE/DOWNGRADE)
@@ -6022,7 +6022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    Programa: CCDR0003
    Sigla   : APLI
    Autor   : Tiago
-   Data    : Junho/2015                          Ultima atualizacao: 23/02/2016
+   Data    : Junho/2015                          Ultima atualizacao: 01/09/2016
 
    Dados referentes ao programa:
 
@@ -6036,6 +6036,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   
    23/02/2016 - Quando for verificar o saldo retirar a subtracao do valor do bloqueio judicial
                 da somatoria (Tiago/Rodrigo SD405466)
+                
+   01/09/2016 - Qdo o ultimo dia de repique da fatura for feriado mudar a situacao da
+                fatura pra Nao Efetivado pois esta gerando um problema
+                (Tiago/Quisinski #506917).
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -6562,10 +6566,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         --Mudar situacao da fatura para nao efetuado qdo 
         --for o ultimo dia do repique e nao conseguiu realizar o pagamento total        
-        IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento, pr_tipo => 'P')
-           = (pr_dtmvtolt - vr_qtddiapg) AND 
-           (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0 AND 
-           pr_cdprogra = 'CRPS674' THEN        
+        IF ((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
+                                        ,pr_tipo => 'P') = (pr_dtmvtolt - vr_qtddiapg) AND 
+            (rw_tbcrd_fatura.vlpendente - vr_vlpagmto) > 0)  OR           
+           --Se for o penultimo dia de repique o o proximo dia nao eh dia util
+           --mudar a situacao da fatura para finalizar o repique
+           ((gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtolt => rw_tbcrd_fatura.dtvencimento
+                                        , pr_tipo => 'P') -  (pr_dtmvtolt - vr_qtddiapg)) = 1 AND
+            (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtolt => pr_dtmvtolt + 1
+                                        , pr_tipo => 'P') > (pr_dtmvtolt + 1)))               AND 
+           pr_cdprogra = 'CRPS674') THEN        
           BEGIN            
             UPDATE tbcrd_fatura
                SET tbcrd_fatura.insituacao = 4

@@ -12,7 +12,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Objetivo  : Envio de negativacoes para a Serasa
   --
-  --  Alteracoes: 20/06/2016 - Enviar todos os dados na primeira linha de cada registro. Antes o 
+  --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+  --						   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+  --						   (Andrei - RKAM). 
+  --
+  --              20/06/2016 - Enviar todos os dados na primeira linha de cada registro. Antes o 
   --                           numero da conta ia somente na segunda linha
   --
   --              04/07/2016 - Nao enviar para o Serasa automaticamente se ja foi enviado uma vez
@@ -723,7 +727,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
             END IF;
             
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_2.rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_2.rowid --ROWID da cobranca
                                                ,pr_cdocorre => 93 -- Negativacao Serasa
                                                ,pr_cdmotivo => 'S3' -- Negativado na Serasa
                                                ,pr_vltarifa => 0
@@ -772,7 +776,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
               IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                 --Levantar Excecao
                 RAISE vr_exc_saida;
-              END IF;
+            END IF;
             END IF;
             
           END LOOP;

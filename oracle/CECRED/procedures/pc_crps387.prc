@@ -333,7 +333,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                03/08/2016 - Ajustes para garantir que o rw_crapatr não fique com lixo do registro
                             anterior. PRJ320 - Oferta DebAut (Odirlei-AMcom)      
-                         
+                             
+               30/08/2016 - Alterar data de cancelamento da autorização para gravar com a data
+                            do sistema dtmvtolt (Lucas Ranghetti #493282)             
+                            
                23/09/2016 - Tratar registros de vr_nro_conta_dec < 9000000000 para tratar
                             agencia(cdagectl) do debito (Lucas Ranghetti#527719)
 ............................................................................ */
@@ -1553,8 +1556,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                    rw_gnconve.nmempres,
                                    vr_contador);
 
-          vr_dtcancel := rw_crapdat.dtmvtolt - to_char(rw_crapdat.dtmvtolt,'dd');
-          vr_dtcancel := vr_dtcancel - to_char(vr_dtcancel,'dd');
+          /* Data de cancelamento da autorizacao */
+          vr_dtcancel := rw_crapdat.dtmvtolt;
 
           vr_nrseqarq := vr_nrseqarq - 1; /* p/incrementar Seq.  */
 
@@ -2370,7 +2373,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     ELSE
                       vr_nrdconta := vr_nro_conta_dec;
                     END IF;
-                    
+
                     IF pr_cdcooper = 3 AND (vr_cdagedeb < 100 OR vr_cdagedeb > vr_cdultage) 
                        AND vr_cdagedeb <> 1 THEN
 
@@ -2864,7 +2867,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                     IF cr_crapatr%FOUND THEN
                       IF SUBSTR(vr_setlinha,150,1) <> '1' THEN
-                        rw_crapatr.dtfimatr := rw_crapatr.dtiniatr;
+                        rw_crapatr.dtfimatr := vr_dtcancel;
                         BEGIN
                           UPDATE crapatr
                              SET crapatr.dtfimatr = crapatr.dtiniatr
