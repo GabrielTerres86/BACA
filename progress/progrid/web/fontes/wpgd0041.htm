@@ -1,8 +1,11 @@
 <!--------------------------------------------------------------------
 
 	09/09/2016 - Incluida a opcao de geração de todos relatórios
-	   					 quando o tipo for "TABULADA", Prj. 229. (Jean Michel).
-
+	   		     quando o tipo for "TABULADA", Prj. 229. (Jean Michel).
+    
+    28/09/2016 - Alterado para não apresentar opcao de tipo de relatorio "Todos"
+                 quando for tipo "Em Branc", Prj. 229. (Odirlei-AMcom).
+                         
 ---------------------------------------------------------------------->
 <html>
 	<head>
@@ -64,7 +67,7 @@
 																		 </tr>
 																		 <tr>
 																				<td align="right" class="NomeCampo">Tipo:</td>
-																				<td><select name="aux_tpdavali" class="Campo" id="aux_tpdavali"></select></td>
+																				<td><select name="aux_tpdavali" class="Campo" id="aux_tpdavali" onchange="AtualizaTipRel()"></select></td>
 																		 </tr> 
 																		 <tr>
 																				<td align="right" class="NomeCampo">Tipo Relat&oacute;rio:</td>
@@ -322,7 +325,28 @@
 			 
 			 document.form.submit();
 		}
-
+        
+        function AtualizaTipRel () {
+            var oOption;   
+            var optprelato = document.getElementById("aux_tprelato");   
+            
+            if (document.form.aux_tpdavali.value == 1){
+                // Remover opcao todos
+                var i;
+                for (i = 0; i < optprelato.length; i++) {
+                 if (optprelato[i].text == 'Todos'){
+                   optprelato.remove(i);      
+                 } 
+                }
+            }else{
+                // Incluir opção "Todos"
+                oOption = document.createElement("OPTION");   
+                oOption.text  = "Todos";
+                oOption.value = "4";
+                document.all.aux_tprelato.options.add(oOption);
+            }
+            
+        }
 
 			 
 		// valida os parâmetros da agenda
@@ -348,6 +372,6 @@
 								 document.form.aux_tpdavali.disabled=false;
 			 
 		}   
-		 
+		AtualizaTipRel(); 
 	</SCRIPT>
 </html>
