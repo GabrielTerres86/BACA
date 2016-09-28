@@ -7,8 +7,8 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Outubro/2003.                   Ultima atualizacao:  26/09/2016
-   
+   Data    : Outubro/2003.                   Ultima atualizacao:  20/02/2015
+
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -44,10 +44,7 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
                 01/10/2014 - Incluir novo lote 6400 (Lucas R. - #205006)
                 
                 20/02/2015 - Incluido lote 7050.
-                             (Chamado 229249 # PRJ Melhoria) - (Fabricio)na do Oracle
-                            (Lucas Ranghetti #340156)
-							
-                26/09/2016 - Incluir lotes da M211 para nao exclusao (Evandro-RKAM)
+                             (Chamado 229249 # PRJ Melhoria) - (Fabricio)
 ............................................................................. */
 
 IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
@@ -137,10 +134,6 @@ IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
      {1}nrdolote = 8505   OR        /* Crédito de vencimento de aplicação   */
      {1}nrdolote = 8506   OR        /* Crédito de provisão de aplicação     */
      {1}nrdolote = 6651   OR   /*Debitos nao efetuados no processo noturno (e efetuados pela DEBCON)*/
-     {1}nrdolote = 7050   OR   /*Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
-	 ({1}nrdolote >= 8482  AND      /* TEDS Sicredi */
-     {1}nrdolote <= 8486) THEN
-	 
-	 
+     {1}nrdolote = 7050   THEN /*Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
      glb_cdcritic = 261.
 

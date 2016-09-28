@@ -43,7 +43,7 @@
 
     Programa: b1wgen0050.p
     Autor   : David
-    Data    : Novembro/2009                   Ultima Atualizacao: 27/09/2016
+    Data    : Novembro/2009                   Ultima Atualizacao: 17/05/2016
            
     Dados referentes ao programa:
                 
@@ -136,13 +136,7 @@
                              alterar o campo do cpf do remetente para buscar do campo 
                              correto (Lucas Ranghetti #440959)
                            - Remover chamado em duplicidade das opcoes "ENVIADOS -> TODOS" 
-                             e "RECEBIDOS -> TODOS" na procedure obtem-log-cecred (Lucas Ranghetti #445186)  
-
-                27/09/2016 - M211 - Adicionado parametros par_cdifconv nas procs 
-                            obtem-log-spb, impressao-log-pdf e impressao-log-csv.
-                            Tambem chamada a rotina convertida da obtem-log-cecred
-                            (Evandro-RKAM)
-                             
+                             e "RECEBIDOS -> TODOS" na procedure obtem-log-cecred (Lucas Ranghetti #445186)                             
                 
 ..............................................................................*/
 
@@ -280,7 +274,6 @@ PROCEDURE obtem-log-spb:
     DEF  INPUT PARAM par_idacesso AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inestcri AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdifconv AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrdated AS DECIMAL                        NO-UNDO.
 
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
@@ -323,7 +316,6 @@ PROCEDURE obtem-log-spb:
                               INPUT par_nriniseq,
                               INPUT par_nrregist,
                               INPUT par_inestcri,
-                              INPUT par_cdifconv,
                               INPUT par_vlrdated,
                              OUTPUT TABLE tt-logspb,
                              OUTPUT TABLE tt-logspb-detalhe,
@@ -644,26 +636,8 @@ PROCEDURE obtem-log-cecred:
     DEF OUTPUT PARAM TABLE FOR tt-logspb-totais.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    /* Variaveis para o XML */ 
-    DEF VAR xDoc          AS HANDLE   NO-UNDO.   
-    DEF VAR xRoot         AS HANDLE   NO-UNDO.  
-    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
-    DEF VAR xField        AS HANDLE   NO-UNDO. 
-    DEF VAR xText         AS HANDLE   NO-UNDO. 
-    DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
-    DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
-    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
-    DEF VAR xml_logspb         AS LONGCHAR NO-UNDO. 
-    DEF VAR xml_logspb_detalhe AS LONGCHAR NO-UNDO. 
-    DEF VAR xml_logspb_totais  AS LONGCHAR NO-UNDO. 
-    
-     /* Inicializando objetos para leitura do XML */ 
-    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
-    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
-    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
-    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
-    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */         
-    
+    DEF VAR aux_nmarqlog AS CHAR                                    NO-UNDO.
+
     EMPTY TEMP-TABLE tt-logspb.
     EMPTY TEMP-TABLE tt-logspb-detalhe.
     EMPTY TEMP-TABLE tt-logspb-totais.
@@ -675,196 +649,436 @@ PROCEDURE obtem-log-cecred:
                         "R" - MSG'S REJEITADAS / "T" - TODOS         *****************/
     /*********************************************************************************/
 
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-                 
-    /* Efetuar a chamada a rotina Oracle */ 
-    RUN STORED-PROCEDURE pc_obtem_log_cecred_car
-       aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
+    
+
+    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+    IF  NOT AVAILABLE crapcop  THEN
+        DO:
+            ASSIGN aux_cdcritic = 651
+                   aux_dscritic = "".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+        END.
+
+    ASSIGN aux_nrseqlog = 0
+           aux_qtdenvok = 0
+           aux_vlrenvok = 0
+           aux_qtdrecok = 0
+           aux_vlrrecok = 0
+           aux_qtenvnok = 0
+           aux_vlenvnok = 0
+           aux_qtrecnok = 0
+           aux_vlrecnok = 0
+           aux_qtrejeit = 0
+           aux_qtdrejok = 0 
+           aux_vlrrejok = 0.
+
+    IF  par_nriniseq = 0  THEN
+        ASSIGN par_nriniseq = 1.
+
+    IF  par_nrregist = 0  THEN
+        ASSIGN par_nrregist = 999999.
+
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 1     AND   /** ENVIADAS    **/
+        par_cdsitlog = "P")  THEN  /** PROCESSADAS **/
+        RUN busca-log-ted (INPUT par_cdcooper,
+                           INPUT par_nrdconta,
+                           INPUT par_nrsequen,
+                           INPUT par_cdorigem,
+                           INPUT par_dtmvtini,
+                           INPUT par_dtmvtfim,
+                           INPUT 1,
+                           INPUT par_nriniseq,
+                           INPUT par_nrregist,
+                           INPUT par_inestcri,
+                           INPUT par_vlrdated,
+                          OUTPUT TABLE tt-logspb-detalhe) .
+    
+    IF  par_numedlog = 0    OR 
+       (par_numedlog = 1    AND  /** ENVIADAS   **/
+        par_cdsitlog = "D") THEN /** DEVOLVIDAS **/
+        RUN busca-log-ted (INPUT par_cdcooper,
+                           INPUT par_nrdconta,
+                           INPUT par_nrsequen,
+                           INPUT par_cdorigem,
+                           INPUT par_dtmvtini,
+                           INPUT par_dtmvtfim,
+                           INPUT 2,
+                           INPUT par_nriniseq,
+                           INPUT par_nrregist,
+                           INPUT par_inestcri,
+                           INPUT par_vlrdated,
+                          OUTPUT TABLE tt-logspb-detalhe).
+    
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 1     AND 
+        par_cdsitlog = "R")  THEN /** ENVIADAS REJEITADAS **/
+        RUN busca-log-ted (INPUT par_cdcooper,
+                           INPUT par_nrdconta,
+                           INPUT par_nrsequen,
+                           INPUT par_cdorigem,
+                           INPUT par_dtmvtini,
+                           INPUT par_dtmvtfim,
+                           INPUT 5,
+                           INPUT par_nriniseq,
+                           INPUT par_nrregist,
+                           INPUT par_inestcri,
+                           INPUT par_vlrdated,
+                          OUTPUT TABLE tt-logspb-detalhe).   
+                          
+       IF  par_numedlog = 0  OR 
+       (par_numedlog = 1     AND 
+        par_cdsitlog = "T")  THEN /** ENVIADAS TODOS **/
+        DO:
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 1,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe) .
+            
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 2,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+            
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 5,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).   
+        END.
+        
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 2     AND  /** RECEBIDAS   **/
+        par_cdsitlog = "P")  THEN /** PROCESSADAS **/
+        RUN busca-log-ted (INPUT par_cdcooper,
+                           INPUT par_nrdconta,
+                           INPUT par_nrsequen,
+                           INPUT par_cdorigem,
+                           INPUT par_dtmvtini,
+                           INPUT par_dtmvtfim,
+                           INPUT 3,
+                           INPUT par_nriniseq,
+                           INPUT par_nrregist,
+                           INPUT par_inestcri,
+                           INPUT par_vlrdated,
+                          OUTPUT TABLE tt-logspb-detalhe).
+    
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 2     AND
+        par_cdsitlog = "D")  THEN  /** RECEBIDAS DEVOLVIDAS  **/
+        RUN busca-log-ted (INPUT par_cdcooper,
+                           INPUT par_nrdconta,
+                           INPUT par_nrsequen,
+                           INPUT par_cdorigem,
+                           INPUT par_dtmvtini,
+                           INPUT par_dtmvtfim,
+                           INPUT 4,
+                           INPUT par_nriniseq,
+                           INPUT par_nrregist,
+                           INPUT par_inestcri,
+                           INPUT par_vlrdated,
+                          OUTPUT TABLE tt-logspb-detalhe).   
+                          
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 2     AND
+        par_cdsitlog = "T")  THEN  /** RECEBIDAS TODOS  **/
+        DO:
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 3,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+                          
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 4,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).   
+        END.
+        
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 4     AND
+        par_cdsitlog = "P")  THEN  /** TODOS PROCESSADOS  **/
+        DO:
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 1,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+        
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 3,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+        END.
+        
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 4     AND
+        par_cdsitlog = "D")  THEN  /** TODOS DEVOLVIDOS  **/
+        DO:
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 2,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+        
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 4,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+        END.
+
+    IF  par_numedlog = 0     OR 
+       (par_numedlog = 4     AND
+        par_cdsitlog = "R")  THEN  /** TODOS REJEITADOS  **/
+        DO:
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 5,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+        END.
+    
+    IF  (par_numedlog = 4     AND
+        par_cdsitlog = "T")  THEN  /** TODOS TODOS  **/
+        DO:
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 1,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 2,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).            
+                              
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 3,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+                              
+            RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 4,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).              
+             
+             RUN busca-log-ted (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT 5,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                                INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+        END.
+    
+    IF  par_numedlog = 0  OR 
+        par_numedlog = 3  THEN
+        DO: 
+            ASSIGN aux_nmarqlog = "/usr/coop/" + crapcop.dsdircop + 
+                                  "/log/mqcecred_processa_" +
+                                  STRING(DAY(par_dtmvtini),"99") +
+                                  STRING(MONTH(par_dtmvtini),"99") +
+                                  SUBSTR(STRING(YEAR(par_dtmvtini)),3) + 
+                                  ".log".
+    
+            IF  SEARCH(aux_nmarqlog) = ?  THEN
+                DO:
+                    IF  par_numedlog = 3  THEN
+                        DO:
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = "Nao existe log das transacoes " +
+                                                  "para este dia.".
+                            
+                            RUN gera_erro (INPUT par_cdcooper,
                                            INPUT par_cdagenci,
                                            INPUT par_nrdcaixa,
-                                           INPUT par_cdoperad,
-                                           INPUT par_nmdatela,
-                                           INPUT par_cdorigem,
-                                           INPUT par_dtmvtini,
-                                           INPUT par_dtmvtfim,
-                                           INPUT par_numedlog,
-                                           INPUT par_cdsitlog,
-                                           INPUT par_nrdconta,
-                                           INPUT par_nrsequen,
-                                           INPUT par_nriniseq,
-                                           INPUT par_nrregist,
-                                           INPUT par_inestcri,
-                                           INPUT par_vlrdated,
-                                           OUTPUT ?,  /* pr_clob_logspb */
-                                           OUTPUT ?,  /* pr_clob_logspb_detalhe */
-                                           OUTPUT ?,  /* pr_clob_logspb_totais */
-                                           OUTPUT "", /* cdcritic */
-                                           OUTPUT 0). /* dscritic */
+                                           INPUT 1,          /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                            
+                            RETURN "NOK".    
+                        END.
+                END.
+            ELSE
+                RUN le-arquivo-log (INPUT aux_nmarqlog,
+                                    INPUT 3,
+                                    INPUT "").
     
-    /* Fechar o procedimento para buscarmos o resultado */ 
-    CLOSE STORED-PROC pc_obtem_log_cecred_car
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-    /*************************************************************/
-    /* Buscar o XML na tabela de retorno da procedure Progress */ 
-    ASSIGN xml_logspb         = pc_obtem_log_cecred_car.pr_clob_logspb
-           xml_logspb_detalhe = pc_obtem_log_cecred_car.pr_clob_logspb_detalhe
-           xml_logspb_totais  = pc_obtem_log_cecred_car.pr_clob_logspb_totais.     
+            IF  par_numedlog = 3               AND 
+                NOT CAN-FIND(FIRST tt-logspb)  THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Nao existem mensagens de " + 
+                                                  "log para este dia.".
+                
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,          /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                
+                    RETURN "NOK".    
+                END.
+        END.
     
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = ""
-           aux_cdcritic = pc_obtem_log_cecred_car.pr_cdcritic 
-                          WHEN pc_obtem_log_cecred_car.pr_cdcritic <> ?
-           aux_dscritic = pc_obtem_log_cecred_car.pr_dscritic 
-                          WHEN pc_obtem_log_cecred_car.pr_dscritic <> ?.
-    
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }     
-    
-    IF  aux_cdcritic <> 0   OR
-        aux_dscritic <> ""  THEN
+    IF  par_numedlog = 1  OR 
+        par_numedlog = 2  THEN
         DO:
-            CREATE tt-erro.
-            ASSIGN tt-erro.cdcritic = aux_cdcritic
-                   tt-erro.dscritic = aux_dscritic.     
-            RETURN "NOK".
-            
-        END.       
-    
-    /* Processar registros da pr_clob_logspb */
-    
-    /* Efetuar a leitura do XML*/ 
-    SET-SIZE(ponteiro_xml) = LENGTH(xml_logspb) + 1. 
-    PUT-STRING(ponteiro_xml,1) = xml_logspb.    
-    
-    IF  ponteiro_xml <> ? THEN
-        DO: 
-           xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
-           xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-            
-           DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
-               
-               xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
-
-               IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN 
-                   NEXT.            
-
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb.
-                  
-               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-
-                   xRoot2:GET-CHILD(xField,aux_cont). 
-
-                   IF xField:SUBTYPE <> "ELEMENT" THEN 
-                       NEXT. 
-
-                   xField:GET-CHILD(xText,1).                    
-                        
-                 ASSIGN tt-logspb.nrseqlog = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqlog"         
-                        tt-logspb.dslinlog = xText:NODE-VALUE WHEN xField:NAME = "dslinlog".
-               END.              
-             
-           END.    
-           
-           SET-SIZE(ponteiro_xml) = 0.    
-        END.      
-    
-    /* Processar registros da pr_clob_logspb_detalhe */
-    
-    /* Efetuar a leitura do XML*/ 
-    SET-SIZE(ponteiro_xml) = LENGTH(xml_logspb_detalhe) + 1. 
-    PUT-STRING(ponteiro_xml,1) = xml_logspb_detalhe.    
-    
-    IF  ponteiro_xml <> ? THEN
-        DO: 
-           xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
-           xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-            
-           DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
-               
-               xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
-
-               IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN 
-                   NEXT.            
-
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb-detalhe.
-                  
-               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-
-                   xRoot2:GET-CHILD(xField,aux_cont). 
-
-                   IF xField:SUBTYPE <> "ELEMENT" THEN 
-                       NEXT. 
-
-                   xField:GET-CHILD(xText,1).                    
-                        
-                 ASSIGN tt-logspb-detalhe.nrseqlog = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqlog"         
-                        tt-logspb-detalhe.cdbandst = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbandst"
-                        tt-logspb-detalhe.cdagedst = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagedst"
-                        tt-logspb-detalhe.nrctadst =     xText:NODE-VALUE  WHEN xField:NAME = "nrctadst"
-                        tt-logspb-detalhe.dsnomdst =     xText:NODE-VALUE  WHEN xField:NAME = "dsnomdst"
-                        tt-logspb-detalhe.dscpfdst = INT(xText:NODE-VALUE) WHEN xField:NAME = "dscpfdst"
-                        tt-logspb-detalhe.cdbanrem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbanrem"
-                        tt-logspb-detalhe.cdagerem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagerem"
-                        tt-logspb-detalhe.nrctarem =     xText:NODE-VALUE  WHEN xField:NAME = "nrctarem"
-                        tt-logspb-detalhe.dsnomrem =     xText:NODE-VALUE  WHEN xField:NAME = "dsnomrem"
-                        tt-logspb-detalhe.dscpfrem = INT(xText:NODE-VALUE) WHEN xField:NAME = "dscpfrem"
-                        tt-logspb-detalhe.hrtransa =     xText:NODE-VALUE  WHEN xField:NAME = "hrtransa"
-                        tt-logspb-detalhe.vltransa = DEC(xText:NODE-VALUE) WHEN xField:NAME = "vltransa"
-                        tt-logspb-detalhe.dsmotivo =     xText:NODE-VALUE  WHEN xField:NAME = "dsmotivo"
-                        tt-logspb-detalhe.dstransa =     xText:NODE-VALUE  WHEN xField:NAME = "dstransa"
-                        tt-logspb-detalhe.dsorigem =     xText:NODE-VALUE  WHEN xField:NAME = "dsorigem"
-                        tt-logspb-detalhe.cdagenci = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci"
-                        tt-logspb-detalhe.nrdcaixa = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdcaixa"
-                        tt-logspb-detalhe.cdoperad =     xText:NODE-VALUE  WHEN xField:NAME = "cdoperad".
-               END.              
-             
-           END.    
-           
-           SET-SIZE(ponteiro_xml) = 0.    
+            IF  NOT CAN-FIND(FIRST tt-logspb-detalhe)  THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Nao existem mensagens " + 
+                                                 (IF  par_numedlog = 1  THEN
+                                                      "enviadas"
+                                                  ELSE
+                                                      "recebidas") +
+                                                  " para este dia.".
+                
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,          /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                
+                    RETURN "NOK".    
+                END.
         END.
-    
-    /* Processar registros da pr_clob_logspb_totais */
-    
-    /* Efetuar a leitura do XML*/ 
-    SET-SIZE(ponteiro_xml) = LENGTH(xml_logspb_totais) + 1. 
-    PUT-STRING(ponteiro_xml,1) = xml_logspb_totais.    
-    
-    IF  ponteiro_xml <> ? THEN
-        DO: 
-           xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
-           xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-            
-           DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
-               
-               xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
-
-               IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN 
-                   NEXT.            
-
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb.
-                  
-               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-
-                   xRoot2:GET-CHILD(xField,aux_cont). 
-
-                   IF xField:SUBTYPE <> "ELEMENT" THEN 
-                       NEXT. 
-
-                   xField:GET-CHILD(xText,1).                    
-                        
-                 ASSIGN tt-logspb.qtsitlog = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtsitlog"         
-                        tt-logspb.vlsitlog = DEC(xText:NODE-VALUE) WHEN xField:NAME = "vlsitlog".
-               END.              
-             
-           END.    
-           
-           SET-SIZE(ponteiro_xml) = 0.    
-        END.
-    
-    /* Chegou ao fim com sucesso */
+        
+    CREATE tt-logspb-totais.
+    ASSIGN tt-logspb-totais.qtdenvok = aux_qtdenvok
+           tt-logspb-totais.vlrenvok = aux_vlrenvok
+           tt-logspb-totais.qtdrecok = aux_qtdrecok
+           tt-logspb-totais.vlrrecok = aux_vlrrecok
+           tt-logspb-totais.qtenvnok = aux_qtenvnok
+           tt-logspb-totais.vlenvnok = aux_vlenvnok
+           tt-logspb-totais.qtrecnok = aux_qtrecnok
+           tt-logspb-totais.vlrecnok = aux_vlrecnok
+           tt-logspb-totais.qtrejeit = aux_qtrejeit
+           tt-logspb-totais.qtdrejok = aux_qtdrejok 
+           tt-logspb-totais.vlrrejok = aux_vlrrejok.
+                   
     RETURN "OK".
 
 END PROCEDURE.
@@ -1542,6 +1756,633 @@ PROCEDURE grava-log-ted:
         RETURN "NOK".
     ELSE
         RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE busca-log-ted:
+
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrsequen AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdorigem AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtini AS DATE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtfim AS DATE NO-UNDO.
+    DEF INPUT PARAM par_idsitmsg AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE NO-UNDO.
+    DEF INPUT PARAM par_inestcri AS INTE NO-UNDO.
+    DEF INPUT PARAM par_vlrdated AS DECI NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
+    
+    IF  par_idsitmsg = 1 THEN
+        RUN busca-enviada-ok (INPUT par_cdcooper,
+                              INPUT par_nrdconta,
+                              INPUT par_nrsequen,
+                              INPUT par_cdorigem,
+                              INPUT par_dtmvtini,
+                              INPUT par_dtmvtfim,
+                              INPUT par_nriniseq,
+                              INPUT par_nrregist,
+                              INPUT par_inestcri,
+                              INPUT par_vlrdated,
+                             OUTPUT TABLE tt-logspb-detalhe).
+    ELSE
+    IF  par_idsitmsg = 2 THEN
+        RUN busca-enviada-nok (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+    ELSE
+    IF  par_idsitmsg = 3 THEN
+        RUN busca-recebida-ok (INPUT par_cdcooper,
+                               INPUT par_nrdconta,
+                               INPUT par_nrsequen,
+                               INPUT par_cdorigem,
+                               INPUT par_dtmvtini,
+                               INPUT par_dtmvtfim,
+                               INPUT par_nriniseq,
+                               INPUT par_nrregist,
+                               INPUT par_inestcri,
+                               INPUT par_vlrdated,
+                              OUTPUT TABLE tt-logspb-detalhe).
+    ELSE
+    IF  par_idsitmsg = 4 THEN
+        RUN busca-recebida-nok (INPUT par_cdcooper,
+                                INPUT par_nrdconta,
+                                INPUT par_nrsequen,
+                                INPUT par_cdorigem,
+                                INPUT par_dtmvtini,
+                                INPUT par_dtmvtfim,
+                                INPUT par_nriniseq,
+                                INPUT par_nrregist,
+                                INPUT par_inestcri,
+                                INPUT par_vlrdated,
+                               OUTPUT TABLE tt-logspb-detalhe).
+    ELSE
+    IF  par_idsitmsg = 5 THEN
+        RUN busca-rejeitada-ok (INPUT par_cdcooper,
+                                INPUT par_nrdconta,
+                                INPUT par_nrsequen,
+                                INPUT par_cdorigem,
+                                INPUT par_dtmvtini,
+                                INPUT par_dtmvtfim,
+                                INPUT par_nriniseq,
+                                INPUT par_nrregist,
+                                INPUT par_inestcri,
+                                INPUT par_vlrdated,
+                               OUTPUT TABLE tt-logspb-detalhe).    
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE busca-enviada-ok:
+
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrsequen AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdorigem AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtini AS DATE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtfim AS DATE NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE NO-UNDO.
+    DEF INPUT PARAM par_inestcri AS INTE NO-UNDO.
+    DEF INPUT PARAM par_vlrdated AS DEC  NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
+
+    ASSIGN aux_nrregist = par_nrregist.
+
+    FOR EACH craplmt WHERE craplmt.cdcooper = par_cdcooper           AND
+                         ((craplmt.nrdconta = par_nrdconta           AND
+                           par_nrdconta <> 0) OR par_nrdconta = 0)   AND
+                         ((craplmt.nrsequen = par_nrsequen           AND
+                           par_nrsequen <> 0) OR par_nrsequen = 0)   AND
+                         ((craplmt.idorigem = par_cdorigem           AND
+                           par_cdorigem <> 0) OR par_cdorigem = 0)   AND
+                           craplmt.dttransa >= par_dtmvtini          AND
+                           craplmt.dttransa <= par_dtmvtfim          AND
+                         ((craplmt.vldocmto = par_vlrdated           AND
+                           par_vlrdated <> 0) OR par_vlrdated = 0)   AND
+                         ((par_inestcri = 1                          AND
+                           CAN-DO("1,2",STRING(craplmt.inestcri))    AND
+                           CAN-DO("STR0005R2,STR0007R2,STR0008R2," + /* TED */
+                                  "PAG0107R2,PAG0108R2,PAG0143R2," + /* TED */
+                                  "STR0037R2,PAG0137R2",             /* TEC */
+                                  craplmt.nmevento))                 OR
+                           par_inestcri = 0)                         AND 
+                           craplmt.idsitmsg = 1 NO-LOCK 
+                                                BY craplmt.hrtransa
+                                                BY craplmt.nrsequen:
+        
+        ASSIGN aux_qtregist = aux_qtregist + 1
+               aux_qtdenvok = aux_qtdenvok + 1
+               aux_vlrenvok = aux_vlrenvok + craplmt.vldocmto.
+
+        /* controles da paginação */
+        IF (aux_qtregist < par_nriniseq) OR
+           (aux_qtregist > (par_nriniseq + par_nrregist)) THEN
+            NEXT.
+
+        IF  aux_nrregist > 0 THEN
+        DO:
+            CREATE tt-logspb-detalhe.
+            ASSIGN tt-logspb-detalhe.nrseqlog = craplmt.nrsequen
+                   tt-logspb-detalhe.cdbanrem = craplmt.cdbanctl
+                   tt-logspb-detalhe.cdagerem = craplmt.cdagectl
+                   tt-logspb-detalhe.nrctarem = STRING(craplmt.nrdconta)
+                   tt-logspb-detalhe.dsnomrem = craplmt.nmcopcta
+                   tt-logspb-detalhe.dscpfrem = craplmt.nrcpfcop
+                   tt-logspb-detalhe.cdbandst = craplmt.cdbandif
+                   tt-logspb-detalhe.cdagedst = craplmt.cdagedif
+                   tt-logspb-detalhe.nrctadst = STRING(craplmt.nrctadif)
+                   tt-logspb-detalhe.dsnomdst = craplmt.nmtitdif
+                   tt-logspb-detalhe.dscpfdst = craplmt.nrcpfdif
+                   tt-logspb-detalhe.dttransa = craplmt.dttransa
+                   tt-logspb-detalhe.hrtransa = STRING(craplmt.hrtransa, "HH:MM:SS")
+                   tt-logspb-detalhe.vltransa = craplmt.vldocmto
+                   tt-logspb-detalhe.dsmotivo = craplmt.dsmotivo
+                   tt-logspb-detalhe.dstransa = "ENVIADA OK"
+                   tt-logspb-detalhe.cdagenci = craplmt.cdagenci /*agencia*/
+                   tt-logspb-detalhe.nrdcaixa = craplmt.nrdcaixa /*nr caixa*/
+                   tt-logspb-detalhe.cdoperad = craplmt.cdoperad /*cd operador*/                  
+                   tt-logspb-detalhe.dsorigem = IF craplmt.idorigem = 1 THEN
+                                                    "AYLLOS"
+                                                ELSE
+                                                IF craplmt.idorigem = 2 THEN
+                                                    "CAIXA ONLINE"
+                                                ELSE
+                                                IF craplmt.idorigem = 3 THEN
+                                                    "INTERNET"
+                                                ELSE
+                                                IF craplmt.idorigem = 4 THEN
+                                                    "TAA"
+                                                ELSE
+                                                    ""
+                   tt-logspb-detalhe.nrsequen = craplmt.nrsequen
+                   tt-logspb-detalhe.cdisprem = crapban.nrispbif
+                   tt-logspb-detalhe.cdispdst = craplmt.nrispbif
+                   tt-logspb-detalhe.nmevento = craplmt.nmevento
+                   tt-logspb-detalhe.nrctrlif = craplmt.nrctrlif.
+        END.
+
+        ASSIGN aux_nrregist = aux_nrregist - 1.
+
+        /* Variaveis CHAR
+           Como pode haver digito X nas contas - adicionar 0 a frente
+           PS: mesmo a conta do remetente pode ter, pois pode ser o
+           remetente de outra instituicao financeira. */
+        RUN adiciona_digito_zero (INPUT 14, 
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctarem).
+
+        RUN adiciona_digito_zero (INPUT 14,
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctadst).
+
+    END.
+
+END PROCEDURE.
+
+PROCEDURE busca-enviada-nok:
+
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrsequen AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdorigem AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtini AS DATE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtfim AS DATE NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE NO-UNDO.
+    DEF INPUT PARAM par_inestcri AS INTE NO-UNDO.
+    DEF INPUT PARAM par_vlrdated AS DEC  NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
+
+    ASSIGN aux_nrregist = par_nrregist.
+
+    FOR EACH craplmt WHERE craplmt.cdcooper = par_cdcooper           AND
+                         ((craplmt.nrdconta = par_nrdconta           AND
+                           par_nrdconta <> 0) OR par_nrdconta = 0)   AND
+                         ((craplmt.nrsequen = par_nrsequen           AND
+                           par_nrsequen <> 0) OR par_nrsequen = 0)   AND
+                         ((craplmt.idorigem = par_cdorigem           AND
+                           par_cdorigem <> 0) OR par_cdorigem = 0)   AND
+                           craplmt.dttransa >= par_dtmvtini          AND
+                           craplmt.dttransa <= par_dtmvtfim          AND
+                         ((craplmt.vldocmto = par_vlrdated           AND
+                           par_vlrdated <> 0) OR par_vlrdated = 0)   AND
+                         ((par_inestcri = 1                          AND
+                           CAN-DO("1,2",STRING(craplmt.inestcri))    AND
+                           CAN-DO("STR0005R2,STR0007R2,STR0008R2," + /* TED */
+                                  "PAG0107R2,PAG0108R2,PAG0143R2," + /* TED */
+                                  "STR0037R2,PAG0137R2",             /* TEC */
+                                  craplmt.nmevento))                 OR
+                           par_inestcri = 0)                         AND 
+                           craplmt.idsitmsg = 2 NO-LOCK
+                                                BY craplmt.hrtransa
+                                                BY craplmt.nrsequen:
+        
+        ASSIGN aux_qtregist = aux_qtregist + 1
+               aux_qtenvnok = aux_qtenvnok + 1
+               aux_vlenvnok = aux_vlenvnok + craplmt.vldocmto.
+
+        /* controles da paginação */
+        IF (aux_qtregist < par_nriniseq) OR
+           (aux_qtregist > (par_nriniseq + par_nrregist)) THEN
+            NEXT.
+
+        IF  aux_nrregist > 0 THEN
+        DO:
+            CREATE tt-logspb-detalhe.
+            ASSIGN tt-logspb-detalhe.nrseqlog = craplmt.nrsequen
+                   tt-logspb-detalhe.cdbanrem = craplmt.cdbanctl
+                   tt-logspb-detalhe.cdagerem = craplmt.cdagectl
+                   tt-logspb-detalhe.nrctarem = STRING(craplmt.nrdconta)
+                   tt-logspb-detalhe.dsnomrem = craplmt.nmcopcta
+                   tt-logspb-detalhe.dscpfrem = craplmt.nrcpfcop
+                   tt-logspb-detalhe.cdbandst = craplmt.cdbandif
+                   tt-logspb-detalhe.cdagedst = craplmt.cdagedif
+                   tt-logspb-detalhe.nrctadst = STRING(craplmt.nrctadif)
+                   tt-logspb-detalhe.dsnomdst = craplmt.nmtitdif
+                   tt-logspb-detalhe.dscpfdst = craplmt.nrcpfdif
+                   tt-logspb-detalhe.dttransa = craplmt.dttransa  
+                   tt-logspb-detalhe.hrtransa = STRING(craplmt.hrtransa, "HH:MM:SS")
+                   tt-logspb-detalhe.vltransa = craplmt.vldocmto
+                   tt-logspb-detalhe.dsmotivo = craplmt.dsmotivo
+                   tt-logspb-detalhe.dstransa = "ENVIADA NAO OK"
+                   tt-logspb-detalhe.cdagenci = craplmt.cdagenci /*agencia*/
+                   tt-logspb-detalhe.nrdcaixa = craplmt.nrdcaixa /*nr caixa*/
+                   tt-logspb-detalhe.cdoperad = craplmt.cdoperad /*cd operador*/
+                   tt-logspb-detalhe.dsorigem = IF craplmt.idorigem = 1 THEN
+                                                    "AYLLOS"
+                                                ELSE
+                                                IF craplmt.idorigem = 2 THEN
+                                                    "CAIXA ONLINE"
+                                                ELSE
+                                                IF craplmt.idorigem = 3 THEN
+                                                    "INTERNET"
+                                                ELSE
+                                                IF craplmt.idorigem = 4 THEN
+                                                    "TAA"
+                                                ELSE
+                                                    ""
+                   tt-logspb-detalhe.nrsequen = craplmt.nrsequen
+                   tt-logspb-detalhe.cdisprem = crapban.nrispbif
+                   tt-logspb-detalhe.cdispdst = craplmt.nrispbif
+                   tt-logspb-detalhe.nmevento = craplmt.nmevento
+                   tt-logspb-detalhe.nrctrlif = craplmt.nrctrlif.
+        END.
+
+        ASSIGN aux_nrregist = aux_nrregist - 1.
+
+        /* Variaveis CHAR
+           Como pode haver digito X nas contas - adicionar 0 a frente
+           PS: mesmo a conta do remetente pode ter, pois pode ser o
+           remetente de outra instituicao financeira. */
+        RUN adiciona_digito_zero (INPUT 14, 
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctarem).
+
+        RUN adiciona_digito_zero (INPUT 14,
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctadst).
+
+
+
+    END.
+
+
+END PROCEDURE.
+
+PROCEDURE busca-recebida-ok:
+
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrsequen AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdorigem AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtini AS DATE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtfim AS DATE NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE NO-UNDO.
+    DEF INPUT PARAM par_inestcri AS INTE NO-UNDO.
+    DEF INPUT PARAM par_vlrdated AS DEC  NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
+
+    ASSIGN aux_nrregist = par_nrregist.
+
+    FOR EACH craplmt WHERE craplmt.cdcooper = par_cdcooper           AND
+                         ((craplmt.nrdconta = par_nrdconta           AND
+                           par_nrdconta <> 0) OR par_nrdconta = 0)   AND
+                         ((craplmt.nrsequen = par_nrsequen           AND
+                           par_nrsequen <> 0) OR par_nrsequen = 0)   AND
+                         ((craplmt.idorigem = par_cdorigem           AND
+                           par_cdorigem <> 0) OR par_cdorigem = 0)   AND
+                           craplmt.dttransa >= par_dtmvtini          AND
+                           craplmt.dttransa <= par_dtmvtfim          AND
+                         ((craplmt.vldocmto = par_vlrdated           AND
+                           par_vlrdated <> 0) OR par_vlrdated = 0)   AND
+                         ((par_inestcri = 1                          AND
+                           CAN-DO("1,2",STRING(craplmt.inestcri))    AND
+                           CAN-DO("STR0005R2,STR0007R2,STR0008R2," + /* TED */
+                                  "PAG0107R2,PAG0108R2,PAG0143R2," + /* TED */
+                                  "STR0037R2,PAG0137R2",             /* TEC */
+                                  craplmt.nmevento))                 OR
+                           par_inestcri = 0)                         AND 
+                           craplmt.idsitmsg = 3 NO-LOCK
+                                                BY craplmt.hrtransa
+                                                BY craplmt.nrsequen:
+
+        ASSIGN aux_qtregist = aux_qtregist + 1
+               aux_qtdrecok = aux_qtdrecok + 1
+               aux_vlrrecok = aux_vlrrecok + craplmt.vldocmto.
+
+        /* controles da paginação */
+        IF (aux_qtregist < par_nriniseq) OR
+           (aux_qtregist > (par_nriniseq + par_nrregist)) THEN
+            NEXT.
+
+        IF  aux_nrregist > 0 THEN
+        DO:
+            CREATE tt-logspb-detalhe.
+            ASSIGN tt-logspb-detalhe.nrseqlog = craplmt.nrsequen
+                   tt-logspb-detalhe.cdbanrem = craplmt.cdbandif
+                   tt-logspb-detalhe.cdagerem = craplmt.cdagedif
+                   tt-logspb-detalhe.nrctarem = STRING(craplmt.nrctadif)
+                   tt-logspb-detalhe.dsnomrem = craplmt.nmtitdif
+                   tt-logspb-detalhe.dscpfrem = craplmt.nrcpfdif
+                   tt-logspb-detalhe.cdbandst = craplmt.cdbanctl
+                   tt-logspb-detalhe.cdagedst = craplmt.cdagectl
+                   tt-logspb-detalhe.nrctadst = STRING(craplmt.nrdconta)
+                   tt-logspb-detalhe.dsnomdst = craplmt.nmcopcta
+                   tt-logspb-detalhe.dscpfdst = craplmt.nrcpfcop
+                   tt-logspb-detalhe.dttransa = craplmt.dttransa
+                   tt-logspb-detalhe.hrtransa = STRING(craplmt.hrtransa, "HH:MM:SS")
+                   tt-logspb-detalhe.vltransa = craplmt.vldocmto
+                   tt-logspb-detalhe.dsmotivo = craplmt.dsmotivo
+                   tt-logspb-detalhe.dstransa = "RECEBIDA OK"
+                   tt-logspb-detalhe.cdagenci = craplmt.cdagenci /*agencia*/
+                   tt-logspb-detalhe.nrdcaixa = craplmt.nrdcaixa /*nr caixa*/
+                   tt-logspb-detalhe.cdoperad = craplmt.cdoperad /*cd operador*/
+                   tt-logspb-detalhe.dsorigem = IF craplmt.idorigem = 1 THEN
+                                                    "AYLLOS"
+                                                ELSE
+                                                IF craplmt.idorigem = 2 THEN
+                                                    "CAIXA ONLINE"
+                                                ELSE
+                                                IF craplmt.idorigem = 3 THEN
+                                                    "INTERNET"
+                                                ELSE
+                                                IF craplmt.idorigem = 4 THEN
+                                                    "TAA"
+                                                ELSE
+                                                    ""
+                   tt-logspb-detalhe.nrsequen = craplmt.nrsequen
+                   tt-logspb-detalhe.cdisprem = craplmt.nrispbif
+                   tt-logspb-detalhe.cdispdst = crapban.nrispbif
+                   tt-logspb-detalhe.cdtiptra = IF  craplmt.nmevento = "STR0037R2" OR craplmt.nmevento = "PAG0137R2" THEN
+                                                    3
+                                                ELSE
+                                                    4
+                   tt-logspb-detalhe.dstiptra = IF  craplmt.nmevento = "STR0037R2" OR craplmt.nmevento = "PAG0137R2" THEN
+                                                    "TEC"
+                                                ELSE
+                                                    "TED"
+                   tt-logspb-detalhe.nmevento = craplmt.nmevento
+                   tt-logspb-detalhe.nrctrlif = craplmt.nrctrlif.
+        END.
+
+        ASSIGN aux_nrregist = aux_nrregist - 1.
+
+        /* Variaveis CHAR
+           Como pode haver digito X nas contas - adicionar 0 a frente
+           PS: mesmo a conta do remetente pode ter, pois pode ser o
+           remetente de outra instituicao financeira. */
+        RUN adiciona_digito_zero (INPUT 14, 
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctarem).
+
+        RUN adiciona_digito_zero (INPUT 14,
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctadst).
+
+    END.
+
+END PROCEDURE.
+
+PROCEDURE busca-recebida-nok:
+
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrsequen AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdorigem AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtini AS DATE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtfim AS DATE NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE NO-UNDO.
+    DEF INPUT PARAM par_inestcri AS INTE NO-UNDO.
+    DEF INPUT PARAM par_vlrdated AS DEC  NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
+
+    ASSIGN aux_nrregist = par_nrregist.
+
+    FOR EACH craplmt WHERE craplmt.cdcooper = par_cdcooper           AND
+                         ((craplmt.nrdconta = par_nrdconta           AND
+                           par_nrdconta <> 0) OR par_nrdconta = 0)   AND
+                         ((craplmt.nrsequen = par_nrsequen           AND
+                           par_nrsequen <> 0) OR par_nrsequen = 0)   AND
+                         ((craplmt.idorigem = par_cdorigem           AND
+                           par_cdorigem <> 0) OR par_cdorigem = 0)   AND
+                           craplmt.dttransa >= par_dtmvtini          AND
+                           craplmt.dttransa <= par_dtmvtfim          AND
+                         ((craplmt.vldocmto = par_vlrdated           AND
+                           par_vlrdated <> 0) OR par_vlrdated = 0)   AND
+                         ((par_inestcri = 1                          AND
+                           CAN-DO("1,2",STRING(craplmt.inestcri))    AND
+                           CAN-DO("STR0005R2,STR0007R2,STR0008R2," + /* TED */
+                                  "PAG0107R2,PAG0108R2,PAG0143R2," + /* TED */
+                                  "STR0037R2,PAG0137R2",             /* TEC */
+                                  craplmt.nmevento))                 OR
+                           par_inestcri = 0)                         AND   
+                           craplmt.idsitmsg = 4 NO-LOCK
+                                                BY craplmt.hrtransa
+                                                BY craplmt.nrsequen:
+
+        ASSIGN aux_qtregist = aux_qtregist + 1
+               aux_qtrecnok = aux_qtrecnok + 1
+               aux_vlrecnok = aux_vlrecnok + craplmt.vldocmto.
+
+        /* controles da paginação */
+        IF (aux_qtregist < par_nriniseq) OR
+           (aux_qtregist > (par_nriniseq + par_nrregist)) THEN
+            NEXT.
+
+        IF  aux_nrregist > 0 THEN
+        DO:
+            CREATE tt-logspb-detalhe.
+            ASSIGN tt-logspb-detalhe.nrseqlog = craplmt.nrsequen
+                   tt-logspb-detalhe.cdbanrem = craplmt.cdbandif
+                   tt-logspb-detalhe.cdagerem = craplmt.cdagedif
+                   tt-logspb-detalhe.nrctarem = STRING(craplmt.nrctadif)
+                   tt-logspb-detalhe.dsnomrem = craplmt.nmtitdif
+                   tt-logspb-detalhe.dscpfrem = craplmt.nrcpfdif
+                   tt-logspb-detalhe.cdbandst = craplmt.cdbanctl
+                   tt-logspb-detalhe.cdagedst = craplmt.cdagectl
+                   tt-logspb-detalhe.nrctadst = STRING(craplmt.nrdconta)
+                   tt-logspb-detalhe.dsnomdst = craplmt.nmcopcta
+                   tt-logspb-detalhe.dscpfdst = craplmt.nrcpfcop
+                   tt-logspb-detalhe.dttransa = craplmt.dttransa
+                   tt-logspb-detalhe.hrtransa = STRING(craplmt.hrtransa, "HH:MM:SS")
+                   tt-logspb-detalhe.vltransa = craplmt.vldocmto
+                   tt-logspb-detalhe.dsmotivo = craplmt.dsmotivo
+                   tt-logspb-detalhe.dstransa = "RECEBIDA NAO OK"
+                   tt-logspb-detalhe.cdagenci = craplmt.cdagenci /*agencia*/
+                   tt-logspb-detalhe.nrdcaixa = craplmt.nrdcaixa /*nr caixa*/
+                   tt-logspb-detalhe.cdoperad = craplmt.cdoperad /*cd operador*/
+                   tt-logspb-detalhe.dsorigem = IF craplmt.idorigem = 1 THEN
+                                                    "AYLLOS"
+                                                ELSE
+                                                IF craplmt.idorigem = 2 THEN
+                                                    "CAIXA ONLINE"
+                                                ELSE
+                                                IF craplmt.idorigem = 3 THEN
+                                                    "INTERNET"
+                                                ELSE
+                                                IF craplmt.idorigem = 4 THEN
+                                                    "TAA"
+                                                ELSE
+                                                    ""
+                   tt-logspb-detalhe.nrsequen = craplmt.nrsequen
+                   tt-logspb-detalhe.cdisprem = craplmt.nrispbif
+                   tt-logspb-detalhe.cdispdst = crapban.nrispbif
+                   tt-logspb-detalhe.nmevento = craplmt.nmevento
+                   tt-logspb-detalhe.nrctrlif = craplmt.nrctrlif.
+        END.
+
+        ASSIGN aux_nrregist = aux_nrregist - 1.
+
+        /* Variaveis CHAR
+           Como pode haver digito X nas contas - adicionar 0 a frente
+           PS: mesmo a conta do remetente pode ter, pois pode ser o
+           remetente de outra instituicao financeira. */
+        RUN adiciona_digito_zero (INPUT 14, 
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctarem).
+
+        RUN adiciona_digito_zero (INPUT 14,
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctadst).
+
+    END.
+
+END PROCEDURE.
+
+
+PROCEDURE busca-rejeitada-ok:
+
+    DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrsequen AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdorigem AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtini AS DATE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtfim AS DATE NO-UNDO.
+    DEF INPUT PARAM par_nriniseq AS INTE NO-UNDO.
+    DEF INPUT PARAM par_nrregist AS INTE NO-UNDO.
+    DEF INPUT PARAM par_inestcri AS INTE NO-UNDO.
+    DEF INPUT PARAM par_vlrdated AS DEC  NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
+
+    ASSIGN aux_nrregist = par_nrregist.
+
+    FOR EACH craplmt WHERE craplmt.cdcooper = par_cdcooper           AND
+                         ((craplmt.nrdconta = par_nrdconta           AND
+                           par_nrdconta <> 0) OR par_nrdconta = 0)   AND
+                         ((craplmt.nrsequen = par_nrsequen           AND
+                           par_nrsequen <> 0) OR par_nrsequen = 0)   AND
+                         ((craplmt.idorigem = par_cdorigem           AND
+                           par_cdorigem <> 0) OR par_cdorigem = 0)   AND
+                           craplmt.dttransa >= par_dtmvtini          AND
+                           craplmt.dttransa <= par_dtmvtfim          AND
+                         ((craplmt.vldocmto = par_vlrdated           AND
+                           par_vlrdated <> 0) OR par_vlrdated = 0)   AND
+                         ((par_inestcri = 1                          AND
+                           CAN-DO("1,2",STRING(craplmt.inestcri))    AND
+                           CAN-DO("STR0005R2,STR0007R2,STR0008R2," + /* TED */
+                                  "PAG0107R2,PAG0108R2,PAG0143R2," + /* TED */
+                                  "STR0037R2,PAG0137R2",             /* TEC */
+                                  craplmt.nmevento))                 OR
+                           par_inestcri = 0)                         AND 
+                           craplmt.idsitmsg = 5 NO-LOCK
+                                                BY craplmt.hrtransa
+                                                BY craplmt.nrsequen:
+
+        ASSIGN aux_qtregist = aux_qtregist + 1
+               aux_qtdrejok = aux_qtdrejok + 1
+               aux_vlrrejok = aux_vlrrejok + craplmt.vldocmto.
+
+        /* controles da paginação */
+        IF (aux_qtregist < par_nriniseq) OR
+           (aux_qtregist > (par_nriniseq + par_nrregist)) THEN
+            NEXT.
+
+        IF  aux_nrregist > 0 THEN
+        DO:
+            CREATE tt-logspb-detalhe.
+            ASSIGN tt-logspb-detalhe.nrseqlog = craplmt.nrsequen
+                   tt-logspb-detalhe.cdbanrem = craplmt.cdbanctl
+                   tt-logspb-detalhe.cdagerem = craplmt.cdagectl
+                   tt-logspb-detalhe.nrctarem = STRING(craplmt.nrdconta)
+                   tt-logspb-detalhe.dsnomrem = craplmt.nmcopcta
+                   tt-logspb-detalhe.dscpfrem = craplmt.nrcpfcop
+                   tt-logspb-detalhe.cdbandst = craplmt.cdbandif
+                   tt-logspb-detalhe.cdagedst = craplmt.cdagedif
+                   tt-logspb-detalhe.nrctadst = STRING(craplmt.nrctadif)
+                   tt-logspb-detalhe.dsnomdst = craplmt.nmtitdif
+                   tt-logspb-detalhe.dscpfdst = craplmt.nrcpfdif
+                   tt-logspb-detalhe.dttransa = craplmt.dttransa
+                   tt-logspb-detalhe.hrtransa = STRING(craplmt.hrtransa,"HH:MM:SS")
+                   tt-logspb-detalhe.vltransa = craplmt.vldocmto
+                   tt-logspb-detalhe.dsmotivo = craplmt.dsmotivo
+                   tt-logspb-detalhe.dstransa = "RECEBIDA NAO OK"
+                   tt-logspb-detalhe.cdagenci = craplmt.cdagenci /*agencia*/
+                   tt-logspb-detalhe.nrdcaixa = craplmt.nrdcaixa /*nr caixa*/
+                   tt-logspb-detalhe.cdoperad = craplmt.cdoperad /*cd operador*/
+                   tt-logspb-detalhe.dsorigem = IF craplmt.idorigem = 1 THEN
+                                                    "AYLLOS"
+                                                ELSE
+                                                IF craplmt.idorigem = 2 THEN
+                                                    "CAIXA ONLINE"
+                                                ELSE
+                                                IF craplmt.idorigem = 3 THEN
+                                                    "INTERNET"
+                                                ELSE
+                                                IF craplmt.idorigem = 4 THEN
+                                                    "TAA"
+                                                ELSE
+                                                    ""
+                   tt-logspb-detalhe.nrsequen = craplmt.nrsequen
+                   tt-logspb-detalhe.cdisprem = crapban.nrispbif
+                   tt-logspb-detalhe.cdispdst = craplmt.nrispbif
+                   tt-logspb-detalhe.nmevento = craplmt.nmevento
+                   tt-logspb-detalhe.nrctrlif = craplmt.nrctrlif.
+        END.
+
+        ASSIGN aux_nrregist = aux_nrregist - 1.
+
+        /* Variaveis CHAR
+           Como pode haver digito X nas contas - adicionar 0 a frente
+           PS: mesmo a conta do remetente pode ter, pois pode ser o
+           remetente de outra instituicao financeira. */
+        RUN adiciona_digito_zero (INPUT 14, 
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctarem).
+
+        RUN adiciona_digito_zero (INPUT 14,
+                                  INPUT-OUTPUT tt-logspb-detalhe.nrctadst).
+
+    END.
 
 END PROCEDURE.
 
@@ -2312,7 +3153,6 @@ PROCEDURE impressao-log-pdf:
     DEF  INPUT PARAM par_vlrdated AS DECIMAL                        NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inestcri AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdifconv AS INTE                           NO-UNDO.    
 
     DEF OUTPUT PARAM par_nmarqpdf AS CHAR                           NO-UNDO.    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -2370,7 +3210,6 @@ PROCEDURE impressao-log-pdf:
                           INPUT 1,
                           INPUT 9999,
                           INPUT par_inestcri,
-                          INPUT par_cdifconv,
                           INPUT par_vlrdated,
                          OUTPUT TABLE tt-logspb,
                          OUTPUT TABLE tt-logspb-detalhe,
@@ -2459,7 +3298,6 @@ PROCEDURE impressao-log-csv:
     DEF  INPUT PARAM par_vlrdated AS DECIMAL                        NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inestcri AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdifconv AS INTE                           NO-UNDO.    
 
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -2499,7 +3337,6 @@ PROCEDURE impressao-log-csv:
                           INPUT 1,
                           INPUT 9999,
                           INPUT par_inestcri,
-                          INPUT par_cdifconv,
                           INPUT par_vlrdated,
                          OUTPUT TABLE tt-logspb,
                          OUTPUT TABLE tt-logspb-detalhe,

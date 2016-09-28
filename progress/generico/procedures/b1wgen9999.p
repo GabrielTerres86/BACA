@@ -34,7 +34,7 @@
 
     Programa  : b1wgen9999.p
     Autor     : Guilherme/David
-    Data      : Marco/2008                    Ultima Atualizacao: 26/09/2016.
+    Data      : Marco/2008                    Ultima Atualizacao: 08/10/2015.
     
     Dados referentes ao programa:
 
@@ -261,9 +261,6 @@
                             
                08/10/2015 - Alterar a procedure idade para chamar a rotina do Oracle
                             (Lucas Ranghetti #340156)
-							
-               26/09/2016 - Incluir lotes da M211 para nao exclusao (Evandro-RKAM)
-							
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen9999tt.i }
@@ -4829,10 +4826,7 @@ PROCEDURE critica_numero_lote:
          par_nrdolote = 8505   OR    /* Credito de vencimento de aplicacao   */
          par_nrdolote = 8506   OR    /* Credito de provisão de aplicacao     */
          par_nrdolote = 6651   OR    /* Debitos nao efetuados no processo noturno (e efetuados pela DEBCON) */
-         par_nrdolote = 7050   OR    /* Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
-		(par_nrdolote >= 8482   AND  /* TEDS Sicredi */
-         par_nrdolote <= 8486)  THEN  
-		 
+         par_nrdolote = 7050   THEN  /* Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
          DO:
              ASSIGN aux_cdcritic = 261
                     aux_dscritic = "".
