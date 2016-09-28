@@ -145,14 +145,17 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                                  ,pr_cdoperad  IN VARCHAR2  -- Operador
                                  ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
                                  ,pr_cdorigem  IN INTEGER   -- Identificador Origem
-                                 ,pr_dtmvtlog  IN DATE      -- Data de movimento de log
+                                 ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                 ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
                                  ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
                                  ,pr_cdsitlog  IN varchar2  -- Codigo de situação de log
                                  ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                 ,pr_nrsequen  IN NUMBER    -- Numero sequencial
                                  ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
                                  ,pr_nrregist  IN VARCHAR2  -- numero de registros
                                  ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
                                  ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                 ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                  ,pr_dscritic           OUT varchar2
                                  ,pr_tab_logspb         OUT nocopy SSPB0001.typ_tab_logspb         --> TempTable para armazenar o valor
                                  ,pr_tab_logspb_detalhe OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
@@ -167,14 +170,17 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                                      ,pr_cdoperad  IN VARCHAR2  -- Operador
                                      ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
                                      ,pr_cdorigem  IN INTEGER   -- Identificador Origem
-                                     ,pr_dtmvtlog  IN DATE      -- Data de movimento de log
+                                     ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                     ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
                                      ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
                                      ,pr_cdsitlog  IN varchar2  -- Codigo de situação de log
                                      ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                     ,pr_nrsequen  IN NUMBER    -- Numero sequencial
                                      ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
                                      ,pr_nrregist  IN VARCHAR2  -- numero de registros
                                      ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
-                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
+                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                     ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                      ,pr_clob_logspb         OUT CLOB
                                      ,pr_clob_logspb_detalhe OUT CLOB
                                      ,pr_clob_logspb_totais  OUT CLOB
@@ -1052,13 +1058,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   /** Procedimento para ler mensagem de log SPB e gerar TempTable **/
   PROCEDURE pc_busca_log_SPB (pr_cdcooper  IN INTEGER  -- Codigo cooperativa
                              ,pr_nrdconta  IN VARCHAR2 -- Numero da Conta
+                             ,pr_nrsequen  IN NUMBER   -- Numero da sequencia
                              ,pr_cdorigem  IN INTEGER  -- Codigo de origem
-                             ,pr_dtmvtlog  IN DATE     -- Data de movimento do log
+                             ,pr_dtmvtini  IN DATE     -- Data de movimento do log inicial
+                             ,pr_dtmvtfim  IN DATE     -- Data de movimento do log final
                              ,pr_nriniseq  IN INTEGER  -- numero inicial da sequencia
                              ,pr_nrregist  IN INTEGER  -- Numero de registros
                              ,pr_idsitmsg  IN INTEGER  -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                              ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
                              ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
+                             ,pr_vlrdated  IN NUMBER            -- Valor da TED
                              ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
                              ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
                              ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
@@ -1084,7 +1093,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --               10/11/2015 - Adicionado parametro de entrada pr_inestcri.
     --                            (Jorge/Andrino)
     --
-    --               26/09/2016 - M211 - Adicionado busca das TEDs Sicredi (Evandro-RKAM)
+    --               26/09/2016 - M211 - Adicionado busca das TEDs Sicredi e correcao
+    --                            de parametros faltantes (Evandro-RKAM)
       ..............................................................................*/
 
     vr_nrseqlog PLS_INTEGER;
@@ -1118,9 +1128,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        WHERE craplmt.cdcooper = pr_cdcooper
          AND ((craplmt.nrdconta = pr_nrdconta AND pr_nrdconta <> 0) OR
                pr_nrdconta = 0)
+         AND ((craplmt.nrsequen = pr_nrsequen AND pr_nrsequen <> 0) OR
+               pr_nrsequen = 0)   
          AND ((craplmt.idorigem = pr_cdorigem AND pr_cdorigem <> 0) OR
                pr_cdorigem = 0)
-         AND craplmt.dttransa = pr_dtmvtlog
+         AND craplmt.dttransa BETWEEN pr_dtmvtini AND pr_dtmvtfim
+         AND ((craplmt.vldocmto = pr_vlrdated AND pr_vlrdated <> 0) OR
+               pr_vlrdated = 0)
          AND ((pr_inestcri = 1           AND
                craplmt.inestcri IN (1,2) AND
                craplmt.nmevento IN ('STR0005R2','STR0007R2','STR0008R2', -- TED
@@ -1579,14 +1593,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                  ,pr_cdoperad  IN VARCHAR2  -- Operador
                                  ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
                                  ,pr_cdorigem  IN INTEGER   -- Identificador Origem
-                                 ,pr_dtmvtlog  IN DATE      -- Data de movimento de log
+                                 ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                 ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
                                  ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
                                  ,pr_cdsitlog  IN varchar2  -- Codigo de situação de log
                                  ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                 ,pr_nrsequen  IN NUMBER    -- Numero sequencial
                                  ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
                                  ,pr_nrregist  IN VARCHAR2  -- numero de registros
                                  ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
                                  ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                 ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                  ,pr_dscritic           OUT varchar2
                                  ,pr_tab_logspb         OUT nocopy SSPB0001.typ_tab_logspb         --> TempTable para armazenar o valor
                                  ,pr_tab_logspb_detalhe OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
@@ -1694,13 +1711,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 1           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
                                 ,pr_dscritic  => pr_dscritic-- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1713,13 +1733,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 2           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1732,13 +1755,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         pr_cdsitlog = 'R')  THEN /** ENVIADAS REJEITADAS **/
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 5           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1752,13 +1778,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 3           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1771,13 +1800,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
+                                ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
                                 ,pr_cdorigem  => pr_cdorigem -- Codigo de origem
-                                ,pr_dtmvtlog  => pr_dtmvtlog -- Data de movimento do log
+                                ,pr_dtmvtini  => pr_dtmvtini -- Data de movimento do log
+                                ,pr_dtmvtfim  => pr_dtmvtfim -- Data de movimento do log
                                 ,pr_idsitmsg  => 4           -- Indicador de tipo de mensagem (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
                                 ,pr_nriniseq  => vr_nriniseq -- numero inicial da sequencia
                                 ,pr_nrregist  => vr_nrregist -- Numero de registros
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
+                                ,pr_vlrdated  => pr_vlrdated -- Valor da TED
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1794,7 +1826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                            ,pr_nmsubdir => '/log');
 
       vr_nmarqlog := vr_nmdireto||'/mqcecred_processa_'||
-                     to_char(pr_dtmvtlog,'DDMMRR')||'.log';
+                     to_char(pr_dtmvtini,'DDMMRR')||'.log';
 
 
       -- Verificar se o arquivo existe
@@ -1930,14 +1962,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                      ,pr_cdoperad  IN VARCHAR2  -- Operador
                                      ,pr_nmdatela  IN VARCHAR2  -- Nome da tela
                                      ,pr_cdorigem  IN INTEGER   -- Identificador Origem
-                                     ,pr_dtmvtlog  IN DATE      -- Data de movimento de log
+                                     ,pr_dtmvtini  IN DATE      -- Data de movimento de log Inicial
+                                     ,pr_dtmvtfim  IN DATE      -- Data de movimento de log Final
                                      ,pr_numedlog  IN varchar2  -- Indicador de log a carregar
                                      ,pr_cdsitlog  IN varchar2  -- Codigo de situação de log
                                      ,pr_nrdconta  IN VARCHAR2  -- Numero da Conta
+                                     ,pr_nrsequen  IN NUMBER    -- Numero sequencial
                                      ,pr_nriniseq  IN INTEGER   -- numero inicial da sequencia
                                      ,pr_nrregist  IN VARCHAR2  -- numero de registros
                                      ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
-                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
+                                     ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
+                                     ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                      ,pr_clob_logspb         OUT CLOB
                                      ,pr_clob_logspb_detalhe OUT CLOB
                                      ,pr_clob_logspb_totais  OUT CLOB
@@ -1979,14 +2014,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          ,pr_cdoperad  => pr_cdoperad   -- Operador
                          ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
                          ,pr_cdorigem  => pr_cdorigem   -- Identificador Origem
-                         ,pr_dtmvtlog  => pr_dtmvtlog   -- Data de movimento de log
+                         ,pr_dtmvtini  => pr_dtmvtini   -- Data de movimento de log inicial
+                         ,pr_dtmvtfim  => pr_dtmvtfim   -- Data de movimento de log final
                          ,pr_numedlog  => pr_numedlog   -- Indicador de log a carregar
                          ,pr_cdsitlog  => pr_cdsitlog   -- Codigo de situação de log
                          ,pr_nrdconta  => pr_nrdconta   -- Numero da Conta
+                         ,pr_nrsequen  => pr_nrsequen   -- Numero sequencial
                          ,pr_nriniseq  => pr_nriniseq   -- numero inicial da sequencia
                          ,pr_nrregist  => pr_nrregist   -- numero de registros
                          ,pr_inestcri  => pr_inestcri   -- Estado Crise
                          ,pr_cdifconv  => pr_cdifconv   -- IF Da TED
+                         ,pr_vlrdated  => pr_vlrdated   -- Valor da TED
                          ,pr_dscritic           => pr_dscritic
                          ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
                          ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
