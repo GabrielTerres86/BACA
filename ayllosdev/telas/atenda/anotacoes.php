@@ -8,9 +8,9 @@
    Objetivo  : Anotações da tela ATENDA
 			   
    Alterações: 
+   09/08/2016 : Adicionado classes FirstAnota e LastAnota, necessarias para navegação - Evandro(RKAM)   
   ************************************************************************/
 ?>
-
 
 <div id="divAnotacoes">
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -47,9 +47,13 @@
 															<table cellpadding="0" cellspacing="0" border="0">
 																<tr>
 																	<td width="60" height="25" class="txtNormalBold">Conta/dv:&nbsp;</td>
-																	<td width="77"><input name="nroconta" type="text" class="campoTelaSemBorda" id="nroconta" style="width: 67px; text-align: right;"></td>
+                                          <td width="77">
+                                            <input name="nroconta" type="text" class="campoTelaSemBorda" id="nroconta" style="width: 67px; text-align: right;">
+                                          </td>
 																	<td width="45" align="right" class="txtNormalBold">Titular:&nbsp;</td>
-																	<td><input name="nmprimtl" type="text" class="campoTelaSemBorda" id="nmprimtl" style="width: 272px;"></td>
+                                          <td>
+                                            <input name="nmprimtl" type="text" class="campoTelaSemBorda" id="nmprimtl" style="width: 272px;">
+                                          </td>
 																</tr>
 															</table>																																		
 														</td>
@@ -66,9 +70,13 @@
 														<td align="center">
 															<table cellpadding="0" cellspacing="3" border="0">
 																<tr>
-																	<td align="center"><input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif" onClick="imprimeAnotacoes();return false;"></td>
+                                          <td align="center">
+                                            <input class="FirstAnota" type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif" onClick="imprimeAnotacoes();return false;">
+                                          </td>
 																	<td width="8"></td>
-																	<td align="center"><input type="image" src="<?php echo $UrlImagens; ?>botoes/sair.gif" onClick="encerraAnotacoes();return false;"></td>
+                                          <td align="center">
+                                            <input class="LastAnota" type="image" src="<?php echo $UrlImagens; ?>botoes/sair.gif" onClick="encerraAnotacoes();return false;">
+                                          </td>
 																</tr>
 															</table>
 														</td>

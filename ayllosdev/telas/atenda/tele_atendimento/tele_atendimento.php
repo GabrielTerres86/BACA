@@ -8,7 +8,8 @@
 	//*** Objetivo  : Mostrar rotina de Tele Atendimento da tela ATENDA    ***//
 	//***                                                                  ***//	 
 	//*** Alteracoes: 15/07/2009 - Padroniza&ccedil;&atilde;o de bot&otilde;es (Guilherme).     ***//
-	//***		  	  30/06/2011 - Alterado para layout padr�o (Rogerius - DB1)***//		
+	//***		  	  30/06/2011 - Alterado para layout padrão (Rogerius - DB1)***//
+	//***             25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM) ***//	
 	//************************************************************************//
 	
 	session_start();
@@ -32,6 +33,8 @@
 		echo '</script>';
 		exit();
 	}	
+	
+    $labelRot = $_POST['labelRot'];	
 
 	// Carrega permiss&otilde;es do operador
 	include("../../../includes/carrega_permissoes.php");	
@@ -48,7 +51,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">TELE-ATENDIMENTO</td>
+								<td id="<?php echo $labelRot; ?>" class="txtBrancoBold ponteiroDrag SetWindow SetFoco" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">TELE-ATENDIMENTO</td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true);return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>

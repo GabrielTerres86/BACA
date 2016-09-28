@@ -45,6 +45,8 @@
  * 036: [28/08/2015] Chamado 288513 - Inclusao do tipo de risco (Heitor - RKAM)
  * 037: [12/01/2015] Impressao do demonstrativo de empres. pre-aprovado feito no TAA e Int.Bank.(Carlos Rafael Tanholi - Pré-Aprovado fase II).
  * 038: [15/03/2016] Odirlei (AMCOM): Alterado rotina mostraEmail para verificar se deve permitir o envio de email para o comite. PRJ207 - Esteira
+ * 039: [27/07/2016] Alterado função controlaFoco(Evandro - RKAM)
+
  */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -1609,9 +1611,55 @@ function controlaLayout(operacao) {
 	return false;
 }
 
-function controlaFoco(operacao) {
-	$('#btContinuar','#divBotoes').focus();
-	return false;
+//Função para controle de navegação
+function controlaFoco() {
+    $('#divConteudoOpcao').each(function () {
+        $(this).find("#divBotoes > a").addClass("FluxoNavega");
+        $(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus();
+        $(this).find("#divBotoes > a").last().addClass("LastInputModal");
+    });
+
+    //Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function () {
+        $(this).bind('keydown', function (e) {
+            if (e.keyCode == 27) {
+                fechaRotina($('#divUsoGenerico'), divRotina).click();
+                fechaRotina($('#divRotina')).click();
+                encerraRotina().click();
+            }
+        });
+    });
+
+    //Se estiver com foco na classe LastInputModal
+    $(".LastInputModal").focus(function () {
+        var pressedShift = false;
+
+        $(this).bind('keyup', function (e) {
+            if (e.keyCode == 16) {
+                pressedShift = false;//Quando tecla shift for solta passa valor false 
+            }
+        })
+
+        $(this).bind('keydown', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (e.keyCode == 13) {
+                $(".LastInputModal").click();
+            }
+            if (e.keyCode == 16) {
+                pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+            }
+            if ((e.keyCode == 9) && pressedShift == true) {
+                return setFocusCampo($(target), e, false, 0);
+            }
+            else if (e.keyCode == 9) {
+                $(".FirstInputModal").focus();
+            }
+        });
+    });
+
+    $(".FirstInputModal").focus();
 }
 
 function atualizaTela(){

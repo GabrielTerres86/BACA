@@ -12,7 +12,7 @@
  * 01/08/2013 - Jean Michel  (CECRED) : Ajuste p/ impressão de cartões de assinatura de proc/tit.
  * 02/09/2015 - Projeto Reformulacao cadastral (Tiago Castro - RKAM)
  * 19/10/2015 - Ajuste no layout na div DivConteudoOpcao que estava quebrando. SD 310056 (Kelvin)
-				
+ * 01/08/2016 - Adicionado classe controlaFoco - (Evandro - RKAM)				
  * --------------
  */
 
@@ -77,10 +77,67 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
             } else {
                 $("#divConteudoOpcao").html(response);
+				controlaFoco();
             }
             return false;
         }
     });
+}
+
+//Função para controle de navegação
+ function controlaFoco() {
+	 	
+	$('#divConteudoOpcao #divImpCartaoAssinatura').each(function () {
+        $(this).find("div").addClass("FluxoNavega");		
+		$(this).find("div").first().addClass("FirstInputModal").focus();
+		$(this).find("div").last().addClass("LastInputModal");
+	});
+	
+	var CountLoop = 500;
+	$('.FluxoNavega').each(function () { 
+	    CountLoop++;
+		$(this).attr('tabindex', CountLoop);
+	});
+	
+	//Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function(){		 
+		$(this).bind('keydown', function(e) {
+		  if(e.keyCode == 13) {
+			$(this).click();
+		  }
+		});
+	});
+	
+    //Se estiver com foco na classe LastInputModal
+    $(".LastInputModal").focus(function(){
+		var pressedShift = false; 
+		
+		$(this).bind('keyup', function(e) {
+			if(e.keyCode == 16) {
+			   pressedShift=false;//Quando tecla shift for solta passa valor false 
+			} 
+		})
+		 
+		$(this).bind('keydown', function(e) {
+		  e.stopPropagation();
+		  e.preventDefault();
+
+		  if(e.keyCode == 13) {
+			$(".LastInputModal").click();
+		  }
+		  if(e.keyCode == 16) {
+				pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+		  } 
+		  if((e.keyCode == 9) && pressedShift == true) {
+				return setFocusCampo($(target), e, false, 0);
+		  } 
+		  else if(e.keyCode == 9){
+			  $(".FirstInputModal").focus();	
+		  } 
+		});
+	});
+	
+	$(".FirstInputModal").focus();
 }
 
 /*!

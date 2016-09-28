@@ -6,6 +6,8 @@
  * OBJETIVO     : Faz as impressões da tela COBRAN	
  * --------------
  * ALTERAÇÕES   : 30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
+ *				  
+ *				  04/08/2016 - Adicionado parametro cddemail na chamada da procedure gera_relatorio. (Reinert)
  * -------------- 
  */
 ?>
@@ -69,6 +71,7 @@
 	$xml .= '		<cdagencx>'.$cdagencx.'</cdagencx>';
 	$xml .= '		<dsiduser>'.$dsiduser.'</dsiduser>';
 	$xml .= '		<inserasa>'.$inserasa.'</inserasa>';
+	$xml .= '		<cddemail>0</cddemail>';
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 

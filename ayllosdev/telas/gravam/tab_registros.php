@@ -6,6 +6,8 @@
  * OBJETIVO     : Tabela que apresenta a consulta de ratings da tela RATING
  * --------------
  * ALTERAÇÕES   :  14/07/2016 - Ajustar nome do renvam (Andrei - RKAM).
+ *                 
+ *                 24/08/2016 - Validar se pode ser alterado a situação do GRAVAMES. Projeto 369 (Lombardi).
  * --------------
  */ 
 
@@ -15,6 +17,7 @@
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
 	isPostMethod();	
+
 ?>
 
 <form id="frmBens" name="frmBens" class="formulario" style="display:none;">
@@ -24,8 +27,12 @@
     <legend>Bens</legend>
 
     <div id="divBens">
-
-      <label for="dtmvttel"><? echo utf8ToHtml('Data do registro:') ?></label>
+	  
+	  <input type="hidden" id="permisit" name="permisit" value="<? echo $permissao_situacao; ?>" />
+      <input type="hidden" id="situacao_anterior" name="situacao_anterior" />
+      <input type="hidden" id="chassi_anterior" name="chassi_anterior" />
+	  
+	  <label for="dtmvttel"><? echo utf8ToHtml('Data do registro:') ?></label>
       <input id="dtmvttel" name="dtmvttel" type="text" ></input>
 
       <label for="dsseqbem"></label>
@@ -37,7 +44,14 @@
       <input id="nrgravam" name="nrgravam" type="text" ></input>
 
       <label for="dssitgrv"><? echo utf8ToHtml('Situa&ccedil;&atilde;o:') ?></label>
-      <input id="dssitgrv" name="dssitgrv" type="text" ></input>
+      <select id="dssitgrv" name="dssitgrv">
+		<option value="0">Nao enviado</option>
+		<option value="1">Em processamento</option>
+		<option value="2">Alienacao</option>
+		<option value="3">Processado com Critica</option>
+		<option value="4">Baixado</option>
+		<option value="5">Cancelado</option>
+	  </select>
 
       <br />
 
@@ -173,12 +187,12 @@
             <input type="hidden" id="dssitgrv" name="dssitgrv" value="<? echo getByTagName($bens[$i]->tags,'dssitgrv'); ?>" />
             <input type="hidden" id="dsblqjud" name="dsblqjud" value="<? echo getByTagName($bens[$i]->tags,'dsblqjud'); ?>" />
             <input type="hidden" id="cdsitgrv" name="cdsitgrv" value="<? echo getByTagName($bens[$i]->tags,'cdsitgrv'); ?>" />
-            <input type="hidden" id="tpctrpro" name="tpctrpro" value="<? echo getByTagName($bens[$i]->tags,'tpctrpro'); ?>" />								
-            <input type="hidden" id="tpjustif" name="tpjustif" value="<? echo getByTagName($bens[$i]->tags,'tpjustif'); ?>" />								
-            <input type="hidden" id="dsjustif" name="dsjustif" value="<? echo getByTagName($bens[$i]->tags,'dsjustif'); ?>" />								
+            <input type="hidden" id="tpctrpro" name="tpctrpro" value="<? echo getByTagName($bens[$i]->tags,'tpctrpro'); ?>" />
+            <input type="hidden" id="tpjustif" name="tpjustif" value="<? echo getByTagName($bens[$i]->tags,'tpjustif'); ?>" />
+            <input type="hidden" id="dsjustif" name="dsjustif" value="<? echo getByTagName($bens[$i]->tags,'dsjustif'); ?>" />
             <input type="hidden" id="possuictr" name="possuictr" value="<? echo $possuictr; ?>" />
-            <input type="hidden" id="idseqbem" name="idseqbem" value="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>" />							
-        
+            <input type="hidden" id="idseqbem" name="idseqbem" value="<? echo getByTagName($bens[$i]->tags,'idseqbem'); ?>" />
+            <input type="hidden" id="tpinclus" name="tpinclus" value="<? echo getByTagName($bens[$i]->tags,'tpinclus'); ?>" />
           </tr>
 
           <?}?>

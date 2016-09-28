@@ -10,6 +10,9 @@
  *				  23/02/2016 - Validacao nonome do funcionario (Jean Michel). 
  *
  *				  27/07/2016 - Adicionar chamada da funcao validaDados no Titular (Lucas Ranghetti #457281)
+				  
+				  18/08/2016 - Adicionado maxlength no nome do funcionario 
+							   conforme solicitado no chamado 504050. (Kelvin)
  * --------------
  */ 
 ?>
@@ -21,7 +24,7 @@
 	<input type="hidden" name="flgsolic" id="flgsolic" />
 
 	<label for="nmfuncio"><? echo utf8ToHtml('Titular:') ?></label>
-	<input id="nmfuncio" name="nmfuncio" type="text" value="<? echo getByTagName($registro,'nmfuncio') ?>" onBlur="retirarAcentuacao(this.value);validaDados();" />
+	<input id="nmfuncio" maxlength="60" name="nmfuncio" type="text" value="<? echo getByTagName($registro,'nmfuncio') ?>" onBlur="retirarAcentuacao(this.value);validaDados();" />
 	
 	<label for="nrcpfcgc"><? echo utf8ToHtml('C.P.F.:') ?></label>
 	<input id="nrcpfcgc" name="nrcpfcgc" type="text" value="<? echo getByTagName($registro,'nrcpfcgc') ?>" />

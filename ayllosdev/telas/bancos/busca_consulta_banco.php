@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 27/07/2015
  * OBJETIVO     : Rotina para consultar bancos cadastrados - BANCOS
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
+ *                PRJ-312 (Reinert)
  * -------------- 
  *
  * -------------- 
@@ -54,7 +55,7 @@
 		}
 						
 		if($campo != ''){ 
-			$retornoAposErro .= '$(\'#'.$campo.'\',\'#frmEntrada\').addClass(\'campoErro\').habilitaCampo().focus(); $(\'#nrispbif\',\'#frmEntrada\').habilitaCampo(); $(\'#frmConsulta\').css(\'display\',\'none\'); $(\'#btSalvar\',\'#divBotoes\').show(); $(\'#btVoltar\',\'#divBotoes\').show();';
+			$retornoAposErro .= '$(\'#'.$campo.'\',\'#divEntrada\').addClass(\'campoErro\').habilitaCampo().focus(); $(\'#nrispbif\',\'#divEntrada\').habilitaCampo(); $(\'#frmConsulta\').css(\'display\',\'none\'); $(\'#btSalvar\',\'#divBotoes\').show(); $(\'#btVoltar\',\'#divBotoes\').show();';
 		}
 		
 		$msgErro  = $xmlObjBuscaBanco->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -66,23 +67,28 @@
 	$registros = $xmlObjBuscaBanco->roottag->tags[0]->tags;
 	
 	echo "$('#frmConsulta').css('display','block');";
-	echo "$('#cdbccxlt','#frmEntrada').val('".getByTagName($registros,'auxcdbcc')."');";
-	echo "$('#nrispbif','#frmEntrada').val('".getByTagName($registros,'auxnrisp')."');";
+	echo "$('#cdbccxlt','#divEntrada').val('".getByTagName($registros,'auxcdbcc')."');";
+	echo "$('#nrispbif','#divEntrada').val('".getByTagName($registros,'auxnrisp')."');";
 	echo "$('#nmresbcc','#frmConsulta').val('".getByTagName($registros,'nmresbcc')."');";
 	echo "$('#nmextbcc','#frmConsulta').val('".getByTagName($registros,'nmextbcc')."');";
 	echo "$('#flgdispb','#frmConsulta').val('".getByTagName($registros,'flgdispb')."');";
 	echo "$('#dtinispb','#frmConsulta').val('".getByTagName($registros,'dtinispb')."');";
-    
+	echo "$('#flgoppag','#frmConsulta').val('".getByTagName($registros,'flgoppag')."');";
+	echo "$('#dtaltstr','#frmConsulta').val('".getByTagName($registros,'dtaltstr')."');";
+    echo "$('#dtaltpag','#frmConsulta').val('".getByTagName($registros,'dtaltpag')."');";
+	
 	if($cddopcao == 'C'){
-		echo "$('#cdbccxlt','#frmEntrada').desabilitaCampo();";
-		echo "$('#nrispbif','#frmEntrada').desabilitaCampo();";
+		echo "$('#cdbccxlt','#divEntrada').desabilitaCampo();";
+		echo "$('#nrispbif','#divEntrada').desabilitaCampo();";
+		
 	}else if($cddopcao == 'A'){
-		echo "$('#cdbccxlt','#frmEntrada').desabilitaCampo();";
-		echo "$('#nrispbif','#frmEntrada').desabilitaCampo();";
+		echo "$('#cdbccxlt','#divEntrada').desabilitaCampo();";
+		echo "$('#nrispbif','#divEntrada').desabilitaCampo();";
 		echo "$('#nmresbcc','#frmConsulta').habilitaCampo().focus();";
 		echo "$('#nmextbcc','#frmConsulta').habilitaCampo();";
 		echo "$('#flgdispb','#frmConsulta').habilitaCampo();";
 		echo "$('#dtinispb','#frmConsulta').habilitaCampo();";
+		echo "$('#flgoppag','#frmConsulta').habilitaCampo();";
 		
 	}
 	

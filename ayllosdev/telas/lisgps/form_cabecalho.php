@@ -20,6 +20,7 @@
 	<label for="cddopcao">Op&ccedil;&atilde;o:</label>
 	<select id="cddopcao" name="cddopcao" alt="Escolha uma op&ccedil;&atilde;o">
 		<option value="C">C - Consultar Pagamentos de GPS</option>
+		<option value="S">S - Salvar Arquivo XML</option>
 		<option value="V">V - Visualizar Pagamentos GPS</option>
 	</select>
 	<a href="#" class="botao" id="btnOK" style="float:none;" >OK</a>

@@ -76,8 +76,8 @@
 	$xml .= "		<vldrendi>".$vldrendi."</vldrendi>";
 	$xml .= "		<tpdrend2>".$tpdrend2."</tpdrend2>";
 	$xml .= "		<vldrend2>".$vldrend2."</vldrend2>";
-	$xml .= "		<dsjusren>".$dsjusren."</dsjusren>";
-	$xml .= "		<dsjusre2>".$dsjusre2."</dsjusre2>";
+	$xml .= "		<dsjusren>".retiraAcentos(removeCaracteresInvalidos($dsjusren))."</dsjusren>";
+	$xml .= "		<dsjusre2>".retiraAcentos(removeCaracteresInvalidos($dsjusre2))."</dsjusre2>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

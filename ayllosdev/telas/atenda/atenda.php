@@ -46,7 +46,7 @@
 				          (Gabriel - Rkam -> Projeto 217).					   
 										    					   
 			 24/08/2015 - Projeto Reformulacao cadastral		   
-						  (Tiago Castro - RKAM)
+						  (Tiago Castro - RKAM)					   
 
 			 07/06/2016 - M195 Melhoria de folha de pagamento (Tiago/Thiago)
 
@@ -102,7 +102,7 @@ setVarSession("rotinasTela", $rotinasTela);
                 .table {display:block;}
                 .td    {display:block;}
             }
-			
+
 
 			div.bloco_full{float:left; width:100%;}
 			div.bloco_line{float:left; width:268px; height:22px; text-align:center; position:relative;top:0; overflow:hidden;}
@@ -384,7 +384,7 @@ setVarSession("rotinasTela", $rotinasTela);
 																						     <p id="valueRot29" class="txtNormal">&nbsp;</p>
 																							</div>																						    
 																						  </div>
-																						  
+
 																						  
 																						  <div class="bloco_full">
 
@@ -467,5 +467,4 @@ setVarSession("rotinasTela", $rotinasTela);
 		 $("#nrdconta","#frmCabAtenda").val(nrdconta);
 		 flgProdutos = true;		 
 	}
-
 </script>

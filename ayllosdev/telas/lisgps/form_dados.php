@@ -5,7 +5,10 @@
  * DATA CRIAÇÃO : Setembro/2015
  * OBJETIVO     : Mostrar tela LISGPS
  * --------------
-	* ALTERAÇÕES   : 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *  * ALTERAÇÕES   : 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *			
+ *					 01/09/2016 - Incluir div divPaCaixa, para permitir controle da tela para opção S. SD 514294 (Renato Darosci - Supero)
+ *
  * --------------
  */
 
@@ -36,6 +39,7 @@ $regVltarid2 = $_POST["regVltarid2"];
 		<label for="dtpagmto">Data Pagamento:</label>
 		<input name="dtpagmto" id="dtpagmto" type="text" value="<? echo $glbvars['dtmvtolt'] ; ?>" autocomplete="off" />
 		
+		<div id="divPaCaixa" style="display:block">
 		<label for="cdagenci">PA:</label>
 		<input name="cdagenci" id="cdagenci" type="text" value="" />
 		
@@ -43,7 +47,7 @@ $regVltarid2 = $_POST["regVltarid2"];
 		<input name="nrdcaixa" id="nrdcaixa" type="text" value="" />
 		
 		<br style="clear:both" />
-		
+		</div>
 		<div id="divVisualizar" style="display:block">
 			<label for="cdidenti">Identificador:</label>
 			<input name="cdidenti" id="cdidenti" type="text" value="" />

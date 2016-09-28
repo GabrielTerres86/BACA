@@ -4,8 +4,12 @@
  * DATA CRIAÇÃO : 27/07/2015
  * OBJETIVO     : Biblioteca de funções da tela BANCOS
  * --------------
- * ALTERAÇÔES   :
+ * ALTERAÇÔES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
+ *                PRJ-312 (Reinert)
+ * ALTERAÇÔES   : 19/08/2016 - Adicionado dois novos filtros, codigo e nome do banco,
+                               conforme solicitado no chamado 5044701. (Kelvin)
  * 
+ *
  *
  * --------------
  */
@@ -13,13 +17,13 @@
  //Formulários e Tabela
 var frmCab   	= 'frmCab';
 var frmConsulta = 'frmConsulta';
-var frmEntrada  = 'frmEntrada';
+var divEntrada  = 'divEntrada';
 
-var cddopcao, nmresbcc, cdbccxlt, nrispbif, flgdispb, dtinispb, nmextbcc,
+var cddopcao, nmresbcc, cdbccxlt, nrispbif, flgdispb, dtinispb, nmextbcc, flgoppag, dtaltstr, dtaltpag,
     cTodosCabecalho, btnOK, cTodosConsulta, cTodosEntrada;
 
-var rCddopcao, rNmresbcc, rCdbccxlt, rNrispbif, rFlgdispb, rDtinispb, rNmextbcc, 
-    cCddopcao, cNmresbcc, cCdbccxlt, cNrispbif, cFlgdispb, cDtinispb, cNmextbcc;
+var rCddopcao, rNmresbcc, rCdbccxlt, rNrispbif, rFlgdispb, rDtinispb, rNmextbcc, rFlgoppag, rDtaltstr, rDtaltpag,
+    cCddopcao, cNmresbcc, cCdbccxlt, cNrispbif, cFlgdispb, cDtinispb, cNmextbcc, cFlgoppag, cDtaltstr, cDtaltpag;
 	
 $(document).ready(function() {
 	
@@ -31,10 +35,11 @@ function carregaDados(){
 
 	cddopcao = $('#cddopcao','#'+frmCab).val();
 	nmresbcc = $('#nmresbcc','#'+frmConsulta).val();  
-	cdbccxlt = $('#cdbccxlt','#'+frmEntrada).val();                                             
-	nrispbif = $('#nrispbif','#'+frmEntrada).val();
+	cdbccxlt = $('#cdbccxlt','#'+divEntrada).val();                                             
+	nrispbif = $('#nrispbif','#'+divEntrada).val();
 	flgdispb = $('#flgdispb','#'+frmConsulta).val();                                            
 	dtinispb = $('#dtinispb','#'+frmConsulta).val();
+	flgoppag = $('#flgoppag','#'+frmConsulta).val();                                            	
 	nmextbcc = $('#nmextbcc','#'+frmConsulta).val();
 					                                                 
 	return false;
@@ -45,7 +50,7 @@ function carregaDados(){
 function estadoInicial() {
 
 	$('#frmConsulta').limpaFormulario();
-	$('#frmEntrada').limpaFormulario();
+	$('#frmCab').limpaFormulario();
 	
 	formataCabecalho();
 	formataConsulta();
@@ -102,11 +107,11 @@ function formataCabecalho() {
 	});
 	
 	$('#frmConsulta').css('display','none');
-	$('#frmEntrada').css('display','none');
+	$('#divEntrada').css('display','none');
 			
 	highlightObjFocus( $('#frmCab') );
 	highlightObjFocus( $('#frmConsulta') );
-	highlightObjFocus( $('#frmEntrada') );
+	highlightObjFocus( $('#divEntrada') );
 		
 	layoutPadrao();
 	
@@ -118,31 +123,35 @@ function formataCabecalho() {
 function controlaLayout() {
 	
 	$('#frmConsulta').css('display','none');
-	$('#frmEntrada').css('display','none');
+	$('#divEntrada').css('display','none');
 	$('input,select').removeClass('campoErro');
 
 	if(cCddopcao.val() == "C") {
 	
 		$('#frmConsulta').css('display','none');
-		$('#frmEntrada').css('display','block');
+		$('#divEntrada').css('display','block');
 		
 		$('#btVoltar','#divBotoes').show();
 		$('#btSalvar','#divBotoes').show();
+		$('#btLupaBanco','#divEntrada').show();
+		$('#btLupaISPB','#divEntrada').show();
 		
 		cCdbccxlt.habilitaCampo();
 		cNrispbif.habilitaCampo();
 
 		cCdbccxlt.focus();
 			
-		controlaPesquisas('frmEntrada');
+		controlaPesquisas('divEntrada');
 		
 	}else if(cCddopcao.val() == "I"){
 		
 		$('#frmConsulta').css('display','none');
-		$('#frmEntrada').css('display','block');
+		$('#divEntrada').css('display','block');
 		
 		$('#btVoltar','#divBotoes').show();
 		$('#btSalvar','#divBotoes').show();
+		$('#btLupaBanco','#divEntrada').hide();
+		$('#btLupaISPB','#divEntrada').hide();
 		
 		cCdbccxlt.habilitaCampo();
 		cNrispbif.habilitaCampo();
@@ -150,15 +159,18 @@ function controlaLayout() {
 		cNmextbcc.desabilitaCampo();
 		cFlgdispb.desabilitaCampo();
 		cDtinispb.desabilitaCampo();
+		cFlgoppag.desabilitaCampo();		
 		cCdbccxlt.focus();
 	
 	}else if(cCddopcao.val() == "A"){
 	
 		$('#frmConsulta').css('display','none');
-		$('#frmEntrada').css('display','block');
+		$('#divEntrada').css('display','block');
 		
 		$('#btVoltar','#divBotoes').show();
 		$('#btSalvar','#divBotoes').show();
+		$('#btLupaBanco','#divEntrada').show();
+		$('#btLupaISPB','#divEntrada').show();
 		
 		cCdbccxlt.habilitaCampo();
 		cNrispbif.habilitaCampo();
@@ -166,6 +178,7 @@ function controlaLayout() {
 		cNmextbcc.desabilitaCampo();
 		cFlgdispb.desabilitaCampo();
 		cDtinispb.desabilitaCampo();
+		cFlgoppag.desabilitaCampo();		
 		cCdbccxlt.focus();
 			
 	}
@@ -179,7 +192,7 @@ function btnVoltar() {
 	
 	if($('#frmConsulta').css('display')=='block'){
 		$('#frmConsulta').css('display','none').limpaFormulario();
-		$('#frmEntrada').limpaFormulario();
+		$('#frmCab').limpaFormulario();
 		cCdbccxlt.habilitaCampo();
 		cCdbccxlt.focus();
 		cNrispbif.habilitaCampo();
@@ -205,9 +218,9 @@ function btnContinuar() {
 	} else {
 					
 		$('#btSalvar','#divBotoes').focus();
-		
+				
 		if(cCddopcao.val() == "C"){
-			
+	
 			buscaBanco();
 									
 		}else if(cCddopcao.val() == "I"){
@@ -224,13 +237,26 @@ function btnContinuar() {
 			}else {
 				
 				$('#frmConsulta').css('display','block');
-												
+
+				rDtaltstr.hide();
+				cDtaltstr.hide();
+				rDtaltpag.hide();
+				cDtaltpag.hide();
+				
 				cCdbccxlt.desabilitaCampo();
 				cNrispbif.desabilitaCampo();
+				
 				cNmresbcc.habilitaCampo();
 				cNmextbcc.habilitaCampo();
-				cFlgdispb.habilitaCampo();
-				cDtinispb.habilitaCampo();
+				cFlgdispb.habilitaCampo();				
+				cFlgoppag.habilitaCampo();
+				
+				if (cFlgdispb.val() == 1){
+					cDtinispb.habilitaCampo();
+				}else{
+					cDtinispb.val('');
+					cDtinispb.desabilitaCampo();
+				}
 				cNmresbcc.focus();				
 				
 			}
@@ -248,8 +274,15 @@ function btnContinuar() {
 												
 								
 			}else {
-								
+
 				buscaBanco();
+				
+				if (cFlgdispb.val() == 1){
+					cDtinispb.habilitaCampo();
+				}else{
+					cDtinispb.val('');
+					cDtinispb.desabilitaCampo();
+				}
 				
 			}
 						
@@ -271,7 +304,16 @@ function buscaBanco() {
 	
 		$('#btSalvar','#divBotoes').hide();
 		$('#btVoltar','#divBotoes').show();
+		rDtaltstr.show();
+		cDtaltstr.show();
+		rDtaltpag.show();
+		cDtaltpag.show();
 		
+	}else{
+		rDtaltstr.hide();
+		cDtaltstr.hide();
+		rDtaltpag.hide();
+		cDtaltpag.hide();
 	}
 				
 	$('input,select').removeClass('campoErro');
@@ -297,7 +339,7 @@ function buscaBanco() {
 		success : function(response) { 				
 					hideMsgAguardo();
 					try {
-						eval( response );						
+						eval( response );												
 					} catch(error) {						
 						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','');
 					}
@@ -329,6 +371,7 @@ function manterRotina() {
 				  nrispbif   : nrispbif,
 				  flgdispb   : flgdispb,
 				  dtinispb   : dtinispb,
+				  flgoppag   : flgoppag,
 				  nmextbcc   : nmextbcc,		
 				  redirect   : 'script_ajax'					  
 				  
@@ -356,37 +399,46 @@ function formataConsulta(){
 	cTodosConsulta = $('input[type="text"],select','#divConsulta');
 	cTodosEntrada = $('input[type="text"],select','#divEntrada');
 	
+	rCdbccxlt = $('label[for="cdbccxlt"]','#divEntrada');
+	rNrispbif = $('label[for="nrispbif"]','#divEntrada');
 	rNmresbcc = $('label[for="nmresbcc"]','#frmConsulta');
-	rCdbccxlt = $('label[for="cdbccxlt"]','#frmEntrada');
-	rNrispbif = $('label[for="nrispbif"]','#frmEntrada');
-	rFlgdispb = $('label[for="flgdispb"]','#frmConsulta');
-	rDtinispb = $('label[for="dtinispb"]','#frmConsulta');
 	rNmextbcc = $('label[for="nmextbcc"]','#frmConsulta');
+	rFlgdispb = $('label[for="flgdispb"]','#frmConsulta');
+	rFlgoppag = $('label[for="flgoppag"]','#frmConsulta');
+	rDtinispb = $('label[for="dtinispb"]','#frmConsulta');
+	rDtaltstr = $('label[for="dtaltstr"]','#frmConsulta');
+	rDtaltpag = $('label[for="dtaltpag"]','#frmConsulta');	
 	
-	
+	cCdbccxlt = $('#cdbccxlt','#divEntrada');	
+	cNrispbif = $('#nrispbif','#divEntrada');
 	cNmresbcc = $('#nmresbcc','#frmConsulta');	
-	cCdbccxlt = $('#cdbccxlt','#frmEntrada');	
-	cNrispbif = $('#nrispbif','#frmEntrada');
-	cFlgdispb = $('#flgdispb','#frmConsulta');
-	cDtinispb = $('#dtinispb','#frmConsulta');
 	cNmextbcc = $('#nmextbcc','#frmConsulta');
-	
+	cFlgdispb = $('#flgdispb','#frmConsulta');
+	cFlgoppag = $('#flgoppag','#frmConsulta');
+	cDtinispb = $('#dtinispb','#frmConsulta');
+	cDtaltstr = $('#dtaltstr','#frmConsulta');
+	cDtaltpag = $('#dtaltpag','#frmConsulta');
 		
-	rNmresbcc.css({'width':'103px'});
-	rCdbccxlt.css({'width':'103px'});
-	rNrispbif.css({'width':'100px'});
-	rFlgdispb.css({'width':'103px'});
-	rDtinispb.css({'width':'191px'});
-	rNmextbcc.css({'width':'101px'});
-		
+	rCdbccxlt.css({'width':'80px'}).addClass('rotulo');
+	rNrispbif.css({'width':'100px'}).addClass('rotulo-linha');
+	rNmresbcc.css({'width':'153px'}).addClass('rotulo');
+	rNmextbcc.css({'width':'153px'}).addClass('rotulo');
+	rFlgdispb.css({'width':'153px'}).addClass('rotulo');
+	rFlgoppag.css({'width':'153px'}).addClass('rotulo');
+	rDtinispb.css({'width':'87px'}).addClass('rotulo-linha');
+	rDtaltstr.css({'width':'110px'}).addClass('rotulo-linha');
+	rDtaltpag.css({'width':'275px'}).addClass('rotulo-linha');
 	
-	cNmresbcc.css({'width':'150px'});
 	cCdbccxlt.css({'width':'100px','text-align':'right'}).addClass('inteiro').attr('maxlength','3');
 	cNrispbif.css({'width':'100px','text-align':'right'}).addClass('inteiro').attr('maxlength','8');
-	cFlgdispb.css({'width':'60px'});
-	cDtinispb.css({'width':'100px'}).addClass('data').val('');
+	cNmresbcc.css({'width':'150px'});
 	cNmextbcc.css({'width':'250px'});
-		
+	cFlgdispb.css({'width':'60px'});
+	cFlgoppag.css({'width':'60px'});
+	cDtinispb.css({'width':'72px'}).addClass('data').val('');
+	cDtaltstr.css({'width':'72px'}).addClass('data').val('');
+	cDtaltpag.css({'width':'72px'}).addClass('data').val('');
+	
 	cTodosConsulta.desabilitaCampo();
 	cTodosEntrada.desabilitaCampo();
 					
@@ -452,7 +504,15 @@ function formataConsulta(){
 		if ( e.keyCode == 13  || e.keyCode == 9) {		
 					
 			$(this).removeClass('campoErro');
-			cDtinispb.focus();
+			
+			if ($(this).val() == 1){
+				cDtinispb.habilitaCampo();
+				cDtinispb.focus();
+			}else{
+				cDtinispb.val('');
+				cDtinispb.desabilitaCampo();
+				cFlgoppag.focus();
+			}			
 				
 			return false;
 		}
@@ -467,15 +527,40 @@ function formataConsulta(){
 		if ( e.keyCode == 13  || e.keyCode == 9) {
 			
 			$(this).removeClass('campoErro');
-
-			btnContinuar();
+			cFlgoppag.focus();			
 			return false;
 		}
 				
 	});
+	
+	cFlgoppag.unbind('keypress').bind('keypress', function(e) {
+		if ( divError.css('display') == 'block' ) { return false;}		
+		// Se é a tecla ENTER, TAB
+		if ( e.keyCode == 13  || e.keyCode == 9) {		
+					
+			$(this).removeClass('campoErro');
+			btnContinuar();				
+			return false;
+		}
+		
+	});
+	
 	layoutPadrao();
 	
 	return false;
+}
+
+function controlaSitSPB(){
+
+	if (cFlgdispb.val() == 1){
+		cDtinispb.habilitaCampo();
+		cDtinispb.focus();
+	}else{
+		cDtinispb.val('');
+		cDtinispb.desabilitaCampo();
+		cFlgoppag.focus();
+	}			
+
 }
 
 function controlaPesquisas(nomeFormulario){
@@ -507,12 +592,12 @@ function controlaPesquisas(nomeFormulario){
 					
 					bo			= 'BANCOS';
 					procedure	= 'PESQUISABANCO';
-					titulo      = 'Bancos';
+					titulo      = 'Institui&ccedil;&atilde;o Financeira';
 					qtReg		= '30';
-					filtros 	= 'C&oacutedigo;cdbccxlt;30px;N;0;N|Nome Abreviadoo;nmresbcc;30px;N;0;N|ISPB;nrispbif;30px;N;0;N'	
-					colunas 	= 'Banco;cdbccxlt;10%;left|Nome Abreviado;nmresbcc;40%;left|ISPB;nrispbif;20%;left|Operando no SPB;flgdispb;25%;left';										
+					filtros = 'C&oacutedigo;cdbccxlt;100px;S;;S|Nome Abreviado;nmresbcc;150px;S;;S|ISPB;nrispbif;75px;N;;N'
+					colunas 	= 'Banco;cdbccxlt;10%;left|Nome Abreviado;nmresbcc;40%;left|ISPB;nrispbif;20%;left|Operando no STR;flgdispb;25%;left';										
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,nomeFormulario);					
-					$('#formPesquisa','#divPesquisa').css('display','none');
+					/*$('#formPesquisa','#divPesquisa').css('display','none');*/
 					$("#divCabecalhoPesquisa > table").css("width","600px");
 					$("#divResultadoPesquisa > table").css("width","600px");
 					$("#divCabecalhoPesquisa").css("width","600px");
@@ -525,12 +610,12 @@ function controlaPesquisas(nomeFormulario){
 					
 					bo			= 'BANCOS';
 					procedure	= 'PESQUISABANCO';
-					titulo      = 'Bancos';
+					titulo      = 'Institui&ccedil;&atilde;o Financeira';
 					qtReg		= '30';
-					filtros 	= 'C&oacutedigo;cdbccxlt;30px;N;0;N|Nome Abreviadoo;nmresbcc;30px;N;0;N|ISPB;nrispbif;30px;N;0;N'
-					colunas 	= 'Banco;cdbccxlt;10%;left|Nome Abreviado;nmresbcc;40%;left|ISPB;nrispbif;20%;left|Operando no SPB;flgdispb;25%;left';										
+					filtros 	= 'C&oacutedigo;cdbccxlt;30px;N;;N|Nome Abreviadoo;nmresbcc;30px;N;;N|ISPB;nrispbif;75px;S;;S'
+					colunas 	= 'Banco;cdbccxlt;10%;left|Nome Abreviado;nmresbcc;40%;left|ISPB;nrispbif;20%;left|Operando no STR;flgdispb;25%;left';										
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,nomeFormulario);					
-					$('#formPesquisa','#divPesquisa').css('display','none');
+					/*$('#formPesquisa','#divPesquisa').css('display','none');*/
 					$("#divCabecalhoPesquisa > table").css("width","600px");
 					$("#divResultadoPesquisa > table").css("width","600px");
 					$("#divCabecalhoPesquisa").css("width","600px");

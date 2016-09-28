@@ -47,7 +47,7 @@
 														<label for="cdpesqui">Pesquisar por:</label>														
 														<input type="radio" name="cdpesqui" id="titular" checked value="1" class="radio" /> 
 														<label for="titular" class="radio">Nome do Titular</label> 														
-														<input type="radio" name="cdpesqui" id="integra" value="2" class="radio" /> 
+														<input type="radio" onkeydown="pesquisaAssociado_2_OnKeyDown()" name="cdpesqui" id="integra" value="2" class="radio" /> 
 														<label for="integra" class="radio">Conta Integra&ccedil;&atilde;o</label>														
 														<input type="radio" name="cdpesqui" id="cpfcnpj" value="3" class="radio" /> 
 														<label for="integra" class="radio">CPF/CNPJ</label>														

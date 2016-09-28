@@ -12,6 +12,7 @@
 	//***			  14/04/2015 - Foi aumentado o tamanho da tabela de		***// 
 	//***						   aplicações para adicionar a nova coluna  ***//
 	//***						   de carencia SD - 255191 (Kelvin)  		***//
+    //***                                                                   ***//
 	//*************************************************************************//
 	
 	session_start();
@@ -34,6 +35,8 @@
 		exit();
 	}	
 
+    $labelRot = $_POST['labelRot'];	
+
 	// Carrega permiss&otilde;es do operador
 	include("../../../includes/carrega_permissoes.php");	
 	
@@ -48,10 +51,18 @@
 					<td>
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
-								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag SetWindow" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">APLICA&Ccedil;&Otilde;ES</td>
-								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true);return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
-								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
+                <td width="11">
+                  <img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21">
+                </td>
+                <td id="<?php echo $labelRot; ?>" class="txtBrancoBold ponteiroDrag SetFoco" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">APLICA&Ccedil;&Otilde;ES
+                </td>
+                <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true);return false;">
+                    <img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0">
+                  </a>
+                </td>
+                <td width="8">
+                  <img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21">
+                </td>
 							</tr>        
 						</table>
 					</td>        
@@ -76,9 +87,15 @@
 													case "@": $nameOpcao = "Principal"; $idPrincipal = $i; break;													
 												}
 											?>
-											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq<?php echo $i; ?>"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen<?php echo $i; ?>"><a href="#" id="linkAba<?php echo $i; ?>" class="txtNormalBold" onClick="acessaOpcaoAba(<?php echo count($opcoesTela); ?>,<?php echo $i; ?>,'<?php echo $opcoesTela[$i]; ?>');return false;"><?php echo $nameOpcao; ?></a></td>
-											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir<?php echo $i; ?>"></td>
+                      <td>
+                        <img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq<?php echo $i; ?>">
+                      </td>
+                      <td align="center" style="background-color: #C6C8CA;" id="imgAbaCen<?php echo $i; ?>"><a href="#" id="linkAba<?php echo $i; ?>" class="txtNormalBold" onClick="acessaOpcaoAba(<?php echo count($opcoesTela); ?>,<?php echo $i; ?>,'<?php echo $opcoesTela[$i]; ?>');return false;"><?php echo $nameOpcao; ?>
+                        </a>
+                      </td>
+                      <td>
+                        <img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir<?php echo $i; ?>">
+                      </td>
 											<td width="1"></td>
 											<?php
 											} // Fim do for

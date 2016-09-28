@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina para alterar informações do gravame
  * --------------
  * ALTERAÇÕES   :  14/07/2016 - Ajustar o nome RENAVAM (Andrei - RKAM).
+ *                 24/08/2016 - Adicionada possibilidade de alterar a situação do gravame. Projeto 369 (Lombardi).
  */
 ?> 
 
@@ -39,7 +40,9 @@
   $nrmodbem = (isset($_POST["nrmodbem"])) ? $_POST["nrmodbem"] : 0;
   $tpctrpro = (isset($_POST["tpctrpro"])) ? $_POST["tpctrpro"] : 0;
   $idseqbem = (isset($_POST["idseqbem"])) ? $_POST["idseqbem"] : 0;
-  
+  $dssitgrv = (isset($_POST["dssitgrv"])) ? $_POST["dssitgrv"] : '';
+  $dsmotivo = (isset($_POST["dsmotivo"])) ? $_POST["dsmotivo"] : '';
+
   validaDados();
   
   // Monta o xml de requisição		
@@ -48,16 +51,18 @@
 	$xml 	   .= "  <Dados>";
 	$xml 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-  $xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
-  $xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
-  $xml 	   .= "     <dscatbem>".$dscatbem."</dscatbem>";
-  $xml 	   .= "     <dschassi>".$dschassi."</dschassi>";
-  $xml 	   .= "     <ufdplaca>".$ufdplaca."</ufdplaca>";
-  $xml 	   .= "     <nrdplaca>".str_replace('-','',$nrdplaca)."</nrdplaca>";
-  $xml 	   .= "     <nrrenava>".$nrrenava."</nrrenava>";
-  $xml 	   .= "     <nranobem>".$nranobem."</nranobem>";
-  $xml 	   .= "     <nrmodbem>".$nrmodbem."</nrmodbem>";
-  $xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
+	$xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>"; 
+	$xml 	   .= "     <idseqbem>".$idseqbem."</idseqbem>";
+	$xml 	   .= "     <dscatbem>".$dscatbem."</dscatbem>";
+	$xml 	   .= "     <dschassi>".$dschassi."</dschassi>";
+	$xml 	   .= "     <ufdplaca>".$ufdplaca."</ufdplaca>";
+	$xml 	   .= "     <nrdplaca>".str_replace('-','',$nrdplaca)."</nrdplaca>";
+	$xml 	   .= "     <nrrenava>".$nrrenava."</nrrenava>";
+	$xml 	   .= "     <nranobem>".$nranobem."</nranobem>";
+	$xml 	   .= "     <nrmodbem>".$nrmodbem."</nrmodbem>";
+	$xml 	   .= "     <tpctrpro>".$tpctrpro."</tpctrpro>";
+	$xml 	   .= "     <cdsitgrv>".$dssitgrv."</cdsitgrv>";
+	$xml 	   .= "     <dsaltsit>".$dsmotivo."</dsaltsit>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
@@ -69,17 +74,17 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    $nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
+		$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
 		
 		if(empty ($nmdcampo)){ 
 			$nmdcampo = "dschassi";
 		}
     
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
+		exibirErro('error',htmlentities($msgErro),'Alerta - Ayllos','fechaRotina($(\'#divRotina\'));focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
 					
 	} 
 		
-  echo "showError('inform','Bem atualizado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+  echo "showError('inform','Bem atualizado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','fechaRotina($(\'#divRotina\'));buscaBens(1, 30);');";	
 	  
   
   function validaDados(){

@@ -3,20 +3,20 @@
  * FONTE          : tabela_cbrfra.php
  * CRIAÇÃO      : Rodrigo Bertelli (RKAM)
  * DATA CRIAÇÃO : 16/06/2014
- * OBJETIVO       : Tabela que apresenda os codigos com fraude na tela CBRFRA
+ * OBJETIVO       : Tabela que apresenda os codigos de barra e cpf/cnpjs com fraude na tela CBRFRA
  *
+ *  16/08/2016 - #456682  Adaptado para mostrar os cpfs/cnpjs bloqueados (Carlos)
+ *  16/09/2016 - Melhoria nas mensagens, de "Código" para "Registro", para ficar genérico, conforme solicitado pelo Maicon (Carlos)
  */
  $search  = array('.','-');
- 
- 
- 
+  
 ?>
 	<table class="tituloRegistros" style="border: 1px solid #777; border-bottom: 0px;">
 		<thead>
 			<tr>
-                <th style="width: 60%"><? echo utf8ToHtml('C&oacute;digos') ?></th>
-				<th style="width: 20%"><? echo utf8ToHtml('Data Inclus&atilde;o') ?></th>
-                <th class="clsexcluir" style="width: 10%; <? echo $strdisabled;?>"><? echo utf8ToHtml('A&ccedil;&atilde;o') ?></th>
+                <th style="width: 60%"><?php echo ($tipo == '1')? 'C&oacute;digos':'CPF/CNPJ' ?></th>
+				<th style="width: 20%">Data Inclus&atilde;o</th>
+                <th class="clsexcluir" style="width: 10%; <? echo $strdisabled;?>">A&ccedil;&atilde;o</th>
 				<th style="width: 2%; border: 0px;">&nbsp;</th>
 			</tr>			
 		</thead>
@@ -29,28 +29,31 @@
 			$i = 0;
 			
 			foreach($registros as $fraude) {
-				// Recebo todos valores em vari�veis
+				// Recebo todos valores em variaveis
 				
 				if ($i == 0) {
 					$qtregist = getByTagName($fraude->tags,'qtregist');
 				}
 						
-				$dsccodbar	= getByTagName($fraude->tags,'dscodbar');
-				$dtsolici	= getByTagName($fraude->tags,'dtsolici');
+				$dsfraude = getByTagName($fraude->tags,'dsfraude');				
+				$dtsolici = getByTagName($fraude->tags,'dtsolici');
 
-				if ($dsccodbar == '') {
+				if ($dsfraude == '') {
 					continue;
 				}
 				
+				if ($tipo == 2 or $tipo == 3) {
+					$dsfraude = formatar($dsfraude,($tipo == 2)? 'cpf':'cnpj');
+				} 
+
 				$cor = ($cor == "corImpar") ? "corPar" : "corImpar";
-				
+
 				$i++;
-				
-			?>
+    ?>
 				<tr class="<? echo $cor; ?>">
-				<td style="width: 60%; text-align: center;"><? echo $dsccodbar;?></td>
+				<td style="width: 60%; text-align: center;"><? echo $dsfraude;?></td>
 				<td style="width: 20%; text-align: center;"><? echo $dtsolici;?></td>
-				<td class="clsexcluir" style="width: 10%; <? echo $strdisabled;?>;text-align: center; padding-left:5px;"><img title="Excluir C&oacute;digo com Fraude" style="cursor: pointer" src="../../imagens/geral/btn_excluir.gif" onclick="preencheCodExclusao('<? echo $dsccodbar?>')"/></td>
+				<td class="clsexcluir" style="width: 10%; <? echo $strdisabled;?>;text-align: center; padding-left:5px;"><img title="Excluir registro de Fraude" style="cursor: pointer" src="../../imagens/geral/btn_excluir.gif" onclick="preencheCodExclusao('<? echo $dsfraude;?>')"/></td>
 				</tr>
 <? 			} ?>	
 	</tbody>

@@ -32,7 +32,9 @@
 		echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Ayllos","");';
 		echo '</script>';
 		exit();
-	}	
+	}
+
+    $labelRot = $_POST['labelRot'];	
 
 	// Carrega permiss&otilde;es do operador
 	include("../../../includes/carrega_permissoes.php");	
@@ -41,6 +43,7 @@
 		
 ?>
 <form action="<?php echo $UrlSite; ?>telas/atenda/folhas_cheque/lista_cheques.php" name="frmCheques" id="frmCheques" method="post">
+<input type="hidden" id="<?php echo $labelRot; ?>" class="SetFoco">
 <input type="hidden" name="nrdconta" id="nrdconta" value="">
 <input type="hidden" name="nmprimtl" id="nmprimtl" value="">
 <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">

@@ -12,8 +12,6 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
 *******************************************************************************
 
 
-
-
  * FONTE        : funcoes.php
  * CRIAÇÃO      : David
  * DATA CRIAÇÃO : Julho/2007
@@ -61,6 +59,9 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 036: [14/08/2015] Lucas Ranghetti(CECRED): Incluir função visualizaArquivo para fazer download do arquivo ou gerar pdf na mesma function.
  * 037: [30/12/2015] Jaison (CECRED)		: Criada a funcao retornaKeyArrayMultidimensional.
  * 038: [11/07/2016] Carlos Rafael Tanholi: Removi o codigo da funcao mensageria que registrava as requisicoes nos arquivo da pasta xml/(in.xml | out.xml).
+ * 039: [20/07/2016] Carlos Rafael Tanholi: Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
+ * 040: [25/07/2016] Carlos Rafael Tanholi: Correcao na expressao regular da funcao formatar(). SD 479874. 
+ * 038: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria
  */
 ?>
 <?php
@@ -667,11 +668,9 @@ function formatar($campo,$tipo,$formatado=true) {
 		}
 	}	
 	
-    //$codigoLimpo = ereg_replace("[' '-./ t]","",$campo);
-
-	$codigoLimpo = preg_replace("/[' '-./ t]/", '', $campo);
+	$codigoLimpo = preg_replace("/[' '-.]/", '', $campo);
     
-	$tamanho = (strlen($codigoLimpo) -2);
+    $tamanho = (strlen($codigoLimpo) -2);
 
     if ($tamanho != 9 && $tamanho != 12) { return $campo; }
     if ($formatado){
@@ -1211,7 +1210,7 @@ function xmlFilho($array, $pai, $filho) {
  * PARÂMETROS : $valor 	-> moeda  
  */
 function formataMoeda( $valor ) {
-	return number_format(str_replace(',','.',$valor),2,',','.');
+	return number_format(floatval(str_replace(',','.',$valor)),2,',','.');
 }
 
 
@@ -1285,7 +1284,7 @@ function dbOracle() {
 	}
 	//valida se a constante nao esta definida
 	if (defined('PASS') == false) {
-		define("PASS", $pass);
+		define('PASS', $pass);
 	}
 }
 
@@ -1459,7 +1458,7 @@ function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
 		
 	$retXML = dbProcedure($xml);
-	
+
 	return $retXML;
 }
 
@@ -1621,4 +1620,26 @@ function justificar($text, $width) {
 	}
 	return $lines;
 }
+
+/*
+Classe auxiliar para montagem de xml usado na mensageria().
+Ex. de uso: telas/cbrfra/manter_rotina.php
+*/
+class XmlMensageria {	
+	private $xml;
+
+	function __construct() {
+		$this->xml = '<Root><Dados>';
+    }
+
+	public function add($tag, $valor) {
+        $this->xml .= '<' . $tag . '>' . trim($valor) . '</' . $tag . '>';
+		return $this;
+    }
+
+    public function __toString() {
+        return $this->xml . '</Dados></Root>';
+    }
+}
+
 ?>

@@ -52,8 +52,9 @@
 	else if ( $operacao == 'consultar' ) {
 		$observacao = $dsobscmt;		
 	}
-		
-	
+
+	$observacao = retiraAcentos($observacao);
+
 ?>
 
 <table cellpadding="0" cellspacing="0" border="0" >

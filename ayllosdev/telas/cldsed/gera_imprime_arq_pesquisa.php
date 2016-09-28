@@ -8,6 +8,9 @@
       Alterações: 05/08/2016 - Ajuste para gerar o arquivo para impressão de forma correta
 							   (Adriano - SD 495725).
 
+				  09/09/2016 - Ajuste de permissão na opção P, conforme solicitado no chamado 509376 (Kelvin).
+
+
  */
 
 	session_start();
@@ -17,7 +20,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 
-	$cddopcao = (isset($_POST["opcao"])) ? $_POST["opcao"] : '';
+	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -116,7 +119,7 @@
 
 		if( $GLOBALS["saida"] == "A" && $GLOBALS['nmarquivo'] == ""){
 			exibirErro('error','Nome do arquivo inv&aacute;lido.','Alerta - Ayllos','$(\'input,select\',\'#frmInfConsultaDetalheMov\').habilitaCampo();focaCampoErro(\'nmarquivo\',\'frmInfConsultaDetalheMov\');',false);
-		}
+	}
 
 		if( $GLOBALS['saida'] == ""){
 			exibirErro('error','Sa&Iacute;da do arquivo inv&aacute;lido.','Alerta - Ayllos','$(\'input,select\',\'#frmInfConsultaDetalheMov\').habilitaCampo();focaCampoErro(\'saida\',\'frmInfConsultaDetalheMov\');',false);

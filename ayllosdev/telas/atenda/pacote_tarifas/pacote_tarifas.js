@@ -7,7 +7,8 @@
                   ATENDA
 
       Altera&ccedil;&otilde;es:
-              	  
+	  25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+
  ***********************************************************************/
 // Variaveis para consulta do pacote de tarifas
 var glb_cdpacote = 0, glb_dspacote, glb_dtinicio_vigencia, glb_dtcancelamento, glb_dtdiadebito, glb_perdesconto_manual, glb_qtdmeses_desconto, glb_cdreciprocidade, glb_dtadesao, glb_flgsituacao;
@@ -56,13 +57,63 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			if ( response.indexOf('showError("error"') == -1 ) {
 					hideMsgAguardo();
 					$('#divConteudoOpcao').html(response);
-					formataTelaPrincipal()		
+					formataTelaPrincipal();
+                    controlaFoco();					
 				} else {
 					eval(response);
 				}
 			return false;
 		}				
 	}); 		
+}
+
+//Função para controle de navegação
+ function controlaFoco() { 
+	$('#divConteudoOpcao').each(function () {
+		$(this).find("#divBotoes > a").addClass("FluxoNavega");
+		$(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus();
+		$(this).find("#divBotoes > a").last().addClass("LastInputModal");
+	}); 		
+	
+	//Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function(){		 
+		$(this).bind('keydown', function(e) {
+		  if(e.keyCode == 13) {
+			$(this).click();
+}
+		});
+	});
+	
+	//Se estiver com foco na classe LastInputModal
+    $(".LastInputModal").focus(function(){
+		var pressedShift = false; 
+
+		$(this).bind('keyup', function(e) {
+			if(e.keyCode == 16) {
+			   pressedShift=false;//Quando tecla shift for solta passa valor false 
+			} 
+		})
+		 
+		$(this).bind('keydown', function(e) { 
+		  e.stopPropagation();
+		  e.preventDefault();
+		  
+		  if(e.keyCode == 13) {
+			$(".LastInputModal").click();
+		  }
+		  if(e.keyCode == 16) {
+				pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+		  } 
+		  if((e.keyCode == 9) && pressedShift == true) {
+				return setFocusCampo($(target), e, false, 0);
+		  } 
+		  else if(e.keyCode == 9){
+			  $(".FirstInputModal").focus();	
+		  } 
+		});
+	});
+	
+	$(".FirstInputModal").focus();
 }
 
 function formataTelaPrincipal(){
@@ -149,7 +200,6 @@ function formataTelaAlteraDebito() {
 	divRotina.css('width',largura);	
 	$('#divConteudoOpcao').css({'height':altura,'width':largura});
 
-	
 	layoutPadrao();
 	hideMsgAguardo();
 	removeOpacidade('divConteudoOpcao');
@@ -162,9 +212,9 @@ function formataTelaAlteraDebito() {
 		if ( e.keyCode == 13 || e.keyCode == 9 ) {
 			$('#btConfirmar','#divBotoes').focus();
 			return false;
-		}
+}
 	});
-	
+
 }
 
 function formataTelaImprimir() {

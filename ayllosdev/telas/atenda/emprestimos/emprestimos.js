@@ -100,6 +100,7 @@
  * 080: [05/04/2016] Incluido tratamento na efetuar_consultas para para verificar se deve validar permitir consulta caso ja esteja na esteira
  *                   PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 081: [03/08/2016] Auste para utilizar a rotina convertida para encontrar as finalidades de empréstimos (Andrei - RKAM).
+ * 081: [18/08/2016] Alteração da função controlaFoco - (Evandro - RKAM)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -5495,7 +5496,7 @@ function montaString() {
     for (var i = 1; i <= contRend; i++) {
 
         // Se nao tem um tipo de rendimento valido
-        if (!in_array(arrayRendimento['tpdrend' + i], ['1', '2', '3', '4', '5', '6'])) {
+        if (!in_array(arrayRendimento['tpdrend' + i], ['1', '2', '3', '4', '5', '6', '7'])) {
             continue;
         }
 
@@ -7658,31 +7659,41 @@ function SelecionaItem(name, tabela, rowid) {
 }
 
 function controlaFoco(operacao) {
+    $('#divConteudoOpcao').each(function () {
+        $(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus();
+        $(this).find("#divBotoes > a").last().addClass("LastInputModal");
+    });
 
-    if (in_array(operacao, ['CT', ''])) {
-        $('#btAlterar', '#divBotoes').focus();
-    } else if (in_array(operacao, ['I_INICIO', 'I_NOVA_PROP', 'A_INICIO', 'A_NOVA_PROP', 'TE', 'CF'])) {
-        $('#vlemprst', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['I_COMITE_APROV', 'A_COMITE_APROV', 'E_COMITE_APROV'])) {
-        $('#btContinuar', '#divBotoes').focus();
-    } else if (in_array(operacao, ['I_DADOS_PROP', 'A_DADOS_PROP', 'E_DADOS_PROP'])) {
-        $('#vlsalari', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['A_DADOS_PROP_PJ', 'E_DADOS_PROP_PJ', 'I_DADOS_PROP_PJ'])) {
-        $('#perfatcl', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['AI_DADOS_AVAL', 'A_DADOS_AVAL', 'E_DADOS_AVAL', 'I_DADOS_AVAL'])) {
-        $('#nrctaava', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['AI_ALIENACAO', 'A_ALIENACAO', 'E_ALIENACAO', 'I_ALIENACAO'])) {
-        $('#dscatbem', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'E_INTEV_ANU', 'I_INTEV_ANU'])) {
-        $('#nrctaava', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['A_PROT_CRED', 'E_PROT_CRED', 'I_PROT_CRED'])) {
-        $('#dtcnsspc', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['AI_HIPOTECA', 'A_HIPOTECA', 'E_HIPOTECA', 'I_HIPOTECA'])) {
-        $('#dscatbem', '#' + nomeForm).focus();
-    } else if (in_array(operacao, ['TC', 'CF', 'C_HIPOTECA', 'C_COMITE_APROV', 'C_DADOS_PROP', 'C_PROT_CRED', 'C_DADOS_PROP_PJ', 'C_DADOS_AVAL', 'C_ALIENACAO', 'C_INTEV_ANU', 'E_HIPOTECA'])) {
-        $('#btContinuar', '#divBotoes').focus();
+    //Se estiver com foco na classe LastInputModal
+    $(".LastInputModal").focus(function () {
+        var pressedShift = false;
+
+        $(this).bind('keyup', function (e) {
+            if (e.keyCode == 16) {
+                pressedShift = false;//Quando tecla shift for solta passa valor false 
+            }
+        })
+
+        $(this).bind('keydown', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (e.keyCode == 13) {
+                $(".LastInputModal").click();
+            }
+            if (e.keyCode == 16) {
+                pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+            }
+            if ((e.keyCode == 9) && pressedShift == true) {
+                return setFocusCampo($(target), e, false, 0);
+            }
+            else if (e.keyCode == 9) {
+                $(".FirstInputModal").focus();
     }
-    return false;
+        });
+    });
+
+    $(".FirstInputModal").focus();
 }
 
 function controlaPesquisas() {
@@ -9091,5 +9102,5 @@ function validaDadosAlterarSomenteValorProposta(){
 			}
 		}
 	});	
-	return false;
+    return false;
 }

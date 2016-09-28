@@ -13,6 +13,7 @@
  * 000: [24/08/2011] Guilherme       (SUPERO) : Adicionado condicao $opcoesTela[$i] == "T", referente ao encerramente de cartao de credito.
  * 003: [17/07/2014] Daniel          (CECRED) : Adicionado condicao $opcoesTela[$i] == "D", referente ao upgrade de cartao de credito SD 179666.
  * 004: [29/07/2015] James           (CECRED) : Adicionado condicao $opcoesTela[$i] == "U".
+ * 005: [25/07/2016] Evandro           (RKAM) : Adicionado classe (SetWindow) - necessaria para navegação com teclado
  */
 ?>
 
@@ -30,6 +31,7 @@ if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 }	
 
 $inpessoa = $_POST['inpessoa'];
+$labelRot = $_POST['labelRot'];	
 
 // Carrega permissões do operador
 include('../../../includes/carrega_permissoes.php');	
@@ -46,7 +48,7 @@ setVarSession("opcoesTela",$opcoesTela);
                         <table width="100%" border="0" cellspacing="0" cellpadding="0">
                             <tr>
                                 <td width="11"><img src="<?echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-                                <td class="txtBrancoBold ponteiroDrag" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif">CART&Otilde;ES CR&Eacute;DITO</td>
+                                <td id="<?php echo $labelRot; ?>" class="txtBrancoBold ponteiroDrag SetWindow SetFoco" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif">CART&Otilde;ES CR&Eacute;DITO</td>
                                 <td width="12" id="tdTitTela" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true); return false;"><img src="<?echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
                                 <td width="8"><img src="<?echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
                             </tr>

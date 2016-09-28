@@ -17,6 +17,8 @@
 *			  09/07/2012 - Retirado campo "redirect" popup. (Jorge)
 *
 *             28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobrança (Odirlei/AMcom)
+*
+*			  25/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM)
 ****************************************************************/
 
 session_start();
@@ -38,6 +40,8 @@ if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) {
 	echo 'showError("error","Par&acirc;metros incorretos.","Alerta - Ayllos","");';
 	exit();
 }	
+
+    $labelRot = $_POST['labelRot'];	
 
 // Carrega permiss&otilde;es do operador
 include("../../../includes/carrega_permissoes.php");	
@@ -69,7 +73,7 @@ include("../../../includes/carrega_permissoes.php");
 						<table width="100%" border="0" cellspacing="0" cellpadding="0" >
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"> COBRAN&Ccedil;A </td>
+								<td id="<?php echo $labelRot; ?>" class="txtBrancoBold ponteiroDrag SetWindow SetFoco" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"> COBRAN&Ccedil;A </td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true);return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>						
 							</tr>
@@ -112,6 +116,7 @@ include("../../../includes/carrega_permissoes.php");
 		</td>
 	</tr>	
 </table>
+
 
 <script type="text/javascript">	
 

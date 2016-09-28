@@ -5,7 +5,8 @@
  * DATA CRIAÇAO : 27/07/2015
  * OBJETIVO     : Rotina para alteração e inserção cadastral da tela BANCOS
  * --------------
- * ALTERA��ES   : 
+ * ALTERA��ES   : Alterado layout e incluido novos campos: flgoppag, dtaltstr e dtaltpag. 
+ *                PRJ-312 (Reinert)
  * -------------- 
  */
 ?> 
@@ -30,7 +31,8 @@
 	$nmresbcc = (isset($_POST["nmresbcc"])) ? $_POST["nmresbcc"] : '';
 	$nmextbcc = (isset($_POST["nmextbcc"])) ? $_POST["nmextbcc"] : '';
 	$flgdispb = (isset($_POST["flgdispb"])) ? $_POST["flgdispb"] : '';
-	$dtinispb = (isset($_POST["dtinispb"])) ? $_POST["dtinispb"] : '?';
+	$dtinispb = (isset($_POST["dtinispb"])) ? $_POST["dtinispb"] : '';
+	$flgoppag = (isset($_POST["flgoppag"])) ? $_POST["flgoppag"] : '';
 		
 	$xmlBanco  = "";
 	$xmlBanco .= "<Root>";
@@ -43,6 +45,7 @@
 	$xmlBanco .= "  	<nmextbcc>".$nmextbcc."</nmextbcc>";	
 	$xmlBanco .= "  	<flgdispb>".$flgdispb."</flgdispb>";	
 	$xmlBanco .= "  	<dtinispb>".$dtinispb."</dtinispb>";	
+	$xmlBanco .= "  	<flgoppag>".$flgoppag."</flgoppag>";	
 	$xmlBanco .= " </Dados>";
 	$xmlBanco .= "</Root>";
 			
@@ -62,19 +65,22 @@
 		
 		$campo = $xmlObjBanco->roottag->tags[0]->attributes['NMDCAMPO'];			
 								
-		if($campo != '' and ($campo != 'nmresbcc' and $campo != 'nmextbcc' and $campo != 'dtinispb' and $campo != 'flgdispb')){ 
+		if($campo != '' and ($campo != 'nmresbcc' and $campo != 'nmextbcc' and $campo != 'dtinispb' and $campo != 'flgdispb' and $campo != 'flgoppag')){ 
 			$retornoAposErro .= '$(\'#'.$campo.'\',\'#frmEntrada\').addClass(\'campoErro\'); btnVoltar();';
 		}else {
 			$retornoAposErro .= '$(\'#nmresbcc\',\'#frmConsulta\').addClass(\'campoErro\').habilitaCampo().focus(); $(\'#frmConsulta\').css(\'display\',\'block\'); $(\'#btSalvar\',\'#divBotoes\').show(); $(\'#btVoltar\',\'#divBotoes\').show();';
 		}
 		
-		$msgErro  = $xmlObjBanco->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		$msgErro  = utf8_encode($xmlObjBanco->roottag->tags[0]->tags[0]->tags[4]->cdata);
 						
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
 		
 	}
-			
-	exibirErro('inform','Registro incluido com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','estadoInicial();',false);	
+	if($cddopcao == 'A'){
+		exibirErro('inform','Registro alterado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','estadoInicial();',false);	
+	}else{
+		exibirErro('inform','Registro inclu&iacute;do com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','estadoInicial();',false);
+	}
 	
 ?>
 

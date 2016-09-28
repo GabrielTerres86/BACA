@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Maio/2016 
  * OBJETIVO     : Rotina para realizar inclusão manual do gravame
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 24/08/2016 - Alteração da descricao de confirmação da inclusao manual. Projeto 369 (Lombardi).
  */
 ?> 
 
@@ -70,21 +70,21 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioBens();focaCampoErro(\''.$nmdcampo.'\',\'frmBens\');',false);		
 					
 	} 
-		
-  echo "showError('inform','Inclus&atilde;o manual do registro efetuada com sucesso!','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+	  
+	echo "showError('inform','Inclus&atilde;o manual do registro efetuada com sucesso! Ao efetuar uma aliena&ccedil;&atilde;o manual, &eacute; necess&aacute;rio efetuar a aliena&ccedil;&atilde;o manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
 	  
   
-  function validaDados(){
+	function validaDados(){
 			
 		IF($GLOBALS["dtmvttel"] == '' ){ 
 			exibirErro('error','Data do registro deve ser informada!.','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dtmvttel\',\'frmBens\');',false);
 		}
     
-    IF($GLOBALS["dsjustif"] == '' ){ 
+		IF($GLOBALS["dsjustif"] == '' ){ 
 			exibirErro('error','Justificativa deve ser informada!','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'dsjustif\',\'frmBens\');',false);
 		}
     
-    IF($GLOBALS["nrgravam"] == 0 ){ 
+		IF($GLOBALS["nrgravam"] == 0 ){ 
 			exibirErro('error','O n&uacute;mero do registro deve ser informado!','Alerta - Ayllos','formataFormularioBens();focaCampoErro(\'nrgravam\',\'frmBens\');',false);
 		}
 				

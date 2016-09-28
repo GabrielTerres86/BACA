@@ -6,6 +6,8 @@
  * OBJETIVO     : Mostra rotina de Impressões da tela de CONTAS
  *
  * ALTERACOES   : 23/07/2013 - Inclusão de tabela p/ opções de cartao_assinaturas (Jean Michel).
+ *                01/08/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado. (Evandro - RKAM)
+ 
  */	 
 ?>
 
@@ -19,6 +21,8 @@
 	
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nmdatela"]) || !isset($_POST["nmrotina"])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','');
+	
+    $labelRot = $_POST['labelRot'];	
 	
 	// Carrega permissões do operador
 	include("../../../includes/carrega_permissoes.php");	
@@ -42,7 +46,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Impress&otilde;es</td>
+								<td id="<?php echo $labelRot; ?>" class="txtBrancoBold ponteiroDrag SetFoco" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Impress&otilde;es</td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a class="fecharRotina" onclick="fechaRotina(divRotina);return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>

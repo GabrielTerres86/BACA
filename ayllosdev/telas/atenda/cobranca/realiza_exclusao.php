@@ -2,12 +2,15 @@
 
 /*************************************************************************
 	Fonte: realiza_exclusao.php
-	Autor: Gabriel						Ultima atualizacao: 18/02/2016
+	Autor: Gabriel						Ultima atualizacao: 04/08/2016
 	Data : Dezembro/2010
 	
 	Objetivo: Efetuar a exclusao do convenio CEB.
 	
 	Alteracoes: 18/02/2016 - PRJ 213 - Reciprocidade. (Jaison/Marcos)
+
+				04/08/2016 - Adicionado campo de forma de envio de 
+						     arquivo de cobrança. (Reinert)
 
 *************************************************************************/
 

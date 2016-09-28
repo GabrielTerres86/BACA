@@ -5,13 +5,13 @@
  * DATA CRIAÇÃO : Maio/2016 
  * OBJETIVO     : Rotina para buscar os bens
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 24/08/2016 - Validar se pode ser alterado a situação do GRAVAMES. Projeto 369 (Lombardi).
  */
 ?> 
 
 <?php	
  
-  session_start();
+    session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
@@ -28,24 +28,24 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
   
-  $nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
-  $nrctrpro = (isset($_POST["nrctrpro"])) ? $_POST["nrctrpro"] : 0;
-  $nrgravam = (isset($_POST["nrgravam"])) ? $_POST["nrgravam"] : 0;
-  $nrregist = (isset($_POST["nrregist"])) ? $_POST["nrregist"] : 30;
-  $nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
-
-  validaDados();
+	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0;
+	$nrctrpro = (isset($_POST["nrctrpro"])) ? $_POST["nrctrpro"] : 0;
+	$nrgravam = (isset($_POST["nrgravam"])) ? $_POST["nrgravam"] : 0;
+	$nrregist = (isset($_POST["nrregist"])) ? $_POST["nrregist"] : 30;
+	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
   
-  // Monta o xml de requisição		
+	validaDados();
+  
+	// Monta o xml de requisição		
 	$xml  		= "";
 	$xml 	   .= "<Root>";
 	$xml 	   .= "  <Dados>";
 	$xml 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-  $xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>";
-  $xml 	   .= "     <nrgravam>".$nrgravam."</nrgravam>";
-  $xml 	   .= "     <nrregist>".$nrregist."</nrregist>";	
-  $xml 	   .= "     <nriniseq>".$nriniseq."</nriniseq>";
+	$xml 	   .= "     <nrctrpro>".$nrctrpro."</nrctrpro>";
+	$xml 	   .= "     <nrgravam>".$nrgravam."</nrgravam>";
+	$xml 	   .= "     <nrregist>".$nrregist."</nrregist>";	
+	$xml 	   .= "     <nriniseq>".$nriniseq."</nriniseq>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
@@ -59,13 +59,34 @@
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltro();focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);		
 					
-	} 
-		
+	}
+	
 	$bens = $xmlObj->roottag->tags[0]->tags;
-  $qtregist  = $xmlObj->roottag->attributes["QTREGIST"];
-  $possuictr  = $xmlObj->roottag->tags[0]->attributes["POSSUICTR"]; 
+	$qtregist  = $xmlObj->roottag->attributes["QTREGIST"];
+	$possuictr  = $xmlObj->roottag->tags[0]->attributes["POSSUICTR"]; 
   
-  if ($qtregist == 0) { 		
+	// Monta o xml de requisição		
+	$xml  		= "";
+	$xml 	   .= "<Root>";
+	$xml 	   .= "  <Dados>";
+	$xml 	   .= "  </Dados>";
+	$xml 	   .= "</Root>";
+	
+	// Executa script para envio do XML	
+	$xmlResult = mensageria($xml, "TELA_GRAVAM", "PERMISSAOSITUACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltro();focaCampoErro(\'nrdconta\',\'frmFiltro\');',false);
+					
+	}
+	
+	$permissao_situacao = $xmlObj->roottag->tags[0]->cdata;
+	
+	if ($qtregist == 0) { 		
 		
 		exibirErro('inform','Nenhum registro foi encontrado.','Alerta - Ayllos','formataFiltro();$(\'#nrdconta\',\'#frmFiltro\').focus();');		
 		
@@ -74,9 +95,7 @@
 		include('tab_registros.php'); 	
 		
 	}	
-		
-	
-	
+
 	function validaDados(){
 			
 		IF($GLOBALS["nrdconta"] == 0 ){ 

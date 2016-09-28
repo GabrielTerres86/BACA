@@ -4,7 +4,9 @@
  * DATA CRIAÇÃO : Setembro/2015
  * OBJETIVO     : Biblioteca de funções da tela LISGPS
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 01/09/2016 - Implementar funções referente a Opção S, que está sendo inclusa 
+ *                             na tela para atender ao SD 514294. (Renato Darosci - Supero)
+ *
  * -----------------------------------------------------------------------
  */
 
@@ -34,7 +36,8 @@ function estadoInicial() {
     $('#frmCab').css({'display':'block'});
 
     // Habilita Div's
-    $('#divConsulta').css({'display':'block'});
+    $('#divConsulta').css({ 'display': 'block' });
+    $('#divPaCaixa').css({ 'display': 'block' });
     $('#divVisualizar').css({'display':'none'});
     $('#frmConsulta').css({'display':'none'});
     $('#divBotoes').css({'display':'none'});
@@ -100,11 +103,9 @@ function controlaFoco() {
     cCddopcao.unbind('keypress').bind('keypress', function(e) {
         if ( e.keyCode == 9 || e.keyCode == 13 ) {
             cCddopcao.desabilitaCampo();
-            $('#divBotoes', '#divTela').css({'display':'block'});
-            cDtpagmto.focus();
-            if (cCddopcao.val()=="V") {
-                $('#divVisualizar').css({'display':'block'});
-            }
+
+            configuraTela();
+
             return false;
         }
     });
@@ -112,11 +113,9 @@ function controlaFoco() {
     btnOK.unbind('keypress').bind('keypress', function(e) {
         if ( e.keyCode == 9 || e.keyCode == 13 ) {
             cCddopcao.desabilitaCampo();
-            $('#divBotoes', '#divTela').css({'display':'block'});
-            cDtpagmto.focus();
-            if (cCddopcao.val()=="V") {
-                $('#divVisualizar').css({'display':'block'});
-            }
+
+            configuraTela();
+
             return false;
         }
     });
@@ -124,17 +123,19 @@ function controlaFoco() {
     btnOK.unbind('click').bind('click', function(){
         cCddopcao.desabilitaCampo();
         btnOK.desabilitaCampo();
-        $('#divBotoes', '#divTela').css({'display':'block'});
-        cDtpagmto.focus();
-        if (cCddopcao.val()=="V") {
-            $('#divVisualizar').css({'display':'block'});
-        }
+        
+        configuraTela();
+
         return false;
     });
 
     cDtpagmto.unbind('keypress').bind('keypress', function(e) {
         if ( e.keyCode == 9 || e.keyCode == 13 ) {
+            if (cCddopcao.val() == "S") {
+                cCdidenti.focus();
+            } else {
             cCdagenci.focus();
+        }
         }
     });
 
@@ -164,7 +165,7 @@ function controlaFoco() {
 
     cCdidenti.focusin(function() { if (cCdidenti.val()==0 || cCdidenti.val()=="") { cCdidenti.val("") } });
     cCdidenti.unbind('keypress').bind('keypress', function(e) {
-        if ( e.keyCode == 9 || e.keyCode == 13 ) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             btnProsseguir();
         }
     });
@@ -172,6 +173,26 @@ function controlaFoco() {
     layoutPadrao();
     return false;
 }
+
+function configuraTela() {
+
+    $('#divBotoes', '#divTela').css({ 'display': 'block' });
+    cDtpagmto.focus();
+
+    switch (cCddopcao.val()) {
+        case "V":
+            $('#divVisualizar').css({ 'display': 'block' });
+            break;
+        case "S":
+            $('#divPaCaixa').css({ 'display': 'none' });
+            $('#divVisualizar').css({ 'display': 'block' });
+            break;
+        default:
+            $('#divPaCaixa').css({ 'display': 'block' });
+    }
+    
+}
+
 
 function btnVoltar() {
     cTodosCabDados.habilitaCampo();
@@ -183,12 +204,20 @@ function btnProsseguir() {
 
     if (cCdidenti.val()==0 || cCdidenti.val()=="") { cCdidenti.val(0) };
 
-    if (cCddopcao.val()=="C") { // Consulta totais de GPS
-        consultaGps();
-    }else
-    if (cCddopcao.val()=="V") { // Visualiza os pagamentos GPS
-        visualizaGps();
+    switch (cCddopcao.val()) {
+        case "C":
+            consultaGps(); // Consulta totais de GPS
+            break;
+        case "V":
+            visualizaGps(); // Visualiza os pagamentos GPS
+            break;
+        case "S":
+            salvarXML();  // Realizar o download do(s) arquivo(s) XML conforme parametros informados
+            break;
+        default:
+            break;
     }
+
 }
 
 function consultaGps() {
@@ -308,6 +337,53 @@ function visualizaGps() {
 
     return false;
 }
+
+// Função chamada para baixar os arquivos solicitados
+function salvarXML() {
+
+    var dtpagmto = cDtpagmto.val();
+    var cdidenti = cCdidenti.val();
+    
+    if (dtpagmto == "") {
+        //hideMsgAguardo();
+        showError("error", "Data Pagamento n&atilde;o informada.", "Alerta - Ayllos", "cDtpagmto.focus()");
+        return false;
+    }
+
+    if (cdidenti == "" || cdidenti == 0) {
+        //hideMsgAguardo();
+        showError("error", "Identificador n&atilde;o informado.", "Alerta - Ayllos", "cCdidenti.focus()");
+    return false;
+}
+    
+    showMsgAguardo("Aguarde, gerando arquivo ZIP ...");
+
+    // Executa script de consulta através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/lisgps/baixar_arquivo.php',
+        data: {
+            dtpagmto: dtpagmto,
+            cdidenti: cdidenti,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+
+}
+
 
 // Formata tabela de dados da remessa
 function formataTabela() {

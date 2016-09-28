@@ -11,7 +11,10 @@
  * 		           01/08/2016 - Corrigido grid que estava com os valores "trocados", conforme
  *								solicitado no chamado 480204. (Kelvin)
  *
-  *				   03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)	
+  *				   03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)	 * 		         
+ *
+ *                11/08/2016 - #481330 Ajuste de navegação e seleção do cheque (Carlos)
+ *
  * --------------
  */	
 
@@ -56,7 +59,7 @@
 					$flgctitg = getByTagName($r->tags,'flgctitg');
 					$idseqttl = getByTagName($r->tags,'idseqttl');	?>
 					
-					<tr>
+					<tr onmouseup="clicouCheque(<? echo $flgctitg?>)">
 
 						<td><span><? echo $flgselec; ?></span>
 							<input name="aplicacao" type="checkbox" onclick="validaSelecao(this)" value="<? echo $nrseqdig; ?>" />	
@@ -115,9 +118,9 @@
 </div>
 
 <div id="divBotoes" style="margin-bottom:10px" >
-    <a href="#" class="botao" id="btTitular" onclick="mostraTitular(); return false;">Titular</a>
-    <a href="#" class="botao" id="btRegulariza" onclick="Regulariza(); return false;">Regularizar</a>
-    <a href="#" class="botao" id="btRefazer" onclick="RefazRegulariza(); return false;">Reenviar regulariza&ccedil;&atilde;o</a>
-    <a href="#" class="botao" id="btImprimir" onclick="Gera_Impressao(); return false;">Imprimir Carta</a>
-    <a href="#" class="botao" name="btVoltar" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
+    <a href="#" class="botao" id="btTitular" onclick="mostraTitular(); return false;" tabindex="3">Titular</a>
+    <a href="#" class="botao" id="btRegulariza" onclick="Regulariza(); return false;" tabindex="4">Regularizar</a>
+    <a href="#" class="botao" id="btRefazer" onclick="RefazRegulariza(); return false;" tabindex="5">Reenviar regulariza&ccedil;&atilde;o</a>
+    <a href="#" class="botao" id="btImprimir" onclick="Gera_Impressao(); return false;" tabindex="6">Imprimir Carta</a>
+    <a href="#" class="botao" name="btVoltar" id="btVoltar" onclick="btnVoltar(); return false;" tabindex="7">Voltar</a>
 </div>

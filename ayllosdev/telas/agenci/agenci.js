@@ -5,7 +5,10 @@
  * OBJETIVO     : Biblioteca de funções da tela AGENCI
  * --------------
  * ALTERAÇÕES   : 08/01/2014 - Ajustes para homologação (Adriano)
+ * ALTERAÇÕES   : 30/08/2016 - Removido a coluna DIG da pesquisa por agências da tela AGENCI (Andrey)
  *				  
+ *				  06/09/2016 - Adicionado filtro pelo nome da agencia e do banco, conforme solicitado
+ *  						   no chamado 504477 (Kelvin).
  *				  
  * --------------
  */
@@ -664,7 +667,7 @@ function controlaPesquisaBanco(){
 	procedure	= 'busca-banco';
 	titulo      = 'Banco';
 	qtReg		= '30';					
-	filtrosPesq	= 'Código;cddbanco;50px;S;' + cddbanco+ ';S|Nome;nmextbcc;50px;N;;N;';
+	filtrosPesq	= 'Código;cddbanco;50px;S;' + cddbanco+ ';S|Nome;nmextbcc;150px;S;;S;';
 	colunas 	= 'Código;cddbanco;35%;right|Nome;nmextbcc;65%;left';
 	mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,'','$(\'#cddbanco\',\'#frmCab\').focus();',nomeFormulario);
 	
@@ -708,8 +711,8 @@ function controlaPesquisaAgencia(){
 	titulo      = 'Agência';
 	qtReg		= '30';	
 
-	filtrosPesq	= 'Banco;cddbanco;30px;N;' + cddbanco+ ';N;|Agência;cdageban;50px;S;' + cdageban + ';S;';
-	colunas 	= 'Banco;cddbanco;10%;right|Agencia;cdageban;10%;center|Dig.;dgaenci;10%;center|Nome;nmageban;60%;center|Ativa;cdsitagb;10%;right';
+	filtrosPesq = 'Banco;cddbanco;30px;N;' + cddbanco + ';N;|Código;cdageban;50px;S;' + cdageban + ';S;|Nome;nmageban;150px;S;;S;';
+	colunas = 'Banco;cddbanco;10%;right|Agencia;cdageban;10%;center|Nome;nmageban;60%;center|Ativa;cdsitagb;10%;right';
 	mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,'','formataDivPesquisa("' + divPesqLeft + '","' + divPesqTop + '","' + divCabPesqTableWidth + '","' + divCabPesqTableFloat + '","' + divResulPesqTableWidth + '","' + divCabPesqWidth + '","' + divResulPesqWidth + '");',nomeFormulario);
 	
 	//Ajusta o tamanho da tabela de pesquisa

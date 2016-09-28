@@ -54,8 +54,8 @@
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
-	$xml .= "		<nmmaettl>".$nmmaettl."</nmmaettl>";
-	$xml .= "		<nmpaittl>".$nmpaittl."</nmpaittl>";
+	$xml .= "		<nmmaettl>".retiraAcentos(removeCaracteresInvalidos($nmmaettl))."</nmmaettl>";
+	$xml .= "		<nmpaittl>".retiraAcentos(removeCaracteresInvalidos($nmpaittl))."</nmpaittl>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

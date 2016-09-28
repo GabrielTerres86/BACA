@@ -38,6 +38,8 @@
                 01/08/2016 - Ajuste no teste de qtdfloat pois estava deixando 
                              a opção vazia a ser selecionda (Marcos-Supero)
 
+				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
+
 *************************************************************************/
 
 session_start();
@@ -79,6 +81,7 @@ $qtdfloat    = trim($_POST["qtdfloat"]);
 $flprotes    = trim($_POST["flprotes"]);
 $qtdecprz    = trim($_POST["qtdecprz"]);
 $idrecipr	 = trim($_POST["idrecipr"]);
+$inenvcob	 = trim($_POST["inenvcob"]);
 
 // Titulo de tela dependendo a opcao de CONSULTA/HABILITACAO
 $dstitulo = ($cddopcao == "C")? "CONSULTA" : "HABILITA&Ccedil;&Atilde;O"; 
@@ -274,6 +277,11 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                     </select>
                     <br />
                     
+					<label for="inenvcob"><? echo utf8ToHtml('Forma Envio Arquivo Cobrança:') ?></label>
+					<select name="inenvcob" id="inenvcob" <?php if ($dsorgarq != 'IMPRESSO PELO SOFTWARE') { ?> disabled class="campoTelaSemBorda" <?php }else{ ?> class="<?php echo $campo; ?>" <?php } ?>>
+						<option id="inenvcob" value="1" <?php if ($dsorgarq == 'IMPRESSO PELO SOFTWARE' && $inenvcob == 1) { ?> selected <?php }elseif($dsorgarq != 'IMPRESSO PELO SOFTWARE'){ ?> selected <?php } ?>> INTERNET BANK </option>
+                        <option id="inenvcob" value="2" <?php if ($dsorgarq == 'IMPRESSO PELO SOFTWARE' && $inenvcob == 2) { ?> selected <?php } ?> > FTP </option>					   
+					</select >
                     <label for="dsdemail"><? echo utf8ToHtml('E-mail Arquivo Retorno:') ?></label>
                     <select name="dsdemail" id="dsdemail" class="<?php echo $campo; ?>">
                      
@@ -613,6 +621,7 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         $("#qtdfloat","#divOpcaoConsulta").prop("disabled",true);
         $("#flprotes","#divOpcaoConsulta").prop("disabled",true);
         $("#qtdecprz","#divOpcaoConsulta").prop("disabled",true);
+        $("#inenvcob","#divOpcaoConsulta").prop("disabled",true);
         $(".clsPerDesconto","#divOpcaoConsulta").prop("disabled",true);
         <?php
     } else if ($dsdmesag != "" && $dsorgarq == "INTERNET" ) { // Nao tem senha liberada para Internet

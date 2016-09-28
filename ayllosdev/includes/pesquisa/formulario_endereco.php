@@ -105,7 +105,7 @@
 	cLogradouroRes.attr('maxlength','40').css('width','389px');
 	cComplemento.attr('maxlength','90').css('width','389px');
 	cBairroRes.attr('maxlength','40').css('width','389px');	
-	cCidadeRes.attr('maxlength','25').css('width','313px');
+	cCidadeRes.attr('maxlength','50').css('width','313px');
 	cEstado.css('width','50px');	
 
 	$('#btSalvar','#formFormularioEndereco').click( function(){

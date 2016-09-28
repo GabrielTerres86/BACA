@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Maio/2016 
  * OBJETIVO     : Rotina para a baixa manual do gravame
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 24/08/2016 - Alteração da descricao de confirmação da baixa manual. Projeto 369 (Lombardi).
  */
 ?> 
 
@@ -64,7 +64,7 @@
 					
 	} 
 		
-  echo "showError('inform','Registro de Baixa Manual efetuada com sucesso!','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
+  echo "showError('inform','Registro de baixa manual efetuada com sucesso! Ao efetuar a baixa manual, &eacute; necess&aacute;rio efetuar a baixa manual no sistema CETIP.','Notifica&ccedil;&atilde;o - Ayllos','buscaBens(1, 30);');";	
 	  
   
   function validaDados(){

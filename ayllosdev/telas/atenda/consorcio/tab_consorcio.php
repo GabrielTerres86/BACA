@@ -10,7 +10,7 @@
 				<th><? echo utf8ToHtml('Valor Carta');  ?></th>
 				<th><? echo utf8ToHtml('Parc.');  ?></th>
 				<th><? echo utf8ToHtml('Valor Parcela');  ?></th>
-				<th>Situação</th>
+				<th>SituaÃ§Ã£o</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -72,6 +72,6 @@
 </script>
 
 <div id="divBotoes">
-	<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina('true');" />
-	<input type="image" id="btConsultar" src="<? echo $UrlImagens; ?>botoes/consultar.gif" onClick="btConsultar();" /> 
+	<input type="image" id="btVoltar" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;" />
+  <input type="image" id="btConsultar" src="<? echo $UrlImagens; ?>botoes/consultar.gif" onClick="btConsultar();" /> 
 </div>

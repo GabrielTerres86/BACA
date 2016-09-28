@@ -3,7 +3,7 @@
 	/************************************************************************  
 	  Fonte: imprimir_pdf_dscchq.php                                               
 	  Autor: Guilherme                                                          
-	  Data : Março/2008                   Última Alteração: 21/06/2016
+	  Data : Março/2008                   Última Alteração: 15/08/2016          
 																			
 	  Objetivo  : Gerar PDF das impressoes de desconto de cheques              
 	                                                                            	 
@@ -16,6 +16,9 @@
 				  19/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
                   21/06/2016 - Inclusao do coordenador que liberou/analisou as 
                                restricoes. (Jaison/James)
+				  
+				  15/08/2016 - Ajuste no numero do banco conforme solicitado no chamado
+							   492081. (Kelvin)
 	************************************************************************/ 
 	
 	// Classe para geração de arquivos PDF
@@ -904,7 +907,7 @@
 
 			$arrRestricaoCoordenador = array();
 
-            for ($i = 0;$i < count($dadosCheques); $i++){
+			for ($i = 0;$i < count($dadosCheques); $i++){
 				if ($i == 0){
 					$this->Cell(1.6,0.4,"Bom Para","B",0,"L",0,"");
 					$this->Cell(0.6,0.4,"Cmp","B",0,"L",0,"");
@@ -925,7 +928,7 @@
 				$vlrmaior = $dadosCheques[$i]["VLCHEQUE"] > $vlrmaior ? $dadosCheques[$i]["VLCHEQUE"] : $vlrmaior;
 				$this->Cell(1.6,0.4,$dadosCheques[$i]["DTLIBERA"],0,0,"L",0,"");
 				$this->Cell(0.6,0.4,formataNumericos('999',$dadosCheques[$i]["CDCMPCHQ"],''),0,0,"L",0,"");
-				$this->Cell(0.6,0.4,formataNumericos('999',$dadosCheques[$i]["CDBCOCHQ"],''),0,0,"L",0,"");
+				$this->Cell(0.6,0.4,formataNumericos('999',$dadosCheques[$i]["CDBANCHQ"],''),0,0,"L",0,"");
 				$this->Cell(0.8,0.4,formataNumericos('9999',$dadosCheques[$i]["CDAGECHQ"],''),0,0,"R",0,"");
 				$this->Cell(2,0.4,formataNumericos('zzzzzzz.zzz.9',$dadosCheques[$i]["NRCTACHQ"],'.'),0,0,"R",0,"");
 				$this->Cell(1.2,0.4,formataNumericos('zzz.zz9',$dadosCheques[$i]["NRCHEQUE"],'.'),0,0,"R",0,"");

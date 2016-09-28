@@ -33,6 +33,9 @@
 
                 17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM) 
+				04/08/2016 - Adicionado campo de forma de envio de 
+						     arquivo de cobrança. (Reinert)
+
 *************************************************************************/
 
 	session_start();
@@ -71,6 +74,7 @@
     $flprotes = $_POST["flprotes"];
     $qtdecprz = $_POST["qtdecprz"];
     $idrecipr = (int) $_POST["idrecipr"];
+	$inenvcob = (int) $_POST["inenvcob"];
     $idreciprold = (int) $_POST["idreciprold"];
     $perdesconto = $_POST["perdesconto"];
 	$executandoProdutos = $_POST['executandoProdutos'];
@@ -97,6 +101,7 @@
     $xmlHabilitaConvenio .= "   <idrecipr>".$idrecipr."</idrecipr>";
     $xmlHabilitaConvenio .= "   <idreciprold>".$idreciprold."</idreciprold>";
     $xmlHabilitaConvenio .= "   <perdesconto>".$perdesconto."</perdesconto>";
+    $xmlHabilitaConvenio .= "   <inenvcob>".$inenvcob."</inenvcob>";	
 	$xmlHabilitaConvenio .= " </Dados>";
 	$xmlHabilitaConvenio .= "</Root>";
 

@@ -3,7 +3,7 @@
 	/****************************************************************
 	 Fonte: principal.php                                            
 	 Autor: David                                                    
-	 Data : Junho/2008                   Última Alteração: 17/11/2015
+	 Data : Junho/2008                   Última Alteração: 26/07/2016
 	                                                                 
 	 Objetivo  : Mostrar opcao Principal da rotina de Internet da    
 	             tela ATENDA                                         
@@ -56,6 +56,12 @@
 
 				  17/11/2015 - Implementação de nova tela para contas PJ que
 							   exigem assinatura conjunta, Prj. Ass. Conjunta (Jean Michel).						  
+
+				  26/07/2016 - Corrigi a acao do botao voltar em tela e a forma de recuperacao
+							   dos dados do XML. SD 479874 (Carlos R.)
+
+          
+				  30/08/2016 - Adição dos campos de data e hora de acesso ao Mobile (Dionathan).
 
 	*******************************************************************************/
 	
@@ -114,13 +120,13 @@
 	$xmlObjTitulares = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjTitulares->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjTitulares->roottag->tags[0]->name) && strtoupper($xmlObjTitulares->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjTitulares->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
-	$inpessoa    = $xmlObjTitulares->roottag->tags[0]->attributes["INPESSOA"];
-	$idastcjt    = $xmlObjTitulares->roottag->tags[0]->attributes["IDASTCJT"];
-	$titulares   = $xmlObjTitulares->roottag->tags[1]->tags;
+	$inpessoa    = ( isset($xmlObjTitulares->roottag->tags[0]->attributes["INPESSOA"]) ) ? $xmlObjTitulares->roottag->tags[0]->attributes["INPESSOA"] : '';
+	$idastcjt    = ( isset($xmlObjTitulares->roottag->tags[0]->attributes["IDASTCJT"]) ) ? $xmlObjTitulares->roottag->tags[0]->attributes["IDASTCJT"] : '';
+	$titulares   = ( isset($xmlObjTitulares->roottag->tags[1]->tags) ) ? $xmlObjTitulares->roottag->tags[1]->tags : array();
 	$qtTitulares = count($titulares);
 	
 	// Função para exibir erros na tela através de javascript
@@ -136,27 +142,27 @@
 <script type="text/javascript">var metodoBlock = "blockBackground(parseInt($('#divRotina').css('z-index')))";</script>
 
 <div id="divInternetPrincipal">
-	<div class="divRegistros">
-		<table>
-			<thead>
-				<tr>
-					<?php
+  <div class="divRegistros">
+    <table>
+      <thead>
+        <tr>
+          <?php
 						if($idastcjt == 1){
 					?>
-						<th>CPF</th>
-						<th>Respons&aacute;vel Assinatura Conjunta</th>
-					<?php
+          <th>CPF</th>
+          <th>Respons&aacute;vel Assinatura Conjunta</th>
+          <?php
 						}else{
 					?>
-						<th>Sequ&ecirc;ncia</th>
-						<th>Titular</th>
-					<?php
+          <th>Sequ&ecirc;ncia</th>
+          <th>Titular</th>
+          <?php
 						}
-					?>	
-				</tr>			
-			</thead>
-			<tbody>
-				<?  					
+					?>
+        </tr>
+      </thead>
+      <tbody>
+        <?  					
 					for ($i = 0; $i < $qtTitulares; $i++) { 
 										
 						$mtdClick = "selecionaTitularInternet('".($i + 1)."',".$qtTitulares.",'".formatar(str_pad($titulares[$i]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true)."','".$idastcjt."','".$titulares[$i]->tags[0]->cdata."');";
@@ -166,322 +172,320 @@
 							if($idastcjt == 1){
 						?>
 						<td><?php echo formatar(str_pad($titulares[$i]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true); ?></td>
-						<?php
+          <?php
 						}else{
 					?>
 					<td><?php echo $titulares[$i]->tags[0]->cdata; ?></td>
-					<?php
+          <?php
 						}
 					?>
 						<td><?php echo $titulares[$i]->tags[1]->cdata; ?></td>
-					</tr>
-				<?} // Fim do for ?>			
-			</tbody>
-		</table>
-	</div>
-	
+        </tr>
+        <?} // Fim do for ?>
+      </tbody>
+    </table>
+  </div>
+
 	<form action="" method="post" name="frmDadosTitInternet" id="frmDadosTitInternet">
-		<fieldset>
-			<?php
+    <fieldset>
+      <?php
 				if($idastcjt == 1){
 			?>
 					<legend>Acesso &agrave; Conta Corrente Via Internet (CPF:<span id="spanSeqTitular"><?php echo formatar(str_pad($titulares[0]->tags[14]->cdata,11,"0",STR_PAD_LEFT),'cpf',true); ?></span>)</legend>						
-			<?php
+      <?php
 				}else{
 			?>
 					<legend>Acesso &agrave; Conta Corrente Via Internet (<span id="spanSeqTitular">1</span> Titular)</legend>
-			<?php
+      <?php
 			
 				}			
 			
 				for ($i = 0; $i < $qtTitulares; $i++) { ?>
-			
-				
+
+
 				<div id="divTitInternet<?php echo ($i + 1); ?>" style="display: none;" >						
-					
+
 					<label id="dssitsnh" for="dssitsnh<?php echo ($i + 1);?>"><? echo utf8ToHtml('Situação:') ?></label>
 					<input id="dssitsnh<?php echo ($i + 1);?>" name="dssitsnh" type="text" value="<?php echo $titulares[$i]->tags[3]->cdata; ?>" />
-					
-					<? if ($inpessoa == "2") { 
+
+        <? if ($inpessoa == "2") { 
 							if($idastcjt != "1"){?>
 								<br />
 								<label for="nmprepos"><? echo utf8ToHtml('Preposto:') ?></label>
-								<input type="text" id="nmprepos" value="<?php echo $titulares[$i]->tags[2]->cdata; ?>" />
-					<? 		}
+        <input type="text" id="nmprepos" value="<?php echo $titulares[$i]->tags[2]->cdata; ?>" />
+        <? 		}
 						} ?>
 					
 					<? if ($inpessoa == "1") { ?>
 					
 						<br />
 						<label for="vllimweb"><? echo utf8ToHtml('Valor Limite/Dia:') ?></label>
-						<input type="text" id="vllimweb" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[11]->cdata),2,",","."); ?>" />
-						
+        <input type="text" id="vllimweb" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[11]->cdata),2,",","."); ?>" />
+
 						<label for="dtlimweb"><? echo utf8ToHtml('Dt.Alter.Limite/Dia:') ?></label>
-						<input type="text" id="dtlimweb" value="<?php echo $titulares[$i]->tags[16]->cdata; ?>" />
-						
+        <input type="text" id="dtlimweb" value="<?php echo $titulares[$i]->tags[16]->cdata; ?>" />
+
 						<label for="vllimted"><? echo utf8ToHtml('Vlr.Limite/Dia TED:') ?></label>
-						<input type="text" id="vllimted" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",","."); ?>" />
-						
+        <input type="text" id="vllimted" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",","."); ?>" />
+
 						<label for="dtlimted"><? echo utf8ToHtml('Dt.Alter.Limite/Dia TED:') ?></label>
-						<input type="text" id="dtlimted" value="<?php echo $titulares[$i]->tags[17]->cdata; ?>" />
-						
+        <input type="text" id="dtlimted" value="<?php echo $titulares[$i]->tags[17]->cdata; ?>" />
+
 						<label for="vllimvrb"><? echo utf8ToHtml('Limite VR Boleto:') ?></label>
-						<input type="text" id="vllimvrb" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",","."); ?>" />
-						
+        <input type="text" id="vllimvrb" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",","."); ?>" />
+
 						<label for="dtlimvrb"><? echo utf8ToHtml('Dt.Alter.Limite Vr Boleto:') ?></label>
-						<input type="text" id="dtlimvrb" value="<?php echo $titulares[$i]->tags[21]->cdata; ?>" />
-											
-					<? } ?>
+        <input type="text" id="dtlimvrb" value="<?php echo $titulares[$i]->tags[21]->cdata; ?>" />
+
+        <? } ?>
 																	
 					<? if ($inpessoa == "2") { ?>
 					
 						<br />
-						<br />
-										
+        <br />
+
 						<label for="vllimtrf"><? echo utf8ToHtml('Vlr.Limite/Dia Transf:') ?></label>
-						<input type="text" id="vllimtrf" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[12]->cdata),2,",","."); ?>" />
-						
+        <input type="text" id="vllimtrf" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[12]->cdata),2,",","."); ?>" />
+
 						<label for="dtlimtrf"><? echo utf8ToHtml('Dt.Alter.Limite/Dia Transf:') ?></label>
-						<input type="text" id="dtlimtrf" value="<?php echo $titulares[$i]->tags[19]->cdata; ?>" />
-						
+        <input type="text" id="dtlimtrf" value="<?php echo $titulares[$i]->tags[19]->cdata; ?>" />
+
 						<label for="vllimpgo"><? echo utf8ToHtml('Vlr.Limite/Dia Pagto:') ?></label>
-						<input type="text" id="vllimpgo" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",","."); ?>" />
-						
+        <input type="text" id="vllimpgo" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[13]->cdata),2,",","."); ?>" />
+
 						<label for="dtlimpgo"><? echo utf8ToHtml('Dt.Alter.Limite/Dia Pagto:') ?></label>
-						<input type="text" id="dtlimpgo" value="<?php echo $titulares[$i]->tags[18]->cdata; ?>" />
-						
+        <input type="text" id="dtlimpgo" value="<?php echo $titulares[$i]->tags[18]->cdata; ?>" />
+
 						<label for="vllimted"><? echo utf8ToHtml('Vlr.Limite/Dia TED:') ?></label>
-						<input type="text" id="vllimted" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",","."); ?>" />
-					
+        <input type="text" id="vllimted" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[15]->cdata),2,",","."); ?>" />
+
 						<label for="dtlimted"><? echo utf8ToHtml('Dt.Alter.Limite/Dia TED:') ?></label>
-						<input type="text" id="dtlimted" value="<?php echo $titulares[$i]->tags[17]->cdata; ?>" />
-						
+        <input type="text" id="dtlimted" value="<?php echo $titulares[$i]->tags[17]->cdata; ?>" />
+
 						<label for="vllimvrb"><? echo utf8ToHtml('Vlr.Limite VR Boleto:') ?></label>
-						<input type="text" id="vllimvrb" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",","."); ?>" />
-						
+        <input type="text" id="vllimvrb" value="<?php echo number_format(str_replace(",",".",$titulares[$i]->tags[20]->cdata),2,",","."); ?>" />
+
 						<label for="dtlimvrb"><? echo utf8ToHtml('Dt.Alter.Limite Vr Boleto:') ?></label>
-						<input type="text" id="dtlimvrb" value="<?php echo $titulares[$i]->tags[21]->cdata; ?>" />
-						<br />
+        <input type="text" id="dtlimvrb" value="<?php echo $titulares[$i]->tags[21]->cdata; ?>" />
+        <br />
+
+        <? } ?>
 					
-					<? } ?>
-					
-					<br />
-									
+        <br />
+
 					<label for="dtlibera"><? echo utf8ToHtml('Data Liberação:') ?></label>
-					<input type="text" id="dtlibera" value="<?php echo $titulares[$i]->tags[4]->cdata; ?>" />
-										
-					<label for="hrlibera"><? echo utf8ToHtml('Hora Liberação:') ?></label>
-					<input type="text" id="hrlibera" value="<?php echo $titulares[$i]->tags[5]->cdata; ?>" />
-					<br />
-										
-					<label for="dtultace"><? echo utf8ToHtml('Data Último Acesso:') ?></label>
-					<input type="text" id="dtultace" value="<?php echo $titulares[$i]->tags[8]->cdata; ?>" />
-					
-					<label for="hrultace"><? echo utf8ToHtml('Hora Último Acesso:') ?></label>
-					<input type="text" id="hrultace" value="<?php echo $titulares[$i]->tags[9]->cdata; ?>" />
-					<br />
-					
-					<label for="dtaltsit"><? echo utf8ToHtml('Data Alteração Situação:') ?></label>
-					<input type="text" id="dtaltsit" value="<?php echo $titulares[$i]->tags[7]->cdata; ?>" />
-					
-					<label for="dtaltsnh"><? echo utf8ToHtml('Data Alteração Senha:') ?></label>
-					<input type="text" id="dtaltsnh" value="<?php echo $titulares[$i]->tags[6]->cdata; ?>" />
-					<br />
-					
+					<input type="text" id="dtlibera" value="<?php echo $titulares[$i]->tags[4]->cdata.' '.$titulares[$i]->tags[5]->cdata; ?>" />
+
 					<label for="dtblutsh"><? echo utf8ToHtml('Data Bloqueio Senha:') ?></label>
 					<input type="text" id="dtblutsh" value="<?php echo $titulares[$i]->tags[22]->cdata; ?>" />
-					<br />
+        <br />
+
+					<label for="dtaltsit"><? echo utf8ToHtml('Data Alteração Situação:') ?></label>
+        <input type="text" id="dtaltsit" value="<?php echo $titulares[$i]->tags[7]->cdata; ?>" />
+
+					<label for="dtaltsnh"><? echo utf8ToHtml('Data Alteração Senha:') ?></label>
+        <input type="text" id="dtaltsnh" value="<?php echo $titulares[$i]->tags[6]->cdata; ?>" />
+					<br style="clear: both;"/>
 					
-					<!--
+					<fieldset>
+					<legend align="left" style="font-weight: bold;"><? echo utf8ToHtml('Data do Último Acesso:') ?></legend>
+						<label for="dtultace"><? echo utf8ToHtml('Conta Online:') ?></label>
+						<input type="text" id="dtultace" value="<?php echo trim($titulares[$i]->tags[8]->cdata) == "" ? null : $titulares[$i]->tags[8]->cdata.' '.$titulares[$i]->tags[9]->cdata; ?>" />
+
+						<label for="dtacemob"><? echo utf8ToHtml('Cecred Mobile:') ?></label>
+						<input type="text" id="dtacemob" value="<?php echo trim($titulares[$i]->tags[23]->cdata) == "" ? null : $titulares[$i]->tags[23]->cdata.' '.$titulares[$i]->tags[24]->cdata; ?>" />
+					</fieldset>
+
+        <!--
 					<label for="nmoperad"><? /*echo utf8ToHtml('Operador:') */?></label>
 					<input type="text" id="nmoperad" value="<? /*php echo $titulares[$i]->tags[10]->cdata; */?>" />
 					<br />
 					--->
-				</div>	
-			<? } ?>
+      </div>
+      <? } ?>
 			
-		</fieldset>
-	</form>
-	<div id="divBotoes">
-		<!-- JMD --><input type="image" id="btnVoltarOpcao" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="confPJ = false; exibePJ = false; acessaOpcaoAba('<? echo count($glbvars["opcoesTela"])?>','<? echo $idPrincipal ?>','<? echo $glbvars["opcoesTela"][$idPrincipal]?>');"  >
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/bloqueio.gif" <?php if (in_array("B",$glbvars["opcoesTela"])) { ?>onClick="showConfirmacao('Deseja bloquear a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','bloqueiaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelamento.gif" <?php if (in_array("X",$glbvars["opcoesTela"])) { ?>onClick="cancelaSenhaAcesso(1);return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />		
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/impressao.gif" <?php if (in_array("M",$glbvars["opcoesTela"])) { ?>onClick="carregarContrato('','yes');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/senha.gif" <?php if (in_array("S",$glbvars["opcoesTela"])) { ?>onClick="mostraDivAlteraSenha();return false;"<?php } else {?>style="cursor: default;" onClick="return false;"<?php } ?> />
-		<input id="liberacao"   type="image" src="<?php echo $UrlImagens; ?>botoes/liberacao.gif" <?php if (in_array("L",$glbvars["opcoesTela"])) { ?>onClick="mostraDivLiberaSenha();return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
-		<input id="habilitacao" type="image" src="<?php echo $UrlImagens; ?>botoes/habilitacao.gif" <?php if (in_array("H",$glbvars["opcoesTela"])) { ?>onClick="carregaHabilitacao();return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
-	</div>
+    </fieldset>
+  </form>
+  <div id="divBotoes">
+		<!-- JMD --><input type="image" id="btnVoltarOpcao" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;"  >
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/bloqueio.gif" <?php if (in_array("B",$glbvars["opcoesTela"])) { ?>onClick="showConfirmacao('Deseja bloquear a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','bloqueiaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelamento.gif" <?php if (in_array("X",$glbvars["opcoesTela"])) { ?>onClick="cancelaSenhaAcesso(1);return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/impressao.gif" <?php if (in_array("M",$glbvars["opcoesTela"])) { ?>onClick="carregarContrato('','yes');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/senha.gif" <?php if (in_array("S",$glbvars["opcoesTela"])) { ?>onClick="mostraDivAlteraSenha();return false;"<?php } else {?>style="cursor: default;" onClick="return false;"<?php } ?> />
+    <input id="liberacao"   type="image" src="<?php echo $UrlImagens; ?>botoes/liberacao.gif" <?php if (in_array("L",$glbvars["opcoesTela"])) { ?>onClick="mostraDivLiberaSenha();return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
+    <input id="habilitacao" type="image" src="<?php echo $UrlImagens; ?>botoes/habilitacao.gif" <?php if (in_array("H",$glbvars["opcoesTela"])) { ?>onClick="carregaHabilitacao();return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
+  </div>
 </div>
 
 <div id="divAlterarSenha" style="display: none;">
 
-	<form action="" method="post" name="frmAlterarSenha" id="frmAlterarSenha" style = "padding-top:20px;">
-	
+  <form action="" method="post" name="frmAlterarSenha" id="frmAlterarSenha" style = "padding-top:20px;">
+
 		<label for="cddsenha"><? echo utf8ToHtml('Senha Atual:') ?></label>
-		<input name="cddsenha" type="password" id="cddsenha" onkeypress="return enterTab(this,event);" />
-		<br />
-		
+    <input name="cddsenha" type="password" id="cddsenha" onkeypress="return enterTab(this,event);" />
+    <br />
+
 		<label for="cdsnhnew"><? echo utf8ToHtml('Nova Senha:') ?></label>
-		<input name="cdsnhnew" type="password" id="cdsnhnew" onkeypress="return enterTab(this,event);" />
-		<br />
-		
+    <input name="cdsnhnew" type="password" id="cdsnhnew" onkeypress="return enterTab(this,event);" />
+    <br />
+
 		<label for="cdsnhrep"><? echo utf8ToHtml('Confirma Senha:') ?></label>
-		<input name="cdsnhrep" type="password" id="cdsnhrep" />
-	
-	</form>
-	<div id="divBotoes1">
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="mostraDivAlteraSenha();return false;" />
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="showConfirmacao('Deseja alterar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','alteraSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
-	</div>
+    <input name="cdsnhrep" type="password" id="cdsnhrep" />
+
+  </form>
+  <div id="divBotoes1">
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="mostraDivAlteraSenha();return false;" />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="showConfirmacao('Deseja alterar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','alteraSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
+  </div>
 </div>
 
 <div id="divNumericaLetras" style="display: none;">
-	
-	<br />
-	<input type="image" id="btnVoltarOpcao" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="acessaOpcaoAba('<? echo count($glbvars["opcoesTela"])?>','<? echo $idPrincipal ?>','<? echo $glbvars["opcoesTela"][$idPrincipal]?>');"  >
+
+  <br />
+	<input type="image" id="btnVoltarOpcao" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;"  >
 	<input type="image" id="btnNumerico" src="<?php echo $UrlImagens; ?>botoes/numerica.gif" onClick="mostraDivAlteraSenhaNum();return false;">
-	<input type="image" id="btnLetrasSolicitar" src="<?php echo $UrlImagens; ?>botoes/letras_seguranca.gif" onClick=" mostraDivAlteraSenhaLetras();return false;" >
-	<br />
-	
+  <input type="image" id="btnLetrasSolicitar" src="<?php echo $UrlImagens; ?>botoes/letras_seguranca.gif" onClick=" mostraDivAlteraSenhaLetras();return false;" >
+  <br />
+
 </div>
-				
+
 <div id="divLiberarSenha" style="display: none;">
-	
-	<form action="" method="post" name="frmLiberarSenha" id="frmLiberarSenha" style = "padding-top:15px;">
-	
-		
+
+  <form action="" method="post" name="frmLiberarSenha" id="frmLiberarSenha" style = "padding-top:15px;">
+
+
 		<label for="cdsnhnew"><? echo utf8ToHtml('Senha:') ?></label>
-		<input name="cdsnhnew" type="password" id="cdsnhnew" onkeypress="return enterTab(this,event);" />
-		<br />
-		
+    <input name="cdsnhnew" type="password" id="cdsnhnew" onkeypress="return enterTab(this,event);" />
+    <br />
+
 		<label for="cdsnhrep"><? echo utf8ToHtml('Confirma Senha:') ?></label>
-		<input name="cdsnhrep" type="password" id="cdsnhrep" />
-									
-	</form>
-	<div id="divBotoes2">
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="mostraOpcaoPrincipal();return false;" />
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif" onClick="showConfirmacao('Deseja liberar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','liberaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
-	</div>
+    <input name="cdsnhrep" type="password" id="cdsnhrep" />
+
+  </form>
+  <div id="divBotoes2">
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="mostraOpcaoPrincipal();return false;" />
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif" onClick="showConfirmacao('Deseja liberar a senha de acesso &agrave; internet?','Confirma&ccedil;&atilde;o - Ayllos','liberaSenhaAcesso()',metodoBlock,'sim.gif','nao.gif');return false;" />
+  </div>
 </div>
 
 <form action="" method="post" name="frmSenhaLetras" id="frmSenhaLetras" class="formulario" style="display: none;">
-	
-	<fieldset>
-	<legend>Letras de Seguran&ccedil;a</legend>
-	
-	<br />
-	
-	<label for="dssennov">Letras de Seguran&ccedil;a:</label>
-	<input name="dssennov" type="password" id="dssennov" maxlength="3" onkeypress="return enterTab(this,event);" />
-	<br />
-	
-	<label for="dssencon">Confirme suas letras:</label>
-	<input name="dssencon" type="password" id="dssencon" maxlength="3" onkeypress="if(event.keyCode == 13){alterarSenhaLetrasCartao();return false; return false;};"/>
-	
-	<input name="cddopcao" id="cddopcao" type="hidden" />
-	
-	</fieldset>
-	
-	<div id="divBotoes">
-		<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="mostraDivAlteraSenha();return false;">
-		<input type="image" id="btnAlterar" name="btnAlterar" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="alterarSenhaLetrasCartao();return false;">
-		
-	</div>
-		
+
+  <fieldset>
+    <legend>Letras de Seguran&ccedil;a</legend>
+
+    <br />
+
+    <label for="dssennov">Letras de Seguran&ccedil;a:</label>
+    <input name="dssennov" type="password" id="dssennov" maxlength="3" onkeypress="return enterTab(this,event);" />
+    <br />
+
+    <label for="dssencon">Confirme suas letras:</label>
+    <input name="dssencon" type="password" id="dssencon" maxlength="3" onkeypress="if(event.keyCode == 13){alterarSenhaLetrasCartao();return false; return false;};"/>
+
+    <input name="cddopcao" id="cddopcao" type="hidden" />
+
+  </fieldset>
+
+  <div id="divBotoes">
+    <input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="mostraDivAlteraSenha();return false;">
+    <input type="image" id="btnAlterar" name="btnAlterar" src="<?php echo $UrlImagens; ?>botoes/alterar.gif" onClick="alterarSenhaLetrasCartao();return false;">
+
+  </div>
+
 </form>
 
 <div id="divPrincipalPJ" style="display: none; padding-top:15px;">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/responsaveis_assinatura_conjunta.gif" onClick="controlaLayout('divResponsaveisAss');return false;" />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/acesso_internet_responsaveis.gif" id="btnAceIntResp" onClick="exibeLayout(<?php echo($idastcjt); ?>,<?php echo($qtTitulares); ?>);"/>							
+  <input type="image" src="<?php echo $UrlImagens; ?>botoes/responsaveis_assinatura_conjunta.gif" onClick="controlaLayout('divResponsaveisAss');return false;" />
+  <input type="image" src="<?php echo $UrlImagens; ?>botoes/acesso_internet_responsaveis.gif" id="btnAceIntResp" onClick="exibeLayout(<?php echo($idastcjt); ?>,<?php echo($qtTitulares); ?>);"/>
 </div>
 
 <div id="divResponsaveisAss" style="display: none; padding-top: 10px;">
-	<form id="frmResponsaveisAss" class="formulario">
-	  <?php 
+  <form id="frmResponsaveisAss" class="formulario">
+    <?php 
 	    if($idastcjt == 1){
 	      include('responsaveis_assinatura_conjunta.php'); 
 	    }
 	  ?>
-	</form>
+  </form>
 
-	<div id="divBotoes">
-		<!-- JMD --> <input type="image" id="btnVoltarOpcao" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="confPJ = false; exibePJ = false; acessaOpcaoAba('<? echo count($glbvars["opcoesTela"])?>','<? echo $idPrincipal ?>','<? echo $glbvars["opcoesTela"][$idPrincipal]?>');"  >
+  <div id="divBotoes">
+		<!-- JMD --> <input type="image" id="btnVoltarOpcao" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;"  >
 		<input type="image" id="btConfirmar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="validaResponsaveis(); return false;" />
-	</div>
+  </div>
 </div>
 
 <form action="<?php echo $UrlSite; ?>telas/atenda/internet/impressao.php" name="frmImpressaoInternet" id="frmImpressaoInternet" method="post">
-<input type="hidden" name="nrdconta" id="nrdconta" value="">
-<input type="hidden" name="idseqttl" id="idseqttl" value="">
-<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
-</form>		
+  <input type="hidden" name="nrdconta" id="nrdconta" value="">
+    <input type="hidden" name="idseqttl" id="idseqttl" value="">
+      <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+    </form>
 <script type="text/javascript">
 
-	idastcjt = <?php echo $idastcjt; ?>;
+  idastcjt = <?php echo $idastcjt; ?>;
 
-	<?php
+  <?php
 		if($idastcjt == 1){
-	?>		
-			if(!exibePJ){
-				controlaLayout('divPrincipalPJ');
-				$("#divConteudoOpcao").css("height","50");
-				$("#divConteudoOpcao").css("width","395");
-				confPJ = true;
-			}else{
-				confPJ = false;
-			}			
-			exibePJ = true;
-	<?php
+	?>
+  if(!exibePJ){
+  controlaLayout('divPrincipalPJ');
+  $("#divConteudoOpcao").css("height","50");
+  $("#divConteudoOpcao").css("width","395");
+  confPJ = true;
+  }else{
+  confPJ = false;
+  }
+  exibePJ = true;
+  <?php
 		}
-	?>	
-	
-	// Esconde mensagem de aguardo
-	hideMsgAguardo();
+	?>
 
-	// Bloqueia conteúdo que está átras do div da rotina
-	blockBackground(parseInt($("#divRotina").css("z-index")));	
-	
-	//JMD	
-	if(!confPJ){
-		exibeLayout(<?php echo $idastcjt; ?>,qtdTitular);
-	}
-	
+  // Esconde mensagem de aguardo
+  hideMsgAguardo();
 
-function exibeLayout(pr_idastcjt,qtdTitular){
-	
-	qtdTitular = qtdTitular;
-	
-	if(qtdTitular <= 1 && pr_idastcjt ==1 ){
-		showError("error","Selecione no minimo 2 responsaveis pela assinatura conjunta.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
-	
-	controlaLayout('divInternetPrincipal');	
-	tamanhoDiv = '<?php if ($inpessoa == "1") { echo "345"; } else { echo "420"; } ?>px';
-	
-	// Aumenta tamanho do div onde o conteúdo da opção será visualizado
-	$("#divConteudoOpcao").css("height",tamanhoDiv); 
-	
-	// Muda a posição do campo de exibição da Sit. da Senha para Pes. Física
-	//$('#dssitsnh','#divInternetPrincipal').css("width","<?php if ($inpessoa == "1") { echo "133"; } else { echo "86"; } ?>px");
-	$('#dssitsnh','#divInternetPrincipal').css("width","133px");
+  // Bloqueia conteúdo que está átras do div da rotina
+  blockBackground(parseInt($("#divRotina").css("z-index")));
 
-	$("#cddsenha","#frmAlterarSenha").setMask("INTEGER","zzzzzzzz","","");
-	$("#cdsnhnew","#frmAlterarSenha").setMask("INTEGER","zzzzzzzz","","");
-	$("#cdsnhrep","#frmAlterarSenha").setMask("INTEGER","zzzzzzzz","","");
-	
-	$("#cdsnhnew","#frmLiberarSenha").setMask("INTEGER","zzzzzzzz","","");
-	$("#cdsnhrep","#frmLiberarSenha").setMask("INTEGER","zzzzzzzz","","");
-	
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto 217
-	if (executandoProdutos && pr_idastcjt == 0) {
-		if (cdproduto == 1) {
-			mostraDivLiberaSenha();
-		} 
-		else if (cdproduto == 14) {
-			obtemDadosLimites();
-		}
-	}
-	ajustarCentralizacao();
-}
+  //JMD
+  if(!confPJ){
+  exibeLayout(<?php echo $idastcjt; ?>,qtdTitular);
+  }
+
+
+  function exibeLayout(pr_idastcjt,qtdTitular){
+
+  qtdTitular = qtdTitular;
+
+  if(qtdTitular <= 1 && pr_idastcjt ==1 ){
+  showError("error","Selecione no minimo 2 responsaveis pela assinatura conjunta.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+  return false;
+  }
+
+  controlaLayout('divInternetPrincipal');
+	tamanhoDiv = '<?php if ($inpessoa == "1") { echo "365"; } else { echo "405"; } ?>px';
+
+  // Aumenta tamanho do div onde o conteúdo da opção será visualizado
+  $("#divConteudoOpcao").css("height",tamanhoDiv);
+
+  // Muda a posição do campo de exibição da Sit. da Senha para Pes. Física
+  //$('#dssitsnh','#divInternetPrincipal').css("width","<?php if ($inpessoa == "1") { echo "133"; } else { echo "86"; } ?>px");
+  $('#dssitsnh','#divInternetPrincipal').css("width","133px");
+
+  $("#cddsenha","#frmAlterarSenha").setMask("INTEGER","zzzzzzzz","","");
+  $("#cdsnhnew","#frmAlterarSenha").setMask("INTEGER","zzzzzzzz","","");
+  $("#cdsnhrep","#frmAlterarSenha").setMask("INTEGER","zzzzzzzz","","");
+
+  $("#cdsnhnew","#frmLiberarSenha").setMask("INTEGER","zzzzzzzz","","");
+  $("#cdsnhrep","#frmLiberarSenha").setMask("INTEGER","zzzzzzzz","","");
+
+  //Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto 217
+  if (executandoProdutos && pr_idastcjt == 0) {
+  if (cdproduto == 1) {
+  mostraDivLiberaSenha();
+  }
+  else if (cdproduto == 14) {
+  obtemDadosLimites();
+  }
+  }
+  ajustarCentralizacao();
+  }
 </script>

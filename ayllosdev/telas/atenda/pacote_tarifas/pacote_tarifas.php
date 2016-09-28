@@ -7,7 +7,7 @@
          Objetivo  : Mostrar rotina de Pacote Tarifas da tela ATENDA
 
          Alterações:
-              					
+             					
 	  ************************************************************************/
 ?>
 <?	
@@ -20,6 +20,8 @@
 	
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST['nmdatela'])) exibirErro('error','Parâmetros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina);');
+	
+    $labelRot = $_POST['labelRot'];	
 	
 	// Carrega permissões do operador
 	include('../../../includes/carrega_permissoes.php');	
@@ -42,7 +44,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo $nmrotina; ?></td>
+								<td id="<?php echo $labelRot; ?>" class="txtBrancoBold ponteiroDrag SetFoco" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo $nmrotina; ?></td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true);return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>        

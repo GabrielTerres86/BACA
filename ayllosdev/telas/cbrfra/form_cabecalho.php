@@ -4,7 +4,10 @@
  * CRIAÇÃO     	: Rodrigo Bertelli (RKAM)        
  * DATA CRIAÇÃO : Junho/2014
  * OBJETIVO     : Cabecalho para a tela CBRFRA
-  */
+
+ Alterações: 16/09/2016 - Melhoria nos nomes das opções conforme solicitado pelo Maicon, para:
+                          C - Consultar Fraudes, I - Incluir Fraude e E - Excluir Fraude (Carlos) 
+ */
 	
 	session_start();
 	
@@ -21,9 +24,9 @@
 			<td> 	
 				<label for="cddopcao"><? echo utf8ToHtml('Op&ccedil;&atilde;o') ?></label>	
 				<select class='campo' id='cddopcao' name='cddopcao'>
-					<option value='C'>C - Consultar Códigos com Fraude</option>
-					<option value='I'>I - Incluir Códigos com Fraude</option>
-					<option value='E'>E - Excluir Códigos com Fraude</option>
+					<option value='C'>C - Consultar Fraudes</option>
+					<option value='I'>I - Incluir Fraude</option>
+					<option value='E'>E - Excluir Fraude</option>
 				</select>
 				<a href="#" class="botao" id="btOK" name="btnOK" onClick = "liberaCampos();" style = "text-align:right;">OK</a>
 			</td>

@@ -45,7 +45,7 @@
 	$vlemprst		= (isset($_POST['vlemprst']))   ? $_POST['vlemprst']   : 0  ; 
 	
 	// motivo
-	$dsobstel		= (isset($_POST['dsobstel']))   ? $_POST['dsobstel']   : '' ;
+	$dsobstel		= (isset($_POST['dsobstel']))   ? retiraAcentos(utf8_decode($_POST['dsobstel'])) : '' ;
 	$dscmaprv		= (isset($_POST['dscmaprv']))   ? $_POST['dscmaprv']   : '' ;
 	$flgalter		= (isset($_POST['flgalter']))   ? $_POST['flgalter']   : '' ;
 	

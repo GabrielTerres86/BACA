@@ -13,12 +13,13 @@
 
             27/05/2016 - Inclusao de selecao dos debitos. (Jaison/James)
 
+			25/07/2016 - Adicionado função controlaFoco  (Evandro - RKAM)	
  ***********************************************************************/
 
 var glb_gen_dstabela, glb_gen_cdhistor, glb_gen_recid; 
 
 // Fun&ccedil;&atilde;o para acessar op&ccedil;&otilde;es da rotina
-function acessaOpcaoAba(nrOpcoes,id,opcao) {
+function acessaOpcaoAba(nrOpcoes, id, opcao) {
 	if (opcao == "0") {	// Op&ccedil;&atilde;o Principal
 		var msg = "lan&ccedil;amentos futuros";
 	}
@@ -28,17 +29,17 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	// Atribui cor de destaque para aba da op&ccedil;&atilde;o
 	for (var i = 0; i < nrOpcoes; i++) {
 		if (id == i) { // Atribui estilos para foco da op&ccedil;&atilde;o
-			$("#linkAba" + id).attr("class","txtBrancoBold");
-			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
-			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
-			$("#imgAbaCen" + id).css("background-color","#969FA9");
+            $("#linkAba" + id).attr("class", "txtBrancoBold");
+            $("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
+            $("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
+            $("#imgAbaCen" + id).css("background-color", "#969FA9");
 			continue;			
 		}
 		
-		$("#linkAba" + i).attr("class","txtNormalBold");
-		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
-		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
-		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
+        $("#linkAba" + i).attr("class", "txtNormalBold");
+        $("#imgAbaEsq" + i).attr("src", UrlImagens + "background/mnu_nle.gif");
+        $("#imgAbaDir" + i).attr("src", UrlImagens + "background/mnu_nld.gif");
+        $("#imgAbaCen" + i).css("background-color", "#C6C8CA");
 	}	
 	
 	// Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
@@ -50,14 +51,65 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			nrdconta: nrdconta,
 			redirect: "html_ajax"
 		},
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')) )");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
 		},
-		success: function(response) {
+        success: function (response) {
 			$("#divConteudoOpcao").html(response);
+            controlaFoco(opcao);
 		}				
 	}); 		
+}
+
+function controlaFoco(opcao) {
+    $('#divConteudoOpcao').each(function () {
+        $(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus();
+        $(this).find("#divBotoes > a").last().addClass("LastInputModal");
+    });
+
+    //Se estiver com foco na classe FluxoNavega
+    $(".FirstInputModal").focus(function () {
+        $(this).bind('keydown', function (e) {
+            if (e.keyCode == 13) {
+                $(this).click();
+            }
+        });
+    });
+
+    $(".LastInputModal").focus(function () {
+        var pressedShift = false;
+
+        $(this).bind('keyup', function (e) {
+            if (e.keyCode == 16) {
+                pressedShift = false;//Quando tecla shift for solta passa valor false 
+            }
+        })
+
+        $(this).bind('keydown', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            if (e.keyCode == 13) {
+                $('.LastInputModal').click();
+            }
+
+            if (e.keyCode == 16) {
+                pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+            }
+            if ((e.keyCode == 9) && pressedShift == true) {
+                return setFocusCampo($(target), e, false, 0);
+            }
+            else if (e.keyCode == 9) {
+                $(".FirstInputModal").focus();
+            }
+        });
+
+    });
+
+    $(".FirstInputModal").focus();
+
+    $(".FirstInputModal").focus();
 }
 
 function controlaLayout() {
@@ -73,26 +125,35 @@ function controlaLayout() {
 	divRegistro.css({ 'height': '120px', 'width': '650px', 'overflow-y': 'auto' });
 	
 	var ordemInicial = new Array();
-	ordemInicial = [[0,0]];
+    ordemInicial = [[0, 0]];
 			
 	var arrayLargura = new Array();
-	arrayLargura[0] = '15px';
+    arrayLargura[0] = '15px';
     arrayLargura[1] = '56px';
-	arrayLargura[2] = '225px';
-	arrayLargura[3] = '175px';
-	arrayLargura[4] = '25px';
+    arrayLargura[2] = '225px';
+    arrayLargura[3] = '175px';
+    arrayLargura[4] = '25px';
 	
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'center';
-	arrayAlinha[2] = 'left';
-	arrayAlinha[3] = 'right';
-	arrayAlinha[4] = 'center';
-	arrayAlinha[5] = 'right';
+    arrayAlinha[2] = 'left';
+    arrayAlinha[3] = 'right';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'right';
 	
 	var metodoTabela = 'metodtab();';
 	
-	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, metodoTabela );
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+
+    // Botoes
+    btVoltar.unbind('click').bind('click', function () {
+        encerraRotina(true);
+        return false;
+    });
+
+    habilitaBotao('btExcluir', 'D'); // Desabilitar
+    habilitaBotao('btDebitar', 'D'); // Desabilitar
 	
 	// Botoes
 	btVoltar.unbind('click').bind('click',function() {
@@ -230,28 +291,28 @@ function validarDebitarLanctoFut(acao) { // acao => 'D'ebitar - 'V'alidar
         return false;
     }
 	
-	showMsgAguardo("Aguarde, processando...");
+    showMsgAguardo("Aguarde, processando...");
 		
 	$.ajax({		
 		type: "POST",
 		dataType: "html",
-		url: UrlSite + "telas/atenda/lancamentos_futuros/debitar_lancamentos.php",
+        url: UrlSite + "telas/atenda/lancamentos_futuros/debitar_lancamentos.php",
 		data: {
             acao: acao,
             nrdconta: nrdconta,
-			vlcampos: vlcampos,
+            vlcampos: vlcampos,
 			redirect: "script_ajax"
 		}, 
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {				
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});				

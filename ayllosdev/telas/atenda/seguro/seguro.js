@@ -43,6 +43,10 @@
 				               Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi) 
 				  
 				  
+                  22/08/2016 - Qdo for seguro de vida (tpseguro = 3) ao digitar o plano buscar o valor
+                               automaticamente (Tiago/Thiago #462910).
+
+                  25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
  * */
  
 //**************************************************
@@ -469,11 +473,36 @@ function controlaOperacao(operacao) {
 						
 				} else {
 					eval( response );
+                    
 				}
+				controlaFoco();
 				return false;
 			}				
 		});		
 }
+
+
+//Função para controle de navegação
+function controlaFoco() {
+    $('#divConteudoOpcao').each(function () {
+        $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
+        $(this).find("#divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
+        $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
+    });
+
+    //Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function () {
+        $(this).bind('keydown', function (e) {
+            if (e.keyCode == 13) {
+                $(this).click();
+            }
+		});		
+    });
+
+    $(".FirstInputModal").focus();
+}
+
+
 /*efetua validacao quando for o plano de vida*/
 function validaInclusaoVida(){
 
@@ -1391,12 +1420,12 @@ function controlaLayout(operacao) {
                 arrayLargura[4] = '110px';  // Coluna Seguradora
 				
 				var arrayAlinha = new Array();
-                arrayAlinha[0] = 'right';
+				arrayAlinha[0] = 'right';
 				arrayAlinha[1] = 'right';
-                arrayAlinha[2] = 'right';
-                arrayAlinha[3] = 'right';
-                arrayAlinha[4] = 'right';
-                arrayAlinha[5] = 'right';
+				arrayAlinha[2] = 'right';
+				arrayAlinha[3] = 'right';
+				arrayAlinha[4] = 'right';
+				arrayAlinha[5] = 'right';
 				
 				tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 				
@@ -1506,10 +1535,10 @@ function buscaSeg(operacao){
 					if ( response.indexOf('showError("error"') == -1 ) {
 						eval(response);
 						if(operacao == 'ATUALIZASEG'){
-							 showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','controlaOperacao("")','sim.gif','nao.gif'); 
+							 showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); 
 							 return false;
 						}
-						showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','controlaOperacao(\'BTF\')','sim.gif','nao.gif'); 
+						showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); 
 						return false;
 					}else{
 						eval(response);
@@ -1735,7 +1764,15 @@ function carregaPropriedadesFormPrestVida(){
 		consultarSeg();
 		buscaEnd();
 		habilitaBotoesSegVida();
-	}else{
+	} else {
+	    if(tpseguro == 3){ /*VIDA*/
+	        $('#tpplaseg').unbind('blur').bind('blur', function () {
+	            buscaValorPlano($('#tpplaseg').val());
+	        })
+	        $('#vlpreseg').desabilitaCampo();
+	        $('#vlcapseg').focus();
+	    }
+
 		$('#btContinuar').unbind('click').bind('click', function() {
 				if ($("#ddvencto").val() < 1 || $("#ddvencto").val() > 28 ) {
              
@@ -1755,7 +1792,7 @@ function carregaPropriedadesFormPrestVida(){
 	}
 	
 }
-
+	
 // Carrega formulário de cadastro de prestamista e vida
 function carregaPropriedadesFormPrestVidaNovo(){
 	
@@ -2088,6 +2125,51 @@ function criaSeg(operacao){
 		}				
 	});	
 	return false;
+}
+
+// Função responsável por validar a inclusão de um seguro
+function buscaValorPlano(tpplaseg) {
+
+    // Captura os valores do formulário
+    //var tpplaseg = $('#tpplaseg').val();
+    var tpseguro = 3;    /*VIDA*/
+    var cdsegura = 5011; /*CHUBB*/
+
+    //tpplaseg = 11;   /*Tiago o plano tem q ser digitado na tela*/
+
+    //alert(tpplaseg + ' | ' + tpseguro + ' | ' + cdsegura + ' | ' + nrdconta);
+
+    var dest = UrlSite + 'telas/atenda/seguro/busca_valor_plano.php';
+  
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        data: {
+            nrdconta: nrdconta,
+            tpseguro: tpseguro, 
+            tpplaseg: tpplaseg,            
+            cdsegura: cdsegura,
+  
+            redirect: 'script_ajax'
+        },
+        url: dest,
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possivel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            if (response.indexOf('showError("error")') == -1) {
+                eval(response);
+                return false;
+            } else {
+                hideMsgAguardo();
+                eval(response);
+                return false;
+            }
+
+        }
+    });
+    return false;
 }
 
 function validaPlanoSeguro(formulario,reccraws,buscarUltimo){
@@ -2464,7 +2546,7 @@ function imprimirTermoCancelamento(){
 	var action = UrlSite + 'telas/atenda/seguro/imprime_termo_cancelamento.php';
 	$('#formImpressao').attr('action',action);
 	
-	var callafter = "fechaMotivoCancelamento();blockBackground(parseInt($('#divRotina').css('z-index')));";
+	var callafter = "fechaMotivoCancelamento();blockBackground(parseInt($('#divRotina').css('z-index')));controlaOperacao(\'\');";
 	
 	carregaImpressaoAyllos("formImpressao",action,callafter);
 	

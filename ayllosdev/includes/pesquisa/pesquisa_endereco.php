@@ -103,7 +103,7 @@
 	var cEstado		= $('#cdufende','#formPesquisaEndereco');
 	
 	cEndereco.addClass('alphanum campo').css({'width':'322px'}).attr('maxlength','40');
-	cCidade.addClass('alphanum campo').css({'width':'165px'}).attr('maxlength','25');
+	cCidade.addClass('alphanum campo').css({'width':'165px'}).attr('maxlength','50');
 	cEstado.addClass('campo').css({'width':'165px'});
 	
 	layoutPadrao();
