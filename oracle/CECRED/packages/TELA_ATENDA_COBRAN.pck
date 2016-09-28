@@ -58,6 +58,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
+																,pr_inenvcob  IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança																
                                 ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -138,13 +139,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
   --  Programa : TELA_ATENDA_COBRAN
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Fevereiro - 2016                 Ultima atualizacao:
+  --  Data     : Fevereiro - 2016                 Ultima atualizacao: 04/08/2016
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela Cobranca dentro da ATENDA
   --
-  -- Alteracoes:
+  -- Alteracoes: 04/08/2016 - Adicionado parametro pr_inenvcob na procedure 
+  -- 						  pc_habilita_convenio (Reinert).
   --
   ---------------------------------------------------------------------------
 
@@ -1072,6 +1074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
+																,pr_inenvcob  IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança
                                 ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -1176,6 +1179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flprotes
               ,crapceb.qtdecprz
               ,crapceb.qtdfloat
+							,crapceb.inenvcob
           FROM crapceb
          WHERE crapceb.cdcooper = pr_cdcooper
            AND crapceb.nrdconta = pr_nrdconta
@@ -1508,6 +1512,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         END IF;
       END IF;
 
+			/* Se forma de envio de arquivo de cobrança for por FTP e origem do convênio 
+			   não for "IMPRESSO PELO SOFTWARE", gerar crítica*/
+			IF pr_inenvcob = 2 AND rw_crapcco.dsorgarq <> 'IMPRESSO PELO SOFTWARE' THEN
+				  -- Atribuir descrição da crítica
+          vr_dscritic := 'Forma de envio de arquivo de cobrança não permitido para esta origem de convênio.';
+					-- Levantar exceção
+          RAISE vr_exc_saida;				
+			END IF;
       -- Seta como registro existente
       vr_blnewreg := FALSE;
 
@@ -1567,6 +1579,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       IF vr_blnewreg AND 
          (nvl(vr_insitif,'A') <> 'I' AND (vr_insitcip IS NULL OR vr_insitcip = 'A')) THEN
         
+        vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');      
+        
         --> Verificar se ja existe o beneficiario na cip
         OPEN cr_DDA_Benef (pr_dspessoa => rw_crapass.dspessoa,
                            pr_nrcpfcgc => rw_crapass.nrcpfcgc);
@@ -1578,9 +1592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                              pr_nrdconta => pr_nrdconta);
             FETCH cr_crapjur INTO rw_crapjur;
             CLOSE cr_crapjur;
-          END IF;  
-            
-          vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
+          END IF;              
                     
       BEGIN
             INSERT INTO TBJDDDABNF_BeneficiarioIF@jdbnfsql
@@ -1807,7 +1819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
             RAISE vr_exc_saida;
           END IF;
                     
-          --vr_insitceb := 3; -- PENDENTE          
+          
           vr_flgimpri := 0; -- nao imprimir o termo de adesao
           
         ELSE
@@ -1835,6 +1847,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flprotes = pr_flprotes
               ,crapceb.qtdecprz = pr_qtdecprz
               ,crapceb.idrecipr = pr_idrecipr
+							,crapceb.inenvcob = pr_inenvcob
          WHERE crapceb.cdcooper = vr_cdcooper
            AND crapceb.nrdconta = pr_nrdconta
            AND crapceb.nrconven = pr_nrconven;
@@ -2051,6 +2064,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                  ,pr_dsdadant => CASE WHEN rw_crapceb.flgcruni = 1 THEN 'SIM' ELSE 'NAO' END
                                  ,pr_dsdadatu => CASE WHEN pr_flgcruni = 1 THEN 'SIM' ELSE 'NAO' END);
       END IF;
+      
+      -- Se alterou Forma de envio de arquivo de cobrança
+      IF rw_crapceb.inenvcob <> pr_inenvcob THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'inenvcob'
+                                 ,pr_dsdadant => CASE WHEN rw_crapceb.inenvcob = 1 THEN 'INTERNET BANK' ELSE 'FTP' END
+                                 ,pr_dsdadatu => CASE WHEN pr_inenvcob = 1 THEN 'INTERNET BANK' ELSE 'FTP' END);
+      END IF;
+
       
       -- Gera log das categorias e percentual de desconto
       FOR vr_idx IN 1..vr_lstdados.COUNT LOOP
