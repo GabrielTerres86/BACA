@@ -1169,7 +1169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 21/09/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1432,7 +1432,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                    
        21/09/2016 - #523944 Criação de log de controle de início, erros e fim de execução
                     do job pc_processa_crapdda (Carlos)
-
+              
+       28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
+                    na procedure pc_paga_titulo (Lucas Ranghetti #511679)                      
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -8001,7 +8003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 05/02/2016
+    --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -8045,11 +8047,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                   28/10/2015 - Alterado tamanha da variavel vr_dspagtos de 2500
     --                                para 4000. (Jorge/Elton) SD - 351514
     --
-	--                05/02/2016 - Ajuste para efetuar a atualizaçao do titulo DDA somente no final da rotina,
+  	--                05/02/2016 - Ajuste para efetuar a atualizaçao do titulo DDA somente no final da rotina,
     --                             pois existem casos que é ocorre um erro e é efetuado rollback contudo, a situação do titulo 
     --                             já foi atulizada e enviado a JDDA.
     --                            (Adriano - SD 394710)
     --
+    --                28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
+    --                             (Lucas Ranghetti #511679)                      
     -- ..........................................................................
 
   BEGIN
@@ -8709,6 +8713,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       -- se encontrou erro ao buscar lote, abortar programa
       IF vr_dscritic IS NOT NULL THEN
+        -- Rollback da transação
+        ROLLBACK TO undopoint;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
