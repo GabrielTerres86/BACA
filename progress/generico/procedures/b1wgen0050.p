@@ -637,7 +637,6 @@ PROCEDURE obtem-log-cecred:
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inestcri AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_cdifconv AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrdated AS DECIMAL                        NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-logspb.
@@ -685,23 +684,22 @@ PROCEDURE obtem-log-cecred:
                                            INPUT par_nrdcaixa,
                                            INPUT par_cdoperad,
                                            INPUT par_nmdatela,
-                                           INPUT par_cdorigem,                                           
-										   INPUT par_dtmvtini,
-										   INPUT par_dtmvtfim,                                           
-										   INPUT par_numedlog,
+                                           INPUT par_cdorigem,
+                                           INPUT par_dtmvtini,
+                                           INPUT par_dtmvtfim,
+                                           INPUT par_numedlog,
                                            INPUT par_cdsitlog,
                                            INPUT par_nrdconta,
                                            INPUT par_nrsequen,
                                            INPUT par_nriniseq,
                                            INPUT par_nrregist,
                                            INPUT par_inestcri,
-										   INPUT par_cdifconv,
                                            INPUT par_vlrdated,
                                            OUTPUT ?,  /* pr_clob_logspb */
                                            OUTPUT ?,  /* pr_clob_logspb_detalhe */
                                            OUTPUT ?,  /* pr_clob_logspb_totais */
-                                           OUTPUT 0, /* cdcritic */
-                                           OUTPUT ""). /* dscritic */
+                                           OUTPUT "", /* cdcritic */
+                                           OUTPUT 0). /* dscritic */
     
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_obtem_log_cecred_car

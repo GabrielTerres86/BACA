@@ -176,7 +176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
   --  Sistema  : Rotina acessada pela tela LCREDI
   --  Sigla    : XXXX
   --  Autor    : Andre Otto - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 10/08/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 23/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -185,6 +185,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
   --
   -- Alteracoes: 10/08/2016 - Ajuste referente a homologação da área de negócio
   --                          (Andrei - RKAM)
+  --
+  --             23/09/2016 - Ajuste para apresentar informações no log formatadas corretamente
+  --                          (Adriano).
   ---------------------------------------------------------------------------------------------------------------
 
   -- Variaveis de log
@@ -981,7 +984,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Sistema : CECRED
         Sigla   : LCREDI
         Autor   : Andrei - RKAM
-        Data    : Julho - 2016.                    Ultima atualizacao: 10/08/2016
+        Data    : Julho - 2016.                    Ultima atualizacao: 23/09/2016
     
         Dados referentes ao programa:
     
@@ -992,10 +995,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Observacao: -----
     
         Alteracoes: 10/08/2016 - Ajustado validação do tipo de contrato e nas mensagens
-							     de log para as informações alteradas
-								 (Andrei - RKAM).
+							                   de log para as informações alteradas
+                 							 (Andrei - RKAM).
+                               
+                    23/09/2016 - Ajuste para apresentar informações no log formatadas corretamente
+                                 (Adriano).
+                 
     ..............................................................................*/
-	CURSOR cr_craplcr(pr_cdcooper in crapcop.cdcooper%type
+	  CURSOR cr_craplcr(pr_cdcooper in crapcop.cdcooper%type
                      ,pr_cdlcremp in craplcr.cdlcremp%type) is
       SELECT c.cdlcremp
            , c.cdcooper
@@ -1680,7 +1687,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou Vl. da Tarf. Especial da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
                                                     ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.vltrfesp,'fm999g990d00') || 
-                                                    ' para ' || pr_vltrfesp || '.');
+                                                    ' para ' || to_char(pr_vltrfesp,'fm999g990d00') || '.');
           
     END IF;
     
@@ -1757,8 +1764,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou o Val. de Juros Fixos da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
-                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txjurfix,'fm990d000') || 
-                                                    ' para ' || pr_txjurfix || '.');
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txjurfix,'fm990d00') || 
+                                                    ' para ' || to_char(pr_txjurfix,'fm990d00') || '.');
           
     END IF;
     
@@ -1770,8 +1777,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou o Val. de Juros Variaveis da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
-                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txjurvar,'fm990d000') || 
-                                                    ' para ' || pr_txjurvar || '.');
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txjurvar,'fm990d00') || 
+                                                    ' para ' || to_char(pr_txjurvar,'fm990d00') || '.');
           
     END IF;
     
@@ -1783,8 +1790,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou a Taxa sobre Prestacao da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
-                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txpresta,'fm990d000') || 
-                                                    ' para ' || pr_txpresta || '.');
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txpresta,'fm990d00') || 
+                                                    ' para ' || to_char(pr_txpresta,'fm990d00') || '.');
           
     END IF;
     
@@ -1796,8 +1803,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou a Taxa Minima da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
-                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txminima,'fm990d000') || 
-                                                    ' para ' || pr_txminima || '.');
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txminima,'fm990d00') || 
+                                                    ' para ' || to_char(pr_txminima,'fm990d00') || '.');
           
     END IF;
     
@@ -1809,8 +1816,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou a Taxa Maxima da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
-                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txmaxima,'fm990d000') || 
-                                                    ' para ' || pr_txmaxima || '.');
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txmaxima,'fm990d00') || 
+                                                    ' para ' || to_char(pr_txmaxima,'fm990d00') || '.');
           
     END IF;
     
@@ -1822,8 +1829,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                 ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou a Taxa Base da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
-                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txbaspre,'fm990d000') || 
-                                                    ' para ' || pr_txbaspre || '.');
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.txbaspre,'fm990d00') || 
+                                                    ' para ' || to_char(pr_txbaspre,'fm990d00') || '.');
           
     END IF;
     
@@ -1862,7 +1869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou o Juros de Mora da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
                                                     ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.perjurmo,'fm990d000000') || 
-                                                    ' para ' || pr_perjurmo || '.');
+                                                    ' para ' || to_char(pr_perjurmo,'fm990d000000') || '.');
           
     END IF;
     
@@ -1875,7 +1882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou o Vl.Maximo Associado da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
                                                     ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.vlmaxass,'fm999g999g990d00') || 
-                                                    ' para ' || pr_vlmaxass || '.');
+                                                    ' para ' || to_char(pr_vlmaxass,'fm999g999g990d00') || '.');
           
     END IF;
     
@@ -1888,7 +1895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                                     ' -->  Operador '|| vr_cdoperad || ' - ' || 
                                                     'Alterou o Vl.Maximo para PJ da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
                                                     ' - ' || rw_craplcr.dslcremp || ' de ' || to_char(rw_craplcr.vlmaxasj,'fm999g999g990d00') || 
-                                                    ' para ' || pr_vlmaxasj || '.');
+                                                    ' para ' || to_char(pr_vlmaxasj,'fm999g999g990d00') || '.');
           
     END IF;
     
@@ -2081,7 +2088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                     ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2) IS         --> Descrição do erro                                
 
-	/* .............................................................................
+  /* .............................................................................
     
         Programa: pc_incluir_linha_credito
         Sistema : CECRED
@@ -2098,8 +2105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Observacao: -----
     
         Alteracoes: 10/08/2016 - Ajustado validação do tipo de contrato, mensagens
-							     de log e inclusão do registro craplcr
-								 (Andrei - RKAM).
+                   de log e inclusão do registro craplcr
+                 (Andrei - RKAM).
     ..............................................................................*/
     CURSOR cr_craplcr(pr_cdcooper in crapcop.cdcooper%type
                      ,pr_cdlcremp in craplcr.cdlcremp%type) is
@@ -2762,7 +2769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     Objetivo   : Realiza o bloqueio/liberação da linha de crédito
     
     Alterações : 10/08/2016 - Ajustado formato da informação a ser apresentada no log
-						 	 (Andrei - RKAM).
+                (Andrei - RKAM).
     -------------------------------------------------------------------------------------------------------------*/                               
   
     CURSOR cr_craplcr(p_cdcooper in crapcop.cdcooper%TYPE 
@@ -2899,7 +2906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     Objetivo   : Realiza a exclusão da linha de crédito
     
     Alterações : 10/08/2016 - Ajustado formato da informação a ser apresentada no log
-						 	 (Andrei - RKAM).
+                (Andrei - RKAM).
     -------------------------------------------------------------------------------------------------------------*/                               
   
     CURSOR cr_craplcr(pr_cdcooper IN crapcop.cdcooper%TYPE 

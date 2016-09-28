@@ -188,6 +188,7 @@ CREATE OR REPLACE PACKAGE CECRED.flxf0001 AS
            RETURN BOOLEAN;
 END FLXF0001;
 /
+
 CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
@@ -4409,15 +4410,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 28/09/2016
+    --  Data     : novembro/2013.                   Ultima atualizacao: 25/11/2013
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Gravar movimento financeiro referente aos TEDs recebidos
     --
     --   Atualizacao: 25/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
-    --
-    --                28/09/2016 - Passar novos parämetros na chamada a sspb0001 (Evandro-RKAM)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -4441,15 +4440,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                  ,pr_cdoperad  => pr_cdoperad   -- Operador
                                  ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
                                  ,pr_cdorigem  => 0 /* TODOS */ -- Identificador Origem
-                                 ,pr_dtmvtini  => pr_dtmvtolt   -- Data de movimento de log
-                                 ,pr_dtmvtfim  => pr_dtmvtolt   -- Data de movimento de log
+                                 ,pr_dtmvtlog  => pr_dtmvtolt   -- Data de movimento de log
                                  ,pr_numedlog  =>  2  /* RECEBIDAS */   -- Indicador de log a carregar
                                  ,pr_cdsitlog  => 'P' /* Processadas */ -- Codigo de situação de log
                                  ,pr_nrdconta  => 0             -- Numero da Conta
-                                 ,pr_nrsequen  => 0             -- Sequencia
                                  ,pr_nriniseq  => 1             -- numero inicial da sequencia
                                  ,pr_nrregist  => 99999         -- numero de registros
-                                 ,pr_vlrdated  => 0             -- Valor da ted
                                  ,pr_dscritic  => pr_dscritic
                                  ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
                                  ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
@@ -5713,3 +5709,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
 END FLXF0001;
 /
+
