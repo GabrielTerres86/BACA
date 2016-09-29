@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 30/05/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 29/09/2016
 
    Dados referentes ao programa:
 
@@ -625,7 +625,11 @@
 
                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
                                                                     
-							 
+
+                 14/07/2016 - M325 Informe de Rendimentos - Novos parametros
+                              operacao7. (Guilherme/SUPERO)
+                              
+                 29/09/2016 - Inclusao 176 a 183. Reservado para o projeto 300. (Lombardi)
 
 ------------------------------------------------------------------------------*/
 
@@ -2024,6 +2028,30 @@ PROCEDURE process-web-request :
 		ELSE
             IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
                 RUN proc_operacao173.    
+		ELSE
+            IF  aux_operacao = 176 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao174. 
+		ELSE
+            IF  aux_operacao = 177 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao175. 
+		ELSE
+            IF  aux_operacao = 178 THEN /* Reservado para o projeto 300.*/
+                RUN proc_operacao176. 
+		ELSE
+            IF  aux_operacao = 179 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao177. 
+		ELSE
+            IF  aux_operacao = 180 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao178. 
+		ELSE
+            IF  aux_operacao = 181 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao179. 
+		ELSE
+            IF  aux_operacao = 182 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao180. 
+		ELSE
+            IF  aux_operacao = 183 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao181. 
 
     END.
 /*....................................................................*/
@@ -7516,6 +7544,63 @@ PROCEDURE proc_operacao173:
     {&out} aux_tgfimprg.        
 
 END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao176:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao177:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao178:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao179:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao180:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao181:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao182:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao183:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
 
 
 /*............................................................................*/
