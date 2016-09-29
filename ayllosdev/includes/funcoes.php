@@ -58,12 +58,15 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 035: [13/08/2015] James					: Remover o caminho "/var/www/ayllos/xml/"
  * 036: [14/08/2015] Lucas Ranghetti(CECRED): Incluir função visualizaArquivo para fazer download do arquivo ou gerar pdf na mesma function.
  * 037: [30/12/2015] Jaison (CECRED)		: Criada a funcao retornaKeyArrayMultidimensional.
- * 038: [11/07/2016] Carlos Rafael Tanholi: Removi o codigo da funcao mensageria que registrava as requisicoes nos arquivo da pasta xml/(in.xml | out.xml).
- * 039: [20/07/2016] Carlos Rafael Tanholi: Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
- * 040: [25/07/2016] Carlos Rafael Tanholi: Correcao na expressao regular da funcao formatar(). SD 479874. 
- * 041: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
-?>
-<?php
+ * 038: [11/07/2016] Carlos Rafael Tanholi  : Removi o codigo da funcao mensageria que registrava as requisicoes nos arquivo da pasta xml/(in.xml | out.xml).
+ * 039: [20/07/2016] Carlos Rafael Tanholi  : Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
+ * 040: [25/07/2016] Carlos Rafael Tanholi  : Correcao na expressao regular da funcao formatar(). SD 479874. 
+ * 041: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria
+ * 042: [22/09/2016] Carlos Rafael Tanholi  : Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
+ * 043: [29/09/2016] Carlos Rafael Tanholi  : Corrigi fechamento de comentario do cabecalho e removi o codigo comentado. 
+ */
+
+
 // Função para requisição de dados através de XML 
 // Função retorna string com XML de retorno	
 // Includes necessárias: - includes/config.php
@@ -104,37 +107,6 @@ function getDataXML($xmlRequest,$flgPermissao=true,$flgBlank=true,$codCooper=0) 
 
 	// Retorna string com XML
 	return $retorno;
-	
-	/**** Desabilitada criptografia com gnuserver em 08/04/2014 ****
-	$key = "50983417512346753284723840854609576043576094576059437609";
-	$iv  = "12345678";
-	
-	$NomeArq = microtime(1).getmypid();
-	$NomeArq = preg_replace("/\s/","",$NomeArq);		
-	
-	// Comando para requisição de dados pelo script gnuclient
-	$command = "w".$codCooper." '".$xmlRequest."'";		
-			
-	$encriptado = mcrypt_cbc(MCRYPT_BLOWFISH,$key,$command,MCRYPT_ENCRYPT,$iv);
-	$encriptado = preg_replace("/\n/","\\{n}",$encriptado);
-	
-	$fp = fopen("/var/www/ayllos/xml/$NomeArq","w+");
-	fwrite($fp,$encriptado);
-	fclose($fp);
-		
-	// Executa o shell	
-	$xmlResult = shell_exec('/bin/cat /var/www/ayllos/xml/'.$NomeArq.' | /usr/local/bin/gnuclient.pl --servidor="'.$DataServer.'" --porta="2502"');
-	unlink("/var/www/ayllos/xml/$NomeArq");
-	$decriptado = mcrypt_cbc(MCRYPT_BLOWFISH,$key,$xmlResult,MCRYPT_DECRYPT,$iv);
-	$decriptado = eregi_replace('/\e\040/',"",$decriptado);
-	
-	if ($flgBlank && trim($decriptado) == "") {
-		die("XML error: Requisi&ccedil;&atilde;o retornou XML em branco");
-	}				
-
-	// Retorna string com XML
-	return $decriptado;
-	****/
 }
 
 // Função para criação do objeto responsável pelo tratamento do XML
@@ -1619,4 +1591,26 @@ function justificar($text, $width) {
 	}
 	return $lines;
 }
+
+/*
+Classe auxiliar para montagem de xml usado na mensageria().
+Ex. de uso: telas/cbrfra/manter_rotina.php
+*/
+class XmlMensageria {	
+	private $xml;
+
+	function __construct() {
+		$this->xml = '<Root><Dados>';
+    }
+
+	public function add($tag, $valor) {
+        $this->xml .= '<' . $tag . '>' . trim($valor) . '</' . $tag . '>';
+		return $this;
+    }
+
+    public function __toString() {
+        return $this->xml . '</Dados></Root>';
+    }
+}
+
 ?>

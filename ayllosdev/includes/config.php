@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Ultima Alteracao: 14/09/2016 ***//
+	//*** Data : Julho/2007                   Ultima Alteracao: 29/09/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
@@ -26,11 +26,16 @@
 	//***						   para ambientes diferentes. SD 489051    ***//
 	//***						   (Carlos Rafael Tanholi)	 			   ***//		
 	//***																   ***//	
+	//***			  29/09/2016 - Correcao no carregamento das variaveis  ***//
+	//***						   $UrlSite e $UrlImagens que nao estavam  ***//
+	//***						   sendo carregados corretamente.		   ***//
+	//***						   (Carlos Rafael Tanholi)	 			   ***//	
+	//***																   ***//	
 	//************************************************************************//
-	
+
 	// carrega o arquivo .cfg de dados do sistema Ayllos
 	$array_dados_ini = parse_ini_file("config.cfg", true);
-
+	
 	// Pega o nome do server
 	define("SERVERNAMEAPP",gethostname());  
 
@@ -42,7 +47,7 @@
 		$serverCFG = 'PRODUCAO';
 	}
 
-	// valida a existencia do servidor e da configuracao para o mesmo no arquivo cofig.cfg
+	// valida a existencia do servidor e da configuracao para o mesmo no arquivo config.cfg
 	if ( trim($serverCFG) == '' || array_key_exists($serverCFG, $array_dados_ini) == false ) {
 		echo utf8_decode('Configuração inexistente para o servidor ' . $serverCFG . ' no arquivo de configurações (config.cfg)');
 		exit();
@@ -72,10 +77,10 @@
 	$TituloLogin = $array_dados_ini[SERVERNAMECFG]['TITULO_LOGIN'];
 	
 	// Url do site
-	$UrlSite = $array_dados_ini[SERVERNAMECFG]['URL_SITE'];
-	
+	$UrlSite = 'http://'.$_SERVER['SERVER_NAME'].'/';
+
 	// Url para imagens
-	$UrlImagens = $array_dados_ini[SERVERNAMECFG]['URL_IMAGENS'];
+	$UrlImagens = 'http://'.$_SERVER['SERVER_NAME'].'/imagens/';
 	
 	// Url para Login 
 	$UrlLogin = $array_dados_ini[SERVERNAMECFG]['URL_LOGIN'];
