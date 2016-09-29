@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "wwwdev", "http://localhost:3950", "{71F5A55F-F85E-45A4-AFAD-8A2A912B3379}"
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "viacredi(1)", "http://localhost:16952", "{0BBE33AD-5427-470A-8666-9A14C0A3032B}"
 	ProjectSection(WebsiteProperties) = preProject
 		SccProjectName = "SAK"
 		SccAuxPath = "SAK"
@@ -11,21 +11,21 @@ Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "wwwdev", "http://localhost:
 		SccProvider = "SAK"
 		UseIISExpress = "true"
 		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.0"
-		Debug.AspNetCompiler.VirtualPath = "/localhost_3950"
-		Debug.AspNetCompiler.PhysicalPath = "..\..\wwwdev\"
-		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_3950\"
+		Debug.AspNetCompiler.VirtualPath = "/localhost_16952"
+		Debug.AspNetCompiler.PhysicalPath = "..\..\wwwdev\viacredi\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_16952\"
 		Debug.AspNetCompiler.Updateable = "true"
 		Debug.AspNetCompiler.ForceOverwrite = "true"
 		Debug.AspNetCompiler.FixedNames = "false"
 		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.VirtualPath = "/localhost_3950"
-		Release.AspNetCompiler.PhysicalPath = "..\..\wwwdev\"
-		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_3950\"
+		Release.AspNetCompiler.VirtualPath = "/localhost_16952"
+		Release.AspNetCompiler.PhysicalPath = "..\..\wwwdev\viacredi\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_16952\"
 		Release.AspNetCompiler.Updateable = "true"
 		Release.AspNetCompiler.ForceOverwrite = "true"
 		Release.AspNetCompiler.FixedNames = "false"
 		Release.AspNetCompiler.Debug = "False"
-		SlnRelativePath = "..\..\wwwdev\"
+		SlnRelativePath = "..\..\wwwdev\viacredi\"
 	EndProjectSection
 EndProject
 Global
@@ -33,19 +33,19 @@ Global
 		SccNumberOfProjects = 2
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = http://alm.cecred.coop.br:8080/tfs/defaultcollection
-		SccWebProject0 = true
-		SccProjectUniqueName0 = http://localhost:3950
-		SccProjectName0 = ../../wwwdev
-		SccLocalPath0 = ..\\..\\wwwdev
-		SccProjectEnlistmentChoice0 = 2
-		SccLocalPath1 = .
+		SccLocalPath0 = .
+		SccWebProject1 = true
+		SccProjectUniqueName1 = http://localhost:16952
+		SccProjectName1 = ../../wwwdev/viacredi
+		SccLocalPath1 = ..\\..\\wwwdev\\viacredi
+		SccProjectEnlistmentChoice1 = 2
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{71F5A55F-F85E-45A4-AFAD-8A2A912B3379}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{71F5A55F-F85E-45A4-AFAD-8A2A912B3379}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BBE33AD-5427-470A-8666-9A14C0A3032B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BBE33AD-5427-470A-8666-9A14C0A3032B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
