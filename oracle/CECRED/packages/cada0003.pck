@@ -5344,7 +5344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
     vr_cdcritic       crapcri.cdcritic%TYPE;
     vr_dscritic       VARCHAR2(10000);
-    vr_cdconsul       NUMBER(5);
+    vr_cdconsul       NUMBER(7);
     vr_dttransa       DATE;
     vr_hrtransa       VARCHAR2(5);
     vr_cdagenci       crapage.cdagenci%TYPE;
@@ -5385,6 +5385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       end if;
     end if;
 
+    if nvl(pr_cdconsultordst,0) <> 0 then
     begin
       select 1
         into vr_valida_agencia
@@ -5397,6 +5398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       when no_data_found then
         raise vr_err_agen;
     end;
+    end if;
 
     if nvl(vr_cdconsul,0) <> nvl(pr_cdconsultordst,0) then
       update crapass c

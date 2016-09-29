@@ -266,7 +266,7 @@
 		}
 		else { // Se é Inclusão	
 			// Melhoria 126
-			if ($cdconsul != 0) {
+		
 				$nmdeacao = "CADCON_TRANSFERE_CONTA";
 
 				$xml  = "";
@@ -292,7 +292,7 @@
 				if ($xmlObjeto->Erro->Registro->dscritic != "") {
 					$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 					exibirErro("error",$msgErro,"Alerta - Ayllos","",false);
-				}
+				
 			}
 			//Fim Melhoria 126
 
