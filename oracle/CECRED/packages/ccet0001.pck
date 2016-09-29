@@ -1564,7 +1564,7 @@ create or replace package body cecred.CCET0001 is
                      '<txjurseg>' || to_char(nvl(vr_txjurseg,0),'fm990D00') || '</txjurseg>' ||
                      '<vlemprst>' || to_char(nvl(vr_vlemprst,0),'fm999G999G990D00') || '</vlemprst>' ||
                      '<txjuremp>' || to_char(nvl(vr_txjuremp,0),'fm990D00') || '</txjuremp>' ||
-                     '<txanocet>' || to_char(nvl(vr_txanocet,0),'fm990D00') || '</txanocet>' ||
+                     '<txanocet>' || to_char(nvl(vr_txanocet,0),'fm9990D00') || '</txanocet>' ||
                      '<txmescet>' || to_char(nvl(vr_txmescet,0),'fm990D00') || '</txmescet>' ||
                      '<txjurlim>' || to_char(nvl(vr_txjurlim,0),'fm990D00') || '</txjurlim>' ||
                      '<vljurrem>' || to_char(nvl(vr_vljurrem,0),'fm999G990D00') || '</vljurrem>' ||
