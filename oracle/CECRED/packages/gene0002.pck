@@ -4204,12 +4204,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
             -- Efetuar LOOP de 1 até a quantidade de jobs necessários para escalonar
             FOR vr_ind IN 1..vr_qtjobnec LOOP
               -- Preparar prefixo padrão dos JobNames
-              -- RLJOB_<CDFILREL>#<N>
+              -- JBGEN_CTRL_REL_<CDFILREL>#<N>
               -- Onde:
-              --   RLJOB$   : Prefixo padrão
+              --   JBGEN_CTRL_REL_$ : Prefixo padrão
               --   CDFILREL : Código da fila
               --   N        : Sequencial criado pelo Oracle
-              vr_nmjobnam := 'RLJOB_'||rw_crapfil.cdfilrel||'#';
+              vr_nmjobnam := 'JBGEN_CTRL_REL_'||rw_crapfil.cdfilrel||'#';
               -- Sair ao alcançar a quantidade máxima de Jobs
               EXIT WHEN vr_ind + vr_qtjobati > rw_crapfil.qtjobati;
               -- Criamos o bloco PLSQL para execução da fila
