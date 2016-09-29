@@ -7,7 +7,7 @@ Data de criação: 09/09/2015
 Objetivo.......: Tela de Pagamento de GPS - SICREDI
 
 Alteracoes.....:
-
+                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
 
 -->
 <html>
@@ -27,7 +27,7 @@ Alteracoes.....:
         <link rel="StyleSheet" type="text/css" href="/script/viacredi.css" />
         <title>PAGAMENTO GPS SICREDI</title>
     </head>
-    <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();">
+    <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
         <form  method=post>
         <input type="hidden" name="vh_foco"     id="vh_foco"     value="" >
         <input type="hidden" name="vh_nome"     id="vh_nome"     value="" >
