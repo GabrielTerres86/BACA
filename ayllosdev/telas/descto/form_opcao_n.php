@@ -1,9 +1,9 @@
 <? 
 /*!
- * FONTE        : form_opcao_l.php
+ * FONTE        : form_opcao_n.php
  * CRIAÇÃO      : Jaison
- * DATA CRIAÇÃO : 21/09/2016
- * OBJETIVO     : Formulario que apresenta a opcao L da tela DESCTO
+ * DATA CRIAÇÃO : 28/09/2016
+ * OBJETIVO     : Formulario que apresenta a opcao N da tela DESCTO
  * --------------
  * ALTERAÇÕES   : 
  * --------------
@@ -31,7 +31,7 @@
 	<fieldset>
 		<legend> <? echo utf8ToHtml('Relatório'); ?> </legend>
 
-		<label for="dtiniper"><? echo utf8ToHtml('Data Digitação De:'); ?></label>
+		<label for="dtiniper"><? echo utf8ToHtml('Data Término De:'); ?></label>
 		<input type="text" id="dtiniper" name="dtiniper" value="<?php echo $dtiniper ?>" />
 
 		<label for="dtfimper"><? echo utf8ToHtml('Até:'); ?></label>
@@ -43,8 +43,8 @@
 		<label for="nrdconta">Conta:</label>
 		<input type="text" id="nrdconta" name="nrdconta" value="<?php echo $nrdconta ?>" />
 
-		<label for="nrborder"><? echo utf8ToHtml('Borderô:'); ?></label>
-		<input type="text" id="nrborder" name="nrborder" value="<?php echo $nrborder ?>" />
+		<label for="nrctrlim">Contrato:</label>
+		<input type="text" id="nrctrlim" name="nrctrlim" value="<?php echo $nrctrlim ?>" />
 	</fieldset>
 
 </form>

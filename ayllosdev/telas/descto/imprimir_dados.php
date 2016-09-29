@@ -71,22 +71,14 @@ if ($cddopcao == 'L' || $cddopcao == 'N') {
     $xmlResult = mensageria($xml, "TELA_DESCTO", $nmdeacao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObject = getObjectXML($xmlResult);
 
-    if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
-        $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-        $arrErro = explode("###", $msgErro);
-        $msgErro = $arrErro[0];
-        $nmCampo = $arrErro[1];
-        $nmFunca = $nmCampo ? "$('#".$nmCampo."', '#frmOpcao').focus();" : '' ;
-
-        ?><script language="javascript">
-        //showError("error","<?php echo utf8_encode($msgErro); ?>","Alerta - Ayllos","<?php echo $nmFunca; ?>","");
-        //alert('<?php echo utf8_encode($msgErro); ?>');
-        <?php echo $nmFunca; ?>
-        //return false;
-        </script><?php
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+        $msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        ?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
         exit();
-        //exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$nmFunca);
     }
+
+    // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+    $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
     
 } else {
     $procedure = '';

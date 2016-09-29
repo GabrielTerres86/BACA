@@ -17,7 +17,6 @@ require_once('../../class/xmlfile.php');
 isPostMethod();
 ?>
 
-
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;">
 
     <label for="cddopcao"><?php echo utf8ToHtml('Op&ccedil;&atilde;o') ?></label>
@@ -36,10 +35,7 @@ isPostMethod();
         <option value="N" <?php echo $cddopcao == 'N' ? 'selected' : '' ?>>N - Imprimir relatorio de limites nao renovados.</option>
     </select>
 
-
     <a href="#" class="botao" id="btnOk1">Ok</a>
     <br style="clear:both" />	
 
 </form>
-
-
