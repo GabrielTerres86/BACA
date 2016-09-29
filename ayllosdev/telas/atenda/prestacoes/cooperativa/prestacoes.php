@@ -9,6 +9,7 @@
  * --------------
  * 001: [24/05/2013] Lucas R.(CECRED): Incluir camada "../" nas includes .
  * 002: [20/02/2014] Jorge   (CECRED): Adicionado parametros de paginacao em acessaOpcaoAba().
+ * 003: [29/09/2016] Tiago   (CECRED): Aumentado a qtd por pagina de registro para 60 no acessaOpcaoAba().
  */	 
 ?>
 
@@ -93,7 +94,7 @@
 	
 	hideMsgAguardo();
 			
-	acessaOpcaoAba( qtOpcoesTela, 0, '<? echo $opcoesTela[0]; ?>', 1, 50);	
+	acessaOpcaoAba( qtOpcoesTela, 0, '<? echo $opcoesTela[0]; ?>', 1, 60);	
 </script>
 
 
