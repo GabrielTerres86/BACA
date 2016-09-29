@@ -5385,18 +5385,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       end if;
     end if;
 
-    begin
-      select 1
-        into vr_valida_agencia
-        from tbcc_consultor_pa t
-       where t.cdcooper    = pr_cdcooper
-         and t.cdconsultor = pr_cdconsultordst
-         and t.nrsequen    = 0
-         and t.cdagenci    = vr_cdagenci;
-    exception
-      when no_data_found then
-        raise vr_err_agen;
-    end;
+    if nvl(pr_cdconsultordst,0) <> 0 then
+	  begin
+        select 1
+          into vr_valida_agencia
+          from tbcc_consultor_pa t
+         where t.cdcooper    = pr_cdcooper
+           and t.cdconsultor = pr_cdconsultordst
+           and t.nrsequen    = 0
+           and t.cdagenci    = vr_cdagenci;
+      exception
+        when no_data_found then
+          raise vr_err_agen;
+      end;
+    end if;
 
     if nvl(vr_cdconsul,0) <> nvl(pr_cdconsultordst,0) then
       update crapass c
