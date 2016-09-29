@@ -706,6 +706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       --Variaveis de exceção
       vr_exc_erro EXCEPTION;
+      vr_nrsequence crapsqu.nrseqatu%TYPE;
       
     BEGIN
 
@@ -732,13 +733,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
       --Inicaliza o monitoramento
       IF pr_tpoperac = 1 THEN
-        
+        vr_nrsequence := fn_sequence(pr_nmtabela => 'TBGEN_RESUMO_PROCESSO'
+                                ,pr_nmdcampo => 'CDRESUMO_PROCESSO'
+                                ,pr_dsdchave => '0');
         BEGIN
           INSERT INTO tbgen_resumo_processo (cdresumo_processo
                                             ,cdservico_barramento
                                             ,dhinicio
                                             ,indstatus_processo)
-                                     VALUES((SELECT max(cdresumo_processo + 1) FROM tbgen_resumo_processo)
+                                     VALUES( vr_nrsequence
                                             ,rw_tbgen_aplicacao_barramento.cdservico_barramento
                                             ,SYSDATE
                                             ,1)
@@ -758,6 +761,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
 
         END;
+
+        vr_nrsequence := fn_sequence(pr_nmtabela => 'TBGEN_ITEM_RESUMO_PROCESSO'
+                                ,pr_nmdcampo => 'CDITEM_RESUMO_PROCESSO'
+                                ,pr_dsdchave => '0');
         
         BEGIN
             INSERT INTO tbgen_item_resumo_processo (cditem_resumo_processo
@@ -767,7 +774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                     ,cdcooper
                                                     ,nrdconta
                                                     ,dsitem_resumo_processo)
-                                             VALUES((SELECT max(cditem_resumo_processo + 1) cditem_resumo_processo FROM tbgen_item_resumo_processo)
+                                             VALUES(vr_nrsequence
                                                    ,vr_cdresumo_processo
                                                    ,SYSDATE                                                  
                                                    ,1 --Iniciado
@@ -8746,7 +8753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_nrconven  => vr_rec_header.nrcnvcob --> Numero do Convenio
                                 ,pr_nrremass  => vr_rec_header.nrremass --> Numero da Remessa
                                 ,pr_qtbloque  => vr_qtbloque --> Quantidade de Boletos Processados
-                                ,pr_vlrtotal  => 0  --> Valor Totall dos Boletos
+                                ,pr_vlrtotal  => vr_vlrtotal --> Valor Totall dos Boletos
                                 ,pr_nmarquiv  => vr_tab_crapaux(i).nmarqori --> Nome do Arquivo
                                 ,pr_nrprotoc  => pr_nrprotoc --> Numero do Protocolo
                                 ,pr_hrtransa  => pr_hrtransa --> Hora da transacao
@@ -9705,7 +9712,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_nrconven  => vr_rec_header.nrcnvcob --> Numero do Convenio
                                 ,pr_nrremass  => vr_rec_header.nrremass --> Numero da Remessa
                                 ,pr_qtbloque  => vr_qtbloque --> Quantidade de Boletos Processados
-                                ,pr_vlrtotal  => 0  --> Valor Totall dos Boletos
+                                ,pr_vlrtotal  => vr_vlrtotal  --> Valor Totall dos Boletos
                                 ,pr_nmarquiv  => vr_tab_crapaux(i).nmarqori --> Nome do Arquivo
                                 ,pr_nrprotoc  => pr_nrprotoc --> Numero do Protocolo
                                 ,pr_hrtransa  => pr_hrtransa --> Hora da transacao
@@ -10566,7 +10573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_nrconven  => vr_rec_header.nrcnvcob --> Numero do Convenio
                                 ,pr_nrremass  => vr_rec_header.nrremass --> Numero da Remessa
                                 ,pr_qtbloque  => vr_qtbloque --> Quantidade de Boletos Processados
-                                ,pr_vlrtotal  => 0  --> Valor Totall dos Boletos
+                                ,pr_vlrtotal  => vr_vlrtotal  --> Valor Totall dos Boletos
                                 ,pr_nmarquiv  => vr_tab_crapaux(i).nmarqori --> Nome do Arquivo
                                 ,pr_nrprotoc  => pr_nrprotoc --> Numero do Protocolo
                                 ,pr_hrtransa  => pr_hrtransa --> Hora da transacao

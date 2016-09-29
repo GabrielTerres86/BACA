@@ -228,7 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 06/07/2016
+   Data    : Agosto/2006                   Ultima Atualizacao: 29/09/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -282,6 +282,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
                06/07/2016 - Incluir log no exception da crappro na procedure 
                             pc_gera_protocolo (Lucas Ranghetti #468306)
+                            
+               29/09/2016 - Ajuste para gravar a data no formato DD/MM/RRRR ao gravar o protocolo
+                            (Andrei - RKAM).             
+                            
 ............................................................................. */
 
   /* Rotina para gerar um codigo identificador de sessão para ser usado na validacao de parametros na URL */
@@ -770,6 +774,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --   Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
     -- 
     --               06/07/2016 - Incluir log no exception da crappro (Lucas Ranghetti #468306)
+    --
+    --               29/09/2016 - Ajuste para gravar a data no formato DD/MM/RRRR ao gravar o protocolo
+    --                            (Andrei - RKAM).
+    --
     -- .............................................................................
   BEGIN
     DECLARE
@@ -880,7 +888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                   ,nvl(pr_dsinfor3,' ')
                   ,nvl(pr_dsprotoc,' ')
                   ,pr_dtmvtolt
-                  ,SYSDATE
+                  ,TO_CHAR(SYSDATE,'DD/MM/RRRR')
                   ,vr_flgagend
                   ,pr_hrtransa
                   ,nvl(pr_nrdconta,0)
@@ -1268,9 +1276,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           AND rownum = 1;
       rw_crapopi cr_crapopi%ROWTYPE;
 
-      -- Registro de data
-      rw_crapdat btch0001.cr_crapdat%ROWTYPE; 
-
     BEGIN
       -- Validar dados da cooperativa
       OPEN cr_crapcop(pr_cdcooper);
@@ -1284,11 +1289,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
       ELSE
         CLOSE cr_crapcop;
       END IF;
-
-      -- Busca a data do sistema
-      OPEN btch0001.cr_crapdat(pr_cdcooper);
-      FETCH btch0001.cr_crapdat INTO rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
 
       -- Assimilar valores de saída
       vr_dtinipro := pr_dtinipro;
@@ -1306,10 +1306,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
         vr_dtfimpro := SYSDATE;
       END IF;
 
+      /* Validação removida em 31/08/2016 - PRJ386.5 - CECRED MOBILE (Dionathan)
       -- Validar data do dia
       IF vr_dtfimpro > to_date(SYSDATE, 'DD/MM/RRRR') THEN
         vr_dtfimpro := SYSDATE;
-      END IF;
+      END IF;*/
 
       -- Buscar dados dos protocolos
       FOR rw_crappro IN cr_crappro(pr_cdcooper => pr_cdcooper
@@ -1328,13 +1329,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
           -- Valida protocolo Favorecido
           IF pr_cdtippro <> 8 AND rw_crappro.cdtippro = 8 THEN
             RAISE vr_exc_iter;
-          END IF;
-
-          --> Nao carregar Protocolo pagamento fatura caso seja o dia de geracao, 
-          --> devido o pagamento ainda poder ser estornado. 
-          IF rw_crappro.cdtippro = 15  AND
-		         rw_crappro.dtmvtolt = rw_crapdat.dtmvtolt THEN 
-		        RAISE vr_exc_iter;
           END IF;
 
           -- Incrementa quantidade de registros
