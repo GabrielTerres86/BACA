@@ -177,7 +177,7 @@
 
 </script>
 <form name="frmImprimir" id="frmImprimir">
-  <input type="hidden" name="sidlogin" id="sidlogin" value=""<?php echo $glbvars["sidlogin"]; ?>">
+  <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 
   <input name="nrdconta" id="nrdconta" type="hidden" value="" />
   <input name="idseqttl" id="idseqttl" type="hidden" value="" />
