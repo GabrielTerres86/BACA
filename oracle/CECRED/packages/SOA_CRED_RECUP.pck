@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.SOA_CRED_RECUP IS
+CREATE OR REPLACE PACKAGE SOA.SOA_CRED_RECUP IS
   ---------------------------------------------------------------------------
   --
   --  Programa : SOA_CRED_RECUP
@@ -50,7 +50,7 @@ CREATE OR REPLACE PACKAGE CECRED.SOA_CRED_RECUP IS
   
 END SOA_CRED_RECUP;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.SOA_CRED_RECUP IS
+CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
   ---------------------------------------------------------------------------
   --
   --  Programa : SOA_CRED_RECUP
