@@ -91,7 +91,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0131.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 12/11/2015
+    Data    : Dezembro/2011                     Ultima atualizacao: 27/09/2016
 
     Objetivo  : Tranformacao BO tela PREVIS
 
@@ -134,6 +134,10 @@
                 12/11/2015 - Na chamada da procedure obtem-log-cecred, incluir
                              novo parametro inestcri projeto Estado de Crise
                              (Jorge/Andrino)             
+                             
+                27/09/2016 - M211 - Envio do parado cdifconv na chamada da 
+                            obtem-log-cecred pela pi_sr_ted_f (Jonata-RKAM)        
+                        
                         
 ............................................................................*/
 
@@ -2560,8 +2564,9 @@ PROCEDURE pi_sr_ted_f:
                                           INPUT 0,
                                           INPUT 1,
                                           INPUT 99999,
-                                          INPUT 0, /* par_vlrdated */
-                                          INPUT 0, /* inestcri, 0 Nao, 1 Sim */
+                                          INPUT 0, /* inestcri, 0 Nao, 1 Sim */                                          
+                                          INPUT 3,  /* IF da TED - Todas */
+										  INPUT 0, /* par_vlrdated */
                                           OUTPUT TABLE tt-logspb,
                                           OUTPUT TABLE tt-logspb-detalhe,
                                           OUTPUT TABLE tt-logspb-totais,

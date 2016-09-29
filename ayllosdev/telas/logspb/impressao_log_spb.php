@@ -3,29 +3,32 @@
 	//************************************************************************//
 	//*** Fonte: impressao_log_spb.php                                     ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Novembro/2009                ⁄ltima AlteraÁ„o: 06/07/2011 ***//
+	//*** Data : Novembro/2009                √öltima Altera√ß√£o: 06/07/2011 ***//
 	//***                                                                  ***//
-	//*** Objetivo  : Gerar impress„o do log de transaÁıes SPB             ***//
+	//*** Objetivo  : Gerar impress√£o do log de transa√ß√µes SPB             ***//
 	//***                                                                  ***//	 
-	//*** AlteraÁıes: 01/09/2011 - Retirar condiÁ„o de validaÁ„o p/ campo  ***//
+	//*** Altera√ß√µes: 01/09/2011 - Retirar condi√ß√£o de valida√ß√£o p/ campo  ***//
 	//***                          cdsitlog (David).                       ***//
-	//***																   ***//
+	//***																                                   ***//
 	//***             29/05/2012 - Chamado a funcao visualizaPDF para      ***//
-	//***						   mostrar o arquivo. (Fabricio)           ***//
-	//***																   ***//
+	//***						   mostrar o arquivo. (Fabricio)                       ***//
+	//***																                                   ***//
 	//***             06/07/2012 - Adicionado confirmacao para impressao   ***//
-	//***						   Retirado var post imprimir (Jorge)      ***//
+	//***						   Retirado var post imprimir (Jorge)                  ***//
+  //***                                                                  ***//
+  //***             14/09/2016 -  Adicionado novo paramentro "$cdifconv".***//
+  //***               (Evandro - RKAM)                                   ***//
 	//************************************************************************//
 	
 	session_cache_limiter("private");
 	session_start();
 	
-	// Includes para controle da session, vari·veis globais de controle, e biblioteca de funÁıes	
+	// Includes para controle da session, vari√°veis globais de controle, e biblioteca de fun√ß√µes	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");		
 	require_once("../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÈtodo POST
+	// Verifica se tela foi chamada pelo m√©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -37,37 +40,38 @@
 	
 	$nmarqpdf = $_POST["nmarqpdf"];
 
-	// Se campos necess·rios para carregar dados n„o foram informados
+	// Se campos necess√°rios para carregar dados n√£o foram informados
 	if (!isset($_POST["flgidlog"]) || !isset($_POST["dtmvtlog"]) || !isset($_POST["numedlog"])) {
-		exibeErro('Par‚metros incorretos.');
+		exibeErro('Par√¢metros incorretos.');
 	}		
 
 	$flgidlog = $_POST["flgidlog"];
 	$dtmvtlog = $_POST["dtmvtlog"];
 	$numedlog = $_POST["numedlog"];
 	$cdsitlog = $_POST["cdsitlog"];
-
-	// Verifica se flag de identificaÁ„o do log È v·lida
+  $cdifconv = $_POST["$cdifconv"];
+  
+	// Verifica se flag de identifica√ß√£o do log √© v√°lida
 	if ($flgidlog <> "yes" && $flgidlog <> "no") {
-		exibeErro('Log inv·lido.');
+		exibeErro('Log inv√°lido.');
 	
 	}
 
-	// Verifica se data do log È v·lida
+	// Verifica se data do log √© v√°lida
 	if (!validaData($dtmvtlog)) {
-		exibeErro('Data de log inv·lida.');
+		exibeErro('Data de log inv√°lida.');
 	
 	}
 
-	// Verifica se tipo do log È um inteiro v·lido
+	// Verifica se tipo do log √© um inteiro v√°lido
 	if (!validaInteiro($numedlog)) {
-		exibeErro('Tipo de log inv·lido.');
+		exibeErro('Tipo de log inv√°lido.');
 	
 	}
 
 	$dsiduser = session_id();	
 	
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xmlGetLog  = "";
 	$xmlGetLog .= "<Root>";
 	$xmlGetLog .= "  <Cabecalho>";
@@ -86,6 +90,7 @@
 	$xmlGetLog .= "    <numedlog>".$numedlog."</numedlog>";
 	$xmlGetLog .= "    <cdsitlog>".$cdsitlog."</cdsitlog>";
 	$xmlGetLog .= "    <dsiduser>".$dsiduser."</dsiduser>";
+  $xmlGetLog .= "    <cdifconv>".$cdifconv."</cdifconv>";
 	$xmlGetLog .= "  </Dados>";
 	$xmlGetLog .= "</Root>";
 	
@@ -95,20 +100,20 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjLog = getObjectXML($xmlResult);
 
-	// ObtÈm nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+	// Obt√©m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 	$nmarqpdf = $xmlObjLog->roottag->tags[0]->attributes["NMARQPDF"];
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjLog->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjLog->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibeErro($msg);
 	}
 
-	// Chama funÁ„o para mostrar PDF do impresso gerado no browser
+	// Chama fun√ß√£o para mostrar PDF do impresso gerado no browser
 	visualizaPDF($nmarqpdf);
 
 		
-	// FunÁ„o para exibir erros na tela atravÈs de javascript
+	// Fun√ß√£o para exibir erros na tela atrav√©s de javascript
 	function exibeErro($msgErro) {
 		echo '<script>alert("'.$msgErro.'");</script>';
 		exit();

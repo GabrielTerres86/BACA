@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jonathan C. da Silva - RKAM
-   Data    : 26/08/2014                        Ultima atualizacao: 12/11/2015
+   Data    : 26/08/2014                        Ultima atualizacao: 27/09/2016
 
    Dados referentes ao programa:
 
@@ -22,7 +22,11 @@
                              
                12/11/2015 - Na chamada da procedure obtem-log-cecred, incluir
                             novo parametro inestcri, projeto Estado de Crise
-                            (Jorge/Andrino)              
+                            (Jorge/Andrino)           
+
+               27/09/2016 - M211 - Envio do parado cdifconv na chamada da 
+                            obtem-log-cecred (Jonata-RKAM)                  
+                            
  .............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -262,9 +266,10 @@ PROCEDURE transacao:
                                           INPUT par_nrdconta,
                                           INPUT par_nrsequen,
                                           INPUT 0,
-                                          INPUT par_qtregpag,
-                                          INPUT 0,  /* par_vlrdated */
+                                          INPUT par_qtregpag,                                          
                                           INPUT 0,  /* inestcri 0 Nao, 1 Sim*/
+                                          INPUT 3,  /* IF da TED - Todas */
+										  INPUT 0,  /* par_vlrdated */
                                          OUTPUT TABLE tt-logspb,
                                          OUTPUT TABLE tt-logspb-detalhe,
                                          OUTPUT TABLE tt-logspb-totais,

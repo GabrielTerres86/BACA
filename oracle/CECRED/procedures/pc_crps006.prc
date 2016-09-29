@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Novembro/91.                      Ultima atualizacao: 07/06/2016
+    Data    : Novembro/91.                      Ultima atualizacao: 26/09/2016
 
     Dados referentes ao programa:
 
@@ -180,6 +180,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                             para considerar os lotes 10301, 6902 
                             (Adriano - SD 428923).
                             
+               26/09/2016 - Ajuste para incluir lotes da M211 (Jonata - RKAM)
 
     ............................................................................. */
     DECLARE
@@ -357,7 +358,122 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               ,1
               ,1
         FROM DUAL
-     ORDER BY 2;
+     UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8482
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8483
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8484
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8485
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8486
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      ORDER BY 2;
 
       CURSOR cr_crapage (pr_cdcooper IN crapage.cdcooper%TYPE
                         ,pr_cdagenci IN crapage.cdagenci%TYPE) IS

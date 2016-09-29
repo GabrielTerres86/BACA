@@ -28,6 +28,10 @@
 //***             09/11/2015 - Adicionar campo "Crise" no formulario de **//
 //***                          consulta, opcao "L"		               ***//
 //***                          (Jorge/Andrino) 			               ***//
+//***			                                                       ***//
+//***             14/09/2016 - Adicionado validação do campo Sicredi    **//
+//***                          e botões concluir e voltar 			   ***//
+//***                          (Evandro - RKAM) 			           ***//
 //************************************************************************//
 
 var contWin  = 0;
@@ -37,7 +41,10 @@ var cdcooper;
 var nmcooper;
 var carregouOpcoes = false;
 
-$(document).ready(function() {
+$(document).ready(function () {
+
+    $('.Botoes').css("margin", "0 300px");
+    $('.Botoes').css("cursor", "pointer");
 
 	if (!carregouOpcoes)
 		carregaOpcoes();
@@ -203,9 +210,28 @@ $(document).ready(function() {
 			
 		}
 	});
+
+	$("#cdifconv", "#frmLogSPB").bind("change", function (e) {
+	    if ($(this).val() == "1") {	       
+	        $("#numedlog option", "#frmLogSPB").each(function () {
+	            if ($(this).val() == "2") {
+	                $(this).prop("disabled", false);
+	                $(this).prop("selected", true);
+	            }
+	            else {
+	                $(this).prop("disabled", true);
+	            }
+	        });
+	    }
+	    else {
+	        $("#numedlog option", "#frmLogSPB").each(function () {
+	            $(this).prop("disabled", false);
+	        });
+	    }
+	});
 	
 	//Rótulos
-	$('label[for="cddopcao"]','#frmLogSPB').css({'width':'140px'}); 
+	$('label[for="cddopcao"]','#frmLogSPB').css({'width':'55px'}); 
 	$('label[for="flgidlog"]','#frmLogSPB').css({'width':'140px'}); 
 	$('label[for="cdsitlog"]','#frmLogSPB').css({'width':'140px'}); 
 	$('label[for="dtmvtlog"]','#frmLogSPB').css({'width':'75px'}); 
@@ -214,9 +240,10 @@ $(document).ready(function() {
 	$('label[for="dsorigem"]','#frmLogSPB').css({'width':'65px'});
 	$('label[for="inestcri"]','#frmLogSPB').css({'width':'140px'});
 	$('label[for="vlrdated"]','#frmLogSPB').css({'width':'75px'});
+	$('label[for="cdifconv"]','#frmLogSPB').css({'width':'65px'});
 	
 	//Campos
-	$("#cddopcao","#frmLogSPB").css({'width':'477px'});
+	$("#cddopcao","#frmLogSPB").css({'width':'535px'});
 	$("#flgidlog","#frmLogSPB").css({'width':'120px'});
 	$("#cdsitlog","#frmLogSPB").css({'width':'120px'});
 	$("#dtmvtlog","#frmLogSPB").css({'width':'90px'});
@@ -225,7 +252,8 @@ $(document).ready(function() {
 	$("#dsorigem","#frmLogSPB").css({'width':'120px'});
 	$("#inestcri","#frmLogSPB").css({'width':'120px'});	
 	$("#vlrdated","#frmLogSPB").css({'width':'90px'});
-	
+	$("#cdifconv","#frmLogSPB").css({'width':'120px'});
+
 	controlaFoco();
 	
 	$("#dtmvtlog","#frmLogSPB").setMask("DATE","","","");
@@ -238,6 +266,35 @@ $(document).ready(function() {
 	$("#cddopcao","#frmLogSPB").focus();
 });
 
+function VoltarLoad() {
+    $("#divConteudoLog").css("display", "none");
+
+    $("#flgidlog", "#frmLogSPB").prop("disabled", false);
+
+    $("#dtmvtlog", "#frmLogSPB").prop("disabled", false);
+
+    $("#numedlog option:first", "#frmLogSPB").text("Enviadas");
+    $("#numedlog option:first", "#frmLogSPB").val("1");
+    $("#numedlog", "#frmLogSPB").val("1");
+    $("#numedlog", "#frmLogSPB").prop("disabled", false);
+
+    $("#cdsitlog option:first", "#frmLogSPB").text("Processadas");
+    $("#cdsitlog option:first", "#frmLogSPB").val("P");
+    $("#cdsitlog", "#frmLogSPB").val("P");
+    $("#cdsitlog", "#frmLogSPB").prop("disabled", false);
+
+    $("#nrdconta", "#frmLogSPB").prop("disabled", false);
+    $("#dsorigem", "#frmLogSPB").prop("disabled", false);
+    $("#inestcri", "#frmLogSPB").prop("disabled", false);
+    $("#vlrdated", "#frmLogSPB").prop("disabled", false);
+    $("#divCoop", "#frmLogSPB").hide();
+    $("#divTipo", "#frmLogSPB").show();
+    $("#divLog", "#frmLogSPB").show();
+    $("#divData", "#frmLogSPB").show();
+    $("#divContaOrigem", "#frmLogSPB").show();
+    $("#btImpCsv", "#frmLogSPB").hide();
+    $("#btImpPsv", "#frmLogSPB").hide();
+}
 
 function controlaFoco() {
 
@@ -353,7 +410,8 @@ function obtemLog() {
 		var nrdconta = retiraCaracteres($("#nrdconta","#frmLogSPB").val(),"0123456789",true);
 		var dsorigem = $("#dsorigem","#frmLogSPB").val();
 		var inestcri = $("#inestcri","#frmLogSPB").val();
-		var vlrdated = $("#vlrdated","#frmLogSPB").val();
+		var vlrdated = $("#vlrdated", "#frmLogSPB").val();
+		var cdifconv = $("#cdifconv", "#frmLogSPB").val();
 
 		// Se nenhum dos tipos de conta foi informado
 		if (dtmvtlog == "") {		
@@ -385,6 +443,7 @@ function obtemLog() {
 					nrregist: 50,
 					inestcri: inestcri,
 					vlrdated: vlrdated,
+					cdifconv: cdifconv,
 					redirect: "script_ajax" // Tipo de retorno do ajax
 				},
 				error: function(objAjax,responseError,objExcept) {
@@ -448,6 +507,7 @@ function controlaOperacao(nriniseq, nrregist) {
 	var nrdconta = retiraCaracteres($("#nrdconta","#frmLogSPB").val(),"0123456789",true);
 	var dsorigem = $("#dsorigem","#frmLogSPB").val();
 	var inestcri = $("#inestcri","#frmLogSPB").val();
+	var cdifconv = $("#cdifconv", "#frmLogSPB").val();
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando log de transa&ccedil;&otilde;es ...");
@@ -466,6 +526,7 @@ function controlaOperacao(nriniseq, nrregist) {
 			nriniseq: nriniseq,
 			nrregist: nrregist,
 			inestcri: inestcri,
+			cdifconv: cdifconv,
 			redirect: "script_ajax" // Tipo de retorno do ajax
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -491,7 +552,8 @@ function imprimeLog(nmarqpdf, sidlogin){
 	var flgidlog = $("#flgidlog","#frmLogSPB").val();
 	var dtmvtlog = $("#dtmvtlog","#frmLogSPB").val();
 	var numedlog = $("#numedlog","#frmLogSPB").val();
-	var cdsitlog = $("#cdsitlog","#frmLogSPB").val();
+	var cdsitlog = $("#cdsitlog", "#frmLogSPB").val();
+	var cdifconv = $("#cdifconv", "#frmLogSPB").val();
 	
 	$('#frmImpressao').append('<input type="hidden" id="cddopcao" name="cddopcao" value="'+cddopcao+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="flgidlog" name="flgidlog" value="'+flgidlog+'" />');
@@ -499,7 +561,8 @@ function imprimeLog(nmarqpdf, sidlogin){
 	$('#frmImpressao').append('<input type="hidden" id="numedlog" name="numedlog" value="'+numedlog+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="cdsitlog" name="cdsitlog" value="'+cdsitlog+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="nmarqpdf" name="nmarqpdf" value="'+nmarqpdf+'" />');
-	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');	
+	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');
+	$('#frmImpressao').append('<input type="hidden" id="cdifconv" name="cdifconv" value="'+cdifconv+'" />');
 	
 	var action = UrlSite + "telas/logspb/impressao_log_spb.php";	
 	
@@ -586,7 +649,8 @@ function Csv() {
 	var dsorigem = $("#dsorigem","#frmLogSPB").val();
 	var inestcri = $("#inestcri","#frmLogSPB").val();
 	var vlrdated = $("#vlrdated","#frmLogSPB").val();
-	
+	var vlrdated = $("#cdifconv","#frmLogSPB").val();
+
 	$('#frmImpressao').append('<input type="hidden" id="cddopcao" name="cddopcao" value="'+cddopcao+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="flgidlog" name="flgidlog" value="'+flgidlog+'" />');
@@ -597,7 +661,8 @@ function Csv() {
 	$('#frmImpressao').append('<input type="hidden" id="dsorigem" name="dsorigem" value="'+dsorigem+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="inestcri" name="inestcri" value="'+inestcri+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="vlrdated" name="vlrdated" value="'+vlrdated+'" />');
-	
+	$('#frmImpressao').append('<input type="hidden" id="cdifconv" name="cdifconv" value="'+cdifconv+'" />');
+
 	var action = UrlSite + "telas/logspb/impressao_log_csv.php";
 	
 	carregaImpressaoAyllos("frmImpressao",action);
@@ -615,7 +680,8 @@ function Pdf(){
 	var dsorigem = $("#dsorigem","#frmLogSPB").val();
 	var inestcri = $("#inestcri","#frmLogSPB").val();
 	var vlrdated = $("#vlrdated","#frmLogSPB").val();
-	
+	var vlrdated = $("#cdifconv", "#frmLogSPB").val();
+
 	$('#frmImpressao').append('<input type="hidden" id="cddopcao" name="cddopcao" value="'+cddopcao+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="flgidlog" name="flgidlog" value="'+flgidlog+'" />');
@@ -626,7 +692,8 @@ function Pdf(){
 	$('#frmImpressao').append('<input type="hidden" id="dsorigem" name="dsorigem" value="'+dsorigem+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="inestcri" name="inestcri" value="'+inestcri+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="vlrdated" name="vlrdated" value="'+vlrdated+'" />');
-	
+	$('#frmImpressao').append('<input type="hidden" id="cdifconv" name="cdifconv" value="'+cdifconv+'" />');
+
 	var action = UrlSite + "telas/logspb/impressao_log_pdf.php";
 	
 	carregaImpressaoAyllos("frmImpressao",action);
