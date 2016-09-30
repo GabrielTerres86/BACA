@@ -888,7 +888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                   ,nvl(pr_dsinfor3,' ')
                   ,nvl(pr_dsprotoc,' ')
                   ,pr_dtmvtolt
-                  ,TO_CHAR(SYSDATE,'DD/MM/RRRR')
+                  ,SYSDATE
                   ,vr_flgagend
                   ,pr_hrtransa
                   ,nvl(pr_nrdconta,0)
