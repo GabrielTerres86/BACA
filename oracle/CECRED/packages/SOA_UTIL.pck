@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.SOA_UTIL IS
+CREATE OR REPLACE PACKAGE SOA.SOA_UTIL IS
   ---------------------------------------------------------------------------
   --
   --  Programa : SOA_UTIL
@@ -23,7 +23,7 @@ CREATE OR REPLACE PACKAGE CECRED.SOA_UTIL IS
   
 END SOA_UTIL;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.SOA_UTIL IS
+CREATE OR REPLACE PACKAGE BODY SOA.SOA_UTIL IS
 
     FUNCTION fn_caract_acento(pr_texto IN VARCHAR2,                                                   --> String para limpeza
                             pr_insubsti IN PLS_INTEGER DEFAULT 0,                                     --> Flag para substituir

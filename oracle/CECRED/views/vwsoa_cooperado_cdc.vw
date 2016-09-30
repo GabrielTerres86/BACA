@@ -2,6 +2,7 @@ CREATE OR REPLACE VIEW CECRED.VWSOA_COOPERADO_CDC AS
    select cdc.cdcooper
          ,cdc.idcooperado_cdc
          ,cdc.idmatriz
+         ,ass.nmprimtl
          ,cdc.nmfantasia         
          ,case when ass.inpessoa <> 1
                /* Pessoa jurídica devemos buscar o CNAE da crapass */
