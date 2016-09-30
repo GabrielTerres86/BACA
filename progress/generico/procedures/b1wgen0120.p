@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0120.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Outubro/2011                     Ultima atualizacao: 23/08/2016
+    Data    : Outubro/2011                     Ultima atualizacao: 30/09/2016 
 
     Objetivo  : Tranformacao BO tela BCAIXA
 
@@ -89,6 +89,10 @@
                              (Gil/Rkam)
 				
 				23/08/2016 - Agrupamento das informacoes (M36 - Kelvin).
+
+				30/09/2016 - Ajuste realizado para corrigir o problema da melhoria 36 onde
+							 não estava mostrando as arrecações de GPS, conforme é citado no chamado 532033.
+							 (Kelvin)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -1342,34 +1346,7 @@ PROCEDURE Gera_Boletim:
                           INPUT-OUTPUT aux_vlrttctb,
                           INPUT-OUTPUT aux_vlrttcrd,
                           INPUT-OUTPUT aux_qtrttctb).
-                END.
-            ELSE
-            IF  craphis.nmestrut = "craplgp" THEN
-                DO:
-                    /* Verifica qual historico deve rodar conforme cadastro
-                     da COOP. Se tem Credenciamento, deve ser historico 
-                     582 senao 458 */
-                    IF (   (crapcop.cdcrdarr = 0 AND
-                            craphis.cdhistor = 458)
-                       OR  (crapcop.cdcrdarr <> 0 AND
-                            craphis.cdhistor = 582)) THEN DO:
-                        
-                        RUN gera_craplgp
-                            ( INPUT par_cdcooper,
-                              INPUT-OUTPUT aux_vlrttctb,
-                              INPUT-OUTPUT aux_qtrttctb).
-                    END.
-                    ELSE DO:
-                        IF (crapcop.cdcrdins <> 0  AND /* GPS SICREDI NOVO */
-                            craphis.cdhistor = 1414) THEN DO:
-
-                            RUN gera_craplgp_gps
-                               ( INPUT par_cdcooper,
-                                 INPUT-OUTPUT aux_vlrttctb,
-                                 INPUT-OUTPUT aux_qtrttctb).
                         END.
-                    END.
-                END.
             ELSE 
             IF  craphis.nmestrut = "craplci" THEN
                 DO:
@@ -1690,7 +1667,8 @@ PROCEDURE Gera_Boletim:
                 END.
             /*** tratamento para historico 717-arrecadacoes ******/
             IF  craphis.cdhistor = 717    AND
-                aux_vlrttctb <> 0         THEN
+                (aux_vlrttctb <> 0        OR
+                aux_vlarcgps <> 0)       THEN
                 DO:
                     IF  NOT par_tipconsu AND
                         LINE-COUNTER(str_1) > 76 THEN
