@@ -34,7 +34,7 @@
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 06/09/2016
+    Data    : Abril/2006                     Ultima Atualizacao: 27/09/2016
     
     Dados referentes ao programa:
 
@@ -446,6 +446,10 @@
 			
 			  06/09/2016 - Ajuste no horario de permissao de cancelamento de agendamento de TED
 						   (Adriano - SD 509480).
+                           
+              26/09/2016 - Ajuste para enviar mais de um email para monitoracao de fraude
+                           qdo o corpo do email ultrapassar 25 titulos pois estava
+                           acarretando em problemas no IB (Tiago/Elton SD 521667).             
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -482,6 +486,9 @@ DEF TEMP-TABLE tt-tbcapt_trans_pend   NO-UNDO LIKE tbcapt_trans_pend.
 DEF TEMP-TABLE tt-tbconv_trans_pend   NO-UNDO LIKE tbconv_trans_pend.
 DEF TEMP-TABLE tt-tbfolha_trans_pend  NO-UNDO LIKE tbfolha_trans_pend.
 DEF TEMP-TABLE tt-tbtarif_pacote_trans_pend NO-UNDO LIKE tbtarif_pacote_trans_pend.
+DEF TEMP-TABLE tt-pagtos-mon NO-UNDO
+    FIELD nrsequen AS INTE
+    FIELD dslinhas AS CHAR.
 
 DEF VAR aux_tab_limite AS LONGCHAR                                  NO-UNDO.
 DEF VAR xml_dsmsgerr   AS CHAR                                      NO-UNDO.
@@ -2833,6 +2840,8 @@ PROCEDURE paga_titulo:
     DEFINE VARIABLE aux_nrcpfpre AS DECIMAL     NO-UNDO.
     DEFINE VARIABLE aux_nmprepos AS CHARACTER   NO-UNDO.
 
+    DEFINE VARIABLE aux_nrsequen AS INTEGER     NO-UNDO.
+
     DEFINE BUFFER cra2ass FOR crapass.
     DEFINE BUFFER crabavt FOR crapavt.
 
@@ -3607,6 +3616,8 @@ PROCEDURE paga_titulo:
          ** envia email.                                                  **
          ** ------------------------------------------------------------- **/
         
+		EMPTY TEMP-TABLE tt-pagtos-mon.
+
         IF  aux_cdagenci  = 90    AND 
             par_idtitdda  = 0     AND 
             NOT par_flgagend      THEN
@@ -3618,7 +3629,8 @@ PROCEDURE paga_titulo:
                 IF  aux_flgemail  THEN
                     DO:
                         ASSIGN aux_vlpagtos = 0
-                               aux_dspagtos = "".
+                               aux_dspagtos = ""
+                               aux_nrsequen = 0.
 
                         FOR EACH crappro WHERE crappro.cdcooper = crapcop.cdcooper AND 
                                                crappro.nrdconta = par_nrdconta     AND
@@ -3680,19 +3692,27 @@ PROCEDURE paga_titulo:
                                             DO:
 
                                                 ASSIGN aux_vlpagtos = aux_vlpagtos + craptit.vldpagto
-                                                       aux_dspagtos = aux_dspagtos +
-                                                           "Valor do Pagamento: R$ " + 
+                                                       aux_nrsequen = aux_nrsequen + 1.
+
+                                                CREATE tt-pagtos-mon.
+                                                ASSIGN tt-pagtos-mon.nrsequen = aux_nrsequen
+                                                       tt-pagtos-mon.dslinhas = "Valor do Pagamento: R$ " + 
                                                            TRIM(STRING(craptit.vldpagto,"zzz,zzz,zzz,zz9.99")) + 
                                                            " - Cod.Barras: " + craptit.dscodbar + "\n\n".
+                                                VALIDATE tt-pagtos-mon.
                                             END.
                                         END.
                                     ELSE
                                     DO:
                                         ASSIGN aux_vlpagtos = aux_vlpagtos + craptit.vldpagto
-                                               aux_dspagtos = aux_dspagtos +
-                                                   "Valor do Pagamento: R$ " + 
-                                                   TRIM(STRING(craptit.vldpagto,"zzz,zzz,zz9.99")) + 
+                                               aux_nrsequen = aux_nrsequen + 1.
+
+                                        CREATE tt-pagtos-mon.
+                                        ASSIGN tt-pagtos-mon.nrsequen = aux_nrsequen
+                                               tt-pagtos-mon.dslinhas = "Valor do Pagamento: R$ " + 
+                                                                        TRIM(STRING(craptit.vldpagto,"zzz,zzz,zzz,zz9.99")) + 
                                                    " - Cod.Barras: " + craptit.dscodbar + "\n\n".
+                                        VALIDATE tt-pagtos-mon.
                                     END.
                                 END.
                         
@@ -3856,31 +3876,68 @@ PROCEDURE paga_titulo:
 
                         END.
 
-                        ASSIGN aux_conteudo = aux_conteudo + "\n" + aux_dspagtos.
-                                                
+                        /* Envia email para monitoracao de fraude com 25 titulos por email
+                           pois estava estourando a variavel do corpo do email*/
                         RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT
                             SET h-b1wgen0011.
 
                         IF  VALID-HANDLE(h-b1wgen0011)  THEN
                             DO:
-                                RUN enviar_email_completo IN h-b1wgen0011
-                                  (INPUT par_cdcooper,
-                                   INPUT "INTERNETBANK",
-                                   INPUT "cpd@cecred.coop.br",
-                                   INPUT "monitoracaodefraudes@cecred.coop.br",
-                                   INPUT "PAGTO " +
-                                         crapcop.nmrescop + " " +
-                                         TRIM(STRING(par_nrdconta,
-                                                     "zzzz,zzz,9")) + " R$ " +
-                                         TRIM(STRING(par_vllanmto,
-                                                     "zzz,zzz,zzz,zz9.99")),
-                                   INPUT "",
-                                   INPUT "",
-                                   INPUT aux_conteudo,
-                                   INPUT TRUE).
+                                ASSIGN aux_nrsequen = 0.
+
+                                FOR EACH tt-pagtos-mon NO-LOCK BY tt-pagtos-mon.nrsequen:
+
+                                    ASSIGN aux_dspagtos = aux_dspagtos + tt-pagtos-mon.dslinhas
+                                           aux_nrsequen = aux_nrsequen + 1.
+
+                                    IF  aux_nrsequen = 25 THEN
+                                        DO:   
+											RUN enviar_email_completo IN h-b1wgen0011
+											  (INPUT par_cdcooper,
+											   INPUT "INTERNETBANK",
+											   INPUT "cpd@cecred.coop.br",
+											   INPUT "monitoracaodefraudes@cecred.coop.br",
+											   INPUT "PAGTO " +
+													 crapcop.nmrescop + " " +
+													 TRIM(STRING(par_nrdconta,
+																 "zzzz,zzz,9")) + " R$ " +
+													 TRIM(STRING(par_vllanmto,
+																 "zzz,zzz,zzz,zz9.99")),
+											   INPUT "",
+											   INPUT "",
+											   INPUT aux_conteudo + "\n" + aux_dspagtos,
+											   INPUT TRUE).
+
+                                            ASSIGN aux_dspagtos = ""
+                                                   aux_nrsequen = 0.
+                                        END.               
+                                END.
+
+                                IF  aux_nrsequen > 0 THEN
+                                DO:
+                                    RUN enviar_email_completo IN h-b1wgen0011
+                                      (INPUT par_cdcooper,
+                                       INPUT "INTERNETBANK",
+                                       INPUT "cpd@cecred.coop.br",
+                                       INPUT "monitoracaodefraudes@cecred.coop.br",
+                                       INPUT "PAGTO " +
+                                             crapcop.nmrescop + " " +
+                                             TRIM(STRING(par_nrdconta,
+                                                         "zzzz,zzz,9")) + " R$ " +
+                                             TRIM(STRING(par_vllanmto,
+                                                         "zzz,zzz,zzz,zz9.99")),
+                                       INPUT "",
+                                       INPUT "",
+                                       INPUT aux_conteudo + "\n" + aux_dspagtos,
+                                       INPUT TRUE).
+
+                                    ASSIGN aux_dspagtos = ""
+                                           aux_nrsequen = 0.
+                                END.
 
                                 DELETE PROCEDURE h-b1wgen0011.
                             END.
+                            /*Fim do envio de email*/
                     END.
                     
             END.

@@ -14,6 +14,8 @@
    Alteracoes: 24/06/2016 - Alterado para exibir o curso se estiver ativo em pelo
                             menos 1 PA SD468459. (Odirlei-AMcom)
                             
+               23/09/2016 - Ajuste para exibir corretamente o caracter de de marcador
+                            SD525341(Odirlei-AMcom)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -132,6 +134,8 @@ END.
 FOR EACH tt-crapedp NO-LOCK
     BY tt-idevento
     BY tt-cdevento:
+    
+    tt-dsconteu = REPLACE(tt-dsconteu,'•','<br>&bull;&nbsp;').
 
     /* Cria o nó PROGRAMACAO */
     xDoc:CREATE-NODE( xRoot2, "CURSOS_EAD", "ELEMENT" ).

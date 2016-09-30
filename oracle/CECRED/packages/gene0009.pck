@@ -256,7 +256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
             END IF;
                                 
             IF TRIM(vr_tpregistro) IS NULL THEN
-              vr_dscritic := 'Nao foi possivel definir layout para a linha';
+              vr_dscritic := 'Nao foi possivel definir layout para a linha '||vr_contlin;
               RAISE vr_exc_erro;
             END IF;
             

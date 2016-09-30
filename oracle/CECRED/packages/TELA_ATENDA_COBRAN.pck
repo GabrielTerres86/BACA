@@ -1088,7 +1088,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 26/04/2016
+    Data    : Fevereiro/2016                 Ultima atualizacao: 24/08/2016
 
     Dados referentes ao programa:
 
@@ -1098,6 +1098,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
     Alteracoes: 26/04/2016 - Ajustes projeto PRJ318 - Nova Plataforma cobrança
                              (Odirlei-AMcom)
+
+				24/08/2016 - Ajuste emergencial pós-liberação do projeto 318. (Rafael)
     ..............................................................................*/
     DECLARE
 
@@ -1346,7 +1348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         vr_cdcritic := 9;
         RAISE vr_exc_saida;
       END IF;
-
+      
       vr_insitceb := pr_insitceb;
 
       -- Monta a mensagem da operacao para envio no e-mail
@@ -1518,7 +1520,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 					-- Levantar exceção
           RAISE vr_exc_saida;				
 			END IF;
-
       -- Seta como registro existente
       vr_blnewreg := FALSE;
 
@@ -1578,6 +1579,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       IF vr_blnewreg AND 
          (nvl(vr_insitif,'A') <> 'I' AND (vr_insitcip IS NULL OR vr_insitcip = 'A')) THEN
         
+        vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');      
+        
         --> Verificar se ja existe o beneficiario na cip
         OPEN cr_DDA_Benef (pr_dspessoa => rw_crapass.dspessoa,
                            pr_nrcpfcgc => rw_crapass.nrcpfcgc);
@@ -1589,9 +1592,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                              pr_nrdconta => pr_nrdconta);
             FETCH cr_crapjur INTO rw_crapjur;
             CLOSE cr_crapjur;
-          END IF;  
-            
-          vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
+          END IF;              
                     
       BEGIN
             INSERT INTO TBJDDDABNF_BeneficiarioIF@jdbnfsql
@@ -1818,7 +1819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
             RAISE vr_exc_saida;
           END IF;
                     
-          vr_insitceb := 3; -- PENDENTE          
+          
           vr_flgimpri := 0; -- nao imprimir o termo de adesao
           
         ELSE
@@ -2365,7 +2366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flprotes'
                             ,pr_tag_cont => rw_cco_prc.flprotes
                             ,pr_des_erro => vr_dscritic);
-
+                            
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
@@ -3103,7 +3104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         ROLLBACK;
 
   END pc_gera_arq_ajuda;
-
+  
   --> Rotina para ativar convenio
   PROCEDURE pc_ativar_convenio( pr_nrdconta  IN crapceb.nrdconta%TYPE --> Conta
                                ,pr_nrconven  IN crapceb.nrconven%TYPE --> Convenio

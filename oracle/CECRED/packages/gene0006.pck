@@ -228,7 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 06/07/2016
+   Data    : Agosto/2006                   Ultima Atualizacao: 29/09/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -282,6 +282,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
 
                06/07/2016 - Incluir log no exception da crappro na procedure 
                             pc_gera_protocolo (Lucas Ranghetti #468306)
+                            
+               29/09/2016 - Ajuste para gravar a data no formato DD/MM/RRRR ao gravar o protocolo
+                            (Andrei - RKAM).             
+                            
 ............................................................................. */
 
   /* Rotina para gerar um codigo identificador de sessão para ser usado na validacao de parametros na URL */
@@ -770,6 +774,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
     --   Alteracoes: 01/06/2013 - Conversão Progress-Oracle (Petter - Supero).
     -- 
     --               06/07/2016 - Incluir log no exception da crappro (Lucas Ranghetti #468306)
+    --
+    --               29/09/2016 - Ajuste para gravar a data no formato DD/MM/RRRR ao gravar o protocolo
+    --                            (Andrei - RKAM).
+    --
     -- .............................................................................
   BEGIN
     DECLARE
@@ -880,7 +888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0006 IS
                   ,nvl(pr_dsinfor3,' ')
                   ,nvl(pr_dsprotoc,' ')
                   ,pr_dtmvtolt
-                  ,SYSDATE
+                  ,TO_CHAR(SYSDATE,'DD/MM/RRRR')
                   ,vr_flgagend
                   ,pr_hrtransa
                   ,nvl(pr_nrdconta,0)

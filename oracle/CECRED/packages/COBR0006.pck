@@ -706,6 +706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       --Variaveis de exceção
       vr_exc_erro EXCEPTION;
+      vr_nrsequence crapsqu.nrseqatu%TYPE;
       
     BEGIN
 
@@ -732,13 +733,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
       --Inicaliza o monitoramento
       IF pr_tpoperac = 1 THEN
-        
+        vr_nrsequence := fn_sequence(pr_nmtabela => 'TBGEN_RESUMO_PROCESSO'
+                                ,pr_nmdcampo => 'CDRESUMO_PROCESSO'
+                                ,pr_dsdchave => '0');
         BEGIN
           INSERT INTO tbgen_resumo_processo (cdresumo_processo
                                             ,cdservico_barramento
                                             ,dhinicio
                                             ,indstatus_processo)
-                                     VALUES((SELECT max(cdresumo_processo + 1) FROM tbgen_resumo_processo)
+                                     VALUES( vr_nrsequence
                                             ,rw_tbgen_aplicacao_barramento.cdservico_barramento
                                             ,SYSDATE
                                             ,1)
@@ -758,6 +761,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
 
         END;
+
+        vr_nrsequence := fn_sequence(pr_nmtabela => 'TBGEN_ITEM_RESUMO_PROCESSO'
+                                ,pr_nmdcampo => 'CDITEM_RESUMO_PROCESSO'
+                                ,pr_dsdchave => '0');
         
         BEGIN
             INSERT INTO tbgen_item_resumo_processo (cditem_resumo_processo
@@ -767,7 +774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                     ,cdcooper
                                                     ,nrdconta
                                                     ,dsitem_resumo_processo)
-                                             VALUES((SELECT max(cditem_resumo_processo + 1) cditem_resumo_processo FROM tbgen_item_resumo_processo)
+                                             VALUES(vr_nrsequence
                                                    ,vr_cdresumo_processo
                                                    ,SYSDATE                                                  
                                                    ,1 --Iniciado
@@ -1921,7 +1928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).nrcepsac,
                 nvl(trim(pr_tab_crapcob(vr_idx_cob).nmdavali),' '),
                 nvl(pr_tab_crapcob(vr_idx_cob).nrinsava,0),
-                pr_tab_crapcob(vr_idx_cob).cdtpinav,
+                nvl(pr_tab_crapcob(vr_idx_cob).cdtpinav,0),
                 nvl(trim(pr_tab_crapcob(vr_idx_cob).dsdinstr),' '),
                 pr_tab_crapcob(vr_idx_cob).dsusoemp,
                 pr_tab_crapcob(vr_idx_cob).nrremass,
@@ -1930,7 +1937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).flgimpre,
                 pr_tab_crapcob(vr_idx_cob).nrnosnum,
                 pr_tab_crapcob(vr_idx_cob).dtdocmto,
-                pr_tab_crapcob(vr_idx_cob).tpjurmor,
+                nvl(pr_tab_crapcob(vr_idx_cob).tpjurmor,3),
                 pr_tab_crapcob(vr_idx_cob).vljurdia,
                 pr_tab_crapcob(vr_idx_cob).tpdmulta,
                 pr_tab_crapcob(vr_idx_cob).vlrmulta,
@@ -1940,7 +1947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).idseqttl,
                 pr_tab_crapcob(vr_idx_cob).cdoperad,
                 pr_tab_crapcob(vr_idx_cob).qtdiaprt,
-                pr_tab_crapcob(vr_idx_cob).inemiexp,
+                nvl(pr_tab_crapcob(vr_idx_cob).inemiexp,0),
                 0, -- idopeleg
                 0, -- idtitleg
                 0, -- flgcbdda (FALSE)
@@ -4792,7 +4799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 
     -- 27.3P Valida Codigo do Juros de Mora
-    pr_rec_cobranca.tpdjuros := pr_tab_linhas('TPDJUROS').numero;
+    pr_rec_cobranca.tpdjuros := nvl(pr_tab_linhas('TPDJUROS').numero,0);
     IF pr_rec_cobranca.tpdjuros <> 1 AND  -- Valor por Dia
        pr_rec_cobranca.tpdjuros <> 2 AND  -- Taxa Mensal
        pr_rec_cobranca.tpdjuros <> 3 THEN -- Isento
@@ -5183,7 +5190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 
     -- 08.3Q Valida Tipo de Inscricao
-    pr_rec_cobranca.cdtpinsc := pr_tab_linhas('INPESSOA').numero;
+    pr_rec_cobranca.cdtpinsc := nvl(pr_tab_linhas('INPESSOA').numero,0);
     IF pr_rec_cobranca.cdtpinsc <> 1 AND
        pr_rec_cobranca.cdtpinsc <> 2  THEN
       -- Tipo/Numero de Inscricao do Sacado Invalidos
@@ -5281,7 +5288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 
     -- 17.3Q Valida Tipo de Inscricao Avalista
-    pr_rec_cobranca.cdtpinav := pr_tab_linhas('CDTPINAV').numero;
+    pr_rec_cobranca.cdtpinav := nvl(pr_tab_linhas('CDTPINAV').numero,0);
     IF pr_rec_cobranca.cdtpinav <> 0 AND  -- Vazio
        pr_rec_cobranca.cdtpinav <> 1 AND  -- Fisica
        pr_rec_cobranca.cdtpinav <> 2 THEN -- Juridica
@@ -6326,7 +6333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
              
     END IF;      
     
-    pr_rec_cobranca.cdtpinsc := pr_tab_linhas('INPESSOA').numero;
+    pr_rec_cobranca.cdtpinsc := nvl(pr_tab_linhas('INPESSOA').numero,0);
     pr_rec_cobranca.nrinssac := pr_tab_linhas('NRCPFCGC').numero;
     pr_rec_cobranca.nmdsacad := REPLACE(pr_tab_linhas('NMDSACAD').texto,'&','E');
     pr_rec_cobranca.dsendsac := pr_tab_linhas('DSENDSAC').texto;
@@ -6336,7 +6343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.cdufsaca := pr_tab_linhas('CDUFSACA').texto;
     pr_rec_cobranca.nmdavali := pr_tab_linhas('NMDAVALI').texto;
     pr_rec_cobranca.nrinsava := pr_tab_linhas('NRINSAVA').numero;
-    pr_rec_cobranca.cdtpinav := pr_tab_linhas('CDTPINAV').numero;
+    pr_rec_cobranca.cdtpinav := nvl(pr_tab_linhas('CDTPINAV').numero,0);
     
     pc_grava_sacado( pr_cdoperad     => pr_cdoperad,     --> Operador
                      pr_rec_cobranca => pr_rec_cobranca, --> Dados da linha
@@ -7712,7 +7719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_rec_cobranca.vldjuros > 0 THEN
        
       -- Juros por dia
-      pr_rec_cobranca.tpdmulta := 1;
+      pr_rec_cobranca.tpdjuros := 1;
       
     END IF;
     
@@ -7746,6 +7753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.nmcidsac := pr_tab_linhas('CIDSACAD').texto;   
     pr_rec_cobranca.cdufsaca := pr_tab_linhas('UFSACADO').texto;
     pr_rec_cobranca.nrcepsac := pr_tab_linhas('CEPSACAD').numero;
+    pr_rec_cobranca.cdtpinsc := pr_tab_linhas('TPINSSAC').numero;
       
     -- 38.7 Tipo de inscricao do sacado 
     IF pr_tab_linhas('TPINSSAC').numero <> 0 AND  --Vazio
@@ -7886,6 +7894,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_tab_linhas('INDMENSA').texto = 'A' THEN
             
       IF substr(pr_tab_linhas('OBSMENSA').texto,23,4) = 'CNPJ' THEN
+        pr_rec_cobranca.nmdavali := substr(pr_tab_linhas('OBSMENSA').texto,1,20);
+        pr_rec_cobranca.nrinsava := substr(pr_tab_linhas('OBSMENSA').texto,27,14);
+        pr_rec_cobranca.cdtpinav := 2;
       
         IF to_number(substr(pr_tab_linhas('OBSMENSA').texto,27,14)) > 0 AND 
            trim(substr(pr_tab_linhas('OBSMENSA').texto,1,20)) IS NULL   THEN
@@ -7911,7 +7922,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
         END IF;         
          
-      ELSIF substr(pr_tab_linhas('OBSMENSA').texto,23,4) = 'CPF' THEN
+      ELSIF substr(pr_tab_linhas('OBSMENSA').texto,27,3) = 'CPF' THEN
+        pr_rec_cobranca.nmdavali := substr(pr_tab_linhas('OBSMENSA').texto,1,24);
+        pr_rec_cobranca.nrinsava := substr(pr_tab_linhas('OBSMENSA').texto,30,11);
+        pr_rec_cobranca.cdtpinav := 1;
         
         IF to_number(substr(pr_tab_linhas('OBSMENSA').texto,30,11)) > 0 AND 
            trim(substr(pr_tab_linhas('OBSMENSA').texto,1,24)) IS NULL   THEN
@@ -8739,7 +8753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_nrconven  => vr_rec_header.nrcnvcob --> Numero do Convenio
                                 ,pr_nrremass  => vr_rec_header.nrremass --> Numero da Remessa
                                 ,pr_qtbloque  => vr_qtbloque --> Quantidade de Boletos Processados
-                                ,pr_vlrtotal  => 0  --> Valor Totall dos Boletos
+                                ,pr_vlrtotal  => vr_vlrtotal --> Valor Totall dos Boletos
                                 ,pr_nmarquiv  => vr_tab_crapaux(i).nmarqori --> Nome do Arquivo
                                 ,pr_nrprotoc  => pr_nrprotoc --> Numero do Protocolo
                                 ,pr_hrtransa  => pr_hrtransa --> Hora da transacao
@@ -9698,7 +9712,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_nrconven  => vr_rec_header.nrcnvcob --> Numero do Convenio
                                 ,pr_nrremass  => vr_rec_header.nrremass --> Numero da Remessa
                                 ,pr_qtbloque  => vr_qtbloque --> Quantidade de Boletos Processados
-                                ,pr_vlrtotal  => 0  --> Valor Totall dos Boletos
+                                ,pr_vlrtotal  => vr_vlrtotal  --> Valor Totall dos Boletos
                                 ,pr_nmarquiv  => vr_tab_crapaux(i).nmarqori --> Nome do Arquivo
                                 ,pr_nrprotoc  => pr_nrprotoc --> Numero do Protocolo
                                 ,pr_hrtransa  => pr_hrtransa --> Hora da transacao
@@ -10559,7 +10573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_nrconven  => vr_rec_header.nrcnvcob --> Numero do Convenio
                                 ,pr_nrremass  => vr_rec_header.nrremass --> Numero da Remessa
                                 ,pr_qtbloque  => vr_qtbloque --> Quantidade de Boletos Processados
-                                ,pr_vlrtotal  => 0  --> Valor Totall dos Boletos
+                                ,pr_vlrtotal  => vr_vlrtotal  --> Valor Totall dos Boletos
                                 ,pr_nmarquiv  => vr_tab_crapaux(i).nmarqori --> Nome do Arquivo
                                 ,pr_nrprotoc  => pr_nrprotoc --> Numero do Protocolo
                                 ,pr_hrtransa  => pr_hrtransa --> Hora da transacao
@@ -14598,7 +14612,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
       
     --> Remover arquivo 
-    vr_dscomand := 'rm '|| vr_dsdircop || '/upload/' || pr_nmarquiv;
+    vr_dscomand := 'mv '|| vr_dsdircop || '/upload/' || pr_nmarquiv|| ' ' ||
+                           vr_dsdircop || '/salvar';
                 
     gene0001.pc_oscommand_shell(pr_des_comando => vr_dscomand,
                                 pr_typ_saida   => vr_typ_said,
@@ -14622,7 +14637,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_dsretorn := 'NOK';    
       
       --> Remover arquivo 
-      vr_dscomand := 'rm '|| vr_dsdircop || '/upload/' || pr_nmarquiv;
+      vr_dscomand := 'mv '|| vr_dsdircop || '/upload/' || pr_nmarquiv|| ' ' ||
+                             vr_dsdircop || '/salvar';
               
       gene0001.pc_oscommand_shell(pr_des_comando => vr_dscomand,
                                   pr_typ_saida   => vr_typ_said,
@@ -14635,7 +14651,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_dsretorn := 'NOK';           
       
        --> Remover arquivo 
-      vr_dscomand := 'rm '|| vr_dsdircop || '/upload/' || pr_nmarquiv;
+      vr_dscomand := 'mv '|| vr_dsdircop || '/upload/' || pr_nmarquiv|| ' ' ||
+                             vr_dsdircop || '/salvar';
               
       gene0001.pc_oscommand_shell(pr_des_comando => vr_dscomand,
                                   pr_typ_saida   => vr_typ_said,
