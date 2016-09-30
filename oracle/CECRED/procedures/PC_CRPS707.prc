@@ -87,7 +87,6 @@ BEGIN
      vr_cdcritic     INTEGER;
      vr_cdprogra     VARCHAR2(10);
      vr_dscritic     VARCHAR2(4000);
-     vr_typsaida     VARCHAR2(3);
      vr_nmarqlog     VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
       
 
@@ -191,27 +190,12 @@ BEGIN
      -- Busca diretorio das TEDs para processamento
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
      
-     -- Executar Script para conversão dos XLS do diretório para LST
-     gene0001.pc_OScommand_Shell(pr_des_comando => gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_CONVERT_XLS_CSV')
-                                ,pr_typ_saida   => vr_typsaida
-                                ,pr_des_saida   => vr_dscritic); 
-     -- Havendo erro avisaremos o financeiro
-     IF vr_typsaida = 'ERR' THEN                           
-       -- Envio centralizado de log de erro
-       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                 ,pr_ind_tipo_log => 2 -- Erro tratato
-                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_dscritic );
-       RAISE vr_exc_saida;
-     END IF;
-     
      -- Busca remetente de email
      vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
 
      -- Efetuar leitura dos arquivos do diretorio
      gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds
-                               ,pr_pesq     => 're1714%.lst'
+                               ,pr_pesq     => 're1714%.ddm'
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
      -- Se houver erro
