@@ -95,7 +95,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 28/03/2016
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 30/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -107,6 +107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
                                  ao cooperado 
                                  (Andrei - RKAM ).
     --
+    --  Alteração : 30/09/2016 - Deletar as variaveis vr_tab_regras e vr_tab_layouts antes de carregar (Rafael).
     --
     -- ..........................................................................*/
     
@@ -136,6 +137,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
       --> Carregar layout que serao utilizados
       PROCEDURE pc_carrega_layouts(pr_idlayout IN tbgen_layout_campo.idlayout%TYPE) IS      
       BEGIN
+        -- variaveis precisam ser deletadas na sessão antes de carregar
+        vr_tab_layouts.delete;
+        vr_tab_regras.delete;
         -- Ler os campos do layout e armazenar na temptable para ter melhor performace ao ler as linhas
         FOR rw_campo_layout IN cr_campo_layout(pr_idlayout => pr_idlayout) LOOP
           vr_tab_layouts(rw_campo_layout.tpregistro)(rw_campo_layout.nrsequencia_campo) := rw_campo_layout;
