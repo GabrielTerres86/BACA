@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --  Sistema  : Rotinas referente ao processo de domicilio bancario
   --  Sigla    : CCRD
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : Setembro - 2015.                   Ultima atualizacao: 
+  --  Data     : Setembro - 2015.                   Ultima atualizacao: 30/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1150,14 +1150,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
             vr_dserro := vr_dserro ||'CNPJ.';
           END IF;
           RAISE vr_erro;
-        ELSIF rw_crapass.nrcpfcgc <> rw_tabela.nrcpfcgc THEN
-          IF rw_crapass.inpessoa = 1 THEN
+        ELSIF rw_crapass.nrcpfcgc <> rw_tabela.nrcpfcgc AND rw_crapass.inpessoa = 1 THEN
             vr_dserro := 'CPF informado ('||gene0002.fn_mask_cpf_cnpj(rw_tabela.nrcpfcgc,vr_inpessoa)||
                          ') difere do CPF do associado ('||gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa)||').';
-          ELSE
-            vr_dserro := 'CNPJ informado ('||gene0002.fn_mask_cpf_cnpj(rw_tabela.nrcpfcgc,vr_inpessoa)||
-                         ') difere do CNPJ do associado ('||gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa)||').';
-          END IF;
+          RAISE vr_erro;
+        ELSIF substr(lpad(rw_crapass.nrcpfcgc,14,0),1,8) <> substr(lpad(rw_tabela.nrcpfcgc,14,0),1,8) AND rw_crapass.inpessoa = 2 then
+          vr_dserro := 'Base do CNPJ informado ('||substr(lpad(rw_tabela.nrcpfcgc,14,0),1,8)||
+                       ') difere da base do CNPJ do associado ('||substr(lpad(rw_crapass.nrcpfcgc,14,0),1,8)||').';
           RAISE vr_erro;
         END IF;
         
@@ -1490,7 +1489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     vr_listaarq    VARCHAR2(4000);     --> Lista de arquivos
 
 
-  BEGIN
+    BEGIN
     
     -- Se o dia da semana for sabado ou domingo, nao deve executar o fonte
     IF to_char(SYSDATE,'D') IN (1,7) THEN
