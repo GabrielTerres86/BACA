@@ -629,7 +629,8 @@
                  14/07/2016 - M325 Informe de Rendimentos - Novos parametros
                               operacao7. (Guilherme/SUPERO)
                               
-                 29/09/2016 - Inclusao 176 a 183. Reservado para o projeto 300. (Lombardi)
+                 29/09/2016 - Inclusao 176 E 177. Reservado para o projeto de melhoria 169.
+                              Inclusao 178 a 185. Reservado para o projeto 300. (Lombardi)
 
 ------------------------------------------------------------------------------*/
 
@@ -2029,29 +2030,35 @@ PROCEDURE process-web-request :
             IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
                 RUN proc_operacao173.    
 		ELSE
-            IF  aux_operacao = 176 THEN /* Reservado para o projeto 300. */
-                RUN proc_operacao174. 
-		ELSE
-            IF  aux_operacao = 177 THEN /* Reservado para o projeto 300. */
-                RUN proc_operacao175. 
-		ELSE
-            IF  aux_operacao = 178 THEN /* Reservado para o projeto 300.*/
+            IF  aux_operacao = 176 THEN /* Reservado para o projeto de melhoria 169. */
                 RUN proc_operacao176. 
 		ELSE
-            IF  aux_operacao = 179 THEN /* Reservado para o projeto 300. */
+            IF  aux_operacao = 177 THEN /* Reservado para o projeto de melhoria 169. */
                 RUN proc_operacao177. 
 		ELSE
-            IF  aux_operacao = 180 THEN /* Reservado para o projeto 300. */
+            IF  aux_operacao = 178 THEN /* Reservado para o projeto 300.*/
                 RUN proc_operacao178. 
 		ELSE
-            IF  aux_operacao = 181 THEN /* Reservado para o projeto 300. */
+            IF  aux_operacao = 179 THEN /* Reservado para o projeto 300. */
                 RUN proc_operacao179. 
 		ELSE
-            IF  aux_operacao = 182 THEN /* Reservado para o projeto 300. */
+            IF  aux_operacao = 180 THEN /* Reservado para o projeto 300. */
                 RUN proc_operacao180. 
 		ELSE
-            IF  aux_operacao = 183 THEN /* Reservado para o projeto 300. */
+            IF  aux_operacao = 181 THEN /* Reservado para o projeto 300. */
                 RUN proc_operacao181. 
+		ELSE
+            IF  aux_operacao = 182 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao182. 
+		ELSE
+            IF  aux_operacao = 183 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao183. 
+		ELSE
+            IF  aux_operacao = 184 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao184. 
+		ELSE
+            IF  aux_operacao = 185 THEN /* Reservado para o projeto 300. */
+                RUN proc_operacao185. 
 
     END.
 /*....................................................................*/
@@ -7545,14 +7552,14 @@ PROCEDURE proc_operacao173:
 
 END PROCEDURE.
 
-/* Reservado para o projeto 300. */
+/* Reservado para o projeto de melhoria 169. */
 PROCEDURE proc_operacao176:	
 
 	 {&out} "NOK"  aux_tgfimprg.        
 
 END PROCEDURE.
 
-/* Reservado para o projeto 300. */
+/* Reservado para o projeto de melhoria 169. */
 PROCEDURE proc_operacao177:	
 
 	 {&out} "NOK"  aux_tgfimprg.        
@@ -7596,6 +7603,20 @@ END PROCEDURE.
 
 /* Reservado para o projeto 300. */
 PROCEDURE proc_operacao183:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao184:	
+
+	 {&out} "NOK"  aux_tgfimprg.        
+
+END PROCEDURE.
+
+/* Reservado para o projeto 300. */
+PROCEDURE proc_operacao185:	
 
 	 {&out} "NOK"  aux_tgfimprg.        
 
