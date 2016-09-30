@@ -3,6 +3,7 @@ CREATE OR REPLACE VIEW CECRED.VWSOA_COOPERATIVAS AS
         ,origem.nmrescop
         ,mun.idcidade
         ,mun.dscidesp
+        ,mun.cdestado
     from(
           select cop.cdcooper
                 ,cop.nmrescop
