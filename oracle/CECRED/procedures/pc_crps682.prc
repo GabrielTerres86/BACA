@@ -453,7 +453,10 @@ BEGIN
                           ,pr_nrdconta crapneg.nrdconta%TYPE) IS
       SELECT MAX(nvl(cyb.qtdiaatr,0)) dias_atraso   /* Dias em atraso */
             ,COUNT(1)                 qtd_operacoes /* Qtd. de Operações */
-            ,SUM(nvl(cyb.vlpreapg,0)) total_atraso  /* Total em Atraso */
+            ,SUM(case when cyb.flgpreju = 1
+                      then nvl(cyb.vlsdprej,0)
+                      else nvl(cyb.vlpreapg,0)
+                  end) total_atraso                 /* Total em Atraso */
         FROM crapcyb cyb
        WHERE cyb.cdcooper = pr_cdcooper
          AND cyb.nrdconta = pr_nrdconta
@@ -849,6 +852,7 @@ BEGIN
             -- Habilitar contas suspensas PF
             EMPR0002.pc_habilita_contas_suspensas (pr_cdcooper => rw_crapcop.cdcooper
                                                   ,pr_inpessoa => 1
+                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                   ,pr_dscritic => vr_dscritic);
             -- Se possui critica
             IF vr_dscritic IS NOT NULL THEN
@@ -858,6 +862,7 @@ BEGIN
             -- Habilitar contas suspensas PJ
             EMPR0002.pc_habilita_contas_suspensas (pr_cdcooper => rw_crapcop.cdcooper
                                                   ,pr_inpessoa => 2
+                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                   ,pr_dscritic => vr_dscritic);
             -- Se possui critica
             IF vr_dscritic IS NOT NULL THEN

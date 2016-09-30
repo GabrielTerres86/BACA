@@ -441,6 +441,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
            AND cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
       
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
       -- Variável de críticas
       vr_loop_erro EXCEPTION;
       vr_exc_erro  EXCEPTION;
@@ -459,6 +462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
       vr_linha          VARCHAR2(500);
       vr_linha_rel      VARCHAR2(500);
       vr_comando        VARCHAR2(1000);
+      vr_flgachou       BOOLEAN;            --> Booleano para controle
       vr_vllimdis_pf    tbepr_carga_pre_aprv.vltotal_pre_aprv_pf%TYPE;
       vr_vllimdis_pj    tbepr_carga_pre_aprv.vltotal_pre_aprv_pj%TYPE;
       -- Variaveis do arquivo
@@ -489,9 +493,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
         
         -- Percorre cooperativas para habilitar contas suspensas
         FOR rw_crapcop IN cr_crapcop LOOP
+          
+          -- Leitura do calendario
+          OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+          FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+          vr_flgachou := BTCH0001.cr_crapdat%FOUND;
+          CLOSE BTCH0001.cr_crapdat;
+          -- Se nao achou
+          IF NOT vr_flgachou THEN
+            vr_cdcritic := 1;
+            RAISE vr_exc_erro;
+          END IF;
+        
           -- Contas PF
           EMPR0002.pc_habilita_contas_suspensas (pr_cdcooper => rw_crapcop.cdcooper
                                                 ,pr_inpessoa => 1 
+                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                 ,pr_dscritic => vr_dscritic);
           -- Se ocorrer algum erro
           IF vr_dscritic IS NOT NULL THEN
@@ -499,7 +516,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
           END IF;
           -- Contas PJ
           EMPR0002.pc_habilita_contas_suspensas (pr_cdcooper => rw_crapcop.cdcooper
-                                                ,pr_inpessoa => 2 
+                                                ,pr_inpessoa => 2
+                                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                 ,pr_dscritic => vr_dscritic);
            -- Se ocorrer algum erro
           IF vr_dscritic IS NOT NULL THEN

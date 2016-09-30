@@ -204,6 +204,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   -- Habilitar as contas bloqueadas por refinanciamento
   PROCEDURE pc_habilita_contas_suspensas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Conta do cooperado
                                         ,pr_inpessoa IN crappre.inpessoa%TYPE --> Tipo de pessoa
+                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                         ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
 
   END EMPR0002;
@@ -3003,6 +3004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
   -- Habilitar as contas bloqueadas por refinanciamento
   PROCEDURE pc_habilita_contas_suspensas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Conta do cooperado
                                         ,pr_inpessoa IN crappre.inpessoa%TYPE --> Tipo de pessoa
+                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                         ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
 
   BEGIN
@@ -3056,13 +3058,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       BEGIN
         -- Habilita as contas
         UPDATE tbepr_param_conta prm
-           SET flglibera_pre_aprv = 1
-              ,dtatualiza_pre_aprv = SYSDATE
+           SET flglibera_pre_aprv  = 1
+              ,dtatualiza_pre_aprv = pr_dtmvtolt
+              ,idmotivo            = null
            WHERE prm.cdcooper = pr_cdcooper
              AND prm.flglibera_pre_aprv  = 0
              AND prm.idmotivo            IS NOT NULL -- Indica que é por refinanciamento 
              AND prm.dtatualiza_pre_aprv IS NOT NULL
-             AND ADD_MONTHS(TRUNC(prm.dtatualiza_pre_aprv), vr_qtd_mes) <= SYSDATE
+             AND ADD_MONTHS(TRUNC(prm.dtatualiza_pre_aprv), vr_qtd_mes) <= pr_dtmvtolt
              AND EXISTS(SELECT 1 
                           FROM crapass ass
                          WHERE ass.cdcooper = prm.cdcooper
