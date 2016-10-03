@@ -1143,6 +1143,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     -- .........................................................................*/
 
     ----------->>> CURSORES  <<<--------
+    --> Buscar dados do bordero
+    CURSOR cr_crapbdc IS
+      SELECT *
+        FROM crapbdc
+       WHERE crapbdc.cdcooper = pr_cdcooper
+         AND crapbdc.nrdconta = pr_nrdconta
+         AND crapbdc.nrborder = pr_nrborder;
+         
+    rw_crapbdc cr_crapbdc%ROWTYPE;
 
     ----------->>> TEMPTABLE <<<--------
     vr_tab_dados_avais         DSCT0002.typ_tab_dados_avais;
@@ -1176,6 +1185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_typsaida        VARCHAR2(100); 
 
     vr_cdtipdoc        INTEGER;
+    vr_cdageqrc        INTEGER;
     vr_dstextab        craptab.dstextab%TYPE;
 
     vr_qrcode          VARCHAR2(100);
@@ -1209,6 +1219,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
       vr_dstransa := 'Gerar impressao de bordero de cheque';
     END IF;
+
+    -- Busca dos dados do bordero
+    OPEN cr_crapbdc;
+    FETCH cr_crapbdc INTO rw_crapbdc;
+    
+    -- Se NAO encontrar
+    IF cr_crapbdc%NOTFOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Nao foi possivel encontrar Bordero.';
+      CLOSE cr_crapbdc;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapbdc;
 
     --> Buscar dados para montar contratos etc para desconto de cheques
     DSCT0002.pc_busca_dados_imp_descont
@@ -1308,8 +1331,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       vr_dstitulo := 'BORDERÔ DE DESCONTO DE CHEQUES E TERMO DE CUSTÓDIA';
       vr_dsmvtolt := vr_tab_dados_itens_bordero(vr_idxborde).nmcidade ||', '|| GENE0005.fn_data_extenso(pr_dtmvtolt);
+      
+      --Incluir no QRcode a agencia onde foi criado o contrato.
+      IF nvl(rw_crapbdc.cdageori,0) = 0 THEN
+        vr_cdageqrc := vr_tab_dados_itens_bordero(vr_idxborde).cdagenci;
+      ELSE
+        vr_cdageqrc := rw_crapbdc.cdageori;
+      END IF;
+      
       vr_qrcode   := pr_cdcooper ||'_'||
-                     vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'_'||
+                     vr_cdageqrc ||'_'||
                      pr_nrdconta ||'_'||
                      pr_nrborder ||'_'||
                      0           ||'_'||

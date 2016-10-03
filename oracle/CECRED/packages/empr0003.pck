@@ -768,6 +768,7 @@ BEGIN
                crapass.nrcpfcgc,
                crapass.nrdocptl,
                crapass.cdagenci,
+               crawepr.cdagenci cdageepr,
                crapass.nmprimtl,
                crawepr.tpemprst,
                crawepr.flgpagto,
@@ -1370,7 +1371,7 @@ BEGIN
 
           -- Gera o QR Code para uso da digitalizacao
           vr_qrcode   := pr_cdcooper ||'_'||
-                         rw_crawepr.cdagenci ||'_'||
+                         rw_crawepr.cdageepr ||'_'||
                          pr_nrdconta ||'_'||
                          0           ||'_'||
                          pr_nrctremp ||'_'||

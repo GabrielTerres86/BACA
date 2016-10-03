@@ -294,12 +294,7 @@ FORM SKIP(3)
 FORM tt-proposta_bordero.nmextcop FORMAT "x(50)"
      SKIP(1)
      "\033\016PROPOSTA DE DESCONTO DE TITULOS\024"
-    "PARA USO DA DIGITALIZACAO" AT 65
-     SKIP(1)
-     rel_numconta                 FORMAT "zzzz,zzz,9" AT 65
-     tt-proposta_bordero.nrborder FORMAT "z,zzz,zz9"  AT 78
-     aux_tpdocged                 FORMAT "zz9"        AT 90
-     SKIP(1)
+     SKIP(3)     
      "\033\105\DADOS DO ASSOCIADO\033\106"
      SKIP(1)
      "Conta/dv:\033\016" tt-proposta_bordero.nrdconta FORMAT "zzzz,zzz,9" "\024"
@@ -1089,9 +1084,6 @@ IF  par_idimpres = 5 OR   /* COMPLETA */
                 tt-proposta_bordero.dstipcta      tt-proposta_bordero.dssitdct  
                 tt-proposta_bordero.dtadmiss
                 tt-proposta_bordero.nmextcop      tt-proposta_bordero.dsramati
-                tt-proposta_bordero.nrborder      FORMAT "z,zzz,zz9"
-                rel_numconta                      FORMAT "zzzz,zzz,9"
-                aux_tpdocged                      FORMAT "zz9"
                 WITH FRAME f_pro_dados.
 
         IF  tt-proposta_bordero.tpcobran = "SEM REGISTRO" THEN

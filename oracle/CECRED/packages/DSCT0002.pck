@@ -4167,6 +4167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
       SELECT lim.nrdconta,
+             lim.cdageori,
              lim.vllimite,
              lim.cddlinha,
              lim.dtinivig
@@ -4252,6 +4253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_typsaida        VARCHAR2(100); 
     
     vr_cdtipdoc        INTEGER;
+    vr_cdageqrc        INTEGER;
     vr_dstextab        craptab.dstextab%TYPE;
     
     vr_qrcode          VARCHAR2(100);
@@ -4529,8 +4531,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_dstitulo := 'CONTRATO DE DESCONTO DE TÍTULOS No:';
       END IF;
       
+      --Incluir no QRcode a agencia onde foi criado o contrato.
+      IF nvl(rw_craplim.cdageori,0) = 0 THEN
+        vr_cdageqrc := vr_tab_contrato_limite(vr_idxctlim).cdagenci;
+      ELSE
+        vr_cdageqrc := rw_craplim.cdageori;
+      END IF;
+      
       vr_qrcode := pr_cdcooper ||'_'||
-                   vr_tab_contrato_limite(vr_idxctlim).cdagenci ||'_'||
+                   vr_cdageqrc ||'_'||
                    pr_nrdconta ||'_'||
                    0           ||'_'||
                    pr_nrctrlim ||'_'||
@@ -4987,6 +4996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_typsaida        VARCHAR2(100); 
 
     vr_cdtipdoc        INTEGER;
+    vr_cdageqrc        INTEGER;
     vr_dstextab        craptab.dstextab%TYPE;
     
     vr_dstitulo        VARCHAR2(200);
@@ -5027,7 +5037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       RAISE vr_exc_erro;
     END IF;
     
-     -- Busca dos dados do bordero
+    -- Busca dos dados do bordero
     OPEN cr_crapbdt;
     FETCH cr_crapbdt INTO rw_crapbdt;
     vr_blnfound := cr_crapbdt%FOUND;
@@ -5143,8 +5153,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       END IF;  
       
       vr_dsmvtolt := vr_tab_dados_itens_bordero(vr_idxborde).nmcidade ||', '|| GENE0005.fn_data_extenso(pr_dtmvtolt);
+      
+      --Incluir no QRcode a agencia onde foi criado o contrato.
+      IF nvl(rw_crapbdt.cdageori,0) = 0 THEN
+        vr_cdageqrc := vr_tab_dados_itens_bordero(vr_idxborde).cdagenci;
+      ELSE
+        vr_cdageqrc := rw_crapbdt.cdageori;
+      END IF;
+      
       vr_qrcode   := pr_cdcooper ||'_'||
-                     vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'_'||
+                     vr_cdageqrc ||'_'||
                      pr_nrdconta ||'_'||
                      pr_nrborder ||'_'||
                      0           ||'_'||

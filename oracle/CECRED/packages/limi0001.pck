@@ -27,6 +27,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                   inpessoa crapass.inpessoa%TYPE,
                   dsendass VARCHAR2(1000),
                   cdagenci crapass.cdagenci%TYPE,
+                  cdageori craplim.cdageori%TYPE,
                   nmcidpac crapage.nmcidade%TYPE,
                   nrctrlim craplim.nrctrlim%TYPE,
                   dsctrlim VARCHAR2(100),
@@ -1270,6 +1271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
       SELECT lim.nrdconta,
+             lim.cdageori,
              lim.vllimite,
              lim.cddlinha,
              lim.nrctrlim,
@@ -1542,6 +1544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_tab_dados_ctr(vr_idxctr).inpessoa := rw_crapass.inpessoa;
     vr_tab_dados_ctr(vr_idxctr).dsendass := vr_dsendass;
     vr_tab_dados_ctr(vr_idxctr).cdagenci := rw_crapass.cdagenci;
+    vr_tab_dados_ctr(vr_idxctr).cdageori := rw_craplim.cdageori;    
     vr_tab_dados_ctr(vr_idxctr).nmcidpac := nvl(rw_crapage.nmcidade,'____________________');
     vr_tab_dados_ctr(vr_idxctr).nrctrlim := rw_craplim.nrctrlim;
     vr_tab_dados_ctr(vr_idxctr).dsctrlim := TRIM(gene0002.fn_mask_contrato(rw_craplim.nrctrlim)) || '/001';
@@ -1741,6 +1744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_dstextab        craptab.dstextab%TYPE; 
     vr_tpdocged        INTEGER;
     vr_qrcode          VARCHAR2(100);
+    vr_cdageqrc        INTEGER;
     
     vr_dsdireto        VARCHAR2(4000);
     vr_nmendter        VARCHAR2(4000);     
@@ -1868,8 +1872,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
     vr_txtcompl := NULL;
     
+    --Incluir no QRcode a agencia onde foi criado o contrato.
+    IF nvl(vr_tab_dados_ctr(vr_idxctr).cdageori,0) = 0 THEN
+      vr_cdageqrc := vr_tab_dados_ctr(vr_idxctr).cdagenci;
+    ELSE
+      vr_cdageqrc := vr_tab_dados_ctr(vr_idxctr).cdageori;
+    END IF;
+        
     vr_qrcode := pr_cdcooper ||'_'||
-                 vr_tab_dados_ctr(vr_idxctr).cdagenci ||'_'||
+                 vr_cdageqrc ||'_'||
                  pr_nrdconta ||'_'||
                  0           ||'_'||
                  pr_nrctrlim ||'_'||

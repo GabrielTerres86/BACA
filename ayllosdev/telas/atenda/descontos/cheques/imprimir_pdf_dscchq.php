@@ -3,7 +3,7 @@
 	/************************************************************************  
 	  Fonte: imprimir_pdf_dscchq.php                                               
 	  Autor: Guilherme                                                          
-	  Data : Março/2008                   Última Alteração: 21/06/2016
+	  Data : Março/2008                   Última Alteração: 03/10/2016
 																			
 	  Objetivo  : Gerar PDF das impressoes de desconto de cheques              
 	                                                                            	 
@@ -16,6 +16,9 @@
 				  19/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
                   21/06/2016 - Inclusao do coordenador que liberou/analisou as 
                                restricoes. (Jaison/James)
+                  03/10/2016 - Retirado "Para uso da digitalizacao" na proposta 
+                               de Bordero.
+                               PRJ314 - Indexacao Centralizada (Odirlei-AMcom)
 	************************************************************************/ 
 	
 	// Classe para geração de arquivos PDF
@@ -652,16 +655,10 @@
 
 			$this->Ln();
 			$this->SetFont("Courier","",11);
-			$this->Cell(10,0.4,"PROPOSTA DESCONTO DE CHEQUES",0,0,"L",0,"");
-			$this->Cell(8,0.4,"PARA USO DA DIGITALIZACAO",0,1,"R",0,"");		
+			$this->Cell(18,0.4,"PROPOSTA DESCONTO DE CHEQUES",0,1,"L",0,"");
 						
 			$this->Ln();
-			$this->Cell(10.6,0.4,"",0,0,"R",0,"");
-			$this->Cell(2.6,0.4,formataNumericos("zzzz.zzz.9",$dadosProposta["NRDCONTA"],"."),0,0,"R",0,"");					
-			$this->Cell(0.8,0.4,"",0,0,"R",0,"");		
-			$this->Cell(2.4,0.4,formataNumericos("z.zzz.zz9",$dadosProposta["NRBORDER"],"."),0,0,"R",0,"");			
-			$this->Cell(0.8,0.4,"",0,0,"R",0,"");		
-			$this->Cell(0.8,0.4," 87",0,1,"R",0,"");	
+            $this->Cell(18,0.4,"",0,1,"L",0,"");
 			
 			$this->Ln();
 			
