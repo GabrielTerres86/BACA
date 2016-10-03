@@ -56,6 +56,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
   --  
   --------------------------------------------------------------------------------------------------------------*/
 
+  -- Tipo de registros
+  TYPE typ_reg_crapage IS RECORD
+    (nmresage crapage.nmresage%TYPE);
+
+  -- Tipo de dados
+  TYPE typ_tab_crapage  IS TABLE OF typ_reg_crapage INDEX BY PLS_INTEGER;
+
+  -- Vetor de memoria
+  vr_tab_crapage  typ_tab_crapage;
+
+  -- Busca o nome das agencias
+  CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE) IS
+     SELECT crapage.cdagenci,
+            crapage.nmresage
+       FROM crapage
+      WHERE crapage.cdcooper = pr_cdcooper;
+
   PROCEDURE pc_rel_bordero_nao_liberados(pr_dtiniper   IN VARCHAR2              --> Data inicial
                                         ,pr_dtfimper   IN VARCHAR2              --> Data final
                                         ,pr_cdagenci   IN crapass.cdagenci%TYPE --> Numero do PA
@@ -243,6 +260,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
         vr_vlchqmai := TO_NUMBER(SUBSTR(vr_dstextab, 1, 15));
       END IF;
 
+      -- Busca o nome das agencias
+      FOR rw_crapage IN cr_crapage(pr_cdcooper => vr_cdcooper) LOOP
+        vr_tab_crapage(rw_crapage.cdagenci).nmresage := rw_crapage.nmresage;
+      END LOOP;
+
       -- Inicializar o CLOB
       vr_des_xml := NULL;
       dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -313,9 +335,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
         pc_escreve_xml('<Bordero>'||
                          '<dtmvtolt>'|| TO_CHAR(rw_dados.dtmvtolt, 'DD/MM/RRRR') ||'</dtmvtolt>'||
                          '<cdagenci>'|| rw_dados.cdagenci ||'</cdagenci>'||
+                         '<nmresage>'|| vr_tab_crapage(rw_dados.cdagenci).nmresage ||'</nmresage>'||
                          '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(rw_dados.nrdconta)) ||'</nrdconta>'||
                          '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(rw_dados.nrborder)) ||'</nrborder>'||
-                         '<dat_real>'|| TO_CHAR(rw_dados.dtinsori, 'DD/MM/RRRR') ||'</dat_real>'||
+                         '<dat_real>'|| TO_CHAR(NVL(rw_dados.dtinsori, rw_dados.dtmvtolt), 'DD/MM/RRRR') ||'</dat_real>'||
                          '<hor_real>'|| GENE0002.fn_converte_time_data(rw_dados.hrtransa) ||'</hor_real>'||
                          '<qt_ban85>'|| vr_qt_ban85 ||'</qt_ban85>'||
                          '<vl_ban85>'|| TO_CHAR(vr_vl_ban85,'fm999G999G999G990D00') ||'</vl_ban85>'||
@@ -323,7 +346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
                          '<vl_menor>'|| TO_CHAR(vr_vl_menor,'fm999G999G999G990D00') ||'</vl_menor>'||
                          '<qt_maior>'|| vr_qt_maior ||'</qt_maior>'||
                          '<vl_maior>'|| TO_CHAR(vr_vl_maior,'fm999G999G999G990D00') ||'</vl_maior>'||
-                         '<nmoperad>'|| SUBSTR(rw_dados.nmoperad, 1, 25) ||'</nmoperad>'||
+                         '<nmoperad>'|| SUBSTR(rw_dados.nmoperad, 1, 29) ||'</nmoperad>'||
                          '<dssitbdc>'|| rw_dados.dssitbdc ||'</dssitbdc>'||
                        '</Bordero>');
       END LOOP;
@@ -505,13 +528,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
       ORDER BY ass.cdagenci,
                ass.nrdconta;
 
-      -- Busca o nome das agencias
-      CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE) IS
-         SELECT crapage.cdagenci,
-                crapage.nmresage
-           FROM crapage
-          WHERE crapage.cdcooper = pr_cdcooper;
-
       -- Telefone do cooperado
       CURSOR cr_craptfc(pr_cdcooper IN craptfc.cdcooper%TYPE
                        ,pr_nrdconta IN craptfc.nrdconta%TYPE) IS
@@ -561,15 +577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DESCTO AS
       vr_dscomand VARCHAR2(4000);
       vr_typsaida VARCHAR2(100);
 
-      -- Tipo de registros
-      TYPE typ_reg_crapage IS RECORD
-        (nmresage crapage.nmresage%TYPE);
-
-      -- Tipo de dados
-      TYPE typ_tab_crapage  IS TABLE OF typ_reg_crapage INDEX BY PLS_INTEGER;
-
       -- Vetor de memoria
-      vr_tab_crapage  typ_tab_crapage;
       vr_vet_nrenova  GENE0002.typ_split;
 
       -- Variáveis para armazenar as informações em XML
