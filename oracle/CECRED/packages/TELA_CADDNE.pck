@@ -23,6 +23,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
   -- Alteracoes: 
   ---------------------------------------------------------------------------
 
+  -- Identificacao dos Enderecos
+  const_origem_cadastro CONSTANT crapdne.idoricad%TYPE := 1; -- Origem do Cadastro como CORREIOS (1)
+
+  -- Quantidade de registros para realizar o COMMIT 
+  vr_qtd_reg_commit CONSTANT INTEGER := 10000;
+
   -- Tipo de registro para o nome das cidades
   TYPE typ_reg_cidade IS
     RECORD (codigo   INTEGER
@@ -45,8 +51,94 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     TABLE OF typ_reg_bairro
     INDEX BY PLS_INTEGER;
 
-  -- Quantidade de registros para realizar o COMMIT 
-  vr_qtd_reg_commit CONSTANT INTEGER := 1000;
+  -- Tipo de registro para o nome dos logradouros
+  TYPE typ_reg_logradouro IS
+    RECORD (estado       crapdne.cduflogr%TYPE
+           ,nome_rua     crapdne.nmextlog%TYPE
+           ,complemento  crapdne.dscmplog%TYPE
+           ,cep          crapdne.nrceplog%TYPE
+           ,tipo         crapdne.dstiplog%TYPE
+           ,nome_rua_res crapdne.nmreslog%TYPE
+           ,bairro_nome  crapdne.nmextbai%TYPE
+           ,bairro_res   crapdne.nmresbai%TYPE
+           ,cidade_nome  crapdne.nmextcid%TYPE
+           ,cidade_res   crapdne.nmrescid%TYPE);
+  -- O indice da tabela sera o codigo da logradouro
+  TYPE typ_tab_logradouro IS
+    TABLE OF typ_reg_logradouro
+    INDEX BY PLS_INTEGER;
+
+  PROCEDURE pc_insere_endereco(pr_tab_logradouro IN OUT typ_tab_logradouro --> Tabela de Ruas
+                              ,pr_idtipdne       IN INTEGER
+                              ,pr_dscritic      OUT VARCHAR2) IS   --> Descricao da critica
+
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_insere_localidade
+    Sistema : Ayllos Web
+    Autor   : Douglas Quisinski
+    Data    : Setembro/2016                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Inserir os Enderecos
+    
+    Alteracoes: 
+    ..............................................................................*/
+    BEGIN
+      --Inserir dados do endereco na tabela em um unico momento
+      BEGIN
+        FORALL idx IN INDICES OF pr_tab_logradouro SAVE EXCEPTIONS
+          INSERT INTO crapdne(nrceplog
+                             ,nmextlog
+                             ,nmreslog
+                             ,dscmplog
+                             ,dstiplog
+                             ,nmextbai
+                             ,nmresbai
+                             ,nmextcid
+                             ,nmrescid
+                             ,cduflogr
+                             ,idoricad
+                             ,idtipdne)
+                       VALUES(pr_tab_logradouro(idx).cep
+                             ,pr_tab_logradouro(idx).nome_rua
+                             ,pr_tab_logradouro(idx).nome_rua_res
+                             ,pr_tab_logradouro(idx).complemento
+                             ,pr_tab_logradouro(idx).tipo
+                             ,pr_tab_logradouro(idx).bairro_nome
+                             ,pr_tab_logradouro(idx).bairro_res
+                             ,pr_tab_logradouro(idx).cidade_nome
+                             ,pr_tab_logradouro(idx).cidade_res
+                             ,pr_tab_logradouro(idx).estado
+                             ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
+                             ,pr_idtipdne); -- Tipo de Enderecao
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic:=  'Erro ao inserir na tabela crapdne. '||
+                         SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
+      END;
+
+      -- Limpar a tabela
+      pr_tab_logradouro.DELETE;
+      
+      -- Comitar os registros
+      COMMIT;
+      
+    EXCEPTION
+      
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na insercao dos enderecos: ' || 
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
+    END;
+  END pc_insere_endereco;
+
 
   PROCEDURE pc_proc_arq_localidade(pr_tab_cidade IN OUT typ_tab_cidade --> Sigla do estado que será processado
                                   ,pr_dscritic      OUT VARCHAR2) IS   --> Descricao da critica
@@ -101,7 +193,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       -- Variaveis para processamento do arquivo
       vr_input_file  UTL_FILE.FILE_TYPE;
-      vr_setlinha    VARCHAR2(250);
+      vr_setlinha    VARCHAR2(32500);
 
     BEGIN
       -- Verificar se o arquivo LOG_LOCALIDADE.TXT existe
@@ -131,11 +223,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
+          -- Retirar os espacos em branco
+          vr_setlinha := TRIM(vr_setlinha);
           
           vr_codigo   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 1, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-          vr_estado   := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2);
-          vr_nome     := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,40);
-          vr_resumido := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,25);
+          vr_estado   := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
+          vr_nome     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,40));
+          vr_resumido := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,25));
           
           -- Carregar os dados da Cidade para a PL_TABLE
           pr_tab_cidade(vr_codigo).codigo   := vr_codigo;
@@ -151,20 +245,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
 
         WHEN OTHERS THEN
+          -- Fechar o arquivo
+          GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+          
           vr_dscritic:= 'Erro geral no carregamento do arquivo ' || vr_nmarqprc || ': ' ||
-                        REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
           RAISE vr_exc_saida;
       END;
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
       
       WHEN OTHERS THEN
         pr_dscritic := 'Erro geral na rotina da tela CADDNE.pc_proc_arq_localidade: ' || 
-                       REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
-
-        ROLLBACK;
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
     END;
   END pc_proc_arq_localidade;
 
@@ -217,7 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       -- Variaveis para processamento do arquivo
       vr_input_file  UTL_FILE.FILE_TYPE;
-      vr_setlinha    VARCHAR2(250);
+      vr_setlinha    VARCHAR2(32500);
 
     BEGIN
       -- Verificar se o arquivo LOG_LOCALIDADE.TXT existe
@@ -247,11 +345,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
+          -- Retirar os espacos em branco
+          vr_setlinha := TRIM(vr_setlinha);
           
           vr_codigo   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 1, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-          vr_estado   := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2);
-          vr_nome     := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72);
-          vr_resumido := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 5, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,40);
+          vr_estado   := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
+          vr_nome     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72));
+          vr_resumido := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 5, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,40));
           
           -- Carregar os dados da Cidade para a PL_TABLE
           pr_tab_bairro(vr_codigo).codigo   := vr_codigo;
@@ -267,19 +367,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
 
         WHEN OTHERS THEN
+          -- Fechar o arquivo
+          GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+          
           vr_dscritic:= 'Erro geral no carregamento do arquivo ' || vr_nmarqprc || ': ' ||
-                        REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
           RAISE vr_exc_saida;
       END;
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
       
       WHEN OTHERS THEN
         pr_dscritic := 'Erro geral na rotina da tela CADDNE.pc_proc_arq_bairro: ' || 
-                       REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
-        ROLLBACK;
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
     END;
   END pc_proc_arq_bairro;
 
@@ -326,7 +431,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_UNID_OPER.TXT';
 
       -- Identificacao dos Enderecos
-      vr_idoricad CONSTANT crapdne.idoricad%TYPE := 1; -- Origem do Cadastro como CORREIOS (1)
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 3; -- Tipo de Endereco UNID. OPER
 
       -- Variavel de criticas
@@ -347,23 +451,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       -- Variaveis para processamento do arquivo
       vr_input_file  UTL_FILE.FILE_TYPE;
-      vr_setlinha    VARCHAR2(250);
-      
-      -- Contador para realizar commit
-      vr_qtd_proc     INTEGER;
+      vr_setlinha    VARCHAR2(32500);
       
       -- Campos 
-      vr_estado       crapdne.cduflogr%TYPE;
       vr_cidade_cod   INTEGER;
       vr_bairro_cod   INTEGER;
-      vr_nome_rua     crapdne.nmextlog%TYPE;
-      vr_complemento  crapdne.dscmplog%TYPE;
-      vr_cep          crapdne.nrceplog%TYPE;
-      vr_nome_rua_res crapdne.nmreslog%TYPE;
-      vr_bairro_nome  crapdne.nmextbai%TYPE;
-      vr_bairro_res   crapdne.nmresbai%TYPE;
-      vr_cidade_nome  crapdne.nmextcid%TYPE;
-      vr_cidade_res   crapdne.nmrescid%TYPE;
+      
+      -- PL TABLE de Logradouros 
+      vr_tab_logradouro typ_tab_logradouro;
+      vr_ind            INTEGER;
 
     BEGIN
       -- Verificar se o arquivo LOG_UNID_OPER.TXT existe
@@ -388,24 +484,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       END IF;
       
       DELETE FROM crapdne
-            WHERE crapdne.idoricad = vr_idoricad  -- Origem do Cadastro
+            WHERE crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
       -- Realizamos o commit 
       COMMIT;
 
+      -- Limpar a tabela
+      vr_tab_logradouro.DELETE;
+      
       BEGIN
-        -- Zerar contador
-        vr_qtd_proc := 0;
         -- Laco para leitura de linhas do arquivo
         LOOP
           -- Verificar se foram processados a quantidade para para realizar o commit
-          IF vr_qtd_proc = vr_qtd_reg_commit THEN
-            vr_qtd_proc:= 0;
-            COMMIT;
+          IF vr_tab_logradouro.COUNT() = vr_qtd_reg_commit THEN
+            pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                              ,pr_idtipdne       => vr_idtipdne
+                              ,pr_dscritic       => vr_dscritic);
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              -- Atualizar o controle de erros
+              vr_erro_insert := TRUE;
+              -- Erro na busca dos dados
+              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                     ,pr_texto_completo => vr_dstexto_insert
+                                     ,pr_texto_novo     => vr_dscritic || chr(10)); 
+              vr_dscritic := NULL;
+            END IF;
           END IF;
 
           -- Atualizar o totalizador
-          vr_qtd_proc := vr_qtd_proc + 1;
+          vr_ind := vr_tab_logradouro.COUNT() + 1;
 
           -- Carrega handle do arquivo
           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -413,33 +520,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
+          -- Retirar os espacos em branco
+          vr_setlinha := TRIM(vr_setlinha);
 
           -- Buscar os dados da RUA
           BEGIN
-            vr_estado       := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2);
+            -- Codigo da Cidade e do Bairro
             vr_cidade_cod   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'));
             vr_bairro_cod   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-            vr_complemento  := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90);
-            vr_nome_rua     := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80);
-            vr_cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-            vr_nome_rua_res := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 10, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72);
+
+            -- Carregar os dados do Logradouro para a PL_TABLE
+            vr_tab_logradouro(vr_ind).estado       := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
+            vr_tab_logradouro(vr_ind).complemento  := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90));
+            vr_tab_logradouro(vr_ind).nome_rua     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80));
+            vr_tab_logradouro(vr_ind).cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+            vr_tab_logradouro(vr_ind).nome_rua_res := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 10, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72));
+            vr_tab_logradouro(vr_ind).tipo         := ' ';
 
             -- verificar se o bairro existe
             IF pr_tab_bairro.EXISTS(vr_bairro_cod) THEN
-              vr_bairro_nome  := SUBSTR(pr_tab_bairro(vr_bairro_cod).nome,1,72);
-              vr_bairro_res   := SUBSTR(pr_tab_bairro(vr_bairro_cod).resumido,1,40);
+              vr_tab_logradouro(vr_ind).bairro_nome  := SUBSTR(pr_tab_bairro(vr_bairro_cod).nome,1,72);
+              vr_tab_logradouro(vr_ind).bairro_res   := SUBSTR(pr_tab_bairro(vr_bairro_cod).resumido,1,40);
             ELSE 
-              vr_bairro_nome  := ' ';
-              vr_bairro_res   := ' ';
+              vr_tab_logradouro(vr_ind).bairro_nome  := ' ';
+              vr_tab_logradouro(vr_ind).bairro_res   := ' ';
             END IF;
             
             -- verificar se a cidade existe
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
-              vr_cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
-              vr_cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
+              vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
             ELSE 
-              vr_cidade_nome  := ' ';
-              vr_cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
+              vr_tab_logradouro(vr_ind).cidade_res   := ' ';
             END IF;
             
           EXCEPTION
@@ -455,45 +568,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
               CONTINUE;
           END;
           
-          BEGIN
-            INSERT INTO crapdne(nrceplog
-                               ,nmextlog
-                               ,nmreslog
-                               ,dscmplog
-                               ,dstiplog
-                               ,nmextbai
-                               ,nmresbai
-                               ,nmextcid
-                               ,nmrescid
-                               ,cduflogr
-                               ,idoricad
-                               ,idtipdne)
-                        VALUES(vr_cep
-                              ,vr_nome_rua
-                              ,vr_nome_rua_res
-                              ,vr_complemento
-                              ,' '
-                              ,vr_bairro_nome
-                              ,vr_bairro_res
-                              ,vr_cidade_nome
-                              ,vr_cidade_res
-                              ,vr_estado
-                              ,vr_idoricad   -- idoricad (1 - CORREIOS)
-                              ,vr_idtipdne); -- idtipdne (3 - UNID. OPER)
-            
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- Atualizar o controle de erros
-              vr_erro_insert := TRUE;
-              -- Erro na busca dos dados
-              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
-                                     ,pr_texto_completo => vr_dstexto_insert
-                                     ,pr_texto_novo     => vr_setlinha || '  #  ' || 
-                                                           SQLERRM     || chr(10));  
-              
-              CONTINUE;
-          END;
-          
         END LOOP; -- Loop Arquivo
 
       EXCEPTION 
@@ -502,10 +576,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
 
         WHEN OTHERS THEN
+          -- Fechar o arquivo
+          GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+          
           vr_dscritic:= 'Erro geral no processamento do arquivo: ' || vr_nmarqprc || ': ' ||
-                        REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
           RAISE vr_exc_saida;
       END;
+      
+      -- Verificar se foram processados a quantidade para para realizar o commit
+      IF vr_tab_logradouro.COUNT() > 0 THEN
+        -- Insert dos enderecos
+        pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                          ,pr_idtipdne       => vr_idtipdne
+                          ,pr_dscritic       => vr_dscritic);
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Atualizar o controle de erros
+          vr_erro_insert := TRUE;
+          -- Erro na busca dos dados
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                 ,pr_texto_completo => vr_dstexto_insert
+                                 ,pr_texto_novo     => vr_dscritic || chr(10)); 
+          vr_dscritic := NULL;
+        END IF;
+      END IF;      
       
       IF vr_erro_leitura THEN
         -- Fecha o XML de erro de leitura
@@ -544,12 +640,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
-      
+        
       WHEN OTHERS THEN
         pr_dscritic := 'Erro geral na rotina da tela CADDNE.pc_proc_arq_unid_oper : ' || 
-                       REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
-        ROLLBACK;
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
     END;
     
   END pc_proc_arq_unid_oper;
@@ -596,7 +692,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_GRANDE_USUARIO.TXT';
 
       -- Identificacao dos Enderecos
-      vr_idoricad CONSTANT crapdne.idoricad%TYPE := 1; -- Origem do Cadastro como CORREIOS (1)
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 2; -- Tipo de Endereco GRANDE USUARIO
 
       -- Variavel de criticas
@@ -617,23 +712,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       -- Variaveis para processamento do arquivo
       vr_input_file  UTL_FILE.FILE_TYPE;
-      vr_setlinha    VARCHAR2(250);
+      vr_setlinha    VARCHAR2(32500);
       
-      -- Contador para realizar commit
-      vr_qtd_proc     INTEGER;
-
       -- Campos 
-      vr_estado       crapdne.cduflogr%TYPE;
       vr_cidade_cod   INTEGER;
       vr_bairro_cod   INTEGER;
-      vr_nome_rua     crapdne.nmextlog%TYPE;
-      vr_complemento  crapdne.dscmplog%TYPE;
-      vr_cep          crapdne.nrceplog%TYPE;
-      vr_nome_rua_res crapdne.nmreslog%TYPE;
-      vr_bairro_nome  crapdne.nmextbai%TYPE;
-      vr_bairro_res   crapdne.nmresbai%TYPE;
-      vr_cidade_nome  crapdne.nmextcid%TYPE;
-      vr_cidade_res   crapdne.nmrescid%TYPE;
+      
+      -- PL TABLE de Logradouros 
+      vr_tab_logradouro typ_tab_logradouro;
+      vr_ind            INTEGER;
 
     BEGIN
       -- Verificar se o arquivo LOG_GRANDE_USUARIO.TXT existe
@@ -658,24 +745,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       END IF;
       
       DELETE FROM crapdne
-            WHERE crapdne.idoricad = vr_idoricad  -- Origem do Cadastro
+            WHERE crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
       -- Realizamos o commit 
       COMMIT;
 
+      -- Limpar a tabela
+      vr_tab_logradouro.DELETE;
+      
       BEGIN
-        -- Zerar contador
-        vr_qtd_proc := 0;
         -- Laco para leitura de linhas do arquivo
         LOOP
           -- Verificar se foram processados a quantidade para para realizar o commit
-          IF vr_qtd_proc = vr_qtd_reg_commit THEN
-            vr_qtd_proc:= 0;
-            COMMIT;
+          IF vr_tab_logradouro.COUNT() = vr_qtd_reg_commit THEN
+            pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                              ,pr_idtipdne       => vr_idtipdne
+                              ,pr_dscritic       => vr_dscritic);
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              -- Atualizar o controle de erros
+              vr_erro_insert := TRUE;
+              -- Erro na busca dos dados
+              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                     ,pr_texto_completo => vr_dstexto_insert
+                                     ,pr_texto_novo     => vr_dscritic || chr(10)); 
+              vr_dscritic := NULL;
+            END IF;
           END IF;
 
           -- Atualizar o totalizador
-          vr_qtd_proc := vr_qtd_proc + 1;
+          vr_ind := vr_tab_logradouro.COUNT() + 1;
 
           -- Carrega handle do arquivo
           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -683,38 +781,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
+          -- Retirar os espacos em branco
+          vr_setlinha := TRIM(vr_setlinha);
 
           -- Buscar os dados da RUA
           BEGIN
-            vr_estado       := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2);
+            -- Codigo da Cidade e do Bairro
             vr_cidade_cod   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'));
             vr_bairro_cod   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-            vr_complemento  := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90);
-            vr_nome_rua     := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80);
-            vr_cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-            vr_nome_rua_res := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 10, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72);
+
+            vr_tab_logradouro(vr_ind).estado       := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
+            vr_tab_logradouro(vr_ind).complemento  := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90));
+            vr_tab_logradouro(vr_ind).nome_rua     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80));
+            vr_tab_logradouro(vr_ind).cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+            vr_tab_logradouro(vr_ind).nome_rua_res := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 10, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72));
 
             -- Se nao veio o nome resumido da rua, adiciona o nome da rua
-            IF TRIM(vr_nome_rua_res) IS NULL THEN
-              vr_nome_rua_res := vr_nome_rua;
+            IF TRIM(vr_tab_logradouro(vr_ind).nome_rua_res) IS NULL THEN
+              vr_tab_logradouro(vr_ind).nome_rua_res := vr_tab_logradouro(vr_ind).nome_rua;
             END IF;
             
             -- verificar se o bairro existe
             IF pr_tab_bairro.EXISTS(vr_bairro_cod) THEN
-              vr_bairro_nome  := SUBSTR(pr_tab_bairro(vr_bairro_cod).nome,1,72);
-              vr_bairro_res   := SUBSTR(pr_tab_bairro(vr_bairro_cod).resumido,1,40);
+              vr_tab_logradouro(vr_ind).bairro_nome  := SUBSTR(pr_tab_bairro(vr_bairro_cod).nome,1,72);
+              vr_tab_logradouro(vr_ind).bairro_res   := SUBSTR(pr_tab_bairro(vr_bairro_cod).resumido,1,40);
             ELSE 
-              vr_bairro_nome  := ' ';
-              vr_bairro_res   := ' ';
+              vr_tab_logradouro(vr_ind).bairro_nome  := ' ';
+              vr_tab_logradouro(vr_ind).bairro_res   := ' ';
             END IF;
             
             -- verificar se a cidade existe
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
-              vr_cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
-              vr_cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
+              vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
             ELSE 
-              vr_cidade_nome  := ' ';
-              vr_cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
+              vr_tab_logradouro(vr_ind).cidade_res   := ' ';
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -725,49 +827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                                      ,pr_texto_completo => vr_dstexto_leitura
                                      ,pr_texto_novo     => vr_setlinha || '  #  ' || 
                                                            SQLERRM     || chr(10));  
-              -- Ignora a linha e vai para o proximo registro
-              CONTINUE;
           END;
-          
-          BEGIN
-            INSERT INTO crapdne(nrceplog
-                               ,nmextlog
-                               ,nmreslog
-                               ,dscmplog
-                               ,dstiplog
-                               ,nmextbai
-                               ,nmresbai
-                               ,nmextcid
-                               ,nmrescid
-                               ,cduflogr
-                               ,idoricad
-                               ,idtipdne)
-                        VALUES(vr_cep
-                              ,vr_nome_rua
-                              ,vr_nome_rua_res
-                              ,vr_complemento
-                              ,' '
-                              ,vr_bairro_nome
-                              ,vr_bairro_res
-                              ,vr_cidade_nome
-                              ,vr_cidade_res
-                              ,vr_estado
-                              ,vr_idoricad   -- idoricad (1 - CORREIOS)
-                              ,vr_idtipdne); -- idtipdne (2 - GRANDE USUARIO)
-            
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- Atualizar o controle de erros
-              vr_erro_insert := TRUE;
-              -- Erro na busca dos dados
-              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
-                                     ,pr_texto_completo => vr_dstexto_insert
-                                     ,pr_texto_novo     => vr_setlinha || '  #  ' || 
-                                                           SQLERRM     || chr(10));  
-              
-              CONTINUE;
-          END;
-          
         END LOOP; -- Loop Arquivo
 
       EXCEPTION 
@@ -776,11 +836,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
 
         WHEN OTHERS THEN
+          -- Fechar o arquivo
+          GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+          
           vr_dscritic:= 'Erro geral no processamento do arquivo: ' || vr_nmarqprc || ': ' ||
-                        REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
           RAISE vr_exc_saida;
       END;
       
+      -- Verificar se foram processados a quantidade para para realizar o commit
+      IF vr_tab_logradouro.COUNT() > 0 THEN
+        -- Insert dos enderecos
+        pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                          ,pr_idtipdne       => vr_idtipdne
+                          ,pr_dscritic       => vr_dscritic);
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Atualizar o controle de erros
+          vr_erro_insert := TRUE;
+          -- Erro na busca dos dados
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                 ,pr_texto_completo => vr_dstexto_insert
+                                 ,pr_texto_novo     => vr_dscritic || chr(10)); 
+          vr_dscritic := NULL;
+        END IF;
+      END IF; 
+            
       IF vr_erro_leitura THEN
         -- Fecha o XML de erro de leitura
         gene0002.pc_escreve_xml(pr_xml            => vr_clob_leitura
@@ -818,13 +900,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
 
       WHEN OTHERS THEN
         pr_dscritic := 'Erro geral na rotina da tela CADDNE.pc_proc_arq_grande_usuario: ' || 
-                       REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
-
-        ROLLBACK;
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
     END;
   END pc_proc_arq_grande_usuario;
 
@@ -865,7 +946,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_CPC.TXT';
 
       -- Identificacao dos Enderecos
-      vr_idoricad CONSTANT crapdne.idoricad%TYPE := 1; -- Origem do Cadastro como CORREIOS (1)
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 4; -- Tipo de Endereco Caixa Postal Comunitaria - CPC
 
       -- Variavel de criticas
@@ -886,20 +966,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       -- Variaveis para processamento do arquivo
       vr_input_file  UTL_FILE.FILE_TYPE;
-      vr_setlinha    VARCHAR2(250);
+      vr_setlinha    VARCHAR2(32500);
       
-      -- Contador para realizar commit
-      vr_qtd_proc     INTEGER;
-
       -- Campos 
-      vr_estado       crapdne.cduflogr%TYPE;
       vr_cidade_cod   INTEGER;
-      vr_nome_rua     crapdne.nmextlog%TYPE;
-      vr_complemento  crapdne.dscmplog%TYPE;
-      vr_cep          crapdne.nrceplog%TYPE;
-      vr_nome_rua_res crapdne.nmreslog%TYPE;
-      vr_cidade_nome  crapdne.nmextcid%TYPE;
-      vr_cidade_res   crapdne.nmrescid%TYPE;
+      
+      -- PL TABLE de Logradouros 
+      vr_tab_logradouro typ_tab_logradouro;
+      vr_ind            INTEGER;
 
     BEGIN
       -- Verificar se o arquivo LOG_UNID_OPER.TXT existe
@@ -924,48 +998,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       END IF;
       
       DELETE FROM crapdne
-            WHERE crapdne.idoricad = vr_idoricad  -- Origem do Cadastro
+            WHERE crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
       -- Realizamos o commit 
       COMMIT;
 
+      -- Limpar a tabela
+      vr_tab_logradouro.DELETE;
+      
       BEGIN
-        -- Zerar contador
-        vr_qtd_proc := 0;
         -- Laco para leitura de linhas do arquivo
         LOOP
           -- Verificar se foram processados a quantidade para para realizar o commit
-          IF vr_qtd_proc = vr_qtd_reg_commit THEN
-            vr_qtd_proc:= 0;
-            COMMIT;
+          IF vr_tab_logradouro.COUNT() = vr_qtd_reg_commit THEN
+            pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                              ,pr_idtipdne       => vr_idtipdne
+                              ,pr_dscritic       => vr_dscritic);
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              -- Atualizar o controle de erros
+              vr_erro_insert := TRUE;
+              -- Erro na busca dos dados
+              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                     ,pr_texto_completo => vr_dstexto_insert
+                                     ,pr_texto_novo     => vr_dscritic || chr(10)); 
+              vr_dscritic := NULL;
+            END IF;
           END IF;
 
           -- Atualizar o totalizador
-          vr_qtd_proc := vr_qtd_proc + 1;
-          
+          vr_ind := vr_tab_logradouro.COUNT() + 1;
+
           -- Carrega handle do arquivo
           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto lido
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
+          -- Retirar os espacos em branco
+          vr_setlinha := TRIM(vr_setlinha);
 
           -- Buscar os dados da RUA
           BEGIN
-            vr_estado       := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2);
+            -- Codigo da Cidade 
             vr_cidade_cod   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-            vr_nome_rua_res := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72);
-            vr_complemento  := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90);
-            vr_nome_rua     := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 5, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80);
-            vr_cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+
+            vr_tab_logradouro(vr_ind).estado       := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
+            vr_tab_logradouro(vr_ind).nome_rua_res := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72));
+            vr_tab_logradouro(vr_ind).complemento  := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90));
+            vr_tab_logradouro(vr_ind).nome_rua     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 5, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80));
+            vr_tab_logradouro(vr_ind).cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'));
 
             -- verificar se a cidade existe
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
-              vr_cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
-              vr_cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
+              vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
             ELSE 
-              vr_cidade_nome  := ' ';
-              vr_cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
+              vr_tab_logradouro(vr_ind).cidade_res   := ' ';
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -976,49 +1065,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                                      ,pr_texto_completo => vr_dstexto_leitura
                                      ,pr_texto_novo     => vr_setlinha || '  #  ' || 
                                                            SQLERRM     || chr(10));  
-              -- Ignora a linha e vai para o proximo registro
-              CONTINUE;
           END;
           
-          BEGIN
-            INSERT INTO crapdne(nrceplog
-                               ,nmextlog
-                               ,nmreslog
-                               ,dscmplog
-                               ,dstiplog
-                               ,nmextbai
-                               ,nmresbai
-                               ,nmextcid
-                               ,nmrescid
-                               ,cduflogr
-                               ,idoricad
-                               ,idtipdne)
-                        VALUES(vr_cep
-                              ,vr_nome_rua
-                              ,vr_nome_rua_res
-                              ,vr_complemento
-                              ,' '
-                              ,' '
-                              ,' '
-                              ,vr_cidade_nome
-                              ,vr_cidade_res
-                              ,vr_estado
-                              ,vr_idoricad   -- idoricad (1 - CORREIOS)
-                              ,vr_idtipdne); -- idtipdne (4 - CPC)
-            
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- Atualizar o controle de erros
-              vr_erro_insert := TRUE;
-              -- Erro na busca dos dados
-              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
-                                     ,pr_texto_completo => vr_dstexto_insert
-                                     ,pr_texto_novo     => vr_setlinha || '  #  ' || 
-                                                           SQLERRM     || chr(10));  
-              
-              CONTINUE;
-          END;
-         
         END LOOP; -- Loop Arquivo
 
       EXCEPTION 
@@ -1027,10 +1075,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
 
         WHEN OTHERS THEN
+          -- Fechar o arquivo
+          GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+          
           vr_dscritic:= 'Erro geral no processamento do arquivo: ' || vr_nmarqprc || ': ' ||
                         REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
           RAISE vr_exc_saida;
       END;
+      
+      -- Verificar se foram processados a quantidade para para realizar o commit
+      IF vr_tab_logradouro.COUNT() > 0 THEN
+        -- Insert dos enderecos
+        pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                          ,pr_idtipdne       => vr_idtipdne
+                          ,pr_dscritic       => vr_dscritic);
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Atualizar o controle de erros
+          vr_erro_insert := TRUE;
+          -- Erro na busca dos dados
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                 ,pr_texto_completo => vr_dstexto_insert
+                                 ,pr_texto_novo     => vr_dscritic || chr(10)); 
+          vr_dscritic := NULL;
+        END IF;
+      END IF; 
       
       IF vr_erro_leitura THEN
         -- Fecha o XML de erro de leitura
@@ -1069,13 +1137,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
 
       WHEN OTHERS THEN
         pr_dscritic := 'Erro geral na rotina da tela CADDNE.pc_proc_arq_cpc: ' || 
-                       REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
-
-        ROLLBACK;
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
     END;
   END pc_proc_arq_cpc;
 
@@ -1123,7 +1190,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_nmarqprc VARCHAR2(50) := 'LOG_LOGRADOURO_'|| pr_dssigla ||'.TXT';
 
       -- Identificacao dos Enderecos
-      vr_idoricad CONSTANT crapdne.idoricad%TYPE := 1; -- Origem do Cadastro como CORREIOS (1)
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 1; -- Cadastro de Enderecos
 
       -- Variavel de criticas
@@ -1144,24 +1210,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       -- Variaveis para processamento do arquivo
       vr_input_file  UTL_FILE.FILE_TYPE;
-      vr_setlinha    VARCHAR2(250);
+      vr_setlinha    VARCHAR2(32500);
       
-      -- Contador para realizar commit
-      vr_qtd_proc     INTEGER;
-
       -- Campos 
-      vr_estado       crapdne.cduflogr%TYPE;
       vr_cidade_cod   INTEGER;
       vr_bairro_cod   INTEGER;
-      vr_nome_rua     crapdne.nmextlog%TYPE;
-      vr_complemento  crapdne.dscmplog%TYPE;
-      vr_cep          crapdne.nrceplog%TYPE;
-      vr_tipo         crapdne.dstiplog%TYPE;
-      vr_nome_rua_res crapdne.nmreslog%TYPE;
-      vr_bairro_nome  crapdne.nmextbai%TYPE;
-      vr_bairro_res   crapdne.nmresbai%TYPE;
-      vr_cidade_nome  crapdne.nmextcid%TYPE;
-      vr_cidade_res   crapdne.nmrescid%TYPE;
+      
+      -- PL TABLE de Logradouros 
+      vr_tab_logradouro typ_tab_logradouro;
+      vr_ind            INTEGER;
       
     BEGIN
       -- Verificar se o arquivo LOG_LOGRADOURO_*.TXT existe
@@ -1187,24 +1244,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       DELETE FROM crapdne
             WHERE UPPER(crapdne.cduflogr) = pr_dssigla
-              AND crapdne.idoricad = vr_idoricad  -- Origem do Cadastro
+              AND crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
       -- Realizamos o commit 
       COMMIT;
 
+      -- Limpar a tabela
+      vr_tab_logradouro.DELETE;
+      
       BEGIN
-        -- Zerar contador
-        vr_qtd_proc := 0;
         -- Laco para leitura de linhas do arquivo
         LOOP
           -- Verificar se foram processados a quantidade para para realizar o commit
-          IF vr_qtd_proc = vr_qtd_reg_commit THEN
-            vr_qtd_proc:= 0;
-            COMMIT;
+          IF vr_tab_logradouro.COUNT() = vr_qtd_reg_commit THEN
+            pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                              ,pr_idtipdne       => vr_idtipdne
+                              ,pr_dscritic       => vr_dscritic);
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              -- Atualizar o controle de erros
+              vr_erro_insert := TRUE;
+              -- Erro na busca dos dados
+              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                     ,pr_texto_completo => vr_dstexto_insert
+                                     ,pr_texto_novo     => vr_dscritic || chr(10)); 
+              vr_dscritic := NULL;
+            END IF;
           END IF;
 
           -- Atualizar o totalizador
-          vr_qtd_proc := vr_qtd_proc + 1;
+          vr_ind := vr_tab_logradouro.COUNT() + 1;
 
           -- Carrega handle do arquivo
           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1212,34 +1280,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
-          
+          -- Retirar os espacos em branco
+          vr_setlinha := TRIM(vr_setlinha);
+
           -- Buscar os dados da RUA
           BEGIN
-            vr_estado       := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2);
+            -- Codigo da Cidade e do Bairro
             vr_cidade_cod   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'));
             vr_bairro_cod   := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-            vr_nome_rua     := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80);
-            vr_complemento  := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90);
-            vr_cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'));
-            vr_tipo         := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 9, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,25);
-            vr_nome_rua_res := SUBSTR(gene0002.fn_busca_entrada(pr_postext => 11, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72);
+
+            vr_tab_logradouro(vr_ind).estado       := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
+            vr_tab_logradouro(vr_ind).nome_rua     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,80));
+            vr_tab_logradouro(vr_ind).complemento  := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,90));
+            vr_tab_logradouro(vr_ind).cep          := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+            vr_tab_logradouro(vr_ind).tipo         := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 9, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,25));
+            vr_tab_logradouro(vr_ind).nome_rua_res := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 11, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,72));
 
             -- verificar se o bairro existe
             IF pr_tab_bairro.EXISTS(vr_bairro_cod) THEN
-              vr_bairro_nome  := SUBSTR(pr_tab_bairro(vr_bairro_cod).nome,1,72);
-              vr_bairro_res   := SUBSTR(pr_tab_bairro(vr_bairro_cod).resumido,1,40);
+              vr_tab_logradouro(vr_ind).bairro_nome  := SUBSTR(pr_tab_bairro(vr_bairro_cod).nome,1,72);
+              vr_tab_logradouro(vr_ind).bairro_res   := SUBSTR(pr_tab_bairro(vr_bairro_cod).resumido,1,40);
             ELSE 
-              vr_bairro_nome  := ' ';
-              vr_bairro_res   := ' ';
+              vr_tab_logradouro(vr_ind).bairro_nome  := ' ';
+              vr_tab_logradouro(vr_ind).bairro_res   := ' ';
             END IF;
             
             -- verificar se a cidade existe
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
-              vr_cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
-              vr_cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
+              vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
             ELSE 
-              vr_cidade_nome  := ' ';
-              vr_cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
+              vr_tab_logradouro(vr_ind).cidade_res   := ' ';
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -1250,47 +1322,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                                      ,pr_texto_completo => vr_dstexto_leitura
                                      ,pr_texto_novo     => vr_setlinha || '  #  ' || 
                                                            SQLERRM     || chr(10));  
-              -- Ignora a linha e vai para o proximo registro
-              CONTINUE;
-          END;
-          
-          BEGIN
-            INSERT INTO crapdne(nrceplog
-                               ,nmextlog
-                               ,nmreslog
-                               ,dscmplog
-                               ,dstiplog
-                               ,nmextbai
-                               ,nmresbai
-                               ,nmextcid
-                               ,nmrescid
-                               ,cduflogr
-                               ,idoricad
-                               ,idtipdne)
-                        VALUES(vr_cep
-                              ,vr_nome_rua
-                              ,vr_nome_rua_res
-                              ,vr_complemento
-                              ,vr_tipo
-                              ,vr_bairro_nome
-                              ,vr_bairro_res
-                              ,vr_cidade_nome
-                              ,vr_cidade_res
-                              ,vr_estado
-                              ,vr_idoricad   -- idoricad (1 - CORREIOS)
-                              ,vr_idtipdne); -- idtipdne (1 - Enderecos)
-            
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- Atualizar o controle de erros
-              vr_erro_insert := TRUE;
-              -- Erro na busca dos dados
-              gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
-                                     ,pr_texto_completo => vr_dstexto_insert
-                                     ,pr_texto_novo     => vr_setlinha || '  #  ' || 
-                                                           SQLERRM     || chr(10));  
-              
-              CONTINUE;
           END;
           
         END LOOP; -- Loop Arquivo
@@ -1301,10 +1332,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
 
         WHEN OTHERS THEN
+          -- Fechar o arquivo
+          GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
+          
           vr_dscritic:= 'Erro geral no processamento do estado ' || pr_dssigla || ': ' ||
-                        REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
           RAISE vr_exc_saida;
       END;
+      
+      -- Verificar se foram processados a quantidade para para realizar o commit
+      IF vr_tab_logradouro.COUNT() > 0 THEN
+        -- Insert dos enderecos
+        pc_insere_endereco(pr_tab_logradouro => vr_tab_logradouro
+                          ,pr_idtipdne       => vr_idtipdne
+                          ,pr_dscritic       => vr_dscritic);
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Atualizar o controle de erros
+          vr_erro_insert := TRUE;
+          -- Erro na busca dos dados
+          gene0002.pc_escreve_xml(pr_xml            => vr_clob_insert
+                                 ,pr_texto_completo => vr_dstexto_insert
+                                 ,pr_texto_novo     => vr_dscritic || chr(10)); 
+          vr_dscritic := NULL;
+        END IF;
+      END IF; 
       
       IF vr_erro_leitura THEN
         -- Fecha o XML de erro de leitura
@@ -1343,14 +1396,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
-        ROLLBACK;
       
       WHEN OTHERS THEN
         pr_dscritic := 'Erro geral na rotina da tela CADDNE.pc_proc_arq_estado: ' || 
                        '(' || pr_dssigla || ') - ' ||
-                       REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
-
-        ROLLBACK;
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
     END;
   END pc_proc_arq_estado;
 
@@ -1396,7 +1448,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
       
-
     BEGIN
       pr_tab_erro.DELETE;  
       
@@ -1465,7 +1516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
       -- Verificar se o arquivo CAIXA POSTAL COMUNITARIA deve ser processado
       IF pr_flcpc = 1 THEN
-        -- Processar o arquivo LOG_cpc.TXT
+        -- Processar o arquivo LOG_CPC.TXT
         pc_proc_arq_cpc(pr_tab_cidade => vr_tab_cidade --> Tabela de Cidades
                        ,pr_dscritic   => vr_dscritic); --> Descricao da Critica
 
@@ -1500,6 +1551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
         vr_lista_estados := gene0002.fn_quebra_string(vr_dsestprc,';');
         -- Percorrer todos os estados 
         FOR vr_estado IN vr_lista_estados.FIRST..vr_lista_estados.LAST LOOP
+          -- Processar o arquivo LOG_LOGRADOURO_*.TXT
           pc_proc_arq_estado(pr_tab_cidade => vr_tab_cidade --> Tabela de Cidades
                             ,pr_tab_bairro => vr_tab_bairro --> Tabela de Bairros
                             ,pr_dssigla    => vr_lista_estados(vr_estado) --> Sigla do estado que sera processado
@@ -1520,6 +1572,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           END IF;
         END LOOP;
       END IF;
+      
+      -- Finalizou o processo todo
+      COMMIT;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -1531,12 +1586,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                               pr_cdcritic => NVL(vr_cdcritic, 0),
                               pr_dscritic => vr_dscritic,
                               pr_tab_erro => pr_tab_erro);         
-        ROLLBACK;      
         
       WHEN OTHERS THEN
         -- Critica de erro
         vr_dscritic := 'Erro geral na rotina da tela CADDNE: ' || 
-                       REPLACE(REPLACE(SQLERRM,'''',NULL),'"',NULL);
+                        REPLACE(REPLACE(SQLERRM || ' -> ' ||
+                                       dbms_utility.format_error_backtrace || ' - ' ||
+                                       dbms_utility.format_error_stack,'''',NULL),'"',NULL);
         -- Adicionar a critica no retorno de erros
         gene0001.pc_gera_erro(pr_cdcooper => 3, -- CECRED
                               pr_cdagenci => 0,
@@ -1545,7 +1601,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                               pr_cdcritic => NVL(vr_cdcritic, 0),
                               pr_dscritic => vr_dscritic,
                               pr_tab_erro => pr_tab_erro);         
-        ROLLBACK;
     END;
   END pc_proc_arq_correio;
 
