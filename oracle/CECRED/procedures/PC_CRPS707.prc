@@ -130,6 +130,7 @@ BEGIN
      -- Linha a LInha
      vr_nrcpfcgc    NUMBER;
      vr_nrdconta    NUMBER;
+     vr_nmprimtl    VARCHAR2(60);
      vr_flgexis_cpf BOOLEAN;
      vr_flgexis_cta BOOLEAN;
      vr_cdcooper    NUMBER;
@@ -145,7 +146,7 @@ BEGIN
      vr_qtproces NUMBER;
      vr_qtrejeit NUMBER;
      vr_vlrtotal NUMBER;
-     vr_dstxterr VARCHAR2(4000);
+     vr_dstxterr VARCHAR2(32767);
      vr_hasfound      BOOLEAN;
    
    FUNCTION fn_mes(pr_data IN DATE) RETURN VARCHAR2 IS
@@ -154,11 +155,11 @@ BEGIN
        RETURN to_number(to_char(pr_data,'mm'));
      ELSE
        IF to_char(pr_data,'mm') = 10 THEN
-         RETURN 'O';
+         RETURN 'o';
        ELSIF to_char(pr_data,'mm') = 11 THEN
-         RETURN 'N';
+         RETURN 'n';
        ELSE
-         RETURN 'D';
+         RETURN 'd';
        END IF;
      END IF;
    END;
@@ -362,6 +363,7 @@ BEGIN
                vr_flgexis_cta := false;
                vr_cdcooper    := 0;
                vr_nrdconta    := 0;
+               vr_nmprimtl    := ' ';
                vr_nrcpfcgc    := 0;
                vr_vloperac    := 0;
                vr_nrispbif    := 0;
@@ -424,6 +426,14 @@ BEGIN
                    RAISE vr_exc_saida;
                END;
 
+               -- Busca do nome do destino
+               IF substr(vr_dslinharq,1,2) = '05' THEN
+                 vr_nmprimtl := substr(vr_dslinharq,223,50);
+               ELSE
+                 vr_nmprimtl := substr(vr_dslinharq,288,50);
+               END IF;  
+
+
                -- Busca da conta a creditar
                BEGIN
                  IF substr(vr_dslinharq,1,2) = '05' THEN
@@ -465,8 +475,9 @@ BEGIN
                        vr_cdmotivo := 'Conta Duplicada';
                        RAISE vr_exc_saida;
                      ELSE
-                       -- Armazena a Cooperativa da conta
+                       -- Armazena a Cooperativa da conta e nome do associado
                        vr_cdcooper := rw_crapass.cdcooper;
+                       vr_nmprimtl := rw_crapass.nmprimtl;
                      END IF;
                    END IF;
                  END IF;
@@ -629,7 +640,7 @@ BEGIN
                                         ,pr_cdbanctl => rw_crapcop.cdbcoctl
                                         ,pr_cdagectl => rw_crapcop.cdagectl
                                         ,pr_nrdconta => vr_nrdconta
-                                        ,pr_nmcopcta => rw_crapass.nmprimtl
+                                        ,pr_nmcopcta => vr_nmprimtl
                                         ,pr_nrcpfcop => vr_nrcpfcgc
                                         ,pr_cdbandif => vr_cdbandif
                                         ,pr_cdagedif => vr_cdagedif
@@ -686,7 +697,7 @@ BEGIN
                                      vr_nrcpfcgc ||
                                   '</td>' ||
                                   '<td>' ||
-                                    rw_crapass.nmprimtl ||
+                                    vr_nmprimtl ||
                                   '</td>' ||
                                   '<td>' ||
                                     vr_cdmotivo ||
@@ -707,7 +718,7 @@ BEGIN
                                           ,pr_cdbanctl => rw_crapcop.cdbcoctl
                                           ,pr_cdagectl => rw_crapcop.cdagectl
                                           ,pr_nrdconta => vr_nrdconta
-                                          ,pr_nmcopcta => rw_crapass.nmprimtl
+                                          ,pr_nmcopcta => vr_nmprimtl
                                           ,pr_nrcpfcop => vr_nrcpfcgc
                                           ,pr_cdbandif => vr_cdbandif
                                           ,pr_cdagedif => vr_cdagedif
