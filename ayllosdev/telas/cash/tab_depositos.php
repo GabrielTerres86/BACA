@@ -84,7 +84,7 @@
 					</tr>
 			<? }
 			   // Salva arquivo csv com nome em microsegundos
-			   $nmarquivo   = 'cash_depositos_' . round(microtime(true) * 1000) . '.csv';
+			   $nmarquivo   = 'cash_depositos_' . round(microtime(true) * 1000) . '.xls';
 			   $nmdir       = '../../documentos/'.$glbvars['dsdircop'].'/temp/';
 			   file_put_contents($nmdir.$nmarquivo, $csv);
 			?>
