@@ -380,8 +380,15 @@ function controlaFoco() {
 				return false;
 			}	
 	});
-	
+
 	$('#vlrdated','#frmLogSPB').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {	
+				$('#cdifconv','#frmLogSPB').focus();
+				return false;
+			}	
+	});
+	
+	$('#cdifconv','#frmLogSPB').unbind('keypress').bind('keypress', function(e) {
 			if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {	
 				obtemLog();
 				return false;
