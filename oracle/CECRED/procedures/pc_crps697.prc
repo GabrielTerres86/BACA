@@ -21,6 +21,8 @@ BEGIN
      Objetivo  : Criacao de mensagens no Internet Bank para GPS (Guias da Previdencia Social)
 
      Alterações: 29/12/2015 - Incluso tratamento 'DD/MM/YYYY' ao usar o to_date (Daniel)
+
+	             04/10/2016 - Ajuste erro encontrado na execução do processo Batch (Daniel)
     ...............................................................................*/
 
     DECLARE
@@ -255,7 +257,7 @@ BEGIN
                 vr_dsmensagem := 'O Pagamento de GPS para o Identificador: ' || rw_count_gps.cdidenti ||
                                  ' no valor de R$ ' || TO_CHAR(rw_count_gps.vlrtotal,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') ||
                                  ' possui apenas '  || rw_count_gps.count || ' agendamento(s) pendente(s).' ||
-                                 '</br></br>Novos agendamentos deverão ser realizados a partir de Jan/'  || TO_NUMBER(TO_CHAR(vr_dtmvtolt, 'RRRR')) + 1 ||
+                                 '</br></br>Novos agendamentos deverão ser realizados a partir de Jan/'  || to_char(add_months(vr_dtmvtolt,12),'RRRR') ||
                                  ', acessando o link Transações -> Guia Previdência Social -> Agendamentos de GPS.' ||
                                  '</br>Salientamos que os novos agendamentos de GPS devem ser realizados com base no reajuste do salário mínimo.' ||
                                  '</br></br>Caso não sejam realizados novos agendamentos, não haverá mais a contribuição para ' ||
