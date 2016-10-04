@@ -1,18 +1,19 @@
-<? 
+<?php
  /*!
  * FONTE        : form_impres.php
  * CRIAÇÃO      : Rogerius Militão (DB1)
- * DATA CRIAÇÃO : 31/08/2011 
+ * DATA CRIAÇÃO : 31/08/2011
  * OBJETIVO     : Formulário de exibição da IMPRES
  * --------------
  * ALTERAÇÕES   :
  * 10/09/2012 - Guilherme    (SUPERO) : Demonstrativo Aplicações: Alteração de layout e novos campos
  * 29/11/2012 - Daniel       (CECRED) : Alterado botões do tipo tag <input> para tag <a> novo layout.
  * 31/05/2013 - Daniel       (CECRED) : Retirado campo flgtarif.
+ * 08/08/2016 - Guilherme    (SUPERO) : M325 - Informe de Rendimentos Trimestral PJ
  * --------------
- */	
+ */
 ?>
-<form name="frmImpres" id="frmImpres" class="formulario" onSubmit="return false;" style="display:none" >	
+<form name="frmImpres" id="frmImpres" class="formulario" onSubmit="return false;" style="display:none" >
 
 	<fieldset>
 
@@ -58,8 +59,26 @@
         <option value="yes">Sim</option>
 		</select>
 		-->
-		<br />
+		<br style="clear:both" />
+
+        <div id="divTipo6" >
+		<label for="tpinform"><? echo utf8ToHtml('Informe:') ?></label>
+		<select name="tpinform" id="tpinform">
+		    <option value=0 selected>Anual</option>
+		    <option value=1>Trimestral</option>
+		</select>
+		</div>
+        <div id="divPeriodo" >
+		<label for="nrperiod"><? echo utf8ToHtml('Trimestre:') ?></label>
+		<select name="nrperiod" id="nrperiod">
+		    <option value=1 selected>Jan-Mar</option>
+		    <option value=2>Abr-Jun</option>
+		    <option value=3>Jul-Set</option>
+		    <option value=4>Out-Dez</option>
+		</select>
+        </div>
 </div>
+
 		<label for="nraplica"><? echo utf8ToHtml('Aplicac.:') ?></label>
 		<input name="nraplica" id="nraplica" type="text" value="<? echo $nraplica ?>" value="" />
 		<a style="margin-top:5px"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
@@ -72,12 +91,12 @@
 		<label for="flgemiss"><? echo utf8ToHtml('Quando?:') ?></label>
 		<select name="flgemiss" id="flgemiss">
 		<option value="yes">Agora</option>
-		<option value="no">Processo</option>		
+		<option value="no">Processo</option>
 		</select>
 
-</div>	
-	</fieldset>		
-	
+</div>
+	</fieldset>
+
 </form>
 <script type="text/javascript">
 
@@ -88,9 +107,9 @@ $("#tpmodelo","#frmImpres").change(function() {
     var src   = $(this).val();
 
     if (src == '1') {
-        var dtArray = dtmvtolt.split('/');    
+        var dtArray = dtmvtolt.split('/');
         var dtdozemes = (dtArray[0] + 1) + "/" + dtArray[1] + "/" + (dtArray[2] - 1);
-    
+
         cDtrefere.habilitaCampo();
         cDtreffim.habilitaCampo();
         cDtreffim.val(dtmvtolt);
@@ -103,6 +122,16 @@ $("#tpmodelo","#frmImpres").change(function() {
         cDtreffim.desabilitaCampo();
     }
 
+});
+
+$("#tpinform","#frmImpres").change(function() {
+    var src   = $(this).val();
+
+    if (src == 0) { // ANUAL
+        $('#divPeriodo').hide();
+    }else { // TRIMESTRAL
+        $('#divPeriodo').show();
+    }
 });
 
 </script>
@@ -121,5 +150,7 @@ $("#tpmodelo","#frmImpres").change(function() {
 	<input name="nrctremp" id="nrctremp" type="hidden" value="" />
 	<input name="nraplica" id="nraplica" type="hidden" value="" />
 	<input name="nranoref" id="nranoref" type="hidden" value="" />
-</form>	
+	<input name="nrperiod" id="nrperiod" type="hidden" value="" />
+	<input name="tpinform" id="tpinform" type="hidden" value="" />
+</form>
 
