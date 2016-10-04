@@ -98,7 +98,9 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
               dsorigem Varchar2(15),
               cdagenci craplmt.cdagenci%type,
               nrdcaixa craplmt.nrdcaixa%type,
-              cdoperad craplmt.cdoperad%type);
+              cdoperad craplmt.cdoperad%type,
+              nmevento craplmt.nmevento%TYPE,
+              nrctrlif craplmt.nrctrlif%TYPE);
 
   TYPE typ_tab_logspb_detalhe IS
     TABLE OF typ_reg_logspb_detalhe
@@ -1123,7 +1125,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              cdagenci,
              nrdcaixa,
              cdoperad,
-             idorigem
+             idorigem,
+             nrctrlif,
+             nmevento
         FROM craplmt
        WHERE craplmt.cdcooper = pr_cdcooper
          AND ((craplmt.nrdconta = pr_nrdconta AND pr_nrdconta <> 0) OR
@@ -1197,8 +1201,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmcopcta;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfcop;
 
-         END IF;
-
+         END IF;         
+         
+         pr_tab_logspb_detalhe(vr_idx).nmevento := rw_craplmt.nmevento;
+         pr_tab_logspb_detalhe(vr_idx).nrctrlif := rw_craplmt.nrctrlif;
          pr_tab_logspb_detalhe(vr_idx).hrtransa := rw_craplmt.hrtransa;
          pr_tab_logspb_detalhe(vr_idx).vltransa := rw_craplmt.vldocmto;
          pr_tab_logspb_detalhe(vr_idx).dsmotivo := rw_craplmt.dsmotivo;
@@ -2055,10 +2061,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
         --Percorrer todos as regionais
         WHILE vr_idx_logspb IS NOT NULL LOOP
-          vr_dsregistr:= '<linhas>'||
+          vr_dsregistr:= '<linhas_logspb>'||
                          '  <nrseqlog>' || nvl(vr_tab_logspb(vr_idx_logspb).nrseqlog,0)||'</nrseqlog>'||
                          '  <dslinlog>' || nvl(vr_tab_logspb(vr_idx_logspb).dslinlog,' ')||'</dslinlog>'||
-                         '</linhas>';
+                         '</linhas_logspb>';
 
            -- Escrever no XML
           gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
@@ -2093,7 +2099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
         --Percorrer todos as regionais
         WHILE vr_idx_logspb_detalhe IS NOT NULL LOOP
-          vr_dsregistr:= '<linhas>'||
+          vr_dsregistr:= '<linhas_logspb_detalhe>'||
                          '  <nrseqlog>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrseqlog,0)||'</nrseqlog>'||
                          '  <cdbandst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdbandst,0)||'</cdbandst>'||
                          '  <cdagedst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagedst,0)||'</cdagedst>'||
@@ -2113,7 +2119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '  <cdagenci>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagenci,0)||'</cdagenci>'||  
                          '  <nrdcaixa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrdcaixa,0)||'</nrdcaixa>'||  
                          '  <cdoperad>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdoperad,' ')||'</cdoperad>'||                                                                                                                                                                                                          
-                         '</linhas>';
+                         '</linhas_logspb_detalhe>';
            -- Escrever no XML
           gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
                                  ,pr_texto_completo => vr_dstextaux
@@ -2147,10 +2153,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
         --Percorrer todos as regionais
         WHILE vr_idx_logspb_totais IS NOT NULL LOOP
-          vr_dsregistr:= '<linhas>'||
+          vr_dsregistr:= '<linhas_logspb_totais>'||
                          '  <qtsitlog>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).qtsitlog,'fm999g999g9990'),'0')||'</qtsitlog>'||
                          '  <vlsitlog>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).vlsitlog,'fm999g999g9990d00'),'0')||'</vlsitlog>'||
-                         '</linhas>';
+                         '</linhas_logspb_totais>';
            -- Escrever no XML
           gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
                                  ,pr_texto_completo => vr_dstextaux

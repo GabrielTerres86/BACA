@@ -721,7 +721,7 @@ PROCEDURE obtem-log-cecred:
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }     
     
     IF  aux_cdcritic <> 0   OR
-        aux_dscritic <> ""  THEN
+        aux_dscritic <> "OK"  THEN
         DO:
             CREATE tt-erro.
             ASSIGN tt-erro.cdcritic = aux_cdcritic
@@ -804,12 +804,12 @@ PROCEDURE obtem-log-cecred:
                         tt-logspb-detalhe.cdagedst = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagedst"
                         tt-logspb-detalhe.nrctadst =     xText:NODE-VALUE  WHEN xField:NAME = "nrctadst"
                         tt-logspb-detalhe.dsnomdst =     xText:NODE-VALUE  WHEN xField:NAME = "dsnomdst"
-                        tt-logspb-detalhe.dscpfdst = INT(xText:NODE-VALUE) WHEN xField:NAME = "dscpfdst"
+                        tt-logspb-detalhe.dscpfdst = DEC(xText:NODE-VALUE) WHEN xField:NAME = "dscpfdst"
                         tt-logspb-detalhe.cdbanrem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbanrem"
                         tt-logspb-detalhe.cdagerem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagerem"
                         tt-logspb-detalhe.nrctarem =     xText:NODE-VALUE  WHEN xField:NAME = "nrctarem"
                         tt-logspb-detalhe.dsnomrem =     xText:NODE-VALUE  WHEN xField:NAME = "dsnomrem"
-                        tt-logspb-detalhe.dscpfrem = INT(xText:NODE-VALUE) WHEN xField:NAME = "dscpfrem"
+                        tt-logspb-detalhe.dscpfrem = DEC(xText:NODE-VALUE) WHEN xField:NAME = "dscpfrem"
                         tt-logspb-detalhe.hrtransa =     xText:NODE-VALUE  WHEN xField:NAME = "hrtransa"
                         tt-logspb-detalhe.vltransa = DEC(xText:NODE-VALUE) WHEN xField:NAME = "vltransa"
                         tt-logspb-detalhe.dsmotivo =     xText:NODE-VALUE  WHEN xField:NAME = "dsmotivo"
