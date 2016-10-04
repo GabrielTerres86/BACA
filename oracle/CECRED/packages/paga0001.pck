@@ -1115,7 +1115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 13/09/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1386,17 +1386,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        15/07/2016 - #433568 na procedure pc_executa_transferencia da PAGA0001 permitir que se gere o 
                     protocolo para os agendamentos feitos através do TAA (Carlos)
 
-	     18/07/2016 - Ajuste para incluir end if perdido no merge
-			   	          (Adriano)
-                    
+	     18/07/2016 - Ajuste para incluir end if perdido no merge (Adriano)
+                                                                              
 			 04/08/2016 - Alterado rotinas pc_gera_arq_coop_cnab240 e pc_gera_arq_coop_cnab400
 			              para tratar envio via ftp. (Reinert)
-                    
+                                                                              
        23/08/2016 - Incluir tratamento para autorizações suspensas na procedure
                     pc_debita_convenio_cecred (Lucas Ranghetti #499496)
        13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
                    (Adriano - SD 495293). 
-                                                                              
+                   
+       21/09/2016 - #523944 Criação de log de controle de início, erros e fim de execução
+                    do job pc_processa_crapdda (Carlos)
+              
+       28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
+                    na procedure pc_paga_titulo (Lucas Ranghetti #511679)                      
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -7966,7 +7970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 05/02/2016
+    --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -8015,6 +8019,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                             já foi atulizada e enviado a JDDA.
     --                            (Adriano - SD 394710)
     --
+    --                28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
+    --                             (Lucas Ranghetti #511679)                      
     -- ..........................................................................
 
   BEGIN
@@ -8674,6 +8680,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       -- se encontrou erro ao buscar lote, abortar programa
       IF vr_dscritic IS NOT NULL THEN
+        -- Rollback da transação
+        ROLLBACK TO undopoint;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -11522,7 +11530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                 
                    13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
                                (Adriano - SD 495293).       
-                                
+
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -12204,7 +12212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 							--Atualizar flag para true
 								vr_flgalter := TRUE;
 								pr_flgalter := TRUE;
-						END IF;
+        END IF;
 					END IF;
         END IF;
 
