@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 22/06/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 14/07/2016
 
        Dados referentes ao programa:
 
@@ -77,6 +77,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    22/06/2016 - Ajuste no ELSE que verifica a existencia de registro na leitura do
                                 cursor cr_crapacb para nao gerar mais RAISE, mas sim, gravar log
                                 e continuar processando o arquivo. (Fabricio)
+                                
+                   29/06/2016 - Ajuste no cursor cr_crawcrd_cdgrafin_conta para contemplar a busca
+                                tanto por cartoes Bloqueados quanto Cancelados (insitcrd = 5,6).
+                                (Chamados 478655, 478680 entre outros...) - (Fabricio)
+                                
+                   14/07/2016 - Ajustado a identificacao dos dados da conta e controle na leitura do
+                                numero da conta quando o valor recebido eh zero
+                                (Douglas - Chamado 465010, 478018)
     ............................................................................ */
 
     DECLARE
@@ -400,7 +408,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
          WHERE pcr.cdcooper = pr_cdcooper  
            AND pcr.nrdconta = pr_nrdconta  
            AND pcr.nrcctitg = pr_nrcctitg
-           AND (pcr.dtcancel = pr_dtmvtolt OR pcr.insitcrd = 6)
+           AND (pcr.dtcancel = pr_dtmvtolt OR pcr.insitcrd IN (5,6))
            AND pcr.cdadmcrd BETWEEN 10 AND 80 -- Apenas bancoob
            AND pcr.flgprcrd = 1
       GROUP BY pcr.cdadmcrd,
@@ -625,7 +633,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
             SET rej.cdpesqbb = pr_cdpesqbb
            WHERE rej.cdcooper = pr_cdcooper
             AND rej.cdagenci = pr_cdagenci
-            AND rej.nrdconta = vr_nrdconta
+            AND rej.nrdconta = pr_nrdconta
             AND rej.dtmvtolt = pr_dtmvtolt
             AND rej.cdpesqbb IS NULL;
 
@@ -1253,6 +1261,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 vr_nrctatp1 := to_number(TRIM(substr(vr_des_text,221,8)));
                 vr_nrctatp2 := 0;
                 
+                -- Se o numero da conta chegou com zero
+                -- Pegar o campo "Numero da Conta a Debitar"
+                IF NVL(vr_nrctatp1,0) = 0 THEN
+                  vr_nrctatp1 := to_number(TRIM(substr(vr_des_text,206,12)));
+                END IF;
+                
                 -- Buscar valores
                 vr_tipooper := to_number(substr(vr_des_text,7,2));
                 vr_nroperac := to_number(substr(vr_des_text,9,8));
@@ -1397,6 +1411,110 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
 
               -- se for DADOS DO CARTÃO
               IF substr(vr_des_text,5,2) = '02'  THEN
+
+                -- Guardar contas do arquivo para verificação
+                vr_nrctatp2 := to_number(TRIM(substr(vr_des_text,337,12)));
+                vr_tipooper := to_number(substr(vr_des_text,7,2));
+                vr_cdlimcrd := 0;
+                -- Agencia do banco
+                vr_cdagebcb := to_number(substr(vr_des_text,333,4));
+                -- Se vier agencia bancoob zerada, obtem do Nr. da Conta Cartão
+                IF vr_cdagebcb = 0 THEN
+                  vr_cdagebcb := to_number(substr(vr_des_text,28,4));
+                END IF;
+                
+                /*
+                1 - Inclusao de Cartao
+                3 - Cancelamento de Cartao
+                4 - Inclusao de Adicional
+                7 - Reativacao de Contas
+                12 - Alteracao de Estado
+                13 - Alteracao de Estado Conta
+                25 - Reativar Cartao do Adicional                
+                */                
+                IF vr_tipooper NOT IN (1,3,4,7,12,13,25) THEN
+                   CONTINUE;
+                END IF;
+                
+                -- busca a cooperativa com base no cod. da agencia central do arquivo
+                OPEN cr_crapcop_cdagebcb(pr_cdagebcb => vr_cdagebcb);
+                FETCH cr_crapcop_cdagebcb INTO rw_crapcop_cdagebcb;
+                IF cr_crapcop_cdagebcb%NOTFOUND THEN
+                  -- Fechar o cursor pois havera raise
+                  CLOSE cr_crapcop_cdagebcb;
+                  -- Montar mensagem de critica
+                  vr_dscritic := 'Codigo da agencia do Bancoob ' || to_char(vr_cdagebcb) ||
+                                 ' nao possui Cooperativa correspondente.';
+                  
+                  -- gravar log do erro
+                  pc_log_message;
+                  -- Próxima linha
+                  CONTINUE;
+                ELSE
+                  -- Fecha cursor cooperativa
+                  CLOSE cr_crapcop_cdagebcb;
+                END IF;                
+
+                -- faz associação da variavel cod cooperativa;
+                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;
+                
+                -- Caso o numero da conta for igual a 0, vamos buscar o numero da conta pelo CPF
+                IF NVL(vr_nrctatp2,0) = 0 THEN
+                  
+                  OPEN cr_crawcrd_outros_nrcctitg(pr_cdcooper => vr_cdcooper,
+                                                  pr_nrcctitg => TO_NUMBER(substr(vr_des_text,25,13)));                                         
+                  FETCH cr_crawcrd_outros_nrcctitg INTO rw_crawcrd_outros_nrcctitg;
+
+                  IF cr_crawcrd_outros_nrcctitg%FOUND THEN
+                    CLOSE cr_crawcrd_outros_nrcctitg;                    
+                    vr_nrctatp2 := rw_crawcrd_outros_nrcctitg.nrdconta;
+                  ELSE
+                    CLOSE cr_crawcrd_outros_nrcctitg;                    
+                  OPEN cr_crawcrd_outros(pr_cdcooper => vr_cdcooper,
+                                           pr_nrseqcrd => TO_NUMBER(substr(vr_des_text,9,8)));                                         
+                  FETCH cr_crawcrd_outros INTO rw_crawcrd_outros;
+                  IF cr_crawcrd_outros%NOTFOUND THEN
+                    -- Fechar o cursor pois havera raise
+                    CLOSE cr_crawcrd_outros;                    
+                    CONTINUE;
+                  ELSE
+                    CLOSE cr_crawcrd_outros;                    
+                  END IF;
+                  vr_nrctatp2 := rw_crawcrd_outros.nrdconta;
+                  END IF;
+                END IF;                
+                
+                -- Se não veio conta
+                IF NVL(vr_nrctatp2,0) = 0 THEN                  
+                  -- Ignora a linha
+                  CONTINUE; 
+                END IF;
+                
+                vr_nrdconta := vr_nrctatp2;
+                
+                IF vr_tipooper IN (1,4) THEN
+                  -- Buscar informação do cartão verificando se o mesmo está encerrado (cancelado)
+                  OPEN  cr_crawcrd_encerra(vr_cdcooper                            --pr_cdcooper
+                                          ,vr_nrdconta                            --pr_nrdconta
+                                          ,TO_NUMBER(substr(vr_des_text,25,13))   --pr_nrcctitg
+                                          ,TO_NUMBER(substr(vr_des_text,38,19))); --pr_nrcrcard
+                  FETCH cr_crawcrd_encerra INTO rw_crawcrd_encerra;
+                  -- Se encontrar o cartão como encerrado (cancelado)
+                  IF cr_crawcrd_encerra%FOUND THEN
+                    -- fecha o cursor
+                    CLOSE cr_crawcrd_encerra;
+                    CONTINUE; -- Ignora o registro
+                  END IF;                
+                  CLOSE cr_crawcrd_encerra;
+                  
+                END IF;
+                
+                -- Busca dados da agencia cooperado
+                OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
+                                pr_nrdconta => vr_nrdconta);
+                FETCH cr_crapass INTO rw_crapass;
+                CLOSE cr_crapass;
+                
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
                 IF TO_NUMBER(substr(vr_des_text,93,02)) = '03' THEN                  
                   
@@ -1463,103 +1581,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   END IF;
                 END IF;
                 
-                -- Guardar contas do arquivo para verificação
-                vr_nrctatp2 := to_number(TRIM(substr(vr_des_text,337,12)));
-                vr_tipooper := to_number(substr(vr_des_text,7,2));
-                vr_cdlimcrd := 0;
-                -- Agencia do banco
-                vr_cdagebcb := to_number(substr(vr_des_text,333,4));
-                -- Se vier agencia bancoob zerada, obtem do Nr. da Conta Cartão
-                IF vr_cdagebcb = 0 THEN
-                  vr_cdagebcb := to_number(substr(vr_des_text,28,4));
-                END IF;
-                
-                /*
-                1 - Inclusao de Cartao
-                3 - Cancelamento de Cartao
-                4 - Inclusao de Adicional
-                7 - Reativacao de Contas
-                12 - Alteracao de Estado
-                13 - Alteracao de Estado Conta
-                25 - Reativar Cartao do Adicional                
-                */                
-                IF vr_tipooper NOT IN (1,3,4,7,12,13,25) THEN
-                   CONTINUE;
-                END IF;
-                
-                IF vr_tipooper IN (1,4) THEN
-                  -- Buscar informação do cartão verificando se o mesmo está encerrado (cancelado)
-                  OPEN  cr_crawcrd_encerra(vr_cdcooper                            --pr_cdcooper
-                                          ,vr_nrdconta                            --pr_nrdconta
-                                          ,TO_NUMBER(substr(vr_des_text,25,13))   --pr_nrcctitg
-                                          ,TO_NUMBER(substr(vr_des_text,38,19))); --pr_nrcrcard
-                  FETCH cr_crawcrd_encerra INTO rw_crawcrd_encerra;
-                  -- Se encontrar o cartão como encerrado (cancelado)
-                  IF cr_crawcrd_encerra%FOUND THEN
-                    -- fecha o cursor
-                    CLOSE cr_crawcrd_encerra;
-                    CONTINUE; -- Ignora o registro
-                  END IF;                
-                  CLOSE cr_crawcrd_encerra;
-                  
-                END IF;
-                
-                -- busca a cooperativa com base no cod. da agencia central do arquivo
-                OPEN cr_crapcop_cdagebcb(pr_cdagebcb => vr_cdagebcb);
-                FETCH cr_crapcop_cdagebcb INTO rw_crapcop_cdagebcb;
-                IF cr_crapcop_cdagebcb%NOTFOUND THEN
-                  -- Fechar o cursor pois havera raise
-                  CLOSE cr_crapcop_cdagebcb;
-                  -- Montar mensagem de critica
-                  vr_dscritic := 'Codigo da agencia do Bancoob ' || to_char(vr_cdagebcb) ||
-                                 ' nao possui Cooperativa correspondente.';
-                  
-                  -- gravar log do erro
-                  pc_log_message;
-                  -- Próxima linha
-                  CONTINUE;
-                ELSE
-                  -- Fecha cursor cooperativa
-                  CLOSE cr_crapcop_cdagebcb;
-                END IF;                
-
-                -- faz associação da variavel cod cooperativa;
-                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;
-                
-                -- Caso o numero da conta for igual a 0, vamos buscar o numero da conta pelo CPF
-                IF NVL(vr_nrctatp2,0) = 0 THEN
-                  
-                  OPEN cr_crawcrd_outros_nrcctitg(pr_cdcooper => vr_cdcooper,
-                                                  pr_nrcctitg => TO_NUMBER(substr(vr_des_text,25,13)));                                         
-                  FETCH cr_crawcrd_outros_nrcctitg INTO rw_crawcrd_outros_nrcctitg;
-
-                  IF cr_crawcrd_outros_nrcctitg%FOUND THEN
-                    CLOSE cr_crawcrd_outros_nrcctitg;                    
-                    vr_nrctatp2 := rw_crawcrd_outros_nrcctitg.nrdconta;
-                  ELSE
-                    CLOSE cr_crawcrd_outros_nrcctitg;                    
-                  OPEN cr_crawcrd_outros(pr_cdcooper => vr_cdcooper,
-                                           pr_nrseqcrd => TO_NUMBER(substr(vr_des_text,9,8)));                                         
-                  FETCH cr_crawcrd_outros INTO rw_crawcrd_outros;
-                  IF cr_crawcrd_outros%NOTFOUND THEN
-                    -- Fechar o cursor pois havera raise
-                    CLOSE cr_crawcrd_outros;                    
-                    CONTINUE;
-                  ELSE
-                    CLOSE cr_crawcrd_outros;                    
-                  END IF;
-                  vr_nrctatp2 := rw_crawcrd_outros.nrdconta;
-                  END IF;
-                END IF;                
-                
-                -- Se não veio conta
-                IF NVL(vr_nrctatp2,0) = 0 THEN                  
-                  -- Ignora a linha
-                  CONTINUE; 
-                END IF;
-                
-                vr_nrdconta := vr_nrctatp2;
-                
                 /* 
                 3 - Cancelamento de Cartao
                 7 - Reativacao de Contas
@@ -1600,6 +1621,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   vr_vllimcrd := 0;
                   vr_tpdpagto := 0;
                   vr_flgdebcc := 0;
+                  
+                  -- Busca dados da agencia cooperado
+                  OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
+                                  pr_nrdconta => vr_nrdconta);
+                  FETCH cr_crapass INTO rw_crapass;
+                  CLOSE cr_crapass;
                   
                   -- Buscar o contrato que esteja em uso
                   OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
@@ -2456,7 +2483,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
         -- Adiciona a linha ao XML
         pc_escreve_xml (vr_xml_clobxml,'<rejeitados>'
                ||chr(10)||'<cdcooper>'||rw_craprej.cdcooper||'</cdcooper>'
-               ||chr(10)||'<nmtitcrd>'||TRIM(rw_craprej.nmtitcrd) ||'</nmtitcrd>'
+               ||chr(10)||'<nmtitcrd>'||NVL(TRIM(rw_craprej.nmtitcrd), ' ') ||'</nmtitcrd>'
                ||chr(10)||'<cdpesqbb>'||TRIM(rw_craprej.cdpesqbb)||'</cdpesqbb>'
                ||chr(10)||'<nrdocmto>'||TRIM(gene0002.fn_mask(rw_craprej.nrdocmto,'zz.zzz.zzz'))||'</nrdocmto>'
                ||chr(10)||'<nrdconta>'||TRIM(gene0002.fn_mask(rw_craprej.nrdconta,'zzzz.zzz.z'))||'</nrdconta>'
@@ -2588,7 +2615,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
 
     EXCEPTION
       WHEN vr_exc_fimprg THEN
-       
+
        pc_log_message;
 
         -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
