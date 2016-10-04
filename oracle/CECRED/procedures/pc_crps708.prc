@@ -42,7 +42,7 @@ BEGIN
                       ,pr_fim DATE) IS
        SELECT cop.cdcooper
              ,cop.nrctactl
-             ,SUM(lcm.vllanmto) vllanmto
+             ,COUNT(1) qtlanmto
          FROM craplcm lcm
              ,crapcop cop 
         WHERE cop.cdcooper = lcm.cdcooper
@@ -55,8 +55,8 @@ BEGIN
           AND lcm.dtmvtolt BETWEEN pr_ini AND pr_fim
         GROUP BY cop.cdcooper
                 ,cop.nrctactl;
-    -- Valor acumulado total 
-    vr_vllanmto NUMBER;
+    -- Quantidade acumulado total 
+    vr_qtlanmto NUMBER;
    
     -- Buscar Lote
     CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -157,7 +157,7 @@ BEGIN
      FETCH cr_tarifa
       INTO vr_vltedtec;
      CLOSE cr_tarifa; 
-     vr_vllanmto := 0;
+     vr_qtlanmto := 0;
      
      -- Somente se achou tarifa
      IF nvl(vr_vltedtec,0) > 0 THEN
@@ -208,8 +208,8 @@ BEGIN
                                  ,8485
                                  ,1
                                  ,1
-                                 ,rw_lcm.vllanmto*vr_vltedtec
-                                 ,rw_lcm.vllanmto*vr_vltedtec
+                                 ,rw_lcm.qtlanmto*vr_vltedtec
+                                 ,rw_lcm.qtlanmto*vr_vltedtec
                                  ,1)
                         RETURNING nrseqdig
                              INTO rw_craplot.nrseqdig;
@@ -223,8 +223,8 @@ BEGIN
              -- Atualiza Lote
              UPDATE craplot
                 SET qtcompln = qtcompln + 1
-                  , vlinfocr = vlinfocr + (rw_lcm.vllanmto*vr_vltedtec)
-                  , vlcompcr = vlcompcr + (rw_lcm.vllanmto*vr_vltedtec)
+                  , vlinfocr = vlinfocr + (rw_lcm.qtlanmto*vr_vltedtec)
+                  , vlcompcr = vlcompcr + (rw_lcm.qtlanmto*vr_vltedtec)
                   , nrseqdig = nrseqdig + 1
               WHERE craplot.cdcooper = pr_cdcooper
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
@@ -263,7 +263,7 @@ BEGIN
                               ,gene0002.fn_mask(rw_lcm.nrctactl,'99999999') -- nrdctitg
                               ,rw_craplot.nrseqdig -- atualizado da LOTE acima
                               ,1810
-                              ,rw_lcm.vllanmto*vr_vltedtec
+                              ,rw_lcm.qtlanmto*vr_vltedtec
                               ,rw_craplot.nrseqdig -- atualizado da LOTE acima
                               ,pr_cdcooper);
          EXCEPTION
@@ -273,12 +273,12 @@ BEGIN
          END;
            
          -- Acumular ao total
-         vr_vllanmto := vr_vllanmto + rw_lcm.vllanmto;
+         vr_qtlanmto := vr_qtlanmto + rw_lcm.qtlanmto;
          
        END LOOP;
          
        -- Se houve valor acumulado
-       IF vr_vllanmto > 0 THEN 
+       IF vr_qtlanmto > 0 THEN 
          -- Busca Lote
          OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -308,8 +308,8 @@ BEGIN
                                  ,8486
                                  ,1
                                  ,1
-                                 ,vr_vllanmto*vr_vltedtec
-                                 ,vr_vllanmto*vr_vltedtec
+                                 ,vr_qtlanmto*vr_vltedtec
+                                 ,vr_qtlanmto*vr_vltedtec
                                  ,1)
                         RETURNING nrseqdig
                              INTO rw_craplot.nrseqdig;
@@ -323,8 +323,8 @@ BEGIN
              -- Atualiza Lote
              UPDATE craplot
                 SET qtcompln = qtcompln + 1
-                  , vlinfocr = vlinfocr + (vr_vllanmto*vr_vltedtec)
-                  , vlcompcr = vlcompcr + (vr_vllanmto*vr_vltedtec)
+                  , vlinfocr = vlinfocr + (vr_qtlanmto*vr_vltedtec)
+                  , vlcompcr = vlcompcr + (vr_qtlanmto*vr_vltedtec)
                   , nrseqdig = nrseqdig + 1
               WHERE craplot.cdcooper = pr_cdcooper
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
@@ -369,7 +369,7 @@ BEGIN
                               ,gene0002.fn_mask(rw_crapcop.nrctactl,'99999999') -- nrdctitg
                               ,rw_craplot.nrseqdig -- atualizado da LOTE acima
                               ,1811
-                              ,vr_vllanmto*vr_vltedtec
+                              ,vr_qtlanmto*vr_vltedtec
                               ,rw_craplot.nrseqdig -- atualizado da LOTE acima
                               ,pr_cdcooper);
          EXCEPTION
