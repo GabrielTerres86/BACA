@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para calculos e envios de extratos
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 20/06/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2016
 
     Alteracoes: 27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes,
                              na procedure pc_ver_saldos (Jean Michel).
@@ -26,6 +26,12 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                              
                20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                             desta package.(Carlos Rafael Tanholi).                              
+                            
+               29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
+                            atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
+							
+			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -167,7 +173,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                  ,pr_cdoperad   IN craplgm.cdoperad%TYPE
                                  ,pr_nrdconta   IN crapass.nrdconta%TYPE
                                  ,pr_vllimcre   IN crapass.vllimcre%TYPE 
-                                 ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U' /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */                                
+                                 ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */                                
                                  ,pr_des_reto  OUT VARCHAR2 --> OK ou NOK
                                  ,pr_tab_sald  OUT EXTR0001.typ_tab_saldos
                                  ,pr_tab_erro  OUT GENE0001.typ_tab_erro);                              
@@ -178,7 +184,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                     ,pr_cdoperad   IN craplgm.cdoperad%TYPE  --> Código do operador
                                     ,pr_nrdconta   IN crapass.nrdconta%TYPE  --> Conta do associado
                                     ,pr_vllimcre   IN crapass.vllimcre%TYPE  --> Valor do limite de crédito
-                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U' /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
                                     ,pr_cdcritic  OUT crapcri.cdcritic%type --> Codigo de Erro
                                     ,pr_dscritic  OUT VARCHAR2);            --> Descricao de Erro                                   
   
@@ -188,7 +194,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                     ,pr_cdoperad IN craplgm.cdoperad%TYPE  --> Código do operador
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Conta do associado
                                     ,pr_dtrefere IN crapdat.dtmvtolt%TYPE 
-                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U'   --> /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A'   --> /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
                                     ,pr_cdcritic OUT crapcri.cdcritic%type --> Codigo de Erro
                                     ,pr_dscritic OUT VARCHAR2);            --> Descricao de Erro
                               
@@ -202,7 +208,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                               ,pr_vllimcre   IN crapass.vllimcre%TYPE
                               ,pr_dtrefere   IN crapdat.dtmvtolt%TYPE
                               ,pr_flgcrass   IN BOOLEAN DEFAULT TRUE
-                              ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U' /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                              ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
                               ,pr_des_reto  OUT VARCHAR2 --> OK ou NOK
                               ,pr_tab_sald  OUT EXTR0001.typ_tab_saldos
                               ,pr_tab_erro  OUT GENE0001.typ_tab_erro);
@@ -218,6 +224,16 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                           ,pr_des_reto  OUT VARCHAR2 --> OK ou NOK
                           ,pr_tab_sald  OUT EXTR0001.typ_tab_saldos
                           ,pr_tab_erro  OUT GENE0001.typ_tab_erro);
+
+  /* Meio de utilizacao da pc_onbtem_saldo no PROGRESS */
+  PROCEDURE pc_obtem_saldo_car(pr_cdcooper IN crapcop.cdcooper%TYPE
+                              ,pr_cdagenci IN crapass.cdagenci%TYPE
+                              ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE
+                              ,pr_cdoperad IN craplgm.cdoperad%TYPE
+                              ,pr_nrdconta IN crapass.nrdconta%TYPE
+                              ,pr_dtrefere IN crapdat.dtmvtolt%TYPE
+                              ,pr_des_reto OUT VARCHAR2 --> OK ou NOK
+                              ,pr_clob_ret OUT CLOB);   --> Tabela Extrato da Conta                          
 
   -- Chamar funçao para montagem do número do documento para extrato
   FUNCTION fn_format_nrdocmto_extr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
@@ -394,7 +410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 21/06/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 29/08/2016
 
    Dados referentes ao programa:
 
@@ -671,6 +687,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
               21/06/2016 - Ajuste para utilizar o cursor cr_crapsda_pk para encontrar o saldo
                            (Adriano).             
                            
+              30/06/2016 - Alterado parametro (pr_flgcrass), para false, na função fn_inpessoa_nrdconta.
+                           Busca de saldo para popular a uma temp/table, chamando o conteudo da temp/table 
+                           dentro do loop de saldo, evitando uma nova chamada dentro do loop de consulta de saldo. (Evandro)
+
+              09/08/2016 - #483189 Retirada do cursor cr_max_sda pois o mesmo não é mais utilizado;
+                           Mudança do default do parâmetro pr_tipo_busca para 'A' nas rotinas 
+                           pc_obtem_saldo_dia (Carlos)
+
+               29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
+                            atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -800,25 +826,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
      WHERE sda.cdcooper = pr_cdcooper
        AND sda.nrdconta = pr_nrdconta
        AND sda.dtmvtolt >= pr_dtrefere;
-
-  --> Retornar o ultimo registro com data cfme pr_tipo_busca =
-  -- A -> Retornar o ultimo registro com data inferior a data passada
-  -- I -> Retornar o ultimo registro com data igual a data passada
-  -- U -> Retornar o ultimo registro sem considerar a data
-  CURSOR cr_max_sda(pr_cdcooper   IN crapsda.cdcooper%TYPE
-                   ,pr_nrdconta   IN crapsda.nrdconta%TYPE
-                   ,pr_dtrefere   IN crapsda.dtmvtolt%TYPE
-                   ,pr_tipo_busca IN VARCHAR2) IS
-    SELECT MAX(sda.progress_recid)
-      FROM crapsda sda
-     WHERE sda.cdcooper = pr_cdcooper
-       AND sda.nrdconta = pr_nrdconta
-       AND ( (pr_tipo_busca = 'A' AND sda.dtmvtolt < pr_dtrefere)
-            OR
-             (pr_tipo_busca = 'I' AND sda.dtmvtolt = pr_dtrefere)
-            OR
-             (pr_tipo_busca = 'U' AND sda.dtmvtolt >= pr_dtrefere)
-           );
 
   --> Retornar o registro de saldo cfme Progress Recid passado
   CURSOR cr_crapsda(pr_progress_recid IN crapsda.progress_recid%TYPE) IS
@@ -1283,7 +1290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  ,pr_cdoperad   IN craplgm.cdoperad%TYPE
                                  ,pr_nrdconta   IN crapass.nrdconta%TYPE
                                  ,pr_vllimcre   IN crapass.vllimcre%TYPE
-                                 ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U' /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                                 ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
                                  ,pr_des_reto  OUT VARCHAR2 --> OK ou NOK
                                  ,pr_tab_sald  OUT EXTR0001.typ_tab_saldos
                                  ,pr_tab_erro  OUT GENE0001.typ_tab_erro) AS
@@ -1399,7 +1406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                     ,pr_cdoperad   IN craplgm.cdoperad%TYPE  --> Código do operador
                                     ,pr_nrdconta   IN crapass.nrdconta%TYPE  --> Conta do associado
                                     ,pr_vllimcre   IN crapass.vllimcre%TYPE  --> Valor do limite de crédito
-                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U' /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
                                     ,pr_cdcritic  OUT crapcri.cdcritic%type --> Codigo de Erro
                                     ,pr_dscritic  OUT VARCHAR2) IS          --> Descricao de Erro
     vr_des_reto VARCHAR2(03);           --> OK ou NOK
@@ -1546,7 +1553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                     ,pr_cdoperad   IN craplgm.cdoperad%TYPE  --> Código do operador
                                     ,pr_nrdconta   IN crapass.nrdconta%TYPE  --> Conta do associado
                                     ,pr_dtrefere   IN crapdat.dtmvtolt%TYPE  --> Data de referencia
-                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U'   --> /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                                    ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A'   --> /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
                                     ,pr_cdcritic  OUT crapcri.cdcritic%type  --> Codigo de Erro
                                     ,pr_dscritic  OUT VARCHAR2) IS           --> Descricao de Erro
 
@@ -1786,7 +1793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                               ,pr_vllimcre   IN crapass.vllimcre%TYPE
                               ,pr_dtrefere   IN crapdat.dtmvtolt%TYPE
                               ,pr_flgcrass   IN BOOLEAN DEFAULT TRUE
-                              ,pr_tipo_busca IN VARCHAR2 DEFAULT 'U' /*U-nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                              ,pr_tipo_busca IN VARCHAR2 DEFAULT 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
                               ,pr_des_reto  OUT VARCHAR2 --> OK ou NOK
                               ,pr_tab_sald  OUT EXTR0001.typ_tab_saldos
                               ,pr_tab_erro  OUT GENE0001.typ_tab_erro) AS
@@ -1873,8 +1880,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END IF;
       -- Verificar qual data usar para acessar crapsda
       CASE pr_tipo_busca
-        WHEN 'U' THEN --Nao usa data
-          vr_dtmvtaux:= NULL;
         WHEN 'I' THEN --Mesmo Dia
           vr_dtmvtaux:= pr_rw_crapdat.dtmvtolt;
         WHEN 'A' THEN --Dia Anterior
@@ -1885,8 +1890,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_dtmvtaux:= NULL;
       END CASE;
 
-      /*U-nao usa data, I=usa dtmvtolt, A=Usa dtmvtoan, P=Usa dtmvtopr */
-      IF pr_tipo_busca IN ('I','A','P') THEN
         -- Busca do Saldo da conta pela PK
         OPEN cr_crapsda_pk(pr_cdcooper => pr_cdcooper
                           ,pr_dtmvtolt => vr_dtmvtaux
@@ -1895,25 +1898,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_crapsda:= cr_crapsda_pk%FOUND;
         --Fechar Cursor
         CLOSE cr_crapsda_pk;
-      ELSE
-        -- Busca do Saldo da conta tentativa U -> Retornar o ultimo registro ordenado por data
-        OPEN cr_max_sda(pr_cdcooper   => pr_cdcooper
-                       ,pr_nrdconta   => pr_nrdconta
-                       ,pr_dtrefere   => pr_rw_crapdat.dtmvtoan
-                       ,pr_tipo_busca => 'U');
-        FETCH cr_max_sda INTO vr_progress_recid;
-        vr_crapsda:= cr_max_sda%FOUND;
-        CLOSE cr_max_sda;
-        --Se Encontrou
-        IF vr_crapsda THEN
-          -- Busca do saldo após achar o Progress Recid
-          OPEN cr_crapsda(pr_progress_recid => vr_progress_recid);
-          FETCH cr_crapsda INTO rw_crapsda;
-          vr_crapsda:= cr_crapsda%FOUND;
-          -- Fechar Cursor
-          CLOSE cr_crapsda;
-        END IF;
-      END IF; --pr_flgsdapk
 
       -- Se não encontrou crapsda
       IF NOT vr_crapsda THEN
@@ -2180,7 +2164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --    Sistema : Conta-Corrente - Cooperativa de Credito
     --    Sigla   : CRED
     --    Autor   : Marcos (Supero)
-    --    Data    : Dez/2012                         Ultima atualizacao: 21/06/2016
+    --    Data    : Dez/2012                         Ultima atualizacao: 30/06/2016
     --
     --    Dados referetes ao programa:
     --    Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -2337,6 +2321,196 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_sald.DELETE;
     END;
   END pc_obtem_saldo;
+
+  /* Utiliza a pc_obtem_saldo atraves do PROGRESS */
+  PROCEDURE pc_obtem_saldo_car(pr_cdcooper IN crapcop.cdcooper%TYPE
+                              ,pr_cdagenci IN crapass.cdagenci%TYPE
+                              ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE
+                              ,pr_cdoperad IN craplgm.cdoperad%TYPE
+                              ,pr_nrdconta IN crapass.nrdconta%TYPE
+                              ,pr_dtrefere IN crapdat.dtmvtolt%TYPE
+                              ,pr_des_reto OUT VARCHAR2 --> OK ou NOK
+                              ,pr_clob_ret OUT CLOB) AS --> Tabela Extrato da Conta
+  BEGIN
+    --    Programa: pc_obtem_saldo_car
+    --    Sistema : Conta-Corrente - Cooperativa de Credito
+    --    Sigla   : CRED
+    --    Autor   : Carlos Rafael Tanholi
+    --    Data    : Agosto/2016                         Ultima atualizacao: 
+    --
+    --    Dados referetes ao programa:
+    --    Frequencia: Sempre que chamado pelos programas de extrato da conta
+    ---------------------------------------------------------------------------
+
+    DECLARE
+      vr_cdcritic crapcri.cdcritic%TYPE;    
+      -- Descrição da critica
+      vr_dscritic VARCHAR2(4000);
+      -- Sequencia do vetor de saldos
+      vr_ind BINARY_INTEGER;
+
+      -- Saida da rotina de extrato
+      vr_des_reto VARCHAR2(3);      
+      -- PLTABLE
+      vr_tab_sald EXTR0001.typ_tab_saldos;
+      vr_tab_erro GENE0001.typ_tab_erro;
+      
+      -- CURSOR GENÉRICO DE CALENDÁRIO
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
+
+      --Variaveis de Indice
+      vr_index VARCHAR(12);
+      --Variaveis Arquivo Dados
+      vr_dstexto VARCHAR2(32767);
+      vr_string  VARCHAR2(32767);
+
+    BEGIN
+      
+      -- datas da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        CLOSE btch0001.cr_crapdat;
+        -- monta msg de critica
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+
+        -- Chamar rotina de gravação de erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE btch0001.cr_crapdat;
+      END IF;    
+    
+      EXTR0001.pc_obtem_saldo(pr_cdcooper   => pr_cdcooper
+                             ,pr_rw_crapdat => rw_crapdat
+                             ,pr_cdagenci   => pr_cdagenci
+                             ,pr_nrdcaixa   => pr_nrdcaixa
+                             ,pr_cdoperad   => pr_cdoperad
+                             ,pr_nrdconta   => pr_nrdconta
+                             ,pr_dtrefere   => pr_dtrefere
+                             ,pr_des_reto   => vr_des_reto
+                             ,pr_tab_sald   => vr_tab_sald
+                             ,pr_tab_erro   => vr_tab_erro);
+                             
+      -- Se houve retorno não Ok
+      IF vr_des_reto = 'NOK' THEN
+        -- Tenta buscar o erro no vetor de erro
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_des_erro := vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+        ELSE
+          vr_des_erro := 'Retorno "NOK" na extr0001.pc_obtem_saldo e sem informação na pr_vet_erro, Conta: '||pr_nrdconta;
+
+        END IF;
+
+        -- Abandona o processo
+        RAISE vr_exc_erro;
+      ELSE  
+        --Montar CLOB
+        IF vr_tab_sald.COUNT > 0 THEN
+          
+          -- Criar documento XML
+          dbms_lob.createtemporary(pr_clob_ret, TRUE); 
+          dbms_lob.open(pr_clob_ret, dbms_lob.lob_readwrite);
+          
+          -- Insere o cabeçalho do XML 
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret 
+                                 ,pr_texto_completo => vr_dstexto 
+                                 ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+           
+          --Buscar Primeiro beneficiario
+          vr_index:= vr_tab_sald.FIRST;
+          
+          --Percorrer todos os beneficiarios
+          WHILE vr_index IS NOT NULL LOOP
+            vr_string:= '<extrato>'||
+                          '<nrdconta>'||NVL(TO_CHAR(vr_tab_sald(vr_index).nrdconta),' ')||'</nrdconta>'|| 
+                          '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtmvtolt,'DD/MM/YYYY'), ' ')||'</dtmvtolt>'||
+                          '<vlsddisp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsddisp),' ')||'</vlsddisp>'||
+                          '<vlsdchsl>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdchsl),' ')||'</vlsdchsl>'||
+                          '<vlsdbloq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdbloq),' ')||'</vlsdbloq>'||
+                          '<vlsdblpr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdblpr),' ')||'</vlsdblpr>'||
+                          '<vlsdblfp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdblfp),' ')||'</vlsdblfp>'||
+                          '<vlsdindi>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdindi),' ')||'</vlsdindi>'||
+                          '<vllimcre>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimcre),' ')||'</vllimcre>'||
+                          '<cdcooper>'||NVL(TO_CHAR(vr_tab_sald(vr_index).cdcooper),' ')||'</cdcooper>'||
+                          '<vlsdeved>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdeved),' ')||'</vlsdeved>'||
+                          '<vldeschq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vldeschq),' ')||'</vldeschq>'||
+                          '<vllimutl>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimutl),' ')||'</vllimutl>'||
+                          '<vladdutl>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vladdutl),' ')||'</vladdutl>'||
+                          '<vlsdrdca>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdrdca),' ')||'</vlsdrdca>'||
+                          '<vlsdrdpp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdrdpp),' ')||'</vlsdrdpp>'||
+                          '<vllimdsc>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimdsc),' ')||'</vllimdsc>'||
+                          '<vlprepla>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlprepla),' ')||'</vlprepla>'||
+                          '<vlprerpp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlprerpp),' ')||'</vlprerpp>'||
+                          '<vlcrdsal>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlcrdsal),' ')||'</vlcrdsal>'||
+                          '<qtchqliq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).qtchqliq),' ')||'</qtchqliq>'||
+                          '<qtchqass>'||NVL(TO_CHAR(vr_tab_sald(vr_index).qtchqass),' ')||'</qtchqass>'||
+                          '<dtdsdclq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtdsdclq),' ')||'</dtdsdclq>'||
+                          '<vltotpar>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vltotpar),' ')||'</vltotpar>'||
+                          '<vlopcdia>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlopcdia),' ')||'</vlopcdia>'||
+                          '<vlavaliz>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlavaliz),' ')||'</vlavaliz>'||
+                          '<vlavlatr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlavlatr),' ')||'</vlavlatr>'||
+                          '<qtdevolu>'||NVL(TO_CHAR(vr_tab_sald(vr_index).qtdevolu),' ')||'</qtdevolu>'||
+                          '<vltotren>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vltotren),' ')||'</vltotren>'||
+                          '<vldestit>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vldestit),' ')||'</vldestit>'||
+                          '<vllimtit>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimtit),' ')||'</vllimtit>'||
+                          '<vlsdempr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdempr),' ')||'</vlsdempr>'||
+                          '<vlsdfina>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdfina),' ')||'</vlsdfina>'||
+                          '<vlsrdc30>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdc30),' ')||'</vlsrdc30>'||
+                          '<vlsrdc60>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdc60),' ')||'</vlsrdc60>'||
+                          '<vlsrdcpr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdcpr),' ')||'</vlsrdcpr>'||
+                          '<vlsrdcpo>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdcpo),' ')||'</vlsrdcpo>'||
+                          '<vlsdcota>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdcota),' ')||'</vlsdcota>'||
+                          '<vlblqtaa>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlblqtaa),' ')||'</vlblqtaa>'||
+                          '<vlstotal>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlstotal),' ')||'</vlstotal>'||
+                          '<vlsaqmax>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsaqmax),' ')||'</vlsaqmax>'||
+                          '<vlacerto>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlacerto),' ')||'</vlacerto>'||
+                          '<dslimcre>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dslimcre),' ')||'</dslimcre>'||
+                          '<vlipmfpg>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlipmfpg),' ')||'</vlipmfpg>'||
+                          '<dtultlcr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtultlcr,'DD/MM/YYYY'), ' ')||'</dtultlcr>'||
+                          '<vlblqjud>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlblqjud),' ')||'</vlblqjud>'||
+                        '</extrato>';
+
+            -- Escrever no XML
+            gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret 
+                                   ,pr_texto_completo => vr_dstexto 
+                                   ,pr_texto_novo     => vr_string
+                                   ,pr_fecha_xml      => FALSE);   
+                                                      
+            --Proximo Registro
+            vr_index:= vr_tab_sald.NEXT(vr_index);
+            
+          END LOOP;  
+          
+          -- Encerrar a tag raiz 
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret 
+                                 ,pr_texto_completo => vr_dstexto 
+                                 ,pr_texto_novo     => '</root>' 
+                                 ,pr_fecha_xml      => TRUE);      
+        END IF;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+
+    END;
+
+  END pc_obtem_saldo_car;    
+
+
 
   -- Chamar funçao para montagem do número do documento para extrato
   FUNCTION fn_format_nrdocmto_extr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
@@ -2557,7 +2731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema : Conta-Corrente - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Marcos (Supero)
-        Data    : Dez/2012                         Ultima atualizacao: 01/04/2015
+        Data    : Dez/2012                         Ultima atualizacao: 17/05/2016
 
         Dados referetes ao programa:
         Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -2582,6 +2756,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  Depositos Identificados (Alisson - AMcom)
 
                     01/04/2015 - Ajuste na variavel vr_dshistor (Jean Michel).
+
+                    17/05/2016 - Incluido tratamento para historico 1019 exibir o correta
+                                 descrição no historico e para caso for um lançamento de 
+                                 debito automatico concatenar com historico complementar
+                                 PRJ320 - Ofernta conv Debaut(Odirlei-AMcom)
 
     */
     DECLARE
@@ -2653,6 +2832,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       --Tipo de Registro de Lancamento
       rw_craplcm cr_craplcm%ROWTYPE;
       
+      --> Buscar nome do convenio
+      CURSOR cr_crapscn (pr_cdcooper IN crapatr.cdcooper%TYPE     
+                        ,pr_cdempcon IN crapatr.cdempcon%TYPE     
+                        ,pr_cdsegmto IN crapatr.cdsegmto%TYPE) IS 
+        SELECT  TRIM(REPLACE(REPLACE(dsnomcnv,'-F','- F'),'- FEBRABAN')) dsnomcnv
+          FROM crapscn scn
+         WHERE scn.cdempcon = pr_cdempcon    
+           AND scn.cdsegmto = pr_cdsegmto
+           AND scn.dsoparre = 'E'
+           AND scn.cddmoden IN ('A','C');
+      rw_crapscn cr_crapscn%ROWTYPE;
+      
+      --> Buscar autorização de debito automatico
+      CURSOR cr_crapatr (pr_cdcooper IN crapatr.cdcooper%TYPE     --> Cooperativa
+                        ,pr_nrdconta IN crapatr.nrdconta%TYPE     --> Conta
+                        ,pr_cdhistor IN crapatr.cdhistor%TYPE     --> historico
+                        ,pr_cdrefere IN crapatr.cdrefere%TYPE) IS --> Referencia
+        SELECT  decode(TRIM(atr.dshisext),NULL,NULL,' - '|| TRIM(atr.dshisext)) dshisext
+               ,atr.cdempcon
+               ,atr.cdsegmto
+          FROM crapatr atr
+         WHERE atr.cdcooper = pr_cdcooper
+           AND atr.nrdconta = pr_nrdconta
+           AND atr.cdhistor = pr_cdhistor
+           AND atr.cdrefere = pr_cdrefere;
+           
+      rw_crapatr cr_crapatr%ROWTYPE;                
+      
       -- Buscar o sequencia do log de mensagens do SPB
       CURSOR cr_craplmt(pr_cdcooper IN craplcm.cdcooper%TYPE     --> Cooperativa
                        ,pr_nrdconta IN craplcm.nrdconta%TYPE     --> Conta
@@ -2694,6 +2901,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       --Fechar Cursor
       CLOSE cr_craplcm;
 
+      rw_crapatr := NULL;
+      --> Verificar se convenio é de debito automatico
+      OPEN cr_crapatr (pr_cdcooper => rw_craplcm.cdcooper   --> Cooperativa
+                      ,pr_nrdconta => rw_craplcm.nrdconta   --> Conta
+                      ,pr_cdhistor => rw_craplcm.cdhistor   --> historico
+                      ,pr_cdrefere => rw_craplcm.nrdocmto); --> Referencia
+      FETCH cr_crapatr INTO rw_crapatr;
+      CLOSE cr_crapatr;
+      
       -- Copiar informações comuns
       vr_nrdconta := rw_craplcm.nrdconta;
       vr_dtmvtolt := rw_craplcm.dtmvtolt;
@@ -2782,8 +2998,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_indebcre := rw_craplcm.indebcre;
       vr_inhistor := rw_craplcm.inhistor;
       vr_cdhistor := rw_craplcm.cdhistor;
+      
+      IF rw_craplcm.cdhistor IN (1019) THEN
+
+        --> Buscar autorização de debito automatico
+        OPEN cr_crapscn (pr_cdcooper => rw_craplcm.cdcooper   
+                        ,pr_cdempcon => rw_crapatr.cdempcon   
+                        ,pr_cdsegmto => rw_crapatr.cdsegmto); 
+        FETCH cr_crapscn INTO rw_crapscn;
+        -- Senao encontrar
+        IF cr_crapscn%NOTFOUND THEN
+          CLOSE cr_crapscn;
+          -- Usar descrições do histórico apenas
+          vr_dsextrat := rw_craplcm.dsextrat|| rw_crapatr.dshisext;
+          vr_dshistor := rw_craplcm.dshistor|| rw_crapatr.dshisext;
+        ELSE
+          CLOSE cr_crapscn;
+          
+          vr_dsextrat := rw_crapscn.dsnomcnv || rw_crapatr.dshisext;
+          vr_dshistor := rw_crapscn.dsnomcnv || rw_crapatr.dshisext;
+          
+        END IF;
+        
       -- Para histórico 508 - PG.P/INTERNET
-      IF rw_craplcm.cdhistor = 508 THEN
+      ELSIF rw_craplcm.cdhistor = 508 THEN
         -- Utilizar a descrição proveniente do histórico
         vr_dsextrat := rw_craplcm.dsextrat;
         vr_dshistor := rw_craplcm.dshistor;
@@ -2794,6 +3032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_dshistor := substr(vr_dshistor || ' - ' || rw_craplcm.dscedent,1,100);
 
         END IF;
+
       /* Lancamento de pagamento de avalista */
       ELSIF ((rw_craplcm.cdhistor IN(1539,1541,1542,1543,1544)) AND (rw_craplcm.nrseqava > 0)) THEN
         vr_dsextrat := rw_craplcm.dsextrat;
@@ -2819,8 +3058,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_dshistor := rw_craplcm.dshistor || rw_craplcm.cdpesqbb;
         ELSE
           -- Usar descrições do histórico apenas
-          vr_dsextrat := rw_craplcm.dsextrat;
-          vr_dshistor := rw_craplcm.dshistor;
+          -- concatenar historico complementat do debito automatico caso encontrado
+          vr_dsextrat := rw_craplcm.dsextrat || rw_crapatr.dshisext;
+          vr_dshistor := rw_craplcm.dshistor || rw_crapatr.dshisext;
         END IF;
       END IF;
       -- Chamar funçao para montagem do número do documento para extrato
@@ -3058,6 +3298,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
       rw_crapass_age cr_crapass_age%ROWTYPE;
+
+
+   -- Tipo de registro para o saldo da conta
+   TYPE typ_reg_saldo IS
+       RECORD(vlsddisp crapsda.vlsddisp%TYPE,
+              vlsdchsl crapsda.vlsdchsl%TYPE,
+              vlsdbloq crapsda.vlsdbloq%TYPE,
+              vlsdblpr crapsda.vlsdblpr%TYPE,
+              vlsdblfp crapsda.vlsdblfp%TYPE);
+
+   /* Definição de tabela que compreende os registros acima declarados */
+
+   TYPE typ_tab_saldo IS
+     TABLE OF typ_reg_saldo
+     INDEX BY PLS_INTEGER;
+
+   vr_tab_saldo typ_tab_saldo;
+    
+   -- Busca o saldo para popular a temp/table
+   CURSOR cr_crapsda2 IS
+    SELECT dtmvtolt,
+           vlsddisp,
+           vlsdchsl,
+           vlsdbloq,
+           vlsdblpr,
+           vlsdblfp
+      FROM crapsda sda
+     WHERE cdcooper = pr_cdcooper
+       and nrdconta = pr_nrdconta
+       and dtmvtolt between pr_dtiniper and pr_dtfimper;
+
 
     BEGIN
 
@@ -3371,6 +3642,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_flgfirst := TRUE;
       -- Varrer o vetor usando as chaves hash
       vr_ind_tab := vr_tab_extr.FIRST;
+      
+
+      
+      -- Popula a temp table de saldo
+      FOR rw_crapsda IN cr_crapsda2 LOOP
+        vr_tab_saldo(to_char(rw_crapsda.dtmvtolt,'YYYYMMDD')).vlsddisp := rw_crapsda.vlsddisp;
+        vr_tab_saldo(to_char(rw_crapsda.dtmvtolt,'YYYYMMDD')).vlsdchsl := rw_crapsda.vlsdchsl;
+        vr_tab_saldo(to_char(rw_crapsda.dtmvtolt,'YYYYMMDD')).vlsdbloq := rw_crapsda.vlsdbloq;
+        vr_tab_saldo(to_char(rw_crapsda.dtmvtolt,'YYYYMMDD')).vlsdblpr := rw_crapsda.vlsdblpr;
+        vr_tab_saldo(to_char(rw_crapsda.dtmvtolt,'YYYYMMDD')).vlsdblfp := rw_crapsda.vlsdblfp;
+      END LOOP;
+
+      
       LOOP
         -- Sair quando não existir a informação
         EXIT WHEN vr_ind_tab IS NULL;
@@ -3430,23 +3714,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             vr_tab_extr(vr_ind_tab_new).vllimcre := pr_vllimcre;
             vr_tab_extr(vr_ind_tab_new).dsagenci := rw_crapage.nmextage;
           END IF;
-          -- Busca do Saldo da conta com tentativa:
-          -- I -> Retornar o ultimo registro com data igual a data passada
-          OPEN cr_max_sda(pr_cdcooper   => pr_cdcooper
-                         ,pr_nrdconta   => pr_nrdconta
-                         ,pr_dtrefere   => vr_tab_extr(vr_ind_tab).dtmvtolt
-                         ,pr_tipo_busca => 'I');
-          FETCH cr_max_sda
-           INTO vr_progress_recid;
-          CLOSE cr_max_sda;
-          -- Busca do saldo após achar o Progress Recid
-          OPEN cr_crapsda(pr_progress_recid => vr_progress_recid);
-          FETCH cr_crapsda
-           INTO rw_crapsda;
+
+          OPEN cr_crapsda_pk(pr_cdcooper => pr_cdcooper
+                            ,pr_dtmvtolt => vr_tab_extr(vr_ind_tab).dtmvtolt
+                            ,pr_nrdconta => pr_nrdconta);
+          FETCH cr_crapsda_pk INTO rw_crapsda;
+
           -- Se encontrar
-          IF cr_crapsda%FOUND THEN
+          IF cr_crapsda_pk%FOUND THEN
             -- Fechar cursor
-            CLOSE cr_crapsda;
+            CLOSE cr_crapsda_pk;
             -- Atualiza o registro base da repetição
             vr_tab_extr(vr_ind_tab).vlsddisp := rw_crapsda.vlsddisp;
             vr_tab_extr(vr_ind_tab).vlsdchsl := rw_crapsda.vlsdchsl;
@@ -3458,7 +3735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                               + nvl(rw_crapsda.vlsdblfp,0);
           ELSE
             -- Fechar cursor
-            CLOSE cr_crapsda;
+            CLOSE cr_crapsda_pk;
             -- Chamar rotina para busca do saldo do dia
             extr0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper
                                        ,pr_rw_crapdat => pr_rw_crapdat
@@ -3537,6 +3814,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Limpa vetor de saldo
         pr_tab_extrato.DELETE;
       WHEN OTHERS THEN
+
+        btch0001.pc_log_internal_exception(pr_cdcooper);
+      
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Limpa vetor de saldo
