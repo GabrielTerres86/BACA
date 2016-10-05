@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 23/09/2016
+   Data    : Abril/2004                        Ultima atualizacao: 04/10/2016
 
    Dados referentes ao programa:
 
@@ -333,12 +333,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                03/08/2016 - Ajustes para garantir que o rw_crapatr não fique com lixo do registro
                             anterior. PRJ320 - Oferta DebAut (Odirlei-AMcom)      
-                             
-               30/08/2016 - Alterar data de cancelamento da autorização para gravar com a data
-                            do sistema dtmvtolt (Lucas Ranghetti #493282)             
-                            
+                         
                23/09/2016 - Tratar registros de vr_nro_conta_dec < 9000000000 para tratar
                             agencia(cdagectl) do debito (Lucas Ranghetti#527719)
+                            
+               04/10/2016 - Tratar registros dos convenios samae timbo e casan para
+                            que caso a conta seja < 9000000000 verificar se autorizacao 
+                            pertence a conta, e para o samae timbo, ignorar registros que nao 
+                            sao da viacredi (Lucas Ranghetti #534110)
 ............................................................................ */
 
     DECLARE
@@ -1556,8 +1558,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                    rw_gnconve.nmempres,
                                    vr_contador);
 
-          /* Data de cancelamento da autorizacao */
-          vr_dtcancel := rw_crapdat.dtmvtolt;
+          vr_dtcancel := rw_crapdat.dtmvtolt - to_char(rw_crapdat.dtmvtolt,'dd');
+          vr_dtcancel := vr_dtcancel - to_char(vr_dtcancel,'dd');
 
           vr_nrseqarq := vr_nrseqarq - 1; /* p/incrementar Seq.  */
 
@@ -2372,26 +2374,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_nrdconta := 0;
                     ELSE
                       vr_nrdconta := vr_nro_conta_dec;
-                    END IF;
+                    END IF;                    
+                    
+                    -- se agencia de debito nao for casan e samae timbo 
+                    IF vr_cdagedeb NOT IN(1294,23) THEN
+                      IF pr_cdcooper = 3 AND (vr_cdagedeb < 100 OR vr_cdagedeb > vr_cdultage) 
+                         AND vr_cdagedeb <> 1 THEN
 
-                    IF pr_cdcooper = 3 AND (vr_cdagedeb < 100 OR vr_cdagedeb > vr_cdultage) 
-                       AND vr_cdagedeb <> 1 THEN
-
-                      -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
-                      IF vr_tpregist <> 'C' THEN
-                        pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
+                        -- Somente ira gerar crapndb caso o registro não seja do tipo "C"
+                        IF vr_tpregist <> 'C' THEN
+                          pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
+                        END IF;
+                        continue;
                       END IF;
-                      continue;
                     END IF;
                     
                     -- Se a agencia de debito for diferente da agencia de controle
                     -- e agencia de debito for diferente de 001(viacredi) ou cooperativa do processo
                     -- for diferente de Viacredi então vamos ignorar o registro
-                    IF vr_cdagedeb <> rw_crapcop.cdagectl 
-                       AND (vr_cdagedeb <> 1 OR rw_crapcop.cdcooper <> 1) THEN
-                      continue;
+                    -- e agencia de debito nao for casan e samae timbo 
+                    IF vr_cdagedeb NOT IN(1294,23) THEN
+                      IF vr_cdagedeb <> rw_crapcop.cdagectl 
+                         AND (vr_cdagedeb <> 1 OR rw_crapcop.cdcooper <> 1) THEN
+                        continue;
+                      END IF;
                     END IF;
-                    
+                   
                   /*  -- Se a cooperativa do processo for diferente da cooperativa do convenio e se for diferente de Viacredi
                     -- ignora o registro
                     IF rw_crapcop.cdcooper <> rw_gnconve.cdcooper AND
@@ -2424,6 +2432,54 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_nrdolote := vr_dstextab;
                     END IF;
                     CLOSE cr_craptco;
+                    
+                    -- Se agencia do debito for 0023 (Samae Timbo) e cooperativa nao for viacredi
+                    -- devemos ignorar
+                    IF vr_cdagedeb = 23 AND rw_crapcop.cdcooper <> 1 THEN
+                      continue;
+                    END IF;
+                    
+                    -- Não validar agencia para a casan na cecred
+                    IF vr_cdagedeb = 1294 AND rw_crapcop.cdcooper = 3 THEN
+                      continue;
+                    END IF;
+                    
+                     -- Verificacao especifica da casan
+                    IF vr_cdagedeb = 1294 THEN                    
+                      -- Abre o cursor de associados
+                      IF cr_crapass%ISOPEN THEN
+                        CLOSE cr_crapass;
+                      END IF;
+                      -- verificar se a conta pertence a cooperativa que esta rodando
+                      OPEN cr_crapass(vr_cdcooper, vr_nrdconta, 0);
+                      FETCH cr_crapass INTO rw_crapass;
+                      
+                      IF cr_crapass%FOUND THEN
+                        CLOSE cr_crapass;
+                        
+                        -- Cadastro das autorizacoes de debito em conta
+                        IF cr_crapatr%ISOPEN THEN
+                          CLOSE cr_crapatr;
+                        END IF;
+                        
+                        -- se encontrou conta na cooperativa do processo, verificar se referencia
+                        -- tambem pertence a esta conta
+                        OPEN cr_crapatr(vr_cdcooper, vr_nrdconta, rw_gnconve.cdhisdeb, vr_cdrefere);
+                        FETCH cr_crapatr INTO rw_crapatr;
+                        
+                        IF cr_crapatr%NOTFOUND THEN
+                          CLOSE cr_crapatr;                                                
+                          continue;
+                        ELSE
+                          -- se referencia pertence a esta conta, segue o programa normalmente
+                          CLOSE cr_crapatr;                                                                        
+                        END IF;
+                      ELSE
+                        -- Se conta nao for da cooperativa do processo, pula para o proximo registro
+                        CLOSE cr_crapass;
+                        continue;
+                      END IF;
+                    END IF;
                   ELSE
                     /* Posicao 31,1(aux_setlinha possue 9) */
 
@@ -2611,7 +2667,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     -- Se nao existir criticas
                     IF vr_cdcritic = 0 THEN
                       -- Data de referencia nao pode ser inferior a data de processo
-                      IF vr_dtrefere <= rw_crapdat.dtmvtolt THEN
+                    --  IF vr_dtrefere <= rw_crapdat.dtmvtolt THEN Regra correta para validar data do pagamento
+                      IF vr_dtrefere < rw_crapdat.dtmvtolt THEN
                         pc_critica_debito_cooperativa(3, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                         continue;
                       END IF;
@@ -2867,7 +2924,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                     IF cr_crapatr%FOUND THEN
                       IF SUBSTR(vr_setlinha,150,1) <> '1' THEN
-                        rw_crapatr.dtfimatr := vr_dtcancel;
+                        rw_crapatr.dtfimatr := rw_crapatr.dtiniatr;
                         BEGIN
                           UPDATE crapatr
                              SET crapatr.dtfimatr = crapatr.dtiniatr

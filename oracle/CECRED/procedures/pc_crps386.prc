@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 23/08/2016
+   Data    : Abril/2004                    Ultima atualizacao: 04/10/2016
 
    Dados referentes ao programa:
 
@@ -163,6 +163,8 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             
                23/08/2016 - Verificar final de semanas e feriados para verificar suspenções
                             (Lucas Ranghetti #499496)             
+				
+			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -562,18 +564,19 @@ begin
             
       -- Atribuir a data da autorização
       vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
-     
-      IF rw_gnconve.cdconven = 4 THEN -- CASAN
-        vr_nragenci := 1294;
-      ELSE
+
+      IF rw_gnconve.cdconven = 4 AND 
+         (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
+          vr_nragenci := 1294;
+      ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
         -- Caso contrario grava com novo formato. Ex: 0101
-        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN 
+        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN
           vr_nragenci := TRIM(rw_gnconve.cdagedeb);
         ELSE
           vr_nragenci := rw_crapcop.cdagectl;      
-        END IF;
+        END IF;     
       END IF;
 
       if rw_gnconve.cdconven <> 1 then -- Brasil Telecom
@@ -959,3 +962,4 @@ exception
     -- Efetuar rollback
     rollback;
 end;
+/
