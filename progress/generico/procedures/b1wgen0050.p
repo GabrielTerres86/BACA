@@ -844,7 +844,7 @@ PROCEDURE obtem-log-cecred:
                    NEXT.            
 
                IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb.
+                  CREATE tt-logspb-totais.
                   
                DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
