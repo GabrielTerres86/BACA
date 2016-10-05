@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 14/07/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 04/10/2016
 
        Dados referentes ao programa:
 
@@ -85,6 +85,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    14/07/2016 - Ajustado a identificacao dos dados da conta e controle na leitura do
                                 numero da conta quando o valor recebido eh zero
                                 (Douglas - Chamado 465010, 478018)
+
+                   04/10/2016 - Ajustado para gravar o nome da empresa do plastico quando criar uma
+                                nova proposta de cartao (Douglas - Chamado 488392)
     ............................................................................ */
 
     DECLARE
@@ -286,6 +289,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
             ,pcr.nrdoccrd
             ,pcr.dtcancel
             ,pcr.flgdebit
+            ,pcr.nmempcrd
             ,pcr.rowid
         FROM crawcrd pcr
        WHERE pcr.cdcooper = pr_cdcooper  AND
@@ -339,6 +343,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
             ,pcr.nrdoccrd
             ,pcr.dtcancel
             ,pcr.flgdebit
+            ,pcr.nmempcrd
             ,pcr.rowid
         FROM crawcrd pcr
        WHERE ROWID = pr_rowid;
@@ -2247,7 +2252,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             nrseqcrd,
                             dtentr2v,
                             dtpropos,
-                            flgdebit)
+                            flgdebit,
+                            nmempcrd)
                         VALUES
                            (rw_crawcrd.nrdconta,
                             TO_NUMBER(substr(vr_des_text,38,19)), -- número cartão vindo do arquivo
@@ -2274,7 +2280,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             vr_nrseqcrd,
                             vr_dtentr2v,
                             rw_crapdat.dtmvtolt,
-                            rw_crawcrd.flgdebit)
+                            rw_crawcrd.flgdebit,
+                            rw_crawcrd.nmempcrd)
                             RETURNING ROWID INTO rw_crawcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN
