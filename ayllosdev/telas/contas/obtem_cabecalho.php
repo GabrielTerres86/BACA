@@ -19,6 +19,7 @@
  * 010: [20/02/2015] Lucas R. (CECRED)    : Alterado Codificação da tela para ANSI.
  * 011: [29/07/2015] Lucas Ranghetti (CECRED): Alterado logica rotina de procuradores para $cabecalho[6]->cdata > 1(inpessoa > 1).
  * 012: [01/09/2015] Gabriel (RKAM)       : Reformulacao Cadastral. 
+ * 013: [14/09/2016] Kelvin (Cecred)      : Ajuste feito para resolver o problema relatado no chamado 506554. 
  */ 
 
 	session_start();	
@@ -102,7 +103,7 @@
 	$tpNatureza = $cabecalho[6]->cdata;
 	
 	// Monta div com os dados de Pessoa Jurídica
-	if ($tpNatureza == 2) {
+	if ($tpNatureza >= 2) {
 	
 		// Prepara o html para div PJ
 		echo 'var strHTML  = \'<label for="nmextttl">Raz&atilde;o Social:</label>\';';
@@ -168,7 +169,7 @@
 	
 	echo 'var strHTMLTTL = \'\';'; 
 	// PJ
-	if ($tpNatureza == 2) { 
+	if ($tpNatureza >= 2) { 
 		
 		// Preenche nome fantasia somente qdo for pessoa juridica
 		echo '$("#nmfansia","#frmCabContas").val("'.$cabecalho[17]->cdata.'");'; 

@@ -14,6 +14,7 @@
  * 005: [06/02/2012] Tiago (CECRED)            : Ajuste para não chamar 2 vezes a função mostraPesquisa.
  * 006: [23/07/2015] Gabriel (RKAM)            : Reformulacao Cadastral.
  * 007: [03/12/2015] Jaison/Andrino  (CECRED)  : Adicao do campo flserasa na pesquisa generica de BUSCA_CNAE.
+ * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -40,6 +41,11 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		$('#imgAbaDir' + i).attr('src',UrlImagens + 'background/mnu_nld.gif');
 		$('#imgAbaCen' + i).css('background-color','#C6C8CA');
 	}
+	
+	/*inpessoa 3 não tem idseqttl, então para não passar null
+	  na requisição, passamos 0 para não gerar problemas.*/
+	if (inpessoa == 3)
+		idseqttl = 0;
 
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
