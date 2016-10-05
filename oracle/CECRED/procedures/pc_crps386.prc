@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 23/06/2016
+   Data    : Abril/2004                    Ultima atualizacao: 04/10/2016
 
    Dados referentes ao programa:
 
@@ -161,6 +161,10 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
 			   13/07/2016 - Nao deve mais enviar o codigo da cooperativa na frente do campo conta.
 			                Chamado 407247 (Heitor - RKAM)
                             
+               23/08/2016 - Verificar final de semanas e feriados para verificar suspenções
+                            (Lucas Ranghetti #499496)             
+				
+			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -202,6 +206,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
        and craphis.cdhistor = gnconve.cdhisdeb;
   -- Buscar autorizacoes de debito em conta
   cursor cr_crapatr (pr_cdcooper in crapcop.cdcooper%type,
+                     pr_dtmovini IN crapdat.dtmvtolt%TYPE,
                      pr_dtmvtolt in crapdat.dtmvtolt%type,
                      pr_cdhisdeb in gnconve.cdhisdeb%type) is
     select crapatr.dtiniatr,           
@@ -227,7 +232,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
        and (   crapatr.dtiniatr = pr_dtmvtolt
             or crapatr.dtfimatr = pr_dtmvtolt
             or crapatr.dtinisus = pr_dtmvtolt 
-            or crapatr.dtfimsus = pr_dtmvtolt)
+            or crapatr.dtfimsus BETWEEN pr_dtmovini AND pr_dtmvtolt)
        and crapatr.cdhistor = pr_cdhisdeb
      order by inexecuc,
               nlssort(crapatr.nmfatura, 'NLS_SORT=BINARY_AI'),
@@ -305,6 +310,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
   vr_nrsequen        varchar2(6);
   vr_nmarqdat        varchar2(100);
   vr_nmarqped        varchar2(24);
+  vr_dtmovini        DATE;
 
   -- Subrotina para escrever texto na variável CLOB do XML
   procedure pc_escreve_xml(pr_des_dados in varchar2,
@@ -363,6 +369,15 @@ begin
     end if;
   close btch0001.cr_crapdat;
 
+  -- Data anterior util
+  vr_dtmovini := gene0005.fn_valida_dia_util(pr_cdcooper,
+                                             (rw_crapdat.dtmvtolt - 1), -- 1 dia anterior
+                                             'A',    -- Anterior
+                                             TRUE,   -- Feriado
+                                             FALSE); -- Desconsiderar 31/12
+  -- Adiciona mais um 1 dia na data inicial, para pegar finais de semana e feriados
+  vr_dtmovini := vr_dtmovini + 1;
+
  -- Número sequencial para Movimento de Convenios Unificados
   vr_concvuni := 0;
   -- Leitura dos convênios ativos para a cooperativa
@@ -378,6 +393,7 @@ begin
     -- Verifica se o convênio possui movimento
     -- Se não tem movimento, não precisa gerar os arquivos
     open cr_crapatr (pr_cdcooper,
+                     vr_dtmovini,
                      rw_crapdat.dtmvtolt,
                      rw_gnconve.cdhisdeb);
       fetch cr_crapatr into rw_crapatr;
@@ -542,23 +558,25 @@ begin
     vr_tot_qtregist := 0;
     -- Leitura das autorizacoes de debito em conta
     for rw_crapatr in cr_crapatr (pr_cdcooper,
+                                  vr_dtmovini,
                                   rw_crapdat.dtmvtolt,
                                   rw_gnconve.cdhisdeb) loop
             
       -- Atribuir a data da autorização
       vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
-     
-      IF rw_gnconve.cdconven = 4 THEN -- CASAN
-        vr_nragenci := 1294;
-      ELSE
+
+      IF rw_gnconve.cdconven = 4 AND 
+         (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
+          vr_nragenci := 1294;
+      ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
         -- Caso contrario grava com novo formato. Ex: 0101
-        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN 
+        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN
           vr_nragenci := TRIM(rw_gnconve.cdagedeb);
         ELSE
           vr_nragenci := rw_crapcop.cdagectl;      
-        END IF;
+        END IF;     
       END IF;
 
       if rw_gnconve.cdconven <> 1 then -- Brasil Telecom
@@ -572,7 +590,7 @@ begin
             if rw_crapatr.dtiniatr = rw_crapdat.dtmvtolt then
                vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
             else
-               vr_dtautori := to_char(rw_crapatr.dtfimsus, 'yyyymmdd');
+               vr_dtautori := to_char(rw_crapdat.dtmvtolt, 'yyyymmdd');
             end if; 
          end if;     
       end if;
@@ -796,7 +814,7 @@ begin
         vr_cdcritic := 905; 
       end if;
       --
-      
+
       IF rw_gnconve.tpdenvio = 6 THEN -- WebServices
         --codigo da critica
         vr_cdcritic := 982;
