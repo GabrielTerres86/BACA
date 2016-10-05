@@ -1,11 +1,11 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS474 (pr_cdcooper IN crapcop.cdcooper%TYPE      --> Codigo Cooperativa
-                                       ,pr_cdagenci IN crapage.cdagenci%TYPE --> Codigo Agencia
-                                       ,pr_nmdatela IN VARCHAR2                   --> Nome Tela
-                                       ,pr_idparale in crappar.idparale%TYPE --> Indicador de processoparalelo
-                                       ,pr_stprogra OUT PLS_INTEGER               --> Saida de termino da execucao
-                                       ,pr_infimsol OUT PLS_INTEGER               --> Saida de termino da solicitacao
-                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
-                                       ,pr_dscritic OUT VARCHAR2) IS              --> Descricao da Critica
+                                              ,pr_cdagenci IN crapage.cdagenci%TYPE      --> Codigo Agencia
+                                              ,pr_nmdatela IN VARCHAR2                   --> Nome Tela
+                                              ,pr_idparale in crappar.idparale%TYPE      --> Indicador de processoparalelo
+                                              ,pr_stprogra OUT PLS_INTEGER               --> Saida de termino da execucao
+                                              ,pr_infimsol OUT PLS_INTEGER               --> Saida de termino da solicitacao
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
+                                              ,pr_dscritic OUT VARCHAR2) IS              --> Descricao da Critica
 BEGIN
 
   /* .............................................................................
@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Gabriel
-  Data    : Fevereiro/2012.                    Ultima atualizacao: 27/04/2016
+  Data    : Fevereiro/2012.                    Ultima atualizacao: 26/09/2016
 
   Dados referentes ao programa:
 
@@ -71,10 +71,10 @@ BEGIN
               25/11/2015 - Ajuste ref ao lancamento de juros remuneratorios referente
                            ao pagto de boletos de emprestimo - Projeto 210 (Rafael)
 
-               02/02/2016 - Incluso novo parametro cdorigem referente Projeto Pgo
-                      PP InternetBank. (Daniel)
+              02/02/2016 - Incluso novo parametro cdorigem referente Projeto Pgo
+                           PP InternetBank. (Daniel)
 
-         03/02/2016 - (Chamado 393718) Inclusao de um log dos saldos antes
+              03/02/2016 - (Chamado 393718) Inclusao de um log dos saldos antes
                             e apos cada transacao de debito efetivada no
                             contrato (Tiago Castro - RKAM).
 
@@ -98,16 +98,16 @@ BEGIN
                            quando o correto e testar inproces > 2.
                            Heitor (RKAM)
 		      
-			  05/07/2016 - Melhorias de performance e gerenciamento de memoria. Chamado 479871.
-			               Alterado local onde e feito uma das geracoes de log, pois o indice
-						   utilizado na geracao poderia estar nulo, ocasionando problemas.
-						   Chamado 408357.
-			               (Heitor - RKAM)
+			        05/07/2016 - Melhorias de performance e gerenciamento de memoria. Chamado 479871.
+			                     Alterado local onde e feito uma das geracoes de log, pois o indice
+            						   utilizado na geracao poderia estar nulo, ocasionando problemas.
+						               Chamado 408357. (Heitor - RKAM)
+
+              26/09/2016 - Incluido verificacao de contratos de acordo, Prj. 302 (Jean Michel).
 
     ............................................................................. */
 
   DECLARE
-
 
     /*Cursores Locais */
 
@@ -167,7 +167,7 @@ BEGIN
          AND crapass.cdcooper = crappep.cdcooper
          AND crapass.nrdconta = crappep.nrdconta
          AND crappep.cdcooper = pr_cdcooper
-                 AND crappep.dtvencto <= pr_dtmvtolt
+         AND crappep.dtvencto <= pr_dtmvtolt
          AND crappep.inprejuz = 0
                        AND ((crappep.inliquid = 0) OR (crappep.inliquid = 1 AND crappep.dtvencto > pr_dtmvtoan))
        ORDER
@@ -241,6 +241,20 @@ BEGIN
          and c.cdacesso = 'PC_CRPS474-ERRO';
     rw_erro cr_erro%ROWTYPE;
 
+    -- Consulta contratos ativos de acordos
+   CURSOR cr_ctr_acordo IS
+   SELECT tbrecup_acordo_contrato.nracordo
+         ,tbrecup_acordo_contrato.cdcooper
+         ,tbrecup_acordo_contrato.nrdconta
+         ,tbrecup_acordo_contrato.nrctremp
+     FROM tbrecup_acordo_contrato
+     JOIN tbrecup_acordo
+       ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo
+    WHERE tbrecup_acordo.cdsituacao = 1
+      AND tbrecup_acordo_contrato.cdorigem IN (2,3);
+
+   rw_ctr_acordo cr_ctr_acordo%ROWTYPE;
+
     --tabela de Memoria dos detalhes de emprestimo
     vr_tab_crawepr EMPR0001.typ_tab_crawepr;
 
@@ -255,6 +269,10 @@ BEGIN
 
     /* Tabela de Memoria de Calculados */
     vr_tab_calculado empr0001.typ_tab_calculado;
+
+    /* Contratos de acordo */
+    TYPE typ_tab_acordo   IS TABLE OF NUMBER(10) INDEX BY VARCHAR2(30);
+    vr_tab_acordo   typ_tab_acordo;
 
     --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -280,6 +298,8 @@ BEGIN
     vr_mesrefju INTEGER;
     vr_anorefju INTEGER;
     vr_flgpripr BOOLEAN;
+    
+    vr_cdindice VARCHAR2(30) := ''; -- Indice da tabela de acordos
 
     --Variaveis de Indices
        vr_index_crawepr VARCHAR2(30);
@@ -435,6 +455,14 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
     
+    -- Carregar Contratos de Acordos
+    FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
+      vr_cdindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
+                     LPAD(rw_ctr_acordo.nrctremp,10,'0');
+      vr_tab_acordo(vr_cdindice) := rw_ctr_acordo.nracordo;
+    END LOOP;
+
+
     if pr_cdagenci = 0 then
       begin
         delete crapprm c
@@ -675,6 +703,7 @@ BEGIN
       END IF;
       --Fechar CURSOR
       CLOSE cr_crapepr;
+
       /* 229243 Verifica se possui movimento de credito no dia */
       IF rw_crapdat.inproces = 1
          AND vr_flgpripr THEN
@@ -842,6 +871,12 @@ BEGIN
 
           END IF;
 
+          vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                         LPAD(rw_crappep.nrctremp,10,'0');
+
+          IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+            vr_flgpagpa := FALSE;
+          END IF;
 
           /* Sem valor suficiente para pagar parcela ou parcela ja liquidada */
           IF NOT vr_flgpagpa THEN
@@ -1034,6 +1069,13 @@ BEGIN
           END IF;
 
         END IF;
+
+        vr_cdindice := LPAD(pr_cdcooper,10,'0') || LPAD(rw_crappep.nrdconta,10,'0') ||
+                       LPAD(rw_crappep.nrctremp,10,'0');
+
+        IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
+          vr_vlsomato := 0;
+        END IF;	
 
         IF vr_vlsomato <= 0 THEN
           /* Sem nada para pagar */

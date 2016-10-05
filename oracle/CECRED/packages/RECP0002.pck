@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0002 IS
   --  Sistema  : Rotinas referentes ao WebService de Acordos
   --  Sigla    : EMPR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Julho - 2016.                   Ultima atualizacao: 19/09/2016
+  --  Data     : Julho - 2016.                   Ultima atualizacao: 29/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -25,7 +25,11 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0002 IS
   --                          procedure pc_gerar_acordo, Prj. 302 (Jean Michel). 
   --
   --             19/09/2016 - 19/09/2016 - Incluido novo parametro pr_dtcancel na
-  --                          procedure pc_cancelar_acordo, Prj. 302 (Jean Michel).             
+  --                          procedure pc_cancelar_acordo, Prj. 302 (Jean Michel).
+  --
+  --             29/09/2016 - Incluida validacao de contratos de acordos na procedure
+  --                          pc_gerar_acordo, Prj. 302 (Jean Michel).
+  --             
   ---------------------------------------------------------------------------
   
   TYPE typ_rec_parcelas 
@@ -79,7 +83,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --  Sistema  : Rotinas referentes ao WebService de Acordos
   --  Sigla    : EMPR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Julho - 2016.                   Ultima atualizacao: 
+  --  Data     : Julho - 2016.                   Ultima atualizacao: 29/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -100,6 +104,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   --
   --             19/09/2016 - 19/09/2016 - Incluido novo parametro pr_dtcancel na
   --                          procedure pc_cancelar_acordo, Prj. 302 (Jean Michel).
+  --
+  --             29/09/2016 - Incluida validacao de contratos de acordos na procedure
+  --                          pc_gerar_acordo, Prj. 302 (Jean Michel).
   --
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
@@ -1078,7 +1085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 19/09/2016
+      Data    : Julho/2016.                    Ultima atualizacao: 29/09/2016
 
       Dados referentes ao programa:
 
@@ -1089,6 +1096,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Observacao: -----
       Alteracoes: 19/09/2016 - Incluida validacao de contratos JUDICIAL/EXTRA-JUDICIAL,
                                Prj. 302 (Jean Michel).
+
+                  29/09/2016 - Incluida validacao de contratos de acordos, Prj. 302 (Jean Michel).             
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1141,7 +1150,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 		 AND cyc.nrdconta =	pr_nrdconta
 		 AND cyc.nrctremp = pr_nrctremp;
 	rw_crapcyc cr_crapcyc%ROWTYPE;	 
-		    
+		  
+    CURSOR cr_crapepr(pr_cdcooper crapepr.cdcooper%TYPE
+                     ,pr_nrdconta crapepr.nrdconta%TYPE
+                     ,pr_dtmvtolt crapepr.dtmvtolt%TYPE
+                     ,pr_nrctremp crapepr.nrctremp%TYPE) IS
+
+      SELECT epr.cdcooper
+            ,epr.nrdconta
+        FROM crapepr epr
+        JOIN crawepr wepr
+          ON wepr.cdcooper = epr.cdcooper
+         AND wepr.nrdconta = epr.nrdconta
+         AND wepr.nrctremp = epr.nrctremp
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.dtmvtolt = pr_dtmvtolt
+         AND (wepr.nrctrliq##1  = pr_nrctremp OR
+              wepr.nrctrliq##2  = pr_nrctremp OR
+              wepr.nrctrliq##3  = pr_nrctremp OR
+              wepr.nrctrliq##4  = pr_nrctremp OR
+              wepr.nrctrliq##5  = pr_nrctremp OR
+              wepr.nrctrliq##6  = pr_nrctremp OR
+              wepr.nrctrliq##7  = pr_nrctremp OR
+              wepr.nrctrliq##8  = pr_nrctremp OR
+              wepr.nrctrliq##9  = pr_nrctremp OR
+              wepr.nrctrliq##10 = pr_nrctremp);  
+
+  	rw_crapepr cr_crapepr%ROWTYPE;
+
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
     vr_dscritic   VARCHAR2(10000);
@@ -1492,6 +1529,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       END IF; 
     END IF;
     
+    -- Verifica se contrato esta para liquidar
+    OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => vr_nrdconta
+                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                   ,pr_nrctremp => vr_nrctremp);
+
+    FETCH cr_crapepr INTO rw_crapepr; 
+
+    IF cr_crapepr%NOTFOUND THEN
+      CLOSE cr_crapepr;
+      vr_dscritic := 'Não foi possível gerar boleto, contrato ' || gene0002.fn_mask_contrato(vr_nrctremp) || ' marcado para liquidar.';
+  		RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapepr;
+    END IF;
+
     COMMIT;      
   EXCEPTION
     WHEN vr_exc_erro_det THEN
@@ -1547,7 +1600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 19/09/2016
+      Data    : Julho/2016.                    Ultima atualizacao: 29/09/2016
 
       Dados referentes ao programa:
 
@@ -1561,6 +1614,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                     
                   19/09/2016 - Incluido novo parametro pr_dtcancel, Prj. 302 (Jean Michel).             
 
+                  29/09/2016 - Incluido tratamento para desbloquear valor em C/C,
+                               Prj. 302 (Jean Michel). 
+
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1569,7 +1625,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     --> Buscar situacao do acordo
     CURSOR cr_tbacordo IS
        SELECT aco.cdsituacao,
-              aco.nracordo
+              aco.nracordo,
+              aco.vlbloqueado
         FROM tbrecup_acordo aco
         WHERE nracordo = pr_nracordo;
     rw_tbacordo cr_tbacordo%ROWTYPE;  
@@ -1580,6 +1637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
             ,par.nrdconta_cob
             ,par.nrconvenio
             ,par.nrboleto
+            ,par.nrdconta
         FROM tbrecup_acordo_parcela par
        WHERE par.nracordo = pr_nracordo;
     
@@ -1597,7 +1655,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
          AND crapcob.incobran NOT IN (3,5); -- (Baixado, Liquidado)
     rw_crapcob cr_crapcob%ROWTYPE;
         
-         
+    --> Buscar cooperado
+    CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
+                       pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT ass.cdcooper
+            ,ass.nrdconta
+            ,ass.cdagenci
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+     
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
     vr_dscritic     VARCHAR2(10000);
@@ -1609,7 +1677,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_tab_lat_consolidada     paga0001.typ_tab_lat_consolidada;      
     
     vr_cdcooper     crapcop.cdcooper%TYPE;  
-    
+    vr_nrdconta     crapass.nrdconta%TYPE;
+    vr_des_reto     VARCHAR2(10);
+    vr_tab_erro    gene0001.typ_tab_erro;
+
   BEGIN
     
     --> Buscar situacao do acordo
@@ -1640,7 +1711,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       IF rw_parcelas.cdcooper <> vr_cdcooper THEN
         
         vr_cdcooper := rw_parcelas.cdcooper;
-        
+        vr_nrdconta := rw_parcelas.nrdconta;
+
         -- Leitura do calendário da cooperativa
         OPEN btch0001.cr_crapdat(pr_cdcooper => rw_parcelas.cdcooper);
 
@@ -1695,11 +1767,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       END IF;            
     END LOOP;  
     
+    -- Condicao para verificar se possui valor de acordo
+    IF rw_tbacordo.vlbloqueado > 0 THEN
+
+      OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => vr_nrdconta);   
+
+      FETCH cr_crapass INTO rw_crapass;               
+
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_cdcritic := 9;
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapass;
+      END IF;
+    
+      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => rw_crapass.cdcooper             --> Cooperativa conectada
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt     --> Movimento atual
+                                    ,pr_cdagenci => rw_crapass.cdagenci     --> Código da agência
+                                    ,pr_cdbccxlt => 100                     --> Número do caixa
+                                    ,pr_cdoperad => '1'                     --> Código do Operador
+                                    ,pr_cdpactra => rw_crapass.cdagenci     --> P.A. da transação
+                                    ,pr_nrdolote => 650001                  --> Numero do Lote
+                                    ,pr_nrdconta => rw_crapass.nrdconta             --> Número da conta
+                                    ,pr_cdhistor => 2194                    --> Codigo historico 2194 - CR.DESB.ACORD
+                                    ,pr_vllanmto => rw_tbacordo.vlbloqueado --> Valor da parcela emprestimo
+                                    ,pr_nrparepr => rw_tbacordo.nracordo    --> Número parcelas empréstimo
+                                    ,pr_nrctremp => 0                       --> Número do contrato de empréstimo
+                                    ,pr_des_reto => vr_des_reto             --> Retorno OK / NOK
+                                    ,pr_tab_erro => vr_tab_erro);           --> Tabela com possíves erros
+      --Se Retornou erro
+      IF vr_des_reto <> 'OK' THEN
+        -- Se possui algum erro na tabela de erros
+        IF vr_tab_erro.count() > 0 THEN
+          -- Atribui críticas às variaveis
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+        ELSE
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao criar o lancamento de desbloqueio de acordo';
+        END IF;
+        
+        RAISE vr_exc_erro;
+      END IF;
+    END IF; 
+
     BEGIN
       -- Alterar a situação do acordo para cancelado
       UPDATE tbrecup_acordo SET
              cdsituacao = 3 -- Cancelado
             ,dtcancela = pr_dtcancel
+            ,vlbloqueado = 0 -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
        WHERE nracordo = rw_tbacordo.nracordo;
     EXCEPTION
       WHEN OTHERS THEN

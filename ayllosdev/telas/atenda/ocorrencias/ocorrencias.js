@@ -13,6 +13,9 @@
 				29/10/2012 - Ajustes referente a inclusão da opção "Grupo Economico". 
 						     Projeto GE (Adriano).
 
+                29/09/2016 - Ajustes referente a inclusão da opção "Acordos". 
+						     Projeto 302 (Jean Michel).
+
  ***********************************************************************/
 
 var contWin = 0;  // Vari&aacute;vel para contagem do n&uacute;mero de janelas abertas para impress&atilde;o de extratos
@@ -40,12 +43,15 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
     } else if (opcao == '6') { // Operação Grupo Economico
 		var msg  = "grupo economico";
 		var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/grupo_economico.php";
-	}
+    } else if (opcao == '7') { // Operação Acordos
+        var msg = "acordos";
+        var UrlOperacao = UrlSite + "telas/atenda/ocorrencias/acordos.php";
+    }
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando " + msg + " ...");
 	
 	// Atribui cor de destaque para aba da op&ccedil;&atilde;o
-	for (var i = 0; i < nrOpcoes; i++) {
+	for (var i = 0; i <= nrOpcoes; i++) {
 		if (id == i) { // Atribui estilos para foco da op&ccedil;&atilde;o
 			$("#linkAba" + id).attr("class","txtBrancoBold");
 			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
@@ -445,6 +451,31 @@ function formataGrupoEconomico(){
 	
 }
 
+// Formata o layout Acordos
+function formataAcordos() {
+    
+    var divRegistro = $('div.divRegistros', '#divAcordos');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+
+    divRegistro.css({ 'height': '180px', 'width': '530px' });
+
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '130px';
+    arrayLargura[1] = '150px';
+    
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'center';
+    
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+    
+    return false;
+
+}
 
 // Função de complemento da formataEstourso
 function selecionaEstouros(tr) {

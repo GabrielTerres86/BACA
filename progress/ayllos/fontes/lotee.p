@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 27/06/2016
+   Data    : Outubro/91.                         Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -174,6 +174,8 @@
                             alterado o INLIQUID quando o lote é excluído.
                           + Controlar o preenchimento da data de pagamento do prejuízo,
                             voltando o prejuizo antes da liquidaçao. (Renato Darosci - M176)
+                            
+               23/09/2016 - Inclusao de validacao de contratos de acordos, Prj. 302 (Jean Michel).             
                           
 ............................................................................. */
 
@@ -205,7 +207,10 @@ DEF    VAR aux_sldmulta AS DEC                                          NO-UNDO.
 DEF    VAR aux_sldjmora AS DEC                                          NO-UNDO.
 DEF    VAR aux_vlrpagos AS DECIMAL                                      NO-UNDO.
 
+DEF    VAR aux_flgativo AS INTEGER                                      NO-UNDO.
+
 { includes/var_online.i } 
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/var_internet.i }
 { includes/var_lote.i }
 
@@ -807,7 +812,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                         glb_cdcritic = 0.
                         LEAVE.
                     END.
-
+               
                FIND FIRST craplem WHERE craplem.cdcooper = glb_cdcooper      AND
                                         craplem.nrdconta = crapepr.nrdconta  AND
                                         craplem.nrctremp = crapepr.nrctremp  AND
@@ -974,13 +979,59 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                       LEAVE.
 
                    END.  /*  Fim do DO WHILE TRUE  */
-
+                
                    IF   glb_cdcritic > 0   THEN
                         DO:
                             par_situacao = FALSE.
                             LEAVE.
                         END.
+                  
+                   /* Verifica se ha contratos de acordo */            
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper    
+                                                        ,INPUT crapepr.nrdconta
+                                                        ,INPUT crapepr.nrctremp
+                                                        ,0
+                                                        ,0
+                                                        ,"").
 
+                  CLOSE STORED-PROC pc_verifica_acordo_ativo
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN glb_cdcritic = 0
+                         glb_dscritic = ""
+                         glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                         glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                         aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                  
+                  IF glb_cdcritic > 0 THEN
+                    DO:
+                        RUN fontes/critic.p.
+                        BELL.
+                        MESSAGE glb_dscritic.
+                        ASSIGN glb_cdcritic = 0.
+                        LEAVE.
+                    END.
+                  ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                    DO:
+                      MESSAGE glb_dscritic.
+                      ASSIGN glb_cdcritic = 0.
+                      LEAVE.
+                    END.
+                    
+                  IF aux_flgativo = 1 THEN
+                    DO:
+                      MESSAGE "Nao e possivel excluir o lote, contem emprestimo em acordo.".
+                      PAUSE 3 NO-MESSAGE.
+                      LEAVE.
+                    END.            
+                  
+                  /* Fim verifica se ha contratos de acordo */   
+                  
                    FIND crapass WHERE crapass.cdcooper = glb_cdcooper       AND
                                       crapass.nrdconta = crapepr.nrdconta
                                       NO-LOCK NO-ERROR.

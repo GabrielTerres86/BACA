@@ -1,22 +1,21 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-         pc_crps120_1 (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                      ,pr_cdprogra  IN crapprg.cdprogra%TYPE default null  --> Codigo do programa chamador                      
-                      ,pr_cdoperad  IN crapope.cdoperad%type  --> codigo do operador                 
-                      ,pr_crapdat   IN  btch0001.cr_crapdat%rowtype  --> type contendo as informações da crapdat
-                      ,pr_nrdconta  IN crapass.nrdconta%type  --> Nr da conta do associado
-                      ,pr_nrctremp  IN crapepr.nrctremp%type  --> Nr do emprestimo
-                      ,pr_nrdolote  IN crapepr.nrdolote%type  --> Nr do lote do emprestimo
-                      ,pr_inusatab  IN boolean                --> Indicador se utiliza taxa de juros
-                      ,pr_vldaviso  IN NUMBER                 --> Valor do aviso
-                      ,pr_vlsalliq  IN NUMBER                 --> Valor de saldo liquido
-                      ,pr_dtintegr  IN DATE                   --> Data de integração
-                      ,pr_cdhistor  IN craphis.cdhistor%type  --> Cod do historico
-                      ,pr_insitavs OUT crapavs.insitavs%type  --> Situação do aviso
-                      ,pr_vldebito OUT crapavs.vldebito%type  --> Retorno do valor debito
-                      ,pr_vlestdif OUT crapavs.vlestdif%type  --> Valor do estouro ou diferenca.
-                      ,pr_flgproce OUT crapavs.flgproce%type  --> retorno indicativo de processamento
-                      ,pr_cdcritic OUT PLS_INTEGER            --> Critica encontrada
-                      ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+                                                ,pr_cdprogra  IN crapprg.cdprogra%TYPE default null  --> Codigo do programa chamador                      
+                                                ,pr_cdoperad  IN crapope.cdoperad%type  --> codigo do operador                 
+                                                ,pr_crapdat   IN  btch0001.cr_crapdat%rowtype  --> type contendo as informações da crapdat
+                                                ,pr_nrdconta  IN crapass.nrdconta%type  --> Nr da conta do associado
+                                                ,pr_nrctremp  IN crapepr.nrctremp%type  --> Nr do emprestimo
+                                                ,pr_nrdolote  IN crapepr.nrdolote%type  --> Nr do lote do emprestimo
+                                                ,pr_inusatab  IN boolean                --> Indicador se utiliza taxa de juros
+                                                ,pr_vldaviso  IN NUMBER                 --> Valor do aviso
+                                                ,pr_vlsalliq  IN NUMBER                 --> Valor de saldo liquido
+                                                ,pr_dtintegr  IN DATE                   --> Data de integração
+                                                ,pr_cdhistor  IN craphis.cdhistor%type  --> Cod do historico
+                                                ,pr_insitavs OUT crapavs.insitavs%type  --> Situação do aviso
+                                                ,pr_vldebito OUT crapavs.vldebito%type  --> Retorno do valor debito
+                                                ,pr_vlestdif OUT crapavs.vlestdif%type  --> Valor do estouro ou diferenca.
+                                                ,pr_flgproce OUT crapavs.flgproce%type  --> retorno indicativo de processamento
+                                                ,pr_cdcritic OUT PLS_INTEGER            --> Critica encontrada
+                                                ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
     /* .............................................................................
 
@@ -24,7 +23,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah/Edson
-       Data    : Maio/1995                     Ultima atualizacao: 22/09/2015
+       Data    : Maio/1995                     Ultima atualizacao: 26/09/2016
 
        Dados referentes ao programa:
 
@@ -76,6 +75,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 é inicializada com zero e no Oracle permanecia vazia
                                 (Marcos-Supero)
 
+                   26/09/2016 - Inclusao de verificacao de contratos de acordos,
+                                Prj. 302 (Jean Michel). 
+
     ............................................................................ */
 
     DECLARE
@@ -90,6 +92,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
+      vr_flgativo   INTEGER := 0;
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -305,6 +308,26 @@ CREATE OR REPLACE PROCEDURE CECRED.
         RETURN;
       END IF;
       
+      -- Verifica se existe contrato de acordo ativo
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        RAISE vr_exc_saida;
+      ELSIF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;      
+      END IF;
+                                 
+      IF vr_flgativo = 1 THEN
+        vr_dscritic := 'Lancamento nao permitido, contrato para liquidar esta em acordo.';
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Saldo devedor menor ou igual a zero
       IF vr_vlsdeved <= 0   THEN 
          
@@ -605,6 +628,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
         END IF;
         -- Devolvemos código e critica encontradas das variaveis locais
         pr_cdcritic := NVL(vr_cdcritic,0);
+		pr_insitavs := NVL(pr_insitavs,0);
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado
@@ -614,4 +638,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
   END pc_crps120_1;
 /
-

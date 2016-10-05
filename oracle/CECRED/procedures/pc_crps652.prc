@@ -4562,9 +4562,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
          -- Carregar Contratos de Acordos
          FOR rw_ctr_acordo IN cr_ctr_acordo LOOP
-           vr_idindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.nrdconta,10,'0') ||
-                          LPAD(rw_ctr_acordo.cdorigem,10,'0') || LPAD(rw_ctr_acordo.nrctremp,10,'0');
-           vr_tab_acordo(rw_crapjur.nrdconta) := rw_ctr_acordo.nracordo;
+           vr_idindice := LPAD(rw_ctr_acordo.cdcooper,10,'0') || LPAD(rw_ctr_acordo.cdorigem,10,'0') ||
+                          LPAD(rw_ctr_acordo.nrdconta,10,'0') || LPAD(rw_ctr_acordo.nrctremp,10,'0');
+           vr_tab_acordo(vr_idindice) := rw_ctr_acordo.nracordo;
          END LOOP;
 
          --Selecionar Contratos em Cobranca no Cyber

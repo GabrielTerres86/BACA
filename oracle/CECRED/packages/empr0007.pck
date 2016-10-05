@@ -6,14 +6,15 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao:
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 27/09/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Portabilidade de Credito
   --
-  -- Alteracoes:
+  -- Alteracoes: 27/09/2016 - Inclusao de verificacao de contratos de acordos
+  --                          na procedure pc_enviar_boleto, Prj. 302 (Jean Michel).
   --
   ---------------------------------------------------------------------------
 
@@ -305,7 +306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 29/06/2016
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 27/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -315,6 +316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   -- Alteracoes: 29/06/2016 - Adicionar validacao de substr para a leitura da crapass com a 
   --                          crapenc na procedure pc_gera_boleto_contrato (Lucas Ranghetti #456095)
   --
+  --             27/09/2016 - Inclusao de verificacao de contratos de acordos
+  --                          na procedure pc_enviar_boleto, Prj. 302 (Jean Michel).
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -3058,7 +3061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 25/11/2015
+      Data    : Agosto/15.                    Ultima atualizacao: 27/09/2016
 
       Dados referentes ao programa:
 
@@ -3070,6 +3073,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       Alteracoes: 25/11/2015 - Ajuste no registro da informacao de envio/impressao
                                dos boletos de emprestimo. (Rafael)
+
+                  27/09/2016 - Inclusao de verificacao de contratos de acordo,
+                               Prj. 302 (Jean Michel).
     ..............................................................................*/
     DECLARE
 
@@ -3089,6 +3095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			vr_nrdrowid ROWID;
 			vr_dsorigem VARCHAR2(1000) := TRIM(GENE0001.vr_vet_des_origens(pr_idorigem));
 			vr_nmarqpdf VARCHAR2(1000);
+      vr_flgativo INTEGER := 0;
 
 			-- PL/Table com os dados retornados da COBR0005.pc_buscar_titulo_cobranca
 			vr_tab_cob cobr0005.typ_tab_cob;
@@ -3110,6 +3117,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		BEGIN
 			BEGIN
         
+        -- Verifica contratos de acordo
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Gerar exceção
+          RAISE vr_exc_erro;
+        END IF;
+            
+        IF vr_flgativo = 1 THEN
+          vr_dscritic := 'Geracao do boleto nao permitido, emprestimo em acordo.';
+          -- Gerar exceção
+          RAISE vr_exc_erro;
+        END IF;
+                
         -- verificar estado do boleto antes de imprimir ou enviar boleto        
         OPEN cr_boleto(pr_cdcooper
                       ,pr_nrctacob
@@ -6117,7 +6143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		Sistema : CECRED
 		Sigla   : EMPR
 		Autor   : Lucas Reinert
-		Data    : Outubro/15.                    Ultima atualizacao: --/--/----
+		Data    : Outubro/15.                    Ultima atualizacao: 27/09/2016
 
 		Dados referentes ao programa:
 
@@ -6127,7 +6153,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
 		Observacao: -----
 
-		Alteracoes:
+		Alteracoes: 27/09/2016 - Incluida verificacao de contratos de acordo,
+                             Prj. 302 (Jean Michel).
 	..............................................................................*/
 		DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -6159,12 +6186,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_dscorema   VARCHAR2(4000); -- corpo do email                 
       vr_des_erro VARCHAR2(4000);
       
+       vr_flgativo INTEGER := 0;
 			---------------------------- CURSORES -----------------------------------
 			CURSOR cr_tbepr_cde(pr_cdcooper crapcop.cdcooper%TYPE
 												 ,pr_nrctacob tbepr_cobranca.nrdconta_cob%TYPE
 												 ,pr_nrcnvcob tbepr_cobranca.nrcnvcob%TYPE
 												 ,pr_nrdocmto tbepr_cobranca.nrboleto%TYPE) IS
 				SELECT cde.nrdconta
+              ,cde.nrctremp
 					FROM tbepr_cobranca cde
 				 WHERE cde.cdcooper = pr_cdcooper
 					 AND cde.nrdconta_cob = pr_nrctacob
@@ -6219,6 +6248,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 					 -- Gera exceção
 					 RAISE vr_exc_saida;
 				END IF;
+
+        -- Verifica contratos de acordo
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => rw_tbepr_cde.nrctremp
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          -- Gerar exceção
+          RAISE vr_exc_saida;
+        END IF;
+            
+        IF vr_flgativo = 1 THEN
+          vr_dscritic := 'Geracao do boleto nao permitido, emprestimo em acordo.';
+          -- Gerar exceção
+          RAISE vr_exc_saida;
+        END IF;
 
 				-- Busca do diretório base da cooperativa para a geração de relatórios
 				vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C'          --> /usr/coop

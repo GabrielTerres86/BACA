@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 07/06/2016
+   Data    : Outubro/91.                     Ultima atualizacao: 22/09/2016
 
    Dados referentes ao programa:
 
@@ -297,6 +297,10 @@
                04/07/2016 - Deletar crappro e crapaut dos lancamentos de 
                             debito automatico.
                             PRJ320 - Oferta debito automatico (Odirlei-AMcom)
+                            
+               22/09/2016 - Incluido tratamento para verificacao de contrato de 
+                            acordo, Prj. 302 (Jean Michel).
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -319,6 +323,7 @@ DEF VAR ant_cdcooper         AS INT                                  NO-UNDO.
 DEF VAR aux_cdcoptco         AS INT                                  NO-UNDO.
 DEF VAR aux_nrctatco         AS INT                                  NO-UNDO.
 DEF VAR aux_sldesblo         AS DECI                                 NO-UNDO.
+DEF VAR aux_flgativo         AS INT                                  NO-UNDO. 
 
 DEF BUFFER crabdev FOR crapdev.
 
@@ -366,9 +371,7 @@ ASSIGN aux_cdhstnex = "106,107,114,160,177,324,325,387,388,472,478,497,499," +
 EXCLUSAO:
 DO WHILE TRUE:
 
-   RUN fontes/inicia.p.
-    
-   
+   RUN fontes/inicia.p.   
 
    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
       
@@ -524,7 +527,7 @@ DO WHILE TRUE:
                              aux_flgerros = TRUE.
                     END.
            END.
- 
+  
       IF   glb_cdcritic > 0 THEN
            DO:
                RUN fontes/critic.p.
@@ -544,9 +547,10 @@ DO WHILE TRUE:
                PAUSE(0).
 
                MESSAGE glb_dscritic.
+           
                NEXT.
            END.
-
+             
       ASSIGN tel_qtinfoln = craplot.qtinfoln   tel_qtcompln = craplot.qtcompln
              tel_vlinfodb = craplot.vlinfodb   tel_vlcompdb = craplot.vlcompdb
              tel_vlinfocr = craplot.vlinfocr   tel_vlcompcr = craplot.vlcompcr
@@ -1779,6 +1783,52 @@ DO WHILE TRUE:
                     END.  
                ELSE     /*  Hst 275, 394, 428, 350 e 317 e 506  */
                     DO:
+                      
+                      /* Verifica se possui contrato de acordo */
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                      /* Verifica se ha contratos de acordo */
+                      RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                                            ,INPUT craplcm.nrdconta
+                                                            ,INPUT INT(ENTRY(1,craplcm.cdpesqbb, ";"))
+                                                            ,OUTPUT 0
+                                                            ,OUTPUT 0
+                                                            ,OUTPUT "").
+
+                      CLOSE STORED-PROC pc_verifica_acordo_ativo
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                      
+                      ASSIGN glb_cdcritic = 0
+                             glb_dscritic = ""
+                             glb_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                             glb_dscritic = TRIM(pc_verifica_acordo_ativo.pr_dscritic) WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                             aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                      
+                      IF glb_cdcritic > 0 THEN
+                        DO:
+                           RUN fontes/critic.p.
+                           MESSAGE glb_dscritic.
+                           BELL.
+                           UNDO, NEXT.
+                        END.
+                      ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                        DO:
+                          MESSAGE glb_dscritic.
+                          BELL.
+                          UNDO, NEXT.
+                        END.
+                        
+                      IF aux_flgativo = 1 THEN
+                        DO:
+                          MESSAGE "Lancamento nao permitido, contrato para liquidar esta em acordo".                          
+                          PAUSE 3 NO-MESSAGE.
+                          UNDO, NEXT.
+                        END.
+                      /* Fim verifica se possui contrato de acordo */              
+                    
                         RUN fontes/saldo_epr.p 
                                    (INPUT  craplcm.nrdconta,
                                     INPUT  INT(ENTRY(1, craplcm.cdpesqbb, ";")),

@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 01/12/2015
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 29/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -22,6 +22,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   --
   --               12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
   --                            Caixa OnLine) 
+  --
+  --               29/09/2019 - Inclusao de verificacao de contratos de acordos de
+  --                            empréstimos na procedure pc_obtem_mensagens_alerta,
+  --                            Prj. 302 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -487,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 21/06/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 29/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -516,6 +520,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --
   --               21/06/2016 - Correcao para o uso correto do indice da CRAPTAB em procedures 
   --                            desta package.(Carlos Rafael Tanholi).    
+  --
+  --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
+  --                           empréstimos na procedure pc_obtem_mensagens_alerta,
+  --                           Prj. 302 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -3619,7 +3627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 01/12/2015
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 29/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -3641,6 +3649,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              01/12/2015 - Alterar validacao de contratos em cobrança no 
     --                           CYBER para verificar na cracyc ao inves da crapcyb
     --                           (Douglas)
+    --                          
+    --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
+    --                           empréstimos, Prj. 302 (Jean Michel).
+    --
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4102,6 +4114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; --Tabela Avalistas
     vr_tab_bens CADA0001.typ_tab_bens;          --Tabela bens
 
+    vr_flgativo INTEGER := 0;
   BEGIN
   
     vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
@@ -5125,6 +5138,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     END IF;
     
+    -- Verifica contratos de acordos
+    RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrctremp => 0
+                                     ,pr_flgativo => vr_flgativo
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+
+    IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_flgativo = 1 THEN
+      pc_cria_registro_msg(pr_dsmensag             => 'Atencao! Cooperado possui contrato de acordo.',
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+    END IF;
+ 
     pr_des_reto := 'OK';
     
   EXCEPTION    

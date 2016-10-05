@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --  Sistema  : Rotinas gen¿ricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 11/05/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 26/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -23,6 +23,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --
   --             11/05/2016 - Criacao do FIELD vlatraso na typ_reg_dados_epr. (Jaison/James)
   --
+  --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
+  --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de emprestimo. Antiga: tt-dados-epr */
@@ -764,7 +766,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 02/02/2016
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 26/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -801,6 +803,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --
   --             02/02/2016 - Adicionado validação na procedure pc_busca_pgto_parcelas_prefix
   --                          para verificar se o emprestimo já está liquidado 389736 (Kelvin).
+  --
+  --             26/09/2016 - Adicionado validacao de contratos de acordo na procedure
+  --                          pc_valida_pagamentos_geral, Prj. 302 (Jean Michel). 
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -7732,6 +7737,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    01/06/2016 - Adicionado validacao para identificar se esta executando
                                 no batch ou online na chamada da procedure 
                                 pc_obtem_saldo_dia (Douglas - Chamado 455609)
+
+                   26/09/2016 - Adicionado validacao de contratos de acordo na procedure,
+                                Prj. 302 (Jean Michel).             
     ............................................................................. */
   
     DECLARE
@@ -7781,6 +7789,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
     
+      vr_flgativo INTEGER := 0;
+
     BEGIN
       --Inicializar variavel erro
       pr_des_reto := 'OK';
@@ -7932,7 +7942,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                                'Confirma pagamento?';
           END IF;                                                                                                                              
         END IF;
-      
+        
+        IF pr_idorigem IN(3,5) THEN 
+          -- Verifica se existe contrato de acordo ativo
+          RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
+                                           ,pr_flgativo => vr_flgativo
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+
+          IF NVL(vr_cdcritic,0) > 0 THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            RAISE vr_exc_saida;
+          ELSIF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;      
+          END IF;
+                                   
+          IF vr_flgativo = 1 THEN
+            vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo.';
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
+
         --Ocorreu transacao
         vr_flgtrans := TRUE;
       EXCEPTION
@@ -13652,7 +13684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         Sistema  : Conta-Corrente - Cooperativa de Credito
         Sigla    : CRED
         Autor    : Douglas Quisinski
-        Data     : Novembro/2015                Ultima atualizacao:   /  /    
+        Data     : Novembro/2015                Ultima atualizacao:
 
         Dados referentes ao programa:
 
@@ -13660,7 +13692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          Objetivo  : Possui a mesma funcionalidade da rotina pc_valida_pagamentos_geral,
                      para chamadas diretamente atraves de rotinas progress
 
-        Alteração : 
+        Alteração :
     ..........................................................................*/
 
     -- Flag gerar log

@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 06/07/2016
+   Data    : 14/09/2005                        Ultima atualizacao: 23/09/2016
 
    Dados referentes ao programa:
 
@@ -623,6 +623,9 @@
                            na qualificacao da operacao
                            Andrey (RKAM) - Chamado 473364
 
+              23/09/2016 - Inclusao de validacao de contratos de acordos,
+                           Prj. 302 (Jean Michel).  
+                           
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -1262,7 +1265,8 @@ PROCEDURE valida-liquidacao-emprestimos:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
-
+    DEF VAR aux_flgativo AS INT                                     NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN
@@ -1302,6 +1306,44 @@ PROCEDURE valida-liquidacao-emprestimos:
                                LEAVE Valida.
                            END.
                     END.
+                    
+                /* Verifica se ha contratos de acordo */            
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                      ,INPUT par_nrdconta
+                                                      ,INPUT par_nrctremp
+                                                      ,0
+                                                      ,0
+                                                      ,"").
+
+                CLOSE STORED-PROC pc_verifica_acordo_ativo
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                       aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                       aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                
+                IF aux_cdcritic > 0 THEN
+                  DO:
+                      RUN fontes/critic.p.
+                      LEAVE Valida.
+                  END.
+                ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+                  DO:
+                    LEAVE Valida.
+                  END.
+                  
+                IF aux_flgativo = 1 THEN
+                  DO:
+                    ASSIGN aux_dscritic = "Nao e possivel selecionar contratos que estao em acordo.".
+                    LEAVE Valida.
+                  END.  
              END.
 
         /* Validar Data do Emprestimo */
@@ -3122,6 +3164,9 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        h-b1wgen0188 AS HANDLE                         NO-UNDO.
     DEF   VAR        h-b1wgen0043 AS HANDLE                         NO-UNDO.
 
+    DEF   VAR        aux_flgativo AS INTEGER                        NO-UNDO.
+    DEF   VAR        aux_contaliq AS INTEGER                        NO-UNDO.
+		
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
@@ -3373,19 +3418,77 @@ PROCEDURE valida-dados-gerais:
                  ASSIGN aux_dtmvtolt = par_dtmvtolt.
              END.
         ELSE /* Senao pegar data do emprestimo */
-             DO:
-                 FIND crawepr WHERE
-                      crawepr.cdcooper = par_cdcooper   AND
-                      crawepr.nrdconta = par_nrdconta   AND
-                      crawepr.nrctremp = par_nrctremp
-                      NO-LOCK NO-ERROR.
-
-                 IF   AVAIL crawepr   THEN
-                      ASSIGN aux_dtmvtolt = crawepr.dtmvtolt.
-             END.
+			DO:
+        ASSIGN aux_flgativo = 0.
         
-        IF   par_tpemprst = 0 THEN
-             DO:
+				FIND crawepr WHERE crawepr.cdcooper = par_cdcooper
+                       AND crawepr.nrdconta = par_nrdconta
+                       AND crawepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
+
+        IF AVAILABLE crawepr   THEN
+          DO:
+            ASSIGN aux_dtmvtolt = crawepr.dtmvtolt.
+              
+            IF par_dsctrliq <> "Sem liquidacoes"   THEN
+					ASSIGN aux_contaliq = NUM-ENTRIES(par_dsctrliq).
+				ELSE
+          ASSIGN aux_contaliq = 0.               
+        
+          DO aux_contador = 1 TO aux_contaliq:
+
+            IF crawepr.nrctrliq[aux_contador] > 0 THEN
+              DO:
+
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+              /* Verifica se ha contratos de acordo */
+              RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                        ,INPUT par_nrdconta
+                        ,INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))
+                        ,0
+                        ,0
+                        ,"").
+
+              CLOSE STORED-PROC pc_verifica_acordo_ativo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                  aux_dscritic = ""
+                  aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                  aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                  aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo) WHEN pc_verifica_acordo_ativo.pr_flgativo <> ?.
+                              
+              IF aux_cdcritic > 0 THEN
+              DO:
+                LEAVE.
+              END.
+              ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+              DO:
+                LEAVE.
+              END.
+                            
+              IF aux_flgativo = 1 THEN
+                DO:
+                ASSIGN aux_dscritic = "Lancamento nao permitido, contrato para liquidar esta em acordo".
+                LEAVE.
+                END.
+              END.
+                                  
+          END. /* DO TO aux_contaliq */  
+          END.
+        
+				IF aux_flgativo = 1 THEN
+				  DO:
+            LEAVE.
+          END.
+
+      END.
+
+        IF par_tpemprst = 0 THEN
+          DO:
 
                  /* validar finalidade de portabilidade(crapfin.tpfinali=2) para produto "PRICE TR" */
                  FIND crapfin WHERE 
@@ -10950,7 +11053,7 @@ PROCEDURE valida_inclusao_tr:
        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
- 
+
     ASSIGN par_cdcritic = pc_valida_inclusao_tr.pr_cdcritic
                              WHEN pc_valida_inclusao_tr.pr_cdcritic <> ?
            par_dscritic = pc_valida_inclusao_tr.pr_dscritic

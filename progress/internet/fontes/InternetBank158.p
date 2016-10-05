@@ -4,14 +4,15 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Daniel Zimmermann
-   Data    : Setembro/2015.                       Ultima atualizacao: 
+   Data    : Setembro/2015.                       Ultima atualizacao: 05/10/2016
    
    Dados referentes ao programa:
    
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Efetua pagamento contrato
    
-   Alteracoes: 
+   Alteracoes: 05/10/2016 - Incluido tratamento no retorno da procedrure
+							valida_pagamentos_geral, Prj. 302 (Jean Michel).
 
 ..............................................................................*/
 
@@ -178,7 +179,13 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
            DELETE PROCEDURE h-b1wgen0084b.
            IF RETURN-VALUE = "NOK" THEN
               DO:
-                  ASSIGN xml_dsmsgerr = "<dsmsgerr>Erro Saldo</dsmsgerr>".
+
+				  FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+				  IF AVAILABLE tt-erro THEN
+				    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + tt-erro.dscritic + "</dsmsgerr>".
+				  ELSE
+					ASSIGN xml_dsmsgerr = "<dsmsgerr>Erro Saldo</dsmsgerr>".
                   RETURN "NOK".
               END.
            ELSE

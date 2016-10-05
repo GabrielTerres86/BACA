@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 24/08/2016
+   Data    : Outubro/91.                     Ultima atualizacao: 22/09/2016
 
    Dados referentes ao programa:
 
@@ -443,7 +443,7 @@
                             no 521. Tratamento p hist 1873 igual ao tratamento 
                             do hist 521 (Carlos)
 
-			   23/06/2015 - Adicionado tratamento para portabilidade de crédito.
+               23/06/2015 - Adicionado tratamento para portabilidade de crédito.
                             (Reinert)
                             
                24/06/2015 - #298239 Criacao do log para inclusao de lancamento;
@@ -459,15 +459,15 @@
                07/12/2015 - #367740 Criado o tratamento para o historico 1874 
                             assim como eh feito com o historico 1873 (Carlos)
 
-			   15/12/2015 - Corrigido problema referente a descricrao da critica.
+               15/12/2015 - Corrigido problema referente a descricrao da critica.
                             (Reinert)
                 
                21/12/2015 - Utilizar a procedure convertida na bo 2175 para as 
                             validacoes de alinea, conforme revisao de alineas
                             e processo de devolucao de cheque (Douglas - Melhoria 100)
 
-			   12/02/2016 - Ajustes decorrente a homologação do projeto M100
-						   (Adriano).
+               12/02/2016 - Ajustes decorrente a homologação do projeto M100
+                            (Adriano).
 
                12/05/2016 - Mudanca para pegar saldo devedor da obtem-dados-emprestimos
                             na b1wgen0002 e nao mais da saldo_epr.p. Cobranca de Multa
@@ -477,9 +477,12 @@
                             historicos(275, 428 e 394) (James)
 
 
-			   24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
-						   (Adriano - SD 511318 ).
+               24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
+                            (Adriano - SD 511318 ).
 							
+               22/09/2016 - Incluido tratamento para verificacao de contrato de 
+                            acordo, Prj. 302 (Jean Michel).
+                            
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -493,7 +496,6 @@
 { includes/var_online.i }
 { includes/var_landpv.i }
 { includes/var_cmedep.i "NEW" }
-
 
 DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
@@ -530,6 +532,7 @@ DEF VAR par_dtconnec         AS CHAR                            NO-UNDO.
 DEF VAR par_numipusr         AS CHAR                            NO-UNDO.
 DEF VAR aux_vlblqjud         AS DEC                             NO-UNDO.
 DEF VAR aux_vlresblq         AS DEC                             NO-UNDO.
+DEF VAR aux_flgativo         AS DEC                             NO-UNDO.
 
 DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
@@ -2028,6 +2031,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
       
       IF   aux_nrtrfcta > 0 THEN
            DO:
+            
                glb_cdcritic = 156.
                RUN fontes/critic.p.
 
@@ -2076,7 +2080,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                HIDE FRAME f_autentica.
       
            END.
-           
+          
       /***** Tratamento da Compensacao Eletronica ***/
       IF   NOT CAN-DO("3,4,372,386",STRING(tel_cdhistor))   THEN
            LEAVE.
@@ -2086,6 +2090,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
       IF   tel_cdhistor <> 386   THEN
            DO:
+            
                /*  Verifica o horario de corte  */
                
                FIND craptab WHERE craptab.cdcooper = glb_cdcooper   AND
@@ -4453,8 +4458,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                 ASSIGN glb_cdcritic = 952.
                                 RUN fontes/critic.p.
                                 BELL.
-                                /*MESSAGE glb_dscritic + "Saldo R$"
-                                TRIM(STRING(aux_sldesblo,"zzz,zz9.99")).*/
+                                
                                 MESSAGE glb_dscritic.
                                 glb_cdcritic = 0.
                                 PAUSE(3) NO-MESSAGE. 
@@ -4551,6 +4555,52 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  UNDO, NEXT INICIO.
                              END.
 
+                        /* Verificacao de contrato de acordo */  
+                        
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                          /* Verifica se ha contratos de acordo */
+                          RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                                                ,INPUT tel_nrdctabb
+                                                                ,INPUT his_nrctremp
+                                                                ,OUTPUT 0
+                                                                ,OUTPUT 0
+                                                                ,OUTPUT "").
+
+                          CLOSE STORED-PROC pc_verifica_acordo_ativo
+                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                          ASSIGN glb_cdcritic = 0
+                                 glb_dscritic = ""
+                                 glb_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+                                 glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+                                 aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+                          
+                          IF glb_cdcritic > 0 THEN
+                            DO:
+                                RUN fontes/critic.p.
+                                BELL.
+                                MESSAGE glb_dscritic.
+                                UNDO, NEXT INICIO.
+                            END.
+                          ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                            DO:
+                              MESSAGE glb_dscritic.
+                              ASSIGN glb_cdcritic = 0.
+                              UNDO, NEXT INICIO.
+                            END.
+                            
+                          IF aux_flgativo = 1 THEN
+                            DO:
+                              MESSAGE "Lancamento nao permitido, contrato para liquidar esta em acordo".
+                              PAUSE 3 NO-MESSAGE.
+                              UNDO, NEXT INICIO.
+                            END.
+                        /* Fim verificacao contrato acordo */
+                        
                         IF  NOT VALID-HANDLE(h-b1wgen0002)  THEN
                             RUN sistema/generico/procedures/b1wgen0002.p
                             PERSISTENT SET h-b1wgen0002.

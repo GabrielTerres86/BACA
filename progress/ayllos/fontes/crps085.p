@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 20/05/2016
+   Data    : Janeiro/94.                         Ultima atualizacao: 26/09/2016
 
    Dados referentes ao programa:
 
@@ -49,79 +49,83 @@
 
                12/11/98 - Tratar atendimento noturno (Deborah).
 
-             23/10/2000 - Desmembrar a critica 95 conforme a situacao do 
-                          titular (Eduardo).
+               23/10/2000 - Desmembrar a critica 95 conforme a situacao do 
+                            titular (Eduardo).
 
-             30/10/2000 - Alterar nrdolote p/6 posicoes (Margarete/Planner).
+               30/10/2000 - Alterar nrdolote p/6 posicoes (Margarete/Planner).
 
-             01/09/2004 - Tratamento para recebimento de arquivo padrao CNAB
-                          (Julio)
+               01/09/2004 - Tratamento para recebimento de arquivo padrao CNAB
+                            (Julio)
 
-             03/12/2004 - Alterado, arquivo ira conter um registro para cada
-                          contrato (Julio)
+               03/12/2004 - Alterado, arquivo ira conter um registro para cada
+                            contrato (Julio)
 
-             10/06/2005 - Tratamento de digito verificador para BIG TIMBER
-                          (Julio)
+               10/06/2005 - Tratamento de digito verificador para BIG TIMBER
+                            (Julio)
 
-             28/06/2005 - Alimentado campo cdcooper das tabelas craplot,
-                          craplem e craprej (Diego).
+               28/06/2005 - Alimentado campo cdcooper das tabelas craplot,
+                            craplem e craprej (Diego).
 
-             20/09/2005 - Modificado FIND FIRST para FIND na tabela 
-                          crapcop.cdcooper = glb_cdcooper (Diego).
+               20/09/2005 - Modificado FIND FIRST para FIND na tabela 
+                            crapcop.cdcooper = glb_cdcooper (Diego).
                           
-             01/11/2005 - Alteracao na validacao da data de Geracao do
-                          arquivo. (Julio)
+               01/11/2005 - Alteracao na validacao da data de Geracao do
+                            arquivo. (Julio)
              
-            10/12/2005 - Atualizar craprej.nrdctabb (Magui).                    
-            15/02/2006 - Unificacao dos Bancos - SQLWorks - Fernando.
+               10/12/2005 - Atualizar craprej.nrdctabb (Magui).     
+               
+               15/02/2006 - Unificacao dos Bancos - SQLWorks - Fernando.
 
-            24/05/2006 - Salvar o relatorio em "rlnsv" (Julio)
-            
-            06/06/2006 - Inclusao do numero do contrato e nome do associado no
-                         relatorio de rejeitados. Alteracao do relatorio para
-                         132 colunas (Julio)
+               24/05/2006 - Salvar o relatorio em "rlnsv" (Julio)
+               
+               06/06/2006 - Inclusao do numero do contrato e nome do associado no
+                            relatorio de rejeitados. Alteracao do relatorio para
+                            132 colunas (Julio)
 
-            04/08/2006 - Tratamento para o caso de o arquivo nao possuir 
-                         registro de rodape (Julio)
+               04/08/2006 - Tratamento para o caso de o arquivo nao possuir 
+                            registro de rodape (Julio)
 
-            06/12/2006 - Melhorias na transformacao do arquivo dos2ux, para 
-                         nao ocorrer mais erro de permissao de arquivo (Julio).
-                         
-            08/04/2007 - Alterado o formato da variável "aux_qtprepag" de 
-                          "999" para "zz9", conforme o formato do campo
-                          "crapepr.qtprepag" da base de dados
-                          - Kbase IT Solutions - Paulo Ricardo Maciel.
+               06/12/2006 - Melhorias na transformacao do arquivo dos2ux, para 
+                            nao ocorrer mais erro de permissao de arquivo (Julio).
+                            
+               08/04/2007 - Alterado o formato da variável "aux_qtprepag" de 
+                            "999" para "zz9", conforme o formato do campo
+                            "crapepr.qtprepag" da base de dados
+                            - Kbase IT Solutions - Paulo Ricardo Maciel.
                           
-            01/09/2008 - Alteracao CDEMPRES (Kbase) - Eduardo Silva.
-            
-            19/10/2009 - Alteracao Codigo Historico (Kbase).
-            
-            09/03/2012 - Declarado novas variaveis da include lelem.i (Tiago).
-            
-            26/03/2012 - Efetuar NEXT apos criticas 9, 695, 95, 410, 174 
-                         (Diego).
-                         
-            11/01/2013 - Alterado o format na criação do relatório crrl072
-                         para "999". (Irlan)
-                             
-            28/03/2013 - Retirar atribuicao do campo qtprepag. (Irlan)
-            
-            10/10/2013 - Possibilidade de imprimir o relatório direto da tela 
-                         SOL045, na hora da solicitacao (N) (Carlos)
-                         
-            25/10/2013 - Copia o arquivo do dir rlnsv p/ o dir rl (Carlos)
-            
-            07/11/2013 - Retornada validacao do nome do arquivo com codigo da 
-                         empresa "99" (Diego).
-                         
-            14/01/2014 - Inclusao de VALIDATE craplot, craplem, craprej (Carlos)
-            
-            20/01/2015 - Alterado o formato do campo nrctremp para 8 
-                         caracters (Kelvin - 233714)
+               01/09/2008 - Alteracao CDEMPRES (Kbase) - Eduardo Silva.
+               
+               19/10/2009 - Alteracao Codigo Historico (Kbase).
+               
+               09/03/2012 - Declarado novas variaveis da include lelem.i (Tiago).
+               
+               26/03/2012 - Efetuar NEXT apos criticas 9, 695, 95, 410, 174 
+                            (Diego).
+                            
+               11/01/2013 - Alterado o format na criação do relatório crrl072
+                            para "999". (Irlan)
+                                
+               28/03/2013 - Retirar atribuicao do campo qtprepag. (Irlan)
+               
+               10/10/2013 - Possibilidade de imprimir o relatório direto da tela 
+                            SOL045, na hora da solicitacao (N) (Carlos)
+                            
+               25/10/2013 - Copia o arquivo do dir rlnsv p/ o dir rl (Carlos)
+               
+               07/11/2013 - Retornada validacao do nome do arquivo com codigo da 
+                            empresa "99" (Diego).
+                            
+               14/01/2014 - Inclusao de VALIDATE craplot, craplem, craprej (Carlos)
+               
+               20/01/2015 - Alterado o formato do campo nrctremp para 8 
+                            caracters (Kelvin - 233714)
 
-            20/05/2016 - Remover a include lelem.i e chamar a procedure 
-                         b1wgen0002.leitura_lem. Cobranca de Multa e
-                         Juros de Mora. (Jaison/James)
+               20/05/2016 - Remover a include lelem.i e chamar a procedure 
+                            b1wgen0002.leitura_lem. Cobranca de Multa e
+                            Juros de Mora. (Jaison/James)
+                            
+               26/09/2016 - Inclusao de verificacao de contratos de acordos,
+                            Prj. 302 (Jean Michel).
 
 ............................................................................. */
 
@@ -246,6 +250,8 @@ DEF    VAR par_flgfirst AS LOGICAL INIT TRUE                          NO-UNDO.
 DEF    VAR tel_dsimprim AS CHAR    FORMAT "x(8)" INIT "Imprimir"      NO-UNDO.
 DEF    VAR tel_dscancel AS CHAR    FORMAT "x(8)" INIT "Cancelar"      NO-UNDO.
 DEF    VAR par_flgcance AS LOGICAL                                    NO-UNDO.
+
+DEF    VAR aux_flgativo AS INTEGER                                    NO-UNDO.
 
 FORM rel_dsintegr     AT  1 FORMAT "x(25)"      LABEL "TIPO"
      rel_nmempres     AT 33 FORMAT "x(15)"      LABEL "EMPRESA"
@@ -622,6 +628,51 @@ FOR EACH crapsol WHERE crapsol.cdcooper = glb_cdcooper   AND
               aux_nmprimtl = SUBSTR(aux_dsregist, 16, 30)
               aux_nrctrarq = DECI(SUBSTR(aux_dsregist, 162, 20)).
  
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Verifica se ha contratos de acordo */
+        RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                              ,INPUT aux_nrdconta
+                                              ,INPUT aux_nrctremp
+                                              ,0
+                                              ,0
+                                              ,"").
+
+        CLOSE STORED-PROC pc_verifica_acordo_ativo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN glb_cdcritic = 0
+               glb_dscritic = ""
+               glb_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+               glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+               aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo) WHEN pc_verifica_acordo_ativo.pr_flgativo <> ?.
+               
+        IF glb_cdcritic > 0 THEN
+          DO:
+            RUN fontes/critic.p.
+            UNIX SILENT VALUE("echo " +
+                            STRING(TIME,"HH:MM:SS") +
+                            " - " + glb_cdprogra + "' --> '" +
+                            glb_dscritic + " >> log/proc_batch.log").
+            NEXT.                
+          END.
+        ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+          DO:
+            UNIX SILENT VALUE("echo " +
+                              STRING(TIME,"HH:MM:SS") +
+                              " - " + glb_cdprogra + "' --> '" +
+                              glb_dscritic + " >> log/proc_batch.log").
+            NEXT.                  
+          END.
+          
+        IF aux_flgativo = 1 THEN
+          NEXT.
+          
+        /* Fim Verifica se ha contratos de acordo */
+        
        /* Se for Big Timber entao deve incluir o digito verificador no numero
           do cadastro, pois eles estao mandando os arquivos sem o digito */
 

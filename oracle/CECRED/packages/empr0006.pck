@@ -6,14 +6,15 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0006 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Carlos Rafael Tanholi - CECRED
-  --  Data     : Maio - 2015.                   Ultima atualizacao: 
+  --  Data     : Maio - 2015.                   Ultima atualizacao: 27/09/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas relacionadas a Portabilidade de Credito
   --
-  -- Alteracoes:
+  -- Alteracoes: 27/09/2016 - Incluida verificacao de contratos de acordos na procedure
+  --                          pc_aprovar_portabilidade, Prj. 302 (Jean Michel).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -304,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Carlos Rafael Tanholi - CECRED
-  --  Data     : Maio - 2015.                   Ultima atualizacao: 24/08/2016
+  --  Data     : Maio - 2015.                   Ultima atualizacao: 27/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -321,6 +322,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
   --
   --             24/08/2016 - Comentar para não apagar XML (Oscar)    
   --
+  --             27/09/2016 - Incluida verificacao de contratos de acordos na procedure
+  --                          pc_aprovar_portabilidade, Prj. 302 (Jean Michel).
   ---------------------------------------------------------------------------------------------------------------
 
   /* verifica se eh uma proposta de emprestimo de portabilidade */
@@ -2934,14 +2937,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
     --  Sistema  : Portabilidade de Emprestimos
     --  Sigla    : CRED
     --  Autor    : Jaison
-    --  Data     : Junho/2015.                   Ultima atualizacao: 
+    --  Data     : Junho/2015.                   Ultima atualizacao: 27/09/2016
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Procedure para gerar a Aprovacao da portabilidade
     --
-    -- Alteracoes: 
+    -- Alteracoes: 27/09/2016 - Incluido verificacao de contratos de acordos, Prj. 302 (Jean Michel)
     --
     ---------------------------------------------------------------------------------------------------------------
 
@@ -2975,6 +2978,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       vr_dsdirbin       VARCHAR2(1000);
       vr_vlsdeved       crapepr.vlsdeved%TYPE;
       vr_qtpreapg       NUMBER;
+
+      vr_flgativo       INTEGER := 0;
 
       vr_tab_portabilidade typ_reg_retorno_xml;      
 
@@ -3056,6 +3061,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         CLOSE btch0001.cr_crapdat;
       END IF;
 
+      -- Verificacao de contratos de acordos
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        RAISE vr_exc_saida;
+      ELSIF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      IF vr_flgativo = 1 THEN
+        vr_dscritic := 'Aprovacao nao permitida, contrato de emprestimo para refinanciamento esta em acordo.';
+        RAISE vr_exc_saida;
+      END IF;
+                           
       -- Verifica se o banco esta cadastrado
       OPEN cr_crapban(pr_cdbccxlt => 85); -- CECRED
       FETCH cr_crapban INTO rw_crapban;

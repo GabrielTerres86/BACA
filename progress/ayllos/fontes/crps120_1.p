@@ -33,7 +33,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Maio/95.                            Ultima atualizacao: 26/01/2015
+   Data    : Maio/95.                            Ultima atualizacao: 26/09/2016
 
    Dados referentes ao programa:
 
@@ -77,6 +77,9 @@
                             
                26/01/2015 - Alterado o formato do campo nrctremp para 8 
                             caracters (Kelvin - 233714)
+                            
+               26/09/2016 - Inclusao da validacao de contratos de acordos,
+                            Prj. 302 (Jean Michel).
 .............................................................................*/
 
 DEF INPUT  PARAM par_nrdconta AS INT                                        .
@@ -94,6 +97,7 @@ DEF OUTPUT PARAM par_flgproce AS LOGICAL                                    .
 
 { includes/var_batch.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR tab_diapagto AS INT                                   NO-UNDO.
 DEF        VAR tab_dtcalcul AS DATE                                  NO-UNDO.
@@ -161,6 +165,7 @@ DEF        VAR aux_nrdiamss AS INT                                   NO-UNDO.
 DEF        VAR aux_ddlanmto AS INT                                   NO-UNDO.
 DEF        VAR aux_inliquid AS INT                                   NO-UNDO.
 DEF        VAR aux_qtprepag AS INT     FORMAT "zz9"                  NO-UNDO.
+DEF        VAR aux_flgativo AS INT                                   NO-UNDO. 
 
 ASSIGN glb_cdcritic = 0
        par_vldebito = 0
@@ -181,6 +186,52 @@ ELSE
 /*  Leitura do contrato de emprestimo  */
 
 DO WHILE TRUE:
+
+  /* Verifica se possui contrato de acordo */
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+  /* Verifica se ha contratos de acordo */
+  RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper
+                                        ,INPUT par_nrdconta
+                                        ,INPUT par_nrctremp
+                                        ,0
+                                        ,0
+                                        ,"").
+
+  CLOSE STORED-PROC pc_verifica_acordo_ativo
+    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+  ASSIGN glb_cdcritic = 0
+         glb_dscritic = ""
+         glb_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+         glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+         aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+
+  IF glb_cdcritic > 0 THEN
+    DO:
+      RUN fontes/critic.p.
+      UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                        glb_cdprogra + "' --> '" + glb_dscritic +
+                        " >> log/proc_batch.log").
+      RETURN.
+    END.
+  ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+    DO:
+      UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                        glb_cdprogra + "' --> '" + glb_dscritic +
+                        " >> log/proc_batch.log").
+      RETURN.
+    END.
+    
+  IF aux_flgativo = 1 THEN
+	DO:
+	 ASSIGN par_insitavs = 0.
+     RETURN.
+    END.
+  /* Fim verifica se possui contrato de acordo */
 
    FIND crapepr WHERE crapepr.cdcooper = glb_cdcooper   AND   
                       crapepr.nrdconta = par_nrdconta   AND
