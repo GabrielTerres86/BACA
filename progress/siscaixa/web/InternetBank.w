@@ -622,7 +622,7 @@
                  14/07/2016 - M325 Informe de Rendimentos - Novos parametros
                               operacao7. (Guilherme/SUPERO)
 
-                 21/09/2016 -  P169 Integralização de cotaas no IB
+                 21/09/2016 -  P169 Integralização de cotas no IB
                                 adição das funções 176 e 177 (Ricardo Linhares)                              
                               
 ------------------------------------------------------------------------------*/
@@ -7533,8 +7533,6 @@ PROCEDURE proc_operacao176:
     
     ASSIGN aux_vintegra = DECIMAL(GET-VALUE("vlintegr")).
     
-    MESSAGE "aux_vintegra:" aux_vintegra "aux_vintegra:" aux_vintegra.
-      
     RUN sistema/internet/fontes/InternetBank176.p (INPUT aux_cdcooper,
                            												 INPUT 90,             /* par_cdagenci */
                                                    INPUT 900,            /* par_nrdcaixa */

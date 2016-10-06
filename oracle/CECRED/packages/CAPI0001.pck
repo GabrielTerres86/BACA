@@ -51,6 +51,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
   -- constante para validar origem
   vc_internet CONSTANT INTEGER := 3;
+  
+  -- constante para utilizar sempre a mesma agencia
+  vc_cdagenci CONSTANT INTEGER := 1;
 
   -- constantes para lotes
   vc_lote_cotas_capital  CONSTANT INTEGER := 10002;
@@ -68,7 +71,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
   PROCEDURE pc_buscar_lote(pr_cdcooper IN craplot.cdcooper%TYPE
                           ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
-                          ,pr_cdagenci IN craplot.cdagenci%TYPE
                           ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
                           ,pr_nrdolote IN craplot.nrdolote%TYPE
                           ,pr_tplotmov IN craplot.tplotmov%TYPE
@@ -103,7 +105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
     OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                    ,pr_dtmvtolt => pr_dtmvtolt
-                   ,pr_cdagenci => pr_cdagenci
+                   ,pr_cdagenci => vc_cdagenci
                    ,pr_cdbccxlt => pr_cdbccxlt
                    ,pr_nrdolote => pr_nrdolote);
 
@@ -130,7 +132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       VALUES
         (pr_cdcooper
         ,pr_dtmvtolt
-        ,pr_cdagenci
+        ,vc_cdagenci
         ,pr_cdbccxlt
         ,pr_nrdolote
         ,pr_tplotmov
@@ -403,7 +405,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     -- Buscar lote para lançamento de cotas
     pc_buscar_lote(pr_cdcooper => pr_cdcooper
                   ,pr_dtmvtolt => pr_dtmvtolt
-                  ,pr_cdagenci => pr_cdagenci
                   ,pr_cdbccxlt => vc_cdbccxlt
                   ,pr_nrdolote => vc_lote_cotas_capital
                   ,pr_tplotmov => tp_lote_cotas_capital
@@ -433,7 +434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       VALUES
         (pr_cdcooper
         ,pr_dtmvtolt
-        ,pr_cdagenci
+        ,vc_cdagenci
         ,vc_cdbccxlt
         ,vc_lote_cotas_capital
         ,pr_nrdconta
@@ -456,7 +457,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     -- Buscar lote para lançamento de deposito a vista
     pc_buscar_lote(pr_cdcooper => pr_cdcooper
                   ,pr_dtmvtolt => pr_dtmvtolt
-                  ,pr_cdagenci => pr_cdagenci
                   ,pr_cdbccxlt => vc_cdbccxlt
                   ,pr_nrdolote => vc_lote_deposito_vista
                   ,pr_tplotmov => tp_lote_deposito_vista
@@ -482,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
       ,vllanmto
       ,cdcooper)
     VALUES
-      (pr_cdagenci
+      (vc_cdagenci
       ,vc_cdbccxlt
       ,vr_craplcm_cdhist
       ,pr_dtmvtolt
@@ -509,11 +509,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
     gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => SUBSTR(pr_cdoperad,1,10)
-                        ,pr_dscritic => NULL
+                        ,pr_dscritic => ' '
                         ,pr_dsorigem => SUBSTR(vr_dsorigem,1,13)
-                        ,pr_dstransa => SUBSTR(vr_dstransa,1,121)
+                        ,pr_dstransa => vr_dstransa
                         ,pr_dttransa => TRUNC(SYSDATE)
-                        ,pr_flgtrans => 0
+                        ,pr_flgtrans => 1
                         ,pr_hrtransa => gene0002.fn_busca_time()
                         ,pr_idseqttl => pr_idseqttl
                         ,pr_nmdatela => SUBSTR(pr_nmdatela,1,12)
@@ -714,11 +714,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
     gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_cdoperad => SUBSTR(pr_cdoperad,1,10)
-                        ,pr_dscritic => NULL
+                        ,pr_dscritic => ' '
                         ,pr_dsorigem => SUBSTR(vr_dsorigem,1,13)
-                        ,pr_dstransa => SUBSTR(vr_dstransa,1,121)
+                        ,pr_dstransa => vr_dstransa
                         ,pr_dttransa => TRUNC(SYSDATE)
-                        ,pr_flgtrans => 0
+                        ,pr_flgtrans => 1
                         ,pr_hrtransa => gene0002.fn_busca_time()
                         ,pr_idseqttl => pr_idseqttl
                         ,pr_nmdatela => SUBSTR(pr_nmdatela,1,12)

@@ -1253,8 +1253,9 @@ DO WHILE TRUE:
                          /* Limite integralização */
                          IF tel_vllimint[1] > tel_vllimint[2]  THEN
                             DO:
-                               MESSAGE "O valor deve ser inferior ou igual " +
-                                       "ao estipulado pela CECRED.".
+                               MESSAGE  "O valor deve ser maior"
+                                         "ou igual ao estipulado"
+                                         "para o Operacional.".
           
                                NEXT-PROMPT tel_vllimint[2]
                                            WITH FRAME f_dados_captacao.
