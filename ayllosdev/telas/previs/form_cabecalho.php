@@ -2,13 +2,14 @@
 /*!
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : Rogerius Militão (DB1)
- * DATA CRIAÇÃO : 21/12/2011											ÚLTIMA ALTERAÇÃO: 25/03/2013
+ * DATA CRIAÇÃO : 21/12/2011											ÚLTIMA ALTERAÇÃO: 03/10/2016
  * OBJETIVO     : Cabeçalho para a tela PREVIS
  * --------------
  * ALTERAÇÕES   : 01/08/2012 - Incluido as subopcoes(E,S,R) na opcao 'F' da tela PREVIS (Tiago).
  * -------------- 17/08/2012 - Alternado a posição do campo dtmvtolt para vir antes do campo cdcooper (Adriano).
  *                25/03/2013 - Padronização de novo layout (Daniel).
  *                05/09/2013 - Alteração da sigla PAC para PA (Carlos).
+ *                03/10/2016 - Remocao das opcoes "F" e "L" para o PRJ313. (Jaison/Marcos SUPERO)
  */
 
 ?>
@@ -20,9 +21,7 @@
 	<select id="cddopcao" name="cddopcao" alt="Entre com a opcao desejada (A,C,F,I,L).">
 	<option value="A" <?php echo $cddopcao == 'A' ? 'selected' : '' ?> >A - Alterar previsoes financeiras.</option>
 	<option value="C" <?php echo $cddopcao == 'C' ? 'selected' : '' ?> >C - Consultar previsoes financeiras.</option>
-	<option value="F" <?php echo $cddopcao == 'F' ? 'selected' : '' ?> >F - Consultar fluxo financeiro.</option>
 	<option value="I" <?php echo $cddopcao == 'I' ? 'selected' : '' ?> >I - Incluir previsoes financeiras.</option>
-	<option value="L" <?php echo $cddopcao == 'L' ? 'selected' : '' ?> >L - Consultar data de liquidacao das previsoes financeiras.</option>
 	</select>
 
 	
