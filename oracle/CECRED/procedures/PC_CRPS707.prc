@@ -616,7 +616,8 @@ BEGIN
                                      ,cdhistor
                                      ,vllanmto
                                      ,nrseqdig
-                                     ,cdcooper)
+                                     ,cdcooper
+                                     ,hrtransa)
                               VALUES(rw_crapdat.dtmvtolt
                                     ,1
                                     ,100
@@ -628,7 +629,8 @@ BEGIN
                                     ,1787
                                     ,vr_vloperac
                                     ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                                    ,vr_cdcooper);
+                                    ,vr_cdcooper
+                                    ,to_char(SYSDATE,'sssss'));
                EXCEPTION
                  WHEN OTHERS THEN
                    vr_cdmotivo := 'Erro ao criar Trasnferencia em C/C: '||SQLERRM;
