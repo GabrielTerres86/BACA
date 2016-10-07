@@ -824,15 +824,13 @@ function btnContinuar() {
 function btnGravar() {
 
 	if ( divError.css('display') == 'block' ) { return false; }		
-	alert('aaa');
+  
 	if ( cCddopcao.hasClass('campo') ) {
-	    alert('bbb');
 		cddopcao = cCddopcao.val();
 		cdmovmto = cCdmovmto.val();
 		ativaCampoCabecalho();		
 		
 	} else {
-	    alert('ccc');
 		cdmovmto = cCdmovmto.val();
 		cdcoopex = normalizaNumero( cCdcooper.val() );
 			
