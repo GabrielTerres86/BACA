@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Vitor
-   Data    : Janeiro/2011                   Ultima Atualizacao: 24/03/2016
+   Data    : Janeiro/2011                   Ultima Atualizacao: 05/10/2016
 
    Dados referentes ao programa:
 
@@ -20,6 +20,8 @@
                
                24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).                            
                            
+               05/10/2016 - Remover a validacao de permissao por departamento
+                            (Douglas - Chamado 534460)
 .............................................................................*/ 
 
 { includes/var_online.i }
@@ -101,21 +103,6 @@ DEF VAR edi_error  AS CHAR VIEW-AS EDITOR SIZE 132 BY 15 PFCOLOR 0.
 DEF FRAME f_error 
     edi_error HELP "Pressione <F4> ou <END> para finalizar" 
     WITH SIZE 76 BY 15 ROW 6 COLUMN 3 USE-TEXT NO-BOX NO-LABELS OVERLAY.
-
-IF  glb_dsdepart <> "TI"       AND 
-    glb_dsdepart <> "PRODUTOS" THEN
-    DO:
-        ASSIGN glb_cdcritic = 36.
-        RUN fontes/critic.p.
-        ASSIGN glb_cdcritic = 0
-               glb_nmdatela = "MENU00".
-        
-        BELL.
-        MESSAGE glb_dscritic.
-        PAUSE 3 NO-MESSAGE.
-        
-        RETURN.
-    END.
 
 VIEW FRAME f_moldura.
 PAUSE 0.

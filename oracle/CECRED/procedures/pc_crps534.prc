@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 31/08/2016
+   Data    : Dezembro/2009.                  Ultima atualizacao: 06/10/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -109,6 +109,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                31/08/2016 - Adicionar validação para o campo de CPF recebido no arquivo ser
                             diferente do CPF do titular da conta (Douglas - Chamado 476269)
                             
+               06/10/2016 - Ajuste na leitura do CPF do destintario quando processar a linha
+                            do arquivo (Douglas - Chamado 533206)
   ............................................................................ */
 
 
@@ -354,7 +356,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                           , pr_out_nrdconta;
       -- Verificar se foram retornado registros
       IF cr_craptco%FOUND THEN
- 
+
         -- Validar o CPF da conta
         OPEN cr_crapass (pr_cdcooper => pr_out_cdcooper
                         ,pr_nrdconta => pr_out_nrdconta);
@@ -1785,6 +1787,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               vr_cdagedoc := to_number(SUBSTR(vr_dslinha,124,4));
               vr_nrctadoc := to_number(SUBSTR(vr_dslinha,129,13));
               vr_dsrelcpf := SUBSTR(vr_dslinha,89,14);     
+              -- Leitura do CPF de destino
+              vr_cpfdesti := to_number(SUBSTR(vr_dslinha,89,14));
               
               -- Se o arquivo vem de cooperativa incorporada
               IF vr_flgincorp THEN
