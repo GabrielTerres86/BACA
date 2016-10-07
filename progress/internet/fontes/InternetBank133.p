@@ -4,14 +4,14 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Douglas
-   Data    : Março/2015.                         Ultima atualizacao:   /  /
+   Data    : Março/2015.                         Ultima atualizacao: 04/10/2016
 
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Gerar o log para os boletos que foram enviados por e-mail
    
-   Alteracoes: 
+   Alteracoes: 04/10/2016 - Alterar par_dsdemail para CHAR (Kelvin - Melhoria 271)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -25,7 +25,7 @@ DEF INPUT PARAM par_cdbandoc LIKE crapcob.cdbandoc                     NO-UNDO.
 DEF INPUT PARAM par_nrdctabb LIKE crapcob.nrdctabb                     NO-UNDO.
 DEF INPUT PARAM par_nrcnvcob LIKE crapcob.nrcnvcob                     NO-UNDO.
 DEF INPUT PARAM par_nrdocmto AS CHAR                                   NO-UNDO.
-DEF INPUT PARAM par_dsdemail LIKE crapsab.dsdemail                     NO-UNDO.
+DEF INPUT PARAM par_dsdemail AS CHAR                                   NO-UNDO.
 /* CDTIPLOG - Tipo do log a ser gerado (1 - Erro / 2 - Reenvio)*/
 DEF INPUT PARAM par_cdtiplog AS INTE                                   NO-UNDO.
 

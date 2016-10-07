@@ -37,7 +37,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 29/06/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 03/10/2016
 
    Dados referentes ao programa:
 
@@ -347,6 +347,8 @@
                29/06/2016 - Adicionado ROUND para o calculo de Multa e Juros da 
                             consulta-boleto-2via para que arredonde os valores
                             (Douglas - Chamado 457956)
+
+			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -465,36 +467,45 @@ DEF TEMP-TABLE tt-crapcob        LIKE crapcob.
 
 PROCEDURE consulta-boleto-2via.
 
-    DEF INPUT        PARAM p-cdcooper       AS INTE             NO-UNDO.
-    DEF INPUT        PARAM p-nrcpfcgc       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-nrinssac       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-nrdconta       AS INTE             NO-UNDO.
-    DEF INPUT        PARAM p-nrcnvcob       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-nrdocmto       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-dsdoccop       AS CHAR             NO-UNDO.
-    DEF INPUT        PARAM p-idorigem       AS INTE             NO-UNDO.
-    DEF INPUT        PARAM p-cdoperad       AS CHAR             NO-UNDO.
+    DEF INPUT        PARAM p-cdcooper  AS INTE             NO-UNDO.
+    DEF INPUT        PARAM p-nrcpfcgc  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-nrinssac  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-nrdconta  AS INTE             NO-UNDO.
+    DEF INPUT        PARAM p-nrcnvcob  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-nrdocmto  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-dsdoccop  AS CHAR             NO-UNDO.
+    DEF INPUT        PARAM p-idorigem  AS INTE             NO-UNDO.
+    DEF INPUT        PARAM p-cdoperad  AS CHAR             NO-UNDO.
     
     DEF OUTPUT       PARAM TABLE FOR  tt-erro.
     DEF OUTPUT       PARAM TABLE FOR  tt-consulta-blt.
 
-    DEF VAR aux_critdata AS LOGI                                NO-UNDO.
-    DEF VAR aux_contador AS INTE                                NO-UNDO.
-    DEF VAR aux_vlrjuros AS DECI                                NO-UNDO.
-    DEF VAR aux_vlrmulta AS DECI                                NO-UNDO.
-    DEF VAR aux_vldescto AS DECI                                NO-UNDO.
-    DEF VAR aux_vlabatim AS DECI                                NO-UNDO.
-    DEF VAR aux_vlfatura AS DECI                                NO-UNDO.
-    DEF VAR aux_dscritic AS CHAR                                NO-UNDO.
+    DEF VAR aux_critdata               AS LOGI             NO-UNDO.
+    DEF VAR aux_contador               AS INTE             NO-UNDO.
+    DEF VAR aux_vlrjuros               AS DECI             NO-UNDO.
+    DEF VAR aux_vlrmulta               AS DECI             NO-UNDO.
+    DEF VAR aux_vldescto               AS DECI             NO-UNDO.
+    DEF VAR aux_vlabatim               AS DECI             NO-UNDO.
+    DEF VAR aux_vlfatura               AS DECI             NO-UNDO.
+    DEF VAR aux_dscritic               AS CHAR             NO-UNDO.
+                                                         
+    DEF VAR aux_dtvencut               AS DATE             NO-UNDO.          
+    DEF VAR aux_vltituut               AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut               AS DECI             NO-UNDO.
+    DEF VAR aux_dtvencut_atualizado    AS DATE             NO-UNDO.
+    DEF VAR aux_vltituut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vldescut               AS DECI             NO-UNDO.
+    DEF VAR aux_cdmensut               AS INTE             NO-UNDO.
+    
+    DEF VAR h-b2crap14                 AS HANDLE           NO-UNDO.
+    DEF VAR h-b1wgen0089               AS HANDLE           NO-UNDO.
 
-    DEF VAR h-b2crap14   AS HANDLE                              NO-UNDO.
-    DEF VAR h-b1wgen0089 AS HANDLE                              NO-UNDO.
-
-    DEF VAR aux_rowidcob AS ROWID                               NO-UNDO.
-    DEF VAR aux_rowidcco AS ROWID                               NO-UNDO.
+    DEF VAR aux_rowidcob               AS ROWID            NO-UNDO.
+    DEF VAR aux_rowidcco               AS ROWID            NO-UNDO.
 
     DEF QUERY q_crapcob FOR crapcob, crapcco.
-    DEF VAR   aux_query AS CHAR                                 NO-UNDO.
+    DEF VAR   aux_query                AS CHAR             NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-consulta-blt. 
@@ -716,92 +727,52 @@ PROCEDURE consulta-boleto-2via.
                           INPUT "2 via de boleto gerado pelo pagador.").
     DELETE PROCEDURE h-b1wgen0089.
 
-    /* rotina para criticar data de vencimento */
-    RUN sistema/siscaixa/web/dbo/b2crap14.p PERSISTENT SET h-b2crap14.
+    RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                   INPUT crapcob.nrdconta,           
+                                   INPUT crapcob.dtvencto,           
+                                   INPUT crapdat.dtmvtocd,           
+                                   INPUT crapcob.vlabatim,           
+                                   INPUT crapcob.vltitulo,           
+                                   INPUT crapcob.vlrmulta,           
+                                   INPUT crapcob.vljurdia,           
+                                   INPUT crapcob.cdmensag,           
+                                   INPUT crapcob.vldescto,           
+                                   INPUT crapcob.tpdmulta,           
+                                   INPUT crapcob.tpjurmor,           
+                                   INPUT YES,           
+                                   OUTPUT aux_dtvencut,           
+                                   OUTPUT aux_vltituut,           
+                                   OUTPUT aux_vlmormut,           
+                                   OUTPUT aux_dtvencut_atualizado,
+                                   OUTPUT aux_vltituut_atualizado,
+                                   OUTPUT aux_vlmormut_atualizado,          
+                                   OUTPUT aux_vldescut,           
+                                   OUTPUT aux_cdmensut,
+                                   OUTPUT aux_critdata).
     
-    RUN verifica-vencimento-titulo IN h-b2crap14(INPUT crapcob.cdcooper, 
-                                                 INPUT 90 /*internet*/,
-                                                 INPUT crapdat.dtmvtocd,
-                                                 INPUT crapcob.dtvencto,
-                                                OUTPUT aux_critdata).
-    DELETE PROCEDURE h-b2crap14. 
-    
-    ASSIGN aux_vldescto = 0
-           aux_vlabatim = crapcob.vlabatim
-           aux_vlfatura = crapcob.vltitulo.
-
-    /* abatimento deve ser calculado antes dos juros/multa */
-    IF crapcob.vlabatim > 0 THEN
-       ASSIGN aux_vlfatura = aux_vlfatura - crapcob.vlabatim.
-   
     /* verifica se o titulo esta vencido */
     IF  aux_critdata  THEN
     DO: 
-        /* MULTA PARA ATRASO */
-        IF  crapcob.tpdmulta = 1  THEN /* Valor */
-            ASSIGN aux_vlrmulta = crapcob.vlrmulta.
-        ELSE
-        IF  crapcob.tpdmulta = 2  THEN /* % de multa */
-            ASSIGN aux_vlrmulta = ROUND( (crapcob.vlrmulta * aux_vlfatura) / 100 , 2).
-
-        /* MORA PARA ATRASO */
-        IF  crapcob.tpjurmor = 1  THEN /* dias */
-            ASSIGN aux_vlrjuros =  crapcob.vljurdia * 
-                                  (crapdat.dtmvtocd - crapcob.dtvencto). 
-        ELSE
-        IF  crapcob.tpjurmor = 2  THEN /* mes */
-            ASSIGN aux_vlrjuros = ROUND( (aux_vlfatura * 
-                                  ((crapcob.vljurdia / 100) / 30) * 
-                                  (crapdat.dtmvtocd - crapcob.dtvencto)), 2). 
-    
-       /* ASSIGN tt-consulta-blt.tpdmulta = 3
-               tt-consulta-blt.tpjurmor = 3
-               tt-consulta-blt.flgdprot = FALSE. */
-
         /* se concede ate o vencimento */
         IF  crapcob.cdmensag = 1 OR
             crapcob.cdmensag = 0 THEN
-            ASSIGN tt-consulta-blt.vldescto = 0
-                   tt-consulta-blt.cdmensag = 0
-                   aux_vldescto             = 0.
-
+            ASSIGN tt-consulta-blt.vldescto = aux_vldescut
+                   tt-consulta-blt.cdmensag = aux_cdmensut.
+                   
     END.
-    ELSE
-    DO:
-        
-        /* 11/04/2013 - Jorge (retirado esta condicao para poder imprimir DDA)
-        /* se for a vencer e DDA */
-        IF  crapcob.flgcbdda THEN
-            DO:
-                CREATE tt-erro.
-                ASSIGN tt-erro.dscritic = "Boleto DDA. Acesse a sua conta.".
-                RETURN "NOK".
-            END.
-        */    
-        /* se concede ate o vencto, ja calculou */
-        IF  crapcob.cdmensag <> 2  THEN
-            ASSIGN aux_vldescto = crapcob.vldescto
-                   aux_vlfatura = aux_vlfatura - aux_vldescto.
-    END.
-
-    /* se concede apos o vencimento */
-    IF  crapcob.cdmensag = 2  THEN
-        ASSIGN aux_vldescto = crapcob.vldescto
-               aux_vlfatura = aux_vlfatura - aux_vldescto.
-
-
-    /* valor final da tarifa */
-    ASSIGN aux_vlfatura = aux_vlfatura + aux_vlrmulta + aux_vlrjuros.
-
-    ASSIGN tt-consulta-blt.dtvencto = (IF aux_critdata THEN 
-                                          crapdat.dtmvtocd  
-                                       ELSE
-                                          crapcob.dtvencto)
-           tt-consulta-blt.vltitulo = aux_vlfatura
+   
+    ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
+           tt-consulta-blt.vltitulo            = aux_vltituut
+           tt-consulta-blt.vlmormul            = aux_vlmormut
+           
+           tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+           tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+           tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+           tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
+           
            tt-consulta-blt.nrdconta = crapcob.nrdconta
            tt-consulta-blt.vldocmto = crapcob.vltitulo
-           tt-consulta-blt.vlmormul = (aux_vlrmulta + aux_vlrjuros)
-           tt-consulta-blt.dtvctori = crapcob.dtvencto
+           tt-consulta-blt.dtvctori = aux_dtvencut
            tt-consulta-blt.flgaceit = "N".
 
     RETURN "OK".
@@ -844,6 +815,16 @@ PROCEDURE consulta-bloqueto.
     DEF VAR aux_data             AS DATE                      NO-UNDO.
     DEF VAR h-b1wgen0030         AS HANDLE                    NO-UNDO.
     
+    DEF VAR aux_dtvencut               AS DATE             NO-UNDO.          
+    DEF VAR aux_vltituut               AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut               AS DECI             NO-UNDO.
+    DEF VAR aux_dtvencut_atualizado    AS DATE             NO-UNDO.
+    DEF VAR aux_vltituut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vldescut               AS DECI             NO-UNDO.
+    DEF VAR aux_cdmensut               AS INTE             NO-UNDO.
+    DEF VAR aux_critdata               AS LOGI             NO-UNDO.
+    
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
  /* p-tipo-consulta > 1-NAO COBRADOS/2-COBRADOS/3-TODOS                      */
@@ -864,7 +845,7 @@ PROCEDURE consulta-bloqueto.
     EMPTY TEMP-TABLE tt-consulta-blt.
 
     ASSIGN aux_nrregis1 = p-num-registros.
-
+    
     IF  p-consulta < 1  OR
         p-consulta > 16 THEN
         DO:
@@ -1088,12 +1069,43 @@ PROCEDURE consulta-bloqueto.
 
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
+                                      
+                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                INPUT crapcob.nrdconta,           
+                                                                INPUT crapcob.dtvencto,           
+                                                                INPUT crapdat.dtmvtocd,           
+                                                                INPUT crapcob.vlabatim,           
+                                                                INPUT crapcob.vltitulo,           
+                                                                INPUT crapcob.vlrmulta,           
+                                                                INPUT crapcob.vljurdia,           
+                                                                INPUT crapcob.cdmensag,           
+                                                                INPUT crapcob.vldescto,           
+                                                                INPUT crapcob.tpdmulta,           
+                                                                INPUT crapcob.tpjurmor,           
+                                                                INPUT NO,           
+                                                                OUTPUT aux_dtvencut,           
+                                                                OUTPUT aux_vltituut,           
+                                                                OUTPUT aux_vlmormut,           
+                                                                OUTPUT aux_dtvencut_atualizado,
+                                                                OUTPUT aux_vltituut_atualizado,
+                                                                OUTPUT aux_vlmormut_atualizado,          
+                                                                OUTPUT aux_vldescut,           
+                                                                OUTPUT aux_cdmensut,
+                                                                OUTPUT aux_critdata).     
+                                 
+                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                          
+                                      
                              END.
+                             
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
             
                              IF   AVAILABLE tt-consulta-blt  THEN
-                                  tt-consulta-blt.nrregist = aux_nrregist.
+                                  tt-consulta-blt.nrregist            = aux_nrregist.
                          END.
                     ELSE
                          DO:
@@ -1244,8 +1256,37 @@ PROCEDURE consulta-bloqueto.
                                                     
                                   IF   RETURN-VALUE = "NOK"  THEN
                                        RETURN "NOK".
+                             
+                             RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                            INPUT crapcob.nrdconta,           
+                                                            INPUT crapcob.dtvencto,           
+                                                            INPUT crapdat.dtmvtocd,           
+                                                            INPUT crapcob.vlabatim,           
+                                                            INPUT crapcob.vltitulo,           
+                                                            INPUT crapcob.vlrmulta,           
+                                                            INPUT crapcob.vljurdia,           
+                                                            INPUT crapcob.cdmensag,           
+                                                            INPUT crapcob.vldescto,           
+                                                            INPUT crapcob.tpdmulta,           
+                                                            INPUT crapcob.tpjurmor,           
+                                                            INPUT NO,           
+                                                            OUTPUT aux_dtvencut,           
+                                                            OUTPUT aux_vltituut,           
+                                                            OUTPUT aux_vlmormut,           
+                                                            OUTPUT aux_dtvencut_atualizado,
+                                                            OUTPUT aux_vltituut_atualizado,
+                                                            OUTPUT aux_vlmormut_atualizado,          
+                                                            OUTPUT aux_vldescut,           
+                                                            OUTPUT aux_cdmensut,
+                                                            OUTPUT aux_critdata).     
+                             
+                             ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                    tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                    tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                    tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                             
                              END.    
-
+                             
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
             
                              IF   AVAILABLE tt-consulta-blt  THEN
@@ -1403,6 +1444,34 @@ PROCEDURE consulta-bloqueto.
 
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
+                                      
+                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                INPUT crapcob.nrdconta,           
+                                                                INPUT crapcob.dtvencto,           
+                                                                INPUT crapdat.dtmvtocd,           
+                                                                INPUT crapcob.vlabatim,           
+                                                                INPUT crapcob.vltitulo,           
+                                                                INPUT crapcob.vlrmulta,           
+                                                                INPUT crapcob.vljurdia,           
+                                                                INPUT crapcob.cdmensag,           
+                                                                INPUT crapcob.vldescto,           
+                                                                INPUT crapcob.tpdmulta,           
+                                                                INPUT crapcob.tpjurmor,           
+                                                                INPUT NO,           
+                                                                OUTPUT aux_dtvencut,           
+                                                                OUTPUT aux_vltituut,           
+                                                                OUTPUT aux_vlmormut,           
+                                                                OUTPUT aux_dtvencut_atualizado,
+                                                                OUTPUT aux_vltituut_atualizado,
+                                                                OUTPUT aux_vlmormut_atualizado,          
+                                                                OUTPUT aux_vldescut,           
+                                                                OUTPUT aux_cdmensut,
+                                                                OUTPUT aux_critdata).     
+                                 
+                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
                                 END.
                                 END.
                              END.
@@ -1565,6 +1634,35 @@ PROCEDURE consulta-bloqueto.
                                                            
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
+                                      
+                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                INPUT crapcob.nrdconta,           
+                                                                INPUT crapcob.dtvencto,           
+                                                                INPUT crapdat.dtmvtocd,           
+                                                                INPUT crapcob.vlabatim,           
+                                                                INPUT crapcob.vltitulo,           
+                                                                INPUT crapcob.vlrmulta,           
+                                                                INPUT crapcob.vljurdia,           
+                                                                INPUT crapcob.cdmensag,           
+                                                                INPUT crapcob.vldescto,           
+                                                                INPUT crapcob.tpdmulta,           
+                                                                INPUT crapcob.tpjurmor,           
+                                                                INPUT NO,           
+                                                                OUTPUT aux_dtvencut,           
+                                                                OUTPUT aux_vltituut,           
+                                                                OUTPUT aux_vlmormut,           
+                                                                OUTPUT aux_dtvencut_atualizado,
+                                                                OUTPUT aux_vltituut_atualizado,
+                                                                OUTPUT aux_vlmormut_atualizado,          
+                                                                OUTPUT aux_vldescut,           
+                                                                OUTPUT aux_cdmensut,
+                                                                OUTPUT aux_critdata).     
+                                 
+                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                                 
                                 END.
                                 END.
                              END.
@@ -1861,7 +1959,83 @@ PROCEDURE consulta-bloqueto.
 
                              RETURN "NOK".
                         END.
+                   
+                    IF   p-origem = 3 THEN                /* Internet */
+                         DO:
+                            
+                            FOR EACH crapcco WHERE 
+                                     crapcco.cdcooper = p-cdcooper 
+                                     NO-LOCK
+                               ,EACH crapceb WHERE 
+                                     crapceb.cdcooper = crapcco.cdcooper  AND
+                                     crapceb.nrconven = crapcco.nrconven  AND
+                                     crapceb.nrdconta = p-nro-conta
+                                     NO-LOCK
+                               ,EACH crapcob WHERE 
+                                     crapcob.cdcooper  = crapceb.cdcooper  AND
+                                     crapcob.nrdconta  = crapceb.nrdconta  AND
+                                     crapcob.nrcnvcob  = crapceb.nrconven  AND
+                                     crapcob.dsdoccop MATCHES "*" + STRING(p-dsdoccop) + "*" 
+                                     NO-LOCK
+                                     BY crapcob.dtmvtolt:
 
+                                IF  p-flgregis <> ? THEN
+                                    IF crapcob.flgregis <> p-flgregis THEN NEXT.
+                                       
+                                IF   AVAILABLE crapcco  THEN
+                                     aux_dsorgarq = crapcco.dsorgarq.
+                                ELSE
+                                     aux_dsorgarq = "".
+
+
+                                RUN proc_nosso_numero(INPUT p-cdcooper,
+                                                      INPUT p-cod-agencia,
+                                                      INPUT p-nro-caixa,
+                                                      INPUT p-ind-situacao,
+                                                      INPUT p-num-registros).
+                                                           
+                                IF   RETURN-VALUE = "NOK"  THEN
+                                     RETURN "NOK".
+                              
+                               RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                              INPUT crapcob.nrdconta,           
+                                                              INPUT crapcob.dtvencto,           
+                                                              INPUT crapdat.dtmvtocd,           
+                                                              INPUT crapcob.vlabatim,           
+                                                              INPUT crapcob.vltitulo,           
+                                                              INPUT crapcob.vlrmulta,           
+                                                              INPUT crapcob.vljurdia,           
+                                                              INPUT crapcob.cdmensag,           
+                                                              INPUT crapcob.vldescto,           
+                                                              INPUT crapcob.tpdmulta,           
+                                                              INPUT crapcob.tpjurmor,           
+                                                              INPUT NO,           
+                                                              OUTPUT aux_dtvencut,           
+                                                              OUTPUT aux_vltituut,           
+                                                              OUTPUT aux_vlmormut,           
+                                                              OUTPUT aux_dtvencut_atualizado,
+                                                              OUTPUT aux_vltituut_atualizado,
+                                                              OUTPUT aux_vlmormut_atualizado,          
+                                                              OUTPUT aux_vldescut,           
+                                                              OUTPUT aux_cdmensut,
+                                                              OUTPUT aux_critdata).     
+                               
+                               ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                      tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                      tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                      tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                              
+                            END.
+
+                            FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
+            
+                            IF   AVAILABLE tt-consulta-blt  THEN
+                                 tt-consulta-blt.nrregist = aux_nrregist.
+                         
+                         END.
+                    ELSE
+                    DO:
+                    
                         FOR EACH crapcco WHERE 
                                  crapcco.cdcooper = p-cdcooper AND
                                  ((p-inestcri = 1 AND crapcco.cddbanco = 85)
@@ -1880,49 +2054,50 @@ PROCEDURE consulta-bloqueto.
                                  NO-LOCK
                                  BY crapcob.dtmvtolt:
 
-                        /* Se p-inescri = 1, mostrar VR boleto "somente crise". */
-                        IF p-inestcri = 1 THEN
-                        DO:
-                            FIND FIRST crapret 
-                                 WHERE crapret.cdcooper = crapcob.cdcooper
-                                   AND crapret.nrcnvcob = crapcco.nrconven
-                                   AND crapret.nrdconta = crapcob.nrdconta
-                                   AND crapret.nrdocmto = crapcob.nrdocmto
-                                   AND CAN-DO("6,17,76,77",
-                                              STRING(crapret.cdocorre))
-                                   AND crapret.vlrpagto >= 250000
-                                   AND crapret.cdmotivo = "04"
-                                   AND CAN-DO("1,2",STRING(crapret.inestcri))
-                                   NO-LOCK NO-ERROR.
-                            IF NOT AVAIL crapret THEN
-                                NEXT.
+                            /* Se p-inescri = 1, mostrar VR boleto "somente crise". */
+                            IF p-inestcri = 1 THEN
+                            DO:
+                                FIND FIRST crapret 
+                                     WHERE crapret.cdcooper = crapcob.cdcooper
+                                       AND crapret.nrcnvcob = crapcco.nrconven
+                                       AND crapret.nrdconta = crapcob.nrdconta
+                                       AND crapret.nrdocmto = crapcob.nrdocmto
+                                       AND CAN-DO("6,17,76,77",
+                                                  STRING(crapret.cdocorre))
+                                       AND crapret.vlrpagto >= 250000
+                                       AND crapret.cdmotivo = "04"
+                                       AND CAN-DO("1,2",STRING(crapret.inestcri))
+                                       NO-LOCK NO-ERROR.
+                                IF NOT AVAIL crapret THEN
+                                    NEXT.
+                            END.
+
+                            IF   p-tipo-consulta = 1    AND
+                                 crapcob.incobran <> 0  AND 
+                                 crapcob.incobran <> 3  THEN
+                                 NEXT.
+                            ELSE
+                            IF   p-tipo-consulta = 2    AND
+                                 crapcob.incobran <> 5  THEN
+                                 NEXT.
+
+                            IF  p-flgregis <> ? THEN
+                                IF crapcob.flgregis <> p-flgregis THEN NEXT.
+                                   
+                            IF   AVAILABLE crapcco  THEN
+                                 aux_dsorgarq = crapcco.dsorgarq.
+                            ELSE
+                                 aux_dsorgarq = "".
+
+                            RUN p_grava_bloqueto(INPUT p-cdcooper,
+                                                 INPUT p-cod-agencia, 
+                                                 INPUT p-nro-caixa,
+                                                 INPUT crapdat.dtmvtoan,
+                                                 INPUT p-num-registros,
+                                                 INPUT p-ini-sequencia,
+                                          INPUT-OUTPUT par_qtregist,
+                                                OUTPUT TABLE tt-consulta-blt).
                         END.
-
-                        IF   p-tipo-consulta = 1    AND
-                             crapcob.incobran <> 0  AND 
-                             crapcob.incobran <> 3  THEN
-                             NEXT.
-                        ELSE
-                        IF   p-tipo-consulta = 2    AND
-                             crapcob.incobran <> 5  THEN
-                             NEXT.
-
-                        IF  p-flgregis <> ? THEN
-                            IF crapcob.flgregis <> p-flgregis THEN NEXT.
-                               
-                        IF   AVAILABLE crapcco  THEN
-                             aux_dsorgarq = crapcco.dsorgarq.
-                        ELSE
-                             aux_dsorgarq = "".
-
-                        RUN p_grava_bloqueto(INPUT p-cdcooper,
-                                             INPUT p-cod-agencia, 
-                                             INPUT p-nro-caixa,
-                                             INPUT crapdat.dtmvtoan,
-                                             INPUT p-num-registros,
-                                             INPUT p-ini-sequencia,
-                                      INPUT-OUTPUT par_qtregist,
-                                            OUTPUT TABLE tt-consulta-blt).
                     END.
          END.
          WHEN  9 THEN      /* Por Vencimento "1 - Em Aberto */
@@ -3260,7 +3435,12 @@ PROCEDURE cria_tt-consulta-blt.
    DEF VAR aux_dtsitcrt AS DATE                NO-UNDO.
    DEF VAR aux_vlrmulta AS DECI                NO-UNDO.
    DEF VAR aux_vlrjuros AS DECI                NO-UNDO.
-
+   
+   DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+   DEF VAR aux_dsdemail AS CHAR                NO-UNDO.
+   DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+   DEF VAR aux_dscritic AS CHAR                NO-UNDO.
+   
    IF  NOT AVAILABLE crapcco  THEN
        DO:
            ASSIGN i-cod-erro = 0
@@ -3303,8 +3483,45 @@ PROCEDURE cria_tt-consulta-blt.
         ASSIGN aux_nossonro = STRING(crapcob.nrdconta,"99999999") +
                               STRING(crapcob.nrdocmto,"999999999").
     
-   DO TRANSACTION:
+   
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
+   RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+     aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT deci(crapcob.cdcooper),
+                         INPUT deci(crapcob.nrdconta),
+                         OUTPUT "",
+                         OUTPUT "",
+                         OUTPUT "").
+                        
+                       
+   CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+         WHERE PROC-HANDLE = aux_handproc.
+
+   ASSIGN aux_nmprimtl = ""
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                         WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+          aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                         WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+          aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                         WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+   IF  aux_des_erro <> "OK" OR
+       aux_dscritic <> ""   THEN DO: 
+
+       IF  aux_dscritic = "" THEN DO:   
+           ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+       END.
+      
+       RETURN "NOK".
+   END.
+   
+   DO TRANSACTION:
+     
      CREATE tt-consulta-blt.
      
      /*  Verifica no Cadastro de Sacados Cobranca */
@@ -3319,6 +3536,7 @@ PROCEDURE cria_tt-consulta-blt.
                         crapsab.nrinssac = crapcob.nrinssac NO-LOCK NO-ERROR.
 
      IF  AVAILABLE crapsab  THEN
+         DO:
          ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapsab.nmdsacad,"&","%26")
                 tt-consulta-blt.dsendsac = TRIM(TRIM(crapsab.dsendsac) + 
                                            IF crapsab.nrendsac > 0 THEN
@@ -3328,12 +3546,36 @@ PROCEDURE cria_tt-consulta-blt.
                 tt-consulta-blt.nmbaisac = crapsab.nmbaisac
                 tt-consulta-blt.nmcidsac = crapsab.nmcidsac
                 tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-                tt-consulta-blt.nrcepsac = crapsab.nrcepsac
-                tt-consulta-blt.dsdemail = crapsab.dsdemail
-                tt-consulta-blt.flgemail = (IF crapsab.dsdemail <> "" THEN
-                                                TRUE
-                                            ELSE 
-                                                FALSE).
+                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+                    
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+             RUN STORED-PROCEDURE pc_busca_emails_pagador
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                         (INPUT crapsab.cdcooper,
+                                          INPUT crapsab.nrdconta,
+                                          INPUT crapsab.nrinssac,
+                                         OUTPUT "",  /* pr_dsdemail */
+                                         OUTPUT "",  /* pr_des_erro */
+                                         OUTPUT ""). /* pr_dscritic */
+             CLOSE STORED-PROC pc_busca_emails_pagador
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_dsdemail = ""
+                    aux_dscritic = ""
+                    aux_des_erro = ""
+                    aux_dsdemail = pc_busca_emails_pagador.pr_dsdemail
+                                       WHEN pc_busca_emails_pagador.pr_dsdemail <> ?
+                    aux_dscritic = pc_busca_emails_pagador.pr_dscritic
+                                       WHEN pc_busca_emails_pagador.pr_dscritic <> ?
+                    aux_des_erro = pc_busca_emails_pagador.pr_des_erro
+                                       WHEN pc_busca_emails_pagador.pr_des_erro <> ?.
+
+              ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
+                     tt-consulta-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).
+         END.
      ELSE
          ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapcob.nmdsacad,"&","%26")
                 tt-consulta-blt.flgemail = FALSE.
@@ -3350,7 +3592,7 @@ PROCEDURE cria_tt-consulta-blt.
 
      ASSIGN tt-consulta-blt.cdcooper = crapcob.cdcooper
             tt-consulta-blt.nrdconta = crapcob.nrdconta
-            tt-consulta-blt.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
+            tt-consulta-blt.nmprimtl = aux_nmprimtl
             tt-consulta-blt.idseqttl = crapcob.idseqttl
             tt-consulta-blt.nossonro = aux_nossonro
             tt-consulta-blt.incobran = IF  crapcob.incobran = 0  THEN
@@ -3735,7 +3977,11 @@ PROCEDURE cria_tt-consulta-blt_rej.
    DEF VAR aux_dtsitcrt AS DATE                NO-UNDO.
    DEF VAR aux_vlrmulta AS DECI                NO-UNDO.
    DEF VAR aux_vlrjuros AS DECI                NO-UNDO.  
-     
+   
+   DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+   DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+   DEF VAR aux_dscritic AS CHAR                NO-UNDO.
+   
    FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
 
    IF  NOT AVAILABLE crapcco  THEN
@@ -3778,7 +4024,43 @@ PROCEDURE cria_tt-consulta-blt_rej.
         END.
     ELSE
         ASSIGN aux_nossonro = STRING(crapret.nrnosnum,"99999999999999999").
-    
+   
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+   RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+     aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT deci(crapcob.cdcooper),
+                         INPUT deci(crapcob.nrdconta),
+                         OUTPUT "",
+                         OUTPUT "",
+                         OUTPUT "").
+                        
+                       
+   CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+         WHERE PROC-HANDLE = aux_handproc.
+
+   ASSIGN aux_nmprimtl = ""
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                         WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+          aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                         WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+          aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                         WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+   IF  aux_des_erro <> "OK" OR
+       aux_dscritic <> ""   THEN DO: 
+
+       IF  aux_dscritic = "" THEN DO:   
+           ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+       END.
+      
+       RETURN "NOK".
+   END.
+   
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
@@ -3818,7 +4100,7 @@ PROCEDURE cria_tt-consulta-blt_rej.
     
      ASSIGN tt-consulta-blt.cdcooper = crapret.cdcooper
             tt-consulta-blt.nrdconta = crapret.nrdconta
-            tt-consulta-blt.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
+            tt-consulta-blt.nmprimtl = aux_nmprimtl
             tt-consulta-blt.idseqttl = 0
             tt-consulta-blt.nossonro = aux_nossonro
             tt-consulta-blt.incobran = "R"
@@ -3939,12 +4221,52 @@ PROCEDURE cria_tt-consulta-blt_tdb.
 
    DEF OUTPUT       PARAM TABLE FOR tt-consulta-blt.
    
+   DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+   DEF VAR aux_dsdemail AS CHAR                NO-UNDO.
+   DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+   DEF VAR aux_dscritic AS CHAR                NO-UNDO.
    
    FOR FIRST crapass FIELDS(nmprimtl cdagenci)
        WHERE crapass.cdcooper = crapcob.cdcooper AND
              crapass.nrdconta = crapcob.nrdconta
              NO-LOCK: END.
-             
+   
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+   RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+     aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT deci(crapcob.cdcooper),
+                         INPUT deci(crapcob.nrdconta),
+                         OUTPUT "",
+                         OUTPUT "",
+                         OUTPUT "").
+                        
+                       
+   CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+         WHERE PROC-HANDLE = aux_handproc.
+
+   ASSIGN aux_nmprimtl = ""
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                         WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+          aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                         WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+          aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                         WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+   IF  aux_des_erro <> "OK" OR
+       aux_dscritic <> ""   THEN DO: 
+
+       IF  aux_dscritic = "" THEN DO:   
+           ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+       END.
+      
+       RETURN "NOK".
+   END.
+   
    DO TRANSACTION:
      CREATE tt-consulta-blt.
      
@@ -3954,6 +4276,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
             crapsab.nrinssac = crapcob.nrinssac NO-LOCK NO-ERROR.
 
      IF  AVAILABLE crapsab  THEN
+         DO:
        ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapsab.nmdsacad,"&","%26")
               tt-consulta-blt.dsendsac = TRIM(TRIM(crapsab.dsendsac) + 
                                          IF crapsab.nrendsac > 0 THEN
@@ -3963,12 +4286,37 @@ PROCEDURE cria_tt-consulta-blt_tdb.
               tt-consulta-blt.nmbaisac = crapsab.nmbaisac
               tt-consulta-blt.nmcidsac = crapsab.nmcidsac
               tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-              tt-consulta-blt.nrcepsac = crapsab.nrcepsac
-              tt-consulta-blt.dsdemail = crapsab.dsdemail
-              tt-consulta-blt.flgemail = (IF crapsab.dsdemail <> "" THEN
-                                              TRUE
-                                          ELSE 
-                                              FALSE).
+                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+             RUN STORED-PROCEDURE pc_busca_emails_pagador
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                         (INPUT crapsab.cdcooper,
+                                          INPUT crapsab.nrdconta,
+                                          INPUT crapsab.nrinssac,
+                                         OUTPUT "",  /* pr_dsdemail */
+                                         OUTPUT "",  /* pr_des_erro */
+                                         OUTPUT ""). /* pr_dscritic */
+             CLOSE STORED-PROC pc_busca_emails_pagador
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_dsdemail = ""
+                    aux_dscritic = ""
+                    aux_des_erro = ""
+                    aux_dsdemail = pc_busca_emails_pagador.pr_dsdemail
+                                       WHEN pc_busca_emails_pagador.pr_dsdemail <> ?
+                    aux_dscritic = pc_busca_emails_pagador.pr_dscritic
+                                       WHEN pc_busca_emails_pagador.pr_dscritic <> ?
+                    aux_des_erro = pc_busca_emails_pagador.pr_des_erro
+                                       WHEN pc_busca_emails_pagador.pr_des_erro <> ?.
+
+              ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
+                     tt-consulta-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).                    
+             
+         END.
        ELSE
            ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapcob.nmdsacad,"&","%26")
                   tt-consulta-blt.flgemail = FALSE.
@@ -3998,7 +4346,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
        
        ASSIGN tt-consulta-blt.cdcooper = crapcob.cdcooper
               tt-consulta-blt.nrdconta = crapcob.nrdconta
-              tt-consulta-blt.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
+              tt-consulta-blt.nmprimtl = aux_nmprimtl
               tt-consulta-blt.nrdocmto = crapcob.nrdocmto
               tt-consulta-blt.nrctrlim = craptdb.nrctrlim
               tt-consulta-blt.dsdoccop = crapcob.dsdoccop   
@@ -4087,6 +4435,11 @@ PROCEDURE proc_nosso_numero.
     DEF VAR aux_cdsituac AS CHAR                NO-UNDO.
     DEF VAR aux_dssituac AS CHAR                NO-UNDO.
     DEF VAR aux_flgdesco AS CHAR                NO-UNDO.
+    
+    DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+    DEF VAR aux_dsdemail AS CHAR                NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                NO-UNDO.   
     
     /* Variaveis auxiliares para calculo do digito verificador */
     DEF VAR aux_var01    AS INTE INITIAL 0      NO-UNDO.
@@ -4235,7 +4588,7 @@ PROCEDURE proc_nosso_numero.
         aux_nrregist >= aux_fimseque) THEN
         RETURN.
 
-    IF  crapass.inpessoa = 1  THEN
+    /*IF  crapass.inpessoa = 1  THEN
         DO:               
             FIND FIRST crapttl WHERE 
                  crapttl.cdcooper = crapcob.cdcooper AND
@@ -4258,7 +4611,43 @@ PROCEDURE proc_nosso_numero.
         DO:
             IF AVAIL crapass THEN
                ASSIGN aux_nmprimtl = REPLACE(crapass.nmprimtl,"&","%26"). 
+        END.*/
+    
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+      aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT deci(crapcob.cdcooper),
+                          INPUT deci(crapcob.nrdconta),
+                          OUTPUT "",
+                          OUTPUT "",
+                          OUTPUT "").
+                          
+                         
+    CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    ASSIGN aux_nmprimtl = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                          WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+           aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                          WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+           aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                          WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_des_erro <> "OK" OR
+        aux_dscritic <> ""   THEN DO: 
+
+        IF  aux_dscritic = "" THEN DO:   
+            ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
         END.
+        
+        RETURN "NOK".
+    END.
     
     DO TRANSACTION:
 
@@ -4355,13 +4744,36 @@ PROCEDURE proc_nosso_numero.
                               ELSE
                                   REPLACE(crapsab.dsendsac,"&","%26")
                                   + ", " +
-                                  TRIM(STRING(crapsab.nrendsac))
-                              tt-consulta-blt.dsdemail = crapsab.dsdemail
-                              tt-consulta-blt.flgemail = 
-                                                 (IF crapsab.dsdemail <> "" THEN
-                                                      TRUE
-                                                  ELSE 
-                                                      FALSE).
+                                  TRIM(STRING(crapsab.nrendsac)).
+                                  
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+                       RUN STORED-PROCEDURE pc_busca_emails_pagador
+                           aux_handproc = PROC-HANDLE NO-ERROR
+                                                   (INPUT crapsab.cdcooper,
+                                                    INPUT crapsab.nrdconta,
+                                                    INPUT crapsab.nrinssac,
+                                                   OUTPUT "",  /* pr_dsdemail */
+                                                   OUTPUT "",  /* pr_des_erro */
+                                                   OUTPUT ""). /* pr_dscritic */
+                       CLOSE STORED-PROC pc_busca_emails_pagador
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                       ASSIGN aux_dsdemail = ""
+                              aux_dscritic = ""
+                              aux_des_erro = ""
+                              aux_dsdemail = pc_busca_emails_pagador.pr_dsdemail
+                                                 WHEN pc_busca_emails_pagador.pr_dsdemail <> ?
+                              aux_dscritic = pc_busca_emails_pagador.pr_dscritic
+                                                 WHEN pc_busca_emails_pagador.pr_dscritic <> ?
+                              aux_des_erro = pc_busca_emails_pagador.pr_des_erro
+                                                 WHEN pc_busca_emails_pagador.pr_des_erro <> ?.
+
+                        ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
+                               tt-consulta-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).                    
+                              
                    END.
                ELSE
                    ASSIGN tt-consulta-blt.dsendsac = REPLACE(aux_na_dsendsac,"&","%26")
@@ -12114,5 +12526,129 @@ PROCEDURE verifica_sit_serasa:
     END.
   END CASE.
 
-
 END PROCEDURE.
+
+PROCEDURE calcula_multa_juros_boleto:
+    DEF INPUT PARAM par_cdcooper             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_nrdconta             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_dtvencto             AS DATE              NO-UNDO.
+    DEF INPUT PARAM par_dtmvtocd             AS DATE              NO-UNDO.
+    DEF INPUT PARAM par_vlabatim             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_vltitulo             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_vlrmulta             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_vljurdia             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_cdmensag             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_vldescto             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_tpdmulta             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_tpjurmor             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_flag2via             AS LOGI              NO-UNDO.
+    DEF OUTPUT PARAM par_dtvencut            AS DATE              NO-UNDO.
+    DEF OUTPUT PARAM par_vltituut            AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_vlmormut            AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_dtvencut_atualizado AS DATE              NO-UNDO.
+    DEF OUTPUT PARAM par_vltituut_atualizado AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_vlmormut_atualizado AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_vldescut            AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_cdmensut            AS INTE              NO-UNDO.
+    DEF OUTPUT PARAM par_cridatut            AS LOGI              NO-UNDO.
+                                             
+    DEF VAR h-b2crap14                       AS HANDLE            NO-UNDO.
+    DEF VAR aux_critdata                     AS LOGI              NO-UNDO.
+    DEF VAR aux_vlrjuros                     AS DECI              NO-UNDO.
+    DEF VAR aux_vlrmulta                     AS DECI              NO-UNDO.
+    DEF VAR aux_vldescto                     AS DECI              NO-UNDO.
+    DEF VAR aux_vlabatim                     AS DECI              NO-UNDO.
+    DEF VAR aux_vlfatura                     AS DECI              NO-UNDO.
+    DEF VAR aux_dscritic                     AS CHAR              NO-UNDO.
+   
+    /* rotina para criticar data de vencimento */
+    RUN sistema/siscaixa/web/dbo/b2crap14.p PERSISTENT SET h-b2crap14.
+    
+    RUN verifica-vencimento-titulo IN h-b2crap14(INPUT par_cdcooper, 
+                                                 INPUT 90 /*internet*/,
+                                                 INPUT par_dtmvtocd,
+                                                 INPUT par_dtvencto,
+                                                OUTPUT aux_critdata).
+    DELETE PROCEDURE h-b2crap14. 
+    
+    ASSIGN aux_vldescto = 0
+           aux_vlabatim = par_vlabatim
+           aux_vlfatura = par_vltitulo.
+
+    /* abatimento deve ser calculado antes dos juros/multa */
+    IF par_vlabatim > 0 THEN
+       ASSIGN aux_vlfatura = aux_vlfatura - par_vlabatim.
+   
+    /* verifica se o titulo esta vencido */
+    IF  aux_critdata  THEN
+    DO: 
+        /* MULTA PARA ATRASO */
+        IF  par_tpdmulta = 1  THEN /* Valor */
+            ASSIGN aux_vlrmulta = par_vlrmulta.
+        ELSE
+        IF  par_tpdmulta = 2  THEN /* % de multa */
+            ASSIGN aux_vlrmulta = ROUND( (par_vlrmulta * aux_vlfatura) / 100 , 2).
+
+        /* MORA PARA ATRASO */
+        IF  par_tpjurmor = 1  THEN /* dias */
+            ASSIGN aux_vlrjuros =  par_vljurdia * 
+                                  (par_dtmvtocd - par_dtvencto). 
+        ELSE
+        IF  par_tpjurmor = 2  THEN /* mes */
+            ASSIGN aux_vlrjuros = ROUND( (aux_vlfatura * 
+                                  ((par_vljurdia / 100) / 30) * 
+                                  (par_dtmvtocd - par_dtvencto)), 2). 
+    
+        /* se concede ate o vencimento */
+        IF  par_cdmensag = 1 OR
+            par_cdmensag = 0 THEN
+            ASSIGN par_vldescut = 0
+                   par_cdmensut = 0
+                   aux_vldescto = 0.
+
+    END.
+    ELSE
+    DO:       
+        /* se concede ate o vencto, ja calculou */
+        IF  par_cdmensag <> 2  THEN
+            ASSIGN aux_vldescto = par_vldescto
+                   aux_vlfatura = aux_vlfatura - aux_vldescto.
+    END.
+
+    /* se concede apos o vencimento */
+    IF  par_cdmensag = 2  THEN
+        ASSIGN aux_vldescto = par_vldescto
+               aux_vlfatura = aux_vlfatura - aux_vldescto.
+
+
+    /* valor final da tarifa */
+    ASSIGN aux_vlfatura = aux_vlfatura + aux_vlrmulta + aux_vlrjuros.
+
+    IF  par_flag2via  THEN
+        DO:
+            ASSIGN par_dtvencut = (IF aux_critdata THEN 
+                                       par_dtmvtocd 
+                                   ELSE
+                                       par_dtvencto)
+                   par_vltituut = aux_vlfatura
+                   par_vlmormut = (aux_vlrmulta + aux_vlrjuros).
+           
+        END.
+    ELSE 
+        DO:
+            ASSIGN par_dtvencut_atualizado = (IF aux_critdata THEN 
+                                                  par_dtmvtocd  
+                                              ELSE
+                                                  par_dtvencto)
+                   par_vltituut_atualizado = aux_vlfatura
+                   par_vlmormut_atualizado = (aux_vlrmulta + aux_vlrjuros)      
+                   par_dtvencut = par_dtvencto
+                   par_vltituut = par_vltitulo.
+           
+        END.
+
+    ASSIGN par_cridatut = aux_critdata.
+
+    RETURN "OK".
+END PROCEDURE.
+

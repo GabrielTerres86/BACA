@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 23/01/2015
+   Data    : Marco/2007                        Ultima atualizacao: 04/10/2016
 
    Dados referentes ao programa:
 
@@ -26,6 +26,8 @@
                            
                23/01/2015 - Adicionar os campos de email e celular do pagador
                             Projeto Boleto por E-mail (Douglas)
+
+               04/10/2016 - Alterar par_dsdemail para CHAR (Kelvin - Melhoria 271)
 ..............................................................................*/
 
 CREATE WIDGET-POOL. 
@@ -55,7 +57,7 @@ DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_tprotina AS INTE                                  NO-UNDO.
 /* Tipo de instrução: 0 = Alteração Normal, 1 = instrução de alteração */
 DEF  INPUT PARAM par_tpinstru AS INTE                                  NO-UNDO.
-DEF  INPUT PARAM par_dsdemail LIKE crapsab.dsdemail                    NO-UNDO.
+DEF  INPUT PARAM par_dsdemail AS CHAR                                  NO-UNDO.
 DEF  INPUT PARAM par_nrcelsac LIKE crapsab.nrcelsac                    NO-UNDO.
                                               
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.

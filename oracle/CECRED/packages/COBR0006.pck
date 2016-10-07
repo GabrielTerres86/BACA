@@ -81,7 +81,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                cdtpinsc  crapcob.cdtpinsc%TYPE,
                nrinssac  crapcob.nrinssac%TYPE,
                -- Email e telefone do Sacado
-               dsdemail  crapsab.dsdemail%TYPE,
+               dsdemail  VARCHAR2(5000),
                nrcelsac  crapsab.nrcelsac%TYPE,
                -- Dados do Avalista
                nmdavali  crapcob.nmdavali%TYPE,
@@ -3634,7 +3634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   PROCEDURE pc_altera_email_cel_sacado (pr_cdcooper IN crapcop.cdcooper%TYPE --Cooperativa 
                                        ,pr_nrdconta IN crapass.nrdconta%TYPE --Conta
                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE --Inscrição do sacado
-                                       ,pr_dsdemail IN crapsab.dsdemail%TYPE --E-mail
+                                       ,pr_dsdemail IN VARCHAR2              --E-mail
                                        ,pr_nrcelsac IN crapsab.nrcelsac%TYPE --Número do celular
                                        ,pr_des_erro OUT VARCHAR2             --Retorno OK/NOK
                                        ,pr_cdcritic OUT INTEGER              --Codigo Critica
@@ -3646,21 +3646,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 05/10/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Alterar e-mail dos sacados
     
-    Alterações : 
+    Alterações : 05/10/2016 - Ajustes referente a melhoria M271 (Kelvin)
     -------------------------------------------------------------------------------------------------------------*/                                
   
     CURSOR cr_crapsab(pr_cdcooper IN crapsab.cdcooper%TYPE
                      ,pr_nrdconta IN crapsab.nrdconta%TYPE
                      ,pr_nrinssac IN crapsab.nrinssac%TYPE) IS
-    SELECT crapsab.dsdemail
-          ,crapsab.nrcelsac
+    SELECT crapsab.nrcelsac
       FROM crapsab 
      WHERE crapsab.cdcooper = pr_cdcooper
        AND crapsab.nrdconta = pr_nrdconta
@@ -3670,11 +3669,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     --Variaveis de Criticas
     vr_cdcritic INTEGER := 0;
     vr_dscritic VARCHAR2(4000):= NULL;
+    vr_des_erro VARCHAR2(1000);
     vr_exc_erro EXCEPTION;
     vr_exc_saida EXCEPTION;
     
     --Variaveis locais 
-    vr_dsdemail crapsab.dsdemail%TYPE;
+    vr_dsdemail VARCHAR2(5000);
     
     --> Tabela de retorno do operadores que estao alocando a tabela especifidada
     vr_tab_locktab GENE0001.typ_tab_locktab;
@@ -3754,14 +3754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     --Realiza a alteração do registro de sacado                          
     BEGIN
             
-      UPDATE crapsab SET crapsab.dsdemail = (CASE 
-                                               WHEN vr_dsdemail IS NOT NULL            AND 
-                                                    vr_dsdemail <> rw_crapsab.dsdemail THEN 
-                                                 vr_dsdemail 
-                                               ELSE 
-                                                 rw_crapsab.dsdemail 
-                                             END)  
-                        ,crapsab.nrcelsac = (CASE 
+      UPDATE crapsab SET crapsab.nrcelsac = (CASE 
                                                WHEN nvl(pr_nrcelsac,0) <> 0            AND 
                                                     pr_nrcelsac <> rw_crapsab.nrcelsac THEN 
                                                  pr_nrcelsac 
@@ -3781,6 +3774,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_erro;             
     
     END;
+    
+    -- Realizar a gravação do email do pagador    
+    COBR0009.pc_grava_email_pagador(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrinssac => pr_nrinssac
+                                   ,pr_dsdemail => vr_dsdemail
+                                   ,pr_des_erro => vr_des_erro
+                                   ,pr_dscritic => vr_dscritic);
+    -- Validacao de erro 
+    IF vr_des_erro <> 'OK' THEN
+      IF TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := 'Nao foi possivel atualizar o email do sacado - COBR0009.pc_grava_email_pagador';
+      END IF;
+      RAISE vr_exc_erro;
+    END IF;
     
     --Retorno OK
     pr_des_erro:= 'OK';  
