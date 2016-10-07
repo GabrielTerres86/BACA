@@ -2517,7 +2517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         END IF;
         --Prepara retorno cooperado
         COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_ret.rowid --ROWID da cobranca
-                                           ,pr_cdocorre => pr_cdocorre          --Codigo Ocorrencia
+                                           ,pr_cdocorre => 19                   --Codigo Ocorrencia
                                            ,pr_cdmotivo => NULL                 --Codigo Motivo
                                            ,pr_vltarifa => 0                    --Valor Tarifa
                                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl  --Banco centralizador
@@ -4202,9 +4202,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                          'convenio protesto - Abatimento nao efetuado!';
           RAISE vr_exc_erro;
         END IF;
+      ELSE
+        CLOSE cr_crapcco;        
       END IF;
-    ELSE
-      CLOSE cr_crapcco;
     END IF;    
     ---- FIM - VALIDACOES PARA RECUSAR ----
     

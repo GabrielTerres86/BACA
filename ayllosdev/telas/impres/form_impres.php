@@ -67,6 +67,7 @@
 		    <option value=0 selected>Anual</option>
 		    <option value=1>Trimestral</option>
 		</select>
+		</div>
         <div id="divPeriodo" >
 		<label for="nrperiod"><? echo utf8ToHtml('Trimestre:') ?></label>
 		<select name="nrperiod" id="nrperiod">
