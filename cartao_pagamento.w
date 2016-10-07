@@ -24,9 +24,11 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   30/09/2015 - Ajuste para na saida do campo dscodbar sempre ir para o campo
                                de valor caso seja um titulo (Odirlei-AMcom)  
-							   
-			      24/03/2015 - Ajustes referentes aos chamados 373337 e 416733, linha digitavel
-				               incompleta e pagamento de fatura com valor zerado (Tiago/Fabricio).
+                                                           
+                              24/03/2015 - Ajustes referentes aos chamados 373337 e 416733, linha digitavel
+                                               incompleta e pagamento de fatura com valor zerado (Tiago/Fabricio).
+
+                                  03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -53,8 +55,13 @@ DEF INPUT   PARAM par_flagenda   AS LOGICAL             NO-UNDO.
 DEFINE VARIABLE aux_flgderro        AS LOGICAL      NO-UNDO.
 DEFINE VARIABLE aux_datpagto        AS DATE         NO-UNDO.
 DEFINE VARIABLE aux_sfcodbar        AS CHAR         NO-UNDO.
-DEFINE VARIABLE aux_dscritic        AS CHAR         NO-UNDO.
 DEFINE VARIABLE aux_valor           AS CHAR         NO-UNDO.
+DEFINE VARIABLE aux_vlfatura        AS DECI         NO-UNDO.
+DEFINE VARIABLE aux_vlrjuros        AS DECI         NO-UNDO.
+DEFINE VARIABLE aux_vlrmulta        AS DECI         NO-UNDO.
+DEFINE VARIABLE aux_fltitven        AS INTE         NO-UNDO.
+DEFINE VARIABLE aux_dscritic        AS CHAR         NO-UNDO.                                                  
+DEFINE VARIABLE aux_des_erro        AS CHAR         NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -818,6 +825,7 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_dscodbar w_cartao_pagamento
 ON LEAVE OF ed_dscodbar IN FRAME f_cartao_pagamento
 DO:     
+
     IF  NOT par_flagenda  THEN
         DO:
             ed_datpagto:SCREEN-VALUE = STRING(glb_dtmvtocd, "99/99/9999").
@@ -846,7 +854,10 @@ DO:
 
     /* se for titulo sempre vai para o campo de valor*/
     IF  ed_idtpdpag:SCREEN-VALUE = "2"    THEN
-       APPLY "ENTRY" TO ed_vldpagto.
+        DO:      
+            APPLY "ENTRY" TO ed_vldpagto.
+        END.        
+        
     ELSE 
     IF  par_flagenda                       THEN
         APPLY "ENTRY" TO ed_datpagto.         
@@ -1074,6 +1085,55 @@ END.
 
 /* **********************  Internal Procedures  *********************** */
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE calcula_valor_titulo_vencido w_cartao_pagamento 
+PROCEDURE calcula_valor_titulo_vencido :
+/*------------------------------------------------------------------------------
+  Purpose: Retornar o valor de titulos contendo juros/multas    
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEF INPUT  PARAM pr_cdcooper        AS INTE         NO-UNDO.
+DEF INPUT  PARAM pr_nrdconta        AS INTE         NO-UNDO.
+DEF INPUT  PARAM pr_idseqttl        AS INTE         NO-UNDO.
+DEF INPUT  PARAM pr_cdagenci        AS INTE         NO-UNDO.
+DEF INPUT  PARAM pr_nrdcaixa        AS INTE         NO-UNDO.
+        
+DEF INPUT  PARAM pr_titulo1         AS DECI         NO-UNDO.
+DEF INPUT  PARAM pr_titulo2         AS DECI         NO-UNDO.
+DEF INPUT  PARAM pr_titulo3         AS DECI         NO-UNDO.
+DEF INPUT  PARAM pr_titulo4         AS DECI         NO-UNDO.
+DEF INPUT  PARAM pr_titulo5         AS DECI         NO-UNDO.
+DEF INPUT  PARAM pr_codigo_barras   AS CHAR         NO-UNDO.
+DEF OUTPUT  PARAM pr_vlfatura       AS DECI         NO-UNDO.
+DEF OUTPUT  PARAM pr_vlrjuros       AS DECI         NO-UNDO.
+DEF OUTPUT  PARAM pr_vlrmulta       AS DECI         NO-UNDO.
+DEF OUTPUT  PARAM pr_fltitven       AS INTE         NO-UNDO.
+DEF OUTPUT  PARAM pr_des_erro       AS CHAR         NO-UNDO.
+DEF OUTPUT  PARAM pr_dscritic       AS CHAR         NO-UNDO.
+
+RUN procedures/calcula_valor_titulo_vencido.p (INPUT pr_cdcooper,
+                                               INPUT pr_nrdconta, 
+                                               INPUT pr_idseqttl,
+                                               INPUT pr_cdagenci,
+                                               INPUT pr_nrdcaixa,
+                                               INPUT pr_titulo1,
+                                               INPUT pr_titulo2,
+                                               INPUT pr_titulo3,
+                                               INPUT pr_titulo4,
+                                               INPUT pr_titulo5,
+                                               INPUT pr_codigo_barras,
+                                              OUTPUT pr_vlfatura,
+                                              OUTPUT pr_vlrjuros,
+                                              OUTPUT pr_vlrmulta,
+                                              OUTPUT pr_fltitven,
+                                              OUTPUT pr_des_erro,
+                                              OUTPUT pr_dscritic).
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE control_load w_cartao_pagamento  _CONTROL-LOAD
 PROCEDURE control_load :
 /*------------------------------------------------------------------------------
@@ -1183,7 +1243,26 @@ PROCEDURE extrai_valor_codbar :
            END. /* Titulos */
            ELSE IF ed_idtpdpag:SCREEN-VALUE = "2"  THEN
            DO:
-              ASSIGN aux_valor = SUBSTR(aux_sfcodbar,10,10).
+              RUN calcula_valor_titulo_vencido(INPUT glb_cdcooper,
+                                               INPUT glb_nrdconta,
+                                               INPUT 1,
+                                               INPUT 91,
+                                               INPUT 0,
+                                               INPUT 0,
+                                               INPUT 0,
+                                               INPUT 0,
+                                               INPUT 0,
+                                               INPUT 0,
+                                               INPUT aux_sfcodbar,
+                                              OUTPUT aux_vlfatura,
+                                              OUTPUT aux_vlrjuros,
+                                              OUTPUT aux_vlrmulta,
+                                              OUTPUT aux_fltitven,
+                                              OUTPUT aux_des_erro,
+                                              OUTPUT aux_dscritic).
+
+              ASSIGN aux_valor = STRING(aux_vlfatura,"zz,zzz,z99.99").
+          
            END.
         END.
         ELSE /* Se for linha Digitavel*/
@@ -1200,8 +1279,8 @@ PROCEDURE extrai_valor_codbar :
                                       INPUT "    ATENÇÃO",
                                       INPUT "",
                                       INPUT "",
-                                      INPUT "Documento Inválido",
-                                      INPUT "Valor Incorreto",
+                                      INPUT "",/*Documento Inválido*/
+                                      INPUT "",/*Valor Incorreto*/
                                       INPUT "").
                       PAUSE 3 NO-MESSAGE.
                       h_mensagem:HIDDEN = YES.
@@ -1213,8 +1292,28 @@ PROCEDURE extrai_valor_codbar :
 
                END. /* Titulos */
                ELSE IF ed_idtpdpag:SCREEN-VALUE = "2"  THEN
-               DO:
-                  ASSIGN aux_valor = SUBSTR(aux_sfcodbar,39).
+               DO:                  
+                  RUN calcula_valor_titulo_vencido(INPUT glb_cdcooper,
+                                                   INPUT glb_nrdconta,
+                                                   INPUT 1,
+                                                   INPUT 91,
+                                                   INPUT 0,
+                                                   INPUT DEC(SUBSTR(aux_sfcodbar,1,10)),
+                                                   INPUT DEC(SUBSTR(aux_sfcodbar,11,11)),
+                                                   INPUT DEC(SUBSTR(aux_sfcodbar,22,11)),
+                                                   INPUT DEC(SUBSTR(aux_sfcodbar,33,1)),
+                                                   INPUT DEC(SUBSTR(aux_sfcodbar,34,14)),
+                                                   INPUT 0,
+                                                  OUTPUT aux_vlfatura,
+                                                  OUTPUT aux_vlrjuros,
+                                                  OUTPUT aux_vlrmulta,
+                                                  OUTPUT aux_fltitven,
+                                                  OUTPUT aux_des_erro,
+                                                  OUTPUT aux_dscritic). 
+                  
+                 
+                  ASSIGN aux_valor = STRING(aux_vlfatura,"zzz,zzz,z99.99").
+
                END.
     
             END.
@@ -1239,8 +1338,13 @@ PROCEDURE extrai_valor_codbar :
                 /*APPLY "CHOOSE" TO Btn_C.*/
                 RETURN NO-APPLY.
             END.
-
-         ASSIGN ed_vldpagto:SCREEN-VALUE = STRING(DECI(aux_valor) / 100).   
+         
+         /*Se o valor veio do oracle, passa normal*/
+         IF aux_vlfatura <> 0 OR 
+            aux_vlfatura <> ?  THEN
+            ASSIGN ed_vldpagto:SCREEN-VALUE = STRING(aux_valor).   
+         ELSE
+             ASSIGN ed_vldpagto:SCREEN-VALUE = STRING(DECI(aux_valor) / 100).   
        END.
        
     END.
