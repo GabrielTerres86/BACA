@@ -1277,7 +1277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_tab_erro  GENE0001.typ_tab_erro;
       
       vr_exc_erro  EXCEPTION;
-    
+
     BEGIN     
     
       gene0004.pc_executa_job( pr_cdcooper => 3   --> Codigo da cooperativa
@@ -1405,7 +1405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 25/03/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 07/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1413,6 +1413,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --   Objetivo  : Procedure para efetuar a baixa do titulo por pagamento ou vencimento
     --
     --  Alteracoes: 25/03/2015 - Remover o savepoint vr_save_baixa (Douglas - Chamado 267787)
+    --             
+    --              07/10/2016 - Quando pagamento do título é no mesmo dia da liberação do borderô
+    --                           de desconto o valor do juro deve ser devolvido.
+    --                           Incluído ELSIF para quando vr_qtdprazo=0  (SD#489111-AJFink)
     --
     -- .........................................................................
 
@@ -2162,7 +2166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           --Zerar valor juros
           vr_vldjuros:= 0;
 
-          /* Houve pagamento antecipado */
+          /* Houve pagamento antecipado e data de pagamento maior que data de liberação do bordero (vr_qtdprazo>0) */
           IF vr_qtdprazo > 0 AND rw_craptdb.dtdpagto < rw_craptdb.dtvencto  THEN
             --Percorrer todo o prazo
             FOR vr_contador IN 1..vr_qtdprazo LOOP
@@ -2285,11 +2289,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 vr_tab_crawljt.DELETE(idx);
               END IF;
             END LOOP;
+          --#489111 início
+          /* Houve pagamento antecipado e data de pagamento igual a data de liberação do bordero (vr_qtdprazo=0) */
+          ELSIF vr_qtdprazo = 0 AND rw_craptdb.dtdpagto < rw_craptdb.dtvencto  THEN
+            --data referencia juros
+            vr_dtrefjur:= Last_Day(rw_craptdb.dtdpagto);
+            /* Restitui o juro que seria apropriado no mês do pagamento do título */
+            FOR rw_crapljt IN cr_crapljt (pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => rw_craptdb.nrdconta
+                                         ,pr_nrborder => rw_craptdb.nrborder
+                                         ,pr_dtrefere => vr_dtrefjur
+                                         ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                         ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                         ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                         ,pr_nrdocmto => rw_craptdb.nrdocmto
+                                         ,pr_tipo     => 1) LOOP
+              --Acumular total juros
+              vr_vltotjur:= Nvl(vr_vltotjur,0) + Nvl(rw_crapljt.vldjuros,0);
+              --Atualizar tabela lancamento juros desconto titulos
+              BEGIN
+                UPDATE crapljt SET crapljt.vlrestit = crapljt.vldjuros
+                                  ,crapljt.vldjuros = 0
+                WHERE crapljt.ROWID = rw_crapljt.ROWID;
+              EXCEPTION
+                WHEN Others THEN
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Erro ao atualizar tabela crapljt(1).'||sqlerrm;
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+              END;
+            END LOOP;
+            --Data de Referencia
+            vr_dtultdat:= vr_dtrefjur;
+          --#489111 fim
           ELSE
             /* o juros sempre eh referente ao ultimo dia do mes */
             vr_dtultdat:= Last_Day(rw_craptdb.dtdpagto);
           END IF;
-          /* Corrige os juros cobrados a mais no periodo */
+          /* Restitui o juro que seria apropriado no(s) periodo(s) seguinte(s) */
           FOR rw_crapljt IN cr_crapljt (pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => rw_craptdb.nrdconta
                                        ,pr_nrborder => rw_craptdb.nrborder
@@ -2309,7 +2346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             EXCEPTION
               WHEN Others THEN
                 vr_cdcritic:= 0;
-                vr_dscritic:= 'Erro ao inserir na tabela .'||sqlerrm;
+                vr_dscritic:= 'Erro ao atualizar tabela crapljt(2).'||sqlerrm;
                 --Levantar Excecao
                 RAISE vr_exc_erro;
             END;
