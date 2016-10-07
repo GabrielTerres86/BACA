@@ -707,7 +707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       --Variaveis de exceção
       vr_exc_erro EXCEPTION;
       vr_nrsequence crapsqu.nrseqatu%TYPE;
-
+      
     BEGIN
 
       --Busca o tipo de serviço
@@ -4667,7 +4667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   
         IF TRIM(vr_rej_cdmotivo) IS NOT NULL THEN
           pc_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                            ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                            ,pr_nrdconta      => pr_nrdconta -- Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                             ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                             ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                             ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
@@ -5106,7 +5106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
         IF TRIM(vr_rej_cdmotivo) IS NOT NULL THEN
           pc_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                            ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                            ,pr_nrdconta      => pr_nrdconta -- Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                             ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                             ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                             ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
@@ -6245,7 +6245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
         IF TRIM(vr_rej_cdmotivo) IS NOT NULL THEN
           pc_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                            ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                            ,pr_nrdconta      => pr_nrdconta -- Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                             ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                             ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                             ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
@@ -7306,7 +7306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
       IF TRIM(vr_rej_cdmotivo) IS NOT NULL THEN
         pc_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                          ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                          ,pr_nrdconta      => pr_nrdconta -- Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                           ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                           ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                           ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
@@ -8005,7 +8005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     WHEN vr_exc_reje THEN
       -- Rejeitou a cobranca e nao deve continuar o processamento
       pc_valida_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                               ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                               ,pr_nrdconta      => pr_nrdconta -- Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                                ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                                ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                                ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
@@ -8029,7 +8029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
       -- Erro geral do processamento 
       pc_valida_grava_rejeitado(pr_cdcooper      => pr_rec_cobranca.cdcooper --> Codigo da Cooperativa
-                               ,pr_nrdconta      => pr_rec_cobranca.nrdconta --> Numero da Conta
+                               ,pr_nrdconta      => pr_nrdconta -- Enviar o pr_nrdconta ao inves do pr_rec_cobranca.nrdconta, pois quando o motivo eh 08 o campo pr_rec_cobranca.nrdconta eh gerado com valor errado
                                ,pr_nrcnvcob      => pr_rec_cobranca.nrcnvcob --> Numero do Convenio
                                ,pr_vltitulo      => pr_rec_cobranca.vltitulo --> Valor do Titulo
                                ,pr_cdbcoctl      => pr_rec_header.cdbcoctl   --> Codigo do banco na central
