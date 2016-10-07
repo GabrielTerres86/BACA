@@ -1428,7 +1428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 25/03/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 07/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1436,6 +1436,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --   Objetivo  : Procedure para efetuar a baixa do titulo por pagamento ou vencimento
     --
     --  Alteracoes: 25/03/2015 - Remover o savepoint vr_save_baixa (Douglas - Chamado 267787)
+    --             
+    --              07/10/2016 - Quando pagamento do título é no mesmo dia da liberação do borderô
+    --                           de desconto o valor do juro deve ser devolvido.
+    --                           Incluído ELSIF para quando vr_qtdprazo=0  (SD#489111-AJFink)
     --
     -- .........................................................................
 
