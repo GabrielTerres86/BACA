@@ -190,7 +190,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                                      ,pr_dscritic            OUT VARCHAR2
                                     );
 
-    /******************************************************************************/
+  /******************************************************************************/
   /**                       Gera log de envio TED                              **/
   /******************************************************************************/
   PROCEDURE pc_grava_log_ted
@@ -221,7 +221,8 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                         ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
-
+                        ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2);    --> Descricao do erro
@@ -2045,26 +2046,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;        
       END IF;    
     ELSE
-      -- Efetuaremos leitura das pltables e converteremos as mesmas para XML
-      IF vr_tab_logspb.count > 0 THEN
-        -- Criar documento XML
+      -- Criar documento XML
         dbms_lob.createtemporary(pr_clob_logspb, TRUE);
         dbms_lob.open(pr_clob_logspb, dbms_lob.lob_readwrite);
+        
+        -- Insere o cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><root>');
+                               
+        
+        
+      -- Efetuaremos leitura das pltables e converteremos as mesmas para XML
+      IF vr_tab_logspb.count > 0 THEN
+        
 
         -- Insere o cabeçalho do XML
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+                               ,pr_texto_novo     => '<linhas_logspb>');
 
         --Buscar Primeiro registro
         vr_idx_logspb := vr_tab_logspb.FIRST;
 
         --Percorrer todos as regionais
         WHILE vr_idx_logspb IS NOT NULL LOOP
-          vr_dsregistr:= '<linhas_logspb>'||
+          vr_dsregistr:= '<linhas>'||
                          '  <nrseqlog>' || nvl(vr_tab_logspb(vr_idx_logspb).nrseqlog,0)||'</nrseqlog>'||
                          '  <dslinlog>' || nvl(vr_tab_logspb(vr_idx_logspb).dslinlog,' ')||'</dslinlog>'||
-                         '</linhas_logspb>';
+                         '</linhas>';
 
            -- Escrever no XML
           gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
@@ -2080,26 +2090,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         -- Encerrar a tag raiz
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '</root>'
-                               ,pr_fecha_xml      => TRUE);
+                               ,pr_texto_novo     => '</linhas_logspb>');
       END IF;
       
       IF vr_tab_logspb_detalhe.count > 0 THEN
-        -- Criar documento XML
-        dbms_lob.createtemporary(pr_clob_logspb_detalhe, TRUE);
-        dbms_lob.open(pr_clob_logspb_detalhe, dbms_lob.lob_readwrite);
+         
 
         -- Insere o cabeçalho do XML
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+                               ,pr_texto_novo     => '<linhas_logspb_detalhe>');
 
         --Buscar Primeiro registro
         vr_idx_logspb_detalhe := vr_tab_logspb_detalhe.FIRST;
 
         --Percorrer todos as regionais
         WHILE vr_idx_logspb_detalhe IS NOT NULL LOOP
-          vr_dsregistr:= '<linhas_logspb_detalhe>'||
+          vr_dsregistr:= '<linhas>'||
                          '  <nrseqlog>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrseqlog,0)||'</nrseqlog>'||
                          '  <cdbandst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdbandst,0)||'</cdbandst>'||
                          '  <cdagedst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagedst,0)||'</cdagedst>'||
@@ -2119,9 +2126,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '  <cdagenci>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagenci,0)||'</cdagenci>'||  
                          '  <nrdcaixa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrdcaixa,0)||'</nrdcaixa>'||  
                          '  <cdoperad>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdoperad,' ')||'</cdoperad>'||                                                                                                                                                                                                          
-                         '</linhas_logspb_detalhe>';
+                         '</linhas>';
            -- Escrever no XML
-          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                  ,pr_texto_completo => vr_dstextaux
                                  ,pr_texto_novo     => vr_dsregistr
                                  ,pr_fecha_xml      => FALSE);
@@ -2132,33 +2139,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         END LOOP;
 
         -- Encerrar a tag raiz
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '</root>'
-                               ,pr_fecha_xml      => TRUE);
+                               ,pr_texto_novo     => '</linhas_logspb_detalhe>');
       END IF;
       
       IF vr_tab_logspb_totais.count > 0 THEN
-        -- Criar documento XML
-        dbms_lob.createtemporary(pr_clob_logspb_totais, TRUE);
-        dbms_lob.open(pr_clob_logspb_totais, dbms_lob.lob_readwrite);
+        
 
         -- Insere o cabeçalho do XML
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+                               ,pr_texto_novo     => '<linhas_logspb_totais>');
 
         --Buscar Primeiro registro
         vr_idx_logspb_totais := vr_tab_logspb_totais.FIRST;
 
         --Percorrer todos as regionais
         WHILE vr_idx_logspb_totais IS NOT NULL LOOP
-          vr_dsregistr:= '<linhas_logspb_totais>'||
+          vr_dsregistr:= '<linhas>'||
                          '  <qtsitlog>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).qtsitlog,'fm999g999g9990'),'0')||'</qtsitlog>'||
                          '  <vlsitlog>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).vlsitlog,'fm999g999g9990d00'),'0')||'</vlsitlog>'||
-                         '</linhas_logspb_totais>';
+                         '</linhas>';
            -- Escrever no XML
-          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                  ,pr_texto_completo => vr_dstextaux
                                  ,pr_texto_novo     => vr_dsregistr
                                  ,pr_fecha_xml      => FALSE);
@@ -2169,9 +2173,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         END LOOP;
 
         -- Encerrar a tag raiz
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '</root>'
+                               ,pr_texto_novo     => '</linhas_logspb_totais></root>'
                                ,pr_fecha_xml      => TRUE);
       END IF;
       
@@ -2214,7 +2218,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
-
+                        ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro
@@ -2302,7 +2307,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 ,craplmt.nrdcaixa
                 ,craplmt.cdoperad
                 ,craplmt.nrispbif
-                ,craplmt.inestcri)
+                ,craplmt.inestcri
+                ,craplmt.cdifconv)
         VALUES ( nvl(pr_cdcooper,0)     --> craplmt.cdcooper
                 ,pr_dttransa            --> craplmt.dttransa
                 ,nvl(pr_hrtransa,0)     --> craplmt.hrtransa
@@ -2330,7 +2336,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 ,nvl(pr_nrdcaixa,0)     --> craplmt.nrdcaixa
                 ,nvl(pr_cdoperad,' ')   --> craplmt.cdoperad
                 ,nvl(pr_nrispbif,0)     --> craplmt.nrispbif
-                ,nvl(pr_inestcri,0) );  --> craplmt.inestcri
+                ,nvl(pr_inestcri,0)     --> craplmt.inestcri
+                ,nvl(pr_cdifconv,0));   --> craplmt.cdifconv
 
     EXCEPTION
       WHEN OTHERS THEN

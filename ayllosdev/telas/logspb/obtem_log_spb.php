@@ -3,7 +3,7 @@
 	//**************************************************************************//
 	//*** Fonte: obtem_log_spb.php                                           ***//
 	//*** Autor: David                                                       ***//
-	//*** Data : Novembro/2009                Última Alteração: 09/11/2015   ***//
+	//*** Data : Novembro/2009                Última Alteração: 07/10/2016   ***//
 	//***                                                                    ***//
 	//*** Objetivo  : Obter log das transações SPB                           ***//
 	//***                                                                    ***//	 
@@ -39,6 +39,9 @@
 	//***																	 ***//
 	//***		      09/11/2015 - Adicionado campo "Crise" inestcri.		 ***//
 	//***						   (Jorge/Andrino)							 ***//
+	//***																	 ***//
+	//***		      07/10/2016 - Efetuado o envio do parametro cdifconv.   ***//
+	//***						   (Adriano)							     ***//
 	//**************************************************************************//
 	
 	session_start();
@@ -74,6 +77,7 @@
 	$nrregist = $_POST["nrregist"];
 	$inestcri = $_POST["inestcri"];
 	$vlrdated = $_POST["vlrdated"];
+	$cdifconv = $_POST["cdifconv"];
 	
 	$qtdtotal = 0;
 	$vlrtotal = 0;
@@ -130,6 +134,7 @@
 	$xmlGetLog .= "    <nrregist>".$nrregist."</nrregist>";
 	$xmlGetLog .= "    <inestcri>".$inestcri."</inestcri>";
 	$xmlGetLog .= "    <vlrdated>".$vlrdated."</vlrdated>";
+	$xmlGetLog .= "    <cdifconv>".$cdifconv."</cdifconv>";
 	$xmlGetLog .= "  </Dados>";
 	$xmlGetLog .= "</Root>";
 		
