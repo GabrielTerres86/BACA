@@ -557,7 +557,7 @@
 
 		<legend>SICREDI</legend>
 		
-		<label for="cdagesic"><? echo utf8ToHtml("A&ecirc;ncia Sicredi:"); ?></label>
+		<label for="cdagesic"><? echo utf8ToHtml("Ag&ecirc;ncia Sicredi:"); ?></label>
 		<input type="text" id="cdagesic" name="cdagesic" value="<?echo getByTagName($cooperativa->tags,'cdagesic');?>" >
 
 		<label for="nrctasic"><? echo utf8ToHtml("Conta Sicredi:"); ?></label>
