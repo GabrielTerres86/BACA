@@ -139,7 +139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
   --  Programa : TELA_ATENDA_COBRAN
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Fevereiro - 2016                 Ultima atualizacao: 04/08/2016
+  --  Data     : Fevereiro - 2016                 Ultima atualizacao: 14/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -148,6 +148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
   -- Alteracoes: 04/08/2016 - Adicionado parametro pr_inenvcob na procedure 
   -- 						  pc_habilita_convenio (Reinert).
   --
+  --             14/09/2016 - Adicionado validacao de convenio ativo na procedure
+  --                          pc_habilita_convenio (Douglas - Chamado 502770)
   ---------------------------------------------------------------------------
 
 
@@ -1088,7 +1090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 24/08/2016
+    Data    : Fevereiro/2016                 Ultima atualizacao: 14/09/2016
 
     Dados referentes ao programa:
 
@@ -1100,6 +1102,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                              (Odirlei-AMcom)
 
 				24/08/2016 - Ajuste emergencial pós-liberação do projeto 318. (Rafael)
+                             
+                14/09/2016 - Adicionado validacao de convenio ativo 
+                             (Douglas - Chamado 502770)
+                             
     ..............................................................................*/
     DECLARE
 
@@ -1130,6 +1136,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapcco.dsorgarq
               ,crapcco.flgregis
               ,crapcco.flgutceb
+              ,crapcco.flgativo
           FROM crapcco 
          WHERE crapcco.cdcooper = pr_cdcooper
            AND crapcco.nrconven = pr_nrconven;
@@ -1348,7 +1355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         vr_cdcritic := 9;
         RAISE vr_exc_saida;
       END IF;
-      
+
       vr_insitceb := pr_insitceb;
 
       -- Monta a mensagem da operacao para envio no e-mail
@@ -1389,6 +1396,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       -- Se NAO encontrou
       IF NOT vr_blnfound THEN
         vr_cdcritic := 563;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
+      IF rw_crapcco.flgativo = 0 AND pr_insitceb = 1 THEN
+        vr_cdcritic := 949;
         RAISE vr_exc_saida;
       END IF;
 
@@ -2366,7 +2379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flprotes'
                             ,pr_tag_cont => rw_cco_prc.flprotes
                             ,pr_des_erro => vr_dscritic);
-                            
+
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
@@ -3104,7 +3117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         ROLLBACK;
 
   END pc_gera_arq_ajuda;
-  
+
   --> Rotina para ativar convenio
   PROCEDURE pc_ativar_convenio( pr_nrdconta  IN crapceb.nrdconta%TYPE --> Conta
                                ,pr_nrconven  IN crapceb.nrconven%TYPE --> Convenio
