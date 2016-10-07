@@ -68,16 +68,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
   cd_craplct_cdhist_internet CONSTANT NUMBER(5) := 2138;
   cd_craplcm_cdhist_internet CONSTANT NUMBER(5) := 2139;
 
-
-  PROCEDURE pc_buscar_lote(pr_cdcooper IN craplot.cdcooper%TYPE
-                          ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
-                          ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
-                          ,pr_nrdolote IN craplot.nrdolote%TYPE
-                          ,pr_tplotmov IN craplot.tplotmov%TYPE
-                          ,pr_vlintegr IN craplot.vlcompcr%TYPE
-                          ,pr_qtinfoln OUT craplot.qtinfoln%TYPE
-                          ,pr_qtcompln OUT craplot.qtcompln%TYPE
-                          ,pr_nrseqdig OUT craplot.nrseqdig%TYPE) IS
+  PROCEDURE pc_buscar_lote_credito(pr_cdcooper IN craplot.cdcooper%TYPE
+                                  ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                                  ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                                  ,pr_nrdolote IN craplot.nrdolote%TYPE
+                                  ,pr_tplotmov IN craplot.tplotmov%TYPE
+                                  ,pr_vlintegr IN craplot.vlcompcr%TYPE
+                                  ,pr_qtinfoln OUT craplot.qtinfoln%TYPE
+                                  ,pr_qtcompln OUT craplot.qtcompln%TYPE
+                                  ,pr_nrseqdig OUT craplot.nrseqdig%TYPE) IS
 
     -- Cursor para o lote
     CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
@@ -159,7 +158,99 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     
     CLOSE cr_craplot;
 
-  END pc_buscar_lote;
+  END pc_buscar_lote_credito;
+
+  PROCEDURE pc_buscar_lote_debito(pr_cdcooper IN craplot.cdcooper%TYPE
+                                  ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                                  ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                                  ,pr_nrdolote IN craplot.nrdolote%TYPE
+                                  ,pr_tplotmov IN craplot.tplotmov%TYPE
+                                  ,pr_vlintegr IN craplot.vlcompcr%TYPE
+                                  ,pr_qtinfoln OUT craplot.qtinfoln%TYPE
+                                  ,pr_qtcompln OUT craplot.qtcompln%TYPE
+                                  ,pr_nrseqdig OUT craplot.nrseqdig%TYPE) IS
+
+    -- Cursor para o lote
+    CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
+                     ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                     ,pr_cdagenci IN craplot.cdagenci%TYPE
+                     ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                     ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+
+      SELECT ROWID
+            ,nrseqdig
+            ,qtcompln
+            ,qtinfoln
+            ,vlcompdb
+            ,vlinfodb
+        FROM craplot
+       WHERE cdcooper = pr_cdcooper
+         AND dtmvtolt = pr_dtmvtolt
+         AND cdagenci = pr_cdagenci
+         AND cdbccxlt = pr_cdbccxlt
+         AND nrdolote = pr_nrdolote;
+
+    rw_craplot cr_craplot%ROWTYPE;
+
+  BEGIN
+
+    OPEN cr_craplot(pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => pr_dtmvtolt
+                   ,pr_cdagenci => vc_cdagenci
+                   ,pr_cdbccxlt => pr_cdbccxlt
+                   ,pr_nrdolote => pr_nrdolote);
+
+    FETCH cr_craplot
+     INTO rw_craplot;
+
+    IF cr_craplot%NOTFOUND THEN
+      pr_qtinfoln := 1;
+      pr_qtcompln := 1;
+      pr_nrseqdig := 1;
+
+      INSERT INTO craplot
+        (cdcooper
+        ,dtmvtolt
+        ,cdagenci
+        ,cdbccxlt
+        ,nrdolote
+        ,tplotmov
+        ,qtinfoln
+        ,qtcompln
+        ,nrseqdig
+        ,vlcompdb
+        ,vlinfodb)
+      VALUES
+        (pr_cdcooper
+        ,pr_dtmvtolt
+        ,vc_cdagenci
+        ,pr_cdbccxlt
+        ,pr_nrdolote
+        ,pr_tplotmov
+        ,pr_qtinfoln
+        ,pr_qtcompln
+        ,pr_nrseqdig
+        ,pr_vlintegr
+        ,pr_vlintegr);
+    ELSE
+
+      pr_qtinfoln := rw_craplot.qtinfoln + 1;
+      pr_qtcompln := rw_craplot.qtcompln + 1;
+      pr_nrseqdig := rw_craplot.nrseqdig + 1;
+
+      UPDATE craplot
+         SET nrseqdig = pr_nrseqdig
+            ,qtcompln = pr_qtcompln
+            ,qtinfoln = pr_qtinfoln
+            ,vlcompdb = craplot.vlcompdb + pr_vlintegr
+            ,vlinfodb = craplot.vlinfodb + pr_vlintegr
+       WHERE ROWID = rw_craplot.rowid;
+
+    END IF;
+    
+    CLOSE cr_craplot;
+
+  END pc_buscar_lote_debito;
 
   -- Busca o valor máximo para integralização de acordo com o tipo de pessoa
   FUNCTION fn_buscar_val_max_integr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -403,15 +494,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     END IF;
 
     -- Buscar lote para lançamento de cotas
-    pc_buscar_lote(pr_cdcooper => pr_cdcooper
-                  ,pr_dtmvtolt => pr_dtmvtolt
-                  ,pr_cdbccxlt => vc_cdbccxlt
-                  ,pr_nrdolote => vc_lote_cotas_capital
-                  ,pr_tplotmov => tp_lote_cotas_capital
-                  ,pr_vlintegr => pr_vlintegr
-                  ,pr_qtinfoln => vr_qtinfoln
-                  ,pr_qtcompln => vr_qtcompln
-                  ,pr_nrseqdig => vr_nrseqdig);
+    pc_buscar_lote_credito(pr_cdcooper => pr_cdcooper
+                          ,pr_dtmvtolt => pr_dtmvtolt
+                          ,pr_cdbccxlt => vc_cdbccxlt
+                          ,pr_nrdolote => vc_lote_cotas_capital
+                          ,pr_tplotmov => tp_lote_cotas_capital
+                          ,pr_vlintegr => pr_vlintegr
+                          ,pr_qtinfoln => vr_qtinfoln
+                          ,pr_qtcompln => vr_qtcompln
+                          ,pr_nrseqdig => vr_nrseqdig);
 
 
     -- Lancamentos de cotas/capital - craplct
@@ -455,15 +546,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     END;
 
     -- Buscar lote para lançamento de deposito a vista
-    pc_buscar_lote(pr_cdcooper => pr_cdcooper
-                  ,pr_dtmvtolt => pr_dtmvtolt
-                  ,pr_cdbccxlt => vc_cdbccxlt
-                  ,pr_nrdolote => vc_lote_deposito_vista
-                  ,pr_tplotmov => tp_lote_deposito_vista
-                  ,pr_vlintegr => pr_vlintegr
-                  ,pr_qtinfoln => vr_qtinfoln
-                  ,pr_qtcompln => vr_qtcompln
-                  ,pr_nrseqdig => vr_nrseqdig);
+      pc_buscar_lote_debito(pr_cdcooper => pr_cdcooper
+                            ,pr_dtmvtolt => pr_dtmvtolt
+                            ,pr_cdbccxlt => vc_cdbccxlt
+                            ,pr_nrdolote => vc_lote_deposito_vista
+                            ,pr_tplotmov => tp_lote_deposito_vista
+                            ,pr_vlintegr => pr_vlintegr
+                            ,pr_qtinfoln => vr_qtinfoln
+                            ,pr_qtcompln => vr_qtcompln
+                            ,pr_nrseqdig => vr_nrseqdig);
 
     -- cria lançamento de depositos a vista - craplcm
 
@@ -658,25 +749,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
        RAISE vr_exc_erro;
      END IF;
 
-     -- atualizar lote de cotas de capital
+     -- atualizar lote de cotas de capital (crédito lote)
      UPDATE craplot
         SET qtcompln = (qtcompln - 1)
            ,qtinfoln = (qtinfoln - 1)
            ,vlcompcr = (vlcompcr - rw_craplct.vllanmto)
            ,vlinfocr = (vlinfocr - rw_craplct.vllanmto)
       WHERE dtmvtolt = rw_craplct.dtmvtolt
-        AND cdagenci = pr_cdagenci
+        AND cdagenci = vc_cdagenci
         AND cdbccxlt = vc_cdbccxlt
         AND nrdolote = vc_lote_cotas_capital;
 
-     -- atualizar lote de depósito
+     -- atualizar lote de depósito (débito lote)
      UPDATE craplot
         SET qtcompln = (qtcompln - 1)
            ,qtinfoln = (qtinfoln - 1)
-           ,vlcompcr = (vlcompcr - rw_craplct.vllanmto)
-           ,vlinfocr = (vlinfocr - rw_craplct.vllanmto)
+           ,vlcompdb = (vlcompdb - rw_craplct.vllanmto)
+           ,vlinfodb = (vlinfodb - rw_craplct.vllanmto)
       WHERE dtmvtolt = rw_craplct.dtmvtolt
-        AND cdagenci = pr_cdagenci
+        AND cdagenci = vc_cdagenci
         AND cdbccxlt = vc_cdbccxlt
         AND nrdolote = vc_lote_deposito_vista;
 
