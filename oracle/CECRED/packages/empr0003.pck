@@ -26,6 +26,11 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
   --                          desta package.(Carlos Rafael Tanholi).  
   --
+  --             24/08/2016 - (Projeto 343)
+  --                        - Adicionada varíavel para verificação de  versão para 
+  --                          impressão de novos parágros nos contratos de forma condicional; 
+  --                          (Ricardo Linhares)    
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Verifica da TAB016 se o interveniente esta habilitado
@@ -755,6 +760,12 @@ BEGIN
                    26/11/2015 - Adicionado nova validacao de origem 
                                 "MICROCREDITO PNMPO BNDES CECRED" conforme solicitado
                                 no chamado 360165 (Kelvin)             
+                                no chamado 360165 (Kelvin)
+                                
+                    24/08/2016 - (Projeto 343)
+                               - Adicionada varíavel para verificação de  versão para 
+                                 impressão de novos parágros nos contratos de forma condicional; 
+                                 (Ricardo Linhares)             
 
     ............................................................................. */
 
@@ -973,6 +984,9 @@ BEGIN
       vr_nmconjug2      crapavt.nmconjug%TYPE;
       vr_nrcpfcjg2      VARCHAR2(50);
 
+      -- controle versão
+      vr_nrversao       NUMBER;
+
       -- variaveis de críticas
       vr_tab_erro       GENE0001.typ_tab_erro;
       vr_des_reto       VARCHAR2(10);
@@ -1000,6 +1014,13 @@ BEGIN
         RAISE vr_exc_saida; -- encerra programa e retorna critica
       END IF;
       CLOSE cr_crawepr;
+
+      -- Verifica a versão do contrato
+      IF rw_crawepr.dtmvtolt < TO_DATE('26/10/2016','DD/MM/RRRR') THEN
+        vr_nrversao := 0;
+      ELSE
+        vr_nrversao := 1;
+      END IF;
 
       -- Abre o cursor com as informacoes do emprestimo
       OPEN cr_crapepr;
@@ -1443,6 +1464,7 @@ BEGIN
           END IF;
           -- gera corpo do xml
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                                 '<versao>'        ||vr_nrversao                             ||'</versao>' ||
                                  '<digitalizacao>' ||vr_digitalizacao                        ||'</digitalizacao>'||
                                  '<titulo>'        ||vr_dstitulo                             || '</titulo>'||
                                  '<nmemitente>'    ||rw_crawepr.nmprimtl                     ||'</nmemitente>'||

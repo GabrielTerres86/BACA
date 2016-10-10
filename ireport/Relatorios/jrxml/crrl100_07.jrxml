@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
-	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.zoom" value="1.3636363636363653"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="147"/>
+	<property name="ireport.y" value="2242"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -198,6 +198,9 @@
 	</field>
 	<field name="negociavel" class="java.lang.String">
 		<fieldDescription><![CDATA[negociavel]]></fieldDescription>
+	</field>
+	<field name="versao" class="java.lang.Integer">
+		<fieldDescription><![CDATA[versao]]></fieldDescription>
 	</field>
 	<background>
 		<band height="850" splitType="Stretch">
@@ -762,14 +765,33 @@ b) Não realizar o pagamento, na data de vencimento pactuada, de 02 (duas) prest
 				<reportElement uuid="584c2636-53cc-4695-861e-5b552df4716c" x="0" y="808" width="100" height="1"/>
 			</break>
 		</band>
-		<band height="850">
+		<band height="103">
 			<staticText>
-				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="93" width="466" height="688"/>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="93" width="466" height="10"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
 				</textElement>
-				<text><![CDATA[c) Vier a falecer. <br>
-<u>8. Atraso no Pagamento e Multa</u> – Caso ocorra atraso no pagamento ou vencimento antecipado, serão devidos os encargos remuneratórios e juros de mora especificados nesta cédula, vigente entre a data de vencimento até a data do efetivo pagamento e multa contratual de 2% (dois por cento), sobre o montante apurado, além dos impostos que incidam ou venham a incidir sobre a operação contratada.<br>
+				<text><![CDATA[c) Vier a falecer.]]></text>
+			</staticText>
+		</band>
+		<band height="55">
+			<printWhenExpression><![CDATA[$F{versao} > 0]]></printWhenExpression>
+			<staticText>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="0" width="466" height="55"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[d) Desenvolver atividades que importem em incentivo à prostituição, que utilizem mão de obra infantil, que tenham mantido seus trabalhadores em condições análogas à escravidão ou crime contra o meio ambiente, salvo se efetuada reparação imposta ou quando eventualmente estiver sendo cumprida a pena imposta à <b>Emitente</b>.<br>
+e) Descumprir qualquer das disposições constantes na Política de Responsabilidade Socioambiental da <b>Cooperativa</b>.]]></text>
+			</staticText>
+		</band>
+		<band height="757">
+			<staticText>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="0" width="466" height="688"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[<u>8. Atraso no Pagamento e Multa</u> – Caso ocorra atraso no pagamento ou vencimento antecipado, serão devidos os encargos remuneratórios e juros de mora especificados nesta cédula, vigente entre a data de vencimento até a data do efetivo pagamento e multa contratual de 2% (dois por cento), sobre o montante apurado, além dos impostos que incidam ou venham a incidir sobre a operação contratada.<br>
 a) Caso seja necessário realizar a cobrança judicial ou administrativa de quaisquer valores em atraso, o Emitente deverá pagar todas as despesas desta cobrança, incluindo custos de postagem de carta de cobrança, cobrança telefônica, inclusão de dados nos cadastros de proteção ao crédito, e custas e honorários advocatícios. O Emitente também poderá reembolsar-se de todos os custos que tiver com a cobrança de qualquer obrigação da Cooperativa.<br>
 b) O recebimento, pela Cooperativa, de determinada parcela não significará quitação das anteriores.<br>
 <u>9. Liquidação Antecipada</u> - O Emitente poderá antecipar pagamentos de parcelas, fazendo jus a um desconto proporcional no valor dos encargos financeiros, apurados pro rata temporis pelo período compreendido entre o pagamento antecipado e o efetivo vencimento das parcelas vincendas, cujo montante apurado será deduzido do valor projetado das parcelas no momento da liquidação do contrato.<br>
@@ -792,10 +814,10 @@ g) O Emitente e os Devedores Solidários permanecem responsáveis pelas obrigaç
 				<elementGroup/>
 			</elementGroup>
 			<break>
-				<reportElement uuid="e8a282b1-96ea-4452-8744-32b97ce96e2e" x="0" y="827" width="100" height="1"/>
+				<reportElement uuid="e8a282b1-96ea-4452-8744-32b97ce96e2e" x="0" y="734" width="100" height="1"/>
 			</break>
 		</band>
-		<band height="850">
+		<band height="539">
 			<staticText>
 				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="6" y="93" width="466" height="391"/>
 				<textElement textAlignment="Justified" markup="html">
@@ -813,19 +835,6 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 <u>18. Devedores solidários</u> - As pessoas ao final nomeadas, designadas Devedores Solidários, declaram-se solidariamente responsáveis por todas as obrigações assumidas pelo Emitente e assinam esta cédula concordando com os seus termos.<br>
 <u>19. Solução amigável de conflitos</u> - Para a solução amigável de eventuais conflitos relacionados a esta cédula, o Emitente poderá dirigir seu pedido ou reclamação ao Posto de Atendimento]]></text>
 			</staticText>
-			<break>
-				<reportElement uuid="b9bf629c-679e-41fa-87f1-2bae929dcf70" x="0" y="791" width="100" height="1"/>
-			</break>
-			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="9" y="606" width="150" height="11"/>
-				<textElement>
-					<font fontName="Courier New" size="8"/>
-				</textElement>
-				<text><![CDATA[Emitente]]></text>
-			</staticText>
-			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="9" y="604" width="209" height="1"/>
-			</line>
 			<textField>
 				<reportElement uuid="b71853e8-3bcc-4f09-8b39-97edab1045b3" x="6" y="483" width="466" height="29"/>
 				<textElement textAlignment="Justified">
@@ -834,19 +843,44 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<textFieldExpression><![CDATA[$F{amigalvel}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="6" y="511" width="466" height="39"/>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="6" y="511" width="466" height="28"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
 				</textElement>
 				<text><![CDATA[<u> 20. Declaração de Leitura</u> - O Emitente e o(s) Devedor(es) Solidário(s), ao assinarem as Condições Específicas desta Cédula, declaram que a leram previamente e que não possuem nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
 			</staticText>
+		</band>
+		<band height="64">
+			<printWhenExpression><![CDATA[$F{versao} > 0]]></printWhenExpression>
+			<staticText>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="6" y="0" width="466" height="64"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[<u>21. Declaração de Responsabilidade Socioambiental</u> – Declara conhecer a Política de Responsabilidade Socioambiental da Cooperativa e cumprir o disposto na legislação referente à Política Nacional do Meio Ambiente, não destinando os recursos decorrentes desta Cédula a quaisquer finalidades e/ou projetos que possam causar danos ambientais e/ou sociais, adotando durante o prazo de vigência desta Cédula, medidas e ações destinadas a evitar ou corrigir danos causados ao Meio Ambiente, segurança e medicina do trabalho, mantendo ainda, em situação regular suas obrigações junto aos órgãos do meio ambiente.]]></text>
+			</staticText>
+		</band>
+		<band height="300">
+			<break>
+				<reportElement uuid="b9bf629c-679e-41fa-87f1-2bae929dcf70" x="0" y="221" width="100" height="1"/>
+			</break>
+			<staticText>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="9" y="56" width="150" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="8"/>
+				</textElement>
+				<text><![CDATA[Emitente]]></text>
+			</staticText>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" positionType="Float" x="24" y="709" width="194" height="1" isRemoveLineWhenBlank="true">
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="9" y="54" width="209" height="1"/>
+			</line>
+			<line>
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" positionType="Float" x="24" y="139" width="194" height="1" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="f6b0ae58-dd15-4c23-8594-b902521a218a" positionType="Float" x="40" y="710" width="178" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="f6b0ae58-dd15-4c23-8594-b902521a218a" positionType="Float" x="40" y="140" width="178" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -855,7 +889,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<textFieldExpression><![CDATA[$F{nmaval01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="39205f8a-24e5-45ed-88e6-e05858316e98" positionType="Float" x="40" y="719" width="167" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="39205f8a-24e5-45ed-88e6-e05858316e98" positionType="Float" x="40" y="149" width="167" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -864,7 +898,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<textFieldExpression><![CDATA[$F{cpfava01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="f0510262-3445-49d7-97e3-9f127aec0dc7" positionType="Float" x="60" y="728" width="159" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="f0510262-3445-49d7-97e3-9f127aec0dc7" positionType="Float" x="60" y="158" width="159" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -873,7 +907,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<textFieldExpression><![CDATA[$F{endava01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="ad273934-494d-43c1-ab99-5962f927e7f4" positionType="Float" x="56" y="759" width="152" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="ad273934-494d-43c1-ab99-5962f927e7f4" positionType="Float" x="56" y="189" width="152" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -882,7 +916,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<textFieldExpression><![CDATA[$F{celava01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="3257e6eb-71ff-47f2-b657-6983a328000e" positionType="Float" x="292" y="730" width="178" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="3257e6eb-71ff-47f2-b657-6983a328000e" positionType="Float" x="292" y="160" width="178" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -891,7 +925,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<textFieldExpression><![CDATA[$F{endcjg01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="4cb53ab2-a36c-4921-89bd-28c33493d82a" positionType="Float" x="274" y="720" width="161" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="4cb53ab2-a36c-4921-89bd-28c33493d82a" positionType="Float" x="274" y="150" width="161" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -900,7 +934,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<textFieldExpression><![CDATA[$F{cpfcjg01}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="242" y="672" width="198" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="242" y="102" width="198" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -909,7 +943,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<text><![CDATA[Cônjuge dos Devedores Solidários:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="242" y="699" width="13" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="242" y="129" width="13" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -918,7 +952,7 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<text><![CDATA[1)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="243" y="710" width="59" height="30" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="243" y="140" width="59" height="30" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -930,7 +964,7 @@ Endereço:
 ]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="c168af1e-1424-4209-85b5-f3c3b8f419f5" positionType="Float" x="274" y="710" width="193" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="c168af1e-1424-4209-85b5-f3c3b8f419f5" positionType="Float" x="274" y="140" width="193" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -939,12 +973,12 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{nmcjg01}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" positionType="Float" x="258" y="709" width="209" height="1" isRemoveLineWhenBlank="true">
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" positionType="Float" x="258" y="139" width="209" height="1" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="458cc7f1-1955-4e42-93cb-22cb0f6858a2" positionType="Float" x="292" y="761" width="171" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="458cc7f1-1955-4e42-93cb-22cb0f6858a2" positionType="Float" x="292" y="191" width="171" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -953,7 +987,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{celcjg01}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="247" y="761" width="46" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="247" y="191" width="46" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -962,7 +996,7 @@ Endereço:
 				<text><![CDATA[Telefone:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="9" y="672" width="211" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="9" y="102" width="211" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -971,7 +1005,7 @@ Endereço:
 				<text><![CDATA[Devedores Solidários:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="12" y="699" width="13" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="12" y="129" width="13" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -980,7 +1014,7 @@ Endereço:
 				<text><![CDATA[1)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="11" y="710" width="59" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="11" y="140" width="59" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -992,7 +1026,7 @@ Endereço:
 ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="11" y="758" width="46" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" positionType="Float" x="11" y="188" width="46" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1229,11 +1263,11 @@ Emitente]]></text>
 compreendido seu conteúdo e estando ciente das condições e obrigações que assumi na presente operação.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="11" y="91" width="179" height="11"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="11" y="83" width="179" height="19"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
-				<text><![CDATA[A rogo do EMITENTE assina o rogado:]]></text>
+				<text><![CDATA[A rogo do EMITENTE/INTERVENIENTE/ DEVEDOR SOLIDÁRIO assina o rogado:]]></text>
 			</staticText>
 			<staticText>
 				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="11" y="102" width="38" height="23"/>
