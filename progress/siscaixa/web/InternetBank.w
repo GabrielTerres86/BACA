@@ -1081,6 +1081,9 @@ DEF VAR aux_vlpcttar AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlpacote AS DECI                                           NO-UNDO.
 DEF VAR aux_inconsul AS INTE										   NO-UNDO.
 
+/*  Operacao 176/177 */
+DEF VAR aux_vintegra AS DECIMAL                                        NO-UNDO.
+
 DEF VAR aux_idrazfan AS INTE										   NO-UNDO.
 DEF VAR aux_nrdcaixa AS INTE										   NO-UNDO.
 DEF VAR aux_titulo1  AS DECI										   NO-UNDO.
@@ -2030,14 +2033,20 @@ PROCEDURE process-web-request :
 			IF  aux_operacao = 172 THEN /* Termo pacote de tarifas PDF */
 				RUN proc_operacao172.
 		ELSE
-        IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
-            RUN proc_operacao173. 
-    ELSE
+			IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
+				RUN proc_operacao173. 
+		ELSE
             IF  aux_operacao = 174 THEN /* Busca configurações para nome da emissão */
                 RUN proc_operacao174.
 		ELSE
             IF  aux_operacao = 175 THEN /* Grava configurações de nome da emissão */
                 RUN proc_operacao175.
+		ELSE
+			IF  aux_operacao = 176 THEN /* Integralizar cotas de capital */
+				RUN proc_operacao176.                
+		ELSE
+			IF  aux_operacao = 177 THEN     /* Cancelar integralização */
+				RUN proc_operacao177.  
 		ELSE
             IF  aux_operacao = 186 THEN /* Retorna valor atualizado de titulos vencidos */
                 RUN proc_operacao186.
