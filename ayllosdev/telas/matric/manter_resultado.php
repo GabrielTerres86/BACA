@@ -7,12 +7,14 @@
 	  --------------
 	  ALTERAÇÕES   : 22/02/2011 - Criada tabela para mostrar os Produtos/Servicos ativos quando o cooperado for deminitdo (Jorge)
  				
- 					 31/08/2011 - Realizado a chamada da procedure alerta_fraude (Adriano).
+ 				 31/08/2011 - Realizado a chamada da procedure alerta_fraude (Adriano).
 				  
-					 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
+				 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
 				 
 					 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
 					
+				     18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
+
 					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
 	*/
 	//----------------------------------------------------------------------------------------------------------------------------------	
@@ -200,10 +202,11 @@
 		$nomeForm  = ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
 		$metodoNao = ( $inpessoa == 1 ) ? "$('#dtnasctl','#frmFisico').focus();" : "$('#dtcnscpf','#frmJuridico').focus();";
 	
-		// Se poussui uma conta ja, perguntar se deseja duplicar 
+		// Se ja poussui uma conta, perguntar se deseja duplicar 
 		if ( count ($xmlObjeto->inf) == 1) {
 			$nrdconta_org = $xmlObjeto->inf[0]->nrdconta;
-			$metodoSim = "selecionaConta('$nrdconta_org');";
+			echo "outconta = '".$nrdconta_org."';";
+			$metodoSim = "mostrarRotina('$operacao');";
 			exibirConfirmacao('CPF/CNPJ já possui a conta ' . $nrdconta_org . 
 							  ' na cooperativa. Deseja efetuar a duplicação?','Confirmação - MATRIC',$metodoSim,$metodoNao,false);
 		}

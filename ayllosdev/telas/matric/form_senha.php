@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 09/05/2014
  * OBJETIVO     : Formulario senha
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 18/02/2016 - Adicionado parametro POST operacao. (Jorge/Thiago) - SD 394596
  * --------------
  */ 
 ?>
@@ -16,7 +16,9 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
-	isPostMethod();		
+	isPostMethod();	
+
+	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 ?>
 
 <form id="frmSenha" name="frmSenha" class="formulario" onsubmit="return false;">
@@ -35,5 +37,5 @@
 
 <div id="divBotoes2">
 	<a href="#" class="botao" id="btVoltar" onclick="fechaRotina($('#divRotina')); return false;">Cancelar</a>
-	<a href="#" class="botao" id="btOk" onclick="validarSenha(); return false;">Ok</a>
+	<a href="#" class="botao" id="btOk" onclick="validarSenha('<?php echo $operacao; ?>'); return false;">Ok</a>
 </div>

@@ -10,6 +10,7 @@
 							   apenas do cpf/cnpj e removido a possibilidade de
 							   alteração pela opção "X", conforme solicitado no 
 							   chamado 321572 (Kelvin).
+				  18/02/2016 - Incluido operacao LCC e LCD para mostrar titulo para pedir senha do coordenador. (Jorge/Thiago) - SD 394596			   
  */	 
 ?>
 
@@ -21,7 +22,7 @@
 	require_once("../../includes/funcoes.php");
 	
 	$operacao = $_POST['operacao'];
-	if($operacao == 'VX' || $operacao == 'VJ'){
+	if($operacao == 'VX' || $operacao == 'VJ' || $operacao == 'LCD' || $operacao == 'LCC'){
 		$titulo = 'PARA CONTINUAR, PEÇA LIBERAÇÃO AO COORDENADOR';
 	}
 	else{
@@ -39,7 +40,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml($titulo); ?></td>
+								<td id="tdTituloRotina" class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml($titulo); ?></td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="btnVoltar();fechaRotina($('#divRotina')); return false;" ><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>
