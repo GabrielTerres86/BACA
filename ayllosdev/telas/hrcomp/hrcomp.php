@@ -5,8 +5,9 @@
  * DATA CRIAÇÃO : 24/02/2014
  * OBJETIVO     : Mostrar tela HRCOMP.
  * --------------
- * ALTERAÇÕES   : 
- * --------------
+ * ALTERAÇÕES   : 21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
+ * --------------              escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
+ *                             (Lucas Ranghetti #525623)
  */
 	
 	session_start();
@@ -80,7 +81,7 @@
 													<table width="100%"  border= "0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 														<tr>
 															<td align="center">
-																<table width="545" border="0" cellpadding="0" cellspacing="0" style="backgroung-color: #F4F3F0;">
+																<table width="645" border="0" cellpadding="0" cellspacing="0" style="backgroung-color: #F4F3F0;">
 																	<tr>
 																		<td>
 																			<!-- INCLUDE DA TELA DE PESQUISA -->

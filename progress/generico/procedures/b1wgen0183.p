@@ -1,11 +1,11 @@
 
-/*.............................................................................
+/*..............................................................................
 
   Programa: generico/procedures/b1wgen0183.p
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Tiago
-  Data    : Fevereiro/14                           Ultima alteracao: 13/06/2016
+  Data    : Fevereiro/14                           Ultima alteracao: 21/09/2016
 
   Objetivo  : Procedures referentes a tela HRCOMP.
 
@@ -19,9 +19,13 @@
               13/06/2016 - Incluir flgativo na busca das cooperativas na PROCEDURE
                            grava_dados (Lucas Ranghetti #462237)
 
-	          25/08/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET) e
-			               nao permitir alterar o horario para antes do horario
-						   atual (Tiago/Thiago #493693).
+	            25/08/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET) e
+			                     nao permitir alterar o horario para antes do horario
+						               atual (Tiago/Thiago #493693).
+                           
+              21/09/2016 - Na procedure grava_dados incluir tratamento para caso 
+                           alterar a cooperativa cecred e escolher o programa
+                           "DEVOLUCAO DOC" - Melhoria 316 (Lucas Ranghetti #525623)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -170,10 +174,8 @@ PROCEDURE carrega_cooperativas:
     ASSIGN tt-coop.cdcooper = 0
            tt-coop.nmrescop = "TODAS".
 
-    FOR EACH crapcop NO-LOCK:
-
-        IF  crapcop.cdcooper = 3 THEN
-            NEXT.
+    FOR EACH crapcop WHERE crapcop.flgativo = TRUE 
+                     NO-LOCK BY crapcop.dsdircop:
 
         CREATE tt-coop.
         ASSIGN tt-coop.cdcooper = crapcop.cdcooper
@@ -323,8 +325,12 @@ PROCEDURE grava_dados:
     IF  aux_flgtodas = TRUE THEN
         DO:
 
-            FOR EACH crapcop WHERE crapcop.cdcooper <> 3 
-                               AND crapcop.flgativo = TRUE NO-LOCK:
+            FOR EACH crapcop WHERE crapcop.flgativo = TRUE NO-LOCK:
+            
+                /* Para a cecred somente alteramos o DEVOLUCAO DOC */
+                IF  crapcop.cdcooper = 3 AND 
+                    par_dsprogra <> "DEVOLUCAO DOC" THEN
+                    NEXT.
                                
                 /*Valida sequencia da execucao dos processos para nao deixar cadastrar
                   horarios de forma que altere essa sequencia de execucao. */
@@ -464,6 +470,22 @@ PROCEDURE grava_dados:
         END.
     ELSE
         DO:
+            IF  par_cdcoopex = 3 AND 
+                par_dsprogra <> "DEVOLUCAO DOC" THEN
+                DO:
+                    ASSIGN aux_cdcritic = 0
+    								       aux_dscritic = "Cooperativa nao permite alteracao.".
+    
+    							  RUN gera_erro (INPUT par_cdcooper,
+    							  			         INPUT par_cdagenci,
+    							  			         INPUT 0,
+    							  			         INPUT 1,     /** Sequencia **/
+    							  			         INPUT aux_cdcritic,
+    							  			         INPUT-OUTPUT aux_dscritic).
+                    
+    							  RETURN "NOK". 
+                END.
+            
             /*Valida sequencia da execucao dos processos para nao deixar cadastrar
               horarios de forma que altere essa sequencia de execucao. */
             RUN valida_seq_execucao(INPUT par_cdcoopex,
@@ -909,7 +931,7 @@ END PROCEDURE.
 PROCEDURE reagenda_job:
 
     DEF INPUT PARAM par_cdcooper    LIKE    crapcop.cdcooper    NO-UNDO.
-	DEF INPUT PARAM par_cdprogra    LIKE    craphec.cdprogra    NO-UNDO.
+	  DEF INPUT PARAM par_cdprogra    LIKE    craphec.cdprogra    NO-UNDO.
     DEF INPUT PARAM par_dtmvtolt    LIKE    crapdat.dtmvtolt    NO-UNDO.
     DEF INPUT PARAM par_ageinihr    AS      INTEGER             NO-UNDO.
     DEF INPUT PARAM par_ageinimm    AS      INTEGER             NO-UNDO.

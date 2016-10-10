@@ -4,6 +4,10 @@
  * CRIAÇÃO      : Tiago Machado
  * DATA CRIAÇÃO : 25/02/2014
  * OBJETIVO     : Tela do formulario de detalhamento dos arquivos da comp
+ * --------------
+ * ALTERAÇÕES   : 21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
+ * --------------              escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
+ *                             (Lucas Ranghetti #525623)
  */	 
 ?>
 
@@ -25,7 +29,7 @@
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
 								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('Detalhamento de Tarifas') ?></td>
+								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('Detalhamento de hor&aacute;rios') ?></td>
 								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divRotina')); carregaDetalhamento(); return false;"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
 								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
 							</tr>
@@ -54,7 +58,7 @@
 											<table width="100%">
 												<tr>		
 													<td> 	
-														<label for="processo"><b><? echo utf8ToHtml('Processo:') ?></b>&nbsp;&nbsp;</label>
+														<label for="processo"><b><? echo utf8ToHtml('Processo:') ?></b></label>
 														<label for="nmprocex"><b><? echo utf8ToHtml('VLB') ?></b></label>
 														<input type="hidden" id="nmprocex" name="nmprocex" value="" />
 													</td>
@@ -83,7 +87,7 @@
 									</div>
 									<div id="divBotoesfrmDetalhaHrcomp" style="margin-bottom: 5px; text-align:center;" >
 										<a href="#" class="botao" id="btVoltar"  	onClick="<? echo 'fechaRotina($(\'#divRotina\'));'; ?> return false;">Voltar</a>
-										<a href="#" class="botao" id="btSalvar"  	onClick="<? echo 'fechaRotina($(\'#divRotina\')); realizaOperacao(); carregaDetalhamento();'; ?> return false;">Concluir</a>										
+										<a href="#" class="botao" id="btSalvar"  	onClick="<? echo 'fechaRotina($(\'#divRotina\')); realizaOperacao();'; ?> return false;">Concluir</a>										
 									</div>									
 								</td>
 							</tr>

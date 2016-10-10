@@ -5,8 +5,10 @@
  * DATA CRIAÇÃO : 21/02/2013 
  * OBJETIVO     : Rotina para manter as operações da tela CADGRU
  * --------------
- * ALTERAÇÕES   : 
- * -------------- 
+ * ALTERAÇÕES   : 21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
+ * --------------              escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
+ *                             (Lucas Ranghetti #525623)
+ *  
  */
 ?> 
 
@@ -79,7 +81,7 @@
 	}
 	
 	if ($cddopcao == "A"){
-		echo 'showError("inform","Processo alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","unblockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';		
+		echo 'showError("inform","Processo alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos"," carregaDetalhamento();unblockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));");';
 	}
 			
 ?>
