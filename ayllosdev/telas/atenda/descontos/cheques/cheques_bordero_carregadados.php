@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_bordero_carregadados.php                          
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 02/01/2015
+	 Data : Novembro/2008                Última Alteração: 20/06/2016
 	                                                                  
 	 Objetivo  : Mostrar os dados do bordero para fazer a liberação   
 	             ou análise				        				   
@@ -33,8 +33,9 @@
 							  format pre-definido para nao ocorrer 
 							  divergencia ao pesquisar no SmartShare.
                               (Chamado 181988) - (Fabricio)
-			  
-							  
+
+                 20/06/2016 - Inicializacao da aux_inconfi6. (Jaison/James)
+
 	************************************************************************/
 	
 	session_start();
@@ -210,15 +211,17 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 			aux_inconfi2 = 11; 
 			aux_inconfi3 = 21; 
 			aux_inconfi4 = 71; 
-			aux_inconfi5 = 30;
-			liberaAnalisaBorderoDscChq('N','1','11','21','71','30','1','0');
+			aux_inconfi5 = 30; 
+			aux_inconfi6 = 51;
+			liberaAnalisaBorderoDscChq('N','1','11','21','71','30','51','1','0');
 <?php } elseif ($cddopcao == "L") { ?>
 			aux_inconfir = 1; 
 			aux_inconfi2 = 11; 
 			aux_inconfi3 = 21; 
 			aux_inconfi4 = 71; 
-			aux_inconfi5 = 30;
-			showConfirmacao("Deseja liberar o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscChq('L','1','11','21','71','30','1','0')","metodoBlock()","sim.gif","nao.gif");
+			aux_inconfi5 = 30; 
+			aux_inconfi6 = 51;
+			showConfirmacao("Deseja liberar o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscChq('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
 <?php } elseif ($cddopcao == "E") { ?>
 			showConfirmacao("Deseja excluir o border&ocirc; de desconto de cheques?","Confirma&ccedil;&atilde;o - Ayllos","excluirBorderoDscChq()","metodoBlock()","sim.gif","nao.gif");
 <?php } ?>
