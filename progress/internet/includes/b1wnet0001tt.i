@@ -96,8 +96,9 @@ DEF TEMP-TABLE tt-gera-blt NO-UNDO
     FIELD nrinssac LIKE crapcob.nrinssac.
      
 DEF TEMP-TABLE tt-dados-sacado-blt NO-UNDO LIKE crapsab
-    FIELD flgremov AS LOGI
-    FIELD flgsacad AS LOGI
-    FIELD dscriend AS CHAR.
+	FIELD dsdemail AS CHAR
+	FIELD flgremov AS LOGI
+	FIELD flgsacad AS LOGI
+	FIELD dscriend AS CHAR
  
 /*............................................................................*/
