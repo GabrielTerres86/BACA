@@ -21,6 +21,7 @@
  * 014: [03/08/2015] Gabriel (RKAM)          : Reformulacao cadastral.
  * 015: [19/09/2015] Gabriel (RKAM) Projeto 217: Ajuste para chamada da rotina Produtos.
  * 016: [05/01/2016] Carlos (CECRED)         : #350828 Impressao de declaração de pessoa exposta politicamente.
+ * 017: [14/09/2016] Kelvin (CECRED) 		 : Ajuste feito para resolver o problema relatado no chamado 506554.
  */
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela CONTAS
@@ -474,7 +475,7 @@ function formataCabecalho() {
         $('hr', '#frmCabContas').css({ 'background-color': '#777', 'height': '1px', 'margin': '24px 0px 2px 0px' });
     }
 
-    if (inpessoa != 2) { // CASO PF
+    if (inpessoa < 2) { // CASO PF
         $('#divRotinaPJ', '#frmCabContas').css('visibility', 'hidden').empty();
         $('#divRotinaPF', '#frmCabContas').css('visibility', 'visible');
         grupoPF.desabilitaCampo();

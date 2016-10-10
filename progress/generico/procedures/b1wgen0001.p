@@ -40,7 +40,7 @@
 
    Programa: b1wgen0001.p                  
    Autora  : Mirtes.
-   Data    : 12/09/2005                      Ultima atualizacao: 31/08/2016
+   Data    : 12/09/2005                      Ultima atualizacao: 03/10/2016
 
    Dados referentes ao programa:
 
@@ -377,7 +377,6 @@
 				02/08/2016 - Nao tratar parametro de isencao de extrato na cooperativa
                              quando cooperado possuir servico de extrato no pacote de 
                              tarifas (Diego).
-
                              
                 23/08/2016 - Alteracao da procedure obtem-saldo para uso da procedure 
                              Oracle pc_obtem_saldo_car criada para tratar e retornar
@@ -392,6 +391,9 @@
                 05/09/2016 - Correcao no comando usado para consulta do campo dtmvtoan 
 							 da CRAPDAT e na logica usada para calculo da media
 							 procedute carrega_medias.(Carlos Rafael Tanholi. SD 513352).
+
+                03/10/2016 - Correcao no carregamento da TEMP TABLE da procedure obtem-saldo
+							 com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1559,7 +1561,7 @@ PROCEDURE gera-tarifa-extrato:
                           ASSIGN aux_cdbattar = "EXTMETAAPF".
                       ELSE
                           ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                  END.
+        END.
               ELSE
                   DO:
 					  ASSIGN aux_tipotari = 6. 
@@ -2702,10 +2704,10 @@ PROCEDURE obtem-saldo:
 	
     EMPTY TEMP-TABLE tt-saldos.
     EMPTY TEMP-TABLE tt-erro.
-	
       
+        
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+   
     RUN STORED-PROCEDURE pc_obtem_saldo_car 
         aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper, /* Cooperativa */
@@ -2716,27 +2718,27 @@ PROCEDURE obtem-saldo:
                           INPUT par_dtrefere, /* Dt. Referencia */
                          OUTPUT "", /* (OK|NOK) */
                          OUTPUT ?). /* Tabela Extrato da Conta */
-
+            
     CLOSE STORED-PROC pc_obtem_saldo_car 
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
+
     ASSIGN aux_dscritic = pc_obtem_saldo_car.pr_des_reto
                           WHEN pc_obtem_saldo_car.pr_des_reto <> ?.
-        
+
     IF  aux_dscritic <> ""  THEN
-    DO:                                  
+        DO:
         CREATE tt-erro.
         ASSIGN tt-erro.dscritic = aux_dscritic.
+            
+            RETURN "NOK".
+        END.
+    ELSE
+        DO:
 
-        RETURN "NOK".
-    END.      
-    ELSE 
-    DO:
-      
       CREATE tt-saldos.
-      
+   
       EMPTY TEMP-TABLE tt-saldos.
 
       /*Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
@@ -2757,19 +2759,19 @@ PROCEDURE obtem-saldo:
       CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
       IF ponteiro_xml <> ? THEN
-          DO:
+        DO: 
               xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
               xDoc:GET-DOCUMENT-ELEMENT(xRoot).
-
+            
               DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
 
                   xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
-
+        
                   IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
                       NEXT. 
 
                   IF xRoot2:NUM-CHILDREN > 0 THEN
-                      CREATE tt-extrato_conta.
+                      CREATE tt-saldos.
 
                   DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
 
@@ -2779,7 +2781,7 @@ PROCEDURE obtem-saldo:
                           NEXT. 
 
                       xField:GET-CHILD(xText,1).
-
+        
                       ASSIGN tt-saldos.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "nrdconta".
                       ASSIGN tt-saldos.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt".
                       ASSIGN tt-saldos.vlsddisp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsddisp".
@@ -2826,23 +2828,23 @@ PROCEDURE obtem-saldo:
                       ASSIGN tt-saldos.vlipmfpg = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlipmfpg".
                       ASSIGN tt-saldos.dtultlcr = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtultlcr".
                       ASSIGN tt-saldos.vlblqjud = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqjud".
+        
+        END.
 
-                  END. 
-
-              END.
-
+        END.   
+            
               SET-SIZE(ponteiro_xml) = 0. 
 
-          END.
-
+        END.
+        
       /*Elimina os objetos criados*/
       DELETE OBJECT xDoc. 
       DELETE OBJECT xRoot. 
       DELETE OBJECT xRoot2. 
       DELETE OBJECT xField. 
       DELETE OBJECT xText.    
-      
-	  RETURN "OK".
+        
+    RETURN "OK".  
 
     END.
 
@@ -3730,15 +3732,15 @@ PROCEDURE carrega_medias:
 		END.
 		ELSE
 		DO:
-			FIND FIRST crapsda WHERE crapsda.cdcooper = par_cdcooper 
-								 AND crapsda.nrdconta = par_nrdconta 
-								 AND crapsda.dtmvtolt = aux_dtmvtolt
-							   NO-LOCK NO-ERROR.
-			IF AVAILABLE crapsda THEN
-			DO:
+        FIND FIRST crapsda WHERE crapsda.cdcooper = par_cdcooper 
+                             AND crapsda.nrdconta = par_nrdconta 
+                             AND crapsda.dtmvtolt = aux_dtmvtolt
+                           NO-LOCK NO-ERROR.
+        IF AVAILABLE crapsda THEN
+        DO:
 				ASSIGN aux_vltsddis = aux_vltsddis + crapsda.vlsddisp.
-			END.
-
+        END.
+        
 			ASSIGN aux_qtdiauti = aux_qtdiauti + 1  /* incrementa a quantidade de dias uteis */
 				   aux_dtmvtolt = aux_dtmvtolt + 1. /* atualiza a data do movimento */
         END.

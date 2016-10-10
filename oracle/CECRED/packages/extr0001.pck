@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para calculos e envios de extratos
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 29/08/2015
+    Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2016
 
     Alteracoes: 27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes,
                              na procedure pc_ver_saldos (Jean Michel).
@@ -28,7 +28,10 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             desta package.(Carlos Rafael Tanholi).                              
                             
                29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
-                            atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)                                      
+                            atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
+							
+			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -675,15 +678,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            no batch ou online na chamada da função fn_inpessoa_nrdconta 
                            (Kelvin - Chamado 459346)
 
-              02/06/2016 - Adicionado validações Para melhorar desempenho da 
-                           rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
-                          
+			  02/06/2016 - Adicionado validações Para melhorar desempenho da 
+						   rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
+                           
               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                            desta package.(Carlos Rafael Tanholi).                              
                            
               21/06/2016 - Ajuste para utilizar o cursor cr_crapsda_pk para encontrar o saldo
-                           (Adriano). 
-               
+                           (Adriano).             
+                           
               30/06/2016 - Alterado parametro (pr_flgcrass), para false, na função fn_inpessoa_nrdconta.
                            Busca de saldo para popular a uma temp/table, chamando o conteudo da temp/table 
                            dentro do loop de saldo, evitando uma nova chamada dentro do loop de consulta de saldo. (Evandro)
@@ -2133,7 +2136,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- 1110 DB.CESSAO
         -- 1009 TRANSF.INTERC
         -- 1011 CR.TRF.INTERC
-
+        
         -- Busca o inpessoa da conta
         vr_inpessoa := fn_inpessoa_nrdconta(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
@@ -2252,7 +2255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END LOOP;
 
       -- Chegou ao final sem problemas
-      pr_des_reto := 'OK';
+      pr_des_reto := 'OK';      
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -2555,7 +2558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           WHILE vr_index IS NOT NULL LOOP
             vr_string:= '<extrato>'||
                           '<nrdconta>'||NVL(TO_CHAR(vr_tab_sald(vr_index).nrdconta),' ')||'</nrdconta>'|| 
-                          '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtmvtolt),'DD/MM/YYYY')||'</dtmvtolt>'||
+                          '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtmvtolt,'DD/MM/YYYY'), ' ')||'</dtmvtolt>'||
                           '<vlsddisp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsddisp),' ')||'</vlsddisp>'||
                           '<vlsdchsl>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdchsl),' ')||'</vlsdchsl>'||
                           '<vlsdbloq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdbloq),' ')||'</vlsdbloq>'||
@@ -2598,7 +2601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                           '<vlacerto>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlacerto),' ')||'</vlacerto>'||
                           '<dslimcre>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dslimcre),' ')||'</dslimcre>'||
                           '<vlipmfpg>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlipmfpg),' ')||'</vlipmfpg>'||
-                          '<dtultlcr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtultlcr),'DD/MM/YYYY')||'</dtultlcr>'||
+                          '<dtultlcr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtultlcr,'DD/MM/YYYY'), ' ')||'</dtultlcr>'||
                           '<vlblqjud>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlblqjud),' ')||'</vlblqjud>'||
                         '</extrato>';
 
@@ -3031,8 +3034,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
            AND craplmt.vldocmto = pr_vllanmto;
 
       -- Tipo de registro do Log do SPB
-      rw_craplmt cr_craplmt%ROWTYPE;     
-
+      rw_craplmt cr_craplmt%ROWTYPE;  
+      
       --Busca o inprocess na crapdat
       CURSOR cr_crapdat(pr_cdcooper IN crapdat.cdcooper%TYPE) IS --> Cooperativa
         SELECT dat.inproces
@@ -3046,12 +3049,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Busca do tipo de pessoa do associado
       vr_inpessoa crapass.inpessoa%TYPE;
       -- Index para a temptable de tarifa
-      vr_tariidx varchar2(11);
+      vr_tariidx varchar2(11);      
      --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
       
     BEGIN
-
+      
       -- Selecionar Informacoes do Lancamento
       OPEN cr_craplcm (pr_rowid => pr_rowid);
       FETCH cr_craplcm INTO rw_craplcm;
@@ -3526,7 +3529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
         vr_dstransa := 'Consultar dados Dep. Vista.';
       END IF;
-
+      
       
       -- Verificar se o BATCH esta rodando
       IF pr_rw_crapdat.inproces <> 1 THEN
@@ -3539,7 +3542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_flgcrass := FALSE;
 
       END IF;
-
+      
       
       -- Busca do tipo de pessoa do associado
       vr_inpessoa := fn_inpessoa_nrdconta(pr_cdcooper => pr_cdcooper
