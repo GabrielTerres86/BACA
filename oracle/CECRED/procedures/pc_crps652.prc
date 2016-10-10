@@ -326,9 +326,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
      --Selecionar Dados Cyber
      CURSOR cr_crapcyb (pr_cdcooper IN crapcop.cdcooper%type) IS
-       SELECT crappep.vlmrapar
-             ,crappep.vlmtapar
-             ,crapcyb.cdcooper
+       SELECT crapcyb.cdcooper
              ,crapcyb.nrdconta
              ,crapcyb.cdfinemp
              ,crapcyb.nrctremp
@@ -375,19 +373,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcyb.ROWID
              ,crapass.cdagenci cdagenci_ass
              ,crapass.nrcpfcgc
+			 ,(select sum(x.vlmtapar)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and x.inliquid = 0) vlmtapar
+             ,(select sum(x.vlmrapar)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and x.inliquid = 0) vlmrapar
        FROM crapcyb
            ,crapass
-           ,(SELECT crappep.cdcooper, crappep.nrdconta, crappep.nrctremp, sum(crappep.vlmtapar) AS vlmtapar, sum(crappep.vlmrapar) AS vlmrapar
-                          FROM crappep
-                          WHERE
-               crappep.inliquid = 0 GROUP BY crappep.cdcooper, crappep.nrdconta, crappep.nrctremp) crappep
        WHERE crapass.cdcooper = crapcyb.cdcooper
        AND   crapass.nrdconta = crapcyb.nrdconta
        AND   crapcyb.cdcooper = pr_cdcooper
        AND   crapcyb.dtdbaixa IS NULL
-       And crapcyb.cdcooper = crappep.cdcooper (+)
-       AND crapcyb.nrdconta = crappep.nrdconta (+)
-       AND crapcyb.nrctremp = crappep.nrctremp (+)
        ORDER BY crapcyb.cdcooper
                ,crapcyb.cdorigem
                ,crapcyb.nrdconta
