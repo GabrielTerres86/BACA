@@ -216,6 +216,9 @@
 			                6 - WebService (Marcos)
                
                15/08/2016 - Alterado ordem da leitura da crapatr (Lucas Ranghetti #499449)
+
+			   05/10/2016 - Incluir tratamento para a CASAN enviar a angecia 1294 para autorizacoes
+							mais antigas (Lucas Ranghetti ##534110)
 ............................................................................. */
  
 { includes/var_batch.i {1} }
@@ -469,8 +472,22 @@ FOR EACH gncvcop NO-LOCK WHERE
                    aux_ctamigra = FALSE 
                    aux_nragenci = STRING(crabcop.cdagectl, "9999").
             
+
+
             IF  gnconve.cdconven = 4 THEN   /* CASAN */
+			    DO:
+				    FIND crapatr WHERE 
+                         crapatr.cdcooper = glb_cdcooper     AND
+                         crapatr.nrdconta = craplcm.nrdconta AND
+                         crapatr.cdhistor = craplcm.cdhistor AND
+                         crapatr.cdrefere = DECIMAL(ENTRY(6,SUBSTR(craplcm.cdpesqbb,6,100),"-")) AND
+						 crapatr.dtiniatr < 10/05/2016
+                         NO-LOCK NO-ERROR.
+
+				    IF  AVAIL crapatr THEN
                 ASSIGN aux_nragenci = '1294'.
+				END.
+                
 
             IF  aux_flgfirst THEN
                 DO:
@@ -681,7 +698,6 @@ FOR EACH gncvcop NO-LOCK WHERE
                                 " Documento = " + STRING(craplcm.nrdocmto) +
                                 " >> log/proc_message.log").
                            NEXT.
-                       END.
                 END.                                   
                 END.       
 
@@ -1429,7 +1445,7 @@ PROCEDURE atualiza_controle.
        END.
    ELSE
        UNIX SILENT VALUE("mv " + aux_nmarqped + " salvar " + "2> /dev/null").
-  
+   
    IF  gnconve.tpdenvio = 6 THEN  /* WebServices */
      DO:
        
