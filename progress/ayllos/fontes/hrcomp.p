@@ -26,7 +26,7 @@
                21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
                             escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
                             (Lucas Ranghetti #525623)
-............................................................................. */
+............................................................................. */  
 
 { includes/var_online.i }
 { sistema/generico/includes/var_internet.i }
@@ -177,8 +177,17 @@ ON RETURN OF b_consulta DO:
                                STRING(tt-processos.agefimhr,"99") + ":" +
                                STRING(tt-processos.agefimmm,"99").
                     END.
-                           
+                ELSE /* Nao confirmou */
+                    DO:
+                        ASSIGN tt-processos.flgativo = aux_flgativo
+                               tt-processos.ageinihr = aux_ageinihr
+                               tt-processos.ageinimm = aux_ageinimm
+                               tt-processos.agefimhr = aux_agefimhr 
+                               tt-processos.agefimmm = aux_agefimmm.
+                    END.
+
                 b_consulta:REFRESH().
+                CLEAR FRAME f_edita.
                 HIDE FRAME f_edita.
                 LEAVE.
             END.

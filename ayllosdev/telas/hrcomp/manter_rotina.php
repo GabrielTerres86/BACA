@@ -1,11 +1,11 @@
-<? 
+<?  
 /*!
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Tiago Machado Flor         
  * DATA CRIAÇÃO : 21/02/2013 
  * OBJETIVO     : Rotina para manter as operações da tela CADGRU
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
+ * ALTERAÇÕES   : 21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e    
  * --------------              escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
  *                             (Lucas Ranghetti #525623)
  *  

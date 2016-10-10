@@ -1,4 +1,4 @@
-<?php
+<?php 
 /*!
  * FONTE        : hrcomp.php 
  * CRIAÇÃO      : Tiago Machado         

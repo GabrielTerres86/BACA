@@ -1,4 +1,4 @@
-/*!
+/*! 
  * FONTE        : hrcomp.js
  * CRIAÇÃO      : Tiago Machado          
  * DATA CRIAÇÃO : 24/02/2014
