@@ -12335,7 +12335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_vltitulo NUMBER(15,2);
     vr_vldmulta NUMBER(15,2);
     vr_nrinssac crapcob.nrinssac%TYPE;
-    vr_dsdemail crapsab.dsdemail%TYPE;
+    vr_dsdemail VARCHAR2(5000);
     vr_nrcelsac crapsab.nrcelsac%TYPE;
     vr_idx      PLS_INTEGER;
     
