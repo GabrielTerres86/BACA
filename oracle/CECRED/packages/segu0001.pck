@@ -4756,12 +4756,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_comando    VARCHAR2(2000);                                    --> Comando UNIX para Mover arquivo lido
       vr_tab_linhas gene0009.typ_tab_linhas;
 
-      TYPE typ_tab_ordena IS TABLE OF gene0009.typ_tab_campos INDEX BY VARCHAR2(66);
+      TYPE typ_tab_ordena IS TABLE OF gene0009.typ_tab_campos INDEX BY VARCHAR2(105);
       -- Caracteres:  [8] - Data
       --             [25] - Número da proposta
       --             [25] - Número da apolice
       vr_tab_ordena typ_tab_ordena;
-      vr_dsdchave   VARCHAR2(66);
+      vr_dsdchave   VARCHAR2(105);
 
       vr_listaarqs  VARCHAR2(2000); -- dir da coop atual
 
@@ -4786,6 +4786,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       vr_tab_erro     gene0001.typ_tab_erro;
 
       vr_tpdseguro    PLS_INTEGER := 0;
+      vr_found_seg    BOOLEAN:=FALSE;
+      vr_found_ant    BOOLEAN:=FALSE; -- Identifica se o Predecessor existe (Para Apolice, Proposta / Para Endosso, Apolice)
+      vr_nrapolice    tbseg_contratos.nrapolice%TYPE;
+      vr_nrendosso    tbseg_contratos.nrendosso%TYPE;
 
       vr_typ_saida    VARCHAR2(4000);
 
@@ -4815,11 +4819,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
            AND ass.nrdconta = p_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
 
+      -- Busca Associado pelo CPF/CNPJ
+      CURSOR cr_ass_cpfcnpj(p_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
+        SELECT ass.cdcooper
+              ,ass.nrdconta
+              ,ass.nrcpfcgc
+              ,ass.rowid
+              ,COUNT(cdcooper) OVER (PARTITION BY cdcooper) qtd_reg
+          FROM crapass ass
+         WHERE ass.nrcpfcgc = p_nrcpfcgc
+         ORDER BY ass.cdcooper, ass.nrdconta;
+      rw_ass_cpfcnpj cr_ass_cpfcnpj%ROWTYPE;
 
       -- VERIFICAR SE PROPOSTA/APOLICE EXISTE NA BASE
-      CURSOR cr_seguros (p_cdcooper IN tbseg_contratos.cdcooper%TYPE
-                        ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
-                        ,p_nrapolic IN tbseg_contratos.nrapolice%TYPE) IS
+      CURSOR cr_seg_proposta(p_cdcooper IN tbseg_contratos.cdcooper%TYPE
+                            ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
+                            ,p_nrpropos IN tbseg_contratos.nrproposta%TYPE) IS
+        SELECT seg.rowid, seg.*
+          FROM tbseg_contratos seg
+         WHERE seg.cdcooper      = p_cdcooper
+           AND seg.nrdconta      = p_nrdconta
+           AND seg.nrproposta    = p_nrpropos
+           AND seg.nrapolice     = 0
+           AND seg.tpseguro      = 'A' -- AUTO
+           ;
+      CURSOR cr_seg_apolice (p_cdcooper IN tbseg_contratos.cdcooper%TYPE
+                            ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
+                            ,p_nrapolic IN tbseg_contratos.nrapolice%TYPE) IS
         SELECT seg.rowid, seg.*
           FROM tbseg_contratos seg
          WHERE seg.cdcooper      = p_cdcooper
@@ -4827,9 +4853,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
            AND seg.nrapolice     = p_nrapolic
            AND seg.tpseguro      = 'A' -- AUTO
            AND seg.flgvigente    = 1   -- Buscar contrato vigente
-           --AND seg.inerro_import = 0 -- Seguro sem Erro
            ;
-      rw_seg_base cr_seguros%ROWTYPE;
+      CURSOR cr_seg_endosso (p_cdcooper IN tbseg_contratos.cdcooper%TYPE
+                            ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
+                            ,p_nrapolic IN tbseg_contratos.nrapolice%TYPE
+                            ,p_nrendoss IN tbseg_contratos.nrendosso%TYPE) IS
+        SELECT seg.rowid, seg.*
+          FROM tbseg_contratos seg
+         WHERE seg.cdcooper      = p_cdcooper
+           AND seg.nrdconta      = p_nrdconta
+           AND seg.nrapolice     = p_nrapolic
+           AND seg.nrendosso     = p_nrendoss
+           AND seg.tpseguro      = 'A' -- AUTO
+           AND seg.flgvigente    = 1   -- Buscar contrato vigente
+           ;
+      rw_seg_base cr_seg_apolice%ROWTYPE;
 
       -- BUSCAR O ENDOSSO A SER CANCELADO
       CURSOR cr_endosso_cancel (p_nrapolic  IN tbseg_contratos.nrapolice%TYPE
@@ -4880,6 +4918,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       rw_tpendosso cr_tpendosso%ROWTYPE;
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
+      FUNCTION fn_conv (p_valor boolean) RETURN VARCHAR2 IS
+
+        BEGIN
+         IF p_valor THEN
+           RETURN 'SIM';
+         ELSE 
+           RETURN 'NAO';
+         END IF;                 
+                  
+      END fn_conv;      
+      
+      
       --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -4924,11 +4974,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         ELSE
           -- BLOCO PRA EXTRAIR A DATA DO NOME DO ARQUIVO
           vr_vet_arqv := gene0002.fn_quebra_string(pr_string =>pr_cdprogra, pr_delimit => '_' );
-          FOR idx IN 1..vr_vet_arqv.count LOOP         
-            -- QUEBRA POR "." PRA REMOVER A EXTENSAO DO ARQUIVO 
+          FOR idx IN 1..vr_vet_arqv.count LOOP
+            -- QUEBRA POR "." PRA REMOVER A EXTENSAO DO ARQUIVO
             vr_nmarqdat := gene0002.fn_quebra_string(pr_string =>vr_vet_arqv(idx), pr_delimit => '.' );
-          END LOOP;          
-       
+          END LOOP;
+
           vr_nmarqlog := 'ERRO_ARQ_SEG_' || vr_nmarqdat(1) || '_' ||to_char(SYSDATE,'hh24');
           vr_flfinmsg := 'N';
           vr_dscriti2 := pr_cdprogra || ' -> ' ||
@@ -4964,7 +5014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       BEGIN
 
-        -- Se for a primeira execução do dia, zera o FLAG_ARQ_SEGURO        
+        -- Se for a primeira execução do dia, zera o FLAG_ARQ_SEGURO
         IF to_number(to_char(SYSDATE,'hh24')) = vr_hriniexe THEN
           BEGIN
             UPDATE crapprm prm
@@ -5064,6 +5114,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         END IF; -- Ultima Execução - as 12h
 
      END pc_controla_execucao;
+     
+     
+     -- FUNÇÃO TEM POR OBJETITVO VALIDAR O TEXTO IMPORTADO
+     -- POIS HOUVERAM CASOS DE ARQUIVOS RECEBIDOS COM FORMATAÇÃO 
+     -- UTF-8, E O PADRÃO DEVE SER ANSI. APENAS PARA EVITAR
+     -- INCONSISTÊNCIAS NA IMPORTAÇÃO
+     FUNCTION fn_valida_seguradora (pr_texto   VARCHAR2  -- Texto a ser validado
+                                   ,pr_compara VARCHAR2) -- Texto contra o qual será validado
+                                 RETURN BOOLEAN IS
+       BEGIN
+
+       	 -- PADRÃO ANSI
+         IF  pr_texto = pr_compara THEN
+           RETURN TRUE;
+         END IF;
+
+         -- SE O TEXTO VEIO EM UTF-8
+         IF gene0007.fn_convert_web_db(pr_texto) = pr_compara THEN
+           RETURN TRUE;
+         END IF; 
+
+         RETURN FALSE;
+     
+     END fn_valida_seguradora;
 
   BEGIN
 
@@ -5095,6 +5169,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
     --Carregar a lista de arquivos txt na pl/table
     vr_tab_arqtmp := gene0002.fn_quebra_string(pr_string => vr_listaarqs);
+
+    -- Gera LOG de Erro do Arquivo
+    gera_log(pr_cdcooper => 3 --pr_cdcooper
+            ,pr_cdprogra => vr_cdprogra
+            ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
+            ,pr_cdcritic => 0
+            ,pr_dscritic => ' TOTAL ARQUIVOS ENCONTRADOS: ' || 
+                            vr_tab_arqtmp.count
+             );
+
 
     -- Controle de execução - Se tem ou não arquivo
     IF vr_tab_arqtmp.count = 0 THEN
@@ -5185,7 +5269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     ,pr_dscritic => ' Linha 1: ' || vr_dscritic
                      );
             CONTINUE; -- Passa para o proximo arquivo da lista
-          END IF;        
+          END IF;
         END IF;*/
       END IF;
 
@@ -5194,22 +5278,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       -- Garantir que a tabela não possua registros
       vr_tab_ordena.DELETE();
 
-
       -- Percorrer todas a tabela de memória com os dados do arquivo
       FOR vr_indice IN vr_tab_linhas.FIRST..vr_tab_linhas.LAST LOOP --LINHAS ARQUIVO
-        
+
         IF vr_tab_linhas(vr_indice).exists('$ERRO$') THEN
           -- Se a linha tem erro, criar outra chave pra ela
           vr_dsdchave := to_char(SYSDATE, 'YYYY') || '1231' ||
                          to_char(SYSDATE, 'YYYY') || '1231' ||
-                         LPAD(0,25,'0')           ||
-                         LPAD(vr_indice,25,'0') ;
+                         LPAD(vr_indice,14,'0')   ||
+                         LPAD(vr_indice,25,'0')   ||
+                         LPAD(vr_indice,25,'0')   ||
+                         LPAD(vr_indice,25,'0');
         ELSE
           -- Para cada linha do arquivo lida, deve montar a chave de ordenação
           vr_dsdchave := to_char(vr_tab_linhas(vr_indice)('DTINIVIGENCIA').data, 'YYYYMMDD') ||
                          to_char(vr_tab_linhas(vr_indice)('DTINIPROPOSTA').data, 'YYYYMMDD') ||
+                         LPAD(vr_tab_linhas(vr_indice)('SEGURADOCPFCNPJ').numero,14,'0')     ||
                          LPAD(vr_tab_linhas(vr_indice)('NRPROPOSTA').numero,25,'0')          ||
-                         LPAD(vr_tab_linhas(vr_indice)('NRAPOLICE').numero,25,'0') ;
+                         LPAD(vr_tab_linhas(vr_indice)('NRAPOLICE').numero,25,'0')           ||
+                         LPAD(vr_tab_linhas(vr_indice)('NRENDOSSO').numero,25,'0');
         END IF;
 
         -- Inclui o registro de linha na tabela de ordenação
@@ -5224,8 +5311,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       -- das linhas do arquivo de forma ordenada, conforme a chave
       vr_dsdchave := vr_tab_ordena.FIRST();
 
-      LOOP
 
+      LOOP
         -- Transferir o registro
         vr_tab_linhas(vr_tab_linhas.COUNT() + 1) := vr_tab_ordena(vr_dsdchave);
 
@@ -5233,6 +5320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         -- Carregar a proxima chave da sequencia
         vr_dsdchave := vr_tab_ordena.NEXT(vr_dsdchave);
       END LOOP;
+
 
       -- Limpar a tab de ordenação
       vr_tab_ordena.DELETE();
@@ -5282,16 +5370,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         -- Verificar se está recebendo um cancelamento de endoso
         IF NVL(vr_tab_linhas(vr_indice2)('NRENDOSSO_CANCELA').numero,0) <> 0 THEN
 
-          -- Buscar o endosso de cancelamento
-          OPEN  cr_endosso_cancel(vr_tab_linhas(vr_indice2)('NRAPOLICE').numero
-                                 ,vr_tab_linhas(vr_indice2)('NRENDOSSO_CANCELA').numero);
+          vr_nrapolice := vr_tab_linhas(vr_indice2)('NRAPOLICE').numero;
+          vr_nrendosso := vr_tab_linhas(vr_indice2)('NRENDOSSO_CANCELA').numero;
+
+          -- Buscar o endosso a ser cancelado
+          OPEN  cr_endosso_cancel(vr_nrapolice
+                                 ,vr_nrendosso);
           FETCH cr_endosso_cancel INTO rw_endosso_cancel;
 
           -- Se não encontrar o registro do endosso
           IF cr_endosso_cancel%NOTFOUND THEN
+            -- Fechar cursor
+            CLOSE cr_endosso_cancel;
             -- Monta
-            vr_dscritic := 'Endosso Cancelamento não encontrado! Apolice/Endosso => '
-                        || vr_tab_linhas(vr_indice2)('NRAPOLICE').numero ||'/'|| vr_tab_linhas(vr_indice2)('NRENDOSSO_CANCELA').numero;
+            vr_dscritic := 'Cancelamento do Endosso não pode ser efetuado! Apólice/Endosso => '
+                        || vr_nrapolice ||'/'|| vr_nrendosso;
 
             -- Gera LOG de Erro do Arquivo
             gera_log(pr_cdcooper => 3 --pr_cdcooper
@@ -5300,13 +5393,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     ,pr_cdcritic => 0
                     ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
                      );
-
-            -- Fechar cursor
-            CLOSE cr_endosso_cancel;
             CONTINUE; -- Passa para proxima linha
           END IF;
 
-          -- Fechar cursor
+            -- Fechar cursor
           CLOSE cr_endosso_cancel;
 
           -- Efetuar o cancelamento do endosso retornado
@@ -5335,21 +5425,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
           -- Se não encontrar o registro do endosso
           IF cr_endosso_ativa%NOTFOUND THEN
+            -- Fechar cursor
+            CLOSE cr_endosso_ativa;
+
             -- Monta
-            vr_dscritic := 'Endosso a ser ativado não encontrado! Apolice/Endosso => '
-                        || vr_tab_linhas(vr_indice2)('NRAPOLICE').numero ||'/'|| rw_endosso_cancel.nrapolice;
+            vr_dscritic := 'Endosso a ser ativado não encontrado! Apolice => '
+                            || rw_endosso_cancel.nrapolice;
 
             -- Gera LOG de Erro do Arquivo
             gera_log(pr_cdcooper => 3 --pr_cdcooper
                     ,pr_cdprogra => vr_tab_arqtmp(idx)
-                    ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
+                    ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
                     ,pr_cdcritic => 0
                     ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
                      );
-
-            -- Fechar cursor
-            CLOSE cr_endosso_cancel;
-
             ROLLBACK; -- desfaz a transação
             CONTINUE; -- Passa para proxima linha
           END IF;
@@ -5437,30 +5526,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
               -- SEGURADORA - ATENÇÃO: SICREDI MANDA SEGURADORA PELO NOME E NAO POR CODIGO OU CNPJ
               -- SICREDI AUTO POSSUÍA APENAS 3 SEGURADORAS ATE O MOMENTO DA LIBERAÇÃO DO PROJETO (JUL/2016)
-              CASE gene0007.fn_convert_web_db(
-                         UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"',''))))
-                WHEN 'HDI SEGUROS S/A'                THEN
+              
+              IF fn_valida_seguradora(UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')))
+                                     ,'HDI SEGUROS S/A') THEN
                   -- Verificar se o seguro é do tipo "Carta Verde"
                   IF (SUBSTR(LPAD(vr_reg_arquivo.nrapolice, 14,'0'),6,3) = '133') THEN
                     -- Ignora as informações de apólices do tipo "Carta Verde", pois
                     -- a carta é um produto exclusivo da seguradora HDI
                     CONTINUE;
                   END IF;
-
                   vr_reg_arquivo.cdsegura := 6572;
+                  
+              ELSIF fn_valida_seguradora(UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')))
+                                       ,'MAPFRE SEGURADORA S/A') THEN
+                 vr_reg_arquivo.cdsegura := 12;
 
-                WHEN 'MAPFRE SEGURADORA S/A'          THEN vr_reg_arquivo.cdsegura := 12;
-                WHEN 'SUL AMÉRICA CIA NAC DE SEGUROS' THEN vr_reg_arquivo.cdsegura := 39284;
-                ELSE vr_dscritic := 'Seguradora inválida! => ' || UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')));
-                     -- Gera LOG de Erro do Arquivo
-                     gera_log(pr_cdcooper => 3 --pr_cdcooper
-                             ,pr_cdprogra => vr_tab_arqtmp(idx)
-                             ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
-                             ,pr_cdcritic => 0
-                             ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
-                              );
-                     CONTINUE; -- Passa para proxima linha
-              END CASE;
+              ELSIF fn_valida_seguradora(UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')))
+                                        ,'SUL AMÉRICA CIA NAC DE SEGUROS') THEN
+                vr_reg_arquivo.cdsegura := 39284;
+
+              ELSE
+                vr_dscritic := 'Seguradora inválida! => ' || UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')));
+                -- Gera LOG de Erro do Arquivo
+                gera_log(pr_cdcooper => 3 --pr_cdcooper
+                        ,pr_cdprogra => vr_tab_arqtmp(idx)
+                        ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
+                        ,pr_cdcritic => 0
+                        ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
+                        );
+                CONTINUE; -- Passa para proxima linha
+                                       
+              END IF;
 
               lt_d_nr_do_ci := TRIM(REPLACE(vr_tab_linhas(vr_indice2)('NUMEROCI'      ).texto,'"',''));
 
@@ -5476,11 +5572,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                         );
                 CONTINUE; -- Passa para proxima linha
             END;
-            
+
             -- Validar SEGURADOCONTA
             IF regexp_like (vr_tab_linhas(vr_indice2)('SEGURADOCONTA').texto,'[^0-9]') THEN
               -- Encontrou caracteres diferentes de 0 a 9
-              vr_dscritic := 'Conteúdo inválido no campo SEGURADOCONTA: ' ||
+              vr_dscritic := 'Conteúdo inválido no campo CONTA/DV: ' ||
                              vr_tab_linhas(vr_indice2)('SEGURADOCONTA').texto;
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
@@ -5541,12 +5637,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                   CLOSE cr_crapass;
                 END IF; -- FIM cr_crapass
               END IF; -- FIM cr_CRAPCOP
+              
+              -- TENTAR LOCALIZAR COOP/CONTA PELO CPF/CNPJ
+              IF vr_reg_arquivo.inerro_import = 1 THEN
+                OPEN cr_ass_cpfcnpj (p_nrcpfcgc => vr_reg_arquivo.nrcpf_cnpj_segurado);
+                FETCH cr_ass_cpfcnpj INTO rw_ass_cpfcnpj;
+
+                IF  cr_ass_cpfcnpj%FOUND
+                AND rw_ass_cpfcnpj.qtd_reg = 1 THEN
+                  vr_reg_arquivo.cdcooper      := rw_ass_cpfcnpj.cdcooper;
+                  vr_reg_arquivo.nrdconta      := rw_ass_cpfcnpj.nrdconta;
+                  vr_reg_arquivo.inerro_import := 0; -- Limpa erro se achou COOP/CONTA
+                END IF;
+                CLOSE cr_ass_cpfcnpj;
+              END IF;
+              
             END IF;
 
             -- Validar PRESTACAO
             IF regexp_like (vr_tab_linhas(vr_indice2)('VLRPRESTACAO').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
-              vr_dscritic := 'Conteúdo inválido no campo VLRPRESTACAO';
+              vr_dscritic := 'Conteúdo inválido no campo VLR PRESTACAO';
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
@@ -5563,7 +5674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             -- Validar TOTPREMIOBRUTO
             IF regexp_like (vr_tab_linhas(vr_indice2)('TOTPREMIOBRUTO').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
-              vr_dscritic := 'Conteúdo inválido no campo TOTPREMIOBRUTO';
+              vr_dscritic := 'Conteúdo inválido no campo TOT.PREMIO BRUTO';
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
@@ -5580,7 +5691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             -- Validar TOTPREMIOLIQUIDO
             IF regexp_like (vr_tab_linhas(vr_indice2)('TOTPREMIOLIQUIDO').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
-              vr_dscritic := 'Conteúdo inválido no campo TOTPREMIOLIQUIDO';
+              vr_dscritic := 'Conteúdo inválido no campo TOT. PREMIO LIQUIDO';
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
@@ -5597,7 +5708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             -- Validar VLRFRANQUIA
             IF regexp_like (vr_tab_linhas(vr_indice2)('VLRFRANQUIA').texto,'[^0-9-]') THEN
               -- Encontrou caracteres diferentes de 0 a 9 e "-"
-              vr_dscritic := 'Conteúdo inválido no campo VLRFRANQUIA';
+              vr_dscritic := 'Conteúdo inválido no campo VLR. FRANQUIA';
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_tab_arqtmp(idx)
@@ -5610,6 +5721,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               vr_reg_auto.vlfranquia := to_number( SUBSTR(vr_tab_linhas(vr_indice2)('VLRFRANQUIA').texto,
                                         INSTR(vr_tab_linhas(vr_indice2)('VLRFRANQUIA').texto,'-') ) ) / 100;
             END IF;
+
+
+IF vr_reg_arquivo.nrapolice = 1030431142546 THEN
+  NULL; -- verificar esse caso que importou os registros mesmo nao tendo proposta.
+END IF;
 
 
             --    TERMINOU DE LER O CONTEUDO DO ARQUIVO
@@ -5630,7 +5746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               vr_reg_arquivo.tpendosso     := NULL;
               vr_reg_arquivo.tpsub_endosso := NULL;
             ELSIF vr_reg_arquivo.nrapolice  <> 0
-              -- AND vr_reg_arquivo.nrproposta <> 0
+              --AND vr_reg_arquivo.nrproposta <> 0  -- COMENTADO PARA PASSAR PELO ERRO DO SICREDI AO MANDAR PROPOSTA = 0 QUANDO ENDOSSO
               AND vr_reg_arquivo.nrendosso  <> 0 THEN
               -- É ENDOSSO
               vr_tpdseguro := 3;
@@ -5705,16 +5821,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             END  IF;
 
 
-            -- VALIDAR SE APOLICE JA EXISTE NESSA COOPER/CONTA
-            OPEN cr_seguros (p_cdcooper => vr_reg_arquivo.cdcooper
-                            ,p_nrdconta => vr_reg_arquivo.nrdconta
-                            ,p_nrapolic => vr_reg_arquivo.nrapolice);
-            FETCH cr_seguros INTO rw_seg_base;
-            --Se nao Encontrou
-            IF cr_seguros%NOTFOUND
-            OR (vr_tpdseguro  = 1 AND   -- Se é Proposta e Com Erro, cadastra
-                vr_reg_arquivo.inerro_import = 1) THEN
-              CLOSE cr_seguros;
+            CASE vr_tpdseguro
+              WHEN 1 THEN  -- PROPOSTA
+                -- VALIDAR SE PROPOSTA JA EXISTE NESSA COOPER/CONTA
+                OPEN cr_seg_proposta(p_cdcooper => vr_reg_arquivo.cdcooper
+                                    ,p_nrdconta => vr_reg_arquivo.nrdconta
+                                    ,p_nrpropos => vr_reg_arquivo.nrproposta);
+                FETCH cr_seg_proposta INTO rw_seg_base;
+                vr_found_seg := cr_seg_proposta%FOUND;
+                CLOSE cr_seg_proposta;
+              WHEN 2 THEN  -- APOLICE
+                -- VALIDAR SE APOLICE JA EXISTE NESSA COOPER/CONTA
+                OPEN cr_seg_apolice (p_cdcooper => vr_reg_arquivo.cdcooper
+                                    ,p_nrdconta => vr_reg_arquivo.nrdconta
+                                    ,p_nrapolic => vr_reg_arquivo.nrapolice);
+                FETCH cr_seg_apolice INTO rw_seg_base;
+                vr_found_seg := cr_seg_apolice%FOUND;
+                CLOSE cr_seg_apolice;
+              WHEN 3 THEN  -- ENDOSSO
+                -- VALIDAR SE ENDOSSO JA EXISTE NESSA COOPER/CONTA
+                OPEN cr_seg_endosso (p_cdcooper => vr_reg_arquivo.cdcooper
+                                    ,p_nrdconta => vr_reg_arquivo.nrdconta
+                                    ,p_nrapolic => vr_reg_arquivo.nrapolice
+                                    ,p_nrendoss => vr_reg_arquivo.nrendosso);
+                FETCH cr_seg_endosso INTO rw_seg_base;
+                vr_found_seg := cr_seg_endosso%FOUND;
+                CLOSE cr_seg_endosso;
+            END CASE;
+
+
+
+            --Se nao Encontrou na base
+            IF NOT vr_found_seg THEN
 
               -- ATENCAO: PARA OS CASOS DE ENDOSSO, APENAS A APOLICE VEM A MESMA
               -- POREM, A PROPOSTA SERÁ OUTRA.
@@ -5722,18 +5860,113 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               vr_reg_tpatu.tp_seguro    := 'I'; -- INSERE DADOS
               vr_reg_tpatu.tp_auto      := 'I'; -- INSERE DADOS
               vr_reg_arquivo.flgvigente  := 1;
-              -- Se é um Endosso e nao existir na base ainda, já cria como CANCELADO
-              IF  vr_tpdseguro = 3
-              AND vr_reg_arquivo.tpendosso IN (4,5) THEN
-                vr_reg_arquivo.indsituacao := 'C'; -- Altera a situado Seguro para CANCELADO
-                vr_reg_arquivo.dtcancela   := rw_crapdat.dtmvtolt;
+              
+              
+              IF vr_tpdseguro = 2 THEN -- APOLICE
+                -- VALIDAR SE PROPOSTA JA EXISTE NESSA COOPER/CONTA
+                OPEN cr_seg_proposta(p_cdcooper => vr_reg_arquivo.cdcooper
+                                    ,p_nrdconta => vr_reg_arquivo.nrdconta
+                                    ,p_nrpropos => vr_reg_arquivo.nrproposta);
+                FETCH cr_seg_proposta INTO rw_seg_base;
+                vr_found_ant := cr_seg_proposta%FOUND;
+                CLOSE cr_seg_proposta;
+
+                --SE ENCONTROU PROPOSTA NA BASE
+                IF  vr_found_ant THEN
+                  OPEN  cr_auto_base(p_idcontrato => rw_seg_base.idcontrato);
+                  FETCH cr_auto_base INTO rw_auto_base;
+                  CLOSE cr_auto_base;
+
+                  -- ATUALIZA PROPOSTA EXISTENTE COM OS DADOS IMPORTADOS DE APOLICE
+                  vr_reg_tpatu.tp_seguro    := 'A'; -- ATUALIZA DADOS
+                  vr_reg_tpatu.tp_auto      := 'A'; -- ATUALIZA DADOS
+                  -- AQUI
+                  vr_reg_arquivo.idcontrato := rw_seg_base.idcontrato;
+                  vr_reg_auto.idcontrato    := rw_auto_base.idcontrato;
+                  
+
+                  -- QUANDO PROPOSTA JA FOI ENVIADA E É RECEBIDA UMA APOLICE
+                  -- O VALOR DA FRANQUIA ESTA VINDO ZERO NA COLUNA DA APOLICE.
+                  IF vr_reg_auto.vlfranquia IS NULL
+                  OR vr_reg_auto.vlfranquia = 0 THEN
+                    vr_reg_auto.vlfranquia := rw_auto_base.vlfranquia;
+                  END IF;
+                END IF;
+              
+              ELSIF  vr_tpdseguro = 3 THEN
+                -- Se é um Endosso e nao existir na base ainda, já cria como CANCELADO
+
+                -- VALIDAR SE APOLICE JA EXISTE NESSA COOPER/CONTA
+                OPEN cr_seg_apolice (p_cdcooper => vr_reg_arquivo.cdcooper
+                                    ,p_nrdconta => vr_reg_arquivo.nrdconta
+                                    ,p_nrapolic => vr_reg_arquivo.nrapolice);
+                FETCH cr_seg_apolice INTO rw_seg_base;
+                vr_found_ant := cr_seg_apolice%FOUND;
+                CLOSE cr_seg_apolice;
+                IF  NOT vr_found_ant THEN
+                  -- ERRO - Apólice não existe e recebeu um endosso
+                  -- Gera LOG de Erro do Arquivo
+                  gera_log(pr_cdcooper => 3 --pr_cdcooper
+                          ,pr_cdprogra => vr_tab_arqtmp(idx)
+                          ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
+                          ,pr_cdcritic => 0
+                          ,pr_dscritic => ' Linha '|| vr_indice2 || ': Recebimento de ENDOSSO para APÓLICE inexistente!' ||
+                                          ' Apólice ('   || vr_reg_arquivo.nrapolice  ||
+                                          ') e Endosso ('  || vr_reg_arquivo.nrendosso  || ')'
+                           );
+
+                  CONTINUE;
+
+                ELSE
+                  vr_reg_tpatu.tp_seguro   := 'Y';  -- Inserir dados do seguro, inativando o registro anterior
+
+                  -- Se tá ZERO, erro do SICREDI
+                  IF vr_reg_arquivo.nrproposta = 0 THEN
+                    vr_reg_arquivo.nrproposta := rw_seg_base.nrproposta;
+                  END IF;
+
+                  IF vr_reg_arquivo.tpendosso IN (4,5) THEN
+                    vr_reg_arquivo.indsituacao := 'C'; -- Altera a situado Seguro para CANCELADO
+                    vr_reg_arquivo.dtcancela   := rw_crapdat.dtmvtolt;
+
+                    -- QUANDO CANCELAMENTO, MANTEM OS DADOS DO
+                    -- ULTIMO VEICULO DA APOLICE ATIVA
+                    -- CONSULTAR VEICULO DA APOLICE
+                    OPEN  cr_auto_base(p_idcontrato => rw_seg_base.idcontrato);
+                    FETCH cr_auto_base INTO rw_auto_base;
+                    CLOSE cr_auto_base;
+
+                    -- Manter o automovel atual copiando os dados do veículo
+                    vr_reg_auto.idveiculo            := NVL(vr_reg_auto.idveiculo     ,rw_auto_base.idveiculo);
+                    vr_reg_auto.nmmarca              := NVL(TRIM(vr_reg_auto.nmmarca) ,rw_auto_base.nmmarca);
+                    vr_reg_auto.dsmodelo             := NVL(TRIM(vr_reg_auto.dsmodelo),rw_auto_base.dsmodelo);
+                    vr_reg_auto.nrano_fabrica        := NVL(vr_reg_auto.nrano_fabrica ,rw_auto_base.nrano_fabrica);
+                    vr_reg_auto.nrano_modelo         := NVL(vr_reg_auto.nrano_modelo  ,rw_auto_base.nrano_modelo);
+                    vr_reg_auto.dsplaca              := NVL(TRIM(vr_reg_auto.dsplaca) ,rw_auto_base.dsplaca);
+                    vr_reg_auto.dschassi             := NVL(TRIM(vr_reg_auto.dschassi),rw_auto_base.dschassi);
+                    vr_reg_auto.cdfipe               := NVL(vr_reg_auto.cdfipe        ,rw_auto_base.cdfipe);
+                    vr_reg_auto.vlfranquia           := NVL(vr_reg_auto.vlfranquia    ,rw_auto_base.vlfranquia);
+
+                  END IF;
+                END IF;
               END IF;
 
-            ELSE  -- ENCONTROU O SEGURO NA BASE
+            ELSE  -- ENCONTROU O REGISTRO NA BASE
 
-              CLOSE cr_seguros;
-
-              vr_reg_tpatu.tp_seguro   := 'Y';  -- Inserir dados do seguro, inativando o registro anterior
+              IF  vr_tpdseguro = 1 THEN                                      -- SE FOR PROPOSTA
+                IF  vr_reg_arquivo.nrproposta          = rw_seg_base.nrproposta  -- PROPOSTA ARQUIVO = PROPOSTA BASE
+                AND vr_reg_arquivo.nrcpf_cnpj_segurado = rw_seg_base.nrcpf_cnpj_segurado
+                AND vr_reg_arquivo.dtinicio_vigencia   = rw_seg_base.dtinicio_vigencia THEN
+                  vr_reg_tpatu.tp_seguro    := 'A';  --  ALTERA os dados do Seguro cadastrado
+                  -- AQUI
+                  vr_reg_arquivo.idcontrato := rw_seg_base.idcontrato;
+                  vr_reg_auto.idcontrato    := rw_auto_base.idcontrato;
+                ELSE
+                  vr_reg_tpatu.tp_seguro   := 'I';  --  INCLUI os dados do Seguro cadastrado
+                END IF;
+              ELSE
+                  vr_reg_tpatu.tp_seguro   := 'Y';  -- Inserir dados do seguro, inativando o registro anterior
+              END IF;
 
               -- Tratar repetição - Possivel erro do envio por parte Sicredi
               -- Se um registro de apõlice for enviado novamente, irá apenas informar no
@@ -5747,7 +5980,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                         ,pr_cdprogra => vr_tab_arqtmp(idx)
                         ,pr_indierro => 2 -- 1-Log Geral 2-Log Especifico Arquivo
                         ,pr_cdcritic => 0
-                        ,pr_dscritic => ' Linha '|| vr_indice2 || ': Identificado envio de registro duplicado.'
+                        ,pr_dscritic => ' Linha '|| vr_indice2 || ': Identificado envio de registro duplicado.' ||
+                                        ' Proposta('     || vr_reg_arquivo.nrproposta ||
+                                        '), Apólice ('   || vr_reg_arquivo.nrapolice  ||
+                                        ') e Endosso ('  || vr_reg_arquivo.nrendosso  || ')'
                          );
 
                 CONTINUE;
@@ -5826,78 +6062,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 vr_reg_arquivo.dsplano            := rw_seg_base.dsplano;
 
               ELSE
-                -- CONSULTAR VEICULO DA APOLICE
-                OPEN cr_auto_base(p_idcontrato => rw_seg_base.idcontrato);
-                FETCH cr_auto_base INTO rw_auto_base;
-                --Se nao Encontrou
-                IF cr_auto_base%FOUND AND NVL(vr_reg_auto.vlfranquia,0) = 0 THEN
-                  vr_reg_auto.vlfranquia := rw_auto_base.vlfranquia;
-                END IF;
-                -- Fechar
-                CLOSE cr_auto_base;
+                IF vr_reg_tpatu.tp_seguro <> 'I' THEN
+                  -- CONSULTAR VEICULO DA APOLICE
+                  OPEN cr_auto_base(p_idcontrato => rw_seg_base.idcontrato);
+                  FETCH cr_auto_base INTO rw_auto_base;
+                  --Se nao Encontrou
+                  IF cr_auto_base%FOUND AND NVL(vr_reg_auto.vlfranquia,0) = 0 THEN
+                    vr_reg_auto.vlfranquia := rw_auto_base.vlfranquia;
+                  END IF;
+                  -- Fechar
+                  CLOSE cr_auto_base;
 
-                vr_reg_tpatu.tp_auto  := 'I';  -- INSERE DADOS
+                  vr_reg_tpatu.tp_auto  := 'I';  -- INSERE DADOS
 
-                -- Deve resetar os valores do registro de memória com os dados do seguro
-                -- e atualizar apenas os valores especificos
-                vr_reg_arquivo.idcontrato         := rw_seg_base.idcontrato;
-                vr_reg_arquivo.cdparceiro         := rw_seg_base.cdparceiro;
-                vr_reg_arquivo.tpseguro           := rw_seg_base.tpseguro;
-                vr_reg_arquivo.nrproposta         := rw_seg_base.nrproposta;
-                vr_reg_arquivo.nrapolice          := rw_seg_base.nrapolice;
-                vr_reg_arquivo.cdcooper           := rw_seg_base.cdcooper;
-                vr_reg_arquivo.nrdconta           := rw_seg_base.nrdconta;
-                vr_reg_arquivo.nrcpf_cnpj_segurado:= rw_seg_base.nrcpf_cnpj_segurado;
-                vr_reg_arquivo.nmsegurado         := rw_seg_base.nmsegurado;
-                --vr_reg_arquivo.nrendosso          := rw_seg_base.nrendosso;
-                --vr_reg_arquivo.tpendosso          := rw_seg_base.tpendosso;
-                --vr_reg_arquivo.tpsub_endosso      := rw_seg_base.tpsub_endosso;
-                vr_reg_arquivo.nrapolice_renovacao:= rw_seg_base.nrapolice_renovacao;
-                vr_reg_arquivo.dtinicio_vigencia  := rw_seg_base.dtinicio_vigencia;
-                vr_reg_arquivo.dttermino_vigencia := rw_seg_base.dttermino_vigencia;
-                vr_reg_arquivo.cdsegura           := rw_seg_base.cdsegura;
-                vr_reg_arquivo.indsituacao        := rw_seg_base.indsituacao;
-                vr_reg_arquivo.dtcancela          := rw_seg_base.dtcancela;
-                vr_reg_arquivo.flgvigente         := 1;
+                  -- Deve resetar os valores do registro de memória com os dados do seguro
+                  -- e atualizar apenas os valores especificos
+                  vr_reg_arquivo.idcontrato         := rw_seg_base.idcontrato;
+                  vr_reg_arquivo.cdparceiro         := rw_seg_base.cdparceiro;
+                  vr_reg_arquivo.tpseguro           := rw_seg_base.tpseguro;
+                  vr_reg_arquivo.nrproposta         := rw_seg_base.nrproposta;
+                  vr_reg_arquivo.nrapolice          := rw_seg_base.nrapolice;
+                  vr_reg_arquivo.cdcooper           := rw_seg_base.cdcooper;
+                  vr_reg_arquivo.nrdconta           := rw_seg_base.nrdconta;
+                  vr_reg_arquivo.nrcpf_cnpj_segurado:= rw_seg_base.nrcpf_cnpj_segurado;
+                  vr_reg_arquivo.nmsegurado         := rw_seg_base.nmsegurado;
+                  --vr_reg_arquivo.nrendosso          := rw_seg_base.nrendosso;
+                  --vr_reg_arquivo.tpendosso          := rw_seg_base.tpendosso;
+                  --vr_reg_arquivo.tpsub_endosso      := rw_seg_base.tpsub_endosso;
+                  vr_reg_arquivo.nrapolice_renovacao:= rw_seg_base.nrapolice_renovacao;
+                  vr_reg_arquivo.dtinicio_vigencia  := rw_seg_base.dtinicio_vigencia;
+                  vr_reg_arquivo.dttermino_vigencia := rw_seg_base.dttermino_vigencia;
+                  vr_reg_arquivo.cdsegura           := rw_seg_base.cdsegura;
+                  vr_reg_arquivo.indsituacao        := rw_seg_base.indsituacao;
+                  vr_reg_arquivo.dtcancela          := rw_seg_base.dtcancela;
+                  vr_reg_arquivo.flgvigente         := 1;
 
-                -- INFORMAÇÕES QUE SERÃO ATUALIZADAS - Desta forma não receberão o valor da base
-                --vr_reg_arquivo.vlpremio_liquido   := rw_seg_base.vlpremio_liquido;
-                --vr_reg_arquivo.vlpremio_total     := rw_seg_base.vlpremio_total;
-                --vr_reg_arquivo.nrdiadebito        := rw_seg_base.nrdiadebito;
-                --vr_reg_arquivo.qtparcelas         := rw_seg_base.qtparcelas;
-                --vr_reg_arquivo.vlparcela          := rw_seg_base.vlparcela;
-                --vr_reg_arquivo.percomissao        := rw_seg_base.percomissao;
-                vr_reg_arquivo.dsobservacao       := rw_seg_base.dsobservacao;
-                vr_reg_arquivo.vlcapital          := rw_seg_base.vlcapital;
-                vr_reg_arquivo.inerro_import      := rw_seg_base.inerro_import;
-                vr_reg_arquivo.dtmvtolt           := rw_seg_base.dtmvtolt;
-                vr_reg_arquivo.dsplano            := rw_seg_base.dsplano;
+                  -- INFORMAÇÕES QUE SERÃO ATUALIZADAS - Desta forma não receberão o valor da base
+                  --vr_reg_arquivo.vlpremio_liquido   := rw_seg_base.vlpremio_liquido;
+                  --vr_reg_arquivo.vlpremio_total     := rw_seg_base.vlpremio_total;
+                  --vr_reg_arquivo.nrdiadebito        := rw_seg_base.nrdiadebito;
+                  --vr_reg_arquivo.qtparcelas         := rw_seg_base.qtparcelas;
+                  --vr_reg_arquivo.vlparcela          := rw_seg_base.vlparcela;
+                  --vr_reg_arquivo.percomissao        := rw_seg_base.percomissao;
+                  vr_reg_arquivo.dsobservacao       := rw_seg_base.dsobservacao;
+                  vr_reg_arquivo.vlcapital          := rw_seg_base.vlcapital;
+                  vr_reg_arquivo.inerro_import      := rw_seg_base.inerro_import;
+                  vr_reg_arquivo.dtmvtolt           := rw_seg_base.dtmvtolt;
+                  vr_reg_arquivo.dsplano            := rw_seg_base.dsplano;
 
-                --vr_reg_auto.idcontrato           := rw_auto_base.idcontrato;
-                --vr_reg_auto.idveiculo            := rw_auto_base.idveiculo;
-                -- INFORMAÇÕES QUE SERÃO ATUALIZADAS - Desta forma não receberão o valor da base
-                --vr_reg_auto.nmmarca              := rw_auto_base.nmmarca;
-                --vr_reg_auto.dsmodelo             := rw_auto_base.dsmodelo;
-                --vr_reg_auto.nrano_fabrica        := rw_auto_base.nrano_fabrica;
-                --vr_reg_auto.nrano_modelo         := rw_auto_base.nrano_modelo;
-                --vr_reg_auto.dsplaca              := rw_auto_base.dsplaca;
-                --vr_reg_auto.dschassi             := rw_auto_base.dschassi;
-                --vr_reg_auto.cdfipe               := rw_auto_base.cdfipe;
-                --vr_reg_auto.vlfranquia           := rw_auto_base.vlfranquia;
+                  --vr_reg_auto.idcontrato           := rw_auto_base.idcontrato;
+                  --vr_reg_auto.idveiculo            := rw_auto_base.idveiculo;
+                  -- INFORMAÇÕES QUE SERÃO ATUALIZADAS - Desta forma não receberão o valor da base
+                  --vr_reg_auto.nmmarca              := rw_auto_base.nmmarca;
+                  --vr_reg_auto.dsmodelo             := rw_auto_base.dsmodelo;
+                  --vr_reg_auto.nrano_fabrica        := rw_auto_base.nrano_fabrica;
+                  --vr_reg_auto.nrano_modelo         := rw_auto_base.nrano_modelo;
+                  --vr_reg_auto.dsplaca              := rw_auto_base.dsplaca;
+                  --vr_reg_auto.dschassi             := rw_auto_base.dschassi;
+                  --vr_reg_auto.cdfipe               := rw_auto_base.cdfipe;
+                  --vr_reg_auto.vlfranquia           := rw_auto_base.vlfranquia;
+
+                END IF; -- FIM vr_reg_tpatu.tp_seguro <> 'I'
 
               END IF;
 
             END IF;
-            IF cr_seguros%ISOPEN THEN
-              CLOSE cr_seguros;
+            IF cr_seg_apolice%ISOPEN THEN
+              CLOSE cr_seg_apolice;
             END IF;
 
             IF vr_reg_tpatu.tp_seguro IN ('I','Y') THEN
               vr_reg_arquivo.dsobservacao  := 'Incluido em ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR') ||
                                              ' as ' || to_char(SYSDATE,'hh24:mi:ss');
             ELSE
-              vr_reg_arquivo.dsobservacao  := 'Atualizado em ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR') ||
-                                             ' as ' || to_char(SYSDATE,'hh24:mi:ss');
+              vr_reg_arquivo.dsobservacao  := 'Atualizado em '
+                                             || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')
+                                             || ' as ' || to_char(SYSDATE,'hh24:mi:ss');
             END IF;
 
             -- Limpar a variável
@@ -5922,19 +6162,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             IF NOT vr_flgsegok OR vr_dscritic IS NOT NULL THEN
               -- Gera LOG de Erro do Arquivo
               gera_log(pr_cdcooper => 3 --pr_cdcooper
-                      ,pr_cdprogra => vr_cdprogra
+                      ,pr_cdprogra => vr_tab_arqtmp(idx)
                       ,pr_indierro => vr_indierro -- 1 -- 1-Log Geral 2-Log Especifico Arquivo
                       ,pr_cdcritic => 0
                       ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ' => ATENÇÃO: ' || vr_dscritic
                        );
               ROLLBACK;
               CONTINUE; -- Passa para proxima linha
+            /*ELSE
+              -- Gera LOG
+              gera_log(pr_cdcooper => 3 --pr_cdcooper
+                      ,pr_cdprogra => vr_tab_arqtmp(idx)
+                      ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
+                      ,pr_cdcritic => 0
+                      ,pr_dscritic => ' =>   Linha '|| vr_indice2 || ' => SUCESSO');  */
             END IF;
-
           ------------------ FIM - PROCESSAMENTO PARA GRAVACAO DOS DADOS --------------------
-
         END IF; -- IF TRIM(vr_tab_linhas(vr_indice2)('NRENDOSSO_CANCELA').numero) IS NOT NULL
-
         ----------
         COMMIT; -- Ao termino de cada linha, COMMIT
         ----------
@@ -5949,9 +6193,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                             ,pr_nmsubdir => NULL);
         vr_dsdanexo := vr_raizcoop || '/log/' || vr_nmarqerr;
 
-        vr_mailbody := REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_E')
-                               ,'##DATA##'
-                               ,to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR'));
+        vr_mailbody := REPLACE(REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_E')
+                                       ,'##DATA##'
+                                       ,to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR'))
+                               ,'##NMARQ##'
+                               ,vr_tab_arqtmp(idx));
         -- Gera LOG
         gera_log(pr_cdcooper => 3
                 ,pr_cdprogra => vr_cdprogra
@@ -5960,9 +6206,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 ,pr_dscritic => ' =>   Envio de Email de Termino com Erro!');
       ELSE -- EMAIL de SUCESSO
         vr_dsdanexo := NULL;
-        vr_mailbody := REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_S')
-                               ,'##DATA##'
-                               ,to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR'));
+        vr_mailbody := REPLACE(REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_S')
+                                       ,'##DATA##'
+                                       ,to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR'))
+                               ,'##NMARQ##'
+                               ,vr_tab_arqtmp(idx));
         -- Gera LOG
         gera_log(pr_cdcooper => 3 --pr_cdcooper
                 ,pr_cdprogra => vr_cdprogra
@@ -6001,15 +6249,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       -- SE TEM LOG DE ERROS, ENVIAR PARA O CONNECT PARA SICREDI
       IF vr_dsdanexo IS NOT NULL THEN
-        
-        -- Quando arquivo finalizado com erro, gravar o 
+
+        -- Quando arquivo finalizado com erro, gravar o
         -- arquivo de log na pasta /micros/cecred/segauto/
         vr_nmdirlog := gene0001.fn_diretorio(pr_tpdireto => 'M'
                                            , pr_cdcooper => 3
                                            , pr_nmsubdir => '/segauto/');
         -- Comando para copiar arquivo
         vr_comando:= 'cp '||vr_dsdanexo||' '||vr_nmdirlog ||' 2> /dev/null';
-                     
+
         --Executar o comando no unix
         GENE0001.pc_OScommand (pr_typ_comando => 'S'
                               ,pr_des_comando => vr_comando
@@ -6025,7 +6273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                   ,pr_cdcritic => 0
                   ,pr_dscritic => ' =>   ' || vr_dscritic);
         END IF;
-        
+
         -- Montar Comando para mover o arquivo LOG para o diretório connect/sicredi/ENVIA
         vr_comando:= 'mv '|| vr_dsdanexo || ' ' || vr_dsdirenv || '/'|| vr_nmarqerr;
 
@@ -6058,7 +6306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
     END LOOP; -- Fim da Lista de Arquivos da Pasta
-    
+
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
@@ -6073,11 +6321,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
     --> Log de final de execução
     pc_controla_log_batch(pr_dstiplog => 'F');
-    
+
     -- se for a ultima execução do dia,
     -- move arquivo de log de execução pra pasta /micros/cecred/segauto
     IF  vr_flultexc THEN
-      
+
       vr_raizcoop := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                           ,pr_cdcooper => pr_cdcooper
                                           ,pr_nmsubdir => 'log');
@@ -6086,7 +6334,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                          , pr_nmsubdir => '/segauto/');
       -- Comando para copiar arquivo
       vr_comando:= 'mv ' || vr_raizcoop || '/log_SEGUROS_* '||vr_nmdirlog ||' 2> /dev/null';
-      
+
       -- Executar o comando no unix
       GENE0001.pc_OScommand(pr_typ_comando => 'S'
                            ,pr_des_comando => vr_comando
@@ -6098,7 +6346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         --> Final da execução com ERRO
         pc_controla_log_batch(pr_dstiplog => 'E',
                               pr_dscritic => vr_dscritic);
-      END IF;    
+      END IF;
     END IF;
 
 
@@ -6194,12 +6442,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     vr_dscritic VARCHAR2(4000);
 
     -- Buscar o contrato atual da apolice a ser endossado
-    CURSOR cr_contrato_endosso (p_nrapolic  IN tbseg_contratos.nrapolice%TYPE) IS
+    CURSOR cr_contrato_endosso (p_nrapolice  IN tbseg_contratos.nrapolice%TYPE) IS
       SELECT seg.rowid
         FROM tbseg_contratos seg
-       WHERE seg.nrapolice   = p_nrapolic
-         AND seg.flgvigente  = 1
-         AND seg.tpseguro    = 'A'; -- AUTO
+       WHERE seg.nrapolice     = p_nrapolice
+         AND seg.flgvigente    = 1
+       --AND seg.inerro_import = 0
+         AND seg.tpseguro      = 'A'; -- AUTO
     rw_contrato_endosso   cr_contrato_endosso%ROWTYPE;
 
     CURSOR cr_max_veiculo (p_idcontrato IN tbseg_auto_veiculos.idcontrato%TYPE) IS
@@ -6235,7 +6484,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 CLOSE cr_contrato_endosso;
 
                 -- Mensagem de erro de retorno
-                vr_dscritic := 'Não encontrada Apólice a ser endossada.';
+                vr_dscritic := 'Não encontrada Apólice a ser endossada.' ||
+                               ' [Apólice: ' || pr_seguros(vr_indice).nrapolice || ' - ' || pr_tipatu.tp_seguro || ']' ;
 
                 -- Indicar erro do arquivo especifico
                 pr_indierro := 2;
@@ -6263,7 +6513,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                   -- Exception
                   RAISE vr_exc_erro;
               END;
-
             END IF;
 
             BEGIN
@@ -6334,7 +6583,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 RAISE vr_exc_erro;
             END;
 
-          ELSIF pr_tipatu.tp_seguro = 'A' THEN -- Atualizar o Seguro existente
+          ELSIF pr_tipatu.tp_seguro IN ('A','W') THEN -- Atualizar o Seguro existente
+            -- Se for para alterar o endosso anterior
+            IF pr_tipatu.tp_seguro = 'W' THEN
+
+              OPEN  cr_contrato_endosso(pr_seguros(vr_indice).nrapolice);
+              FETCH cr_contrato_endosso INTO rw_contrato_endosso;
+
+              -- Se não encontrar o endosso para atualizar
+              IF cr_contrato_endosso%NOTFOUND THEN
+                -- Fechar o cursor
+                CLOSE cr_contrato_endosso;
+
+                -- Mensagem de erro de retorno
+                vr_dscritic := 'Não encontrada Apólice a ser endossada.' ||
+                               ' [Apólice: ' || pr_seguros(vr_indice).nrapolice || ' - ' || pr_tipatu.tp_seguro || ']' ;
+
+                -- Indicar erro do arquivo especifico
+                pr_indierro := 2;
+
+                -- Exception
+                RAISE vr_exc_erro;
+              END IF;
+
+              CLOSE cr_contrato_endosso;
+
+              -- Altera o contrato atual para endossado, pois irá inserir o endosso com as alterações
+              BEGIN
+                UPDATE tbseg_contratos t
+                   SET t.indsituacao = 'E' -- Endossado
+                     , t.flgvigente  = 0
+                     , t.dtcancela   = pr_seguros(vr_indice).dtinicio_vigencia
+                 WHERE ROWID = rw_contrato_endosso.rowid;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro ao atualizar Endosso: ' || SQLERRM;
+
+                  -- Indicar erro do arquivo especifico
+                  pr_indierro := 1;
+
+                  -- Exception
+                  RAISE vr_exc_erro;
+              END;
+
+            END IF;
+
             BEGIN
               vr_idcontrato(vr_indice) := pr_seguros(vr_indice).idcontrato;
               UPDATE tbseg_contratos seg
@@ -6363,9 +6656,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     ,seg.percomissao         = pr_seguros(vr_indice).percomissao
                     ,seg.dsobservacao        = pr_seguros(vr_indice).dsobservacao
                     ,seg.vlcapital           = pr_seguros(vr_indice).vlcapital
-                    ,seg.inerro_import       = pr_seguros(vr_indice).inerro_import
-                    ,seg.dtmvtolt            = rw_crapdat.dtmvtolt
                     ,seg.dsplano             = pr_seguros(vr_indice).dsplano
+                    ,seg.dtmvtolt            = rw_crapdat.dtmvtolt
+                    ,seg.inerro_import       = pr_seguros(vr_indice).inerro_import
                     ,seg.flgvigente          = pr_seguros(vr_indice).flgvigente
                WHERE seg.idcontrato = vr_idcontrato(vr_indice);
             EXCEPTION

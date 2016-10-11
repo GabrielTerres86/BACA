@@ -370,10 +370,10 @@ function formataTabela() {
 
     var arrayLargura = new Array();
     arrayLargura[0]  = '120px';
-    arrayLargura[1]  = '90px';
-    arrayLargura[2]  = '90px';
+    arrayLargura[1]  = '117px';
+    arrayLargura[2]  = '117px';
     arrayLargura[3]  = '90px';
-    arrayLargura[4]  = '130px';
+    arrayLargura[4]  = '115px';
     //arrayLargura[5]  = '60px';
    // arrayLargura[6]  = '10px';
 

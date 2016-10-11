@@ -369,19 +369,20 @@ function controlaOperacao(operacao) {
 				}
 				cddopcao = 'CONSULTAR';
 				break;
-			case 'ALTERAR':				
-				if(tpseguro != 3){
-					return false;
-				}
-				
-				// Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
-				if (idorigem == 'N') {
-				    showError('error', 'Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-					return false;
-				}
-				consultar = true;				
-				cddopcao = 'ALTERAR';
-				break;
+		    case 'ALTERAR':
+		        // Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
+		        if (idorigem == 'N') {
+		            showError('error', 'Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		            return false;
+		        }
+
+		        if (tpseguro != 3) {
+		            return false;
+		        }
+
+		        consultar = true;
+		        cddopcao = 'ALTERAR';
+		        break;
 			case 'TI'://tela insere
 					
 					operacao = 'TI';

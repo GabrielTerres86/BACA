@@ -75,41 +75,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
 
     --- CURSORES ---
     CURSOR cr_seg_pend IS
-      SELECT * --> Select para filtrar a paginação
-        FROM (
-              SELECT seg.rowid dsrowid
-                    ,seg.idcontrato
-                    ,seg.nrproposta
-                    ,seg.nrapolice
-                    ,seg.nrendosso
-                    ,seg.dtinicio_vigencia
-                    ,seg.dttermino_vigencia
-                    ,TRIM(UPPER(gene0007.fn_caract_acento(csg.nmsegura))) nmsegura
-                    ,seg.cdcooper
-                    ,seg.nrdconta
-                    ,seg.nrcpf_cnpj_segurado
-                    ,seg.nmsegurado
-                    ,seg.dtmvtolt
-                    ,DECODE(seg.indsituacao,'A','ATIVA','V','VENCIDA','R','RENOVADA','CANCELADA') indsituacao
-                    ,TRIM(UPPER(gene0007.fn_caract_acento(auto.nmmarca))) nmmarca
-                    ,TRIM(UPPER(gene0007.fn_caract_acento(auto.dsmodelo))) dsmodelo
-                    ,auto.dschassi
-                    ,auto.dsplaca
-                    ,auto.nrano_fabrica
-                    ,auto.nrano_modelo
-                    ,COUNT(1)  OVER (PARTITION BY 1)  qtregist
-                    ,rownum      nrrownum
-                FROM tbseg_contratos seg
-                    ,tbseg_auto_veiculos auto
-                    ,crapcsg csg
-               WHERE seg.idcontrato    = auto.idcontrato
-                 AND seg.tpseguro      = 'A' -- Seguro AUTO
-                 AND seg.inerro_import = 1   -- Registros com erros de Conta ou Agencia(cooper)
-                 AND csg.cdcooper      = 1   -- Esses registros da SEG nao tem cooperativa, fixo baseado na 1
-                 AND csg.cdsegura      = seg.cdsegura
-               ORDER BY seg.nrcpf_cnpj_segurado) tmp
+    SELECT *
+      FROM (
+            SELECT tmp.* --> Select para filtrar a paginação
+                  ,rownum      nrrownum
+              FROM (
+                    SELECT seg.rowid dsrowid
+                          ,seg.idcontrato
+                          ,seg.nrproposta
+                          ,seg.nrapolice
+                          ,seg.nrendosso
+                          ,seg.dtinicio_vigencia
+                          ,seg.dttermino_vigencia
+                          ,TRIM(UPPER(gene0007.fn_caract_acento(csg.nmsegura))) nmsegura
+                          ,seg.cdcooper
+                          ,seg.nrdconta
+                          ,seg.nrcpf_cnpj_segurado
+                          ,seg.nmsegurado
+                          ,seg.dtmvtolt
+                          ,DECODE(seg.indsituacao,'A','ATIVA','V','VENCIDA','R','RENOVADA','C','CANCELADA','ENDOSSADA') indsituacao
+                          ,TRIM(UPPER(gene0007.fn_caract_acento(auto.nmmarca))) nmmarca
+                          ,TRIM(UPPER(gene0007.fn_caract_acento(auto.dsmodelo))) dsmodelo
+                          ,auto.dschassi
+                          ,auto.dsplaca
+                          ,auto.nrano_fabrica
+                          ,auto.nrano_modelo
+                          ,COUNT(1)  OVER (PARTITION BY 1)  qtregist
+
+                      FROM tbseg_contratos seg
+                          ,tbseg_auto_veiculos auto
+                          ,crapcsg csg
+                     WHERE seg.idcontrato    = auto.idcontrato
+                       AND seg.tpseguro      = 'A' -- Seguro AUTO
+                       AND seg.inerro_import = 1   -- Registros com erros de Conta ou Agencia(cooper)
+                       AND csg.cdcooper      = 1   -- Esses registros da SEG nao tem cooperativa, fixo baseado na 1
+                       AND csg.cdsegura      = seg.cdsegura
+                     ORDER BY seg.nrcpf_cnpj_segurado, seg.idcontrato
+                       ) tmp
+           ) tmp2
        WHERE nrrownum BETWEEN pr_nriniseq AND (pr_nriniseq + (pr_nrregist - 1))
-       ORDER BY tmp.idcontrato
        ;
              --seg.dtmvtolt, seg.nrproposta,seg.nrapolice,seg.nrendosso;
 
@@ -177,8 +181,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
 
       -- Gravando registros
       vr_tab_dados(vr_index)('idcontrato')          := rw_seg_pend.idcontrato;
-      vr_tab_dados(vr_index)('nrproposta')          := gene0002.fn_mask(rw_seg_pend.nrproposta,'zzz.zzz.zz9');
-      vr_tab_dados(vr_index)('nrapolice')           := gene0002.fn_mask(rw_seg_pend.nrapolice,'zzz.zzz.zz9');
+      vr_tab_dados(vr_index)('nrproposta')          := gene0002.fn_mask(rw_seg_pend.nrproposta,'zzzz.zzz.zzz.zz9');
+      vr_tab_dados(vr_index)('nrapolice')           := gene0002.fn_mask(rw_seg_pend.nrapolice ,'zzzz.zzz.zzz.zz9');
       vr_tab_dados(vr_index)('nrendosso')           := gene0002.fn_mask(rw_seg_pend.nrendosso,'zzz.zzz.zz9');
       vr_tab_dados(vr_index)('dtinicio_vigencia')   := to_char(rw_seg_pend.dtinicio_vigencia,'dd/mm/RRRR');
       vr_tab_dados(vr_index)('dttermino_vigencia')  := to_char(rw_seg_pend.dttermino_vigencia,'dd/mm/RRRR');
@@ -510,59 +514,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
         FROM tbseg_contratos seg
        WHERE seg.idcontrato  = p_idcontrato;
 
-    -- VERIFICAR SE PROPOSTA/APOLICE/ENDOSSO EXISTE NA BASE
-    CURSOR cr_seg_base (p_cdcooper IN tbseg_contratos.cdcooper%TYPE
-                       ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
-                       ,p_nrapolic IN tbseg_contratos.nrapolice%TYPE ) IS
-      SELECT seg.rowid
-            ,seg.idcontrato
-            ,seg.nrapolice
-            ,seg.tpendosso
-            ,seg.nrendosso
-            ,seg.indsituacao
-            ,COUNT(cdcooper) OVER (PARTITION BY cdcooper) qtd_reg
-        FROM tbseg_contratos seg
-       WHERE seg.cdcooper      = p_cdcooper
-         AND seg.nrdconta      = p_nrdconta
-         AND seg.nrapolice     = p_nrapolic
-         --AND seg.nrendosso  = p_nrendoss
-         AND seg.tpseguro      = 'A'
-         AND seg.flgvigente    = 1 -- Buscar contrato Ativo
-         AND seg.inerro_import = 0 -- Seguro Sem erro
-     -- (Existe a mesma Coop/Conta/Apolice Vigente e Sem Erro?)
-       ORDER BY seg.idcontrato DESC
-        ;
-    rw_seg_base cr_seg_base%ROWTYPE;
+
+      CURSOR cr_seg_base (p_cdcooper IN tbseg_contratos.cdcooper%TYPE
+                         ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
+                         ,p_nrpropos IN tbseg_contratos.nrproposta%TYPE
+                         ,p_nrapolic IN tbseg_contratos.nrapolice%TYPE
+                         ,p_nrendoss IN tbseg_contratos.nrendosso%TYPE) IS
+        SELECT seg.rowid
+              ,COUNT(cdcooper) OVER (PARTITION BY cdcooper) qtd_reg
+              ,seg.*
+          FROM tbseg_contratos seg
+         WHERE seg.cdcooper      = p_cdcooper
+           AND seg.nrdconta      = p_nrdconta
+           AND seg.nrproposta    = p_nrpropos
+           AND seg.nrapolice     = p_nrapolic
+           AND seg.nrendosso     = p_nrendoss
+           AND seg.tpseguro      = 'A' -- AUTO
+           AND seg.flgvigente    = 1   -- Buscar contrato vigente
+           AND seg.inerro_import = 0   -- SEM ERRO
+           ;
+
+      -- VERIFICAR SE PROPOSTA/APOLICE EXISTE NA BASE
+      CURSOR cr_seg_proposta(p_cdcooper IN tbseg_contratos.cdcooper%TYPE
+                            ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
+                            ,p_nrpropos IN tbseg_contratos.nrproposta%TYPE
+                            ,p_tpdpesqu IN NUMBER) IS
+        SELECT seg.rowid
+              ,COUNT(cdcooper) OVER (PARTITION BY cdcooper) qtd_reg
+              ,seg.*
+          FROM tbseg_contratos seg
+         WHERE seg.cdcooper      = p_cdcooper
+           AND seg.nrdconta      = p_nrdconta
+           AND seg.nrproposta    = p_nrpropos
+           AND ((p_tpdpesqu  = 0 AND seg.nrapolice  = 0) OR  -- Validar Proposta
+                (p_tpdpesqu <> 0 AND seg.nrapolice <> 0))    -- Validar se Proposta tem Apolice
+           AND seg.tpseguro      = 'A' -- AUTO
+           AND seg.inerro_import = 0   -- SEM ERRO
+           ;
+
+      CURSOR cr_seg_apolice (p_cdcooper IN tbseg_contratos.cdcooper%TYPE
+                            ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
+                            ,p_nrapolic IN tbseg_contratos.nrapolice%TYPE) IS
+        SELECT seg.rowid
+              ,COUNT(cdcooper) OVER (PARTITION BY cdcooper) qtd_reg
+              ,seg.*
+          FROM tbseg_contratos seg
+         WHERE seg.cdcooper      = p_cdcooper
+           AND seg.nrdconta      = p_nrdconta
+           AND seg.nrapolice     = p_nrapolic
+           AND seg.tpseguro      = 'A' -- AUTO
+           AND seg.flgvigente    = 1   -- Buscar contrato vigente
+           AND seg.inerro_import = 0   -- SEM ERRO
+           ;
+
+      CURSOR cr_seg_endosso (p_cdcooper IN tbseg_contratos.cdcooper%TYPE
+                            ,p_nrdconta IN tbseg_contratos.nrdconta%TYPE
+                            ,p_nrapolic IN tbseg_contratos.nrapolice%TYPE
+                            ,p_nrendoss IN tbseg_contratos.nrendosso%TYPE) IS
+        SELECT seg.rowid
+              ,COUNT(cdcooper) OVER (PARTITION BY cdcooper) qtd_reg
+              ,seg.*
+          FROM tbseg_contratos seg
+         WHERE seg.cdcooper      = p_cdcooper
+           AND seg.nrdconta      = p_nrdconta
+           AND seg.nrapolice     = p_nrapolic
+           AND seg.nrendosso     = p_nrendoss
+           AND seg.tpseguro      = 'A' -- AUTO
+           AND seg.flgvigente    = 1   -- Buscar contrato vigente
+           AND seg.inerro_import = 0   -- SEM ERRO
+           ;
+    rw_seg_base cr_seg_apolice%ROWTYPE;
 
     -- Cursor para buscar os veiculos do contrato do PARAMETRO (contrato com erro)
-    CURSOR cr_auto_param (p_idcontrato IN tbseg_contratos.idcontrato%TYPE) IS
-      SELECT auto.idcontrato
-            ,auto.idveiculo
-            ,auto.nmmarca
-            ,auto.dsmodelo
-            ,auto.nrano_fabrica
-            ,auto.nrano_modelo
-            ,auto.dsplaca
-            ,auto.dschassi
-            ,auto.cdfipe
-            ,auto.vlfranquia
+    CURSOR cr_auto_tela (p_idcontrato IN tbseg_contratos.idcontrato%TYPE) IS
+      SELECT auto.*
         FROM tbseg_auto_veiculos auto
        WHERE auto.idcontrato = p_idcontrato;
-    rw_auto_param cr_auto_param%ROWTYPE;
+    rw_auto_tela cr_auto_tela%ROWTYPE;
 
     -- Cursor para buscar os veiculos do contrato da base
     CURSOR cr_auto_base (p_idcontrato IN tbseg_contratos.idcontrato%TYPE) IS
-      SELECT auto.idcontrato
-            ,auto.idveiculo
-            ,auto.nmmarca
-            ,auto.dsmodelo
-            ,auto.nrano_fabrica
-            ,auto.nrano_modelo
-            ,auto.dsplaca
-            ,auto.dschassi
-            ,auto.cdfipe
-            ,auto.vlfranquia
-            ,MAX(idveiculo) OVER (PARTITION BY idcontrato) max_id
+      SELECT auto.*
         FROM tbseg_auto_veiculos auto
        WHERE auto.idcontrato = p_idcontrato;
     rw_auto_base cr_auto_base%ROWTYPE;
@@ -579,9 +611,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
     vr_cdagenci       VARCHAR2(100);
     vr_nrdcaixa       VARCHAR2(100);
     vr_idorigem       VARCHAR2(100);
+    vr_dsmsgupd       VARCHAR2(200); -- Mensagem de erro na atualização
 
     vr_found_cop      BOOLEAN:=FALSE;
     vr_found_ass      BOOLEAN:=FALSE;
+    vr_found_seg      BOOLEAN:=FALSE;       -- Flag se Encontrou Seguro
+    vr_error_seg      BOOLEAN:=FALSE;       -- Flag de Erro no Seguro
     vr_flg_base       BOOLEAN:=FALSE;
 
     vr_cont_auto      INTEGER:=0;
@@ -591,6 +626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
     vr_tab_erro       gene0001.typ_tab_erro;
     vr_indierro       NUMBER;
     vr_tpdseguro      PLS_INTEGER := 0;
+    vr_idcontrato     tbseg_contratos.idcontrato%TYPE:=0;
 
     vr_reg_tpatu      SEGU0001.typ_reg_flg_atu;
 
@@ -603,6 +639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
 
     --Controle de erro
     vr_exc_erro       EXCEPTION;
+    vr_exc_critica    EXCEPTION;
 
   BEGIN
 
@@ -674,183 +711,148 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
           pr_nmdcampo := 'cnewNrdconta';
           RAISE vr_exc_erro;
 
-        ELSE -- Encontrou ASSOCIADO - Encontrou COOPER - Encontrou SEGURO
+        ELSE -- Encontrou ASSOCIADO - Encontrou COOPER
 
           -- Tipo atualização dos Dados (I-Inclusão / A-Alteração / M-Manter)
-          vr_reg_tpatu.tp_seguro         := 'M';
+          vr_reg_tpatu.tp_seguro         := 'A';
           vr_reg_tpatu.tp_auto           := 'M';
           vr_reg_tpatu.tp_vida           := 'A';
           vr_reg_tpatu.tp_casa           := 'A';
           vr_reg_tpatu.tp_prst           := 'A';
 
-          rw_tab_seg_tela(1).dtmvtolt      := rw_crapdat.dtmvtolt; -- Data de Atualização
+          rw_tab_seg_tela(1).dtmvtolt      := rw_crapdat.dtmvtocd; -- Data de Atualização
 
-
-          IF  rw_tab_seg_tela(1).nrproposta <> 0
-          AND rw_tab_seg_tela(1).nrapolice   = 0
-          AND rw_tab_seg_tela(1).nrendosso   = 0 THEN
-            -- É PROPOSTA
-            vr_tpdseguro := 1;
-          ELSIF rw_tab_seg_tela(1).nrproposta <> 0
-            AND rw_tab_seg_tela(1).nrapolice  <> 0
-            AND rw_tab_seg_tela(1).nrendosso   = 0 THEN
-            -- É APOLICE
-            vr_tpdseguro := 2;
-          ELSIF rw_tab_seg_tela(1).nrapolice  <> 0
-            AND rw_tab_seg_tela(1).nrproposta <> 0
-            AND rw_tab_seg_tela(1).nrendosso  <> 0 THEN
-            -- É ENDOSSO
-            vr_tpdseguro := 3;
-          END IF;
-
-
-          IF  pr_nrdconta = 7325800 THEN
-            NULL;
-          END IF;
-
-          IF cr_seg_base%ISOPEN THEN
-            CLOSE cr_seg_base;
-          END IF;
-          -- Verificar se a Coop/Conta PARAMETRO já possui o seguro do PARAMETRO
+          -- VALIDAR SE EXISTE SEGURO COM OS MESMOS DADOS, PORÉM ATIVO E SEM ERRO
+          -- PARA VALIDAR ERRO / OU DUPLICADOS
           OPEN cr_seg_base (p_cdcooper => pr_cdcooper
                            ,p_nrdconta => pr_nrdconta
-                           ,p_nrapolic => rw_tab_seg_tela(1).nrapolice);
+                           ,p_nrpropos => rw_tab_seg_tela(1).nrproposta
+                           ,p_nrapolic => rw_tab_seg_tela(1).nrapolice
+                           ,p_nrendoss => rw_tab_seg_tela(1).nrendosso);
           FETCH cr_seg_base INTO rw_seg_base;
-          --Se nao Encontrou
-          IF cr_seg_base%NOTFOUND THEN
-            CLOSE cr_seg_base;
+          vr_found_seg := cr_seg_base%FOUND;
+          CLOSE cr_seg_base;
 
-            rw_tab_seg_tela(1).cdcooper      := pr_cdcooper;         -- Atualiza com dados do Parametro
-            rw_tab_seg_tela(1).nrdconta      := pr_nrdconta;         -- Atualiza com dados do Parametro
-            rw_tab_seg_tela(1).dsobservacao  := '[PENSEG] Atualizado em ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR') ||
-                                                 ' as ' || to_char(SYSDATE,'hh24:mi:ss');
 
-            -- Se não encontrou, vai apenas
-            -- atualizar CDCOOPER e NRDCONTA do registro do PARAMETRO
-            -- Nao faz nada com dados da AUTO (mantem)
-            vr_reg_tpatu.tp_seguro := 'A'; -- ATUALIZA DADOS SEGURO
-            vr_reg_tpatu.tp_auto   := 'M'; -- MANTEM DADOS VEICULO
+          IF  vr_found_seg THEN
+            -- SE ENCONTROU É PQ TEM ALGUM ERRO, OU ESSE REGISTRO FOI ENVIADO NOVAMENTE VALIDO
+            -- OU ALGO NAO PERMITIU CADASTRAR/ATUALIZAR ESSE REGISTRO DA
+            -- TELA NA BASE
 
-            rw_tab_seg_tela(1).flgvigente  := 1;
+            -- MARCAR COMO '9' E ATUALIZAR A OBSERVAÇÃO
+            rw_tab_seg_tela(1).flgvigente    := 1;
+            rw_tab_seg_tela(1).inerro_import := 9; -- 9 = PROBLEMA, NAO É ERRO E NEM SUCESSO
+            vr_dsmsgupd                      := 'Recebido registro duplicado!';
+            rw_tab_seg_tela(1).dsobservacao  := '[PENSEG] Problema com os dados/Duplicidade - ' ||
+                                                ' Em ' || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR') ||
+                                                ' as ' || to_char(SYSDATE,'hh24:mi:ss');
+
+          ELSE -- NAO ENCONTROU
+
+            rw_tab_seg_tela(1).flgvigente    := 1;
             rw_tab_seg_tela(1).inerro_import := 0;                   -- Limpa Registro de ERRO
-            -- Se é um Endosso e nao existir na base ainda, já cria como CANCELADO
-            IF  rw_tab_seg_tela(1).nrendosso <> 0
-            AND rw_tab_seg_tela(1).tpendosso IN (4,5) THEN
-              rw_tab_seg_tela(1).indsituacao := 'C'; -- Altera a situado Seguro para CANCELADO
-              rw_tab_seg_tela(1).dtcancela   := rw_crapdat.dtmvtolt;
-            END IF;
+            rw_tab_seg_tela(1).dsobservacao  := '[PENSEG] Atualizado em '
+                                                || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR') ||
+                                                ' as ' || to_char(SYSDATE,'hh24:mi:ss');
+            -- Verificar o tipo de registro da TELA
+            IF  rw_tab_seg_tela(1).nrproposta <> 0
+            AND rw_tab_seg_tela(1).nrapolice   = 0
+            AND rw_tab_seg_tela(1).nrendosso   = 0 THEN
+              -- É PROPOSTA
+              vr_tpdseguro := 1;
 
-          ELSE -- Coop e Conta informada já tem essa Proposta/Apolice
+              -- Apenas atualiza na base
 
-            CLOSE cr_seg_base;
-            --vr_reg_tpatu.tp_seguro   := 'Y';  -- Inserir dados do seguro, inativando o registro anterior
+            ELSIF rw_tab_seg_tela(1).nrproposta <> 0
+              AND rw_tab_seg_tela(1).nrapolice  <> 0
+              AND rw_tab_seg_tela(1).nrendosso   = 0 THEN
+              -- É APOLICE
+              vr_tpdseguro := 2;
 
-            rw_tab_auto_tela.DELETE;     -- Limpa os registros de Veiculos
-            rw_tab_seg_tela(1).inerro_import := 0;                   -- Limpa Registro de ERRO
-            
-            -- POSICIONA NO VEICULO DO SEGURO DO PARAMETRO
-            OPEN cr_auto_param(p_idcontrato => pr_idcontrato) ;
-            FETCH cr_auto_param INTO rw_tab_auto_tela(1);
-            --Se nao Encontrou
-            IF cr_auto_param%NOTFOUND THEN
-              CLOSE cr_auto_param;
-              pr_cdcritic := 9999;
-              pr_des_erro := 'Seguro selecionado sem veiculo! (' || pr_idcontrato ||')';
-              pr_nmdcampo := 'cnewCdcooper';
-              RAISE vr_exc_erro;
+              -- Apenas atualiza na base
 
-            ELSE -- ENCONTROU VEICULO PARAMETRO
+            ELSIF rw_tab_seg_tela(1).nrapolice  <> 0
+              --AND rw_tab_seg_tela(1).nrproposta <> 0 -- COMENTADO PARA PASSAR PELO ERRO DO SICREDI AO MANDAR PROPOSTA = 0 QUANDO ENDOSSO
+              AND rw_tab_seg_tela(1).nrendosso  <> 0 THEN
+              -- É ENDOSSO
+              vr_tpdseguro := 3;
 
-              -- POSICIONA NO VEICULO DO CONTRATO BASE
-              OPEN cr_auto_base(p_idcontrato => rw_seg_base.idcontrato);
-              FETCH cr_auto_base INTO rw_auto_base;
-              --Se nao Encontrou
-              IF cr_auto_base%NOTFOUND THEN
-                CLOSE cr_auto_base;
-                pr_cdcritic := 9999;
-                pr_des_erro := 'Seguro base sem veiculo! (' || rw_seg_base.idcontrato ||')';
-                pr_nmdcampo := 'cnewCdcooper';
-                RAISE vr_exc_erro;
+              -- PARA RECEBER UM ENDOSSO, É NECESSÁRIO QUE
+              -- EXISTA UMA APOLICE VIGENTE E SEM ERRO
+              -- VALIDAR SE ENDOSSO JA EXISTE NESSA COOPER/CONTA/APOLICE
+              OPEN cr_seg_apolice (p_cdcooper => pr_cdcooper
+                                  ,p_nrdconta => pr_nrdconta
+                                  ,p_nrapolic => rw_tab_seg_tela(1).nrapolice);
+              FETCH cr_seg_apolice INTO rw_seg_base;
+              vr_found_seg := cr_seg_apolice%FOUND;
+              CLOSE cr_seg_apolice;
 
-              ELSE -- ENCONTROU VEICULO DO SEGURO DA BASE
+              -- SE NAO ENCONTROU A APOLICE RELACIONADA AO ENDOSSO DA TELA
+              IF NOT vr_found_seg THEN
+                -- MARCAR COMO '9' E ATUALIZAR A OBSERVAÇÃO
+                rw_tab_seg_tela(1).flgvigente    := 1;
+                rw_tab_seg_tela(1).inerro_import := 9; -- 9 = PROBLEMA, NAO É ERRO E NEM SUCESSO
+                vr_dsmsgupd                      := 'Recebimento de ENDOSSO para APÓLICE inexistente!';
+                rw_tab_seg_tela(1).dsobservacao  := '[PENSEG] Recebimento de ENDOSSO para APÓLICE inexistente - ' ||
+                                                    '(' || pr_cdcooper ||'/'||
+                                                           pr_nrdconta || '/' ||
+                                                           rw_tab_seg_tela(1).nrapolice || ')' ||
+                                                    ' Em ' || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR') ||
+                                                    ' as ' || to_char(SYSDATE,'hh24:mi:ss');
+              ELSE -- ENCONTROU APOLICE ATIVA
+                -- Atualizar dados do seguro, inativando o registro anterior
+                vr_reg_tpatu.tp_seguro   := 'W';
 
-                -- PARA EVITAR ERROS DE SEQUENCIA
-                -- CASO O CONTRATO A SER ATUALIZADO FOR DE SEQUENCIA
-                -- MENOR QUE O CONTRATO DA BASE, SIGNIFICA QUE O
-                -- OPERADOR SE EQUIVOCOU NA HORA DE EDITAR OS REGISTROS
-                -- DE SEGUROS PENDENTES, OU VEIO NA SEQUENCIA UM REGISTRO
-                -- NOVO COM DADOS CORRETOS APOS UM COM ERRO.
-                -- EX.: CONTRATO 1 - COM ERRO
-                     -- CONTRATO 2 - SEM ERRO
-                IF pr_idcontrato < rw_seg_base.idcontrato THEN
-                  rw_tab_seg_tela(1).inerro_import := 9; -- Segregar registros que tiveram problemas
-                  rw_tab_seg_tela(1).dsobservacao  := '[PENSEG] Nao Atualizado - Nr Contrato selecionado inferior ' ||
-                                                       'ao Nr Contrato base! ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR') ||
-                                                       ' as ' || to_char(SYSDATE,'hh24:mi:ss');
-                  vr_reg_tpatu.tp_auto   := 'M'; -- MANTEM DADOS VEICULO
-
-                ELSE -- IDCONTRATO sequencia certa.
-
-                  IF  vr_tpdseguro = 2  THEN -- Apolice
-                    IF rw_tab_seg_tela(1).nrapolice = rw_seg_base.nrapolice THEN
-                      -- Apolice da Tela = Apolice da Base. Não pode importar
-                      rw_tab_seg_tela(1).inerro_import := 9; -- Segregar registros que tiveram problemas
-                      pr_cdcritic := 9999;
-                      pr_des_erro := 'ERRO! Este seguro já está base! [Coop: ' || rw_tab_seg_tela(1).cdcooper
-                                                         ||   ' Conta: ' || rw_tab_seg_tela(1).nrdconta
-                                                         || ' Apólice: ' || rw_tab_seg_tela(1).nrapolice
-                                                         || ']';
-                      pr_nmdcampo := 'cnewCdcooper';
-                      RAISE vr_exc_erro;
-                    END IF;
-
-                  ELSIF vr_tpdseguro = 3 THEN -- Endosso
-                    --rw_tab_seg_tela(1).tpendosso IN (4,5) THEN -- Seguro da Tela
-
-                    IF  rw_seg_base.indsituacao = 'E' THEN
-                      -- Se a Base está como "E" ja foi processado na importação do arquivo
-                      -- Mantem dados e atualiza CDCOOPER e NRDCONTA
-                      vr_reg_tpatu.tp_auto   := 'M'; -- MANTEM DADOS VEICULO
-                      vr_reg_tpatu.tp_seguro := 'A'; -- ATUALIZA DADOS SEGURO (COOP/CONTA)
-
-                    ELSE  -- Outra situação
-
-                      vr_reg_tpatu.tp_seguro := 'Y';
-                      -- Se o endosso ativo da Base já for de Cancelamento
-                      IF  rw_seg_base.nrendosso   <> 0
-                      AND rw_seg_base.tpendosso   IN (4,5) THEN
-                        rw_tab_seg_tela(1).inerro_import := 9; -- Segregar registros que tiveram problemas
-                        pr_cdcritic := 9999;
-                        pr_des_erro := 'ERRO! Apólice ' || rw_seg_base.nrapolice || ' já recebeu Endosso de Cancelamento. ';
-                        pr_nmdcampo := 'cnewCdcooper';
-                        RAISE vr_exc_erro;
-                      END IF;                      
-
-                      rw_tab_auto_tela(1).idcontrato    := rw_seg_base.idcontrato;
-                      rw_tab_auto_tela(1).idveiculo     := rw_auto_base.idveiculo;
-
-                    END IF; -- FIM ELSE rw_seg_base.indsituacao = 'E'
-
-                  END IF; -- FIM vr_tpdseguro = 3
-
-                  rw_tab_seg_tela(1).cdcooper      := pr_cdcooper;         -- Atualiza com dados do Parametro
-                  rw_tab_seg_tela(1).nrdconta      := pr_nrdconta;         -- Atualiza com dados do Parametro
-                  rw_tab_seg_tela(1).dsobservacao  := '[PENSEG] Atualizado em ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR') ||
-                                                       ' as ' || to_char(SYSDATE,'hh24:mi:ss');
+                -- Se tá ZERO, erro do SICREDI
+                IF rw_tab_seg_tela(1).nrproposta = 0 THEN
+                  rw_tab_seg_tela(1).nrproposta := rw_seg_base.nrproposta;
                 END IF;
 
-              END IF; -- FIM DO cr_auto_base%NOTFOUND
+                IF rw_tab_seg_tela(1).tpendosso IN (4,5) THEN
+                  rw_tab_seg_tela(1).indsituacao := 'C'; -- Altera a situado Seguro para CANCELADO
+                  rw_tab_seg_tela(1).dtcancela   := rw_crapdat.dtmvtolt;
+                  vr_reg_tpatu.tp_auto           := 'A'; -- ATUALIZA DADOS VEICULO
+                  rw_tab_auto_tela.delete;
 
-            END IF;
+                  -- QUANDO CANCELAMENTO, MANTEM OS DADOS DO
+                  -- ULTIMO VEICULO DA APOLICE ATIVA
+                  -- CONSULTAR VEICULO DA APOLICE BASE
+                  OPEN  cr_auto_base(p_idcontrato => rw_seg_base.idcontrato);
+                  FETCH cr_auto_base INTO rw_auto_base;
+                  CLOSE cr_auto_base;
 
-          END IF; -- FIM IF/ELSE NOTFOUND
-          IF cr_seg_base%ISOPEN THEN
-            CLOSE cr_seg_base;
-          END IF;
+                  -- CONSULTAR VEICULO DA APOLICE TELA
+                  OPEN  cr_auto_tela(p_idcontrato => rw_tab_seg_tela(1).idcontrato);
+                  FETCH cr_auto_tela INTO rw_tab_auto_tela(1);
+                  CLOSE cr_auto_tela;
+
+                  -- Manter o automovel atual copiando os dados do veículo
+                  rw_tab_auto_tela(1).idveiculo      := NVL(rw_tab_auto_tela(1).idveiculo     ,rw_auto_base.idveiculo);
+                  rw_tab_auto_tela(1).nmmarca        := NVL(TRIM(rw_tab_auto_tela(1).nmmarca) ,rw_auto_base.nmmarca);
+                  rw_tab_auto_tela(1).dsmodelo       := NVL(TRIM(rw_tab_auto_tela(1).dsmodelo),rw_auto_base.dsmodelo);
+                  rw_tab_auto_tela(1).nrano_fabrica  := NVL(rw_tab_auto_tela(1).nrano_fabrica ,rw_auto_base.nrano_fabrica);
+                  rw_tab_auto_tela(1).nrano_modelo   := NVL(rw_tab_auto_tela(1).nrano_modelo  ,rw_auto_base.nrano_modelo);
+                  rw_tab_auto_tela(1).dsplaca        := NVL(TRIM(rw_tab_auto_tela(1).dsplaca) ,rw_auto_base.dsplaca);
+                  rw_tab_auto_tela(1).dschassi       := NVL(TRIM(rw_tab_auto_tela(1).dschassi),rw_auto_base.dschassi);
+                  rw_tab_auto_tela(1).cdfipe         := NVL(rw_tab_auto_tela(1).cdfipe        ,rw_auto_base.cdfipe);
+                  rw_tab_auto_tela(1).vlfranquia     := NVL(rw_tab_auto_tela(1).vlfranquia    ,rw_auto_base.vlfranquia);
+
+                END IF; -- fim --> IF rw_tab_seg_tela(1).tpendosso IN (4,5)
+
+              END IF; -- FIM --> ENCONTROU APOLICE ATIVA
+
+            END IF; -- FIM --> VERIFICAÇÃO PROPOSTA/APOLICE/ENDOSSO
+
+          END IF;   -- FIM DO IF  vr_found_seg THEN
+
+          -- ATUALIZA COM OS DADOS DO PARAMETRO -- COMUM PARA TODOS
+          rw_tab_seg_tela(1).cdcooper      := pr_cdcooper;         -- Atualiza com dados do Parametro
+          rw_tab_seg_tela(1).nrdconta      := pr_nrdconta;         -- Atualiza com dados do Parametro
+
 
           -- AJUSTA SITUAÇÃO DO SEGURO
           IF  rw_tab_seg_tela(1).indsituacao = 'A'  -- ATIVA
-          AND rw_tab_seg_tela(1).dttermino_vigencia <= rw_crapdat.dtmvtolt THEN
+          AND rw_tab_seg_tela(1).dttermino_vigencia <= rw_crapdat.dtmvtocd THEN
             rw_tab_seg_tela(1).indsituacao := 'V'; -- VENCIDO
           END IF;
 
@@ -873,26 +875,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
             pr_des_erro := pr_dscritic;
             pr_nmdcampo := 'cnewCdcooper';
             RAISE vr_exc_erro;
+          ELSE
+            IF vr_dsmsgupd IS NOT NULL THEN
+              -- OCORREU CRITICA NA ATUALIZAÇÃO DO SEGURO
+              -- FAZ COMMIT MESMO ASSIM
+              pr_cdcritic := 9999;
+              pr_des_erro := vr_dsmsgupd;
+              pr_nmdcampo := 'cnewCdcooper';
+              RAISE vr_exc_critica;
+            END IF;
           END IF;
-
-/*          IF vr_reg_tpatu.tp_auto = 'A' THEN
-             -- SE FOR "M", não exclui registro do PARAMETRO
-             -- Quando "A", o Contrato PARAMETRO deve ser excluido
-             BEGIN
-               DELETE tbseg_auto_veiculos auto
-                 WHERE auto.idcontrato = pr_idcontrato;
-
-               DELETE tbseg_contratos seg
-                WHERE seg.idcontrato = pr_idcontrato;
-             EXCEPTION
-               WHEN OTHERS THEN
-                 pr_des_erro := 'Erro na atualizacao do Seguro! ' || SQLERRM;
-                 pr_cdcritic := 9999;
-                 pr_nmdcampo := 'cnewCdcooper';
-                 RAISE vr_exc_erro;
-             END;
-          END IF;
-*/        END IF;   -- FIM IF NOT vr_found_ass THEN
+        END IF;   -- FIM IF NOT vr_found_ass THEN
       END IF;     -- FIM IF NOT vr_found_cop THEN
     END IF;       -- FIM IF cr_seg_tela%NOTFOUND THEN
     IF cr_seg_tela%ISOPEN THEN
@@ -902,10 +895,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
     COMMIT;
 
   EXCEPTION
+    WHEN vr_exc_critica THEN
+      COMMIT;
+      pr_dscritic := gene0007.fn_convert_db_web(pr_des_erro);
+      -- Carregar XML padrao para variavel de retorno nao utilizada.
+      -- Existe para satisfazer exigencia da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                    '<Root><Dados>Rotina com erros</Dados></Root>');
+
     WHEN vr_exc_erro THEN
       ROLLBACK;
       pr_dscritic := gene0007.fn_convert_db_web(pr_des_erro);
-      --pr_nmdcampo := 'cnewCdcooper';
 
       -- Carregar XML padrao para variavel de retorno nao utilizada.
       -- Existe para satisfazer exigencia da interface.

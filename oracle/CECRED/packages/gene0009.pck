@@ -95,7 +95,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 28/03/2016
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 30/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -107,6 +107,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
                                  ao cooperado 
                                  (Andrei - RKAM ).
     --
+    --  Alteração : 30/09/2016 - Deletar as variaveis vr_tab_regras e vr_tab_layouts antes de carregar (Rafael).
+    --
+    --              03/10/2016 - Tratar linhas com quantidade de colunas diferente do layout, quando
+    --                           "com delimitador" (Guilherme/SUPERO)
     --
     -- ..........................................................................*/
     
@@ -131,16 +135,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
       vr_nmcampo    VARCHAR2(100);
       vr_dsformato  tbgen_layout_campo.dsformato%TYPE;
       vr_split      gene0002.typ_split;
-      vr_qtdcampos  INTEGER:=0;    -- Identifica quantidade de campos do Layout
      
       -----------------> SUBPROGRAMAS <--------------
       --> Carregar layout que serao utilizados
       PROCEDURE pc_carrega_layouts(pr_idlayout IN tbgen_layout_campo.idlayout%TYPE) IS      
       BEGIN
+        -- variaveis precisam ser deletadas na sessão antes de carregar
+        vr_tab_layouts.delete;
+        vr_tab_regras.delete;
         -- Ler os campos do layout e armazenar na temptable para ter melhor performace ao ler as linhas
         FOR rw_campo_layout IN cr_campo_layout(pr_idlayout => pr_idlayout) LOOP
           vr_tab_layouts(rw_campo_layout.tpregistro)(rw_campo_layout.nrsequencia_campo) := rw_campo_layout;
-          vr_qtdcampos := vr_qtdcampos + 1;
           
           IF TRIM(rw_campo_layout.dsidentificador_registro) IS NOT NULL THEN
             vr_tab_regras(rw_campo_layout.tpregistro)(rw_campo_layout.nrsequencia_campo) := rw_campo_layout;
@@ -258,7 +263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
             END IF;
                                 
             IF TRIM(vr_tpregistro) IS NULL THEN
-              vr_dscritic := 'Nao foi possivel definir layout para a linha';
+              vr_dscritic := 'Nao foi possivel definir layout para a linha '||vr_contlin;
               RAISE vr_exc_erro;
             END IF;
             
@@ -319,13 +324,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
               vr_split := gene0002.fn_quebra_string(pr_string => vr_dslinha, 
                                                     pr_delimit => rw_layout.dsdelimitador);
                                                     
-              IF vr_qtdcampos <> vr_split.count() THEN
+              -- Compara quantidade de campos do Layout com a qtde campos da linha
+              IF vr_tab_layouts(vr_tpregistro).count() <> vr_split.count() THEN
                  vr_tab_linhas(vr_contlin)('$ERRO$').texto := 'Formato inválido da linha!';
                  --> Em caso de erro deve parar de ler a linha e retornar para o chamador
-                 CONTINUE;              
-              END IF;                                                                                                         
-
-
+                 CONTINUE;
+              END IF;
+              
               FOR i IN vr_tab_layouts(vr_tpregistro).first..vr_tab_layouts(vr_tpregistro).last LOOP     
                       
                 vr_nmcampo   := vr_tab_layouts(vr_tpregistro)(i).nmcampo;  

@@ -17,14 +17,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RELSEG AS
   --
   --    Programa: TELA_RELSEG
   --    Autor   : Guilherme/SUPERO
-  --    Data    : Junho/2016                   Ultima Atualizacao: 
+  --    Data    : Junho/2016                   Ultima Atualizacao:
   --
   --    Dados referentes ao programa:
   --
   --    Objetivo  : BO ref. a Mensageria da tela RELSEG
   --
-  --    Alteracoes:                              
-  --    
+  --    Alteracoes:
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   PROCEDURE pc_export_seguro_auto_sicr(pr_tpseguro IN PLS_INTEGER   --> Tipo de Seguro   (1-Proposta / 2-Apolice / 3-Endosso)
@@ -56,57 +56,201 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RELSEG AS
                      ,p_tpstaseg IN VARCHAR2) IS
            -- p_tpseguro => 1-Proposta / 2-Apolice / 3-Endosso
            -- p_tpstaseg => A-Ativo / V-Vencido / C-Cancelado
-      SELECT seg.cdcooper
-            ,nvl(ass.cdagenci,0) cdagenci
-            ,seg.dtinicio_vigencia
-            ,seg.dttermino_vigencia
-            ,TRIM(UPPER(translate(csg.nmsegura,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
-                                              ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegura
-            ,TRIM(UPPER(translate(seg.nmsegurado,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
-                                                ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegurado
-            ,NVL(cop.cdagectl,0) cdagectl
-            ,seg.nrdconta
-            ,seg.nrcpf_cnpj_segurado
-            ,seg.nrproposta
-            ,seg.nrapolice
-            ,seg.nrendosso
-            ,seg.vlpremio_liquido
-            ,seg.vlpremio_total
-            ,seg.qtparcelas
-            ,seg.vlparcela
-            ,DECODE(seg.indsituacao,'A','ATIVA','C','CANCELADA','VENCIDA') indsituacao
-            ,seg.percomissao
-            ,seg.dtcancela
-            ,'000000000000'  nrendosso_altera
-            ,seg.tpendosso
-            ,seg.tpsub_endosso
-        FROM tbseg_contratos seg
-            ,crapcsg csg
-            ,crapcop cop
-            ,crapass ass
-        WHERE seg.tpseguro    = 'A'          -- SEGURO AUTO
-          AND csg.cdcooper    = 1            -- SEGURADORAS CADASTRADAS NA VIACREDI
-          AND csg.cdsegura    = seg.cdsegura
-          AND seg.cdcooper    = cop.cdcooper(+)  -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
-          AND seg.cdcooper    = ass.cdcooper (+) -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
-          AND seg.nrdconta    = ass.nrdconta (+) -- HA SITUACOES COM CONTA 0 (QUANDO ERRO)
-          AND seg.indsituacao = p_tpstaseg
-          AND ((p_tpseguro      = 1 AND       -- PROPOSTAS
-                seg.nrproposta <> 0 AND
-                seg.nrapolice   = 0 AND
-                seg.nrendosso   = 0
-               ) OR
-               (p_tpseguro      = 2 AND       -- APOLICES
-                seg.nrproposta <> 0 AND
-                seg.nrapolice  <> 0 AND
-                seg.nrendosso   = 0
-               )OR
-               (p_tpseguro      = 3 AND       -- ENDOSSOS
-                seg.nrproposta <> 0 AND
-                seg.nrapolice  <> 0 AND
-                seg.nrendosso  <> 0
-               ))
-      ORDER BY seg.cdcooper, cdagenci, nrdconta,nrproposta, nrapolice,nrendosso;
+    SELECT *
+      FROM (SELECT seg.cdcooper       -- PROPOSTAS
+                  ,nvl(ass.cdagenci,0) cdagenci
+                  ,seg.dtinicio_vigencia
+                  ,seg.dttermino_vigencia
+                  ,TRIM(UPPER(translate(csg.nmsegura,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                    ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegura
+                  ,TRIM(UPPER(translate(seg.nmsegurado,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                      ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegurado
+                  ,NVL(cop.cdagectl,0) cdagectl
+                  ,seg.nrdconta
+                  ,seg.nrcpf_cnpj_segurado
+                  ,seg.nrproposta
+                  ,seg.nrapolice
+                  ,seg.nrendosso
+                  ,auto.nmmarca
+                  ,auto.dsmodelo
+                  ,auto.nrano_fabrica
+                  ,auto.nrano_modelo
+                  ,auto.dsplaca
+                  ,auto.dschassi
+                  ,seg.vlpremio_liquido
+                  ,seg.vlpremio_total
+                  ,seg.qtparcelas
+                  ,seg.vlparcela
+                  ,DECODE(seg.indsituacao,'A','ATIVA','C','CANCELADA','VENCIDA') indsituacao
+                  ,seg.percomissao
+                  ,seg.dtcancela
+                  ,'000000000000'  nrendosso_altera
+                  ,seg.tpendosso
+                  ,seg.tpsub_endosso
+              FROM tbseg_contratos seg
+                  ,tbseg_auto_veiculos auto
+                  ,crapcsg csg
+                  ,crapcop cop
+                  ,crapass ass
+              WHERE seg.idcontrato  = auto.idcontrato
+                AND seg.tpseguro    = 'A'          -- SEGURO AUTO
+                AND csg.cdcooper    = 1            -- SEGURADORAS CADASTRADAS NA VIACREDI
+                AND csg.cdsegura    = seg.cdsegura
+                AND seg.cdcooper    = cop.cdcooper(+)  -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.cdcooper    = ass.cdcooper (+) -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.nrdconta    = ass.nrdconta (+) -- HA SITUACOES COM CONTA 0 (QUANDO ERRO)
+                AND seg.indsituacao = p_tpstaseg
+                AND p_tpseguro      = 1
+                AND seg.nrproposta <> 0 -- APENAS PROPOSTAS
+                AND seg.nrapolice   = 0
+                AND seg.nrendosso   = 0  
+            UNION ALL
+            SELECT seg.cdcooper         -- APOLICES
+                  ,nvl(ass.cdagenci,0) cdagenci
+                  ,seg.dtinicio_vigencia
+                  ,seg.dttermino_vigencia
+                  ,TRIM(UPPER(translate(csg.nmsegura,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                    ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegura
+                  ,TRIM(UPPER(translate(seg.nmsegurado,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                      ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegurado
+                  ,NVL(cop.cdagectl,0) cdagectl
+                  ,seg.nrdconta
+                  ,seg.nrcpf_cnpj_segurado
+                  ,seg.nrproposta
+                  ,seg.nrapolice
+                  ,seg.nrendosso
+                  ,auto.nmmarca
+                  ,auto.dsmodelo
+                  ,auto.nrano_fabrica
+                  ,auto.nrano_modelo
+                  ,auto.dsplaca
+                  ,auto.dschassi
+                  ,seg.vlpremio_liquido
+                  ,seg.vlpremio_total
+                  ,seg.qtparcelas
+                  ,seg.vlparcela
+                  ,DECODE(seg.indsituacao,'A','ATIVA','C','CANCELADA','VENCIDA') indsituacao
+                  ,seg.percomissao
+                  ,seg.dtcancela
+                  ,'000000000000'  nrendosso_altera
+                  ,seg.tpendosso
+                  ,seg.tpsub_endosso
+              FROM tbseg_contratos     seg
+                  ,tbseg_auto_veiculos auto
+                  ,crapcsg csg
+                  ,crapcop cop
+                  ,crapass ass
+              WHERE seg.idcontrato  = auto.idcontrato
+                AND seg.tpseguro    = 'A'          -- SEGURO AUTO
+                AND csg.cdcooper    = 1            -- SEGURADORAS CADASTRADAS NA VIACREDI
+                AND csg.cdsegura    = seg.cdsegura
+                AND seg.cdcooper    = cop.cdcooper(+)  -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.cdcooper    = ass.cdcooper (+) -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.nrdconta    = ass.nrdconta (+) -- HA SITUACOES COM CONTA 0 (QUANDO ERRO)
+                AND seg.indsituacao = p_tpstaseg
+                AND p_tpseguro      = 2
+                AND seg.nrproposta <> 0       -- APENAS APOLICES
+                AND seg.nrapolice  <> 0
+                AND seg.nrendosso   = 0
+            UNION ALL
+            SELECT seg.cdcooper               -- ENDOSSOS DE ALTERACAO - SAO CONSIDERADOS APOLICES TB
+                  ,nvl(ass.cdagenci,0) cdagenci
+                  ,seg.dtinicio_vigencia
+                  ,seg.dttermino_vigencia
+                  ,TRIM(UPPER(translate(csg.nmsegura,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                    ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegura
+                  ,TRIM(UPPER(translate(seg.nmsegurado,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                      ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegurado
+                  ,NVL(cop.cdagectl,0) cdagectl
+                  ,seg.nrdconta
+                  ,seg.nrcpf_cnpj_segurado
+                  ,seg.nrproposta
+                  ,seg.nrapolice
+                  ,seg.nrendosso
+                  ,auto.nmmarca
+                  ,auto.dsmodelo
+                  ,auto.nrano_fabrica
+                  ,auto.nrano_modelo
+                  ,auto.dsplaca
+                  ,auto.dschassi
+                  ,seg.vlpremio_liquido
+                  ,seg.vlpremio_total
+                  ,seg.qtparcelas
+                  ,seg.vlparcela
+                  ,DECODE(seg.indsituacao,'A','ATIVA','C','CANCELADA','VENCIDA') indsituacao
+                  ,seg.percomissao
+                  ,seg.dtcancela
+                  ,'000000000000'  nrendosso_altera
+                  ,seg.tpendosso
+                  ,seg.tpsub_endosso
+              FROM tbseg_contratos     seg
+                  ,tbseg_auto_veiculos auto
+                  ,crapcsg csg
+                  ,crapcop cop
+                  ,crapass ass
+              WHERE seg.idcontrato  = auto.idcontrato
+                AND seg.tpseguro    = 'A'          -- SEGURO AUTO
+                AND csg.cdcooper    = 1            -- SEGURADORAS CADASTRADAS NA VIACREDI
+                AND csg.cdsegura    = seg.cdsegura
+                AND seg.cdcooper    = cop.cdcooper(+)  -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.cdcooper    = ass.cdcooper (+) -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.nrdconta    = ass.nrdconta (+) -- HA SITUACOES COM CONTA 0 (QUANDO ERRO)
+                AND seg.indsituacao = p_tpstaseg
+                AND p_tpseguro      = 2
+                AND seg.nrproposta <> 0         -- APOLICES E ENDOSSOS ALTERACAO
+                AND seg.nrapolice  <> 0
+                AND seg.nrendosso  <> 0
+                AND seg.tpendosso IN (2,3,6,8) -- ENDOSSOS de ALTERACAO
+            UNION ALL
+            SELECT seg.cdcooper
+                  ,nvl(ass.cdagenci,0) cdagenci
+                  ,seg.dtinicio_vigencia
+                  ,seg.dttermino_vigencia
+                  ,TRIM(UPPER(translate(csg.nmsegura,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                    ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegura
+                  ,TRIM(UPPER(translate(seg.nmsegurado,'¡«…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’À‹·ÁÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ıÎ¸'
+                                                      ,'ACEIOUAEIOUAEIOUAOEUaceiouaeiouaeiouaoeu'))) nmsegurado
+                  ,NVL(cop.cdagectl,0) cdagectl
+                  ,seg.nrdconta
+                  ,seg.nrcpf_cnpj_segurado
+                  ,seg.nrproposta
+                  ,seg.nrapolice
+                  ,seg.nrendosso
+                  ,auto.nmmarca
+                  ,auto.dsmodelo
+                  ,auto.nrano_fabrica
+                  ,auto.nrano_modelo
+                  ,auto.dsplaca
+                  ,auto.dschassi
+                  ,seg.vlpremio_liquido
+                  ,seg.vlpremio_total
+                  ,seg.qtparcelas
+                  ,seg.vlparcela
+                  ,DECODE(seg.indsituacao,'A','ATIVA','C','CANCELADA','VENCIDA') indsituacao
+                  ,seg.percomissao
+                  ,seg.dtcancela
+                  ,'000000000000'  nrendosso_altera
+                  ,seg.tpendosso
+                  ,seg.tpsub_endosso
+              FROM tbseg_contratos     seg
+                  ,tbseg_auto_veiculos auto
+                  ,crapcsg csg
+                  ,crapcop cop
+                  ,crapass ass
+              WHERE seg.idcontrato  = auto.idcontrato
+                AND seg.tpseguro    = 'A'          -- SEGURO AUTO
+                AND csg.cdcooper    = 1            -- SEGURADORAS CADASTRADAS NA VIACREDI
+                AND csg.cdsegura    = seg.cdsegura
+                AND seg.cdcooper    = cop.cdcooper(+)  -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.cdcooper    = ass.cdcooper (+) -- HA SITUACOES COM COOP  0 (QUANDO ERRO)
+                AND seg.nrdconta    = ass.nrdconta (+) -- HA SITUACOES COM CONTA 0 (QUANDO ERRO)
+                AND seg.indsituacao = p_tpstaseg
+                AND p_tpseguro      = 3
+                AND seg.nrproposta <> 0       -- APENAS ENDOSSOS
+                AND seg.nrapolice  <> 0
+                AND seg.nrendosso  <> 0
+            ) tmp
+        ORDER BY tmp.cdcooper, tmp.cdagenci, tmp.nrdconta, tmp.nrproposta, tmp.nrapolice, tmp.nrendosso;
       rw_seguros cr_seguros%ROWTYPE;
 
       -- Cria o registro de data
@@ -169,22 +313,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RELSEG AS
         WHEN 1 THEN -- Proposta
           vr_nmarqim := vr_nmarqim || 'proposta_';
         WHEN 2 THEN -- Apolice
-          vr_nmarqim := vr_nmarqim || 'apolice_';        
+          vr_nmarqim := vr_nmarqim || 'apolice_';
         WHEN 3 THEN -- Endosso
-          vr_nmarqim := vr_nmarqim || 'endosso_';       
+          vr_nmarqim := vr_nmarqim || 'endosso_';
         ELSE NULL;
       END CASE;
       CASE pr_tpstaseg
         WHEN 'A' THEN -- Ativa
           vr_nmarqim := vr_nmarqim || 'ativo_';
         WHEN 'V' THEN -- Vencida
-          vr_nmarqim := vr_nmarqim || 'vencido_';       
+          vr_nmarqim := vr_nmarqim || 'vencido_';
         WHEN 'C' THEN -- Cancelada
-          vr_nmarqim := vr_nmarqim || 'cancelado_';     
+          vr_nmarqim := vr_nmarqim || 'cancelado_';
         ELSE NULL;
       END CASE;
 
-      
+
       vr_nmarqim := vr_nmarqim || to_char(SYSDATE,'sssss') || '.csv';
 
 
@@ -197,6 +341,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RELSEG AS
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => 'Cooperativa;PA;Inicio Vigencia;Fim Vigencia;Seguradora;'
                                                  ||'Segurado;Agencia;Conta/DV;CPF/CNPJ;Proposta;Apolice;Endosso;'
+
+                                                 || 'Marca;Modelo;Ano Fabr;Ano Modelo;Placa;Chassi;'
+
                                                  ||'Altera Endoso;Tipo;Sub Tipo;'
                                                  ||'Valor Premio Liq;Valor Premio Total;Qtde Parcelas;Valor Parcela;'
                                                  ||'Situacao;% Comissao;Data Cancelamento;' ||chr(10));
@@ -219,9 +366,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RELSEG AS
                                                      rw_seguros.nrproposta                                                       || ';' ||
                                                      rw_seguros.nrapolice                                                        || ';' ||
                                                      rw_seguros.nrendosso                                                        || ';' ||
+
+                                                     rw_seguros.nmmarca                                                          || ';' ||
+                                                     rw_seguros.dsmodelo                                                         || ';' ||
+                                                     rw_seguros.nrano_fabrica                                                    || ';' ||
+                                                     rw_seguros.nrano_modelo                                                     || ';' ||
+                                                     rw_seguros.dsplaca                                                          || ';' ||
+                                                     rw_seguros.dschassi                                                         || ';' ||
+                                                     
                                                      rw_seguros.nrendosso_altera                                                 || ';' ||
                                                      rw_seguros.tpendosso                                                        || ';' ||
                                                      rw_seguros.tpsub_endosso                                                    || ';' ||
+
                                                      to_Char(rw_seguros.vlpremio_liquido,'FM9G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || ';' ||
                                                      to_Char(rw_seguros.vlpremio_total,'FM9G999G990D00','NLS_NUMERIC_CHARACTERS=,.')   || ';' ||
                                                      rw_seguros.qtparcelas                                                             || ';' ||
