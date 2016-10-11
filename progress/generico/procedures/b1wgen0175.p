@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 12/07/2016
+   Data    : Setembro/2013                      Ultima atualizacao: 11/10/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -77,6 +77,9 @@
 
    12/07/2016 - #451040 Trazer número da conta para as devoluções de alínea 37 
                 (Carlos)
+
+   11/10/2016 - #534932 Incluido o parametro ISPB na chamada de grava-log-ted em 
+                envia_arquivo_xml (Carlos)
 
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
@@ -6852,6 +6855,7 @@ PROCEDURE envia_arquivo_xml:
                                            INPUT 0, /*PA origem*/
                                            INPUT 0, /*Caixa origem */
                                            INPUT "1", /* operador */
+                                           INPUT 0,   /* ISPB */
                                            INPUT 0).  /* sem crise */
        
         DELETE PROCEDURE h-b1wgen0050.
