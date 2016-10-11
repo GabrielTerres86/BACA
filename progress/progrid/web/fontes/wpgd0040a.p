@@ -27,6 +27,9 @@
                           
              10/09/2013 - Incluido validacao de agencia crapadp.cdAgenci <> 0. 
                         - Ajustes para mostrar AGE e AGO. (Lucas R).
+                        
+             09/08/2016 - Incluir filtro por tipo de evento
+                          PRJ229 - Melhorias OQS  (Odirlei-AMcom)
  */
 
  CREATE WIDGET-POOL.
@@ -43,8 +46,10 @@ DEFINE VARIABLE msgsDeErro                   AS CHARACTER.
 DEFINE VARIABLE idEvento                     AS INTEGER.
 DEFINE VARIABLE cdCooper                     AS INTEGER.
 DEFINE VARIABLE nrmeseve                     AS INTEGER.
+DEFINE VARIABLE tpevento                     AS INTEGER.
 DEFINE VARIABLE dtAnoAge                     AS INTEGER.
 DEFINE VARIABLE cdEvento                     AS INTEGER.
+DEFINE VARIABLE aux_tpevento                 AS INTEGER.
 
 DEFINE VARIABLE imagemDoProgrid              AS CHARACTER.
 DEFINE VARIABLE imagemDaCooperativa          AS CHARACTER.
@@ -155,7 +160,19 @@ FUNCTION montaTela RETURNS LOGICAL ():
            '      <tr>' SKIP
            '   </table>' SKIP. 
     {&out} '<br>' SKIP.
-          
+    
+    ASSIGN aux_tpevento = 0.
+    
+    IF idEvento = 1 THEN
+      DO:
+        ASSIGN aux_tpevento = 10.
+      END.
+    ELSE
+      IF idEvento = 2 THEN
+        DO:        
+          ASSIGN aux_tpevento = 11.
+        END.
+        
       /*Seleciona os eventos que satisfaçam os parametros*/
       FOR EACH Crapadp WHERE Crapadp.IdEvento = idEvento  AND
                              Crapadp.CdCooper = cdCooper  AND
@@ -192,7 +209,23 @@ FUNCTION montaTela RETURNS LOGICAL ():
               ASSIGN linha1 = Crapedp.NmEvento + aux_nmresage.
           ELSE
               ASSIGN msgsDeErro = msgsDeErro + "-> Problemas na leitura da crapedp - Evento." + STRING(Crapadp.CdEvento) + "<br>".
-
+          
+          /* Se escolheu somente EAD e o evento for diferente de EAD,
+             deve ignorar e ir para o proximo */          
+          IF tpevento = 1 AND              
+             Crapedp.tpevento <> aux_tpevento THEN
+              DO:
+                NEXT.
+              END.            
+          ELSE
+              /* Se escolheu somente Presencial e o evento for igual EAD,
+                 deve ignorar e ir para o proximo */
+              IF tpevento = 2 AND 
+                 Crapedp.tpevento = aux_tpevento THEN
+                  DO:
+                    NEXT.
+                  END.
+          
           /* Se os tipos forem 1-curso 3-gincana 4-palestra 5-teatro imprime o tipo antes do nome do evento*/
           IF  crapedp.tpevento = 1 OR 
               crapedp.tpevento = 3 OR 
@@ -216,7 +249,10 @@ FUNCTION montaTela RETURNS LOGICAL ():
           /*Se o evento estiver cancelado, não imprime todos os dados*/
           IF  crapadp.idstaeve <> 2 THEN
               DO:  
-                  IF  crapadp.idevento = 2 THEN
+                  IF  crapadp.idevento = 2 OR 
+                      /* ou se for eventos EAD */
+                      crapedp.tpevento = 10 OR 
+                      crapedp.tpevento = 11 THEN
                       FIND Crapldp WHERE Crapldp.CdCooper = cdCooper         AND
                                          Crapldp.NrSeqDig = Crapadp.CdLocali 
                                          NO-LOCK NO-ERROR. 
@@ -227,13 +263,21 @@ FUNCTION montaTela RETURNS LOGICAL ():
                                          NO-LOCK NO-ERROR.
                           
                   IF  AVAILABLE Crapldp THEN
-                      ASSIGN localDoEvento   = Crapldp.DsLocali
-                             enderecoDoLocal = Crapldp.DsEndLoc + ", " + Crapldp.NmBaiLoc + ", " + Crapldp.NmCidLoc + ", fone (" + STRING(Crapldp.NrDddTel) + ") " + STRING(Crapldp.NrTelefo)
-                                                     referencia      = Crapldp.DsRefLoc.
+                    DO:
+                        ASSIGN localDoEvento   = Crapldp.DsLocali.
+                        IF crapedp.tpevento = 10 OR 
+                           crapedp.tpevento = 11 THEN
+                           ASSIGN enderecoDoLocal = " "
+                                  referencia      = " ".
+                        ELSE    
+                           ASSIGN enderecoDoLocal = Crapldp.DsEndLoc + ", " + Crapldp.NmBaiLoc + ", " + Crapldp.NmCidLoc + ", fone (" + STRING(Crapldp.NrDddTel) + ") " + STRING(Crapldp.NrTelefo)
+                                  referencia      = Crapldp.DsRefLoc.
+                           
+                    END.           
                   ELSE
                       ASSIGN localDoEvento   = "Indefinido"
                              enderecoDoLocal = "Indefinido"
-                                                     referencia      = " ".
+                             referencia      = " ".
               
                   /**** Nome da pessoa que fará a abertura ****/
                   FIND FIRST Crapaep WHERE Crapaep.IdEvento = Crapadp.IdEvento AND
@@ -300,62 +344,72 @@ FUNCTION montaTela RETURNS LOGICAL ():
               END.
           ELSE    
               DO:
-                  ASSIGN aux_dsdiaeve = crapadp.dsdiaeve
+                
+                  ASSIGN aux_dsdiaeve = TRIM(crapadp.dsdiaeve)
                          aux_dscdiase = "".
-                  
+                
                   /*ALTERACAO JEAN 29/06/2016*/
-                  DO aux_contador = 1 TO NUM-ENTRIES(aux_dsdiaeve,","):
-                    
-                    IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 1 THEN
+                  IF aux_dsdiaeve <> ? AND aux_dsdiaeve <> "" THEN
                     DO:
-                      ASSIGN aux_dscdiase = aux_dscdiase + ", Segunda-Feira".
-                    END.
                     
-                    IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 2 THEN
-                    DO:
-                      ASSIGN aux_dscdiase = aux_dscdiase + ", Terça-Feira".
-                    END.
+                      DO aux_contador = 1 TO NUM-ENTRIES(aux_dsdiaeve,","):
                     
-                    IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 3 THEN
-                    DO:
-                      ASSIGN aux_dscdiase = aux_dscdiase + ", Quarta-Feira".
-                    END.
-                    
-                    IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 4 THEN
-                    DO:
-                      ASSIGN aux_dscdiase = aux_dscdiase + ", Quinta-Feira".
-                    END.
-                    
-                    IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 5 THEN
-                    DO:
-                      ASSIGN aux_dscdiase = aux_dscdiase + ", Sexta-Feira".
-                    END.
-                    
-                    IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 6 THEN
-                    DO:
-                      ASSIGN aux_dscdiase = aux_dscdiase + ", Sábado".
-                    END.
-                    
-                    IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 0 THEN
-                    DO:
-                      ASSIGN aux_dscdiase = aux_dscdiase + ", Domingo".
-                    END.
+                        IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 1 THEN
+                        DO:
+                          ASSIGN aux_dscdiase = aux_dscdiase + ", Segunda-Feira".
+                        END.
+                        
+                        IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 2 THEN
+                        DO:
+                          ASSIGN aux_dscdiase = aux_dscdiase + ", Terça-Feira".
+                        END.
+                        
+                        IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 3 THEN
+                        DO:
+                          ASSIGN aux_dscdiase = aux_dscdiase + ", Quarta-Feira".
+                        END.
+                        
+                        IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 4 THEN
+                        DO:
+                          ASSIGN aux_dscdiase = aux_dscdiase + ", Quinta-Feira".
+                        END.
+                        
+                        IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 5 THEN
+                        DO:
+                          ASSIGN aux_dscdiase = aux_dscdiase + ", Sexta-Feira".
+                        END.
+                        
+                        IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 6 THEN
+                        DO:
+                          ASSIGN aux_dscdiase = aux_dscdiase + ", Sábado".
+                        END.
+                        
+                        IF INT(ENTRY(aux_contador,aux_dsdiaeve,",")) = 0 THEN
+                        DO:
+                          ASSIGN aux_dscdiase = aux_dscdiase + ", Domingo".
+                        END.
+                      END.
+                      
                   END.
-                  
-                  ASSIGN aux_dscdiase = TRIM(aux_dscdiase).
   
-                  IF SUBSTRING(aux_dscdiase,1,1) = "," then
+                  IF aux_dscdiase <> ? AND aux_dscdiase <> "" THEN
                     DO:
-                      ASSIGN aux_dscdiase = SUBSTRING(aux_dscdiase,2).
+                      
+                      ASSIGN aux_dscdiase = TRIM(aux_dscdiase).
+                      
+                      IF SUBSTRING(aux_dscdiase,1,1) = "," then
+                        DO:
+                          ASSIGN aux_dscdiase = SUBSTRING(aux_dscdiase,2).
+                        END.
+                      
+                      IF SUBSTRING(aux_dscdiase,LENGTH(aux_dscdiase) - 1,1) = "," then
+                        DO:
+                          ASSIGN aux_dscdiase = SUBSTRING(aux_dscdiase,1,LENGTH(aux_dscdiase) - 1).
+                        END.
+                      
+                      ASSIGN aux_dscdiase = aux_dscdiase + "."
+                             aux_dsdiaeve = aux_dscdiase.
                     END.
-                  
-                  IF SUBSTRING(aux_dscdiase,LENGTH(aux_dscdiase) - 1,1) = "," then
-                    DO:
-                      ASSIGN aux_dscdiase = SUBSTRING(aux_dscdiase,1,LENGTH(aux_dscdiase) - 1).
-                    END.
-                  
-                  ASSIGN aux_dscdiase = aux_dscdiase + "."
-                         aux_dsdiaeve = aux_dscdiase.
               
                   /* *** Dados do evento *** */              
                   {&out} '   <table border="0" cellspacing="1" cellpadding="1" width="100%">' SKIP
@@ -449,7 +503,8 @@ DO:
     ASSIGN idEvento  = INTEGER(GET-VALUE("parametro1"))
            cdCooper  = INTEGER(GET-VALUE("parametro2"))
            dtAnoAge  = INTEGER(GET-VALUE("parametro3"))
-           nrmeseve  = INTEGER(GET-VALUE("parametro4")) NO-ERROR.  
+           nrmeseve  = INTEGER(GET-VALUE("parametro4"))            
+           tpevento  = INTEGER(GET-VALUE("parametro5")) NO-ERROR.  
            
     FIND crapcop WHERE crapcop.cdcooper = cdCooper 
                        NO-LOCK NO-ERROR.

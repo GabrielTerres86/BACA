@@ -105,7 +105,7 @@ PROCEDURE valida-inclusao:
         ASSIGN m-erros = m-erros + "Data de Atualização do Fornecedor é inválida.".
         RETURN "NOK".
     END.
-
+    
     /* Valida data de atualização do fornecedor */
     IF {&tttabela}.dtnasfor = ? AND {&tttabela}.cddbanco <> ? AND {&tttabela}.inpesrcb = 1 THEN
     DO:
@@ -231,10 +231,10 @@ PROCEDURE inclui-registro:
         retorno-erro = m-erros.
         RETURN "NOK".
     END.
-
+      
     /* Cria o registro na tabela fisica, a partir da tabela temporária */
     FIND FIRST {&tttabela} NO-LOCK NO-ERROR.
-
+    
     IF {&tttabela}.idforpri = 1 THEN /* somente um fornecedor poderá ser o principal fornecedor de material de divulgação*/
       DO: 
         FOR EACH {&tabela} WHERE {&tabela}.idforpri = 1 EXCLUSIVE-LOCK: 
@@ -261,7 +261,8 @@ PROCEDURE inclui-registro:
            {&tabela}.nmcidfor = CAPS(TRIM({&tabela}.nmcidfor))
            {&tabela}.nmcoofor = CAPS(TRIM({&tabela}.nmcoofor))
            {&tabela}.nmfornec = CAPS(TRIM({&tabela}.nmfornec))
-           {&tabela}.nmhompag = CAPS(TRIM({&tabela}.nmhompag)).
+           {&tabela}.nmhompag = CAPS(TRIM({&tabela}.nmhompag))
+           {&tabela}.dsjusain = CAPS(TRIM({&tabela}.dsjusain)).
 
     /* Fim - Efetuar sobreposições necessárias */ 
 
@@ -276,8 +277,8 @@ END PROCEDURE.
 /*       "OK" ou "NOK" = indica se houve erro ou não na validação                                     */
 /*       m-erros = Guarda a mensagem de erro da validação                                             */
 PROCEDURE valida-alteracao:
-    DEFINE INPUT PARAMETER TABLE FOR {&tttabela}.
-
+    DEFINE INPUT PARAMETER TABLE FOR {&tttabela}.     
+    
     
     FIND FIRST {&tttabela} NO-LOCK NO-ERROR.
 
@@ -437,7 +438,7 @@ PROCEDURE altera-registro:
 
     /* Posiciona o registro da tabela temporária e executa o procedimento de validação. */
     /* Este procedimento não deve executar nenhuma validação */
-
+    
     FIND FIRST {&tttabela} NO-LOCK NO-ERROR.
     
     IF {&tttabela}.idforpri = 1 THEN /* somente um fornecedor poderá ser o principal fornecedor de material de divulgação*/
@@ -446,7 +447,7 @@ PROCEDURE altera-registro:
           ASSIGN {&tabela}.idforpri = 0.      
         END.
     END.
-
+    
     RUN valida-alteracao (INPUT TABLE {&tttabela}).
 
     IF RETURN-VALUE = "NOK" THEN DO:
@@ -464,8 +465,7 @@ PROCEDURE altera-registro:
 
     /* Fim - Copia o registro da tabela temporária para a tabela física */
 
-    /* Efetuar sobreposições necessárias */ 
-
+    /* Efetuar sobreposições necessárias */  
     ASSIGN {&tabela}.cdcooper = 0
            {&tabela}.dtultalt = TODAY
            {&tabela}.cdufforn = CAPS(TRIM({&tabela}.cdufforn))
@@ -476,7 +476,8 @@ PROCEDURE altera-registro:
            {&tabela}.nmcidfor = CAPS(TRIM({&tabela}.nmcidfor))
            {&tabela}.nmcoofor = CAPS(TRIM({&tabela}.nmcoofor))
            {&tabela}.nmfornec = CAPS(TRIM({&tabela}.nmfornec))
-           {&tabela}.nmhompag = CAPS(TRIM({&tabela}.nmhompag)).
+           {&tabela}.nmhompag = CAPS(TRIM({&tabela}.nmhompag))
+           {&tabela}.dsjusain = CAPS(TRIM({&tabela}.dsjusain)).
 
     /* Fim - Efetuar sobreposições necessárias */ 
 

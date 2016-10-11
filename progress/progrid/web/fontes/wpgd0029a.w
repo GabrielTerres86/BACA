@@ -12,7 +12,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       01/09/2015 - Ajuste de homologaçao do Projeto Progrid RFN01 - Busca na
                    crapdap por nrseqdig e dtanoage para correta inclusao dos 
                    itens descritivos. (Vanessa).
-
+      
+      19/08/2016 - Melhorias OQS - RF07 (Odirlei - AMcom).
 ...............................................................................*/
 
 
@@ -40,7 +41,10 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_nrseqeve AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_qtavares AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_tpiteava AS CHARACTER FORMAT "X(256)":U .
+       FIELD aux_tpiteava AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_qtavares_coop AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_qtavares_ass  AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_qtavares_forn AS CHARACTER FORMAT "X(256)":U .
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -140,6 +144,7 @@ DEFINE VARIABLE vetoravalia AS CHAR NO-UNDO.
 &Scoped-define FIRST-ENABLED-TABLE ab_unmap
 &Scoped-define SECOND-ENABLED-TABLE crapiap
 &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_nrseqeve ab_unmap.aux_qtavares ~
+ab_unmap.aux_qtavares_coop ab_unmap.aux_qtavares_ass ab_unmap.aux_qtavares_forn ~
 ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cdevento ~
 ab_unmap.aux_dtanoage ab_unmap.aux_tpiteava ab_unmap.aux_cddopcao ~
 ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_idavalia ~
@@ -151,6 +156,7 @@ ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao
 &Scoped-define SECOND-DISPLAYED-TABLE crapiap
 &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_nrseqeve ~
 ab_unmap.aux_qtavares ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ~
+ab_unmap.aux_qtavares_coop ab_unmap.aux_qtavares_ass ab_unmap.aux_qtavares_forn ~
 ab_unmap.aux_cdevento ab_unmap.aux_dtanoage ab_unmap.aux_tpiteava ~
 ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_idavalia ab_unmap.aux_idevento ab_unmap.aux_lsavalia ~
@@ -180,6 +186,18 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
+     ab_unmap.aux_qtavares_coop AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_qtavares_ass AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_qtavares_forn AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1     
      ab_unmap.aux_cdagenci AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -376,27 +394,40 @@ PROCEDURE CriaListaAvalia :
 ------------------------------------------------------------------------------*/
 
 DEF VAR aux_dsgruava AS CHAR NO-UNDO.
+DEF VAR aux_tprelgru    AS CHAR NO-UNDO.
 
 FOR EACH crapiap WHERE crapiap.cdcooper = 0 NO-LOCK, 
     FIRST crapgap WHERE crapgap.cdcooper = 0                          AND
                         crapgap.cdgruava = crapiap.cdgruava           AND
                         crapgap.tpiteava = INT(ab_unmap.aux_tpiteava) NO-LOCK
-                        BREAK BY crapgap.nrordgru
-	                             BY crapiap.cdgruava 
-	                                BY crapiap.cditeava:
+                        BREAK BY crapgap.tprelgru
+                               BY crapgap.nrordgru
+	                              BY crapiap.cdgruava 
+	                               BY crapiap.cditeava:
 
     IF FIRST-OF(crapiap.cdgruava) THEN
         aux_dsgruava = crapgap.dsgruava.
     ELSE
         aux_dsgruava = "".
+        
+    ASSIGN aux_tprelgru = "".
+                 
+    IF crapgap.tprelgru = 1 THEN    
+       ASSIGN aux_tprelgru = 'COOPERADO'.
+    ELSE IF crapgap.tprelgru = 2 THEN
+       ASSIGN aux_tprelgru = 'COOPERATIVA'.
+    ELSE IF crapgap.tprelgru = 3 THEN
+       ASSIGN aux_tprelgru = 'FORNECEDOR'.    
     
     IF   vetoravalia = ""   THEN
-         vetoravalia = "~{" + "cditeava:" + "'" + STRING(crapiap.cditeava) + 
+         vetoravalia = "~{" + "tprelgru:" + "'" + aux_tprelgru + 
+                            "',cditeava:" + "'" + STRING(crapiap.cditeava) + 
                             "',dsiteava:" + "'" + crapiap.dsiteava +
                             "',dsgruava:" + "'" + aux_dsgruava + "'~}".
     ELSE
          vetoravalia = vetoravalia + "," + 
-                        "~{" + "cditeava:" + "'" + STRING(crapiap.cditeava) + 
+                        "~{" + "tprelgru:" + "'" + aux_tprelgru + 
+                            "',cditeava:" + "'" + STRING(crapiap.cditeava) + 
                             "',dsiteava:" + "'" + crapiap.dsiteava +
                             "',dsgruava:" + "'" + aux_dsgruava + "'~}".
 END.
@@ -444,7 +475,13 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("aux_nrseqeve":U,"ab_unmap.aux_nrseqeve":U,ab_unmap.aux_nrseqeve:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
-    ("aux_qtavares":U,"ab_unmap.aux_qtavares":U,ab_unmap.aux_qtavares:HANDLE IN FRAME {&FRAME-NAME}).
+    ("aux_qtavares":U,"ab_unmap.aux_qtavares":U,ab_unmap.aux_qtavares:HANDLE IN FRAME {&FRAME-NAME}). 
+  RUN htmAssociate
+    ("aux_qtavares_coop":U,"ab_unmap.aux_qtavares_coop":U,ab_unmap.aux_qtavares_coop:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_qtavares_ass":U,"ab_unmap.aux_qtavares_ass":U,ab_unmap.aux_qtavares_ass:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_qtavares_forn":U,"ab_unmap.aux_qtavares_forn":U,ab_unmap.aux_qtavares_forn:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
     ("aux_stdopcao":U,"ab_unmap.aux_stdopcao":U,ab_unmap.aux_stdopcao:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -518,6 +555,11 @@ IF VALID-HANDLE(h-b1wpgd0029) THEN
                           crapiap.cditeava = INT(ENTRY(i, ab_unmap.aux_lsavalia)) NO-LOCK NO-ERROR.
                       IF AVAIL crapiap THEN
                           aux_cdgruava = crapiap.cdgruava.
+                          
+                      FIND FIRST crapgap 
+                           WHERE crapgap.cdcooper = 0                
+                             AND crapgap.cdgruava = crapiap.cdgruava 
+                             NO-LOCK NO-ERROR.
                       
                       CREATE cratrap.
                       ASSIGN
@@ -531,7 +573,14 @@ IF VALID-HANDLE(h-b1wpgd0029) THEN
                           cratrap.nrseqeve = crapadp.nrseqdig.
 
                       IF crapadp.cdagenci = INT(ab_unmap.aux_cdagenci) THEN
-                          cratrap.qtavares = INT(ab_unmap.aux_qtavares).
+                        DO:
+                           IF crapgap.tprelgru = 1 THEN /* COOPERADO */
+                             ASSIGN cratrap.qtavares = INT(ab_unmap.aux_qtavares_ass).
+                           ELSE IF crapgap.tprelgru = 2 THEN /* COOPERATIVA */
+                             ASSIGN cratrap.qtavares = INT(ab_unmap.aux_qtavares_coop).
+                           ELSE IF crapgap.tprelgru = 3 THEN /* FORNECEDOR */
+                             ASSIGN cratrap.qtavares = INT(ab_unmap.aux_qtavares_forn).
+                        END.    
                       ELSE
                           cratrap.qtavares = 0.
     
@@ -787,6 +836,9 @@ ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_cdagenci    = GET-VALUE("aux_cdagenci") 
        ab_unmap.aux_dtanoage    = GET-VALUE("aux_dtanoage")
        ab_unmap.aux_qtavares    = GET-VALUE("aux_qtavares")
+       ab_unmap.aux_qtavares_ass  = GET-VALUE("aux_qtavares_ass")
+       ab_unmap.aux_qtavares_coop = GET-VALUE("aux_qtavares_coop")
+       ab_unmap.aux_qtavares_forn = GET-VALUE("aux_qtavares_forn")
        ab_unmap.aux_nrseqeve    = GET-VALUE("aux_nrseqeve").
 
 RUN outputHeader.

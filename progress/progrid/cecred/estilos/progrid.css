@@ -1,3 +1,14 @@
+/*!
+ * FONTE        : progrid.css
+ * CRIACAO      : Desconhecido
+ * DATA CRIA��O : 
+ * OBJETIVO     : Arquivos com estilos CSS do Progrid
+ * --------------
+ * ALTERACOES   :
+ * --------------
+ * 001: [23/08/2016] Odirlei(AMcom)    : Incluir css para botoes.  
+ */	
+ 
 .dataTable 
 {
 	border-collapse:collapse;	        
@@ -350,4 +361,63 @@ width:25%;height:25%;margin-top:135px;margin-left:350px}
 	color:#868686;
 	
 	
+}
+.botao {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ffffff), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #ffffff 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffff', endColorstr='#d4d4d4');
+	background-color:#ffffff;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+	border-left:1px solid #CCCCCC;
+	border-top:1px solid #CCCCCC;
+	border-right:1px solid #999999;
+	border-bottom:1px solid #999999;
+	/*border:1px solid #696969;*/
+	display:inline-block;
+	color:#3d3c3d;
+	font-family:Verdana;
+	font-size:11px;
+	font-weight:bold;
+	padding:3px 6px;
+	text-decoration:none;    
+}.botao:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #adadad), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #adadad 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#adadad', endColorstr='#d4d4d4');
+	background-color:#adadad;
+}.botao:active {
+	position:relative;
+	top:1px;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #adadad), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #adadad 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#adadad', endColorstr='#d4d4d4');
+	background-color:#adadad;
+}.botao:focus {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #adadad), color-stop(1, #d4d4d4) );
+	background:-moz-linear-gradient( center top, #adadad 5%, #d4d4d4 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#adadad', endColorstr='#d4d4d4');
+	background-color:#adadad;
+}
+.botaoDesativado {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #bbbbbb), color-stop(1, #cccccc) );
+	background:-moz-linear-gradient( center top, #bbbbbb 5%, #cccccc 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#bbbbbb', endColorstr='#eeeeee');
+	background-color:#eeeeee;
+	-moz-border-radius:3px;
+	-webkit-border-radius:3px;
+	border-radius:3px;
+	border-left:1px solid #BBBBBB;
+	border-top:1px solid #BBBBBB;
+	border-right:1px solid #777777;
+	border-bottom:1px solid #777777;
+	/*border:1px solid #696969;*/
+	display:inline-block;
+	color:#666666;
+	font-family:Verdana;
+	font-size:11px;
+	font-weight:bold;        
+	padding:3px 6px;
+	text-decoration:none;
 }

@@ -373,9 +373,10 @@ function Salvar(){
    if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
       if (ValidaDados(document.forms[0])) {
          document.form.aux_cddopcao.value='sa';
-
 		 document.form.cdeixtem.value = document.form.aux_cdeixtem.value;
+         
          document.form.cdevento.value = document.form.aux_cdevento.value;
+         document.form.idforrev.value = document.form.aux_idforrev.value; 
 
 		 armazenaFacili(); 
          status = 'Salvando. Por favor, aguarde ...';
@@ -431,6 +432,7 @@ function MostraEixos(){
 }
 
 function MostraEventos(arrayDados){
+
   for (var i=document.all.aux_cdevento.options.length; i>=0; i--){
       document.all.aux_cdevento.remove(i); 
   }
@@ -464,6 +466,7 @@ function MostraEventos(arrayDados){
 }
 
 function MostraPublico(){
+
    for (var i=document.all.aux_dspublic.options.length; i>=0; i--)
       document.all.aux_dspublic.remove(i); 
 
@@ -490,6 +493,7 @@ function MostraPublico(){
 }
 
 function MostraFormaRealizacao(){
+
    for (var i=document.all.aux_idforrev.options.length; i>=0; i--)
       document.all.aux_idforrev.remove(i); 
 
@@ -582,14 +586,15 @@ function AdRecurso(){
 
 function PosicionaEvento(){
 
-   document.form.aux_cdtemeix.value = document.form.cdeixtem.value;
+   document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
+
    document.form.aux_cdevento.value = document.form.cdevento.value;
    //setTimeout(function(){MostraEixos;},1000);   
    MostraEixos(); 
    MostraFormaRealizacao();      
    //MostraPublico();
  
-   setTimeout(function(){MostraEventos(document.form.cdeixtem.value);},2000);
+   setTimeout(function(){MostraEventos(document.form.aux_cdtemeix.value);},2000);
 }
 function mostraFacili(){
   var row;var cell;
@@ -821,6 +826,8 @@ mostraFacili();
 montaFacili();
 mostraRecurso();
 montaRecurso();
+
+
 
 if (document.form.idtrainc.value == 'S') {
 	document.getElementById("aux_flgtrinc").checked = true;

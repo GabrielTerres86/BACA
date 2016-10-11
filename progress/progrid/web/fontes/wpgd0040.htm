@@ -56,8 +56,12 @@
                                     <td><select name="aux_cdcooper" class="Campo" onChange="document.form.cdcooper.value = document.form.aux_cdcooper.value; document.form.aux_dtanoage.value = '';document.form.submit();"></select></td>
                                  </tr>
                                  <tr>
-                                    <td align="right" class="NomeCampo">Mes:</td>
+                                    <td align="right" class="NomeCampo">Mês:</td>
                                     <td><select name="aux_nrmeseve" class="Campo";></select></td> 
+                                 </tr>
+                                 <tr>
+                                    <td align="right" class="NomeCampo">Tipo de Evento:</td>
+                                    <td><select name="aux_tpevento" class="Campo";></select></td> 
                                  </tr>
                               </table>
                              <!-- Fim dos dados específicos da tela, reinício do modelo geral -->
@@ -92,6 +96,13 @@
    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
    document.form.action = NomeDoProgramaPrincipal;
    var aux_vazio = false;
+   
+   /* Indicar mês inicial como mês atual */
+   var dataAtual = new Date();
+   var mes = dataAtual.getMonth() + 1;  
+   document.form.aux_nrmeseve.value = mes;
+   
+   
 
 function Habilita()
 {
@@ -144,7 +155,8 @@ function imprimir()
                        "?parametro1=" + document.form.aux_idevento.value +  
                        "&parametro2=" + document.form.aux_cdcooper.value + 
                        "&parametro3=" + document.form.aux_dtanoage.value + 
-                       "&parametro4=" + document.form.aux_nrmeseve.value ;
+                       "&parametro4=" + document.form.aux_nrmeseve.value +
+                       "&parametro5=" + document.form.aux_tpevento.value ;
                imp = window.open(linha,"imp","toolbar=no,location=no,diretories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,top=10,left=10,width=640,height=400");
              }
    } // imprimir()

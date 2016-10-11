@@ -132,7 +132,8 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                         ,pr_des_erro OUT VARCHAR2);  --> Descricao do Erro
                         
   --> Rotina de envio de email de eventos sem local de realização
-  PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                        
+  PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);     
+                         
 END PRGD0001;
 /
 CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
@@ -778,7 +779,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       END IF;
     
       IF vr_nmdeacao IN ('LISTA_PA', 'LISTA_REGIONAIS', 'LISTA_COOPER', 'LISTA_EIXO',
-                         'LISTA_TEMA', 'LISTA_EVENTO','RETANOAGE') THEN
+                         'LISTA_TEMA', 'LISTA_EVENTO','RETANOAGE','LISTA_FORNECEDORES') THEN
         vr_nmdatela := 'GENERICO';
       END IF;
     
@@ -1891,7 +1892,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       pr_des_erro := 'Erro geral em PRGD0001.pc_retanoage: ' || SQLERRM;
       pr_dscritic := 'Erro geral em PRGD0001.pc_retanoage: ' || SQLERRM;
 
-  END pc_retanoage;
+  END pc_retanoage;  
+  
 
 END PRGD0001;
 /

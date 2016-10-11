@@ -15,12 +15,12 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       
       30/12/2015 - Inclusão de novos campos na aba Fornecedor.
                    Projeto 229 - Melhorias OQS (Lombardi).
-
+                   
       13/06/2016 - Ajustes para garantir que exiba a informacao do banco 
                    ja selecionada quando apresentar critica.
                    Projeto 229 - Melhorias OQS (Odirlei - AMcom).
                    
-
+      13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)  
 ...............................................................................*/
 { includes/var_progrid.i }
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -57,8 +57,9 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_idorifor AS CHARACTER
        FIELD pagina AS CHARACTER FORMAT "X(256)":U
        FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U.
-
+       FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_ctlinati AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_ctljusti AS CHARACTER FORMAT "X(256)":U.
   
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
@@ -150,7 +151,7 @@ gnapfdp.inpessoa gnapfdp.nmbaifor gnapfdp.nmcidfor gnapfdp.nmcoofor ~
 gnapfdp.nmfornec gnapfdp.nmhompag gnapfdp.nrcepfor gnapfdp.nrfaxfor ~
 gnapfdp.nrfonfor gnapfdp.idtipfor gnapfdp.idforpri gnapfdp.idorifor ~
 gnapfdp.cdtipcta gnapfdp.inpesrcb gnapfdp.dtnasfor gnapfdp.dtinivig ~
-gnapfdp.dtfimvig gnapfdp.dspricli
+gnapfdp.dtfimvig gnapfdp.dspricli gnapfdp.dsjusain
 &Scoped-define ENABLED-TABLES ab_unmap gnapfdp    
 &Scoped-define FIRST-ENABLED-TABLE ab_unmap
 &Scoped-define SECOND-ENABLED-TABLE gnapfdp
@@ -163,7 +164,7 @@ ab_unmap.aux_idtipfor ab_unmap.aux_idforpri ab_unmap.aux_idorifor ~
 ab_unmap.aux_cdcopope ab_unmap.aux_cddbanco ab_unmap.aux_cdageban ~
 ab_unmap.aux_nrdconta ab_unmap.aux_dsageban ab_unmap.aux_cdtipcta ~
 ab_unmap.aux_nmpesrcb ab_unmap.aux_nrdocrcb ab_unmap.aux_nrpispas ~
-ab_unmap.aux_dsurlphp 
+ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ab_unmap.aux_ctlinati
 &Scoped-Define DISPLAYED-FIELDS gnapfdp.cddddfax gnapfdp.cddddfor ~
 gnapfdp.cdufforn gnapfdp.dsendfor gnapfdp.dsobserv gnapfdp.dsreffor ~
 gnapfdp.dtforati gnapfdp.dtforina gnapfdp.dtultalt gnapfdp.flgcoope ~
@@ -171,7 +172,7 @@ gnapfdp.inpessoa gnapfdp.nmbaifor gnapfdp.nmcidfor gnapfdp.nmcoofor ~
 gnapfdp.nmfornec gnapfdp.nmhompag gnapfdp.nrcepfor gnapfdp.nrfaxfor ~
 gnapfdp.nrfonfor gnapfdp.idtipfor gnapfdp.idforpri gnapfdp.idorifor ~
 gnapfdp.cdtipcta gnapfdp.inpesrcb gnapfdp.dtnasfor gnapfdp.dtinivig ~
-gnapfdp.dtfimvig gnapfdp.dspricli
+gnapfdp.dtfimvig gnapfdp.dspricli gnapfdp.dsjusain
 &Scoped-define DISPLAYED-TABLES ab_unmap gnapfdp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
 &Scoped-define SECOND-DISPLAYED-TABLE gnapfdp
@@ -184,7 +185,7 @@ ab_unmap.pagina ab_unmap.aux_idtipfor ab_unmap.aux_idforpri ~
 ab_unmap.aux_idorifor ab_unmap.aux_cdcopope ab_unmap.aux_cddbanco ~
 ab_unmap.aux_cdageban ab_unmap.aux_nrdconta ab_unmap.aux_dsageban ~
 ab_unmap.aux_cdtipcta ab_unmap.aux_nmpesrcb ab_unmap.aux_nrdocrcb ~
-ab_unmap.aux_nrpispas ab_unmap.aux_dsurlphp 
+ab_unmap.aux_nrpispas ab_unmap.aux_dsurlphp ab_unmap.aux_ctljusti ab_unmap.aux_ctlinati
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -374,7 +375,14 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-          
+     ab_unmap.aux_ctljusti AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.aux_ctlinati AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
      gnapfdp.idtipfor  AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -390,7 +398,10 @@ DEFINE FRAME Web-Frame
      gnapfdp.idorifor  AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-
+     gnapfdp.dsjusain AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS EDITOR NO-WORD-WRAP
+          SIZE 20 BY 4
+          
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -970,6 +981,10 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("aux_dsurlphp":U,"ab_unmap.aux_dsurlphp":U,ab_unmap.aux_dsurlphp:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
+    ("aux_ctlinati":U,"ab_unmap.aux_ctlinati":U,ab_unmap.aux_ctlinati:HANDLE IN FRAME {&FRAME-NAME}).  
+  RUN htmAssociate
+    ("aux_ctljusti":U,"ab_unmap.aux_ctljusti":U,ab_unmap.aux_ctljusti:HANDLE IN FRAME {&FRAME-NAME}).  
+  RUN htmAssociate
     ("cddddfax":U,"gnapfdp.cddddfax":U,gnapfdp.cddddfax:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("cddddfor":U,"gnapfdp.cddddfor":U,gnapfdp.cddddfor:HANDLE IN FRAME {&FRAME-NAME}).
@@ -1017,6 +1032,8 @@ PROCEDURE htmOffsets :
     ("nrfaxfor":U,"gnapfdp.nrfaxfor":U,gnapfdp.nrfaxfor:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("nrfonfor":U,"gnapfdp.nrfonfor":U,gnapfdp.nrfonfor:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("dsjusain":U,"gnapfdp.dsjusain":U,gnapfdp.dsjusain:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
     ("pagina":U,"ab_unmap.pagina":U,ab_unmap.pagina:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -1095,8 +1112,10 @@ IF VALID-HANDLE(h-b1wpgd0012) THEN
                     gnatfdp.idtipfor = INT(ab_unmap.aux_idtipfor)
                     gnatfdp.idforpri = INT(ab_unmap.aux_idforpri)
                     gnatfdp.idorifor = INT(ab_unmap.aux_idorifor)
-                    gnatfdp.dtinivig = input gnapfdp.dtinivig
-                    gnatfdp.dtfimvig = input gnapfdp.dtfimvig.
+                    gnatfdp.dtinivig = INPUT gnapfdp.dtinivig
+                    gnatfdp.dtfimvig = INPUT gnapfdp.dtfimvig
+                    gnatfdp.cdcopope = INT(ab_unmap.aux_cdcopope)
+                    gnatfdp.dsjusain = INPUT gnapfdp.dsjusain.
                     
                     /* Se for selecionado um banco */
                     IF ab_unmap.aux_cddbanco <> "0" THEN DO:
@@ -1152,7 +1171,9 @@ IF VALID-HANDLE(h-b1wpgd0012) THEN
                     gnatfdp.idforpri = INT(ab_unmap.aux_idforpri)
                     gnatfdp.idorifor = INT(ab_unmap.aux_idorifor)
                     gnatfdp.dtinivig = INPUT gnapfdp.dtinivig
-                    gnatfdp.dtfimvig = INPUT gnapfdp.dtfimvig.
+                    gnatfdp.dtfimvig = INPUT gnapfdp.dtfimvig
+                    gnatfdp.cdcopope = INT(ab_unmap.aux_cdcopope)
+                    gnatfdp.dsjusain = INPUT gnapfdp.dsjusain.
                     
                     /* Se for selecionado um banco */
                     IF ab_unmap.aux_cddbanco <> "0" THEN DO:
@@ -1174,7 +1195,18 @@ IF VALID-HANDLE(h-b1wpgd0012) THEN
                 
             END.    
       END. /* DO WITH FRAME {&FRAME-NAME} */
-   
+      
+      /* Definir se o fornecedor esta ativo conforme regra abaixo */       
+      IF TODAY > INPUT gnapfdp.dtfimvig OR
+         TODAY > INPUT gnapfdp.dtforina THEN       
+      DO:          
+         ASSIGN ab_unmap.aux_idsitfor = FALSE.
+      END.   
+      ELSE
+      DO:
+         ASSIGN ab_unmap.aux_idsitfor = TRUE.
+      END.
+      
       /* "mata" a instância da BO */
       DELETE PROCEDURE h-b1wpgd0012 NO-ERROR.
    
@@ -1195,6 +1227,9 @@ IF VALID-HANDLE(h-b1wpgd0012) THEN
    DO:
       CREATE gnatfdp.
       BUFFER-COPY gnapfdp TO gnatfdp.
+      
+      ASSIGN gnatfdp.cdoperad = gnapses.cdoperad
+             gnatfdp.cdcopope = INT(ab_unmap.aux_cdcopope).
           
       RUN exclui-registro IN h-b1wpgd0012(INPUT TABLE gnatfdp, OUTPUT msg-erro).
 
@@ -1440,7 +1475,7 @@ IF LOCKED gnapses THEN
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:
-   
+
       RUN inputFields.
       
       CASE opcao:
@@ -1746,7 +1781,7 @@ IF REQUEST_METHOD = "POST":U THEN
 
       RUN enableFields.
       RUN outputFields.
-
+      
       /* Tratamento para garantir que mantenha as informaçoes ja selecionadas
          caso apresente critica, pois nao executa o displayFields */
       IF ab_unmap.aux_cddbanco <> "" THEN
@@ -1788,7 +1823,7 @@ IF REQUEST_METHOD = "POST":U THEN
                 END.
 
            WHEN 10 THEN 
-                 RUN RodaJavaScript('alert("Atualizacao executada com sucesso.")'). 
+                 RUN RodaJavaScript('alert("Atualização executada com sucesso.")'). 
          
       END CASE.     
 
@@ -1829,9 +1864,21 @@ ELSE /* Método GET */
                                          ab_unmap.aux_cdtipcta = STRING({&SECOND-ENABLED-TABLE}.cdtipcta)
                                          ab_unmap.aux_nmpesrcb = {&SECOND-ENABLED-TABLE}.nmpesrcb
                                          ab_unmap.aux_nrpispas = IF {&SECOND-ENABLED-TABLE}.nrpispas <> "0" THEN {&SECOND-ENABLED-TABLE}.nrpispas ELSE ""
-                                         ab_unmap.aux_idsitfor = IF {&SECOND-ENABLED-TABLE}.idsitfor = "A" THEN TRUE ELSE FALSE
+                                         /*ab_unmap.aux_idsitfor = IF {&SECOND-ENABLED-TABLE}.idsitfor = "A" THEN TRUE ELSE FALSE*/
                                          ab_unmap.aux_idorifor = STRING({&SECOND-ENABLED-TABLE}.idorifor)
                                          ab_unmap.aux_idtipfor = STRING({&SECOND-ENABLED-TABLE}.idtipfor).
+                                  
+                                  /* Definir se o fornecedor esta ativo conforme regra abaixo */       
+                                  IF TODAY > {&SECOND-ENABLED-TABLE}.dtfimvig OR
+                                     TODAY > {&SECOND-ENABLED-TABLE}.dtforina THEN       
+                                  DO: 
+                                     ASSIGN ab_unmap.aux_idsitfor = FALSE.
+                                  END.   
+                                  ELSE
+                                  DO:
+                                     ASSIGN ab_unmap.aux_idsitfor = TRUE.
+                                  END.
+                                         
                                   RUN ValidaAgencia.
                                   
                                   IF {&SECOND-ENABLED-TABLE}.inpessoa = 1 THEN

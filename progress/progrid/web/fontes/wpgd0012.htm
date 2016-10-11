@@ -9,6 +9,8 @@
               08/10/2015 - Inclusao de novos campos Tipo, Origem e Fornecedor Principal PRJ 229 (Vanessa)
 			  
 			  09/12/2015 - Inclusão do campo cdcopope (Vanessa)
+              
+              13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)
 -->
 
 <html>
@@ -358,20 +360,22 @@ function marcaFornecedorPrincipal(tipo){
 <input type="hidden" name="idorifor" value="1">
 <input type="hidden" name="aux_cdcopope" value="">
 <input type="hidden" name="aux_dsurlphp" value="">
+<input type="hidden" name="aux_ctlinati" value="">
+<input type="hidden" name="aux_ctljusti" value="">
 
 <!-- Inicio do modelo com abas -->
 <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
-  <table width="575" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+  <table width="620" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
     <tr>
-      <td width="35"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
-      <td width="32"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
-      <td width="265" height="20" align="left" class="linkGuia">Cadastro de Fornecedores</td>
-      <td width="252" height="20" align="right" class="linkGuia">wpgd0012</td>	  
-      <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+      <td width="6%"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+      <td width="5%"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+      <td width="45%" height="20" align="left" class="linkGuia">Cadastro de Fornecedores</td>
+      <td width="42%" height="20" align="right" class="linkGuia">wpgd0012</td>	  
+      <td width="2%" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
     </tr>
     <tr valign="top" bgcolor="#FFFFFF">
       <td colspan="5">
-        <table width="575" height="300"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
+        <table width="620" height="300"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
           <tr>
             <td height="200" valign="top" bgcolor="#FFFFFF">
               <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
@@ -423,7 +427,7 @@ function marcaFornecedorPrincipal(tipo){
                           </table>
                         </td>
                         <!-- Links de Adicionar -->
-                        <td width="210" align="right" class="txtTituloHid">
+                        <td width="260" align="right" class="txtTituloHid">
                           <div id="adicionar">
                             <a href="#." onclick="mudaAdicionar();">Adicionar</a>
                           </div>
@@ -441,7 +445,7 @@ function marcaFornecedorPrincipal(tipo){
                   <td height="15" align="left">&nbsp;</td>
                   <td height="15" align="left" bgcolor="#F5F5F5">
                     <div id="divFornecedor" align="left">
-                      <table width="91%" border="0" align="center" cellspacing="0">
+                      <table width="95%" border="0" align="center" cellspacing="0">
                         <tr>
                           <td align="right" class="NomeCampo">Natureza: </td>
                           <td colspan="9" class="NomeCampo">
@@ -510,31 +514,54 @@ function marcaFornecedorPrincipal(tipo){
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Home Page: </td>
-                          <td colspan="2" ><input name="nmhompag" type="text" class="Campo" size="40" maxlength="50"></td>
+                          <td colspan="6" ><input name="nmhompag" type="text" class="Campo" size="40" maxlength="40" style="width:396px" ></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Referencias:</td>
-                          <td colspan="9" class="CampoTextArea"><textarea name="dsreffor" cols="55" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsreffor,200)" onKeyDown="ValidaTamanho(this.form.dsreffor,200)"></textarea></td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dsreffor" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsreffor,200)" onKeyDown="ValidaTamanho(this.form.dsreffor,200)"></textarea></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Considerações:</td>
-                          <td colspan="9" class="CampoTextArea"><textarea name="dsobserv" cols="55" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsobserv,200)" onKeyDown="ValidaTamanho(this.form.dsobserv,200)"></textarea></td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dsobserv" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsobserv,200)" onKeyDown="ValidaTamanho(this.form.dsobserv,200)"></textarea></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Principais Clientes:</td>
-                          <td colspan="9" class="CampoTextArea"><textarea name="dspricli" cols="55" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dspricli,1000)" onKeyDown="ValidaTamanho(this.form.dspricli,1000)"></textarea></td>
+                          <td colspan="9" class="CampoTextArea"><textarea name="dspricli" cols="75" rows="2" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dspricli,1000)" onKeyDown="ValidaTamanho(this.form.dspricli,1000)"></textarea></td>
                         </tr>
                         <tr>
                           <td height="19" align="right" class="NomeCampo">Cadastrado: </td>
                           <td width="52">
                             <input name="dtforati" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" value="">
                           </td>
-                          <td width="195" class="NomeCampo" nowrap>Inativo desde:
-                            <input name="dtforina" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" value=""> 
-                          </td>
-                          <td class="NomeCampo" colspan="2" nowrap><div align="right" class="NomeCampo">Última atualização:</div></td>
+                          
+                          <td class="NomeCampo" colspan="3" nowrap><div align="right" class="NomeCampo">Última atualização:</div></td>
                           <td width="110" align="left">
                             <input name="dtultalt" type="text" disabled="true" class="Campo" size="10" readonly>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td width="80" align="right" class="NomeCampo" style="vertical-align: top">Inativo desde:</td>
+                          <td width="175">
+                            <table border="0" width="100%">
+                              <tr>                            
+                                <td>  
+                                    <input name="dtforina" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="top.frcod.FormataData(this.name, this.value)" onchange="document.form.aux_ctlinati.value = 'A' " value=""> 
+                                </td>
+                                <td align="right" class="NomeCampo">    
+                                    Justificativa:
+                                </td>
+                              </tr>
+                              <tr>
+                                <td> &nbsp; </td>
+                                <td width="210" align="right" class="NomeCampo">
+                                    <a href="#." onclick="AbrirHist();" style="PADDING-RIGHT: 8px"> Histórico</a>
+                                </td>  
+                              </tr>
+                            </table>
+                          </td>
+                          
+                          <td colspan="9" width="400">
+                            <span class="CampoTextArea"><textarea name="dsjusain" cols="55" rows="3" class="CampoTextArea" onKeyUp="ValidaTamanho(this.form.dsjusain,200)" onKeyDown="ValidaTamanho(this.form.dsjusain,200)" onchange="document.form.aux_ctljusti.value = 'A'" ></textarea></span>
                           </td>
                         </tr>
                         <tr>
@@ -543,7 +570,8 @@ function marcaFornecedorPrincipal(tipo){
                             <select name="aux_idtipfor"  size="1" class="Campo" onChange="marcaFornecedorPrincipal(this.value); verificaMaterial();"></select>                           
                           </td>						 
                           <td height="19" align="right" class="NomeCampo"id="FornecedorPrincipalLabel"> Fornecedor Principal:</td>
-                          <td id="FornecedorPrincipalInput"><input name="aux_idforpri"  type="checkbox" class="Campo"></td>
+                          <td id="FornecedorPrincipalInput"><input name="aux_idforpri"  type="checkbox" class="Campo"></td>                         
+                          
                         </tr>
                         <tr>
                           <td class="NomeCampo" nowrap><div align="right" class="NomeCampo">Origem:</div></td>
@@ -614,7 +642,7 @@ function marcaFornecedorPrincipal(tipo){
                       <table border="0" align="center" cellpadding="1" cellspacing="1">
                         <tr>
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></th>
-                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="return top.frcod.Salvar()"></th>
+                          <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="return salvarTela()"></th>
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></th>
                           <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick=";return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P','',document.form.aux_cdcopope.value)"></th>
                         </tr>
@@ -1024,13 +1052,34 @@ function ExEixo(rowid)
 
 function AdProposta()
 {
-   var campo = '';
+   var campo = '';   
+
    if((document.form.dtforina.value != "/  /")&&(document.form.dtforina.value != ""))
-   {
-      alert("Fornecedor está inativo.");
-      return false;
+   {   
+   
+      var dtdatual = new Date();
+      var aux_data = document.form.dtforina.value.split("/");   
+      var dtiantiv = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
+      
+      if (dtiantiv < dtdatual){
+          alert("Fornecedor está inativo.");
+          return false;
+      }
    }
- 
+   
+   
+   if((document.form.dtfimvig.value != "/  /")&&(document.form.dtfimvig.value != ""))
+   {   
+   
+      var dtdatual = new Date();
+      var aux_data = document.form.dtfimvig.value.split("/");   
+      var dtfimvig = new Date(aux_data[2], aux_data[1] - 1, aux_data[0]);
+      
+      if (dtfimvig < dtdatual){
+          alert("Fornecedor está inativo.");
+          return false;
+      }
+   }   
    if(document.form.aux_cddopcao.value == "in")
    {
       alert("O fornecedor deve ser gravado antes de inserir propostas. ");
@@ -1419,6 +1468,36 @@ function formataNum(obj,e) {
 	
 	obj.value = dataok;
 	return true; 
+}
+
+function validar(){
+  if (document.form.aux_ctlinati.value == "A" &&
+      (document.form.aux_ctljusti.value != "A" || document.form.dsjusain.value == "" )) {
+        alert("O campo de justificativa é obrigatório.");
+        document.form.dsjusain.value = "";
+        document.form.dsjusain.focus();
+
+        return false;
+     }
+  return true;  
+}
+function salvarTela() {
+  
+  if ( validar() ) {
+     top.frcod.Salvar();
+  }
+}
+
+function AbrirHist() {
+
+    var campo = '';       
+    campo = TiraFormato(document.form.aux_nrcpfcgc.value);
+    VarURL = document.form.aux_dsendurl.value  + '/wpgd0012e.htm?aux_nrcpfcgc=' + campo + 
+     '&aux_idevento=' + document.form.aux_idevento.value;
+    window.open(VarURL,'','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1100,height=400,top=30,left=30');
+   
+       
+
 }
 
 </script>
