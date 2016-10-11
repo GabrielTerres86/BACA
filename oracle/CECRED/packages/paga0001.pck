@@ -18641,6 +18641,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     -- Erro no envio
     vr_dserro     VARCHAR2(4000);
 
+    vr_cdprogra    VARCHAR2(40) := 'PC_PROCESSA_CRAPDDA';
+    vr_nomdojob    VARCHAR2(40) := 'JBDDA_PROCESSA_CRAPDDA';
+    vr_flgerlog    BOOLEAN := FALSE;
+
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
+
     /*montar descrição de erro para envio email*/
     procedure pc_monta_erro ( pr_crapdda cr_crapdda%rowtype,
                               pr_dscritic varchar2 )is
@@ -18682,6 +18699,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END pc_monta_erro;
 
   BEGIN
+
+    -- Log de inicio de execucao
+    pc_controla_log_batch(pr_dstiplog => 'I');
 
     --buscar registros não processados
     FOR rw_crapdda IN cr_crapdda LOOP
@@ -18759,16 +18779,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --Comitar alterações
     COMMIT;
 
+    -- Log de fim de execucao
+    pc_controla_log_batch(pr_dstiplog => 'F');
+
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PAGA0001.pc_processa_crapdda: '||SQLErrm;
       ROLLBACK;
-      -- Gerar log
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3/*CECRED*/
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                || 'PAGA0001.pc_processa_crapdda' || ' --> '
-                                                || pr_dscritic );
+
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => pr_dscritic);
 
   END pc_processa_crapdda;
 

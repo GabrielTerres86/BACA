@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Abril/2003.                     Ultima atualizacao: 22/07/2013
+   Data    : Abril/2003.                     Ultima atualizacao: 21/09/2016
 
    Dados referentes ao programa:
 
@@ -46,12 +46,13 @@
                22/07/2013 - Migracao PROGRESS/ORACLE - Incluido chamada de
                             procedure (Andre Santos - SUPERO)
              
+			   21/09/2016 - Removi a linha "RUN fontes/iniprg.p." antes da
+							declaracao das variaveis globais necessarias
+							SD 516263. (Carlos Rafael Tanholi)
 ............................................................................. */
 
 { includes/var_batch.i "NEW" }
 { sistema/generico/includes/var_oracle.i }
-
-RUN fontes/iniprg.p.
 
 ASSIGN glb_cdprogra = "crps339"
        glb_cdcritic = 0

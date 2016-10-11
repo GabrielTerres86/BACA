@@ -138,7 +138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   --  Sistema  : Procedimentos envolvendo desconto titulos
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 25/04/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 15/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -154,6 +154,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   --             
   --             25/04/2016 - Ajuste para nao debitar titulos descontados vencidos quando 
   --                          cooperado estiver com acao judicial. (Rafael)
+  --
+  --             15/09/2016 - #519903 Criação de log de controle de início, erros e fim de execução
+  --                          do job pc_efetua_baixa_tit_car_job (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   /* Tipos de Tabelas da Package */
 
@@ -1278,7 +1281,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       
       vr_exc_erro  EXCEPTION;
 
+      vr_cdprogra    VARCHAR2(40) := 'PC_EFETUA_BAIXA_TIT_CAR_JOB';
+      vr_nomdojob    VARCHAR2(40) := 'JBDSCT_EFETUA_BAIXA_TIT_CAR';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN     
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;
+    
+    BEGIN     
+    
+      -- Log de inicio de execucao
+      pc_controla_log_batch(pr_dstiplog => 'I');
     
       gene0004.pc_executa_job( pr_cdcooper => 3   --> Codigo da cooperativa
                               ,pr_fldiautl => 1   --> Flag se deve validar dia util
@@ -1288,7 +1311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                               ,pr_nmprogra => 'DSCT0001.pc_efetua_baixa_tit_car' --> Nome do programa que esta sendo executado no job
                               ,pr_dscritic => vr_dserro);
 
-      -- senao retornou critica chama rotina
+      -- se nao retornou critica chama rotina
       IF trim(vr_dserro) IS NULL THEN
         
         FOR rw_crapcop IN cr_crapcop LOOP
@@ -1321,7 +1344,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             
             IF vr_tab_erro.COUNT > 0 THEN
                vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-               vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+               vr_dscritic := 'Coop: ' || rw_crapcop.cdcooper || 
+                              ' - ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
             END IF;
             
             RAISE vr_exc_erro; 
@@ -1333,9 +1357,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       ELSE
         vr_cdcritic := 0;
         vr_dscritic := vr_dserro;
+
         RAISE vr_exc_erro;  
       END IF;      
     
+      -- Log de fim de execucao
+      pc_controla_log_batch(pr_dstiplog => 'F');
+
     EXCEPTION
       WHEN vr_exc_erro THEN  
 
@@ -1350,12 +1378,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
          
-        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                   pr_ind_tipo_log => 2, --> erro tratado
-                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' - DSCT0001.pc_efetua_baixa_tit_car_job --> ' || vr_dscritic,
-                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
-        
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dscritic);
                             
         ROLLBACK;
         
@@ -1375,11 +1400,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
                              
-        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                   pr_ind_tipo_log => 2, --> erro tratado
-                                   pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                      ' - DSCT0001.pc_efetua_baixa_tit_car_job --> ' || vr_dscritic,
-                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dscritic);
                              
         ROLLBACK;                             
         

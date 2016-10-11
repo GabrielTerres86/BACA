@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 05/05/2016
+    Data    : Marco/07.                       Ultima atualizacao: 16/09/2016
     
     Dados referentes ao programa:
 
@@ -184,6 +184,9 @@
                             "p-cddevolu = 5" nao sejam considerados as devolucoes
                             com valor superior ao parametro VALORESVLB
                             (Douglas - Chamado 414930)
+                            
+               16/09/2016 - #520378 Incluido o parametro ISPB na chamada de grava-log-ted em 
+                            envia_arquivo_xml (Carlos)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -3317,6 +3320,7 @@ PROCEDURE envia_arquivo_xml:
                                               INPUT 0, /*PA origem*/
                                               INPUT 0, /*Caixa origem */
                                               INPUT "1", /* operador */
+                                              INPUT 0,   /* ISPB */ 
                                               INPUT 0).  /* sem crise */
        
            DELETE PROCEDURE h-b1wgen0050.

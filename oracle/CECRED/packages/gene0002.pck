@@ -321,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 05/04/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 29/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -345,6 +345,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
   --                          (Adriano).        
+  --
+  --             29/09/2016 - #523947 No procedimento pc_controle_filas_relato, incluído log de início, fim e 
+  --                          erro na execução do job (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -4113,7 +4116,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
            AND dtfimger IS NULL;
       -- Var genérica para a quantidade pendente
       vr_qtrel_penden NUMBER;
+      
+      vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_FILAS_RELATO';
+      vr_nomdojob    VARCHAR2(40) := 'JBGEN_CONTROLE_FILAS_RELATO';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;      
+
+    BEGIN
+
+      -- Log de inicio de execucao
+      pc_controla_log_batch(pr_dstiplog => 'I');
 
       -- Somente trabalhar com os arquivos de controle na base de produção
       IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
@@ -4253,8 +4277,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
       -- Gravar as alterações
       COMMIT;
+
+      -- Log de fim de execucao
+      pc_controla_log_batch(pr_dstiplog => 'F');
+      
     EXCEPTION
       WHEN OTHERS THEN
+        
+        -- Envio centralizado de log de erro
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => 'Problema na rotina controladora das filas. Detalhes: '||sqlerrm||'.');
+      
         pc_gera_log_relato(pr_cdcooper => 0
                           ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema na rotina controladora das filas. Detalhes: '||sqlerrm||'.');
     END;
