@@ -104,7 +104,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
   TYPE typ_tab_logspb_detalhe IS
     TABLE OF typ_reg_logspb_detalhe
-    INDEX BY varchar2(20); --hrtransa(10)+ nrseqlog(10).
+    INDEX BY varchar2(30); --hrtransa(5)+ progress_recid(25).
 
   /* Type de registros para armazenar os totais por situação de log do SPB*/
   TYPE typ_reg_logspb_totais IS
@@ -1105,7 +1105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_qtregist NUMBER := 0;
     vr_qtsitlog NUMBER := 0;
     vr_vlsitlog NUMBER := 0;
-    vr_idx      VARCHAR2(20);
+    vr_idx      VARCHAR2(30);
 
     --Ler Log de mensagens para transações ao SPB
     CURSOR cr_craplmt IS
@@ -1128,7 +1128,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              cdoperad,
              idorigem,
              nrctrlif,
-             nmevento
+             nmevento,
+             progress_recid
         FROM craplmt
        WHERE craplmt.cdcooper = pr_cdcooper
          AND ((craplmt.nrdconta = pr_nrdconta AND pr_nrdconta <> 0) OR
@@ -1174,7 +1175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
 
       IF  vr_nrregist > 0 THEN
-        vr_idx := lpad(rw_craplmt.hrtransa,10,'0')||lpad(rw_craplmt.nrsequen,10,'0');
+        vr_idx := lpad(rw_craplmt.hrtransa,5,'0')||lpad(rw_craplmt.progress_recid,25,'0');
 
          pr_tab_logspb_detalhe(vr_idx).nrseqlog := rw_craplmt.nrsequen;
 
@@ -1273,7 +1274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     vr_dslinlog VARCHAR2(4000);
     vr_nrseqlog INTEGER;
-    vr_idx      VARCHAR2(20);
+    vr_idx      VARCHAR2(30);
 
   BEGIN
 
@@ -1281,7 +1282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrseqlog := pr_tab_logspb_detalhe.count + 1;
 
     IF pr_idsitmsg IN (1) THEN --Enviada OK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,162,3));
@@ -1306,7 +1307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
    ELSIF pr_idsitmsg IN (3) THEN  --Recebida OK
 
-      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,162,3));
@@ -1324,7 +1325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_tab_logspb_detalhe(vr_idx).vltransa := to_number(SUBSTR(vr_dslinlog,132,14));
 
     ELSIF pr_idsitmsg IN (2,5) THEN   -- Enviada NOK, Rejeitada OK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,267,3));
@@ -1342,7 +1343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_tab_logspb_detalhe(vr_idx).vltransa := to_number(SUBSTR(vr_dslinlog,237,14));
 
     ELSIF pr_idsitmsg IN (4) THEN   -- Recebida NOK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,267,3));
@@ -2007,7 +2008,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_tab_logspb         SSPB0001.typ_tab_logspb;   
     vr_idx_logspb         INTEGER;       
     vr_tab_logspb_detalhe SSPB0001.typ_tab_logspb_detalhe;
-    vr_idx_logspb_detalhe varchar2(20);
+    vr_idx_logspb_detalhe varchar2(30);
     vr_tab_logspb_totais  SSPB0001.typ_tab_logspb_totais;  
     vr_idx_logspb_totais  VARCHAR2(1);
     vr_tab_erro           GENE0001.typ_tab_erro;
@@ -2118,7 +2119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '  <nrctarem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrctarem,' ')||'</nrctarem>'||
                          '  <dsnomrem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsnomrem,' ')||'</dsnomrem>'||
                          '  <dscpfrem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dscpfrem,0)||'</dscpfrem>'||                                                                                                                                                                                                                                 
-                         '  <hrtransa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).hrtransa,' ')||'</hrtransa>'||  
+                         '  <hrtransa>' || to_char(to_date(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).hrtransa,'sssss'),'hh24:mi:ss') ||'</hrtransa>'||  
                          '  <vltransa>' || nvl(to_char(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).vltransa,'fm999g999g9990d00'),'0')||'</vltransa>'||  
                          '  <dsmotivo>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsmotivo,' ')||'</dsmotivo>'||  
                          '  <dstransa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dstransa,' ')||'</dstransa>'||  
