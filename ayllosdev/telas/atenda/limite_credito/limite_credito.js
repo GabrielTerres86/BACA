@@ -31,7 +31,9 @@
  * 017:[08/10/2015] Gabriel    (RKAM)    : Reformulacao cadastral (Gabriel-RKAM).
  * 018:[26/01/2016] Heitor     (RKAM)    : Chamado 364592 - Alterada atribuicao ao campo vloutras, nao estava preenchendo corretamente ao retornar valor decimal
  *
- * 018: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
+ * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
+ * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
+ * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
  */
  
 var callafterLimiteCred = '';
@@ -43,13 +45,13 @@ var flgProposta;	 //Existe ou não uma proposta cadastrada
 var flgAltera;
 var dsinfcad;
 
-var nomeForm    	= 'frmNovoLimite'; 			// Variável para guardar o nome do formulário corrente
-var boAvalista  	= 'b1wgen0019.p'; 			// BO para esta rotina
-var procAvalista 	= 'obtem-dados-avalista'; 	// Nome da procedures que busca os avalistas
+var nomeForm = 'frmNovoLimite'; 			// Variável para guardar o nome do formulário corrente
+var boAvalista = 'b1wgen0019.p'; 			// BO para esta rotina
+var procAvalista = 'obtem-dados-avalista'; 	// Nome da procedures que busca os avalistas
 
-var strHTML 		= ''; // Variável usada na criação da div de alerta do grupo economico.
-var strHTML2 		= ''; // Variável usada na criação do form onde serão mostradas as mensagens de alerta do grupo economico.	
-var dsmetodo   		= ''; // Variável usada para manipular o método a ser executado na função encerraMsgsGrupoEconomico.
+var strHTML = ''; // Variável usada na criação da div de alerta do grupo economico.
+var strHTML2 = ''; // Variável usada na criação do form onde serão mostradas as mensagens de alerta do grupo economico.	
+var dsmetodo = ''; // Variável usada para manipular o método a ser executado na função encerraMsgsGrupoEconomico.
 		
 var aux_inconfir = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 var aux_inconfi2 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
@@ -82,24 +84,24 @@ function trataRatingSingulares(qtdTotalTopicos) {
 	arrayRatingSingulares = new Array();
 	
 	//var nomeCampo = "";
-	$("select",'#frmDadosRatingSingulares').each(function () { 
+    $("select", '#frmDadosRatingSingulares').each(function () {
 		
 		i = arrayRatingSingulares.length;
 		
-		eval('var regFilho'+i+' = new Object();');
+        eval('var regFilho' + i + ' = new Object();');
 		
-		eval('regFilho'+i+'["nrtopico"] = $(this).attr("name").substr($(this).attr("name").indexOf("topico_") + 7, ($(this).attr("name").indexOf("item_") - 1) - ($(this).attr("name").indexOf("topico_") + 7))');
-		eval('regFilho'+i+'["nritetop"] = $(this).attr("name").substr($(this).attr("name").indexOf("item_") + 5)');
-		eval('regFilho'+i+'["nrseqite"] = $(this).val()');
+        eval('regFilho' + i + '["nrtopico"] = $(this).attr("name").substr($(this).attr("name").indexOf("topico_") + 7, ($(this).attr("name").indexOf("item_") - 1) - ($(this).attr("name").indexOf("topico_") + 7))');
+        eval('regFilho' + i + '["nritetop"] = $(this).attr("name").substr($(this).attr("name").indexOf("item_") + 5)');
+        eval('regFilho' + i + '["nrseqite"] = $(this).val()');
 		
-		eval('arrayRatingSingulares['+i+'] = regFilho'+i+';');
+        eval('arrayRatingSingulares[' + i + '] = regFilho' + i + ';');
 			
-		if (arrayRatingSingulares[i]["nrseqite"] == "" || !validaNumero(arrayRatingSingulares[i]["nrseqite"],true,0,0)) {
+        if (arrayRatingSingulares[i]["nrseqite"] == "" || !validaNumero(arrayRatingSingulares[i]["nrseqite"], true, 0, 0)) {
 			hideMsgAguardo();
-			showError("error","Item " + arrayRatingSingulares[i]["nrtopico"] + "." + arrayRatingSingulares[i]["nritetop"] + " n&atilde;o informado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "Item " + arrayRatingSingulares[i]["nrtopico"] + "." + arrayRatingSingulares[i]["nritetop"] + " n&atilde;o informado.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;
 		} else {
-			if (qtdTotalTopicos == i + 1){
+            if (qtdTotalTopicos == i + 1) {
 				confirmaNovoLimite(1, true);
 			}
 		}
@@ -159,17 +161,17 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 		}
 				
 		if (id == i) { // Atribui estilos para foco da opção
-			$("#linkAba" + id).attr("class","txtBrancoBold");
-			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
-			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
-			$("#imgAbaCen" + id).css("background-color","#969FA9");
+            $("#linkAba" + id).attr("class", "txtBrancoBold");
+            $("#imgAbaEsq" + id).attr("src", UrlImagens + "background/mnu_sle.gif");
+            $("#imgAbaDir" + id).attr("src", UrlImagens + "background/mnu_sld.gif");
+            $("#imgAbaCen" + id).css("background-color", "#969FA9");
 			continue;			
 		}
 		
-		$("#linkAba" + i).attr("class","txtNormalBold");
-		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
-		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
-		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
+        $("#linkAba" + i).attr("class", "txtNormalBold");
+        $("#imgAbaEsq" + i).attr("src", UrlImagens + "background/mnu_nle.gif");
+        $("#imgAbaDir" + i).attr("src", UrlImagens + "background/mnu_nld.gif");
+        $("#imgAbaCen" + i).css("background-color", "#C6C8CA");
 	}
 
 	// Carrega conteúdo da opção através de ajax
@@ -184,11 +186,11 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 			inconfir: 1,
 			redirect: "html_ajax"
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {						
+        success: function (response) {
 			$("#divConteudoOpcao").html(response);
 			controlaFoco(cddopcao);
 		}				
@@ -198,14 +200,14 @@ function acessaOpcaoAba(nrOpcoes, id, cddopcao) {
 // Função para confirmar novo Limite de Crédito
 function confirmaNovoLimite(inconfir, flgratok) {
 
-	var nrcpfcgc = $("#nrcpfcgc","#frmCabAtenda").val().replace(".","").replace(".","").replace("-","").replace("/","");
+    var nrcpfcgc = $("#nrcpfcgc", "#frmCabAtenda").val().replace(".", "").replace(".", "").replace("-", "").replace("/", "");
 	var camposRS = "";
 	var dadosRtS = "";
-	var nrctrrat = $("#nrctrpro","#frmDadosLimiteCredito").val();
+    var nrctrrat = $("#nrctrpro", "#frmDadosLimiteCredito").val();
 	
 	if (flgratok) {
-		camposRS = retornaCampos( arrayRatingSingulares, '|' );
-		dadosRtS  = retornaValores( arrayRatingSingulares, ';', '|',camposRS );
+        camposRS = retornaCampos(arrayRatingSingulares, '|');
+        dadosRtS = retornaValores(arrayRatingSingulares, ';', '|', camposRS);
 	}
 	
 	showMsgAguardo("Aguarde, confirmando novo " + strTitRotinaLC + " ...");
@@ -225,16 +227,16 @@ function confirmaNovoLimite(inconfir, flgratok) {
 			dadosRtS: dadosRtS,
 			redirect: "script_ajax"
 		}, 
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {				
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		} 				
 	});					
@@ -253,16 +255,16 @@ function excluirNovoLimite() {
 			nrdconta: nrdconta,
 			redirect: "script_ajax"
 		}, 
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});				
@@ -282,22 +284,22 @@ function cancelarLimiteAtual(nrctrlim) {
 			nrctrlim: nrctrlim,
 			redirect: "script_ajax"
 		}, 
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});				
 }
 
-function renovarLimiteAtual(nrctrlim){
+function renovarLimiteAtual(nrctrlim) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, renovando " + strTitRotinaLC + " atual ...");
 	
@@ -310,50 +312,50 @@ function renovarLimiteAtual(nrctrlim){
 			nrctrlim: nrctrlim,
 			redirect: "script_ajax"
 		}, 
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}
 	});
 }
 
 // Função para validar novo limite de crédito
-function validarNovoLimite(inconfir,inconfi2) {
+function validarNovoLimite(inconfir, inconfi2) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando novo " + strTitRotinaLC + " ...");
 	
-	var nrctrlim = $("#nrctrlim","#frmNovoLimite").val().replace(/\./g,"");
-	var cddlinha = $("#cddlinha","#frmNovoLimite").val();
-	var vllimite = $("#vllimite","#frmNovoLimite").val().replace(/\./g,"");
-	var flgimpnp = $("#flgimpnp","#frmNovoLimite").val();
+    var nrctrlim = $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, "");
+    var cddlinha = $("#cddlinha", "#frmNovoLimite").val();
+    var vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+    var flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
 	
 	// Valida número do contrato
-	if (nrctrlim == "" || !validaNumero(nrctrlim,true,0,0)) {
+    if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","N&uacute;mero de contrato inv&aacute;lido.","Alerta - Ayllos","$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "N&uacute;mero de contrato inv&aacute;lido.", "Alerta - Ayllos", "$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 
 	
 	// Valida linha de crédito
-	if (cddlinha == "" || !validaNumero(cddlinha,true,0,0)) {
+    if (cddlinha == "" || !validaNumero(cddlinha, true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Linha de cré	dito inv&aacute;lida.","Alerta - Ayllos","$('#cddlinha','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Linha de cré	dito inv&aacute;lida.", "Alerta - Ayllos", "$('#cddlinha','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
 	// Valida valor do limite de crédito
-	if (vllimite == "" || !validaNumero(vllimite,true,0,0)) {
+    if (vllimite == "" || !validaNumero(vllimite, true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Valor do " + strTitRotinaLC + " inv&aacute;lido.","Alerta - Ayllos","$('#vllimite','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Valor do " + strTitRotinaLC + " inv&aacute;lido.", "Alerta - Ayllos", "$('#vllimite','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 	
 	
@@ -371,16 +373,16 @@ function validarNovoLimite(inconfir,inconfi2) {
 			inconfi2: inconfi2,
 			redirect: "script_ajax"
 		},	
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 
@@ -392,7 +394,7 @@ function cadastrarNovoLimite() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, cadastrando novo " + strTitRotinaLC + " ...");
 	
-	nrinfcad = (typeof(nrinfcad) == "undefined") ? 1 : nrinfcad; 
+    nrinfcad = (typeof (nrinfcad) == "undefined") ? 1 : nrinfcad;
 	
 	// Executa script de cadastro do limite atravé	s de ajax
 	$.ajax({		
@@ -400,16 +402,16 @@ function cadastrarNovoLimite() {
 		url: UrlSite + "telas/atenda/limite_credito/cadastrar_novo_limite.php",
 		data: {
 			nrdconta: nrdconta,
-			nrctrlim: $("#nrctrlim","#frmNovoLimite").val().replace(/\./g,""),
-			cddlinha: $("#cddlinha","#frmNovoLimite").val(),
-			vllimite: $("#vllimite","#frmNovoLimite").val().replace(/\./g,""),
-			flgimpnp: $("#flgimpnp","#frmNovoLimite").val(),
-			vlsalari: $("#vlsalari","#frmNovoLimite").val().replace(/\./g,""),
-			vlsalcon: $("#vlsalcon","#frmNovoLimite").val().replace(/\./g,""),
-			vloutras: $("#vloutras","#frmNovoLimite").val().replace(/\./g,""),
-			vlalugue: $("#vlalugue","#frmNovoLimite").val().replace(/\./g,""),
-			inconcje: ($("#inconcje_1","#frmNovoLimite").prop('checked')) ? 1 : 0,
-			dsobserv: $("#dsobserv","#frmNovoLimite").val(),
+            nrctrlim: $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, ""),
+            cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
+            vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
+            flgimpnp: $("#flgimpnp", "#frmNovoLimite").val(),
+            vlsalari: $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, ""),
+            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, ""),
+            vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
+            vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
+            inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
+            dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
 			dtconbir: dtconbir,			
 			/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
 			nrgarope: nrgarope,
@@ -419,60 +421,60 @@ function cadastrarNovoLimite() {
 			perfatcl: perfatcl,
 			nrperger: nrperger,		
 		    /** ---------------------------------------------------------------------- **/
-			nrctaav1: normalizaNumero($("#nrctaav1","#frmNovoLimite").val()),
-			nmdaval1: $("#nmdaval1","#frmNovoLimite").val(),
-			nrcpfav1: normalizaNumero($("#nrcpfav1","#frmNovoLimite").val()),
-			tpdocav1: $("#tpdocav1","#frmNovoLimite").val(),
-			dsdocav1: $("#dsdocav1","#frmNovoLimite").val(),
-			nmdcjav1: $("#nmdcjav1","#frmNovoLimite").val(),
-			cpfcjav1: normalizaNumero($("#cpfcjav1","#frmNovoLimite").val()),
-			tdccjav1: $("#tdccjav1","#frmNovoLimite").val(),
-			doccjav1: $("#doccjav1","#frmNovoLimite").val(),
-			ende1av1: $("#ende1av1","#frmNovoLimite").val(),
-			ende2av1: $("#ende2av1","#frmNovoLimite").val(),
-			nrcepav1: normalizaNumero($("#nrcepav1","#frmNovoLimite").val()),
-			nmcidav1: $("#nmcidav1","#frmNovoLimite").val(),
-			cdufava1: $("#cdufava1","#frmNovoLimite").val(),
-			nrfonav1: $("#nrfonav1","#frmNovoLimite").val(),			
-			emailav1: $("#emailav1","#frmNovoLimite").val(),			
-			nrender1: normalizaNumero($("#nrender1","#frmNovoLimite").val()),			
-			complen1: $("#complen1","#frmNovoLimite").val(),			
-			nrcxaps1: normalizaNumero($("#nrcxaps1","#frmNovoLimite").val()),			
-			vlrenme1: $("#vlrenme1","#frmNovoLimite").val(),
+            nrctaav1: normalizaNumero($("#nrctaav1", "#frmNovoLimite").val()),
+            nmdaval1: $("#nmdaval1", "#frmNovoLimite").val(),
+            nrcpfav1: normalizaNumero($("#nrcpfav1", "#frmNovoLimite").val()),
+            tpdocav1: $("#tpdocav1", "#frmNovoLimite").val(),
+            dsdocav1: $("#dsdocav1", "#frmNovoLimite").val(),
+            nmdcjav1: $("#nmdcjav1", "#frmNovoLimite").val(),
+            cpfcjav1: normalizaNumero($("#cpfcjav1", "#frmNovoLimite").val()),
+            tdccjav1: $("#tdccjav1", "#frmNovoLimite").val(),
+            doccjav1: $("#doccjav1", "#frmNovoLimite").val(),
+            ende1av1: $("#ende1av1", "#frmNovoLimite").val(),
+            ende2av1: $("#ende2av1", "#frmNovoLimite").val(),
+            nrcepav1: normalizaNumero($("#nrcepav1", "#frmNovoLimite").val()),
+            nmcidav1: $("#nmcidav1", "#frmNovoLimite").val(),
+            cdufava1: $("#cdufava1", "#frmNovoLimite").val(),
+            nrfonav1: $("#nrfonav1", "#frmNovoLimite").val(),
+            emailav1: $("#emailav1", "#frmNovoLimite").val(),
+            nrender1: normalizaNumero($("#nrender1", "#frmNovoLimite").val()),
+            complen1: $("#complen1", "#frmNovoLimite").val(),
+            nrcxaps1: normalizaNumero($("#nrcxaps1", "#frmNovoLimite").val()),
+            vlrenme1: $("#vlrenme1", "#frmNovoLimite").val(),
 			
-			nrctaav2: normalizaNumero($("#nrctaav2","#frmNovoLimite").val()),
-			nmdaval2: $("#nmdaval2","#frmNovoLimite").val(),
-			nrcpfav2: normalizaNumero($("#nrcpfav2","#frmNovoLimite").val()),
-			tpdocav2: $("#tpdocav2","#frmNovoLimite").val(),
-			dsdocav2: $("#dsdocav2","#frmNovoLimite").val(),
-			nmdcjav2: $("#nmdcjav2","#frmNovoLimite").val(),
-			cpfcjav2: normalizaNumero($("#cpfcjav2","#frmNovoLimite").val()),
-			tdccjav2: $("#tdccjav2","#frmNovoLimite").val(),
-			doccjav2: $("#doccjav2","#frmNovoLimite").val(),
-			ende1av2: $("#ende1av2","#frmNovoLimite").val(),
-			ende2av2: $("#ende2av2","#frmNovoLimite").val(),
-			nrcepav2: normalizaNumero($("#nrcepav2","#frmNovoLimite").val()),
-			nmcidav2: $("#nmcidav2","#frmNovoLimite").val(),
-			cdufava2: $("#cdufava2","#frmNovoLimite").val(),
-			nrfonav2: $("#nrfonav2","#frmNovoLimite").val(),			
-			emailav2: $("#emailav2","#frmNovoLimite").val(),			
-			nrender2: normalizaNumero($("#nrender2","#frmNovoLimite").val()),			
-			complen2: $("#complen2","#frmNovoLimite").val(),			
-			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmNovoLimite").val()),	
-			vlrenme2: $("#vlrenme2","#frmNovoLimite").val(),			
+            nrctaav2: normalizaNumero($("#nrctaav2", "#frmNovoLimite").val()),
+            nmdaval2: $("#nmdaval2", "#frmNovoLimite").val(),
+            nrcpfav2: normalizaNumero($("#nrcpfav2", "#frmNovoLimite").val()),
+            tpdocav2: $("#tpdocav2", "#frmNovoLimite").val(),
+            dsdocav2: $("#dsdocav2", "#frmNovoLimite").val(),
+            nmdcjav2: $("#nmdcjav2", "#frmNovoLimite").val(),
+            cpfcjav2: normalizaNumero($("#cpfcjav2", "#frmNovoLimite").val()),
+            tdccjav2: $("#tdccjav2", "#frmNovoLimite").val(),
+            doccjav2: $("#doccjav2", "#frmNovoLimite").val(),
+            ende1av2: $("#ende1av2", "#frmNovoLimite").val(),
+            ende2av2: $("#ende2av2", "#frmNovoLimite").val(),
+            nrcepav2: normalizaNumero($("#nrcepav2", "#frmNovoLimite").val()),
+            nmcidav2: $("#nmcidav2", "#frmNovoLimite").val(),
+            cdufava2: $("#cdufava2", "#frmNovoLimite").val(),
+            nrfonav2: $("#nrfonav2", "#frmNovoLimite").val(),
+            emailav2: $("#emailav2", "#frmNovoLimite").val(),
+            nrender2: normalizaNumero($("#nrender2", "#frmNovoLimite").val()),
+            complen2: $("#complen2", "#frmNovoLimite").val(),
+            nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
+            vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
 			redirect: "script_ajax"
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {										
 				eval(response);
 				changeAbaPropLabel("Alterar Limite");				
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 
@@ -480,43 +482,43 @@ function cadastrarNovoLimite() {
 
 // Função para verificar se deve ser enviado e-mail ao PAC Sede
 function verificaEnvioEmail(idimpres, flgimpnp, nrctrlim) {   
-	showConfirmacao("Efetuar envio de e-mail para Sede?","Confirma&ccedil;&atilde;o - Ayllos","carregarImpresso(" + idimpres + ",'yes','" + flgimpnp + "'," + nrctrlim + ");","carregarImpresso(" + idimpres + ",'no','" + flgimpnp + "'," + nrctrlim + ");","sim.gif","nao.gif");
+    showConfirmacao("Efetuar envio de e-mail para Sede?", "Confirma&ccedil;&atilde;o - Ayllos", "carregarImpresso(" + idimpres + ",'yes','" + flgimpnp + "'," + nrctrlim + ");", "carregarImpresso(" + idimpres + ",'no','" + flgimpnp + "'," + nrctrlim + ");", "sim.gif", "nao.gif");
 }
 
 // Função para carregar impresso desejado em PDF (Proposta, Contrato ou Rescisão do Limite de Crédito)
-function carregarImpresso(idimpres,flgemail,flgimpnp,nrctrlim,fnfinish) {	
+function carregarImpresso(idimpres, flgemail, flgimpnp, nrctrlim, fnfinish) {
 	if (nrctrlim == undefined || nrctrlim == 0) {
-		nrctrlim = retiraCaracteres($("#contrato","#frmImprimir").val(),"0123456789",true);
+        nrctrlim = retiraCaracteres($("#contrato", "#frmImprimir").val(), "0123456789", true);
 		
-		if (nrctrlim == "" || !validaNumero(nrctrlim,true,0,0)) {
-			showError("error","Informe o n&uacute;mero do contrato.","Alerta - Ayllos","$('#contrato','#frmImprimir').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
+            showError("error", "Informe o n&uacute;mero do contrato.", "Alerta - Ayllos", "$('#contrato','#frmImprimir').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 			return false;		
 		}
 	}	
 	
 	/* alteracao 006 */
 	if (idimpres == "5") {
-		imprimirRating(false,1,nrctrlim,"divConteudoOpcao",fnfinish);
+        imprimirRating(false, 1, nrctrlim, "divConteudoOpcao", fnfinish);
 		return;
 	}	
 	
-	$("#nrdconta","#frmImprimir").val(nrdconta);
-	$("#idimpres","#frmImprimir").val(idimpres);
-	$("#nrctrlim","#frmImprimir").val(nrctrlim);
-	$("#flgemail","#frmImprimir").val(flgemail);
-	$("#flgimpnp","#frmImprimir").val(flgimpnp);
+    $("#nrdconta", "#frmImprimir").val(nrdconta);
+    $("#idimpres", "#frmImprimir").val(idimpres);
+    $("#nrctrlim", "#frmImprimir").val(nrctrlim);
+    $("#flgemail", "#frmImprimir").val(flgemail);
+    $("#flgimpnp", "#frmImprimir").val(flgimpnp);
 	
 	var callafter = "blockBackground(parseInt($('#divRotina').css('z-index')));";
-	var action    = $('#frmImprimir').attr('action');
+    var action = $('#frmImprimir').attr('action');
 	
 	if (callafterLimiteCred != '') {
 		callafter = callafterLimiteCred;
 	}
 
-	carregaImpressaoAyllos("frmImprimir",action,callafter);
+    carregaImpressaoAyllos("frmImprimir", action, callafter);
 }
 
-function checaEnter(campo,e){
+function checaEnter(campo, e) {
 	var keycode; 
 	if (window.event) keycode = window.event.keyCode; 
 	else if (e) keycode = e.which; 
@@ -530,8 +532,8 @@ function checaEnter(campo,e){
 
 // Função para mostrar div com formulário de dados para digitação ou consulta
 function lcrShowHideDiv(divShow, divHide) {
-	$("#" + divShow).css("display","block");
-	$("#" + divHide).css("display","none");
+    $("#" + divShow).css("display", "block");
+    $("#" + divHide).css("display", "none");
 }
 
 /*
@@ -542,60 +544,60 @@ function validarAvalistas() {
 	
 	showMsgAguardo('Aguarde, validando dados dos avalistas ...');
 	
-	var nrctaav1 = normalizaNumero( $('#nrctaav1','#'+nomeForm).val() );
-	var nrcpfav1 = normalizaNumero( $('#nrcpfav1','#'+nomeForm).val() );
-	var cpfcjav1 = normalizaNumero( $('#cpfcjav1','#'+nomeForm).val() );
-	var nrctaav2 = normalizaNumero( $('#nrctaav2','#'+nomeForm).val() );
-	var nrcpfav2 = normalizaNumero( $('#nrcpfav2','#'+nomeForm).val() );
-	var cpfcjav2 = normalizaNumero( $('#cpfcjav2','#'+nomeForm).val() );	
+    var nrctaav1 = normalizaNumero($('#nrctaav1', '#' + nomeForm).val());
+    var nrcpfav1 = normalizaNumero($('#nrcpfav1', '#' + nomeForm).val());
+    var cpfcjav1 = normalizaNumero($('#cpfcjav1', '#' + nomeForm).val());
+    var nrctaav2 = normalizaNumero($('#nrctaav2', '#' + nomeForm).val());
+    var nrcpfav2 = normalizaNumero($('#nrcpfav2', '#' + nomeForm).val());
+    var cpfcjav2 = normalizaNumero($('#cpfcjav2', '#' + nomeForm).val());
 
-	var nmdaval1 = trim( $('#nmdaval1','#'+nomeForm).val() );
-	var ende1av1 = trim( $('#ende1av1','#'+nomeForm).val() );
-	var nrcepav1 = normalizaNumero($('#nrcepav1','#'+nomeForm).val());
+    var nmdaval1 = trim($('#nmdaval1', '#' + nomeForm).val());
+    var ende1av1 = trim($('#ende1av1', '#' + nomeForm).val());
+    var nrcepav1 = normalizaNumero($('#nrcepav1', '#' + nomeForm).val());
 	
-	var nmdaval2 = trim( $('#nmdaval2','#'+nomeForm).val() );
-	var ende1av2 = trim( $('#ende1av2','#'+nomeForm).val() );
-	var nrcepav2 = normalizaNumero($('#nrcepav2','#'+nomeForm).val());
+    var nmdaval2 = trim($('#nmdaval2', '#' + nomeForm).val());
+    var ende1av2 = trim($('#ende1av2', '#' + nomeForm).val());
+    var nrcepav2 = normalizaNumero($('#nrcepav2', '#' + nomeForm).val());
 	
 	$.ajax({		
 		type: "POST", 
 		url: UrlSite + "telas/atenda/limite_credito/validar_dados_avalistas.php",
 		data: {
-			nrdconta: nrdconta,	nrctaav1: nrctaav1,	nmdaval1: nmdaval1,	
-			nrcpfav1: nrcpfav1, cpfcjav1: cpfcjav1,	ende1av1: ende1av1,	
-			nrctaav2: nrctaav2,	nmdaval2: nmdaval2,	nrcpfav2: nrcpfav2,	
-			cpfcjav2: cpfcjav2,	ende1av2: ende1av2, nrcepav1: nrcepav1,
+            nrdconta: nrdconta, nrctaav1: nrctaav1, nmdaval1: nmdaval1,
+            nrcpfav1: nrcpfav1, cpfcjav1: cpfcjav1, ende1av1: ende1av1,
+            nrctaav2: nrctaav2, nmdaval2: nmdaval2, nrcpfav2: nrcpfav2,
+            cpfcjav2: cpfcjav2, ende1av2: ende1av2, nrcepav1: nrcepav1,
 			nrcepav2: nrcepav2, flgpropo: flgProposta, redirect: 'script_ajax'
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	});	
 }
 
 // Função para formata o layout
-function controlaLayout( cddopcao ) {
+function controlaLayout(cddopcao) {
 
 	//----------------------------------------------------------------
 	// FORMULÁRIO NOVO LIMITE
 	//----------------------------------------------------------------		
-	var cTodosLimite = $('input, select','#'+nomeForm+' .fsLimiteCredito');
-	$('label'    ,'#'+nomeForm+' .fsLimiteCredito').addClass('rotulo').css('width','200px');	
-	$('#nrctrlim','#'+nomeForm+' .fsLimiteCredito').addClass('contrato').css('width','60px');
-	$('#cddlinha','#'+nomeForm+' .fsLimiteCredito').addClass('codigo pesquisa').attr('maxlength','3').css('width','35px');
-	$('#dsdlinha','#'+nomeForm+' .fsLimiteCredito').addClass('descricao').css('width','170px');
-	$('#vllimite','#'+nomeForm+' .fsLimiteCredito').addClass('moeda').css('width','90px');
-	$('#flgimpnp','#'+nomeForm+' .fsLimiteCredito').css('width','70px');	
-	$('#dsobserv','#'+nomeForm+' .fsObservacoes').addClass('campo');
+    var cTodosLimite = $('input, select', '#' + nomeForm + ' .fsLimiteCredito');
+    $('label', '#' + nomeForm + ' .fsLimiteCredito').addClass('rotulo').css('width', '200px');
+    $('#nrctrlim', '#' + nomeForm + ' .fsLimiteCredito').addClass('contrato').css('width', '60px');
+    $('#cddlinha', '#' + nomeForm + ' .fsLimiteCredito').addClass('codigo pesquisa').attr('maxlength', '3').css('width', '35px');
+    $('#dsdlinha', '#' + nomeForm + ' .fsLimiteCredito').addClass('descricao').css('width', '170px');
+    $('#vllimite', '#' + nomeForm + ' .fsLimiteCredito').addClass('moeda').css('width', '90px');
+    $('#flgimpnp', '#' + nomeForm + ' .fsLimiteCredito').css('width', '70px');
+    $('#dsobserv', '#' + nomeForm + ' .fsObservacoes').addClass('campo');
 				
 	// Se for novo limite ou alteracao, habilitar campos
 	if (cddopcao == 'N') {
@@ -605,9 +607,9 @@ function controlaLayout( cddopcao ) {
 	}
 		
 	if (flgProposta) {
-		$('#nrctrlim','#'+nomeForm+' .fsLimiteCredito').desabilitaCampo();
+        $('#nrctrlim', '#' + nomeForm + ' .fsLimiteCredito').desabilitaCampo();
 		changeAbaPropLabel("Alterar Limite");
-	}else{
+    } else {
 		changeAbaPropLabel("Novo Limite");				
 	}
 	
@@ -615,41 +617,41 @@ function controlaLayout( cddopcao ) {
 	// FORMULÁRIO DADOS DA RENDA
 	//----------------------------------------------------------------	
 
-	var rSalTit = $('label[for="vlsalari"]','#'+nomeForm+' .fsDadosRenda');
-	var rSalCjg = $('label[for="vlsalcon"]','#'+nomeForm+' .fsDadosRenda');
-	var rOutras = $('label[for="vloutras"]','#'+nomeForm+' .fsDadosRenda');
-	var rAlugue = $('label[for="vlalugue"]','#'+nomeForm+' .fsDadosRenda');
-	var rInconc = $('label[for="inconcje"]','#'+nomeForm+' .fsConjuge');
-	var cValores  = $('input', '#'+nomeForm+' .fsDadosRenda');
-	var cInconcje = $('input','#'+nomeForm+' .fsConjuge');
+    var rSalTit = $('label[for="vlsalari"]', '#' + nomeForm + ' .fsDadosRenda');
+    var rSalCjg = $('label[for="vlsalcon"]', '#' + nomeForm + ' .fsDadosRenda');
+    var rOutras = $('label[for="vloutras"]', '#' + nomeForm + ' .fsDadosRenda');
+    var rAlugue = $('label[for="vlalugue"]', '#' + nomeForm + ' .fsDadosRenda');
+    var rInconc = $('label[for="inconcje"]', '#' + nomeForm + ' .fsConjuge');
+    var cValores = $('input', '#' + nomeForm + ' .fsDadosRenda');
+    var cInconcje = $('input', '#' + nomeForm + ' .fsConjuge');
 	
-	rSalTit.addClass('rotulo').css({'width':'130px'});
-	rOutras.addClass('rotulo').css({'width':'130px'});	
-	rSalCjg.addClass('rotulo-linha').css({'width':'80px'});
-	rAlugue.addClass('rotulo-linha').css({'width':'80px'});	
-	rInconc.addClass('rotulo-linha').css({'width':'130px'});
-	cValores.addClass('moeda').css({'width':'90px'}).val('0').habilitaCampo();
-	cInconcje.css({'width':'30px'}).habilitaCampo();
+    rSalTit.addClass('rotulo').css({ 'width': '130px' });
+    rOutras.addClass('rotulo').css({ 'width': '130px' });
+    rSalCjg.addClass('rotulo-linha').css({ 'width': '80px' });
+    rAlugue.addClass('rotulo-linha').css({ 'width': '80px' });
+    rInconc.addClass('rotulo-linha').css({ 'width': '130px' });
+    cValores.addClass('moeda').css({ 'width': '90px' }).val('0').habilitaCampo();
+    cInconcje.css({ 'width': '30px' }).habilitaCampo();
 	
 	//----------------------------------------------------------------
 	// FORMULÁRIO OBSERVAÇÕES
 	//----------------------------------------------------------------		
-	$('#dsobserv','#'+nomeForm+' .fsObservacoes').addClass('campo').css({'width':'95%','height':'90px'});
+    $('#dsobserv', '#' + nomeForm + ' .fsObservacoes').addClass('campo').css({ 'width': '95%', 'height': '90px' });
 	
 	//----------------------------------------------------------------
 	// FORMULÁRIO RATING SINGULARES
 	//----------------------------------------------------------------		
-	$('fieldset').css({'clear':'both','border':'1px solid #777','margin':'3px 0px','padding':'10px 3px 5px 3px'});
-	$('fieldset > legend').css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 2px'});
+    $('fieldset').css({ 'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px' });
+    $('fieldset > legend').css({ 'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px' });
 	
 	// Se nao for pessoa fisica, esconder informacoes do conjuge
 	if (inpessoa != 1) {	
-		$(".fsConjuge","#divDadosRenda").css('display','none');
+        $(".fsConjuge", "#divDadosRenda").css('display', 'none');
 	}
 	
 	// Se nao tiver conjuge, desabilita a consulta automatizadas para o mesmo
 	if (nrcpfcjg == 0 && nrctacje == 0) {	
-		$("input[name='inconcje']","#divDadosRenda").desabilitaCampo();
+        $("input[name='inconcje']", "#divDadosRenda").desabilitaCampo();
 	}
 	
 	layoutPadrao();	
@@ -663,13 +665,13 @@ function controlaLayout( cddopcao ) {
 function formataUltimasAlteracoes() {
 			
 	var divRegistro = $('div.divRegistros');		
-	var tabela      = $('table', divRegistro );
-	var linha       = $('table > tbody > tr', divRegistro );
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
 			
-	divRegistro.css({'height':'200px','width':'100%'});
+    divRegistro.css({ 'height': '200px', 'width': '100%' });
 	
 	var ordemInicial = new Array();
-	ordemInicial = [[1,1]];
+    ordemInicial = [[1, 1]];
 			
 	var arrayLargura = new Array();
 	arrayLargura[0] = '60px';
@@ -687,22 +689,22 @@ function formataUltimasAlteracoes() {
 	arrayAlinha[4] = 'left';
 	arrayAlinha[5] = 'left';
 	
-	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha );
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 	return false;
 }
 
 // Função que formata a imprimir
 function formataImprimir() {
 
-	$('#frmImprimir').css({'padding':'10px'});
+    $('#frmImprimir').css({ 'padding': '10px' });
 	
 	// label
 	rContrato = $('label[for="contrato"]', '#frmImprimir');
-	rContrato.css({'font-weight':'bold'})
+    rContrato.css({ 'font-weight': 'bold' })
 	
 	// campo
 	cContrato = $('#contrato', '#frmImprimir');
-	cContrato.addClass('contrato campo').css({'width':'100px','text-align':'right'});
+    cContrato.addClass('contrato campo').css({ 'width': '100px', 'text-align': 'right' });
 	
 	layoutPadrao();
 	
@@ -714,81 +716,81 @@ function formataPrincipal() {
 	$('input, select', '#frmDadosLimiteCredito').desabilitaCampo();		
 
 	// rotulo
-	rVllimite = $('label[for="vllimite"]','#frmDadosLimiteCredito');
-	rDtmvtolt = $('label[for="dtmvtolt"]','#frmDadosLimiteCredito');
-	rCddlinha = $('label[for="cddlinha"]','#frmDadosLimiteCredito');
-	rDtfimvig = $('label[for="dtfimvig"]','#frmDadosLimiteCredito');
-	rNrctrlim = $('label[for="nrctrlim"]','#frmDadosLimiteCredito');
-	rQtdiavig = $('label[for="qtdiavig"]','#frmDadosLimiteCredito');
-	rDsencfi1 = $('label[for="dsencfi1"]','#frmDadosLimiteCredito');
-	rDsencfi2 = $('label[for="dsencfi2"]','#frmDadosLimiteCredito');
-	rDsencfi3 = $('label[for="dsencfi3"]','#frmDadosLimiteCredito');
-	rDssitlli = $('label[for="dssitlli"]','#frmDadosLimiteCredito');
-	rNmoperad = $('label[for="nmoperad"]','#frmDadosLimiteCredito');
-	rNmopelib = $('label[for="nmopelib"]','#frmDadosLimiteCredito');
-	rFlgenvio = $('label[for="flgenvio"]','#frmDadosLimiteCredito');	
-	rDstprenv = $('label[for="dstprenv"]','#frmDadosLimiteCredito');
-	rQtrenova = $('label[for="qtrenova"]','#frmDadosLimiteCredito');
-	rDtrenova = $('label[for="dtrenova"]','#frmDadosLimiteCredito');
+    rVllimite = $('label[for="vllimite"]', '#frmDadosLimiteCredito');
+    rDtmvtolt = $('label[for="dtmvtolt"]', '#frmDadosLimiteCredito');
+    rCddlinha = $('label[for="cddlinha"]', '#frmDadosLimiteCredito');
+    rDtfimvig = $('label[for="dtfimvig"]', '#frmDadosLimiteCredito');
+    rNrctrlim = $('label[for="nrctrlim"]', '#frmDadosLimiteCredito');
+    rQtdiavig = $('label[for="qtdiavig"]', '#frmDadosLimiteCredito');
+    rDsencfi1 = $('label[for="dsencfi1"]', '#frmDadosLimiteCredito');
+    rDsencfi2 = $('label[for="dsencfi2"]', '#frmDadosLimiteCredito');
+    rDsencfi3 = $('label[for="dsencfi3"]', '#frmDadosLimiteCredito');
+    rDssitlli = $('label[for="dssitlli"]', '#frmDadosLimiteCredito');
+    rNmoperad = $('label[for="nmoperad"]', '#frmDadosLimiteCredito');
+    rNmopelib = $('label[for="nmopelib"]', '#frmDadosLimiteCredito');
+    rFlgenvio = $('label[for="flgenvio"]', '#frmDadosLimiteCredito');
+    rDstprenv = $('label[for="dstprenv"]', '#frmDadosLimiteCredito');
+    rQtrenova = $('label[for="qtrenova"]', '#frmDadosLimiteCredito');
+    rDtrenova = $('label[for="dtrenova"]', '#frmDadosLimiteCredito');
 
-	rVllimite.addClass('rotulo').css({'width':'126px'});
-	rDtmvtolt.addClass('rotulo-linha').css({'width':'110px'});
-	rCddlinha.addClass('rotulo').css({'width':'126px'});
-	rDtfimvig.addClass('rotulo-linha').css({'width':'110px'});
-	rNrctrlim.addClass('rotulo').css({'width':'126px'});
-	rQtdiavig.addClass('rotulo-linha').css({'width':'250px'});
-	rDsencfi1.addClass('rotulo').css({'width':'126px'});
-	rDsencfi2.addClass('rotulo').css({'width':'126px'});
-	rDsencfi3.addClass('rotulo').css({'width':'126px'});
-	rDssitlli.addClass('rotulo').css({'width':'126px'});
-	rNmoperad.addClass('rotulo').css({'width':'126px'});
-	rNmopelib.addClass('rotulo').css({'width':'126px'});
-	rFlgenvio.addClass('rotulo').css({'width':'126px'});
-	rDstprenv.addClass('rotulo').css({'width':'126px'});
-	rQtrenova.addClass('rotulo-linha').css({'width':'83px'});
-	rDtrenova.addClass('rotulo-linha').css({'width':'91px'});
+    rVllimite.addClass('rotulo').css({ 'width': '126px' });
+    rDtmvtolt.addClass('rotulo-linha').css({ 'width': '110px' });
+    rCddlinha.addClass('rotulo').css({ 'width': '126px' });
+    rDtfimvig.addClass('rotulo-linha').css({ 'width': '110px' });
+    rNrctrlim.addClass('rotulo').css({ 'width': '126px' });
+    rQtdiavig.addClass('rotulo-linha').css({ 'width': '250px' });
+    rDsencfi1.addClass('rotulo').css({ 'width': '126px' });
+    rDsencfi2.addClass('rotulo').css({ 'width': '126px' });
+    rDsencfi3.addClass('rotulo').css({ 'width': '126px' });
+    rDssitlli.addClass('rotulo').css({ 'width': '126px' });
+    rNmoperad.addClass('rotulo').css({ 'width': '126px' });
+    rNmopelib.addClass('rotulo').css({ 'width': '126px' });
+    rFlgenvio.addClass('rotulo').css({ 'width': '126px' });
+    rDstprenv.addClass('rotulo').css({ 'width': '126px' });
+    rQtrenova.addClass('rotulo-linha').css({ 'width': '83px' });
+    rDtrenova.addClass('rotulo-linha').css({ 'width': '91px' });
 	
 	// campos
-	cVllimite = $('#vllimite','#frmDadosLimiteCredito');
-	cDtmvtolt = $('#dtmvtolt','#frmDadosLimiteCredito');
-	cCddlinha = $('#cddlinha','#frmDadosLimiteCredito');
-	cDtfimvig = $('#dtfimvig','#frmDadosLimiteCredito');
-	cNrctrlim = $('#nrctrlim','#frmDadosLimiteCredito');
-	cQtdiavig = $('#qtdiavig','#frmDadosLimiteCredito');
-	cDsencfi1 = $('#dsencfi1','#frmDadosLimiteCredito');
-	cDsencfi2 = $('#dsencfi2','#frmDadosLimiteCredito');
-	cDsencfi3 = $('#dsencfi3','#frmDadosLimiteCredito');
-	cDssitlli = $('#dssitlli','#frmDadosLimiteCredito');
-	cNmoperad = $('#nmoperad','#frmDadosLimiteCredito');
-	cNmopelib = $('#nmopelib','#frmDadosLimiteCredito');
-	cFlgenvio = $('#flgenvio','#frmDadosLimiteCredito');	
-	cDstprenv = $('#dstprenv','#frmDadosLimiteCredito');
-	cQtrenova = $('#qtrenova','#frmDadosLimiteCredito');
-	cDtrenova = $('#dtrenova','#frmDadosLimiteCredito');
+    cVllimite = $('#vllimite', '#frmDadosLimiteCredito');
+    cDtmvtolt = $('#dtmvtolt', '#frmDadosLimiteCredito');
+    cCddlinha = $('#cddlinha', '#frmDadosLimiteCredito');
+    cDtfimvig = $('#dtfimvig', '#frmDadosLimiteCredito');
+    cNrctrlim = $('#nrctrlim', '#frmDadosLimiteCredito');
+    cQtdiavig = $('#qtdiavig', '#frmDadosLimiteCredito');
+    cDsencfi1 = $('#dsencfi1', '#frmDadosLimiteCredito');
+    cDsencfi2 = $('#dsencfi2', '#frmDadosLimiteCredito');
+    cDsencfi3 = $('#dsencfi3', '#frmDadosLimiteCredito');
+    cDssitlli = $('#dssitlli', '#frmDadosLimiteCredito');
+    cNmoperad = $('#nmoperad', '#frmDadosLimiteCredito');
+    cNmopelib = $('#nmopelib', '#frmDadosLimiteCredito');
+    cFlgenvio = $('#flgenvio', '#frmDadosLimiteCredito');
+    cDstprenv = $('#dstprenv', '#frmDadosLimiteCredito');
+    cQtrenova = $('#qtrenova', '#frmDadosLimiteCredito');
+    cDtrenova = $('#dtrenova', '#frmDadosLimiteCredito');
 
-	cVllimite.css({'width':'220px'});
-	cDtmvtolt.css({'width':'70px' });  
-	cCddlinha.css({'width':'220px'});
-	cDtfimvig.css({'width':'70px' });
-	cNrctrlim.css({'width':'80px' });
-	cQtdiavig.css({'width':'70px' });
-	cDsencfi1.css({'width':'336px'});
-	cDsencfi2.css({'width':'336px'});
-	cDsencfi3.css({'width':'336px'});
-	cDssitlli.css({'width':'250px'});
-	cNmoperad.css({'width':'250px'});
-	cNmopelib.css({'width':'250px'});
-	cFlgenvio.css({'width':'250px'});	
-	cDstprenv.css({'width':'80px' });
-	cQtrenova.css({'width':'70px' });
-	cDtrenova.css({'width':'70px' });	
+    cVllimite.css({ 'width': '220px' });
+    cDtmvtolt.css({ 'width': '70px' });
+    cCddlinha.css({ 'width': '220px' });
+    cDtfimvig.css({ 'width': '70px' });
+    cNrctrlim.css({ 'width': '80px' });
+    cQtdiavig.css({ 'width': '70px' });
+    cDsencfi1.css({ 'width': '336px' });
+    cDsencfi2.css({ 'width': '336px' });
+    cDsencfi3.css({ 'width': '336px' });
+    cDssitlli.css({ 'width': '250px' });
+    cNmoperad.css({ 'width': '250px' });
+    cNmopelib.css({ 'width': '250px' });
+    cFlgenvio.css({ 'width': '250px' });
+    cDstprenv.css({ 'width': '80px' });
+    cQtrenova.css({ 'width': '70px' });
+    cDtrenova.css({ 'width': '70px' });
 
 	// ie
-	if ( $.browser.msie ) {	
-		$('#novoContratoLimite').css({'padding':'10px','text-align':'center','height':'30px', 'width':'93%'});
-		cDsencfi1.css({'width':'333px'});
-		cDsencfi2.css({'width':'333px'});
-		cDsencfi3.css({'width':'333px'});
+    if ($.browser.msie) {
+        $('#novoContratoLimite').css({ 'padding': '10px', 'text-align': 'center', 'height': '30px', 'width': '93%' });
+        cDsencfi1.css({ 'width': '333px' });
+        cDsencfi2.css({ 'width': '333px' });
+        cDsencfi3.css({ 'width': '333px' });
 	}	
 
 }
@@ -798,38 +800,310 @@ function controlaPesquisas() {
 	
 	var campoAnterior = '';
 	var procedure, titulo, qtReg, filtrosPesq, filtrosDesc, colunas;	
-	var bo = 'b1wgen0059.p';		
+    var bo = 'zoom0001';
 	
-	$('a','#'+nomeForm).ponteiroMouse();
+    $('a', '#' + nomeForm).ponteiroMouse();
 	
 	// CÓDIGO DA LINHA
 	titulo      = 'Linhas de Crédito';
-	procedure   = 'Busca_Linha_Credito';			
+	procedure   = 'BUSCALINHAS';
 	$('#cddlinha','#'+nomeForm).unbind('change').bind('change', function() {
-		filtrosDesc = 'tpdlinha|' + inpessoa + ';flgstlcr|yes';
+	    filtrosDesc = 'tpdlinha|' + inpessoa + ';flgstlcr|1;nriniseq|1;nrregist|30';
 		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'dsdlinha',$(this).val(),'dsdlinha',filtrosDesc,'frmNovoLimite');
 		return false;
-	}).next().unbind('click').bind('click', function() {
-		filtrosPesq	= 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;'+ inpessoa + "|;flgstlcr;;;yes;N";	
-		colunas 	= 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
-		fncOnClose  = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
-		mostraPesquisa(bo,procedure,titulo,'20',filtrosPesq,colunas,divRotina,fncOnClose);			
-		return false;										
-	});	
+    }).next().unbind('click').bind('click', function () {
+        filtrosPesq = 'Linha;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|Tipo;tpdlinha;20px;N;' + inpessoa + "|;flgstlcr;;;1;N";
+        colunas = 'Código;cddlinha;11%;right|Descrição;dsdlinha;49%;left|Tipo;dsdtplin;18%;left|Taxa;dsdtxfix;22%;center';
+        fncOnClose = 'cddlinha = $("#cddlinha","#frmNovoLimite").val()';
+        mostraPesquisa(bo, procedure, titulo, '20', filtrosPesq, colunas, divRotina, fncOnClose);
+        return false;
+    });
 }
 
-//	
-function controlaFoco(opcao){	
-	$('.campo:first','#'+nomeForm ).focus();
+
+//Função para controle de navegação	
+function controlaFoco(opcao) {
+
+    if (opcao == "@") { //Principal
+
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmDadosLimiteCredito") {
+                $(this).find("#divBotoes > a").attr({ href: '##' });
+                $(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus().css({ 'position': 'relative', 'top': '-3px' });
+                $(this).find("#divBotoes > a img").first().css({ 'margin': '0 0 0 -3px' });
+                $(this).find("#divBotoes > a").last().addClass("LastInputModal").css({ 'position': 'relative', 'top': '-4px' });
+                $(this).find("#divBotoes > a img").last().css({ 'margin': '0 0 0 -3px' });
+                $(this).find("#divBotoes > a").last().addClass("FluxoNavega");
+                $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
+
+                $(this).find("#divDadosPrincipal_2 :input[type=image]").first().addClass("FirstInputModal").focus();
+                $(this).find("#divDadosPrincipal_2 :input[type=image]").addClass("FluxoNavega");
+                $(this).find("#divDadosPrincipal_2 :input[type=image]").last().addClass("LastInputModal");
+
+				
+				//Se estiver com foco na classe LastInputModal
+                $(".FirstInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 27) {
+                            encerraRotina().click();
+                        }
+                    })              
+                });
+				
+				
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    var pressedShift = false;
+
+                    $(this).bind('keyup', function (e) {
+                        if (e.keyCode == 16) {
+                            pressedShift = false;//Quando tecla shift for solta passa valor false 
+                        }
+                    })
+
+                    $(this).bind('keydown', function (e) {
+
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                        if (e.keyCode == 16) {
+                            pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+                        }
+                        if ((e.keyCode == 9) && pressedShift == true) {
+                            return setFocusCampo($(target), e, false, 0);
+                        }
+                        else if (e.keyCode == 9) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            $(".FirstInputModal").focus();
+                        }
+                    });
+                });
+            }
+
+            //Se estiver com foco na classe FluxoNavega
+            $(".FluxoNavega").focus(function () {
+                $(this).bind('keydown', function (e) {
+                    if (e.keyCode == 13) {
+                        $(this).click();
+                    }
+                });
+            });
+
+        });
+
+        $(".FirstInputModal").focus();
+    }
+    if (opcao == "N") { //Novo Limite
+
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmNovoLimite") {
+                $(this).find("#frmNovoLimite #divDadosLimite .fsLimiteCredito > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#divBotoes:first > :input[type=image]").last().addClass("LastInputModal");
+                $("#btVoltar").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            acessaOpcaoAba(8, 0, '@');
+		return false;										
+                        }
+                    });
+                });
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    var pressedShift = false;
+
+                    $(this).bind('keyup', function (e) {
+                        if (e.keyCode == 16) {
+                            pressedShift = false;//Quando tecla shift for solta passa valor false 
+                        }
+                    })
+
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            $(".LastInputModal").click();
+                        }
+                        if (e.keyCode == 16) {
+                            pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+                        }
+                        if ((e.keyCode == 9) && pressedShift == true) {
+                            return setFocusCampo($(target), e, false, 0);
+                        }
+                        else if (e.keyCode == 9) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            $(".FirstInputModal").focus();
+                        }
+                    });
+                });
+            };
+        });
+        $(".FirstInputModal").focus();
+    }
+    if (opcao == "I") { //Imprimir
+
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmImprimir") {
+                $(this).find("#frmImprimir > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#divBotoes > a").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    var pressedShift = false;
+
+                    $(this).bind('keyup', function (e) {
+                        if (e.keyCode == 16) {
+                            pressedShift = false;//Quando tecla shift for solta passa valor false 
+                        }
+                    })
+
+                    $(this).bind('keydown', function (e) {
+
+                        if (e.keyCode == 13) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            $(".LastInputModal").click();
+                        }
+                        if (e.keyCode == 16) {
+                            pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+                        }
+                        if ((e.keyCode == 9) && pressedShift == true) {
+                            return setFocusCampo($(target), e, false, 0);
+                        }
+                        else if (e.keyCode == 9) {
+                            //e.stopPropagation();
+                            //e.preventDefault();
+                            $(".FirstInputModal").focus();
+                        }
+                    });
+                });
+            }
+        });
+        $(".FirstInputModal").focus();
+    }
+    if (opcao == "U") { //Últimas alterações
+        $('#divConteudoOpcao').bind('keydown', function (e) {
+            if (e.keyCode == 27) {
+                encerraRotina().click();
+            }
+        })
+
+        $('#divConteudoOpcao').each(function () {
+            $(".tituloRegistros").find("thead tr th").first().addClass("FirstInputModal").focus();
+        });
+    }
+
+    if (opcao == "A") { //Cons.Lim.Ativo
+
+        $('#divConteudoOpcao').bind('keydown', function (e) {
+            if (e.keyCode == 27) {
+                encerraRotina().click();
+            }
+        })
+
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+
+            if (IdForm == "frmNovoLimite") {
+                $("#frmNovoLimite").find("#divDadosLimite #divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
+                $("#frmNovoLimite").find("#divDadosLimite #divBotoes > :input[type=image]").addClass("FluxoNavega");
+                $("#frmNovoLimite").find("#divDadosLimite #divBotoes > :input[type=image]").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    var pressedShift = false;
+
+                    $(this).bind('keyup', function (e) {
+                        if (e.keyCode == 16) {
+                            pressedShift = false;//Quando tecla shift for solta passa valor false 
+                        }
+                    })
+
+                    $(this).bind('keydown', function (e) {
+
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                        if (e.keyCode == 27) {
+                            encerraRotina().click();
+                        }
+                        if (e.keyCode == 16) {
+                            pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+                        }
+                        if ((e.keyCode == 9) && pressedShift == true) {
+                            return setFocusCampo($(target), e, false, 0);
+                        }
+                        else if (e.keyCode == 9) {
+                            $(".FirstInputModal").focus();
+                        }
+                    });
+                });
+            }
+
+            //Se estiver com foco na classe FluxoNavega
+            $(".FluxoNavega").focus(function () {
+                $(this).bind('keydown', function (e) {
+                    if (e.keyCode == 13) {
+                        $(this).click();
+                    }
+                });
+            });
+
+        });
+
+        $(".FirstInputModal").focus();
+    }
+
+    if (opcao == "P") { //Cons.Lim.Proposto
+        $('#divConteudoOpcao').bind('keydown', function (e) {
+            if (e.keyCode == 27) {
+                encerraRotina().click();
+            }
+        })
+
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmNovoLimite") {
+                $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
+                $(this).find("#divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
+            }
+	});	
+
+        //Se estiver com foco na classe FluxoNavega
+        $(".FluxoNavega").focus(function () {
+            $(this).bind('keydown', function (e) {
+
+
+                if (e.keyCode == 13) {
+                    $(this).click();
+                }
+                if (e.keyCode == 27) {
+                    encerraRotina().click();
+}
+            });
+        });
+
+        $(".FirstInputModal").focus();
+    }
 }
 
 
 
 // Função para fechar div com mensagens de alerta
-function encerraMsgsGrupoEconomico(){
+function encerraMsgsGrupoEconomico() {
 	
 	// Esconde div
-	$("#divMsgsGrupoEconomico").css("visibility","hidden");
+    $("#divMsgsGrupoEconomico").css("visibility", "hidden");
 	
 	$("#divListaMsgsGrupoEconomico").html("&nbsp;");
 	
@@ -843,17 +1117,17 @@ function encerraMsgsGrupoEconomico(){
 	
 }
 
-function mostraMsgsGrupoEconomico(){
+function mostraMsgsGrupoEconomico() {
 	
 	
-	if(strHTML != ''){
+    if (strHTML != '') {
 		
 		// Coloca conteúdo HTML no div
 		$("#divListaMsgsGrupoEconomico").html(strHTML);
 		$("#divMensagem").html(strHTML2);
 				
 		// Mostra div 
-		$("#divMsgsGrupoEconomico").css("visibility","visible");
+        $("#divMsgsGrupoEconomico").css("visibility", "visible");
 		
 		exibeRotina($("#divMsgsGrupoEconomico"));
 		
@@ -869,23 +1143,23 @@ function mostraMsgsGrupoEconomico(){
 	
 }
 
-function formataGrupoEconomico(){
+function formataGrupoEconomico() {
 
-	var divRegistro = $('div.divRegistros','#divMsgsGrupoEconomico');		
-	var tabela      = $('table', divRegistro );
-	var linha       = $('table > tbody > tr', divRegistro );
+    var divRegistro = $('div.divRegistros', '#divMsgsGrupoEconomico');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
 			
-	divRegistro.css({'height':'140px'});
+    divRegistro.css({ 'height': '140px' });
 	
-	$('#divListaMsgsGrupoEconomico').css({'height':'200px'});
-	$('#divMensagem').css({'width':'250px'});
+    $('#divListaMsgsGrupoEconomico').css({ 'height': '200px' });
+    $('#divMensagem').css({ 'width': '250px' });
 	
 	var ordemInicial = new Array();
 					
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
 	
-	tabela.formataTabela( ordemInicial, '', arrayAlinha );
+    tabela.formataTabela(ordemInicial, '', arrayAlinha);
 	
 	return false;
 	
@@ -904,16 +1178,16 @@ function buscaGrupoEconomico() {
 			nrdconta: nrdconta,	
 			redirect: 'html_ajax'
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}							
 	});
@@ -934,16 +1208,16 @@ function calcEndividRiscoGrupo(nrdgrupo) {
 			nrdgrupo: nrdgrupo,
 			redirect: 'html_ajax'
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}							
 	});
@@ -952,13 +1226,13 @@ function calcEndividRiscoGrupo(nrdgrupo) {
 	
 }
 
-function escondeObservacoes () {
-	$("#divDadosPrincipal, #divDadosPrincipal_2").css('display','block');
-	$("#divDadosObservacoes").css("display","none");
+function escondeObservacoes() {
+    $("#divDadosPrincipal, #divDadosPrincipal_2").css('display', 'block');
+    $("#divDadosObservacoes").css("display", "none");
 }
 
-function confirmaAlteracaoObservacao (nrctrpro) {
-	showConfirmacao('Deseja confirmar a altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','atualizaObservacoes(' + nrctrpro + ')','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
+function confirmaAlteracaoObservacao(nrctrpro) {
+    showConfirmacao('Deseja confirmar a altera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'atualizaObservacoes(' + nrctrpro + ')', 'blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
 }
 
 function atualizaObservacoes(nrctrpro) {
@@ -971,19 +1245,19 @@ function atualizaObservacoes(nrctrpro) {
 		data: {
 			nrdconta: nrdconta,	
 			nrctrlim: nrctrpro,
-			dsobserv: $("#dsobserv","#divDadosObservacoes").val(),
+            dsobserv: $("#dsobserv", "#divDadosObservacoes").val(),
 			redirect: 'html_ajax'
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}							
 	});
@@ -994,34 +1268,34 @@ function atualizaObservacoes(nrctrpro) {
 
 //***********************************************************TIAGO********************************************************
 // Função para validar novo limite de crédito
-function validarAlteracaoLimite(inconfir,inconfi2) {
+function validarAlteracaoLimite(inconfir, inconfi2) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando novo " + strTitRotinaLC + " ...");
 	
-	var nrctrlim = $("#nrctrlim","#frmNovoLimite").val().replace(/\./g,"");
-	var cddlinha = $("#cddlinha","#frmNovoLimite").val();
-	var vllimite = $("#vllimite","#frmNovoLimite").val().replace(/\./g,"");
-	var flgimpnp = $("#flgimpnp","#frmNovoLimite").val();
+    var nrctrlim = $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, "");
+    var cddlinha = $("#cddlinha", "#frmNovoLimite").val();
+    var vllimite = $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+    var flgimpnp = $("#flgimpnp", "#frmNovoLimite").val();
 	
 	// Valida número do contrato
-	if (nrctrlim == "" || !validaNumero(nrctrlim,true,0,0)) {
+    if (nrctrlim == "" || !validaNumero(nrctrlim, true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","N&uacute;mero de contrato inv&aacute;lido.","Alerta - Ayllos","$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "N&uacute;mero de contrato inv&aacute;lido.", "Alerta - Ayllos", "$('#nrctrlim','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 
 	
 	// Valida linha de crédito
-	if (cddlinha == "" || !validaNumero(cddlinha,true,0,0)) {
+    if (cddlinha == "" || !validaNumero(cddlinha, true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Linha de cré	dito inv&aacute;lida.","Alerta - Ayllos","$('#cddlinha','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Linha de cré	dito inv&aacute;lida.", "Alerta - Ayllos", "$('#cddlinha','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
 
 	// Valida valor do limite de crédito
-	if (vllimite == "" || !validaNumero(vllimite,true,0,0)) {
+    if (vllimite == "" || !validaNumero(vllimite, true, 0, 0)) {
 		hideMsgAguardo();
-		showError("error","Valor do " + strTitRotinaLC + " inv&aacute;lido.","Alerta - Ayllos","$('#vllimite','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+        showError("error", "Valor do " + strTitRotinaLC + " inv&aacute;lido.", "Alerta - Ayllos", "$('#vllimite','#frmNovoLimite').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	} 	
 	
@@ -1039,16 +1313,16 @@ function validarAlteracaoLimite(inconfir,inconfi2) {
 			inconfi2: inconfi2,
 			redirect: "script_ajax"
 		},	
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {			    
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 
@@ -1065,16 +1339,16 @@ function alterarNovoLimite() {
 		url: UrlSite + "telas/atenda/limite_credito/alterar_novo_limite.php",
 		data: {
 			nrdconta: nrdconta,
-			nrctrlim: $("#nrctrlim","#frmNovoLimite").val().replace(/\./g,""),
-			cddlinha: $("#cddlinha","#frmNovoLimite").val(),
-			vllimite: $("#vllimite","#frmNovoLimite").val().replace(/\./g,""),
-			flgimpnp: $("#flgimpnp","#frmNovoLimite").val(),
-			vlsalari: $("#vlsalari","#frmNovoLimite").val().replace(/\./g,""),
-			vlsalcon: $("#vlsalcon","#frmNovoLimite").val().replace(/\./g,""),
-			vloutras: $("#vloutras","#frmNovoLimite").val().replace(/\./g,""),
-			vlalugue: $("#vlalugue","#frmNovoLimite").val().replace(/\./g,""),
-			inconcje: ($("#inconcje_1","#frmNovoLimite").prop('checked')) ? 1 : 0,
-			dsobserv: $("#dsobserv","#frmNovoLimite").val(),	
+            nrctrlim: $("#nrctrlim", "#frmNovoLimite").val().replace(/\./g, ""),
+            cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
+            vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
+            flgimpnp: $("#flgimpnp", "#frmNovoLimite").val(),
+            vlsalari: $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, ""),
+            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, ""),
+            vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
+            vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
+            inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
+            dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
 			dtconbir: dtconbir,			
 			/** Variáveis globais alimentadas na função validaDadosRating em rating.js **/
 			nrgarope: nrgarope,
@@ -1084,66 +1358,66 @@ function alterarNovoLimite() {
 			perfatcl: perfatcl,
 			nrperger: nrperger,		
 		    /** ---------------------------------------------------------------------- **/
-			nrctaav1: normalizaNumero($("#nrctaav1","#frmNovoLimite").val()),
-			nmdaval1: $("#nmdaval1","#frmNovoLimite").val(),
-			nrcpfav1: normalizaNumero($("#nrcpfav1","#frmNovoLimite").val()),
-			tpdocav1: $("#tpdocav1","#frmNovoLimite").val(),
-			dsdocav1: $("#dsdocav1","#frmNovoLimite").val(),
-			nmdcjav1: $("#nmdcjav1","#frmNovoLimite").val(),
-			cpfcjav1: normalizaNumero($("#cpfcjav1","#frmNovoLimite").val()),
-			tdccjav1: $("#tdccjav1","#frmNovoLimite").val(),
-			doccjav1: $("#doccjav1","#frmNovoLimite").val(),
-			ende1av1: $("#ende1av1","#frmNovoLimite").val(),
-			ende2av1: $("#ende2av1","#frmNovoLimite").val(),
-			nrcepav1: normalizaNumero($("#nrcepav1","#frmNovoLimite").val()),
-			nmcidav1: $("#nmcidav1","#frmNovoLimite").val(),
-			cdufava1: $("#cdufava1","#frmNovoLimite").val(),
-			nrfonav1: $("#nrfonav1","#frmNovoLimite").val(),			
-			emailav1: $("#emailav1","#frmNovoLimite").val(),			
-			nrender1: normalizaNumero($("#nrender1","#frmNovoLimite").val()),			
-			complen1: $("#complen1","#frmNovoLimite").val(),			
-			nrcxaps1: normalizaNumero($("#nrcxaps1","#frmNovoLimite").val()),		
-			vlrenme1: $("#vlrenme1","#frmNovoLimite").val(),		
+            nrctaav1: normalizaNumero($("#nrctaav1", "#frmNovoLimite").val()),
+            nmdaval1: $("#nmdaval1", "#frmNovoLimite").val(),
+            nrcpfav1: normalizaNumero($("#nrcpfav1", "#frmNovoLimite").val()),
+            tpdocav1: $("#tpdocav1", "#frmNovoLimite").val(),
+            dsdocav1: $("#dsdocav1", "#frmNovoLimite").val(),
+            nmdcjav1: $("#nmdcjav1", "#frmNovoLimite").val(),
+            cpfcjav1: normalizaNumero($("#cpfcjav1", "#frmNovoLimite").val()),
+            tdccjav1: $("#tdccjav1", "#frmNovoLimite").val(),
+            doccjav1: $("#doccjav1", "#frmNovoLimite").val(),
+            ende1av1: $("#ende1av1", "#frmNovoLimite").val(),
+            ende2av1: $("#ende2av1", "#frmNovoLimite").val(),
+            nrcepav1: normalizaNumero($("#nrcepav1", "#frmNovoLimite").val()),
+            nmcidav1: $("#nmcidav1", "#frmNovoLimite").val(),
+            cdufava1: $("#cdufava1", "#frmNovoLimite").val(),
+            nrfonav1: $("#nrfonav1", "#frmNovoLimite").val(),
+            emailav1: $("#emailav1", "#frmNovoLimite").val(),
+            nrender1: normalizaNumero($("#nrender1", "#frmNovoLimite").val()),
+            complen1: $("#complen1", "#frmNovoLimite").val(),
+            nrcxaps1: normalizaNumero($("#nrcxaps1", "#frmNovoLimite").val()),
+            vlrenme1: $("#vlrenme1", "#frmNovoLimite").val(),
 
-			nrctaav2: normalizaNumero($("#nrctaav2","#frmNovoLimite").val()),
-			nmdaval2: $("#nmdaval2","#frmNovoLimite").val(),
-			nrcpfav2: normalizaNumero($("#nrcpfav2","#frmNovoLimite").val()),
-			tpdocav2: $("#tpdocav2","#frmNovoLimite").val(),
-			dsdocav2: $("#dsdocav2","#frmNovoLimite").val(),
-			nmdcjav2: $("#nmdcjav2","#frmNovoLimite").val(),
-			cpfcjav2: normalizaNumero($("#cpfcjav2","#frmNovoLimite").val()),
-			tdccjav2: $("#tdccjav2","#frmNovoLimite").val(),
-			doccjav2: $("#doccjav2","#frmNovoLimite").val(),
-			ende1av2: $("#ende1av2","#frmNovoLimite").val(),
-			ende2av2: $("#ende2av2","#frmNovoLimite").val(),
-			nrcepav2: normalizaNumero($("#nrcepav2","#frmNovoLimite").val()),
-			nmcidav2: $("#nmcidav2","#frmNovoLimite").val(),
-			cdufava2: $("#cdufava2","#frmNovoLimite").val(),
-			nrfonav2: $("#nrfonav2","#frmNovoLimite").val(),			
-			emailav2: $("#emailav2","#frmNovoLimite").val(),			
-			nrender2: normalizaNumero($("#nrender2","#frmNovoLimite").val()),			
-			complen2: $("#complen2","#frmNovoLimite").val(),			
-			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmNovoLimite").val()),
-			vlrenme2: $("#vlrenme2","#frmNovoLimite").val(),			
+            nrctaav2: normalizaNumero($("#nrctaav2", "#frmNovoLimite").val()),
+            nmdaval2: $("#nmdaval2", "#frmNovoLimite").val(),
+            nrcpfav2: normalizaNumero($("#nrcpfav2", "#frmNovoLimite").val()),
+            tpdocav2: $("#tpdocav2", "#frmNovoLimite").val(),
+            dsdocav2: $("#dsdocav2", "#frmNovoLimite").val(),
+            nmdcjav2: $("#nmdcjav2", "#frmNovoLimite").val(),
+            cpfcjav2: normalizaNumero($("#cpfcjav2", "#frmNovoLimite").val()),
+            tdccjav2: $("#tdccjav2", "#frmNovoLimite").val(),
+            doccjav2: $("#doccjav2", "#frmNovoLimite").val(),
+            ende1av2: $("#ende1av2", "#frmNovoLimite").val(),
+            ende2av2: $("#ende2av2", "#frmNovoLimite").val(),
+            nrcepav2: normalizaNumero($("#nrcepav2", "#frmNovoLimite").val()),
+            nmcidav2: $("#nmcidav2", "#frmNovoLimite").val(),
+            cdufava2: $("#cdufava2", "#frmNovoLimite").val(),
+            nrfonav2: $("#nrfonav2", "#frmNovoLimite").val(),
+            emailav2: $("#emailav2", "#frmNovoLimite").val(),
+            nrender2: normalizaNumero($("#nrender2", "#frmNovoLimite").val()),
+            complen2: $("#complen2", "#frmNovoLimite").val(),
+            nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
+            vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
 			redirect: "script_ajax"
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {
+        success: function (response) {
 			try {
 				eval(response);
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		}				
 	}); 	
 	
 }
 
-function buscaDadosProposta(nrdconta, nrctrlim){
+function buscaDadosProposta(nrdconta, nrctrlim) {
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		
@@ -1154,75 +1428,75 @@ function buscaDadosProposta(nrdconta, nrctrlim){
 			nrctrlim: nrctrlim,
 			redirect: "script_ajax"
 		}, 
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {				
+        success: function (response) {
 			try {				
 				eval(response);				
 				hideMsgAguardo();				
 				blockBackground(parseInt($("#divRotina").css("z-index")));				
-			} catch(error) {
+            } catch (error) {
 				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 			}
 		} 				
 	});				
 
 }
 
-function dadosRenda () {
+function dadosRenda() {
 
-	var nrctrlim    = $("#nrctrlim",".fsLimiteCredito").val();
+    var nrctrlim = $("#nrctrlim", ".fsLimiteCredito").val();
 	var cTodosRenda = $('input, select', '#divDadosRenda');		
 	
 	showMsgAguardo("Aguarde, consultando dados ...");
 			
-	$("#divDadosLimite").css("display","none");
-	$("#divDadosRenda").css("display","block");
+    $("#divDadosLimite").css("display", "none");
+    $("#divDadosRenda").css("display", "block");
 	cTodosRenda.desabilitaCampo();
 
 	buscaDadosProposta(nrdconta, nrctrlim);
 	
 }
 
-function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrctaav2, inconcje, nrcpfav1, nrcpfav2){
+function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrctaav2, inconcje, nrcpfav1, nrcpfav2) {
 	//Nao estava preenchendo corretamente o campo quando retornava um valor decimal
 	//Chamado 364592
-	vlsalari = vlsalari.replace(",",".");
-	vlsalcon = vlsalcon.replace(",",".");
-	vloutras = vloutras.replace(",",".");
-	vlalugue = vlalugue.replace(",",".");
+    vlsalari = vlsalari.replace(",", ".");
+    vlsalcon = vlsalcon.replace(",", ".");
+    vloutras = vloutras.replace(",", ".");
+    vlalugue = vlalugue.replace(",", ".");
 
-	$("#vlsalari").val(number_format(vlsalari,2,",","."));
-	$("#vlsalcon").val(number_format(vlsalcon,2,",","."));
-	$("#vloutras").val(number_format(vloutras,2,",","."));
-	$("#vlalugue").val(number_format(vlalugue,2,",","."));
-	$("#inconcje_" + inconcje).prop('checked','true'); 
+    $("#vlsalari").val(number_format(vlsalari, 2, ",", "."));
+    $("#vlsalcon").val(number_format(vlsalcon, 2, ",", "."));
+    $("#vloutras").val(number_format(vloutras, 2, ",", "."));
+    $("#vlalugue").val(number_format(vlalugue, 2, ",", "."));
+    $("#inconcje_" + inconcje).prop('checked', 'true');
 		
-	$("#nrctaav1","#frmNovoLimite").val(nrctaav1);
-	$("#nrctaav2","#frmNovoLimite").val(nrctaav2); 
-	$("#nrcpfav1","#frmNovoLimite").val(nrcpfav1);
-	$("#nrcpfav2","#frmNovoLimite").val(nrcpfav2); 
+    $("#nrctaav1", "#frmNovoLimite").val(nrctaav1);
+    $("#nrctaav2", "#frmNovoLimite").val(nrctaav2);
+    $("#nrcpfav1", "#frmNovoLimite").val(nrcpfav1);
+    $("#nrcpfav2", "#frmNovoLimite").val(nrcpfav2);
 	
 	// Salvar o valor da consulta do conjuge antes de ser alterado pelo usuario
 	ant_inconcje = inconcje;
 	
 }
 
-function setDadosRating(nrgarope, nrinfcad, nrliquid, nrpatlvr){
+function setDadosRating(nrgarope, nrinfcad, nrliquid, nrpatlvr) {
 
-	var nrctaav1 = normalizaNumero( $('#nrctaav1','#divDadosAvalistas').val() );
-	var nrcpfav1 = normalizaNumero( $('#nrcpfav1','#divDadosAvalistas').val() );
+    var nrctaav1 = normalizaNumero($('#nrctaav1', '#divDadosAvalistas').val());
+    var nrcpfav1 = normalizaNumero($('#nrcpfav1', '#divDadosAvalistas').val());
 	
-	var nrctaav2 = normalizaNumero( $('#nrctaav2','#divDadosAvalistas').val() );
-	var nrcpfav2 = normalizaNumero( $('#nrcpfav2','#divDadosAvalistas').val() );
+    var nrctaav2 = normalizaNumero($('#nrctaav2', '#divDadosAvalistas').val());
+    var nrcpfav2 = normalizaNumero($('#nrcpfav2', '#divDadosAvalistas').val());
 	
-	$("#ant_nrctaav1","#divDadosAvalistas").val( nrctaav1 );
-	$("#ant_nrcpfav1","#divDadosAvalistas").val( nrcpfav1 );
-	$("#ant_nrctaav2","#divDadosAvalistas").val( nrctaav2 );
-	$("#ant_nrcpfav2","#divDadosAvalistas").val( nrcpfav2 );
+    $("#ant_nrctaav1", "#divDadosAvalistas").val(nrctaav1);
+    $("#ant_nrcpfav1", "#divDadosAvalistas").val(nrcpfav1);
+    $("#ant_nrctaav2", "#divDadosAvalistas").val(nrctaav2);
+    $("#ant_nrcpfav2", "#divDadosAvalistas").val(nrcpfav2);
     
     carregaAvalista(1);
 	carregaAvalista(2);
@@ -1238,18 +1512,18 @@ function setDadosRating(nrgarope, nrinfcad, nrliquid, nrpatlvr){
 		
 }
 
-function setDadosObservacao(dsobserv){
+function setDadosObservacao(dsobserv) {
 	$("#dsobserv").val(dsobserv);
-	$('#dsobserv','#'+nomeForm+' .fsObservacoes').val(dsobserv);
+    $('#dsobserv', '#' + nomeForm + ' .fsObservacoes').val(dsobserv);
 }
 
-function changeAbaPropLabel(dslababa){
+function changeAbaPropLabel(dslababa) {
 	$("a[name=N]").text(dslababa);
 }
 
-function trataObservacao(cddopcao){
+function trataObservacao(cddopcao) {
 
-	var cTodosObservacao = $("input, select, textarea","#divDadosObservacoes");
+    var cTodosObservacao = $("input, select, textarea", "#divDadosObservacoes");
 	
 	// Se nao for Inclusao ou alteracao, desabilitar os campos
 	if (cddopcao != 'N') {
@@ -1258,28 +1532,28 @@ function trataObservacao(cddopcao){
 	
 }
 
-function efetuar_consultas () {
+function efetuar_consultas() {
 
 	var cddopcao = (flgProposta == 1) ? 'A' : 'I';
 				
 	showMsgAguardo('Aguarde, efetuando consultas ...');
 				
 	$.ajax({
-		type	: 'POST',
-		url     : UrlSite + 'includes/consultas_automatizadas/efetuar_consultas.php',
-		data    : {
-			nrdconta : nrdconta,
-			nrdocmto : nrctrrat,
-			inprodut : 3, // Cheque especial
-			cddopcao : cddopcao,
-			insolici : 1,
-			redirect : 'script_ajax'
+        type: 'POST',
+        url: UrlSite + 'includes/consultas_automatizadas/efetuar_consultas.php',
+        data: {
+            nrdconta: nrdconta,
+            nrdocmto: nrctrrat,
+            inprodut: 3, // Cheque especial
+            cddopcao: cddopcao,
+            insolici: 1,
+            redirect: 'script_ajax'
 		  },
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
 		},
-		success: function(response) {
+        success: function (response) {
 			hideMsgAguardo();				
 			eval(response);
 			return false;
@@ -1289,17 +1563,17 @@ function efetuar_consultas () {
 }
 
 // Function para controlar as telas das consultas automatizadas
-function controlaOperacao ( operacao ) {
+function controlaOperacao(operacao) {
 
-	var nrctrlim = $("#nrctrlim","#frmNovoLimite").val();
+    var nrctrlim = $("#nrctrlim", "#frmNovoLimite").val();
     var iddoaval_busca = 0;
 	var inpessoa_busca = 0;
 	var nrdconta_busca = 0;
 	var nrcpfcgc_busca = 0;
 	var inconcje = 0;
 
-	if (inpessoa == 1)  {	
-		inconcje = $("#inconcje_1","#divDadosRenda").prop('checked') ? 1 : 0;
+    if (inpessoa == 1) {
+        inconcje = $("#inconcje_1", "#divDadosRenda").prop('checked') ? 1 : 0;
 	}
 
 	switch (operacao) {
@@ -1308,7 +1582,7 @@ function controlaOperacao ( operacao ) {
 		case 'C_INICIO': 
 		case 'I_INICIO': {
 			idSocio = 0;
-			lcrShowHideDiv('divDadosRating','frmOrgaos');
+            lcrShowHideDiv('divDadosRating', 'frmOrgaos');
 			return false;
 		}
 	
@@ -1345,18 +1619,18 @@ function controlaOperacao ( operacao ) {
 		case 'C_PROTECAO_AVAL': {  // Aval 1
 			iddoaval_busca = 1;
 			idSocio = 0;
-			inpessoa_busca = $("#inpesso1","#divDadosAvalistas").val();
-			nrdconta_busca = normalizaNumero($("#nrctaav1","#divDadosAvalistas").val());
-			nrcpfcgc_busca = normalizaNumero($("#nrcpfav1","#divDadosAvalistas").val());
+            inpessoa_busca = $("#inpesso1", "#divDadosAvalistas").val();
+            nrdconta_busca = normalizaNumero($("#nrctaav1", "#divDadosAvalistas").val());
+            nrcpfcgc_busca = normalizaNumero($("#nrcpfav1", "#divDadosAvalistas").val());
 			
-			var ant_nrctaav1 = normalizaNumero($("#ant_nrctaav1","#divDadosAvalistas").val());
-			var ant_nrcpfav1 = normalizaNumero($("#ant_nrcpfav1","#divDadosAvalistas").val());
+            var ant_nrctaav1 = normalizaNumero($("#ant_nrctaav1", "#divDadosAvalistas").val());
+            var ant_nrcpfav1 = normalizaNumero($("#ant_nrcpfav1", "#divDadosAvalistas").val());
 			 
 			// Se nao tem avalista 1, ou se mudaram os dados do aval 1, vai para o proximo 
-			if ( (nrdconta_busca == 0 && nrcpfcgc_busca == 0) || 
-			     (nrdconta_busca != ant_nrctaav1)             || 
-  				 (nrcpfcgc_busca != ant_nrcpfav1) ) {
-				controlaOperacao(operacao.substr(0,2) + "DADOS_AVAL");
+            if ((nrdconta_busca == 0 && nrcpfcgc_busca == 0) ||
+			     (nrdconta_busca != ant_nrctaav1) ||
+  				 (nrcpfcgc_busca != ant_nrcpfav1)) {
+                controlaOperacao(operacao.substr(0, 2) + "DADOS_AVAL");
 				return false;
 			}
 			
@@ -1366,16 +1640,16 @@ function controlaOperacao ( operacao ) {
 		case 'A_DADOS_AVAL':
 		case 'C_DADOS_AVAL': {  // Aval 2
 			iddoaval_busca = 2;
-			inpessoa_busca = $("#inpesso2","#divDadosAvalistas").val();
-			nrdconta_busca = normalizaNumero($("#nrctaav2","#divDadosAvalistas").val());
-			nrcpfcgc_busca = normalizaNumero($("#nrcpfav2","#divDadosAvalistas").val());
+            inpessoa_busca = $("#inpesso2", "#divDadosAvalistas").val();
+            nrdconta_busca = normalizaNumero($("#nrctaav2", "#divDadosAvalistas").val());
+            nrcpfcgc_busca = normalizaNumero($("#nrcpfav2", "#divDadosAvalistas").val());
 			
-			var ant_nrctaav2 = normalizaNumero($("#ant_nrctaav2","#divDadosAvalistas").val());
-			var ant_nrcpfav2 = normalizaNumero($("#ant_nrcpfav2","#divDadosAvalistas").val());
+            var ant_nrctaav2 = normalizaNumero($("#ant_nrctaav2", "#divDadosAvalistas").val());
+            var ant_nrcpfav2 = normalizaNumero($("#ant_nrcpfav2", "#divDadosAvalistas").val());
 						
 			// Se nao tem avalista 2, ou se mudaram os dados do aval 2, vai para a proxima tela 
-			if ( (nrdconta_busca == 0 && nrcpfcgc_busca == 0) || 
-			     (nrdconta_busca != ant_nrctaav2)             ||
+            if ((nrdconta_busca == 0 && nrcpfcgc_busca == 0) ||
+			     (nrdconta_busca != ant_nrctaav2) ||
 				 (nrcpfcgc_busca != ant_nrcpfav2)) {
 				
 				if (operacao == 'A_DADOS_AVAL') { // Alteracao
@@ -1386,34 +1660,34 @@ function controlaOperacao ( operacao ) {
 				return false;
 			}
 			
-			operacao = operacao.substr(0,1) + '_PROTECAO_AVAL_2';
+            operacao = operacao.substr(0, 1) + '_PROTECAO_AVAL_2';
 			break;
 		}	
 		
 		case 'A_COMITE_APROV': {
-			validaItensRating (operacao, true);
+            validaItensRating(operacao, true);
 			return false;
 		}
 		
 		case 'A_AVAIS': {
 			$("#frmOrgaos").remove();	
-			$("#divDadosAvalistas").css('display','block');
+            $("#divDadosAvalistas").css('display', 'block');
 			return false;
 		}
 		
 		case 'C_COMITE_APROV': {
 			$("#frmOrgaos").remove();	
-			$("#divDadosAvalistas").css('display','block');
+            $("#divDadosAvalistas").css('display', 'block');
 			return false;
 		}	
 
 		case 'A_PROTECAO_CONJ':
 			
-			if  (ant_inconcje == 0 ) {
+            if (ant_inconcje == 0) {
 				controlaOperacao('A_COMITE_APROV');
 				return false;
 			} else {
-				validaItensRating (operacao, true);
+                validaItensRating(operacao, true);
 			}
 		case 'C_PROTECAO_CONJ': {
 			iddoaval_busca = 99;
@@ -1426,8 +1700,8 @@ function controlaOperacao ( operacao ) {
 	}
 		
 	// Esconde div do RATING e AVAIS e remover o das consultas automatizadas
-	$("#divDadosRating").css("display","none");
-	$("#divDadosAvalistas").css("display","none");
+    $("#divDadosRating").css("display", "none");
+    $("#divDadosAvalistas").css("display", "none");
 	$("#frmOrgaos").remove();
 	
 	showMsgAguardo('Aguarde, abrindo consultar ...');
@@ -1450,24 +1724,24 @@ function controlaOperacao ( operacao ) {
 			dtcnsspc: dtconbir,
 			redirect: 'html_ajax' 
 		},
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
 		},
-		success: function(response) {
+        success: function (response) {
 		
 			hideMsgAguardo();
 		
-			if ( response.indexOf('showError("error"') == -1 ) {
+            if (response.indexOf('showError("error"') == -1) {
 								
 				$('#frmNovoLimite').append(response);
 									
 				dsinfcad = (operacao == 'I_PROTECAO_TIT') ? "" : dsinfcad;
 										
-				formata_protecao (operacao, nrinfcad, dsinfcad);
+                formata_protecao(operacao, nrinfcad, dsinfcad);
 
 			} else {
-				eval( response );
+                eval(response);
 			}
 			return false;
 		}
@@ -1475,34 +1749,34 @@ function controlaOperacao ( operacao ) {
 
 }
 
-function controlaSocios (operacao, cdcooper , idSocio , qtSocios) {
+function controlaSocios(operacao, cdcooper, idSocio, qtSocios) {
 				
 	if (operacao == "A_PROTECAO_TIT") {
-		if ($("#nrinfcad","#frmOrgaos").val() != undefined) {
-			dtconbir = $("#dtcnsspc","#frmOrgaos").val();
-			nrinfcad = $("#nrinfcad","#frmOrgaos").val();
+        if ($("#nrinfcad", "#frmOrgaos").val() != undefined) {
+            dtconbir = $("#dtcnsspc", "#frmOrgaos").val();
+            nrinfcad = $("#nrinfcad", "#frmOrgaos").val();
 		}
 	}			
 				
-	if  (idSocio > qtSocios) { // Nao tem mais socios, mostrar avais
+    if (idSocio > qtSocios) { // Nao tem mais socios, mostrar avais
 	
 		$("#frmOrgaos").remove();	
-		$("#divDadosAvalistas").css('display','block');
+        $("#divDadosAvalistas").css('display', 'block');
 		
 	}
 	else { // Proximo socio
-		controlaOperacao(operacao.substr(0,2) + "PROTECAO_SOC");
+        controlaOperacao(operacao.substr(0, 2) + "PROTECAO_SOC");
 	}
 
 }
 
-function validaItensRating (operacao, flgarray) {
+function validaItensRating(operacao, flgarray) {
 	
-	validaDadosRating(cdcooper , operacao , 3);
+    validaDadosRating(cdcooper, operacao, 3);
 
 }
 
-function confirmaInclusaoMenor(nrdconta,cddopcao,flpropos,inconfir){
+function confirmaInclusaoMenor(nrdconta, cddopcao, flpropos, inconfir) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo('Aguarde, carregando...');
@@ -1519,11 +1793,11 @@ function confirmaInclusaoMenor(nrdconta,cddopcao,flpropos,inconfir){
 			inconfir: inconfir,
 			redirect: "html_ajax"
 		},		
-		error: function(objAjax,responseError,objExcept) {
+        error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
-		success: function(response) {						
+        success: function (response) {
 			$("#divConteudoOpcao").html(response);
 			controlaFoco(cddopcao);
 		}				
