@@ -3,7 +3,7 @@
 /*
     Programa: sspb0001                        Antigo: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 12/08/2015
+    Data    : Outubro/2009                    Ultima Atualizacao: 19/09/2016
 
     Dados referentes ao programa:
 
@@ -63,9 +63,9 @@
                              
                 12/08/2015 - Inclusao da procedure pc_trfsal_opcao_x (Jean Michel).             
 
-				19/08/2016 - Incluido rotinas convertidas para o oracle: pc_proc_pag0101
-							 e pc_proc_opera_str. PRJ-312. (Reinert)
-
+                19/09/2016 - Removida a validacao de horario cadastrado na TAB085
+                             para a geracao de TED dos convenios. SD 519980.
+                             (Carlos Rafael Tanholi)
 ..............................................................................*/
 
   --criação TempTable
@@ -713,12 +713,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
+    --  Data     : Julho/2013.                   Ultima atualizacao: 19/09/2016
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar mensagem STR0026 para a cabine SPB
+    --
+    --   Alteracoes: 	19/09/2016 - Removida a validacao de horario cadastrado na TAB085
+		--					                   para a geracao de TED dos convenios. SD 519980.
+		--					                   (Carlos Rafael Tanholi)
+    --
   BEGIN
     DECLARE
       --Variaveis Locais
@@ -856,8 +861,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapban;
+      
       /*-- Operando com mensagens STR --*/
-      IF rw_crapcop.flgopstr = 1 THEN
+      /*IF rw_crapcop.flgopstr = 1 THEN
         --Verificar horario inicio e fim operacao
         IF rw_crapcop.iniopstr <= GENE0002.fn_busca_time AND
            rw_crapcop.fimopstr >= GENE0002.fn_busca_time THEN
@@ -879,7 +885,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                              ,pr_tab_erro => vr_tab_erro);
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;
+      END IF;*/
+      
       /* Alimenta variaveis default */
 
       --Se for pessoa fisica
@@ -2464,7 +2471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 19/09/2016
 
       Dados referentes ao programa:
 
@@ -2473,6 +2480,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       Alteração : 09/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
 
+                  19/09/2016 - Removida a validacao de horario cadastrado na TAB085
+                               para a geracao de TED dos convenios. SD 519980.
+                               (Carlos Rafael Tanholi)      
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -2790,12 +2800,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     -- Operando com mensagens STR
-    IF rw_crapcop.flgopstr = 1  THEN
+    /*IF rw_crapcop.flgopstr = 1  THEN
       IF rw_crapcop.iniopstr <= gene0002.fn_busca_time AND
          rw_crapcop.fimopstr >= gene0002.fn_busca_time THEN
         vr_flgutstr := TRUE;
       END IF;
-    END IF;
+    END IF;*/
 
     -- Operando com mensagens PAG
     IF rw_crapcop.flgoppag = 1  THEN
@@ -2812,7 +2822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			END IF;
     END IF;
 		
-    IF vr_flgutstr = FALSE AND vr_flgutpag = FALSE THEN
+    IF vr_flgutpag = FALSE THEN
       vr_cdcritic := 0;
       vr_dscritic := CASE WHEN vr_flpagmax THEN 
 			                         'Limite máximo por operação: R$ ' || to_char(rw_crapcop.vlmaxpag, '99g999g990d00')

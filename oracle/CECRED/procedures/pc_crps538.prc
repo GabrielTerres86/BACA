@@ -598,23 +598,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
          AND   crapsab.nrinssac = pr_nrinssac;
        rw_crapsab cr_crapsab%ROWTYPE;
 
-       --Selecionar informacoes para liquidacao
-       CURSOR cr_crapcco_liquida (pr_cdcooper IN crapcop.cdcooper%type
-                                 ,pr_cdbcoctl IN crapcop.cdbcoctl%type
-                                 ,pr_dtmvtolt IN crapdat.dtmvtolt%type) IS
-         SELECT crapcob.rowid
-         FROM crapcob
-             ,crapcco
-         WHERE crapcco.cdcooper = pr_cdcooper
-         AND   crapcco.cddbanco = pr_cdbcoctl
-         AND   crapcco.flgregis = 1
-         AND   crapcob.cdcooper = crapcco.cdcooper
-         AND   crapcob.nrcnvcob = crapcco.nrconven
-         AND   crapcob.incobran = 5 /* pagos */
-         AND   crapcob.dtdpagto = pr_dtmvtolt
-         AND   crapcob.cdbanpag = pr_cdbcoctl
-         AND   crapcob.flgcbdda = 1;
-
        --Selecionar informacoes convenios ativos
        CURSOR cr_crapcco_ativo (pr_cdcooper IN crapcco.cdcooper%type
                                ,pr_cddbanco IN crapcco.cddbanco%type) IS
@@ -4780,8 +4763,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    vr_dscritic:= NULL;
                  END IF;
                END IF;
-             END LOOP;
-             
+           END LOOP;
+           
            END LOOP;
            
            --Determinar a data para arquivo de retorno
@@ -4881,29 +4864,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            --Data Pagamento
            vr_dtdpagto:= rw_crapdat.dtmvtolt;
          END IF;
-
-         /* Processar liquidacao intrabancaria de boletos DDA */
-         FOR rw_liquida IN cr_crapcco_liquida (pr_cdcooper => rw_crapcop.cdcooper
-                                              ,pr_cdbcoctl => rw_crapcop.cdbcoctl
-                                              ,pr_dtmvtolt => vr_dtdpagto) LOOP
-           /* processar liquidacao intrabancaria de titulos DDA pagos nas cooperativas */
-           DDDA0001.pc_liquid_intrabancaria_dda (pr_rowid_cob => rw_liquida.rowid --ROWID da Cobranca
-                                                ,pr_cdcritic  => vr_cdcritic      --Codigo de Erro
-                                                ,pr_dscritic  => vr_dscritic);    --Descricao de Erro
-           --Se ocorreu erro escreve no log
-           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||
-                                                           vr_cdprogra || ' --> '||vr_dscritic ||
-                                                           ' Liquidacao Intrabancaria nao processada. '||
-                                                           ' ROWID crapcob: '||rw_crapcob.rowid);
-             --Limpar variaveis erro
-             vr_cdcritic:= NULL;
-             vr_dscritic:= NULL;
-           END IF;
-         END LOOP; --rw_liquida         
 
          /*************TRATAMENTO P/ COBRANCA REGISTRADA****************/
          /**************************************************************/
