@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 27/05/2016
+    Data      : Abril/2012                      Ultima Atualizacao: 31/08/2016
     
     Dados referentes ao programa:
 
@@ -277,6 +277,21 @@
                              incluir leitura da crapepr como "FIRST" da crapadt,
                              pois so devemos listar aditivos com epmrestimos liberados
                              (Lucas Ranghetti #450354)
+
+                07/06/2016 - Adicionado tratamento para pacote de tarifas na geracao
+                             de documentos nao digitalizados. PRJ218/2 (Reinert).
+
+                16/06/2016 - Na procedure efetua_batimento_ged_termos, ajustado a
+                             descricao do LABEL do Operador que estava "OPEERADOR"
+                             (Lucas Ranghetti #467779)   
+                             
+                26/08/2016 - Retirado verificacao do inliquid = 0 na procedure 
+                             efetua_batimento_ged_gredito (Lucas Ranghetti #501523)
+                             
+                31/08/2016 - Alterar busca da agencia para buscar a agencia do operador
+                             na procedure efetua_batimento_termos para o tpdocmto 37 - PEP
+                             (Lucas Ranghetti #491441)
+                             
 .............................................................................*/
 
 
@@ -286,6 +301,7 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i } 
 
 DEF STREAM str_1.
 DEF STREAM str_2.
@@ -588,7 +604,6 @@ PROCEDURE efetua_batimento_ged:
                     RETURN "NOK".
                 END. 
 
-        
             RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
                                              INPUT aux_dtcreini,
                                              INPUT aux_dtcrefim,
@@ -690,7 +705,6 @@ PROCEDURE efetua_batimento_ged:
         END.
     ELSE IF par_tipopcao = 2 THEN /* CREDITO */
         DO: 
-            
             RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
                                              INPUT aux_dtcreini,
                                              INPUT aux_dtcrefim,
@@ -1949,7 +1963,6 @@ PROCEDURE efetua_batimento_ged_credito:
                                WHERE crapepr.cdcooper = crapadt.cdcooper AND
                                      crapepr.nrdconta = crapadt.nrdconta AND
                                      crapepr.nrctremp = crapadt.nrctremp AND
-                                     crapepr.inliquid = 0                AND
                                      NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905",
                                                STRING(crapepr.cdlcremp)) NO-LOCK:
 
@@ -2370,7 +2383,6 @@ PROCEDURE efetua_batimento_ged_credito:
         /* Emprestimo - Data de Liberacao */
         FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper   AND
                                crapepr.dtmvtolt = aux_data       AND
-                               crapepr.inliquid = 0              AND
                      NOT CAN-DO("3,4", STRING(crapepr.cdorigem)) AND
                      NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
                                 STRING(crapepr.cdlcremp)) 
@@ -2860,7 +2872,7 @@ PROCEDURE efetua_batimento_ged_termos:
          tt-documentos-termo.dsempres  FORMAT "x(23)"      COLUMN-LABEL "TITULAR"
          tt-documentos-termo.dstpterm  FORMAT "x(13)"      COLUMN-LABEL "TIPO DE DOCTO"
          tt-documentos-termo.dtincalt  FORMAT "99/99/9999" COLUMN-LABEL "DATA INC."
-         tt-documentos-termo.cdoperad  FORMAT "x(15)"      COLUMN-LABEL "OPEERADOR"
+         tt-documentos-termo.cdoperad  FORMAT "x(15)"      COLUMN-LABEL "OPERADOR"
          tt-documentos-termo.nmcontat  FORMAT "x(40)"      COLUMN-LABEL "CONTATO DA EMPRESA/COOPERADO"
          WITH DOWN WIDTH 132 CENTERED FRAME f_contr_2.
 
@@ -2881,7 +2893,7 @@ PROCEDURE efetua_batimento_ged_termos:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF  CAN-DO("108,109,124", ENTRY(3,craptab.dstextab,";")) THEN DO:
+        IF  CAN-DO("108,109,124,125,126,127", ENTRY(3,craptab.dstextab,";")) THEN DO:
 
             CREATE tt-documentos.
             ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -3165,10 +3177,16 @@ PROCEDURE efetua_batimento_ged_termos:
 
             /*Verifica se registro existe*/
             IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                     
+                    /* Buscar agencia em que o operador trabalha */
+                    FIND FIRST crapope WHERE crapope.cdcooper = crapdoc.cdcooper
+                                         AND crapope.cdoperad = crapdoc.cdoperad
+                                         NO-LOCK NO-ERROR.
+                     
                 /* Criar registro para listar no relatorio */
                 CREATE tt-documentos-termo.
                 ASSIGN tt-documentos-termo.cdcooper = crapdoc.cdcooper
-                       tt-documentos-termo.cdagenci = crapass.cdagenci 
+                           tt-documentos-termo.cdagenci = crapope.cdpactra WHEN AVAILABLE crapope 
                        tt-documentos-termo.dstpterm = "DECLARACAOPEP"
                            tt-documentos-termo.dsempres = crapass.nmprimtl
                        tt-documentos-termo.nrdconta = crapdoc.nrdconta
@@ -3182,6 +3200,293 @@ PROCEDURE efetua_batimento_ged_termos:
     END. /* fim for each crapdoc */
     END.
     /* fim tipo de documento 37 */
+
+    /*TIPO DE DOCUMENTO: 39 Termo Adesao*/
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 39.
+    
+    /* Buscar valor parametrizado para digitalizacao de Termo de adesao */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+    
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot3        AS HANDLE   NO-UNDO.  
+    DEF VAR xField        AS HANDLE   NO-UNDO. 
+    DEF VAR xText         AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont2     AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR NO-UNDO.
+
+    /* Leitura do XML de novas aplicacoes */
+    
+   /* Inicializando objetos para leitura do XML */ 
+   CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+   CREATE X-NODEREF  xRoot.   /* Vai conter a tag root em diante */ 
+   CREATE X-NODEREF  xRoot2.  /* Vai conter a tag adesao/cancelamento em diante */ 
+   CREATE X-NODEREF  xRoot3.  /* Vai conter a tag pacote em diante */ 
+   CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+   CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+   /* Efetuar a chamada a rotina Oracle  */
+   RUN STORED-PROCEDURE pc_busca_pacote_tarifas_ged
+       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                           OUTPUT ?,            /* XML com informaçoes de LOG */
+                                           OUTPUT 0,            /* Código da crítica */
+                                           OUTPUT "").          /* Descriçao da crítica */
+
+   /* Fechar o procedimento para buscarmos o resultado */ 
+  CLOSE STORED-PROC pc_busca_pacote_tarifas_ged
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+   
+   /* Busca possíveis erros */ 
+   ASSIGN aux_cdcritic = 0
+          aux_dscritic = ""
+          aux_cdcritic = pc_busca_pacote_tarifas_ged.pr_cdcritic 
+                         WHEN pc_busca_pacote_tarifas_ged.pr_cdcritic <> ?
+          aux_dscritic = pc_busca_pacote_tarifas_ged.pr_dscritic 
+                         WHEN pc_busca_pacote_tarifas_ged.pr_dscritic <> ?.
+
+   IF aux_cdcritic <> 0 OR
+      aux_dscritic <> "" THEN
+    DO:
+        CREATE tt-erro.
+        ASSIGN tt-erro.cdcritic = aux_cdcritic
+               tt-erro.dscritic = aux_dscritic.
+        
+        RETURN "NOK".
+        
+     END.
+   
+
+   EMPTY TEMP-TABLE tt-tarif-contas-pacote.
+
+   /*Leitura do XML de retorno da proc e criacao dos registros na tt-saldo-rdca
+    para visualizacao dos registros na tela */
+    
+   /* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_busca_pacote_tarifas_ged.pr_clobxmlc. 
+        
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req. 
+       
+    IF ponteiro_xml <> ? THEN
+        DO:
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+        
+            DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+        
+                xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+        
+                IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                 NEXT. 
+                
+                DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+                    
+                    xRoot2:GET-CHILD(xRoot3,aux_cont).
+                        
+                    IF xRoot3:SUBTYPE <> "ELEMENT" THEN 
+                        NEXT. 
+
+                    IF xRoot3:NUM-CHILDREN > 0 THEN
+                        CREATE tt-tarif-contas-pacote.
+
+                    DO aux_cont2 = 1 TO xRoot3:NUM-CHILDREN:
+                    
+                        xRoot3:GET-CHILD(xField,aux_cont2).
+    
+                        IF xField:SUBTYPE <> "ELEMENT" THEN 
+                            NEXT. 
+                        
+                        xField:GET-CHILD(xText,1).
+                       
+                        ASSIGN tt-tarif-contas-pacote.nrdconta =  INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta"
+                               tt-tarif-contas-pacote.dtadesao = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtadesao"
+                               tt-tarif-contas-pacote.cdopeade =      xText:NODE-VALUE  WHEN xField:NAME = "cdoperador_adesao"
+                               tt-tarif-contas-pacote.dtcancel = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtcancelamento"
+                               tt-tarif-contas-pacote.cdopecan =      xText:NODE-VALUE  WHEN xField:NAME = "cdoperador_cancela".
+                    END.
+
+                END. 
+                
+            END.
+        
+            SET-SIZE(ponteiro_xml) = 0. 
+        END.
+
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
+    
+    FOR EACH tt-tarif-contas-pacote FIELDS(nrdconta dtadesao cdoperador_adesao)
+                     WHERE tt-tarif-contas-pacote.dtcancel  = ?            NO-LOCK:
+        
+        /* Se cooperado estiver demitidos nao gera no relatorio */
+        FIND FIRST crapass WHERE 
+                   crapass.cdcooper = par_cdcooper AND
+                   crapass.nrdconta = tt-tarif-contas-pacote.nrdconta NO-LOCK NO-ERROR.
+
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        
+        /* Verifica se o contrato foi digitalizado */
+        FIND FIRST tt-documento-digitalizado WHERE
+                   tt-documento-digitalizado.cdcooper  = par_cdcooper AND
+                   tt-documento-digitalizado.nrdconta  = tt-tarif-contas-pacote.nrdconta AND
+                   tt-documento-digitalizado.tpdocmto  = aux_tpdocmto                   AND
+                   tt-documento-digitalizado.dtpublic >= tt-tarif-contas-pacote.dtadesao
+                   NO-LOCK NO-ERROR NO-WAIT.
+
+        /*Verifica se registro existe*/
+        IF AVAIL tt-documento-digitalizado  THEN DO:
+            
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+            /* Efetuar a chamada a rotina Oracle  */
+            RUN STORED-PROCEDURE pc_atualiza_digito_pacote
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                     INPUT tt-tarif-contas-pacote.nrdconta, /* Nr. da conta */
+                                                     INPUT 1,            /* Adesao*/
+                                                    OUTPUT 0,            /* Código da crítica */
+                                                    OUTPUT "").          /* Descriçao da crítica */
+
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_atualiza_digito_pacote
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+            NEXT.
+          END.
+        ELSE DO:
+            
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = par_cdcooper
+                   AND tt-documentos-termo.cdagenci = crapass.cdagenci
+                   AND tt-documentos-termo.nrdconta = tt-tarif-contas-pacote.nrdconta
+                   AND tt-documentos-termo.dstpterm = "ADESAO"
+                   AND tt-documentos-termo.nmcontat = ""
+                   AND tt-documentos-termo.dsempres = crapass.nmprimtl
+                   AND tt-documentos-termo.idseqite = 39
+                   AND tt-documentos-termo.dtincalt = tt-tarif-contas-pacote.dtadesao
+               NO-LOCK NO-ERROR.
+
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = par_cdcooper
+                       tt-documentos-termo.cdagenci = crapass.cdagenci 
+                       tt-documentos-termo.dstpterm = "ADESAO"
+                       tt-documentos-termo.dsempres = crapass.nmprimtl /* Titular */
+                       tt-documentos-termo.nrdconta = tt-tarif-contas-pacote.nrdconta
+                       tt-documentos-termo.nmcontat = ""
+                       tt-documentos-termo.dtincalt = tt-tarif-contas-pacote.dtadesao
+                       tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopeade
+                       tt-documentos-termo.idseqite = aux_conttabs. /* Adesao */
+            END.
+        END.
+    END.
+    /* fim tipo de documento 39 */
+    
+    /*TIPO DE DOCUMENTO: 38 Termo Cancelamento*/
+    ASSIGN aux_tpdocmto = 0
+           aux_conttabs = 38.
+
+    /* Buscar valor parametrizado p/ digitalizacao de Termos de cancelamento */
+    FIND tt-documentos WHERE 
+         tt-documentos.idseqite = aux_conttabs NO-LOCK NO-ERROR.
+
+    IF  AVAIL tt-documentos  THEN
+        ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
+
+    FOR EACH tt-tarif-contas-pacote FIELDS(cdcooper nrdconta dtcancelamento cdoperador_cancela)
+                     WHERE tt-tarif-contas-pacote.dtcancel  <> ?            NO-LOCK:
+        
+        /* Se cooperado estiver demitidos nao gera no relatorio */
+        FIND FIRST crapass WHERE 
+                   crapass.cdcooper = par_cdcooper AND
+                   crapass.nrdconta = tt-tarif-contas-pacote.nrdconta NO-LOCK NO-ERROR.
+
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
+        
+        /* Verifica se o contrato foi digitalizado */
+        FIND FIRST tt-documento-digitalizado WHERE
+                   tt-documento-digitalizado.cdcooper  = par_cdcooper AND
+                   tt-documento-digitalizado.nrdconta  = tt-tarif-contas-pacote.nrdconta AND
+                   tt-documento-digitalizado.tpdocmto  = aux_tpdocmto                   AND
+                   tt-documento-digitalizado.dtpublic >= tt-tarif-contas-pacote.dtcancel
+                   NO-LOCK NO-ERROR NO-WAIT.
+
+        /*Verifica se registro existe*/
+        IF AVAIL tt-documento-digitalizado  THEN DO:
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+            /* Efetuar a chamada a rotina Oracle  */
+            RUN STORED-PROCEDURE pc_atualiza_digito_pacote
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
+                                                     INPUT tt-tarif-contas-pacote.nrdconta, /* Nr. da conta */
+                                                     INPUT 2,            /* Cancelamento */
+                                                    OUTPUT 0,            /* Código da crítica */
+                                                    OUTPUT "").          /* Descriçao da crítica */
+
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_atualiza_digito_pacote
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+            NEXT.
+          END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = par_cdcooper
+                   AND tt-documentos-termo.cdagenci = crapass.cdagenci
+                   AND tt-documentos-termo.nrdconta = tt-tarif-contas-pacote.nrdconta
+                   AND tt-documentos-termo.dstpterm = "CANCELAMENTO"
+                   AND tt-documentos-termo.nmcontat = ""
+                   AND tt-documentos-termo.dsempres = crapass.nmprimtl
+                   AND tt-documentos-termo.idseqite = 38
+                   AND tt-documentos-termo.dtincalt = tt-tarif-contas-pacote.dtcancel
+               NO-LOCK NO-ERROR.
+
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = par_cdcooper
+                       tt-documentos-termo.cdagenci = crapass.cdagenci 
+                       tt-documentos-termo.dstpterm = "CANCELAMENTO"
+                       tt-documentos-termo.dsempres = crapass.nmprimtl /* Titular */
+                       tt-documentos-termo.nrdconta = tt-tarif-contas-pacote.nrdconta
+                       tt-documentos-termo.nmcontat = ""
+                       tt-documentos-termo.dtincalt = tt-tarif-contas-pacote.dtcancel
+                       tt-documentos-termo.cdoperad = tt-tarif-contas-pacote.cdopecan
+                       tt-documentos-termo.idseqite = aux_conttabs. /* Cancelamento */
+            END.
+        END.
+    END.
+    /* fim tipo de documento 38 */
 
     /* Verificar se existe registro para gerar no relatorio. */
     FIND FIRST tt-documentos-termo 
