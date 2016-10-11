@@ -538,7 +538,7 @@ function selecionaPesquisa(resultado, idForm) {
 		$('input[name="'+campoNome+'"]','#'+idForm).focus();
 	}else if(idForm == "frmAgenci"){
 		$('input[name="cdageban"]','#'+idForm).focus();
-	}else if(campoNome == "cdlcremp" && tipoPessoaRegra != 'undefined'){
+	}else if(campoNome == "cdlcremp" && typeof tipoPessoaRegra != 'undefined'){
 		var arrayResultado2 = arrayCampos[1].split(";");
         var campoValor2     = arrayResultado2[1];
         if (tipoPessoaRegra == 'PF') {

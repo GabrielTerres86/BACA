@@ -2954,6 +2954,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                                     INPUT par_nrdconta,
                                                     INPUT aux_tpemprst,
                                                     INPUT aux_cdfinemp,
+                                                    INPUT tt-proposta-epr.cdlcremp,
                                                     INPUT FALSE,
                                                     INPUT tt-proposta-epr.dsctrliq,
                                                    OUTPUT TABLE tt-erro,
@@ -2997,6 +2998,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                          INPUT par_nmdatela,
                                          INPUT FALSE,
                                          INPUT aux_cdfinemp,
+                                         INPUT tt-proposta-epr.cdlcremp,
                                          INPUT aux_nrctrliq,
                                          INPUT tt-proposta-epr.dsctrliq,
                                          OUTPUT TABLE tt-erro,
@@ -3598,6 +3600,7 @@ PROCEDURE valida-dados-gerais:
                                  INPUT par_nmdatela,
                                  INPUT par_flgerlog,
                                  INPUT par_cdfinemp,
+                                 INPUT par_cdlcremp,
                                  INPUT aux_nrctrliq,
                                  INPUT par_dsctrliq,
                                  OUTPUT TABLE tt-erro,
@@ -6815,6 +6818,7 @@ PROCEDURE altera-valor-proposta:
                                         INPUT par_nmdatela,
                                         INPUT par_flgerlog,
                                         INPUT crawepr.cdfinemp,
+                                        INPUT crawepr.cdlcremp,
                                         INPUT crawepr.nrctrliq,
                                         INPUT "",
                                         OUTPUT TABLE tt-erro,
@@ -10967,6 +10971,7 @@ PROCEDURE carrega_dados_proposta_finalidade:
     DEF  INPUT PARAM par_nrdconta AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_tpemprst AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdlcremp AS INTE                             NO-UNDO.
     DEF  INPUT PARAM par_flgatual AS LOG                              NO-UNDO.
     DEF  INPUT PARAM par_dsctrliq AS CHAR                             NO-UNDO.
 
@@ -11007,6 +11012,7 @@ PROCEDURE carrega_dados_proposta_finalidade:
                                 INPUT par_nmdatela,
                                 INPUT FALSE, /* par_flgerlog */
                                 INPUT par_cdfinemp,
+                                INPUT par_cdlcremp,
                                 INPUT aux_nrctrliq,
                                 INPUT par_dsctrliq,
                                 OUTPUT TABLE tt-erro,
@@ -11321,6 +11327,59 @@ PROCEDURE carrega_dados_proposta_finalidade:
 
 END PROCEDURE.
 
+PROCEDURE carrega_dados_proposta_linha_credito:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                             NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                             NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                             NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdfinemp AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_cdlcremp AS INTE                             NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM par_dsnivris AS CHAR                             NO-UNDO.
+
+    DEF VAR aux_nrctrliq LIKE crawepr.nrctrliq                        NO-UNDO.
+    DEF VAR h-b1wgen0043 AS HANDLE                                    NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.
+
+    IF NOT VALID-HANDLE(h-b1wgen0043) THEN
+       RUN sistema/generico/procedures/b1wgen0043.p
+           PERSISTENT SET h-b1wgen0043.
+
+    /* Calcula o Risco */
+    RUN obtem_emprestimo_risco 
+        IN h-b1wgen0043 (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT par_cdoperad,
+                         INPUT par_nrdconta,
+                         INPUT 1, /* par_idseqttl */
+                         INPUT par_idorigem,
+                         INPUT par_nmdatela,
+                         INPUT FALSE, /* par_flgerlog */
+                         INPUT par_cdfinemp,
+                         INPUT par_cdlcremp,
+                         INPUT aux_nrctrliq,
+                         INPUT "",
+                         OUTPUT TABLE tt-erro,
+                         OUTPUT par_dsnivris).
+                         
+    IF VALID-HANDLE(h-b1wgen0043) THEN
+       DELETE PROCEDURE h-b1wgen0043.
+     
+    IF RETURN-VALUE <> "OK" THEN
+       RETURN "NOK".
+
+    RETURN "OK".
+
+END PROCEDURE.
+
 PROCEDURE atualiza_risco_proposta:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                             NO-UNDO.
@@ -11388,6 +11447,7 @@ PROCEDURE atualiza_risco_proposta:
                                 INPUT par_nmdatela,
                                 INPUT FALSE, /* par_flgerlog */
                                 INPUT crawepr.cdfinemp,
+                                INPUT crawepr.cdlcremp,
                                 INPUT crawepr.nrctrliq,
                                 INPUT "",    /* par_dsctrliq */
                                 OUTPUT TABLE tt-erro,
@@ -11649,6 +11709,7 @@ PROCEDURE recalcular_emprestimo:
                                                    INPUT par_nmdatela,
                                                    INPUT TRUE,
                                                    INPUT crawepr.cdfinemp,
+                                                   INPUT crawepr.cdlcremp,
                                                    INPUT crawepr.nrctrliq,
                                                    INPUT "",
                                                    OUTPUT TABLE tt-erro,

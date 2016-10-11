@@ -22,6 +22,7 @@
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : ''; 
 	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : '';
 	$cdfinemp = (isset($_POST['cdfinemp'])) ? $_POST['cdfinemp'] : '';
+	$cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '';
 	$dsctrliq = (isset($_POST['dsctrliq'])) ? $_POST['dsctrliq'] : '';
 	
 	$xml  = "<Root>";
@@ -42,6 +43,7 @@
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<tpemprst>".$tpemprst."</tpemprst>";
 	$xml .= "		<cdfinemp>".$cdfinemp."</cdfinemp>";
+	$xml .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
 	$xml .= "		<dsctrliq>".$dsctrliq."</dsctrliq>";	
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";

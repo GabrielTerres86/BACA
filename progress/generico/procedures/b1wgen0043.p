@@ -4072,6 +4072,7 @@ PROCEDURE obtem_emprestimo_risco:
     DEF  INPUT PARAM par_nmdatela AS CHAR                            NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                            NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                            NO-UNDO.
+    DEF  INPUT PARAM par_cdlcremp AS INTE                            NO-UNDO.
     DEF  INPUT PARAM par_nrctrliq AS INTE EXTENT 10                  NO-UNDO.
     DEF  INPUT PARAM par_dsctrliq AS CHAR                            NO-UNDO.
 
@@ -4154,7 +4155,7 @@ PROCEDURE obtem_emprestimo_risco:
     FIND tt-ocorren NO-LOCK NO-ERROR.
     IF AVAIL tt-ocorren AND tt-ocorren.innivris <> 0 THEN
        ASSIGN aux_innivris = tt-ocorren.innivris.
-
+ 
     IF TRIM(par_dsctrliq)        <> ""                AND 
        UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN
        ASSIGN aux_flgrefin = TRUE.
@@ -4233,6 +4234,26 @@ PROCEDURE obtem_emprestimo_risco:
              END. /* END IF AVAIL crapfin THEN */
 
        END. /* END IF par_cdfinemp > 0 THEN */
+
+    /* Chamado: 522658 */
+    IF par_cdlcremp > 0 THEN
+       DO:
+           IF par_cdcooper = 2 AND CAN-DO("800,850,900",STRING(par_cdlcremp)) THEN
+              DO:
+                  /* Risco E */
+                  IF aux_innivris < 6 THEN
+                     ASSIGN aux_innivris = 6.
+              END.
+           ELSE 
+           IF par_cdcooper <> 2 AND CAN-DO("800,900",STRING(par_cdlcremp)) THEN
+              DO:
+                  /* Risco E */
+                  IF aux_innivris < 6 THEN
+                     ASSIGN aux_innivris = 6.
+              END.
+              
+       END. /* END IF par_cdfinemp > 0 THEN */
+
 
     RUN descricoes_risco(INPUT par_cdcooper,
                          INPUT 0,

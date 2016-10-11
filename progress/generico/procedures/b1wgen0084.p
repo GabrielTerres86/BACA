@@ -3303,6 +3303,7 @@ PROCEDURE grava_efetivacao_proposta:
                                    INPUT par_nmdatela,
                                    INPUT FALSE,
                                    INPUT crawepr.cdfinemp,
+                                   INPUT crawepr.cdlcremp,
                                    INPUT crawepr.nrctrliq,
                                    INPUT "", /* par_dsctrliq */
                                    OUTPUT TABLE tt-erro,

@@ -7960,6 +7960,10 @@ function controlaPesquisas() {
         varMod = (modalidade == 0) ? $("#cdmodali", '#' + nomeForm).val() : modalidade; //modalidade previamente carregada no cadastro da portabilidade        
         filtrosDesc = 'flgstlcr|yes;cdfinemp|' + varAux + ';cdmodali|' + varMod;
         buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dslcremp', $(this).val(), 'dslcremp', filtrosDesc, nomeForm);
+		
+		if (nomeForm != 'frmSimulacao') {
+            carregaDadosPropostaLinhaCredito();
+        }
     });
 
     // Quantidade de dias de liberacao
@@ -8529,6 +8533,7 @@ function carregaDadosPropostaFinalidade() {
 
     var tpemprst = $('#tpemprst', '#frmNovaProp').val();
     var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
+    var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
 
     showMsgAguardo('Aguarde, carregando os dados...');
 
@@ -8538,8 +8543,39 @@ function carregaDadosPropostaFinalidade() {
         data: {
             tpemprst: tpemprst,
             cdfinemp: cdfinemp,
+            cdlcremp: cdlcremp,
             nrdconta: nrdconta,
             dsctrliq: dsctrliq,
+            redirect: 'script_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            bloqueiaFundo(divRotina);
+            eval(response);
+            return false;
+        }
+    });
+    return false;
+}
+
+function carregaDadosPropostaLinhaCredito() {
+
+    var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
+    var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
+
+    showMsgAguardo('Aguarde, carregando os dados...');
+
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'telas/atenda/emprestimos/carrega_dados_proposta_linha_credito.php',
+        data: {
+            cdfinemp: cdfinemp,
+            cdlcremp: cdlcremp,
+            nrdconta: nrdconta,            
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
