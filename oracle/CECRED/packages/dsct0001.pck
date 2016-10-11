@@ -138,7 +138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   --  Sistema  : Procedimentos envolvendo desconto titulos
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 15/09/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 11/10/2016
   --
   -- Dados referentes ao programa:
   --
@@ -157,6 +157,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
   --
   --             15/09/2016 - #519903 Criação de log de controle de início, erros e fim de execução
   --                          do job pc_efetua_baixa_tit_car_job (Carlos)
+  --
+  --             11/10/2016 - #497991 Job pc_efetua_baixa_tit_car_job.
+  --                          Validação de dia útil para execução do job. If com a rotina
+  --                          gene0005.fn_valida_dia_util passando sysdate e comparando com sysdate.
+  --                          No sábado como estava com CRAPDAT.INPROCES = 2 a rotina ficava reprogramando
+  --                          final de semana inteiro e executava na segunda-feira por volta de 7h15
+  --                          sendo que o correto é as 11h30 e 17h30 (AJFink)
+  --
   ---------------------------------------------------------------------------------------------------------------
   /* Tipos de Tabelas da Package */
 
@@ -1280,15 +1288,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_tab_erro  GENE0001.typ_tab_erro;
       
       vr_exc_erro  EXCEPTION;
-
+                                      
       vr_cdprogra    VARCHAR2(40) := 'PC_EFETUA_BAIXA_TIT_CAR_JOB';
       vr_nomdojob    VARCHAR2(40) := 'JBDSCT_EFETUA_BAIXA_TIT_CAR';
       vr_flgerlog    BOOLEAN := FALSE;
+      vr_dthoje      DATE := TRUNC(SYSDATE);
 
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN     
+      BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -1303,64 +1312,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       -- Log de inicio de execucao
       pc_controla_log_batch(pr_dstiplog => 'I');
     
-      gene0004.pc_executa_job( pr_cdcooper => 3   --> Codigo da cooperativa
-                              ,pr_fldiautl => 1   --> Flag se deve validar dia util
-                              ,pr_flproces => 1   --> Flag se deve validar se esta no processo
-                              ,pr_flrepjob => 1   --> Flag para reprogramar o job
-                              ,pr_flgerlog => 1   --> indicador se deve gerar log
-                              ,pr_nmprogra => 'DSCT0001.pc_efetua_baixa_tit_car' --> Nome do programa que esta sendo executado no job
-                              ,pr_dscritic => vr_dserro);
+      -- SD#497991
+      -- validação copiada de TARI0001
+      -- Verificar se a data atual é uma data util, se retornar uma data diferente
+      -- indica que não é um dia util, então deve sair do programa sem executar ou reprogramar
+      IF gene0005.fn_valida_dia_util(pr_cdcooper => 3
+                                    ,pr_dtmvtolt => vr_dthoje) = vr_dthoje THEN -- SD#497991
 
-      -- se nao retornou critica chama rotina
-      IF trim(vr_dserro) IS NULL THEN
+        gene0004.pc_executa_job( pr_cdcooper => 3   --> Codigo da cooperativa
+                                ,pr_fldiautl => 1   --> Flag se deve validar dia util
+                                ,pr_flproces => 1   --> Flag se deve validar se esta no processo
+                                ,pr_flrepjob => 1   --> Flag para reprogramar o job
+                                ,pr_flgerlog => 1   --> indicador se deve gerar log
+                                ,pr_nmprogra => 'DSCT0001.pc_efetua_baixa_tit_car' --> Nome do programa que esta sendo executado no job
+                                ,pr_dscritic => vr_dserro);
+
+        -- se nao retornou critica chama rotina
+        IF trim(vr_dserro) IS NULL THEN
         
-        FOR rw_crapcop IN cr_crapcop LOOP
+          FOR rw_crapcop IN cr_crapcop LOOP
            
-          OPEN btch0001.cr_crapdat(rw_crapcop.cdcooper);
-          FETCH btch0001.cr_crapdat  INTO rw_crapdat;
-          CLOSE btch0001.cr_crapdat;
+            OPEN btch0001.cr_crapdat(rw_crapcop.cdcooper);
+            FETCH btch0001.cr_crapdat  INTO rw_crapdat;
+            CLOSE btch0001.cr_crapdat;
           
-          --Verifica o dia util da cooperativa e caso nao for pula a coop
-          vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper  => rw_crapcop.cdcooper
-                                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
-                                                    ,pr_tipo      => 'A');
+            --Verifica o dia util da cooperativa e caso nao for pula a coop
+            vr_dtmvtolt := gene0005.fn_valida_dia_util(pr_cdcooper  => rw_crapcop.cdcooper
+                                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
+                                                      ,pr_tipo      => 'A');
                                                     
-          IF vr_dtmvtolt <> rw_crapdat.dtmvtolt THEN
-             CONTINUE;
-          END IF;                                          
+            IF vr_dtmvtolt <> rw_crapdat.dtmvtolt THEN
+              CONTINUE;
+            END IF;                                          
           
-          DSCT0001.pc_efetua_baixa_tit_car(pr_cdcooper => rw_crapcop.cdcooper, 
-                                           pr_cdagenci => 1, 
-                                           pr_nrdcaixa => 100, 
-                                           pr_idorigem => 1, 
-                                           pr_cdoperad => 1, 
-                                           pr_dtmvtolt => rw_crapdat.dtmvtolt, 
-                                           pr_dtmvtoan => rw_crapdat.dtmvtoan, 
-                                           pr_cdcritic => vr_cdcritic, 
-                                           pr_dscritic => vr_dscritic, 
-                                           pr_tab_erro => vr_tab_erro);
+            DSCT0001.pc_efetua_baixa_tit_car(pr_cdcooper => rw_crapcop.cdcooper, 
+                                             pr_cdagenci => 1, 
+                                             pr_nrdcaixa => 100, 
+                                             pr_idorigem => 1, 
+                                             pr_cdoperad => 1, 
+                                             pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                             pr_dtmvtoan => rw_crapdat.dtmvtoan, 
+                                             pr_cdcritic => vr_cdcritic, 
+                                             pr_dscritic => vr_dscritic, 
+                                             pr_tab_erro => vr_tab_erro);
                                          
-          IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL OR vr_tab_erro.COUNT > 0 THEN
+            IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL OR vr_tab_erro.COUNT > 0 THEN
             
-            IF vr_tab_erro.COUNT > 0 THEN
-               vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-               vr_dscritic := 'Coop: ' || rw_crapcop.cdcooper || 
-                              ' - ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+              IF vr_tab_erro.COUNT > 0 THEN
+                 vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+                 vr_dscritic := 'Coop: ' || rw_crapcop.cdcooper || 
+                                ' - ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+              END IF;            
+            
+              RAISE vr_exc_erro; 
+            
             END IF;
-            
-            RAISE vr_exc_erro; 
-            
-          END IF;
           
-        END LOOP;
+          END LOOP;
       
-      ELSE
-        vr_cdcritic := 0;
-        vr_dscritic := vr_dserro;
+        ELSE
+          vr_cdcritic := 0;
+          vr_dscritic := vr_dserro;
 
-        RAISE vr_exc_erro;  
-      END IF;      
-    
+          RAISE vr_exc_erro;  
+        END IF;
+
+      END IF; -- SD#497991
+
       -- Log de fim de execucao
       pc_controla_log_batch(pr_dstiplog => 'F');
 
@@ -1377,11 +1395,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                              
         vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-         
+
         -- Log de erro de execucao
         pc_controla_log_batch(pr_dstiplog => 'E',
                               pr_dscritic => vr_dscritic);
-                            
+
         ROLLBACK;
         
       WHEN OTHERS THEN     
@@ -1399,11 +1417,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
         vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
         vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-                             
+
         -- Log de erro de execucao
         pc_controla_log_batch(pr_dstiplog => 'E',
                               pr_dscritic => vr_dscritic);
-                             
+
         ROLLBACK;                             
         
     END;        
