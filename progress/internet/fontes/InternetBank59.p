@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2009                        Ultima atualizacao: 04/08/2016
+   Data    : Marco/2009                        Ultima atualizacao: 11/10/2016
 
    Dados referentes ao programa:
 
@@ -48,6 +48,10 @@
                04/08/2016 - Adicionado tratamento para envio de relatorio de 
                             movimento de cobranca por email para convenios com
                             inenvcob = 2 (envio de arquivo por FTP) (Reinert).
+
+			   11/10/2016 - Ajustes realizado para inserir parte do campo nosso numero
+							ao relatório de  movimento de cobranca com registro,
+							conforme solicitado no chamado 496856 (Kelvin).
                             
 ..............................................................................*/
     
@@ -503,7 +507,9 @@ IF  par_idrelato = 1 OR
                                         tt-consulta-blt.dsorigem +
                                         "</dsorigem><dtdocmto>" +
                                         STRING(tt-consulta-blt.dtdocmto, "99/99/9999") +
-                                        "</dtdocmto></boleto>".   
+                                        "</dtdocmto><nossonro>" +
+										tt-consulta-blt.nossonro +
+                                        "</nossonro></boleto>".   
 
                                              
                 
