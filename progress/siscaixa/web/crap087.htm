@@ -7,7 +7,8 @@ Data de criação: 09/09/2015
 Objetivo.......: Tela de Pagamento de GPS - SICREDI
 
 Alteracoes.....:
-                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
+                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).      
+                29/09/2016 - Adicionado atributo onkeyDown para o form (Lucas Ranghetti #463572)
 
 -->
 <html>
@@ -20,15 +21,15 @@ Alteracoes.....:
         <meta name="ProgId" content="FrontPage.Editor.Document" />
         <meta http-equiv="cache-control" content="no-cache" />
         <meta http-equiv="Pragma" content="No-Cache" />
-        <meta http-equiv="Expires" content="0" />
-        <script language="JavaScript" src="/script/formatadadosie.js"></script>
+        <meta http-equiv="Expires" content="0" />        
         <script language=JavaScript src="/script/jquery.js"></script>
         <script language=JavaScript src="/script/jquery.mask.mv.js"></script>
+		<script language="JavaScript" src="/script/formatadadosie.js"></script>
         <link rel="StyleSheet" type="text/css" href="/script/viacredi.css" />
         <title>PAGAMENTO GPS SICREDI</title>
     </head>
-    <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
-        <form  method=post>
+    <body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript:controlaCampos(); mudaFoco(); click();" onKeyUp="callBLass(event); callBLini(event); callBLsal(event); ">
+        <form  onKeyDown="change_page(event)" method=post>
         <input type="hidden" name="vh_foco"     id="vh_foco"     value="" >
         <input type="hidden" name="vh_nome"     id="vh_nome"     value="" >
         <input type="hidden" name="v_msg"       id="v_msg"       value="" >

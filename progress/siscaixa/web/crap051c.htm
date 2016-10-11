@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Outubro/2009                    Ultima atualizacao: 06/05/2015
+   Data    : Outubro/2009                    Ultima atualizacao: 10/10/2016
 
    Dados referentes ao programa:
 
@@ -33,7 +33,9 @@
                            (Douglas - Chamado 226702)
                            
               06/05/2015 - Alteração no formato de valores (Lunelli SD 264635).
-             
+              
+              10/10/2016 - Incluir log na chamada da rotina crap051e -  CONTROLE 
+                           de movimentacao em especie (Lucas Ranghetti #463572)
    ......................................................................... -->
 
 <html>
@@ -110,6 +112,7 @@ function reabilitaForm() {
     DEF VAR c-nome              AS CHAR            NO-UNDO.
     DEF VAR c-poup              AS CHAR            NO-UNDO.
     DEF VAR aux_achou           AS LOGI            NO-UNDO. 
+    def var aux_nmarqlog        as char            no-undo.
 
 
     DEFINE TEMP-TABLE w-craperr  NO-UNDO
@@ -454,7 +457,25 @@ function reabilitaForm() {
                                        IF  AVAIL craptab   THEN  
                                            DO:     
                                                IF  DEC(v_valor2) >= DEC(craptab.dstextab)  THEN 
-                                                   RUN JavaScript("window.location='crap051e.w?v_pconta=" + STRING(v_conta) + "&v_pnome=" + STRING(v_nome) + "&v_ppoup=" + STRING(v_poupanca) + "&v_pidentifica=" + STRING(v_identifica) + "&v_pvalor=" + STRING(v_valor) + "&v_pvalor1=" + STRING(v_valor1) + "&v_pult_sequencia=" + STRING(p-ult-sequencia) + "&v_pprograma=" + STRING(p-programa) + "'").
+                                                   do:
+                                                       ASSIGN aux_nmarqlog = "/usr/coop/" + crapcop.dsdircop + 
+                                                                             "/log/caixa_online_"            +
+                                                                             STRING(YEAR(TODAY),"9999")      +
+                                                                             STRING(MONTH(TODAY),"99")       +
+                                                                             STRING(DAY(TODAY),"99") + ".log".      
+                                                                             
+                                                       UNIX SILENT VALUE("echo " +  
+                                                                          STRING(TIME,"HH:MM:SS") + "' --> '"          +
+                                                                          "ROTINA: " + CAPS(p-programa) +  "/CRAP051e" +                                      
+                                                                          " PA: " + STRING(v_pac)                      +
+                                                                          " CAIXA: " + STRING(v_caixa)                 +
+                                                                          " OPERADOR: " + STRING(v_operador)           +
+                                                                          " - Chamada rotina: "                        + 
+                                                                          "CONTROLE DE MOVIMENTACAO EM ESPECIE"        + 
+                                                                          " >> " + aux_nmarqlog).    
+                                                        
+                                                      RUN JavaScript("window.location='crap051e.w?v_pconta=" + STRING(v_conta) + "&v_pnome=" + STRING(v_nome) + "&v_ppoup=" + STRING(v_poupanca) + "&v_pidentifica=" + STRING(v_identifica) + "&v_pvalor=" + STRING(v_valor) + "&v_pvalor1=" + STRING(v_valor1) + "&v_pult_sequencia=" + STRING(p-ult-sequencia) + "&v_pprograma=" + STRING(p-programa) + "'").
+                                                   end.
                                           END.
                                    END.
                            END.  

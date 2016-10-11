@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Agosto/2003                     Ultima atualizacao: 13/12/2013
+   Data    : Agosto/2003                     Ultima atualizacao: 04/10/2016
 
    Dados referentes ao programa:
 
@@ -32,6 +32,8 @@
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)                     
 
+               04/10/2016 - Verificar se existe  registro criado na tabela de controle de 
+                            movimentacoes em especie. (Lucas Ranghetti #463572)
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -136,6 +138,9 @@ DEF VAR v_poupanca  AS CHAR no-undo.
 DEF VAR v_valor     AS CHAR NO-UNDO.
 DEF VAR v_valor1    AS CHAR NO-UNDO.
 DEF VAR v_programa  AS CHAR NO-UNDO.
+DEF VAR aux_nrdctabb AS DECI NO-UNDO.
+DEF VAR aux_nrdocmto AS DECI NO-UNDO.
+DEF VAR aux_nmarqlog AS CHAR NO-UNDO.
 
 DEF VAR p-mensagem         AS CHAR no-undo.
 
@@ -564,6 +569,12 @@ IF REQUEST_METHOD = 'POST':U   THEN
 
       {include/assignfields.i}
 
+      ASSIGN aux_nmarqlog = "/usr/coop/" + crapcop.dsdircop + 
+                            "/log/caixa_online_"            +
+                            STRING(YEAR(TODAY),"9999")      +
+                            STRING(MONTH(TODAY),"99")       +
+                            STRING(DAY(TODAY),"99") + ".log".           
+     
       IF get-value('cancela') <> ''   THEN
          DO:
             ASSIGN vh_foco     = '9'     flinfdst    = 'S'
@@ -576,10 +587,28 @@ IF REQUEST_METHOD = 'POST':U   THEN
          END.
       ELSE 
          DO:
+         
             ASSIGN v_nrccdrcb = REPLACE(v_nrccdrcb,'.','')
                   v_cpfcgrcb = REPLACE(v_cpfcgrcb,'/','')
                    v_cpfcgrcb = REPLACE(v_cpfcgrcb,'.','')
                    v_cpfcgrcb = REPLACE(v_cpfcgrcb,'-','').
+                       
+            
+                       
+            /* Se clicou no OK */           
+            IF  get-value('ok') <> '' THEN                           
+                UNIX SILENT VALUE("echo " +  
+                                  STRING(TIME,"HH:MM:SS") + "' --> '" +
+                                  "ROTINA: " + CAPS(v_programa) +  "/CRAP051e"   +                                      
+                                  " PA: " + STRING(v_pac)             +
+                                  " CAIXA: " + STRING(v_caixa)        +
+                                  " OPERADOR: " + STRING(v_operador)  +
+                                  " CONTA: " + STRING(v_nrccdrcb)     +                                      
+                                  " VALOR: " + STRING(v_valor)        +
+                                  " - Selecionado botao: "            + 
+                                  CAPS(get-value('ok'))               + 
+                                  " >> " + aux_nmarqlog).                 
+            
                            
             RUN dbo/b1crap51.p PERSISTENT SET h-b1crap51.
             RUN elimina-erro 
@@ -688,119 +717,167 @@ IF REQUEST_METHOD = 'POST':U   THEN
                      
                       IF   NOT l-houve-erro   THEN
                       DO:
-                      DO TRANSACTION ON ERROR UNDO:
-                          
-                         ASSIGN l-houve-erro = NO.
+                          DO TRANSACTION ON ERROR UNDO:
+                              
+                             ASSIGN l-houve-erro = NO.
 
-                         RUN dbo/bo_controla_depositos.p 
-                             PERSISTENT SET h-bo-depos.
-                         RUN atualiza-crapcme
-                                   IN  h-bo-depos(INPUT v_coop,
-                                                  INPUT int(v_pac),
-                                                  INPUT int(v_caixa),
-                                                  INPUT v_operador,
-                                                  INPUT v_vlmincen,
-                                                  INPUT p-ult-sequencia,
-                                                  INPUT INTE(v_nrccdrcb),
-                                                  INPUT v_nmpesrcb,
-                                                  INPUT v_cpfcgrcb,
-                                                  INPUT "Fisica",
-                                                  INPUT v_nridercb,
-                                                  INPUT DATE(v_dtnasrcb),
-                                                  INPUT v_desenrcb,
-                                                  INPUT v_nmcidrcb,
-                                                  INPUT v_cdufdrcb,
-                                                  INPUT INTE(v_nrceprcb),
-                                                  INPUT v_recursos,
-                                                  INPUT "", 
-                                                  INPUT flinfdst).
+                             RUN dbo/bo_controla_depositos.p 
+                                 PERSISTENT SET h-bo-depos.
+                             RUN atualiza-crapcme
+                                       IN  h-bo-depos(INPUT v_coop,
+                                                      INPUT int(v_pac),
+                                                      INPUT int(v_caixa),
+                                                      INPUT v_operador,
+                                                      INPUT v_vlmincen,
+                                                      INPUT p-ult-sequencia,
+                                                      INPUT INTE(v_nrccdrcb),
+                                                      INPUT v_nmpesrcb,
+                                                      INPUT v_cpfcgrcb,
+                                                      INPUT "Fisica",
+                                                      INPUT v_nridercb,
+                                                      INPUT DATE(v_dtnasrcb),
+                                                      INPUT v_desenrcb,
+                                                      INPUT v_nmcidrcb,
+                                                      INPUT v_cdufdrcb,
+                                                      INPUT INTE(v_nrceprcb),
+                                                      INPUT v_recursos,
+                                                      INPUT "", 
+                                                      INPUT flinfdst).
 
-                         DELETE PROCEDURE h-bo-depos.
-                   
-                                                           
-                             IF RETURN-VALUE = 'NOK' THEN
-                                DO:
-                                 ASSIGN l-houve-erro = YES.
-                                 FOR EACH w-craperr:
-                                     DELETE w-craperr.
-                                 END.
-                                 FOR EACH craperr NO-LOCK WHERE
-                                          craperr.cdcooper = 
-                                            crapcop.cdcooper  AND
-                                          craperr.cdagenci =  
-                                            INT(v_pac)        AND
-                                          craperr.nrdcaixa =
-                                            INT(v_caixa):
-                                     CREATE w-craperr.
-                                     ASSIGN w-craperr.cdagenci   = 
-                                                      craperr.cdagenc
-                                            w-craperr.nrdcaixa   =
-                                                      craperr.nrdcaixa
-                                            w-craperr.nrsequen   = 
-                                                      craperr.nrsequen
-                                            w-craperr.cdcritic   = 
-                                                      craperr.cdcritic
-                                            w-craperr.dscritic   = 
-                                                      craperr.dscritic
-                                            w-craperr.erro       = 
-                                                      craperr.erro.
-                                 END.
-                                 UNDO.
-                             END.
-                      END. /*transaction*/
-                      
-                      IF l-houve-erro THEN
-                         DO:
-
-  
-                           FOR EACH craperr WHERE 
-                                    craperr.cdcooper = crapcop.cdcooper  AND
-                                    craperr.cdagenci = INTE(v_pac)       AND
-                                    craperr.nrdcaixa = INTE(v_caixa)
-                                    EXCLUSIVE-LOCK:
-                              DELETE craperr.
-                           END.
-                           FOR EACH w-craperr NO-LOCK:
-                                 CREATE craperr.
-                                 ASSIGN craperr.cdcooper =
-                                                crapcop.cdcooper
-                                        craperr.cdagenci = 
-                                                w-craperr.cdagenc
-                                        craperr.nrdcaixa   = 
-                                                w-craperr.nrdcaixa
-                                        craperr.nrsequen   = 
-                                                w-craperr.nrsequen
-                                        craperr.cdcritic   =
-                                                w-craperr.cdcritic
-                                        craperr.dscritic   = 
-                                                w-craperr.dscritic
-                                        craperr.erro       = 
-                                                w-craperr.erro.
-                                 VALIDATE craperr.
-                             END.
-
-                             {include/i-erro.i}
-                         END.
-                      ELSE
-                         DO:
-                             IF  v_programa = "CRAP051"   THEN
+                             DELETE PROCEDURE h-bo-depos.                   
+                                                                
+                             IF  RETURN-VALUE = 'NOK' THEN
                                  DO:
-                                     {&OUT}
-                        '<script> window.location = "crap051.w" </script>'.  
+                                     ASSIGN l-houve-erro = YES.
+                                     FOR EACH w-craperr:
+                                         DELETE w-craperr.
+                                     END.
+                                     FOR EACH craperr NO-LOCK WHERE
+                                               craperr.cdcooper = 
+                                                 crapcop.cdcooper  AND
+                                               craperr.cdagenci =  
+                                                 INT(v_pac)        AND
+                                               craperr.nrdcaixa =
+                                                 INT(v_caixa):
+                                         CREATE w-craperr.
+                                         ASSIGN w-craperr.cdagenci   = 
+                                                           craperr.cdagenc
+                                                 w-craperr.nrdcaixa   =
+                                                           craperr.nrdcaixa
+                                                 w-craperr.nrsequen   = 
+                                                           craperr.nrsequen
+                                                 w-craperr.cdcritic   = 
+                                                           craperr.cdcritic
+                                                 w-craperr.dscritic   = 
+                                                           craperr.dscritic
+                                                 w-craperr.erro       = 
+                                                           craperr.erro.
+                                     END.
+                                     UNDO.
                                  END.
-                             ELSE
-                             IF   v_programa = "CRAP057"   THEN
-                                  DO:
-                                     {&OUT}
-                        '<script> window.location = "crap057.w" </script>'.  
-                                  END.
-                             ELSE
-                             IF   v_programa = "CRAP055"   THEN
-                                  DO:
-                                     {&OUT}
-                        '<script> window.location = "crap055.w" </script>'.  
-                                  END.            
-                         END.
+                             
+                             IF  v_programa = "CRAP051" AND
+                                 NOT l-houve-erro THEN
+                                 DO:
+                                     /* Forçar a verificação da tabela crapcme para garantirmos que o operador irá ter 
+                                        digitado as informações */
+                                     FOR EACH craplcm WHERE craplcm.cdcooper = crapcop.cdcooper   AND
+                                                            craplcm.dtmvtolt = DATE(v_data)       AND
+                                                            craplcm.cdagenci = inte(v_pac)        AND
+                                                            craplcm.cdbccxlt = 11                 AND
+                                                            craplcm.nrdolote = 11000 + inte(v_caixa) AND
+                                                            craplcm.nrautdoc = p-ult-sequencia    AND
+                                                            craplcm.cdhistor = 1 USE-INDEX craplcm3  NO-LOCK:
+
+                                         ASSIGN aux_nrdctabb = craplcm.nrdctabb
+                                                aux_nrdocmto = craplcm.nrdocmto.
+                                     END. 
+                                 
+                                     FIND crapcme WHERE crapcme.cdcooper = crapcop.cdcooper   AND
+                                                        crapcme.dtmvtolt = DATE(v_data)       AND
+                                                        crapcme.cdagenci = inte(v_pac)        AND
+                                                        crapcme.cdbccxlt = 11                 AND
+                                                        crapcme.nrdolote = 11000 + inte(v_caixa)   AND
+                                                        crapcme.nrdctabb = aux_nrdctabb        AND
+                                                        crapcme.nrdocmto = aux_nrdocmto   
+                                                        NO-LOCK NO-ERROR.
+                                                             
+                                     IF  NOT AVAILABLE crapcme   THEN
+                                         DO:
+                                             ASSIGN l-houve-erro = YES.
+                                             FOR EACH w-craperr:
+                                                 DELETE w-craperr.
+                                             END.
+                                         
+                                             FIND FIRST w-craperr WHERE                                                  
+                                                        w-craperr.cdagenci = INT(v_pac)        AND
+                                                        w-craperr.nrdcaixa = INT(v_caixa) 
+                                                        NO-LOCK NO-ERROR.
+                                                        
+                                             IF  NOT AVAILABLE w-craperr THEN
+                                                 DO:
+                                                     CREATE w-craperr.
+                                                     ASSIGN w-craperr.cdagenci = INT(v_pac) 
+                                                            w-craperr.nrdcaixa = INT(v_caixa)
+                                                            w-craperr.nrsequen = p-ult-sequencia 
+                                                            w-craperr.cdcritic = 0
+                                                            w-craperr.dscritic = "Controle de movimentacao em especie inexistente.".
+                                                 END.                                             
+                                         END.
+                                 END.
+                          END. /*transaction*/                                        
+                      
+                          IF l-houve-erro THEN
+                             DO:
+      
+                               FOR EACH craperr WHERE 
+                                        craperr.cdcooper = crapcop.cdcooper  AND
+                                        craperr.cdagenci = INTE(v_pac)       AND
+                                        craperr.nrdcaixa = INTE(v_caixa)
+                                        EXCLUSIVE-LOCK:
+                                  DELETE craperr.
+                               END.
+                               FOR EACH w-craperr NO-LOCK:
+                                     CREATE craperr.
+                                     ASSIGN craperr.cdcooper =
+                                                    crapcop.cdcooper
+                                            craperr.cdagenci = 
+                                                    w-craperr.cdagenc
+                                            craperr.nrdcaixa   = 
+                                                    w-craperr.nrdcaixa
+                                            craperr.nrsequen   = 
+                                                    w-craperr.nrsequen
+                                            craperr.cdcritic   =
+                                                    w-craperr.cdcritic
+                                            craperr.dscritic   = 
+                                                    w-craperr.dscritic
+                                            craperr.erro       = 
+                                                    w-craperr.erro.
+                                     VALIDATE craperr.
+                                 END.
+
+                                 {include/i-erro.i}
+                             END.
+                          ELSE
+                             DO:
+                                 IF  v_programa = "CRAP051"   THEN
+                                     DO:
+                                         {&OUT}
+                            '<script> window.location = "crap051.w" </script>'.  
+                                     END.
+                                 ELSE
+                                 IF   v_programa = "CRAP057"   THEN
+                                      DO:
+                                         {&OUT}
+                            '<script> window.location = "crap057.w" </script>'.  
+                                      END.
+                                 ELSE
+                                 IF   v_programa = "CRAP055"   THEN
+                                      DO:
+                                         {&OUT}
+                            '<script> window.location = "crap055.w" </script>'.  
+                                      END.            
+                             END.
                        END. /* mAGUI ultimo */
                   END.
             END.        

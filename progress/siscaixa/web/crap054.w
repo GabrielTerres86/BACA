@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/02/2016
+   Data    : Marco/2001                      Ultima atualizacao: 10/10/2016
 
    Dados referentes ao programa:
 
@@ -44,6 +44,9 @@
                             
                23/02/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                             PinPad Novo (Lucas Lunelli - [PROJ290])
+                            
+               10/10/2016 - Incluir log na chamada da rotina crap051f - Controle 
+                            de movimentacao em especie (Lucas Ranghetti #463572)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -135,6 +138,7 @@ DEF VAR p-flgdebcc           AS LOGI INITIAL FALSE.
 
 DEF VAR aux_nrdconta    AS INTE.
 DEF VAR aux_vllanmto    LIKE craplcm.vllanmto.
+DEF VAR aux_nmarqlog    AS CHAR         NO-UNDO.
 
 DEF VAR l-houve-erro    AS LOG          NO-UNDO.
 
@@ -943,6 +947,23 @@ PROCEDURE process-web-request :
                          DO:
                              IF  aux_vllanmto >= DEC(craptab.dstextab)   THEN
                                  DO:
+                                 
+                                     ASSIGN aux_nmarqlog = "/usr/coop/" + crapcop.dsdircop + 
+                                                           "/log/caixa_online_"            +
+                                                           STRING(YEAR(TODAY),"9999")      +
+                                                           STRING(MONTH(TODAY),"99")       +
+                                                           STRING(DAY(TODAY),"99") + ".log".      
+                                                           
+                                     UNIX SILENT VALUE("echo " +  
+                                                        STRING(TIME,"HH:MM:SS") + "' --> '"          +
+                                                        "ROTINA: " + CAPS(p-programa) +  "/CRAP051f" +                                      
+                                                        " PA: " + STRING(v_pac)                      +
+                                                        " CAIXA: " + STRING(v_caixa)                 +
+                                                        " OPERADOR: " + STRING(v_operador)           +
+                                                        " - Chamada rotina: "                        + 
+                                                        "CONTROLE DE MOVIMENTACAO EM ESPECIE"        + 
+                                                        " >> " + aux_nmarqlog).    
+                                 
                                      ASSIGN p-nrdolote = 11000 + INT(v_caixa). 
                                                
                                      {&OUT}
