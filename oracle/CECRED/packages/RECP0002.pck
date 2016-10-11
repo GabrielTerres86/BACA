@@ -1812,19 +1812,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         RAISE vr_exc_erro;
       END IF;
     END IF; 
-
-    BEGIN
-      -- Alterar a situação do acordo para cancelado
-      UPDATE tbrecup_acordo SET
-             cdsituacao = 3 -- Cancelado
-            ,dtcancela = pr_dtcancel
-            ,vlbloqueado = 0 -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
-       WHERE nracordo = rw_tbacordo.nracordo;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao atualizar acordo: '||SQLERRM;
-        RAISE vr_exc_erro_det;   
-    END;
       
     -- Desmarcar o contrato como CIN
     UPDATE crapcyc
@@ -1838,7 +1825,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                        AND DECODE(tbrecup_acordo_contrato.cdorigem,2,3,tbrecup_acordo_contrato.cdorigem) = crapcyc.cdorigem
                        AND tbrecup_acordo_contrato.nracordo = rw_tbacordo.nracordo);   
  
-    COMMIT;    
+    BEGIN
+      -- Alterar a situação do acordo para cancelado
+      UPDATE tbrecup_acordo SET
+             cdsituacao = 3 -- Cancelado
+            ,dtcancela = pr_dtcancel
+            ,vlbloqueado = 0 -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
+       WHERE nracordo = rw_tbacordo.nracordo;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar acordo: '||SQLERRM;
+        RAISE vr_exc_erro_det;   
+    END;   
 
   EXCEPTION
     WHEN vr_exc_erro_det THEN
