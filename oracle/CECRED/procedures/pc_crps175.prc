@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/96.                    Ultima atualizacao: 13/06/2016
+   Data    : Novembro/96.                    Ultima atualizacao: 28/09/2016
 
    Dados referentes ao programa:
 
@@ -126,6 +126,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
               13/06/2016 - Ajustado leitura da contas bloqueadas para utilizar a rotina padrao
                            e o cursor da craptab para utilizar o indice na pesquisa
                            (Douglas - Chamado 454248)
+                           
+             28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                          P308 (Ricardo Linhares).                            
+                           
      ............................................................................. */
 
      DECLARE
@@ -457,6 +461,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
        vr_dscomand       VARCHAR2(1000);
        vr_dstitulo       VARCHAR2(100);
 
+       -- Controle de arquivos
+       vr_dircon VARCHAR2(200);
+       vr_arqcon VARCHAR2(200);
+       vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+       vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+       vc_cdtodascooperativas INTEGER := 0;  
+
        -- Valores utilizados para contabilidade
        vr_tot_vlprvfis   NUMBER:= 0;
        vr_tot_vlprvjur   NUMBER:= 0;
@@ -495,7 +506,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
 
        --Variavel para arquivo de dados e xml
        vr_nom_direto  VARCHAR2(400);
-       vr_nom_micros  VARCHAR2(400);
        vr_nom_arquivo VARCHAR2(100);
 
        --Variaveis de Excecao
@@ -1706,7 +1716,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
                            TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                                --> Data DDMMAA
                            gene0002.fn_mask(4237, pr_dsforma => '9999')||','||                                         --> Conta Origem
-                           gene0002.fn_mask(4271, pr_dsforma => '9999')||','||                    	                   --> Conta Destino
+                           gene0002.fn_mask(4271, pr_dsforma => '9999')||','||                                         --> Conta Destino
                            TRIM(TO_CHAR(vr_tot_rdcagefis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
                            gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
                            '"SALDO TOTAL DE TITULOS ATIVOS RDCA 60 - COOPERADOS PESSOA FISICA"';                     --> Descricao
@@ -1862,7 +1872,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                               --> Data AAMMDD do Arquivo
                            TO_CHAR(rw_crapdat.dtmvtolt,'DDMMYY')||','||                                               --> Data DDMMAA
                            gene0002.fn_mask(8054, pr_dsforma => '9999')||','||                                        --> Conta Origem
-                           gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                    	                  --> Conta Destino
+                           gene0002.fn_mask(8116, pr_dsforma => '9999')||','||                                        --> Conta Destino
                            TRIM(TO_CHAR(vr_tot_vlprvfis, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
                            gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                        --> Fixo
                            '"PROVISAO DO MES - RDCA 60 COOPERADOS PESSOA FISICA"';                                    --> Descricao
@@ -2020,14 +2030,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
              RAISE vr_exc_erro;
           END;
           
-          -- Buscar o diretório micros
-          vr_nom_micros := gene0001.fn_diretorio(pr_tpdireto => 'M'   
-                                                ,pr_cdcooper => pr_cdcooper
-                                                ,pr_nmsubdir => '/contab'); 
-          
+         -- Busca o diretório para contabilidade
+          vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+          vr_dircon := vr_dircon || vc_dircon;
+          vr_arqcon:=  TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_RDCA60.txt';
+         
           -- Executa comando UNIX para converter arq para Dos
-          vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqtxt||' > '
-                                   || vr_nom_micros ||'/'||vr_nmarqtxt || ' 2>/dev/null';
+          vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqtxt||' > ' ||
+                                      vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
           -- Executar o comando no unix
           GENE0001.pc_OScommand(pr_typ_comando => 'S'

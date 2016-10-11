@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                                        ,pr_nmtelant IN VARCHAR2
                                        ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 20/07/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 07/10/2016
 
    Dados referentes ao programa:
 
@@ -231,17 +231,29 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                22/12/2015 - Ajustar os codigos de alines conforme revisao de alineas e 
                             processo de devolucao de cheque (Douglas - Melhoria 100)
 
-			         31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
-							              (Adriano - SD 426308).
+         31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
+               (Adriano - SD 426308).
 
                26/04/2016 - Ajuste para evitar geracao de raise quando tiver erro de 
-      			                conversao para numerico (vr_cdcritic:= 843) (Daniel) 
+                            conversao para numerico (vr_cdcritic:= 843) (Daniel) 
                             
                20/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
+                            
+
+                07/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                                   P308 (Ricardo Linhares).                               
      ............................................................................. */
 
      DECLARE
+
+      -- variáveis para controle de arquivos
+       vr_dircon VARCHAR2(200);
+       vr_arqcon VARCHAR2(200);
+       vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+       vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+       vc_cdtodascooperativas INTEGER := 0;        
+       vr_dscomand       VARCHAR2(1000);    
 
        /* Declaracao dos registros e vetores */
 
@@ -391,7 +403,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
          AND   crapneg.cdobserv IN (11,12,13,14,20,25,28,30,35,43,44,45)
          AND   crapneg.dtfimest IS NULL;
        rw_crapneg cr_crapneg%ROWTYPE;
-       
+
        -- Verificar se devolucao é automatica
        CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
                                   ,pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -410,7 +422,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_typ_saida       VARCHAR2(3);
        vr_dircop_imp      VARCHAR2(200);
        vr_nom_direto      VARCHAR2(200);
-       vr_nom_dirmic      VARCHAR2(200);
        vr_dircop_salvar   VARCHAR2(200);
        vr_dircop_rlnsv    VARCHAR2(200);
        vr_email_dest      VARCHAR2(500);
@@ -485,6 +496,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
           vr_nrcheque   gncpchq.nrcheque%TYPE;
           vr_cdtipreg   gncpchq.cdtipreg%TYPE;
           vr_exc_erro   EXCEPTION;
+          
+      
 
         BEGIN
 
@@ -2545,10 +2558,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                         || vr_cdprogra || ' --> '
                                                                         || vr_des_erro || vr_compl_erro);
-						  
-						  -- Limpa as variaveis apos efetuar log.
-						  vr_cdcritic:= 0;
-						  vr_des_erro:= NULL;
+              
+              -- Limpa as variaveis apos efetuar log.
+              vr_cdcritic:= 0;
+              vr_des_erro:= NULL;
                           vr_compl_erro:= NULL;
                       END;
 
@@ -2929,7 +2942,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             END IF;
                             vr_cdcritic:= 414;
                             vr_cdalinea:= 49;
-                            
                           END IF;
                         END IF; --cr_cdcritic = 0
                       END IF; --cr_crapfdc%NOTFOUND
@@ -3089,7 +3101,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         --Ler proxima linha do arquivo
                         RAISE vr_exc_pula;
                       END IF; --vr_cdcritic = 108
-                      
+
                       -- Se cheque ja entrou critica 97
                       IF vr_cdcritic = 97 THEN
 
@@ -4679,10 +4691,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                                       ,pr_cdcooper => pr_cdcooper);
 
-                -- busca o diretorio micros contab
-                vr_nom_dirmic := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
-                                                      ,pr_cdcooper => pr_cdcooper
-                                                      ,pr_nmsubdir => 'contab');
 
                 -- Inicializar o CLOB
                 dbms_lob.createtemporary(vr_xml_rel, true);
@@ -4884,6 +4892,11 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 IF LENGTH(vr_clobcri) > 0 THEN
                   -- Arquivo de saida
                   vr_nmarquiv_cri := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
+                  
+                  -- Busca o diretório para contabilidade
+                  vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+                  vr_dircon := vr_dircon || vc_dircon;
+                  vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
 
                   -- Chama a geracao do TXT
                   GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
@@ -4893,10 +4906,31 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                      ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_nmarquiv_cri    --> Arquivo final com o path
                                                      ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                                      ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                                     ,pr_dspathcop => vr_nom_dirmic            --> Copiar para a Micros
+                                                     ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
                                                      ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
                                                      ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                                      ,pr_des_erro  => vr_des_erro);            --> Saída com erro
+                                                     
+
+                       -- Executa comando UNIX para converter arq para Dos
+                     vr_dscomand := 'ux2dos '||vr_dircon||'/'||vr_nmarquiv_cri||' > '||
+                                                vr_dircon||'/'||vr_arqcon||' 2>/dev/null';                                           
+                                                
+                      -- Executar o comando no unix
+                      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                           ,pr_des_comando => vr_dscomand
+                                           ,pr_typ_saida   => vr_typ_saida
+                                           ,pr_des_saida   => vr_des_erro);
+
+                      IF vr_typ_saida = 'ERR' THEN
+                        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                  ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                                   || vr_cdprogra || ' --> ERRO AO COPIAR ARQUIVO ' || vr_nmarquiv || ': '
+                                                                   || vr_des_erro );
+                      END IF;                                             
+                                                     
+                                                     
                 END IF;
 
                 -- Liberando a memória alocada pro CLOB

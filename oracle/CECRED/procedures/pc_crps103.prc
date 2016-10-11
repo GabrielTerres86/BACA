@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Dezembro/94.                    Ultima atualizacao: 10/04/2015
+   Data    : Dezembro/94.                    Ultima atualizacao: 28/09/2016
 
    Dados referentes ao programa:
 
@@ -118,6 +118,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
                            
               03/08/2015 - Não exibir no arquivo informações de agencias com valor 
                            zero. Conforme chamado 315716. ( Renato - Supero )
+                           
+	            28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                           P308 (Ricardo Linhares).                            
+                           
+                           
 ............................................................................. */
 
   -- Leituras para include da BO de Aplicacao
@@ -338,7 +343,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
   vr_sldpresg_tmp  craplap.vllanmto%TYPE; --> Valor saldo de resgate
   vr_dup_vlsdrdca  craplap.vllanmto%TYPE; --> Acumulo do saldo da aplicacao RDCA
   vr_nom_direto     VARCHAR2(400);        --> Nome da pasta para arquivo de dados
-  vr_nom_micros     VARCHAR2(400);        --> Nome da pasta do diretorio micros
   vr_nmarqtxt       VARCHAR2(100);        --> Nome do arquivo TXT
   vr_input_file     UTL_FILE.file_type;   --> Handle Utl File
   vr_setlinha       VARCHAR2(400);        --> Linhas do arquivo
@@ -346,7 +350,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
   vr_tot_rdcagejur  NUMBER := 0;          --> Valor Total
   vr_tot_prvmesfis      craplap.vllanmto%TYPE := 0;
   vr_tot_prvmesjur      craplap.vllanmto%TYPE := 0;  
-   
+  
+  vr_dircon VARCHAR2(200);
+  vr_arqcon VARCHAR2(200);
+  vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+  vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+  vc_cdtodascooperativas INTEGER := 0;   
  
   aux_ttslfmes     NUMBER(16,2) := 0;
   aux_dtinimes     DATE;
@@ -810,91 +819,91 @@ BEGIN
      IF rw_craprda2.flgctain = 1 THEN
         -- acumula_aplicacoes_novas.
         IF rw_craplap.cdhistor in (118, 492, 143) THEN
-           -- 118	RESGATE
-           -- 492	RESGATE
-           -- 143	RESG.P/UNIF.
+           -- 118  RESGATE
+           -- 492  RESGATE
+           -- 143  RESG.P/UNIF.
            vr_vlresmes_n := vr_vlresmes_n + rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor = 116 THEN
-           -- 116	RENDIMENTO
+           -- 116  RENDIMENTO
            vr_vlrenmes_n := vr_vlrenmes_n + rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor = 117 THEN
-           -- 117	PROVISAO
+           -- 117  PROVISAO
            vr_vlprvmes_n := vr_vlprvmes_n + rw_craplap.vllanmto;
            IF rw_craplap.nrdolote = 8380 THEN
               vr_vlprvlan_n := vr_vlprvlan_n + rw_craplap.vllanmto;
            END if;
         ELSIF rw_craplap.cdhistor in (119, 124) THEN
-           -- 119	DIF.TX. MAIOR
-           -- 124	AJUSTE PROV.
+           -- 119  DIF.TX. MAIOR
+           -- 124  AJUSTE PROV.
            vr_vlajuprv_n := vr_vlajuprv_n + rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor in (121, 125) THEN
-          -- 121	DIF.TX. MENOR
-          -- 125	AJUSTE PROV.
+          -- 121  DIF.TX. MENOR
+          -- 125  AJUSTE PROV.
           vr_vlajuprv_n := vr_vlajuprv_n - rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor in (126, 493) THEN
-          -- 126	SAQ.S/REND.30
-          -- 493	SAQ.S/REND.30
+          -- 126  SAQ.S/REND.30
+          -- 493  SAQ.S/REND.30
           vr_vlsaques_n := vr_vlsaques_n + rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor = 861 THEN
-          -- 861	DB.IRRF
+          -- 861  DB.IRRF
           vr_vlrtirrf_n := vr_vlrtirrf_n + rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor = 875 THEN
-          -- 875	AJT RGT IR-30
+          -- 875  AJT RGT IR-30
           vr_vlirajrg_n := vr_vlirajrg_n + rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor = 877 THEN
-          -- 877	AJT REN IR-30
+          -- 877  AJT REN IR-30
           vr_vlirajrn_n := vr_vlirajrn_n + rw_craplap.vllanmto;
         ELSIF rw_craplap.cdhistor = 868 THEN
-          -- 868	IR ABONO APLIC
+          -- 868  IR ABONO APLIC
           vr_vlrtirab_n := vr_vlrtirab_n + rw_craplap.vllanmto;
         END IF;
     ELSE
       -- acumula_aplicacoes_antigas.
       IF rw_craplap.cdhistor in (118, 492, 143) THEN
-         -- 118	RESGATE
-         -- 492	RESGATE
-         -- 143	RESG.P/UNIF.
+         -- 118  RESGATE
+         -- 492  RESGATE
+         -- 143  RESG.P/UNIF.
          vr_vlresmes_a := vr_vlresmes_a + rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor = 116 THEN
-         -- 116	RENDIMENTO
+         -- 116  RENDIMENTO
          vr_vlrenmes_a := vr_vlrenmes_a + rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor = 117 THEN
-         -- 117	PROVISAO
+         -- 117  PROVISAO
          vr_vlprvmes_a := vr_vlprvmes_a + rw_craplap.vllanmto;
          IF rw_craplap.nrdolote = 8380 THEN
             vr_vlprvlan_a := vr_vlprvlan_a + rw_craplap.vllanmto;
          END IF;
       ELSIF rw_craplap.cdhistor in (119, 124) THEN
-         -- 119	DIF.TX. MAIOR
-         -- 124	AJUSTE PROV.
+         -- 119  DIF.TX. MAIOR
+         -- 124  AJUSTE PROV.
          vr_vlajuprv_a := vr_vlajuprv_a + rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor in (121, 125) THEN
-        -- 121	DIF.TX. MENOR
-        -- 125	AJUSTE PROV.
+        -- 121  DIF.TX. MENOR
+        -- 125  AJUSTE PROV.
         vr_vlajuprv_a := vr_vlajuprv_a - rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor in (126, 493) THEN
-         -- 126	SAQ.S/REND.30
-         -- 493	SAQ.S/REND.30
+         -- 126  SAQ.S/REND.30
+         -- 493  SAQ.S/REND.30
          vr_vlsaques_a := vr_vlsaques_a + rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor = 861 THEN
-         -- 861	DB.IRRF
+         -- 861  DB.IRRF
          vr_vlrtirrf_a := vr_vlrtirrf_a + rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor = 875 THEN  -- Ajuste IR Resgate
-         -- 875	AJT RGT IR-30
+         -- 875  AJT RGT IR-30
          vr_vlirajrg_a := vr_vlirajrg_a + rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor = 877 THEN  -- Ajuste IR Rendimento
-         -- 877	AJT REN IR-30
+         -- 877  AJT REN IR-30
          vr_vlirajrn_a := vr_vlirajrn_a + rw_craplap.vllanmto;
       ELSIF rw_craplap.cdhistor = 868 THEN
-         -- 868	IR ABONO APLIC
+         -- 868  IR ABONO APLIC
          vr_vlrtirab_a := vr_vlrtirab_a + rw_craplap.vllanmto;
       END IF;
     END IF;
 
     IF rw_craplap.cdhistor IN (118, 492, 143) THEN
-       -- 118	RESGATE
-       -- 492	RESGATE
-       -- 143	RESG.P/UNIF.
+       -- 118  RESGATE
+       -- 492  RESGATE
+       -- 143  RESG.P/UNIF.
        
        vr_vlresmes := vr_vlresmes + rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
@@ -905,12 +914,12 @@ BEGIN
           vr_detalhe(vr_ind_detalhe).vlrgtmes := vr_detalhe(vr_ind_detalhe).vlrgtmes + rw_craplap.vllanmto;
        END IF;
     ELSIF rw_craplap.cdhistor = 116 THEN
-       -- 116	RENDIMENTO
+       -- 116  RENDIMENTO
       vr_vlrenmes := vr_vlrenmes + rw_craplap.vllanmto;
       -- Separando por tipo de pessoa
       vr_tab_aplicacao(rw_craplap.inpessoa).vlrenmes := vr_tab_aplicacao(rw_craplap.inpessoa).vlrenmes + rw_craplap.vllanmto;
     ELSIF rw_craplap.cdhistor = 117 THEN
-       -- 117	PROVISAO
+       -- 117  PROVISAO
        vr_vlprvmes := vr_vlprvmes + rw_craplap.vllanmto;
        -- Dados para contabilidade - Informacoes de provisao separados por agencia e tipo de pessoa
        IF rw_craplap.inpessoa = 1 THEN
@@ -939,20 +948,20 @@ BEGIN
           vr_tab_aplicacao(rw_craplap.inpessoa).vlprvlan := vr_tab_aplicacao(rw_craplap.inpessoa).vlprvlan + rw_craplap.vllanmto;
        END IF;
     ELSIF rw_craplap.cdhistor IN (119, 124) THEN
-       -- 119	DIF.TX. MAIOR
-       -- 124	AJUSTE PROV.
+       -- 119  DIF.TX. MAIOR
+       -- 124  AJUSTE PROV.
        vr_vlajuprv := vr_vlajuprv + rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
        vr_tab_aplicacao(rw_craplap.inpessoa).vlajuprv := vr_tab_aplicacao(rw_craplap.inpessoa).vlajuprv + rw_craplap.vllanmto;
     ELSIF rw_craplap.cdhistor IN (121, 125) THEN
-       -- 121	DIF.TX. MENOR
-       -- 125	AJUSTE PROV.
+       -- 121  DIF.TX. MENOR
+       -- 125  AJUSTE PROV.
        vr_vlajuprv := vr_vlajuprv - rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
        vr_tab_aplicacao(rw_craplap.inpessoa).vlajuprv := vr_tab_aplicacao(rw_craplap.inpessoa).vlajuprv - rw_craplap.vllanmto;
     ELSIF rw_craplap.cdhistor in (126, 493) THEN
-       -- 126	SAQ.S/REND.30
-       -- 493	SAQ.S/REND.30
+       -- 126  SAQ.S/REND.30
+       -- 493  SAQ.S/REND.30
        vr_vlsaques := vr_vlsaques + rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
        vr_tab_aplicacao(rw_craplap.inpessoa).vlsaques := vr_tab_aplicacao(rw_craplap.inpessoa).vlsaques + rw_craplap.vllanmto;
@@ -962,22 +971,22 @@ BEGIN
           vr_detalhe(vr_ind_detalhe).vlrgtmes := vr_detalhe(vr_ind_detalhe).vlrgtmes + rw_craplap.vllanmto;
        END IF;
     ELSIF rw_craplap.cdhistor = 861 THEN
-       -- 861	DB.IRRF
+       -- 861  DB.IRRF
        vr_vlrtirrf := vr_vlrtirrf + rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
        vr_tab_aplicacao(rw_craplap.inpessoa).vlrtirrf := vr_tab_aplicacao(rw_craplap.inpessoa).vlrtirrf + rw_craplap.vllanmto;
     ELSIF rw_craplap.cdhistor = 875 THEN  -- Ajuste IR Resgate
-       -- 875	AJT RGT IR-30
+       -- 875  AJT RGT IR-30
        vr_vlirajrg := vr_vlirajrg + rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
        vr_tab_aplicacao(rw_craplap.inpessoa).vlirajrg := vr_tab_aplicacao(rw_craplap.inpessoa).vlirajrg + rw_craplap.vllanmto;
     ELSIF rw_craplap.cdhistor = 877 THEN  -- Ajuste IR Rendimento
-       -- 877	AJT REN IR-30
+       -- 877  AJT REN IR-30
        vr_vlirajrn := vr_vlirajrn + rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
        vr_tab_aplicacao(rw_craplap.inpessoa).vlirajrn := vr_tab_aplicacao(rw_craplap.inpessoa).vlirajrn + rw_craplap.vllanmto;
     ELSIF rw_craplap.cdhistor = 868 THEN
-       -- 868	IR ABONO APLIC
+       -- 868  IR ABONO APLIC
        vr_vlrtirab := vr_vlrtirab + rw_craplap.vllanmto;
        -- Separando por tipo de pessoa
        vr_tab_aplicacao(rw_craplap.inpessoa).vlrtirab := vr_tab_aplicacao(rw_craplap.inpessoa).vlrtirab + rw_craplap.vllanmto;
@@ -1266,7 +1275,7 @@ BEGIN
                       gene0002.fn_mask(4269, pr_dsforma => '9999')||','||                                        --> Conta Destino
                       gene0002.fn_mask(4232, pr_dsforma => '9999')||','||                                        --> Conta Origem
                       TRIM(TO_CHAR(vr_tot_rdcagefis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                              	         --> Fixo
+                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"'||vr_dsprefix||'SALDO TOTAL DE TITULOS ATIVOS RDCA 30 - COOPERADOS PESSOA FISICA"';                      --> Descricao
 
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1420,7 +1429,7 @@ BEGIN
                       gene0002.fn_mask(8112, pr_dsforma => '9999')||','||                                        --> Conta Destino
                       gene0002.fn_mask(8051, pr_dsforma => '9999')||','||                                        --> Conta Origem
                       TRIM(TO_CHAR(vr_tot_prvmesfis,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --> Total Valor PF
-                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                              	         --> Fixo
+                      gene0002.fn_mask(1434, pr_dsforma => '9999')||','||                                         --> Fixo
                       '"'||vr_dsprefix||'PROVISAO DO MES - RDCA 30 COOPERADOS PESSOA FISICA"';                                    --> Descricao
 
        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -1537,14 +1546,14 @@ BEGIN
         RAISE vr_exc_saida;
      END;
 
-     -- Buscar o diretório MICROS
-     vr_nom_micros := gene0001.fn_diretorio(pr_tpdireto => 'M'   
-                                           ,pr_cdcooper => pr_cdcooper
-                                           ,pr_nmsubdir => '/contab'); 
-     
+     -- Busca o diretório para contabilidade
+     vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+     vr_dircon := vr_dircon || vc_dircon;
+     vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_RDCA30.txt';
+
      -- Executa comando UNIX para converter arq para Dos
-     vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqtxt||' > '
-                              || vr_nom_micros ||'/'||vr_nmarqtxt || ' 2>/dev/null';
+     vr_dscomand := 'ux2dos '||vr_nom_direto||'/'||vr_nmarqtxt||' > '||
+                                vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
      -- Executar o comando no unix
      GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -1618,4 +1627,3 @@ EXCEPTION
     ROLLBACK;
 END;
 /
-

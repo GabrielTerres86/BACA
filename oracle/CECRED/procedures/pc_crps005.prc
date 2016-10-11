@@ -12,8 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 26/07/2016
-
+   Data    : Novembro/91.                    Ultima atualizacao: 28/09/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -366,9 +365,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                             
                17/06/2015 - #295005 Alterado o campo usado como filtro do tipo de linha de 
                             crédito, de dslcremp para dsorgrec (Carlos)
-			         
+               
                26/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
+                            
+							 29/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares).
      ............................................................................. */
 
      DECLARE
@@ -2803,7 +2805,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
          vr_dsaux      VARCHAR2(100);
          vr_nmaux      VARCHAR2(100);
          vr_nom_direto VARCHAR2(100);
-         vr_nom_dirmic VARCHAR2(100);
+         vr_dircon VARCHAR2(100); -- diretório para contabilidade
+         vr_arqcon VARCHAR2(100); -- arquivo para contabilidade
+
+         vc_dircon CONSTANT VARCHAR(30) := 'arquivos_contabeis/ayllos'; 
+         vc_cdacesso CONSTANT VARCHAR(24) := 'ROOT_SISTEMAS';
+         vc_cdtodascooperativas INTEGER := 0;          
+         
          vr_dscomando  varchar2(4000);
          vr_typ_saida  varchar2(100);
          vr_nom_direto_cop VARCHAR2(100);
@@ -2823,9 +2831,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                               ,pr_cdcooper => pr_cdcooper
                                               ,pr_nmsubdir => 'rl');
          
-         vr_nom_dirmic:= GENE0001.fn_diretorio(pr_tpdireto => 'M'
-                                              ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsubdir => 'contab');                                     
          --Atribuir zero para variaveis de saldo médio
          vr_rel_vlsmpmes:= 0;
          vr_rel_vlsmnesp:= 0;
@@ -4102,9 +4107,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
              RAISE vr_exc_erro;
          END;
          
+         -- Busca o diretório para contabilidade
+          vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+          vr_dircon := vr_dircon || vc_dircon;
+          vr_arqcon := to_char(vr_dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_1.txt';
+         
          -- Ao final, converter o arquivo para DOS e enviá-lo a pasta micros/<dsdircop>/contab
          vr_dscomando := 'ux2dos '||vr_nom_direto||'/'||vr_nmarqtxt||' > '||
-                                    vr_nom_dirmic||'/'||vr_nmarqtxt||' 2>/dev/null';
+                                    vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
          --Executar o comando no unix
          GENE0001.pc_OScommand(pr_typ_comando => 'S'
                               ,pr_des_comando => vr_dscomando
@@ -5661,6 +5671,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                 /* FIM - Renato Darosci(Supero) - 30/09/2013 - Atualizar os dados da tabela crapcyb */
 
                 /* Buscar se conta possui devolucao automatica de cheques ou nao */
+
+
+
                 cada0003.pc_verifica_sit_dev(pr_cdcooper => pr_cdcooper, 
                                              pr_nrdconta => rw_crapass.nrdconta, 
                                              pr_flgdevolu_autom => vr_flgdevolu_autom);
@@ -5716,7 +5729,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                                   ,pr_vlsldrgt => vr_vlsldrgt   --> Saldo Total para Resgate
                                                   ,pr_cdcritic => vr_cdcritic   --> Código da crítica
                                                   ,pr_dscritic => vr_dscritic); --> Descrição da crítica
-            																						
+                                                        
                 IF nvl(vr_cdcritic,0) <> 0 OR 
                    TRIM(vr_dscritic) IS NOT NULL THEN
                   RAISE vr_exc_saida;
@@ -5823,7 +5836,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                       END IF;
                   END CASE;
                 END LOOP;
-                
+
                 IF vr_flgdevolu_autom = 1 THEN
                   vr_tab_crat007(vr_index_crat007).flgdevolu_autom:= 'SIM';
                 ELSE

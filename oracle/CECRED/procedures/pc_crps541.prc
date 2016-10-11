@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS541(
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2009.                      Ultima atualizacao: 31/08/2015
+   Data    : Novembro/2009.                      Ultima atualizacao: 07/10/2016
 
    Dados referentes ao programa:
 
@@ -64,6 +64,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS541(
                31/08/2015 - Projeto para tratamento dos programas que geram 
                             criticas que necessitam de lancamentos manuais 
                             pela contabilidade. (Jaison/Marcos-Supero)
+                            
+              07/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                           P308 (Ricardo Linhares).                            
+                            
 
 ............................................................................. */
 
@@ -191,7 +195,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS541(
   -- Diretórios
   vr_diretori      VARCHAR2(200);
   vr_nom_direto    VARCHAR2(200);
-  vr_nom_dirmic    VARCHAR2(200);
   vr_dircop_rlnsv  VARCHAR2(200);
   -- Registros de arquivos
   vr_array_arquivo GENE0002.typ_split;
@@ -216,6 +219,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS541(
   vr_listarq_incorp VARCHAR2(32767);
   -- Flag para guardar teste de arquivo de coop incorporada
   vr_flarqincorp BOOLEAN;
+  
+  vr_dircon VARCHAR2(200);
+  vr_arqcon VARCHAR2(200);
+  vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+  vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+  vc_cdtodascooperativas INTEGER := 0;  
+  vr_dscomand       VARCHAR2(1000);  
 
 BEGIN
 
@@ -324,11 +334,6 @@ BEGIN
   -- Busca do diretório base da cooperativa para a geração de relatórios
   vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                         ,pr_cdcooper => pr_cdcooper);
-
-  -- busca o diretorio micros contab
-  vr_nom_dirmic := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
-                                        ,pr_cdcooper => pr_cdcooper
-                                        ,pr_nmsubdir => 'contab');
 
   -- Define o diretório dos arquivos
   vr_diretori := vr_nom_direto || '/integra/';
@@ -987,6 +992,12 @@ BEGIN
 
         -- Arquivo de saida
         vr_nmarquiv := TO_CHAR(vr_dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
+        
+       -- Busca o diretório para contabilidade
+        vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+        vr_dircon := vr_dircon || vc_dircon;
+        vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD') ||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
+
 
         -- Chama a geracao do TXT
         GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
@@ -996,11 +1007,11 @@ BEGIN
                                            ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_nmarquiv    --> Arquivo final com o path
                                            ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                           ,pr_dspathcop => vr_nom_dirmic            --> Copiar para a Micros
+                                           ,pr_dspathcop => vr_dircon                --> Copiar para a Micros
                                            ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
                                            ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                            ,pr_des_erro  => vr_des_erro);            --> Saída com erro
-
+                                           
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_clobcri);
         dbms_lob.freetemporary(vr_clobcri);
@@ -1014,6 +1025,27 @@ BEGIN
                                                      || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_nmarquiv || ': '
                                                      || vr_des_erro );
         END IF;
+
+           -- Executa comando UNIX para converter arq para Dos
+         vr_dscomand := 'ux2dos '||vr_dircon||'/'||vr_nmarquiv||' > '||
+                                    vr_dircon||'/'||vr_arqcon||' 2>/dev/null';                                           
+                                    
+          -- Executar o comando no unix
+          GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                               ,pr_des_comando => vr_dscomand
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_des_erro);
+
+          IF vr_typ_saida = 'ERR' THEN
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> ERRO AO COPIAR ARQUIVO ' || vr_nmarquiv || ': '
+                                                       || vr_des_erro );
+
+          END IF;                                    
+
+
         
       END;
 
@@ -1072,4 +1104,3 @@ EXCEPTION
     ROLLBACK;
 END pc_crps541;
 /
-

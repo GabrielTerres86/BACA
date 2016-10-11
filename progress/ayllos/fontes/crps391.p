@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                      Ultima atualizacao: 02/09/2015
+   Data    : Abril/2004                      Ultima atualizacao: 07/10/2016
 
    Dados referentes ao programa:
 
@@ -135,6 +135,12 @@
                            
               02/09/2015 - Inclusao da geraçao do arquivo REPCNVFIL.TXT para 
                            cada cooperativa  PRJ-214 (Vanessa) 
+
+
+              07/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                           P308 (Ricardo Linhares).                            
+                            
+                           
 .............................................................................*/
                         
 { includes/var_batch.i}
@@ -284,7 +290,7 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
         aux_arqrel_3 = "contab/" + SUBSTRING(STRING(YEAR(glb_dtmvtolt),"9999"),3,2)
                                  + STRING(MONTH(glb_dtmvtolt),"99")
                                  + STRING(DAY(glb_dtmvtolt),"99") + "_REPCNVFIL.txt".
-
+                                 
  {includes/cabrel132_1.i }
  {includes/cabrel132_2.i }
 
@@ -410,11 +416,14 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
          IF  LAST-OF(tt-arq-radar.cdcooper) THEN
          DO: 
             OUTPUT STREAM str_3 CLOSE.
+            
+            /* Move para nova pasta */
+            
             UNIX SILENT VALUE("ux2dos " + aux_arqrel_3 + 
-              " > /micros/" + tt-arq-radar.dsdircop + "/contab/"
+              " > /usr/sistemas/arquivos_contabeis/ayllos/"
                             + SUBSTRING(STRING(YEAR(tt-arq-radar.dtmvtolt),"9999"),3,2)
                             + STRING(MONTH(tt-arq-radar.dtmvtolt),"99")
-                            + STRING(DAY(tt-arq-radar.dtmvtolt),"99") + "_REPCNVFIL.txt 2>/dev/null").
+                            + STRING(DAY(tt-arq-radar.dtmvtolt),"99") + "_" + STRING(glb_cdcooper,"99") + "_REPCNVFIL.txt 2>/dev/null").
                         
          END.
      END.
@@ -1462,8 +1471,3 @@ PROCEDURE enviar-ted:
 END PROCEDURE.
 
 /*............................................................................*/
-
-
-
-
-

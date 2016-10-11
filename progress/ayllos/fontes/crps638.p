@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 19/05/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 07/10/2016
 
     Dados referente ao programa:
 
@@ -87,6 +87,11 @@
                 
                 19/05/2016 - Adicionado negativo no format do f_totais_rel635 
                              (Lucas Ranghetti #447067)
+                             
+
+                07/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                             P308 (Ricardo Linhares).                            
+                             
 ..............................................................................*/
 
 DEF STREAM str_1.  /* Rel.634 - CONCILIACAO CONV. SICREDI DIARIO         */
@@ -453,7 +458,7 @@ RUN fontes/iniprg.p.
 
 IF  glb_cdcritic > 0   THEN
     QUIT.
-       
+      
 FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
 
 IF  NOT AVAILABLE crapcop   THEN
@@ -2009,6 +2014,7 @@ PROCEDURE gera_conciliacao_conven:
     DEF VAR aux_contador        AS INTE FORMAT "z9"                        NO-UNDO.
 
     DEF VAR aux_nmarqdat        AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmarqcon        AS CHAR                                    NO-UNDO.  
 
 
 /* MODELO
@@ -2088,8 +2094,10 @@ PROCEDURE gera_conciliacao_conven:
     ASSIGN  con_dtmvtopr = "70" +
                           SUBSTR(STRING(YEAR(aux_dtmvtopr),"9999"),3,2) +
                           STRING(MONTH(aux_dtmvtopr),"99")   +
-                          STRING(DAY  (aux_dtmvtopr),"99")
-           aux_nmarqdat = "contab/" + SUBSTR(con_dtmvtolt,3,6) + "_CONVEN_SIC.txt".
+                          STRING(DAY  (aux_dtmvtopr),"99").
+                          
+              ASSIGN  aux_nmarqdat = "contab/" + SUBSTR(con_dtmvtolt,3,6) + "_CONVEN_SIC.txt".
+              ASSIGN  aux_nmarqcon = SUBSTR(con_dtmvtolt,3,6) + "_" + STRING(glb_cdcooper,"99") + "_CONVEN_SIC.txt".
     
     
     FOR EACH crapage WHERE crapage.cdcooper = glb_cdcooper
@@ -2199,8 +2207,8 @@ PROCEDURE gera_conciliacao_conven:
     FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
     
     UNIX SILENT VALUE("ux2dos " + aux_nmarqdat +
-                              " > /micros/" + crapcop.dsdircop + "/" +
-                              aux_nmarqdat + " 2>/dev/null").
+                              " > /usr/sistemas/arquivos_contabeis/ayllos/" +
+                              aux_nmarqcon + " 2>/dev/null").
 
 END PROCEDURE. /* FIM - gera_conciliacao_conven */
 

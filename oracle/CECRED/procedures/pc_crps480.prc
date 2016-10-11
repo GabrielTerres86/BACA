@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : David
-     Data    : Maio/2007                       Ultima atualizacao: 10/06/2016
+     Data    : Maio/2007                       Ultima atualizacao: 28/09/2016
 
      Dados referentes ao programa:
 
@@ -109,33 +109,37 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                  25/11/2013 - Ajustes na passagem dos parâmetros para restart (Marcos-Supero)
 
                  03/02/2014 - criado temptable para armazenar associados, a fim de melhorar performace (Odirlei-AMcom)
-                 
+
                  24/07/2014 - Atualizacao dos campos dtsdfmea e vlslfmea da craprda (Andrino-RKAM)
-                            
+
                  11/11/2014 - Nova coluna de carência e convertido o relatório para paisagem. (Kelvin - Chamado 218644)
 
-                 19/11/2014 - Adicionar validação para não gerar registro na CRAPLAP 
+                 19/11/2014 - Adicionar validação para não gerar registro na CRAPLAP
                               com valor zerado ou negativo (Douglas - Chamado 191418)
-                              
-                 22/04/2015 - Alteração para realizar a geração do relatório separado por PF e PJ, além de 
+
+                 22/04/2015 - Alteração para realizar a geração do relatório separado por PF e PJ, além de
                               alterar o fonte para utilizar o mesmo jaspaer para os relatórios CRRL454 e CRRL455.
                               Projeto 186  ( Renato - Supero )
-                              
-                 16/09/2015 - SD334531 - Ajuste pois após geração do arquivo _RDC a variável vr_nom_direto persistia 
+
+                 16/09/2015 - SD334531 - Ajuste pois após geração do arquivo _RDC a variável vr_nom_direto persistia
                               com o diretório contab, e não do rl que era o correto. (Marcos-Supero)
 
                  19/10/2015 - Ajuste nos relatorios para nao contabilizar informacoes nos PAs migrados
-                              e gerar os dados corretamente no PA atual (SD326975 Tiago/Rodrigo)   
-                              
+                              e gerar os dados corretamente no PA atual (SD326975 Tiago/Rodrigo)
+
                  03/12/2015 - Adicionado novo campo com a média dos saldos das aplicações rdcpos,
                               conforme solicitado no chamado 357115 (Kelvin)
-                 
+
                  25/05/2016 - Ajuste no saldo medio pois estava trazendo os valores incorretos, conforme
                               solicitado no chamado 446559. (Kelvin)
 
                  10/06/2016 - Ajustado a leitura da craptab para utilizar a procedure padrao TABE0001.fn_busca_dstextab
                               e carregar as contas bloqueadas com a TABE0001.pc_carrega_ctablq
                               (Douglas - Chamado 454248)
+                              
+
+                  28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                                     P308 (Ricardo Linhares).                                    
   ..............................................................................*/
 
     DECLARE
@@ -227,14 +231,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         TABLE OF typ_reg_resumo
           INDEX BY BINARY_INTEGER;
       -- Definicao do tipo de tabela de resumo para pessoa Fisica/Juridica
-      TYPE typ_tab_fisjur IS 
-        TABLE OF typ_tab_resumo 
-          INDEX BY BINARY_INTEGER; 
+      TYPE typ_tab_fisjur IS
+        TABLE OF typ_tab_resumo
+          INDEX BY BINARY_INTEGER;
       -- Definição do tipo de tabela dos valores de titulos ativos por pessoa
-      TYPE typ_tab_vlsdapat IS 
+      TYPE typ_tab_vlsdapat IS
         TABLE OF NUMBER
-          INDEX BY BINARY_INTEGER; 
-      -- Definição do tipo de tabela para resumo por agencia 
+          INDEX BY BINARY_INTEGER;
+      -- Definição do tipo de tabela para resumo por agencia
       TYPE typ_tab_resage IS
         TABLE OF typ_tab_vlsdapat
           INDEX BY BINARY_INTEGER;
@@ -246,7 +250,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       TYPE typ_tab_totapl IS
         TABLE OF typ_tab_vlsdapat
           INDEX BY BINARY_INTEGER;
-      
+
       -- Vetor para armazenar os dados de resumo
       vr_tab_resumo typ_tab_resumo;
       vr_tab_fisjur typ_tab_fisjur;  -- Dados de resumo para pessoa Fisica/Jurídica
@@ -256,7 +260,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
 
       vr_tab_totpes typ_tab_totapl;  -- Totais Ativos
       vr_tab_totpro typ_tab_totapl;  -- Totais Provisões
-      
+
       -- Chave para a tabela de resumo
       vr_num_chave_resumo BINARY_INTEGER;
 
@@ -405,7 +409,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         SELECT lap.txaplica
           FROM craplap lap
          WHERE lap.cdcooper = pr_cdcooper
-           AND lap.nrdconta = pr_nrdconta --> Conta enviada 
+           AND lap.nrdconta = pr_nrdconta --> Conta enviada
            AND lap.nraplica = pr_nraplica --> Aplicação enviada
            AND lap.dtmvtolt = pr_dtmvtolt --> Data enviada
          ORDER BY lap.progress_recid;     --> Primeiro resgate
@@ -473,14 +477,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdcooper = age.cdcooper
            AND ass.cdagenci = age.cdagenci;
-      
+
       -- Buscar todas as aplicações para inicializar a tabela de memória
       CURSOR cr_crapdtc_ini IS
         SELECT dtc.tpaplica
           FROM crapdtc dtc
          WHERE dtc.cdcooper  = pr_cdcooper
            AND dtc.tpaplrdc IN (1,2); -- RDP pré e pós
-      
+
       --Tipo do Cursor de associados para Bulk Collect
       TYPE typ_crapass_bulk IS TABLE of cr_crapass_cecred%ROWTYPE;
       vr_tab_crapass_bulk typ_crapass_bulk;
@@ -553,7 +557,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           FROM crapdtc dtc
          WHERE dtc.cdcooper = pr_cdcooper
            AND dtc.tpaplica = pr_tpaplica;
-           
+
       --Busca o saldo médio das aplicações RDCPOS
       CURSOR cr_crapsda(pr_cdcooper crapsda.cdcooper%TYPE
                        ,pr_nrdconta crapsda.nrdconta%TYPE
@@ -574,7 +578,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                          WHERE cdcooper = pr_cdcooper
                            AND nrdconta = pr_nrdconta
                            AND dtsdfmea = pr_dtmvtolt)); --Busca do último dia do mês
-     
+
       vr_tpaplrdc crapdtc.tpaplrdc%TYPE;
       vr_dsaplica crapdtc.dsaplica%TYPE;
 
@@ -608,7 +612,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       --
       vr_dsxmldad_arq       CLOB;           -- Arquivo de informação de tarifas
       vr_nom_direto         VARCHAR2(100);  -- Diretorio /coop/rl
-      vr_nom_micros         VARCHAR2(100);  -- Diretorio /coop/rl
       vr_nom_arquivo        VARCHAR2(100);  -- Nome do arquivo de relatório
       vr_nmarqrdc           VARCHAR2(100);  -- Nome do arquivo RDC
       vr_dscomand           VARCHAR2(500);  -- comando Unix
@@ -616,7 +619,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       vr_nrctaaux           NUMBER;         -- Número da conta - variável auxiliar
       vr_nrctaori           NUMBER;         -- Número da conta de origem para o arquivo
       vr_nrctades           NUMBER;         -- Número da conta de destino para o arquivo
-      vr_dsmensag           VARCHAR2(100);  -- Mensagem de cabeçalho do arquivo  
+      vr_dsmensag           VARCHAR2(100);  -- Mensagem de cabeçalho do arquivo
       vr_dsmsgarq           VARCHAR2(120);  -- Mensagem de cabeçalho do arquivo completa
       vr_dsprefix  CONSTANT VARCHAR2(15) := 'REVERSAO '; -- Prefixo para cabeçalho do arquivo
       vr_dtmvtolt           DATE;           -- Auxiliar para tratamento de datas
@@ -624,9 +627,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       vr_dscritic           VARCHAR2(2000); -- controle de erros
       vr_typ_saida          VARCHAR2(2000); -- controle de erros de scripts unix
       vr_vllinarq           NUMBER;
-  
+
       vr_Bufdes_xml varchar2(32000);
       
+     vr_dircon VARCHAR2(200);
+     vr_arqcon VARCHAR2(200);
+     vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+     vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+     vc_cdtodascooperativas INTEGER := 0;  
+      
+
       -------- SubRotinas para reaproveitamento de código --------------
 
       -- Subrotina para escrever texto na variável CLOB do XML
@@ -651,7 +661,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                                   ,pr_des_vlfis IN VARCHAR2
                                   ,pr_des_vljur IN VARCHAR2) IS
       BEGIN
-      
+
         -- Escreve no XML abrindo e fechando a tag de total
         pc_escreve_xml('<total>'
                      ||'  <dstotal>'||pr_des_total||'</dstotal>'
@@ -713,7 +723,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_detalhe(vr_des_chave_det).vlsldrdc := pr_vlslfmes ;
           vr_tab_detalhe(vr_des_chave_det).txaplica := pr_txaplica;
           vr_tab_detalhe(vr_des_chave_det).qtdiauti := pr_qtdiauti;
-          
+
           -- Verificar se a aplicação possui bloqueio de resgate
           IF vr_tab_blqrgt.EXISTS(LPAD(pr_nrdconta,12,'0')||LPAD(pr_nraplica,8,'0')) THEN
             -- Situação bloqueada
@@ -793,7 +803,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-      
+
       -- Validações iniciais do programa
       BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                                ,pr_flgbatch => 1
@@ -884,7 +894,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                      ,pr_cdempres => 11
                      ,pr_cdacesso => 'MXRENDIPOS'
                      ,pr_tpregist => 1);
-                                               
+
       -- Se não encontrar
       IF TRIM(vr_dstextab) IS NOT NULL THEN
         -- Utilizar datas padrão
@@ -997,17 +1007,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           CLOSE cr_crapres;
         END IF;
       END IF;
-      
+
       -- Percorrer o registro de tipo de aplicação para inicializar a tab
       FOR rw_crapdtc IN cr_crapdtc_ini LOOP
         -- Inicializa para pessoa fisica e jurídica
         vr_tab_fisjur(1)(rw_crapdtc.tpaplica).qtaplati := 0;
         vr_tab_fisjur(2)(rw_crapdtc.tpaplica).qtaplati := 0;
       END LOOP;
-      
+
       -- Busca das aplicações RDC pré e pós
       FOR rw_craprda IN cr_craprda LOOP
-     
+
         BEGIN
           -- Leitura dos lancamentos de resgate da aplicacao passada
           OPEN cr_craplap(pr_nrdconta => rw_craprda.nrdconta
@@ -1026,11 +1036,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                         || gene0002.fn_mask(rw_craprda.nraplica,'zzz.zz9');
             -- Gerar roolback para desfazer alterações desse registro
             RAISE vr_exc_undo;
-          ELSE 
+          ELSE
             -- Apenas fechar para continuar o processo
             CLOSE cr_craplap;
           END IF;
-          
+
           -- Se há controle de restart
           IF vr_inrestar > 0  AND (  -- Se for uma conta anterior a de restart
                                      (rw_craprda.nrdconta < vr_nrctares)
@@ -1298,12 +1308,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           vr_tab_resumo(rw_craprda.tpaplica).tpaplrdc := rw_craprda.tpaplrdc;
           vr_tab_resumo(rw_craprda.tpaplica).qtaplati := nvl(vr_tab_resumo(rw_craprda.tpaplica).qtaplati,0) + 1;
           vr_tab_resumo(rw_craprda.tpaplica).vlsdapat := nvl(vr_tab_resumo(rw_craprda.tpaplica).vlsdapat,0) + vr_vlsdapat;
-          
+
           BEGIN
             -- gravar as informações por tipo de pessoa
-            vr_tab_fisjur(vr_tab_crapass(rw_craprda.nrdconta).inpessoa)(rw_craprda.tpaplica).qtaplati := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craprda.nrdconta).inpessoa)(rw_craprda.tpaplica).qtaplati :=
                       nvl(vr_tab_fisjur(vr_tab_crapass(rw_craprda.nrdconta).inpessoa)(rw_craprda.tpaplica).qtaplati,0) + 1;
-            vr_tab_fisjur(vr_tab_crapass(rw_craprda.nrdconta).inpessoa)(rw_craprda.tpaplica).vlsdapat := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craprda.nrdconta).inpessoa)(rw_craprda.tpaplica).vlsdapat :=
                       nvl(vr_tab_fisjur(vr_tab_crapass(rw_craprda.nrdconta).inpessoa)(rw_craprda.tpaplica).vlsdapat,0) + vr_vlsdapat;
           EXCEPTION
             WHEN no_data_found THEN
@@ -1312,23 +1322,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           END;
 
           -- Gravar as informações por agencia
-          BEGIN             
-            vr_tab_resage(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).cdagenci)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) := 
+          BEGIN
+            vr_tab_resage(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).cdagenci)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) :=
                 vr_tab_resage(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).cdagenci)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) + vr_vlsdapat;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_resage(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).cdagenci)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) := vr_vlsdapat;
           END;
-          
-          BEGIN 
+
+          BEGIN
             -- Somar os totalizadores
-            vr_tab_totpes(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) := 
+            vr_tab_totpes(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) :=
                 vr_tab_totpes(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) + vr_vlsdapat;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_totpes(rw_craprda.tpaplrdc)(vr_tab_crapass(rw_craprda.nrdconta).inpessoa) := vr_vlsdapat;
           END;
-                    
+
           -- Atualizar todos os campos atualizados ate o momento no Rowtype
           -- e tambem a data calculada e saldo fim do mês na aplicação
           BEGIN
@@ -1443,8 +1453,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                              ,pr_dsaplica => rw_craprda.dsaplica
                              ,pr_dtvencto => rw_craprda.dtvencto
                              ,pr_tpaplica => rw_craprda.tpaplica
-                             ,pr_cdageass => vr_tab_crapass(rw_craprda.nrdconta).cdagenci 
-                             ,pr_nmresage => vr_tab_crapass(rw_craprda.nrdconta).nmresage 
+                             ,pr_cdageass => vr_tab_crapass(rw_craprda.nrdconta).cdagenci
+                             ,pr_nmresage => vr_tab_crapass(rw_craprda.nrdconta).nmresage
                              ,pr_dtmvtolt => rw_craprda.dtmvtolt
                              ,pr_vlaplica => rw_craprda.vlaplica
                              ,pr_vlslfmes => rw_craprda.vlslfmes
@@ -1604,7 +1614,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       FOR rw_craplap IN cr_craplap_mes LOOP
         -- Verificar se já existe o registro para relatório detalhado
         IF rw_craplap.insaqtot = 0 THEN
-          -- Chamar a criação de registro de detalhe 
+          -- Chamar a criação de registro de detalhe
           pc_cria_reg_detalhe(pr_nrdconta => rw_craplap.nrdconta
                              ,pr_nmprimtl => vr_tab_crapass(rw_craplap.nrdconta).nmprimtl
                              ,pr_nraplica => rw_craplap.nraplica
@@ -1612,8 +1622,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                              ,pr_dsaplica => rw_craplap.dsaplica
                              ,pr_dtvencto => rw_craplap.dtvencto
                              ,pr_tpaplica => rw_craplap.tpaplica
-                             ,pr_cdageass => vr_tab_crapass(rw_craplap.nrdconta).cdagenci 
-                             ,pr_nmresage => vr_tab_crapass(rw_craplap.nrdconta).nmresage 
+                             ,pr_cdageass => vr_tab_crapass(rw_craplap.nrdconta).cdagenci
+                             ,pr_nmresage => vr_tab_crapass(rw_craplap.nrdconta).nmresage
                              ,pr_dtmvtolt => rw_craplap.rda_dtmvtolt
                              ,pr_vlaplica => rw_craplap.vlaplica
                              ,pr_vlslfmes => rw_craplap.vlslfmes
@@ -1641,14 +1651,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         vr_tab_resumo(rw_craplap.tpaplica).tpaplica := rw_craplap.tpaplica;
         vr_tab_resumo(rw_craplap.tpaplica).dsaplica := rw_craplap.dsaplica;
         vr_tab_resumo(rw_craplap.tpaplica).tpaplrdc := rw_craplap.tpaplrdc;
-        
+
         -- Criar o registro caso o mesmo não exista
         IF NOT vr_tab_fisjur(1).exists(rw_craplap.tpaplica) THEN
           -- Criar o registro para pessoa física e juridica
           vr_tab_fisjur(1)(rw_craplap.tpaplica) := vr_tab_resumo(rw_craplap.tpaplica);
           vr_tab_fisjur(2)(rw_craplap.tpaplica) := vr_tab_resumo(rw_craplap.tpaplica);
         END IF;
-        
+
         -- Para execução somente quando Coop = 3 - Cecred com aplicação RDC Pos
         IF pr_cdcooper = 3 AND rw_craplap.tpaplrdc = 2 THEN
           -- Se ainda não existir registro para essa conta
@@ -1662,7 +1672,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             vr_tab_resumo_cecred(rw_craplap.nrdconta).vlrenmes := 0;
             vr_tab_resumo_cecred(rw_craplap.nrdconta).vlajuprv := 0;
           END IF;
-          
+
           OPEN cr_crapsda(pr_cdcooper
                          ,rw_craplap.nrdconta
                          ,rw_crapdat.dtmvtoan
@@ -1670,7 +1680,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
          FETCH cr_crapsda
           INTO vr_tab_resumo_cecred(rw_craplap.nrdconta).vlsldmed;
          CLOSE cr_crapsda;
-          
+
         END IF;
         -- Para lançamentos 473 APLIC.RDCPRE e 528 APLIC.RDCPOS
         IF rw_craplap.cdhistor IN(473,528) THEN
@@ -1680,16 +1690,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
 
           BEGIN
             -- gravar as informações por tipo de pessoa
-            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).qtaplmes := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).qtaplmes :=
                  nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).qtaplmes,0) + 1;
-            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlaplmes := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlaplmes :=
                  nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlaplmes,0) + rw_craplap.vlaplica;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).qtaplmes := 1;
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlaplmes := rw_craplap.vlaplica;
           END;
-                 
+
         -- Para aplicações ainda não vencidas e
         -- lançamentos 477 RESG.RDC e 534 RESG.RDC
         ELSIF rw_craplap.dtvencto <= rw_craplap.dtmvtolt AND rw_craplap.cdhistor IN(477,534) THEN
@@ -1700,16 +1710,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             -- Acumular resgate no registro de detalhe
             vr_tab_detalhe(vr_des_chave_det).vlrgtmes := NVL(vr_tab_detalhe(vr_des_chave_det).vlrgtmes,0) + rw_craplap.vllanmto;
           END IF;
-          
+
           BEGIN
             -- gravar as informações por tipo pessoa
-            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlresmes := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlresmes :=
                  nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlresmes,0) + rw_craplap.vllanmto;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlresmes := rw_craplap.vllanmto;
           END;
-          
+
         -- Para aplicações vencidas e
         -- lançamentos 477 RESG.RDC e 534 RESG.RDC
         ELSIF rw_craplap.dtvencto > rw_craplap.dtmvtolt AND rw_craplap.cdhistor IN(477,534) THEN
@@ -1722,10 +1732,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           IF rw_craplap.cdhistor = 477 THEN
             -- Acumular sqsren
             vr_tab_resumo(rw_craplap.tpaplica).vlsqsren := NVL(vr_tab_resumo(rw_craplap.tpaplica).vlsqsren,0) + rw_craplap.vllanmto;
-            
-            BEGIN 
+
+            BEGIN
               -- gravar as informações por tipo pessoa
-              vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqsren := 
+              vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqsren :=
                  nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqsren,0) + rw_craplap.vllanmto;
             EXCEPTION
               WHEN no_data_found THEN
@@ -1745,10 +1755,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             IF vr_num_exis = 1 THEN
               -- Acumular no sq com rendimento
               vr_tab_resumo(rw_craplap.tpaplica).vlsqcren := NVL(vr_tab_resumo(rw_craplap.tpaplica).vlsqcren,0) + rw_craplap.vllanmto;
-              
+
               BEGIN
                 -- gravar as informações por tipo pessoa
-                vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqcren := 
+                vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqcren :=
                     nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqcren,0) + rw_craplap.vllanmto;
               EXCEPTION
                 WHEN no_data_found THEN
@@ -1757,10 +1767,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             ELSE
               -- Acumular no sq sem rendimento
               vr_tab_resumo(rw_craplap.tpaplica).vlsqsren := nvl(vr_tab_resumo(rw_craplap.tpaplica).vlsqsren,0) + rw_craplap.vllanmto;
-              
+
               BEGIN
                 -- gravar as informações por tipo pessoa
-                vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqsren := 
+                vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqsren :=
                     nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlsqsren,0) + rw_craplap.vllanmto;
               EXCEPTION
                 WHEN no_data_found THEN
@@ -1772,16 +1782,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         ELSIF rw_craplap.cdhistor IN(475,532) THEN
           -- Acumular no valor rendimento mês
           vr_tab_resumo(rw_craplap.tpaplica).vlrenmes := NVL(vr_tab_resumo(rw_craplap.tpaplica).vlrenmes,0) + rw_craplap.vllanmto;
-          
+
           BEGIN
             -- gravar as informações por tipo pessoa
-            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrenmes := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrenmes :=
                 nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrenmes,0) + rw_craplap.vllanmto;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrenmes := rw_craplap.vllanmto;
           END;
-                  
+
           -- Se existir registro na resumo_cecred
           IF vr_tab_resumo_cecred.EXISTS(rw_craplap.nrdconta) THEN
             -- Acumular tbm
@@ -1791,42 +1801,42 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         ELSIF rw_craplap.cdhistor IN(474,529) THEN
           -- Acumular valor de provisão mês
           vr_tab_resumo(rw_craplap.tpaplica).vlprvmes := NVL(vr_tab_resumo(rw_craplap.tpaplica).vlprvmes,0) + rw_craplap.vllanmto;
-          
+
           BEGIN
             -- gravar as informações por tipo pessoa
-            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlprvmes := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlprvmes :=
                 nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlprvmes,0) + rw_craplap.vllanmto;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlprvmes := rw_craplap.vllanmto;
           END;
-          
+
           -- Gravar as informações por agencia
-          BEGIN           
-            vr_tab_proage(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).cdagenci)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) := 
+          BEGIN
+            vr_tab_proage(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).cdagenci)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) :=
                 vr_tab_proage(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).cdagenci)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) + rw_craplap.vllanmto;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_proage(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).cdagenci)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) := rw_craplap.vllanmto;
           END;
-          
-          BEGIN 
+
+          BEGIN
             -- Somar os totalizadores
-            vr_tab_totpro(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) := 
+            vr_tab_totpro(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) :=
                 vr_tab_totpro(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) + rw_craplap.vllanmto;
           EXCEPTION
             WHEN no_data_found THEN
               vr_tab_totpro(rw_craplap.tpaplrdc)(vr_tab_crapass(rw_craplap.nrdconta).inpessoa) := rw_craplap.vllanmto;
           END;
-           
+
           -- Somente para o lote 8480
           IF rw_craplap.nrdolote = 8480 THEN
             -- Acumular provisão lançado
             vr_tab_resumo(rw_craplap.tpaplica).vlprvlan := NVL(vr_tab_resumo(rw_craplap.tpaplica).vlprvlan,0) + rw_craplap.vllanmto;
-            
-            BEGIN 
+
+            BEGIN
               -- gravar as informações por tipo pessoa
-              vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlprvlan := 
+              vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlprvlan :=
                   nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlprvlan,0) + rw_craplap.vllanmto;
             EXCEPTION
               WHEN no_data_found THEN
@@ -1842,12 +1852,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         ELSIF rw_craplap.cdhistor IN(531,463) THEN
           -- Decrementar ajuste de previdência
           vr_tab_resumo(rw_craplap.tpaplica).vlajuprv := NVL(vr_tab_resumo(rw_craplap.tpaplica).vlajuprv,0) - rw_craplap.vllanmto;
-          
+
           BEGIN
             -- gravar as informações por tipo pessoa
-            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlajuprv := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlajuprv :=
                 nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlajuprv,0) - rw_craplap.vllanmto;
-          EXCEPTION 
+          EXCEPTION
             WHEN no_data_found THEN
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlajuprv := (0 - rw_craplap.vllanmto);
           END;
@@ -1860,12 +1870,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         ELSIF rw_craplap.cdhistor IN(476,533) THEN
           -- Acumular IRRF
           vr_tab_resumo(rw_craplap.tpaplica).vlrtirrf := vr_tab_resumo(rw_craplap.tpaplica).vlrtirrf + rw_craplap.vllanmto;
-          
+
           BEGIN
             -- gravar as informações por tipo pessoa
-            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrtirrf := 
+            vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrtirrf :=
                 nvl(vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrtirrf,0) + rw_craplap.vllanmto;
-          EXCEPTION 
+          EXCEPTION
             WHEN no_data_found THEN
               vr_tab_fisjur(vr_tab_crapass(rw_craplap.nrdconta).inpessoa)(rw_craplap.tpaplica).vlrtirrf := rw_craplap.vllanmto;
           END;
@@ -1908,7 +1918,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         vr_dsjasper    := 'crrl455.jasper';
         vr_nmformul    := '132col';
         vr_qtcoluna    := 132;
-        
+
         -- Criar tags agrupadora de totais
         pc_escreve_xml('<totais>');
         -- Enviar cada informações de totais como um nó
@@ -1949,13 +1959,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                           ,pr_des_valor => TO_CHAR(NVL(vr_tab_resumo(vr_num_chave_resumo).vlsqsren,0)   ,'fm999g999g999g990d00mi')
                           ,pr_des_vlfis => TO_CHAR(NVL(vr_tab_fisjur(1)(vr_num_chave_resumo).vlsqsren,0),'fm999g999g999g990d00mi')
                           ,pr_des_vljur => TO_CHAR(NVL(vr_tab_fisjur(2)(vr_num_chave_resumo).vlsqsren,0),'fm999g999g999g990d00mi'));
-        
-        
+
+
         FOR ind IN vr_tab_fisjur.first..vr_tab_fisjur.last LOOP
           dbms_output.put_line(TO_CHAR(NVL(vr_tab_fisjur(1)(vr_num_chave_resumo).vlsdapat,0),'fm999g999g999g990d00mi'));
         END LOOP;
-        
-        
+
+
         -- Somente para Pós
         IF vr_tab_resumo(vr_num_chave_resumo).tpaplrdc = 2 THEN
           pc_cria_node_total(pr_des_total => 'SAQUES COM RENDIMENTO:'
@@ -2104,26 +2114,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         -- Buscar o próximo registro da tab resumo
         vr_num_chave_resumo := vr_tab_resumo.NEXT(vr_num_chave_resumo);
       END LOOP;
-      
+
       -- Se for uma virada de mês, emitir o arquivo para contabilidade
-      IF trunc(rw_crapdat.dtmvtopr,'MM') <> trunc(rw_crapdat.dtmvtolt,'MM') AND 
+      IF trunc(rw_crapdat.dtmvtopr,'MM') <> trunc(rw_crapdat.dtmvtolt,'MM') AND
          (vr_tab_totpes.COUNT() > 0 OR vr_tab_totpro.COUNT() > 0)          AND
-         pr_cdcooper <> 3  THEN 
- 
+         pr_cdcooper <> 3  THEN
+
         -- Inicializar o CLOB (XML) para o arquivo com informação das tarifas
         dbms_lob.createtemporary(vr_dsxmldad_arq, TRUE);
-        dbms_lob.open(vr_dsxmldad_arq,dbms_lob.lob_readwrite);   
-        
+        dbms_lob.open(vr_dsxmldad_arq,dbms_lob.lob_readwrite);
+
         --------------------------------------------
         /***** SALDO TOTAL DOS TITULOS ATIVOS *****/
         --------------------------------------------
-        
-        -- Para cada tipo de aplicação 
+
+        -- Para cada tipo de aplicação
         FOR indapl IN vr_tab_totpes.FIRST..vr_tab_totpes.LAST LOOP
-        
+
           -- Para cada tipo de pessoa que constara no arquivo
           FOR indpes IN 1..2 LOOP
-            
+
             -- Setar as variáveis conforme tipo de aplicação
             IF indapl = 1 THEN
               -- Setar as variáveis conforme indice
@@ -2152,10 +2162,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 vr_dsmensag := 'SALDO TOTAL DE TITULOS ATIVOS RDC POS - COOPERADOS PESSOA JURIDICA';
               end if;
             END IF;
-          
+
             -- Para cada cada modalidade 1=Normal e 2=Reversão
             FOR indmod IN 1..2 LOOP
-              
+
               -- Se modo normal
               IF indmod = 1 THEN
                 vr_dtmvtolt := rw_crapdat.dtmvtolt;
@@ -2165,13 +2175,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 vr_nrctaaux := vr_nrctaori;
                 vr_nrctaori := vr_nrctades;
                 vr_nrctades := vr_nrctaaux;
-          
+
                 vr_dtmvtolt := rw_crapdat.dtmvtopr;
-                
+
                 -- Incluir a palavra REVERSAO
                 vr_dsmsgarq := vr_dsprefix||vr_dsmensag;
               END IF;
-              
+
               -- Verifica se o valor existe
               IF vr_tab_totpes.EXISTS(indapl) THEN
                 IF vr_tab_totpes(indapl).EXISTS(indpes) THEN
@@ -2182,44 +2192,44 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
               ELSE
                 vr_vllinarq := 0; -- Quando não existir atribui zero
               END IF;
-              
+
               -- Se o valor for maior que zero
               IF vr_vllinarq > 0 THEN
-              
+
                 /* Imprimir dados de pessoa FISICA */
                 vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
-                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||',' 
-                            || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
+                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||','
+                            || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,')
                             || ',1434,"'|| vr_dsmsgarq ||'"'
                             || CHR(10);
-        
+
                 -- Escrever CLOB
-                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
-        
-                -- Repetir as informações da agencia 
+                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
+
+                -- Repetir as informações da agencia
                 FOR repete IN 1..2 LOOP
-                  -- Agencia 
-                  vr_cdagenci := vr_tab_resage(indapl).FIRST;  
-                
+                  -- Agencia
+                  vr_cdagenci := vr_tab_resage(indapl).FIRST;
+
                   -- Percorrer para todas as agencias todos os dados de pessoa fisica e juridica
                   LOOP
-                    
+
                     -- Verifica se o valor existe
                     IF vr_tab_resage.EXISTS(indapl) THEN
                       IF vr_tab_resage(indapl).EXISTS(vr_cdagenci) THEN
                         IF vr_tab_resage(indapl)(vr_cdagenci).EXISTS(indpes) THEN
-                      
+
                           -- Monta a linha para o arquivo
                           vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
                                          to_char(vr_tab_resage(indapl)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
                                          CHR(10);
-                    
-                          -- Escrever a linha no CLOB 
-                          dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
+
+                          -- Escrever a linha no CLOB
+                          dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
                         END IF; -- Testa tipo pessoa
                       END IF; -- Testa agencia
                     END IF; -- Testa aplicação
-                    
+
                     EXIT WHEN vr_cdagenci = vr_tab_resage(indapl).LAST;
                     vr_cdagenci := vr_tab_resage(indapl).NEXT(vr_cdagenci);
                   END LOOP;
@@ -2228,18 +2238,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             END LOOP; -- Normal e reversão
           END LOOP; -- Pessoas 1 e 2
         END LOOP; -- Tipo de aplicação
-     
-    
+
+
         --------------------------------------------
         /***** VALOR TOTAL DA PROVISAO DO MES *****/
         --------------------------------------------
-        
-        -- Para cada tipo de aplicação 
+
+        -- Para cada tipo de aplicação
         FOR indapl IN vr_tab_totpro.FIRST..vr_tab_totpro.LAST LOOP
-        
+
           -- Para cada tipo de pessoa que constara no arquivo
           FOR indpes IN 1..2 LOOP
-            
+
             -- Setar as variáveis conforme tipo de aplicação
             IF indapl = 1 THEN
               -- Setar as variáveis conforme indice
@@ -2268,27 +2278,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                 vr_dsmensag := 'PROVISAO DO MES - RDC POS COOPERADOS PESSOA JURIDICA';
               end if;
             END IF;
-          
+
             -- Para cada cada modalidade 1=Normal e 2=Reversão
             FOR indmod IN 1..2 LOOP
-              
+
               -- Se modo normal
               IF indmod = 1 THEN
                 vr_dtmvtolt := rw_crapdat.dtmvtolt;
-                -- 
+                --
                 vr_dsmsgarq := vr_dsmensag;
               ELSE
                 -- Inversão das contas
                 vr_nrctaaux := vr_nrctaori;
                 vr_nrctaori := vr_nrctades;
                 vr_nrctades := vr_nrctaaux;
-          
+
                 vr_dtmvtolt := rw_crapdat.dtmvtopr;
-                
+
                 -- Incluir a palavra REVERSAO
                 vr_dsmsgarq := vr_dsprefix||vr_dsmensag;
               END IF;
-              
+
               -- Verifica se o valor existe
               IF vr_tab_totpro.EXISTS(indapl) THEN
                 IF vr_tab_totpro(indapl).EXISTS(indpes) THEN
@@ -2299,45 +2309,45 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
               ELSE
                 vr_vllinarq := 0; -- Quando não existir atribui zero
               END IF;
-              
+
               -- Se o valor for maior que zero
               IF vr_vllinarq > 0 THEN
-                  
+
                 /* Imprimir dados de pessoa FISICA */
                 vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
-                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||',' 
-                            || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
+                            || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||','
+                            || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,')
                             || ',1434,"'|| vr_dsmsgarq ||'"'
                             || CHR(10);
-        
+
                 -- Escrever CLOB
-                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
-        
-                -- Repetir as informações da agencia 
+                dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
+
+                -- Repetir as informações da agencia
                 FOR repete IN 1..2 LOOP
-                    
-                  -- Agencia 
+
+                  -- Agencia
                   vr_cdagenci := vr_tab_proage(indapl).FIRST;
-                
+
                   -- Percorrer para todas as agencias todos os dados de pessoa fisica e juridica
                   LOOP
-                    
+
                     -- Verifica se o valor existe
                     IF vr_tab_proage.EXISTS(indapl) THEN
                       IF vr_tab_proage(indapl).EXISTS(vr_cdagenci) THEN
                         IF vr_tab_proage(indapl)(vr_cdagenci).EXISTS(indpes) THEN
-                      
+
                           -- Monta a linha para o arquivo
                           vr_dslinarq := to_char(vr_cdagenci,'FM000')||','||
                                          to_char(vr_tab_proage(indapl)(vr_cdagenci)(indpes),'fm99999999990D00','NLS_NUMERIC_CHARACTERS=.,')||
                                          CHR(10);
-                    
-                          -- Escrever a linha no CLOB 
-                          dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);   
+
+                          -- Escrever a linha no CLOB
+                          dbms_lob.writeappend(vr_dsxmldad_arq,length(vr_dslinarq),vr_dslinarq);
                         END IF; -- Testa tipo pessoa
                       END IF; -- Testa agencia
                     END IF; -- Testa aplicação
-                    
+
                     EXIT WHEN vr_cdagenci = vr_tab_proage(indapl).LAST;
                     vr_cdagenci := vr_tab_proage(indapl).NEXT(vr_cdagenci);
                   END LOOP;
@@ -2346,36 +2356,39 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             END LOOP; -- Normal e reversão
           END LOOP; -- Pessoas 1 e 2
         END LOOP; -- Tipo de aplicação
-    
+
         -- Buscar os diretórios
-        vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'   
+        vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                               ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsubdir => '/contab'); 
-        vr_nom_micros := gene0001.fn_diretorio(pr_tpdireto => 'M'   
-                                              ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsubdir => '/contab'); 
+                                              ,pr_nmsubdir => '/contab');
+
         -- Define o nome do arquivo
         vr_nmarqrdc := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_RDC.txt';
-            
+
         -- Criar o arquivo de dados
         GENE0002.pc_clob_para_arquivo(pr_clob     => vr_dsxmldad_arq
                                      ,pr_caminho  => vr_nom_direto
                                      ,pr_arquivo  => vr_nmarqrdc
                                      ,pr_des_erro => vr_dscritic);
-    
+
         --Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_dsxmldad_arq);
-        dbms_lob.freetemporary(vr_dsxmldad_arq); 
-    
+        dbms_lob.freetemporary(vr_dsxmldad_arq);
+
         -- Testa
         IF vr_dscritic IS NOT NULL THEN
           -- Gerar exceção
           RAISE vr_exc_erro;
-        END IF; 
+        END IF;
         
+         -- Busca o diretório para contabilidade
+        vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+        vr_dircon := vr_dircon || vc_dircon;
+        vr_arqcon := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_RDC.txt';
+
         -- Executa comando UNIX para converter arq para Dos
         vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqrdc||' > '
-                                 || vr_nom_micros ||'/'||vr_nmarqrdc || ' 2>/dev/null';
+                                 || vr_dircon ||'/'||vr_arqcon || ' 2>/dev/null';
 
         -- Executar o comando no unix
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -2385,14 +2398,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         IF vr_typ_saida = 'ERR' THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
       END IF;
-      
+
       -- Buscar novamente o diretório rl
-      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'   
+      vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                             ,pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsubdir => '/rl'); 
-      
+                                            ,pr_nmsubdir => '/rl');
+
       -- Iniciar extração dos dados para geração dos relatórios detalhados
       vr_des_chave_det := vr_tab_detalhe.FIRST;
       LOOP
@@ -2430,7 +2443,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         END IF;
         -- Se for o primeiro ou mudou a agência ou tipo de vencimento
         IF vr_des_chave_det = vr_tab_detalhe.FIRST
-		    OR vr_tab_detalhe(vr_des_chave_det).tpaplica <> vr_tab_detalhe(vr_tab_detalhe.PRIOR(vr_des_chave_det)).tpaplica
+        OR vr_tab_detalhe(vr_des_chave_det).tpaplica <> vr_tab_detalhe(vr_tab_detalhe.PRIOR(vr_des_chave_det)).tpaplica
         OR vr_tab_detalhe(vr_des_chave_det).cdagenci <> vr_tab_detalhe(vr_tab_detalhe.PRIOR(vr_des_chave_det)).cdagenci
         OR vr_tab_detalhe(vr_des_chave_det).indvecto <> vr_tab_detalhe(vr_tab_detalhe.PRIOR(vr_des_chave_det)).indvecto THEN
           -- Criar novo nó de agência / tipo vcto
@@ -2456,7 +2469,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         IF vr_des_chave_det = vr_tab_detalhe.LAST
         OR vr_tab_detalhe(vr_des_chave_det).cdagenci <> vr_tab_detalhe(vr_tab_detalhe.NEXT(vr_des_chave_det)).cdagenci
         OR vr_tab_detalhe(vr_des_chave_det).indvecto <> vr_tab_detalhe(vr_tab_detalhe.NEXT(vr_des_chave_det)).indvecto
-		    OR vr_tab_detalhe(vr_des_chave_det).tpaplica <> vr_tab_detalhe(vr_tab_detalhe.NEXT(vr_des_chave_det)).tpaplica THEN
+        OR vr_tab_detalhe(vr_des_chave_det).tpaplica <> vr_tab_detalhe(vr_tab_detalhe.NEXT(vr_des_chave_det)).tpaplica THEN
           -- fechar nó de agência / tipo vcto
           pc_escreve_xml('</agencia>');
         END IF;
@@ -2511,7 +2524,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                                ,pr_infimsol => pr_infimsol
                                ,pr_stprogra => pr_stprogra);
       -- Efetuar commit final
-      COMMIT;             
+      COMMIT;
 
     EXCEPTION
       WHEN vr_exc_erro THEN
