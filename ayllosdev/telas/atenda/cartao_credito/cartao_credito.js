@@ -52,6 +52,8 @@
  * 034: [14/10/2015] Jean Michel   (CECRED) : Alterado o width dos campo e label nmopetaa PRJ 215. 
  * 035: [29/06/2016] Kelvin		   (CECRED)	: Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461 
  * 036: [08/08/2016] Fabricio      (CECRED) : Alterado id do form utilizado na function ImprimeExtratoCartao2 (chamado 477696).
+ * 037: [05/10/2016] Kelvin		   (CECRED) : Ajuste feito ao realizar o cadastro de um novo cartão no campo  "habilita funcao debito"
+										      conforme solicitado no chamado 508426. (Kelvin)
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -3981,7 +3983,7 @@ function validaTitular() {
 	
 }
 
-function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa) {
+function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando dados...");
@@ -3997,6 +3999,7 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa) {
 			nrcpfcgc: nrcpfcgc,
 			nmtitcrd: nmtitcrd,
 			inpessoa: inpessoa,
+			floutros: floutros,
 			redirect: "html_ajax"
 		},		
         success: function (response) {
@@ -4132,7 +4135,7 @@ function selecionaRepresentante() {
 		alteraFuncaoDebito();
 	}	
 	
-    buscaDadosCartao(cdadmcrd, Representantes[index].nrcpfcgc, Representantes[index].nmdavali, 2);
+    buscaDadosCartao(cdadmcrd, Representantes[index].nrcpfcgc, Representantes[index].nmdavali, 2,Representantes[index].floutros);
 }
  
 function carregaRepresentantes() {

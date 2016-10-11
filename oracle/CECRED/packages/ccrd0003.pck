@@ -6781,7 +6781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END pc_controla_log_batch;
 
     BEGIN
-
+      
       -- Log de inicio de execucao
       pc_controla_log_batch(pr_dstiplog => 'I');
       

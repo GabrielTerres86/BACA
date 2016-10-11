@@ -333,12 +333,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             
                03/08/2016 - Ajustes para garantir que o rw_crapatr não fique com lixo do registro
                             anterior. PRJ320 - Oferta DebAut (Odirlei-AMcom)      
-                         
+                             
                30/08/2016 - Alterar data de cancelamento da autorização para gravar com a data
                             do sistema dtmvtolt (Lucas Ranghetti #493282)             
                             
                23/09/2016 - Tratar registros de vr_nro_conta_dec < 9000000000 para tratar
                             agencia(cdagectl) do debito (Lucas Ranghetti#527719)
+                            
+               27/09/2016 - Alterado gravacao na crapatr no campo dtiniatr para gravar
+                            a data com o dia do processo (Lucas Ranghetti #506501)
                             
                04/10/2016 - Tratar registros dos convenios samae timbo e casan para
                             que caso a conta seja < 9000000000 verificar se autorizacao 
@@ -2378,7 +2381,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     ELSE
                       vr_nrdconta := vr_nro_conta_dec;
                     END IF;
-                    
+
                     -- se agencia de debito nao for casan e samae timbo 
                     IF vr_cdagedeb NOT IN(1294,23) THEN
                     IF pr_cdcooper = 3 AND (vr_cdagedeb < 100 OR vr_cdagedeb > vr_cdultage) 
@@ -2768,7 +2771,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                vr_cdrefere,
                                0,
                                1,
-                               to_date(substr(vr_setlinha,45,08),'YYYYMMDD'),
+                               rw_crapdat.dtmvtolt,
                                NULL,
                                rw_crapass.nmprimtl,
                                NULL,

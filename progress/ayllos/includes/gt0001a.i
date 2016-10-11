@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 18/09/2015
+   Data    : Marco/2004                        Ultima Atualizacao: 14/09/2016
 
    Dados referentes ao programa:
 
@@ -101,7 +101,9 @@
                10/02/2015 - Inclusao do campo tel_flgdbssd.
                             (PRJ Melhoria - Chamado 229249) - (Fabricio)
                
-               18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)             
+               18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)            
+               
+               14/09/2016 - Incluir chamada da rotina pc_pula_seq_gt0001 (Lucas Ranghetti #484556)
 ............................................................................. */
 DEF VAR log_nrseqatu LIKE gnconve.nrseqatu           NO-UNDO.  
 DEF VAR log_nrseqint LIKE gnconve.nrseqint           NO-UNDO.
@@ -195,7 +197,8 @@ DEF VAR aux_nmarqpar LIKE gnconve.nmarqpar           NO-UNDO.
 DEF VAR aux_tprepass AS CHAR                         NO-UNDO.
 DEF VAR aux_flgdbssd LIKE gnconve.flgdbssd           NO-UNDO.
 DEF VAR aux_nrctdbfl LIKE gnconve.nrctdbfl           NO-UNDO.
-
+DEF VAR aux_cdcritic AS INTEGER                      NO-UNDO.
+DEF VAR aux_dscritic AS CHARACTER                    NO-UNDO.
 
 IF   tel_cdconven = 0   THEN
      DO:
@@ -800,6 +803,43 @@ DO TRANSACTION ON ENDKEY UNDO, LEAVE:
               log_nrseqpar = gnconve.nrseqpar
               log_nmarqpar = gnconve.nmarqpar
               log_flgdbssd = gnconve.flgdbssd.
+
+          /* Se o sequencial de integracao for maior que o anterior, quer dizer que foi alterado
+             e precisa ser criado registro de controle */
+          IF  tel_nrseqint > aux_nrseqint THEN
+              DO:                    
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                  RUN STORED-PROCEDURE pc_pula_seq_gt0001  /** CONV0001 **/
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT glb_cdcooper, /* Código da Cooperativa */
+                                             INPUT glb_dtmvtolt, /* Data do Movimento */
+                                             INPUT tel_cdconven, /* Codigo do convenio */
+                                             INPUT 3,            /* Tipo de controle */
+                                             INPUT aux_nrseqint, /* Sequencial anterior */
+                                             INPUT tel_nrseqint, /* Sequencial alterado */
+                                             INPUT tel_nmarqint, /* Nome do arquivo */ 
+                                            OUTPUT 0,            /* Código da crítica */
+                                            OUTPUT "").          /* Descrição da crítica */
+                  
+                  CLOSE STORED-PROC pc_pula_seq_gt0001
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = ""                         
+                         aux_cdcritic = pc_pula_seq_gt0001.pr_cdcritic 
+                                         WHEN pc_pula_seq_gt0001.pr_cdcritic <> ?
+                         aux_dscritic = pc_pula_seq_gt0001.pr_dscritic
+                                         WHEN pc_pula_seq_gt0001.pr_dscritic <> ?.
+                  
+                  IF  aux_dscritic <> ""  THEN
+                      DO:
+                          BELL.
+                          MESSAGE aux_dscritic.
+                          NEXT.       
+                      END.
+              END.
 
           RUN gera_log.
 

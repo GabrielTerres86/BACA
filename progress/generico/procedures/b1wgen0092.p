@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 01/09/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 27/09/2016
     
    Dados referentes ao programa:
    
@@ -142,6 +142,14 @@
                            
               01/09/2016 - Incluir validacao de senha para o cooperado buscando os 
                            dados da tabela crapcrd tambem (Lucas Ranghetti #499733)
+                           
+              20/09/2016 - Incluir tratamento para o convenio Aguas de Schroeder aparecer
+                           na oferta de debito automatico na procedure busca_convenios_codbarras
+                           (Lucas Ranghetti #488846)
+
+			  27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+			               mais referencias iguais para a mesma conta (busca-autori).
+						   (Chamado 528246) - (Fabricio)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -223,7 +231,8 @@ PROCEDURE busca-autori:
             DO: 
                 FIND crapatr WHERE crapatr.cdcooper = par_cdcooper  AND
                                    crapatr.nrdconta = par_nrdconta  AND
-                                   crapatr.cdrefere = par_cdrefere
+                                   crapatr.cdrefere = par_cdrefere  AND
+								   crapatr.cdhistor = INT(par_cdhistor)
                                    USE-INDEX crapatr1
                                    NO-LOCK NO-ERROR NO-WAIT.
               
@@ -2230,16 +2239,25 @@ PROCEDURE busca_convenios_codbarras:
                     ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
-            DO:                
-                FIND FIRST gnconve WHERE gnconve.cdhiscxa = crapcon.cdhistor AND
-                            gnconve.flgativo = TRUE             AND
-                            gnconve.nmarqatu <> ""              AND
-                            gnconve.cdhisdeb <> 0 NO-LOCK NO-ERROR.
+            DO:      
+                /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
+                   buasca anterior nao funciona */
+                FIND FIRST gnconve WHERE 
+                           (gnconve.cdhiscxa = crapcon.cdhistor AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0)               OR 
+                           (gnconve.cdconven = 87               AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0)
+                           NO-LOCK NO-ERROR.
                                          
-                IF  NOT AVAIL gnconve THEN
+                IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
-                    ASSIGN aux_nmempcon = gnconve.nmempres.
+                    IF gnconve.cdconven <> 87 THEN
+                       ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
