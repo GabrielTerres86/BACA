@@ -8,13 +8,11 @@
  * ALTERAÇÕES   :
  * --------------
  */
-
 session_start();
 require_once("../../includes/config.php");
 require_once("../../includes/funcoes.php");
 require_once("../../includes/controla_secao.php");
 isPostMethod();
-
 ?>
 <table id="telaInicial" id="telaInicial" cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>

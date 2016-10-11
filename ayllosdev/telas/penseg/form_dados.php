@@ -8,7 +8,6 @@
  * ALTERAÇÕES   :
  * --------------
  */
-
 session_start();
 require_once("../../includes/config.php");
 require_once("../../includes/funcoes.php");
@@ -20,7 +19,6 @@ require_once("../../class/xmlfile.php");
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A')) <> '') {
     exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 }
-
 
 $idcontrato     = (isset($_POST['idcontrato'   ])) ? $_POST['idcontrato'   ] : '' ;
 $regNrproposta  = (isset($_POST['regNrproposta'])) ? $_POST['regNrproposta'] : '' ;

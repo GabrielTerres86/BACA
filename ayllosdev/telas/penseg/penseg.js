@@ -8,7 +8,6 @@
  * -----------------------------------------------------------------------
  */
 
-
 // Variaveis
 var cregNrproposta,cregNrapolice,cregNrendosso,cregDtinivig,cregDtfimvig,cregNmsegura,cregNmmarca,cregDsmodelo,cregDschassi,cregNmsegur,cregNrdocpf
    ,cregDsplaca,cregNranofab,cregNranomod,cregCdcooper,cregNrdconta,cnewCdcooper,cnewNrdconta,cnewNmrescop,cnewNmprimtl

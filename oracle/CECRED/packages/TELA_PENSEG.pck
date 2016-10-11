@@ -1,7 +1,6 @@
 CREATE OR REPLACE PACKAGE CECRED.TELA_PENSEG AS
 
 
-
   PROCEDURE pc_busca_seguros_pend(pr_nriniseq IN INTEGER               --> Registro inicial da listagem
                                  ,pr_nrregist IN INTEGER               --> Numero de registros p/ paginaca
                  ,pr_xmllog   IN VARCHAR2              --> XML com informacoes de LOG

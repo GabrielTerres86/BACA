@@ -1,4 +1,4 @@
-<? 
+<?php 
 /*!
  * FONTE        : gera_relatorios.php
  * CRIAÇÃO      : David Kruger        
@@ -9,9 +9,6 @@
 				: 18/02/2014 - Exportação em .txt para Tp.Relat 5 (Lucas)
  * -------------- 
  */
-?> 
-
-<?	
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -112,7 +109,7 @@
 		$nmarqpdf  = "/var/www/ayllos/documentos/".$glbvars["dsdircop"]."/temp/".$nmarquiv;
 
 		if (!file_exists($nmarqpdf) || !is_file($nmarqpdf)) {			
-			?><script language="javascript">alert('Arquivo TXT nao foi gerado.<? echo $nmarqpdf ?>');</script><?php
+			?><script language="javascript">alert('Arquivo TXT nao foi gerado.<?php echo $nmarqpdf ?>');</script><?php
 			return false;
 		}
 		

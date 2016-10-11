@@ -9,10 +9,9 @@
                   15/08/2013 - Alteração da sigla PAC para PA (Carlos)
 				  18/02/2014 - Exportação em .txt para Tp.Relat 5 (Lucas)
                   12/05/2016 - PRJ187.2 - Adicionada opção 6 - Seguro Sicredi (Guilherme/SUPERO)
- * --------------
+
  */
 ?>
-
 <form id="frmRel" name="frmRel" class="formulario">
     <fieldset id="frmContRel" style="clear: both; border: 1px solid rgb(119, 119, 119); margin: 3px 0px; padding: 10px 3px 5px;">
 	<legend><? echo utf8ToHtml('Relat&#243;rios') ?></legend>

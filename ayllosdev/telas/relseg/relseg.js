@@ -11,8 +11,7 @@
 
                 : 12/05/2016 - PRJ187.2 - Adicionada opção 6 - Seguro Sicredi (Guilherme/SUPERO)
  *				  
- * --------------
- */
+  */
 
 // Definição de algumas variáveis globais 
 var cddopcao        = 'C';
@@ -617,5 +616,4 @@ function Gera_Impressao(cddopcao) {
 	
 	var callafter = "estadoInicial();";
 	carregaImpressaoAyllos(formDados,action,callafter);
-	
 }

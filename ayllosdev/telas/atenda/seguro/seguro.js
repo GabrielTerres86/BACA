@@ -48,6 +48,7 @@
                   25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
 
                   29/08/2016  - PROJ 187.2 - Sicredi Seguros (Guilherme/SUPERO)
+
  * */
  
 //**************************************************

@@ -8,15 +8,14 @@
  * ALTERAÇÕES   :
  * --------------
  */
-
     session_start();
     require_once('../../includes/config.php');
     require_once('../../includes/funcoes.php');
     require_once('../../includes/controla_secao.php');
     require_once('../../class/xmlfile.php');
     isPostMethod();
-
 ?>
+
 <form id="frmCab" name="frmCab" class="formulario" onSubmit="return false;" style="display:none">
 
     <label for="cddopcao"><?php echo utf8ToHtml('Op&ccedil;&atilde;o:') ?></label>

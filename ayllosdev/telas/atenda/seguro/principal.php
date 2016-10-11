@@ -127,18 +127,18 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
 
             var arraySeguroAuto = new Object();
 
-            arraySeguroAuto['nmresseg'] = '<? echo getByTagName($seguro_auto,'nmdsegur'); ?>';
-            arraySeguroAuto['dsmarvei'] = '<? echo getByTagName($seguro_auto,'dsmarvei'); ?>';
-            arraySeguroAuto['dstipvei'] = '<? echo getByTagName($seguro_auto,'dstipvei'); ?>';
-            arraySeguroAuto['nranovei'] = '<? echo getByTagName($seguro_auto,'nranovei'); ?>';
-            arraySeguroAuto['nrmodvei'] = '<? echo getByTagName($seguro_auto,'nrmodvei'); ?>';
-            arraySeguroAuto['nrdplaca'] = '<? echo getByTagName($seguro_auto,'nrdplaca'); ?>';
-            arraySeguroAuto['dtinivig'] = '<? echo getByTagName($seguro_auto,'dtinivig'); ?>';
-            arraySeguroAuto['dtfimvig'] = '<? echo getByTagName($seguro_auto,'dtfimvig'); ?>';
-            arraySeguroAuto['qtparcel'] = '<? echo getByTagName($seguro_auto,'qtparcel'); ?>';
-            arraySeguroAuto['vlpreseg'] = '<? echo getByTagName($seguro_auto,'vlpreseg'); ?>';
-            arraySeguroAuto['vlpremio'] = '<? echo getByTagName($seguro_auto,'vlpremio'); ?>';
-            arraySeguroAuto['dtdebito'] = '<? echo getByTagName($seguro_auto,'dtdebito'); ?>';
+            arraySeguroAuto['nmresseg'] = '<?php echo getByTagName($seguro_auto,'nmdsegur'); ?>';
+            arraySeguroAuto['dsmarvei'] = '<?php echo getByTagName($seguro_auto,'dsmarvei'); ?>';
+            arraySeguroAuto['dstipvei'] = '<?php echo getByTagName($seguro_auto,'dstipvei'); ?>';
+            arraySeguroAuto['nranovei'] = '<?php echo getByTagName($seguro_auto,'nranovei'); ?>';
+            arraySeguroAuto['nrmodvei'] = '<?php echo getByTagName($seguro_auto,'nrmodvei'); ?>';
+            arraySeguroAuto['nrdplaca'] = '<?php echo getByTagName($seguro_auto,'nrdplaca'); ?>';
+            arraySeguroAuto['dtinivig'] = '<?php echo getByTagName($seguro_auto,'dtinivig'); ?>';
+            arraySeguroAuto['dtfimvig'] = '<?php echo getByTagName($seguro_auto,'dtfimvig'); ?>';
+            arraySeguroAuto['qtparcel'] = '<?php echo getByTagName($seguro_auto,'qtparcel'); ?>';
+            arraySeguroAuto['vlpreseg'] = '<?php echo getByTagName($seguro_auto,'vlpreseg'); ?>';
+            arraySeguroAuto['vlpremio'] = '<?php echo getByTagName($seguro_auto,'vlpremio'); ?>';
+            arraySeguroAuto['dtdebito'] = '<?php echo getByTagName($seguro_auto,'dtdebito'); ?>';
 
         </script><?php
     }else if(in_array($operacao,array('C_CASA'))){
@@ -150,34 +150,34 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
 
             var arraySeguroCasa = new Object();
 
-            arraySeguroCasa['nmresseg'] = '<? echo getByTagName($seguros,'nmresseg'); ?>';
-            arraySeguroCasa['nrctrseg'] = '<? echo getByTagName($seguros,'nrctrseg'); ?>';
-            arraySeguroCasa['tpplaseg'] = '<? echo getByTagName($seguros,'tpplaseg'); ?>';
-            arraySeguroCasa['ddpripag'] = '<? echo getByTagName($seguros,'dtprideb'); ?>';
+            arraySeguroCasa['nmresseg'] = '<?php echo getByTagName($seguros,'nmresseg'); ?>';
+            arraySeguroCasa['nrctrseg'] = '<?php echo getByTagName($seguros,'nrctrseg'); ?>';
+            arraySeguroCasa['tpplaseg'] = '<?php echo getByTagName($seguros,'tpplaseg'); ?>';
+            arraySeguroCasa['ddpripag'] = '<?php echo getByTagName($seguros,'dtprideb'); ?>';
             arraySeguroCasa['ddpripag'] = arraySeguroCasa['ddpripag'].split("/");
             arraySeguroCasa['ddpripag'] = arraySeguroCasa['ddpripag'][0];
 
-            arraySeguroCasa['ddvencto'] = '<? echo getByTagName($seguros,'dtdebito'); ?>';
+            arraySeguroCasa['ddvencto'] = '<?php echo getByTagName($seguros,'dtdebito'); ?>';
             arraySeguroCasa['ddvencto'] = arraySeguroCasa['ddvencto'].split("/");
             arraySeguroCasa['ddvencto'] = arraySeguroCasa['ddvencto'][0];
 
-            arraySeguroCasa['vlpreseg'] = '<? echo getByTagName($seguros,'vlpreseg'); ?>';
-            arraySeguroCasa['dtinivig'] = '<? echo getByTagName($seguros,'dtinivig'); ?>';
-            arraySeguroCasa['dtfimvig'] = '<? echo getByTagName($seguros,'dtfimvig'); ?>';
-            arraySeguroCasa['flgclabe'] = '<? echo getByTagName($seguros,'flgclabe'); ?>';
-            arraySeguroCasa['nmbenvid'] = '<? echo $seguros[28]->tags[0]->cdata; ?>';
-            arraySeguroCasa['dtcancel'] = '<? echo getByTagName($seguros,'dtcancel'); ?>';
-            arraySeguroCasa['dsmotcan'] = '<? echo getByTagName($seguros,'dsmotcan'); ?>';
+            arraySeguroCasa['vlpreseg'] = '<?php echo getByTagName($seguros,'vlpreseg'); ?>';
+            arraySeguroCasa['dtinivig'] = '<?php echo getByTagName($seguros,'dtinivig'); ?>';
+            arraySeguroCasa['dtfimvig'] = '<?php echo getByTagName($seguros,'dtfimvig'); ?>';
+            arraySeguroCasa['flgclabe'] = '<?php echo getByTagName($seguros,'flgclabe'); ?>';
+            arraySeguroCasa['nmbenvid'] = '<?php echo $seguros[28]->tags[0]->cdata; ?>';
+            arraySeguroCasa['dtcancel'] = '<?php echo getByTagName($seguros,'dtcancel'); ?>';
+            arraySeguroCasa['dsmotcan'] = '<?php echo getByTagName($seguros,'dsmotcan'); ?>';
 
-            arraySeguroCasa['nrcepend'] = '<? echo getByTagName($seguros,'nrcepend'); ?>';
-            arraySeguroCasa['dsendres'] = '<? echo getByTagName($seguros,'dsendres'); ?>';
-            arraySeguroCasa['nrendere'] = '<? echo getByTagName($seguros,'nrendres'); ?>';
-            arraySeguroCasa['complend'] = '<? echo getByTagName($seguros,'complend'); ?>';
-            arraySeguroCasa['nmbairro'] = '<? echo getByTagName($seguros,'nmbairro'); ?>';
-            arraySeguroCasa['nmcidade'] = '<? echo getByTagName($seguros,'nmcidade'); ?>';
-            arraySeguroCasa['cdufresd'] = '<? echo getByTagName($seguros,'cdufresd'); ?>';
+            arraySeguroCasa['nrcepend'] = '<?php echo getByTagName($seguros,'nrcepend'); ?>';
+            arraySeguroCasa['dsendres'] = '<?php echo getByTagName($seguros,'dsendres'); ?>';
+            arraySeguroCasa['nrendere'] = '<?php echo getByTagName($seguros,'nrendres'); ?>';
+            arraySeguroCasa['complend'] = '<?php echo getByTagName($seguros,'complend'); ?>';
+            arraySeguroCasa['nmbairro'] = '<?php echo getByTagName($seguros,'nmbairro'); ?>';
+            arraySeguroCasa['nmcidade'] = '<?php echo getByTagName($seguros,'nmcidade'); ?>';
+            arraySeguroCasa['cdufresd'] = '<?php echo getByTagName($seguros,'cdufresd'); ?>';
 
-            arraySeguroCasa['tpendcor'] = '<? echo getByTagName($seguros,'tpendcor'); ?>';
+            arraySeguroCasa['tpendcor'] = '<?php echo getByTagName($seguros,'tpendcor'); ?>';
 
         </script><?php
     }else if($operacao == 'SEGUR'){
@@ -353,5 +353,5 @@ controlaLayout('<?php echo $operacao;?>');
 hideMsgAguardo();
 // Bloqueia conteúdo que está atras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
-<? if($operacao == 'C_CASA'){ ?> formataCep(); <? } ?>
+<?php if($operacao == 'C_CASA'){ ?> formataCep(); <?php } ?>
 </script>

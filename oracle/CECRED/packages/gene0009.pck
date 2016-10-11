@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.gene0009 AS
+CREATE OR REPLACE PACKAGE CECRED.GENE0009 AS
 
   /*---------------------------------------------------------------------------------------------------------------
 

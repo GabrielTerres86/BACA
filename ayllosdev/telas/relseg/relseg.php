@@ -10,8 +10,6 @@
  *                03/10/2016 - PRJ 187.2 - Permissão para relatorio Sicredi (Guilherme/SUPERO)
  * --------------
  */
-?>
-<?php
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
