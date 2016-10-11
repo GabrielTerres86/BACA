@@ -5723,11 +5723,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             END IF;
 
 
-IF vr_reg_arquivo.nrapolice = 1030431142546 THEN
-  NULL; -- verificar esse caso que importou os registros mesmo nao tendo proposta.
-END IF;
-
-
             --    TERMINOU DE LER O CONTEUDO DO ARQUIVO
             --    INICIO DAS VALIDAÇÕES
 
