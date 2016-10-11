@@ -1,17 +1,17 @@
-<? 
+<?php
 /*!
  * FONTE        : relseg.php
  * CRIAÇÃO      : David Kruger         
  * DATA CRIAÇÃO : 22/02/2013
  * OBJETIVO     : Mostrar tela RELSEG
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 14/06/2016 - Adicionado variavel nometela e mt_rand para o script (Guilherme/SUPERO)
  *				  
+ *                03/10/2016 - PRJ 187.2 - Permissão para relatorio Sicredi (Guilherme/SUPERO)
  * --------------
  */
 ?>
-
-<? 
+<?php
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');	
@@ -20,6 +20,11 @@
 	isPostMethod();
 	
 	require_once("../../includes/carrega_permissoes.php");	
+
+    $nometela = str_replace(".php", "", basename($_SERVER['PHP_SELF']));
+
+     // Validar se tem permissão pra acessar opção R -> 6 - Sicredi
+    $rel_sicredi = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'R',false);
 ?>
 
 <html>
@@ -34,7 +39,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="relseg.js"></script>
+        <script type="text/javascript" src="<?php echo $nometela ; ?>.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">

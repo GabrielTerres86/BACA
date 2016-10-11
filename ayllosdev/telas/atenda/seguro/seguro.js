@@ -38,7 +38,7 @@
 				  03/07/2015 - Regirado funcao dateEntry (Lucas Ranghetti/Thiago Rodrigues #303749)
 				  
 				  08/10/2015 - Reformulacao cadastral (Gabriel-RKAM).
-				  
+
 				  22/06/2016 - Trazer os novos contratos de seguro adicionados a base de dados pela integração com o PROWEB.
 				               Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi) 
 				  
@@ -370,15 +370,16 @@ function controlaOperacao(operacao) {
 				cddopcao = 'CONSULTAR';
 				break;
 			case 'ALTERAR':				
-				if(tpseguro != 3){
+		        // Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
+		        if (idorigem == 'N') {
+		            showError('error', 'Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
 					return false;
 				}
 				
-				// Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
-				if (idorigem == 'N'){
-					showError('error','Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		        if (tpseguro != 3) {
 					return false;
 				}
+
 				consultar = true;				
 				cddopcao = 'ALTERAR';
 				break;
@@ -446,15 +447,15 @@ function controlaOperacao(operacao) {
 			dataType: 'html',
 			url: UrlSite + 'telas/atenda/seguro/principal.php', 
 			data: {
-				nrdconta:nrdconta, cddopcao:cddopcao,
-				nrctrseg:nrctrseg, inpessoa:inpessoa,
-				tpseguro:tpseguro, cdsegura:cdsegura,
-				cdsexosg:cdsexosg, nmresseg:nmresseg,
-				cdsitdct:cdsitdct, nmprimtl:nmprimtl,
-				operacao:operacao, idproposta:idproposta,
+                nrdconta:nrdconta,           cddopcao   :cddopcao,
+                nrctrseg:nrctrseg,           inpessoa   :inpessoa,
+                tpseguro:tpseguro,           cdsegura   :cdsegura,
+                cdsexosg:cdsexosg,           nmresseg   :nmresseg,
+                cdsitdct:cdsitdct,           nmprimtl   :nmprimtl,
+                operacao:operacao,           idproposta :idproposta,
                 idcontrato:idcontrato,
-				nmsegura:nmsegura, nmdsegur:nmdsegur,
-				tipo:tpseguro    , redirect: 'script_ajax'
+                nmsegura:nmsegura,           nmdsegur   :nmdsegur,
+                tipo    :tpseguro,           redirect   : 'script_ajax'
 			}, 
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
@@ -473,7 +474,6 @@ function controlaOperacao(operacao) {
 						
 				} else {
 					eval( response );
-                    
 				}
 				controlaFoco();
 				return false;
@@ -496,7 +496,7 @@ function controlaFoco() {
             if (e.keyCode == 13) {
                 $(this).click();
             }
-		});		
+        });
     });
 
     $(".FirstInputModal").focus();
@@ -676,7 +676,7 @@ function controlaLayout(operacao) {
 		case 'C_AUTO':
             $('#divConteudoOpcao,#tableJanela').css({'height':'210px','width':'500px'});
 		
-			var cTodos 	  = $('#nmresseg,#dsmarvei,#dstipvei,#nranovei,#nrmodvei,#nrdplaca,#dtinivig,#dtfimvig,#qtparcel,#vlpreseg,#dtdebito,#vlpremio','#frmAuto');
+            var cTodos    = $('#nmresseg,#dsmarvei,#dstipvei,#nranovei,#nrmodvei,#nrdplaca,#dtinivig,#dtfimvig,#qtparcel,#vlpreseg,#dtdebito,#vlpremio','#frmAuto');
 			var cNmresseg = $('#nmresseg','#frmAuto');
 			var cDsmarvei = $('#dsmarvei','#frmAuto');
 			var cDstipvei = $('#dstipvei','#frmAuto');
@@ -1233,11 +1233,11 @@ function controlaLayout(operacao) {
 				cNmbairro.val(arraySeguroCasa['nmbairro']);
 				cNmcidade.val(arraySeguroCasa['nmcidade']);
 				cCdufresd.val(arraySeguroCasa['cdufresd']);
-				if(arraySeguroCasa['tpendcor']==1)	cTpendcor1.attr('checked',true);
-				else if(arraySeguroCasa['tpendcor']==2)	cTpendcor2.attr('checked',true);
-				else if(arraySeguroCasa['tpendcor']==3)	cTpendcor3.attr('checked',true);
-				if(arraySeguroCasa['flgclabe']=='no')	cFlgclabeN.attr('checked',true);
-				else if(arraySeguroCasa['flgclabe']=='yes')	cFlgclabeS.attr('checked',true);
+                if(arraySeguroCasa['tpendcor']==1)  cTpendcor1.attr('checked',true);
+                else if(arraySeguroCasa['tpendcor']==2) cTpendcor2.attr('checked',true);
+                else if(arraySeguroCasa['tpendcor']==3) cTpendcor3.attr('checked',true);
+                if(arraySeguroCasa['flgclabe']=='no')   cFlgclabeN.attr('checked',true);
+                else if(arraySeguroCasa['flgclabe']=='yes') cFlgclabeS.attr('checked',true);
 				
 				cTodos.addClass('campo');
 				
@@ -1535,10 +1535,10 @@ function buscaSeg(operacao){
 					if ( response.indexOf('showError("error"') == -1 ) {
 						eval(response);
 						if(operacao == 'ATUALIZASEG'){
-							 showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); 
+							 showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','controlaOperacao("")','sim.gif','nao.gif'); 
 							 return false;
 						}
-						showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','bloqueiaFundo(divRotina)','sim.gif','nao.gif'); 
+						showConfirmacao('Deseja continuar a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','controlaOperacao("'+operacao+'");showMsgAguardo("Aguarde,processando . . ." );','controlaOperacao(\'BTF\')','sim.gif','nao.gif'); 
 						return false;
 					}else{
 						eval(response);
@@ -1788,16 +1788,16 @@ function carregaPropriedadesFormPrestVida(){
 		});
 		$('#btVoltar').unbind('click').bind('click', function() {
 				controlaOperacao('BTF');return false;	
-		});
+		});		
 	}
 	
 }
-	
+
 // Carrega formulário de cadastro de prestamista e vida
 function carregaPropriedadesFormPrestVidaNovo(){
 	
-	var label = 'label[for="nmSegurado"],label[for="dsTpSeguro"],'+
-			    'label[for="dtIniVigen"],label[for="nrProposta"],'+
+    var label = 'label[for="nmSegurado"],label[for="dsTpSeguro"],' +
+			    'label[for="dtIniVigen"],label[for="nrProposta"],' +
                 'label[for="dsPlano"]';
 				
 	$(label).addClass('rotulo').css({'width':'100px','text-align':'right'});
@@ -1829,12 +1829,12 @@ function carregaPropriedadesFormPrestVidaNovo(){
 	$('#dsObservacoes').css({'height':'50px','width':'500px'}).desabilitaCampo();
 	
 	var divRegistro = $('div.divRegistros');
-	var tabela      = $('table', divRegistro );
+    var tabela      = $('table', divRegistro);
 
-	divRegistro.css('height','80px');
+    divRegistro.css('height','80px');
 	
 	var ordemInicial = new Array();
-	ordemInicial = [[1,0]];
+    ordemInicial = [[1,0]];
 
 	var arrayLargura = new Array();
 	arrayLargura[0] = '250px';
@@ -1847,7 +1847,7 @@ function carregaPropriedadesFormPrestVidaNovo(){
 	arrayAlinha[2] = 'left';
 	arrayAlinha[3] = 'right';
 	
-	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 	
 	$('#divConteudoOpcao,#tableJanela').css({'height':'210px','width':'640px'});
 	
@@ -1862,7 +1862,7 @@ function carregaPropriedadesFormPrestVidaNovo(){
 	$('#divConteudoOpcao,#tableJanela').css({'height':'450px'});
 	
 	var btVoltar = $('#btVoltar', divBotoes);
-				btVoltar.click(function(){
+    btVoltar.click(function () {
 					controlaOperacao('');
 					return false;
 				});
@@ -2369,7 +2369,7 @@ function buscarEnderecoCorrespondencia(tipo_endereco){
 		dataType: 'html',
 		url: UrlSite + "telas/atenda/seguro/busca_endereco_correspondencia.php",
 		data: {
-			nrdconta: nrdconta,	tpendcor: tipo_endereco, 
+            nrdconta: nrdconta, tpendcor: tipo_endereco,
 			idseqttl: idseqttl, redirect: "html_ajax" // Tipo de retorno do ajax
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -2401,8 +2401,8 @@ function controlaPesquisas(operacao) {
 			return false;
 		}).next().unbind('click').bind('click', function() {
 			$("#divPesquisa").css({'z-index':'150'});
-			filtrosPesq	= 'C&oacutedigo:;cdmotcan;40px;S|Descri&ccedil&atildeo:;dsmotcan;120px;S;';	
-			colunas 	= 'C&oacutedigo:;cdmotcan;11%;right|Descri&ccedil&atildeo:;dsmotcan;49%;left';
+            filtrosPesq = 'C&oacutedigo:;cdmotcan;40px;S|Descri&ccedil&atildeo:;dsmotcan;120px;S;';
+            colunas     = 'C&oacutedigo:;cdmotcan;11%;right|Descri&ccedil&atildeo:;dsmotcan;49%;left';
 			fncOnClose  = 'cdmotcan = $("#cdmotcan","#frmMotivo").val();';
 			mostraPesquisa(bo,procedure,titulo,qtReg, filtrosPesq, colunas, divUso, fncOnClose);
 			return false;
@@ -2420,8 +2420,8 @@ function controlaPesquisas(operacao) {
 			buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'nmsegura',$(this).val(),'nmsegura',filtrosDesc,'frmBuscarSeguradora');
 			return false;
 		}).next().unbind('click').bind('click', function() {			
-			filtrosPesq	= 'C&oacutedigo:;cdsegura;60px;|Descri&ccedil&atildeo:;nmsegura;200px;';	
-			colunas 	= 'C&oacutedigo:;cdsegura;11%;right|Descri&ccedil&atildeo:;nmsegura;49%;';
+            filtrosPesq = 'C&oacutedigo:;cdsegura;60px;|Descri&ccedil&atildeo:;nmsegura;200px;';
+            colunas     = 'C&oacutedigo:;cdsegura;11%;right|Descri&ccedil&atildeo:;nmsegura;49%;';
 			fncOnClose  = 'cdsegura = $("#cdsegura","#frmBuscarSeguradora").val()';
 			mostraPesquisa(bo,procedure,titulo,'20',filtrosPesq,colunas,divRotina,fncOnClose);
 			return false;
@@ -2462,7 +2462,7 @@ function cancelarSeguro(){
 		dataType: 'html',
 		url: UrlSite + "telas/atenda/seguro/cancelar_seguro.php",
 		data: {
-			nrdconta: nrdconta,	idseqttl: idseqttl, tpseguro: tpseguro, nrctrseg: nrctrseg, motivcan: motivcan, 
+            nrdconta: nrdconta, idseqttl: idseqttl, tpseguro: tpseguro, nrctrseg: nrctrseg, motivcan: motivcan,
 			redirect: "html_ajax" // Tipo de retorno do ajax
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -2507,7 +2507,7 @@ function desfazerCancelamentoSeguro(){
 		dataType: 'html',
 		url: UrlSite + "telas/atenda/seguro/desfazer_cancelamento_seguro.php",
 		data: {
-			nrdconta: nrdconta,	idseqttl: idseqttl, tpseguro: tpseguro, nrctrseg: nrctrseg, 
+            nrdconta: nrdconta, idseqttl: idseqttl, tpseguro: tpseguro, nrctrseg: nrctrseg,
 			redirect: "html_ajax" // Tipo de retorno do ajax
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -2758,7 +2758,7 @@ function formataZoom()
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
-	var cTodos 	  = $('#vlplaseg,#flgunica,#qtmaxpar,#mmpripag,#qtdiacar,#ddmaxpag','#frmZoom');
+    var cTodos    = $('#vlplaseg,#flgunica,#qtmaxpar,#mmpripag,#qtdiacar,#ddmaxpag','#frmZoom');
 	var cVlplaseg = $('#vlplaseg','#frmZoom');
 	var cFlgunica = $('#flgunica','#frmZoom');
 	var cQtmaxpar = $('#qtmaxpar','#frmZoom');

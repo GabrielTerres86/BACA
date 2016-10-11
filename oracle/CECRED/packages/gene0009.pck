@@ -109,6 +109,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
     --
     --  Alteração : 30/09/2016 - Deletar as variaveis vr_tab_regras e vr_tab_layouts antes de carregar (Rafael).
     --
+    --              03/10/2016 - Tratar linhas com quantidade de colunas diferente do layout, quando
+    --                           "com delimitador" (Guilherme/SUPERO)
+    --
     -- ..........................................................................*/
     
       ------------------> CURSORES <----------------
@@ -320,6 +323,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
               -- Quebrar linha do arquivo pelo delimitador
               vr_split := gene0002.fn_quebra_string(pr_string => vr_dslinha, 
                                                     pr_delimit => rw_layout.dsdelimitador);
+                                                    
+              -- Compara quantidade de campos do Layout com a qtde campos da linha
+              IF vr_tab_layouts(vr_tpregistro).count() <> vr_split.count() THEN
+                 vr_tab_linhas(vr_contlin)('$ERRO$').texto := 'Formato inválido da linha!';
+                 --> Em caso de erro deve parar de ler a linha e retornar para o chamador
+                 CONTINUE;
+              END IF;
               
               FOR i IN vr_tab_layouts(vr_tpregistro).first..vr_tab_layouts(vr_tpregistro).last LOOP     
                       
