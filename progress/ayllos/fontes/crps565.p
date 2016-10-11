@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Abril/2010                         Ultima atualizacao: 18/01/2016
+   Data    : Abril/2010                         Ultima atualizacao: 22/09/2016
 
    Dados referentes ao programa:
 
@@ -35,6 +35,9 @@
                18/01/2016 - Quando encontrar agencia de codigo "9999" desativar
                             todas as agencias do banco correspondente
                             (Douglas - Chamado 361760)
+
+               22/09/2016 - Ajuste para não desativar o banco 7 - BNDS, conforme
+                            solicitado no chamado 507147. (Kelvin)
 
 ..............................................................................*/
 
@@ -287,7 +290,8 @@ FOR EACH crapcop
                     END.        
                 ELSE
                     DO:       
-                        IF   crapagb.cdsitagb <> aux_cdsitagb   THEN
+                        IF   crapagb.cdsitagb <> aux_cdsitagb AND
+                             crapagb.cddbanco <> 7 THEN /*Nao faz para o banco 7 - BNDS*/
                              ASSIGN crapagb.cdsitagb = aux_cdsitagb
                                     crapagb.dtmvtolt = glb_dtmvtolt 
                                     crapagb.cdoperad = glb_cdoperad.
@@ -314,6 +318,9 @@ FOR EACH crapcop
                 
             END. /*** Fim do DO WHILE TRUE ***/
 
+            /*Nao faz para o banco 7 - BNDS*/
+            IF aux_cdbccxlt <> 7 THEN
+               DO:
             /* Se a agencia em questao eh "9999" */
             IF aux_cdageban = 9999 THEN
             DO:
@@ -322,6 +329,8 @@ FOR EACH crapcop
                     /* desativar todas as agencias do banco */
                     ASSIGN crapagb.cdsitagb = "N".
                 END.
+                    END.  
+               
             END.
             
         END.                                                       

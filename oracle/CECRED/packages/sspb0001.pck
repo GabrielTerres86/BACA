@@ -221,7 +221,7 @@ PROCEDURE pc_trfsal_opcao_x(pr_cdcooper IN INTEGER    --> Cooperativa
 PROCEDURE pc_estado_crise (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
                           ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
                           ,pr_clobxmlc OUT CLOB); -- XML com informações de LOG
-													
+
 PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2   -- Código do programa
 												 ,pr_nmarqxml IN  VARCHAR2   -- Nome do arquivo xml
 												 ,pr_nmarqlog IN  VARCHAR2   -- Nome do arquivo de log
@@ -249,7 +249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 09/11/2015
+  --  Data     : Julho/2013.                   Ultima atualizacao: 22/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -261,6 +261,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --             09/11/2015 - Ajustar a atualização do lote para gravar vr_qtinfoln
   --                          na qtinfoln nas procedures pc_trfsal_opcao_b e 
   --                          pc_trfsal_opcao_x (Douglas - Chamado 356338)
+  --
+  --             22/09/2016 - Arrumar validacao para horario limite de envio de ted na 
+  --                          procedure pc_trfsal_opcao_b (Lucas Ranghetti #500917)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -2479,7 +2482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Objetivo  : Procedure para enviar TED/TEC  - SPB
 
       Alteração : 09/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
-
+      
                   19/09/2016 - Removida a validacao de horario cadastrado na TAB085
                                para a geracao de TED dos convenios. SD 519980.
                                (Carlos Rafael Tanholi)      
@@ -2814,7 +2817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         vr_flgutpag := TRUE;
       END IF;
     END IF;
-		
+
 		IF vr_flgutpag THEN /* Operando com PAG */ 
 			IF pr_vldocmto > rw_crapcop.vlmaxpag THEN
          vr_flpagmax := TRUE;
@@ -2913,7 +2916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         vr_nmmsgenv := 'PAG0137';
       ELSE
 				IF vr_flgutstr THEN /* Se STR Disponivel */        
-           vr_nmmsgenv := 'STR0037';
+        vr_nmmsgenv := 'STR0037';
 				ELSE
 					vr_dscritic := 0;
 					vr_dscritic := 'Operação indisponível para o banco favorecido.';
@@ -2928,7 +2931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 															 ,pr_tab_erro => vr_tab_erro);
 					--Levantar Excecao
 					RAISE vr_exc_erro;					
-				END IF;
+      END IF;
       END IF;
 
       pc_gera_xml (pr_cdcooper => pr_cdcooper          --> Codigo da cooperativa
@@ -2989,7 +2992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         vr_nmmsgenv := 'PAG0107';
       ELSE 
 				IF vr_flgutstr THEN/* Se STR Disponivel */
-           vr_nmmsgenv := 'STR0005';
+        vr_nmmsgenv := 'STR0005';
 				ELSE
 					vr_dscritic := 0;
 					vr_dscritic := 'Operação indisponível para o banco favorecido.';
@@ -3004,7 +3007,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 															 ,pr_tab_erro => vr_tab_erro);
 					--Levantar Excecao
 					RAISE vr_exc_erro;					
-				END IF;
+      END IF;
       END IF;
 
       pc_gera_xml (pr_cdcooper   => pr_cdcooper        --> Codigo da cooperativa
@@ -3127,7 +3130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         vr_nmmsgenv := 'PAG0108';
       ELSE 
 				IF vr_flgutstr THEN /* Se STR Disponivel */
-           vr_nmmsgenv := 'STR0008';
+        vr_nmmsgenv := 'STR0008';
 				ELSE
 					vr_dscritic := 0;
 					vr_dscritic := 'Operação indisponível para o banco favorecido.';
@@ -3142,7 +3145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 															 ,pr_tab_erro => vr_tab_erro);
 					--Levantar Excecao
 					RAISE vr_exc_erro;					
-				END IF;
+      END IF;
       END IF;
 
       pc_gera_xml (pr_cdcooper   => pr_cdcooper        --> Codigo da cooperativa
@@ -3228,7 +3231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Evandro
-      Data     : Dezembro/2006.                   Ultima atualizacao: 09/11/2015
+      Data     : Dezembro/2006.                   Ultima atualizacao: 22/09/2016
 
 
       Dados referentes ao programa:
@@ -3243,6 +3246,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
                   09/11/2015 - Ajustar a atualização do lote para gravar vr_qtinfoln
                                na qtinfoln (Douglas - Chamado 356338)
+                               
+                  22/09/2016 - Arrumar validacao para horario limite de envio de ted (Lucas Ranghetti #500917)
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -3380,6 +3385,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrdcomto craplcs.nrdocmto%TYPE := 0;
     vr_inestcri INTEGER;
     vr_clobxmlc CLOB;
+    vr_hrlimted NUMBER;
+
   BEGIN
 
     /* Busca dados da cooperativa */
@@ -3446,7 +3453,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     vr_horalimb := gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HOR_LIM_PORTAB');
 
-    IF vr_horalimb < TO_CHAR(SYSDATE, 'HH:MM') THEN
+    vr_hrlimted := to_char(to_date(vr_horalimb,'hh24:mi'),'sssss');
+    
+    IF vr_hrlimted < to_char(SYSDATE, 'sssss') THEN
        vr_cdcritic := 0;
        vr_dscritic := 'Horario limite para envio de ted --> ' || vr_horalimb;
        --Levantar Excecao
@@ -4548,7 +4557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     END;
   END pc_estado_crise;
-	
+  
 	PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2 -- Código do programa
                            ,pr_nmarqxml IN  VARCHAR2 -- Nome do arquivo xml
                            ,pr_nmarqlog IN  VARCHAR2 -- Nome do arquivo de log

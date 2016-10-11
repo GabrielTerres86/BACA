@@ -518,7 +518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 02/08/2016
+    Data    : Agosto/2011                        Ultima atualizacao: 05/10/2016
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -681,18 +681,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                               
                 13/11/2015 - Ajustado leitura na CRAPOPE incluindo upper (Odirlei-AMcom)             
 				  
-				09/12/2015 - Ajustes na leitura das tarifas na procedure pc_gera_extrato_tarifas (Dionathan)
+				        09/12/2015 - Ajustes na leitura das tarifas na procedure pc_gera_extrato_tarifas (Dionathan)
                 
                 21/12/2015 - Ajuste na informacao gravado no campo de historico, estava concatenando a descricao
                              com o cedente e em alguns casos, estourando o campo, sera cortado em 50 posicoes.
                              Chamado 376432 (Heitor RKAM)
                 
                 04/01/2015 - Ajuste na pc_consulta_lancamento para exibir apenas 50 caracteres no dshistor 
-                             SD381109 (Odirlei-AMcom)               
+                             SD381109 (Odirlei-AMcom) 
                              
                 15/12/2015 - Criado rotina para geração do relatório "Tarifa Op. Créditos" 
-                             (Jonathan - RKAM > M273). 
-                                           
+                             (Jonathan - RKAM > M273).
+                             
                 17/02/2016 - Ajustes na pc_consulta_lancamento referentes ao projeto melhoria 157
                              (Lucas Ranghetti #330322)
 				        
@@ -703,8 +703,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              vr_dtddlslf na procedure pc_consulta_lancamento (Lucas Ranghetti #411852)
 
                 17/02/2016 - Ajuste na rotina pc_gera_impextir ao compor o saldo de retorno para pessoa juridica
-                             conforme solicitado no chamado 396382. (Kelvin)             
-                             
+                             conforme solicitado no chamado 396382. (Kelvin) 
+
                  06/04/2016 - Ajustes feito para correção do chamado 426937. (Kelvin)             
                              
                 20/04/2016 - Remover comando rm e incluir direto na tela impres 
@@ -719,9 +719,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 16/05/2016 - Ajustar cursor cr_craptab_ctabloq que estava filtrando o numero
                              da conta na crapcop e para que seja utilizado o indice da craptab
                              na pc_gera_impressao_car (Douglas - Chamado 452281)
-                             
-                06/04/2016 - Incluido novo tratamento para Prj. Tarifas na procedure pc_gera_tarifa_extrato (Jean Michel)
 
+                06/04/2016 - Incluido novo tratamento para Prj. Tarifas na procedure pc_gera_tarifa_extrato (Jean Michel)   
+                             
                 15/06/2016 - Tramaneto feito para ajustar a data de lançamentos futuros conforme solicitado
                              no chamado 469078. (Kelvin)
 
@@ -737,6 +737,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
 				07/09/2016 - Incluido historico 863 no extrato de poupanca programada da ATENDA
                            - Andrey (RKAM) - Chamado 507087
+    
+                05/10/2016 - #484925 Correção da forma de como era montado o extrato de cotas para evitar
+                             cálculos errados na composição do extrato das contas migradas, procedure
+                             pc_extrato_cotas (Carlos)
 
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -944,7 +948,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_exc_null EXCEPTION;
 
       vr_qtacobra INTEGER;
-      vr_tipotari INTEGER;
+      vr_tipotari INTEGER;      
       vr_fliseope INTEGER;
 
     BEGIN
@@ -1109,7 +1113,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Data referencia anterior 30 dias
         IF pr_dtrefere < ( rw_crapdat.dtmvtocd - 30 ) THEN /* Periodo */
           --Se terminal for TAA
-          IF pr_nrterfin <> 0 THEN /* TAA */
+          IF pr_nrterfin <> 0 THEN /* TAA */ 
             vr_tipotari := 9;
             --Se for pessoa fisica
             IF rw_crapass.inpessoa = 1 THEN /* Fisica */
@@ -1128,7 +1132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END IF;
         ELSE
           --Se terminal for TAA
-          IF pr_nrterfin <> 0 THEN /* TAA */
+          IF pr_nrterfin <> 0 THEN /* TAA */ 
             vr_tipotari := 7;
             --Se for pessoa fisica
             IF rw_crapass.inpessoa = 1 THEN /* Fisica */
@@ -1150,7 +1154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
        
       --Cobrar Tarifa
       IF pr_flgtarif THEN
-
+        
         TARI0001.pc_verifica_tarifa_operacao(pr_cdcooper => pr_cdcooper
                                             ,pr_cdoperad => pr_cdoperad
                                             ,pr_cdagenci => pr_cdagenci
@@ -1174,7 +1178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
         /* Possui pacote de tarifas, e utilizou operacao isenta disponivel*/
         IF   vr_fliseope = 1 THEN
-             vr_inisenta := 1;
+          vr_inisenta := 1;
               /*Possui pacote de tarifas, e excedeu qtd.isenta do servico "extrato"*/
         ELSIF  vr_qtacobra > 0 THEN
                /* Essa atribuicao eh necessaria devido a chamada da procedure
@@ -1402,8 +1406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- Frequencia: -----
   -- Objetivo   : Procedure para consultar extrato do capital 
   --
-  -- Alterações : 16/07/2014 - Conversão Progress -> Oracle (Alisson - AMcom)
-  --              
+  -- Alterações : 16/07/2014 - Conversão Progress -> Oracle (Alisson - AMcom)  --              
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Selecionar Dados para Geracao Extrato Imposto Renda      
@@ -1413,8 +1416,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapdir.vlttccap
         FROM crapdir crapdir
         WHERE crapdir.cdcooper = pr_cdcooper 
-        AND   crapdir.nrdconta = pr_nrdconta
-        ORDER BY crapdir.progress_recid DESC;
+           AND crapdir.nrdconta = pr_nrdconta
+           AND crapdir.dtmvtolt = to_date('31/12/2004','dd/mm/RRRR'); -- ultimo registro de dir criado antes do uso da tab craplct
+
       --Selecionar Lancamento Cota Capital
       CURSOR cr_craplct (pr_cdcooper IN craplct.cdcooper%type
                         ,pr_nrdconta IN craplct.nrdconta%type) IS
@@ -1426,8 +1430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       rw_craplct cr_craplct%ROWTYPE;                                     
       --Selecionar Lancamento Cota Capital
       CURSOR cr_craplct2 (pr_cdcooper IN craplct.cdcooper%type
-                         ,pr_nrdconta IN craplct.nrdconta%type
-                         ,pr_dtmvtolt IN craplct.dtmvtolt%TYPE) IS
+                         ,pr_nrdconta IN craplct.nrdconta%type) IS
         SELECT  craplct.cdcooper
                ,craplct.cdhistor
                ,craplct.dtmvtolt
@@ -1440,7 +1443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         FROM craplct craplct
         WHERE craplct.cdcooper = pr_cdcooper 
         AND   craplct.nrdconta = pr_nrdconta
-        AND   craplct.dtmvtolt >= pr_dtmvtolt
+        AND   craplct.dtmvtolt >= pr_dtiniper
         AND   craplct.dtmvtolt <= pr_dtfimper
         ORDER BY cdcooper,nrdconta,dtmvtolt,cdhistor,nrdocmto;
       --Selecionar Historicos de Tarifas
@@ -1455,6 +1458,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         WHERE craphis.cdcooper = pr_cdcooper
         AND   craphis.cdhistor = pr_cdhistor;
       rw_craphis cr_craphis%ROWTYPE;   
+      
+      CURSOR cr_craptco (pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT t.cdcopant, t.nrctaant
+          FROM craptco t
+         WHERE t.cdcooper = pr_cdcooper
+           AND t.nrdconta = pr_nrdconta;
+      rw_craptco cr_craptco%ROWTYPE;
+
       --Variaveis Locais
       vr_index    PLS_INTEGER;
       vr_vlsldtot NUMBER:= 0;
@@ -1463,6 +1475,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dstransa VARCHAR2(100);
       vr_dsorigem VARCHAR2(100);
       vr_nrdrowid ROWID;      
+      
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_nrdconta crapass.nrdconta%TYPE;  
+      vr_saldo NUMBER:= 0;
+      
+      
+      CURSOR cr_craplctsaldo (pr_cdcooper IN crapcop.cdcooper%TYPE
+                             ,pr_nrdconta IN crapass.nrdconta%TYPE
+                             ,pr_dtiniper IN craplct.dtmvtolt%TYPE) IS      
+        SELECT (NVL((SELECT SUM(l.vllanmto)
+                      FROM craplct l
+                          ,craphis h
+                     WHERE l.cdcooper = pr_cdcooper
+                       AND l.nrdconta = pr_nrdconta
+                       AND l.dtmvtolt < pr_dtiniper
+                       AND l.cdcooper = h.cdcooper
+                       AND l.cdhistor = h.cdhistor
+                       AND h.indebcre = 'C')
+                   ,0) - 
+                NVL((SELECT SUM(l.vllanmto)
+                      FROM craplct l
+                          ,craphis h
+                     WHERE l.cdcooper = pr_cdcooper
+                       AND l.nrdconta = pr_nrdconta
+                       AND l.dtmvtolt < pr_dtiniper
+                       AND l.cdcooper = h.cdcooper
+                       AND l.cdhistor = h.cdhistor
+                       AND h.indebcre = 'D')
+                   ,0)) saldo
+          FROM dual;
+      
     BEGIN
       --Limpar Mensagem Saida
       pr_dscritic:= NULL; 
@@ -1471,45 +1514,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       --Inicializar transacao
       vr_dsorigem:= gene0001.vr_vet_des_origens(pr_idorigem);
       vr_dstransa:= 'Busca Extrato de Capital.';
-      --Selecionar Dados para Geracao Extrato Imposto Renda      
-      FOR rw_crapdir IN cr_crapdir (pr_cdcooper => pr_cdcooper 
-                                   ,pr_nrdconta => pr_nrdconta) LOOP
-        --Data Inferior ao periodo Inicial ou igual a 31/12/2004
-        IF rw_crapdir.dtmvtolt <= pr_dtiniper OR rw_crapdir.dtmvtolt = to_date('12/31/2004','MM/DD/YYYY') THEN 
-          --Data Saldo
-          vr_dtprmsld:= rw_crapdir.dtmvtolt;
-          --Valor Saldo
-          vr_vlsldtot:= rw_crapdir.vlttccap;
-          --uso Extrato          
-          vr_flgusdir:= TRUE;
-          --Sair do LOOP
-          EXIT;
-        END IF;  
-      END LOOP;
-      --Se a data do primeiro saldo continua Nula
-      IF vr_dtprmsld IS NULL THEN
-        --Selecionar Lancamento Cota Capital
-        OPEN cr_craplct (pr_cdcooper => pr_cdcooper
+      
+      OPEN cr_craptco (pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => pr_nrdconta);
-        FETCH cr_craplct INTO rw_craplct;                
-        --Se Encontrou
-        IF cr_craplct%FOUND THEN
-          --Data Primeiro Saldo
-          vr_dtprmsld:= rw_craplct.dtmvtolt;
-        ELSE
-          vr_dtprmsld:= pr_dtmvtolt;
+      FETCH cr_craptco INTO rw_craptco;
+
+      vr_cdcooper := pr_cdcooper;
+      vr_nrdconta := pr_nrdconta;
+      
+      IF cr_craptco%FOUND THEN
+        vr_cdcooper := rw_craptco.cdcopant;
+        vr_nrdconta := rw_craptco.nrctaant;         
         END IF;
-        --Fechar Cursor
-        CLOSE cr_craplct;
-        /* Dia de abertura da conta */
-        vr_flgusdir:= FALSE;     
-      END IF;
+      
+      CLOSE cr_craptco;                   
+      
+      --Selecionar Dados para Geracao Extrato Imposto Renda      
+      FOR rw_crapdir IN cr_crapdir (pr_cdcooper => vr_cdcooper 
+                                   ,pr_nrdconta => vr_nrdconta) LOOP
+        vr_vlsldtot := rw_crapdir.vlttccap;
+      END LOOP;
+      
+      -- Pegar lançamentos inferiores a data informada para compor saldo inicial
+      OPEN cr_craplctsaldo (pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_dtiniper => pr_dtiniper);
+      FETCH cr_craplctsaldo INTO vr_saldo;      
+
+      vr_vlsldtot := vr_vlsldtot + NVL(vr_saldo,0);
+
       /* Saldo inicial */  
-      pr_vlsldant:= vr_vlsldtot;
+      pr_vlsldant:= NVL(vr_vlsldtot,0);
+      
       --Selecionar Lancamentos Cota de Capital
       FOR rw_craplct IN cr_craplct2 (pr_cdcooper => pr_cdcooper
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_dtmvtolt => vr_dtprmsld) LOOP
+                                    ,pr_nrdconta => pr_nrdconta) LOOP
         --Se foi no dia da abertura da conta e na mesma data                            
         IF vr_flgusdir AND rw_craplct.dtmvtolt = vr_dtprmsld THEN 
           --Proximo registro
@@ -1571,6 +1610,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       pr_des_reto:= 'OK';
     EXCEPTION
       WHEN OTHERS THEN
+      
+        btch0001.pc_log_internal_exception(pr_cdcooper);
       
         -- Retorno não OK
         pr_des_reto:= 'NOK';
@@ -3543,7 +3584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              27/05/2016 - Identificar se origem for TRMULTAJUROS. Inclusao: fldebito,
   --                           cdagenci, cdbccxlt, nrdolote, nrseqdig. (Jaison/James)
   --
-  --
+  --              
   --              28/06/2016 - Incluir conta na busca do maximo Float (Marcos-Supero #477843)
   -- 
   ---------------------------------------------------------------------------------------------------------------
@@ -3915,7 +3956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       -- Lançamentos de Débito de Tarifa
       CURSOR cr_lancto_deb_tarifa(p_cdcooper crapcop.cdcooper%TYPE
                                  ,p_nrdconta crapemp.nrdconta%TYPE) IS
-        SELECT pfp.nrseqpag
+         SELECT pfp.nrseqpag
               ,pfp.PROGRESS_RECID
               ,pfp.qtlctpag * pfp.vltarapr vltottar
               ,pfp.dtcredit
@@ -4414,7 +4455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).nrdolote := rw_craplau.nrdolote;
         pr_tab_lancamento_futuro(vr_index).nrseqdig := rw_craplau.nrseqdig;
         pr_tab_lancamento_futuro(vr_index).dtrefere := rw_craplau.dtmvtolt;
-
+        
         /* Pagtos INTERNET */  
         IF rw_craphis.cdhistor = 508 THEN
           --Descricao do Historico
@@ -4431,7 +4472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END LOOP; --rw_craplau
       
       -- Lançamentos de Debito de Folha
-      FOR rw_lancto_deb_folha IN cr_lancto_deb_folha(pr_cdcooper
+      FOR rw_lancto_deb_folha IN cr_lancto_deb_folha(pr_cdcooper                                    
                                                     ,pr_nrdconta) LOOP
          --Tipo Historico
          IF rw_lancto_deb_folha.inhistor IN (1,2,3,4,5) THEN
@@ -4467,7 +4508,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END LOOP;
       
       -- Lançamentos de Débito de Tarifa
-      FOR rw_lancto_deb_tarifa IN cr_lancto_deb_tarifa(pr_cdcooper
+      FOR rw_lancto_deb_tarifa IN cr_lancto_deb_tarifa(pr_cdcooper                                    
                                                       ,pr_nrdconta) LOOP
          --Selecionar Historicos
          OPEN cr_craphis (pr_cdcooper => pr_cdcooper
@@ -4519,7 +4560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       END LOOP;
       
       -- Lançamentos de Crédito de Folha
-      FOR rw_lancto_cred_folha IN cr_lancto_cred_folha(pr_cdcooper        
+      FOR rw_lancto_cred_folha IN cr_lancto_cred_folha(pr_cdcooper                                    
                                                       ,pr_nrdconta) LOOP
          --Tipo Historico
          IF rw_lancto_cred_folha.inhistor IN (1,2,3,4,5) THEN
@@ -5607,7 +5648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;                                                 
         END IF;
       END LOOP;
-
+                                                                                        
       FOR rw_craptdb IN cr_craptdb(pr_cdcooper => pr_cdcooper,
                                    pr_nrdconta => pr_nrdconta,
                                    pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
@@ -12115,7 +12156,7 @@ END pc_consulta_ir_pj_trim;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).flglista:= vr_tab_extrato_epr_novo(vr_index_novo).flglista;
             pr_tab_extrato_epr_aux(vr_index_epr_aux).cdorigem:= vr_tab_extrato_epr_novo(vr_index_novo).cdorigem;
-            
+
             --Historicos
             IF vr_tab_extrato_epr_novo(vr_index_novo).cdhistor IN (1050,1051) THEN
               --Flag Informacao
@@ -14901,8 +14942,8 @@ END pc_consulta_ir_pj_trim;
             vr_nmendter:= pr_dsiduser || gene0002.fn_busca_time;
             pr_nmarqimp:= vr_nmendter || '.ex';
             pr_nmarqpdf:= vr_nmendter || '.pdf';
-          END IF;  
-          
+          END IF;            
+         
           --Selecionar associado
           OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
@@ -14970,7 +15011,7 @@ END pc_consulta_ir_pj_trim;
             
             --Popular Clob do relatorio interno
             gene0002.pc_escreve_xml(vr_clobxml143, vr_dstexto143,vr_dstexto);
-
+ 
             --Levantar Excecao
             RAISE vr_exc_sair;          
           END IF;
@@ -15115,7 +15156,7 @@ END pc_consulta_ir_pj_trim;
           pr_des_reto:= 'OK';
 
         EXCEPTION
-          WHEN vr_exc_sair THEN
+          WHEN vr_exc_sair THEN                 
             vr_cdcritic:= NULL;
             vr_dscritic:= NULL;
           WHEN vr_exc_erro THEN
@@ -16997,7 +17038,7 @@ END pc_consulta_ir_pj_trim;
         END IF;
         
         gene0002.pc_escreve_xml(pr_clobxml, vr_dstexto143,'<mes trimestre="' || vr_trimestre || '" id_mes="' || GENE0001.vr_vet_nmmesano(vr_contador) || '" vltotmes="' || to_char(nvl( vr_vltotmes,0),'fm999G999G990D00') || '">');  
-               
+       
         vr_dstexto:= vr_dstexto ||
                      '<detalhe id_tipo="' || vr_tab_extrato_ope_credito(vr_index).dscricao || '" vltottip="' || to_char(nvl( vr_vlrparci,0),'fm999G999G990D00') || '">' ||
                          '<jurorend>' || to_char(nvl( vr_tab_extrato_ope_credito(vr_index).juroremu,0),'fm999G999G990D00') || '</jurorend>' ||
@@ -17010,7 +17051,7 @@ END pc_consulta_ir_pj_trim;
           
         --Popular Clob do relatorio interno
         gene0002.pc_escreve_xml(pr_clobxml, vr_dstexto143,vr_dstexto);        
-               
+       
         --Para o ambiente Internet Bank quebra o relatório em três páginas
         IF pr_idorigem = 3        AND 
            MOD(vr_contador,4) = 0 THEN
@@ -17028,7 +17069,7 @@ END pc_consulta_ir_pj_trim;
         
       --Finaliza TAG Extratos e Conta            
       gene0002.pc_escreve_xml(pr_clobxml,vr_dstexto143,'</informacoes><totalAno>' || to_char(nvl( vr_vltotano,0),'fm999G999G990D00') || '</totalAno></crrl712>',TRUE);      
-                                                  
+                                                    
       --Ayllos Web
       IF pr_flgrodar = 1 THEN
 
@@ -17165,61 +17206,61 @@ END pc_consulta_ir_pj_trim;
   END;
       
   END pc_gera_extrato_op_credito;  
-    
-  -- Subrotina para gerar impressao
-  PROCEDURE pc_gera_impressao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
-                              ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
-                              ,pr_nrdcaixa IN INTEGER                --Numero do Caixa
-                              ,pr_idorigem IN INTEGER                --Origem dos Dados
-                              ,pr_nmdatela IN VARCHAR2               --Nome da Tela
-                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data Movimento
-                              ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --Data Proximo Movimento
-                              ,pr_cdprogra IN crapprg.cdprogra%TYPE  --Codigo Programa
-                              ,pr_inproces IN INTEGER                --Indicador Processo
-                              ,pr_cdoperad IN VARCHAR2               --Codigo Operador
-                              ,pr_dsiduser IN VARCHAR2               --Identificador Usuario
-                              ,pr_flgrodar IN BOOLEAN                --Flag Executar
-                              ,pr_nrdconta IN crapass.nrdconta%TYPE  --Numero da Conta do Associado
-                              ,pr_idseqttl IN crapttl.idseqttl%TYPE  --Sequencial do Titular
-                              ,pr_tpextrat IN INTEGER                --Tipo de Extrato
-                              ,pr_dtrefere IN DATE                   --Data de Referencia
-                              ,pr_dtreffim IN DATE                   --Data Referencia Final
-                              ,pr_flgtarif IN BOOLEAN                --Indicador Cobra tarifa
-                              ,pr_inrelext IN INTEGER                --Indicador Relatorio Extrato
-                              ,pr_inselext IN INTEGER                --Indicador Selecao Extrato
-                              ,pr_nrctremp IN crapepr.nrctremp%TYPE  --Numero Contrato Emprestimo
-                              ,pr_nraplica IN craplap.nraplica%TYPE  --Numero Aplicacao
-                              ,pr_nranoref IN INTEGER                --Ano de Referencia
-                              ,pr_flgerlog IN BOOLEAN                --Escreve erro Log
-                              ,pr_clobxml1 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl040
-                              ,pr_dstexto1 IN OUT NOCOPY VARCHAR2    --Texto para Clob 1
-                              ,pr_clobxml2 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl044
-                              ,pr_dstexto2 IN OUT NOCOPY VARCHAR2    --Texto para Clob 2
-                              ,pr_clobxml3 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl073
-                              ,pr_dstexto3 IN OUT NOCOPY VARCHAR2    --Texto para Clob 3
-                              ,pr_clobxml4 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl088
-                              ,pr_dstexto4 IN OUT NOCOPY VARCHAR2    --Texto para Clob 4
-                              ,pr_clobxml5 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl209
-                              ,pr_dstexto5 IN OUT NOCOPY VARCHAR2    --Texto para Clob 5
-                              ,pr_clobxml6 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl370
-                              ,pr_dstexto6 IN OUT NOCOPY VARCHAR2    --Texto para Clob 6
-                              ,pr_clobxml7 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl499
-                              ,pr_dstexto7 IN OUT NOCOPY VARCHAR2    --Texto para Clob 7
-                              ,pr_clobxml8 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl143
-                              ,pr_dstexto8 IN OUT NOCOPY VARCHAR2    --Texto para Clob 8
-                              ,pr_clobxml9 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl143b
-                              ,pr_dstexto9 IN OUT NOCOPY VARCHAR2    --Texto para Clob 9
-                              ,pr_tab_craptab IN apli0001.typ_tab_ctablq   --> Tipo de tabela de Conta Bloqueada
-                              ,pr_tab_craplpp IN apli0001.typ_tab_craplpp  --> Tipo de tabela com lancamento poupanca
-                              ,pr_tab_craplrg IN apli0001.typ_tab_craplpp  --> Tipo de tabela com resgates
-                              ,pr_tab_resgate IN apli0001.typ_tab_resgate  --> Tabela com valores dos resgates das contas por aplicacao
-                              ,pr_intpextr IN INTEGER                      --> Tipo de extrato (1=Simplificado, 2=Detalhado)
+
+    -- Subrotina para gerar impressao
+    PROCEDURE pc_gera_impressao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
+                                ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
+                                ,pr_nrdcaixa IN INTEGER                --Numero do Caixa
+                                ,pr_idorigem IN INTEGER                --Origem dos Dados
+                                ,pr_nmdatela IN VARCHAR2               --Nome da Tela
+                                ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --Data Movimento
+                                ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --Data Proximo Movimento
+                                ,pr_cdprogra IN crapprg.cdprogra%TYPE  --Codigo Programa
+                                ,pr_inproces IN INTEGER                --Indicador Processo
+                                ,pr_cdoperad IN VARCHAR2               --Codigo Operador
+                                ,pr_dsiduser IN VARCHAR2               --Identificador Usuario
+                                ,pr_flgrodar IN BOOLEAN                --Flag Executar
+                                ,pr_nrdconta IN crapass.nrdconta%TYPE  --Numero da Conta do Associado
+                                ,pr_idseqttl IN crapttl.idseqttl%TYPE  --Sequencial do Titular
+                                ,pr_tpextrat IN INTEGER                --Tipo de Extrato
+                                ,pr_dtrefere IN DATE                   --Data de Referencia
+                                ,pr_dtreffim IN DATE                   --Data Referencia Final
+                                ,pr_flgtarif IN BOOLEAN                --Indicador Cobra tarifa
+                                ,pr_inrelext IN INTEGER                --Indicador Relatorio Extrato
+                                ,pr_inselext IN INTEGER                --Indicador Selecao Extrato
+                                ,pr_nrctremp IN crapepr.nrctremp%TYPE  --Numero Contrato Emprestimo
+                                ,pr_nraplica IN craplap.nraplica%TYPE  --Numero Aplicacao
+                                ,pr_nranoref IN INTEGER                --Ano de Referencia
+                                ,pr_flgerlog IN BOOLEAN                --Escreve erro Log
+                                ,pr_clobxml1 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl040
+                                ,pr_dstexto1 IN OUT NOCOPY VARCHAR2    --Texto para Clob 1
+                                ,pr_clobxml2 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl044
+                                ,pr_dstexto2 IN OUT NOCOPY VARCHAR2    --Texto para Clob 2
+                                ,pr_clobxml3 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl073
+                                ,pr_dstexto3 IN OUT NOCOPY VARCHAR2    --Texto para Clob 3
+                                ,pr_clobxml4 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl088
+                                ,pr_dstexto4 IN OUT NOCOPY VARCHAR2    --Texto para Clob 4
+                                ,pr_clobxml5 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl209
+                                ,pr_dstexto5 IN OUT NOCOPY VARCHAR2    --Texto para Clob 5
+                                ,pr_clobxml6 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl370
+                                ,pr_dstexto6 IN OUT NOCOPY VARCHAR2    --Texto para Clob 6
+                                ,pr_clobxml7 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl499
+                                ,pr_dstexto7 IN OUT NOCOPY VARCHAR2    --Texto para Clob 7
+                                ,pr_clobxml8 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl143
+                                ,pr_dstexto8 IN OUT NOCOPY VARCHAR2    --Texto para Clob 8
+                                ,pr_clobxml9 IN OUT NOCOPY CLOB        --Clob arquivo de dados crrl143b
+                                ,pr_dstexto9 IN OUT NOCOPY VARCHAR2    --Texto para Clob 9
+                                ,pr_tab_craptab IN apli0001.typ_tab_ctablq   --> Tipo de tabela de Conta Bloqueada
+                                ,pr_tab_craplpp IN apli0001.typ_tab_craplpp  --> Tipo de tabela com lancamento poupanca
+                                ,pr_tab_craplrg IN apli0001.typ_tab_craplpp  --> Tipo de tabela com resgates
+                                ,pr_tab_resgate IN apli0001.typ_tab_resgate  --> Tabela com valores dos resgates das contas por aplicacao
+                                ,pr_intpextr IN INTEGER                      --> Tipo de extrato (1=Simplificado, 2=Detalhado)
                               ,pr_tpinform IN INTEGER DEFAULT 0      -- Tipo do Informe PJ 0-Anual / 1-Trimestral
                               ,pr_nrperiod IN INTEGER DEFAULT 1      -- Trimestre PJ 1-Jan-Mar / 2-Abr-Jun / 3-Jul-Set / 4-Out-Dez
-                              ,pr_nmarqimp OUT VARCHAR2              --Nome Arquivo Impressao
-                              ,pr_nmarqpdf OUT VARCHAR2              --Nome Arquivo PDF
-                              ,pr_tab_erro OUT GENE0001.typ_tab_erro -- Tabela de Erros
-                              ,pr_des_reto OUT VARCHAR2 ) IS         --Descricao OK/NOK
+                                ,pr_nmarqimp OUT VARCHAR2              --Nome Arquivo Impressao
+                                ,pr_nmarqpdf OUT VARCHAR2              --Nome Arquivo PDF
+                                ,pr_tab_erro OUT GENE0001.typ_tab_erro -- Tabela de Erros
+                                ,pr_des_reto OUT VARCHAR2 ) IS         --Descricao OK/NOK
   BEGIN
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -17604,7 +17645,7 @@ END pc_consulta_ir_pj_trim;
                                 ,pr_tab_erro => pr_tab_erro);
           pr_des_reto:= 'NOK';  
         WHEN OTHERS THEN
-
+btch0001.pc_log_internal_exception(pr_cdcooper);
           --Montar critica
           vr_dscritic:=  'Erro ao executar a rotina pc_gera_impressao. '||sqlerrm; 
           -- Chamar rotina de gravacao de erro
@@ -18842,7 +18883,7 @@ END pc_consulta_ir_pj_trim;
 
      Alteracoes: 27/04/2016 - Incluir campo genrecid na consulta-lancto-car(Lucas Ranghetti/Fabricio)
 
-                 27/05/2016 - Inclusao: fldebito, cdagenci, cdbccxlt, nrdolote, nrseqdig.
+                 27/05/2016 - Inclusao: fldebito, cdagenci, cdbccxlt, nrdolote, nrseqdig. 
                               (Jaison/James)
 
      ..............................................................................*/

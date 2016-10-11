@@ -166,6 +166,9 @@
                
                05/05/2016 - Ajuste para gerar log da opçao "T" na "LOGTEL", conforme solicitado
                             no chamado 422419. (Kelvin)
+                            
+               16/09/2016 - Permitir alterar o campo flgacres, para resolver o problema relatado
+                            no chamado 512411. (Kelvin)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -633,6 +636,7 @@ DO WHILE TRUE:
                   tel_cdagenci  /*Somente op. CEDRED alteram este campo*/
                   tel_flgdonet 
                   tel_flgdopgd
+                  tel_flgacres WHEN tel_flgdopgd = TRUE
                   WITH FRAME f_operad   
           
            EDITING:
