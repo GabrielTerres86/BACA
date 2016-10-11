@@ -1,10 +1,10 @@
-CREATE OR REPLACE PACKAGE CECRED.inss0002 AS
+CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 
    /*---------------------------------------------------------------------------------------------------------------
 
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 03/08/2016
+   Data     : 27/08/2015                        Ultima atualizacao: 26/09/2016
 
    Dados referentes ao programa:
 
@@ -49,6 +49,13 @@ CREATE OR REPLACE PACKAGE CECRED.inss0002 AS
                05/09/2016 - SD 490844 - Removido o código que limpava a variável
                             vr_cdlindig quando o agendamento era feito pelo código
                             de barras (procedure pc_gps_agmto_novo). (Carlos)
+
+               26/09/2016 - SD 524122 - Ajuste no sequencial enviado no XML para  o SICREDI,
+                            nrautsic, para utilizar uma nova Sequence (Guilherme/SUPERO)
+                            SD 531444 - pc_gps_arquivo_download - Alterada a forma de
+                            listar os arquivos da pasta de pc_lista_arquivos para pc_OScommand_Shell
+                            (Guilherme/SUPERO)
+
   --------------------------------------------------------------------------------------------------------------- */
   PROCEDURE pc_gps_validar_sicredi(pr_cdcooper IN crapcop.cdcooper %TYPE
                                   ,pr_cdagenci IN NUMBER
@@ -296,7 +303,7 @@ CREATE OR REPLACE PACKAGE CECRED.inss0002 AS
 
 END inss0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
+CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
@@ -1442,7 +1449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
     vr_idarrgps NUMBER(10)      := 0;
     vr_dsorigem VARCHAR2(100)   := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dsmsglog VARCHAR2(32767) := '';
-    vr_nrseqsic NUMBER(5)       :=0; -- Numero Sequencial para enviar ao Sicredi
+    vr_nrautsic NUMBER(5)       :=0; -- Numero Sequencial para enviar ao Sicredi
     vr_busca    VARCHAR2(50);
 
     vr_dtdenvio VARCHAR2(19);
@@ -1755,18 +1762,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
 
       -- Completa literal com o Identificador
       pr_dslitera := pr_dslitera || pr_cdidenti;
-      
-      
+
+
       -- Nr Sequencial para enviar no XML do SICREDI apenas
       vr_busca    :=  TRIM(pr_cdcooper)    || ';' ||
-                      TO_char(rw_crapdat.dtmvtocd,'dd/mm/yyyy');      
-      vr_nrseqsic := fn_sequence('CRAPLGP','NRSEQSIC',vr_busca);
+                      TO_char(rw_crapdat.dtmvtocd,'dd/mm/yyyy');
+      vr_nrautsic := fn_sequence('CRAPLGP','NRAUTSIC',vr_busca);
 
       /* Grava id da arrecadacao da gps do sicredi na lgp */
       BEGIN
         UPDATE craplgp lgp
            SET lgp.nrautdoc = pr_nrseqaut  -- ID autenticacao CECRED
-              --, lgp.nrautsic = vr_nrseqsic  -- ID autenticacao apenas para envio ao SICREDI
+             , lgp.nrautsic = vr_nrautsic  -- ID autenticacao apenas para envio ao SICREDI
          WHERE lgp.rowid = vr_craplgp_rowid;
         --Se nao atualizou registro
         IF SQL%ROWCOUNT = 0 THEN
@@ -1926,7 +1933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
                   '<arr:autenticacao>' ||
                       '<aut:usuario>CECR</aut:usuario>' || -- No Máximo 4 Letras/números
                       '<aut:terminal>1</aut:terminal>' ||
-                      '<aut:numeroAutenticacao>' || to_char( /*vr_nrseqsic*/ pr_nrseqaut) || '</aut:numeroAutenticacao>' ||
+                      '<aut:numeroAutenticacao>' || to_char( vr_nrautsic) || '</aut:numeroAutenticacao>' ||
                   '</arr:autenticacao>';
 
     --FECHA AS TAGS E FINALIZA O XML
@@ -2173,8 +2180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
        WHERE lgp.cdcooper = gps.cdcooper
          AND lgp.nrctapag = gps.nrdconta
          AND lgp.nrseqagp = gps.nrseqagp
-         AND gps.nrdconta = pr_nrdconta  /*825077 -- */
-         AND gps.cdcooper = pr_cdcooper  /*1 -- */
+         AND gps.nrdconta = pr_nrdconta
+         AND gps.cdcooper = pr_cdcooper
          AND gps.insituacao = 0 -- ATIVA
        GROUP BY gps.cdcooper
               , gps.nrdconta
@@ -4617,7 +4624,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
             OR  p_cdagenci = 0)
            AND (lgp.nrdcaixa = p_nrdcaixa
             OR p_nrdcaixa = 0)
-           AND lgp.flgpagto  = 1;
+           AND lgp.flgpagto  = 1
+           ;
      rw_craplgp cr_craplgp%ROWTYPE;
 
 
@@ -4811,7 +4819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
                OR p_nrdcaixa = 0)
            AND (lgp.cdidenti2 = p_cdidenti OR
                    p_cdidenti = 0)
-           AND lgp.flgpagto = 1
+           AND lgp.flgpagto  = 1
            AND ope.cdcooper  = lgp.cdcooper
            AND UPPER(ope.cdoperad)  = UPPER(lgp.cdopecxa)
            ORDER BY lgp.cdagenci
@@ -5621,7 +5629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
      Sistema : Rotinas acessadas pelas telas de cadastros Web
      Sigla   : INSS
      Autor   : Renato Darosci - Supero
-     Data    : Setembro/2016.                  Ultima atualizacao:
+     Data    : Setembro/2016.                  Ultima atualizacao: 30/09/2016
 
      Dados referentes ao programa:
 
@@ -5630,7 +5638,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
      Objetivo  : Efetua o agrupamento e criação do ZIP com arquivos para DOWNLOAD
      Observacao: -----
 
-     Alteracoes:
+     Alteracoes: 30/09/2016 - Alterada a forma de listar os arquivos da pasta
+                              de pc_lista_arquivos para pc_OScommand_Shell
+                              (Guilherme/SUPERO)
 
     ..............................................................................*/
     -- CURSORES
@@ -5774,18 +5784,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
     END IF;
 
     -- Montar o padrão do nome para a consulta dos arquivos
-    vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'%.crypto';
+    vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.*.crypto';
 
-    -- Retorna a lista dos arquivos do diretório, conforme padrão *cdcooper*.*.rem
-    gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
+    -- Retorna a lista dos arquivos do diretório, conforme máscara
+/*    gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                               ,pr_pesq     => vr_dsprocur
                               ,pr_listarq  => vr_list_arquivos
-                              ,pr_des_erro => vr_dscritic);
+                              ,pr_des_erro => vr_dscritic);*/
+    gene0001.pc_OScommand_Shell(pr_des_comando => 'ls '||vr_dsdireto || '/' || vr_dsprocur ||' 2> /dev/null'
+                               ,pr_typ_saida   => vr_dscritic
+                               ,pr_des_saida   => vr_list_arquivos);
 
     -- Se retornou erro na busca dos arquivos
-    IF vr_dscritic IS NOT NULL THEN
+    IF NVL(vr_dscritic, ' ') = 'ERR' THEN
       -- Retornar a mensagem de erro
-      pr_des_erro := 'Erro ao buscar lista de arquivos: '||vr_dscritic;
+      pr_des_erro := 'Erro ao buscar lista de arquivos: ' || vr_list_arquivos;
       RAISE vr_exc_saida;
     END IF;
 
@@ -5798,7 +5811,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
 
     -- Listar os arquivos em uma tabela de memória
     vr_array_arquivo := gene0002.fn_quebra_string(pr_string  => vr_list_arquivos
-                                                 ,pr_delimit => ',');
+                                                 ,pr_delimit => chr(10));
 
     -- Buscar o diretório do script shell
     vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
@@ -5810,7 +5823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
       -- Comando para descriptografar arquivo
       vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
                    'mqcecred_descriptografa.pl --descriptografa='||
-                   chr(39)|| vr_dsdireto ||'/'||vr_array_arquivo(ind)||chr(39);
+                   chr(39)|| vr_array_arquivo(ind)||chr(39);
 
       -- Executar o comando no unix
       GENE0001.pc_OScommand (pr_typ_comando => 'S'
