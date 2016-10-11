@@ -154,7 +154,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   --
   -- Alteracoes: 12/11/2015 - Alterado as descricões de risco na procedure pc_retorna_analise_ctr 
   --                          (Tiago/Rodrigo SD356389).
+  --
   --             04/01/2016 - Incluida procedure pc_retorna_descricao_risco (Heitor - RKAM)
+  --
+  --             27/09/2016 - Na rotina pc_efetua_analise_ctr, ao detectar que a linha nao deve gerar
+  --                          parecer de credito, ira limpar o parecer gerado anteriormente, se houver.
+  --                          Houve casos com alteracao de linha de credito que manteve o parecer indevidamente.
+  --                          Heitor (RKAM) - Chamado 513641
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina que indica se deve habilitar / desabilitar o parecer da analise de credito
@@ -2574,6 +2580,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
       -- Verifica se a linha de credito atual esta parametrizada para nao possuir analise
       IF instr(vr_dslinhas,';'||rw_crawepr.cdlcremp||';') > 0 THEN
+	    BEGIN
+          UPDATE crawepr
+             SET nrseqpac = 0
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctremp = pr_nrctremp;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := '1-Erro ao atualizar CRAWEPR: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+
         -- Encerra o processo sem erro, pois eh previsto isso
         RETURN;
       END IF;
