@@ -162,15 +162,19 @@ function acessaOpcaoAba(nrOpcoes, id, opcao) {
 //Função para controle de navegação
 function controlaFoco() {
     $('#divConteudoOpcao #divAplicacoesPrincipal').each(function () {
+        $(this).find("#divBotoes > a").addClass("FluxoNavega");
         $(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus();
         $(this).find("#divBotoes > a").last().addClass("LastInputModal");
     });
 
+    //Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function () {
     $(this).bind('keydown', function (e) {
         if (e.keyCode == 27) {
-            encerraRotina().click();
+                encerraRotina(true).click();
         }
-    })
+        });
+    });
 
     //Se estiver com foco na classe LastInputModal
     $(".LastInputModal").focus(function () {
