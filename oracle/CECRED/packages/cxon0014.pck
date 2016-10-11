@@ -6091,7 +6091,7 @@ END pc_gera_titulos_iptu_prog;
               END IF;            
             END IF;              
           
-           CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo      => rw_crapcob.vltitulo
+           CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo      => pr_vlfatura
                                                  ,pr_tpdmulta      => rw_crapcob.tpdmulta
                                                  ,pr_vlrmulta      => rw_crapcob.vlrmulta
                                                  ,pr_tpjurmor      => rw_crapcob.tpjurmor
@@ -10599,7 +10599,7 @@ END pc_gera_titulos_iptu_prog;
         /* verifica se o titulo esta vencido */
         IF vr_critica_data THEN
 
-          CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo => rw_crapcob.vltitulo
+          CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo => vr_vlfatura
                                                 ,pr_tpdmulta => rw_crapcob.tpdmulta
                                                 ,pr_vlrmulta => rw_crapcob.vlrmulta
                                                 ,pr_tpjurmor => rw_crapcob.tpjurmor

@@ -355,7 +355,7 @@ DEF VAR aux_nrinsava LIKE crapcob.nrinsava                       NO-UNDO.
 DEF VAR aux_nmdavali LIKE crapcob.nmdavali                       NO-UNDO.
 
 /* E-mail do pagador */
-DEF VAR aux_dsdemail LIKE crapsab.dsdemail                       NO-UNDO.
+DEF VAR aux_dsdemail AS CHAR				                     NO-UNDO.
 DEF VAR aux_nrcelsac LIKE crapsab.nrcelsac                       NO-UNDO.
 
 DEF VAR aux_dsdinstr LIKE crapcob.dsdinstr                       NO-UNDO.
@@ -6397,13 +6397,14 @@ PROCEDURE p_altera_email_cel_sacado:
     DEF  INPUT PARAM par_cdcooper LIKE crapsab.cdcooper             NO-UNDO.
     DEF  INPUT PARAM par_nrdconta LIKE crapsab.nrdconta             NO-UNDO.
     DEF  INPUT PARAM par_nrinssac LIKE crapsab.nrinssac             NO-UNDO.
-    DEF  INPUT PARAM par_dsdemail LIKE crapsab.dsdemail             NO-UNDO.
+    DEF  INPUT PARAM par_dsdemail AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcelsac LIKE crapsab.nrcelsac             NO-UNDO.
 
     DEF VAR aux_ponteiro AS INTE                              NO-UNDO.
     DEF VAR aux_retorno  AS INTE                              NO-UNDO.
-
-    IF  par_nrinssac = 0 THEN
+    DEF VAR aux_dscritic AS CHAR                              NO-UNDO.
+    
+	IF  par_nrinssac = 0 THEN
         RETURN.
 
     /* Tirar os espaços em branco do e-mail*/
@@ -6412,19 +6413,25 @@ PROCEDURE p_altera_email_cel_sacado:
     /* Se o e-mail foi preenchido, temos que verificar se ele eh valido */
     IF  par_dsdemail <> ""  THEN
         DO:
-            RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement aux_ponteiro = PROC-HANDLE
-                ("SELECT GENE0003.fn_valida_email('" + par_dsdemail + "')  FROM dual").
-    
-            FOR EACH {&sc2_dboraayl}.proc-text WHERE PROC-HANDLE = aux_ponteiro:
-                /* O retorno será 0/1 para indicar se o e-mail é válido */
-                ASSIGN aux_retorno = INTE(proc-text).
-            END.
-
-            CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
-                  WHERE PROC-HANDLE = aux_ponteiro.       
-    
-            IF  aux_retorno <> 1 THEN DO:
-                ASSIGN glb_dscritic = "Email invalido.".
+        
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }   
+             RUN STORED-PROCEDURE pc_grava_email_pagador
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                         (INPUT par_cdcooper,
+                                          INPUT par_nrdconta,
+                                          INPUT par_nrinssac,
+                                          INPUT par_dsdemail,
+                                         OUTPUT "",  /* pr_des_erro */
+                                         OUTPUT ""). /* pr_dscritic */
+             CLOSE STORED-PROC pc_grava_email_pagador
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+             ASSIGN aux_dscritic = ""
+                    aux_dscritic = pc_grava_email_pagador.pr_dscritic
+                                       WHEN pc_grava_email_pagador.pr_dscritic <> ?.
+        
+            IF  aux_dscritic <> "" THEN DO:
+                ASSIGN glb_dscritic = "Email invalido." + aux_dscritic .
                 RETURN.
             END.
         END.
@@ -6435,12 +6442,7 @@ PROCEDURE p_altera_email_cel_sacado:
                        crapsab.nrinssac = par_nrinssac EXCLUSIVE-LOCK NO-ERROR.
                           
     IF AVAILABLE crapsab THEN DO:
-
-        IF par_dsdemail <> "" AND par_dsdemail <> crapsab.dsdemail THEN DO:
-            ASSIGN crapsab.dsdemail = par_dsdemail.
-        END.
-            
-
+        
         IF par_nrcelsac <> 0 AND par_nrcelsac <> crapsab.nrcelsac THEN DO:
             ASSIGN crapsab.nrcelsac = par_nrcelsac.
         END.

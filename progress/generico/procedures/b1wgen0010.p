@@ -1978,7 +1978,13 @@ PROCEDURE consulta-bloqueto.
                                      crapcob.dsdoccop MATCHES "*" + STRING(p-dsdoccop) + "*" 
                                      NO-LOCK
                                      BY crapcob.dtmvtolt:
-
+                                
+                                FIND crapsab WHERE 
+                                     crapsab.cdcooper = p-cdcooper     AND
+                                     crapsab.nrdconta = p-nro-conta    AND
+                                     crapsab.nrinssac = crapcob.nrinssac
+                                     NO-LOCK NO-ERROR.
+                                     
                                 IF  p-flgregis <> ? THEN
                                     IF crapcob.flgregis <> p-flgregis THEN NEXT.
                                        
@@ -12640,7 +12646,10 @@ PROCEDURE calcula_multa_juros_boleto:
                                                   par_dtmvtocd  
                                               ELSE
                                                   par_dtvencto)
-                   par_vltituut_atualizado = aux_vlfatura
+                   par_vltituut_atualizado = (IF aux_critdata THEN 
+                                                  aux_vlfatura  
+                                              ELSE
+                                                  par_vltitulo)
                    par_vlmormut_atualizado = (aux_vlrmulta + aux_vlrjuros)      
                    par_dtvencut = par_dtvencto
                    par_vltituut = par_vltitulo.
