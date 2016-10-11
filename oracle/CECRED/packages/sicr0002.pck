@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 20/09/2016
+     Data    : Junho/2014                       Ultima atualizacao: 11/10/2016
 
      Dados referentes ao programa:
 
@@ -129,6 +129,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                               
                  20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt na procedure 
                               pc_cria_lancamentos_deb (Lucas Ranghetti/Fabricio #524588)
+                              
+                 11/10/2016 - Incluir valor do lancamento como parametro na verificacao da 
+                              craplau (Lucas Ranghetti #537385)
   ......................................................................................................... */
 
   -- VARIAVEIS A UTILIZAR
@@ -203,7 +206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                        pr_nrdconta IN crapass.nrdconta%TYPE,
                        pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
                        pr_cdhistor IN INTEGER,
-                       pr_nrdocmto IN NUMBER) IS
+                       pr_nrdocmto IN NUMBER,
+                       pr_vllanaut IN NUMBER) IS
     SELECT lau.progress_recid
     FROM  craplau lau
     WHERE lau.cdcooper = pr_cdcooper
@@ -212,7 +216,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     AND   lau.cdhistor = pr_cdhistor
     AND   lau.nrdocmto = pr_nrdocmto
     AND   lau.insitlau <> 1
-    AND   lau.dtdebito IS NOT NULL;
+    AND   lau.dtdebito IS NOT NULL
+    AND   lau.vllanaut = pr_vllanaut;
     rw_craplau_2 cr_craplau_2%ROWTYPE;
 
   -- BUSCA DOS DADOS DE LOTES
@@ -397,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : 
-   Data    :                        Ultima atualizacao: 20/09/2016
+   Data    :                        Ultima atualizacao: 11/10/2016
   
    Dados referentes ao programa:
   
@@ -418,6 +423,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                06/09/2016 - Incluir tratamento para lock do lote (Lucas Ranghetti #518312)
                
                20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt (Lucas Ranghetti/Fabricio #524588)
+               
+               11/10/2016 - Incluir valor do lancamento como parametro na verificacao da craplau (Lucas Ranghetti #537385)
   --------------------------------------------------------------------------------------------------------------------*/ 
   
    ---------->>> CURSORES <<<--------
@@ -463,7 +470,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                        pr_nrdconta => pr_nrdconta,
                        pr_dtmvtolt => pr_dtmvtolt,
                        pr_cdhistor => pr_cdhistor,
-                       pr_nrdocmto => pr_nrdocmto);
+                       pr_nrdocmto => pr_nrdocmto,
+                       pr_vllanaut => pr_vllanaut);
     FETCH cr_craplau_2 INTO rw_craplau_2;
     
     IF cr_craplau_2%FOUND THEN
