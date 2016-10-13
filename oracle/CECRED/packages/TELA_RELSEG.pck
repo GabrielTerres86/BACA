@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_RELSEG AS
   --
   --    Programa: TELA_RELSEG
   --    Autor   : Guilherme/SUPERO
-  --    Data    : Junho/2016                   Ultima Atualizacao:
+  --    Data    : OUTUBRO/2016                   Ultima Atualizacao:
   --
   --    Dados referentes ao programa:
   --
