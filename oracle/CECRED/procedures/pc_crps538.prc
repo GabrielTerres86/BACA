@@ -287,7 +287,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
                22/09/2016 - Ajuste nos cursores e alteração da lógica para obtenção de títulos (Rodrigo)
                
-               11/10/2016 - Ajustes referente ao processo de REPROC do arquivo COB615 do Sicredi (Renato Darosci)
+               11/10/2016 - Ajustes referente ao processo de REPROC do arquivo COB615 (Renato Darosci)
    .............................................................................*/
 
      DECLARE
@@ -2468,10 +2468,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
          END IF;
          /*  Fim da verificacao se deve executar  */
          
-         -- Se não for execução pela COMPEFORA, deve criticar caso seja encontrado 
+         -- Se for execução pela COMPEFORA, deve criticar caso seja encontrado 
          -- mais de um arquivo para processamento, de forma a evitar que um arquivo 
-         -- normal e um REPROC sejam processados juntos  ( Renato Darosci - Supero)
-         IF pr_nmtelant <> 'COMPEFORA' THEN
+         -- normal e um REPROC sejam reprocessados juntos  ( Renato Darosci - Supero)
+         IF pr_nmtelant = 'COMPEFORA' THEN
            -- Se encontrou mais de um arquivos
            IF vr_tab_nmarqtel.COUNT > 1 THEN
              -- Montar mensagem de critica
@@ -2511,7 +2511,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            vr_cdcritic:= 0;
            vr_inreproc:= FALSE;
            
-           /*  REMOVIDO PORQUE NÃO */
+           /*  REMOVIDO PORQUE NÃO ESTAVA VALIDANDO DA FORMA CORRETA, POIS O "TAIL -2" CONSIDERAVA A LINHA ERRADA */
            /* Verificar se o arquivo esta completo. A ultima linha do arquivo deve conter o chr(26) */
            /*vr_comando:= 'tail -2 '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx);
 
@@ -2587,7 +2587,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              CONTINUE;
            END IF;
            
-           -- Verificar se o arquivo é um REPROC Sicredi  (Renato Darosci - 11/10/2016)
+           -- Verificar se o arquivo é um REPROC  (Renato Darosci - 11/10/2016)
            IF TRIM(SUBSTR(vr_setlinha,99,3)) = 'REP' THEN
              -- Indica que o arquivo é de reprocessamento
              vr_inreproc := TRUE;
