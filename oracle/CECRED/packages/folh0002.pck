@@ -344,7 +344,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
                                      ,pr_data_xml   OUT CLOB
                                      ,pr_cdcritic   OUT PLS_INTEGER
                                      ,pr_dscritic   OUT VARCHAR2);
-
+  
    /* Procedure encarregada de enviar os pagamentos para aprovacao */
    PROCEDURE pc_envia_pagto_apr_ib(pr_cdcooper   IN crapcop.cdcooper%TYPE
                                   ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
@@ -376,21 +376,21 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
 
   /* Procedure encarregada de cadastrar/atualizar funcionario para empresa */
   PROCEDURE pc_cadastra_empregado_ib(pr_nrdctemp IN crapass.nrdconta%TYPE
-                                    ,pr_nrcpfemp IN NUMBER
-                                    ,pr_nmprimtl IN VARCHAR2
-                                    ,pr_dsdcargo IN VARCHAR2
-                                    ,pr_dtadmiss IN VARCHAR2
-                                    ,pr_dstelefo IN VARCHAR2
-                                    ,pr_dsdemail IN VARCHAR2
-                                    ,pr_nrregger IN VARCHAR2
-                                    ,pr_nrodopis IN VARCHAR2
-                                    ,pr_nrdactps IN VARCHAR2
-                                    ,pr_altera   IN VARCHAR2
-                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE
-                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                     ,pr_nrcpfemp IN NUMBER
+                                     ,pr_nmprimtl IN VARCHAR2
+                                     ,pr_dsdcargo IN VARCHAR2
+                                     ,pr_dtadmiss IN VARCHAR2
+                                     ,pr_dstelefo IN VARCHAR2
+                                     ,pr_dsdemail IN VARCHAR2
+                                     ,pr_nrregger IN VARCHAR2
+                                     ,pr_nrodopis IN VARCHAR2
+                                     ,pr_nrdactps IN VARCHAR2
+                                     ,pr_altera   IN VARCHAR2
+                                     ,pr_cdcooper IN crapcop.cdcooper%TYPE
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE
                                      ,pr_nrcpfope IN crapopi.nrcpfope%TYPE
-                                    ,pr_cdcritic   OUT PLS_INTEGER
-                                    ,pr_dscritic   OUT VARCHAR2);
+                                     ,pr_cdcritic   OUT PLS_INTEGER
+                                     ,pr_dscritic   OUT VARCHAR2);
 
   /* Procedure encarregada de excluir um funcionario da empresa */
   PROCEDURE pc_exclui_empregado_ib(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -405,16 +405,16 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
 
   /* Procedure para geracao do relatorio dos pagamentos de folha da empresa */
   PROCEDURE pc_gera_relatorio_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE
-                                ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
-                                ,pr_nrctaemp  IN crapass.nrdconta%TYPE -- Conta empresa
+                                 ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE
+                                 ,pr_nrctaemp  IN crapass.nrdconta%TYPE -- Conta empresa
                                  ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE -- Operador conectado
-                                ,pr_nrctalfp  IN crapass.nrdconta%TYPE -- Conta empregado
-                                ,pr_dtinisel  IN DATE
-                                ,pr_dtfimsel  IN DATE
-                                ,pr_insituac  IN INTEGER
-                                ,pr_tpemissa  IN VARCHAR2
-                                ,pr_nmarquiv OUT VARCHAR2
-                                ,pr_dscritic OUT VARCHAR2);
+                                 ,pr_nrctalfp  IN crapass.nrdconta%TYPE -- Conta empregado
+                                 ,pr_dtinisel  IN DATE
+                                 ,pr_dtfimsel  IN DATE
+                                 ,pr_insituac  IN INTEGER
+                                 ,pr_tpemissa  IN VARCHAR2
+                                 ,pr_nmarquiv OUT VARCHAR2
+                                 ,pr_dscritic OUT VARCHAR2);
 
   --Procedure para impimir os comprovantes  HOLERITE
   PROCEDURE pc_impressao_comprovante(pr_cdcooper  IN crapcop.cdcooper%TYPE
@@ -704,7 +704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                pr_nmdcampo := 'dscontar';
                RAISE vr_excerror;
          END;
-         
+
          vr_dstransa    := 'Registro inserido com sucesso - CONFOL.';
          -- Registro OLD
          rw_crapcfp_old.cdcontar := NULL;
@@ -728,7 +728,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                pr_nmdcampo := 'dscontar';
                RAISE vr_excerror;
          END;
-         
+
          vr_dstransa    := 'Registro alterado com sucesso - CONFOL.';
          -- Registro OLD
          rw_crapcfp_old.cdcontar := rw_dados_cfp.cdcontar;
@@ -988,7 +988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       END;
 
       vr_dstransa := 'Exclusao de registro efetuado com sucesso - CONFOL.';
-      
+
       -- Gerando Log de Consulta
       GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                           ,pr_cdoperad => vr_cdoperad
@@ -1743,7 +1743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                pr_nmdcampo := 'dsoriflh';
                RAISE vr_excerror;
          END;
-         
+
          vr_dstransa    := 'Registro inserido com sucesso - ORIFOL.';
          -- Registros OLD
          rw_crapofp_old.cdorigem := NULL;
@@ -1801,7 +1801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                pr_nmdcampo := 'dsoriflh';
                RAISE vr_excerror;
          END;
-         
+
          vr_dstransa := 'Registro alterado com sucesso - ORIFOL.';
          -- Registros OLD
          rw_crapofp_old.cdorigem := rw_dados.cdorigem;
@@ -2309,9 +2309,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             pr_des_erro := 'Erro ao deletar o registro na CRAPLFP: '||SQLERRM;
             RAISE vr_excerror;
       END;
-      
-      vr_dstransa := 'Exclusao de registro efetuado com sucesso - ORIFOL.';      
-      
+
+      vr_dstransa := 'Exclusao de registro efetuado com sucesso - ORIFOL.';
+
       IF rw_crapofp.idvarmes = 'S' THEN
          vr_idvarmes := 'SIM';
       ELSE
@@ -3157,7 +3157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                           ,XMLTYPE('<dsvlrprm'||ind||'>'||vr_dsvlrprm||'</dsvlrprm'||ind||'>'));
 
       END LOOP;
-      
+
       vr_dstransa := 'Buscando Parametros de Servico Folha IB - PARFOL.';
       -- Gerando Log de Consulta
       GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -3236,7 +3236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : AyllosWeb
    --  Sigla    : CRED
    --  Autor    : Andre Santos - SUPERO
-   --  Data     : Maio/2015.                   Ultima atualizacao: 20/11/2015
+   --  Data     : Maio/2015.                   Ultima atualizacao: 07/07/2016
    --
    -- Dados referentes ao programa:
    --
@@ -3246,6 +3246,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --
    -- Alteracoes: 20/11/2015 - Gerando Log de Comsulta da tela ESTFOL - Melhoria
    --                          (Andre Santos - SUPERO)
+   --
+   --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
+   --                          de performance - Marcos(Supero)
    --
    ---------------------------------------------------------------------------------------------------------------
 
@@ -3374,7 +3377,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                        ,pr_nrdconta   => rw_crappfp.nrdconta
                                        ,pr_vllimcre   => rw_crappfp.vllimcre
                                        ,pr_dtrefere   => rw_crapdat.dtmvtolt
-                                       ,pr_flgcrass   => FALSE
+                                       ,pr_flgcrass   => FALSE --> Não carregar a crapass inteira
+                                       ,pr_tipo_busca => 'A' --> Busca da SDA do dia anterior
                                        ,pr_des_reto   => vr_dsretorn
                                        ,pr_tab_sald   => vr_tab_sald
                                        ,pr_tab_erro   => vr_tab_erro);
@@ -3529,7 +3533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : AyllosWeb
    --  Sigla    : CRED
    --  Autor    : Andre Santos - SUPERO
-   --  Data     : Maio/2015.                   Ultima atualizacao: 27/01/2016
+   --  Data     : Maio/2015.                   Ultima atualizacao: 07/07/2016
    --
    -- Dados referentes ao programa:
    --
@@ -3543,6 +3547,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --                          (Jorge/Marcos Supero).
    --
    --             27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
+   --
+   --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
+   --                          de performance - Marcos(Supero)   
    ---------------------------------------------------------------------------------------------------------------
       -- Cursores
 
@@ -3738,7 +3745,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                     ,pr_nrdconta   => rw_crappfp.nrdconta
                                     ,pr_vllimcre   => rw_crappfp.vllimcre
                                     ,pr_dtrefere   => rw_crapdat.dtmvtolt
-                                    ,pr_flgcrass   => FALSE
+                                    ,pr_flgcrass   => FALSE --> Não carregar a crapass inteira
+                                    ,pr_tipo_busca => 'A' --> Busca da SDA do dia anterior
                                     ,pr_des_reto   => vr_dsretorn
                                     ,pr_tab_sald   => vr_tab_sald
                                     ,pr_tab_erro   => vr_tab_erro);
@@ -3805,7 +3813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             RAISE vr_excerror;
          END IF;
       CLOSE cr_crapemp;
-      
+
       vr_nrctaemp := rw_crapemp.nrdconta;
       vr_desmsgem := gene0007.fn_convert_web_db(pr_dsmsgeml);
 
@@ -4148,7 +4156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      --  Sistema  : AyllosWeb
      --  Sigla    : CRED
      --  Autor    : Renato Darosci - SUPERO
-     --  Data     : Junho/2015.                   Ultima atualizacao: 16/02/2016
+     --  Data     : Junho/2015.                   Ultima atualizacao: 17/08/2016
      --
      -- Dados referentes ao programa:
      --
@@ -4162,6 +4170,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      --
      --             16/02/2016 - Inclusao do parametro conta na chamada da
      --                          FOLH0001.fn_valor_tarifa_folha. (Jaison/Marcos)
+     --
+     --             17/08/2016 - Ajuste feito para não permitir continuar a operação
+     --                          na tela pagfol caso a empresa não tenha convenio de
+     --                          folha ativo, conforme solicitado no chamado 485808. 
+     --                          (Kelvin).
      --
      ---------------------------------------------------------------------------------------------------------------
 
@@ -4305,6 +4318,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      FETCH cr_crapcop INTO rw_crapcop;
      CLOSE cr_crapcop;
 
+     IF rw_crapcop.nrdconta = '0' OR 
+        TRIM(rw_crapcop.nrdconta) IS NULL THEN
+     
+        pr_des_erro := 'Empresa ' || pr_cdempres  || ' nao possui convenio de folha ativo!';
+        RAISE vr_excerror;
+     END IF;
+     
      -- Converte a STRING data para DATE
      vr_dtmvtolt := TO_DATE(pr_dtmvtolt,'DD/MM/RRRR');
 
@@ -4658,7 +4678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                          ,pr_path_tag  => '/Root'
                          ,pr_tag_no    => 'retorno'
                          ,pr_des_erro  => pr_des_erro);
-                         
+
      vr_dstransa := 'Detalhando Relac. Pagtos Folha - PAGFOL. Retornou: '||TRIM(gene0002.fn_mask(NVL(vr_qtdregis,0),'zzzzz9'))||' regitro(s).';
      -- Gerando Log de Consulta
      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -4956,12 +4976,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                             invertido - Marcos(Supero)
 
                 12/11/2015 - Migracao da tarifação do sistema da CONFOL para CADTAR (Marcos-Supero)
-
+                
                 16/02/2016 - Inclusao do parametro conta na chamada da
                              FOLH0001.fn_valor_tarifa_folha. (Jaison/Marcos)
 
                 01/03/2016 - Correção do nome da cidade no termo (Marcos-Supero)
-
+                
 			    31/05/2016 - Alteracao para pegar o nome da crapass para colocar
                              na Razao Social do termo. (Jaison/Marcos-Supero)
                 
@@ -6256,7 +6276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : Internet Banking
    --  Sigla    : CRED
    --  Autor    : Jaison
-   --  Data     : Julho/2015.                   Ultima atualizacao: 16/02/2016
+   --  Data     : Julho/2015.                   Ultima atualizacao: 07/07/2016
    --
    -- Dados referentes ao programa:
    --
@@ -6270,7 +6290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --             16/02/2016 - Inclusao do parametro conta na chamada da
    --                          FOLH0001.fn_valor_tarifa_folha. (Jaison/Marcos)
    --
-
+   --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
+   --                          de performance - Marcos(Supero)
    ---------------------------------------------------------------------------------------------------------------
 
       -- Cursor genérico de calendário
@@ -6614,7 +6635,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                      pr_cdoperad   => 1,
                                      pr_nrdconta   => pr_nrdconta,
                                      pr_vllimcre   => rw_crapemp.vllimcre, -- ass.vllimcre
-                                     pr_flgcrass   => TRUE,
+                                     pr_flgcrass   => FALSE, --> Não carregar a crapass inteira
+                                     pr_tipo_busca => 'A', --> Busca da SDA do dia anterior
                                      pr_dtrefere   => rw_crapdat.dtmvtolt,
                                      pr_des_reto   => vr_des_reto,
                                      pr_tab_sald   => vr_tab_saldo,
@@ -7226,6 +7248,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    -- Objetivo  : Procedure encarregada de listar os pagamentos para aprovacao selecionado
    --
    -- Alteracoes: 27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
+   --
+   --             11/08/2016 - Retirada a chamada da rotina pc_valida_lancto_folha, devido a mesma
+   --                          não estar sendo necessária e ajuste no controle de erro de forma que 
+   --                          as datas sejam retornadas mesmo no caso de erros
    ---------------------------------------------------------------------------------------------------------------
       -- Busca todos os dados ja cadastrados
       CURSOR cr_crappfp(p_dsrowpfp IN VARCHAR2) IS
@@ -7283,11 +7309,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             AND lfp.nrcpfemp = efp.nrcpfemp(+)
           ORDER BY nmprimtl;
 
+      -- Buscar informações do associado
+    CURSOR cr_crapass(pr_cdcooper  crapass.cdcooper%TYPE
+                     ,pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT t.nmprimtl
+        FROM crapass t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.nrdconta = pr_nrdconta;
+
+    -- Buscar contas de funcionarios optaram pela transferencia do salario para outra instituicao financeira
+    CURSOR cr_crapccs(pr_cdcooper  crapass.cdcooper%TYPE
+                     ,pr_nrdconta  crapass.nrdconta%TYPE) IS
+      SELECT ccs.nmfuncio
+        FROM crapccs ccs
+       WHERE ccs.cdcooper = pr_cdcooper
+         AND ccs.nrdconta = pr_nrdconta;
+
       vr_nmprimtl VARCHAR2(1000);
       vr_dsalert  VARCHAR2(1000);
 
       vr_xml_orig_temp VARCHAR2(32767);
-      vr_erro EXCEPTION;
+      --vr_erro EXCEPTION;
 
    BEGIN
       -- Inicializa variavel
@@ -7311,7 +7353,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                     ,rw_crappfp.cdempres
                                     ,rw_crappfp.nrseqpag) LOOP
 
+         -- Limpar variável
+         vr_nmprimtl := NULL;
+         
+         -- Buscar o nome conforme o tipo da conta, antes era retornado pela pc_valida_lancto_folha
+         -- Conforme o tipo de conta 
+         IF rw_craplfp.idtpcont = 'C' THEN -- Para associados
 
+           -- Buscar dados da CRAPASS
+           OPEN  cr_crapass(rw_craplfp.cdcooper, rw_craplfp.nrdconta);
+           FETCH cr_crapass INTO vr_nmprimtl;
+           CLOSE cr_crapass;
+         
+         ELSIF rw_craplfp.idtpcont = 'T' THEN -- Para CTASAL
+
+           -- Buscar as informações de CTASAL
+           OPEN  cr_crapccs(rw_craplfp.cdcooper, rw_craplfp.nrdconta);
+           FETCH cr_crapccs INTO vr_nmprimtl;
+           CLOSE cr_crapccs;
+           
+         END IF;
+
+         /**************************************
+         ** Renato Darosci - Supero
+         ** 11/08/2015
+         **
+         ** Retirado a chamada da validação pois a variável de retorno de críticas
+         ** não está sendo testada, dessa forma a chamada da validação não se faz
+         ** necessária. Outro motivo é que esta validação é feita no momento da 
+         ** validação do pagamento.         
+         **
          -- Efetua a validação do lançamento
          FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => rw_craplfp.nrdconta
@@ -7326,7 +7397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             pr_cdcritic := 0;
             RAISE vr_erro; -- Finaliza o programa
          END IF;
-
+         **************************************/
 
          -- Grava o Corpo do XML
          gene0002.pc_escreve_xml(pr_xml            => pr_xmlpagto
@@ -7351,10 +7422,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                              ,pr_fecha_xml      => TRUE);
 
    EXCEPTION
-      WHEN vr_erro THEN
+      /*WHEN vr_erro THEN    -- TRATAMENTO NÃO SERÁ MAIS UTILIZADO
          -- Apenas retorna o erro
-         NULL;
+         NULL;*/
       WHEN OTHERS THEN
+        -- Encerrar a tag raiz
+        gene0002.pc_escreve_xml(pr_xml            => pr_xmlpagto
+                               ,pr_texto_completo => vr_xml_orig_temp
+                               ,pr_texto_novo     => '</dados>'
+                               ,pr_fecha_xml      => TRUE);  
+      
+      
          pr_cdcritic := 0;
          pr_dscritic := 'Erro na rotina FOLH0002.pc_lista_pgto_pend_ib: '||SQLERRM;
    END pc_lista_pgto_pend_ib;
@@ -7973,7 +8051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
          vr_qtregpag := vr_qtregpag + 1;
          IF vr_tab_pgto(vr_idx_pgto).vllctpag > 0 THEN
-         vr_qtlctpag := vr_qtlctpag + 1;
+           vr_qtlctpag := vr_qtlctpag + 1;
          END IF;
          vr_vllctpag := vr_vllctpag + vr_tab_pgto(vr_idx_pgto).vllctpag;
 
@@ -8855,7 +8933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                     ,pr_nrdconta => pr_nrdconta
                     ,pr_nrdctemp => pr_nrdctemp
                     ,pr_nrcpfemp => pr_nrcpfemp
-                  ,pr_idtpcont => pr_idtpcont);
+                    ,pr_idtpcont => pr_idtpcont);
      FETCH cr_craplfp INTO rw_craplfp;
      vr_hasfound := cr_craplfp%FOUND;
      CLOSE cr_craplfp;
