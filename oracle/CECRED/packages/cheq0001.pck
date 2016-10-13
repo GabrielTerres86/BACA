@@ -3015,7 +3015,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                        'Operador: ' || pr_cdoperad;
                        
         -- Caso tenha sinistro, retorna erro abaixo
-        pr_des_erro:= 'Atencao! Operacao nao autorizada. Cheque UNICRED envolvido em sinistro.';
+        pr_des_erro:= 'Atencao! Operacao nao autorizada. Cheque envolvido em sinistro.';
         
         -- Enviar e-mail dos dados deste sinistro
         gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
