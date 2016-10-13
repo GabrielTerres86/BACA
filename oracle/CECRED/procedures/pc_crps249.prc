@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 31/05/2016
+   Data    : Novembro/98                     Ultima atualizacao: 13/10/2016
 
    Dados referentes ao programa:
 
@@ -510,6 +510,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             Sicredi e não de pagamentos efetuados
                             Não considerar GPS agendados / Despesas apenas quando SICREDI
                             (Guilherme/SUPERO)
+
+			   13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index primcipal
+			                (Daniel) 	
 ............................................................................ */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
@@ -614,10 +617,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select dstextab
       from craptab
      where craptab.cdcooper = pr_cdcooper
-       and craptab.nmsistem = 'CRED'
-       and craptab.tptabela = pr_tptabela
+       and UPPER(craptab.nmsistem) = 'CRED'
+       and UPPER(craptab.tptabela) = pr_tptabela
        and craptab.cdempres = pr_cdempres
-       and craptab.cdacesso = pr_nrdctabb
+       and UPPER(craptab.cdacesso) = pr_nrdctabb
        and craptab.tpregist = pr_cdbccxlt;
   rw_craptab    cr_craptab%rowtype;
   -- Rejeitados na integração
@@ -679,8 +682,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select dstextab
       from craptab
      where craptab.cdcooper = pr_cdcooper
-       and craptab.tptabela = pr_tptabela
-       and craptab.cdacesso = pr_nrdctabb;
+       and UPPER(craptab.tptabela) = pr_tptabela
+       and UPPER(craptab.cdacesso) = pr_nrdctabb;
   -- Tarifa dos históricos
   cursor cr_crabthi (pr_cdcooper in crapthi.cdcooper%type,
                      pr_cdhistor in crapthi.cdhistor%type,
