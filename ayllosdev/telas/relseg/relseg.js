@@ -8,18 +8,20 @@
                 : 12/09/2013 - Alterada a função de #dtfimper, para quando for pressionado o enter, gerar o relatório, assim como quando clicado
 				               no botão no botão Prosseguir. (Carlos)
 				: 18/02/2014 - Exportação em .txt para Tp.Relat 5 (Lucas)
+
+                : 12/05/2016 - PRJ187.2 - Adicionada opção 6 - Seguro Sicredi (Guilherme/SUPERO)
  *				  
  *				  
  * --------------
  */
 
 // Definição de algumas variáveis globais 
-var cddopcao		= 'C';
+var cddopcao        = 'C';
 
 	
 //Formulários
-var frmCab   		= 'frmCab';
-var formDados        = 'frmRel';
+var frmCab          = 'frmCab';
+var formDados       = 'frmRel';
 
 //Labels e Campos do cabeçalho
 var rCddopcao, 
@@ -46,12 +48,22 @@ function estadoInicial() {
 	$('#frmSeg').css({'display':'none'});
 	$('#frmRel').css({'display':'none'});
 
+    $('#divParam','#frmRel').css('display','block');
+    $('#divOp6'  ,'#frmRel').css('display','none');
+    $('#tprelato','#frmRel').val( 1 );
 
+    $('#tpseguro','#frmRel').val( 2 );
+    $('#tpstaseg','#frmRel').val( 'A' );
+    
 	formataCabecalho();
 	
 	cTodosCabecalho.limpaFormulario();
+    $('input[type="text"],select','#frmRel').limpaFormulario();
+    $('input,select', '#frmRel').removeClass('campoErro');
 	
 	cCddopcao.val( cddopcao );
+    $('#cddopcao','#frmCab').val( 'C' );
+    $('#cddopcao','#frmCab').focus();
 	
 	$('#divBotoes', '#divTela').css({'display':'none'});
 	
@@ -138,7 +150,8 @@ function formataCabecalho() {
 
 function formataRelatorio(){
 
-	var rTelcdage, rDtiniper, rInexprel, rDtfimper, cTelcdage, cDtiniper, cInexprel, cDtfimper, rTprelato, cTprelato, tprelato;
+    var rTelcdage, rDtiniper, rInexprel, rDtfimper, cTelcdage, cDtiniper, cInexprel, cDtfimper, rTprelato, cTprelato, tprelato,
+        rTpseguro, cTpseguro, rTpstaseg, cTpstaseg;
 	
 	highlightObjFocus($('#frmRel')); 
 	
@@ -160,10 +173,16 @@ function formataRelatorio(){
 	cDtiniper = $('#dtiniper','#frmRel'); 
 	cDtfimper = $('#dtfimper','#frmRel'); 
 	cInexprel = $('#inexprel','#frmRel'); 
-
+    // Relatorio tipo 6
+    rTpseguro  = $('label[for="tpseguro"]','#frmRel');
+    rTpstaseg  = $('label[for="tpstaseg"]','#frmRel');
+    cTpseguro  = $('#tpseguro','#frmRel');
+    cTpstaseg  = $('#tpstaseg','#frmRel');
 	
 	//Rótulos
 	rTprelato.css('width','44px');
+    rTpseguro.css ('width','44px');
+    rTpstaseg.css('width','120px');
 	rTelcdage.addClass('rotulo').css({'width':'44px'});
 	rDtiniper.addClass('rotulo-linha').css({'width':'70px'});
 	rDtfimper.addClass('rotulo-linha').css({'width':'30px'});	
@@ -171,6 +190,8 @@ function formataRelatorio(){
 	
 	//Campos
 	cTprelato.css('width','496px');
+    cTpseguro.css('width','100px');
+    cTpstaseg.css('width','100px');
 	cTelcdage.addClass('inteiro').css({'width':'50px'});
 	cDtiniper.addClass('data').css({'width':'100px'});
 	cInexprel.css({'width':'65px'});
@@ -184,17 +205,32 @@ function formataRelatorio(){
 	
 		if (cTprelato.val() == 5){			
 			$('#divExpRel','#frmRel').css('display','block');
+            $('#divParam' ,'#frmRel').css('display','block');
+            $('#divOp6'   ,'#frmRel').css('display','none');
 			formataRelatorio();
+        } else if (cTprelato.val() == 6){ //SEGURO AUTO
+            $('#divExpRel','#frmRel').css('display','none');
+            $('#divParam' ,'#frmRel').css('display','none');
+            $('#divOp6'   ,'#frmRel').css('display','block');
 		} else {
 			$('#divExpRel','#frmRel').css('display','none');
+            $('#divParam' ,'#frmRel').css('display','block');
+            $('#divOp6'   ,'#frmRel').css('display','none');
 		}				
 	});
 	
 	$('#tprelato','#frmRel').unbind('keypress').bind('keypress', function(e) {
+        if (cTprelato.val() == 6) {
+            if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#tpseguro','#frmRel').focus();
+                return false;
+            }
+        } else {
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
 				$('#telcdage','#frmRel').focus();
 				return false;
 			}	
+        }
 	});
 	
 	$('#telcdage','#frmRel').unbind('keypress').bind('keypress', function(e) {
@@ -211,6 +247,19 @@ function formataRelatorio(){
 			}	
 	});
 	
+    $('#tpseguro','#frmRel').unbind('keypress').bind('keypress', function(e) {
+            if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#tpstaseg','#frmRel').focus();
+                return false;
+            }
+    });
+    $('#tpstaseg','#frmRel').unbind('keypress').bind('keypress', function(e) {
+        if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {
+            showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','btnRelatorio();','estadoInicial();','sim.gif','nao.gif');
+            return false;
+        }
+    });
+
 	$('#dtfimper','#frmRel').unbind('keypress').bind('keypress', function(e) {
 		if(cddopcao == 'R'){
 			if ($('#tprelato','#frmRel').val() != 5) {
@@ -253,23 +302,23 @@ function formataSeguros(){
 	cddopcao = $('#cddopcao','#frmCab').val();
 	
 	// cabecalho dados seguros
-	rVlrdecom1			= $('label[for="vlrdecom1"]','#frmSeg'); 
-	rVlrdecom2			= $('label[for="vlrdecom2"]','#frmSeg'); 
-	rVlrdecom3			= $('label[for="vlrdecom3"]','#frmSeg'); 
-	rVlrdeiof1			= $('label[for="vlrdeiof1"]','#frmSeg'); 
-	rVlrdeiof2			= $('label[for="vlrdeiof2"]','#frmSeg'); 
-	rVlrdeiof3			= $('label[for="vlrdeiof3"]','#frmSeg'); 
-	rVlrapoli     		= $('label[for="vlrapoli"]','#frmSeg'); 
+    rVlrdecom1          = $('label[for="vlrdecom1"]','#frmSeg');
+    rVlrdecom2          = $('label[for="vlrdecom2"]','#frmSeg');
+    rVlrdecom3          = $('label[for="vlrdecom3"]','#frmSeg');
+    rVlrdeiof1          = $('label[for="vlrdeiof1"]','#frmSeg');
+    rVlrdeiof2          = $('label[for="vlrdeiof2"]','#frmSeg');
+    rVlrdeiof3          = $('label[for="vlrdeiof3"]','#frmSeg');
+    rVlrapoli           = $('label[for="vlrapoli"]','#frmSeg');
 	
-	cVlrdecom1			= $('#vlrdecom1','#frmSeg'); 
-	cVlrdecom2			= $('#vlrdecom2','#frmSeg'); 
-	cVlrdecom3			= $('#vlrdecom3','#frmSeg'); 
-	cVlrdeiof1			= $('#vlrdeiof1','#frmSeg'); 
-	cVlrdeiof2			= $('#vlrdeiof2','#frmSeg'); 
-	cVlrdeiof3			= $('#vlrdeiof3','#frmSeg'); 
-	cVlrapoli			= $('#vlrapoli','#frmSeg'); 
+    cVlrdecom1          = $('#vlrdecom1','#frmSeg');
+    cVlrdecom2          = $('#vlrdecom2','#frmSeg');
+    cVlrdecom3          = $('#vlrdecom3','#frmSeg');
+    cVlrdeiof1          = $('#vlrdeiof1','#frmSeg');
+    cVlrdeiof2          = $('#vlrdeiof2','#frmSeg');
+    cVlrdeiof3          = $('#vlrdeiof3','#frmSeg');
+    cVlrapoli           = $('#vlrapoli','#frmSeg');
 	
-	cTodosSeguros		= $('input[type="text"]','#frmSeg');
+    cTodosSeguros       = $('input[type="text"]','#frmSeg');
 
 	//Labels
 	rVlrdecom1.addClass('rotulo').css({'width':'100px'});
@@ -544,7 +593,10 @@ function Gera_Impressao(cddopcao) {
 	cDtiniper = $('#dtiniper','#frmRel'); 
 	cDtfimper = $('#dtfimper','#frmRel'); 
 	cInexprel = $('#inexprel','#frmRel'); 
+    cTprelato = $('#tprelato','#frmRel');
+
 	
+    if (cTprelato.val() != 6) {
 	if (cDtiniper.hasClass('campo') && (cDtiniper.val() == '' || cDtiniper.val() == null) ) {
 		showError('error','170 - Data nao informada!','Alerta - Ayllos','focaCampoErro(\'dtiniper\',\''+ formDados +'\');');
 		return false;
@@ -552,6 +604,7 @@ function Gera_Impressao(cddopcao) {
 		      showError('error','170 - Data nao informada!','Alerta - Ayllos','focaCampoErro(\'dtfimper\',\''+ formDados +'\');');
 		      return false;
 	}  
+    }
 
     cTodosRelatorios = $('input[type="text"],select','#' + formDados);
 	
@@ -567,7 +620,5 @@ function Gera_Impressao(cddopcao) {
 	$('#cddopcao','#' + formDados).val(cddopcao);
 	
 	var callafter = "estadoInicial();";
-	
 	carregaImpressaoAyllos(formDados,action,callafter);
-	
 }

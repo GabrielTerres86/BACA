@@ -348,6 +348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                              AND segNov.cdsegura   = csg.cdsegura
                                              AND segNov.cdcooper   = '||vr_cdcooper||'
                                              AND segNov.nrdconta   = '||pr_nrdconta||'
+                                             AND segNov.flgvigente = 1
                                              AND segNov.nrapolice > 0)
                                 ORDER BY dsSituac,dsTipo, dtFimVigen DESC, nrApolice2
                                  ');

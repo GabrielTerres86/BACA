@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED."SEGU0001" AS
+CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
 
 /*..............................................................................
 

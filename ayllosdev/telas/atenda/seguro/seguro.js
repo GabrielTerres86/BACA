@@ -42,11 +42,13 @@
 				  22/06/2016 - Trazer os novos contratos de seguro adicionados a base de dados pela integração com o PROWEB.
 				               Criação de nova tela de consulta para os seguros de vida. Projeto 333_1. (Lombardi) 
 				  
-				  
                   22/08/2016 - Qdo for seguro de vida (tpseguro = 3) ao digitar o plano buscar o valor
                                automaticamente (Tiago/Thiago #462910).
 
                   25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+
+                  29/08/2016  - PROJ 187.2 - Sicredi Seguros (Guilherme/SUPERO)
+
  * */
  
 //**************************************************
@@ -67,15 +69,15 @@ var idseqttl, vlpreseg, dtprideb, flgunica, flgclabe, vlpremio, nmbenvid;
 var nmsegura;
 /*inicializa variavel global dentro deste escopo*/
 var operacao;
-var nmprimtl 	= null;
-var cdsitdct 	= null;
+var nmprimtl    = null;
+var cdsitdct    = null;
 var tpseguro    = null;
 var idproposta  = null;
 var idcontrato  = null;
 var cdsexosg    = null;
 var nmresseg    = null;
 var inpessoa    = null;
-var dspesseg	= '';
+var dspesseg    = '';
 /*variaveis referentes ao endereco*/
 var dsendere    = null;
 var nrendere    = null;
@@ -91,7 +93,7 @@ var nmbenefi    = new Array();
 var dsgraupr    = new Array();
 var txpartic    = new Array();
 var arrayPlanos = new Array();
-var dtultalt 	= '';
+var dtultalt    = '';
 /*parametros para consulta*/
 var consultar   = false;
 var dsStatus    = null;
@@ -116,8 +118,8 @@ var dtnascsg    = '';
 var cdsexotl    = null;
 var vlseguro    = 0;
 /*variaveis refentes ao seguro tela cadastro*/
-var vlplaseg 	= null;
-var vlmorada	= null;
+var vlplaseg    = null;
+var vlmorada    = null;
 var teclado     = 0;
 
 // Inicializando os seletores dos campos do cabeçalho
@@ -125,7 +127,7 @@ var cTodos    = $('#cdsitdct,#nmresseg,#nmdsegur,#nrcpfcgc,'+
 				  '#dtnascsg,#cdsexosg,#nmprimtl');		  
 			  
 function resetaVars(){
-     cdsitdct 	 = null;
+     cdsitdct    = null;
 	 tpseguro    = null;	
 	 qtparcel    = null;
 	 idproposta  = null;
@@ -166,8 +168,8 @@ function resetaVars(){
 	 nrcepend    = null;
 	 
 	 // Váriaveis refentes a tela de seguro
-	 vlplaseg 	 = null;
-	 vlmorada	 = null;	 
+     vlplaseg    = null;
+     vlmorada    = null;
 }
 
 //Controla as operações da descrição de seguros
@@ -176,34 +178,34 @@ function controlaOperacao(operacao) {
 		consultar = false;
 		$('table > tbody > tr', 'div.divRegistros').each( function() {
 			if ($(this).hasClass('corSelecao') ) {
-				dsStatus = $('#dsstatus', $(this) ).val();
-				dsSeguro = $('#dsseguro', $(this) ).val();
-				tpseguro = $('#tpseguro', $(this) ).val();
-				nrctrseg = $('#nrctrseg', $(this) ).val();
-				vlpreseg = $('#vlpreseg', $(this) ).val();
-				dtdebito = $('#dtdebito', $(this) ).val();
-				dtinivig = $('#dtinivig', $(this) ).val();
-				dtfimvig = $('#dtfimvig', $(this) ).val();
-				dtprideb = $('#dtprideb', $(this) ).val();
-				flgunica = $('#flgunica', $(this) ).val();
-				qtparcel = $('#qtparcel', $(this) ).val();
-				tpplaseg = $('#tpplaseg', $(this) ).val();
-				flgclabe = $('#flgclabe', $(this) ).val();
-				vlpremio = $('#vlpremio', $(this) ).val();
-				nmbenvid = $('#nmbenvid', $(this) ).val();
-				nmresseg = $('#nmdsegur', $(this) ).val();							
-				qtpreseg = $('#qtpreseg', $(this) ).val();				
-				dtcancel = $('#dtcancel', $(this) ).val();						
-				vlprepag = $('#vlprepag', $(this) ).val();						
-				dtiniseg = $('#dtiniseg', $(this) ).val();	
-				dtmvtolt = $('#dtmvtolt', $(this) ).val();	
-				cdsexosg = $('#cdsexosg', $(this) ).val();	
-				qtprepag = $('#qtprepag', $(this) ).val();	
-				qtparcel = $('#qtparcel', $(this) ).val();	
-				cdsitseg = $('#cdsitseg', $(this) ).val();	
-                idorigem = $('#idorigem', $(this) ).val();	
-                nmsispar = $('#nmsispar', $(this) ).val();
-                idcontrato = $('#idcontrato', $(this) ).val();
+                dsStatus   = $('#dsstatus', $(this) ).val();
+                dsSeguro   = $('#dsseguro', $(this) ).val();
+                tpseguro   = $('#tpseguro', $(this) ).val();
+                nrctrseg   = $('#nrctrseg', $(this) ).val();
+                vlpreseg   = $('#vlpreseg', $(this) ).val();
+                dtdebito   = $('#dtdebito', $(this) ).val();
+                dtinivig   = $('#dtinivig', $(this) ).val();
+                dtfimvig   = $('#dtfimvig', $(this) ).val();
+                dtprideb   = $('#dtprideb', $(this) ).val();
+                flgunica   = $('#flgunica', $(this) ).val();
+                qtparcel   = $('#qtparcel', $(this) ).val();
+                tpplaseg   = $('#tpplaseg', $(this) ).val();
+                flgclabe   = $('#flgclabe', $(this) ).val();
+                vlpremio   = $('#vlpremio', $(this) ).val();
+                nmbenvid   = $('#nmbenvid', $(this) ).val();
+                nmresseg   = $('#nmdsegur', $(this) ).val();
+                qtpreseg   = $('#qtpreseg', $(this) ).val();
+                dtcancel   = $('#dtcancel', $(this) ).val();
+                vlprepag   = $('#vlprepag', $(this) ).val();
+                dtiniseg   = $('#dtiniseg', $(this) ).val();
+                dtmvtolt   = $('#dtmvtolt', $(this) ).val();
+                cdsexosg   = $('#cdsexosg', $(this) ).val();
+                qtprepag   = $('#qtprepag', $(this) ).val();
+                qtparcel   = $('#qtparcel', $(this) ).val();
+                cdsitseg   = $('#cdsitseg', $(this) ).val();
+                idorigem   = $('#idorigem', $(this) ).val();
+                nmsispar   = $('#nmsispar', $(this)).val();
+                idcontrato = $('#idcontrato', $(this)).val();
 				
 				// for para pegar os valores dos parentes caso seja vida
 				if(tpseguro == 3){
@@ -222,8 +224,8 @@ function controlaOperacao(operacao) {
 		switch (operacao) {
 			case 'C' : 
 				// Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
-				if (idorigem == 'N'){
-					showError('error','Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".','Alerta - Ayllos','bloqueiaFundo(divRotina)');
+			    if (idorigem == 'N') {
+			        showError('error', 'Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
 					return false;
 				}
 				mensagem = 'carregando etapa do cancelamento de seguro...';
@@ -369,20 +371,20 @@ function controlaOperacao(operacao) {
 				}
 				cddopcao = 'CONSULTAR';
 				break;
-			case 'ALTERAR':				
+		    case 'ALTERAR':
 		        // Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
 		        if (idorigem == 'N') {
 		            showError('error', 'Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-					return false;
-				}
-				
-		        if (tpseguro != 3) {
-					return false;
-				}
+		            return false;
+		        }
 
-				consultar = true;				
-				cddopcao = 'ALTERAR';
-				break;
+		        if (tpseguro != 3) {
+		            return false;
+		        }
+
+		        consultar = true;
+		        cddopcao = 'ALTERAR';
+		        break;
 			case 'TI'://tela insere
 					
 					operacao = 'TI';

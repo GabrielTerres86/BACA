@@ -1,4 +1,4 @@
-<?
+<?php
  /*!
  * FONTE        : form_autonovo.php
  * CRIAÇÃO      : Guilherme/SUPERO
