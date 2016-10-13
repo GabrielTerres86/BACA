@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_pct_tarifas" language="groovy" pageWidth="595" pageHeight="772" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="1.5000000000000153"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="1079"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<parameter name="PR_XMLPATH" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/cabecalho]]>
+	</queryString>
+	<field name="nmextcop" class="java.lang.String">
+		<fieldDescription><![CDATA[nmextcop]]></fieldDescription>
+	</field>
+	<field name="nrdocnpj" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdocnpj]]></fieldDescription>
+	</field>
+	<field name="nmcidade" class="java.lang.String">
+		<fieldDescription><![CDATA[nmcidade]]></fieldDescription>
+	</field>
+	<field name="cdagectl" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagectl]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="dtdiadebito" class="java.lang.String">
+		<fieldDescription><![CDATA[dtdiadebito]]></fieldDescription>
+	</field>
+	<field name="dspacote" class="java.lang.String">
+		<fieldDescription><![CDATA[dspacote]]></fieldDescription>
+	</field>
+	<field name="vltarifa" class="java.lang.String">
+		<fieldDescription><![CDATA[vltarifa]]></fieldDescription>
+	</field>
+	<field name="dtinicio_vigencia" class="java.lang.String">
+		<fieldDescription><![CDATA[dtinicio_vigencia]]></fieldDescription>
+	</field>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[nmrescop]]></fieldDescription>
+	</field>
+	<field name="representantes" class="java.lang.String">
+		<fieldDescription><![CDATA[representantes]]></fieldDescription>
+	</field>
+	<field name="cargos" class="java.lang.String">
+		<fieldDescription><![CDATA[cargos]]></fieldDescription>
+	</field>
+	<field name="dstarifas" class="java.lang.String">
+		<fieldDescription><![CDATA[dstarifas]]></fieldDescription>
+	</field>
+	<field name="qtdoperacoes" class="java.lang.String">
+		<fieldDescription><![CDATA[qtdoperacoes]]></fieldDescription>
+	</field>
+	<field name="inpessoa" class="java.lang.Integer">
+		<fieldDescription><![CDATA[inpessoa]]></fieldDescription>
+	</field>
+	<field name="idorigem" class="java.lang.Integer">
+		<fieldDescription><![CDATA[idorigem]]></fieldDescription>
+	</field>
+	<pageHeader>
+		<band height="50"/>
+	</pageHeader>
+	<detail>
+		<band height="161">
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="47" y="52" width="500" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="405" y="114" width="142" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="47" y="114" width="358" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="47" y="70" width="500" height="18"/>
+			</rectangle>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="120" y="55" width="416" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmextcop}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="50" y="55" width="150" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[COOPERATIVA:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="50" y="73" width="109" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[CNPJ:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="79" y="73" width="455" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdocnpj}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="50" y="118" width="55" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="true"/>
+				</textElement>
+				<text><![CDATA[COOPERADO:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="409" y="118" width="135" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrcpfcgc}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="105" y="118" width="298" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="0" y="9" width="595" height="12"/>
+				<textElement textAlignment="Center" verticalAlignment="Top">
+					<font fontName="Courier New" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CONTRATO/TERMO DE ADESÃO AO SERVIÇO COOPERATIVO]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" positionType="Float" stretchType="RelativeToBandHeight" mode="Transparent" x="47" y="132" width="307" height="29" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[$F{inpessoa} == 2]]></printWhenExpression>
+				</reportElement>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" stretchType="RelativeToBandHeight" mode="Transparent" x="354" y="132" width="193" height="29" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[$F{inpessoa} == 2]]></printWhenExpression>
+				</reportElement>
+			</rectangle>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" positionType="Float" stretchType="RelativeToBandHeight" x="359" y="144" width="184" height="11" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{inpessoa} == 2]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="html">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cargos}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" positionType="Float" stretchType="RelativeToBandHeight" x="50" y="144" width="304" height="11" isRemoveLineWhenBlank="true" isPrintWhenDetailOverflows="true">
+					<printWhenExpression><![CDATA[$F{inpessoa} == 2]]></printWhenExpression>
+				</reportElement>
+				<textElement markup="html">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{representantes}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="359" y="132" width="87" height="11" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[$F{inpessoa} == 2]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Cargo:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="50" y="132" width="114" height="11" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[$F{inpessoa} == 2]]></printWhenExpression>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Representante legal:]]></text>
+			</staticText>
+		</band>
+		<band height="255">
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="367" y="213" width="180" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="47" y="213" width="320" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="326" y="18" width="106" height="28"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" positionType="Float" mode="Transparent" x="47" y="0" width="385" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="432" y="0" width="115" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="47" y="18" width="279" height="28"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" mode="Transparent" x="432" y="18" width="115" height="28"/>
+			</rectangle>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="59" width="500" height="154"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Pelo presente instrumento, o <b>COOPERADO</b> acima qualificado, adere ao Serviço Cooperativo, em caráter irrevogável e irretratável, para todos os efeitos legais, declarando estar ciente e de pleno acordo com as seguintes regras e condições:
+<br><br><b>1</b> – As disposições contidas nas Cláusulas e Condições Gerais Aplicáveis ao Conta Corrente e Conta Investimento, as quais encontram-se disponibilizadas no site da <b>COOPERATIVA</b>, integram este Contrato/Termo de Adesão para os devidos fins, formando um documento único e indivisível, cujo teor o <b>COOPERADO</b> conhece, entende e com o qual concorda, passando a assumir todas as prerrogativas e obrigações que lhe são atribuídas, na condição de <b>COOPERADO</b>.
+<br><br><b>2</b> – O Serviço Cooperativo escolhido e contratado pelo <b>COOPERADO</b>, neste ato, contempla a prestação, pela <b>COOPERATIVA</b>, dos seguintes serviços, mediante pagamento, pelo <b>COOPERADO</b>, do valor mensal acima estabelecido:
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="216" width="320" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Serviços]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="367" y="216" width="180" height="12"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Quantidade]]></text>
+			</staticText>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" stretchType="RelativeToBandHeight" mode="Transparent" x="47" y="231" width="320" height="18"/>
+			</rectangle>
+			<rectangle>
+				<reportElement uuid="53f8a77e-1dba-44b9-8b4e-74dca27b4843" stretchType="RelativeToBandHeight" mode="Transparent" x="367" y="231" width="180" height="18"/>
+			</rectangle>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="50" y="3" width="265" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Conta para débito: Banco nº 0085 | Ag.Coop. nº]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="302" y="3" width="24" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdagectl}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="326" y="3" width="41" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[| Conta nº]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="368" y="3" width="59" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="435" y="3" width="93" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Dia para débito:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="435" y="33" width="108" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtinicio_vigencia}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="330" y="22" width="97" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Valor mensal:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="330" y="33" width="97" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vltarifa}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="435" y="22" width="108" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[Início da vigência:]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="528" y="3" width="19" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtdiadebito}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" positionType="Float" stretchType="RelativeToBandHeight" x="50" y="233" width="317" height="11" isPrintWhenDetailOverflows="true"/>
+				<textElement markup="html">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dstarifas}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" positionType="Float" stretchType="RelativeToBandHeight" x="370" y="233" width="177" height="11" isPrintWhenDetailOverflows="true"/>
+				<textElement textAlignment="Center" markup="html">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qtdoperacoes}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement uuid="ef75ef1d-e939-46c4-8933-fcbc2a88a7a0" x="50" y="27" width="274" height="11"/>
+				<textElement>
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dspacote}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="517">
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="2" width="500" height="55"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<b>3</b> – A utilização de produtos/serviços não compreendidos na lista de Serviços Essenciais ou no Serviço Cooperativo contratado pelo <b>COOPERADO</b>, ou ainda a utilização dos serviços contemplados ora contratado em número acima do previsto neste instrumento, ensejará a cobrança de tarifas avulsas, se aplicáveis, de acordo com os valores constantes na Tabela de Tarifa, disponível no site da <b>COOPERATIVA</b> e nos Postos de Atendimento.
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="68" width="500" height="82"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<b>4</b> – O <b>COOPERADO</b> compromete-se a manter recursos disponíveis em sua conta corrente, considerando o limite de crédito existente, para a efetivação do débito relativo ao Serviço Cooperativo, no dia para débito acima estabelecido, bem como das tarifas avulsas referentes aos demais produtos/serviços utilizados na data de sua ocorrência. No caso de insuficiência de saldo para débito do Serviço Cooperativo no dia acima estabelecido, poderá a <b>COOPERATIVA</b> realizar tentativas de débitos até a quitação total do valor devido. Caso a insuficiência de saldo perdure por 03 (três) meses consecutivos ou mais, poderá a <b>COOPERATIVA</b> cancelar o Serviço Cooperativo contratado. ]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="161" width="500" height="58"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<b>5</b> – A <b>COOPERATIVA</b> poderá conceder descontos no valor mensal do Serviço Cooperativo, caso o <b>COOPERADO</b> cumpra qualquer das exigências de reciprocidade disponíveis no site da <b>COOPERATIVA</b>. O cumprimento das exigências será apurado mensalmente pela <b>COOPERATIVA</b> e o desconto alcançado pelo <b>COOPERADO</b> será aplicado no mês subsequente ao da apuração, quando do débito do Serviço Cooperativo.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="278" width="500" height="37"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<b>7</b> – Caso o <b>COOPERADO</b> pretenda alterar/cancelar o Serviço Cooperativo contratado, deverá fazê-lo diretamente no Posto de Atendimento da Cooperativa, sendo que tal alteração/cancelamento somente produzirá efeitos no 1º dia útil do mês subsequente ao da solicitação.
+]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="230" width="500" height="37"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<b>6</b> – A <b>COOPERATIVA</b> poderá, a seu critério, realizar reajustes no valor mensal do Serviço Cooperativo, os quais serão publicados no site e afixados nos Postos de Atendimento com, no mínimo, 30 (trinta) dias de antecedência.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="326" width="500" height="36"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<b>8</b> – A <b>COOPERATIVA</b> poderá, a seu critério, descontinuar quaisquer dos Serviços Cooperativos ofertados, garantindo aos <b>COOPERADOS</b>, cujo serviço seja cancelado, a migração para serviço de, no mínimo, igual ou superior condição, comparado ao anteriormente contratado.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="373" width="500" height="48"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<b>9</b> – Todos os atos praticados pelo <b>COOPERADO</b> na conta online (site da <b>COOPERATIVA</b>) ou no Posto de Atendimento, mediante aposição de senha numérica e letras de segurança, serão registrados e arquivados em meios magnéticos, sendo reconhecidas, para todos os fins de direito, como válidas, verdadeiras e processadas por meios seguros.]]></text>
+			</staticText>
+			<staticText>
+				<reportElement uuid="1ad7563c-5ab9-49e4-a7f8-223dfe5ce2f9" x="47" y="432" width="500" height="58"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="9" isBold="false"/>
+				</textElement>
+				<text><![CDATA[E, por estarem assim justas e contratadas, firmam o presente Contrato/Termo de Serviço Cooperativo em tantas vias quantas forem necessárias.
+]]></text>
+			</staticText>
+			<textField>
+				<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="47" y="492" width="500" height="11"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmcidade}]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="191">
+			<frame>
+				<reportElement uuid="cfce4fdf-f19a-4e0f-88c0-b164d103b984" x="47" y="0" width="500" height="191">
+					<printWhenExpression><![CDATA[$F{idorigem} != 3]]></printWhenExpression>
+				</reportElement>
+				<line>
+					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="78" width="210" height="1"/>
+				</line>
+				<textField>
+					<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="0" y="85" width="500" height="11"/>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmprimtl}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement uuid="f594c163-a354-4c33-a1df-e0c1cfd829c6" x="0" y="171" width="210" height="1"/>
+				</line>
+				<textField>
+					<reportElement uuid="30ad85a1-ad63-41c8-8be2-d19e143626db" x="0" y="179" width="500" height="11"/>
+					<textElement>
+						<font fontName="Courier New" size="9"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$F{nmextcop} + " - " + $F{nmrescop}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="50"/>
+	</pageFooter>
+</jasperReport>
