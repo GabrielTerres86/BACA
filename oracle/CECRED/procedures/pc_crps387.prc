@@ -1,9 +1,9 @@
 CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                    ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
-                    ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
-                    ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
-                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                    ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+                                              ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                                              ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                                              ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                              ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
 /* .............................................................................
 
@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 04/10/2016
+   Data    : Abril/2004                        Ultima atualizacao: 13/10/2016
 
    Dados referentes ao programa:
 
@@ -347,6 +347,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             que caso a conta seja < 9000000000 verificar se autorizacao 
                             pertence a conta, e para o samae timbo, ignorar registros que nao 
                             sao da viacredi (Lucas Ranghetti #534110)
+                            
+               13/10/2016 - Alterar update na crapatr do campo dtfimatr para gravar a data do dia ao
+                            inves de gravar a data de inicio da autorizacao dtiniatr (Lucas Ranghetti #532520)
 ............................................................................ */
 
     DECLARE
@@ -2932,7 +2935,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         rw_crapatr.dtfimatr := vr_dtcancel;
                         BEGIN
                           UPDATE crapatr
-                             SET crapatr.dtfimatr = crapatr.dtiniatr
+                             SET crapatr.dtfimatr = vr_dtcancel
                            WHERE ROWID = rw_crapatr.rowid;
                         EXCEPTION
                           WHEN OTHERS THEN
