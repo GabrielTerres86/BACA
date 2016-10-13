@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 27/09/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 13/10/2016
     
    Dados referentes ao programa:
    
@@ -147,9 +147,13 @@
                            na oferta de debito automatico na procedure busca_convenios_codbarras
                            (Lucas Ranghetti #488846)
 
-			  27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
-			               mais referencias iguais para a mesma conta (busca-autori).
-						   (Chamado 528246) - (Fabricio)
+			        27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+			                     mais referencias iguais para a mesma conta (busca-autori).
+						              (Chamado 528246) - (Fabricio)
+                          
+              13/10/2016 - Tratamento para permitir a exclusao da autorizacao do debito
+                           automatico somente no proximo dia util apos o cancelamento 
+                           (Lucas Ranghetti #531786)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1441,6 +1445,15 @@ PROCEDURE valida-dados:
                                        par_nmdcampo = "".
                                 LEAVE Valida.
                             END.
+                            
+                         /* Permitir a exclusao do debito somente no proximo dia util apos 
+                            o cancelamento */
+                         IF  crapatr.dtfimatr = par_dtmvtolt THEN
+                             DO:
+                                ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util."
+                                       par_nmdcampo = "".
+                                LEAVE Valida. 
+                             END.
 
                         LEAVE Valida.
                     END.                
@@ -2130,7 +2143,7 @@ PROCEDURE grava-dados:
                                 BUFFER-COPY crapatr TO tt-autori-atl.
                             END.
                         ELSE
-                            DO:
+                            DO:     
                                 CREATE tt-autori-atl.
                                 ASSIGN tt-autori-atl.cdcooper = par_cdcooper
                                        tt-autori-atl.nrdconta = par_nrdconta.
