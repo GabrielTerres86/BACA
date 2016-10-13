@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 07/06/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 27/09/2016
     
    Dados referentes ao programa:
    
@@ -117,11 +117,39 @@
               27/11/2015 - Incluir historico 2016 - DB.WBT INTERNET para nao validar
                            quando for cancelamento de autorizacao de debito 
                            (Lucas Ranghetti #308844)
-                           
+              
               18/04/2016 - Incluir procedure para validar senha do cartao 
                            magnetico e também atualizar o indicador na crapatr (Lucas Ranghetti #436229)
+                           
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+              
+              30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli 
+                           e Odirlei AMCOM - [PROJ320])
+                           
+              28/07/2016 - Ajustar log da procedure atualiza_inassele (Lucas Ranghetti #488149)
+                           
+              03/08/2016 - Correçao reativaçao de débito automático (Lucas Lunelli [PROJ320])
+              
+              15/08/2016 - Adicionar validacao para a Aguas de Camboriu e Aguas de Penha 
+                           para 10 digitos (Lucas Ranghetti #502275)
+              
+              23/08/2016 - Incluir tratamento na procedure grava-dados para nao permitir
+                           a inclusao de faturas caso a empresa e segmento estiverem zerados
+                           (Lucas Ranghetti #499006)
+                           
+              24/08/2016 - Na procedure valida-dados, incluir tratamento de final de 
+                           semana na busca na craplau (Lucas Ranghetti #510617)
+                           
+              01/09/2016 - Incluir validacao de senha para o cooperado buscando os 
+                           dados da tabela crapcrd tambem (Lucas Ranghetti #499733)
+                           
+              20/09/2016 - Incluir tratamento para o convenio Aguas de Schroeder aparecer
+                           na oferta de debito automatico na procedure busca_convenios_codbarras
+                           (Lucas Ranghetti #488846)
 
+			  27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+			               mais referencias iguais para a mesma conta (busca-autori).
+						   (Chamado 528246) - (Fabricio)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -131,6 +159,7 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/ayllos/includes/var_online.i NEW }
  
 DEF VAR aux_cdcritic AS INTE                                            NO-UNDO.
@@ -146,6 +175,7 @@ DEF VAR aux_dsprotoc AS CHAR                                            NO-UNDO.
 
 DEF VAR h-b1wgen9999 AS HANDLE                                          NO-UNDO.
 DEF VAR h-b1wgen9998 AS HANDLE                                          NO-UNDO.
+DEF VAR h-b1wgen0074 AS HANDLE                                          NO-UNDO.
 DEF VAR h-bo_algoritmo_seguranca AS HANDLE                              NO-UNDO.
 DEF VAR h-b1wgen0015 AS HANDLE                                          NO-UNDO.
 
@@ -155,6 +185,7 @@ DEF VAR h-b1wgen0015 AS HANDLE                                          NO-UNDO.
 /******************************************************************************/
 /**           Procedure para buscar autorizacoes de debito                   **/
 /******************************************************************************/
+/* Chamada na AUTORI e no TAA */
 PROCEDURE busca-autori:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
@@ -181,6 +212,7 @@ PROCEDURE busca-autori:
     DEF VAR aux_regexist AS LOGI                                    NO-UNDO.
     DEF VAR aux_inconfir AS INTE                                    NO-UNDO.
     DEF VAR aux_retornvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmempcon AS CHAR                                    NO-UNDO.
     DEF VAR par_dshistor AS CHAR                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -199,11 +231,8 @@ PROCEDURE busca-autori:
             DO: 
                 FIND crapatr WHERE crapatr.cdcooper = par_cdcooper  AND
                                    crapatr.nrdconta = par_nrdconta  AND
-                                   crapatr.cdhistor = (IF par_flgsicre = "yes" OR 
-                                                          par_flgsicre = "S" THEN
-                                                          1019
-                                                       ELSE INT(par_cdhistor) ) AND
-                                   crapatr.cdrefere = par_cdrefere
+                                   crapatr.cdrefere = par_cdrefere  AND
+								   crapatr.cdhistor = INT(par_cdhistor)
                                    USE-INDEX crapatr1
                                    NO-LOCK NO-ERROR NO-WAIT.
               
@@ -223,7 +252,7 @@ PROCEDURE busca-autori:
                             LEAVE Busca.
                         END.
             
-                IF  par_flgsicre = "yes" OR par_flgsicre = "S" THEN
+                IF  crapatr.cdhistor = 1019 THEN
                     DO:
                         FIND FIRST crapscn WHERE 
                                    crapscn.dsoparre = "E"                 AND
@@ -282,16 +311,19 @@ PROCEDURE busca-autori:
                         FOR EACH crapatr WHERE 
                                  crapatr.cdcooper = par_cdcooper AND
                                  crapatr.nrdconta = par_nrdconta AND
-                                 IF  (par_flgsicre = "yes" OR 
-                                     par_flgsicre = "S") THEN 
-                                     crapatr.cdhistor = 1019
-                                 ELSE crapatr.cdhistor <> 1019     
+                                 crapatr.cdhistor > 0
                                  USE-INDEX crapatr1 NO-LOCK:
 
-                             par_dshistor = "".
+                            ASSIGN par_dshistor = ""
+                                   aux_nmempcon = "Nao encontrado".  
 
-                            IF  par_flgsicre = "yes" OR
-                                par_flgsicre = "S" THEN
+                            IF  (par_flgsicre      = "S"    AND 
+                                 crapatr.cdhistor  <> 1019) OR
+                                (par_flgsicre      = "N"    AND
+                                 crapatr.cdhistor  =  1019) THEN 
+                                 NEXT.
+
+                            IF  crapatr.cdhistor = 1019 THEN
                                 DO:
                                     FIND FIRST crapscn WHERE 
                                                crapscn.dsoparre = "E"                 AND
@@ -302,22 +334,31 @@ PROCEDURE busca-autori:
                                                NO-LOCK NO-ERROR NO-WAIT.
                                     
                                     IF  AVAIL crapscn THEN
-                                        par_dshistor = crapscn.dsnomcnv.
+                                        ASSIGN par_dshistor = crapscn.dsnomcnv
+                                               aux_nmempcon = crapscn.dsnomcnv.
+                                    ELSE 
+                                        NEXT.
+                                        
                                 END.    
                             ELSE
                                 DO:
+                                    FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor NO-LOCK NO-ERROR.
+                                    
+                                    IF  AVAIL gnconve THEN 
+                                        ASSIGN aux_nmempcon = gnconve.nmempres.
+                                    ELSE
+                                        NEXT.
+                                    
                                     FIND FIRST craphis WHERE craphis.cdcooper = par_cdcooper AND 
                                                             craphis.cdhistor = crapatr.cdhistor
                                                             NO-LOCK NO-ERROR.
                                     IF  AVAIL craphis THEN
-                                        par_dshistor = craphis.dshistor.
-                                        
+                                        ASSIGN par_dshistor = craphis.dshistor.
                                 END.
 
                             IF  par_idorigem = 4  THEN /* TAA */
                                 DO:
                                     IF  (crapatr.dtfimatr <> ?) OR
-                                        (crapatr.tpautori = 0)  OR
                                         (crapatr.cdempcon = 0   AND
                                          crapatr.cdsegmto = 0)  THEN
                                         NEXT.
@@ -330,8 +371,6 @@ PROCEDURE busca-autori:
                                         NEXT.
                                 END.
                                 
-                            FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor NO-LOCK NO-ERROR.
-
                             CREATE tt-autori.
                             ASSIGN aux_regexist = TRUE
                                    tt-autori.cdhistor = crapatr.cdhistor
@@ -348,7 +387,7 @@ PROCEDURE busca-autori:
                                    tt-autori.desmaxdb = STRING(crapatr.vlrmaxdb, "zzz,zz9.99")
                                    tt-autori.cdempcon = crapatr.cdempcon
                                    tt-autori.cdsegmto = crapatr.cdsegmto
-                                   tt-autori.nmempcon = IF AVAIL gnconve THEN gnconve.nmempres ELSE "".
+                                   tt-autori.nmempcon = aux_nmempcon.
 
                         END.  /*  Fim do FOR EACH  --  Leitura do crapatr  */
 
@@ -367,21 +406,50 @@ PROCEDURE busca-autori:
                                  crapatr.cdhistor = INT(par_cdhistor)  NO-LOCK
                                  USE-INDEX crapatr1:
                
-                            FIND craphis WHERE
-                                 craphis.cdcooper = par_cdcooper AND 
-                                 craphis.cdhistor = crapatr.cdhistor
-                                 NO-LOCK NO-ERROR.
-               
-                            IF  NOT AVAIL craphis THEN
+                            ASSIGN par_dshistor = ""
+                                   aux_nmempcon = "Nao encontrado".  
+                            
+                            IF  crapatr.cdhistor = 1019 THEN
                                 DO:
-                                    ASSIGN aux_cdcritic = 093.
-                                    LEAVE Busca.
+                                    FIND FIRST crapscn WHERE 
+                                               crapscn.dsoparre = "E"                 AND
+                                              (crapscn.cddmoden = "A"                 OR
+                                               crapscn.cddmoden = "C")                AND
+                                               crapscn.cdempcon = crapatr.cdempcon    AND
+                                               crapscn.cdsegmto = STRING(crapatr.cdsegmto)
+                                               NO-LOCK NO-ERROR NO-WAIT.
+                                    
+                                    IF  AVAIL crapscn THEN
+                                        ASSIGN par_dshistor = crapscn.dsnomcnv
+                                               aux_nmempcon = crapscn.dsnomcnv.
+                                    ELSE 
+                                        NEXT.
+                                        
+                                END.    
+                            ELSE
+                                DO:
+                                    FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor NO-LOCK NO-ERROR.
+                                    
+                                    IF  AVAIL gnconve THEN 
+                                        ASSIGN aux_nmempcon = gnconve.nmempres.
+                                    ELSE 
+                                        NEXT.
+                                    
+                                    FIND FIRST craphis WHERE craphis.cdcooper = par_cdcooper AND 
+                                                             craphis.cdhistor = crapatr.cdhistor
+                                                             NO-LOCK NO-ERROR.
+                                    IF  AVAIL craphis THEN
+                                        ASSIGN par_dshistor = craphis.dshistor.
+                                    ELSE 
+                                        DO:
+                                            ASSIGN aux_cdcritic = 093.
+                                            LEAVE Busca.
+                                        END.
                                 END.
 
                             IF  par_idorigem = 4  THEN /* TAA */
                                 DO:
                                     IF  (crapatr.dtfimatr <> ?) OR
-                                        (crapatr.tpautori = 0)  OR
                                         (crapatr.cdempcon = 0   AND
                                          crapatr.cdsegmto = 0)  THEN
                                         NEXT.
@@ -394,8 +462,6 @@ PROCEDURE busca-autori:
                                         NEXT.
                                 END.
 
-                            FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor NO-LOCK NO-ERROR.
-                            
                             CREATE tt-autori.
                             ASSIGN aux_regexist = TRUE
                                    tt-autori.cdhistor = crapatr.cdhistor
@@ -412,7 +478,7 @@ PROCEDURE busca-autori:
                                    tt-autori.desmaxdb = STRING(crapatr.vlrmaxdb, "zzz,zz9.99")
                                    tt-autori.cdempcon = crapatr.cdempcon
                                    tt-autori.cdsegmto = crapatr.cdsegmto
-                                   tt-autori.nmempcon = IF AVAIL gnconve THEN gnconve.nmempres ELSE "".
+                                   tt-autori.nmempcon = aux_nmempcon.
 
                         END.  /*  Fim do FOR EACH  --  Leitura do crapatr  */
                
@@ -432,21 +498,49 @@ PROCEDURE busca-autori:
                                  crapatr.cdrefere = par_cdrefere NO-LOCK
                                  USE-INDEX crapatr1:
                
-                            FIND craphis WHERE
-                                 craphis.cdcooper = par_cdcooper AND 
-                                 craphis.cdhistor = crapatr.cdhistor
-                                 NO-LOCK NO-ERROR.
-               
-                            IF  NOT AVAIL craphis THEN
+                            ASSIGN par_dshistor = ""
+                                   aux_nmempcon = "Nao encontrado".  
+                            
+                            IF  crapatr.cdhistor = 1019 THEN
                                 DO:
-                                    ASSIGN aux_cdcritic = 093.
-                                    LEAVE Busca.
+                                    FIND FIRST crapscn WHERE 
+                                               crapscn.dsoparre = "E"                 AND
+                                              (crapscn.cddmoden = "A"                 OR
+                                               crapscn.cddmoden = "C")                AND
+                                               crapscn.cdempcon = crapatr.cdempcon    AND
+                                               crapscn.cdsegmto = STRING(crapatr.cdsegmto)
+                                               NO-LOCK NO-ERROR NO-WAIT.
+                                    
+                                    IF  AVAIL crapscn THEN
+                                        ASSIGN par_dshistor = crapscn.dsnomcnv
+                                               aux_nmempcon = crapscn.dsnomcnv.
+                                    ELSE
+                                        NEXT.
+                                END.    
+                            ELSE
+                                DO:
+                                    FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor NO-LOCK NO-ERROR.
+                                    
+                                    IF  AVAIL gnconve THEN 
+                                        ASSIGN aux_nmempcon = gnconve.nmempres.
+                                    ELSE
+                                        NEXT.
+                                    
+                                    FIND FIRST craphis WHERE craphis.cdcooper = par_cdcooper AND 
+                                                             craphis.cdhistor = crapatr.cdhistor
+                                                             NO-LOCK NO-ERROR.
+                                    IF  AVAIL craphis THEN
+                                        ASSIGN par_dshistor = craphis.dshistor.
+                                    ELSE 
+                                        DO:
+                                            ASSIGN aux_cdcritic = 093.
+                                            LEAVE Busca.
+                                        END.
                                 END.
 
                             IF  par_idorigem = 4  THEN /* TAA */
                                 DO:
                                     IF  (crapatr.dtfimatr <> ?) OR 
-                                        (crapatr.tpautori = 0)  OR
                                         (crapatr.cdempcon = 0   AND
                                          crapatr.cdsegmto = 0)  THEN
                                         NEXT.
@@ -459,8 +553,6 @@ PROCEDURE busca-autori:
                                         NEXT.
                                 END.
 
-                            FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor NO-LOCK NO-ERROR.
-                            
                             CREATE tt-autori.
                             ASSIGN aux_regexist = TRUE
                                    tt-autori.cdhistor = crapatr.cdhistor
@@ -477,7 +569,7 @@ PROCEDURE busca-autori:
                                    tt-autori.desmaxdb = STRING(crapatr.vlrmaxdb, "zzz,zz9.99")
                                    tt-autori.cdempcon = crapatr.cdempcon
                                    tt-autori.cdsegmto = crapatr.cdsegmto
-                                   tt-autori.nmempcon = IF AVAIL gnconve THEN gnconve.nmempres ELSE "".
+                                   tt-autori.nmempcon = aux_nmempcon.
 
                         END.  /*  Fim do FOR EACH  --  Leitura do crapatr  */
                
@@ -961,9 +1053,19 @@ PROCEDURE valida-dados:
            par_nmdcampo = "".
     
     Valida: DO WHILE TRUE:
+    
+        FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
+                       NO-LOCK NO-ERROR.
+              
+        IF  NOT AVAILABLE crapdat THEN           
+            DO:
+                ASSIGN aux_cdcritic = 1.
+                LEAVE Valida.
+            END.
 
         IF  par_cddopcao = "I"  THEN
             DO:   
+                              
                 IF  par_cdhistor = 0 THEN
                     DO:
                         ASSIGN aux_dscritic = "Convenio nao selecionado."
@@ -1163,6 +1265,16 @@ PROCEDURE valida-dados:
                             END.
                     END.
                 ELSE
+                IF  CAN-DO("2147,2169",TRIM(STRING(par_cdhistor))) THEN /* Aguas de penha, Aguas de Camboriu */
+                    DO: 
+                        IF  LENGTH(STRING(par_cdrefere)) > 10 THEN
+                            DO: 
+                                ASSIGN aux_cdcritic = 654
+                                       par_nmdcampo = "cdrefere".
+                                LEAVE Valida.
+                            END.                 
+                    END.
+                ELSE 
                 /* Calcula digito para Casan, TELESC, Samae, B.T.V, Vivo, 
                    Aguas Itapema, DAE Naveg., Aguas Joinville, Aguas Pr.Getulio,
                    Foz do Brasil, Aguas de Massaranduba, Aguas de Itapocoroy  */   
@@ -1283,22 +1395,27 @@ PROCEDURE valida-dados:
                             .
                         ELSE
                             DO:
+                                IF  crapatr.dtfimatr = ? THEN
+                                    DO:
                                 ASSIGN aux_cdcritic = 452
                                        par_nmdcampo = "cdrefere".
                                 LEAVE Valida.
                             END.
                     END.
+                    END.
+                    
             END.
         ELSE
         IF  par_cddopcao = "E" THEN
             DO:
 
                  /* Nao sera permitido a exlusao de autorizacao de debito no dia do debito */
-                 FIND FIRST craplau WHERE craplau.cdcooper = par_cdcooper AND
-                                          craplau.nrdconta = par_nrdconta AND
-                                          craplau.cdhistor = par_cdhistor AND
-                                          craplau.nrdocmto = par_cdrefere AND
-                                          craplau.dtmvtopg = par_dtmvtolt
+                 FIND FIRST craplau WHERE craplau.cdcooper = par_cdcooper     AND
+                                          craplau.nrdconta = par_nrdconta     AND
+                                          craplau.cdhistor = par_cdhistor     AND
+                                          craplau.nrdocmto = par_cdrefere     AND
+                                          craplau.dtmvtopg > crapdat.dtmvtoan AND 
+                                          craplau.dtmvtopg <= crapdat.dtmvtolt
                                           NO-LOCK NO-ERROR.
   
                   IF  AVAIL craplau THEN
@@ -1443,11 +1560,11 @@ PROCEDURE grava-dados:
     DEF  INPUT PARAM par_dtultdeb AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtvencto AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmfatura AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_vlrmaxdb AS DECI                           NO-UNDO. /* Lunelli */
+    DEF  INPUT PARAM par_vlrmaxdb AS DECI                           NO-UNDO.
 
     DEF  INPUT PARAM par_flgsicre AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_cdempcon AS INTE                           NO-UNDO. /* Lunelli */
-    DEF  INPUT PARAM par_cdsegmto AS INTE                           NO-UNDO. /* Lunelli */
+    DEF  INPUT PARAM par_cdempcon AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdsegmto AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgmanua AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_fatura01 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_fatura02 AS CHAR                           NO-UNDO.
@@ -1464,15 +1581,23 @@ PROCEDURE grava-dados:
     DEF VAR aux_cdsegmto AS CHAR                                    NO-UNDO. 
     DEF VAR aux_cdempcon AS INTE                                    NO-UNDO.
     DEF VAR aux_cdempres AS CHAR                                    NO-UNDO.
+    DEF VAR aux_cdhistor AS INTE                                    NO-UNDO.
     DEF VAR aux_tpautori AS INTE                                    NO-UNDO.
     DEF VAR aux_flgmaxdb AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgsicre AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgachtr AS LOGI                                    NO-UNDO.
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
+    DEF VAR aux_tpoperac AS INTE                                    NO-UNDO.
+    DEF VAR aux_dtiniatr AS DATE                                    NO-UNDO. 
+    DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
+    DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
+           aux_flgachtr = FALSE
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = (IF par_cddopcao = "E" THEN "Exclui" 
                            ELSE IF par_cddopcao = "I" THEN "Inclui" 
@@ -1495,54 +1620,101 @@ PROCEDURE grava-dados:
                 UNDO Grava, LEAVE Grava.
             END.
 
-        IF par_idorigem = 3 THEN /* IBANK */
-        DO:
-            /** Verifica o horario inicial e final para a operacao **/
-            RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET
-                                                            h-b1wgen0015.
+        /* Inicializar data de inicio da autorizacao do debito automatico */
+        ASSIGN aux_dtiniatr = par_dtmvtolt.
+        
+        /* Buscar data do sistema */
+        FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
     
-            IF VALID-HANDLE(h-b1wgen0015) THEN
+        IF  NOT AVAILABLE crapdat   THEN
             DO:
-                RUN horario_operacao IN h-b1wgen0015 (INPUT par_cdcooper,
-                                                      INPUT par_cdagenci,
-                                                      INPUT 11,
-                                                      INPUT crapass.inpessoa,
-                                                     OUTPUT aux_dscritic,
-                                                     OUTPUT TABLE tt-limite).
-    
-                DELETE PROCEDURE h-b1wgen0015.
-    
-                IF RETURN-VALUE = "NOK" THEN
-                    UNDO Grava, LEAVE Grava.
-        
-                FIND FIRST tt-limite NO-LOCK NO-ERROR.
-                    
-                IF NOT AVAILABLE tt-limite THEN
-                DO:
-                    ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
-                    UNDO Grava, LEAVE Grava.
-                END.
-        
-                /** Validar horario **/
-                IF tt-limite.idesthor = 1 THEN /** Estourou horario   **/
-                DO:
-                    ASSIGN aux_dscritic = "Horario esgotado para realizar operacao " +
-                                          "de Debito Automatico Facil.".
-        
-                    UNDO Grava, LEAVE Grava.
-                END.
+                ASSIGN aux_cdcritic = 1.
+                UNDO Grava, LEAVE Grava.      
             END.
-            ELSE
-            DO:
-                ASSIGN aux_dscritic = "Nao foi possivel realizar a operacao.".
-                UNDO Grava, LEAVE Grava.
-            END.
-        END.
 
+        IF  par_idorigem = 3 THEN /* IBANK */
+            DO:
+                
+                /* Definir tipo de operacao para busca 
+                   do limite de horario(hist 1154 - Sicredi) */
+                IF  par_cdhistor = "1154" THEN
+                    ASSIGN aux_tpoperac = 13.
+                ELSE
+                    ASSIGN aux_tpoperac = 11.
+                
+                
+                /** Verifica o horario inicial e final para a operacao **/
+                RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET
+                                                                h-b1wgen0015.
+        
+                IF  VALID-HANDLE(h-b1wgen0015) THEN
+                    DO:
+                        RUN horario_operacao IN h-b1wgen0015 (INPUT par_cdcooper,
+                                                              INPUT par_cdagenci,
+                                                              INPUT aux_tpoperac,
+                                                              INPUT crapass.inpessoa,
+                                                             OUTPUT aux_dscritic,
+                                                             OUTPUT TABLE tt-limite).
+            
+                        DELETE PROCEDURE h-b1wgen0015.
+            
+                        IF  RETURN-VALUE = "NOK" THEN
+                            UNDO Grava, LEAVE Grava.
+                
+                        FIND FIRST tt-limite NO-LOCK NO-ERROR.
+                            
+                        IF  NOT AVAILABLE tt-limite THEN
+                            DO:
+                                ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                
+                        /** Validar horario **/
+                        IF  tt-limite.idesthor = 1 THEN /** Estourou horario   **/
+                            DO:
+                                  /* Se for inclusao e estourou o horario deve gerar o registro
+                                     com data de inicio qual a dtmvtopr*/
+                                  IF  par_cddopcao = "I" THEN                                  
+                                      DO:
+                                          /* Se for dia util deve gerar o registro para o proximo dia util
+                                             ja que o arquivo ja foi transmitido, do contrario mantem o dtmvtolt */
+                                          IF  tt-limite.iddiauti = 1 THEN /* eh dia util */
+                                              DO:  
+                                                ASSIGN aux_dtiniatr = crapdat.dtmvtopr.
+                                              END.
+                                      END.
+                                    /* se nao for inclusao deve apresentar critica*/
+                                  ELSE
+                                      DO:
+                                          ASSIGN aux_dscritic = "Horario esgotado para realizar operacao " +
+                                                                "de Debito Automatico Facil.".
+                              
+                                          UNDO Grava, LEAVE Grava.
+                                      END.
+                            END.
+                    END.
+                ELSE
+                    DO:
+                        ASSIGN aux_dscritic = "Nao foi possivel realizar a operacao.".
+                        UNDO Grava, LEAVE Grava.
+                    END.
+            END.
+
+        /* Associa corretamente ao histórico SICREDI */
+        IF  par_flgsicre = "S" THEN
+            ASSIGN aux_cdhistor = 1019
+                   aux_flgsicre = TRUE.
+        ELSE 
+            ASSIGN aux_cdhistor = INT(par_cdhistor)
+                   aux_flgsicre = FALSE.
+            
         IF  par_cddopcao = "I" THEN
             DO: 
-                FIND gnconve WHERE gnconve.cdhisdeb = int(par_cdhistor)
-                                                NO-LOCK NO-ERROR.
+                ASSIGN aux_vlrcalcu = ""
+                       aux_cdempres = "0".
+                
+                /* Busca por convenio CECRED */
+                FIND gnconve WHERE gnconve.cdhisdeb = aux_cdhistor NO-LOCK NO-ERROR.
 
                 IF  AVAIL(gnconve) THEN
                     DO:
@@ -1556,13 +1728,11 @@ PROCEDURE grava-dados:
                                                       "para a cooperativa.".
                                 UNDO Grava, LEAVE Grava.
                             END.
-
                     END.
 
-                /* Verifica convenio da empresa, e arrecadaçao por cod de barras */
-                IF  par_idorigem = 2 /* CXONLINE */ OR
-                    par_idorigem = 3 /* IBANK */    OR
-                    par_idorigem = 4 /* TAA */      THEN
+                /* Se foi encaminhado valores de empresa e segmento... */
+                IF  par_cdempcon <> 0 AND
+                    par_cdsegmto <> 0 THEN
                     DO:
                         FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
                                                  crapcon.cdempcon = par_cdempcon AND
@@ -1575,79 +1745,102 @@ PROCEDURE grava-dados:
                             END.
                         ELSE
                             DO:
-                                IF  crapcon.flgcnvsi = TRUE THEN
-                                    DO:
-                                        ASSIGN aux_dscritic = "Convevio indisponivel para Debito Automatico.".
-                                        UNDO Grava, LEAVE Grava.
-                                    END.
+                                ASSIGN aux_cdempcon = crapcon.cdempcon 
+                                       aux_cdsegmto = STRING(crapcon.cdsegmto)
+                                       aux_flgsicre = crapcon.flgcnvsi
+                                       aux_cdhistor = IF crapcon.cdhistor = 1154 THEN 1019 ELSE aux_cdhistor.
                             END.
                     END.    
-
-                ASSIGN aux_vlrcalcu = "".
-
-                IF  par_flgsicre = "yes" OR 
-                    par_flgsicre = "S" THEN
+                ELSE
                     DO:
-                        IF  par_flgmanua = "yes" OR 
-                            par_flgmanua = "S" THEN
+                        /* Retirar empresa e segmto da linha digitável */
+                        IF  par_flgmanua = "S" THEN
                             DO: 
                                 ASSIGN  aux_vlrcalcu  = SUBSTR(STRING(par_fatura01,"999999999999"),1,11) + 
                                                        SUBSTR(STRING(par_fatura02,"999999999999"),1,11) + 
                                                        SUBSTR(STRING(par_fatura03,"999999999999"),1,11) + 
                                                        SUBSTR(STRING(par_fatura04,"999999999999"),1,11).
 
-                                FIND FIRST crapscn WHERE 
-                                           crapscn.dsoparre = "E"                       AND
-                                          (crapscn.cddmoden = "A"                       OR
-                                           crapscn.cddmoden = "C")                      AND
-                                           crapscn.cdempcon = INT(SUBSTR(aux_vlrcalcu,16,4)) AND
-                                           crapscn.cdsegmto = SUBSTR(aux_vlrcalcu,2,1)
-                                           NO-LOCK NO-ERROR NO-WAIT.
+                                ASSIGN  aux_cdempcon  = INT(SUBSTR(aux_vlrcalcu,16,4))
+                                        aux_cdsegmto  = SUBSTR(aux_vlrcalcu,2,1).
+                            END.
+                        /* Retirar empresa e semgto do cod de barras */
+                        ELSE 
+                            DO:
+                                ASSIGN aux_cdempcon   = INT(SUBSTR(par_codbarra,16,4))
+                                       aux_cdsegmto   = SUBSTR(par_codbarra,2,1)
+                                       aux_vlrcalcu   = par_codbarra.
+                            END.                    
+                    END.
+                    
+                /* Se for SICREDI... */
+                IF  aux_flgsicre = TRUE THEN
+                    DO:
+                        /* Caso a empresa e segmento estejam zerados */
+                        IF  INT(aux_cdempcon) = 0 AND 
+                            INT(aux_cdsegmto) = 0 THEN
+                            DO:
+                                ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                    
+                        /* Busca origem do convenio SICREDI e verifica se é habilitado para Deb Autom */
+                        FIND FIRST crapscn WHERE 
+                                   crapscn.dsoparre = "E"           AND
+                                  (crapscn.cddmoden = "A"           OR
+                                   crapscn.cddmoden = "C")          AND
+                                   crapscn.cdempcon = aux_cdempcon  AND
+                                   crapscn.cdsegmto = aux_cdsegmto
+                                   NO-LOCK NO-ERROR NO-WAIT.
             
-                                IF  AVAIL crapscn THEN
-                                    ASSIGN aux_cdsegmto = crapscn.cdsegmto
-                                           aux_cdempcon = crapscn.cdempcon 
-                                           aux_cdempres = STRING(crapscn.cdempres). 
-
+                        IF  AVAIL crapscn THEN
+                            DO:
+                                ASSIGN aux_cdsegmto = crapscn.cdsegmto
+                                       aux_cdempcon = crapscn.cdempcon 
+                                       aux_cdempres = STRING(crapscn.cdempres). 
                             END.
                         ELSE
                             DO: 
-                                FIND FIRST crapscn WHERE 
-                                           crapscn.dsoparre = "E"                       AND
-                                          (crapscn.cddmoden = "A"                       OR
-                                           crapscn.cddmoden = "C")                      AND
-                                           crapscn.cdempcon = INT(SUBSTR(par_codbarra,16,4)) AND
-                                           crapscn.cdsegmto = SUBSTR(par_codbarra,2,1)
+                                ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
+                                UNDO Grava, LEAVE Grava.
+                            END.                           
+                    END.
+                ELSE
+                    DO:
+                        FIND FIRST gnconve WHERE gnconve.flgativo = TRUE            AND
+                                                (gnconve.cdhisdeb = aux_cdhistor    AND
+                                                 gnconve.cdhisdeb <> 0)              
                                            NO-LOCK NO-ERROR NO-WAIT.
 
-                                IF  AVAIL crapscn THEN
-                                    ASSIGN aux_vlrcalcu  = par_codbarra
-                                           aux_cdsegmto = crapscn.cdsegmto
-                                           aux_cdempcon = crapscn.cdempcon
-                                           aux_cdempres = crapscn.cdempres.
-                            END.
-                    END.
-                ELSE /* Se nao for SICREDI assume dados diferentes, dependendo do tipo de origem */
-                    DO:
-                        IF  par_idorigem = 3 /* IBANK */    OR 
-                            par_idorigem = 4 /* TAA */      OR
-                            par_idorigem = 2 /* CXONLINE */ THEN
+                        IF  NOT AVAIL gnconve THEN
                             DO:
-                                ASSIGN aux_cdempcon = par_cdempcon
-                                       aux_cdsegmto = STRING(par_cdsegmto).
-
-                                IF  par_idorigem = 3 /* IBANK */    THEN
-                                    ASSIGN aux_tpautori = 1.
-                                ELSE
-                                IF  par_idorigem = 4 /* TAA */      THEN
-                                    ASSIGN aux_tpautori = 2.
-                                ELSE
-                                IF  par_idorigem = 2 /* CXONLINE */ THEN
-                                    ASSIGN aux_tpautori = 3.
+                                ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
+                                UNDO Grava, LEAVE Grava.
                             END.
-                        ELSE 
-                            ASSIGN aux_cdempcon = 0
-                                   aux_cdsegmto = "0".
+
+                        IF  AVAIL gnconve AND
+                            gnconve.nmarqatu = "" THEN
+                            DO:
+                                ASSIGN aux_dscritic = "A inclusao do debito deste convenio deve ser " +
+                                                      "solicitada diretamente na empresa conveniada".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+
+                    END.
+                    
+                /* registra tp com base no idorigem, AUTORI = 0. Assim, se <> 0 entao é Debito Fácil */
+                IF  par_idorigem = 3 /* IBANK */    OR 
+                    par_idorigem = 4 /* TAA */      OR
+                    par_idorigem = 2 /* CXONLINE */ THEN
+                    DO:
+                        IF  par_idorigem = 3 /* IBANK */    THEN
+                            ASSIGN aux_tpautori = 1.
+                        ELSE
+                        IF  par_idorigem = 4 /* TAA */      THEN
+                            ASSIGN aux_tpautori = 2.
+                        ELSE
+                        IF  par_idorigem = 2 /* CXONLINE */ THEN
+                            ASSIGN aux_tpautori = 3.
                     END.
 
                 IF  par_vlrmaxdb > 0 THEN
@@ -1655,93 +1848,140 @@ PROCEDURE grava-dados:
                 ELSE
                     ASSIGN aux_flgmaxdb = FALSE.
 
-                IF  par_cdhistor = "31" THEN
-                    DO:
-                        ContadorAtr: DO aux_contador = 1 TO 10:
+                ContadorAtr: DO aux_contador = 1 TO 10:
 
-                            FIND crapatr WHERE 
-                                 crapatr.cdcooper = par_cdcooper AND
-                                 crapatr.nrdconta = par_nrdconta AND
-                                 crapatr.cdhistor = int(par_cdhistor) AND
-                                 crapatr.cdrefere = par_cdrefere
-                                 USE-INDEX crapatr1
-                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-            
-                            IF  AVAILABLE crapatr THEN
-                                DELETE crapatr.
-                            ELSE
-                            IF  LOCKED(crapatr)  THEN
+                    FIND crapatr WHERE 
+                         crapatr.cdcooper = par_cdcooper AND
+                         crapatr.nrdconta = par_nrdconta AND
+                         crapatr.cdhistor = aux_cdhistor AND
+                         crapatr.cdrefere = par_cdrefere
+                         EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+    
+                    IF  AVAILABLE crapatr THEN
+                        ASSIGN aux_flgachtr = TRUE.
+                    ELSE
+                    IF  LOCKED(crapatr)  THEN
+                        DO:
+                            IF  aux_contador = 10 THEN
                                 DO:
-                                    IF  aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            UNDO Grava, LEAVE Grava.
-                                        END.
-                                    ELSE 
-                                        DO:
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT ContadorAtr.
-                                        END.
+                                    ASSIGN aux_cdcritic = 341.
+                                    UNDO Grava, LEAVE Grava.
+                                END.
+                            ELSE 
+                                DO:
+                                    PAUSE 1 NO-MESSAGE.
+                                    NEXT ContadorAtr.
                                 END.
                         END.
-                    END.
-                ELSE 
+                END.
+                
+                CREATE tt-autori-ant.
+                ASSIGN tt-autori-ant.cdcooper = par_cdcooper
+                       tt-autori-ant.nrdconta = par_nrdconta.
+                           
+                /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                IF par_cdagenci = 0 THEN
+                   ASSIGN par_cdagenci = glb_cdagenci.
+                /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+				
+                /* Achou a crapatr, reativa o registro */
+                IF  aux_flgachtr = TRUE  THEN
                     DO:
-                        FIND crapatr WHERE 
-                             crapatr.cdcooper = par_cdcooper      AND
-                             crapatr.nrdconta = par_nrdconta      AND
-                             crapatr.cdhistor = INT(par_cdhistor) AND
-                             crapatr.cdrefere = par_cdrefere 
-                             USE-INDEX crapatr1
-                             NO-LOCK NO-ERROR NO-WAIT.
-            
-                        IF  AVAILABLE crapatr THEN
-                            DO: 
-                                ASSIGN aux_cdcritic = 452.
-                                UNDO Grava, LEAVE Grava.
+                        IF  aux_cdhistor = 31 THEN
+                            DELETE crapatr.
+                        ELSE 
+                            DO:
+                                IF  crapatr.dtfimatr <> aux_dtiniatr THEN
+                                    ASSIGN crapatr.dtiniatr = aux_dtiniatr.                   
+
+                                ASSIGN crapatr.dtfimatr = ?
+                                       crapatr.cdbarras = aux_vlrcalcu
+                                       crapatr.flgmaxdb = aux_flgmaxdb
+                                       crapatr.vlrmaxdb = par_vlrmaxdb
+                                       crapatr.tpautori = aux_tpautori
+										/* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                                       crapatr.cdopeori = par_cdoperad
+                                       crapatr.cdageori = par_cdagenci
+                                       crapatr.dtinsori = TODAY
+                						/* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
+                                       crapatr.dshisext = par_nmfatura.
+                                       
+                                VALIDATE crapatr.                               
                             END.
                     END.
 
-                    CREATE tt-autori-ant.
-                    ASSIGN tt-autori-ant.cdcooper = par_cdcooper
-                           tt-autori-ant.nrdconta = par_nrdconta.
-                    
-                    /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-                    IF par_cdagenci = 0 THEN
-                      ASSIGN par_cdagenci = glb_cdagenci.
-                    /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-
-                    CREATE crapatr.
-                    ASSIGN crapatr.cdcooper = par_cdcooper
-                           crapatr.nrdconta = par_nrdconta
-                           crapatr.cdempcon = aux_cdempcon
-                           crapatr.cdsegmto = INT(aux_cdsegmto)
-                           crapatr.cdempres = IF par_flgsicre = "yes" OR 
-                                                 par_flgsicre = "S" THEN 
-                                                 aux_cdempres
-                                              ELSE "0"
-                           crapatr.cdrefere = par_cdrefere
-                           crapatr.cdhistor = IF par_flgsicre = "yes" OR 
-                                                 par_flgsicre = "S" THEN 
-                                                 1019 
-                                              ELSE INT(par_cdhistor)
-                           crapatr.dtiniatr = par_dtmvtolt
-                           crapatr.cdbarras = aux_vlrcalcu
-                           crapatr.flgmaxdb = aux_flgmaxdb
-                           crapatr.vlrmaxdb = par_vlrmaxdb
-                           crapatr.tpautori = aux_tpautori
+                /* nao achou, cria novo */
+                IF  aux_flgachtr = FALSE  OR 
+                    aux_cdhistor = 31     THEN 
+                    DO:
+                        CREATE crapatr.
+                        ASSIGN crapatr.cdcooper = par_cdcooper
+                               crapatr.nrdconta = par_nrdconta
+                               crapatr.cdempcon = aux_cdempcon
+                               crapatr.cdsegmto = INT(aux_cdsegmto)
+                               crapatr.cdempres = aux_cdempres
+                               crapatr.cdrefere = par_cdrefere
+                               crapatr.cdhistor = aux_cdhistor
+                               crapatr.dtiniatr = aux_dtiniatr /* data depende se estouro o limite de horario*/
+                               crapatr.cdbarras = aux_vlrcalcu
+                               crapatr.flgmaxdb = aux_flgmaxdb
+                               crapatr.vlrmaxdb = par_vlrmaxdb
+                               crapatr.tpautori = aux_tpautori
                            /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                            crapatr.cdopeori = par_cdoperad
                            crapatr.cdageori = par_cdagenci
                            crapatr.dtinsori = TODAY
                            /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-                           crapatr.dshisext = par_nmfatura.
+                               crapatr.dshisext = par_nmfatura.
 
-                    VALIDATE crapatr.
+                        VALIDATE crapatr.
+                    END.
 
-                    CREATE tt-autori-atl.
-                    BUFFER-COPY crapatr TO tt-autori-atl.
+                CREATE tt-autori-atl.
+                BUFFER-COPY crapatr TO tt-autori-atl.
                     
+                /* Verificar se ja possui conta sicredi*/
+                IF  aux_flgsicre = TRUE  AND
+                    crapass.nrctacns = 0 THEN
+                    DO:
+                        /* Caso nao possua deve gerar */
+                        RUN sistema/generico/procedures/b1wgen0074.p 
+                            PERSISTENT SET h-b1wgen0074.
+
+                        RUN Gera_Conta_Consorcio IN h-b1wgen0074 
+                                                 (INPUT par_cdcooper,
+                                                  INPUT 0,
+                                                  INPUT par_dtmvtolt,
+                                                  INPUT 0,
+                                                  INPUT par_nrdconta,
+                                                  INPUT par_cdoperad,
+                                                 OUTPUT TABLE tt-erro,
+                                                 OUTPUT aux_nrctacns).
+
+                        DELETE PROCEDURE h-b1wgen0074.
+
+                        IF  RETURN-VALUE <> "OK"   THEN
+                            DO:                               
+                                IF  par_idorigem = 3 THEN /** Internet **/
+                                    DO:
+                                        ASSIGN aux_dscritic = "Nao foi possível efetuar o cadastro " 
+                                                            + "do débito automático. Favor entrar em "
+                                                            + "contato com o Posto de Atendimento/SAC.".
+                                        UNDO Grava, LEAVE Grava.
+                                    END.  
+                                ELSE 
+                                    DO:
+                                      FIND FIRST tt-erro NO-ERROR.
+                                      IF  AVAILABLE tt-erro THEN
+                                          DO:
+                                             ASSIGN aux_dscritic = tt-erro.dscritic.
+                                             UNDO Grava, LEAVE Grava.
+                                          END.    
+                                    END.
+                            END.
+                    END.
+                    
+                
                     IF  par_idorigem = 3 THEN /** Internet **/
                         DO:
                             RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
@@ -1771,7 +2011,7 @@ PROCEDURE grava-dados:
                                            INPUT aux_dsinfor1,
                                            INPUT aux_dsinfor2,
                                            INPUT aux_dsinfor3,
-                                           INPUT crapcon.nmextcon, /** Cedente **/
+                                           INPUT IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv, /** Cedente **/
                                            INPUT FALSE, /** Agendamento **/
                                            INPUT 0,
                                            INPUT 0,
@@ -1791,7 +2031,7 @@ PROCEDURE grava-dados:
                             RUN verifica_log ( INPUT par_cdcooper,
                                                INPUT par_cdoperad,
                                                INPUT par_nrdconta,
-                                               INPUT par_cdhistor,
+                                               INPUT aux_cdhistor,
                                                INPUT par_cdrefere,
                                                INPUT par_dtmvtolt,
                                                INPUT par_dtiniatr,
@@ -1814,7 +2054,7 @@ PROCEDURE grava-dados:
                             ( INPUT par_cdcooper,
                               INPUT par_cdoperad,
                               INPUT par_nrdconta,
-                              INPUT par_cdhistor,
+                              INPUT aux_cdhistor,
                               INPUT par_cdrefere,
                               INPUT par_dtmvtolt,
                               INPUT par_dtiniatr,
@@ -1828,7 +2068,7 @@ PROCEDURE grava-dados:
 
                     FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                                        crapatr.nrdconta = par_nrdconta AND
-                                       crapatr.cdhistor = int(par_cdhistor) AND
+                                       crapatr.cdhistor = aux_cdhistor AND
                                        crapatr.cdrefere = par_cdrefere
                                        USE-INDEX crapatr1
                                        EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -1900,7 +2140,7 @@ PROCEDURE grava-dados:
                         RUN verifica_log ( INPUT par_cdcooper,
                                            INPUT par_cdoperad,
                                            INPUT par_nrdconta,
-                                           INPUT par_cdhistor,
+                                           INPUT aux_cdhistor,
                                            INPUT par_cdrefere,
                                            INPUT par_dtmvtolt,
                                            INPUT par_dtiniatr,
@@ -1919,16 +2159,12 @@ PROCEDURE grava-dados:
                 END.
         
             ASSIGN aux_retornvl = "OK".
-    END.
+    END. /* GRAVA */
 
    RELEASE crapatr.
     
    IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
         DO: 
-
-            /*ASSIGN aux_dscritic = "Erro na transacao. Nao foi " + 
-                                  "possivel confirmar novo limite.". */
-
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
@@ -1938,24 +2174,41 @@ PROCEDURE grava-dados:
         END.
 
     IF  par_flgerlog  THEN
+        DO:
+            IF  par_idorigem = 3 OR 
+                par_idorigem = 4 THEN
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT "Aceite das regras do termo",
+                                    INPUT TRUE,
+                                    INPUT 1,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid). 
+        
         RUN proc_gerar_log_tab (INPUT par_cdcooper,
-                            INPUT par_cdoperad,
-                            INPUT aux_dscritic,
-                            INPUT aux_dsorigem,
-                            INPUT aux_dstransa,
-                            INPUT (IF  aux_retornvl = "OK" THEN TRUE 
-                                       ELSE FALSE),
-                            INPUT par_idseqttl,
-                            INPUT par_nmdatela,
-                            INPUT par_nrdconta,
-                            INPUT TRUE,
-                            INPUT BUFFER tt-autori-ant:HANDLE,
-                            INPUT BUFFER tt-autori-atl:HANDLE ).
+                                INPUT par_cdoperad,
+                                INPUT aux_dscritic,
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                           ELSE FALSE),
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                                INPUT TRUE,
+                                INPUT BUFFER tt-autori-ant:HANDLE,
+                                INPUT BUFFER tt-autori-atl:HANDLE ).
+
+        END.
 
     RETURN aux_retornvl.
 
 END PROCEDURE.
 
+/* Retorna convenios aceitos para DEBITO AUTOMATICO */
 PROCEDURE busca_convenios_codbarras:
 
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
@@ -1964,27 +2217,70 @@ PROCEDURE busca_convenios_codbarras:
 
     DEF OUTPUT PARAM TABLE FOR tt-convenios-codbarras.
 
+    DEF VAR aux_nmempcon AS CHAR NO-UNDO.
+    
     FOR EACH crapcon WHERE crapcon.cdcooper =  par_cdcooper         AND
-                           crapcon.flgcnvsi =  FALSE                AND
                            crapcon.cdempcon >= par_cdempcon         AND
-                           crapcon.cdsegmto >= par_cdsegmto         NO-LOCK,
-        FIRST gnconve WHERE gnconve.cdhiscxa = crapcon.cdhistor AND
-                            gnconve.flgativo = TRUE             AND
-                            gnconve.nmarqatu <> ""              AND
-                            gnconve.cdhisdeb <> 0 NO-LOCK:
+                           crapcon.cdsegmto >= par_cdsegmto         NO-LOCK:
+                           
+        ASSIGN aux_nmempcon = "".
+                           
+        IF  crapcon.flgcnvsi = TRUE THEN
+            DO:
+                FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
+                                          crapscn.cdempcon <> 0)                       AND
+                                          crapscn.cdsegmto = STRING(crapcon.cdsegmto)  AND
+                                          crapscn.dsoparre = 'E'                       AND
+                                         (crapscn.cddmoden = 'A'                       OR
+                                          crapscn.cddmoden = 'C') NO-LOCK NO-ERROR.
+                IF  NOT AVAIL crapscn THEN
+                    NEXT.
+                ELSE
+                    ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+            END.
+        ELSE
+            DO:      
+                /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
+                   buasca anterior nao funciona */
+                FIND FIRST gnconve WHERE 
+                           (gnconve.cdhiscxa = crapcon.cdhistor AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0)               OR 
+                           (gnconve.cdconven = 87               AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0)
+                           NO-LOCK NO-ERROR.
+                                         
+                IF  NOT AVAILABLE gnconve THEN
+                    NEXT.
+                ELSE 
+                    IF gnconve.cdconven <> 87 THEN
+                       ASSIGN aux_nmempcon = gnconve.nmempres.
+            END.
 
+        IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
+            ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
+                   aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
+            
         CREATE tt-convenios-codbarras.
-        ASSIGN tt-convenios-codbarras.nmextcon = crapcon.nmextcon
+        ASSIGN tt-convenios-codbarras.nmextcon = IF aux_nmempcon = "" THEN crapcon.nmextcon ELSE aux_nmempcon
                tt-convenios-codbarras.nmrescon = crapcon.nmrescon
                tt-convenios-codbarras.cdempcon = crapcon.cdempcon
-               tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto.
-               tt-convenios-codbarras.cdhistor = gnconve.cdhisdeb.
-
+               tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto
+               tt-convenios-codbarras.cdhistor = IF AVAIL gnconve THEN gnconve.cdhisdeb ELSE crapcon.cdhistor
+               tt-convenios-codbarras.flgcnvsi = crapcon.flgcnvsi.
+               
+       RELEASE crapcon.
+       RELEASE gnconve.
+       RELEASE crapscn.
 
     END.
 
 END PROCEDURE.
 
+/* IB, chamado pelo InternetBank105 */
 PROCEDURE busca_autorizacoes_cadastradas:
 
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
@@ -1994,43 +2290,101 @@ PROCEDURE busca_autorizacoes_cadastradas:
 
     DEF OUTPUT PARAM TABLE FOR tt-autorizacoes-cadastradas.
 
+    DEF VAR aux_nmempcon         AS CHAR NO-UNDO.
+    DEF VAR aux_inaltera         AS LOGI NO-UNDO.
+    DEF VAR aux_cdempcon         AS INTE NO-UNDO.
+    DEF VAR aux_cdsegmto         AS INTE NO-UNDO.
     
     FOR EACH crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
-                           crapatr.tpautori <> 0           AND
-                           (((par_cddopcao = "A" OR par_cddopcao = "E")   AND
-                             crapatr.dtiniatr = par_dtmvtolt)             OR
-                            (par_cddopcao = "C" OR par_cddopcao = "S"))   AND
-                           crapatr.dtfimatr = ? /* ativa */               AND
-                           ((par_cddopcao = "S" AND crapatr.dtfimsus = ?) OR
-                            (par_cddopcao <> "S"))                    NO-LOCK,
-        FIRST crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                            crapcon.cdempcon = crapatr.cdempcon AND
-                            crapcon.cdsegmto = crapatr.cdsegmto AND
-                            crapcon.flgcnvsi = FALSE NO-LOCK:
+                           crapatr.dtfimatr = ? /* ativa */             AND
+                         ((par_cddopcao = "S" AND crapatr.dtfimsus = ?) OR
+                          (par_cddopcao = "S" AND crapatr.dtfimsus <=  par_dtmvtolt) OR
+                          (par_cddopcao <> "S"))                        NO-LOCK:
+                            
+        ASSIGN aux_nmempcon = ""
+               aux_inaltera = FALSE
+               aux_nmempcon = ""
+               aux_cdempcon = 0
+               aux_cdsegmto = 0.
+        
+        /* SICREDI */
+        IF  crapatr.cdhistor = 1019 THEN 
+            DO:
+                FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                          crapscn.cdempcon <> 0)                       AND
+                                          crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                          crapscn.dsoparre = 'E'                       AND
+                                         (crapscn.cddmoden = 'A'                       OR
+                                          crapscn.cddmoden = 'C') NO-LOCK NO-ERROR.
+                IF  NOT AVAIL crapscn THEN
+                    NEXT.
+                ELSE
+                    ASSIGN aux_nmempcon = crapscn.dsnomcnv
+                           aux_inaltera = TRUE.
+               
+            END.
+        ELSE
+            DO:
+                FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor AND
+                                         gnconve.flgativo = TRUE             NO-LOCK NO-ERROR.
+                                         
+                IF  NOT AVAIL gnconve THEN
+                    NEXT.
+                ELSE 
+                    ASSIGN aux_nmempcon = gnconve.nmempres
+                           aux_inaltera = TRUE WHEN gnconve.cdhisdeb <> 0 AND 
+                                                    TRIM(gnconve.nmarqatu) <> "".
+                                                    
+                FIND FIRST crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
+                                         crapcon.cdhistor = gnconve.cdhiscxa NO-LOCK NO-ERROR.
+                                         
+                IF  NOT AVAIL crapcon THEN
+                    NEXT.
+                ELSE 
+                    ASSIGN aux_cdempcon = crapcon.cdempcon
+                           aux_cdsegmto = crapcon.cdsegmto.                                                    
+            END.   
 
+            
+            
+            
         CREATE tt-autorizacoes-cadastradas.
-        ASSIGN tt-autorizacoes-cadastradas.nmextcon = crapcon.nmextcon
-               tt-autorizacoes-cadastradas.nmrescon = crapcon.nmrescon
-               tt-autorizacoes-cadastradas.cdempcon = crapatr.cdempcon
-               tt-autorizacoes-cadastradas.cdsegmto = crapatr.cdsegmto
+        ASSIGN tt-autorizacoes-cadastradas.nmextcon = aux_nmempcon
+               tt-autorizacoes-cadastradas.nmrescon = ""
+               tt-autorizacoes-cadastradas.cdempcon = IF  crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
+               tt-autorizacoes-cadastradas.cdsegmto = IF  crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
                tt-autorizacoes-cadastradas.cdrefere = crapatr.cdrefere
                tt-autorizacoes-cadastradas.vlmaxdeb = crapatr.vlrmaxdb
-               tt-autorizacoes-cadastradas.dshisext = crapatr.dshisext.
+               tt-autorizacoes-cadastradas.dshisext = crapatr.dshisext
+               tt-autorizacoes-cadastradas.inaltera = aux_inaltera
+               tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor.
+               
+        RELEASE crapscn.
+        RELEASE gnconve.
+        RELEASE crapcon.
+        
     END.
 
 END PROCEDURE.
 
+/* Chamado no IB99 */
 PROCEDURE altera_autorizacao:
 
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
     DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
-    DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
-    DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdrefere AS DECI NO-UNDO.
+    DEF INPUT PARAM par_cdhistor AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_vlmaxdeb AS DECI NO-UNDO.
     DEF INPUT PARAM par_dshisext AS CHAR NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -2038,18 +2392,20 @@ PROCEDURE altera_autorizacao:
 
     DEF VAR aux_vlmaxdeb AS DECI         NO-UNDO.
     DEF VAR aux_dshisext AS CHAR         NO-UNDO.
+    DEF VAR aux_inaltera AS LOGI         NO-UNDO.
+    DEF VAR aux_retornvl AS CHAR INIT "NOK" NO-UNDO.
 
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Altera autorizacao de debito em conta".
 
     Altera: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
         FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
-                           crapatr.cdsegmto = par_cdsegmto AND
-                           crapatr.cdempcon = par_cdempcon AND
-                           crapatr.cdrefere = par_cdrefere AND
-                           crapatr.tpautori <> 0
+                           crapatr.cdhistor = par_cdhistor AND
+                           crapatr.cdrefere = par_cdrefere
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL crapatr THEN
@@ -2082,11 +2438,36 @@ PROCEDURE altera_autorizacao:
                 LEAVE Altera.
             END.
 
+            /* Verifica inaltera - NAO SICREDI, CONVENIO PRÓPRIO */
+            IF  crapatr.cdhistor <> 1019 THEN 
+                DO:
+                    FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor AND
+                                             gnconve.flgativo = TRUE             AND
+                                             gnconve.cdhisdeb <> 0               AND
+                                             TRIM(gnconve.nmarqatu) <> ""        NO-LOCK NO-ERROR.
+                                             
+                    IF  NOT AVAIL gnconve THEN
+                        DO:
+                            ASSIGN aux_dscritic = "Esta autorizaçao de débito só pode ser alterada através do próprio parceiro. " +
+                                                  "Em caso de dúvidas, entre em contato com o SAC".
+                            LEAVE Altera.
+                        END.
+                END.
+            
+            /* Temp-table para geraçao de log */
+            CREATE tt-autori-ant.
+            BUFFER-COPY crapatr TO tt-autori-ant.
+
             ASSIGN aux_vlmaxdeb     = crapatr.vlrmaxdb
                    aux_dshisext     = crapatr.dshisext
                    crapatr.vlrmaxdb = par_vlmaxdeb
-                   crapatr.flgmaxdb = par_vlmaxdeb > 0
-                   crapatr.dshisext = par_dshisext.
+                   crapatr.flgmaxdb = par_vlmaxdeb > 0.
+                   
+            IF  par_idorigem <> 4 THEN /* TAA */
+                ASSIGN crapatr.dshisext = par_dshisext.
+
+            CREATE tt-autori-atl.
+            BUFFER-COPY crapatr TO tt-autori-atl.
 
             /* gera protocolo */
             RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
@@ -2145,14 +2526,22 @@ PROCEDURE altera_autorizacao:
                     UNDO Altera, LEAVE Altera.
                 END.
 
-                FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
-                                         crapcon.cdempcon = par_cdempcon AND
-                                         crapcon.cdsegmto = par_cdsegmto AND
-                                         crapcon.flgcnvsi = FALSE 
-                                         NO-LOCK NO-ERROR.
-
-
-                IF NOT AVAIL crapcon THEN
+                IF  crapatr.cdhistor <> 1019 THEN
+                    FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
+                                            (gnconve.cdhisdeb = crapatr.cdhistor AND
+                                             gnconve.cdhisdeb <> 0)              AND
+                                             gnconve.nmarqatu <> ""              
+                                             NO-LOCK NO-ERROR NO-WAIT.
+                ELSE
+                    FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                              crapscn.cdempcon <> 0)                       AND
+                                              crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                              crapscn.dsoparre = 'E'                       AND
+                                             (crapscn.cddmoden = 'A'                       OR
+                                              crapscn.cddmoden = 'C') 
+                                              NO-LOCK NO-ERROR NO-WAIT.							  
+                IF  NOT AVAIL gnconve AND
+                    NOT AVAIL crapscn THEN
                 DO:
                     ASSIGN aux_dscritic = "Empresa nao conveniada.".
                     UNDO Altera, LEAVE Altera.
@@ -2183,7 +2572,7 @@ PROCEDURE altera_autorizacao:
                            INPUT aux_dsinfor1,
                            INPUT aux_dsinfor2,
                            INPUT aux_dsinfor3,
-                           INPUT crapcon.nmextcon, /** Cedente **/
+                           INPUT IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv, /** Cedente **/
                            INPUT FALSE, /** Agendamento **/
                            INPUT 0,
                            INPUT 0,
@@ -2195,9 +2584,9 @@ PROCEDURE altera_autorizacao:
 
                 IF RETURN-VALUE <> "OK" THEN
                     UNDO Altera, LEAVE Altera.
-
             END.
                     
+            ASSIGN aux_retornvl = "OK".
 
             LEAVE Altera.
         END.
@@ -2211,43 +2600,71 @@ PROCEDURE altera_autorizacao:
                        INPUT 1,            /** Sequencia **/
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
-
-        RETURN "NOK".
     END.
 
-    RETURN "OK".
+    IF  par_flgerlog  THEN
+        RUN proc_gerar_log_tab (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT aux_dscritic,
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                           ELSE FALSE),
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                                INPUT TRUE,
+                                INPUT BUFFER tt-autori-ant:HANDLE,
+                                INPUT BUFFER tt-autori-atl:HANDLE ).
+
+    RETURN aux_retornvl.
 
 END PROCEDURE.
 
 PROCEDURE exclui_autorizacao:
 
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
     DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdrefere AS DECI NO-UNDO.
+    DEF INPUT PARAM par_cdhistor AS INTE NO-UNDO.
+    DEF INPUT PARAM par_idmotivo AS INTE NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
+    DEF VAR aux_retornvl AS CHAR INIT "NOK"                        NO-UNDO.
 
     DEF VAR aux_cdrefere AS DECI         NO-UNDO.
     DEF VAR aux_vlmaxdeb AS DECI         NO-UNDO.
     DEF VAR aux_dshisext AS CHAR         NO-UNDO.
+    DEF VAR log_dsmotivo AS CHAR                                   NO-UNDO.
+    DEF VAR aux_cdhistor AS INTE                                   NO-UNDO.
+    DEF VAR aux_cdempcon AS INTE                                   NO-UNDO.
+    DEF VAR aux_cdsegmto AS INTE                                   NO-UNDO.
 
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Exclui autorizacao de debito em conta".
 
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+    EMPTY TEMP-TABLE tt-erro.
     
     Exclui: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
         FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
-                           crapatr.cdsegmto = par_cdsegmto AND
-                           crapatr.cdempcon = par_cdempcon AND
-                           crapatr.cdrefere = par_cdrefere AND
-                           crapatr.tpautori <> 0
+                           crapatr.cdhistor = par_cdhistor AND
+                           crapatr.cdrefere = par_cdrefere 
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL crapatr THEN
@@ -2272,11 +2689,150 @@ PROCEDURE exclui_autorizacao:
         END.
         ELSE
         DO:
+            /* Temp-table para geraçao de log */
+            CREATE tt-autori-ant.
+            BUFFER-COPY crapatr TO tt-autori-ant.
+            ASSIGN tt-autori-ant.dsmotivo = "".
+            
+            /* Verifica inaltera - NAO SICREDI, CONVENIO PRÓPRIO */
+            IF  crapatr.cdhistor <> 1019 THEN 
+                DO:
+                    FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor AND
+                                             gnconve.flgativo = TRUE             AND
+                                             gnconve.cdhisdeb <> 0               AND
+                                             TRIM(gnconve.nmarqatu) <> ""        NO-LOCK NO-ERROR.
+                                             
+                    IF  NOT AVAIL gnconve THEN
+                        DO:
+                            ASSIGN aux_dscritic = "Esta autorizaçao de débito só pode ser alterada através do próprio parceiro. " +
+                                                  "Em caso de dúvidas, entre em contato com o SAC".
+                            LEAVE Exclui.
+                        END.
+                END.
+                
+            /* Verificaçao lançamentos futuros */
+            FOR EACH craplau WHERE craplau.cdcooper = crapatr.cdcooper AND
+                                   craplau.nrdconta = crapatr.nrdconta AND
+                                   craplau.cdhistor = crapatr.cdhistor AND
+                                   craplau.nrdocmto = crapatr.cdrefere AND
+                                   craplau.dtmvtopg >= par_dtmvtolt
+                                   NO-LOCK.
+                                     
+                IF  craplau.dtmvtopg = par_dtmvtolt THEN
+                    DO:
+                        ASSIGN aux_dscritic = "Os cancelamentos sao permitidos somente nas datas em que nao há débito programado. " +
+                                              "Efetue o cancelamento no próximo dia útil.".
+                        LEAVE Exclui.
+                    END.
+                ELSE 
+                    DO:
+                         RUN bloqueia_lancamento (INPUT craplau.cdcooper, 
+                                                  INPUT craplau.nrdconta,
+                                                  INPUT craplau.dtmvtolt,
+                                                  INPUT craplau.dtmvtopg,
+                                                  INPUT craplau.nrdocmto,
+                                                  INPUT craplau.cdhistor,
+                                                  INPUT par_cdoperad,
+                                                  INPUT par_nmdatela,
+                                                  INPUT par_idorigem,
+                                                  INPUT par_flgerlog,
+                                                 OUTPUT TABLE tt-erro). 
+                                                 
+                         IF  RETURN-VALUE = "NOK" THEN
+                             DO:
+                                ASSIGN aux_cdcritic = 0
+                                       aux_dscritic = "".
+                                LEAVE Exclui.
+                             END.
+                    END.
+            END.
+                
+            FIND CURRENT crapatr EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            
+            /* Criar registro de motivo da exclusao */
+            IF  par_idmotivo <> 0 THEN
+                DO:
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+                  RUN STORED-PROCEDURE pc_grava_motv_excl_debaut
+                      aux_handproc = PROC-HANDLE NO-ERROR
+                                              (INPUT par_cdcooper,
+                                               INPUT par_nrdconta,
+                                               INPUT par_cdhistor,
+                                               INPUT par_cdrefere,
+                                               INPUT par_idmotivo,
+                                               INPUT par_idorigem,
+                                               INPUT par_cdempcon,
+                                               INPUT par_cdsegmto,
+                                               OUTPUT 0,   /* pr_cdcritic */
+                                               OUTPUT ""). /* pr_dscritic */
+
+                  CLOSE STORED-PROC pc_grava_motv_excl_debaut
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = ""
+                         aux_cdcritic = pc_grava_motv_excl_debaut.pr_cdcritic 
+                                            WHEN pc_grava_motv_excl_debaut.pr_cdcritic <> ?
+                         aux_dscritic = pc_grava_motv_excl_debaut.pr_dscritic
+                                            WHEN pc_grava_motv_excl_debaut.pr_dscritic <> ?.
+                                            
+                  IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+                      UNDO Exclui, LEAVE Exclui.                      
+                      
+                      
+                  RUN obtem-motivos-cancelamento-debaut (INPUT par_cdcooper,
+                                                         INPUT par_cdagenci,
+                                                         INPUT par_nrdcaixa,
+                                                         INPUT par_cdoperad,
+                                                         INPUT par_nmdatela,
+                                                         INPUT par_idorigem,
+                                                         INPUT par_nrdconta,
+                                                         INPUT par_dtmvtolt,
+                                                         OUTPUT TABLE tt-motivos-cancel-debaut,
+                                                         OUTPUT TABLE tt-erro).
+                  IF   RETURN-VALUE = "NOK" THEN
+                       DO:
+                          ASSIGN aux_cdcritic = 0 
+                                 aux_dscritic = "Nao foi possivel obter os motivos do cancelamento.".
+                          LEAVE Exclui.
+                       END.
+                      
+                  FIND FIRST tt-motivos-cancel-debaut WHERE tt-motivos-cancel-debaut.idmotivo = par_idmotivo
+                                                            NO-LOCK NO-ERROR NO-WAIT.
+                                                            
+                  IF  AVAILABLE tt-motivos-cancel-debaut THEN
+                      ASSIGN log_dsmotivo = tt-motivos-cancel-debaut.dsmotivo.
+                      
+                END.
+            /* FIM  Criar registro de motivo da exclusao */  
+            
             ASSIGN aux_cdrefere = crapatr.cdrefere
                    aux_vlmaxdeb = crapatr.vlrmaxdb
-                   aux_dshisext = crapatr.dshisext.
+                   aux_dshisext = crapatr.dshisext
+                   aux_cdhistor = crapatr.cdhistor
+                   aux_cdempcon = crapatr.cdempcon
+                   aux_cdsegmto = crapatr.cdsegmto.
 
-            DELETE crapatr.
+           /* Verifica a data da autorizaçao */
+           IF  crapatr.dtiniatr <> par_dtmvtolt THEN
+               DO:
+                  ASSIGN crapatr.dtfimatr = par_dtmvtolt. /* Cancela */
+                  
+                  CREATE tt-autori-atl.
+                  BUFFER-COPY crapatr TO tt-autori-atl.
+                  ASSIGN tt-autori-atl.dsmotivo = STRING(log_dsmotivo, "x(60)").
+               END.
+           ELSE
+               DO:
+                  CREATE tt-autori-atl.
+                  ASSIGN tt-autori-atl.cdcooper = par_cdcooper
+                         tt-autori-atl.nrdconta = par_nrdconta
+                         tt-autori-atl.dsmotivo = STRING(log_dsmotivo, "x(60)").
+                  DELETE crapatr.
+               END.
 
             /* gera protocolo */
             RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
@@ -2335,14 +2891,22 @@ PROCEDURE exclui_autorizacao:
                     UNDO Exclui, LEAVE Exclui.
                 END.
 
-                FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
-                                         crapcon.cdempcon = par_cdempcon AND
-                                         crapcon.cdsegmto = par_cdsegmto AND
-                                         crapcon.flgcnvsi = FALSE 
-                                         NO-LOCK NO-ERROR.
-
-
-                IF NOT AVAIL crapcon THEN
+                IF  aux_cdhistor <> 1019 THEN
+                    FIND FIRST gnconve WHERE gnconve.flgativo = TRUE           AND
+                                            (gnconve.cdhisdeb = par_cdhistor   AND
+                                             gnconve.cdhisdeb <> 0)            AND
+                                             gnconve.nmarqatu <> ""              
+                                             NO-LOCK NO-ERROR NO-WAIT.
+                ELSE
+                    FIND FIRST crapscn WHERE (crapscn.cdempcon = aux_cdempcon          AND
+                                              crapscn.cdempcon <> 0)                   AND
+                                              crapscn.cdsegmto = STRING(aux_cdsegmto)  AND
+                                              crapscn.dsoparre = 'E'                   AND
+                                             (crapscn.cddmoden = 'A'                   OR
+                                              crapscn.cddmoden = 'C') 
+                                              NO-LOCK NO-ERROR NO-WAIT.
+                IF  NOT AVAIL gnconve AND
+                    NOT AVAIL crapscn THEN
                 DO:
                     ASSIGN aux_dscritic = "Empresa nao conveniada.".
                     UNDO Exclui, LEAVE Exclui.
@@ -2370,7 +2934,7 @@ PROCEDURE exclui_autorizacao:
                            INPUT aux_dsinfor1,
                            INPUT aux_dsinfor2,
                            INPUT aux_dsinfor3,
-                           INPUT crapcon.nmextcon, /** Cedente **/
+                           INPUT IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv, /** Cedente **/
                            INPUT FALSE, /** Agendamento **/
                            INPUT 0,
                            INPUT 0,
@@ -2385,8 +2949,10 @@ PROCEDURE exclui_autorizacao:
 
             END.
 
+            ASSIGN aux_retornvl = "OK".
+            
             LEAVE Exclui.
-        END.
+        END. /* AVAIL crapatr */
     END. /* END TRANSACTION */
 
     IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
@@ -2397,11 +2963,24 @@ PROCEDURE exclui_autorizacao:
                        INPUT 1,            /** Sequencia **/
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
-
-        RETURN "NOK".
     END.
 
-    RETURN "OK".
+    IF  par_flgerlog  THEN
+        RUN proc_gerar_log_tab (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT aux_dscritic,
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                           ELSE FALSE),
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                                INPUT TRUE,
+                                INPUT BUFFER tt-autori-ant:HANDLE,
+                                INPUT BUFFER tt-autori-atl:HANDLE ).
+
+    RETURN aux_retornvl.
 
 END PROCEDURE.
 
@@ -2501,32 +3080,42 @@ PROCEDURE valida_datas_suspensao:
 
 END PROCEDURE.
 
+/* Chamado no IB110 */
 PROCEDURE cadastra_suspensao_autorizacao:
 
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
     DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdrefere AS DECI NO-UNDO.
+    DEF INPUT PARAM par_cdhistor AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_dtinisus AS DATE NO-UNDO.
     DEF INPUT PARAM par_dtfimsus AS DATE NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
+    DEF VAR aux_retornvl AS CHAR INIT "NOK"                        NO-UNDO.
 
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Suspende autorizacao de debito em conta".
 
     Bloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
         FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
-                           crapatr.cdsegmto = par_cdsegmto AND
-                           crapatr.cdempcon = par_cdempcon AND
-                           crapatr.cdrefere = par_cdrefere AND
-                           crapatr.tpautori <> 0
+                           crapatr.cdhistor = par_cdhistor AND                           
+                           crapatr.cdrefere = par_cdrefere 
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL crapatr THEN
@@ -2551,8 +3140,70 @@ PROCEDURE cadastra_suspensao_autorizacao:
         END.
         ELSE
         DO:
+            /* Verifica inaltera - NAO SICREDI, CONVENIO PRÓPRIO */
+            IF  crapatr.cdhistor <> 1019 THEN 
+                DO:
+                    FIND FIRST gnconve WHERE gnconve.cdhisdeb = crapatr.cdhistor AND
+                                             gnconve.flgativo = TRUE             AND
+                                             gnconve.cdhisdeb <> 0               AND
+                                             TRIM(gnconve.nmarqatu) <> ""        NO-LOCK NO-ERROR.
+                                             
+                    IF  NOT AVAIL gnconve THEN
+                        DO:
+                            ASSIGN aux_dscritic = "Esta autorizaçao de débito só pode ser alterada através do próprio parceiro. " +
+                                                  "Em caso de dúvidas, entre em contato com o SAC".
+                            LEAVE Bloqueia.
+                        END.
+                END.
+        
+            /* Verificaçao lançamentos futuros */
+            FOR EACH craplau WHERE craplau.cdcooper =  crapatr.cdcooper AND
+                                   craplau.nrdconta =  crapatr.nrdconta AND
+                                   craplau.cdhistor =  crapatr.cdhistor AND
+                                   craplau.nrdocmto =  crapatr.cdrefere AND
+                                   craplau.dtmvtopg >= par_dtmvtolt
+                                   NO-LOCK.
+                                     
+                IF  craplau.dtmvtopg = par_dtmvtolt THEN
+                    DO:
+                        ASSIGN aux_dscritic = "Os cancelamentos sao permitidos somente nas datas em que nao há débito programado. " +
+                                              "Efetue o cancelamento no próximo dia útil.".
+                        LEAVE Bloqueia.
+                    END.
+                ELSE 
+                    DO:
+                         RUN bloqueia_lancamento (INPUT craplau.cdcooper, 
+                                                  INPUT craplau.nrdconta,
+                                                  INPUT craplau.dtmvtolt,
+                                                  INPUT craplau.dtmvtopg,
+                                                  INPUT craplau.nrdocmto,
+                                                  INPUT craplau.cdhistor,
+                                                  INPUT par_cdoperad,
+                                                  INPUT par_nmdatela,
+                                                  INPUT par_idorigem,
+                                                  INPUT par_flgerlog,
+                                                 OUTPUT TABLE tt-erro). 
+                                                 
+                         IF  RETURN-VALUE = "NOK" THEN
+                             DO:
+                                ASSIGN aux_cdcritic = 0 
+                                       aux_dscritic = "".
+                                LEAVE Bloqueia.
+                             END.                             
+                    END.
+            END.
+            
+            FIND CURRENT crapatr EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+            
+            /* Temp-table para geraçao de log */
+            CREATE tt-autori-ant.
+            BUFFER-COPY crapatr TO tt-autori-ant.
+        
             ASSIGN crapatr.dtinisus = par_dtinisus
                    crapatr.dtfimsus = par_dtfimsus.
+
+            CREATE tt-autori-atl.
+            BUFFER-COPY crapatr TO tt-autori-atl.
 
             /* gera protocolo */
             RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
@@ -2611,14 +3262,23 @@ PROCEDURE cadastra_suspensao_autorizacao:
                     UNDO Bloqueia, LEAVE Bloqueia.
                 END.
 
-                FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
-                                         crapcon.cdempcon = par_cdempcon AND
-                                         crapcon.cdsegmto = par_cdsegmto AND
-                                         crapcon.flgcnvsi = FALSE 
-                                         NO-LOCK NO-ERROR.
+                IF  crapatr.cdhistor <> 1019 THEN
+                    FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
+                                            (gnconve.cdhisdeb = crapatr.cdhistor AND
+                                             gnconve.cdhisdeb <> 0)              AND
+                                             gnconve.nmarqatu <> ""              
+                                             NO-LOCK NO-ERROR NO-WAIT.
+                ELSE
+                    FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                              crapscn.cdempcon <> 0)                       AND
+                                              crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                              crapscn.dsoparre = 'E'                       AND
+                                             (crapscn.cddmoden = 'A'                       OR
+                                              crapscn.cddmoden = 'C') 
+                                              NO-LOCK NO-ERROR NO-WAIT.
 
-
-                IF NOT AVAIL crapcon THEN
+                IF  NOT AVAIL gnconve AND
+                    NOT AVAIL crapscn THEN
                 DO:
                     ASSIGN aux_dscritic = "Empresa nao conveniada.".
                     UNDO Bloqueia, LEAVE Bloqueia.
@@ -2649,7 +3309,7 @@ PROCEDURE cadastra_suspensao_autorizacao:
                            INPUT aux_dsinfor1,
                            INPUT aux_dsinfor2,
                            INPUT aux_dsinfor3,
-                           INPUT crapcon.nmextcon, /** Cedente **/
+                           INPUT IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv, /** Cedente **/
                            INPUT FALSE, /** Agendamento **/
                            INPUT 0,
                            INPUT 0,
@@ -2662,6 +3322,9 @@ PROCEDURE cadastra_suspensao_autorizacao:
                 IF RETURN-VALUE <> "OK" THEN
                     UNDO Bloqueia, LEAVE Bloqueia.
 
+
+                ASSIGN aux_retornvl = "OK".
+            
             END.
 
             LEAVE Bloqueia.
@@ -2676,14 +3339,28 @@ PROCEDURE cadastra_suspensao_autorizacao:
                        INPUT 1,            /** Sequencia **/
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
-
-        RETURN "NOK".
     END.
 
-    RETURN "OK".
+    IF  par_flgerlog  THEN
+        RUN proc_gerar_log_tab (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT aux_dscritic,
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                           ELSE FALSE),
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                                INPUT TRUE,
+                                INPUT BUFFER tt-autori-ant:HANDLE,
+                                INPUT BUFFER tt-autori-atl:HANDLE ).
+
+    RETURN aux_retornvl.
 
 END PROCEDURE.
 
+/* Chamado no IB 111 */
 PROCEDURE busca_autorizacoes_suspensas:
 
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
@@ -2693,22 +3370,34 @@ PROCEDURE busca_autorizacoes_suspensas:
 
     DEF OUTPUT PARAM TABLE FOR tt-autorizacoes-suspensas.
 
-    
     FOR EACH crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
-                           crapatr.tpautori <> 0           AND
-                           ((par_cddopcao = "C" AND
-                             crapatr.dtfimsus >= par_dtmvtolt) OR
-                            (par_cddopcao = "E" AND
-                             crapatr.dtfimsus > par_dtmvtolt)) NO-LOCK,
-        FIRST crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                            crapcon.cdempcon = crapatr.cdempcon AND
-                            crapcon.cdsegmto = crapatr.cdsegmto AND
-                            crapcon.flgcnvsi = FALSE NO-LOCK:
+                         ((par_cddopcao = "C" AND
+                           crapatr.dtfimsus > par_dtmvtolt) OR
+                          (par_cddopcao = "E" AND
+                           crapatr.dtfimsus > par_dtmvtolt)):
+                             
+        IF  crapatr.cdhistor <> 1019 THEN
+            FIND FIRST gnconve WHERE gnconve.flgativo = TRUE              AND
+                                    (gnconve.cdhisdeb = crapatr.cdhistor  AND
+                                     gnconve.cdhisdeb <> 0)               AND
+                                     gnconve.nmarqatu <> ""             
+                                     NO-LOCK NO-ERROR NO-WAIT.
+        ELSE
+            FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon         AND
+                                      crapscn.cdempcon <> 0)                      AND
+                                      crapscn.cdsegmto = STRING(crapatr.cdsegmto) AND
+                                      crapscn.dsoparre = 'E'                      AND
+                                     (crapscn.cddmoden = 'A'                      OR
+                                      crapscn.cddmoden = 'C') 
+                                      NO-LOCK NO-ERROR NO-WAIT.
+        IF  NOT AVAIL gnconve AND
+            NOT AVAIL crapscn THEN
+            NEXT.
 
         CREATE tt-autorizacoes-suspensas.
-        ASSIGN tt-autorizacoes-suspensas.nmextcon = crapcon.nmextcon
-               tt-autorizacoes-suspensas.nmrescon = crapcon.nmrescon
+        ASSIGN tt-autorizacoes-suspensas.nmextcon = IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv
+               tt-autorizacoes-suspensas.nmrescon = IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv
                tt-autorizacoes-suspensas.cdempcon = crapatr.cdempcon
                tt-autorizacoes-suspensas.cdsegmto = crapatr.cdsegmto
                tt-autorizacoes-suspensas.cdrefere = crapatr.cdrefere
@@ -2718,23 +3407,34 @@ PROCEDURE busca_autorizacoes_suspensas:
 
 END PROCEDURE.
 
+/* Chamado no IB110 */
 PROCEDURE exclui_suspensao_autorizacao:
 
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdrefere AS DECI NO-UNDO.
-    DEF INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
+    DEF INPUT PARAM par_cdhistor AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
-
     DEF VAR aux_dtfimsus AS DATE         NO-UNDO.
+    DEF VAR aux_retornvl AS CHAR INIT "NOK"                        NO-UNDO.
 
-    ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Exclui suspensao de autorizacao de debito em conta".
 
     Desbloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
@@ -2742,8 +3442,7 @@ PROCEDURE exclui_suspensao_autorizacao:
                            crapatr.nrdconta = par_nrdconta AND
                            crapatr.cdsegmto = par_cdsegmto AND
                            crapatr.cdempcon = par_cdempcon AND
-                           crapatr.cdrefere = par_cdrefere AND
-                           crapatr.tpautori <> 0
+                           crapatr.cdrefere = par_cdrefere
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL crapatr THEN
@@ -2755,21 +3454,30 @@ PROCEDURE exclui_suspensao_autorizacao:
                 IF aux_contador = 10 THEN
                 DO:
                     ASSIGN aux_dscritic = "Tabela CRAPATR esta em uso.".
-
                     LEAVE Desbloqueia.
                 END.
             END.
             ELSE
             DO:
                 ASSIGN aux_dscritic = "Autorizacao nao encontrada.".
-
                 LEAVE Desbloqueia.
             END.
         END.
         ELSE
         DO:            
+            /* Temp-table para geraçao de log */
+            CREATE tt-autori-ant.
+            BUFFER-COPY crapatr TO tt-autori-ant.
+            
             ASSIGN aux_dtfimsus     = crapatr.dtfimsus
                    crapatr.dtfimsus = par_dtmvtolt.
+
+            IF  crapatr.dtinisus > par_dtmvtolt THEN
+                ASSIGN crapatr.dtinisus = ?
+                       crapatr.dtfimsus = ?.
+                   
+            CREATE tt-autori-atl.
+            BUFFER-COPY crapatr TO tt-autori-atl.
 
             /* gera protocolo */
             RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
@@ -2828,14 +3536,23 @@ PROCEDURE exclui_suspensao_autorizacao:
                     UNDO Desbloqueia, LEAVE Desbloqueia.
                 END.
 
-                FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
-                                         crapcon.cdempcon = par_cdempcon AND
-                                         crapcon.cdsegmto = par_cdsegmto AND
-                                         crapcon.flgcnvsi = FALSE 
-                                         NO-LOCK NO-ERROR.
+                IF  crapatr.cdhistor <> 1019 THEN
+                    FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
+                                            (gnconve.cdhisdeb = crapatr.cdhistor AND
+                                             gnconve.cdhisdeb <> 0)              AND
+                                             gnconve.nmarqatu <> ""              
+                                             NO-LOCK NO-ERROR NO-WAIT.
+                ELSE
+                    FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                              crapscn.cdempcon <> 0)                       AND
+                                              crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                              crapscn.dsoparre = 'E'                       AND
+                                             (crapscn.cddmoden = 'A'                       OR
+                                              crapscn.cddmoden = 'C') 
+                                              NO-LOCK NO-ERROR NO-WAIT.
 
-
-                IF NOT AVAIL crapcon THEN
+                IF  NOT AVAIL gnconve AND
+                    NOT AVAIL crapscn THEN
                 DO:
                     ASSIGN aux_dscritic = "Empresa nao conveniada.".
                     UNDO Desbloqueia, LEAVE Desbloqueia.
@@ -2866,7 +3583,7 @@ PROCEDURE exclui_suspensao_autorizacao:
                            INPUT aux_dsinfor1,
                            INPUT aux_dsinfor2,
                            INPUT aux_dsinfor3,
-                           INPUT crapcon.nmextcon, /** Cedente **/
+                           INPUT IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv, /** Cedente **/
                            INPUT FALSE, /** Agendamento **/
                            INPUT 0,
                            INPUT 0,
@@ -2879,6 +3596,7 @@ PROCEDURE exclui_suspensao_autorizacao:
                 IF RETURN-VALUE <> "OK" THEN
                     UNDO Desbloqueia, LEAVE Desbloqueia.
 
+                ASSIGN aux_retornvl = "OK".
             END.
             
             LEAVE Desbloqueia.
@@ -2893,11 +3611,24 @@ PROCEDURE exclui_suspensao_autorizacao:
                        INPUT 1,            /** Sequencia **/
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
-
-        RETURN "NOK".
     END.
 
-    RETURN "OK".
+    IF  par_flgerlog  THEN
+        RUN proc_gerar_log_tab (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT aux_dscritic,
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                           ELSE FALSE),
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                                INPUT TRUE,
+                                INPUT BUFFER tt-autori-ant:HANDLE,
+                                INPUT BUFFER tt-autori-atl:HANDLE ).
+
+    RETURN aux_retornvl.
 
 END PROCEDURE.
 
@@ -2915,13 +3646,17 @@ PROCEDURE busca_lancamentos:
     /* busca os lancamentos agendados (PENDENTES e BLOQUEADOS) */
     FOR EACH craplau WHERE craplau.cdcooper = par_cdcooper      AND
                            craplau.nrdconta = par_nrdconta      AND
-                           craplau.insitlau = 1                 AND
                            ((par_cddopcao = "C"                 AND
                              craplau.dtmvtopg >= par_dtiniper   AND
                              craplau.dtmvtopg <= par_dtfimper   AND
+                            (craplau.insitlau = 1 OR craplau.insitlau = 3) AND
                              craplau.dtmvtopg >= par_dtmvtolt)  OR
-                            (par_cddopcao <> "C"                AND
-                             craplau.dtmvtopg > par_dtmvtolt))  AND
+                            (par_cddopcao = "B"                 AND
+                             craplau.insitlau = 1               AND
+                             craplau.dtmvtopg > par_dtmvtolt)   OR
+                            (par_cddopcao = "D"                 AND
+                             craplau.insitlau = 1               AND
+                             craplau.dtmvtopg >= par_dtmvtolt)) AND
                            ((par_cddopcao = "B"                 AND
                              craplau.flgblqdb = FALSE)          OR
                             (par_cddopcao = "D"                 AND
@@ -2930,20 +3665,25 @@ PROCEDURE busca_lancamentos:
         FIRST crapatr WHERE crapatr.cdcooper = craplau.cdcooper AND
                             crapatr.nrdconta = craplau.nrdconta AND
                             crapatr.cdhistor = craplau.cdhistor AND
-                            crapatr.cdrefere = craplau.nrdocmto AND
-                            crapatr.tpautori <> 0               NO-LOCK,
-        FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
+                            crapatr.cdrefere = craplau.nrdocmto NO-LOCK:
+                            
+        IF  crapatr.cdhistor <> 1019 THEN
+            FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
                             gnconve.cdhisdeb = crapatr.cdhistor AND
-                            gnconve.nmarqatu <> ""              NO-LOCK,
-        FIRST crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                            crapcon.cdsegmto = crapatr.cdsegmto AND
-                            crapcon.cdempcon = crapatr.cdempcon AND
-                            crapcon.cdhistor = gnconve.cdhiscxa AND
-                            crapcon.flgcnvsi = FALSE            NO-LOCK:
+                                     gnconve.nmarqatu <> ""              
+                                     NO-LOCK NO-ERROR NO-WAIT.
+        ELSE
+            FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                      crapscn.cdempcon <> 0)                       AND
+                                      crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                      crapscn.dsoparre = 'E'                       AND
+                                     (crapscn.cddmoden = 'A'                       OR
+                                      crapscn.cddmoden = 'C') 
+                                      NO-LOCK NO-ERROR NO-WAIT.
 
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.dtmvtolt = craplau.dtmvtopg
-               tt-lancamentos.nmextcon = crapcon.nmextcon
+               tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv 
                tt-lancamentos.dshisext = crapatr.dshisext
                tt-lancamentos.nrdocmto = craplau.nrdocmto
                tt-lancamentos.vllanmto = craplau.vllanaut
@@ -2965,20 +3705,25 @@ PROCEDURE busca_lancamentos:
                 FIRST crapatr WHERE crapatr.cdcooper = craplcm.cdcooper AND
                                     crapatr.nrdconta = craplcm.nrdconta AND
                                     crapatr.cdhistor = craplcm.cdhistor AND
-                                    crapatr.cdrefere = craplcm.nrdocmto AND
-                                    crapatr.tpautori <> 0               NO-LOCK,
-                FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
-                                    gnconve.cdhisdeb = crapatr.cdhistor AND
-                                    gnconve.nmarqatu <> ""              NO-LOCK,
-                FIRST crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                                    crapcon.cdsegmto = crapatr.cdsegmto AND
-                                    crapcon.cdempcon = crapatr.cdempcon AND
-                                    crapcon.cdhistor = gnconve.cdhiscxa AND
-                                    crapcon.flgcnvsi = FALSE            NO-LOCK:
+                                    crapatr.cdrefere = craplcm.nrdocmto NO-LOCK:
+                                    
+                IF  crapatr.cdhistor <> 1019 THEN
+                    FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
+                                             gnconve.cdhisdeb = crapatr.cdhistor AND
+                                             gnconve.nmarqatu <> ""              
+                                             NO-LOCK NO-ERROR NO-WAIT.
+                ELSE
+                    FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                              crapscn.cdempcon <> 0)                       AND
+                                              crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                              crapscn.dsoparre = 'E'                       AND
+                                             (crapscn.cddmoden = 'A'                       OR
+                                              crapscn.cddmoden = 'C') 
+                                              NO-LOCK NO-ERROR NO-WAIT.
         
                 CREATE tt-lancamentos.
                 ASSIGN tt-lancamentos.dtmvtolt = craplcm.dtmvtolt
-                       tt-lancamentos.nmextcon = crapcon.nmextcon
+                       tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv
                        tt-lancamentos.dshisext = crapatr.dshisext
                        tt-lancamentos.nrdocmto = craplcm.nrdocmto
                        tt-lancamentos.vllanmto = craplcm.vllanmto
@@ -2998,13 +3743,23 @@ PROCEDURE bloqueia_lancamento:
     DEF INPUT PARAM par_nrdocmto AS DECI NO-UNDO.
     DEF INPUT PARAM par_cdhistor AS INTE NO-UNDO.
 
+    DEF INPUT PARAM par_cdoperad AS CHAR NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE NO-UNDO.
+    DEF INPUT param par_flgerlog AS LOGI NO-UNDO.
+
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
+    DEF VAR aux_nrdrowid AS ROWID        NO-UNDO.
+    DEF VAR aux_retornvl AS CHAR         NO-UNDO.
 
     
     ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+           aux_dscritic = ""
+           aux_retornvl = "OK"
+           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Bloquear lancamento de agendamento de debito - Debito Automatico Facil.".
 
     Bloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
@@ -3072,7 +3827,7 @@ PROCEDURE bloqueia_lancamento:
 
                     DELETE PROCEDURE h-b1wgen0015.
             
-                    IF RETURN-VALUE = "NOK" THEN
+                    IF  RETURN-VALUE = "NOK" THEN
                         UNDO Bloqueia, LEAVE Bloqueia.
             
                     FIND FIRST tt-limite NO-LOCK NO-ERROR.
@@ -3101,8 +3856,7 @@ PROCEDURE bloqueia_lancamento:
                 FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                                    crapatr.nrdconta = par_nrdconta AND
                                    crapatr.cdrefere = par_nrdocmto AND
-                                   crapatr.cdhistor = par_cdhistor AND
-                                   crapatr.tpautori <> 0
+                                   crapatr.cdhistor = par_cdhistor
                                    NO-LOCK NO-ERROR.
 
                 IF NOT AVAIL crapatr THEN
@@ -3111,24 +3865,22 @@ PROCEDURE bloqueia_lancamento:
                     UNDO Bloqueia, LEAVE Bloqueia.
                 END.
 
-                FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
-                                         gnconve.cdhisdeb = crapatr.cdhistor AND
-                                         gnconve.nmarqatu <> "" NO-LOCK NO-ERROR.
-
-                IF NOT AVAIL gnconve THEN
-                DO:
-                    ASSIGN aux_dscritic = "Registro de convenios nao localizado.".
-                    UNDO Bloqueia, LEAVE Bloqueia.
-                END.
-
-                FIND crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                                   crapcon.cdsegmto = crapatr.cdsegmto AND
-                                   crapcon.cdempcon = crapatr.cdempcon AND
-                                   crapcon.cdhistor = gnconve.cdhiscxa AND
-                                   crapcon.flgcnvsi = FALSE
-                                   NO-LOCK NO-ERROR.
-
-                IF NOT AVAIL crapcon THEN
+                IF  crapatr.cdhistor <> 1019 THEN
+                    FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
+                                                (gnconve.cdhisdeb = crapatr.cdhistor AND
+                                                  gnconve.cdhisdeb <> 0)              AND
+                                                  gnconve.nmarqatu <> ""              
+                                                 NO-LOCK NO-ERROR NO-WAIT.
+                ELSE
+                    FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                              crapscn.cdempcon <> 0)                       AND
+                                              crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                              crapscn.dsoparre = 'E'                       AND
+                                             (crapscn.cddmoden = 'A'                       OR
+                                              crapscn.cddmoden = 'C') 
+                                              NO-LOCK NO-ERROR NO-WAIT.
+                IF  NOT AVAIL gnconve AND
+                    NOT AVAIL crapscn THEN
                 DO:
                     ASSIGN aux_dscritic = "Empresa nao conveniada.".
                     UNDO Bloqueia, LEAVE Bloqueia.
@@ -3159,7 +3911,7 @@ PROCEDURE bloqueia_lancamento:
                            INPUT aux_dsinfor1,
                            INPUT aux_dsinfor2,
                            INPUT aux_dsinfor3,
-                           INPUT crapcon.nmextcon, /** Cedente **/
+                           INPUT IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv, /** Cedente **/
                            INPUT FALSE, /** Agendamento **/
                            INPUT 0,
                            INPUT 0,
@@ -3187,10 +3939,42 @@ PROCEDURE bloqueia_lancamento:
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
 
-        RETURN "NOK".
+        ASSIGN aux_retornvl = "NOK".
+        
     END.
 
-    RETURN "OK".
+    IF par_flgerlog THEN
+    DO:
+      RUN proc_gerar_log (INPUT par_cdcooper,
+                          INPUT par_cdoperad,
+                          INPUT aux_dscritic,
+                          INPUT aux_dsorigem,
+                          INPUT aux_dstransa,
+                          INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                 ELSE FALSE),
+                          INPUT 1,
+                          INPUT par_nmdatela,
+                          INPUT par_nrdconta,
+                         OUTPUT aux_nrdrowid).
+  
+      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                               INPUT "nrdocmto",
+                               INPUT "",
+                               INPUT STRING(par_nrdocmto)).
+                               
+      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                               INPUT "dtmvtopg",
+                               INPUT "",
+                               INPUT STRING(par_dtmvtopg,"99/99/9999")).                                      
+      
+      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                               INPUT "cdhistor",
+                               INPUT "",
+                               INPUT STRING(par_cdhistor)).    
+    
+    END.
+
+    RETURN aux_retornvl.
 
 END PROCEDURE.
 
@@ -3202,13 +3986,22 @@ PROCEDURE desbloqueia_lancamento:
     DEF INPUT PARAM par_dtmvtopg AS DATE NO-UNDO.
     DEF INPUT PARAM par_nrdocmto AS DECI NO-UNDO.
     DEF INPUT PARAM par_cdhistor AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE NO-UNDO.
+    DEF INPUT param par_flgerlog AS LOGI NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
+    DEF VAR aux_nrdrowid AS ROWID        NO-UNDO.
+    DEF VAR aux_retornvl AS CHAR         NO-UNDO.
 
     ASSIGN aux_cdcritic = 0
-           aux_dscritic = "".
+           aux_dscritic = ""
+           aux_retornvl = "OK"
+           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = "Desbloquear lancamento de agendamento de debito - Debito Automatico Facil.".
 
     Desbloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
@@ -3243,7 +4036,8 @@ PROCEDURE desbloqueia_lancamento:
         ELSE
         DO:
             ASSIGN craplau.flgblqdb = FALSE
-                   craplau.dtdebito = ?.
+                   craplau.dtdebito = ?
+                   craplau.insitlau = 1. /* Ativo */
 
             /* gera protocolo */
             RUN sistema/generico/procedures/bo_algoritmo_seguranca.p 
@@ -3305,8 +4099,7 @@ PROCEDURE desbloqueia_lancamento:
                 FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                                    crapatr.nrdconta = par_nrdconta AND
                                    crapatr.cdrefere = par_nrdocmto AND
-                                   crapatr.cdhistor = par_cdhistor AND
-                                   crapatr.tpautori <> 0
+                                   crapatr.cdhistor = par_cdhistor
                                    NO-LOCK NO-ERROR.
 
                 IF NOT AVAIL crapatr THEN
@@ -3315,28 +4108,69 @@ PROCEDURE desbloqueia_lancamento:
                     UNDO Desbloqueia, LEAVE Desbloqueia.
                 END.
 
-                FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
-                                         gnconve.cdhisdeb = crapatr.cdhistor AND
-                                         gnconve.nmarqatu <> "" NO-LOCK NO-ERROR.
+                IF  crapatr.cdhistor <> 1019 THEN
+                    FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
+                                                (gnconve.cdhisdeb = crapatr.cdhistor AND
+                                                 gnconve.cdhisdeb <> 0)              AND
+                                                 gnconve.nmarqatu <> ""              
+                                                 NO-LOCK NO-ERROR NO-WAIT.
+                ELSE
+                    FIND FIRST crapscn WHERE (crapscn.cdempcon = crapatr.cdempcon          AND
+                                              crapscn.cdempcon <> 0)                       AND
+                                              crapscn.cdsegmto = STRING(crapatr.cdsegmto)  AND
+                                              crapscn.dsoparre = 'E'                       AND
+                                             (crapscn.cddmoden = 'A'                       OR
+                                              crapscn.cddmoden = 'C') 
+                                              NO-LOCK NO-ERROR NO-WAIT.
+                IF  NOT AVAIL gnconve AND
+                    NOT AVAIL crapscn THEN
+                    DO:
+                        ASSIGN aux_dscritic = "Empresa nao conveniada.".
+                        UNDO Desbloqueia, LEAVE Desbloqueia.
+                    END.
 
-                IF NOT AVAIL gnconve THEN
-                DO:
-                    ASSIGN aux_dscritic = "Registro de convenios nao localizado.".
-                    UNDO Desbloqueia, LEAVE Desbloqueia.
-                END.
+                IF  craplau.dtmvtopg = par_dtmvtolt THEN 
+                    DO:
+                        RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET
+                                                                        h-b1wgen0015.
+                
+                        IF  VALID-HANDLE(h-b1wgen0015) THEN
+                            DO:
+                                RUN horario_operacao IN h-b1wgen0015 (INPUT par_cdcooper,
+                                                                      INPUT 90,
+                                                                      INPUT IF crapatr.cdhistor <> 1019 THEN 12 ELSE 13,
+                                                                      INPUT crapass.inpessoa,
+                                                                     OUTPUT aux_dscritic,
+                                                                     OUTPUT TABLE tt-limite).
+    
+                                DELETE PROCEDURE h-b1wgen0015.
+                        
+                                IF  RETURN-VALUE = "NOK" THEN
+                                    UNDO Desbloqueia, LEAVE Desbloqueia.
+                        
+                                FIND FIRST tt-limite NO-LOCK NO-ERROR.
+    
+                                IF  NOT AVAILABLE tt-limite THEN
+                                    DO:
+                                        ASSIGN aux_dscritic = "Tabela de limites nao encontrada.".
+                                        UNDO Desbloqueia, LEAVE Desbloqueia.
+                                    END.
 
-                FIND crapcon WHERE crapcon.cdcooper = crapatr.cdcooper AND
-                                   crapcon.cdsegmto = crapatr.cdsegmto AND
-                                   crapcon.cdempcon = crapatr.cdempcon AND
-                                   crapcon.cdhistor = gnconve.cdhiscxa AND
-                                   crapcon.flgcnvsi = FALSE
-                                   NO-LOCK NO-ERROR.
+                                IF  tt-limite.idesthor = 1  AND /** Estourou horario   **/
+                                    tt-limite.iddiauti = 1  THEN /* É dia útil */
+                                    DO:
+                                        ASSIGN aux_dscritic = "Horario esgotado para realizar a operacao " +
+                                                              "de desbloqueio do lançamento!".
 
-                IF NOT AVAIL crapcon THEN
-                DO:
-                    ASSIGN aux_dscritic = "Empresa nao conveniada.".
-                    UNDO Desbloqueia, LEAVE Desbloqueia.
-                END.
+                                        UNDO Desbloqueia, LEAVE Desbloqueia.
+                                    END.
+                            END.
+                        ELSE
+                            DO:
+                                ASSIGN aux_dscritic = "Nao foi possivel realizar a operacao.".
+                                UNDO Desbloqueia, LEAVE Desbloqueia.
+                            END.
+                    END.
 
                 ASSIGN aux_dsinfor1 = "Bloqueio de Debito - Exclusao"
                        aux_dsinfor2 = crapass.nmprimtl
@@ -3363,7 +4197,7 @@ PROCEDURE desbloqueia_lancamento:
                            INPUT aux_dsinfor1,
                            INPUT aux_dsinfor2,
                            INPUT aux_dsinfor3,
-                           INPUT crapcon.nmextcon, /** Cedente **/
+                           INPUT IF AVAIL gnconve THEN gnconve.nmempres ELSE crapscn.dsnomcnv, /** Cedente **/
                            INPUT FALSE, /** Agendamento **/
                            INPUT 0,
                            INPUT 0,
@@ -3391,10 +4225,42 @@ PROCEDURE desbloqueia_lancamento:
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
 
-        RETURN "NOK".
+        ASSIGN aux_retornvl =  "NOK".
     END.
 
-    RETURN "OK".
+    IF par_flgerlog THEN
+    DO:
+      RUN proc_gerar_log (INPUT par_cdcooper,
+                          INPUT par_cdoperad,
+                          INPUT aux_dscritic,
+                          INPUT aux_dsorigem,
+                          INPUT aux_dstransa,
+                          INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                 ELSE FALSE),
+                          INPUT 1,
+                          INPUT par_nmdatela,
+                          INPUT par_nrdconta,
+                         OUTPUT aux_nrdrowid).
+
+      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                               INPUT "nrdocmto",
+                               INPUT "",
+                               INPUT STRING(par_nrdocmto)).
+                               
+      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                               INPUT "dtmvtopg",
+                               INPUT "",
+                               INPUT STRING(par_dtmvtopg,"99/99/9999")).                                      
+      
+      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                               INPUT "cdhistor",
+                               INPUT "",
+                               INPUT STRING(par_cdhistor)).    
+    END.
+
+    RETURN aux_retornvl.
+
+    
 
 END PROCEDURE.
 
@@ -4572,7 +5438,8 @@ PROCEDURE busca-convenios:
 
 END PROCEDURE.
 
-/* Validar senha do cartao magnetico do cooperado */ 
+
+/* Validar senha do cartao magnetico do cooperado */
 PROCEDURE valida_senha_cooperado:
    
    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
@@ -4598,7 +5465,7 @@ PROCEDURE valida_senha_cooperado:
           aux_dstransa = "Validar senha do cooperado".
   
    FOR EACH crapcrm FIELDS (dssencar) 
-                    WHERE crapcrm.cdcooper = crapcop.cdcooper AND
+                    WHERE crapcrm.cdcooper = par_cdcooper AND
                           crapcrm.nrdconta = par_nrdconta     
                           NO-LOCK:
 
@@ -4606,13 +5473,28 @@ PROCEDURE valida_senha_cooperado:
            DO:
                ASSIGN aux_flgsevld = TRUE.
                LEAVE.
+          END.
+  END.
+  
+  IF  aux_flgsevld = FALSE THEN 
+      DO:
+          FOR EACH crapcrd FIELDS (dssentaa) 
+                           WHERE  crapcrd.cdcooper = par_cdcooper
+                             AND  crapcrd.nrdconta = par_nrdconta
+                             NO-LOCK:                
+                      
+              IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrd.dssentaa) THEN
+                  DO:
+                      ASSIGN aux_flgsevld = TRUE.
+                      LEAVE.
            END.
    END.
+      END. 
 
   IF  aux_flgsevld = FALSE THEN
       DO:
           ASSIGN aux_cdcritic  = 0
-                 aux_dscritic = "Senha invalida.".
+                 aux_dscritic = "Senha invalida!".
 
           RUN gera_erro ( INPUT par_cdcooper,
                           INPUT par_cdagenci,
@@ -4638,6 +5520,371 @@ PROCEDURE valida_senha_cooperado:
     RETURN "OK".
 END.
 
+/* ************************************************************************ */
+/*                                 SMS                                      */
+/* ************************************************************************ */
+
+PROCEDURE sms-cooperado-debaut:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.    
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgacsms AS INTE                           NO-UNDO.    
+    DEF  INPUT-OUTPUT PARAM par_nrdddtfc AS DECI                    NO-UNDO.
+    DEF  INPUT-OUTPUT PARAM par_nrtelefo AS DECI                    NO-UNDO.
+    DEF OUTPUT PARAM par_dsmsgsms AS CHAR                           NO-UNDO.    
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_retornvl AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrdddtfc AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nrtelefo AS CHAR                                    NO-UNDO.
+    DEF VAR log_nrdddtfc AS CHAR                                    NO-UNDO.
+    DEF VAR log_nrtelefo AS CHAR                                    NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0
+           par_nrdddtfc = 0 WHEN par_cddopcao <> "A"
+           par_nrtelefo = 0 WHEN par_cddopcao <> "A"
+           aux_retornvl = "NOK"
+           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+           aux_dstransa = (IF par_cddopcao = "A" THEN "Altera"
+                           ELSE "Exclui") + " telefone para recebimendo de SMS DEBAUT.".
+                           
+                           
+    Operacao: DO WHILE TRUE TRANSACTION
+        ON ERROR  UNDO Operacao, LEAVE Operacao
+        ON QUIT   UNDO Operacao, LEAVE Operacao
+        ON STOP   UNDO Operacao, LEAVE Operacao
+        ON ENDKEY UNDO Operacao, LEAVE Operacao:
+        
+      IF  par_nmdatela <> "CRAP062" AND par_nrdconta <> 999 THEN
+          DO:
+              FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                                 crapass.nrdconta = par_nrdconta 
+                                 NO-LOCK NO-ERROR.
+
+              IF  NOT AVAILABLE crapass  THEN
+                  DO:
+                      ASSIGN aux_cdcritic = 9.
+                      UNDO Operacao, LEAVE Operacao.
+                  END.
+          END.
+          
+      IF  par_flgerlog THEN    
+          DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+      
+              RUN STORED-PROCEDURE pc_busca_fone_sms_debaut_car
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                          (INPUT par_cdcooper,
+                                           INPUT par_nrdconta,
+                                           INPUT par_idorigem,
+                                           OUTPUT "",  /* pr_nrdddtfc */
+                                           OUTPUT "",  /* pr_nrtelefo */
+                                           OUTPUT "",  /* pr_dsmsgsms */
+                                           OUTPUT 0,   /* pr_cdcritic */
+                                           OUTPUT "",  /* pr_dscritic */
+                                           OUTPUT "",  /* pr_nmdcampo */
+                                           OUTPUT ""). /* pr_des_erro */
+
+              CLOSE STORED-PROC pc_busca_fone_sms_debaut_car
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN log_nrdddtfc = pc_busca_fone_sms_debaut_car.pr_nrdddtfc
+                                        WHEN pc_busca_fone_sms_debaut_car.pr_nrdddtfc <> ?
+                     log_nrtelefo = pc_busca_fone_sms_debaut_car.pr_nrtelefo
+                                        WHEN pc_busca_fone_sms_debaut_car.pr_nrtelefo <> ?.
+                                        
+              CREATE tt-sms-telefones-ant.
+              ASSIGN tt-sms-telefones-ant.nrdddtfc = DECI(log_nrdddtfc)
+                     tt-sms-telefones-ant.nrtelefo = DECI(log_nrtelefo).
+          END.
+                    
+      IF  par_cddopcao = "A"  THEN
+          DO:
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+              RUN STORED-PROCEDURE pc_mantem_fone_sms_debaut_car
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                          (INPUT par_cdcooper,
+                                           INPUT par_nrdconta,
+                                           INPUT par_idorigem,
+                                           INPUT par_nrdddtfc,
+                                           INPUT par_nrtelefo,
+                                           INPUT par_flgacsms,
+                                           OUTPUT "",  /* pr_qtdregis */
+                                           OUTPUT 0,   /* pr_cdcritic */
+                                           OUTPUT "",  /* pr_dscritic */
+                                           OUTPUT "",  /* pr_nmdcampo */
+                                           OUTPUT ""). /* pr_des_erro */
+
+              CLOSE STORED-PROC pc_mantem_fone_sms_debaut_car
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = ""
+                     aux_cdcritic = pc_mantem_fone_sms_debaut_car.pr_cdcritic 
+                                        WHEN pc_mantem_fone_sms_debaut_car.pr_cdcritic <> ?
+                     aux_dscritic = pc_mantem_fone_sms_debaut_car.pr_dscritic
+                                        WHEN pc_mantem_fone_sms_debaut_car.pr_dscritic <> ?.
+                                        
+              IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+                  UNDO Operacao, LEAVE Operacao. 
+                      
+          END.
+      ELSE 
+      IF  par_cddopcao = "E"  THEN
+          DO:              
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+              RUN STORED-PROCEDURE pc_exclui_fone_sms_debaut_car
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                          (INPUT par_cdcooper,
+                                           INPUT par_nrdconta,
+                                           INPUT par_idorigem,
+                                           OUTPUT "",  /* pr_qtdregis */
+                                           OUTPUT 0,   /* pr_cdcritic */
+                                           OUTPUT "",  /* pr_dscritic */
+                                           OUTPUT "",  /* pr_nmdcampo */
+                                           OUTPUT ""). /* pr_des_erro */
+
+              CLOSE STORED-PROC pc_exclui_fone_sms_debaut_car
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = ""
+                     aux_cdcritic = pc_exclui_fone_sms_debaut_car.pr_cdcritic 
+                                        WHEN pc_exclui_fone_sms_debaut_car.pr_cdcritic <> ?
+                     aux_dscritic = pc_exclui_fone_sms_debaut_car.pr_dscritic
+                                        WHEN pc_exclui_fone_sms_debaut_car.pr_dscritic <> ?.
+                                        
+              IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+                  UNDO Operacao, LEAVE Operacao. 
+                      
+          END.
+          
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+      RUN STORED-PROCEDURE pc_busca_fone_sms_debaut_car
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT par_cdcooper,
+                                   INPUT par_nrdconta,
+                                   INPUT par_idorigem,
+                                   OUTPUT "",  /* pr_nrdddtfc */
+                                   OUTPUT "",  /* pr_nrtelefo */
+                                   OUTPUT "",  /* pr_dsmsgsms */
+                                   OUTPUT 0,   /* pr_cdcritic */
+                                   OUTPUT "",  /* pr_dscritic */
+                                   OUTPUT "",  /* pr_nmdcampo */
+                                   OUTPUT ""). /* pr_des_erro */
+
+      CLOSE STORED-PROC pc_busca_fone_sms_debaut_car
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+      ASSIGN aux_cdcritic = 0
+             aux_dscritic = ""
+             aux_cdcritic = pc_busca_fone_sms_debaut_car.pr_cdcritic 
+                                WHEN pc_busca_fone_sms_debaut_car.pr_cdcritic <> ?
+             aux_dscritic = pc_busca_fone_sms_debaut_car.pr_dscritic
+                                WHEN pc_busca_fone_sms_debaut_car.pr_dscritic <> ?
+             par_dsmsgsms = pc_busca_fone_sms_debaut_car.pr_dsmsgsms
+                                WHEN pc_busca_fone_sms_debaut_car.pr_dsmsgsms <> ?
+             aux_nrdddtfc = pc_busca_fone_sms_debaut_car.pr_nrdddtfc
+                                WHEN pc_busca_fone_sms_debaut_car.pr_nrdddtfc <> ?
+             aux_nrtelefo = pc_busca_fone_sms_debaut_car.pr_nrtelefo
+                                WHEN pc_busca_fone_sms_debaut_car.pr_nrtelefo <> ?
+             par_nrdddtfc = DECI(aux_nrdddtfc)
+             par_nrtelefo = DECI(aux_nrtelefo).
+             
+      IF  par_idorigem = 4 THEN
+          assign par_dsmsgsms = replace(par_dsmsgsms, "#", " ").
+             
+      CREATE tt-sms-telefones-atl.
+      ASSIGN tt-sms-telefones-atl.nrdddtfc = par_nrdddtfc
+             tt-sms-telefones-atl.nrtelefo = par_nrtelefo.  
+      
+      IF  ERROR-STATUS:ERROR THEN
+          ASSIGN aux_dscritic =  "Nao foi possivel obter cadastro de telefone para SMS..".
+          
+      ASSIGN aux_retornvl = "OK".
+          
+      LEAVE.
+      
+    END.   /* Operacao */                    
+                           
+    IF  aux_cdcritic <> 0 OR aux_dscritic <> ""  THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                           
+           ASSIGN aux_retornvl = "NOK".
+        END.
+
+    IF  par_flgerlog THEN
+        RUN proc_gerar_log_tab (INPUT par_cdcooper,
+                                INPUT par_cdoperad,
+                                INPUT aux_dscritic,
+                                INPUT aux_dsorigem,
+                                INPUT aux_dstransa,
+                                INPUT (IF  aux_retornvl = "OK" THEN TRUE 
+                                           ELSE FALSE),
+                                INPUT par_idseqttl,
+                                INPUT par_nmdatela,
+                                INPUT par_nrdconta,
+                                INPUT TRUE,
+                                INPUT BUFFER tt-sms-telefones-ant:HANDLE,
+                                INPUT BUFFER tt-sms-telefones-atl:HANDLE ).
+
+    RETURN aux_retornvl.                           
+                           
+END PROCEDURE.                           
+
+PROCEDURE obtem-motivos-cancelamento-debaut:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.    
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-motivos-cancel-debaut.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    EMPTY TEMP-TABLE tt-erro.
+    
+    /* Variaveis utilizadas para receber clob da rotina no oracle */
+    DEF VAR xDoc          AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+    DEF VAR xField        AS HANDLE   NO-UNDO. 
+    DEF VAR xText         AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR NO-UNDO.
+    DEF VAR aux_dscritic  AS CHAR     NO-UNDO.
+    DEF VAR aux_des_erro  AS CHAR     NO-UNDO.
+
+
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */ 
+    CREATE X-NODEREF  xRoot2.   
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+    
+    /* Efetuar a chamada a rotina Oracle */
+    RUN STORED-PROCEDURE pc_busca_motivos
+    aux_handproc = PROC-HANDLE NO-ERROR ( INPUT 29                  /* pr_cdproduto */
+                                        ,OUTPUT ?                   /* XML com dados da portabilidade*/
+                                        ,OUTPUT ""                  /* Indicador erro OK/NOK */
+                                        ,OUTPUT "").                /* Descrição da crítica */
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_busca_motivos
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Busca possíveis erros */ 
+    ASSIGN aux_des_erro = ""
+           aux_dscritic = ""
+           aux_des_erro = pc_busca_motivos.pr_des_erro 
+                          WHEN pc_busca_motivos.pr_des_erro <> ?
+           aux_dscritic = pc_busca_motivos.pr_dscritic 
+                          WHEN pc_busca_motivos.pr_dscritic <> ?.
+                          
+    IF  aux_des_erro <> "OK" AND TRIM(aux_dscritic) <> "" THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT 0,
+                           INPUT-OUTPUT aux_dscritic).
+                           
+           RETURN "NOK".
+        END.
+
+    /* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_busca_motivos.pr_clobxmlc.
+
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+    PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+    IF ponteiro_xml <> ? THEN
+       DO:
+           xDoc:LOAD("MEMPTR",ponteiro_xml, FALSE). 
+           xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+           DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+           
+               xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+           
+               IF xRoot2:SUBTYPE <> "ELEMENT"   THEN 
+                 NEXT.     
+                 
+               IF xRoot2:NUM-CHILDREN > 0 THEN
+                  CREATE tt-motivos-cancel-debaut.
+
+               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+               
+                   xRoot2:GET-CHILD(xField,aux_cont).
+                       
+                   IF  xField:SUBTYPE <> "ELEMENT" THEN 
+                       NEXT. 
+                   
+                   xField:GET-CHILD(xText,1).            
+                   
+                   ASSIGN tt-motivos-cancel-debaut.idmotivo = INTE(xText:NODE-VALUE) WHEN xField:NAME = "idmotivo"
+                          tt-motivos-cancel-debaut.dsmotivo = xText:NODE-VALUE WHEN xField:NAME = "dsmotivo".
+               END.            
+               
+           END.                
+    
+      END.
+
+    SET-SIZE(ponteiro_xml) = 0. 
+    
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
+    
+   
+    RETURN "OK".
+
+END PROCEDURE.
 
 PROCEDURE atualiza_inassele:
 
@@ -4659,7 +5906,10 @@ PROCEDURE atualiza_inassele:
    DEF VAR aux_cdcritic AS INT                                     NO-UNDO.
    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
    DEF VAR aux_vlrantes AS INTEGER                                 NO-UNDO.
-   DEF VAR aux_vldepois AS INTEGER                                 NO-UNDO.        
+   DEF VAR aux_vldepois AS INTEGER                                 NO-UNDO.
+   
+   DEF VAR aux_dsdantes AS CHAR                                    NO-UNDO.
+   DEF VAR aux_dsdepois AS CHAR                                    NO-UNDO.        
   
    ASSIGN aux_cdcritic = 0
           aux_dscritic = ""
@@ -4679,30 +5929,36 @@ PROCEDURE atualiza_inassele:
   IF  NOT AVAILABLE crapatr THEN
       ASSIGN aux_dscritic = "Autorizacao nao encontrada.".
    
-   /*ASSIGN aux_vlrantes = crapatr.inassele
-          aux_vldepois = par_inassele.*/
+   ASSIGN aux_vlrantes = crapatr.inassele
+          aux_vldepois = par_inassele.
    
    IF  aux_dscritic = "" OR aux_cdcritic = 0 THEN
        DO:  
           /* 1- Por senha / 2 - Autorizacao Assinada */
-          /*ASSIGN crapatr.inassele = par_inassele.   */
-            VALIDATE crapatr.            
-            RELEASE crapatr.
+          ASSIGN crapatr.inassele = par_inassele.             
             
-          UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " +
-                          STRING(TIME,"HH:MM:SS") + "' --> '"  +
-                          " Operador " + par_cdoperad +
-                          " Incluir/Alterou '    'a Fatura " + STRING(par_cdrefere) +
-                          " - " + "Conta " +
-                          STRING(par_nrdconta,"zzzz,zzz,9") + 
-                          "' --> '" + "inassele" +
-                          " de " + STRING(aux_vlrantes) +
-                          " para " + STRING(aux_vldepois) +
-                          " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
-                          "/log/autori.log").
+          IF  aux_vlrantes = 2 THEN
+              ASSIGN aux_dsdantes = "NAO"
+                     aux_dsdepois = "SIM".
+          ELSE 
+              ASSIGN aux_dsdepois = "NAO"
+                     aux_dsdantes = "SIM".
+
+          IF  aux_vlrantes <> aux_vldepois THEN          
+              UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " +
+                              STRING(TIME,"HH:MM:SS") + "' --> '"  +
+                              " Operador " + par_cdoperad +
+                              " Incluir/Alterou a Fatura " + STRING(par_cdrefere) +
+                              " - " + "Conta " +
+                              STRING(par_nrdconta,"zzzz,zzz,9") + 
+                              "' --> '" + "Assinatura Eletronica" +
+                              " de " + aux_dsdantes +
+                              " para " + aux_dsdepois +
+                              " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
+                              "/log/autori.log").
           
        END.
-   ELSE
+   ELSE 
        DO:
             RUN gera_erro ( INPUT par_cdcooper,
                             INPUT par_cdagenci,
@@ -4726,6 +5982,6 @@ PROCEDURE atualiza_inassele:
        END.   
    
    
-   RETURN "OK".
-                            
-END PROCEDURE.
+    RETURN "OK".
+    
+END PROCEDURE.    
