@@ -830,7 +830,7 @@ function controlaFoco(opcao) {
             formid = $('#divConteudoOpcao form');
             IdForm = $(formid).attr('id');//Seleciona o id do formulario
             if (IdForm == "frmDadosLimiteCredito") {
-                $(this).find("#divBotoes > a").attr({ href: '##' });
+                $(this).find("#divBotoes > a").attr({ href: 'javascript:void(null);' });
                 $(this).find("#divBotoes > a").first().addClass("FirstInputModal").focus().css({ 'position': 'relative', 'top': '-3px' });
                 $(this).find("#divBotoes > a img").first().css({ 'margin': '0 0 0 -3px' });
                 $(this).find("#divBotoes > a").last().addClass("LastInputModal").css({ 'position': 'relative', 'top': '-4px' });
@@ -866,6 +866,8 @@ function controlaFoco(opcao) {
                     $(this).bind('keydown', function (e) {
 
                         if (e.keyCode == 13) {
+                            e.preventDefault();
+                            e.stopImmediatePropagation();
                             $(".LastInputModal").click();
                         }
                         if (e.keyCode == 16) {
@@ -887,6 +889,8 @@ function controlaFoco(opcao) {
             $(".FluxoNavega").focus(function () {
                 $(this).bind('keydown', function (e) {
                     if (e.keyCode == 13) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
                         $(this).click();
                     }
                 });

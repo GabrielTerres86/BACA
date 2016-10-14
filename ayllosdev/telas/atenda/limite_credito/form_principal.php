@@ -121,7 +121,7 @@
 				<? } ?>
 				
 				<?php if ($flgdigit == 'yes'){   ?>
-					<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $tpdocmto ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos("z.zzz.zz9",$nrctrlim,"."); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank">
+					<a onclick="window.open('http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $tpdocmto ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos("z.zzz.zz9",$nrctrlim,"."); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>', '_blank')">						
 						<img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" />
 					</a> 
 				<?php } ?>

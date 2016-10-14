@@ -27,6 +27,10 @@ BEGIN
                 25/07/2015 - Ajuste no procedimento da chamada da rotina webservice. Chamar
                              a rotina somente quando existem títulos a serem enviados. (Rafael)
 
+				13/10/2016 - Ao buscar o bairro, se estiver nulo, utilizar um espaco em branco,
+				             pois estava causando problemas no layout do arquivo.
+							 Heitor (Mouts) - Chamado 534526
+
   .......................................................................... */
 
   DECLARE
@@ -273,7 +277,7 @@ BEGIN
       SELECT sab.nrdconta
             ,sab.dsendsac
             ,sab.cdtpinsc
-            ,sab.nmbaisac
+            ,nvl(sab.nmbaisac,' ') nmbaisac
             ,sab.nrendsac
             ,sab.nrinssac
             ,sab.complend
@@ -1429,4 +1433,3 @@ BEGIN
 
 END pc_crps693;
 /
-

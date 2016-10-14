@@ -41,15 +41,15 @@
                   27/04/2016 - Ajuste para que departamento CANAIS possa ter acesso 
                                a todas as funções da tela, conforme solicitadono
                                chamado 441903. (Kelvin)
-
+                               
                   04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
 
                   28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobrança (Odirlei/AMcom)
 
                   11/07/2016 - Ajustes para apenas solicitar senha para as alterações
                                de desconto manuais.
-                               PRJ213 - Reciprocidade (odirlei-AMcom)    
-                               
+                               PRJ213 - Reciprocidade (odirlei-AMcom)                  
+
 
                   18/08/2016  - Adicionado função controlaFoco.(Evandro - RKAM).
 
@@ -152,7 +152,7 @@ function habilitaSetor(setorLogado) {
  }
  
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, dssitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
+function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
 
     var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
 
@@ -1250,8 +1250,8 @@ function abrirReciprocidadeCalculo() {
 
     showMsgAguardo('Aguarde, carregando ...');
 
-    exibeRotina($('#divUsoGenerico'));
-
+    exibeRotina($('#divUsoGenerico'));  
+    
     var cddopcao = $('#cddopcao','#frmConsulta').val();
     var idrecipr = $('#idrecipr','#frmConsulta').val();
     var idprmrec = $('#idprmrec','#frmConsulta').val();
@@ -1367,8 +1367,8 @@ function verificaSenhaCoordenador() {
         // Acumular categorias conforme reciprocidade ou não
         var tot_percdesc_campo = 0;        
         $(".clsCatFlrecipr0").each(function (index) {
-        tot_percdesc_campo = tot_percdesc_campo + converteMoedaFloat($(this).val());
-    });
+            tot_percdesc_campo = tot_percdesc_campo + converteMoedaFloat($(this).val());
+        });
         var tot_percdesc_recipr_campo = 0;
         $(".clsCatFlrecipr1").each(function (index) {
             tot_percdesc_recipr_campo = tot_percdesc_recipr_campo + converteMoedaFloat($(this).val());
@@ -1376,8 +1376,8 @@ function verificaSenhaCoordenador() {
 
         // Se foi alterado o valor de descontos manuais ou de Reciprocidade
         if (tot_percdesc_campo != tot_percdesc || tot_percdesc_recipr_campo != tot_percdesc_recipr) {
-        flsolicita = true;
-    }
+            flsolicita = true;
+        }
 
     }
     // Se for necessário solicitar senha do coordenador
