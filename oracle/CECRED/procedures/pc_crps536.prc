@@ -65,6 +65,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                             criticas que necessitam de lancamentos manuais 
                             pela contabilidade. (Jaison/Marcos-Supero)
 
+			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
+							da rotina padrão. (Rodrigo)
 .............................................................................*/
 
   -- CURSORES
@@ -159,7 +161,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
 
   -- REGISTROS
   rw_crapcop      cr_crapcop%ROWTYPE;
-  rw_craptab      TABE0001.cr_craptab%ROWTYPE;
   rw_gncptit      cr_gncptit%ROWTYPE;
 
   -- TIPOS
@@ -225,6 +226,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
   vr_exc_saida     EXCEPTION;
   vr_exc_fimprg    EXCEPTION;
 
+  vr_dstextab craptab.dstextab%TYPE;
 
 BEGIN
   -- Código do programa
@@ -292,22 +294,18 @@ BEGIN
   CLOSE cr_crapcop;
 
   -- Verifica se a Cooperativa esta preparada para executa COMPE 85 - ABBC
-  OPEN  TABE0001.cr_craptab(pr_cdcooper   -- pr_cdcooper
-                           ,'CRED'        -- pr_nmsistem
-                           ,'GENERI'      -- pr_tptabela
-                           ,0             -- pr_cdempres
-                           ,'EXECUTAABBC' -- pr_cdacesso
-                           ,0);           -- pr_tpregist
-  FETCH TABE0001.cr_craptab INTO rw_craptab;
+  vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+									       ,pr_nmsistem => 'CRED'
+										   ,pr_tptabela => 'GENERI'
+										   ,pr_cdempres => 0
+										   ,pr_cdacesso => 'EXECUTAABBC'
+										   ,pr_tpregist => 0);
 
   -- Se não encontrar registros ou o registro encontrado está com
   -- indicador igual a SIM, sai do programa
-  IF TABE0001.cr_craptab%NOTFOUND OR NVL(rw_craptab.dstextab,'N') <> 'SIM' THEN
+  IF NVL(vr_dstextab,'N') <> 'SIM' THEN
     RAISE vr_exc_fimprg;
   END IF;
-
-  -- Fecha o cursor
-  CLOSE TABE0001.cr_craptab;
 
   -- Busca do diretório base da cooperativa para a geração de relatórios
   vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop

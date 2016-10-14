@@ -125,6 +125,8 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
    --
   --            10/05/2016 - Ajustes referente a conversão da tela ATURAT
   --                         (Andrei - RKAM).
+  --
+  --			13/10/2016 - Ajuste na leitura da craptab para utilização de cursor padrão (Rodrigo)
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -3343,6 +3345,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
 
     ............................................................................. */
     DECLARE
+	  /* Cursor genérico de parametrização */
+      CURSOR cr_craptab(pr_nmsistem IN craptab.nmsistem%TYPE
+                       ,pr_tptabela IN craptab.tptabela%TYPE
+                       ,pr_cdempres IN craptab.cdempres%TYPE
+                       ,pr_cdacesso IN craptab.cdacesso%TYPE
+                       ,pr_tpregist IN craptab.tpregist%TYPE) IS
+        SELECT tab.cdcooper
+              ,tab.dstextab
+          FROM craptab tab
+         WHERE tab.cdcooper        = pr_cdcooper
+           AND UPPER(tab.nmsistem) = pr_nmsistem
+           AND UPPER(tab.tptabela) = pr_tptabela
+           AND tab.cdempres        = pr_cdempres
+           AND UPPER(tab.cdacesso) = pr_cdacesso
+           AND tab.tpregist        = pr_tpregist;
+
       -- Indice para gravacao nas temptables
       vr_contador NUMBER;
 	  vr_percentu_temp NUMBER;
@@ -3350,8 +3368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       -- Se ainda não foram carregadas as informações na tabela de memória de provisao risco
       IF vr_tab_provisao_cl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
-        FOR rw_craptab IN TABE0001.cr_craptab(pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsistem => 'CRED'
+        FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
                                              ,pr_tptabela => 'GENERI'
                                              ,pr_cdempres => '00'
                                              ,pr_cdacesso => 'PROVISAOCL'
@@ -3382,8 +3399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       -- Se ainda não foram carregadas as informações na tabela de memória de provisao rating
       IF vr_tab_provisao_tl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
-        FOR rw_craptab IN TABE0001.cr_craptab(pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsistem => 'CRED'
+        FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
                                              ,pr_tptabela => 'GENERI'
                                              ,pr_cdempres => '00'
                                              ,pr_cdacesso => 'PROVISAOTL'
