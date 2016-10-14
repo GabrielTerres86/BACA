@@ -4,14 +4,14 @@
    Sistema : CAIXA ON-LINE - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro - (RKAM)
-   Data    : Agosto/2016                        Ultima atualizacao: 23/08/2016
+   Data    : Agosto/2016                        Ultima atualizacao: 14/10/2016
 
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
-   Objetivo  : Exibie a tela do BL - Cartão Assinatura.
+   Objetivo  : Exibi a tela - Cartão Assinatura.
 
-   Alteracoes: 
+   Alteracoes: 14/10/2016 - Removido condição que iniciava um novo BL. - (Evandro - Mouts)
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -66,6 +66,7 @@ DEF TEMP-TABLE ab_unmap
 DEFINE VARIABLE de_troco     AS DECIMAL      NO-UNDO.
 DEFINE VARIABLE aux_dsindent AS CHARACTER    NO-UNDO.
 DEFINE VARIABLE aux_nrdconta AS CHARACTER    NO-UNDO.
+DEFINE VARIABLE aux_cooper   AS CHARACTER    NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -217,34 +218,6 @@ PROCEDURE process-web-request:
   IF REQUEST_method = "Get" AND v_pac <> "0" AND v_caixa <> "0" THEN
   DO: 
 
-      FIND FIRST crapcbl WHERE crapcbl.cdcooper = crapcop.cdcooper   AND
-                               crapcbl.cdagenci = INT(v_pac)         AND
-                               crapcbl.nrdcaixa = INT(v_caixa)
-                               EXCLUSIVE-LOCK NO-ERROR.
-
-      IF  NOT AVAIL crapcbl  THEN 
-          DO:
-
-              CREATE crapcbl.
-              ASSIGN crapcbl.cdcooper = crapcop.cdcooper
-                     crapcbl.cdagenci = INT(v_pac)
-                     crapcbl.nrdcaixa = INT(v_caixa).
-          END.
-
-     /* Se o BL nao tem valores, limpa a identificacao */
-     IF   crapcbl.vlinicial = 0   AND
-          crapcbl.vlcompcr  = 0   AND
-          crapcbl.vlcompdb  = 0   THEN
-          ASSIGN crapcbl.blidenti  = " "
-                 crapcbl.nrdconta  = 0
-                 de_troco          = 0.
-
-      VALIDATE crapcbl.
-
-      ASSIGN de_troco = crapcbl.vlinicial + crapcbl.vlcompdb - crapcbl.vlcompcr
-             v_ident  = crapcbl.blidenti
-             vh_foco = "3".
-
       {&OUT}
         "<HTML>":U SKIP
         "<HEAD>":U SKIP
@@ -291,7 +264,7 @@ PROCEDURE process-web-request:
          '<center>' SKIP
           '<table width="100%" class=cabtab>' SKIP
            ' <tr>' SKIP
-             '  <td class=titulo>BL - Cartão Assinatura</td>' SKIP
+             '  <td class=titulo>BL - Cartão Assinaturasss</td>' SKIP
              '  <td width="21%" class=programa align="right">P.BL&nbsp; V.1.10</td>' SKIP
            ' </tr>' SKIP
           '</table>' SKIP
@@ -355,38 +328,14 @@ PROCEDURE process-web-request:
         (get-value("ok") <> ""       AND 
          get-value("incooper") = "1" AND
          get-value("v_conta") <> "") THEN DO:
-
-      FIND FIRST crapcbl WHERE crapcbl.cdcooper = crapcop.cdcooper   AND
-                               crapcbl.cdagenci = INT(v_pac)         AND
-                               crapcbl.nrdcaixa = INT(v_caixa)
-                               EXCLUSIVE-LOCK NO-ERROR.
-
-      IF NOT AVAIL crapcbl  THEN
-      DO:           
-          CREATE crapcbl.
-          ASSIGN crapcbl.cdcooper = crapcop.cdcooper
-                 crapcbl.cdagenci = INT(v_pac)
-                 crapcbl.nrdcaixa = INT(v_caixa).
-      END.
-
-      ASSIGN crapcbl.vlinicial = 0
-             crapcbl.vlcompcr  = 0
-             crapcbl.vlcompdb  = 0
-             crapcbl.blidenti  = SUBSTRING(get-value("v_ident"),1,40) + " " + STRING(TIME,"HH:MM:SS")
-			 aux_nrdconta = get-value("v_conta").
+         aux_nrdconta = get-value("v_conta").
+		 aux_cooper = get-value("incooper").
+      
 
       IF  get-value("incooper") = "1" THEN
-          ASSIGN crapcbl.nrdconta  = DECI(REPLACE(get-value("v_conta"), ".", "")).
 
-      VALIDATE crapcbl.
-
-    /* Direciona o opener da janela de  BL. Caso forem usadas as teclas F9/F8/F7, o elemento opener assumido
-       não é o menu, e sim o próprio frame das rotinas (pane), portanto existem alguns parâmetros para controle.
-       - Quando chamado via mouse (opener = menu) ele irá executar o evento onLoad do frame menu.
-       - Quando chamado via teclado (opener = pane) ele irá direcionar para a rotina 2, e lá há um tratamento.
-    */
-	 {&OUT} '<script>window.open("http://0303hmlged01/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=' + aux_nrdconta + '&cooperativa=1", "_blank", "width=800,height=600");</script>'.
-	
+	 {&OUT} '<script>window.open("http://ged.cecred.coop.br/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=' + aux_nrdconta + '&cooperativa=' + aux_cooper + '", "_blank", "width=800,height=600");</script>'.
+	 
      END.
      /* Se não pressionou o botão (eventos de submit();) */
      ELSE DO:
