@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Ze Eduardo/Mirtes/Julio
-   Data    : Maio/2005.                         Ultima atualizacao: 23/06/2016
+   Data    : Maio/2005.                         Ultima atualizacao: 14/10/2016
 
    Dados referentes ao programa:
 
@@ -82,10 +82,13 @@
                             
                12/04/2016 - Correcao exclusao relatorio 387 (Lucas Ranghetti/Fabricio)  
                
-			   23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 
-			                6 - WebService (Marcos)                          
+			         23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 
+			                      6 - WebService (Marcos)                          
 
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
+               
+               14/10/2016 - Adicionar ordecacao para o registro "B" tpdcontr = 3, listar 
+                            primeiro os cancelados (Lucas Ranghetti #506030)
 ............................................................................. */
 
 { includes/var_batch.i {1} }
@@ -216,81 +219,161 @@ DO aux_contatip = 1 TO 3:
             aux_exisdare = FALSE
             aux_exisgnre = FALSE. 
 
-    FOR EACH gncvuni WHERE NOT gncvuni.flgproce
-                       AND gncvuni.tpdcontr = aux_contatip
-                     BREAK BY gncvuni.cdconven 
-                           BY gncvuni.cdcooper:
-        
-        ASSIGN aux_verifpac = INT(SUBSTR(gncvuni.dsmovtos, 4, 2)).
-        
-        IF   FIRST-OF(gncvuni.cdconven) THEN
-             DO:
-                 FIND gnconve WHERE gnconve.cdconven = gncvuni.cdconven
-                                    NO-LOCK NO-ERROR.
-        
-                 IF   AVAILABLE gnconve   THEN
-                      DO:
-                          ASSIGN aux_nmempres = TRIM(gnconve.nmempres)
-                                 aux_nrbranco = 10 - 
-                                               ROUND(LENGTH(aux_nmempres) / 2,0)
-                                 aux_nmempres = FILL(" ", aux_nrbranco) + 
-                                                aux_nmempres                   
-                                 aux_flgfirst = TRUE
-                                 aux_nrseqdig = 0
-                                 tot_vlfatura = 0.
-           
-                          glb_dscritic = "Executando Convenio - " + 
-                                         STRING(aux_nmempres).
+    IF  aux_contatip = 1 OR 
+        aux_contatip = 2 THEN
+        DO:        
+            FOR EACH gncvuni WHERE NOT gncvuni.flgproce
+                               AND gncvuni.tpdcontr = aux_contatip
+                             BREAK BY gncvuni.cdconven 
+                                   BY gncvuni.cdcooper:
+                
+                ASSIGN aux_verifpac = INT(SUBSTR(gncvuni.dsmovtos, 4, 2)).
+                
+                IF   FIRST-OF(gncvuni.cdconven) THEN
+                     DO:
+                         FIND gnconve WHERE gnconve.cdconven = gncvuni.cdconven
+                                            NO-LOCK NO-ERROR.
+                
+                         IF   AVAILABLE gnconve   THEN
+                              DO:
+                                  ASSIGN aux_nmempres = TRIM(gnconve.nmempres)
+                                         aux_nrbranco = 10 - 
+                                                       ROUND(LENGTH(aux_nmempres) / 2,0)
+                                         aux_nmempres = FILL(" ", aux_nrbranco) + 
+                                                        aux_nmempres                   
+                                         aux_flgfirst = TRUE
+                                         aux_nrseqdig = 0
+                                         tot_vlfatura = 0.
+                   
+                                  glb_dscritic = "Executando Convenio - " + 
+                                                 STRING(aux_nmempres).
+                    
+                                  UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") 
+                                                     + " - " + STRING(TIME,"HH:MM:SS")   
+                                                     + " - " + glb_cdprogra + "' --> '"  
+                                                     + glb_dscritic + " >> log/proc_message.log").
+                              END. /* IF AVAILABLE gnconve */
             
-                          UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") 
-                                             + " - " + STRING(TIME,"HH:MM:SS")   
-                                             + " - " + glb_cdprogra + "' --> '"  
-                                             + glb_dscritic + " >> log/proc_message.log").
-                      END. /* IF AVAILABLE gnconve */
-    
-                 ASSIGN aux_flaglast = FALSE.
+                         ASSIGN aux_flaglast = FALSE.
 
-                 /** Verifica se existem guias da SEFAZ **/
-                 IF   gncvuni.cdconven = 59 THEN     /** DARE **/
-                      DO:
-                         ASSIGN aux_exisdare = TRUE.
-                      END.
-                 ELSE 
-                 IF   gncvuni.cdconven = 60 THEN    /** GNRE **/
-                      DO:
-                          ASSIGN aux_exisgnre = TRUE.
-                      END.                       
-             
-             END. /* IF FIRST-OF... */
-    
-        IF   FIRST-OF(gncvuni.cdcooper)   THEN
-             DO:
-                 FIND crapcop WHERE crapcop.cdcooper = gncvuni.cdcooper
-                                    NO-LOCK NO-ERROR.
-        
-                 IF   NOT AVAILABLE crapcop   THEN
-                      DO:
-                          glb_cdcritic = 651.
-                          RUN fontes/critic.p.
-                          UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999")
-                                             + " - " + STRING(TIME,"HH:MM:SS") 
-                                             + " - " + glb_cdprogra + "' --> '" 
-                                             + glb_dscritic + " >> log/proc_message.log").
-                          UNDO, RETURN.                   
-                      END. /* IF AVAILABLE crapcop */
-             END.
-             
-        IF   LAST-OF(gncvuni.cdconven)   THEN     
-             ASSIGN aux_flaglast = TRUE.
-             
-        CASE gncvuni.tpdcontr:
-            WHEN 1 THEN RUN efetua_geracao_arquivos.             /* Caixa */
-            WHEN 2 THEN RUN efetua_geracao_arquivos_debitos.     /* Deb.Autom. */
-            WHEN 3 THEN RUN efetua_geracao_arquivos_autorizacao. /* Autoriz. Debito */
-        END CASE.
-    
-    END. /* FOR EACH gncvuni */
+                         /** Verifica se existem guias da SEFAZ **/
+                         IF   gncvuni.cdconven = 59 THEN     /** DARE **/
+                              DO:
+                                 ASSIGN aux_exisdare = TRUE.
+                              END.
+                         ELSE 
+                         IF   gncvuni.cdconven = 60 THEN    /** GNRE **/
+                              DO:
+                                  ASSIGN aux_exisgnre = TRUE.
+                              END.                       
+                     
+                     END. /* IF FIRST-OF... */
+            
+                IF   FIRST-OF(gncvuni.cdcooper)   THEN
+                     DO:
+                         FIND crapcop WHERE crapcop.cdcooper = gncvuni.cdcooper
+                                            NO-LOCK NO-ERROR.
+                
+                         IF   NOT AVAILABLE crapcop   THEN
+                              DO:
+                                  glb_cdcritic = 651.
+                                  RUN fontes/critic.p.
+                                  UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999")
+                                                     + " - " + STRING(TIME,"HH:MM:SS") 
+                                                     + " - " + glb_cdprogra + "' --> '" 
+                                                     + glb_dscritic + " >> log/proc_message.log").
+                                  UNDO, RETURN.                   
+                              END. /* IF AVAILABLE crapcop */
+                     END.
+                     
+                IF   LAST-OF(gncvuni.cdconven)   THEN     
+                     ASSIGN aux_flaglast = TRUE.
+                     
+                CASE gncvuni.tpdcontr:
+                    WHEN 1 THEN RUN efetua_geracao_arquivos.             /* Caixa */
+                    WHEN 2 THEN RUN efetua_geracao_arquivos_debitos.     /* Deb.Autom. */                    
+                END CASE.
+            
+            END. /* FOR EACH gncvuni */
+        END.
+    ELSE
+        DO:
+            /* Listar primeiro os cancelamentos para o registro "B" tpdcontr = 3 
+               Posicao (150,1)  1 - cancelamento / 2 - Inclusao */
+            FOR EACH gncvuni WHERE NOT gncvuni.flgproce
+                               AND gncvuni.tpdcontr = aux_contatip
+                             BREAK BY gncvuni.cdconven 
+                                   BY SUBSTRING(gncvuni.dsmovtos,150,1)
+                                   BY gncvuni.cdcooper:
+                
+                ASSIGN aux_verifpac = INT(SUBSTR(gncvuni.dsmovtos, 4, 2)).
+                
+                IF   FIRST-OF(gncvuni.cdconven) THEN
+                     DO:
+                         FIND gnconve WHERE gnconve.cdconven = gncvuni.cdconven
+                                            NO-LOCK NO-ERROR.
+                
+                         IF   AVAILABLE gnconve   THEN
+                              DO:
+                                  ASSIGN aux_nmempres = TRIM(gnconve.nmempres)
+                                         aux_nrbranco = 10 - 
+                                                       ROUND(LENGTH(aux_nmempres) / 2,0)
+                                         aux_nmempres = FILL(" ", aux_nrbranco) + 
+                                                        aux_nmempres                   
+                                         aux_flgfirst = TRUE
+                                         aux_nrseqdig = 0
+                                         tot_vlfatura = 0.
+                   
+                                  glb_dscritic = "Executando Convenio - " + 
+                                                 STRING(aux_nmempres).
+                    
+                                  UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") 
+                                                     + " - " + STRING(TIME,"HH:MM:SS")   
+                                                     + " - " + glb_cdprogra + "' --> '"  
+                                                     + glb_dscritic + " >> log/proc_message.log").
+                              END. /* IF AVAILABLE gnconve */
+            
+                         ASSIGN aux_flaglast = FALSE.
 
+                         /** Verifica se existem guias da SEFAZ **/
+                         IF   gncvuni.cdconven = 59 THEN     /** DARE **/
+                              DO:
+                                 ASSIGN aux_exisdare = TRUE.
+                              END.
+                         ELSE 
+                         IF   gncvuni.cdconven = 60 THEN    /** GNRE **/
+                              DO:
+                                  ASSIGN aux_exisgnre = TRUE.
+                              END.                       
+                     
+                     END. /* IF FIRST-OF... */
+            
+                IF   FIRST-OF(gncvuni.cdcooper)   THEN
+                     DO:
+                         FIND crapcop WHERE crapcop.cdcooper = gncvuni.cdcooper
+                                            NO-LOCK NO-ERROR.
+                
+                         IF   NOT AVAILABLE crapcop   THEN
+                              DO:
+                                  glb_cdcritic = 651.
+                                  RUN fontes/critic.p.
+                                  UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999")
+                                                     + " - " + STRING(TIME,"HH:MM:SS") 
+                                                     + " - " + glb_cdprogra + "' --> '" 
+                                                     + glb_dscritic + " >> log/proc_message.log").
+                                  UNDO, RETURN.                   
+                              END. /* IF AVAILABLE crapcop */
+                     END.
+                     
+                IF   LAST-OF(gncvuni.cdconven)   THEN     
+                     ASSIGN aux_flaglast = TRUE.
+                     
+                CASE gncvuni.tpdcontr:                    
+                    WHEN 3 THEN RUN efetua_geracao_arquivos_autorizacao. /* Autoriz. Debito */
+                END CASE.
+            
+            END. /* FOR EACH gncvuni */
+        END.
     
     IF  aux_contatip = 1        AND
         aux_exisdare = FALSE    THEN
@@ -303,8 +386,6 @@ DO aux_contatip = 1 TO 3:
         DO:
             RUN gera_arquivo_sem_movimento (INPUT 60).
         END.
-    
-    
 
 END. /* FIM do DO aux_contatip = 1 ... */
 
