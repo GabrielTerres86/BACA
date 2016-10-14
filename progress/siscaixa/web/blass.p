@@ -11,7 +11,9 @@
    Frequencia: Diario (on-line)
    Objetivo  : Exibi a tela - Cartão Assinatura.
 
-   Alteracoes: 14/10/2016 - Removido condição que iniciava um novo BL. - (Evandro - Mouts)
+   Alteracoes: 14/10/2016 - Removido condição que iniciava um novo BL.
+                            Adicionado condição que verifica o servidor do GED,
+							para link do cartão assinatura no Smartshare - (Evandro - Mouts)
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12
@@ -61,12 +63,14 @@ DEF TEMP-TABLE ab_unmap
     FIELD v_data      AS CHAR
     FIELD v_msg       AS CHAR
     FIELD vh_foco     AS CHAR
-    FIELD v_ident     AS CHAR.
+    FIELD v_ident     AS CHAR
+	FIELD vh_gedserv  AS CHARACTER FORMAT "X(256)":U.
 
 DEFINE VARIABLE de_troco     AS DECIMAL      NO-UNDO.
 DEFINE VARIABLE aux_dsindent AS CHARACTER    NO-UNDO.
 DEFINE VARIABLE aux_nrdconta AS CHARACTER    NO-UNDO.
 DEFINE VARIABLE aux_cooper   AS CHARACTER    NO-UNDO.
+DEFINE VARIABLE aux_ServSmart   AS CHARACTER    NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -75,7 +79,8 @@ DEFINE VARIABLE aux_cooper   AS CHARACTER    NO-UNDO.
 &ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
 
 /* ********************  Preprocessor Definitions  ******************** */
-
+&Scoped-Define ENABLED-OBJECTS ab_unmap.vh_gedserv
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.vh_gedserv
 &Scoped-define PROCEDURE-TYPE Procedure
 &Scoped-define DB-AWARE no
 
@@ -330,11 +335,16 @@ PROCEDURE process-web-request:
          get-value("v_conta") <> "") THEN DO:
          aux_nrdconta = get-value("v_conta").
 		 aux_cooper = get-value("incooper").
-      
 
+		 ASSIGN vh_gedserv = IF OS-GETENV("PKGNAME") = "pkgprod"
+                  		     THEN 
+							    "ged.cecred.coop.br"
+                             ELSE
+                                "0303hmlged01".
+		 
       IF  get-value("incooper") = "1" THEN
 
-	 {&OUT} '<script>window.open("http://ged.cecred.coop.br/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=' + aux_nrdconta + '&cooperativa=' + aux_cooper + '", "_blank", "width=800,height=600");</script>'.
+	 {&OUT} '<script>window.open("http://' + vh_gedserv + '/smartshare/Clientes/ViewerExterno.aspx?pkey=8O3ky&conta=' + aux_nrdconta + '&cooperativa=' + aux_cooper + '", "_blank", "width=800,height=600");</script>'.
 	 
      END.
      /* Se não pressionou o botão (eventos de submit();) */
