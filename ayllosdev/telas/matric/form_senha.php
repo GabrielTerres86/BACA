@@ -16,7 +16,7 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
-	isPostMethod();	
+	isPostMethod();		
 
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 ?>

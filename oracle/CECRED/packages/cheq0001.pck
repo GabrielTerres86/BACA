@@ -233,7 +233,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            fonte progress (Lucas Ranghetti #422753)
 													 
       			  04/07/2016 - Adicionados busca_taloes_car para geração de relatório
-                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
+                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
+                            
+              13/10/2016 - #497744 Modificada a consulta de cheque sinistrado na rotina 
+                           pc_ver_fraude_chq_extern pois a parte do cmc7 que pertence a
+                           conta tbm contem o código de segurança, que poderá variar (Carlos)
   --------------------------------------------------------------------------------------------------------------- */
 
 
@@ -2968,8 +2972,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
           FROM tbchq_sinistro_outrasif tbchq
          WHERE tbchq.cdbanco    = pr_cdbanco
            AND tbchq.nrcheque   = pr_nrcheque
-           AND tbchq.nrcontachq = pr_nrctachq;
-         rw_tbchq cr_tbchq%ROWTYPE;
+           AND tbchq.cdagencia  = pr_cdagenci           
+           /* nr da conta cadastrada LIKE qlqr str terminando no Conta completa do cmc7  */
+           AND regexp_like(pr_nrctachq, '.*'||tbchq.nrcontachq||'$');
+           
+         rw_tbchq cr_tbchq%ROWTYPE;     
        
       vr_cdcritic  NUMBER:= 0;
       vr_dscritic VARCHAR2(100);
@@ -3007,7 +3014,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                        'Operador: ' || pr_cdoperad;
                        
         -- Caso tenha sinistro, retorna erro abaixo
-        pr_des_erro:= 'Atencao! Operacao nao autorizada. Cheque UNICRED envolvido em sinistro.';
+        pr_des_erro:= 'Atencao! Operacao nao autorizada. Cheque envolvido em sinistro.';
         
         -- Enviar e-mail dos dados deste sinistro
         gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper

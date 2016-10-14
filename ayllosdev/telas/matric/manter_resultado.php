@@ -1,23 +1,23 @@
 <?php
-/*!
-  FONTE        : manter_resultado.php
-  CRIAÇÃO      : Rodolpho Telmo (DB1)
-  DATA CRIAÇÃO : 23/06/2010 
-  OBJETIVO     : Rotina para unificar a análise do resultado do XML para as operações da tela MATRIC
-  --------------
-  ALTERAÇÕES   : 22/02/2011 - Criada tabela para mostrar os Produtos/Servicos ativos quando o cooperado for deminitdo (Jorge)
+	/*!
+	  FONTE        : manter_resultado.php
+	  CRIAÇÃO      : Rodolpho Telmo (DB1)
+	  DATA CRIAÇÃO : 23/06/2010 
+	  OBJETIVO     : Rotina para unificar a análise do resultado do XML para as operações da tela MATRIC
+	  --------------
+	  ALTERAÇÕES   : 22/02/2011 - Criada tabela para mostrar os Produtos/Servicos ativos quando o cooperado for deminitdo (Jorge)
  				
- 				 31/08/2011 - Realizado a chamada da procedure alerta_fraude (Adriano).
+ 					 31/08/2011 - Realizado a chamada da procedure alerta_fraude (Adriano).
 				  
-				 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
+					 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
 				 
-				 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
- 
-				 18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
- 
- 				 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
+					 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
+					
+				     18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
+
+					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
  --------------
- */
+	*/
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
