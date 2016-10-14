@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 23/08/2016
+   Data    : Novembro/98                     Ultima atualizacao: 13/10/2016
 
    Dados referentes ao programa:
 
@@ -411,7 +411,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                28/08/2014 - Projeto Float: criação dos cursores cr_craptit3,  cr_craptit4
                             cr_crapret3 e alteração nas rotinas (Vanessa)
-						  
+
                01/10/2014 - Inclusao do nome da estrutura CRAPLAC na condicao
                             do campo craphis.nmestrut.
 
@@ -429,9 +429,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                24/11/2014 - Retirado reversão dos juros (Jean Michel).
 
-							 10/12/2014 - Correção para gerar linha gerencial 999 em contrapartida
-							              da conta contábil (1621) do histórico 0277.
-														(Lucas Lunelli - SD. 165821)
+               10/12/2014 - Correção para gerar linha gerencial 999 em contrapartida
+                            da conta contábil (1621) do histórico 0277.
+                            (Lucas Lunelli - SD. 165821)
 
                16/12/2014 - Ajustes para gerar os lancamentos do historico 1019
                             (Debito Automatico Sicredi) da mesma forma que gerado
@@ -441,47 +441,47 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             1154, pois estava utilizando a tarifa de Debito Automatico para
                             contabilizar os lancamentos de arrecadacao no caixa.
                             (Chamado 228450) - (Fabrício)
-							
-			         23/01/2015 - Incluso tratamento FINAME (Daniel)					
-                            
+
+               23/01/2015 - Incluso tratamento FINAME (Daniel)
+
                03/02/2014 - Alteracoes na geracao do relatorio contabil para levar em conta os
-                            novos produtos de captacao. 
+                            novos produtos de captacao.
                             (Carlos Rafael Tanholi - Novos Produtos de Captacao)
-                            
+
                03/02/2014 - (Chamado 245712) Agencia com 3 dígitos não integrando no contábil
                             (Tiago Castro - RKAM).
 
-               27/03/2015 - Incluir nrdocmto no cursor do cr_craplcm5, pois estava dando 
+               27/03/2015 - Incluir nrdocmto no cursor do cr_craplcm5, pois estava dando
                             diferença contabil (Lucas Ranghetti #270081)
-                            
+
                29/04/2015 - Proj. 186 - Separacao de informacoes em PF e PJ, dados
                             para contabilidade. Criando arquivo AAMMDD_OP_CRED.txt
                             (Andre Santos - SUPERO)
 
                15/07/2015 - Ajustar cursor cr_crapret3 para que sejam incluidos os
-                            os 76 e 77 no cdocorre referente a liquidação de boletos 
+                            os 76 e 77 no cdocorre referente a liquidação de boletos
                             do projeto de Cooperativa Emite e Expede.
                             (Douglas - Chamado 307240)
 
                25/08/2015 - Ajustar cursores cr_crapret3 e cr_craptit4 referente
                             ao pagamento de emprestimo c/ boleto - projeto 210. (Rafael)
-			   
-               23/09/2015 - Adicionado relatorio das contas que recebem o ajuste com 
-                            historicos sem credito em conta, para o CRPS249. 
+
+               23/09/2015 - Adicionado relatorio das contas que recebem o ajuste com
+                            historicos sem credito em conta, para o CRPS249.
                             Projeto 214- projeto 214. (Lombardi)
 
                23/09/2015 - Incluindo calculo de pagamentos GPS.
                              (André Santos - SUPERO)
-	                    
+
                05/10/2015 - #334784 Correção dos cursores cr_craplcm4 e cr_craplcm5, com
                             inclusão da cláusula craplcm.dtmvtolt = craplau.dtdebito.
                             Inclusão da cláusula craplcm.nrdocmto = craplau.nrdocmto no cursor
                             cr_craplcm4 (Carlos)
-                            
-               05/11/2015 - PRJ214 - Ajuste na conta contábil de debito quando convênio DPVAT 
+
+               05/11/2015 - PRJ214 - Ajuste na conta contábil de debito quando convênio DPVAT
                             (Marcos-Supero)
-                            
-               06/11/2015 - Comentado os filtros "vlslfmes > 0" devido a divergencias no relatório 
+
+               06/11/2015 - Comentado os filtros "vlslfmes > 0" devido a divergencias no relatório
                             de Razão Contábil. (Renato - Supero)
 
                10/11/2015 - Incluso tratamento dos históricos de pagtos de boletos de emprestimo
@@ -495,11 +495,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                15/02/2016 - Utilizado procedure pc_escreve_xml da package gene0002
                             para criar o arquivo xml do relatório final. (Lombardi)
-               
+
                23/02/2016 - Inclusao de consulta via GENE0001.fn_param_sistema para
                             historicos sem credito em conta corrente para o relatorio
                             crrl708(Jean Michel).
-                                           
+
                22/03/2016 - Incluido bloco para Contabilizacao Despesa Sicredi
                             para GPS (Guilherme/SUPERO)
 
@@ -514,8 +514,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
 														
-							 23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
-							              na leitura do cursor cr_crapepr. (Reinert)
+			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+			                na leitura do cursor cr_crapepr. (Reinert)   
+
+               13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
+			                (Daniel)
                             
 ............................................................................ */
   -- Buscar os dados da cooperativa
@@ -621,10 +624,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select dstextab
       from craptab
      where craptab.cdcooper = pr_cdcooper
-       and craptab.nmsistem = 'CRED'
-       and craptab.tptabela = pr_tptabela
+       and UPPER(craptab.nmsistem) = 'CRED'
+       and UPPER(craptab.tptabela) = pr_tptabela
        and craptab.cdempres = pr_cdempres
-       and craptab.cdacesso = pr_nrdctabb
+       and UPPER(craptab.cdacesso) = pr_nrdctabb
        and craptab.tpregist = pr_cdbccxlt;
   rw_craptab    cr_craptab%rowtype;
   -- Rejeitados na integração
@@ -686,8 +689,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select dstextab
       from craptab
      where craptab.cdcooper = pr_cdcooper
-       and craptab.tptabela = pr_tptabela
-       and craptab.cdacesso = pr_nrdctabb;
+       and UPPER(craptab.tptabela) = pr_tptabela
+       and UPPER(craptab.cdacesso) = pr_nrdctabb;
   -- Tarifa dos históricos
   cursor cr_crabthi (pr_cdcooper in crapthi.cdcooper%type,
                      pr_cdhistor in crapthi.cdhistor%type,
@@ -1155,7 +1158,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
   -- Guias de previdência social
   cursor cr_gps_gerencial(pr_cdcooper in craplgp.cdcooper%type,
-                     pr_dtmvtolt in craplgp.dtmvtolt%type) is
+                          pr_dtmvtolt in craplgp.dtmvtolt%type) is
     select vlr.cdagenci,
            sum(vlr.vlrtotal) vlrtotal,
            count(*) qttottrf
@@ -1179,7 +1182,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      order by vlr.cdagenci;
   -- Despesas SICREDI GPS
   cursor cr_gps_despesas (pr_cdcooper in craplgp.cdcooper%type,
-                     pr_dtmvtolt in craplgp.dtmvtolt%type) is
+                          pr_dtmvtolt in craplgp.dtmvtolt%type) is
     select tmp.cdagenci,
            sum(tmp.vlrtotal) vlrtotal,
            count(*) qttottrf
@@ -1324,7 +1327,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        and craplcm.cdhistor = pr_cdhistor
      group by cdagetfn
      order by cdagetfn;
-	 
+
    -- FINAME BNDES
   CURSOR cr_craplcm7 (pr_cdcooper IN craplcm.cdcooper%TYPE,
                       pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
@@ -1335,7 +1338,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      WHERE craplcm.cdcooper = pr_cdcooper
        AND craplcm.dtmvtolt = pr_dtmvtolt
        AND craplcm.cdhistor = pr_cdhistor
-     GROUP BY cdcooper; 	 
+     GROUP BY cdcooper;
 
   cursor cr_crapcon (pr_cdcooper in crapcon.cdcooper%type) is
     select crapcon.cdempcon,
@@ -1716,7 +1719,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       sld.cdcooper = pr_cdcooper;
 
   rw_crapsld_tot cr_crapsld_tot%ROWTYPE;
-  
+
   CURSOR cr_crapsld_age(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
       SELECT NVL(SUM(sld.vljuresp),0) AS vljuresp
           ,ass.cdagenci
@@ -1733,24 +1736,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
   -- cursor de consulta de produtos que possuem aplicacoes
   CURSOR cr_crapcpc IS
-    SELECT crapcpc.cdprodut 
+    SELECT crapcpc.cdprodut
           ,crapcpc.nmprodut
           ,crapcpc.cdhsnrap
       FROM crapcpc;
-  
+
   -- cursor de consulta de aplicacoes
   CURSOR cr_craprac(pr_cdcooper crapcop.cdcooper%TYPE
                    ,pr_cdprodut crapcpc.cdprodut%TYPE) IS
-    SELECT craprac.vlslfmes, 
-           craprac.nrdconta, 
+    SELECT craprac.vlslfmes,
+           craprac.nrdconta,
            craprac.nraplica,
            craprac.idsaqtot
-      FROM crapcpc, craprac 
+      FROM crapcpc, craprac
      WHERE craprac.cdprodut = crapcpc.cdprodut
-       AND craprac.cdcooper = pr_cdcooper 
+       AND craprac.cdcooper = pr_cdcooper
        AND craprac.cdprodut = pr_cdprodut
        AND craprac.idcalorc = 0;
-       
+
   CURSOR cr_crapepr (pr_cdcooper crapcop.cdcooper%TYPE
                     ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
     SELECT epr.nrdconta
@@ -1785,26 +1788,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_pf_pj_op_cred IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
-       
+
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_age_ope_cred is table of typ_pf_pj_op_cred INDEX BY PLS_INTEGER;
-  
+
   -- PL/Table principal para gravar dados em AAMMDD_OP_CREDI.txt
   TYPE typ_arq_op_cred is table of typ_age_ope_cred INDEX BY PLS_INTEGER;
-  
+
   -- Registro totais dos históricos para o relatório
   TYPE reg_tot_his_rel is record (cdhistor NUMBER(5)
                                  ,dshistor VARCHAR2(100)
                                  ,vllanmto NUMBER(25,2));
-  
+
   -- PL/Table contendo informações totais dos históricos para o relatório
   TYPE typ_tot_his_rel is TABLE OF reg_tot_his_rel INDEX BY PLS_INTEGER;
-  
+
   tb_tot_his_rel typ_tot_his_rel;
-  
+
   -- Variaveis referencia de PL-Table
   vr_arq_op_cred   typ_arq_op_cred;
-       
+
   -- PL/Table contendo informações das agências
   type typ_agencia is record (vr_qttottrf      number(10),
                               vr_qttarcmp      number(10),
@@ -1957,14 +1960,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_qtlanmto_fat        number(10);
   -- Auxiliar
   vr_incrapebn           NUMBER;
-  
+
   -- Variaveis para relatorio
   vr_relatorio_epr       CLOB;
   vr_texto_relatorio     VARCHAR2(32767);
   vr_nom_direto          VARCHAR2(100);
   vr_nom_arquivo         VARCHAR2(100);
   vr_chave               PLS_INTEGER;
-  
+
   vr_indice_pa           NUMBER;
 
   vr_nrctacre            rw_craphis.nrctacrd%TYPE;
@@ -2040,7 +2043,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       vr_tab_agencia2(pr_agencia).vr_cdccuage := 0;
       vr_tab_agencia2(pr_agencia).vr_cdcxaage := 0;
     end if;
-    
+
     -- Se não foi passado o ID do arquivo
     IF pr_cdarquiv IS NOT NULL THEN
        -- Verifica se existe o codigo do arquivo
@@ -2055,7 +2058,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           vr_arq_op_cred(pr_cdarquiv)(pr_agencia)(2) := 0; -- Pessoa Juridica
        END IF;
     END IF;
-    
+
   end;
   -- Insere dados de operações contábeis
   procedure pc_grava_crapopc (pr_cdcooper in crapopc.cdcooper%type,
@@ -2482,7 +2485,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
              crapris.cdagenci,
              DECODE(crapass.inpessoa,3,2,crapass.inpessoa) inpessoa
         from crapris
-            ,crapass        
+            ,crapass
        where crapris.cdcooper = crapass.cdcooper
          and crapris.nrdconta = crapass.nrdconta
          and crapris.cdcooper = pr_cdcooper
@@ -2660,7 +2663,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
          AND craptdb.nrdctabb = crapcob.nrdctabb
          AND craptdb.nrcnvcob = crapcob.nrcnvcob
          AND craptdb.nrdconta = crapcob.nrdconta
-         AND craptdb.nrdocmto = crapcob.nrdocmto       
+         AND craptdb.nrdocmto = crapcob.nrdocmto
          AND craptdb.cdcooper = pr_cdcooper
          AND crapcob.flgregis = pr_flgregis
          AND craptdb.insittit = pr_insittit
@@ -2710,7 +2713,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           AND crapcob.flgregis = pr_flgregis
        GROUP BY crapass.cdagenci
                ,DECODE(crapass.inpessoa,3,2,crapass.inpessoa)
-       ORDER BY crapass.cdagenci;      
+       ORDER BY crapass.cdagenci;
     -- Aplicação RDCA30, RDCA60, RDCPRE
     cursor cr_craprda (pr_cdcooper in craprda.cdcooper%type,
                        pr_tpaplica in craprda.tpaplica%type) is
@@ -2770,11 +2773,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                        rw_crapljd.nrdconta);
         FETCH cr_crapass INTO rw_crapass;
 
-        pc_cria_agencia_pltable(rw_crapass.cdagenci,15);        
+        pc_cria_agencia_pltable(rw_crapass.cdagenci,15);
         -- Separando as informacoes em PF e PJ
         IF rw_crapass.inpessoa = 1 THEN
            vr_arq_op_cred(15)(rw_crapass.cdagenci)(1) := vr_arq_op_cred(15)(rw_crapass.cdagenci)(1) + rw_crapljd.vldjuros;
-           vr_arq_op_cred(15)(999)(1) := vr_arq_op_cred(15)(999)(1) + rw_crapljd.vldjuros;           
+           vr_arq_op_cred(15)(999)(1) := vr_arq_op_cred(15)(999)(1) + rw_crapljd.vldjuros;
         ELSE
            vr_arq_op_cred(15)(rw_crapass.cdagenci)(2) := vr_arq_op_cred(15)(rw_crapass.cdagenci)(2) + rw_crapljd.vldjuros;
            vr_arq_op_cred(15)(999)(2) := vr_arq_op_cred(15)(999)(2) + rw_crapljd.vldjuros;
@@ -3566,7 +3569,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_dshstorc := '"(crps249) REVERSAO DEBITO EXCLUSAO DISPONIVEL."';
     vr_dshcporc := ',2938,';
     pc_proc_lista_orcamento;
-    
+
     -- Procapcred  .............................................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
@@ -3763,13 +3766,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     pc_proc_lista_orcamento;
     -- RECEITA DE DESCONTO DE CHEQUE -- Dados para contabilidade
     -- Inicializa a Pl-Table
-    vr_arq_op_cred(7)(999)(1) := 0; 
+    vr_arq_op_cred(7)(999)(1) := 0;
     vr_arq_op_cred(7)(999)(2) := 0;
     FOR rw_crapljd_age IN cr_crapljd_age(pr_cdcooper,
                                          vr_dtultdia) LOOP
        vr_arq_op_cred(7)(rw_crapljd_age.cdagenci)(rw_crapljd_age.inpessoa) := rw_crapljd_age.vldjuros;
        vr_arq_op_cred(7)(999)(rw_crapljd_age.inpessoa) := vr_arq_op_cred(7)(999)(rw_crapljd_age.inpessoa) + rw_crapljd_age.vldjuros;
-    END LOOP;                                        
+    END LOOP;
     -- Desconto de Titulos .................................................
     for rw_craptdb7 in cr_craptdb7 (pr_cdcooper,
                                     4) loop
@@ -3867,7 +3870,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                         ,0) LOOP
        vr_arq_op_cred(8)(rw_craptdb_age.cdagenci)(rw_craptdb_age.inpessoa) := rw_craptdb_age.vltitulo;
        vr_arq_op_cred(8)(999)(rw_craptdb_age.inpessoa) := vr_arq_op_cred(8)(999)(rw_craptdb_age.inpessoa) + rw_craptdb_age.vltitulo;
-    END LOOP;    
+    END LOOP;
     -- Desconto de título com registro
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
@@ -3903,7 +3906,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                         ,1) LOOP
        vr_arq_op_cred(9)(rw_craptdb_age.cdagenci)(rw_craptdb_age.inpessoa) := rw_craptdb_age.vltitulo;
        vr_arq_op_cred(9)(999)(rw_craptdb_age.inpessoa) := vr_arq_op_cred(9)(999)(rw_craptdb_age.inpessoa) + rw_craptdb_age.vltitulo;
-    END LOOP;     
+    END LOOP;
     -- Provisao de Receita com Desconto de Titulos com registro ............
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
@@ -3938,14 +3941,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Separacao por agencia e por tipo de pessoa -- Dados para contabilidade
     -- Inicializando a Pl-Table
     vr_arq_op_cred(10)(999)(1) := 0;
-    vr_arq_op_cred(10)(999)(2) := 0;    
+    vr_arq_op_cred(10)(999)(2) := 0;
     FOR rw_crapljt_age IN cr_crapljt_age(pr_cdcooper,
                                          vr_dtultdia,
                                          0) LOOP
        -- 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO
        vr_arq_op_cred(10)(rw_crapljt_age.cdagenci)(rw_crapljt_age.inpessoa) := rw_crapljt_age.vldjuros;
        vr_arq_op_cred(10)(999)(rw_crapljt_age.inpessoa) := vr_arq_op_cred(10)(999)(rw_crapljt_age.inpessoa) + rw_crapljt_age.vldjuros;
-    END LOOP;    
+    END LOOP;
     -- Provisao de Receita com Desconto de Titulos .........................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
@@ -3968,7 +3971,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_lsctaorc := ',1646,';
     vr_dshstorc := '"(crps249) RENDA DE DESCONTO DE TITULO C/ REGISTRO."';
     vr_dshcporc := ',2938,';
-    pc_proc_lista_orcamento; 
+    pc_proc_lista_orcamento;
     --
     vr_flgrvorc := true;  -- Lancamento de reversao
     vr_flgctpas := false; -- Conta do ATIVO
@@ -3980,14 +3983,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     -- Separacao por agencia e por tipo de pessoa -- Dados para contabilidade
     -- Inicializando a Pl-Table
     vr_arq_op_cred(11)(999)(1) := 0;
-    vr_arq_op_cred(11)(999)(2) := 0;    
+    vr_arq_op_cred(11)(999)(2) := 0;
     FOR rw_crapljt_age IN cr_crapljt_age(pr_cdcooper,
                                          vr_dtultdia,
                                          1) LOOP
        -- 11 - RENDA DE DESCONTO DE TITULO S/ REGISTRO
        vr_arq_op_cred(11)(rw_crapljt_age.cdagenci)(rw_crapljt_age.inpessoa) := rw_crapljt_age.vldjuros;
        vr_arq_op_cred(11)(999)(rw_crapljt_age.inpessoa) := vr_arq_op_cred(11)(999)(rw_crapljt_age.inpessoa) + rw_crapljt_age.vldjuros;
-    END LOOP;    
+    END LOOP;
     -- Aplicacao RDCA30 ....................................................
     vr_tab_cratorc.delete;
     vr_vltotorc := 0;
@@ -4178,15 +4181,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     vr_dshcporc := ',2938,';
     pc_proc_lista_orcamento;
     --
-   
+
     -- Aplicacoes Novos Produtos de Captacao ...............................
     FOR rw_crapcpc in cr_crapcpc LOOP
       vr_tab_cratorc.delete;
-      vr_vltotorc := 0; 
+      vr_vltotorc := 0;
 
       -- Percorrer novas aplicacoes.
-      FOR rw_craprac in cr_craprac(pr_cdcooper, rw_crapcpc.cdprodut) LOOP       
-      
+      FOR rw_craprac in cr_craprac(pr_cdcooper, rw_crapcpc.cdprodut) LOOP
+
         OPEN cr_crapass (pr_cdcooper,rw_craprac.nrdconta);
         FETCH cr_crapass into rw_crapass;
         CLOSE cr_crapass;
@@ -4201,7 +4204,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            vr_nrctacre := rw_craphis2.nrctacrd;
         END IF;
         CLOSE cr_craphis2;
-        
+
         -- Após o sistema registrar os valores de orçamento dos novos produtos de captação,
         -- seta o campo idcalorc para 1
         IF rw_craprac.idsaqtot > 0 THEN
@@ -4217,8 +4220,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               vr_dscritic := 'Erro ao atualizar CRAPRAC para '|| rw_crapcpc.nmprodut ||', coop '||pr_cdcooper||': '||sqlerrm;
               RAISE vr_exc_saida;
           END;
-        END IF;  
-      END LOOP;     
+        END IF;
+      END LOOP;
 
       --
       vr_flgrvorc := false; -- Lancamento do dia
@@ -4235,10 +4238,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       vr_lsctaorc := ',' || Lpad(vr_nrctacre,4,'0') || ',';
       vr_dshstorc := '"(crps249) REVERSAO DOS DEPOSITOS ' || rw_crapcpc.nmprodut || '."';
       vr_dshcporc := ',2938,';
-      pc_proc_lista_orcamento;  
+      pc_proc_lista_orcamento;
       --
     END LOOP;
-    
+
     --
     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                pr_ind_tipo_log => 2, -- Erro tratado
@@ -4252,7 +4255,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      -- Pl-Table de Reversao
      TYPE typ_tab_reversao
        IS TABLE OF VARCHAR2(32767)
-       INDEX BY BINARY_INTEGER; 
+       INDEX BY BINARY_INTEGER;
 
      -- Registro separando por por agencia e tipo de pessoa
      TYPE typ_reg_historico
@@ -4272,7 +4275,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      vr_input_file     UTL_FILE.file_type;             --> Handle Utl File
      vr_setlinha       VARCHAR2(400);                  --> Linhas do arquivo
      vr_index          NUMBER := 0;
-     
+
      -- Constantes
      vr_dsprefix CONSTANT VARCHAR(20) := 'REVERSAO ';  --> Utilizado para o caso de reversao de contas
 
@@ -4282,8 +4285,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
      -- Variavel de Exception
      vr_exc_erro EXCEPTION;
-     
-     
+
+
      -- Inicializa tabela de Historicos
      PROCEDURE pc_inicia_historico IS
      BEGIN
@@ -4407,23 +4410,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(1542).nrctaori_jur := 7138;
         vr_tab_historico(1542).nrctades_jur := 7033;
         vr_tab_historico(1542).dsrefere_jur := 'MULTA FINANCIAMENTO PRE-FIXADO PAGO PELO AVALISTA - PESSOA JURIDICA';
-     END;  
+     END;
 
      -- Grava no arquivo as informacoes por agencia
      PROCEDURE pc_set_linha(pr_cdarquiv IN NUMBER
-                           ,pr_inpessoa IN NUMBER) IS       
+                           ,pr_inpessoa IN NUMBER) IS
      BEGIN
         -- Gravas as informacoes de valores por agencia
         FOR vr_idx_agencia IN vr_arq_op_cred(pr_cdarquiv).FIRST..vr_arq_op_cred(pr_cdarquiv).LAST LOOP
 
            -- Verifica se existe a informacao de agencia
            IF vr_arq_op_cred(pr_cdarquiv).EXISTS(vr_idx_agencia) THEN
-                
+
               -- Nao considerar o registro 999 na linha
               IF vr_idx_agencia = 999 THEN
                  CONTINUE;
               END IF;
-           
+
               -- Verifica se existe a informacao de tipo de pessoa
               IF vr_arq_op_cred(pr_cdarquiv)(vr_idx_agencia).EXISTS(pr_inpessoa) THEN
                  IF vr_arq_op_cred(pr_cdarquiv)(vr_idx_agencia)(pr_inpessoa) > 0 THEN
@@ -4434,9 +4437,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  END IF;
               END IF;
            END IF;
-        END LOOP;       
+        END LOOP;
      END;
-     
+
      -- Retorna o cabecalho do arquivo AAMMDD_OPCRED.txt
      FUNCTION fn_set_cabecalho(pr_dtarqmv IN DATE
                               ,pr_dtarqui IN DATE
@@ -4455,15 +4458,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
             ||'1434'||','
             ||pr_dsconta;
      END;
-     
+
 
   BEGIN
      -- Inicia Variavel
      pr_dscritic := NULL;
-     
+
      -- Inicializa Pl-Table
      pc_inicia_historico;
-     
+
      -- Busca do diretório onde ficará o arquivo
      vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                                pr_cdcooper => pr_cdcooper,
@@ -4487,11 +4490,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5536,1641,vr_arq_op_cred(2)(999)(1),'"DESCONTO DE CHEQUE - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-                                      
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4502,7 +4505,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1641,5536,vr_arq_op_cred(2)(999)(1),'"'||vr_dsprefix||'DESCONTO DE CHEQUE - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-                
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -4517,11 +4520,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5537,1641,vr_arq_op_cred(2)(999)(2),'"DESCONTO DE CHEQUE - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 2   -- DESCONTO DE CHEQUE - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -4547,8 +4550,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5504,1621,vr_arq_op_cred(3)(999)(1),'"EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */                              
+
+        /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4556,14 +4559,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-                      
+
      IF vr_arq_op_cred(3)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,5504,vr_arq_op_cred(3)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PRICE TR REALIZADOS - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
 
-        /* Deve ser duplicado as linhas separadas por PA */                              
+        /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4591,12 +4594,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         -- Monta cabacalho - Arq 3 - EMPRESTIMOS REALIZADOS. - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1621,5505,vr_arq_op_cred(3)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita                                   
-        
+                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 3   -- EMPRESTIMOS REALIZADOS. - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -4607,22 +4610,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5548,1662,vr_arq_op_cred(4)(999)(1),'"FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(4)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,5548,vr_arq_op_cred(4)(999)(1),'"'||vr_dsprefix||'FINANCIAMENTOS PRICE TR REALIZADOS - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -4631,13 +4634,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(4)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5549,1662,vr_arq_op_cred(4)(999)(2),'"FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -4646,32 +4649,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(4)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 4 - FINANCIAMENTOS REALIZADOS - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1662,5549,vr_arq_op_cred(4)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS REALIZADOS PRICE TR - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 4   -- FINANCIAMENTOS REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(5)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5516,1664,vr_arq_op_cred(5)(999)(1),'"EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4682,7 +4685,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,5516,vr_arq_op_cred(5)(999)(1),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -4706,13 +4709,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(5)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 5 - EMPRESTIMOS PREFIXADO REALIZADOS - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1664,5517,vr_arq_op_cred(5)(999)(2),'"'||vr_dsprefix||'EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 5   -- EMPRESTIMOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -4727,14 +4730,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5562,1667,vr_arq_op_cred(6)(999)(1),'"FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-     
+
      END IF;
 
      IF vr_arq_op_cred(6)(999)(1) > 0 THEN
@@ -4746,7 +4749,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4761,7 +4764,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -4772,11 +4775,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1667,5563,vr_arq_op_cred(6)(999)(2),'"'||vr_dsprefix||'FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 6   -- FINANCIAMENTOS PREFIXADO REALIZADOS - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -4787,7 +4790,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1642,5538,vr_arq_op_cred(7)(999)(1),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -4796,7 +4799,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(7)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5538,1642,vr_arq_op_cred(7)(999)(1),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA"');
@@ -4806,22 +4809,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-     
-     END IF; 
+
+     END IF;
 
      IF vr_arq_op_cred(7)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 7 - RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1642,5539,vr_arq_op_cred(7)(999)(2),'"RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
      END IF;
@@ -4831,11 +4834,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5539,1642,vr_arq_op_cred(7)(999)(2),'"'||vr_dsprefix||'RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 7   -- RECEITA DE DESCONTO DE CHEQUE - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -4846,7 +4849,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5540,1643,vr_arq_op_cred(8)(999)(1),'"DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -4879,7 +4882,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -4889,15 +4892,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         -- Monta cabacalho - Arq 8 - DESCONTO DE TITULO S/ REGISTRO - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1643,5541,vr_arq_op_cred(8)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                      
-        
+                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 8   -- DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-     
+
      END IF;
 
      IF vr_arq_op_cred(9)(999)(1) > 0 THEN
@@ -4905,11 +4908,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5544,1645,vr_arq_op_cred(9)(999)(1),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4924,18 +4927,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(9)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,5545,1645,vr_arq_op_cred(9)(999)(2),'"DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -4944,32 +4947,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(9)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 9 - DESCONTO DE TITULO C/ REGISTRO - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,1645,5545,vr_arq_op_cred(9)(999)(2),'"'||vr_dsprefix||'DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 9   -- DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(10)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 10 - RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1644,5542,vr_arq_op_cred(10)(999)(1),'"RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4980,11 +4983,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5542,1644,vr_arq_op_cred(10)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
-        /* Deve ser duplicado as linhas separadas por PA */ 
+
+        /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -4999,7 +5002,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -5010,7 +5013,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5543,1644,vr_arq_op_cred(10)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 10  -- RENDA DE DESCONTO DE TITULO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -5019,13 +5022,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-   
+
      IF vr_arq_op_cred(11)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5546,vr_arq_op_cred(11)(999)(1),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -5040,7 +5043,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5546,1646,vr_arq_op_cred(11)(999)(1),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -5055,7 +5058,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,1646,5547,vr_arq_op_cred(11)(999)(2),'"RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -5069,8 +5072,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         -- Monta cabacalho - Arq 11 - RENDA DE DESCONTO DE TITULO C/ REGISTRO - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,5547,1646,vr_arq_op_cred(11)(999)(2),'"'||vr_dsprefix||'RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita                                                                         
-        
+                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 11  -- RENDA DE DESCONTO DE TITULO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -5085,14 +5088,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7024,vr_arq_op_cred(12)(999)(1),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-        
+
      END IF;
 
      IF vr_arq_op_cred(12)(999)(1) > 0 THEN
@@ -5100,11 +5103,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,7024,7132,vr_arq_op_cred(12)(999)(1),'"'||vr_dsprefix||'APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
@@ -5115,7 +5118,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7025,vr_arq_op_cred(12)(999)(2),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -5124,28 +5127,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(12)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 12 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,7025,7132,vr_arq_op_cred(12)(999)(2),'"'||vr_dsprefix||'APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 12  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO S/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(13)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 13 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7024,vr_arq_op_cred(13)(999)(1),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -5154,13 +5157,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(13)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 13 - APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,7024,7132,vr_arq_op_cred(13)(999)(1),'"'||vr_dsprefix||'APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -5175,11 +5178,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7132,7025,vr_arq_op_cred(13)(999)(2),'"APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -5190,11 +5193,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,7025,7132,vr_arq_op_cred(13)(999)(2),'"'||vr_dsprefix||'APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-                    
+
         pc_set_linha(pr_cdarquiv => 13  -- APROPRIACAO RECEITA DE TITULO RECEBIDO PARA DESCONTO C/ REGISTRO - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
 
@@ -5205,7 +5208,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7118,7014,vr_arq_op_cred(14)(999)(1),'"PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -5220,7 +5223,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,7014,7118,vr_arq_op_cred(14)(999)(1),'"'||vr_dsprefix||'PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -5229,13 +5232,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(14)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7118,7015,vr_arq_op_cred(14)(999)(2),'"PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
@@ -5245,27 +5248,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
      END IF;
 
-     IF vr_arq_op_cred(14)(999)(2) > 0 THEN     
+     IF vr_arq_op_cred(14)(999)(2) > 0 THEN
         -- Monta cabacalho - Arq 14 - PROVISAO JUROS CH. ESPECIAL - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,7015,7118,vr_arq_op_cred(14)(999)(2),'"'||vr_dsprefix||'PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-        
+
         pc_set_linha(pr_cdarquiv => 14  -- PROVISAO JUROS CH. ESPECIAL - PESSOA JURIDICA
                     ,pr_inpessoa => 2); -- Tipo de Pessoa
-         
+
      END IF;
-                           
+
      IF vr_arq_op_cred(15)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 15 - PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt,btch0001.rw_crapdat.dtmvtolt,7131,7022,vr_arq_op_cred(15)(999)(1),'"APROPRIACAO RECEITA DE CHEQUE RECEBIDO PARA DESCONTO - PESSOA FISICA"');
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto para escrita
-        
+
         /* Deve ser duplicado as linhas separadas por PA */
         pc_set_linha(pr_cdarquiv => 15  -- PROVISAO JUROS CH. ESPECIAL - PESSOA FISICA
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
@@ -5274,7 +5277,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     ,pr_inpessoa => 1); -- Tipo de Pessoa
 
      END IF;
-     
+
      IF vr_arq_op_cred(15)(999)(1) > 0 THEN
         -- Monta cabacalho - Arq 15 - PROVISAO JUROS CH. ESPECIAL - REVERSAO
         vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtopr,btch0001.rw_crapdat.dtmvtopr,7022,7131,vr_arq_op_cred(15)(999)(1),'"'||vr_dsprefix||'APROPRIACAO RECEITA DE CHEQUE RECEBIDO PARA DESCONTO - PESSOA FISICA"');
@@ -5337,18 +5340,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                     -- Verifica se existe reversao
                     IF vr_tab_reversao.COUNT() > 0 THEN
-                      
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                    
+
                        -- escreve a linha de reversao
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
@@ -5356,14 +5359,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                         ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                       
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
@@ -5408,9 +5411,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                       ,btch0001.rw_crapdat.dtmvtopr
                                                       ,7116
                                                       ,7011
-                                                      ,rw_craprej.vlsdapli                   
+                                                      ,rw_craprej.vlsdapli
                                                       ,'"'||vr_dsprefix||'ESTORNO DE JUROS S/EMPRESTIMOS - PESSOA JURIDICA"');
-                       
+
                        vr_tab_reversao(1) := vr_setlinha;
                     END IF;
                  ELSE -- Monta as linhas separadas por agencia
@@ -5421,7 +5424,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                  END IF;
-              END IF;             
+              END IF;
            ELSIF UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'CRAPLEM_ESTFIN' THEN /* FINANCIAMENTO */
               -- Escrever no arquivo somente os registros que o valor for maior que zero
               IF rw_craprej.vlsdapli > 0 THEN
@@ -5430,18 +5433,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                     -- Verifica se existe reversao
                     IF vr_tab_reversao.COUNT() > 0 THEN
-                       
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                       
+
                        -- escreve a linha de reversao
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
@@ -5449,14 +5452,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                   ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                       
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
@@ -5501,9 +5504,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                       ,btch0001.rw_crapdat.dtmvtopr
                                                       ,7141
                                                       ,7027
-                                                      ,rw_craprej.vlsdapli                   
+                                                      ,rw_craprej.vlsdapli
                                                       ,'"'||vr_dsprefix||'ESTORNO DE JUROS S/FINANCIAMENTOS - PESSOA JURIDICA"');
-                       
+
                        vr_tab_reversao(1) := vr_setlinha;
                     END IF;
                  ELSE -- Monta as linhas separadas por agencia
@@ -5518,7 +5521,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            END IF;
 
         ELSIF rw_craprej.cdhistor = 0098 THEN /* JUROS SOBRE EMPR. E FINANC */
-           
+
            IF UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'CRAPLEM' THEN /* EMPRESTIMO */
               -- Escrever no arquivo somente os registros que o valor for maior que zero
               IF rw_craprej.vlsdapli > 0 THEN
@@ -5527,18 +5530,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                     -- Verifica se existe reversao
                     IF vr_tab_reversao.COUNT() > 0 THEN
-                       
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                       
+
                        -- escreve a linha de reversao
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
@@ -5546,14 +5549,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                   ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                       
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
@@ -5598,9 +5601,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                       ,btch0001.rw_crapdat.dtmvtopr
                                                       ,7011
                                                       ,7116
-                                                      ,rw_craprej.vlsdapli                   
+                                                      ,rw_craprej.vlsdapli
                                                       ,'"'||vr_dsprefix||'JUROS SOBRE EMPRESTIMOS - PESSOA JURIDICA"');
-                       
+
                        vr_tab_reversao(1) := vr_setlinha;
                     END IF;
                  ELSE -- Monta as linhas separadas por agencia
@@ -5611,7 +5614,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                                   ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                  END IF;
-              END IF;             
+              END IF;
            ELSIF UPPER(NVL(rw_craprej.dtrefere, ' ')) = 'CRAPLEM_499' THEN /* FINANCIAMENTO */
               -- Escrever no arquivo somente os registros que o valor for maior que zero
               IF rw_craprej.vlsdapli > 0 THEN
@@ -5620,18 +5623,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                     -- Verifica se existe reversao
                     IF vr_tab_reversao.COUNT() > 0 THEN
-                      
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                    
+
                        -- escreve a linha de reversao
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
@@ -5639,14 +5642,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                   ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
-                       
+
                        -- escreve a linha duplicada
                        vr_index := vr_tab_reversao.FIRST;
                        WHILE vr_index IS NOT NULL LOOP
                           -- Ignora o cabecalho de reversao
                           IF vr_index <> 1 THEN
                              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                           ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                           END IF;
                           vr_index := vr_tab_reversao.NEXT(vr_index);
                        END LOOP;
@@ -5691,9 +5694,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                       ,btch0001.rw_crapdat.dtmvtopr
                                                       ,7027
                                                       ,7141
-                                                      ,rw_craprej.vlsdapli                   
+                                                      ,rw_craprej.vlsdapli
                                                       ,'"'||vr_dsprefix||'JUROS SOBRE FINANCIAMENTOS - PESSOA JURIDICA"');
-                       
+
                        vr_tab_reversao(1) := vr_setlinha;
                     END IF;
                  ELSE -- Monta as linhas separadas por agencia
@@ -5706,7 +5709,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                  END IF;
               END IF;
            END IF;
-        
+
         END IF;
 
         -- Verifica se existe o historico na PL-Table
@@ -5718,33 +5721,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
               IF rw_craprej.cdagenci = 0 THEN -- Monta o cabecalho da linha
                  -- Verifica se existe reversao
                  IF vr_tab_reversao.COUNT() > 0 THEN
-                    
+
                     -- escreve a linha duplicada
                     vr_index := vr_tab_reversao.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
                        -- Ignora o cabecalho de reversao
                        IF vr_index <> 1 THEN
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        END IF;
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
-                    
+
                     -- escreve a linha de reversao
                     vr_index := vr_tab_reversao.FIRST;
-                    WHILE vr_index IS NOT NULL LOOP                      
+                    WHILE vr_index IS NOT NULL LOOP
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                               ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                               ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
-                    
+
                     -- escreve a linha duplicada
                     vr_index := vr_tab_reversao.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
                        -- Ignora o cabecalho de reversao
                        IF vr_index <> 1 THEN
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        END IF;
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
@@ -5753,7 +5756,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                     vr_tab_reversao.DELETE;
 
                  END IF;
-                  
+
                  IF rw_craprej.nraplica = 1 THEN -- Pessoa Fisica
                     -- Linha de Cabecalho
                     vr_setlinha := fn_set_cabecalho(btch0001.rw_crapdat.dtmvtolt
@@ -5790,9 +5793,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                    ,btch0001.rw_crapdat.dtmvtopr
                                                    ,vr_tab_historico(rw_craprej.cdhistor).nrctades_jur
                                                    ,vr_tab_historico(rw_craprej.cdhistor).nrctaori_jur
-                                                   ,rw_craprej.vlsdapli                   
+                                                   ,rw_craprej.vlsdapli
                                                    ,'"'||vr_dsprefix||vr_tab_historico(rw_craprej.cdhistor).dsrefere_jur||'"');
-                    
+
                     vr_tab_reversao(1) := vr_setlinha;
                  END IF;
               ELSE -- Monta as linhas separadas por agencia
@@ -5806,21 +5809,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            END IF;
         END IF;
      END LOOP;
-     
+
      -- Quando for o ultimo historico, verifica se existe reversao
      IF vr_tab_reversao.COUNT() > 0 THEN
-        
+
         -- escreve a linha duplicada
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
            -- Ignora o cabecalho de reversao
            IF vr_index <> 1 THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            END IF;
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-        
+
         -- escreve a linha de reversao
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
@@ -5828,29 +5831,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                          ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-        
+
         -- escreve a linha duplicada
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
            -- Ignora o cabecalho de reversao
            IF vr_index <> 1 THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            END IF;
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-        
+
      END IF;
-     
+
      vr_tab_reversao.DELETE;
      vr_index := 0;
-     
+
      -- Leitura do Total de rejeitados na integração -- Pessoa Fisica
      FOR rw_craprej IN cr_craprej2(pr_cdcooper,vr_cdprogra,vr_dtmvtolt,1) LOOP
 
         -- Verifica se existe o historico na PL-Table
         IF vr_tab_historico.EXISTS(rw_craprej.cdhistor) THEN
-          
+
            -- Escrever no arquivo somente os registros que o valor for maior que zero
            IF rw_craprej.vlsdapli > 0 THEN
 
@@ -5858,33 +5861,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                  -- Verifica se existe reversao
                  IF vr_tab_reversao.COUNT() > 0 THEN
-                   
+
                     -- escreve a linha duplicada
                     vr_index := vr_tab_reversao.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
                        -- Ignora o cabecalho de reversao
                        IF vr_index <> 1 THEN
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        END IF;
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
-                 
+
                     -- escreve a linha de reversao
                     vr_index := vr_tab_reversao.FIRST;
-                    WHILE vr_index IS NOT NULL LOOP                      
+                    WHILE vr_index IS NOT NULL LOOP
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                               ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                               ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
-                    
+
                     -- escreve a linha duplicada
                     vr_index := vr_tab_reversao.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
                        -- Ignora o cabecalho de reversao
                        IF vr_index <> 1 THEN
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        END IF;
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
@@ -5931,13 +5934,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                       ,btch0001.rw_crapdat.dtmvtopr
                                                       ,vr_tab_historico(rw_craprej.cdhistor).nrctades_jur
                                                       ,vr_tab_historico(rw_craprej.cdhistor).nrctaori_jur
-                                                      ,rw_craprej.vlsdapli                   
+                                                      ,rw_craprej.vlsdapli
                                                       ,'"'||vr_dsprefix||vr_tab_historico(rw_craprej.cdhistor).dsrefere_jur||'"');
-                       
+
                        vr_tab_reversao(1) := vr_setlinha;
-                    
+
                     END IF;
-                    
+
                  END IF;
               ELSE -- Monta as linhas separadas por agencia
                  vr_index := vr_tab_reversao.COUNT()+1;
@@ -5950,21 +5953,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            END IF;
         END IF;
      END LOOP;
-     
+
      -- Quando for o ultimo historico, verifica se existe reversao
      IF vr_tab_reversao.COUNT() > 0 THEN
-     
+
         -- escreve a linha duplicada
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
            -- Ignora o cabecalho de reversao
            IF vr_index <> 1 THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            END IF;
            vr_index := vr_tab_reversao.NEXT(vr_index);
-        END LOOP;  
-     
+        END LOOP;
+
         -- escreve a linha de reversao
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
@@ -5972,29 +5975,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                          ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-        
+
         -- escreve a linha duplicada
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
            -- Ignora o cabecalho de reversao
            IF vr_index <> 1 THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            END IF;
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-        
+
      END IF;
-     
+
      vr_tab_reversao.DELETE;
      vr_index := 0;
-     
+
      -- Leitura do Total de rejeitados na integração -- Pessoa Fisica
      FOR rw_craprej IN cr_craprej3(pr_cdcooper,vr_cdprogra,vr_dtmvtolt,1) LOOP
 
         -- Verifica se existe o historico na PL-Table
         IF vr_tab_historico.EXISTS(rw_craprej.cdhistor) THEN
-          
+
            -- Escrever no arquivo somente os registros que o valor for maior que zero
            IF rw_craprej.vlsdapli > 0 THEN
 
@@ -6002,33 +6005,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                  -- Verifica se existe reversao
                  IF vr_tab_reversao.COUNT() > 0 THEN
-                 
+
                     -- escreve a linha duplicada
                     vr_index := vr_tab_reversao.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
                        -- Ignora o cabecalho de reversao
                        IF vr_index <> 1 THEN
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        END IF;
                        vr_index := vr_tab_reversao.NEXT(vr_index);
-                    END LOOP;  
-                 
+                    END LOOP;
+
                     -- escreve a linha de reversao
                     vr_index := vr_tab_reversao.FIRST;
-                    WHILE vr_index IS NOT NULL LOOP                      
+                    WHILE vr_index IS NOT NULL LOOP
                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                               ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                               ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
-                    
+
                     -- escreve a linha duplicada
                     vr_index := vr_tab_reversao.FIRST;
                     WHILE vr_index IS NOT NULL LOOP
                        -- Ignora o cabecalho de reversao
                        IF vr_index <> 1 THEN
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                                        ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
                        END IF;
                        vr_index := vr_tab_reversao.NEXT(vr_index);
                     END LOOP;
@@ -6075,13 +6078,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                                       ,btch0001.rw_crapdat.dtmvtopr
                                                       ,vr_tab_historico(rw_craprej.cdhistor).nrctades_jur
                                                       ,vr_tab_historico(rw_craprej.cdhistor).nrctaori_jur
-                                                      ,rw_craprej.vlsdapli                   
+                                                      ,rw_craprej.vlsdapli
                                                       ,'"'||vr_dsprefix||vr_tab_historico(rw_craprej.cdhistor).dsrefere_jur||'"');
-                       
+
                        vr_tab_reversao(1) := vr_setlinha;
-                    
+
                     END IF;
-                    
+
                  END IF;
               ELSE -- Monta as linhas separadas por agencia
                  vr_index := vr_tab_reversao.COUNT()+1;
@@ -6094,21 +6097,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            END IF;
         END IF;
      END LOOP;
-     
+
      -- Quando for o ultimo historico, verifica se existe reversao
      IF vr_tab_reversao.COUNT() > 0 THEN
-       
+
         -- escreve a linha duplicada
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
            -- Ignora o cabecalho de reversao
            IF vr_index <> 1 THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            END IF;
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-     
+
         -- escreve a linha de reversao
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
@@ -6116,20 +6119,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                                          ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-        
+
         -- escreve a linha duplicada
         vr_index := vr_tab_reversao.FIRST;
         WHILE vr_index IS NOT NULL LOOP
            -- Ignora o cabecalho de reversao
            IF vr_index <> 1 THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita                   
+                                            ,pr_des_text => vr_tab_reversao(vr_index)); --> Texto para escrita
            END IF;
            vr_index := vr_tab_reversao.NEXT(vr_index);
         END LOOP;
-        
+
      END IF;
-     
+
      vr_tab_reversao.DELETE;
 
      -- Fechar Arquivo
@@ -6141,11 +6144,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||'>: ' || SQLERRM;
         RAISE vr_exc_erro;
      END;
-     
+
      -- Limpa Pl-Table
      vr_tab_historico.DELETE;
      vr_arq_op_cred.DELETE;
-     
+
 
   EXCEPTION
      WHEN vr_exc_erro THEN
@@ -6283,7 +6286,7 @@ BEGIN
       -- Incluir nome do módulo logado
       gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249_1',
                                  pr_action => vr_cdprogra);
-                                 
+
       pc_crps249_1(pr_cdcooper,
                    vr_dtmvtolt,
                    rw_craphis.nmestrut,
@@ -6338,9 +6341,9 @@ BEGIN
 
     IF (vr_cdhistor <> rw_craprej.cdhistor AND
         vr_vldtotal > 0)                   OR
-			 (vr_cdhistor = rw_craprej.cdhistor  AND
+       (vr_cdhistor = rw_craprej.cdhistor  AND
         vr_vldtotal > 0                    AND
-				rw_craprej.cdagenci = 0)           THEN
+        rw_craprej.cdagenci = 0)           THEN
       -- Incluir o total da quebra
       vr_linhadet := '999,'||trim(to_char(vr_vldtotal, '999999990.00'));
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
@@ -6483,7 +6486,7 @@ BEGIN
              -- 2000 - CREDITO QUITACAO DE EMPRESTIMO
              -- 2001 - DEVOLUCAO BOLETO VENCIDO
              -- 2002 - AJUSTE CONTRATO PROCESSO EM ATRASO
-             -- 2012 - AJUSTE BOLETO (EMPRESTIMO) 
+             -- 2012 - AJUSTE BOLETO (EMPRESTIMO)
             vr_nrdctabb := to_char(rw_craprej.nrctadeb);
           else
             open cr_craptab (pr_cdcooper,
@@ -6706,7 +6709,7 @@ BEGIN
     ELSE
       CLOSE cr_crapscn;
     END IF;
-    
+
     -- Para DPVAT usar conta 4336
     IF rw_crapscn.cdempres = '85' THEN
       vr_nrctasic := 4336;
@@ -6810,14 +6813,14 @@ BEGIN
     open cr_crapscn2 (rw_craplft2.cdempres);
       fetch cr_crapscn2 into rw_crapscn2;
     close cr_crapscn2;
-    
+
     -- Para DPVAT usar conta 4336
     IF rw_crapscn2.cdempres = '85' THEN
       vr_nrctasic := 4336;
     ELSE
       vr_nrctasic := vr_nrctacrd;
     END IF;
-    
+
     --
     vr_linhadet := trim(vr_cdestrut)||
                    trim(vr_dtmvtolt_yymmdd)||','||
@@ -7337,8 +7340,8 @@ BEGIN
                      '4957,'|| -- Conta pendência da singular
                      TRIM(to_char(vr_vltitulo, '99999999999990.00'))||','||
                      '1538,'||
-                     '"(crps249) SUA REMESSA - CONVENIO EMPRESTIMO ' || rw_craptit4.nrconven || '"';      
-    END IF;                     
+                     '"(crps249) SUA REMESSA - CONVENIO EMPRESTIMO ' || rw_craptit4.nrconven || '"';
+    END IF;
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
     vr_linhadet := to_char(rw_craptit4.cdagenci, 'fm000')||','||TRIM(to_char(vr_vltitulo, '999999990.00'));
@@ -8568,7 +8571,7 @@ BEGIN
   end loop;
 
   -- PROCESSAR LANÇAMENTOS DOS TITULOS 085 CREDITADOS AOS COOPERADOS
-  -- MOVIMENTA CONTA 4957 - Boleto de emprestimo (Projeto 210)  
+  -- MOVIMENTA CONTA 4957 - Boleto de emprestimo (Projeto 210)
   for rw_crapret3 in cr_crapret3 (pr_cdcooper => pr_cdcooper,
                                   pr_dtocorre => vr_dtmvtolt) loop
 
@@ -8589,9 +8592,9 @@ BEGIN
                      '4957,'|| -- Conta pendência da singular (C)
                      trim(to_char(rw_crapret3.vlrpagto, '99999999999990.00'))||','||
                      '1538,'||
-                     '"(crps249) SUA REMESSA – CONVENIO EMPRESTIMO ' || to_char(rw_crapret3.nrcnvcob) || '"';      
+                     '"(crps249) SUA REMESSA – CONVENIO EMPRESTIMO ' || to_char(rw_crapret3.nrcnvcob) || '"';
     END IF;
-    
+
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
 
   end loop;  -- Fim do loop crapret3
@@ -9179,7 +9182,7 @@ BEGIN
   else
     vr_cdhistor := 582;
   end if;
-  END IF;     
+  END IF;
   --
   if vr_cdhistor = 582 then
     open cr_crapthi(pr_cdcooper,
@@ -9222,7 +9225,7 @@ BEGIN
   --
 
   for rw_gps_gerencial in cr_gps_gerencial (pr_cdcooper,
-                                vr_dtmvtolt) loop
+                                      vr_dtmvtolt) loop
     --
     vr_vltitulo := rw_gps_gerencial.vlrtotal;
     vr_linhadet := trim(vr_cdestrut)||
@@ -10114,8 +10117,8 @@ BEGIN
                    trim(to_char(vr_vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   end loop;
-  
-  
+
+
   -- LIBERACAO CONTRATO DE FINAME BNDES"
   vr_cdhistor := 1529;
   vr_vllanmto := 0;
@@ -10123,7 +10126,7 @@ BEGIN
   FOR rw_craplcm IN cr_craplcm7 (pr_cdcooper,
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
-                                 
+
     -- 50141211,111214,1632,4451,34000000.00,1434,"LIBERACAO CONTRATO DE FINAME BNDES"
     -- 999,34000000.00
     vr_vllanmto := rw_craplcm.vllanmto;
@@ -10143,7 +10146,7 @@ BEGIN
     --               TRIM(to_char(vr_vllanmto, '999999990.00'));
     --gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
-  
+
   -- ESTORNO LIBERACAO CONTRATO DE FINAME BNDES
   vr_cdhistor := 1530;
   vr_vllanmto := 0;
@@ -10151,7 +10154,7 @@ BEGIN
   FOR rw_craplcm IN cr_craplcm7 (pr_cdcooper,
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
-                                 
+
     -- 50141211,111214,4451,1632,15000000.00,1434,"ESTORNO LIBERACAO CONTRATO DE FINAME BNDES"
     -- 999,15000000.00
     vr_vllanmto := rw_craplcm.vllanmto;
@@ -10171,8 +10174,8 @@ BEGIN
     --               TRIM(to_char(vr_vllanmto, '999999990.00'));
     --gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
-  
-  
+
+
   -- JUROS SOBRE CONTRATO DE FINAME BNDES
   vr_cdhistor := 1531;
   vr_vllanmto := 0;
@@ -10180,7 +10183,7 @@ BEGIN
   FOR rw_craplcm IN cr_craplcm7 (pr_cdcooper,
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
-                                 
+
     -- 50141211,111214,1632,4451,3540000.00,1434,"JUROS SOBRE CONTRATO DE FINAME BNDES"
     -- 999,3540000.00
     vr_vllanmto := rw_craplcm.vllanmto;
@@ -10200,7 +10203,7 @@ BEGIN
     --               TRIM(to_char(vr_vllanmto, '999999990.00'));
     --gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
-  
+
   -- ESTORNO DE JUROS SOBRE CONTRATO DE FINAME BNDES
   vr_cdhistor := 1532;
   vr_vllanmto := 0;
@@ -10208,7 +10211,7 @@ BEGIN
   FOR rw_craplcm IN cr_craplcm7 (pr_cdcooper,
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
-                                 
+
     -- 50141211,111214,4451,1632,2330000.00,1434,"ESTORNO DE JUROS SOBRE CONTRATO DE FINAME BNDES"
     -- 999,2330000.00
     vr_vllanmto := rw_craplcm.vllanmto;
@@ -10229,7 +10232,7 @@ BEGIN
     --gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
 
-  
+
   -- PAGAMENTO PARCELA FINAME
   vr_cdhistor := 1806;
   vr_vllanmto := 0;
@@ -10237,7 +10240,7 @@ BEGIN
   FOR rw_craplcm IN cr_craplcm7 (pr_cdcooper,
                                  vr_dtmvtolt,
                                  vr_cdhistor) LOOP
-                                 
+
     -- 50141211,111214,4451,1432,10000.00,1434,"PAGAMENTO PARCELA FINAME"
     -- 999,10000.00
     vr_vllanmto := rw_craplcm.vllanmto;
@@ -10257,7 +10260,7 @@ BEGIN
     --               TRIM(to_char(vr_vllanmto, '999999990.00'));
     -- gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   END LOOP;
-  
+
   --  Fim da contabilizacao da COMP. ELETRONICA ...............................
 
   --  Contabilizacao mensal ...................................................
@@ -10304,7 +10307,7 @@ BEGIN
 
     -- Fecha cursor
     CLOSE cr_crapsld;
-    
+
     -- Inicializando a Pl-Table
     vr_arq_op_cred(14)(999)(1) := 0;
     vr_arq_op_cred(14)(999)(2) := 0;
@@ -10315,15 +10318,15 @@ BEGIN
     END LOOP;
 
     pc_proc_cbl_mensal(pr_cdcooper);
-    
+
     -- Gera o arquivo AAMMDD_OPCRED.txt - Dados para contabilidade
     pc_gera_arq_op_cred (vr_dscritic);
-    
+
     IF vr_dscritic IS NOT NULL THEN
        vr_cdcritic := 0;
        RAISE vr_exc_saida;
     END IF;
-    
+
     -- Busca o diretório final para copiar o relatório
     vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
                                         ,pr_cdcooper => pr_cdcooper
@@ -10336,10 +10339,10 @@ BEGIN
     -- Testar erro
     if vr_typ_said = 'ERR' then
       gene0001.pc_print('Erro ao copiar o arquivo '||vr_nmarqdat_ope_cred||': '||vr_dscritic);
-    end if;   
+    end if;
 
   END IF;
-  
+
   -- Despesa Sicredi
   BEGIN
     DELETE FROM craprej
@@ -10387,7 +10390,7 @@ BEGIN
                           '<cdhistor>' || rw_crapepr.cdhistor || '</cdhistor>' ||
                           '<tpprodut>' || rw_crapepr.tpprodut || '</tpprodut>' ||
     '</reg>');
-    
+
     IF NOT tb_tot_his_rel.EXISTS(rw_crapepr.cdhistor) THEN
       tb_tot_his_rel(rw_crapepr.cdhistor).cdhistor := rw_crapepr.cdhistor;
       tb_tot_his_rel(rw_crapepr.cdhistor).dshistor := rw_crapepr.dshistor;
@@ -10396,7 +10399,7 @@ BEGIN
       tb_tot_his_rel(rw_crapepr.cdhistor).vllanmto := tb_tot_his_rel(rw_crapepr.cdhistor).vllanmto + rw_crapepr.vllanmto;
     END IF;
   END LOOP;
-  
+
   -- Percorre a lista de pagamentos
   vr_chave := tb_tot_his_rel.FIRST;
   WHILE vr_chave IS NOT NULL LOOP
@@ -10410,16 +10413,16 @@ BEGIN
     END;
     vr_chave := tb_tot_his_rel.NEXT(vr_chave);
   END LOOP;
-  
+
   gene0002.pc_escreve_xml(vr_relatorio_epr,vr_texto_relatorio,'</crrl708>',TRUE);
-  
+
   -- Busca do diretorio base da cooperativa para a geração de arquivos
   vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'           --> /usr/coop
-				    			                      ,pr_cdcooper => pr_cdcooper   --> Cooperativa
-			                                  ,pr_nmsubdir => 'rl');       --> Raiz
+                                        ,pr_cdcooper => pr_cdcooper   --> Cooperativa
+                                        ,pr_nmsubdir => 'rl');       --> Raiz
   -- Seta nome do arquivo
   vr_nom_arquivo := 'crrl708.lst';
-   
+
   -- Solicitar impressao
   gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper      --> Cooperativa conectada
                              ,pr_cdprogra  => vr_cdprogra      --> Programa chamador
@@ -10435,11 +10438,11 @@ BEGIN
                              ,pr_nmformul  => '132col'         --> Nome do formulario para impress?o
                              ,pr_nrcopias  => 1                --> Numero de copias
                              ,pr_des_erro  => vr_dscritic);    --> Saida com erro
-  
+
   -- Liberando a memoria alocada pro CLOB
   dbms_lob.close(vr_relatorio_epr);
   dbms_lob.freetemporary(vr_relatorio_epr);
-  
+
   -- Finalizar o programa
   btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                            ,pr_cdprogra => vr_cdprogra

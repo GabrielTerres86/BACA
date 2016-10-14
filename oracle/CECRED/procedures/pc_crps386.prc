@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 04/10/2016
+   Data    : Abril/2004                    Ultima atualizacao: 13/10/2016
 
    Dados referentes ao programa:
 
@@ -165,6 +165,9 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                             (Lucas Ranghetti #499496)             
 				
 			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
+			   
+			   13/10/2016 - Ajustado tratamento de critica ao efetuar insert da tabela gncvuni, estava 
+			                efetuando gravção na pr_dscritic e o correto é vr_dscritic (Daniel)        	
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -564,19 +567,19 @@ begin
             
       -- Atribuir a data da autorização
       vr_dtautori := to_char(rw_crapatr.dtiniatr, 'yyyymmdd');
-     
+
       IF rw_gnconve.cdconven = 4 AND 
          (rw_crapatr.dtiniatr < to_date('05/10/2016','dd/mm/yyyy')) THEN -- casan
-        vr_nragenci := 1294;
-      ELSE
+          vr_nragenci := 1294;
+      ELSE             
         -- Caso a data de inicio da autorização seja menor que 01/09/2013 e for um cancelamento 
         -- de debito ira gravar a agencia com formato antigo. Ex: "0001"            
         -- Caso contrario grava com novo formato. Ex: 0101
-        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN 
+        IF (rw_crapatr.dtiniatr < to_date('01/09/2013','dd/mm/yyyy')) THEN
           vr_nragenci := TRIM(rw_gnconve.cdagedeb);
         ELSE
           vr_nragenci := rw_crapcop.cdagectl;      
-        END IF;
+        END IF;     
       END IF;
 
       if rw_gnconve.cdconven <> 1 then -- Brasil Telecom
@@ -665,7 +668,7 @@ begin
                   3); -- Tipo Autoriz. Debito
         exception
           when others then
-            pr_dscritic := 'Erro ao criar gncvuni: '||sqlerrm;
+            vr_dscritic := 'Erro ao criar gncvuni: '||sqlerrm;
             raise vr_exc_saida;
         end;
       end if;
@@ -814,7 +817,7 @@ begin
         vr_cdcritic := 905; 
       end if;
       --
-      
+
       IF rw_gnconve.tpdenvio = 6 THEN -- WebServices
         --codigo da critica
         vr_cdcritic := 982;
