@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Ze Eduardo/Mirtes/Julio
-   Data    : Maio/2005.                         Ultima atualizacao: 15/06/2016
+   Data    : Maio/2005.                         Ultima atualizacao: 23/06/2016
 
    Dados referentes ao programa:
 
@@ -80,13 +80,16 @@
                24/03/2016 - Exclusão do relatório 387.
                             (RKAM - Gisele Campos Neves #421009) 
                             
-               12/04/2016 - Correcao exclusao relatorio 387 (Lucas Ranghetti/Fabricio)                            
+               12/04/2016 - Correcao exclusao relatorio 387 (Lucas Ranghetti/Fabricio)  
                
-               
+			   23/06/2016 - P333.1 - Devolução de arquivos com tipo de envio 
+			                6 - WebService (Marcos)                          
+
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
 ............................................................................. */
 
 { includes/var_batch.i {1} }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR b1wgen0011       AS HANDLE                            NO-UNDO.
 
@@ -157,7 +160,7 @@ DEF  STREAM str_2.  /* Para arquivo auxiliar */
 
 ASSIGN glb_cdprogra = "crps449"
        glb_cdempres = 11.
-	   
+
 RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
@@ -201,6 +204,7 @@ ASSIGN aux_dtmvtolt = STRING(YEAR(glb_dtmvtolt),"9999") +
        aux_diamovto = DAY(aux_dtproxim)
        aux_mesmovto = aux_nmmesano[MONTH(aux_dtproxim)]
        aux_anomovto = STRING(YEAR(aux_dtproxim),"9999") + ".".
+
 
 
 ASSIGN aux_dtanteri = glb_dtmvtolt - 5. 
@@ -313,11 +317,11 @@ PROCEDURE efetua_geracao_arquivos:
    IF   aux_flgfirst THEN
         DO:
             RUN nomeia_arquivos.
-
+                
             OUTPUT STREAM str_2 TO VALUE(aux_nmarqped). 
-			
+
             ASSIGN aux_nmempcov = gnconve.nmempres.
-      
+
             PUT STREAM str_2  "A2"   aux_nrconven FORMAT "99999999"
                               "            "
                               aux_nmempcov  FORMAT "x(20)" 
@@ -344,7 +348,7 @@ PROCEDURE efetua_geracao_arquivos:
           rel_vllanmto = DECI(SUBSTR(gncvuni.dsmovtos, 82, 12)) / 100
           tot_vlfatura = tot_vlfatura + rel_vllanmto
           tot_vltarifa = tot_vltarifa + aux_vltarifa.
-               
+
    PUT STREAM str_2 SUBSTR(gncvuni.dsmovtos, 1, 100) FORMAT "x(100)"  
                     aux_nrseqdig FORMAT "99999999"         
                     SUBSTR(gncvuni.dsmovtos, 109, 42) FORMAT "x(42)" SKIP.
@@ -363,7 +367,7 @@ PROCEDURE efetua_geracao_arquivos:
 
             OUTPUT STREAM str_2 CLOSE.
 
-            RUN atualiza_controle.
+            RUN atualiza_controle ('G').
 
         END.  /* Fim do flaglast */
   
@@ -453,6 +457,8 @@ END PROCEDURE.
 
 PROCEDURE atualiza_controle:
 
+   DEF INPUT PARAM par_tpdcontr  AS CHAR  NO-UNDO.
+
    IF  gnconve.tpdenvio = 1   OR   
        gnconve.tpdenvio = 4   OR /* Email */
        gnconve.tpdenvio = 2 THEN /* E-Sales */
@@ -465,6 +471,7 @@ PROCEDURE atualiza_controle:
                                                INPUT aux_nmarqped,
                                                INPUT aux_nmarqdat).
                                                
+
    IF  gnconve.tpdenvio = 2 THEN /* E-Sales */
        DO:
           ASSIGN glb_cdcritic = 696.
@@ -491,14 +498,49 @@ PROCEDURE atualiza_controle:
    ELSE
        UNIX SILENT VALUE("mv " + aux_nmarqped + " salvar 2> /dev/null").
   
+   IF  gnconve.tpdenvio = 6 THEN  /* WebServices */
+       DO:
+          
+          ASSIGN glb_cdcritic = 982.
+		  
+		  { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} } 
+                     
+          /* Efetuar a chamada a rotina Oracle  */
+          RUN STORED-PROCEDURE pc_armazena_arquivo_conven
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT gnconve.cdconven,
+                                                   INPUT glb_dtmvtolt,
+                                                   INPUT par_tpdcontr,
+												   INPUT 0, /* Nao retornado ainda */
+                                                   INPUT '/usr/coop/' + crabcop.dsdircop + '/salvar', 
+                                                   INPUT aux_nmarqdat,
+                                                   OUTPUT 0, 
+                                                   OUTPUT "").
+          
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_armazena_arquivo_conven
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+          { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
+          
+          /* Busca possíveis erros */
+          IF pc_armazena_arquivo_conven.pr_cdretorn <> 202 THEN
+             DO:
+                UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999")
+                                 + " - " + STRING(TIME,"HH:MM:SS") 
+                                 + " - " + glb_cdprogra + "' --> '" 
+                                 + pc_armazena_arquivo_conven.pr_dsmsgret + " - Convenio: "
+                                 + STRING(gncvcop.cdconven) + " >> log/proc_message.log").
+             END.
+       END.
+   
    RUN fontes/critic.p.
    
    UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999") 
                      + " - " + STRING(TIME,"HH:MM:SS") 
                      + " - " + glb_cdprogra + " >> log/proc_message.log").                
 
-   IF  (gnconve.tpdenvio > 1  AND  gnconve.tpdenvio < 4) OR  
-       (gnconve.tpdenvio = 5) THEN  
+   IF  (gnconve.tpdenvio > 1 AND  gnconve.tpdenvio < 4) OR  
+       (gnconve.tpdenvio = 5) OR (gnconve.tpdenvio = 6) THEN  
        DO:
           UNIX SILENT VALUE("echo " + STRING(TODAY,"99/99/9999")
                             + " - " + STRING(TIME,"HH:MM:SS") 
@@ -510,7 +552,6 @@ PROCEDURE atualiza_controle:
        END.
    ELSE
        DO:           
-
            /* Se Caixa(1) ou Debito(2), muda email */
            IF  gncvuni.tpdcontr = 1 THEN
                aux_dsemail2 = gnconve.dsendcxa.
@@ -708,11 +749,11 @@ PROCEDURE efetua_geracao_arquivos_debitos:
    IF   aux_flgfirst THEN
         DO:
             RUN nomeia_arquivos.
-
+                
             OUTPUT STREAM str_2 TO VALUE(aux_nmarqped). 
-			
+
             ASSIGN aux_nmempcov = gnconve.nmempres.
-            
+
             PUT STREAM str_2 "A2"  
                        aux_nrconven  FORMAT "99999999999999999999"
                        aux_nmempcov  FORMAT "x(20)" 
@@ -755,7 +796,7 @@ PROCEDURE efetua_geracao_arquivos_debitos:
 
             OUTPUT STREAM str_2 CLOSE.
 
-            RUN atualiza_controle.
+            RUN atualiza_controle ('F').
 
         END.  /* Fim do flaglast */
 
@@ -768,11 +809,11 @@ PROCEDURE efetua_geracao_arquivos_autorizacao:
    IF   aux_flgfirst THEN
         DO:
             RUN nomeia_arquivos.
-            
+                
             OUTPUT STREAM str_2 TO VALUE(aux_nmarqped). 
-			
+
             ASSIGN aux_nmempcov = gnconve.nmempres.
-            
+
             PUT STREAM str_2 "A2"  
                        aux_nrconven  FORMAT "99999999999999999999"
                        aux_nmempcov  FORMAT "x(20)" 
@@ -810,7 +851,7 @@ PROCEDURE efetua_geracao_arquivos_autorizacao:
 
             OUTPUT STREAM str_2 CLOSE.
 
-            RUN atualiza_controle.
+            RUN atualiza_controle ('B').
 
         END.  /* Fim do flaglast */
 
@@ -850,7 +891,7 @@ PROCEDURE gera_arquivo_sem_movimento:
         
             OUTPUT STREAM str_2 CLOSE.
         
-            RUN atualiza_controle.
+            RUN atualiza_controle ('G').
         END.
 
 END PROCEDURE.
