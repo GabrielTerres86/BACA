@@ -1,33 +1,30 @@
-<? 
-/*!
-  FONTE        : manter_resultado.php
-  CRIAÇÃO      : Rodolpho Telmo (DB1)
-  DATA CRIAÇÃO : 23/06/2010 
-  OBJETIVO     : Rotina para unificar a análise do resultado do XML para as operações da tela MATRIC
-  --------------
-  ALTERAÇÕES   : 22/02/2011 - Criada tabela para mostrar os Produtos/Servicos ativos quando o cooperado for deminitdo (Jorge)
+<?php
+	/*!
+	  FONTE        : manter_resultado.php
+	  CRIAÇÃO      : Rodolpho Telmo (DB1)
+	  DATA CRIAÇÃO : 23/06/2010 
+	  OBJETIVO     : Rotina para unificar a análise do resultado do XML para as operações da tela MATRIC
+	  --------------
+	  ALTERAÇÕES   : 22/02/2011 - Criada tabela para mostrar os Produtos/Servicos ativos quando o cooperado for deminitdo (Jorge)
  				
  				 31/08/2011 - Realizado a chamada da procedure alerta_fraude (Adriano).
 				  
 				 11/04/2013 - Retirado a chamada da procedure alerta_fraude (Adriano).
 				 
-				 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
-				 
-				 18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
- 
- --------------
- */
-?> 
+					 20/07/2015 - Reformulacao Cadastral (Gabriel-RKAM).
+					
+				     18/02/2016 - Ajuste para pedir senha do coordenador quando for duplicar conta. (Jorge/Thiago) - SD 395996
 
-<?	
+					 27/07/2016 - Corrigi o uso de indices do XML inexistentes.SD 479874 (Carlos R).
+	*/
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
+	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
 	
 		$mtdErro	= '';
-		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		$nomeCampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
+		$msgErro	= ( isset($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata) ) ? $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata : '';
+		$nomeCampo	= ( isset($xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'] : '';
 		$nomeForm	= ( $inpessoa == 1 ) ? 'frmFisico' : 'frmJuridico';
 		$nomeForm	= ( ($nomeCampo == 'nrdconta') || ($nomeCampo == 'cdagepac') ) ? 'frmCabMatric' : $nomeForm;
 		
@@ -47,7 +44,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
-	if ($xmlObjeto->Erro->Registro->dscritic != '') {	
+	if (isset($xmlObjeto->Erro->Registro->dscritic) && $xmlObjeto->Erro->Registro->dscritic != '') {	
 		$msgErro = $xmlObjeto->Erro->Registro->dscritic;
 		$mtdErro = 'unblockBackground()';
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
@@ -59,15 +56,15 @@
 	// Controle de parcelamento	
 	//----------------------------------------------------------------------------------------------------------------------------------
 	
-	$qtparcel = $xmlObjeto->roottag->tags[0]->attributes['QTPARCEL'];	
-	$vlparcel = $xmlObjeto->roottag->tags[0]->attributes['VLPARCEL'];
+	$qtparcel = ( isset($xmlObjeto->roottag->tags[0]->attributes['QTPARCEL']) ) ? $xmlObjeto->roottag->tags[0]->attributes['QTPARCEL'] : '';	
+	$vlparcel = ( isset($xmlObjeto->roottag->tags[0]->attributes['VLPARCEL']) ) ? $xmlObjeto->roottag->tags[0]->attributes['VLPARCEL'] : '';
 	
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// Controle de alertas e retornos
 	//----------------------------------------------------------------------------------------------------------------------------------
 	$msg 		= Array();
-	$msgRetorno = $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'];	
-	$msgAlertas = $xmlObjeto->roottag->tags[1]->tags;	
+	$msgRetorno = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRETOR'] : '';	
+	$msgAlertas = ( isset($xmlObjeto->roottag->tags[1]->tags) ) ? $xmlObjeto->roottag->tags[1]->tags : array();	
 		
 	$msgAlertArray = Array();
 	foreach( $msgAlertas as $alerta){
@@ -83,11 +80,10 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// Controle verificação da revisão Cadastral
 	//----------------------------------------------------------------------------------------------------------------------------------	
-	$msgAtCad = $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'];
-	$msgRecad = $xmlObjeto->roottag->tags[0]->attributes['MSGRECAD'];
-	
-	$chaveAlt = $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'];
-	$tpAtlCad = $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'];	
+	$msgAtCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGATCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGATCAD'] : '';
+	$msgRecad = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGRECAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['MSGRECAD'] : '';
+	$chaveAlt = ( isset($xmlObjeto->roottag->tags[0]->attributes['CHAVEALT']) ) ? $xmlObjeto->roottag->tags[0]->attributes['CHAVEALT'] : '';
+	$tpAtlCad = ( isset($xmlObjeto->roottag->tags[0]->attributes['TPATLCAD']) ) ? $xmlObjeto->roottag->tags[0]->attributes['TPATLCAD'] : '';	
 
 	//----------------------------------------------------------------------------------------------------------------------------------
 	// Controle remoção da classe erro dos campos
@@ -108,7 +104,7 @@
 	// Se for validacao da inclusao, exibir a nova conta
 	if ($operacao == 'IV') {
 		
-		$nrctanov = $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'];
+		$nrctanov = ( isset($xmlObjeto->roottag->tags[0]->attributes['NRCTANOV']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'] : '';
 				
 		echo '$("#nrdconta","#frmCabMatric").val(' . $nrctanov . ');';
 		
@@ -245,7 +241,7 @@
 	else
 	if ($operacao == 'BCC'){ // Buscar nova C/C
  	
-		$nrctanov = $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'];	
+		$nrctanov = ( isset($xmlObjeto->roottag->tags[0]->attributes['NRCTANOV']) ) ? $xmlObjeto->roottag->tags[0]->attributes['NRCTANOV'] : '';	
 
 		if ($nrctanov == 0 || $nrctanov == '') {
 			exibirErro('error','Não foi possivel gerar a nova C/C.','Alerta - Ayllos','',false);

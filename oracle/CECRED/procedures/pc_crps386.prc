@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio/Mirtes
-   Data    : Abril/2004                    Ultima atualizacao: 04/10/2016
+   Data    : Abril/2004                    Ultima atualizacao: 13/10/2016
 
    Dados referentes ao programa:
 
@@ -164,7 +164,10 @@ create or replace procedure cecred.pc_crps386(pr_cdcooper  in craptab.cdcooper%t
                23/08/2016 - Verificar final de semanas e feriados para verificar suspenções
                             (Lucas Ranghetti #499496)             
 				
-			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)         	
+			   04/10/2016 - Retirar validacao especifica para o convenio CASAN (Lucas Ranghetti #534110)  
+			   
+			   13/10/2016 - Ajustado tratamento de critica ao efetuar insert da tabela gncvuni, estava 
+			                efetuando gravção na pr_dscritic e o correto é vr_dscritic (Daniel)        	
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -665,7 +668,7 @@ begin
                   3); -- Tipo Autoriz. Debito
         exception
           when others then
-            pr_dscritic := 'Erro ao criar gncvuni: '||sqlerrm;
+            vr_dscritic := 'Erro ao criar gncvuni: '||sqlerrm;
             raise vr_exc_saida;
         end;
       end if;

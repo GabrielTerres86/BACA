@@ -393,8 +393,7 @@ function mostraRotina() {
 }
 
 // Função para esconder div da rotina e carregar dados da conta novamente
-function encerraRotina() {
-    var flgCabec;
+function encerraRotina(flgCabec) {
 
     //Condição para voltar foco na opção selecionada
     var CaptaIdRetornoFoco = '';

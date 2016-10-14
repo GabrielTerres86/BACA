@@ -39,6 +39,8 @@
  * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar até 7 posicoes. (#481816)
  * 017: [22/07/2016] Maciel 		  (RKAM)  : Ajustes no JS para o conportamento correto da consulta a receita
  * 018: [22/07/2016] Maciel 		  (RKAM)  : Aumento do tempo para consulta na receita federal
+ * 019: [10/10/2016] Carlos           (CECRED): #537134 Comentada a consulta automatizada do CPF/CNPJ na receita devido aos constantes
+ *                                              bloqueios de acesso.
  */
 
 // Definição de algumas variáveis globais 
@@ -1328,6 +1330,7 @@ function formataPessoaFisica() {
     });
     // Somente executa se esta conectado no banco de producao
     //console.log(' 1- '+inbcprod.val());
+/*  Não consultar receita enquanto se estuda solução (Chamado #537134)
     if (inbcprod.val() == 'S') {
         // Carregar captcha para consulta na Receita federal
         cDtConsulta.unbind('focus').bind('focus', function () {
@@ -1344,7 +1347,8 @@ function formataPessoaFisica() {
                 validaAcessoEexecuta(UrlSite, 'CPF');
             }
         });
-    }
+    }  */
+
     cNomeTitular.unbind('blur').bind('blur', function (e) {
         if ($(this).val() != "" && cNomeRFB.val() != "") {
             if ($(this).val().toUpperCase() != cNomeRFB.val().toUpperCase()) {
@@ -1576,6 +1580,7 @@ function formataPessoaJuridica() {
     });
     // Somente executa se esta conectado no banco de producao
     //console.log(' 2- '+inbcprod.val());
+/*  Não consultar receita enquanto se estuda solução (Chamado #537134)
     if (inbcprod.val() == 'S') {
         // Carregar captcha para consulta na Receita federal
         cDtConsulta.unbind('focus').bind('focus', function () {
@@ -1592,7 +1597,7 @@ function formataPessoaJuridica() {
                 validaAcessoEexecuta(UrlSite, 'CNPJ');
             }
         });
-    }
+    } */
 
     cRazaoSocial.unbind('blur').bind('blur', function (e) {
 

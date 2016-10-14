@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TABE0001 AS
 
     Programa: TABE0001
     Autor   : Marcos (Supero)
-    Data    : Março/2012                     Ultima Atualizacao: 08/06/2016
+    Data    : Março/2012                     Ultima Atualizacao: 10/10/2016
 
     Dados referentes ao programa:
 
@@ -14,31 +14,16 @@ CREATE OR REPLACE PACKAGE CECRED.TABE0001 AS
                              utilização do índice craptab.craptab##craptab1 (Daniel - Supero)
                              
                              
-    30/11/2015 - Ajustes de performace na leitura da craptab para nao utilizar
-                 a ordenacao pelo progress_recid e sim pelo index da tabela
-                 SD 318820(Odirlei-AMcom)                             
+				30/11/2015 - Ajustes de performace na leitura da craptab para nao utilizar
+							 a ordenacao pelo progress_recid e sim pelo index da tabela
+							 SD 318820(Odirlei-AMcom)                             
 
-    08/06/2016 - Adicionado procedure generica para carregar os dados das contas 
-                 bloqueadas (Douglas - Chamado 454248)
+				08/06/2016 - Adicionado procedure generica para carregar os dados das contas 
+							 bloqueadas (Douglas - Chamado 454248)
+				 
+				10/10/2016 - Ajuste na rotina genérica de busca das informações da craptab 
+							 para minimizar a quantidade de leituras (Rodrigo)
 ..............................................................................*/
-
-  /* Cursor genérico e padrão para busca da craptab */
-  CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
-                   ,pr_nmsistem IN craptab.nmsistem%TYPE
-                   ,pr_tptabela IN craptab.tptabela%TYPE
-                   ,pr_cdempres IN craptab.cdempres%TYPE
-                   ,pr_cdacesso IN craptab.cdacesso%TYPE
-                   ,pr_tpregist IN craptab.tpregist%TYPE) IS
-    SELECT /*+index_asc (tab CRAPTAB##CRAPTAB1)*/
-           tab.dstextab,
-           tab.tpregist
-      from craptab tab
-     where tab.cdcooper = pr_cdcooper
-       and upper(tab.nmsistem) = pr_nmsistem
-       and upper(tab.tptabela) = pr_tptabela
-       and tab.cdempres = pr_cdempres
-       and upper(tab.cdacesso) = nvl(pr_cdacesso, tab.cdacesso)
-       and tab.tpregist = nvl(pr_tpregist, tab.tpregist);
 
   /* Função para busca do dstextab cfme parâmetros */
   FUNCTION fn_busca_dstextab(pr_cdcooper IN craptab.cdcooper%TYPE
@@ -73,13 +58,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TABE0001 AS
 
     Programa: TABE0001
     Autor   : Marcos (Supero)
-    Data    : Março/2012                     Ultima Atualizacao:
+    Data    : Março/2012                     Ultima Atualizacao: 10/10/2016
 
     Dados referentes ao programa:
 
     Objetivo  : Agrupar funçoes e variaveis para buscas de configurações de telas e CRAPTAB
-
+				 
+				10/10/2016 - Ajuste na rotina genérica de busca das informações da craptab 
+							 para minimizar a quantidade de leituras (Rodrigo)
   ..............................................................................*/
+  
+  /* Cursor genérico e padrão para busca da craptab */
+  CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+                   ,pr_nmsistem IN craptab.nmsistem%TYPE
+                   ,pr_tptabela IN craptab.tptabela%TYPE
+                   ,pr_cdempres IN craptab.cdempres%TYPE
+                   ,pr_cdacesso IN craptab.cdacesso%TYPE
+                   ,pr_tpregist IN craptab.tpregist%TYPE) IS
+    SELECT
+           craptab.dstextab,
+           craptab.tpregist
+      FROM craptab
+     WHERE craptab.cdcooper        = pr_cdcooper
+       AND UPPER(craptab.nmsistem) = pr_nmsistem
+       AND UPPER(craptab.tptabela) = pr_tptabela
+       AND craptab.cdempres        = pr_cdempres
+       AND UPPER(craptab.cdacesso) = pr_cdacesso
+       AND craptab.tpregist        = pr_tpregist;
+
+  /* Variação do cursor genérico para busca da craptab 
+     quando não informado cdacesso e/ou tpregist*/
+  CURSOR cr_craptab2(pr_cdcooper IN craptab.cdcooper%TYPE
+                   ,pr_nmsistem IN craptab.nmsistem%TYPE
+                   ,pr_tptabela IN craptab.tptabela%TYPE
+                   ,pr_cdempres IN craptab.cdempres%TYPE
+                   ,pr_cdacesso IN craptab.cdacesso%TYPE
+                   ,pr_tpregist IN craptab.tpregist%TYPE) IS
+    SELECT /*+index_asc (tab CRAPTAB##CRAPTAB1)*/
+           craptab.dstextab,
+           craptab.tpregist
+      FROM craptab
+     WHERE craptab.cdcooper        = pr_cdcooper
+       AND UPPER(craptab.nmsistem) = pr_nmsistem
+       AND UPPER(craptab.tptabela) = pr_tptabela
+       AND craptab.cdempres        = pr_cdempres
+       AND UPPER(craptab.cdacesso) = NVL(pr_cdacesso, craptab.cdacesso)
+       AND craptab.tpregist        = NVL(pr_tpregist, craptab.tpregist);
 
   /* Tratamento de erro */
   vr_des_erro   VARCHAR2(4000);
@@ -120,16 +144,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TABE0001 AS
       -- Armazenar o retorno
       rw_craptab cr_craptab%ROWTYPE;
     BEGIN
-      -- Efetuar busca no cursor cfme os parâmetros passados
-      OPEN cr_craptab(pr_cdcooper => pr_cdcooper
-                     ,pr_nmsistem => pr_nmsistem
-                     ,pr_tptabela => pr_tptabela
-                     ,pr_cdempres => pr_cdempres
-                     ,pr_cdacesso => pr_cdacesso
-                     ,pr_tpregist => pr_tpregist);
-      FETCH cr_craptab
-       INTO rw_craptab;
-      CLOSE cr_craptab;
+      IF pr_cdacesso IS NOT NULL AND pr_tpregist IS NOT NULL THEN
+        -- Efetuar busca com todos os parâmetros da chave
+        OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+                       ,pr_nmsistem => pr_nmsistem
+                       ,pr_tptabela => pr_tptabela
+                       ,pr_cdempres => pr_cdempres
+                       ,pr_cdacesso => pr_cdacesso
+                       ,pr_tpregist => pr_tpregist);
+        FETCH cr_craptab
+         INTO rw_craptab;
+        CLOSE cr_craptab;
+      ELSE
+        -- Efetuar busca no cursor com tratamento especial para nulos
+        OPEN cr_craptab2(pr_cdcooper => pr_cdcooper
+                        ,pr_nmsistem => pr_nmsistem
+                        ,pr_tptabela => pr_tptabela
+                        ,pr_cdempres => pr_cdempres
+                        ,pr_cdacesso => pr_cdacesso
+                        ,pr_tpregist => pr_tpregist);
+        FETCH cr_craptab2
+         INTO rw_craptab;
+        CLOSE cr_craptab2;
+      END IF;
+
       -- Retornar o rowtype encontrado
       RETURN rw_craptab.dstextab;
     END;
