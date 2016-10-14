@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0166.p
     Autor   : Oliver Fagionato (GATI)
-    Data    : Agosto/2013                               Alteracao: 07/06/2016
+    Data    : Agosto/2013                               Alteracao: 26/09/2016
 
     Objetivo  : Alterar, consultar, incluir e gerar relatório de empresas.
 
@@ -67,7 +67,15 @@
                                                                           
                 18/05/2016 - Inclusao do campo dtlimdeb. (Jaison/Marcos)							                                                
 
-                |17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)                                                        
+                17/06/2016 - Inclusão de campos de controle de vendas - M181
+                             ( Rafael Maciel - RKAM)
+
+                04/08/2016 - SD495726 - Folha: Correcao gravacao/alteracao
+                             de empresa (Guilherme/SUPERO)
+                             
+                26/09/2016 - Alterar na procedure Altera_inclui, para gravarmos 
+                             a data de inclusao/cancelamento do produto Folha
+                             (Lucas Ranghetti #480384)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -537,6 +545,11 @@ PROCEDURE Altera_inclui:
                 par_nmextemp = REPLACE(par_nmextemp,"&","").
                 par_nmresemp = REPLACE(par_nmresemp,"&","").
 
+                /* Se alterou(Incluiu/Alterou) o inidicador de servico de folha de pagamento,
+                  iremos atualizar a data de Inclusao do servico ou Cancelamento */
+                IF  crapemp.flgpgtib <> par_flgpgtib THEN
+                    ASSIGN crapemp.dtinccan = TODAY. 
+
                 ASSIGN crapemp.cdempfol = par_cdempfol
                        crapemp.cdempres = par_cdempres
                        crapemp.dtavscot = par_dtavscot
@@ -586,6 +599,8 @@ PROCEDURE Altera_inclui:
                        crapemp.flgdgfib = IF par_flgdgfib THEN FALSE ELSE crapemp.flgdgfib
                        crapemp.dtlimdeb = par_dtlimdeb
                        crapemp.cdoperad = par_cdoperad.
+                       
+                       
                 VALIDATE crapemp.
             END.
     END.
@@ -752,6 +767,9 @@ PROCEDURE Define_cdempres:
         ASSIGN par_cdempres = crapemp.cdempres + 1.
     ELSE
         ASSIGN par_cdempres = 1.
+
+    IF par_nmdatela = "AYLLOSWEB" THEN
+       ASSIGN par_cdempres = 0.
 
     RETURN "OK".
 
