@@ -19,7 +19,7 @@ CREATE OR REPLACE PACKAGE SOA.SOA_CRED_RECUP IS
   ---------------------------------------------------------------------------
   --> Retornar o saldo do contrado do cooperado
   PROCEDURE pc_consultar_saldo_contrato(pr_nrgrupo    IN  NUMBER,       --> Número do Grupo
-                                        pr_nrcontrato IN  NUMBER,       --> Número do Contrato
+                                        pr_nrcontrato IN  VARCHAR2,     --> Número do Contrato
                                         pr_vlsdeved   OUT NUMBER,       --> Valor Saldo Devedor
                                         pr_vlsdprej   OUT NUMBER,       --> Valor Saldo Prejuizo
                                         pr_vlatraso   OUT NUMBER,       --> Valor Atraso
@@ -71,7 +71,7 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
   ---------------------------------------------------------------------------
   --> Retornar o saldo do contrado do cooperado
   PROCEDURE pc_consultar_saldo_contrato(pr_nrgrupo    IN  NUMBER,       --> Número do Grupo
-                                        pr_nrcontrato IN  NUMBER,       --> Número do Contrato
+                                        pr_nrcontrato IN  VARCHAR2,     --> Número do Contrato
                                         pr_vlsdeved   OUT NUMBER,       --> Valor Saldo Devedor
                                         pr_vlsdprej   OUT NUMBER,       --> Valor Saldo Prejuizo
                                         pr_vlatraso   OUT NUMBER,       --> Valor Atraso
@@ -137,7 +137,7 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
    ..............................................................................*/                                    
   BEGIN
     RECP0002.pc_consultar_saldo_cooperado (pr_inPessoa => pr_inPessoa
-                                          ,pr_nrcpfcgc => pr_inPessoa
+                                          ,pr_nrcpfcgc => pr_nrcpfcgc
                                           ,pr_xmlrespo => pr_xmlrespo
                                           ,pr_cdcritic => pr_cdcritic
                                           ,pr_dscritic => pr_dscritic
@@ -177,6 +177,12 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
                              ,pr_cdcritic => pr_cdcritic
                              ,pr_dscritic => pr_dscritic
                              ,pr_dsdetcri => pr_dsdetcri);
+                             
+    IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
+      ROLLBACK;
+    END IF;
+    
+    COMMIT;
   EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;     
@@ -215,6 +221,12 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
                                 ,pr_cdcritic => pr_cdcritic
                                 ,pr_dscritic => pr_dscritic
                                 ,pr_dsdetcri => pr_dsdetcri);
+                                
+    IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
+      ROLLBACK;
+    END IF;
+    
+    COMMIT;
   EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;     

@@ -25,7 +25,7 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0002 IS
   --                          procedure pc_gerar_acordo, Prj. 302 (Jean Michel). 
   --
   --             19/09/2016 - 19/09/2016 - Incluido novo parametro pr_dtcancel na
-  --                          procedure pc_cancelar_acordo, Prj. 302 (Jean Michel).
+  --                          procedure pc_cancelar_acordo, Prj. 302 (Jean Michel).             
   --
   --             29/09/2016 - Incluida validacao de contratos de acordos na procedure
   --                          pc_gerar_acordo, Prj. 302 (Jean Michel).
@@ -114,7 +114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   -- Padrão do numerico no xml
   vr_pdrdonum   VARCHAR2(30) := 'NLS_NUMERIC_CHARACTERS=''.,''';
   -- Formato de retorno para data no xml
-  vr_frmtdata VARCHAR2(20) := 'DD/MM/RRRR';
+  vr_frmtdata   VARCHAR2(20) := 'DD/MM/RRRR';
   
   PROCEDURE pc_quebra_desc_contrat(pr_nrcontrato  IN VARCHAR2,
                                    pr_cdcooper   OUT NUMBER,
@@ -220,8 +220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       vr_index_saldo := vr_tab_saldos.FIRST;
       IF vr_index_saldo IS NOT NULL THEN
         -- Acumular Saldo
-        vr_vlsomato := ROUND( nvl(vr_tab_saldos(vr_index_saldo).vlsddisp, 0) +
-                              nvl(vr_tab_saldos(vr_index_saldo).vllimcre, 0),2);
+        vr_vlsomato := ROUND( nvl(vr_tab_saldos(vr_index_saldo).vlsddisp, 0),2);
       END IF;
       
       IF vr_vlsomato < 0 THEN
@@ -316,29 +315,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         RAISE vr_exc_erro;
       END IF;
     
-      -- Saldo Devedor
-      pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
-      -- Saldo Prejuizo
-      pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
-      -- Valor em Atraso
-      pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0);
+      -- Condicao para verificar se encontrou contrato de emprestimo
+      IF vr_tab_dados_epr.COUNT > 0 THEN
+        -- Saldo Devedor
+        pr_vlsdeved := nvl(vr_tab_dados_epr(1).vlsdeved,0) + nvl(vr_tab_dados_epr(1).vlmtapar,0) + nvl(vr_tab_dados_epr(1).vlmrapar,0);
+        -- Saldo Prejuizo
+        pr_vlsdprej := nvl(vr_tab_dados_epr(1).vlsdprej,0);
+        -- Valor em Atraso
+        pr_vlatraso := nvl(vr_tab_dados_epr(1).vltotpag,0);
+      END IF;
+        
     END IF;
   EXCEPTION
-    WHEN vr_exc_erro THEN
-    
+    WHEN vr_exc_erro THEN    
       --> Buscar descrição critica
-      IF nvl(vr_cdcritic,0) > 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-         
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);          
       END IF;
       
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-      
+      pr_dscritic := vr_dscritic;      
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Não foi possivel calcular saldo do contrato '||pr_nrctremp||': '||SQLERRM;      
+      pr_dscritic := 'Nao foi possivel calcular saldo do contrato '||pr_nrctremp||': '||SQLERRM;      
       
   END pc_calcular_saldo_contrato;  
   
@@ -426,18 +425,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     -- Se não encontrar
     IF btch0001.cr_crapdat%NOTFOUND THEN      
       CLOSE btch0001.cr_crapdat;
-          
       -- Montar mensagem de critica
-      vr_cdcritic := 1;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-          
+      vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';
       RAISE vr_exc_erro;
     ELSE
       CLOSE btch0001.cr_crapdat;
     END IF;
     
     IF nvl(rw_crapdat.inproces,0) <> 1 THEN
-      vr_cdcritic := 138; --> Processo ja solicitado ou rodando.
+      vr_dscritic := 'Processo da Cooperativa nao finalizou, tente novamente mais tarde';
       RAISE vr_exc_erro;
     END IF;
     
@@ -478,16 +474,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                 pr_cdcritic   => vr_cdcritic,        --> Código da Crítica
                                 pr_dscritic   => vr_dscritic);       --> Descrição da Crítica
     
-    IF nvl(vr_cdcritic,0) > 0 OR  
-       TRIM(vr_dscritic) IS NOT NULL THEN       
-      RAISE vr_exc_erro_det;   
-    END IF;   
+    IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN       
+      RAISE vr_exc_erro_det;
+    END IF;
     
   EXCEPTION
     WHEN vr_exc_erro_det THEN
       --> Buscar descrição critica
-      IF nvl(vr_cdcritic,0) > 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
       END IF;
       
@@ -496,16 +490,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 983);
       pr_dsdetcri := vr_dscritic;
     
-    WHEN vr_exc_erro THEN
-    
+    WHEN vr_exc_erro THEN    
       --> Buscar descrição critica
-      IF nvl(vr_cdcritic,0) > 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
          
-      ELSIF nvl(vr_cdcritic,0) = 0 THEN
-        vr_cdcritic := 983;
+      ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||': '||vr_dscritic; 
+      END IF;
+      
+      IF NVL(vr_cdcritic,0) = 0 THEN
+        vr_cdcritic := 983;
       END IF;
       
       pr_cdcritic := vr_cdcritic;
@@ -548,13 +543,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE; 
     
     --> Buscar contrado no cyber
-    CURSOR cr_crapcyb (pr_cdcooper  crapcyb.cdcooper%TYPE,
-                       pr_nrdconta  crapcyb.nrdconta%TYPE) IS
+    CURSOR cr_crapcyb (pr_cdcooper crapcyb.cdcooper%TYPE,
+                       pr_nrdconta crapcyb.nrdconta%TYPE,
+                       pr_dtmvtolt crapcyb.dtmvtolt%TYPE) IS
       SELECT cyb.nrctremp,
              cyb.cdorigem
         FROM crapcyb cyb
        WHERE cyb.cdcooper = pr_cdcooper
-         AND cyb.nrdconta = pr_nrdconta;
+         AND cyb.nrdconta = pr_nrdconta
+         and (cyb.dtdbaixa IS NULL OR cyb.dtdbaixa > ADD_MONTHS(pr_dtmvtolt,-1));
     rw_crapcyb cr_crapcyb%ROWTYPE;
     
     --> Buscar cooperado
@@ -620,9 +617,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       vr_fcrapass := TRUE;
       
       --> Buscar contrado no cyber
-      FOR rw_crapcyb IN cr_crapcyb (pr_cdcooper  => rw_crapass.cdcooper,
-                                    pr_nrdconta  => rw_crapass.nrdconta)LOOP      
-      
+      FOR rw_crapcyb IN cr_crapcyb(pr_cdcooper => rw_crapass.cdcooper,
+                                   pr_nrdconta => rw_crapass.nrdconta,
+                                   pr_dtmvtolt => TRUNC(SYSDATE))LOOP      
         vr_fcrapcyb := TRUE;
         --> Buscar da data da cooperativa caso tenha mudado
         IF vr_cdcooper <> rw_crapass.cdcooper THEN 
@@ -634,18 +631,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
           -- Se não encontrar
           IF btch0001.cr_crapdat%NOTFOUND THEN      
             CLOSE btch0001.cr_crapdat;
-                
             -- Montar mensagem de critica
-            vr_cdcritic := 1;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-                
+            vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';
             RAISE vr_exc_erro;
           ELSE
             CLOSE btch0001.cr_crapdat;
           END IF;
           
           IF nvl(rw_crapdat.inproces,0) <> 1 THEN
-            vr_cdcritic := 138; --> Processo ja solicitado ou rodando.
+            vr_dscritic := 'Processo da Cooperativa nao finalizou, tente novamente mais tarde';
             RAISE vr_exc_erro;
           END IF;
         END IF;
@@ -716,13 +710,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     WHEN vr_exc_erro THEN
     
       --> Buscar descrição critica
-      IF nvl(vr_cdcritic,0) > 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
          
-      ELSIF nvl(vr_cdcritic,0) = 0 THEN
-        vr_cdcritic := 983;
+      ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||': '||vr_dscritic; 
+      END IF;
+      
+      IF NVL(vr_cdcritic,0) = 0 THEN
+        vr_cdcritic := 983;
       END IF;
       
       pr_cdcritic := vr_cdcritic;
@@ -794,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     rw_crapepr cr_crapepr%ROWTYPE;
     
     --> Verificar se o contrato ja esta em algum acordo ativo
-    CURSOR cr_tbrecup_contrato (pr_cdcooper  crapass.cdcooper%TYPE,
+    CURSOR cr_tbrecup_contrato(pr_cdcooper  crapass.cdcooper%TYPE,
                               pr_nrdconta  crapass.nrdconta%TYPE,
                               pr_nrctremp  crapepr.nrctremp%TYPE,
                               pr_nrgrupo   INTEGER,
@@ -802,9 +798,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
      SELECT 1 
        FROM tbrecup_acordo_contrato contrato
        JOIN tbrecup_acordo acordo
-         ON acordo.nracordo = contrato.nracordo
-      WHERE contrato.cdcooper = pr_cdcooper
-        AND contrato.nrdconta = pr_nrdconta
+         ON acordo.nracordo   = contrato.nracordo
+      WHERE acordo.cdcooper   = pr_cdcooper
+        AND acordo.nrdconta   = pr_nrdconta
         AND contrato.nrctremp = pr_nrctremp
         AND contrato.nrgrupo  = pr_nrgrupo
         AND contrato.cdorigem = pr_cdorigem
@@ -864,20 +860,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       INSERT INTO tbrecup_acordo_contrato
                    (nracordo, 
                     nrgrupo, 
-                    cdcooper, 
-                    nrdconta, 
                     cdorigem, 
                     nrctremp)
              VALUES(pr_nracordo, --> nracordo
                     pr_nrdgrupo, --> nrgrupo  
-                    pr_cdcooper, --> cdcooper 
-                    pr_nrdconta, --> nrdconta 
                     pr_cdorigem, --> cdorigem 
                     pr_nrctremp);--> nrctrem 
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao gravar contrato do acordo: '||SQLERRM;
+        vr_dscritic := 'Erro ao gravar contrato de acordo: '||SQLERRM;
         RAISE vr_exc_erro;  
     END;
     
@@ -889,7 +881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       
     WHEN OTHERS THEN
       pr_cdcritic := 0;
-      pr_dscritic := 'Não foi possivel gravar contrato do acordo '||pr_nrctremp||': '||SQLERRM;      
+      pr_dscritic := 'Nao foi possivel gravar contrato do acordo '||pr_nrctremp||': '||SQLERRM;      
   END pc_gravar_contrato_acordo;
   
   --> Rotina para gerar os boletos e gravar as parcelas
@@ -900,10 +892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                 pr_nrcnvcob     IN crapcob.nrcnvcob%TYPE,  --> Numero do convenio de cobranca
                                 pr_inpessoa     IN crapass.inpessoa%TYPE,  --> Tipo de pessoa
                                 pr_nrcpfcgc     IN crapass.nrcpfcgc%TYPE,  --> Numero do cpf/cnpj do cooperado
-                                pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE,  --> Data do movimento
-                                pr_cdorigem     IN  INTEGER,               --> Origem
-                                pr_nrctremp     IN  crapepr.nrctremp%TYPE, --> Numero do Contrato
-                                pr_nrdgrupo     IN INTEGER,                --> Numero do grupo do contrato
+                                pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                
                                 pr_tab_parcelas typ_tab_parcelas,          --> Parcelas a serem processadas
                                 pr_xmlbolet    OUT  xmltype,               --> Xml de retorno dos boletos gerados 
                                 pr_cdcritic    OUT  NUMBER,                --> Código da Crítica
@@ -993,10 +982,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
       -- Se retornou alguma crítica
       IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-         
          --> Buscar descrição critica
-         IF nvl(vr_cdcritic,0) > 0 AND 
-            TRIM(vr_dscritic) IS NULL THEN
+        IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
          END IF;
          vr_cdcritic := 0;
@@ -1007,24 +994,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       
       vr_idxcob := vr_tab_cob.first;
       IF vr_idxcob IS NULL THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Cobrança não encontrada.';
+        vr_cdcritic := 985;
         RAISE vr_exc_erro;
       END IF;      
       
       --> Gravar parcela na tabela
       BEGIN
         INSERT INTO tbrecup_acordo_parcela
-                    (cdcooper,  
-                     nrdconta, 
-                     nracordo,  
+                    (nracordo,  
                      nrparcela,
                      nrboleto, 
                      nrconvenio,
                      nrdconta_cob)
-             VALUES (pr_cdcooper,             --cdcooper
-                     pr_nrdconta,             --nrdconta
-                     pr_nracordo,             --nracordo
+             VALUES (pr_nracordo,             --nracordo
                      pr_tab_parcelas(idx).nrparcel,  --nrparcela
                      vr_tab_cob(vr_idxcob).nrdocmto, --nrboleto
                      pr_nrcnvcob,             --nrconveni
@@ -1035,7 +1017,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
           vr_cdcritic := 990; -- Parcela do acordo já cadastrada.
           RAISE vr_exc_erro;
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir Parcela do acordo: '||SQLERRM;
+          vr_dscritic := 'Erro ao inserir parcela do acordo: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
       
@@ -1138,19 +1120,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
          AND sab.nrinssac = pr_nrinssac;
     rw_crapsab cr_crapsab%ROWTYPE;     
     
-	CURSOR cr_crapcyc(pr_cdcooper crapcyc.cdcooper%TYPE
-                   ,pr_cdorigem crapcyc.cdorigem%TYPE
-                   ,pr_nrdconta crapcyc.nrdconta%TYPE
-                   ,pr_nrctremp crapcyc.nrctremp%TYPE) IS
-	  SELECT cyc.flgjudic
-          ,cyc.flextjud
-	    FROM crapcyc cyc
-	   WHERE cyc.cdcooper = pr_cdcooper
-		 AND cyc.cdorigem =	pr_cdorigem
-		 AND cyc.nrdconta =	pr_nrdconta
-		 AND cyc.nrctremp = pr_nrctremp;
-	rw_crapcyc cr_crapcyc%ROWTYPE;	 
-		  
+    CURSOR cr_crapcyc(pr_cdcooper crapcyc.cdcooper%TYPE
+                     ,pr_cdorigem crapcyc.cdorigem%TYPE
+                     ,pr_nrdconta crapcyc.nrdconta%TYPE
+                     ,pr_nrctremp crapcyc.nrctremp%TYPE) IS
+      SELECT cyc.flgjudic
+            ,cyc.flextjud
+        FROM crapcyc cyc
+       WHERE cyc.cdcooper = pr_cdcooper
+         AND cyc.cdorigem =	DECODE(pr_cdorigem,2,3,pr_cdorigem)
+         AND cyc.nrdconta =	pr_nrdconta
+         AND cyc.nrctremp = pr_nrctremp;
+    rw_crapcyc cr_crapcyc%ROWTYPE;	 
+		    
     CURSOR cr_crapepr(pr_cdcooper crapepr.cdcooper%TYPE
                      ,pr_nrdconta crapepr.nrdconta%TYPE
                      ,pr_dtmvtolt crapepr.dtmvtolt%TYPE
@@ -1208,7 +1190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_xmldoc     xmldom.DOMDocument;
     vr_lista_nodo xmldom.DOMNodeList;    
     vr_nodo       xmldom.DOMNode;        
-    vr_idx      VARCHAR2(500);
+    vr_idx        VARCHAR2(500);
     
     vr_tab_campos gene0007.typ_mult_array;
     
@@ -1237,10 +1219,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       vr_dsctremp := TRIM(pr_xmlrequi.extract('/Root/Contratos/Contrato/Numero/text()').getstringval());
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel identificar contrato.';
+        vr_dscritic := 'Nao foi possivel identificar contrato.';
         RAISE vr_exc_erro;  
         
     END;
+    
     IF vr_dsctremp IS NOT NULL THEN
       pc_quebra_desc_contrat(pr_nrcontrato => vr_dsctremp,
                              pr_cdcooper   => vr_cdcooper,
@@ -1259,18 +1242,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     -- Se não encontrar
     IF btch0001.cr_crapdat%NOTFOUND THEN      
       CLOSE btch0001.cr_crapdat;
-          
       -- Montar mensagem de critica
-      vr_cdcritic := 1;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-          
+      vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';
       RAISE vr_exc_erro;
     ELSE
       CLOSE btch0001.cr_crapdat;
     END IF;
     
     IF nvl(rw_crapdat.inproces,0) <> 1 THEN
-      vr_cdcritic := 138; --> Processo ja solicitado ou rodando.
+      vr_dscritic := 'Processo da Cooperativa nao finalizou, tente novamente mais tarde';
       RAISE vr_exc_erro;
     END IF;
     
@@ -1337,6 +1317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                             rw_crapass.complend,
                             1);
     ELSE
+      -- Fecha cursor
+      CLOSE cr_crapsab;       
       -- Se encontrou, atualiza dados de endereço
       UPDATE crapsab
          SET dsendsac = rw_crapass.dsendere,
@@ -1354,21 +1336,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       vr_nracordo := TRIM(pr_xmlrequi.extract('/Root/Acordo/Numero/text()').getstringval());
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel identificar numero do acordo.';
+        vr_dscritic := 'Nao foi possivel identificar numero do acordo.';
         RAISE vr_exc_erro;          
     END;
     
     BEGIN 
       INSERT INTO tbrecup_acordo
-                   (nracordo   , dhacordo, cdsituacao)
-            VALUES (vr_nracordo, SYSDATE , 1);
-      NULL;
+                   (nracordo, cdcooper, nrdconta, dhacordo, cdsituacao)
+            VALUES (vr_nracordo, vr_cdcooper, vr_nrdconta, SYSDATE , 1);
     EXCEPTION
       WHEN dup_val_on_index THEN
         vr_cdcritic := 991; -- Numero do acordo ja cadastrado.
         RAISE vr_exc_erro;          
       WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel inserir acordo: '||SQLERRM;
+        vr_dscritic := 'Nao foi possivel inserir acordo: '||SQLERRM;
         RAISE vr_exc_erro_det;                
     END;    
     
@@ -1397,32 +1378,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         vr_idx := vr_tab_campos.next(vr_idx);
       END LOOP;
       
-	  OPEN cr_crapcyc(pr_cdcooper => vr_cdcooper_aux
-                   ,pr_cdorigem => vr_cdorigem_aux 
-                   ,pr_nrdconta => vr_nrdconta_aux 
-                   ,pr_nrctremp => vr_nrctremp_aux);
-
-	  FETCH cr_crapcyc INTO rw_crapcyc;
-
-	  IF cr_crapcyc%NOTFOUND THEN
-		   vr_dscritic := 'Não é possível realizar acordo com contratos que não estão em cobrança Judicial/Extrajudicial.';
-       RAISE vr_exc_erro; 
-	  ELSE
-      IF rw_crapcyc.flgjudic = 1 THEN
-        vr_flgjudic := TRUE;
-      END IF;
-
-      IF rw_crapcyc.flextjud = 1 THEN
-        vr_flextjud := TRUE;
-      END IF;
-
-      IF vr_flgjudic = vr_flextjud THEN
-        vr_dscritic := 'Não é possível realizar acordo com contratos que não estão no mesmo processo judicial.';
-        RAISE vr_exc_erro; 
-      END IF;
-
-	  END IF;
-
       IF vr_dsctremp IS NOT NULL THEN
         pc_quebra_desc_contrat(pr_nrcontrato => vr_dsctremp,
                                pr_cdcooper   => vr_cdcooper_aux,
@@ -1434,6 +1389,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         RAISE vr_exc_erro;  
       END IF;
       
+      OPEN cr_crapcyc(pr_cdcooper => vr_cdcooper_aux
+                     ,pr_cdorigem => vr_cdorigem_aux 
+                     ,pr_nrdconta => vr_nrdconta_aux 
+                     ,pr_nrctremp => vr_nrctremp_aux);
+      FETCH cr_crapcyc INTO rw_crapcyc;
+      IF cr_crapcyc%NOTFOUND THEN
+        CLOSE cr_crapcyc;
+        vr_dscritic := 'Nao e possivel realizar acordo com contratos que nao estao em cobranca Judicial/Extrajudicial.';
+        RAISE vr_exc_erro; 
+      ELSE
+        CLOSE cr_crapcyc;
+        IF rw_crapcyc.flgjudic = 1 THEN
+          vr_flgjudic := TRUE;
+        END IF;
+
+        IF rw_crapcyc.flextjud = 1 THEN
+          vr_flextjud := TRUE;
+        END IF;
+
+        IF vr_flgjudic = vr_flextjud THEN
+          vr_dscritic := 'Nao e possivel realizar acordo com contratos que nao estao no mesmo processo judicial.';
+          RAISE vr_exc_erro; 
+        END IF;
+
+      END IF;
+      
+      -- Verifica se contrato esta para liquidar
+      OPEN cr_crapepr(pr_cdcooper => vr_cdcooper_aux
+                     ,pr_nrdconta => vr_nrdconta_aux
+                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                     ,pr_nrctremp => vr_nrctremp_aux);
+      FETCH cr_crapepr INTO rw_crapepr;
+      IF cr_crapepr%FOUND THEN
+        CLOSE cr_crapepr;
+        vr_dscritic := 'Nao foi possivel gerar boleto, contrato ' || gene0002.fn_mask_contrato(vr_nrctremp_aux) || ' marcado para liquidar.';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapepr;
+      END IF;
+
       -- Validar contas
       IF vr_cdcooper_aux <> vr_cdcooper OR 
          vr_nrdconta_aux <> vr_nrdconta THEN
@@ -1451,8 +1446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                   pr_cdcritic  => vr_cdcritic,       --> Código da Crítica
                                   pr_dscritic  => vr_dscritic);     --> Descrição da Crítica
       
-      IF nvl(vr_cdcritic,0) > 0 OR  
-         TRIM(vr_dscritic) IS NOT NULL THEN    
+      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN    
         -- Se apenas possui texto retorna critica padrão
         -- e texto no detalhe 
         IF nvl(vr_cdcritic,0) > 0 THEN   
@@ -1509,16 +1503,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                           pr_inpessoa     => rw_crapass.inpessoa, --> Tipo de pessoa
                           pr_nrcpfcgc     => rw_crapass.nrcpfcgc, --> Numero do cpf/cnpj do cooperado
                           pr_dtmvtolt     => rw_crapdat.dtmvtolt, --> Data do movimento
-                          pr_cdorigem     => vr_cdorigem,         --> Origem
-                          pr_nrctremp     => vr_nrctremp,         --> Numero do Contrato
-                          pr_nrdgrupo     => vr_nrdgrupo,         --> Numero do grupo do contrato
                           pr_tab_parcelas => vr_tab_parcelas,     --> Parcelas a serem processadas
                           pr_xmlbolet     => pr_xmlrespo,         --> Xml de retorno dos boletos gerados 
                           pr_cdcritic     => vr_cdcritic,         --> Código da Crítica
                           pr_dscritic     => vr_dscritic);        --> Descrição da Crítica
                           
-      IF nvl(vr_cdcritic,0) > 0 OR  
-         TRIM(vr_dscritic) IS NOT NULL THEN       
+      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN       
         -- Se apenas possui texto retorna critica padrão
         -- e texto no detalhe 
         IF nvl(vr_cdcritic,0) > 0 THEN   
@@ -1529,23 +1519,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       END IF; 
     END IF;
     
-    -- Verifica se contrato esta para liquidar
-    OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
-                   ,pr_nrdconta => vr_nrdconta
-                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                   ,pr_nrctremp => vr_nrctremp);
-
-    FETCH cr_crapepr INTO rw_crapepr; 
-
-    IF cr_crapepr%NOTFOUND THEN
-      CLOSE cr_crapepr;
-      vr_dscritic := 'Não foi possível gerar boleto, contrato ' || gene0002.fn_mask_contrato(vr_nrctremp) || ' marcado para liquidar.';
-  		RAISE vr_exc_erro;
-    ELSE
-      CLOSE cr_crapepr;
-    END IF;
-
-    COMMIT;      
   EXCEPTION
     WHEN vr_exc_erro_det THEN
       --> Buscar descrição critica
@@ -1555,33 +1528,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       END IF;
       
       --> Apenas critica generica e detalhe critica em outro parametro        
-      pr_cdcritic := 983;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 983);
+      pr_cdcritic := 993;
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 993);
       pr_dsdetcri := vr_dscritic;
       
     WHEN vr_exc_erro THEN
-    
       --> Buscar descrição critica
-      IF nvl(vr_cdcritic,0) > 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
          
-      ELSIF nvl(vr_cdcritic,0) = 0 THEN
-        vr_cdcritic := 983;
+      ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
         pr_dsdetcri := vr_dscritic; 
       END IF;
       
-      ROLLBACK;
+      IF NVL(vr_cdcritic,0) = 0 THEN
+        vr_cdcritic := 993;
+      END IF;
       
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       pr_dsdetcri := nvl(pr_dsdetcri,vr_dscritic);
       
-      
     WHEN OTHERS THEN
-      ROLLBACK;
-     
       pr_cdcritic := 993;
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
       pr_dscritic := vr_dscritic;      
@@ -1625,19 +1594,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     --> Buscar situacao do acordo
     CURSOR cr_tbacordo IS
        SELECT aco.cdsituacao,
+              aco.cdcooper,
+              aco.nrdconta,
               aco.nracordo,
               aco.vlbloqueado
         FROM tbrecup_acordo aco
-        WHERE nracordo = pr_nracordo;
+       WHERE nracordo = pr_nracordo;
     rw_tbacordo cr_tbacordo%ROWTYPE;  
     
     --> Buscar parcelas do acordo
     CURSOR cr_parcelas IS         
-      SELECT par.cdcooper
-            ,par.nrdconta_cob
+      SELECT par.nrdconta_cob
             ,par.nrconvenio
             ,par.nrboleto
-            ,par.nrdconta
         FROM tbrecup_acordo_parcela par
        WHERE par.nracordo = pr_nracordo;
     
@@ -1665,7 +1634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
-     
+         
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
     vr_dscritic     VARCHAR2(10000);
@@ -1680,7 +1649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_nrdconta     crapass.nrdconta%TYPE;
     vr_des_reto     VARCHAR2(10);
     vr_tab_erro    gene0001.typ_tab_erro;
-
+    
   BEGIN
     
     --> Buscar situacao do acordo
@@ -1703,45 +1672,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       RAISE vr_exc_erro;
     END IF;
     
-    vr_cdcooper := 0;
+    -- Leitura do calendário da cooperativa
+    OPEN btch0001.cr_crapdat(pr_cdcooper => rw_tbacordo.cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN      
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';              
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+        
+    IF nvl(rw_crapdat.inproces,0) <> 1 THEN
+      vr_dscritic := 'Processo da Cooperativa nao finalizou, tente novamente mais tarde';
+      RAISE vr_exc_erro;
+    END IF;
     
     --> Buscar parcelas do acordo
-    FOR rw_parcelas IN cr_parcelas LOOP
-      
-      IF rw_parcelas.cdcooper <> vr_cdcooper THEN
-        
-        vr_cdcooper := rw_parcelas.cdcooper;
-        vr_nrdconta := rw_parcelas.nrdconta;
-
-        -- Leitura do calendário da cooperativa
-        OPEN btch0001.cr_crapdat(pr_cdcooper => rw_parcelas.cdcooper);
-
-        FETCH btch0001.cr_crapdat INTO rw_crapdat;
-            
-        -- Se não encontrar
-        IF btch0001.cr_crapdat%NOTFOUND THEN      
-          CLOSE btch0001.cr_crapdat;
-              
-          -- Montar mensagem de critica
-          vr_cdcritic := 1;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-              
-          RAISE vr_exc_erro;
-        ELSE
-          CLOSE btch0001.cr_crapdat;
-        END IF;
-        
-        IF nvl(rw_crapdat.inproces,0) <> 1 THEN
-          vr_cdcritic := 138; --> Processo ja solicitado ou rodando.
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-    
+    FOR rw_parcelas IN cr_parcelas LOOP      
       --> Verificar cobrança
-      OPEN cr_crapcob (pr_cdcooper      => rw_parcelas.cdcooper    ,
+      OPEN cr_crapcob (pr_cdcooper      => rw_tbacordo.cdcooper,
                        pr_nrdconta_cob  => rw_parcelas.nrdconta_cob,
-                       pr_nrconvenio    => rw_parcelas.nrconvenio  ,
-                       pr_nrboleto      => rw_parcelas.nrboleto    );
+                       pr_nrconvenio    => rw_parcelas.nrconvenio,
+                       pr_nrboleto      => rw_parcelas.nrboleto);
       FETCH cr_crapcob INTO rw_crapcob;
       IF cr_crapcob%FOUND THEN
         CLOSE cr_crapcob;
@@ -1757,8 +1712,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                      ,pr_dscritic => vr_dscritic);
                        
         -- Se retornou alguma crítica               
-        IF nvl(vr_cdcritic,0) <> 0 OR 
-           TRIM(vr_dscritic) IS NOT NULL THEN
+        IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro_det;
         END IF;
         
@@ -1811,38 +1765,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         
         RAISE vr_exc_erro;
       END IF;
-    END IF; 
-      
-    -- Desmarcar o contrato como CIN
-    UPDATE crapcyc
-       SET crapcyc.flgehvip = 0,
-           crapcyc.cdmotcin = NULL
-       WHERE EXISTS(SELECT 1
-                      FROM tbrecup_acordo_contrato
-                     WHERE tbrecup_acordo_contrato.cdcooper = crapcyc.cdcooper
-                       AND tbrecup_acordo_contrato.nrdconta = crapcyc.nrdconta
-                       AND tbrecup_acordo_contrato.nrctremp = crapcyc.nrctremp
-                       AND DECODE(tbrecup_acordo_contrato.cdorigem,2,3,tbrecup_acordo_contrato.cdorigem) = crapcyc.cdorigem
-                       AND tbrecup_acordo_contrato.nracordo = rw_tbacordo.nracordo);   
- 
+    END IF;
+    
+    BEGIN
+      -- Desmarcar o contrato como CIN
+      UPDATE crapcyc
+         SET crapcyc.flgehvip = 0,
+             crapcyc.cdmotcin = NULL
+         WHERE EXISTS(SELECT 1
+                        FROM tbrecup_acordo_contrato
+                        JOIN tbrecup_acordo
+                          ON tbrecup_acordo.nracordo = tbrecup_acordo_contrato.nracordo
+                       WHERE tbrecup_acordo.cdcooper = crapcyc.cdcooper
+                         AND tbrecup_acordo.nrdconta = crapcyc.nrdconta
+                         AND tbrecup_acordo_contrato.nrctremp = crapcyc.nrctremp
+                         AND DECODE(tbrecup_acordo_contrato.cdorigem,2,3,tbrecup_acordo_contrato.cdorigem) = crapcyc.cdorigem
+                         AND tbrecup_acordo_contrato.nracordo = rw_tbacordo.nracordo);
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar o CYBER: '||SQLERRM;
+        RAISE vr_exc_erro_det;
+    END;
+
     BEGIN
       -- Alterar a situação do acordo para cancelado
       UPDATE tbrecup_acordo SET
              cdsituacao = 3 -- Cancelado
             ,dtcancela = pr_dtcancel
-            ,vlbloqueado = 0 -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
        WHERE nracordo = rw_tbacordo.nracordo;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao atualizar acordo: '||SQLERRM;
         RAISE vr_exc_erro_det;   
-    END;   
-
+    END;     
+      
   EXCEPTION
     WHEN vr_exc_erro_det THEN
       --> Buscar descrição critica
-      IF nvl(vr_cdcritic,0) > 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
       END IF;
       
@@ -1850,31 +1810,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_cdcritic := 994;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 994);
       pr_dsdetcri := vr_dscritic;
-      
-	  ROLLBACK;
-
     WHEN vr_exc_erro THEN
-    
       --> Buscar descrição critica
-      IF nvl(vr_cdcritic,0) > 0 AND 
-         TRIM(vr_dscritic) IS NULL THEN
+      IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
          
-      ELSIF nvl(vr_cdcritic,0) = 0 THEN
-        vr_cdcritic := 994;
+      ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
         pr_dsdetcri := vr_dscritic;
       END IF;
       
-      ROLLBACK;
+      IF NVL(vr_cdcritic,0) = 0 THEN
+        vr_cdcritic := 994;
+      END IF;
       
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       pr_dsdetcri := nvl(pr_dsdetcri,vr_dscritic);
       
     WHEN OTHERS THEN
-      ROLLBACK;
-     
       pr_cdcritic := 994;
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
       pr_dscritic := vr_dscritic;      
