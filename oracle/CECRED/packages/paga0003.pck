@@ -94,8 +94,8 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                             ,pr_dscritic OUT VARCHAR2	-- Descriçao do erro
                             );
 
-	/* Procedimento do internetbank operação 175 - Operar pagamento DARF/DAS */
-  PROCEDURE pc_InternetBank175(pr_cdcooper IN  crapcop.cdcooper%TYPE  -- Número da conta
+	/* Procedimento do internetbank operação 188 - Operar pagamento DARF/DAS */
+  PROCEDURE pc_InternetBank188(pr_cdcooper IN  crapcop.cdcooper%TYPE  -- Número da conta
 															,pr_nrdconta IN  crapass.nrdconta%TYPE  -- Sequencial de titularidade
 															,pr_idseqttl IN  crapttl.idseqttl%TYPE  -- CPF do operador PJ
 															,pr_nrcpfope IN  crapopi.nrcpfope%TYPE  -- Canal de origem da operação
@@ -128,7 +128,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
 															,pr_versaldo IN  INTEGER                -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
 															,pr_tpleitor IN  INTEGER                -- Descriçao do erro
 															,pr_xml_dsmsgerr    OUT VARCHAR2        -- Retorno XML de critica
-                              								,pr_xml_operacao175 OUT CLOB            -- Retorno XML da operação 174
+                              ,pr_xml_operacao188 OUT CLOB            -- Retorno XML da operação 188
                               								,pr_dsretorn        OUT VARCHAR2 );     -- Retorno de critica (OK ou NOK)
 
   PROCEDURE pc_cria_agend_darf_das(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código da cooperativa
@@ -167,8 +167,8 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_dscritic OUT VARCHAR2 -- Descriçao do erro
                                    );
 
-  /* Procedimento do internetbank operação 174 - Consulta de Horario Limite DARF/DAS */
-  PROCEDURE pc_InternetBank174(pr_cdcooper IN crapcop.cdcooper%type      -- Codigo Cooperativa
+  /* Procedimento do internetbank operação 187 - Consulta de Horario Limite DARF/DAS */
+  PROCEDURE pc_InternetBank187(pr_cdcooper IN crapcop.cdcooper%type      -- Codigo Cooperativa
                               ,pr_cdagenci IN crapage.cdagenci%type      -- Agencia do Associado
                               ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE      -- Numero caixa
                               ,pr_nrdconta IN crapass.nrdconta%TYPE      -- Numero da conta
@@ -191,7 +191,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                               ,pr_iptransa IN VARCHAR2                   -- IP da transacao no IBank/mobile
                               ,pr_flmobile IN INTEGER                    -- Indicador se origem é do Mobile
                               ,pr_xml_dsmsgerr    OUT VARCHAR2           -- Retorno XML de critica
-                              ,pr_xml_operacao174 OUT CLOB               -- Retorno XML da operação 174
+                              ,pr_xml_operacao187 OUT CLOB               -- Retorno XML da operação 187
                               ,pr_dsretorn        OUT VARCHAR2);         -- Retorno de critica (OK ou NOK)
        
    PROCEDURE pc_busca_agend_darf_das_car(pr_cdcooper IN crapcop.cdcooper%TYPE                --> Código da Cooperativa
@@ -2306,8 +2306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
    Alteracoes: 
 ..............................................................................*/  
 
-	/* Procedimento do internetbank operação 175 - Operar pagamento DARF/DAS */
-  PROCEDURE pc_InternetBank175( pr_cdcooper IN  crapcop.cdcooper%TYPE  -- Cooperativa
+	/* Procedimento do internetbank operação 188 - Operar pagamento DARF/DAS */
+  PROCEDURE pc_InternetBank188( pr_cdcooper IN  crapcop.cdcooper%TYPE  -- Cooperativa
                                ,pr_nrdconta IN  crapass.nrdconta%TYPE  -- Número da conta
                                ,pr_idseqttl IN  crapttl.idseqttl%TYPE  -- Sequencial de titularidade
                                ,pr_nrcpfope IN  crapopi.nrcpfope%TYPE  -- CPF do operador PJ
@@ -2340,7 +2340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_versaldo IN  INTEGER                -- Indicador de validação do saldo em relação ao valor total
                                ,pr_tpleitor IN  INTEGER                -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
                                ,pr_xml_dsmsgerr    OUT VARCHAR2        -- Retorno XML de critica
-                               ,pr_xml_operacao175 OUT CLOB            -- Retorno XML da operação 174
+                               ,pr_xml_operacao188 OUT CLOB            -- Retorno XML da operação 188
                                ,pr_dsretorn        OUT VARCHAR2 ) IS   -- Retorno de critica (OK ou NOK)
     --Cursores
 	  CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -2866,11 +2866,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			END IF;
 			
 			-- Montar xml de retorno dos dados
-			dbms_lob.createtemporary(pr_xml_operacao175, TRUE); 
-			dbms_lob.open(pr_xml_operacao175, dbms_lob.lob_readwrite);       
+			dbms_lob.createtemporary(pr_xml_operacao188, TRUE);
+			dbms_lob.open(pr_xml_operacao188, dbms_lob.lob_readwrite);
 
 			-- Insere o cabeçalho do XML 
-			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao175 
+			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
 														 ,pr_texto_completo => vr_xml_temp 
 														 ,pr_texto_novo     => '<raiz>
 														                        <DADOS_PAGAMENTO>
@@ -2878,7 +2878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																													<idastcjt>'|| nvl(TO_CHAR(vr_idastcjt),' ') ||'</idastcjt>
 																									  </DADOS_PAGAMENTO>');
 			-- Encerrar a tag raiz
-			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao175 
+			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
 														 ,pr_texto_completo => vr_xml_temp 
 														 ,pr_texto_novo     => '</raiz>' 
 														 ,pr_fecha_xml      => TRUE);
@@ -2894,16 +2894,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			END IF;
 		
 			-- Montar xml de retorno dos dados
-			dbms_lob.createtemporary(pr_xml_operacao175, TRUE); 
-			dbms_lob.open(pr_xml_operacao175, dbms_lob.lob_readwrite);       
+			dbms_lob.createtemporary(pr_xml_operacao188, TRUE);
+			dbms_lob.open(pr_xml_operacao188, dbms_lob.lob_readwrite);
 
 			-- Insere o cabeçalho do XML 
-			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao175 
+			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
 														 ,pr_texto_completo => vr_xml_temp 
 														 ,pr_texto_novo     => '<raiz>'); 
 	    
 			-- Insere dados
-			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao175 
+			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
 														 ,pr_texto_completo => vr_xml_temp 
 														 ,pr_texto_novo     => '<DADOS_PAGAMENTO>
 																												<lindigi1>'|| vr_lindigi1           ||'</lindigi1>
@@ -2920,7 +2920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																												<dsmsgope>'|| nvl(vr_dsmsgope,' ')   ||'</dsmsgope>																												
 																											</DADOS_PAGAMENTO>');  
 			-- Encerrar a tag raiz
-			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao175 
+			gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao188
 														 ,pr_texto_completo => vr_xml_temp 
 														 ,pr_texto_novo     => '</raiz>' 
 														 ,pr_fecha_xml      => TRUE);
@@ -2953,7 +2953,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			
 			pc_proc_geracao_log(pr_flgtrans => 0 /* false */ );
 			
-  END pc_InternetBank175;
+  END pc_InternetBank188;
   
   PROCEDURE pc_cria_agend_darf_das(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código da cooperativa
                                   ,pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
@@ -3485,8 +3485,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			
   END pc_cria_agend_darf_das;
   
-  /* Procedimento do internetbank operação 174 - Consulta de Horario Limite DARF/DAS */
-  PROCEDURE pc_InternetBank174(pr_cdcooper IN crapcop.cdcooper%type      -- Codigo Cooperativa
+  /* Procedimento do internetbank operação 187 - Consulta de Horario Limite DARF/DAS */
+  PROCEDURE pc_InternetBank187(pr_cdcooper IN crapcop.cdcooper%type      -- Codigo Cooperativa
                               ,pr_cdagenci IN crapage.cdagenci%type      -- Agencia do Associado
                               ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE      -- Numero caixa
                               ,pr_nrdconta IN crapass.nrdconta%TYPE      -- Numero da conta
@@ -3509,7 +3509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                               ,pr_iptransa IN VARCHAR2                   -- IP da transacao no IBank/mobile
                               ,pr_flmobile IN INTEGER                    -- Indicador se origem é do Mobile
                               ,pr_xml_dsmsgerr    OUT VARCHAR2           -- Retorno XML de critica
-                              ,pr_xml_operacao174 OUT CLOB               -- Retorno XML da operação 174
+                              ,pr_xml_operacao187 OUT CLOB               -- Retorno XML da operação 187
                               ,pr_dsretorn        OUT VARCHAR2) IS       -- Retorno de critica (OK ou NOK)
 
     --Tipo de registro de data
@@ -3564,7 +3564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			vr_tab_limite := SUBSTR(vr_tab_limite,(INSTR(vr_tab_limite, '>') + 1));
 	  END IF;
     
-    pr_xml_operacao174 := vr_tab_limite;
+    pr_xml_operacao187 := vr_tab_limite;
     pr_dsretorn := 'OK';
 		
   EXCEPTION
@@ -3587,7 +3587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       -- definir retorno
       pr_xml_dsmsgerr := '<dsmsgerr>Erro inesperado. Nao foi possivel efetuar a consulta. Tente novamente ou contacte seu PA</dsmsgerr>' || sqlerrm;
       pr_dsretorn := 'NOK'; 
-  END pc_InternetBank174;
+  END pc_InternetBank187;
   
   PROCEDURE pc_busca_agend_darf_das(pr_cdcooper IN crapcop.cdcooper%TYPE                --> Código da Cooperativa
                                    ,pr_cdoperad IN crapope.cdoperad%TYPE                --> Código do Operador

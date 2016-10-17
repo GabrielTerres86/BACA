@@ -625,7 +625,7 @@
 
                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
                                                                     
-				26/07/2016 - Inclusao da operacao 174, pagamento de DARF/DAS,
+                26/07/2016 - Inclusao da operacao 187, pagamento de DARF/DAS,
 							 Prj. 338 (Jean Michel).
 
                 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo
@@ -7562,11 +7562,11 @@ PROCEDURE proc_operacao173:
 END PROCEDURE.
 
 /* Consulta Horario Limite DARF/DAS */
-PROCEDURE proc_operacao174:
+PROCEDURE proc_operacao187:
 
 	ASSIGN aux_tpdaguia = INTE(GET-VALUE("tpdaguia")).
 
-    RUN sistema/internet/fontes/InternetBank174.p (INPUT aux_cdcooper,
+    RUN sistema/internet/fontes/InternetBank187.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idseqttl,
                                                   INPUT aux_nrcpfope,
@@ -7593,7 +7593,7 @@ PROCEDURE proc_operacao174:
 END PROCEDURE.
 
 /* Operar pagamentos de DARF/DAS */
-PROCEDURE proc_operacao175:
+PROCEDURE proc_operacao188:
 
     ASSIGN  aux_dtapurac = DATE(GET-VALUE("aux_dtapurac"))
             aux_tpcaptur = INTE(GET-VALUE("aux_tpcaptur"))
@@ -7625,7 +7625,7 @@ PROCEDURE proc_operacao175:
                           ELSE
                               DATE(GET-VALUE("aux_dtmvtopg")).
                               
-    RUN sistema/internet/fontes/InternetBank175.p (INPUT aux_cdcooper,
+    RUN sistema/internet/fontes/InternetBank188.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
                                                    INPUT aux_nrcpfope,

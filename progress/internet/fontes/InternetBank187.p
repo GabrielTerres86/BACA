@@ -1,6 +1,6 @@
 /*..............................................................................
    
-   Programa: sistema/internet/fontes/InternetBank174.p
+   Programa: sistema/internet/fontes/InternetBank187.p
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jean Michel
@@ -25,7 +25,7 @@
 	DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 	DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
     DEF VAR aux_dsretorn AS CHAR                                           NO-UNDO.
-    DEF VAR aux_xml_operacao174 AS LONGCHAR                                NO-UNDO.
+    DEF VAR aux_xml_operacao187 AS LONGCHAR                                NO-UNDO.
 	DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
     DEF VAR aux_iteracoes AS INT                                           NO-UNDO.
     DEF VAR aux_posini AS INT                                              NO-UNDO.
@@ -63,9 +63,9 @@
     ELSE
         ASSIGN aux_flmobile = 0.
     
-    /* Procedimento do internetbank operaçao 174 */
+    /* Procedimento do internetbank operaçao 187 */
 	{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-    RUN STORED-PROCEDURE pc_InternetBank174
+    RUN STORED-PROCEDURE pc_InternetBank187
 		aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper /* Codigo Cooperativa */
                                     	   ,INPUT 90		   /* Agencia do Associado */
                                     	   ,INPUT 900		   /* Numero caixa */
@@ -89,7 +89,7 @@
                                     	   ,INPUT ""		   /* IP da transacao no IBank/mobile */
                                     	   ,INPUT aux_flmobile /* Indicador se origem é do Mobile */
                                     	  ,OUTPUT ""		   /* Retorno XML de critica */
-                                    	  ,OUTPUT ""		   /* Retorno XML da operação 174 */
+                                    	  ,OUTPUT ""		   /* Retorno XML da operaçao 187 */
                                     	  ,OUTPUT "").         /* Retorno de critica (OK ou NOK) */
                                                                            
 
@@ -98,7 +98,7 @@
 			ASSIGN aux_msgerora = aux_msgerora + ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
 		END.
           
-		ASSIGN aux_dscritic = "pc_InternetBank174 --> "  +
+		ASSIGN aux_dscritic = "pc_InternetBank187 --> "  +
 							"Erro ao executar Stored Procedure: " +
 							aux_msgerora.
       
@@ -113,34 +113,34 @@
       
 	END. 
 
-	CLOSE STORED-PROC pc_InternetBank174
+	CLOSE STORED-PROC pc_InternetBank187
 		aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
 
 	{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl}}
 
 	ASSIGN aux_dsretorn       = ""
 		   xml_dsmsgerr       = ""
-		   aux_xml_operacao174 = ""
-		   aux_dsretorn = pc_InternetBank174.pr_dsretorn 
-		      			  WHEN pc_InternetBank174.pr_dsretorn <> ?
-		   xml_dsmsgerr = pc_InternetBank174.pr_xml_dsmsgerr 
-						  WHEN pc_InternetBank174.pr_xml_dsmsgerr <> ?
-		   aux_xml_operacao174 = pc_InternetBank174.pr_xml_operacao174 
-								WHEN pc_InternetBank174.pr_xml_operacao174 <> ?               .
+		   aux_xml_operacao187 = ""
+		   aux_dsretorn = pc_InternetBank187.pr_dsretorn 
+		      			  WHEN pc_InternetBank187.pr_dsretorn <> ?
+		   xml_dsmsgerr = pc_InternetBank187.pr_xml_dsmsgerr 
+						  WHEN pc_InternetBank187.pr_xml_dsmsgerr <> ?
+		   aux_xml_operacao187 = pc_InternetBank187.pr_xml_operacao187 
+								WHEN pc_InternetBank187.pr_xml_operacao187 <> ?               .
 
 	/* Verificar se retornou critica */
 	IF aux_dsretorn <> "OK" THEN
 	    RETURN "NOK".
    
 	/* Atribuir xml de retorno a temptable*/ 
-	IF aux_xml_operacao174 <> "" THEN
+	IF aux_xml_operacao187 <> "" THEN
 		DO:
-			ASSIGN aux_iteracoes = roundUp(LENGTH(aux_xml_operacao174) / 31000)
+			ASSIGN aux_iteracoes = roundUp(LENGTH(aux_xml_operacao187) / 31000)
 				   aux_posini    = 1.    
 
 			DO aux_contador = 1 TO aux_iteracoes:
 						CREATE xml_operacao.
-				ASSIGN xml_operacao.dslinxml = SUBSTRING(aux_xml_operacao174, aux_posini, 31000)
+				ASSIGN xml_operacao.dslinxml = SUBSTRING(aux_xml_operacao187, aux_posini, 31000)
 						aux_posini            = aux_posini + 31000.
 			END.
 
