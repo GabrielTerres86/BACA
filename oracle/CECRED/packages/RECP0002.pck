@@ -1216,7 +1216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       
     vr_cdcooper := 0; 
     BEGIN
-      vr_dsctremp := TRIM(pr_xmlrequi.extract('/Root/Contratos/Contrato/Numero/text()').getstringval());
+      vr_dsctremp := TRIM(pr_xmlrequi.extract('/Root/Contratos/Contrato[1]/Numero/text()').getstringval());
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel identificar contrato.';
