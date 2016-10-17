@@ -1,7 +1,7 @@
 /***********************************************************************
       Fonte: cobranca.js
       Autor: Gabriel
-      Data : Dezembro/2010             Ultima atualizacao : 11/07/2016
+      Data : Dezembro/2010             Ultima atualizacao : 04/08/2016
 
       Objetivo  : Biblioteca de funcoes da rotina CONBRANCA tela ATENDA.
 
@@ -42,12 +42,16 @@
                                a todas as funções da tela, conforme solicitadono
                                chamado 441903. (Kelvin)
 
+                  04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
+
                   28/04/2016 - PRJ 318 - Ajustes projeto Nova Plataforma de cobrança (Odirlei/AMcom)
 
                   11/07/2016 - Ajustes para apenas solicitar senha para as alterações
                                de desconto manuais.
                                PRJ213 - Reciprocidade (odirlei-AMcom)    
                                
+
+                  18/08/2016  - Adicionado função controlaFoco.(Evandro - RKAM).
 
  ***********************************************************************/
 
@@ -93,12 +97,62 @@ function habilitaSetor(setorLogado) {
             $("#divLogCeb").css('display', 'none');
 		
 			$("#divConteudoOpcao").html(response);
+            controlaFoco();
 		}				
 	});
  }
  
+ //Função para controle de navegação
+ function controlaFoco() {
+     $('#divConteudoOpcao').each(function () {
+         $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
+         $(this).find("#divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
+         $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
+     });
+
+
+     $(".LastInputModal").focus(function () {
+         var pressedShift = false;
+
+         $(this).bind('keyup', function (e) {
+             if (e.keyCode == 16) {
+                 pressedShift = false;//Quando tecla shift for solta passa valor false 
+		}				
+         })
+
+         $(this).bind('keydown', function (e) {
+             e.stopPropagation();
+             e.preventDefault();
+
+             if (e.keyCode == 16) {
+                 pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+             }
+             if ((e.keyCode == 9) && pressedShift == true) {
+                 return setFocusCampo($(target), e, false, 0);
+             }
+             else if (e.keyCode == 9) {
+                 $(".FirstInputModal").focus();
+             }
+         });
+
+	});
+
+     //Se estiver com foco na classe FluxoNavega
+     $(".FluxoNavega").focus(function () {
+         $(this).bind('keydown', function (e) {
+             if (e.keyCode == 13) {
+                 e.stopPropagation();
+                 e.preventDefault();
+                 $(this).click();
+ }
+	});
+     });
+ 
+     $(".FirstInputModal").focus();
+ }
+ 
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb,insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr) {
+function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
 
     var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
 
@@ -123,6 +177,7 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb,insitceb, dtcad
     $("#flprotes", "#divConteudoOpcao").val(flprotes);
     $("#qtdecprz", "#divConteudoOpcao").val(qtdecprz);
     $("#idrecipr", "#divConteudoOpcao").val(idrecipr);
+	$("#inenvcob", "#divConteudoOpcao").val(inenvcob);
 
  }
 
@@ -195,6 +250,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     var flprotes = $("#flprotes", "#divConteudoOpcao").val();
     var qtdecprz = $("#qtdecprz", "#divConteudoOpcao").val();
     var idrecipr = $("#idrecipr", "#divConteudoOpcao").val();
+	var inenvcob = $("#inenvcob", "#divConteudoOpcao").val();
 	var emails;
 
 	var flsercco = $("#flsercco","#divConteudoOpcao").val();
@@ -285,6 +341,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
             flprotes: flprotes,
             qtdecprz: qtdecprz,
             idrecipr: idrecipr,
+			inenvcob: inenvcob,
             nrdconta: nrdconta,
             inpessoa: inpessoa,
 			redirect: "script_ajax"
@@ -570,6 +627,7 @@ function realizaHabilitacao() {
     var qtdfloat = $("#qtdfloat", "#divOpcaoConsulta").val();
     var qtdecprz = $("#qtdecprz", "#divOpcaoConsulta").val();
     var idrecipr = $("#idrecipr", "#divOpcaoConsulta").val();
+	var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
     var idreciprold = $("#idreciprold", "#divOpcaoConsulta").val();
 
     nrconven = normalizaNumero(nrconven);
@@ -634,6 +692,7 @@ function realizaHabilitacao() {
             flprotes: flprotes,
             qtdecprz: qtdecprz,
             idrecipr: idrecipr,
+			inenvcob: inenvcob,
             idreciprold: idreciprold,
             perdesconto: perdesconto,
 			executandoProdutos: executandoProdutos,
@@ -852,6 +911,7 @@ function controlaLayout(nomeForm) {
         var Lqtdfloat = $('label[for="qtdfloat"]', '#' + nomeForm);
         var Lflprotes = $('label[for="flprotes"]', '#' + nomeForm);
         var Lqtdecprz = $('label[for="qtdecprz"]', '#' + nomeForm);
+		var Linenvcob = $('label[for="inenvcob"]', '#' + nomeForm);
 		
         var Cnrconven = $('#nrconven', '#' + nomeForm);
         var Cdsorgarq = $('#dsorgarq', '#' + nomeForm);
@@ -865,6 +925,7 @@ function controlaLayout(nomeForm) {
         var Cqtdfloat = $('#qtdfloat', '#' + nomeForm);
         var Cqtdecprz = $('#qtdecprz', '#' + nomeForm);
         var Cperdesconto = $('.clsPerDesconto', '#' + nomeForm);
+		var Cinenvcob = $('#inenvcob', '#' + nomeForm);
 		
         Lnrconven.addClass('rotulo').css('width', '210px');
         Ldsorgarq.addClass('rotulo').css('width', '210px');
@@ -880,6 +941,7 @@ function controlaLayout(nomeForm) {
         Lqtdfloat.addClass('rotulo').css('width', '210px');
         Lflprotes.addClass('rotulo').css('width', '210px');
         Lqtdecprz.addClass('rotulo').css('width', '210px');
+        Linenvcob.addClass('rotulo').css('width', '210px');
 		
         Cnrconven.css({ 'width': '70px' });
         Cdsorgarq.css({ 'width': '200px' });
@@ -891,6 +953,7 @@ function controlaLayout(nomeForm) {
         Cqtdfloat.css({ 'width': '70px' });
         Cqtdecprz.css({ 'width': '50px' }).attr('maxlength', '5').setMask("INTEGER", "zzzzz", ".", "");
         Cperdesconto.css({ 'width': '50px' }).setMask('DECIMAL','zz9,99','.','');
+		Cinenvcob.css({ 'width': '155px' });
 		if (Cinsitceb.val() == 1) {
             Cinsitceb.habilitaCampo();
         }else {
@@ -1084,7 +1147,7 @@ function acessaAba(id,cddopcao) {
     //var linkVoltar2 = 'acessaAba(' + (id - 1) + ',\'' + cddopcao + '\');';
     var linkContinuar = 1;
     var linkVoltar = 1;
-    
+
 
     // Se foi clicado para acessar a segunda aba
     if (id == 1) {
@@ -1098,7 +1161,7 @@ function acessaAba(id,cddopcao) {
     } else if (cddbanco != 85) { // Se NAO for CECRED NAO vai para a segunda tela
         linkContinuar = 2;
     }
-    
+
     if (linkContinuar == 1){
         document.getElementById("btnContinuar").onclick=function(){acessaAba(id + 1,cddopcao);}
     }else if (linkContinuar == 2){
@@ -1304,7 +1367,7 @@ function verificaSenhaCoordenador() {
         // Acumular categorias conforme reciprocidade ou não
         var tot_percdesc_campo = 0;        
         $(".clsCatFlrecipr0").each(function (index) {
-            tot_percdesc_campo = tot_percdesc_campo + converteMoedaFloat($(this).val());
+           tot_percdesc_campo = tot_percdesc_campo + converteMoedaFloat($(this).val());
         });
         var tot_percdesc_recipr_campo = 0;
         $(".clsCatFlrecipr1").each(function (index) {
@@ -1313,7 +1376,7 @@ function verificaSenhaCoordenador() {
 
         // Se foi alterado o valor de descontos manuais ou de Reciprocidade
         if (tot_percdesc_campo != tot_percdesc || tot_percdesc_recipr_campo != tot_percdesc_recipr) {
-           flsolicita = true;
+          flsolicita = true;
         }
 
     }

@@ -1,7 +1,7 @@
 <?php
 /*************************************************************************
 	Fonte: principal.php
-	Autor: Gabriel						Ultima atualizacao: 25/07/2016
+	Autor: Gabriel						Ultima atualizacao: 04/08/2016
 	Data : Dezembro/2010
 	
 	Objetivo: Listar os convenios de cobranca.
@@ -30,6 +30,8 @@
 
 				25/07/2016 - Corrigi a inicializacao da variavel $emails_titular 
 							 e o retorno de erro do XML de dados.SD 479874 (Carlos R.)
+
+				04/08/2016 - Adicionado campo de forma de envio de arquivo de cobrança. (Reinert)
 
 *************************************************************************/
 
@@ -172,8 +174,9 @@ function exibeErro($msgErro) {
 					   $flprotes =  (getByTagName($convenios[$i]->tags,'flprotes') == "yes") ? "SIM" : "NAO";
 					   $qtdecprz =  getByTagName($convenios[$i]->tags,'qtdecprz');
   					   $idrecipr =  getByTagName($convenios[$i]->tags,'idrecipr');
-						
-                       $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtdecprz."','".$idrecipr."');";
+  					   $inenvcob =  getByTagName($convenios[$i]->tags,'inenvcob');
+
+                       $mtdClick = "selecionaConvenio( '".$i."', '".$nrconven."','".$dsorgarq."','".$nrcnvceb."','".$insitceb."','".$dtcadast."','".$cdoperad."','".$inarqcbr."','".$cddemail."' ,'".$dsdemail."','".$flgcruni."','".$flgcebhm."','".$flgregis."','".$flcooexp."','".$flceeexp."','".$cddbanco."','".$flserasa."','".$flsercco."','".$qtdfloat."','".$flprotes."','".$qtdecprz."','".$idrecipr."','".$inenvcob."');";
 					?>
 					<tr id="convenio<?php echo $i; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
@@ -253,6 +256,7 @@ function exibeErro($msgErro) {
 	<input type="hidden" id= "flprotes"    name="flprotes">
 	<input type="hidden" id= "qtdecprz"    name="qtdecprz">
 	<input type="hidden" id= "idrecipr"    name="idrecipr">
+	<input type="hidden" id= "inenvcob"    name="inenvcob">
 
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelamento.gif"   <? if (in_array("X",$glbvars["opcoesTela"])) { ?> onClick="confirmaExclusao();return false;" <? } else { ?> style="cursor: default;" <? } ?> />
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <? if (in_array("C",$glbvars["opcoesTela"])) { ?> onClick="consulta('C','','','false','','');return false;" <? } else { ?> style="cursor: default;" <? } ?> />
