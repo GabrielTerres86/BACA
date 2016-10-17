@@ -21,6 +21,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                    Projeto 229 - Melhorias OQS (Odirlei - AMcom).
                    
       13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)  
+      
+      17/10/2016 - Ajustes para consulta de propostas. (Jean Michel)
 ...............................................................................*/
 { includes/var_progrid.i }
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -711,43 +713,47 @@ PROCEDURE CriaListaPropostas :
   Parameters:  <none>
   Notes:       
 ------------------------------------------------------------------------------*/
+  DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
 
-DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+  DEF VAR aux_contador AS INTEGER NO-UNDO INIT 0.
+  
+  RUN RodaJavaScript("var mproposta=new Array();").
+  
+  FOR EACH gnappdp WHERE gnappdp.cdcooper = 0                AND
+                         gnappdp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
+                         BY gnappdp.dtmvtolt DESC
+                         BY gnappdp.nrpropos DESC:
 
-    FOR EACH gnappdp WHERE gnappdp.cdcooper = 0                AND
-                           gnappdp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
-                           BY gnappdp.dtmvtolt DESC
-                           BY gnappdp.nrpropos DESC:
+    FIND FIRST crapedp WHERE
+        crapedp.cdcooper = 0 AND
+        crapedp.dtanoage = 0 AND
+        crapedp.cdevento = gnappdp.cdevento NO-LOCK NO-ERROR.
 
-      FIND FIRST crapedp WHERE
-          crapedp.cdcooper = 0 AND
-          crapedp.dtanoage = 0 AND
-          crapedp.cdevento = gnappdp.cdevento NO-LOCK NO-ERROR.
+    IF AVAIL crapedp THEN
+        aux_nmevento = crapedp.nmevento.
+    ELSE
+        aux_nmevento = "Sem vínculo.".
 
-      IF AVAIL crapedp THEN
-          aux_nmevento = crapedp.nmevento.
-      ELSE
-          aux_nmevento = "Sem vínculo.".
+    ASSIGN aux_contador = aux_contador + 1.
+    
+    IF vetorproposta <> "" THEN
+      ASSIGN vetorproposta = vetorproposta + ",".
+        
+    ASSIGN vetorproposta = vetorproposta + "~{" + "nrpropos:"    + "'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
+                           + "',dtmvtolt:"  + "'" + string(gnappdp.dtmvtolt,"99/99/9999")
+                           + "',dtvalpro:"  + "'" + string(gnappdp.dtvalpro,"99/99/9999") 
+                           + "',nmevento:"  + "'" + REPLACE(string(aux_nmevento),"'","`")
+                           + "',idprofor:"  + "'" + string(rowid(gnappdp))   + "'~}".
+                           
+    IF aux_contador = 30 THEN
+      DO:
+        ASSIGN aux_contador = 0.
+        RUN RodaJavaScript("mproposta=["  + vetorproposta + "]").
+      END.
 
-      IF  vetorproposta = "" THEN
-          vetorproposta =
-                        "~{" + "nrpropos:"    + "'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
-                             + "',dtmvtolt:"  + "'" + string(gnappdp.dtmvtolt,"99/99/9999")
-                             + "',dtvalpro:"  + "'" + string(gnappdp.dtvalpro,"99/99/9999") 
-                             + "',nmevento:"  + "'" + REPLACE(string(aux_nmevento),"'","`")
-                             + "',idprofor:"  + "'" + string(rowid(gnappdp))   + "'~}".
-      ELSE
-         vetorproposta = vetorproposta + "," + 
-                        "~{" + "nrpropos:"    + "'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
-                             + "',dtmvtolt:"  + "'" + string(gnappdp.dtmvtolt,"99/99/9999")
-                             + "',dtvalpro:"  + "'" + string(gnappdp.dtvalpro,"99/99/9999") 
-                             + "',nmevento:"  + "'" + REPLACE(string(aux_nmevento),"'","`")
-                             + "',idprofor:"  + "'" + string(rowid(gnappdp))   + "'~}".
-                             
-      
-
-   END. /* for each */
-   RUN RodaJavaScript("var mproposta=new Array();mproposta=["  + vetorproposta + "]").
+  END. /* for each */
+  
+  RUN RodaJavaScript("mproposta=["  + vetorproposta + "]").
 
 
 END PROCEDURE.
