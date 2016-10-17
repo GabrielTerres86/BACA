@@ -26,7 +26,7 @@
 	 
 	 25/11/2015 - Ajustando tabela para exibir uma mensagem
 			      quando nao existir nenhum convênio na lista
-				  (Andre Santos - SUPERO)                 
+				  (Andre Santos - SUPERO)
 
 	 17/05/2016 - Permitir a digitacao do codigo da empresa na opcao Alterar.
                   Correcao do campo dtfchfol. Criacao do campo dtlimdeb. (Jaison/Marcos)          
@@ -36,6 +36,16 @@
 
      27/04/2016 - Ajustado nome da DIV para conseguir buscar corretamento o tipo de ordenacao 
                   da geracao do relatorio SD430677 (Odirlei-AMcom)
+
+     29/07/2016 - Corrigi o tratamento de retorno dos dados consultados pela pesquisa de empresa
+                  na funcao buscaEmpresas(). SD 491925 (Carlos R.)
+     04/08/2016 - SD495726 Folha: Correcao cdempres na inclusao (Guilherme/SUPERO) 
+
+     26/08/2016 - Ajuste emergencial referente ao chamado 511180 (Kelvin)
+
+     30/08/2016 - Ajuste emergencial referente ao chamado 512307 (Kelvin)
+
+     01/09/2016 - Ajuste substring do response na consulta de empresas (Douglas - EMERGENCIAL)
 
 ************************************************************************************************/
 
@@ -547,7 +557,7 @@ function controlaOperacao() {
     if (($('#frmInfEmpresa').css('display') == "block") && cddopcao) {
 
         /* validacao */
-        if(($.trim(cCdempres.val()).length == 0) || cCdempres.val() == 0){
+        if ((($.trim(cCdempres.val()).length == 0) || cCdempres.val() == 0) && (cddopcao != 'I')) {
             showError('error','C&oacute;digo inv&aacute;lido!','Campo obrigat&oacute;rio','$("#cdempres","#frmInfEmpresa").focus();');
             return false;
         }
@@ -572,7 +582,7 @@ function controlaOperacao() {
                           '$("#nmresemp","#frmInfEmpresa").focus();');
                 return false;
             }
-
+			
             if (cNmcontat.val() == "") {
                 showError('error','Nome do contato da empresa deve ser informado!',
                           'Campo Obrigat&oacute;rio!',
@@ -764,8 +774,12 @@ function controlaOperacao() {
             mostraRotina('empresa');
             return false;
         }else
-        if (cddopcao == "A" || cddopcao == "I") {
+        if (cddopcao == "A") {
             showConfirmacao("078 - Confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "alteraInclui();", "hideMsgAguardo();", "sim.gif", "nao.gif");
+            return false;
+        } else
+        if (cddopcao == "I") {
+            showConfirmacao("078 - Confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "define_cdempres();", "hideMsgAguardo();", "sim.gif", "nao.gif");
             return false;
         }
     }
@@ -839,12 +853,12 @@ function controlaFocoFormulariosEmpresa() {
                 }
             });
         } else {
-            cTodosFormEmpresa = $('input[type="text"],select,checkbox', '#frmInfEmpresa');
-            cTodosFormEmpresa.habilitaCampo();
-            cNmextttl.desabilitaCampo();
+        cTodosFormEmpresa = $('input[type="text"],select,checkbox', '#frmInfEmpresa');
+        cTodosFormEmpresa.habilitaCampo();
+        cNmextttl.desabilitaCampo();
 
-            cTodosFormIb.habilitaCampo();
-            cCdempres.desabilitaCampo();
+        cTodosFormIb.habilitaCampo();
+        cCdempres.desabilitaCampo();
         }
 
         cIdtpempr.focus().unbind('keypress').bind('keypress', function(e) {
@@ -867,11 +881,11 @@ function controlaFocoFormulariosEmpresa() {
         });
         cNrdconta.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
-                cNrdconta.unbind('change').bind('change', function(e) {
-                    if (normalizaNumero(cNrdconta.val()) > 0){
-                        buscaContaEmp(1);
-                    }
-                });
+                    cNrdconta.unbind('change').bind('change', function(e) {
+                        if (normalizaNumero(cNrdconta.val()) > 0){
+                            buscaContaEmp(1);
+                        }
+                    });
                 cNmcontat.focus();
                 return false;
             }
@@ -1281,7 +1295,7 @@ function alteraInclui() {
                     if (cFlgpgtib.val() != old_cFlgpgtib ) {
 						var metodo = (executandoProdutos) ? "voltarAtenda();" : "estadoInicial();"; 
 						
-                        showError("inform", "Opera&ccedil;&atilde;o efetuada com sucesso!</BR>Favor efetuar a gera&ccedil;&atilde;o e digitaliza&ccedil;&atilde;o do termo dessa conta.", "Alerta - Ayllos", metodo);
+						showError("inform", "Opera&ccedil;&atilde;o efetuada com sucesso!</BR>C&oacute;digo: " +cCdempres.val() + "</BR>Favor efetuar a gera&ccedil;&atilde;o e digitaliza&ccedil;&atilde;o do termo dessa conta.", "Alerta - Ayllos", metodo);
                     }else{
 						if (executandoProdutos) {
 							voltarAtenda();
@@ -1305,6 +1319,40 @@ function alteraInclui() {
     });
 }
 
+// Define as informações da empresa
+function define_cdempres() {
+
+    var cdempres = '';
+
+    // Mostra mensagem de aguardo.
+    $urlFonte = "telas/cademp/define_cdempres.php";
+
+    // Executa script de bloqueio através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + $urlFonte,
+        data: {
+            cdempres: cdempres,
+            cddopcao: cddopcao,
+            nmdatela: 'CADEMP',
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
+            }
+        }
+    });
+}
+
+
 // Busca as informações da empresa
 function buscaEmpresas() {
 
@@ -1321,7 +1369,10 @@ function buscaEmpresas() {
 
     // Mostra mensagem de aguardo.
     if (cddopcao == "I") {
-        $urlFonte = "telas/cademp/define_cdempres.php";
+        $('#frmInfEmpresa').css({ 'display': 'block' });
+        controlaFocoFormulariosEmpresa();
+        hideMsgAguardo();
+        return false;
     } else {
         $urlFonte = "telas/cademp/busca_empresas.php";
     }
@@ -1339,7 +1390,7 @@ function buscaEmpresas() {
             cdempres: cdempres,
             redirect: "script_ajax"
         },
-        error: function(objAjax, responseError, objExcept) {
+        error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divUsoGenerico').css('z-index')))");
         },
@@ -1352,10 +1403,9 @@ function buscaEmpresas() {
                     controlaFocoFormulariosEmpresa();
                     hideMsgAguardo();
                 }else {
-
                     if (cdempres == '') {
 
-                        if (response.substring(3, 6) == 'div') {
+                        if ($.trim(response).substring(1,4) == 'div') {
                             $('#divConteudo').html(response);
                             fechaRotina($('#divCabecalhoPesquisaEmpresa'));
                             exibeRotina($('#divPesquisaEmpresa'));
@@ -1368,7 +1418,6 @@ function buscaEmpresas() {
                         }
                     }else {
                         if (response.search("showError") > 0) {
-                            eval(response);
                             $('#cdempres','#frmInfEmpresa').val('');
                         } else {
                             $('input,select', '#frmInfEmpresa').removeClass('campoErro');
@@ -1614,7 +1663,7 @@ function BuscaTabela() {
 
 /*Impressão*/
 function layoutImpressao() {
-    var flgOrdem = $('#flgordem', '#divConteudo');
+    var flgOrdem = $('#flgordem', '#divConteudoR');
     flgOrdem.css({width: '200px'}).focus();
     hideMsgAguardo();
     blockBackground();
@@ -1636,7 +1685,7 @@ function layoutImpressao() {
 function imprimirPDF() {
 
     var sidlogin = $("#sidlogin", "#frmMenu").val();
-    var flgordem = $("#flgordem", '#divConteudo').val();
+    var flgordem = $("#flgordem", '#divConteudoR').val();
 
     $('#frmImpressao').append('<input type="hidden" id="flgordem" name="flgordem" value="' + flgordem + '" />')
             .append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + sidlogin + '" />');
