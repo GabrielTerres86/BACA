@@ -8,7 +8,7 @@
 
    Dados referentes ao programa:
 
-   Frequencia: Diario
+   Frequencia: Diario 
    Objetivo  : Atende a solicitacao 1
                Emitir relacao de cheques compensados a conferir, separados por 
                P.A.C. (crrl353_PAC).               

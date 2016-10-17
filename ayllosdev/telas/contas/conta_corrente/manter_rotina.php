@@ -1,5 +1,5 @@
 <?php
-/*!
+/*! 
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 26/04/2010 

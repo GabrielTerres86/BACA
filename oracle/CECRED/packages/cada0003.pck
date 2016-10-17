@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   ---------------------------------------------------------------------------------------------------------------
-  --
+  -- 
   --  Programa : CADA0003
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA

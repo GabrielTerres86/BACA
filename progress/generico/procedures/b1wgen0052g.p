@@ -150,7 +150,7 @@
 
 /*............................... DEFINICOES ................................*/
 
-{ sistema/generico/includes/b1wgen0052tt.i &TT-LOG=SIM }
+{ sistema/generico/includes/b1wgen0052tt.i &TT-LOG=SIM } 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }

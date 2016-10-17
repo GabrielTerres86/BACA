@@ -1,5 +1,5 @@
-<?
-/*!
+<? 
+/*! 
  * FONTE        : tab_devolu_conta.php
  * CRIAÇÃO      : Andre Santos - SUPERO
  * DATA CRIAÇÃO : 25/09/2013
@@ -49,7 +49,13 @@
 				<? $cont_id = 0;
 				foreach($lancamento as $lancamento){
                 ?>	<tr>
-						<td><input type="checkbox" name="indice" id="indice" onclick="validaSelecao(this)" value="<? echo $cont_id; ?>"  <?if(getByTagName($lancamento->tags,'cddsitua') == 1 || getByTagName($lancamento->tags,'cdalinea') == 0){ ?> disabled <? } ?> />
+						<td><input type="checkbox" name="indice" id="indice" onclick="validaSelecao(this)" value="<? echo $cont_id; ?>"  <?if(getByTagName($lancamento->tags,'cddsitua') == 1  || 
+																																		      getByTagName($lancamento->tags,'cdalinea') == 0  || 
+																																			  getByTagName($lancamento->tags,'cdalinea') == 20 || 
+																																			  getByTagName($lancamento->tags,'cdalinea') == 21 || 																																			  
+																																			  getByTagName($lancamento->tags,'cdalinea') == 28 || 
+																																			  getByTagName($lancamento->tags,'cdalinea') == 49 ||
+																																			  getByTagName($lancamento->tags,'cdalinea') == 70){ ?> disabled <? } ?> />
 							<script>
 								var id_reg = arrayRegLinha.length;																	
 								arrayRegLinha[id_reg] = new Array();                                                                

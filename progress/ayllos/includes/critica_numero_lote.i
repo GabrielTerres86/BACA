@@ -10,7 +10,7 @@ na procedure critica_numero_lote da BO sistema/generico/procedures/b1wgen9999.p
    Data    : Outubro/2003.                   Ultima atualizacao:  26/09/2016
    
    Dados referentes ao programa:
-
+    
    Frequencia: Diario (on-line)
    Objetivo  : Criticar numeros de lotes na criacao do lote.
 

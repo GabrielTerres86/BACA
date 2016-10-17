@@ -9,7 +9,7 @@
 
    Frequencia: Diario (on-line)
    Objetivo  : BO referente a DEVOLU
-   Observacoes: Incluido tratamento para conta migrada da 
+   Observacoes: Incluido tratamento para conta migrada da  
                 Acredi->Viacredi e efetuada correcao na validacao
                 dos campos aux_cdbanchq e aux_cdagechq quando for
                 cheque de conta migrada - Softdesk 106687 (Diego).

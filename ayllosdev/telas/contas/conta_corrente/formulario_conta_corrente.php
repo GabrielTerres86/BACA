@@ -1,5 +1,5 @@
 <? 
-/*!
+/*! 
 * FONTE        : formulario_conta_corrente.php
 * CRIAÇÃO      : Rodolpho Telmo (DB1)
 * DATA CRIAÇÃO : 13/05/2010 

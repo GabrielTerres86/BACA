@@ -10,7 +10,7 @@
                Devolucoes.
 
    Alteracoes: 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
-                            de cheques (Lucas Ranghetti #484923)
+                            de cheques (Lucas Ranghetti #484923) 
    
 ............................................................................ */
 

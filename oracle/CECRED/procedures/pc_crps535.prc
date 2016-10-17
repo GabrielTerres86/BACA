@@ -6,7 +6,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                                        pr_cdcritic out crapcri.cdcritic%type,
                                        pr_dscritic out varchar2) as
 /* ..........................................................................
-
+ 
    Programa: pc_crps535 - antigo Fontes/crps535.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED

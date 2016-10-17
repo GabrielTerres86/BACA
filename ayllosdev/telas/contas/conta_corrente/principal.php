@@ -1,5 +1,5 @@
 <? 
-/*!
+/*! 
  * FONTE        : principal.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 12/05/2010 

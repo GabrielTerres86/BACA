@@ -1,5 +1,5 @@
 <?
-/*!
+/*! 
  * FONTE        : altera_alinea.php
  * CRIAÇÃO      : Lucas Ranghetti
  * DATA CRIAÇÃO : 12/08/2016

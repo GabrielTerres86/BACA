@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                                       ,pr_dscritic OUT varchar2) IS          --> Texto de erro/critica encontrada
   BEGIN
-
+   
   /* .............................................................................
 
    Programa: pc_crps005                       Antigo Fontes/crps005.p

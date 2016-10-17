@@ -1,5 +1,5 @@
 <?
-/*
+/* 
  * FONTE        : preview.php
  * CRIAÇÃO      : Lucas Ranghetti
  * DATA CRIAÇÃO : Julho/2012
