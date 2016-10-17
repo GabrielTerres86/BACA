@@ -131,7 +131,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0117 IS
            AND c.dtinieve >= pr_dtiniper
            AND c.dtinieve <= pr_dtfimper
            and g.nrcpfcgc = nvl(nullif(pr_nrcpfcgc,0),g.nrcpfcgc)
-           AND c.idstaeve IN (1, 3, 6) --1 - AGENDADO, 3 - TRANSFERIDO, 6 - ACRESCIDO 
+           AND c.idstaeve IN (1, 3, 6, 4) --1 - AGENDADO, 3 - TRANSFERIDO, 6 - ACRESCIDO , 4 – Encerrado
            AND c.cdcooper = co.cdcooper
            AND ce.idevento = c.idevento
            AND ce.cdcooper = c.cdcooper
@@ -216,7 +216,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0117 IS
            AND to_date('01'||to_char(c.nrmeseve,'FM00')||c.dtanoage,'DDMMRRRR') <= pr_dtfimper
            
            AND g.nrcpfcgc = nvl(nullif(pr_nrcpfcgc,0),g.nrcpfcgc)   
-           AND c.idstaeve IN (1, 3, 6) --1 - AGENDADO, 3 - TRANSFERIDO, 6 - ACRESCIDO 
+           AND c.idstaeve IN (1, 3, 6, 4) --1 - AGENDADO, 3 - TRANSFERIDO, 6 - ACRESCIDO , 4 – Encerrado
            AND c.cdcooper = co.cdcooper
            AND ce.idevento = c.idevento
            AND ce.cdcooper = c.cdcooper
