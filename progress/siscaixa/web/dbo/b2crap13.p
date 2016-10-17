@@ -2,7 +2,7 @@
 
     b2crap13.p - Consulta  Boletim Caixa
     
-    Ultima Atualizacao: 26/11/2015
+    Ultima Atualizacao: 17/10/2016
     
     Alteracoes: 02/03/2006 - Unificacao dos bancos - SQLWorks - Eder
     
@@ -57,7 +57,10 @@
                             (Guilherme/SUPERO)
                             
                 27/06/2016 - P290 -> Incluido identificador de CARTAO ou BOLETO para operações de saque, TED, DOC e transferência.
-                             (Gil/Rkam)           
+                             (Gil/Rkam)
+
+                17/10/2016 - #495989 Correção do erro "tentativa de gravar 
+                             no fluxo fechado str_1" (Carlos)
  --------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -1038,14 +1041,17 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                            STRING(w-histor.qtlanmto-recibo, "z,zz9") + ") " +
                                            " .........".
 
-                                        DISPLAY STREAM str_1
-                                            aux_deschist aux_vlrtthis 
-                                            WITH FRAME f_his_boletim.
-                                            DOWN STREAM str_1 WITH FRAME f_his_boletim.
-                                             
-                                        IF  w-histor.qtlanmto-recibo > 0   AND
-                                            LINE-COUNTER(str_1) = 80 THEN
-                                            PAGE STREAM str_1.
+                                        IF p-nome-arquivo <> " " THEN
+                                        DO:
+                                          DISPLAY STREAM str_1
+                                              aux_deschist aux_vlrtthis 
+                                              WITH FRAME f_his_boletim.
+                                              DOWN STREAM str_1 WITH FRAME f_his_boletim.
+
+                                          IF  w-histor.qtlanmto-recibo > 0   AND
+                                              LINE-COUNTER(str_1) = 80 THEN
+                                              PAGE STREAM str_1.
+                                        END.    
                                     END.
                                 IF w-histor.qtlanmto-cartao > 0 THEN
                                     DO:
@@ -1057,14 +1063,17 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
                                            STRING(w-histor.qtlanmto-cartao, "z,zz9") + ") " +
                                            " .........".
 
-                                        DISPLAY STREAM str_1
-                                            aux_deschist aux_vlrtthis 
-                                            WITH FRAME f_his_boletim.
-                                            DOWN STREAM str_1 WITH FRAME f_his_boletim.
-                                             
-                                        IF  w-histor.qtlanmto-cartao > 0   AND
-                                                LINE-COUNTER(str_1) = 80 THEN
-                                                PAGE STREAM str_1.
+                                        IF p-nome-arquivo <> " " THEN
+                                        DO:
+                                          DISPLAY STREAM str_1
+                                              aux_deschist aux_vlrtthis 
+                                              WITH FRAME f_his_boletim.
+                                              DOWN STREAM str_1 WITH FRAME f_his_boletim.
+
+                                          IF  w-histor.qtlanmto-cartao > 0   AND
+                                                  LINE-COUNTER(str_1) = 80 THEN
+                                                  PAGE STREAM str_1.
+                                        END.
                                     END.
                             END.
                             ELSE
