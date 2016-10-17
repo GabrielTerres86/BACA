@@ -843,7 +843,7 @@ DO WHILE TRUE:
                          END. /* END crapepr.tpemprst = 1  */
                       ELSE  
                          DO:
-                             ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+                             ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
                                                        tel_vllanmto.
                          END.
 
