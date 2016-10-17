@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 21/07/2016
+    Data    : Marco/07.                       Ultima atualizacao: 11/10/2016
     
     Dados referentes ao programa:
 
@@ -187,6 +187,8 @@
                             
               21/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
                            de cheques (Lucas Ranghetti #484923)
+
+              11/10/2016 - Acesso da tela PRCCTL DEVOLU em todas cooperativas SD381526 (Tiago/Elton)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -323,6 +325,11 @@ RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
     RETURN.
+
+/*Devido a mudancas na tela PRCCTL que podera ser acessada
+ por outras coops alem da CECRED é necessario que este
+ ASSIGN permaneça para um funcionamento correto*/
+ASSIGN glb_cdcooper = 3.
   
 IF   glb_inrestar > 0   AND   glb_nrctares = 0   THEN
      glb_inrestar = 0.

@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme/Supero
-    Data    : Fevereiro/2010                   Ultima atualizacao: 21/06/2016
+    Data    : Fevereiro/2010                   Ultima atualizacao: 11/10/2016
 
     Dados referentes ao programa:
 
@@ -160,6 +160,7 @@
 						    de comunicação com a ABBC, ao invés de deixar o IP fixo
 							(Adriano - SD 468880).
 
+               11/10/2016 - Acesso da tela PRCCTL em todas cooperativas SD381526 (Tiago/Elton)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -372,6 +373,8 @@ DEF BROWSE b_w-arq-dir
            w-arq-dir.dsmensag COLUMN-LABEL "MENSAGEM"     FORMAT "x(33)"
     WITH 09 DOWN TITLE "Validacao Diretorio /Micros".
                 
+
+FUNCTION proc_coop_executando RETURNS LOGICAL (INPUT par_cdcooper AS INTEGER) FORWARD.
 
 
 FORM SPACE(1)
@@ -755,7 +758,10 @@ DO WHILE TRUE:
             aux_cddopcao = glb_cddopcao.
         END.
 
-   IF  glb_cdcooper <> 3                       OR
+   IF (glb_cdcooper <> 3                      AND
+       glb_cddopcao <> "B"                    AND
+	   glb_cddopcao <> "L"                    AND
+	   glb_cddopcao <> "C")                      OR
       (glb_dsdepart <> "TI"                   AND       
        glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
        glb_dsdepart <> "FINANCEIRO"           AND
@@ -792,6 +798,14 @@ DO WHILE TRUE:
              DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                 UPDATE tel_cdcooper WITH FRAME f_prcctl_2.
                 UPDATE tel_nmprgexe WITH FRAME f_prcctl_2.
+
+				IF glb_cdcooper <> 3        AND
+				   tel_nmprgexe <> "DEVOLU" AND
+				   tel_nmprgexe <> "DEVDOC" THEN
+				DO:
+				  MESSAGE tel_nmprgexe + ", deve ser executada na cooperativa CECRED".
+				  NEXT.
+				END.
 
                 IF tel_nmprgexe = "COMPEL"
                 OR tel_nmprgexe = "TITULO"
@@ -1176,6 +1190,21 @@ DO WHILE TRUE:
                                                              INPUT crapcop.cdcooper,
                                                              INPUT "").                        
 
+									   IF proc_coop_executando(crapcop.cdcooper) THEN
+									      DO:										  
+											   RUN gera_log_execucao(INPUT "DEVOLUCAO " + tel_tpdevolu,
+																	 INPUT "Cooperativa nao finalizou o processo",
+																	 INPUT crapcop.cdcooper,
+																	 INPUT "").                        			
+																	 
+											   RUN gera_log_execucao(INPUT "DEVOLUCAO " + tel_tpdevolu,
+																	 INPUT "Fim execucao",
+																	 INPUT crapcop.cdcooper,
+																	 INPUT "").
+																	 
+									           NEXT.
+										  END.
+
                                        FIND crapsol WHERE 
                                             crapsol.cdcooper = 
                                                         crapcop.cdcooper    AND
@@ -1222,20 +1251,24 @@ DO WHILE TRUE:
                                           VALIDATE crapsol.
                                        END.
      
-                                       
-                                       DO TRANSACTION:
-                                          CREATE crapsol.
-                                          ASSIGN crapsol.cdcooper = glb_cdcooper
-                                                 crapsol.nrsolici = 78
-                                                 crapsol.dtrefere = tel_dtrefere
-                                                 crapsol.cdempres = 11
-                                                 crapsol.dsparame = ""
-                                                 crapsol.insitsol = 1
-                                                 crapsol.nrdevias = 1
-                                                 crapsol.nrseqsol = 
-                                                                 aux_nrseqsol.
-                                          VALIDATE crapsol.
-                                       END.
+                                       IF  crapcop.cdcooper <> glb_cdcooper THEN
+									       DO:
+
+											   DO TRANSACTION:
+												  CREATE crapsol.
+												  ASSIGN crapsol.cdcooper = glb_cdcooper
+														 crapsol.nrsolici = 78
+														 crapsol.dtrefere = tel_dtrefere
+														 crapsol.cdempres = 11
+														 crapsol.dsparame = ""
+														 crapsol.insitsol = 1
+														 crapsol.nrdevias = 1
+														 crapsol.nrseqsol = 
+																		 aux_nrseqsol.
+												  VALIDATE crapsol.
+											   END.
+
+											END.
                                        
                                        IF tel_tpdevolu = "VLB" THEN
                                            RUN fontes/crps264.p 
@@ -1272,6 +1305,14 @@ DO WHILE TRUE:
                                END.
                           ELSE            /* Para 1 coop. selecionada */
                                DO:
+
+								   IF proc_coop_executando(INTE(tel_cdcooper)) THEN
+								      DO:
+											MESSAGE "Processo da cooperativa nao finalizado.".
+											PAUSE 2 NO-MESSAGE.
+											NEXT.
+									  END.
+
                                    RUN gera_log_execucao(INPUT "DEVOLUCAO " + tel_tpdevolu,
                                                          INPUT "Inicio execucao",
                                                          INPUT tel_cdcooper,
@@ -1320,7 +1361,9 @@ DO WHILE TRUE:
                                       VALIDATE crapsol.
                                    END.
                                    
-                                   DO TRANSACTION:
+								   IF INTE(tel_cdcooper) <> glb_cdcooper THEN
+								   DO:
+                                       DO TRANSACTION:
                                           CREATE crapsol.
                                           ASSIGN crapsol.cdcooper = glb_cdcooper
                                                  crapsol.nrsolici = 78
@@ -1333,6 +1376,7 @@ DO WHILE TRUE:
                                                                  aux_nrseqsol.
                                           VALIDATE crapsol.
                                        END.
+                                   END.
 
                                        IF tel_tpdevolu = "VLB" THEN
                                            RUN fontes/crps264.p 
@@ -1381,6 +1425,21 @@ DO WHILE TRUE:
                                                   INPUT "Inicio execucao",
                                                   INPUT crapcop.cdcooper,
                                                   INPUT "").                        
+                          
+						    IF proc_coop_executando(crapcop.cdcooper) THEN
+							   DO:
+									RUN gera_log_execucao(INPUT "DEVOLUCAO DOC",
+														  INPUT "Processo da cooperativa nao finalizado",
+														  INPUT crapcop.cdcooper,
+														  INPUT "").                        
+
+									RUN gera_log_execucao(INPUT "DEVOLUCAO DOC",
+														  INPUT "Fim execucao",
+														  INPUT crapcop.cdcooper,
+														  INPUT "").
+														  
+									NEXT.
+							   END.
 
                             { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
                             
@@ -1455,6 +1514,13 @@ DO WHILE TRUE:
                     END.
                     ELSE
                     DO:
+
+					    IF  proc_coop_executando(INTE(tel_cdcooper)) THEN
+						    DO:
+								MESSAGE "Processo da cooperativa nao finalizado.".
+								RETURN.
+							END.
+
                         RUN gera_log_execucao(INPUT "DEVOLUCAO DOC",
                                               INPUT "Inicio execucao",
                                               INPUT tel_cdcooper,
@@ -3695,6 +3761,20 @@ PROCEDURE gera_log_execucao:
     RETURN "OK".  
 END PROCEDURE.
 
+FUNCTION proc_coop_executando RETURNS LOGICAL (INPUT par_cdcooper AS INTEGER):
+
+	DEF BUFFER crabdat FOR crapdat.
+
+	FIND crabdat WHERE crabdat.cdcooper = par_cdcooper AND
+	                   crabdat.inproces <> 1 NO-LOCK NO-ERROR.
+
+	IF AVAIL(crabdat) THEN
+	   DO:
+			RETURN TRUE.
+	   END.
+
+	RETURN FALSE.
+END FUNCTION.
 
 /*............................................................................*/
 

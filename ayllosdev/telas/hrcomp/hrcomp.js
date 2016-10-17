@@ -6,6 +6,12 @@
  * --------------
  * ALTERAÇÕES   : 25/07/2014 - Retirado tratamento para quando a coop fosse zero (Tiago/Aline)
  * --------------
+ *                21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
+ *                             escolher o programa "DEVOLUCAO DOC" - Melhoria 316.
+ * 							   Também remover trechos do código não utilizados.
+ *                             (Lucas Ranghetti #525623)
+ * 
+ *                11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
  */
 
 // Definição de algumas variáveis globais 
@@ -70,16 +76,25 @@ function estadoInicial() {
 
 function controlaFoco() {
 
+    $('#cddopcao', '#frmCab').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#btnOK', '#frmCab').focus();
+            return false;
+        }
+    });
+
 	$('#cdcoopex','#frmDet').unbind('keypress').bind('keypress', function(e) {
-			if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-				LiberaCampos();
+			if ( e.keyCode == 9 || e.keyCode == 13 ) {					
+				/*Sempre antes de prosseguir na tela verifica acesso a opcao por departamento*/
+             	acessoOpcao();		
 				return false;
 			}
 	});
 	
 	$('#btnOK','#frmCab').unbind('keypress').bind('keypress', function(e) {
 			if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-				LiberaCampos();
+				/*Sempre antes de prosseguir na tela verifica acesso a opcao por departamento*/
+             	acessoOpcao();		
 				$('#cdcoopex','#frmDet').focus();
 				return false;
 			}	
@@ -87,13 +102,9 @@ function controlaFoco() {
 	
 	$('#cdcoopex','#frmDet').unbind('keypress').bind('keypress', function(e) {
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
-				if ( $('#cdcoopex','#frmDet').val() == '0' ) {
-					return false;
-				} else {
 					btnContinuar(); 
 					return false;
 				}		
-			}	
 	});
 	
 }
@@ -109,16 +120,11 @@ function formataCampos() {
 	cTodosCabecalho		= $('input[type="text"],select','#'+frmCab);
 	btnCab				= $('#btOK','#'+frmCab);
 	
-	rCddopcao.css('width','44px');
-	rCdcoopex.addClass('rotulo-linha').css({'width':'41px'});
+	rCddopcao.css('width','71px');
+	rCdcoopex.addClass('rotulo-linha').css({'width':'71px'});
 	
 	cCddopcao.css({'width':'460px'});
 	cCdcoopex.css({'width':'460px'});	
-	
-	if ( $.browser.msie ) {
-		rCdcoopex.css({'width':'44px'});		
-		cCddopcao.css({'width':'456px'});
-	}	
 	
 	cTodosCabecalho.habilitaCampo();
 	
@@ -138,7 +144,7 @@ function btnVoltar() {
 function LiberaCampos() {
 
 	if ( $('#cddopcao','#frmCab').hasClass('campoTelaSemBorda')  ) { return false; }	
-
+	
 	// Desabilita campo opção
 	cTodosCabecalho		= $('input[type="text"],select','#frmCab'); 
 	cTodosCabecalho.desabilitaCampo();
@@ -180,6 +186,36 @@ function btnContinuar() {
 	}
 	
 	return false;		
+}
+
+function acessoOpcao(){
+	
+	showMsgAguardo("Aguarde, liberando aplicacao...");
+	
+	cddopcao = $("#cddopcao").val();
+	
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/hrcomp/acesso_opcao.php", 
+		data: {
+			cddopcao: cddopcao,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				hideMsgAguardo();
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});					
+	
 }
 
 function realizaOperacao() {
@@ -230,44 +266,6 @@ function realizaOperacao() {
 	});				
 }
 
-function controlaPesquisa() {
-
-	// Se esta desabilitado o campo contrato
-	if ($("#cdcoopex","#frmDet").prop("disabled") == true)  {
-		return;
-	}
-	
-	// Variável local para guardar o elemento anterior
-	var campoAnterior = '';
-	var bo, procedure, titulo, qtReg, filtros, colunas, cdcoopex, titulo_coluna, cdcoopexs;	
-	
-	// Nome do Formulário que estamos trabalhando
-	var nomeFormulario = 'frmCab';
-	
-	var divRotina = 'divTela';
-	
-	//Remove a classe de Erro do form
-	$('input,select', '#'+nomeFormulario).removeClass('campoErro');
-	
-	var cdcoopex = $('#cdcoopex','#'+nomeFormulario).val();
-	cdcoopexs = cddgrupo;
-	//cddgrupo = normalizaNumero($(cddgrupo).val());
-	dsdgrupo = '';
-	
-	titulo_coluna = "Grupos de produto";
-	
-	bo			= 'b1wgen0183.p'; 
-	procedure	= 'lista-grupos';
-	titulo      = 'Grupos';
-	qtReg		= '20';
-	filtros 	= 'Codigo;cddgrupo;100px;S;' + cddgrupo + ';S|Descricao;dsdgrupo;150px;S;' + dsdgrupo + ';S';
-	colunas 	= 'Codigo;cddgrupo;20%;right|' + titulo_coluna + ';dsdgrupo;50%;left';
-	mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,'','$(\'#cddgrupo\',\'#frmCab\').val()');
-	
-	return false;
-
-}
-
 function trocaBotao( botao ) {
 	
 	$('#divBotoes','#divTela').html('');
@@ -277,40 +275,6 @@ function trocaBotao( botao ) {
 		$('#divBotoes','#divTela').append('&nbsp;<a href="#" class="botao" onClick="btnContinuar(); return false;" >'+botao+'</a>');
 	}
 	return false;
-}
-
-function buscaDados() {
-
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, consultando grupo...");
-	
-	var cddgrupo = $('#cddgrupo','#frmCab').val();
-	cddgrupo = normalizaNumero(cddgrupo);
-	
-	// Executa script de bloqueio através de ajax
-	$.ajax({		
-		type: "POST",
-		url: UrlSite + "telas/hrcomp/busca_dados.php", 
-		data: {
-			cddgrupo: cddgrupo,
-			cddopcao: cddopcao,
-			dsdgrupo: dsdgrupo,
-			redirect: "script_ajax"
-		}, 
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-		success: function(response) {
-			try {
-				hideMsgAguardo();
-				eval(response);
-			} catch(error) {
-				hideMsgAguardo();
-				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-			}
-		}				
-	});				
 }
 
 function carregaDetalhamento(){
@@ -346,14 +310,7 @@ function carregaDetalhamento(){
 							formataProcessos();
 							
 							var cddopcao = $('#cddopcao','#frmCab').val();
-	/*
-							if ( cddopcao == 'C' ) {											
-								$('#btIncluir','#divBotoesDetalha').hide();
-								$('#btAlterar','#divBotoesDetalha').hide();
-								$('#btExcluir','#divBotoesDetalha').hide();
-							}
 							
-							carregaParametro(); */
 							hideMsgAguardo();
 							return false;
 						} catch(error) {
@@ -428,14 +385,14 @@ function formataProcessos() {
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'100px','width':'100%'});
+	divRegistro.css({'height':'200px','width':'100%'});
 	
 	var ordemInicial = new Array();
 	ordemInicial = [[0,0]];	
 	
 	var arrayLargura = new Array();
 	arrayLargura[0] = '20px';
-	arrayLargura[1] = '149px';
+	arrayLargura[1] = '';
 	arrayLargura[2] = '50px';
 	arrayLargura[3] = '115px';
 	arrayLargura[4] = '110px';
@@ -444,10 +401,9 @@ function formataProcessos() {
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'left';
-	arrayAlinha[2] = 'left';
-	arrayAlinha[3] = 'right';
-	arrayAlinha[4] = 'right';
-	arrayAlinha[5] = 'left';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	arrayAlinha[4] = 'center';	
 	
 	var metodoTabela = '';
 			
@@ -463,10 +419,6 @@ function formataProcessos() {
 		mostraDetalhamentoHrcomp();
 	});
 	
-	/*
-	$('table > tbody > tr:eq(0)', divRegistro).click();
-	*/
-	
 	return false;
 }
 
@@ -481,6 +433,11 @@ function mostraDetalhamentoHrcomp() {
 		return false;
 	}
 	
+	if ((glbTabNmproces != 'DEVOLUCAO DOC') && ($('#cdcoopex', '#frmDet').val() == 3)) {
+	    showError('error', 'Cooperativa não permite alteração.', 'Alerta - Ayllos', "unblockBackground()");
+	    return false;
+	}
+
 	showMsgAguardo('Aguarde, buscando detalhamento...');
 
 	// Executa script através de ajax
@@ -501,7 +458,6 @@ function mostraDetalhamentoHrcomp() {
 			exibeRotina($('#divRotina'));
 			formataDetalhaHrcomp();
 			bloqueiaFundo($('#divRotina'));						
-			//buscaDetalhaTarifa();
 		}				
 	});
 	
@@ -525,7 +481,7 @@ function formataDetalhaHrcomp() {
 	var rAgxfimhr	= $('label[for="agxfimhr"]','#'+frmProc);
 	var rAgxfimmm	= $('label[for="agxfimmm"]','#'+frmProc);
 
-	rProcesso.addClass('rotulo-linha').css('width','45px');
+	rProcesso.addClass('rotulo-linha').css('width','70px');
 	rNmprocex.addClass('rotulo-linha');
 	rFlgativo.addClass('rotulo-linha').css('width','60px');
 	rAgxinihr.addClass('rotulo-linha').css('width','100px');
@@ -591,10 +547,10 @@ function formataDetalhaHrcomp() {
 	
 	cTodos.habilitaCampo();
 	cFlgativo.css('width','60px');	
-	cAgxinihr.css('width','20px').attr('maxlength','2').setMask('INTEGER','99','','');
-	cAgxinimm.css('width','20px').attr('maxlength','2').setMask('INTEGER','99','','');
-	cAgxfimhr.css('width','20px').attr('maxlength','2').setMask('INTEGER','99','','');
-	cAgxfimmm.css('width','20px').attr('maxlength','2').setMask('INTEGER','99','','');	
+	cAgxinihr.css('width','25px').attr('maxlength','2').setMask('INTEGER','99','','');
+	cAgxinimm.css('width','25px').attr('maxlength','2').setMask('INTEGER','99','','');
+	cAgxfimhr.css('width','25px').attr('maxlength','2').setMask('INTEGER','99','','');
+	cAgxfimmm.css('width','25px').attr('maxlength','2').setMask('INTEGER','99','','');	
 	
 	$(rNmprocex).text(glbTabNmproces);
 	$('#nmprocex','#'+frmProc).val(glbTabNmproces);
