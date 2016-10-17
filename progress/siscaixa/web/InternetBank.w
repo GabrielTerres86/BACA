@@ -2046,11 +2046,11 @@ PROCEDURE process-web-request :
             IF  aux_operacao = 173 THEN /* Busca motivos exclusao DEBAUT */
                 RUN proc_operacao173. 
 		ELSE
-            IF  aux_operacao = 174 THEN /* Consulta Horario Limite de DARF/DAS */
-                RUN proc_operacao174.   
+            IF  aux_operacao = 187 THEN /* Consulta Horario Limite de DARF/DAS */
+                RUN proc_operacao187.   
         ELSE
-            IF  aux_operacao = 175 THEN /* Operar pagamento de DARF/DAS */
-                RUN proc_operacao175.
+            IF  aux_operacao = 188 THEN /* Operar pagamento de DARF/DAS */
+                RUN proc_operacao188.
     END.
 /*....................................................................*/
     
