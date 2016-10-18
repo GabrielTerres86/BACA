@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 25/11/2014
+   Data    : Marco/2010                        Ultima atualizacao: 18/10/2016
 
    Dados referentes ao programa:
 
@@ -32,6 +32,9 @@
                                          
                25/11/2014 - Incluir clausula no craptco flgativo = TRUE
                             (Lucas R./Rodrigo)                                       
+                            
+               18/10/2016 - #536120 - Correção da verificação de incorporação das
+                            cooperativas concredi e credimilsul (Carlos)
 ..............................................................................*/
                   
 { includes/var_batch.i }
@@ -536,7 +539,7 @@ PROCEDURE registro:
 
     ASSIGN aux_nrdconta_arq = crapneg.nrdconta.
 
-    /*verifica se é uma conta migrada*/
+    /*verifica se é uma conta incorporada*/
     FIND FIRST craptco 
       WHERE craptco.cdcooper = crapcop.cdcooper
         AND craptco.nrdconta = crapneg.nrdconta 
@@ -550,7 +553,7 @@ PROCEDURE registro:
     IF AVAIL(craptco) THEN 
     DO:                      
       FIND FIRST crapfdc
-     WHERE crapfdc.cdcooper = craptco.cdcooper
+     WHERE crapfdc.cdcooper = craptco.cdcopant
        AND crapfdc.cdbanchq = crapneg.cdbanchq
        AND crapfdc.cdagechq = crapneg.cdagechq
        AND crapfdc.nrctachq = craptco.nrctaant 
