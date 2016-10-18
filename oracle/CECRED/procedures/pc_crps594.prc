@@ -3961,10 +3961,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
             IF cr_crapcco%NOTFOUND THEN
               --Fechar Cursor
               CLOSE cr_crapcco;
-              --Convenio Nao encontrado
-              vr_dscritic:= 'Convenio Nao encontrado.';
-              --Levantar Excecao
-              RAISE vr_exc_erro;
+              
+              -- Gerando o nome do arquivo de erro
+              vr_nmarquiv := 'err'||substr(pr_tab_cratarq(vr_index_cratarq).nmarquiv,1,29);
+
+              -- Comando para mover o arquivo para a pasta integra
+              vr_comando:= 'mv '||vr_dir_salvar||'/'||pr_tab_cratarq(vr_index_cratarq).nmarquiv||' '||vr_dir_integra||'/'||vr_nmarquiv||' 2> /dev/null';
+
+              --Executar o comando no unix
+              GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                                    ,pr_des_comando => vr_comando
+                                    ,pr_typ_saida   => vr_typ_saida
+                                    ,pr_des_saida   => vr_dscritic);
+                        
+              IF vr_dscritic IS NOT NULL THEN            
+                -- Envio centralizado de log de erro
+                btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                          ,pr_ind_tipo_log => 2 -- Erro tratato
+                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                             || vr_cdprogra || ' --> '
+                                                             || vr_dscritic );
+              
+                vr_dscritic := NULL;
+                                                             
+              END IF;
+                                    
+              --Proximo Arquivo
+              vr_index_cratarq:= pr_tab_cratarq.NEXT(vr_index_cratarq); 
+              CONTINUE;                     
+              
             END IF;  
             --Fechar Cursor
             CLOSE cr_crapcco;
@@ -4825,4 +4850,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps594 (pr_cdcooper  IN crapcop.cdcooper%
 
 
   END pc_crps594;
-/
