@@ -27,7 +27,7 @@
 
     Programa: b1wgen0059.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao:  03/08/2016
+    Data    : Marco/2010                   Ultima atualizacao:  06/10/2016
 
     Objetivo  : Buscar os dados p/ telas de pesquisas ou zoom's
 
@@ -175,8 +175,11 @@
 							  (Andrei - RKAM).
 
                 20/07/2016 - Realizado a conversao das rotinas busca-craplcr,
-				             busca-crapfin 
-							  (Andrei - RKAM).
+				             busca-crapfin (Andrei - RKAM).
+
+				06/10/2016 - Inclusao de tratamento de origem "ACORDO" na
+							 procedure busca-crapcco, prj. 302 (Jean Michel).
+							 				
 .............................................................................*/
 
 
@@ -3042,10 +3045,11 @@ PROCEDURE busca-crapcco:
    
     EMPTY TEMP-TABLE tt-crapcco.
 
-    FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper AND 
-                           crapcco.flgativo = TRUE         AND /* ATIVOS */
-                           crapcco.dsorgarq <> "MIGRACAO"  AND 
-                           crapcco.dsorgarq <> "EMPRESTIMO" NO-LOCK
+    FOR EACH crapcco WHERE crapcco.cdcooper = par_cdcooper  AND 
+                           crapcco.flgativo = TRUE          AND /* ATIVOS */
+                           crapcco.dsorgarq <> "MIGRACAO"   AND 
+                           crapcco.dsorgarq <> "EMPRESTIMO" AND
+						   crapcco.dsorgarq <> "ACORDO" NO-LOCK
                            BY crapcco.nmdbanco:
 
         IF   par_nrconven <> 0   THEN

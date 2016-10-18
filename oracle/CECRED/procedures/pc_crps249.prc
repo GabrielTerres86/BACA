@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 22/06/2016
+   Data    : Novembro/98                     Ultima atualizacao: 06/10/2016
 
    Dados referentes ao programa:
 
@@ -512,7 +512,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             (Guilherme/SUPERO)
                             
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
-                            as recusas de TEC salário outros IF (Marcos-Supero)             
+                            as recusas de TEC salário outros IF (Marcos-Supero)
+							
+			   06/10/2016 - Incluido historico 2180 "rw_craprej.cdhistor", Prj. 302
+							(Jean Michel)				             
                             
 ............................................................................ */
   -- Buscar os dados da cooperativa
@@ -6465,7 +6468,7 @@ BEGIN
         if rw_craprej.tpctbcxa in (4, 6) then  -- POR BB A DEBITO
           vr_nrdctabb := null;
           --
-          IF rw_craprej.cdhistor in (266, 971, 977, 1088, 1089, 1998, 1999, 2000, 2001, 2002, 2012) then
+          IF rw_craprej.cdhistor in (266, 971, 977, 1088, 1089, 1998, 1999, 2000, 2001, 2002, 2012, 2180) then
              --  266 - cred. cobranca
              --  971 - cred cobr - BB
              --  977 - cred cobr - CECRED
@@ -6477,6 +6480,7 @@ BEGIN
              -- 2001 - DEVOLUCAO BOLETO VENCIDO
              -- 2002 - AJUSTE CONTRATO PROCESSO EM ATRASO
              -- 2012 - AJUSTE BOLETO (EMPRESTIMO) 
+			 -- 2180 - CRED.COB. ACORDO
             vr_nrdctabb := to_char(rw_craprej.nrctadeb);
           else
             open cr_craptab (pr_cdcooper,

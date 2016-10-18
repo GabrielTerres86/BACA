@@ -18,6 +18,8 @@
 						   (Gabriel - RKAM -> Projeto 127).	
                14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos.
 							SD 320300 (Kelvin).
+               06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco",
+						    Prj. 302 (Jean Michel).
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -297,7 +299,10 @@ function controlaLayout( nomeForm ){
 	  var Cvlsdblpr = $('#vlsdblpr','#'+nomeForm);
 	  
 	  var Lvlsdblfp = $('label[for="vlsdblfp"]','#'+nomeForm);
-	  var Cvlsdblfp = $('#vlsdblfp','#'+nomeForm);
+	  var Cvlsdblfp = $('#vlsdblfp', '#' + nomeForm);
+
+	  var Lvlblqaco = $('label[for="vlblqaco"]', '#' + nomeForm);
+	  var Cvlblqaco = $('#vlblqaco', '#' + nomeForm);
 	  
 	  var Lvlipmfpg = $('label[for="vlipmfpg"]','#'+nomeForm);
 	  var Cvlipmfpg = $('#vlipmfpg','#'+nomeForm);
@@ -324,6 +329,7 @@ function controlaLayout( nomeForm ){
 	  Lvlacerto.css('width','120px');
 	  Lvlsdblpr.addClass('rotulo').css('width','110px');
 	  Lvlsdblfp.addClass('rotulo').css('width','110px');
+	  Lvlblqaco.addClass('rotulo').css('width','110px');
 	  Lvlipmfpg.css('width','120px');
 	  Lvlsdchsl.addClass('rotulo').css('width','110px');
 	  Lvlblqjud.addClass('rotulo').css('width','110px');
@@ -338,6 +344,7 @@ function controlaLayout( nomeForm ){
 	  Cvlacerto.css('width','87px').addClass('monetario');
 	  Cvlsdblpr.css('width','87px').addClass('monetario');
 	  Cvlsdblfp.css('width','87px').addClass('monetario');
+	  Cvlblqaco.css('width','87px').addClass('monetario');
 	  Cvlipmfpg.css('width','87px').addClass('monetario');
 	  Cvlsdchsl.css('width','87px').addClass('monetario');
 	  Cvlblqjud.css('width','87px').addClass('monetario');
@@ -533,6 +540,7 @@ function controlaLayout( nomeForm ){
 		rVlsdbloq = $('label[for="vlsdbloq"]', '#'+nomeForm);
 		rVlsdblpr = $('label[for="vlsdblpr"]', '#'+nomeForm);
 		rVlsdblfp = $('label[for="vlsdblfp"]', '#'+nomeForm);
+		rVlblqaco = $('label[for="vlblqaco"]', '#'+nomeForm);
 		rVlsdchsl = $('label[for="vlsdchsl"]', '#'+nomeForm);
 		rVlsdindi = $('label[for="vlsdindi"]', '#'+nomeForm);
 		rVlstotal = $('label[for="vlstotal"]', '#'+nomeForm);
@@ -544,6 +552,7 @@ function controlaLayout( nomeForm ){
 		rVlsdbloq.addClass('rotulo').css({'width':'200px'});
 		rVlsdblpr.addClass('rotulo').css({'width':'200px'});
 		rVlsdblfp.addClass('rotulo').css({'width':'200px'});
+		rVlblqaco.addClass('rotulo').css({'width':'200px'});
 		rVlsdchsl.addClass('rotulo').css({'width':'200px'});
 		rVlsdindi.addClass('rotulo').css({'width':'200px'});
 		rVlstotal.addClass('rotulo').css({'width':'200px'});
@@ -556,6 +565,7 @@ function controlaLayout( nomeForm ){
 		cVlsdbloq = $('#vlsdbloq', '#'+nomeForm);
 		cVlsdblpr = $('#vlsdblpr', '#'+nomeForm);
 		cVlsdblfp = $('#vlsdblfp', '#'+nomeForm);
+		cVlblqaco = $('#vlblqaco', '#'+nomeForm);
 		cVlsdchsl = $('#vlsdchsl', '#'+nomeForm);
 		cVlsdindi = $('#vlsdindi', '#'+nomeForm);
 		cVlstotal = $('#vlstotal', '#'+nomeForm);
@@ -567,6 +577,7 @@ function controlaLayout( nomeForm ){
 		cVlsdbloq.css({'width':'75px','text-align':'right'});
 		cVlsdblpr.css({'width':'75px','text-align':'right'});
 		cVlsdblfp.css({'width':'75px','text-align':'right'});
+		cVlblqaco.css({'width':'75px','text-align':'right'});
 		cVlsdchsl.css({'width':'75px','text-align':'right'});
 		cVlsdindi.css({'width':'75px','text-align':'right'});
 		cVlstotal.css({'width':'75px','text-align':'right'});

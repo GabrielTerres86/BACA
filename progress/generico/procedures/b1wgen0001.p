@@ -377,6 +377,9 @@
 				02/08/2016 - Nao tratar parametro de isencao de extrato na cooperativa
                              quando cooperado possuir servico de extrato no pacote de 
                              tarifas (Diego).
+
+				06/10/2016 - Incluido a chamada da procedure pc_ret_vlr_bloq_acordo na
+							 procedure carrega_dep_vista, Prj. 302 (Jean Michel).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -427,6 +430,8 @@ DEF VAR dt-inipesq   AS DATE                                           NO-UNDO.
 
 DEF VAR aux_vlblqjud AS DECI                                           NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                           NO-UNDO.
+
+DEF VAR aux_vlblqaco AS DECI INIT 0    								   NO-UNDO.
 
 DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0192 AS HANDLE                                         NO-UNDO.
@@ -1897,7 +1902,6 @@ PROCEDURE valida-impressao-extrato:
             RETURN "NOK".
         END.
     
-    /*JMD*/
     /* Verifica o tipo do serviço a ser validado no pacote de tarifas, com base na origem, se mensal ou por periodo */
     /* Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA */
     IF par_dtiniper < ( par_dtmvtolt - 30 ) THEN /* Periodo */
@@ -1955,8 +1959,7 @@ PROCEDURE valida-impressao-extrato:
 
     IF aux_qtopdisp > 0 THEN
       RETURN "OK".
-    /*JMD*/
-
+    
     /* Quando o cooperado NAO possuir o servico "extrato" contemplado no pacote de tarifas,
        devera validar a qtd. de extratos isentos oferecidos pela cooperativa(parametro). 
        Caso contrario, o cooperado tera direito apenas a qtd. disponibilizada no pacote */
@@ -3321,6 +3324,41 @@ PROCEDURE carrega_dep_vista:
 
     DELETE PROCEDURE h-b1wgen0155.
     /*** Fim Busca Saldo Bloqueado Judicial ***/
+	
+	{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    /* Verifica se ha contratos de acordo */
+    RUN STORED-PROCEDURE pc_ret_vlr_bloq_acordo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                            ,INPUT par_nrdconta
+                                            ,OUTPUT 0
+                                            ,OUTPUT 0
+                                            ,OUTPUT "").
+
+    CLOSE STORED-PROC pc_ret_vlr_bloq_acordo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = 0
+            aux_dscritic = ""
+            aux_cdcritic = INT(pc_ret_vlr_bloq_acordo.pr_cdcritic) WHEN pc_ret_vlr_bloq_acordo.pr_cdcritic <> ?
+            aux_dscritic = pc_ret_vlr_bloq_acordo.pr_dscritic WHEN pc_ret_vlr_bloq_acordo.pr_dscritic <> ?
+            aux_vlblqaco = DECIMAL(pc_ret_vlr_bloq_acordo.pr_vlblqaco).
+			
+	IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+      DO:
+	    
+		RUN gera_erro (INPUT par_cdcooper,
+						INPUT par_cdagenci,
+						INPUT par_nrdcaixa,
+						INPUT 1,            /** Sequencia **/
+						INPUT aux_cdcritic,
+						INPUT-OUTPUT aux_dscritic).      
+                   
+		RETURN "NOK".
+	  END.			
+    
 
     CREATE tt-saldos.
     ASSIGN tt-saldos.vlsddisp = aux_vlsddisp          
@@ -3342,7 +3380,8 @@ PROCEDURE carrega_dep_vista:
                                     ""
            tt-saldos.dtultlcr = crapass.dtultlcr
            tt-saldos.vlipmfpg = crapsld.vlipmfpg
-           tt-saldos.vlblqjud = aux_vlblqjud.
+           tt-saldos.vlblqjud = aux_vlblqjud
+		   tt-saldos.vlblqaco = aux_vlblqaco.
 
     FOR EACH crapdpb WHERE crapdpb.cdcooper = par_cdcooper AND
                            crapdpb.nrdconta = par_nrdconta AND

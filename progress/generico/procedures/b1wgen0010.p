@@ -22,22 +22,12 @@
 
 *******************************************************************************/
 
-
-
-
-
-
-
-
-
-
-
 /* .............................................................................
 
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 29/06/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 06/10/2016
 
    Dados referentes ao programa:
 
@@ -347,6 +337,11 @@
                29/06/2016 - Adicionado ROUND para o calculo de Multa e Juros da 
                             consulta-boleto-2via para que arredonde os valores
                             (Douglas - Chamado 457956)
+
+               06/10/2016 - Ajuste consulta-boleto-2via para contemplar a origem de 
+							"ACORDO" e nao permitir gerar a segunda via do boleto,
+							Prj. 302 (Jean Michel).
+
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -618,7 +613,8 @@ PROCEDURE consulta-boleto-2via.
     FIND FIRST crapcco WHERE ROWID(crapcco) = aux_rowidcco NO-LOCK NO-ERROR.
 
     /* nao eh permitido gerar 2via de boleto do convenio EMPRESTIMO */
-    IF  AVAIL(crapcco) AND crapcco.dsorgarq = "EMPRESTIMO" THEN 
+    IF  AVAIL(crapcco) AND (crapcco.dsorgarq = "EMPRESTIMO" OR 
+		crapcco.dsorgarq = "ACORDO")THEN 
         DO:
             CREATE tt-erro.
             ASSIGN tt-erro.dscritic = "Nao eh permitito gerar 2a. via " + 
