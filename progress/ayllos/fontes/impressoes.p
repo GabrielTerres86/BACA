@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Junho/2006                      Ultima Atualizacao: 03/02/2016
+   Data    : Junho/2006                      Ultima Atualizacao: 09/09/2016
 
    Dados referentes ao programa:
    
@@ -76,6 +76,10 @@
                
                03/02/2016 - Adicionado duas novas clausulas ao contrato conforme 
                             solicitado no chamado 388719. (Kelvin)
+
+               09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						   aux_qtminast referente a quantidade minima de assinatura
+						   conjunta, SD 514239 (Jean Michel).
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -127,6 +131,7 @@ DEF VAR par_nmarqimp AS CHAR                                                NO-U
 
 DEF VAR par_nmendter AS CHAR                                                NO-UNDO.
 DEF VAR aux_idseqttl AS INTE                                                NO-UNDO.
+DEF VAR aux_qtminast AS INTE												NO-UNDO.
 
 DEF TEMP-TABLE cratavt    NO-UNDO LIKE tt-crapavt.
 DEF TEMP-TABLE cratttl    NO-UNDO LIKE tt-crapttl.
@@ -546,6 +551,7 @@ DO WHILE TRUE:
                              INPUT ?,
                             OUTPUT TABLE cratavt,
                             OUTPUT TABLE tt-bens,
+							OUTPUT aux_qtminast,
                             OUTPUT TABLE tt-erro) NO-ERROR.
         
                     FOR EACH cratavt NO-LOCK:

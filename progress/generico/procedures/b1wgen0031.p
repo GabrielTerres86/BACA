@@ -26,7 +26,7 @@
 
     Programa: b1wgen0031.p
     Autor   : Guilherme/David
-    Data    : Julho/2008                     Ultima Atualizacao: 01/12/2015
+    Data    : Julho/2008                     Ultima Atualizacao: 09/09/2016
            
     Dados referentes ao programa:
                 
@@ -185,6 +185,11 @@
                 22/01/2016 - Adicionada verificacao de comprovacao de vida na 
                              procedure obtem-mensagens-alerta-contas.
                              Projeto 255 - INSS (Lombardi).
+
+				09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						     aux_qtminast referente a quantidade minima de assinatura
+						     conjunta na procedure obtem-mensagens-alerta,
+						     SD 514239 (Jean Michel).
                 
 .............................................................................*/
 
@@ -268,7 +273,8 @@ PROCEDURE obtem-mensagens-alerta:
     DEF VAR par_flgdinss AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_flgbinss AS LOGICAL                                 NO-UNDO.
     DEF VAR par_dscritic AS CHAR                                    NO-UNDO.
-    
+    DEF VAR aux_qtminast AS INTE								    NO-UNDO.
+
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -530,6 +536,7 @@ PROCEDURE obtem-mensagens-alerta:
                                         INPUT ?,
                                        OUTPUT TABLE tt-crapavt,
                                        OUTPUT TABLE tt-bens,
+									   OUTPUT aux_qtminast,
                                        OUTPUT TABLE tt-erro) NO-ERROR.
 
        FOR EACH tt-crapavt WHERE tt-crapavt.idrspleg = 1 NO-LOCK: 

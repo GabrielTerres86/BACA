@@ -1,7 +1,7 @@
 /*************************************************************************
  Fonte: internet.js                                               
  Autor: David                                                     
- Data : Junho/2008                   Última Alteração: 12/04/2016
+ Data : Junho/2008                   Última Alteração: 26/08/2016
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Internet da tela  
              ATENDA                                               
@@ -59,6 +59,8 @@
 			 17/11/2015 - Alterações para o PRJ. Ass. Conjunta (Jean Michel) 
 
              12/04/2016 - Remocao Aprovacao Favorecido. (Jaison/Marcos - SUPERO)
+
+             26/08/2016 - Alteracao da function validaResponsaveis, SD 510426 (Jean Michel)
 
 *********************************************************************************/
 
@@ -232,10 +234,9 @@ function mostraOpcaoPrincipal() {
 	// Se a tela foi chamada pela rotina "Produtos" então encerra a rotina.
 	if(executandoProdutos == true){
 		encerraRotina(true);
-		return false;
-	
+		return false;	
 	}
-	
+
 	$("#divInternetPrincipal").css("display","block");
 	$("#divAlterarSenha").css("display","none");
 	$("#divLiberarSenha").css("display","none");
@@ -1900,7 +1901,7 @@ function controlaLayout( nomeForm ){
 		var tabela      = $('table', divRegistro );
 		var linha       = $('table > tbody > tr', divRegistro );
 		
-		divRegistro.css({'height':'200px','width':'100%'});
+		divRegistro.css({'height':'170px','width':'100%'});
 		
 		var ordemInicial = new Array();
 		ordemInicial = [[2,0]];
@@ -2144,8 +2145,7 @@ function carregaCdbanco(cdispbif){
 				$('#cddbanco').val(cdBanco);
 				$("#cdispbif").prop('disabled', true);
 				$("#cddbanco").prop('disabled', false);
-				habilitaCampos();
-				
+				habilitaCampos();				
 		  }
 		}
 						
@@ -2156,9 +2156,11 @@ function carregaCdbanco(cdispbif){
 function validaResponsaveis(){
 	
 	var dscpfcgc = "";	
-	
+	var flgconju = "yes";
+	var qtminast = $("#qtminast").val();
+
 	$('input[type=checkbox]').each(function () {
-		if($(this).val() != "on"){
+	    if($(this).prop('checked')){
 			dscpfcgc += "#" + $(this).val();
 		}
 	});
@@ -2174,6 +2176,8 @@ function validaResponsaveis(){
 		data: {
 			nrdconta: nrdconta,
 			dscpfcgc: dscpfcgc,
+			flgconju: flgconju,
+			qtminast: qtminast,
 			redirect: "script_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -2191,7 +2195,8 @@ function validaResponsaveis(){
 function salvarRepresentantes(){
 	
 	var responsa = "";	
-	
+	var qtminast = $("#qtminast").val();
+
 	$('input[type=checkbox]').each(function () {
 		if($(this).val() != "on"){
 			if(this.checked){
@@ -2213,6 +2218,7 @@ function salvarRepresentantes(){
 		data: {
 			nrdconta: nrdconta,
 			responsa: responsa,
+			qtminast: qtminast,
 			redirect: "script_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {

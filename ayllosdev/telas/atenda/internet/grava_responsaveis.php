@@ -5,7 +5,8 @@
 	 * DATA CRIAÇÃO : 27/11/2015
 	 * OBJETIVO     : Salva dados referente aos poder("Assinar Operação Autoatendimento") de Responsaveis
 	 *
-	 * ALTERACOES   :  
+	 * ALTERACOES   : 31/08/2016 - Alteracao da procedure para parametro de quantidade minima de ass. conjunta,
+	 *							   SD.514239 (Jean Michel). 
 	 *
 	 */
 	
@@ -24,6 +25,7 @@
 
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '0';
 	$responsa = (isset($_POST['responsa'])) ? $_POST['responsa'] : '';
+	$qtminast = (isset($_POST['qtminast'])) ? $_POST['qtminast'] : '0';
 	$cddpoder = 10;
 	$flgerror = false;
 		
@@ -45,6 +47,7 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<idseqttl>0</idseqttl>';	
 	$xml .= '		<responsa>'.$responsa.'</responsa>';
+	$xml .= '		<qtminast>'.$qtminast.'</qtminast>';
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";	
 	 

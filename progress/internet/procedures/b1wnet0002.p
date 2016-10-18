@@ -2,7 +2,7 @@
 
    Programa: b1wnet0002.p                  
    Autor   : David
-   Data    : 03/10/2006                        Ultima atualizacao: 11/05/2016
+   Data    : 03/10/2006                        Ultima atualizacao: 09/09/2016
 
    Dados referentes ao programa:
 
@@ -139,6 +139,9 @@
                11/05/2016 - Remocao de logica para somente mostrar Comprovantes Salariais
 			                quanto houver. Esta busca estava honerando o processo (Marcos-Supero)
                
+			   09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						    aux_qtminast referente a quantidade minima de assinatura
+						    conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
 ..............................................................................*/
 
 
@@ -349,7 +352,8 @@ PROCEDURE carrega-titulares.
     DEF VAR aux_inbloque AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_incadsen AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_qtdiaace AS INTE                                    NO-UNDO.
-    
+    DEF VAR aux_qtminast AS INTE									NO-UNDO.
+
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -588,6 +592,7 @@ PROCEDURE carrega-titulares.
                                                  INPUT ?,     /* par_nrdrowid */
                                                 OUTPUT TABLE tt-crapavt,
                                                 OUTPUT TABLE tt-bens,
+												OUTPUT aux_qtminast,
                                                 OUTPUT TABLE tt-erro) NO-ERROR.
 
                 DELETE PROCEDURE h-b1wgen0058.

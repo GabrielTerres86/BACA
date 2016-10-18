@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0058.p
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 27/11/2015
+    Data    : Marco/2010                   Ultima atualizacao: 25/08/2016
 
     Objetivo  : BO de Comunicacao XML x BO de Contas Procurador (b1wgen0058.p)
 
@@ -21,11 +21,14 @@
                 
                 27/07/2015 - Reformulacao cadastral (Gabriel-RKAM).
                 
-                26/11/2015 - Inclusão da procedure valida_responsaveis
+                26/11/2015 - Inclusao da procedure valida_responsaveis
                              para o Prj. Assinatura Conjunta (Jean Michel).
    
-                27/11/2015 - Inclusão da procedure grava_resp_ass_conjunta
+                27/11/2015 - Inclusao da procedure grava_resp_ass_conjunta
                              para o Prj. Assinatura Conjunta (Jean Michel).
+
+				25/08/2016 - Alteraçoes de parametros da procedure
+							 valida_responsaveis, SD 510426 (Jean Michel).
 .............................................................................*/
 
                                                                              
@@ -104,6 +107,9 @@ DEF VAR aux_dscpfcgc AS CHAR                                           NO-UNDO.
 DEF VAR aux_responsa AS CHAR                                           NO-UNDO.
 DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_idastcjt AS INTE                                           NO-UNDO.
+DEF VAR aux_flgconju AS CHAR										   NO-UNDO.
+DEF VAR aux_flgpende AS INTE										   NO-UNDO.
+DEF VAR aux_qtminast AS INTE										   NO-UNDO.
 
 DEF VAR aux_flgerlog AS LOGI INIT TRUE                                 NO-UNDO.
 
@@ -183,10 +189,12 @@ PROCEDURE valores_entrada:
             WHEN "dscpfcgc" THEN aux_dscpfcgc = tt-param.valorCampo.
             WHEN "responsa" THEN aux_responsa = tt-param.valorCampo.
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
+			WHEN "flgconju" THEN aux_flgconju = tt-param.valorCampo.
+			WHEN "qtminast" THEN aux_qtminast = INT(tt-param.valorCampo).
        END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
-
+	
     FOR EACH tt-param-i 
         BREAK BY tt-param-i.nomeTabela
               BY tt-param-i.sqControle:
@@ -610,6 +618,7 @@ PROCEDURE busca_dados:
                             INPUT aux_nrdrowid,
                             OUTPUT TABLE tt-crapavt,
                             OUTPUT TABLE tt-bens,
+							OUTPUT aux_qtminast,
                             OUTPUT TABLE tt-erro) NO-ERROR.
 
     IF ERROR-STATUS:ERROR THEN
@@ -644,9 +653,11 @@ PROCEDURE busca_dados:
        END.
     ELSE
        DO:
+	   
            RUN piXmlNew.
-           RUN piXmlExport(INPUT TEMP-TABLE tt-crapavt:HANDLE,
+		   RUN piXmlExport(INPUT TEMP-TABLE tt-crapavt:HANDLE,
                            INPUT "Procurador").
+		   RUN piXmlAtributo(INPUT "qtminast", INPUT aux_qtminast).
            RUN piXmlSave.
 
        END.
@@ -1165,7 +1176,7 @@ END PROCEDURE.
 
 
 PROCEDURE valida_responsaveis:
-    
+
     RUN valida_responsaveis IN hBO (INPUT aux_cdcooper,
                                     INPUT aux_nrdcaixa,
                                     INPUT aux_cdoperad,
@@ -1175,26 +1186,14 @@ PROCEDURE valida_responsaveis:
                                     INPUT aux_dtmvtolt,
                                     INPUT aux_nrdconta,
                                     INPUT aux_dscpfcgc,
+									INPUT aux_flgconju,
+									INPUT aux_qtminast,
+								   OUTPUT aux_flgpende,	
                                    OUTPUT TABLE tt-erro).
-
-    IF  ERROR-STATUS:ERROR THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-    
-            IF  NOT AVAILABLE tt-erro  THEN
-                CREATE tt-erro.
-                    
-            ASSIGN tt-erro.dscritic = tt-erro.dscritic + " - " + 
-                                      ERROR-STATUS:GET-MESSAGE(1).
-    
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-
-            RETURN.
-        END.
-
+							   
     IF  RETURN-VALUE = "NOK" THEN
         DO:
+	
             FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
             IF  NOT AVAILABLE tt-erro  THEN
@@ -1210,6 +1209,7 @@ PROCEDURE valida_responsaveis:
     ELSE
         DO:
             RUN piXmlNew.
+		    RUN piXmlAtributo (INPUT "flgpende", INPUT STRING(aux_flgpende)).
             RUN piXmlAtributo (INPUT "OK", INPUT "OK").
             RUN piXmlSave.
         END.
@@ -1228,6 +1228,7 @@ PROCEDURE grava_resp_ass_conjunta:
                                         INPUT aux_nrdconta,
                                         INPUT aux_idseqttl,
                                         INPUT aux_responsa,
+										INPUT aux_qtminast,
                                        OUTPUT TABLE tt-erro).
 
     IF  ERROR-STATUS:ERROR THEN
