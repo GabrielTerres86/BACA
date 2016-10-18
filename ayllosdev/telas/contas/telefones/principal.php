@@ -1,4 +1,4 @@
-<? 
+<?php 
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
@@ -6,12 +6,11 @@
  * OBJETIVO     : Mostrar opcao Principal da rotina de TELEFONES da tela de CONTAS
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1). 
- *
  *                04/08/2015 - Reformulacao Cadastral (Gabriel-RKAM).
- * 
+ *				  14/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
+ *				  18/10/2016 - Correcao no retorno do XML de dados para remover caract. especiais de dados 
+ *							   existentes na base inviabilizando o erro. (Carlos Rafael Tanholi - SD 540832)
  */
-?>
-<?
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -46,11 +45,11 @@
 	$flgExcluir   = (in_array('E', $glbvars['opcoesTela']));
 	$flgIncluir   = (in_array('I', $glbvars['opcoesTela']));	
 	
-	$nrdconta = $_POST['nrdconta'] == '' ? 0 : $_POST['nrdconta'];
-	$idseqttl = $_POST['idseqttl'] == '' ? 0 : $_POST['idseqttl'];	
-	$inpessoa = $_POST['inpessoa'] == '' ? 0 : $_POST['inpessoa'];	
-	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
-	$nrdrowid = (isset($_POST['nrdrowid'])) ? $_POST['nrdrowid'] : '';
+	$nrdconta = ( isset($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0;
+	$idseqttl = ( isset($_POST['idseqttl']) ) ? $_POST['idseqttl'] : 0;
+	$inpessoa = ( isset($_POST['inpessoa']) ) ? $_POST['inpessoa'] : 0;
+	$operacao = ( isset($_POST['operacao']) ) ? $_POST['operacao'] : '';
+	$nrdrowid = ( isset($_POST['nrdrowid']) ) ? $_POST['nrdrowid'] : '';
 			
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
@@ -79,7 +78,7 @@
 	$xml .= '</Root>';
 	
 	$xmlResult = getDataXML($xml);
-	$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));	
 	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){ 
 		if( $cddopcao == 'I' ){
@@ -90,10 +89,10 @@
 	}
 	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;
-	$msgAlert  = trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']);
+	$msgAlert  = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) : '';
 
 	//Verifico se conta é titular em outra conta. Se atributo vier preenchido, muda operação para 'SC' => Somente Consulta
-	$msgConta = trim($xmlObjeto->roottag->tags[0]->attributes['MSGCONTA']);
+	$msgConta = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGCONTA']) ) ? trim($xmlObjeto->roottag->tags[0]->attributes['MSGCONTA']) : '';
 	if( $msgConta != '' ) {
 		$operacao = ( $operacao != 'CF' ) ? 'SC' : $operacao ;
 	}
@@ -102,17 +101,23 @@
 <script type="text/javascript">
 	$('#divConteudoOpcao').css({'-moz-opacity':'0','filter':'alpha(opacity=0)','opacity':'0'});
 </script> 
-<?
+<?php
+	$sugestao = '';
+	$cdopetfn = 0;
 	// Se estiver Alterando/Incluindo/Excluindo, chamar o FORMULARIO
 	if(in_array($operacao,array('TA','TI','TX','CF'))) {
 		
 		$registro = $xmlObjeto->roottag->tags[1]->tags[0]->tags;		
 		$cdopetfn = getByTagName($registro,'cdopetfn');
+
 		if ( $operacao == 'TI' ){
 			$sugestao = '';
 			$ArraySugestao = Array();
 			$regs = $xmlObjeto->roottag->tags[1]->tags;
-			foreach ( $regs as $reg ){ if ( getByTagName($reg->tags,'nrfonass') != '' ) $ArraySugestao[] = getByTagName($reg->tags,'nrfonass'); }
+			foreach ( $regs as $reg ) { 
+				if ( getByTagName($reg->tags,'nrfonass') != '' ) 
+					$ArraySugestao[] = getByTagName($reg->tags,'nrfonass'); 
+			}
 			
 			$sugestao = 'Telefones: '.implode( "/", $ArraySugestao);
 		}

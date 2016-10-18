@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções na rotina TELEFONES da tela de CONTAS
  *
  * ALTERACOES   : 04/08/2015 - Reformulacao Cadastral (Gabriel-RKAM).	
+ *				  18/10/2016 - Correcao no envio de dados para XML removendo caract. especiais. (Carlos Rafael Tanholi - SD 540832)
  */
 
 var nrdrowid  = ''; 
@@ -194,6 +195,9 @@ function manterRotina( operacao ) {
 	idsittfc = $('#idsittfc','#'+nomeForm).val();
 	idorigem = $('#idorigem','#'+nomeForm).val();
 	
+    //remove os caracteres que geram erro no XML
+	nmpescto = removeCaracteresInvalidos(nmpescto);
+
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',
