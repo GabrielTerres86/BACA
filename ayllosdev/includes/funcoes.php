@@ -60,6 +60,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 035: [13/08/2015] James					: Remover o caminho "/var/www/ayllos/xml/"
  * 036: [14/08/2015] Lucas Ranghetti(CECRED): Incluir função visualizaArquivo para fazer download do arquivo ou gerar pdf na mesma function.
  * 037: [30/12/2015] Jaison (CECRED)		: Criada a funcao retornaKeyArrayMultidimensional.
+ * 038: [18/10/2016] Kelvin (CECRED)        : Ajustes feito na funcao RemoveCaracteresInvalidos para codificar a string antes de tratar.
  */
 ?>
 <?php
@@ -1246,15 +1247,25 @@ function converteFloat( $valor, $tipo="" ){
  * OBJETIVO   : Remover caracteres DIFERENTES dos listados no replace da função.
 				Assim, serão removidos caracteres que invalidam o XML ou outras transações.
 				Remove tudo que for diferente de Letras (A-z), numéricos (0-9), caracteres com acentos e alguns sinais de pontuação.
- * PARÂMETROS : $str  [String]  -> Texto que será retornado sem os caracteres.
- */
-function removeCaracteresInvalidos( $str ){
-	//Removendo escapes da string e colocando barras com scape
+ * PARÂMETROS : $str  	    [String]  -> Texto que será retornado sem os caracteres.
+				$encodeString [Bool]  -> Faz encode e decode da string caso for chamado de um fonte que seja necessario.
+ */	
+function removeCaracteresInvalidos( $str, $encodeString = false ){
+    //Removendo escapes da string e colocando barras com scape
 	$str = str_replace('\\', '', $str );
 	
-	$str = preg_replace("/[\n]/", "", $str);
-	$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/", "", $str);	
+	//Se passar encode como true
+	if($encodeString){
+		$str = preg_replace("/[\n]/", "", $str);
+		$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/", "", utf8_decode($str));	
+		$str = utf8_encode($str);
+	}else{
+		$str = preg_replace("/[\n]/", "", $str);
+		$str = preg_replace("/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\"\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/", "", $str);		
+	}
 	return $str;
+	
+	
 }
 
 /************************************************************/

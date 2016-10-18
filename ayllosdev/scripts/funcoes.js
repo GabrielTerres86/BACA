@@ -91,6 +91,9 @@
  * 078: [28/10/2015] Heitor           (RKAM)   : Criada funcao utf8_decode para utilizacao de acentuacao php x js
  * 079: [23/12/2015] Adriano          (CECRED) : Ajuste na rotina layoutPadrao para criar o tratamento para a classe porcento_4. 
  * 080: [23/03/2016] James            (CECRED) : Criado a classe Taxa no INPUT
+ * 080: [18/10/2016] Kelvin			  (CECRED) : Funcao removeCaracteresInvalidos nao estava removendo os caracteres ">" e "<", ajustado 
+												 para remover os mesmos e criado uma flag para identificar se deve remover os acentos ou nao.
+												 
  */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -2473,9 +2476,21 @@ function removeAcentos(str){
 	return str.replace(/[àáâãäå]/g,"a").replace(/[ÀÁÂÃÄÅ]/g,"A").replace(/[ÒÓÔÕÖØ]/g,"O").replace(/[òóôõöø]/g,"o").replace(/[ÈÉÊË]/g,"E").replace(/[èéêë]/g,"e").replace(/[Ç]/g,"C").replace(/[ç]/g,"c").replace(/[ÌÍÎÏ]/g,"I").replace(/[ìíîï]/g,"i").replace(/[ÙÚÛÜ]/g,"U").replace(/[ùúûü]/g,"u").replace(/[ÿ]/g,"y").replace(/[Ñ]/g,"N").replace(/[ñ]/g,"n");
 }
 
-/*! OBJETIVO: Remover caracteres que invalidam o xml*/
-function removeCaracteresInvalidos(str){
-	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");				 
+/*! OBJETIVO  : Remover caracteres que invalidam o xml
+	PARAMETROS: str           -> Texto que contera os caracteres invalidos que irao ser removidos
+				flgRemAcentos -> Flag para identificar se é necessário remover acentuacao
+*/
+
+function removeCaracteresInvalidos(str, flgRemAcentos){
+	
+	//Se necessario remover acentuacao
+	if (flgRemAcentos){
+		return removeAcentos(str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,""));				 
+	}
+		
+	else
+		return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/]/g,"");				 
+	
 }
 
 function utf8_decode(str_data) {
