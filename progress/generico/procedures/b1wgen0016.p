@@ -11972,6 +11972,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT par_idseqttl,                                   /* Sequencial de titularidade */
                                                                   INPUT tt-tbgen_trans_pend.nrcpf_operador,             /* CPF do operador PJ */
                                                                   INPUT par_idorigem,                                   /* Canal de origem da operaçao */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,     /* Tipo da guia (1 – DARF / 2 – DAS) */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,       /* Tipo de captura da guia (1 – Código Barras / 2 – Manual) */
                                                                   INPUT aux_cdseqfat,
                                                                   INPUT aux_nrdigfat,
@@ -11995,7 +11996,8 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.vlpercentual,    /* Valor do percentual da guia */
                                                                   INPUT aux_vldocmto,
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1 – Nesta Data / 2 – Agendamento) */
-                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,       /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto,       /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
+                                                                  OUTPUT ?,                                              /* Descricao do protocolo */
                                                                  OUTPUT 0,                                              /* Código do erro */
                                                                  OUTPUT ?).                                             /* Descriçao do erro */ 
                                                               
@@ -12080,10 +12082,14 @@ PROCEDURE aprova_trans_pend:
                               aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,  /* Código da cooperativa */
                                                                   INPUT par_nrdconta,  /* Número da conta */
                                                                   INPUT par_idseqttl,  /* Sequencial de titularidade */
+                                                                  INPUT par_cdagenci,  /* PA */
+                                                                  INPUT par_nrdcaixa,  /* Numero do caixa */
+                                                                  INPUT par_cdoperad,  /* Codigo do operador */
                                                                   INPUT tt-tbgen_trans_pend.nrcpf_operador,  /* CPF do operador PJ */
                                                                   INPUT par_idorigem,  /* Canal de origem da operaçao */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,  /* Tipo da guia (1 – DARF / 2 – DAS) JMD */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,  /* Tipo de captura da guia (1 – Código Barras / 2 – Manual) */
+                                                                  INPUT 508, /* Historico */
                                                                   INPUT aux_lindigi1,  /* Primeiro campo da linha digitável da guia*/
                                                                   INPUT aux_lindigi2,  /* Segundo campo da linha digitável da guia */
                                                                   INPUT aux_lindigi3,  /* Terceiro campo da linha digitável da guia */
@@ -12104,6 +12110,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.vlpercentual,  /* Valor do percentual da guia */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,  /* Data de agendamento */
                                                                   INPUT tt-tbgen_trans_pend.cdtransacao_pendente,  /* Código de sequencial da transaçao pendente */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tpleitura_docto, /* Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual) */
                                                                  OUTPUT 0,  /* Código do erro */
                                                                  OUTPUT ?). /* Descriçao do erro */
                               

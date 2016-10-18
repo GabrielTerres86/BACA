@@ -509,6 +509,9 @@ create or replace package cecred.PAGA0002 is
 									  ,pr_flmobile IN INTEGER                --> Indicador Mobile
 									  ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
 									  ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			
+                                      ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
+                                      ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
+                                      ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade  
                                       /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
 									  ,pr_msgofatr OUT VARCHAR2
@@ -591,6 +594,9 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_flmobile IN INTEGER                --> Indicador Mobile
                                       ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
                                       ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			
+                                      ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
+                                      ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
+                                      ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade                                      
                                       /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
@@ -722,7 +728,11 @@ create or replace package body cecred.PAGA0002 is
 	--             30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 	--
                  18/07/2016 - Ajuste da mensagem de confirmacao do agendamento de ted para 7h30min ao inves de 9h
-                              (Carlos)
+   	--                        (Carlos)
+	--
+  	--             20/07/2016 - Inclusão dos parametros pr_cdfinali, pr_dstransf e pr_dshistor para criação do 
+  	--                          registro tbted_det_agendamento ao cadastrar um agendamento de ted 
+  	--                          (insert craplau) (Carlos)
 															
 	--             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
 	--						              InternetBanking (Projeto 338 - Lucas Lunelli)															
@@ -1977,6 +1987,11 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                                 ,pr_idtipcar => 0            --> Indicador Tipo Cartão Utilizado
                                 ,pr_nrcartao => 0            --> Nr Cartao
+                                
+                                ,pr_cdfinali => pr_cdfinali  --> Codigo de finalidade
+                                ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
+                                ,pr_dshistor => pr_dshistor  --> Descricao da finalidade
+                                
                                 /* parametros de saida */                               
                                 ,pr_dstransa => vr_dstrans1  --> Descrição de transação
 								,pr_msgofatr => vr_msgofatr
@@ -2086,6 +2101,9 @@ create or replace package body cecred.PAGA0002 is
                                         ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                                         ,pr_idtipcar => 0            --> Indicador Tipo Cartão Utilizado
                                         ,pr_nrcartao => 0            --> Numero Cartao
+                                        ,pr_cdfinali => pr_cdfinali  --> Codigo de finalidade
+                                        ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
+                                        ,pr_dshistor => pr_dshistor  --> Descricao da finalidade
                                         /* parametros de saida */                               
                                         ,pr_dstransa => vr_dstrans1  --> descrição de transação
                                         ,pr_cdcritic => vr_cdcritic  --> Codigo da critica
@@ -3474,6 +3492,11 @@ create or replace package body cecred.PAGA0002 is
                                   ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                                   ,pr_idtipcar => 0            --> Indicador Tipo Cartão Utilizado
                                   ,pr_nrcartao => 0            --> Nr Cartao																	
+                                  
+                                  ,pr_cdfinali => 0            --> Codigo de finalidade
+                                  ,pr_dstransf => ' '          --> Descricao da transferencia
+                                  ,pr_dshistor => ' '          --> Descricao da finalidade
+                                  
                                   /* parametros de saida */                               
                                   ,pr_dstransa => vr_dstrans1  --> Descrição de transação
 								                  ,pr_msgofatr => vr_msgofatr
@@ -5700,6 +5723,9 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_flmobile IN INTEGER                --> Indicador Mobile
                                       ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
                                       ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			
+                                      ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
+                                      ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
+                                      ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade
                                       /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
 									                    ,pr_msgofatr OUT VARCHAR2
@@ -5733,13 +5759,12 @@ create or replace package body cecred.PAGA0002 is
     -- Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper  crapass.cdcooper%TYPE,
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
-      SELECT ass.nrdconta,
-             ass.nmprimtl,
-             ass.idastcjt
-        FROM crapass ass
-       WHERE ass.cdcooper = pr_cdcooper
-         AND ass.nrdconta = pr_nrdconta;
-
+      SELECT crapass.nrdconta,
+             crapass.nmprimtl,
+             crapass.idastcjt
+        FROM crapass
+       WHERE crapass.cdcooper = pr_cdcooper
+         AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
     rw_crabass cr_crapass%ROWTYPE;
     
@@ -6249,7 +6274,23 @@ create or replace package body cecred.PAGA0002 is
                      ,nvl(vr_tpdvalor,0)        -- craplau.tpdvalor
 					           ,pr_flmobile               -- craplau.flmobile
                      ,pr_idtipcar               -- craplau.idtipcar
-                     ,pr_nrcartao);             -- craplau.nrcartao
+                     ,pr_nrcartao)              -- craplau.nrcartao
+                     returning idlancto
+                        into vr_idlancto;
+										 
+        -- Se for TED, criar informações do agendamento
+        IF pr_cdtiptra = 4 THEN 
+          INSERT INTO tbted_det_agendamento
+            (idlancto
+            ,cdfinalidade
+            ,dshistorico
+            ,dsidentific)
+          VALUES
+            (vr_idlancto
+            ,pr_cdfinali
+            ,pr_dshistor
+            ,pr_dstransf);
+        END IF;                          
 										 
       EXCEPTION
         WHEN OTHERS THEN
@@ -6736,6 +6777,9 @@ create or replace package body cecred.PAGA0002 is
 									                    ,pr_flmobile IN INTEGER                --> Indicador Mobile
                                       ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
                                       ,pr_nrcartao IN NUMBER                 --> Numero Cartao
+                                      ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
+                                      ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
+                                      ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade
                                       /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
@@ -6908,6 +6952,11 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                                 ,pr_idtipcar => pr_idtipcar  --> Indicador Tipo Cartão Utilizado
                                 ,pr_nrcartao => pr_nrcartao  --> Nr Cartao
+
+                                ,pr_cdfinali => pr_cdfinali  --> Codigo de finalidade
+                                ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
+                                ,pr_dshistor => pr_dshistor  --> Descricao da finalidade                               
+                                
                                 /* parametros de saida */                               
                                 ,pr_dstransa => pr_dstransa  --> Descrição de transação
 								                ,pr_msgofatr => vr_msgofatr
