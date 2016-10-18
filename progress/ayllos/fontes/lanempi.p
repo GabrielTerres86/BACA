@@ -843,8 +843,16 @@ DO WHILE TRUE:
                          END. /* END crapepr.tpemprst = 1  */
                       ELSE  
                          DO:
-                             ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
-                                                       tel_vllanmto.
+							IF crapepr.vlsdprej < 0 THEN
+								DO:
+									ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
+															  tel_vllanmto.
+								END.
+							ELSE
+								DO:
+									ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+															  tel_vllanmto.
+								END.
                          END.
 
                   END. /* END IF aux_indebcre = "C"   THEN */
