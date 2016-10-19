@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Julho/2001                          Ultima atualizacao: 21/05/2015
+   Data    : Julho/2001                          Ultima atualizacao: 18/10/2016
 
    Dados referentes ao programa:
 
@@ -147,6 +147,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                             incluir cdpesqbb "Data da pesquisa".
                           - Na rotina de aditivos incluir agencia e operador da tabela crapadt.
                             (Lucas Ranghetti #288277)
+
+               18/10/2016 - Quando quebrar o loop de emprestimos por troca de filial, se ainda
+                            não foram incluídos os aditivos então devem ser incluídos.
+                            (AJFink #539415)
+
  ............................................................................ */
   --
   -- Dados da cooperativa
@@ -316,6 +321,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
   --
   vr_vllanbdc            craplim.vllimite%type;
   vr_vlemprst_total      craplim.vllimite%type;
+  vr_lancou_aditivos     varchar2(1); --SD#539415
   -- Exceptions
   vr_exc_saida           EXCEPTION;
 
@@ -1415,6 +1421,8 @@ begin
    into rw_crapdat;
   close btch0001.cr_crapdat;
 
+rw_crapdat.dtmvtolt := to_date('27092016','ddmmyyyy');
+
   -- Buscar os dados da cooperativa
   OPEN cr_crapcop(pr_cdcooper);
   FETCH cr_crapcop INTO rw_crapcop;
@@ -1487,6 +1495,7 @@ begin
     -- Inicializar variáveis de controle de quebra
     vr_flgcontr := 0;
     vr_flgvalor := 0;
+    vr_lancou_aditivos := 'N'; --SD#539415
     -- Inicializar o CLOB
     dbms_lob.createtemporary(vr_des_xml, TRUE);
     dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
@@ -1517,6 +1526,7 @@ begin
           if vr_flgcontr <= 1 and
              vr_tab_geral(vr_indice_geral).vr_flgcontr >= 2 then
             pc_inclui_aditivos_xml(vr_tab_geral(vr_indice_geral).vr_cdagenci);
+            vr_lancou_aditivos := 'S'; --SD#539415
           end if;
           -- Define o cabeçalho da nova seção do relatório
           if vr_tab_geral(vr_indice_geral).vr_flgcontr = 1 then
@@ -1601,6 +1611,13 @@ begin
     if vr_flgvalor <> 0 then
       gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</valor></tipo>');
     end if;
+    --Início SD#539415
+    --o loop de emprestimos finalizou sem incluir os aditivos devido a troca de filial, mesmo
+    --existindo registros na pl/table. Se não lançou então deve incluir.
+    if vr_lancou_aditivos = 'N' then
+      pc_inclui_aditivos_xml(rw_crapage.cdagenci);
+    end if;
+    --Fim SD#539415
     -- Processamento dos borderôs (antiga processa_borderos)
     vr_vllanbdc := 0;
     vr_vlemprst_total := 0;
@@ -1957,6 +1974,7 @@ begin
   -- Inicializar as variáveis de controle de quebra
   vr_flgcontr := 0;
   vr_flgvalor := 0;
+  vr_lancou_aditivos := 'N'; --SD#539415
   -- Relatorio Geral (234 colunas)
   vr_indice_geral2 := vr_tab_geral2.first;
   while vr_indice_geral2 is not null loop
@@ -1977,6 +1995,7 @@ begin
       if vr_flgcontr <= 1 and
          vr_tab_geral2(vr_indice_geral2).vr_flgcontr >= 2 then
         pc_inclui_aditivos_xml(99);
+        vr_lancou_aditivos := 'S'; --SD#539415
       end if;
       -- Se mudou o tipo, abre o novo tipo no XML
       if vr_tab_geral2(vr_indice_geral2).vr_flgcontr <> vr_flgcontr then
@@ -2016,6 +2035,13 @@ begin
     -- Fecha a TAG do TIPO
     gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</tipo>');
   end if;
+  --Início SD#539415
+  --o loop de emprestimos finalizou sem incluir os aditivos devido a troca de filial, mesmo
+  --existindo registros na pl/table. Se não lançou então deve incluir.
+  if vr_lancou_aditivos = 'N' then
+    pc_inclui_aditivos_xml(99);
+  end if;
+  --Fim SD#539415
   -- Fecha as TAGs abertas
   gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp,'</agencias>',true);
                            
@@ -2073,4 +2099,3 @@ EXCEPTION
     ROLLBACK;
 end pc_crps314;
 /
-
