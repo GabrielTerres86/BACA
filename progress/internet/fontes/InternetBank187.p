@@ -81,10 +81,10 @@
                                     	   ,INPUT 10  
                                     	   ,INPUT "996"		   /* Codigo Operador */
                                     	   ,INPUT 10 
-                                    	   ,INPUT 1			   /* (0- False, 1-True)Indicador validacoes */
+                                    	   ,INPUT 0			   /* (0- False, 1-True)Indicador validacoes */
                                     	   ,INPUT "INTERNET"   /* Descricao Origem */
                                     	   ,INPUT par_nrcpfope /* CPF operador */
-                                    	   ,INPUT 0            /* (0- False, 1-True)controla validacoes na efetivacao de agendamentos */
+                                    	   ,INPUT 1            /* (0- False, 1-True)controla validacoes na efetivacao de agendamentos */
                                     	   ,INPUT ""		   /* Nome da Tela */
                                     	   ,INPUT ""		   /* IP da transacao no IBank/mobile */
                                     	   ,INPUT aux_flmobile /* Indicador se origem é do Mobile */
