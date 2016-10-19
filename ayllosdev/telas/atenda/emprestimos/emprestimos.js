@@ -100,7 +100,8 @@
  * 080: [05/04/2016] Incluido tratamento na efetuar_consultas para para verificar se deve validar permitir consulta caso ja esteja na esteira
  *                   PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 081: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
- 
+ *
+ * 082: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -3810,7 +3811,7 @@ function attArray(novaOp, cdcooper) {
         arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc', '#frmAlienacao').val(); // GRAVAMES */
-
+				arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
 
         atual = contIntervis - 1;
@@ -4332,6 +4333,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["idseqbem"] = ' + idseqbem + ';');
     eval('arrayAlienacao' + i + '["idalibem"] = "";');
     eval('arrayAlienacao' + i + '["lsbemfin"] = "";');
+    eval('arrayAlienacao' + i + '["cdcoplib"] = ' + glb_codigoOperadorLiberacao + ';');
 
     eval('arrayAlienacoes[' + i + '] = arrayAlienacao' + i + ';');
 
@@ -5558,8 +5560,8 @@ function montaString() {
                 normalizaNumero(arrayAlienacoes[i]['nrcpfbem']) + ';' +
                 arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
                 arrayAlienacoes[i]['dstipbem'] + ';' +
-                arrayAlienacoes[i]['idseqbem'] /* GRAVAMES*/
-                ;
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES*/
+                arrayAlienacoes[i]['cdcoplib']; /* OPERADOR DE LIBERACAO */
     }
 
     //Interneiente anuente

@@ -28,7 +28,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 09/06/2016
+   Data    : 14/09/2005                        Ultima atualizacao: 19/10/2016
 
    Dados referentes ao programa:
 
@@ -630,6 +630,8 @@
              13/07/2016 - Ajuste na validaçao da Linha de credito na procedure valida-dados-gerais. Agora
                           valida pelo metodo EMPR0002.pc_busca_linha_credito_prog.
 
+             19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
+						  o valor do emprestimo, SD-507761 (Jean Michel).
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -5345,7 +5347,7 @@ PROCEDURE grava-proposta-completa:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
-        DEF  INPUT PARAM par_cdpactra AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdpactra AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
@@ -5656,7 +5658,7 @@ PROCEDURE grava-proposta-completa:
     END.
 
     ASSIGN aux_contbens = 0.
-
+	
     IF par_cddopcao = "A" THEN
        DO:
            /* Bens alienados separados por pipe */
@@ -6274,7 +6276,22 @@ PROCEDURE grava-proposta-completa:
                                     INPUT "nrctremp",
                                     INPUT par_nrctremp,
                                     INPUT par_nrctremp).
+		   
 
+           /* Bens alienados separados por pipe JMD*/
+           DO aux_contador = 1 TO NUM-ENTRIES(par_dsdalien,"|"):
+
+             ASSIGN reg_dsdregis = ENTRY(aux_contador,par_dsdalien,"|").
+			 
+			 if ENTRY(16,reg_dsdregis,";") <> "0" AND
+				ENTRY(16,reg_dsdregis,";") <> "" THEN
+				DO:
+			      RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                           INPUT "Garantia: "+ STRING(aux_contador), /*ENTRY(15,reg_dsdregis,";"),*/
+                                           INPUT "",
+                                           INPUT "Aprovado Coordenador: " + ENTRY(16,reg_dsdregis,";")).
+		        END.
+	       END.	
         END.                   
     
     RETURN "OK".
