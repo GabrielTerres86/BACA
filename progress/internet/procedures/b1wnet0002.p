@@ -2,7 +2,7 @@
 
    Programa: b1wnet0002.p                  
    Autor   : David
-   Data    : 03/10/2006                        Ultima atualizacao: 06/09/2016
+   Data    : 03/10/2006                        Ultima atualizacao: 17/10/2016
 
    Dados referentes ao programa:
 
@@ -148,6 +148,8 @@
                06/09/2016 - Removido a busca do preposto pelo proprio CPF do titular (Pessoa Jurídica)
 							              (Andrey - RKAM)
                
+			   17/10/2016 - Ajuste feito para que possa visualizar as opcoes de transacoes para
+							contas com inpessoa = 3 ao criar um novo operador. (SD 538293 - Kelvin)
 ..............................................................................*/
 
 
@@ -2988,7 +2990,8 @@ PROCEDURE permissoes-menu:
         
 
     /* Verifica se ha um Preposto cadastrado para PJ*/
-    IF  crapass.inpessoa = 2 THEN
+    IF  crapass.inpessoa = 2 OR
+        crapass.inpessoa = 3 THEN
         DO:
             IF crapass.idastcjt = 0 THEN
             DO:

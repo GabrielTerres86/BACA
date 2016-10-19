@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : tab_carrega_atividade.php						Última alterãção:
+ * FONTE        : tab_carrega_atividade.php						Última alteração: 17/10/2016
  * CRIAÇÃO      : Cristian Filipe (GATI)        
  * DATA CRIAÇÃO : 03/09/2013
  * OBJETIVO     : Tabela para opção T
@@ -10,6 +10,8 @@
 		
 				 08/08/2016 - Ajuste para inclusão de controle de paginação
 							  (Adriano - SD 495725).
+ 
+                 17/10/2016 - #524686 Correção de format do nrdconta (Carlos) 
  * --------------
  */
 
@@ -53,7 +55,7 @@
 						</td>
 						<td>
 							<span><? echo getByTagName($values->tags, 'nrdconta') ;?></span>
-							      <? echo mascara(getByTagName($values->tags, 'nrdconta'),'###.###.#');?>
+							      <? echo mascara(getByTagName($values->tags, 'nrdconta'),'####.###.#');?>
 						</td>
 						<td>
 							<span><? echo converteFloat(getByTagName($values->tags, 'vlrendim') ,'MOEDA'); ?></span>
