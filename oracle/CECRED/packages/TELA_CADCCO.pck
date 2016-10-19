@@ -241,7 +241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
    Sigla   : CRED
 
    Autor   : Jonathan - RKAM
-   Data    : Marco/2016                       Ultima atualizacao: 27/04/2016
+   Data    : Marco/2016                       Ultima atualizacao: 19/10/2016
 
    Dados referentes ao programa:
 
@@ -250,7 +250,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 
    Alteracoes: 27/04/2016 - Ajuste para liberar acesso para departamento
                             CANAIS a tela CADCCO, conforme solicitado
-                            no chamado 441903. (Kelvin)                                       
+                            no chamado 441903. (Kelvin)         
+                            
+               19/10/2016 - Remover validação de verificação se já exite um 
+                            convenio para internet na mesma cooperativa na
+                            procedure pc_valida_informacoes (Lucas Ranghetti #531199)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Variavel temporária para LOG 
@@ -454,14 +458,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 19/10/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realiza a validação das informações para cadastro/alteração do registro de convenio
     
-    Alterações : 
+    Alterações : 19/10/2016 - Remover validação de verificação se já exite um 
+                              convenio para internet na mesma cooperativa 
+                              (Lucas Ranghetti #531199)
     -------------------------------------------------------------------------------------------------------------*/                                
     
     --Cursor para encontrar o convenio
@@ -898,33 +904,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       RAISE vr_exc_erro;  
     
     END IF;                
-                        
-    IF pr_dsorgarq = 'INTERNET' AND 
-       pr_cddopcao <> 'A'       THEN
-      
-      OPEN cr_crapcco_internet(pr_cdcooper => pr_cdcooper
-                              ,pr_nrconven => pr_nrconven
-                              ,pr_flgregis => pr_flgregis
-                              ,pr_cddbanco => pr_cddbanco);
-                                     
-      FETCH cr_crapcco_internet INTO rw_crapcco_internet;
-      
-      IF cr_crapcco_internet%FOUND THEN
-        
-         --Fecha o cursor
-         CLOSE cr_crapcco_internet;
-         
-         --Monta mensagem de erro
-         vr_cdcritic := 0;
-         vr_dscritic := 'Ja existe outro convenio para Internet.';
-          
-         RAISE vr_exc_erro;            
-      
-      END IF;                                
-      
-      CLOSE cr_crapcco_internet;
-    
-    END IF;
     
     IF pr_dsorgarq = 'EMPRESTIMO'THEN
       
