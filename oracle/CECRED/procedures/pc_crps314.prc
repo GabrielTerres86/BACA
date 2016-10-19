@@ -1421,8 +1421,6 @@ begin
    into rw_crapdat;
   close btch0001.cr_crapdat;
 
-rw_crapdat.dtmvtolt := to_date('27092016','ddmmyyyy');
-
   -- Buscar os dados da cooperativa
   OPEN cr_crapcop(pr_cdcooper);
   FETCH cr_crapcop INTO rw_crapcop;
