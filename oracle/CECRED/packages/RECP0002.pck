@@ -563,7 +563,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         FROM crapass ass
        WHERE ass.inpessoa = pr_inpessoa
          AND ass.nrcpfcgc = pr_nrcpfcgc
-         AND ass.dtdemiss IS NULL
        ORDER BY ass.cdcooper;
          
     ---------------> VARIAVEIS <------------
@@ -1702,7 +1701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         CLOSE cr_crapcob;
         
         -- Efetua baixa
-        PAGA0001.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
+        COBR0007.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
                                      ,pr_cdocorre => 0
                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                      ,pr_cdoperad => 1
@@ -1791,7 +1790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       -- Alterar a situação do acordo para cancelado
       UPDATE tbrecup_acordo SET
              cdsituacao = 3 -- Cancelado
-            ,dtcancela = pr_dtcancel
+            ,dtcancela  = pr_dtcancel
        WHERE nracordo = rw_tbacordo.nracordo;
     EXCEPTION
       WHEN OTHERS THEN
