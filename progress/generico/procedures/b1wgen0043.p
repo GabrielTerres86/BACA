@@ -4254,6 +4254,8 @@ PROCEDURE obtem_emprestimo_risco:
               
        END. /* END IF par_cdfinemp > 0 THEN */
 
+    IF aux_innivris = 10 THEN
+      ASSIGN aux_innivris = 9.    
 
     RUN descricoes_risco(INPUT par_cdcooper,
                          INPUT 0,
