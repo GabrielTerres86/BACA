@@ -4155,7 +4155,7 @@ PROCEDURE obtem_emprestimo_risco:
     FIND tt-ocorren NO-LOCK NO-ERROR.
     IF AVAIL tt-ocorren AND tt-ocorren.innivris <> 0 THEN
        ASSIGN aux_innivris = tt-ocorren.innivris.
-
+ 
     IF TRIM(par_dsctrliq)        <> ""                AND 
        UPPER(TRIM(par_dsctrliq)) <> "SEM LIQUIDACOES" THEN
        ASSIGN aux_flgrefin = TRUE.
@@ -4254,6 +4254,8 @@ PROCEDURE obtem_emprestimo_risco:
               
        END. /* END IF par_cdfinemp > 0 THEN */
 
+    IF aux_innivris = 10 THEN
+      ASSIGN aux_innivris = 9.    
 
     RUN descricoes_risco(INPUT par_cdcooper,
                          INPUT 0,
