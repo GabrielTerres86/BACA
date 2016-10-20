@@ -77,6 +77,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
 
                    26/09/2016 - Inclusao de verificacao de contratos de acordos,
                                 Prj. 302 (Jean Michel). 
+                                
+                   06/10/2016 - Incluir inclusão do lote, caso o mesmo não seja encontrado. Solicitado
+                                por James - Projeto 302 - ACordos   (Renato Darosci - Supero)
 
     ............................................................................ */
 
@@ -144,7 +147,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
              qtcompln,
              vlinfocr,
              vlcompcr,
-             rowid             
+             rowid  dsrowid
         FROM craplot
        WHERE craplot.cdcooper = pr_cdcooper
          AND craplot.dtmvtolt = pr_dtintegr
@@ -308,26 +311,30 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
         RETURN;
       END IF;
       
-      -- Verifica se existe contrato de acordo ativo
-      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctremp => pr_nrctremp
-                                       ,pr_flgativo => vr_flgativo
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
+      -- VErificar se está sendo chamado da rotina de pagamento de acordos
+      IF pr_cdprogra <> 'RECP0001' THEN
+        -- Verifica se existe contrato de acordo ativo
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
 
-      IF NVL(vr_cdcritic,0) > 0 THEN
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        RAISE vr_exc_saida;
-      ELSIF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;      
+        IF NVL(vr_cdcritic,0) > 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_saida;
+        ELSIF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;      
+        END IF;
+                                   
+        IF vr_flgativo = 1 THEN
+          vr_dscritic := 'Lancamento nao permitido, contrato para liquidar esta em acordo.';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
-                                 
-      IF vr_flgativo = 1 THEN
-        vr_dscritic := 'Lancamento nao permitido, contrato para liquidar esta em acordo.';
-        RAISE vr_exc_saida;
-      END IF;
-
+      
+      
       -- Saldo devedor menor ou igual a zero
       IF vr_vlsdeved <= 0   THEN 
          
@@ -456,7 +463,73 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
       
       --  se não encontrar gravar log
       IF cr_craplot%NOTFOUND THEN
-        vr_dscritic := gene0001.fn_busca_critica(60);  
+        CLOSE cr_craplot;
+        
+        -- Alterado para que ao não encontrar o lote, criar o mesmo. Esta solicitação foi feita pelo 
+        -- James, devido há uma situação ocorrida no projeto 302 - Acordos. (Renato Darosci - 06/10/2016)
+        BEGIN
+          -- Insere o lote
+          INSERT INTO craplot(cdcooper
+                             ,dtmvtolt 
+                             ,cdagenci
+                             ,cdbccxlt
+                             ,nrdolote
+                             ,tplotmov
+                             ,nrseqdig
+                             ,vlcompcr
+                             ,vlinfocr
+                             ,cdhistor
+                             ,cdoperad
+                             ,dtmvtopg)
+                       VALUES(pr_cdcooper
+                             ,pr_dtintegr
+                             ,vr_cdagenci
+                             ,vr_cdbccxlt
+                             ,pr_nrdolote -- 8453
+                             ,5
+                             ,0
+                             ,0
+                             ,0
+                             ,0
+                             ,'1'
+                             ,NULL) RETURNING dtmvtolt
+                                            , cdagenci
+                                            , cdbccxlt
+                                            , nrdolote
+                                            , nrseqdig
+                                            , qtinfoln
+                                            , qtcompln
+                                            , vlinfocr
+                                            , vlcompcr
+                                            , ROWID   
+                                         INTO rw_craplot.dtmvtolt
+                                            , rw_craplot.cdagenci
+                                            , rw_craplot.cdbccxlt
+                                            , rw_craplot.nrdolote
+                                            , rw_craplot.nrseqdig
+                                            , rw_craplot.qtinfoln
+                                            , rw_craplot.qtcompln
+                                            , rw_craplot.vlinfocr
+                                            , rw_craplot.vlcompcr
+                                            , rw_craplot.dsrowid;
+                                             
+        EXCEPTION 
+          WHEN OTHERS THEN
+            -- A lógica de não retornar o erro foi mantida da mesma forma como era feito 
+            -- na versão antiga, para que não cause erros que antes não ocorriam
+            vr_dscritic := 'Erro ao inserir lote: '||SQLERRM;  
+            -- Envio centralizado de log de erro
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> '|| vr_dscritic 
+                                                       ||'AG: 001 BCX: 100 LOTE:'|| gene0002.fn_mask(pr_nrdolote,'999999'));
+            --retonar para o programa chamador
+            RETURN;
+        END;
+        
+        -- 
+        /*vr_dscritic := gene0001.fn_busca_critica(60);  
         -- Envio centralizado de log de erro
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -465,7 +538,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
                                                    ||'AG: 001 BCX: 100 LOTE:'|| gene0002.fn_mask(pr_nrdolote,'999999'));
         CLOSE cr_craplot;
         --retonar para o programa chamador
-        RETURN;
+        RETURN;*/
       ELSE
         --somente fechar cursor
         CLOSE cr_craplot;
@@ -522,7 +595,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
                craplot.vlinfodb = craplot.vlinfodb + vr_vllanmto,
                craplot.vlcompdb = craplot.vlcompdb + vr_vllanmto,
                craplot.nrseqdig = vr_nrseqdig
-         WHERE ROWID = rw_craplot.rowid;
+         WHERE ROWID = rw_craplot.dsrowid;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Não foi possivel atualizar lote(CRAPLOT)'

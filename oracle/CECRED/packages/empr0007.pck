@@ -1456,6 +1456,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       13/07/2016 - Alterado para utilizar as variveis de quantidade de parcelas calculadas
                    e meses decorridos, ao invés dos campos da tabela. Os campos podem 
                    estar desatualizados no empréstimo TR (Douglas - Chamado 463063)
+                   
+      19/10/2016 - Deverá avaliar o indicador de pagamentos apenas quando não estiver
+                   em um acordo ativo, pois para ACORDOS poderá ocorrer o pagamento de 
+                   mais de uma parcela do acordo no mesmo mês ( Renato Darosci - Supero )
+                   
     ..............................................................................*/
 
     DECLARE
@@ -1469,6 +1474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   crapcri.cdcritic%TYPE;
       vr_dscritic   VARCHAR2(4000);
+      vr_flgativo   NUMBER; -- Indicar acordo ativo
 
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
@@ -1563,7 +1569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
            AND epr.nrdconta = pr_nrdconta          --> Nr. da Conta
 					 AND epr.nrctremp = pr_nrctremp          --> Nr. do contrato
            AND epr.inliquid = 0                    --> Somente não liquidados
-           AND epr.indpagto = 0                    --> Nao pago no mês ainda
+           -- AND epr.indpagto = 0 --> Nao pago no mês ainda -- Removido por Renato Darosci - 19/10/2016
            AND epr.flgpagto = 0                    --> Débito em conta
            AND epr.tpemprst = 0;                   --> Price
 			rw_crapepr cr_crapepr%ROWTYPE;
@@ -1710,6 +1716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       vr_dtdpagto     crapepr.dtdpagto%TYPE;  --> Data do pagamento
       vr_ind_lcm      NUMBER(10);             --> Indice da tabela craplcm
 			vr_cdprogra     VARCHAR2(10) := 'COBEMP';
+      vr_nrdoclcm     craplcm.nrdocmto%TYPE;
 
       -- Variáveis para passagem a rotina pc_calcula_lelem
       vr_diapagto     INTEGER;
@@ -1870,11 +1877,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         RAISE vr_exc_erro;
       END IF;
 
+      ------------------
+      -- Verificar se há acordo ativo para o contrato
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+          
+      -- Se houve retorno de erro
+      IF vr_dscritic IS NOT NULL THEN
+        -- Gera exceção
+        RAISE vr_exc_undo;
+      END IF;
+      ------------------
+      
       -- Abre cursor do emprestimo
       OPEN cr_crapepr;
 			FETCH cr_crapepr INTO rw_crapepr;
 
-      IF cr_crapepr%FOUND THEN
+      -- Se encontrou o registro E...
+      IF cr_crapepr%FOUND AND
+        -- Se o flag estiver indicando que não há acordo ativo, deve validar o indicador de pagamento
+        ((NVL(vr_flgativo,0) = 0 AND rw_crapepr.indpagto = 0) OR NVL(vr_flgativo,0) = 1)  THEN
+				
 				-- Busca do cadastro de linhas de crédito de empréstimo
 				FOR rw_craplcr IN cr_craplcr(rw_crapepr.cdlcremp) LOOP
 					-- Guardamos a taxa e o indicador de emissão de boletos
@@ -2062,10 +2089,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
           vr_vldescto := pr_vllanmto;
 					
-					-- Não permitir antecipação de parcela
+					-- Não permitir antecipação de parcela quando não estiver em acordo ativo
           -- Utilizar o quantidade de meses e parcelas calculadas para saber se esta em atraso
           -- Os campos da tabela podem esta desatualizados
-          IF vr_qtprecal > vr_msdecatr THEN
+          IF vr_qtprecal > vr_msdecatr AND NVL(vr_flgativo,0) = 0 THEN
              vr_cdcritic := 0;
 						 vr_dscritic := 'Pagamento apenas para parcelas em atraso';
 						 RAISE vr_exc_undo;
@@ -2278,6 +2305,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               END IF;
             END IF;
 
+            -- Se o contrato estiver em um acordo ativo
+            IF NVL(vr_flgativo,0) = 0 THEN
+              vr_nrdoclcm := rw_crapepr.nrctremp;
+            ELSE 
+              /*****************************************************************************************
+              ** Quando estiver realizando o lançamento de um empréstimo, devido a pagamento do acordo
+              ** deve lançar o número do documento com o NRSEQDIG e não com o número do contrato, para
+              ** que assim seja possivel realizar mais de um lançamento para o mesmo dia
+              ** Isto apesar de raro, pode acontecer quando o cooperado pagar no mesmo dia uma parcela
+              ** em atraso do acordo, juntamente com a parcela atual no mesmo dia.
+              **
+              ** RENATO DAROSCI - 19/10/2016 - PROJETO 302 - SISTEMA DE ACORDOS
+              ** 
+              ******************************************************************************************/
+              vr_nrdoclcm := rw_craplot_8457.nrseqdig + 1;
+            END IF;
+            
+            
             -- Efetuar lancamento na conta-corrente
             BEGIN
               INSERT INTO craplcm(cdcooper
@@ -2293,19 +2338,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,cdhistor
                                  ,nrseqdig
                                  ,vllanmto)
-                           VALUES(pr_cdcooper
-                                 ,rw_craplot_8457.dtmvtolt
-                                 ,rw_craplot_8457.cdagenci
-                                 ,rw_craplot_8457.cdbccxlt
-                                 ,rw_craplot_8457.nrdolote
-                                 ,to_char(rw_crapepr.nrctremp)
-                                 ,rw_crapepr.nrdconta
-                                 ,rw_crapepr.nrdconta
-                                 ,to_char(rw_crapepr.nrdconta,'fm00000000')
-                                 ,rw_crapepr.nrctremp
-                                 ,108 --> Prest Empr.
-                                 ,rw_craplot_8457.nrseqdig + 1
-                                 ,vr_vldescto);
+                           VALUES(pr_cdcooper                               -- cdcooper
+                                 ,rw_craplot_8457.dtmvtolt                  -- dtmvtolt
+                                 ,rw_craplot_8457.cdagenci                  -- cdagenci
+                                 ,rw_craplot_8457.cdbccxlt                  -- cdbccxlt
+                                 ,rw_craplot_8457.nrdolote                  -- nrdolote
+                                 ,to_char(rw_crapepr.nrctremp)              -- cdpesqbb
+                                 ,rw_crapepr.nrdconta                       -- nrdconta
+                                 ,rw_crapepr.nrdconta                       -- nrdctabb
+                                 ,to_char(rw_crapepr.nrdconta,'fm00000000') -- nrdctitg
+                                 ,vr_nrdoclcm                               -- nrdocmto
+                                 ,108 --> Prest Empr.                       -- cdhistor
+                                 ,rw_craplot_8457.nrseqdig + 1              -- nrseqdig
+                                 ,vr_vldescto);                             -- vllanmto
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao criar lancamento de sobras para a conta corrente (CRAPLCM) '
@@ -2346,23 +2391,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,vlestdif
                                  ,vllanmto
                                  ,flgproce)
-                           VALUES(pr_cdcooper
-                                 ,rw_craplot_8457.dtmvtolt
-                                 ,vr_tab_crapass(rw_crapepr.nrdconta).cdagenci
-                                 ,0
-                                 ,108 -- Mesmo do lançamento
-                                 ,vr_tab_crapass(rw_crapepr.nrdconta).cdsecext
-                                 ,rw_craplot_8457.dtmvtolt
-                                 ,rw_craplot_8457.dtmvtolt
-                                 ,0
-                                 ,rw_crapepr.nrdconta
-                                 ,rw_crapepr.nrctremp
-                                 ,rw_craplot_8457.nrseqdig + 1
-                                 ,2
-                                 ,0
-                                 ,0
-                                 ,vr_vldescto
-                                 ,0); -- false
+                           VALUES(pr_cdcooper                                  -- cdcooper
+                                 ,rw_craplot_8457.dtmvtolt                     -- dtmvtolt
+                                 ,vr_tab_crapass(rw_crapepr.nrdconta).cdagenci -- cdagenci
+                                 ,0                                            -- cdempres
+                                 ,108 -- Mesmo do lançamento                   -- cdhistor
+                                 ,vr_tab_crapass(rw_crapepr.nrdconta).cdsecext -- cdsecext
+                                 ,rw_craplot_8457.dtmvtolt                     -- dtdebito
+                                 ,rw_craplot_8457.dtmvtolt                     -- dtrefere
+                                 ,0                                            -- insitavs
+                                 ,rw_crapepr.nrdconta                          -- nrdconta
+                                 ,vr_nrdoclcm                                  -- nrdocmto
+                                 ,rw_craplot_8457.nrseqdig + 1                 -- nrseqdig
+                                 ,2                                            -- tpdaviso
+                                 ,0                                            -- vldebito
+                                 ,0                                            -- vlestdif
+                                 ,vr_vldescto                                  -- vllanmto
+                                 ,0); -- false                                 -- flgproce
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao criar aviso de debito em conta corrente (CRAPAVS) '
@@ -2403,7 +2448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             END IF;
 
             -- Inicializar número auxiliar de documento com o empréstimo
-            vr_nrdocmto := rw_crapepr.nrctremp;
+            vr_nrdocmto := vr_nrdoclcm; -- rw_crapepr.nrctremp; -- Renato Darosci - 19/10/2016
 
             -- Verificar se já existe outro lançamento para este lote
             vr_qtd_lem_nrdocmto := 0;

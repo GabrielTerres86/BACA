@@ -1185,258 +1185,259 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para agendamentos na Internet
   --
-  -- Alteracoes: 31/01/2014 - Alterar Rowid pelo Progress Recid (Gabriel)
+  -- Alteracoes: 
+  --       31/01/2014 - Alterar Rowid pelo Progress Recid (Gabriel)
+  --       08/05/2014 - Alterado a passagem de parametro na procedure
+  --                    pc_grava_retorno para passar o banco e a agencia
+  --                    de onde o titulo foi pago (para os parametros:
+  --                    pr_cdbcorec e pr_cdagerec). Anteriormente buscava
+  --                    o banco e a agencia cadastrados na crapcop. (Fabricio)
+  --       26/06/2014 - Alterado na procedure gera_relatorio para quando o
+  --                    processo não estiver rodando o nome do relatorio seja
+  --                    crrl483_time.lst (Tiago/Aline)
+  --       17/07/2014 - Adicionado procedure pc_verifica_situacao_transacao para
+  --                    validar se exitem transacoes que nao podem mais ser aprovadas.
+  --                    (Douglas - Chamado 178989)
+  --       25/07/2014 - Ao efetuar uma transferencia efetuada no TAA e verificar que não
+  --                    havia saldo o suficiente para a operação, um raise era levantado,
+  --                    quando apenas uma flag deveria ser marcada, para que a rotina de transferencias
+  --                    tivesse o mesmo comportamento do pagamento de titulos.
+  --                    ao levantar a exceção, o rollback era feito e o insitlau não era atualizado.
+  --                    (Douglas/Thiago Rodrigues - Chamado 179602)
   --
-  --             08/05/2014 - Alterado a passagem de parametro na procedure
-  --                          pc_grava_retorno para passar o banco e a agencia
-  --                          de onde o titulo foi pago (para os parametros:
-  --                          pr_cdbcorec e pr_cdagerec). Anteriormente buscava
-  --                          o banco e a agencia cadastrados na crapcop. (Fabricio)
-  --             26/06/2014 - Alterado na procedure gera_relatorio para quando o
-  --                          processo não estiver rodando o nome do relatorio seja
-  --                          crrl483_time.lst (Tiago/Aline)
-  --             17/07/2014 - Adicionado procedure pc_verifica_situacao_transacao para
-  --                          validar se exitem transacoes que nao podem mais ser aprovadas.
-  --                          (Douglas - Chamado 178989)
-  --             25/07/2014 - Ao efetuar uma transferencia efetuada no TAA e verificar que não
-  --                          havia saldo o suficiente para a operação, um raise era levantado,
-  --                          quando apenas uma flag deveria ser marcada, para que a rotina de transferencias
-  --                          tivesse o mesmo comportamento do pagamento de titulos.
-  --                          ao levantar a exceção, o rollback era feito e o insitlau não era atualizado.
-  --                          (Douglas/Thiago Rodrigues - Chamado 179602)
+  --       07/08/2014 - Implementado ajusta para migracao da Concredi -> Viacredi, na procedure
+  --                    pc_obtem_agend_debitos (Jean Michel).
   --
-  --             07/08/2014 - Implementado ajusta para migracao da Concredi -> Viacredi, na procedure
-  --                          pc_obtem_agend_debitos (Jean Michel).
+  --       03/09/2014 - Alteração na pc_verifica_convenio para apenas validar
+  --                    código de barras caso seja inclusão de Débito
+  --                    Automático (Lucas Lunelli - Projeto Débito Fácil)
+  --                    Liberação Outubro/2014.
   --
-  --             03/09/2014 - Alteração na pc_verifica_convenio para apenas validar
-  --                          código de barras caso seja inclusão de Débito
-  --                          Automático (Lucas Lunelli - Projeto Débito Fácil)
-  --                          Liberação Outubro/2014.
+  --       03/09/2014 - Inclusao rotinas projeto Float (Daniel).
   --
-  --             03/09/2014 - Inclusao rotinas projeto Float (Daniel).
+  --       03/09/2014 - Inclusao de tratamento para migracao de cooperativas
+  --                    na procedure pc_obtem_agend_debitos e retirado leitura
+  --                    da tabela craptco da procedure pc_executa_transferencia,
+  --                    nova condicao pc_verifica_convenio e pc_verifica_titulo
+  --                    (Jean Michel).
   --
-  --             03/09/2014 - Inclusao de tratamento para migracao de cooperativas
-  --                          na procedure pc_obtem_agend_debitos e retirado leitura
-  --                          da tabela craptco da procedure pc_executa_transferencia,
-  --                          nova condicao pc_verifica_convenio e pc_verifica_titulo
-  --                          (Jean Michel).
+  --       03/09/2014 - Alterar o valor passado para o parametro par_vlrliqui,
+  --                    na chamada da rotina pc_grava_retorno, pois está sendo
+  --                    gravado o valor incorreto para o campo crapret.vlrliqui
+  --                    ( SD 183392 - Renato - Supero )
   --
-  --             03/09/2014 - Alterar o valor passado para o parametro par_vlrliqui,
-  --                          na chamada da rotina pc_grava_retorno, pois está sendo
-  --                          gravado o valor incorreto para o campo crapret.vlrliqui
-  --                          ( SD 183392 - Renato - Supero )
+  --       19/09/2014 - Adicionado parametros de saida pr_msgofatr e pr_cdempcon
+  --                    na procedure pc_paga_convenio.
+  --                    (Debito Automatico Facil) - (Fabricio)
   --
-  --             19/09/2014 - Adicionado parametros de saida pr_msgofatr e pr_cdempcon
-  --                          na procedure pc_paga_convenio.
-  --                          (Debito Automatico Facil) - (Fabricio)
+  --       03/12/2014 - Inclusao da chamada do solicita_baixa_automatica (Guilherme/SUPERO)
   --
-  --        03/12/2014 - Inclusao da chamada do solicita_baixa_automatica (Guilherme/SUPERO)
+  --       04/12/2014 - De acordo com a circula 3.656 do Banco Central,substituir
+  --                    nomenclaturas Cedente por Beneficiário e  Sacado por Pagador
+  --                     Chamado 229313 (Jean Reddiga - RKAM).
   --
-  --        04/12/2014 - De acordo com a circula 3.656 do Banco Central,substituir
-  --                     nomenclaturas Cedente por Beneficiário e  Sacado por Pagador
-  --                      Chamado 229313 (Jean Reddiga - RKAM).
+  --       06/01/2015 - Adicionado o parametro pr_cdmotivo para procedure pc_prep_tt_lcm_consolidada
+  --                    e ajustado os pontos onde chamava esta procedure para passar o parametro
+  --                    SD 240100 (Tiago/Rodrigo).
   --
-  --        06/01/2015 - Adicionado o parametro pr_cdmotivo para procedure pc_prep_tt_lcm_consolidada
-  --                     e ajustado os pontos onde chamava esta procedure para passar o parametro
-  --                     SD 240100 (Tiago/Rodrigo).
+  --       15/01/2015 - Tratamento para considerar os lancamentos de debitos de
+  --                    convenios CECRED (apenas quando o processo nao estiver
+  --                    rodando) - procedure pc_obtem_agend_debitos.
+  --                    (Chamado 229249 # PRJ Melhoria) - (Fabricio)
   --
-  --        15/01/2015 - Tratamento para considerar os lancamentos de debitos de
-  --                     convenios CECRED (apenas quando o processo nao estiver
-  --                     rodando) - procedure pc_obtem_agend_debitos.
-  --                     (Chamado 229249 # PRJ Melhoria) - (Fabricio)
+  --       10/02/2015 - Criação de mensagem de notificação no internetbank ao gerar
+  --                    crítica de insuficiência de saldo para débito (Agend./Pagam./Transf.) (Lunelli - SD. 229251)
   --
-  --        10/02/2015 - Criação de mensagem de notificação no internetbank ao gerar
-  --                     crítica de insuficiência de saldo para débito (Agend./Pagam./Transf.) (Lunelli - SD. 229251)
+  --       27/03/2015 - Ajuste retorno das informacoes no momento de criacao do lote;
+  --                    procedure pc_debita_convenio_cecred (pos-liberacao). (Fabrício)
   --
-  --        27/03/2015 - Ajuste retorno das informacoes no momento de criacao do lote;
-  --                     procedure pc_debita_convenio_cecred (pos-liberacao). (Fabrício)
+  --       30/03/2015 - Correção no formato de data das mensagens enviadas por
+  --                    crítica de insuficiência de saldo para débito (Lunelli - SD. 267208)
   --
-  --        30/03/2015 - Correção no formato de data das mensagens enviadas por
-  --                     crítica de insuficiência de saldo para débito (Lunelli - SD. 267208)
+  --       30/03/2015 - Alterado na leitura da craplau para quando for
+  --                    Debito automatico (DEBAUT), buscar as datas de
+  --                    pagamentos tambem menores que a data atual, isto
+  --                    para os casos de pagamentos com data no final de
+  --                    semana. (Ajustes pos-liberacao # PRJ Melhoria) -
+  --                    (Fabricio)
   --
-  --        30/03/2015 - Alterado na leitura da craplau para quando for
-  --                     Debito automatico (DEBAUT), buscar as datas de
-  --                     pagamentos tambem menores que a data atual, isto
-  --                     para os casos de pagamentos com data no final de
-  --                     semana. (Ajustes pos-liberacao # PRJ Melhoria) -
-  --                     (Fabricio)
+  --       20/04/2015 - Tratamento na procedure pc_debita_convenio_cecred para
+  --                    lancamentos duplicados Liberty / Unimed.
+  --                    (Chamado 272543) - (Fabricio)
+  --                  - Quando nao encontrar autorizacao de debito automatico
+  --                    cadastrada (453), deve gerar ndb para retornar a critica
+  --                    a empresa; procedure pc_debita_convenio_cecred.
+  --                    (Chamado 275834) - (Fabricio)
   --
-  --        20/04/2015 - Tratamento na procedure pc_debita_convenio_cecred para
-  --                     lancamentos duplicados Liberty / Unimed.
-  --                     (Chamado 272543) - (Fabricio)
-  --                   - Quando nao encontrar autorizacao de debito automatico
-  --                     cadastrada (453), deve gerar ndb para retornar a critica
-  --                     a empresa; procedure pc_debita_convenio_cecred.
-  --                     (Chamado 275834) - (Fabricio)
+  --       06/05/2015 - Atualizada data do último débito na tabela de autorizações (crapatr)
+  --                    (Lucas Lunelli - SD 256257)
   --
-  --        06/05/2015 - Atualizada data do último débito na tabela de autorizações (crapatr)
-  --                     (Lucas Lunelli - SD 256257)
+  --       20/05/2015 - Alterado para chamar a pc_gerar_mensagem da package GENE0003 e
+  --                    não mais da própria DDDA ( Renato - Supero )
   --
-  --        20/05/2015 - Alterado para chamar a pc_gerar_mensagem da package GENE0003 e
-  --                     não mais da própria DDDA ( Renato - Supero )
+  --       11/06/2015 - Ajustes na rotina de pagamentos e valores a creditar, e incluido
+  --                    ocorrencias de pagto 76 e 77 (Cooperativa/EE) referente
+  --                    ao projeto 219 - Cooperativa Emite e Expede (Daniel/Rafael)
   --
-  --        11/06/2015 - Ajustes na rotina de pagamentos e valores a creditar, e incluido
-  --                     ocorrencias de pagto 76 e 77 (Cooperativa/EE) referente
-  --                     ao projeto 219 - Cooperativa Emite e Expede (Daniel/Rafael)
+  --       22/07/2015 - Incluir BEGIN com EXCEPTION na conversão da vr_dttolera na
+  --                    procedure  pc_verif_dias_toler_sicredi, pois caso haja erro na
+  --                    conversão da data não deve fazer nada conforme fazia o programa
+  --                    progress (Lucas Ranghetti #304939)
   --
-  --        22/07/2015 - Incluir BEGIN com EXCEPTION na conversão da vr_dttolera na
-  --                     procedure  pc_verif_dias_toler_sicredi, pois caso haja erro na
-  --                     conversão da data não deve fazer nada conforme fazia o programa
-  --                     progress (Lucas Ranghetti #304939)
+  --       24/07/2015 - Ajustar a gravação da crapret para utilizar o valor de
+  --                    vr_nrremrtc e vr_nrremcre na pc_prep_retorno_cooper_90
+  --                    (Douglas - Chamado 310678)
   --
-  --        24/07/2015 - Ajustar a gravação da crapret para utilizar o valor de
-  --                     vr_nrremrtc e vr_nrremcre na pc_prep_retorno_cooper_90
-  --                     (Douglas - Chamado 310678)
+  --       30/07/2015 - pc_paga_titulo e pc_paga_convenio, Alterado para fazer o atualização do lote qnd for agencia = 90 Internet
+  --                    que não foram feitos na cxon0014, diminuindo tempo de lock da tabela (Odirlei-Amcom)
   --
-  --        30/07/2015 - pc_paga_titulo e pc_paga_convenio, Alterado para fazer o atualização do lote qnd for agencia = 90 Internet
-  --                     que não foram feitos na cxon0014, diminuindo tempo de lock da tabela (Odirlei-Amcom)
+  --       10/08/2015 - Incluir regra para evitar que sejam efetivadas 2 transferencias iguais
+  --                    enviadas pelo ambiente mobile (Dionathan).
   --
-  --        10/08/2015 - Incluir regra para evitar que sejam efetivadas 2 transferencias iguais
-  --                     enviadas pelo ambiente mobile (Dionathan).
+  --       12/08/2015 - Adicionar tratamento na pc_grava_retorno, validando o código do banco de acordo
+  --                    com a avalidação realizada pela pc_processa_liquidacao, antes da chamada da
+  --                    pc_prep_tt_lcm_consolidada. (Douglas - Chamado 316517)
   --
-  --        12/08/2015 - Adicionar tratamento na pc_grava_retorno, validando o código do banco de acordo
-  --                     com a avalidação realizada pela pc_processa_liquidacao, antes da chamada da
-  --                     pc_prep_tt_lcm_consolidada. (Douglas - Chamado 316517)
+  --       13/08/2015 - Ajustar a pesquisa dos últimos três IP's utilizados para acessar o Internet bank
+  --                    na pc_paga_titulo (Douglas - Chamado 313242)
   --
-  --        13/08/2015 - Ajustar a pesquisa dos últimos três IP's utilizados para acessar o Internet bank
-  --                     na pc_paga_titulo (Douglas - Chamado 313242)
+  --       14/08/2015 - pc_paga_titulo e pc_paga_convenio -> inclusão do parametro pr_tpcptdoc, para identificacao do tipo de captura
+  --                         (leitora ou manual(linha digitavel)) (Odirlei-AMcom)
   --
-  --        14/08/2015 - pc_paga_titulo e pc_paga_convenio -> inclusão do parametro pr_tpcptdoc, para identificacao do tipo de captura
-  --                          (leitora ou manual(linha digitavel)) (Odirlei-AMcom)
+  --       21/09/2015 - #321279 e #322979 Adicionado o monitoramento de fraude para pagamento de convênios.
+  --                    Alterado para verificar também os pagamentos agendados pois estão ocorrendo fraudes
+  --                    também por agendamento.
+  --                    No e-mail, adicionado o nome do cedente para títulos e convênios.
+  --                    No e-mail, adicionada a informação "Agendamento" para pagamentos agendados.
+  --                    Alterado o assunto dos e-mails para diferenciar convênios de títulos pela área de
+  --                    monitoração. (Carlos)
   --
-  --        21/09/2015 - #321279 e #322979 Adicionado o monitoramento de fraude para pagamento de convênios.
-  --                     Alterado para verificar também os pagamentos agendados pois estão ocorrendo fraudes
-  --                     também por agendamento.
-  --                     No e-mail, adicionado o nome do cedente para títulos e convênios.
-  --                     No e-mail, adicionada a informação "Agendamento" para pagamentos agendados.
-  --                     Alterado o assunto dos e-mails para diferenciar convênios de títulos pela área de
-  --                     monitoração. (Carlos)
+  --       29/09/2015 - Ajustado para nao executar rotina de monitoracao na efetivacao do pagamento agendado
+  --                    devido a perda de performace da rotina crps509 (Odirlei-AMcom)
   --
-  --        29/09/2015 - Ajustado para nao executar rotina de monitoracao na efetivacao do pagamento agendado
-  --                     devido a perda de performace da rotina crps509 (Odirlei-AMcom)
+  --       29/09/2015 - Adicionar as procedures pc_PAGA0001_obtem_agen_deb e pc_PAGA0001_efetua_debitos para
+  --                    a tela DEBNET (Douglas - Chamado 285228)
   --
-  --        29/09/2015 - Adicionar as procedures pc_PAGA0001_obtem_agen_deb e pc_PAGA0001_efetua_debitos para
-  --                     a tela DEBNET (Douglas - Chamado 285228)
+  --       02/01/2015 - Realizar alterações referente as rotinas do GPS ( Renato - Supero )
   --
-  --        02/01/2015 - Realizar alterações referente as rotinas do GPS ( Renato - Supero )
-  --
-  --        04/12/2015 - Prj 131. Ajustadas procedures verifica_convenio,
-  --                     verifica_titulo e paga_titulo para utilizar a nova 
-  --                     estrutura de aprovação conjunta. (Reinert)  
+  --       04/12/2015 - Prj 131. Ajustadas procedures verifica_convenio,
+  --                    verifica_titulo e paga_titulo para utilizar a nova 
+  --                    estrutura de aprovação conjunta. (Reinert)  
   -- 
-  --        21/12/2015 - Incluido verificacao de situação de transacao pendente, nas procedures
-  --                     pc_debita_agendto_transf e pc_debita_agendto_pagto Prj. Assinatura Conjunta (Jean Michel).
+  --       21/12/2015 - Incluido verificacao de situação de transacao pendente, nas procedures
+  --                    pc_debita_agendto_transf e pc_debita_agendto_pagto Prj. Assinatura Conjunta (Jean Michel).
   --
-  --        22/12/2015 - Incluido campos para o relatorio crrl482 SD376916 (Odirlei-AMcom)
+  --       22/12/2015 - Incluido campos para o relatorio crrl482 SD376916 (Odirlei-AMcom)
   --
-  --        11/11/2015 - Incluido calculo de modulo 11 para geracao
-  --                     de comprovante/protocolo. (Tiago/Fabricio) SD - 334427
+  --       11/11/2015 - Incluido calculo de modulo 11 para geracao
+  --                    de comprovante/protocolo. (Tiago/Fabricio) SD - 334427
   --
-  --        30/12/2015 - Ajuste para não desconsiderar o motivo quando for
-  --                     titulos do banco do brasil com ocorrencia 28
-  --                     (Adriano).
+  --       30/12/2015 - Ajuste para não desconsiderar o motivo quando for
+  --                    titulos do banco do brasil com ocorrencia 28
+  --                    (Adriano).
   --
-  --        06/01/2016 - Alterar nome do procedimento pc_gera_relatorio para evitar overlay devido
-  --                     a problemas com a sincronização do schema holder (Odirlei-AMcom)             
+  --       06/01/2016 - Alterar nome do procedimento pc_gera_relatorio para evitar overlay devido
+  --                    a problemas com a sincronização do schema holder (Odirlei-AMcom)             
   --
-  --        19/01/2016 - (Ajuste migracao crps123 > crps509) Incluir tratamento de debito facil 
-  --                     na procedure  pc_debita_convenio_cecred (Lucas Ranghetti #388406 )
+  --       19/01/2016 - (Ajuste migracao crps123 > crps509) Incluir tratamento de debito facil 
+  --                    na procedure  pc_debita_convenio_cecred (Lucas Ranghetti #388406 )
   --
-  --        21/01/2016 - (Ajuste migracao crps123 > crps509) Incluir update da crapalu para o 
-  --                     debito facil na procedure pc_debita_convenio_cecred (Lucas Ranghetti/Fabricio)
+  --       21/01/2016 - (Ajuste migracao crps123 > crps509) Incluir update da crapalu para o 
+  --                    debito facil na procedure pc_debita_convenio_cecred (Lucas Ranghetti/Fabricio)
   --
-  --        29/01/2016 - Ajuste para corrigir o problema de registros na tabela craprtc com
-  --                     numero de remessa duplicados
-  --                 (Adriano - SD 391157).
+  --       29/01/2016 - Ajuste para corrigir o problema de registros na tabela craprtc com
+  --                    numero de remessa duplicados
+  --                (Adriano - SD 391157).
   --
-  --        26/02/2016 - Ajuste para efetuar a atualizaçao do titulo DDA somente no final da rotina,
-  --                     pois existem casos que é ocorre um erro e é efetuado rollback contudo, a situação do titulo 
-  --                     já foi atulizada e enviado a JDDA.
-  --                     (Adriano - SD 394710)
+  --       26/02/2016 - Ajuste para efetuar a atualizaçao do titulo DDA somente no final da rotina,
+  --                    pois existem casos que é ocorre um erro e é efetuado rollback contudo, a situação do titulo 
+  --                    já foi atulizada e enviado a JDDA.
+  --                    (Adriano - SD 394710)
   --
-  --        03/02/2016 - Alimentar a variavel vr_nrremrtc
-  --                     (Adriano)     
+  --       03/02/2016 - Alimentar a variavel vr_nrremrtc
+  --                    (Adriano)     
   --
-  --        15/02/2016 - Incluir validacao de cooperado demitido critica "64"  
-  --                     na procedure pc_debita_convenio_cecred (Lucas Ranghetti #386413)
+  --       15/02/2016 - Incluir validacao de cooperado demitido critica "64"  
+  --                    na procedure pc_debita_convenio_cecred (Lucas Ranghetti #386413)
   --
-  --        22/03/2016 - Ajuste na mensagem de alerta que identifica transferências duplicadas
-  --                     conforme solicitado no chamado 421403. (Kelvin)            
+  --       22/03/2016 - Ajuste na mensagem de alerta que identifica transferências duplicadas
+  --                    conforme solicitado no chamado 421403. (Kelvin)            
   --
-  --        29/03/2016 - Conversão da rotina pc_InternetBank23
-  --                     (Adriano - M117).             
-  --                         
-  --        09/05/2016 - Ajuste para gerar log em caso de erro na chamada da rotina
-  --                     pc_InternetBank23
-  --                     (Adriano - M117).     
+  --       29/03/2016 - Conversão da rotina pc_InternetBank23
+  --                    (Adriano - M117).             
+  --                        
+  --       09/05/2016 - Ajuste para gerar log em caso de erro na chamada da rotina
+  --                    pc_InternetBank23 (Adriano - M117).     
   --
-  --		10/05/2016 - Ajustes devido ao projeto M118 para cadastrar o favorecido de forma automatica
+  --		   10/05/2016 - Ajustes devido ao projeto M118 para cadastrar o favorecido de forma automatica
   --					 (Adriano - M117).
   --
-  --    12/05/2016 - Retirada a procedure pc_acesso_cadastro_fav e feito o filtro de 10 bancos mais 
-  --                 utilizados, para o mobile (Carlos - M117)
+  --       12/05/2016 - Retirada a procedure pc_acesso_cadastro_fav e feito o filtro de 10 bancos mais 
+  --                    utilizados, para o mobile (Carlos - M117)
   --
-  --    12/05/2016 - Alterado o tipo do parametro pr_nrctatrf de integer para craplau.nrctadst no 
-  --                 procedimento pc_executa_transf_intercoop (Carlos - M117)
+  --       12/05/2016 - Alterado o tipo do parametro pr_nrctatrf de integer para craplau.nrctadst no 
+  --                    procedimento pc_executa_transf_intercoop (Carlos - M117)
   --
-  --    16/05/2016 - Ajustes realizados:
+  --       16/05/2016 - Ajustes realizados:
   --                  > Ajuste para ajustar a condição que identifica o tipo de transação
   --                    e efetua a chamada da respectiva rotina de efetivação;
   --                  > Ajuste para corrigir a geração da tags "BANCOS" que estava sendo
-  --                    criada em duplicidade;
-  --                (Adriano - M117).        
+  --                    criada em duplicidade;   (Adriano - M117).        
   --
-  --   18/05/2016 - Ajuste para poscionar corretamente as tags de limite na InternetBank23
-  --                (Adriano - M117).
+  --       18/05/2016 - Ajuste para poscionar corretamente as tags de limite na InternetBank23
+  --                   (Adriano - M117).
   --
-  --   23/05/2016 - Retirado o uso do campo craplau.flmobile pois não existe em produção
-  --	  		    (Adriano - M117).    
-
-       27/07/2016 - Correção da forma de abertura das tags xml na rotina pc_InternetBank23;
-                  - Definidos valores default (10 e espaço) para os parâmetros cdfinali e dshistor na rotina
-                    CXON0020.pc_executa_envio_ted (Carlos)
-      
-         30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-
-       31/05/2016 - Ajuste para formatar corretamente a agencia da cooperativa
-                    na tag que monta as contas destinos
-                    (Adriano - M117).    
-                    
-       02/06/2016 - Ajsute realizados:
-                     -> Ajuste para retornar as criticas nas variaveis auxliares
-                        ao chamar a rotina resposável pelo débitos de agendamentos de TED
-                     -> Corrigido leitura da craplau para buscar agendamentos 
-                        por tipo de acordo com programa origem                        
-                   (Adriano).  
-                   
-       06/06/2016 - Ajuste para incluir o tratamento de assinatura conjunta na rotina
-                    que efetua o debito de agendamentos de TED 
-                    (Adriano).                           
-                    
-       16/06/2016 - Ajuste para corrigir problema de sobreposição da variável vr_dscritic
-                    (Adriano).
-                                                                              
-       07/07/2016 - Alterar parametro cdprogra para passar 'DEBNET' ao
-                    inves de passar NULL na procedure pc_PAGA0001_obtem_agen_deb e
-                    pc_PAGA0001_efetua_debitos (Lucas Ranghetti #483791)
-                             
-       15/04/2016 - Incluir validação para pacotes de tarifas na procedure
-                     pc_altera_situac_trans. (Reinert)
-
-       30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-       01/07/2016 - Incluir critica "Lancamento ja efetivado pela DEBCON." para lancamentos 
-                    ja efetuados na procedure pc_debita_convenio_cecred (Lucas Ranghetti #474938)
-       28/06/2016 - O corpo da mensagem está com dia e mês invertido na procedure pc_debita_agendto_pagto,
-                    inserido formatação na data (Tiago/Elton SD439430) 
-
-       15/07/2016 - #433568 na procedure pc_executa_transferencia da PAGA0001 permitir que se gere o 
-                    protocolo para os agendamentos feitos através do TAA (Carlos)
-
-	   18/07/2016 - Ajuste para incluir end if perdido no merge
-				    (Adriano)
-                                                                              
+  --       23/05/2016 - Retirado o uso do campo craplau.flmobile pois não existe em produção
+  --	  	        	    (Adriano - M117).    
+  -- 
+  --       27/07/2016 - Correção da forma de abertura das tags xml na rotina pc_InternetBank23;
+  --                    - Definidos valores default (10 e espaço) para os parâmetros cdfinali e dshistor na 
+  --                      rotina CXON0020.pc_executa_envio_ted (Carlos)
+  --    
+  --       30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  --
+  --       31/05/2016 - Ajuste para formatar corretamente a agencia da cooperativa
+  --                    na tag que monta as contas destinos  (Adriano - M117).    
+  --                  
+  --       02/06/2016 - Ajsute realizados:
+  --                  -> Ajuste para retornar as criticas nas variaveis auxliares
+  --                     ao chamar a rotina resposável pelo débitos de agendamentos de TED
+  --                    -> Corrigido leitura da craplau para buscar agendamentos 
+  --                       por tipo de acordo com programa origem   (Adriano).  
+  --                 
+  --       06/06/2016 - Ajuste para incluir o tratamento de assinatura conjunta na rotina
+  --                    que efetua o debito de agendamentos de TED (Adriano).                           
+  --                  
+  --       16/06/2016 - Ajuste para corrigir problema de sobreposição da variável vr_dscritic
+  --                   (Adriano).
+  --                                                                            
+  --       07/07/2016 - Alterar parametro cdprogra para passar 'DEBNET' ao
+  --                    inves de passar NULL na procedure pc_PAGA0001_obtem_agen_deb e
+  --                    pc_PAGA0001_efetua_debitos (Lucas Ranghetti #483791)
+  --                           
+  --       15/04/2016 - Incluir validação para pacotes de tarifas na procedure
+  --                    pc_altera_situac_trans. (Reinert)
+  --
+  --       30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  --
+  --       01/07/2016 - Incluir critica "Lancamento ja efetivado pela DEBCON." para lancamentos 
+  --                    ja efetuados na procedure pc_debita_convenio_cecred (Lucas Ranghetti #474938)
+  --
+  --       28/06/2016 - O corpo da mensagem está com dia e mês invertido na procedure pc_debita_agendto_pagto,
+  --                    inserido formatação na data (Tiago/Elton SD439430) 
+  --
+  --       15/07/2016 - #433568 na procedure pc_executa_transferencia da PAGA0001 permitir que se gere o 
+  --                    protocolo para os agendamentos feitos através do TAA (Carlos)
+  --
+  --       18/07/2016 - Ajuste para incluir end if perdido no merge (Adriano)
+  --                                                                            
+  --       12/09/2016 - Alterações referente ao projeto 302 - Sistema de Acordos - [Renato Darosci / Supero]
+  --                  - Inclusão na rotina pc_prep_tt_lcm_consolidada da condição para buscar a conta para pagamento 
+  --                    de acordo referente ao sistema de Acordos 
+  --                  - Fixar na pc_valores_a_creditar o código de histórico 2180, para os pagamentos de acordo
+  --
   ---------------------------------------------------------------------------------------------------------------*/
-
+  
   /* Cursores da Package */
 
   -- Busca as informações da cooperativa conectada
@@ -14007,10 +14008,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --
     --   24/08/2015 - Ajuste no indice de lancamento para adequar ao pagamento de
     --                emprestimo com boleto ref. ao projeto 210. (Rafael)
-	--
-	--   15/02/2016 - Inclusao do parametro para apuração na chamada da
+	  --
+	  --   15/02/2016 - Inclusao do parametro para apuração na chamada da
     --                TARI0001.pc_busca_dados_tarifa. (Jaison/Marcos)
-    --
+    -- 
     -- .........................................................................
   BEGIN
     DECLARE
@@ -14040,7 +14041,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            AND cde.nrcnvcob     = pr_nrcnvcob
            AND cde.nrboleto     = pr_nrdocmto;
       rw_cde cr_cde%ROWTYPE;
-
+      
+      -- Buscar o número da conta do cooperado no qual foi feito o acordo
+      CURSOR cr_acordo_parcela(pr_cdcooper IN tbepr_cobranca.cdcooper%TYPE
+                      	      ,pr_nrctacob IN tbepr_cobranca.nrdconta_cob%TYPE
+                              ,pr_nrcnvcob IN tbepr_cobranca.nrcnvcob%TYPE
+                              ,pr_nrdocmto IN tbepr_cobranca.nrboleto%TYPE)  IS
+        SELECT aco.nrdconta
+          FROM tbrecup_acordo_parcela acp
+             , tbrecup_acordo         aco
+         WHERE aco.cdcooper     = pr_cdcooper
+           AND aco.nracordo     = acp.nracordo
+           AND acp.nrdconta_cob = pr_nrctacob
+           AND acp.nrconvenio   = pr_nrcnvcob
+           AND acp.nrboleto     = pr_nrdocmto;
+      rw_acordo_parcela    cr_acordo_parcela%ROWTYPE;
+      
       --Variaveis Locais
       vr_vltarifa NUMBER;
       vr_cdhistor INTEGER;
@@ -14139,7 +14155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             vr_cdhistor:= pr_cdhistor;
           END IF;
 
-          IF nvl(rw_crapcob.nrctremp,0) > 0 THEN -- boleto de contrato de emprestimo
+          IF nvl(rw_crapcob.nrctremp,0) > 0 THEN -- boleto de contrato de emprestimo 
 
              OPEN cr_cde(pr_cdcooper => rw_crapcob.cdcooper
                         ,pr_nrctacob => rw_crapcob.nrdconta
@@ -14150,12 +14166,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
              /* atribuir a conta do cooperado para pagto de emprestimo */
              IF cr_cde%FOUND THEN
-                rw_crapcob.nrdconta := rw_cde.nrdconta;
+               rw_crapcob.nrdconta := rw_cde.nrdconta;
              END IF;
 
              CLOSE cr_cde;
+          
+          -- Boleto de Acordo
+          ELSIF rw_crapcco.dsorgarq = 'ACORDO' THEN
+            -- Buscar o número da conta do acordo
+            OPEN  cr_acordo_parcela(pr_cdcooper => rw_crapcob.cdcooper
+                                   ,pr_nrctacob => rw_crapcob.nrdconta
+                                   ,pr_nrcnvcob => rw_crapcob.nrcnvcob
+                                   ,pr_nrdocmto => rw_crapcob.nrdocmto);
+            FETCH cr_acordo_parcela INTO rw_acordo_parcela;
+            
+            /* atribuir a conta do cooperado para pagto de acordo */
+            IF cr_acordo_parcela%FOUND THEN
+              rw_crapcob.nrdconta := rw_acordo_parcela.nrdconta;
+            END IF;
+            
+            CLOSE cr_acordo_parcela;
           END IF;
-
         END IF;
         --Fechar Cursor
         CLOSE cr_crapcco;
@@ -22642,6 +22673,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
              cob.indpagto,
              cob.nrctremp,
              cob.nrdocmto,
+             cco.dsorgarq,
              cob.rowid rowid_cob,
              ret.rowid rowid_ret
         FROM crapret ret
@@ -23074,6 +23106,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               END IF;
 
               CLOSE cr_cde;
+            
+            -- Se for pagamento de ACORDO
+            ELSIF rw_cursor1.dsorgarq = 'ACORDO' THEN
+             -- Fixar o código de histórico 2180
+             vr_cdhistor := 2180;
             END IF;
 
             PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_cursor1.rowid_cob -- ROWID da cobranca
