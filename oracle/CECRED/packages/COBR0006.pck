@@ -4957,14 +4957,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
     END IF;
   
+    --Modificado para efetuar demais validação junto ao sacado
+    pr_rec_cobranca.serasa := pr_rec_header.flserasa;
+  
     --Negativar Serasa e possui convenio serasa
     IF pr_rec_cobranca.cdprotes = 2 AND  
-       pr_rec_header.flserasa = 1   THEN  
-      pr_rec_cobranca.qtdiaprt := pr_tab_linhas('QTDIAPRT').numero;
-      
-      --Modificado para efetuar demais validação junto ao sacado
-      pr_rec_cobranca.serasa := 1;
-      
+      pr_rec_header.flserasa    = 1   THEN  
+      pr_rec_cobranca.qtdiaprt := pr_tab_linhas('QTDIAPRT').numero;      
     END IF;
     
     pr_des_reto := 'OK';

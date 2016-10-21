@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0143.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/12/2012                     Ultima atualizacao:11/08/2016.
+    Data    : 07/12/2012                     Ultima atualizacao:14/10/2016.
 
     Objetivo  : Tranformacao BO tela MANCCF.
 
@@ -26,6 +26,10 @@
                 11/08/2016 - #481330 Ajuste da procedure Refaz_Regulariza para
                              atualizar os campos flgctitg, dtfimest e cdoperad;
                              Melhoria do retorno de erros (Carlos)
+
+                14/10/2016 - #536120 Melhoria da msg de log na rotina proc_crialog
+                             e criacao de logtel para a opcao 
+                             Refaz_regulariza (Carlos)
                              
 ............................................................................*/
 
@@ -919,6 +923,8 @@ PROCEDURE Refaz_Regulariza:
     DEF OUTPUT PARAM aux_flgctitg AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
+    DEF VAR aux_nrdocmto LIKE crapneg.nrdocmto NO-UNDO.
+
     EMPTY TEMP-TABLE tt-erro.
 
     LimpaData: DO TRANSACTION
@@ -976,13 +982,19 @@ PROCEDURE Refaz_Regulariza:
         DO:
             ASSIGN crapneg.flgctitg = 6
                    crapneg.dtfimest = par_dtmvtolt
-                   crapneg.cdoperad = par_cdoperad.
+                   crapneg.cdoperad = par_cdoperad
+                   aux_nrdocmto     = crapneg.nrdocmto.
+        END.
+        ELSE
+        DO:
+            ASSIGN aux_dscritic = "O cheque precisa estar com a situacao 1".
         END.
 
         RELEASE crapneg.
 
         LEAVE LimpaData.
-    END. /* fim LimpaData*/
+
+    END. /* fim LimpaData */
 
     ASSIGN aux_returnvl = "OK".
 
@@ -994,7 +1006,7 @@ PROCEDURE Refaz_Regulariza:
     IF aux_returnvl = "OK" THEN
     DO:
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-               aux_dstransa = "Refaz regularizacao do chq na MANCCF".
+               aux_dstransa = "Reenviar regularizacao".
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,
                             INPUT aux_dscritic,
@@ -1005,6 +1017,13 @@ PROCEDURE Refaz_Regulariza:
                             INPUT 'MANCCF',
                             INPUT par_nrdconta,
                            OUTPUT aux_nrdrowid).
+        
+        RUN proc_crialog (INPUT par_cdcooper,
+                          INPUT par_dtmvtolt,
+                          INPUT par_cdoperad,
+                          INPUT par_nrdconta,
+                          INPUT aux_dstransa, 
+                          INPUT aux_nrdocmto).
     END.
 
     RETURN aux_returnvl.
@@ -1461,8 +1480,8 @@ DEF  INPUT PARAM aux_nrdocmto AS DECI                           NO-UNDO.
                       STRING(TIME,"HH:MM:SS") + "' --> '"                 +
                       " Operador "  + aux_cdoperad                        +
                       " solicitou " + aux_opcreg                          + 
-                      " na solicitacao de regularizacao "                 +
-                      "do cheque "  + STRING(aux_nrdocmto,"zzz,zzz,9")    +
+                      " na regularizacao "                                +
+                      " do cheque "  + STRING(aux_nrdocmto,"zzz,zzz,9")   +
                       " na conta "  + STRING(aux_nrdconta,"zzzz,zzz,9")   +
                       " >> /usr/coop/" +  TRIM(crapcop.dsdircop) + 
                       "/log/manccf.log").

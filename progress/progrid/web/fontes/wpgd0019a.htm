@@ -3,8 +3,12 @@
 Alteracoes: 17/10/2012 - Limitar campos dsdiaeve e dshroeve (Gabriel).
 			
 			      02/07/2015 - Incluido novos tratamentos e campo para inclusão de EVENTOS,
-							   PRJ 229 (Jean Michel).
+												 PRJ 229 (Jean Michel).
+												 
 			      07/07/2016 - Ajuste na validação de Data no Cancelamento e reativação (Vanessa).
+						
+						14/10/2016 - Tratamento referente ao horário de verão na marcacao dos checkbox 
+												 de dias da semana (Jean Michel).
                          
 ------------------------------------------------------------------------------------>
 <html>
@@ -691,7 +695,7 @@ function mostraHistorico(){
     
     arrData = data.split('/');
     data = arrData[1] + '/' + arrData[0] + '/' + arrData[2];
-    data = new Date(data);
+    data = new Date(data + ' 03:00:00');
     diaSem = data.getDay();
     
     //Limpa o cheack box selecionados
@@ -711,9 +715,9 @@ function mostraHistorico(){
       dtinieve = $('#dtinieve').val();
       arrData = dtinieve.split('/');
       dtinieve = arrData[1] + '/' + arrData[0] + '/' + arrData[2];
-      dtinieve = new Date(dtinieve);
-      diaSemIni = dtinieve.getDay();
-    
+      dtinieve = new Date(dtinieve + ' 03:00:00');
+			diaSemIni = dtinieve.getDay();
+			
       if(Math.abs(dtinieve > data)){ 
         alert("Data final de evento nao pode ser menor que data inicial!");
         //Limpa checkbox selecionados
@@ -728,7 +732,7 @@ function mostraHistorico(){
       
       $("#aux_dsdiaeve" + diaSemIni).prop('checked', true);
       resetaJustificativa()
-	  diasEvento();
+			diasEvento();
     }	     
   }
     
@@ -737,8 +741,8 @@ function mostraHistorico(){
     var contador = 0;
     var dtinieve;	
     var dtfineve;
-	var seminiev ;
-	var flg = false;
+		var seminiev ;
+		var flg = false;
     var aux_semanadi = false;
     
     dtinieve = $('#dtinieve').val();
@@ -749,13 +753,13 @@ function mostraHistorico(){
 	 
       arrData = dtinieve.split('/');
       dtinieve = arrData[1] + '/' + arrData[0] + '/' + arrData[2];
-	  dtinieve = new Date(dtinieve);
+			dtinieve = new Date(dtinieve + ' 03:00:00');
 	  
     
       arrData = dtfineve.split('/');
       dtfineve = arrData[1] + '/' + arrData[0] + '/' + arrData[2];
-	  dtfineve = new Date(dtfineve);
-	  seminiev = numSemana(dtinieve, dtfineve); 
+			dtfineve = new Date(dtfineve + ' 03:00:00');
+			seminiev = numSemana(dtinieve, dtfineve); 
      
 	  contador = dtinieve.getDay();
     
@@ -793,7 +797,7 @@ function mostraHistorico(){
     }else{  
       arrData = dtinieve.split('/');
       dtinieve = arrData[1] + '/' + arrData[0] + '/' + arrData[2];
-      dtinieve = new Date(dtinieve);
+      dtinieve = new Date(dtinieve + ' 03:00:00');
       /*diainiev.setFullYear(arrData[2], arrData[1]-1, arrData[0]);
 	  diainiev = diainiev.getDay();*/
 
@@ -801,11 +805,8 @@ function mostraHistorico(){
       $("#aux_dsdiaeve" + contador).prop('checked', true);	
       $("#qtdiaeve").val(1);
    } 
-
 	
-   
-	
-    if(aux_semanadi){
+   if(aux_semanadi){
       document.form.aux_semanadi.value = "S";
     }
   }
