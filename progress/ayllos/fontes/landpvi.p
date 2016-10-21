@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 12/02/2016
+   Data    : Outubro/91.                     Ultima atualizacao: 24/08/2016
 
    Dados referentes ao programa:
 
@@ -469,13 +469,29 @@
 			   12/02/2016 - Ajustes decorrente a homologação do projeto M100
 						   (Adriano).
 
+               12/05/2016 - Mudanca para pegar saldo devedor da obtem-dados-emprestimos
+                            na b1wgen0002 e nao mais da saldo_epr.p. Cobranca de Multa
+                            e Juros de Mora. (Jaison/James)
+                          
+               11/08/2016 - Verificar o saldo disponivel para os lancamentos dos 
+                            historicos(275, 428 e 394) (James)
+
+
+			   24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
+						   (Adriano - SD 511318 ).
+			
+			   21/10/2016 - Incluir o historico 384	na listagem dos historicos para verificacao do 
+			                saldo disponivel (Renato Darosci - SD542195).
+
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
 { sistema/generico/includes/b1wgen0104tt.i }
+{ sistema/generico/includes/b1wgen0002tt.i }
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 { includes/var_online.i }
 { includes/var_landpv.i }
@@ -488,10 +504,10 @@ DEF VAR h-b1wgen0134 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0140 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0155 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0171 AS HANDLE                                  NO-UNDO.
+DEF VAR h-b1wgen0002 AS HANDLE                                  NO-UNDO.
 
 DEF VAR tel_nrctatrf         AS INT                             NO-UNDO.
 DEF VAR aux_cdlcrbol         AS INT                             NO-UNDO.
-DEF VAR aux_qtprecal_retorno LIKE crapepr.qtprecal              NO-UNDO.
 DEF VAR aux_dtrefere         AS DATE                            NO-UNDO.
 DEF VAR aux_flchcoop         AS LOG FORMAT "Sim/Nao"            NO-UNDO.
 DEF VAR aux_cdcopant         AS INT                             NO-UNDO.
@@ -505,6 +521,10 @@ DEF VAR aux_sldesblo         AS DEC                             NO-UNDO.
 DEF VAR aux_slcotnor         AS DEC                             NO-UNDO.
 DEF VAR aux_devchqtic        AS LOG                             NO-UNDO.
 DEF VAR aux_nrdrowid         AS ROWID                           NO-UNDO.
+DEF VAR aux_qtregist         AS INT                             NO-UNDO.
+
+DEF VAR aux_cdcritic         AS INTE                            NO-UNDO.
+DEF VAR aux_dscritic         AS CHAR                            NO-UNDO.
 
 DEF VAR par_loginusr         AS CHAR                            NO-UNDO.
 DEF VAR par_nmusuari         AS CHAR                            NO-UNDO.
@@ -518,6 +538,7 @@ DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
         
 DEF BUFFER crabcop FOR crapcop.
+DEF TEMP-TABLE tt-saldos LIKE wt_saldos.
 
 {includes/atualiza_epr.i}
 
@@ -908,6 +929,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
       HIDE  FRAME f_lanctos_compel.
       HIDE  FRAME f_autentica.
       HIDE  FRAME f_cmedep.
+      HIDE  FRAME f_nrctremp.
       PAUSE(0).
       
       IF   glb_cdcritic <> 0   THEN
@@ -2559,6 +2581,60 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
             RETURN.  /* Volta pedir a opcao para o operador */
         END.    
+        
+        /* Historicos de pagamento de emprestimo */
+        IF CAN-DO("275,394,428,384",STRING(tel_cdhistor)) THEN
+          DO:
+         
+              /* Procedure para buscar o saldo disponivel da conta */
+              RUN obtem_saldo_dia_prog (INPUT glb_cdcooper,
+                                        INPUT tel_cdagenci,
+                                        INPUT tel_cdbccxlt,
+                                        INPUT glb_cdoperad,
+                                        INPUT tel_nrdctabb,
+                                        INPUT glb_dtmvtolt,
+                                        OUTPUT glb_cdcritic,
+                                        OUTPUT glb_dscritic,
+                                        OUTPUT TABLE tt-saldos).
+                                   
+              /* Condicao para verificar se houve erro */                          
+              IF glb_cdcritic <> 0 OR glb_dscritic <> "" THEN
+                 DO:
+                     NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
+                     UNDO, NEXT INICIO.
+                 END.
+
+              /* Condicao para verifica se possui saldo disponivel */
+              FIND FIRST tt-saldos NO-LOCK NO-ERROR.
+              IF AVAILABLE tt-saldos THEN
+                 DO:
+                     ASSIGN aux_vlsddisp = tt-saldos.vlsddisp +
+                                           tt-saldos.vlsdchsl + 
+                                           tt-saldos.vlsdbloq + 
+                                           tt-saldos.vlsdblpr +
+                                           tt-saldos.vlsdblfp + 
+                                           tt-saldos.vllimcre.
+                 END.
+                 
+                 IF aux_indebcre = "D" THEN
+                    DO:
+                       /* Condicao para verifica se possui saldo disponivel */
+                       IF tel_vllanmto > aux_vlsddisp THEN
+                          DO:
+                            
+                            RUN fontes/confirma.p
+                              (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
+                                      + ". Confirma estouro de conta? S/N",
+                               OUTPUT aux_confirma).
+                            
+                            IF aux_confirma <> "S" THEN
+                              UNDO, NEXT INICIO.
+                            
+                        END.
+                    END.                 
+              
+        END. /* END IF  CAN-DO("275,394,428",STRING(tel_cdhistor)) */        
+      
 
    DO TRANSACTION:
 
@@ -3878,11 +3954,17 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                IF  tel_cdhistor = 481 THEN /* Creditar na Conta de invest. */
                    DO:
                       RUN gera_lancamentos_craplci_credito.
+                      
+                      IF glb_cdcritic <> 0 THEN
+                         UNDO , NEXT INICIO.
                    END.
 
                IF  tel_cdhistor = 483 THEN /* Debitar na Conta de invest. */
                    DO:
                       RUN gera_lancamentos_craplci_debito.
+                      
+                      IF glb_cdcritic <> 0 THEN
+                         UNDO , NEXT INICIO.
                    END.
 
                IF   aux_flctatco THEN
@@ -4146,45 +4228,13 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                   IF   NOT AVAILABLE crablot   THEN
                        IF   LOCKED crablot   THEN
                             DO:
-                                RUN sistema/generico/procedures/b1wgen9999.p
-                                PERSISTENT SET h-b1wgen9999.
-                                
-                                RUN acha-lock IN h-b1wgen9999 (INPUT RECID(crablot),
-                                                                         INPUT "banco",
-                                                                         INPUT "crablot",
-                                                                         OUTPUT par_loginusr,
-                                                                         OUTPUT par_nmusuari,
-                                                                         OUTPUT par_dsdevice,
-                                                                         OUTPUT par_dtconnec,
-                                                                         OUTPUT par_numipusr).
-                                
-                                DELETE PROCEDURE h-b1wgen9999.
-                                
-                                ASSIGN aux_dadosusr = 
-                                "077 - Tabela sendo alterada p/ outro terminal.".
-                                
-                                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                                MESSAGE aux_dadosusr.
-                                PAUSE 3 NO-MESSAGE.
-                                LEAVE.
-                                END.
-                                
-                                ASSIGN aux_dadosusr = "Operador: " + par_loginusr +
-                                                          " - " + par_nmusuari + ".".
-                                
-                                HIDE MESSAGE NO-PAUSE.
-                                
-                                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                                MESSAGE aux_dadosusr.
-                                PAUSE 5 NO-MESSAGE.
-                                LEAVE.
-                                END.
-                                
-                                glb_cdcritic = 0.
+                                glb_cdcritic = 84.
+                                PAUSE 1 NO-MESSAGE.
                                 NEXT.
                             END.
                        ELSE
                             DO:
+                                glb_cdcritic = 0.
                                 LEAVE.
                             END.
 
@@ -4192,6 +4242,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                   LEAVE.
 
                END. /* End DO...TO */
+               
+               IF glb_cdcritic > 0 THEN
+                  UNDO, NEXT INICIO.
 
                IF   glb_cdcritic <> 0   THEN
                     DO:
@@ -4201,40 +4254,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                            crablot.cdbccxlt = 100            AND
                                            crablot.nrdolote = his_nrdolote
                                            NO-LOCK NO-ERROR.
-
-                        RUN sistema/generico/procedures/b1wgen9999.p
-                            PERSISTENT SET h-b1wgen9999.
-
-                        RUN acha-lock IN h-b1wgen9999 (INPUT RECID(crablot),
-                                                       INPUT "banco",
-                                                       INPUT "craplot",
-                                                      OUTPUT par_loginusr,
-                                                      OUTPUT par_nmusuari,
-                                                      OUTPUT par_dsdevice,
-                                                      OUTPUT par_dtconnec,
-                                                      OUTPUT par_numipusr).
-
-                        DELETE PROCEDURE h-b1wgen9999.
-
-                        ASSIGN aux_dadosusr = 
-                             "077 - Tabela sendo alterada p/ outro terminal.".
-
-                        DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                            MESSAGE aux_dadosusr.
-                            PAUSE 3 NO-MESSAGE.
-                            LEAVE.
-                        END.
-
-                        ASSIGN aux_dadosusr = "Operador: " + par_loginusr +
-                                              " - " + par_nmusuari + ".".
-
-                        HIDE MESSAGE NO-PAUSE.
-
-                        DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                            MESSAGE aux_dadosusr.
-                            PAUSE 5 NO-MESSAGE.
-                            LEAVE.
-                        END.
 
                         glb_cdcritic = 0.
                         NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
@@ -4386,41 +4405,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                            IF   NOT AVAILABLE crapcot   THEN
                                 IF   LOCKED crapcot   THEN
                                      DO:
-                                        RUN sistema/generico/procedures/b1wgen9999.p
-                                        PERSISTENT SET h-b1wgen9999.
-                                        
-                                        RUN acha-lock IN h-b1wgen9999 (INPUT RECID(crapcot),
-                                                                                 INPUT "banco",
-                                                                                 INPUT "crapcot",
-                                                                                 OUTPUT par_loginusr,
-                                                                                 OUTPUT par_nmusuari,
-                                                                                 OUTPUT par_dsdevice,
-                                                                                 OUTPUT par_dtconnec,
-                                                                                 OUTPUT par_numipusr).
-                                        
-                                        DELETE PROCEDURE h-b1wgen9999.
-                                        
-                                        ASSIGN aux_dadosusr = 
-                                        "077 - Tabela sendo alterada p/ outro terminal.".
-                                        
-                                        DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                                        MESSAGE aux_dadosusr.
-                                        PAUSE 3 NO-MESSAGE.
-                                        LEAVE.
-                                        END.
-                                        
-                                        ASSIGN aux_dadosusr = "Operador: " + par_loginusr +
-                                                                  " - " + par_nmusuari + ".".
-                                        
-                                        HIDE MESSAGE NO-PAUSE.
-                                        
-                                        DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                                        MESSAGE aux_dadosusr.
-                                        PAUSE 5 NO-MESSAGE.
-                                        LEAVE.
-                                        END.
-                                        
-                                        glb_cdcritic = 0.
+                                        glb_cdcritic = 77.
+                                        PAUSE 1 NO-MESSAGE.
                                         NEXT.
                                      END.
                                  ELSE
@@ -4562,43 +4548,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                              IF   NOT AVAILABLE crapcot   THEN           
                                   IF   LOCKED crapcot   THEN             
                                        DO:                               
-                                            RUN sistema/generico/procedures/b1wgen9999.p
-                                            PERSISTENT SET h-b1wgen9999.
-                                            
-                                            RUN acha-lock IN h-b1wgen9999 (INPUT RECID(crapcot),
-                                                                                     INPUT "banco",
-                                                                                     INPUT "crapcot",
-                                                                                     OUTPUT par_loginusr,
-                                                                                     OUTPUT par_nmusuari,
-                                                                                     OUTPUT par_dsdevice,
-                                                                                     OUTPUT par_dtconnec,
-                                                                                     OUTPUT par_numipusr).
-                                            
-                                            DELETE PROCEDURE h-b1wgen9999.
-                                            
-                                            ASSIGN aux_dadosusr = 
-                                            "077 - Tabela sendo alterada p/ outro terminal.".
-                                            
-                                            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                                            MESSAGE aux_dadosusr.
-                                            PAUSE 3 NO-MESSAGE.
-                                            LEAVE.
-                                            END.
-                                            
-                                            ASSIGN aux_dadosusr = "Operador: " + par_loginusr +
-                                                                      " - " + par_nmusuari + ".".
-                                            
-                                            HIDE MESSAGE NO-PAUSE.
-                                            
-                                            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                                            MESSAGE aux_dadosusr.
-                                            PAUSE 5 NO-MESSAGE.
-                                            LEAVE.
-                                            END.
-                                            
-                                            glb_cdcritic = 0.
-                                            NEXT.
-                                                             
+                                           glb_cdcritic = 77.
+                                           PAUSE 1 NO-MESSAGE.
+                                           NEXT.                                                             
                                        END.                              
                                    ELSE                                  
                                    DO:                                   
@@ -4658,17 +4610,118 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  UNDO, NEXT INICIO.
                              END.
 
-                        RUN fontes/saldo_epr.p (INPUT  tel_nrdctabb,
-                                                INPUT  his_nrctremp,
-                                                OUTPUT his_vlsdeved, 
-                                                OUTPUT aux_qtprecal_retorno).
-            
-                        IF   glb_cdcritic > 0   THEN
+                        IF  NOT VALID-HANDLE(h-b1wgen0002)  THEN
+                            RUN sistema/generico/procedures/b1wgen0002.p
+                            PERSISTENT SET h-b1wgen0002.
+
+                        RUN obtem-dados-emprestimos IN h-b1wgen0002
+                                ( INPUT glb_cdcooper, /** Cooperativa   **/
+                                  INPUT tel_cdagenci, /** Agencia       **/
+                                  INPUT tel_cdbccxlt, /** Caixa         **/
+                                  INPUT glb_cdoperad, /** Operador      **/
+                                  INPUT "landpv.p",   /** Nome da tela  **/
+                                  INPUT 1,            /** Origem=Ayllos **/
+                                  INPUT tel_nrdctabb, /** Num. da conta **/
+                                  INPUT 1,            /** Sq.do titular **/
+                                  INPUT glb_dtmvtolt, /** Data de Movto **/
+                                  INPUT glb_dtmvtopr, /** Data de Movto **/
+                                  INPUT ?,            /** Data de Calc. **/
+                                  INPUT his_nrctremp, /** Nr.do Contrato**/
+                                  INPUT "landpvi.p",  /** Tela atual    **/
+                                  INPUT glb_inproces, /** Indic.Process.**/
+                                  INPUT FALSE,        /** Gera log erro **/
+                                  INPUT TRUE,         /** Flag Condic.C.**/
+                                  INPUT 0, 			      /** nriniseq      **/
+                                  INPUT 0, 		        /** nrregist      **/
+                                 OUTPUT aux_qtregist,
+                                 OUTPUT TABLE tt-erro,
+                                 OUTPUT TABLE tt-dados-epr ).
+
+                        IF  VALID-HANDLE(h-b1wgen0002) THEN
+                            DELETE OBJECT h-b1wgen0002.
+
+                        IF  RETURN-VALUE <> "OK"  THEN
+                            DO:
+                              FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+                              IF  AVAILABLE tt-erro  THEN
+                                  ASSIGN glb_dscritic = tt-erro.dscritic.
+                              ELSE
+                                  ASSIGN glb_dscritic = "Erro no carregamento"
+                                                        + " de emprestimos.".
+
+                              MESSAGE glb_dscritic.
+
+                              NEXT-PROMPT tel_cdhistor 
+                                          WITH FRAME f_landpv.
+                              UNDO, NEXT INICIO.
+                            END.
+
+                        FIND FIRST tt-dados-epr NO-LOCK NO-ERROR.
+
+                        IF   NOT AVAILABLE tt-dados-epr   THEN
                              DO:
+                                 ASSIGN glb_dscritic = "Erro no carregamento"
+                                                       + " de emprestimos.".
+
                                  NEXT-PROMPT tel_cdhistor 
                                              WITH FRAME f_landpv.
                                  UNDO, NEXT INICIO.
-                             END.
+                             END.        
+        
+                        /* Se for debito e pagamento seja menor que data atual */
+                        IF aux_indebcre = "D"                   AND
+                           tt-dados-epr.dtdpagto < tel_dtmvtolt THEN
+                           DO:
+                               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                               /* Efetuar a chamada a rotina Oracle */ 
+                               RUN STORED-PROCEDURE pc_efetiva_pag_atraso_tr
+                                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper,          /* Cooperativa conectada */
+                                                                      INPUT tel_cdagenci,          /* Codigo da agencia */
+                                                                      INPUT tel_cdbccxlt,          /* Numero do caixa */
+                                                                      INPUT glb_cdoperad,          /* Codigo do operador */
+                                                                      INPUT "landpv.p",            /* Nome da tela */
+                                                                      INPUT 1,                     /* Origem=Ayllos */
+                                                                      INPUT tel_nrdctabb,          /* Conta do associado */
+                                                                      INPUT his_nrctremp,          /* Numero Contrato */
+                                                                      INPUT tt-dados-epr.vlpreapg, /* Valor a pagar */
+                                                                      INPUT tt-dados-epr.qtmesdec, /* Quantidade de meses decorridos */
+                                                                      INPUT tt-dados-epr.qtprecal, /* Quantidade de prestacoes calculadas */
+                                                                      INPUT tel_vllanmto,          /* Valor de pagamento da parcela */
+                                                                      INPUT ?,                     /* Valor Saldo Disponivel */
+                                                                     OUTPUT 0,                     /* Historico da Multa */
+                                                                     OUTPUT 0,                     /* Valor da Multa */
+                                                                     OUTPUT 0,                     /* Historico Juros de Mora */
+                                                                     OUTPUT 0,                     /* Valor Juros de Mora */
+                                                                     OUTPUT 0,                     /* Codigo da critica  */
+                                                                     OUTPUT "").                   /* Descricao da critica */
+                                                               
+                               /* Fechar o procedimento para buscarmos o resultado */ 
+                               CLOSE STORED-PROC pc_efetiva_pag_atraso_tr
+                                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                               ASSIGN aux_cdcritic = 0
+                                      aux_dscritic = ""
+                                      aux_cdcritic = pc_efetiva_pag_atraso_tr.pr_cdcritic
+                                                        WHEN pc_efetiva_pag_atraso_tr.pr_cdcritic <> ?
+                                      aux_dscritic = pc_efetiva_pag_atraso_tr.pr_dscritic
+                                                        WHEN pc_efetiva_pag_atraso_tr.pr_dscritic <> ?.
+
+                               IF   aux_cdcritic <> 0   OR
+                                    aux_dscritic <> ""  THEN
+                                    DO:
+                                        ASSIGN glb_dscritic = aux_dscritic.
+
+                                        NEXT-PROMPT tel_cdhistor 
+                                                    WITH FRAME f_landpv.
+                                        UNDO, NEXT INICIO.
+                                    END.
+                           END.
+                          
+                        ASSIGN his_vlsdeved = tt-dados-epr.vlsdeved.
 
                         IF  (tel_cdhistor = 275 OR tel_cdhistor = 394) AND
                              tel_vllanmto > his_vlsdeved   THEN
@@ -5219,41 +5272,8 @@ PROCEDURE gera_lancamentos_craplci_credito:
        IF   NOT AVAIL  crablot   THEN
             IF  LOCKED crablot   THEN
                 DO:
-                    RUN sistema/generico/procedures/b1wgen9999.p
-                    PERSISTENT SET h-b1wgen9999.
-                    
-                    RUN acha-lock IN h-b1wgen9999 (INPUT RECID(crablot),
-                                         INPUT "banco",
-                                         INPUT "crablot",
-                                         OUTPUT par_loginusr,
-                                         OUTPUT par_nmusuari,
-                                         OUTPUT par_dsdevice,
-                                         OUTPUT par_dtconnec,
-                                         OUTPUT par_numipusr).
-                    
-                    DELETE PROCEDURE h-b1wgen9999.
-                    
-                    ASSIGN aux_dadosusr = 
-                    "077 - Tabela sendo alterada p/ outro terminal.".
-                    
-                    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                    MESSAGE aux_dadosusr.
-                    PAUSE 3 NO-MESSAGE.
-                    LEAVE.
-                    END.
-                    
-                    ASSIGN aux_dadosusr = "Operador: " + par_loginusr +
-                                  " - " + par_nmusuari + ".".
-                    
-                    HIDE MESSAGE NO-PAUSE.
-                    
-                    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                    MESSAGE aux_dadosusr.
-                    PAUSE 5 NO-MESSAGE.
-                    LEAVE.
-                    END.
-                    
-                    glb_cdcritic = 0.
+                    glb_cdcritic = 77.
+                    PAUSE 1 NO-MESSAGE.
                     NEXT.
                 END.
             ELSE
@@ -5269,6 +5289,9 @@ PROCEDURE gera_lancamentos_craplci_credito:
                 ASSIGN glb_cdcritic = 0.
        LEAVE.
    END.  /*  Fim do DO...TO  */
+   
+   IF glb_cdcritic <> 0 THEN
+      RETURN.
 
    CREATE craplci.
    ASSIGN craplci.cdcooper = glb_cdcooper
@@ -5336,41 +5359,8 @@ PROCEDURE gera_lancamentos_craplci_debito:
        IF   NOT AVAIL  crablot   THEN
             IF  LOCKED crablot   THEN
                 DO:
-                    RUN sistema/generico/procedures/b1wgen9999.p
-                    PERSISTENT SET h-b1wgen9999.
-                    
-                    RUN acha-lock IN h-b1wgen9999 (INPUT RECID(crablot),
-                                         INPUT "banco",
-                                         INPUT "crablot",
-                                         OUTPUT par_loginusr,
-                                         OUTPUT par_nmusuari,
-                                         OUTPUT par_dsdevice,
-                                         OUTPUT par_dtconnec,
-                                         OUTPUT par_numipusr).
-                    
-                    DELETE PROCEDURE h-b1wgen9999.
-                    
-                    ASSIGN aux_dadosusr = 
-                    "077 - Tabela sendo alterada p/ outro terminal.".
-                    
-                    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                    MESSAGE aux_dadosusr.
-                    PAUSE 3 NO-MESSAGE.
-                    LEAVE.
-                    END.
-                    
-                    ASSIGN aux_dadosusr = "Operador: " + par_loginusr +
-                                  " - " + par_nmusuari + ".".
-                    
-                    HIDE MESSAGE NO-PAUSE.
-                    
-                    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                    MESSAGE aux_dadosusr.
-                    PAUSE 5 NO-MESSAGE.
-                    LEAVE.
-                    END.
-                    
-                    glb_cdcritic = 0.
+                    glb_cdcritic = 77.
+                    PAUSE 1 NO-MESSAGE.
                     NEXT.
                 END.
             ELSE
@@ -5382,10 +5372,13 @@ PROCEDURE gera_lancamentos_craplci_debito:
                           crablot.cdbccxlt = 100
                           crablot.nrdolote = 10006  
                           crablot.tplotmov = 29.
-                   ASSIGN glb_cdcritic = 0.
                 END.
+       ASSIGN glb_cdcritic = 0.
        LEAVE.
    END.  /*  Fim do DO...TO  */
+   
+   IF glb_cdcritic <> 0 THEN
+      RETURN.
 
    CREATE craplci.
    ASSIGN craplci.cdcooper = glb_cdcooper
