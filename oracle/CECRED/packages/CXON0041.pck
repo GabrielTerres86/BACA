@@ -807,6 +807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         vr_dscritic := 'Tributo nao cadastrado.';
         pr_foco     := '11';
         CLOSE cr_crapstb;
+		RAISE  vr_exc_erro;
 	  ELSE
 		CLOSE cr_crapstb;
       END IF;
