@@ -1079,6 +1079,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                Prj. 302 (Jean Michel).
 
                   29/09/2016 - Incluida validacao de contratos de acordos, Prj. 302 (Jean Michel).             
+                  
+                  21/10/2016 - Incluir validação de cooperativa habilitada para gerar
+                               acordos ( Renato Darosci - Supero )
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1250,6 +1253,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     
     IF nvl(rw_crapdat.inproces,0) <> 1 THEN
       vr_dscritic := 'Processo da Cooperativa nao finalizou, tente novamente mais tarde';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Validar se a cooperativa está habilitada para criação de acordos
+    IF NVL(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                    ,pr_cdcooper => vr_cdcooper
+                                    ,pr_cdacesso => 'PERMISS_ACORDO'),'N') = 'N' THEN
+      vr_dscritic := 'Cooperativa nao habilitada para geracao de Acordo';
       RAISE vr_exc_erro;
     END IF;
     
