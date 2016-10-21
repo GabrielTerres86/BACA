@@ -1614,7 +1614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                 ,pr_nrdconta => rw_bpr.nrdconta) LOOP
           -- Formatar a informação
           vr_nrdddass := to_char(nvl(rw_tfc.nrdddtfc,0),'fm000');
-          vr_nrtelass := to_char(nvl(rw_tfc.nrtelefo,0),'fm000000000');
+          vr_nrtelass := to_char(nvl(rw_tfc.nrtelefo,0),'fm900000000');
           -- Sair quando encontrar
           EXIT WHEN (vr_nrdddass <> ' ' AND vr_nrtelass <> ' ');
         END LOOP;
@@ -1624,7 +1624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         END IF;
 
         IF TRIM(vr_nrtelass) IS NULL THEN
-          vr_nrtelass := to_char(0,'fm000000000');
+          vr_nrtelass := to_char(0,'fm900000000');
         END IF;
 
         -- Montagem da chave para a tabela por Cooper(5)+TpArquivo(1)+Sequencia(14)

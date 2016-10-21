@@ -29,6 +29,8 @@ create or replace package cecred.PCAP0001 is
                              5 deve ser enviado "08000" (80%), conforme circular vigente do BRDE
                              Chamado 485355 (Heitor - RKAM)
 
+				21/10/2016 - M172 - Ajustes em campos de tipo telefone (Ricardo Linhares).
+
   ............................................................................ */
 
   -- Definicao do tipo de registro de cotas de associados
@@ -1219,7 +1221,7 @@ create or replace package body cecred.PCAP0001 is
        WHERE craptfc.cdcooper = pr_cdcooper
          AND craptfc.nrdconta = pr_nrdconta
          AND craptfc.idseqttl = pr_idseqttl
-         AND craptfc.tptelefo = 2
+         AND craptfc.tptelefo <> 2
    ORDER BY craptfc.cdseqtfc;
     rw_craptfc cr_craptfc%rowtype;
 
@@ -1667,8 +1669,10 @@ create or replace package body cecred.PCAP0001 is
           --quando encontrar
           IF cr_craptfc%FOUND THEN
             CLOSE cr_craptfc;
-            vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
-            vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
+			IF(LENGTH(rw_craptfc.nrtelefo) < 9) THEN
+			  vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
+              vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
+			END IF;
           ELSE
             CLOSE cr_craptfc;
           END IF;

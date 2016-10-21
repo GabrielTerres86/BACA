@@ -3891,7 +3891,7 @@ PROCEDURE carrega_dados_cartoes_bb_debito:
    DEF VAR aux_dssitcrd AS CHAR                                      NO-UNDO.
    DEF VAR aux_vllimcrd LIKE craptlc.vllimcrd                        NO-UNDO.
    DEF VAR aux_nrreside AS CHAR FORMAT "(xx)xxxx-xxxx"               NO-UNDO. 
-   DEF VAR aux_nrcelula AS CHAR FORMAT "(xx)xxxx-xxxx"               NO-UNDO. 
+   DEF VAR aux_nrcelula AS CHAR FORMAT "(xx)xxxxx-xxxx"              NO-UNDO. 
    DEF VAR aux_returnvl AS CHAR                                      NO-UNDO.
    DEF VAR aux_nrdrowid AS ROWID                                     NO-UNDO.
    DEF VAR aux_nmarquiv AS CHAR                                      NO-UNDO.
