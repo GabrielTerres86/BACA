@@ -11851,6 +11851,7 @@ PROCEDURE aprova_trans_pend:
                                                           INPUT par_nrdconta,                                   /* Número da conta */
                                                           INPUT par_idseqttl,                                   /* Sequencial de titularidade */
                                                           INPUT par_idorigem,                                   /* Canal de origem da operaçao */
+                                                          INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,     /* Tipo da guia (1 – DARF / 2 – DAS) */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,       /* Tipo de captura da guia (1-Código Barras / 2-Manual) */
                                                           INPUT aux_lindigi1,                                   /* Primeiro campo da linha digitável da guia */
                                                           INPUT aux_lindigi2,                                   /* Segundo campo da linha digitável da guia */

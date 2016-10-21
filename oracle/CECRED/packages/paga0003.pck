@@ -32,6 +32,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
                                 ,pr_idseqttl IN crapttl.idseqttl%TYPE -- Sequencial de titularidade
                                 ,pr_idorigem IN INTEGER -- Canal de origem da operação
+                                ,pr_tpdaguia IN INTEGER -- Tipo da guia (1 – DARF / 2 – DAS)
                                 ,pr_tpcaptur IN NUMBER -- Tipo de captura da guia (1-Código Barras / 2-Manual)
                                 ,pr_lindigi1 IN OUT NUMBER -- Primeiro campo da linha digitável da guia
                                 ,pr_lindigi2 IN OUT NUMBER -- Segundo campo da linha digitável da guia
@@ -894,6 +895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
                                 ,pr_idseqttl IN crapttl.idseqttl%TYPE -- Sequencial de titularidade
                                 ,pr_idorigem IN INTEGER -- Canal de origem da operação
+                                ,pr_tpdaguia IN INTEGER -- Tipo da guia (1 – DARF / 2 – DAS)
                                 ,pr_tpcaptur IN NUMBER -- Tipo de captura da guia (1-Código Barras / 2-Manual)
                                 ,pr_lindigi1 IN OUT NUMBER -- Primeiro campo da linha digitável da guia
                                 ,pr_lindigi2 IN OUT NUMBER -- Segundo campo da linha digitável da guia
@@ -1170,23 +1172,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       -- Obtém o convênio a partir do código de barras
       vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
       vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
-    
+            
       -- Se não for uma DARF/DAS válida
-      IF vr_cdempcon NOT IN (64, 153, 328, 385) OR vr_cdsegmto NOT IN (5) THEN
+      IF vr_cdempcon NOT IN (64, 153, 154, 328, 385) OR vr_cdsegmto NOT IN (5) THEN
       
         -- GPS -- Convênio 270 e Segmento 5
         IF vr_cdempcon = 270 AND vr_cdsegmto = 5 THEN
-          vr_dscritic := 'GPS deve ser paga na opção ''Guia Previdência Social'' do menu de serviços.';
+          vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
         
-        -- BOLETO - Se o primeiro dígito do código de barras for 8
-        ELSIF SUBSTR(pr_cdbarras, 0, 1) <> 8 THEN
-          vr_dscritic := 'Convênio deve ser pago na opção ''Pagamentos'' do menu de serviços.';
+        -- CONVÊNIO - Se o primeiro dígito do código de barras for 8
+        ELSIF SUBSTR(pr_cdbarras, 0, 1) = 8 THEN
+          vr_dscritic := 'Convênio deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços';
         
-        -- CONVÊNIO - Se não cair em nenhuma condição anterior
+        -- BOLETO - Se não cair em nenhuma condição anterior
         ELSE
-          vr_dscritic := 'Boleto deve ser pago na opção ''Pagamentos'' do menu de serviços.';
+          vr_dscritic := 'Boleto deve ser pago na opção ''Transações - Pagamentos'' do menu de serviços';
         END IF;
       
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+      
+      
+      -- Se for DARF sendo paga como DAS, ou vice-versa
+      IF pr_tpdaguia = 1 AND vr_cdempcon IN (328) THEN -- DAS sendo paga como DARF
+        vr_dscritic := 'DAS deve ser pago na opção ''Transações - DAS'' do menu de serviços';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      ELSIF pr_tpdaguia = 2 AND vr_cdempcon IN (64, 153, 154, 385) THEN -- DARF sendo paga como DAS
+        vr_dscritic := 'DARF deve ser pago na opção ''Transações - DARF'' do menu de serviços';
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -1397,7 +1411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         
         -- Obtém as datas limite de agendamento
         -- Data Mínima: Primeiro dia do mês anterior
-        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtolt,'MM'),-1) + vr_qtddaglf;
+        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtolt,'MM'),-1);
         -- Data Máxima: Data Mínima + Número de dias de prazo para agendamento (crapage.qtddaglf)
         vr_dtmaxage := LAST_DAY(vr_dtminage + vr_qtddaglf);
         
@@ -2657,6 +2671,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_nrdconta => pr_nrdconta,
 																	 pr_idseqttl => pr_idseqttl,
 																	 pr_idorigem => pr_idorigem,
+                                   pr_tpdaguia => pr_tpdaguia,
 																	 pr_tpcaptur => pr_tpcaptur,
 																	 pr_lindigi1 => vr_lindigi1,
 																	 pr_lindigi2 => vr_lindigi2,
