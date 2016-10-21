@@ -984,15 +984,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         END IF;
       END IF;
 
-      /* Verifica o número de digitos do CPF/CNPJ */
-      IF LENGTH(pr_nrcpfcgc) <> 11 AND
-         LENGTH(pr_nrcpfcgc) <> 14 THEN
-        
+      -- Valida CPF/CNPJ
+      GENE0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc
+                                 ,pr_stsnrcal => vr_stsnrcal
+                                 ,pr_inpessoa => vr_inpessoa);
+
+      IF NOT(vr_stsnrcal) THEN
         vr_cdcritic := 27;
         vr_dscritic := '';
         pr_foco     := '10';
-           
-        RAISE vr_exc_erro;    
+        RAISE vr_exc_erro;
       END IF;
 
       IF SUBSTR(rw_crapstb.dsrestri,2,1) <> 'S' THEN
@@ -1008,7 +1009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         IF pr_dtapurac <> TO_CHAR('01/01/1980','MM/dd/RRRR') AND
            pr_dtapurac <> TO_CHAR('08/08/1980','MM/dd/RRRR') THEN
 
-          IF LENGTH(pr_nrcpfcgc) <> 11 THEN
+          IF vr_inpessoa <> 1 THEN
             
             vr_cdcritic := 0;
             vr_dscritic := 'Numero de digitos do CPF incorreto.';
@@ -1023,7 +1024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
             pr_dtapurac <> TO_DATE('07/07/1980','MM/dd/RRRR')  AND
             pr_dtapurac <> TO_DATE('08/08/1980','MM/dd/RRRR')) THEN
 
-          IF LENGTH(pr_nrcpfcgc) <> 14 THEN
+          IF vr_inpessoa <> 2 THEN
 
             vr_cdcritic := 0;
             vr_dscritic := 'Numero de digitos do CNPJ incorreto.';
@@ -1032,18 +1033,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
 
           END IF;
         END IF;
-      END IF;
-
-      -- Valida CPF/CNPJ
-      GENE0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc
-                                 ,pr_stsnrcal => vr_stsnrcal
-                                 ,pr_inpessoa => vr_inpessoa);
-
-      IF NOT(vr_stsnrcal) THEN
-        vr_cdcritic := 27;
-        vr_dscritic := '';
-        pr_foco     := '10';
-        RAISE vr_exc_erro;
       END IF;
 
       IF SUBSTR(rw_crapstb.dsrestri,7,1) = 'S' THEN
