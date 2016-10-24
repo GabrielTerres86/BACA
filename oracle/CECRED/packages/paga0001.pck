@@ -10099,11 +10099,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
         IF rw_crapcon.cdempcon IN (64,153,385) THEN -- DARF
           vr_cdcritic := 0;
-          vr_dscritic := 'DARF deve ser paga na opção (Transações -> DARF) do menu de serviços.';
+          vr_dscritic := 'DARF deve ser paga na opção ''Transações - DARF'' do menu de serviços.';
           RAISE vr_exc_erro;
         ELSIF rw_crapcon.cdempcon IN (328) THEN -- DAS
           vr_cdcritic := 0;
-          vr_dscritic := 'DAS deve ser paga na opção(Transações -> DAS) do menu de serviços.';
+          vr_dscritic := 'DAS deve ser paga na opção ''Transações - DAS'' do menu de serviços.';
           RAISE vr_exc_erro;
         END IF;
 
@@ -11047,7 +11047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      ,pr_idseqttl => rw_craplau.idseqttl -- Sequencial de titularidade
                                      ,pr_nrcpfope => rw_craplau.nrcpfope -- CPF do operador PJ
                                      ,pr_idorigem => pr_idorigem -- Canal de origem da operação
-									 ,pr_tpdaguia => rw_craplau.tppagamento -- Tipo da guia (1 – DARF / 2 – DAS)
+									                   ,pr_tpdaguia => rw_craplau.tppagamento -- Tipo da guia (1 – DARF / 2 – DAS)
                                      ,pr_tpcaptur => rw_craplau.tpcaptura -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)									 
                                      ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                      ,pr_nrdigfat => vr_nrdigfat -- Dígito do faturamento

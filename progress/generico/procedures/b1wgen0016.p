@@ -885,12 +885,12 @@ PROCEDURE verifica_convenio:
       DO:
         IF CAN-DO("64,153,385",STRING(crapcon.cdempcon)) THEN /* DARF */
           DO:
-            par_dscritic = 'DARF deve ser paga na opçao (Transaçoes -> DARF) do menu de serviços.'.
+            par_dscritic = "DARF deve ser paga na opção 'Transações - DARF' do menu de serviços.".
             RETURN "NOK".
           END.
         ELSE IF CAN-DO("328",STRING(crapcon.cdempcon)) THEN /* DAS */
           DO:
-            par_dscritic = 'DAS deve ser paga na opçao(Transaçoes -> DAS) do menu de serviços.'.
+            par_dscritic = "DAS deve ser paga na opção 'Transações - DAS' do menu de serviços.".
             RETURN "NOK".
           END.
       END.

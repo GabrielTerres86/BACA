@@ -374,7 +374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         vr_cddigito := 0;
       END IF;
 
-      IF TO_NUMBER(TO_CHAR(pr_cdrefere,LENGTH(TO_CHAR(pr_cdrefere)),1)) = vr_cddigito THEN
+      IF TO_NUMBER(SUBSTR(pr_cdrefere,LENGTH(TO_CHAR(pr_cdrefere)),1)) = vr_cddigito THEN
         RAISE vr_exc_null;
       END IF;
 
