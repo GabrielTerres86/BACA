@@ -883,7 +883,7 @@ PROCEDURE verifica_convenio:
     /* Verifica o segmento */
     IF CAN-DO("5",STRING(crapcon.cdsegmto)) THEN
       DO:
-        IF CAN-DO("64,153,385",STRING(crapcon.cdempcon)) THEN /* DARF */
+        IF CAN-DO("64,153,154,385",STRING(crapcon.cdempcon)) THEN /* DARF */
           DO:
             par_dscritic = "DARF deve ser paga na opção 'Transações - DARF' do menu de serviços.".
             RETURN "NOK".
