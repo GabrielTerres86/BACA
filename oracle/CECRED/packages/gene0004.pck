@@ -148,7 +148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 06/06/2016
+    --  Data     : Maio/2014.                   Ultima atualizacao: 21/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -169,7 +169,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --                            alguma melhora na performance das chamadas, visto que estavam sendo 
     --                            feitas muitas chamadas da função. Dúvidas sobre a alteração podem ser 
     --                            tratadas também com o Rodrigo Siewerdt. (Renato Darosci - Supero)
-
+	--
+	--				 21/10/2016 - Ajustado cursor da craptel para não executar função desnecessariamente
+	--							  (Rodrigo)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -213,7 +215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         FROM craptel el
        WHERE el.cdcooper = pr_cdcooper
          AND UPPER(el.nmdatela) = UPPER(pr_nmdatela)
-         AND NVL(UPPER(el.nmrotina), ' ') = NVL(UPPER(pr_nmrotina), ' ')
+         AND UPPER(el.nmrotina) = UPPER(pr_nmrotina)
          AND el.idsistem = pr_idsistem;
       rw_craptel cr_craptel%ROWTYPE;
 
@@ -261,7 +263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       END IF;
 
       -- Verifica se a tela está cadastrada no sistema
-      OPEN cr_craptel(pr_cdcooper, pr_nmdatela, pr_nmrotina, pr_idsistem);
+      OPEN cr_craptel(pr_cdcooper, pr_nmdatela, NVL(pr_nmrotina, ' '), pr_idsistem);
       FETCH cr_craptel INTO rw_craptel;
 
       -- Verifica se a tela foi encontrada
