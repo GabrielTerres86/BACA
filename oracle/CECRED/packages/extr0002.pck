@@ -3912,9 +3912,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                tbcrd_his_vinculo_bancoob tbcrd
          WHERE tbcrd.cdtrnbcb = hcb.cdtrnbcb;
     
+      -- Busca empresa utilizando novo produto de folha
+      CURSOR cr_empresa_folha(pr_cdcooper crapcop.cdcooper%TYPE
+                             ,pr_nrdconta crapass.nrdconta%TYPE) IS
+          SELECT emp.cdempres
+                ,emp.idtpempr
+                ,emp.cdcontar
+            FROM crapemp emp
+           WHERE emp.cdcooper = pr_cdcooper
+             AND emp.nrdconta = pr_nrdconta;
+      rw_empresa_folha cr_empresa_folha%ROWTYPE;
+      
       -- Lançamentos de Debito de Folha
       CURSOR cr_lancto_deb_folha(p_cdcooper crapcop.cdcooper%TYPE
-                                ,p_nrdconta crapemp.nrdconta%TYPE) IS
+                                ,p_cdempres crapemp.cdempres%TYPE
+                                ,p_idtpempr crapemp.idtpempr%TYPE) IS
           SELECT pfp.nrseqpag
                 ,pfp.dtdebito
                 ,pfp.dtmvtolt
@@ -3925,24 +3937,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 ,his.inhistor
                 ,SUM(lfp.vllancto) vllctpag
             FROM crappfp pfp
-                ,crapemp emp
                 ,crapofp ofp
                 ,craplfp lfp
                 ,craphis his
            WHERE pfp.cdcooper = p_cdcooper
-             AND emp.nrdconta = p_nrdconta
+             AND pfp.cdempres = p_cdempres
              AND pfp.idsitapr > 3 --> Aprovados
              AND pfp.flsitdeb = 0 --> Ainda nao debitado
-             AND pfp.cdcooper = lfp.cdcooper
-             AND pfp.cdempres = lfp.cdempres
-             AND pfp.nrseqpag = lfp.nrseqpag
-             AND pfp.cdcooper = emp.cdcooper
-             AND pfp.cdempres = emp.cdempres
-             AND lfp.cdcooper = ofp.cdcooper
-             AND lfp.cdorigem = ofp.cdorigem
-             AND his.cdcooper = ofp.cdcooper
-             AND his.cdhistor = decode(emp.idtpempr,'C',ofp.cdhsdbcp,ofp.cdhisdeb)
-             
+             AND lfp.cdcooper = pfp.cdcooper
+             AND lfp.cdempres = pfp.cdempres
+             AND lfp.nrseqpag = pfp.nrseqpag
+             AND ofp.cdcooper = pfp.cdcooper
+             AND ofp.cdorigem = lfp.cdorigem
+             AND his.cdcooper = pfp.cdcooper
+             AND his.cdhistor = decode(p_idtpempr, 'C', ofp.cdhsdbcp, ofp.cdhisdeb)             
            GROUP BY pfp.nrseqpag
                    ,pfp.dtdebito
                    ,pfp.dtmvtolt
@@ -3955,26 +3963,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
       -- Lançamentos de Débito de Tarifa
       CURSOR cr_lancto_deb_tarifa(p_cdcooper crapcop.cdcooper%TYPE
-                                 ,p_nrdconta crapemp.nrdconta%TYPE) IS
+                                 ,p_cdempres crapemp.cdempres%TYPE
+                                 ,p_cdcontar crapemp.cdcontar%TYPE) IS
         SELECT pfp.nrseqpag
               ,pfp.PROGRESS_RECID
               ,pfp.qtlctpag * pfp.vltarapr vltottar
               ,pfp.dtcredit
               ,pfp.dtmvtolt
-              ,emp.idtpempr
               ,folh0001.fn_histor_tarifa_folha(pfp.cdcooper
-                                              ,emp.cdcontar
+                                              ,p_cdcontar
                                               ,pfp.idopdebi
                                               ,pfp.vllctpag) cdhistor
           FROM crappfp pfp
-              ,crapemp emp
          WHERE pfp.cdcooper = p_cdcooper
-           AND emp.nrdconta = p_nrdconta
+           AND pfp.cdempres = p_cdempres
            AND pfp.idsitapr > 3 /* Aprovado */
            AND pfp.flsittar = 0 --> Ainda não debitado a tarifa
            AND pfp.vltarapr > 0 --> Com tarifa a cobrar
-           AND pfp.cdcooper = emp.cdcooper
-           AND pfp.cdempres = emp.cdempres
          ORDER BY pfp.nrseqpag;
          
       -- Lançamentos de Crédito de Folha
@@ -4471,9 +4476,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
       END LOOP; --rw_craplau
       
+      IF rw_crapass.inpessoa <> 1 THEN
+          
       -- Lançamentos de Debito de Folha
+        OPEN cr_empresa_folha (pr_cdcooper => pr_cdcooper
+                              ,pr_nrdconta => pr_nrdconta);
+        FETCH cr_empresa_folha INTO rw_empresa_folha;
+        --Se nao encontrou
+        IF cr_empresa_folha%FOUND THEN
+          --Fechar Cursor
+          CLOSE cr_empresa_folha;
+        
       FOR rw_lancto_deb_folha IN cr_lancto_deb_folha(pr_cdcooper
-                                                    ,pr_nrdconta) LOOP
+                                                        ,rw_empresa_folha.cdempres
+                                                        ,rw_empresa_folha.idtpempr) LOOP
          --Tipo Historico
          IF rw_lancto_deb_folha.inhistor IN (1,2,3,4,5) THEN
            --Valor Lancamento Automatico
@@ -4509,7 +4525,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       
       -- Lançamentos de Débito de Tarifa
       FOR rw_lancto_deb_tarifa IN cr_lancto_deb_tarifa(pr_cdcooper
-                                                      ,pr_nrdconta) LOOP
+                                                          ,rw_empresa_folha.cdempres
+                                                          ,rw_empresa_folha.cdcontar) LOOP
          --Selecionar Historicos
          OPEN cr_craphis (pr_cdcooper => pr_cdcooper
                          ,pr_cdhistor => rw_lancto_deb_tarifa.cdhistor);
@@ -4558,7 +4575,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          pr_tab_lancamento_futuro(vr_index).cdhistor := rw_lancto_deb_tarifa.cdhistor;
          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_lancto_deb_tarifa.dtcredit,'DD/MM/YYYY');                  
       END LOOP;
-      
+        END IF;
+      ELSE
       -- Lançamentos de Crédito de Folha
       FOR rw_lancto_cred_folha IN cr_lancto_cred_folha(pr_cdcooper        
                                                       ,pr_nrdconta) LOOP
@@ -4594,7 +4612,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          pr_tab_lancamento_futuro(vr_index).cdhistor := rw_lancto_cred_folha.cdhistor;
          pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_lancto_cred_folha.dtcredit,'DD/MM/YYYY');                  
       END LOOP;
-      
+      END IF;
       
       --Data Referencia igual ultimo dia mes anterior
       vr_dtrefere:= last_day(add_months(rw_crapdat.dtmvtolt,-1));
