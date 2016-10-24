@@ -11012,6 +11012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_nrdconta => rw_craplau.nrdconta -- Número da conta
                                        ,pr_idseqttl => rw_craplau.idseqttl -- Sequencial de titularidade
                                        ,pr_idorigem => pr_idorigem -- Canal de origem da operação
+									   ,pr_tpdaguia => rw_craplau.tppagamento -- Tipo da guia (1 – DARF / 2 – DAS)
                                        ,pr_tpcaptur => rw_craplau.tpcaptura -- Tipo de captura da guia (1-Código Barras / 2-Manual)									   
                                        ,pr_lindigi1 => vr_lindigi1 -- Primeiro campo da linha digitável da guia
                                        ,pr_lindigi2 => vr_lindigi2 -- Segundo campo da linha digitável da guia
@@ -11046,7 +11047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      ,pr_idseqttl => rw_craplau.idseqttl -- Sequencial de titularidade
                                      ,pr_nrcpfope => rw_craplau.nrcpfope -- CPF do operador PJ
                                      ,pr_idorigem => pr_idorigem -- Canal de origem da operação
-									                   ,pr_tpdaguia => rw_craplau.tppagamento -- Tipo da guia (1 – DARF / 2 – DAS)
+									 ,pr_tpdaguia => rw_craplau.tppagamento -- Tipo da guia (1 – DARF / 2 – DAS)
                                      ,pr_tpcaptur => rw_craplau.tpcaptura -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)									 
                                      ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                      ,pr_nrdigfat => vr_nrdigfat -- Dígito do faturamento
