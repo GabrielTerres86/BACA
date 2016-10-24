@@ -36,6 +36,8 @@
  *
  *				  06/05/2016 - Revisão do processo de validação de senha e 
  *                             correção do fluxo para convenios SICRED [Rafael Maciel (RKAM) #436229] 
+ *
+ *				  24/10/2016 - Ajustar mensagem de critica no cancelamento da operacao, sem efetuar a operacao (Lucas Ranghetti #537829)
  */
 
 // Definição de algumas variáveis globais 
@@ -1377,8 +1379,12 @@ function mensagem(tipo){
 		showConfirmacao("Deseja realmente cancelar a senha?","Confirma&ccedil;&atilde;o - Ayllos","mensagem('2');","mostraSenha();","sim.gif","nao.gif");
 	}else if(tipo == 2){
 		showConfirmacao("Deseja continuar com a autoriza&ccedil;&atilde;o assinada?","Confirma&ccedil;&atilde;o - Ayllos","mensagem('3');","mensagem('4');","sim.gif","nao.gif");
-	}else if(tipo == 4){
-		showError('inform','Autoriza&ccedil;&atilde;o cancelada.','Alerta - Ayllos','controlaOperacao("");');
+	} else if (tipo == 4) {
+	    if (operacao == 'E5') {
+	        showError('inform', 'Cancelamento/exclus&atilde;o n&atilde;o realizado!', 'Alerta - Ayllos', 'controlaOperacao("");');
+	    } else {
+	        showError('inform', 'Opera&ccedil;&atilde;o cancelada!', 'Alerta - Ayllos', 'controlaOperacao("");');
+	    }		
 	}else if(tipo == 3){
 		flginassele == 2; // atualizar o campo inassele para 2
 		showError('inform','Requisite a assinatura do cooperado.','Alerta - Ayllos','controlaOperacao("' + operacao_aux + '");');
