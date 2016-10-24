@@ -70,19 +70,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       -- Cursores
 
       -- Consulta de contratos de acordos ativos
-      CURSOR cr_acordo(pr_cdcooper tbrecup_acordo_contrato.cdcooper%TYPE
-                      ,pr_nrdconta tbrecup_acordo_contrato.nrdconta%TYPE
+      CURSOR cr_acordo(pr_cdcooper tbrecup_acordo.cdcooper%TYPE
+                      ,pr_nrdconta tbrecup_acordo.nrdconta%TYPE
                       ,pr_cdsituacao tbrecup_acordo.cdsituacao%TYPE) IS
-        SELECT tbrecup_acordo_contrato.cdcooper AS cdcooper
+        SELECT tbrecup_acordo.cdcooper AS cdcooper
               ,tbrecup_acordo_contrato.nracordo AS nracordo
-              ,tbrecup_acordo_contrato.nrdconta AS nrdconta
+              ,tbrecup_acordo.nrdconta AS nrdconta
               ,tbrecup_acordo_contrato.nrctremp AS nrctremp
               ,DECODE(tbrecup_acordo_contrato.cdorigem,1,'Estouro de Conta',2,'Empréstimo',3,'Empréstimo','Inexistente') AS dsorigem
           FROM tbrecup_acordo_contrato
           JOIN tbrecup_acordo
             ON tbrecup_acordo.nracordo = tbrecup_acordo_contrato.nracordo
-         WHERE tbrecup_acordo_contrato.cdcooper = pr_cdcooper
-           AND tbrecup_acordo_contrato.nrdconta = pr_nrdconta
+         WHERE tbrecup_acordo.cdcooper = pr_cdcooper
+           AND tbrecup_acordo.nrdconta = pr_nrdconta
            AND tbrecup_acordo.cdsituacao = pr_cdsituacao;
 
       rw_acordo cr_acordo%ROWTYPE;
