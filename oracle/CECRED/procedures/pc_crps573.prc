@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 24/05/2016
+       Data    : Agosto/2010                       Ultima atualizacao: 01/08/2016
 
        Dados referentes ao programa:
 
@@ -258,7 +258,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     
                     20/04/2016 - Ajuste para dividir o arquivo em partes. (James)
                     
-					10/05/2016 - Ajuste no numero do contrato para enviar a modalidade que vai na tag modalidade. (James)                    
+                    10/05/2016 - Ajuste no numero do contrato para enviar a modalidade que vai na tag modalidade. (James)
                     
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
 
@@ -275,7 +275,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     10/05/2016 - Ajuste no numero do contrato para enviar a modalidade que vai na tag modalidade. (James)
                     
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
-.............................................................................*/
+                    
+                    24/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.(Carlos Rafael Tanholi).
+
+                    20/07/2016 - Resolucao dos chamados 491068, 488220 e 486570. (James)
+                    
+                    01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
+
+				          	26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+                                 da data de vencimento e quantidade de dias atraso.
+                                 SD488220 (Odirlei-AMcom)
+                                 
+                    24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+                                 ( Renato Darosci - Supero )
+                                 
+.............................................................................................................................*/
 
     DECLARE
 
@@ -434,10 +448,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         SELECT dstextab
           FROM craptab
          WHERE cdcooper = pr_cdcooper
-           AND nmsistem = 'CRED'
-           AND tptabela = 'GENERI'
+           AND UPPER(nmsistem) = 'CRED'
+           AND UPPER(tptabela) = 'GENERI'
            AND cdempres = 00
-           AND cdacesso = 'PROVISAOCL';
+           AND UPPER(cdacesso) = 'PROVISAOCL';
       rw_craptab cr_craptab%ROWTYPE;
 
       -- Cursor sobre a tabela de associados
@@ -564,6 +578,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
              AND crapbpr.tpctrpro = pr_tpctrpro
+             AND crapbpr.flgbaixa = 0
+             AND crapbpr.flcancel = 0
              AND crapbpr.nrcpfbem <> 0
            ORDER BY progress_recid * pr_idordena, progress_recid DESC;
         rw_crapbpr cr_crapbpr%ROWTYPE;
@@ -582,6 +598,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
              AND crapbpr.tpctrpro = pr_tpctrpro
+             AND crapbpr.flgbaixa = 0
+             AND crapbpr.flcancel = 0
              AND crapbpr.vlmerbem > 0
              AND crapbpr.flgalien = 1;
 
@@ -599,6 +617,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
              AND crapbpr.tpctrpro = pr_tpctrpro
+             AND crapbpr.flgbaixa = 0
+             AND crapbpr.flcancel = 0
              AND crapbpr.nrcpfbem = 0;
 
         -- Descricao dos bens da proposta de emprestimo do cooperado.
@@ -609,7 +629,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                  vlperbem,
                  upper(dscatbem) dscatbem,
                  vlmerbem,
-                 dschassi
+                 dschassi,
+                 flgbaixa,
+                 flcancel
             FROM crapbpr
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
@@ -657,6 +679,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               inindris crapris.inindris%TYPE,
               cdinfadi crapris.cdinfadi%TYPE,
               nrctrnov crapris.nrctrnov%TYPE,
+              cdmodnov crapris.cdmodali%TYPE,
+              dsinfnov crapris.dsinfaux%TYPE,
               flgindiv crapris.flgindiv%TYPE,
               sbcpfcgc VARCHAR2(14),
               dsinfaux crapris.dsinfaux%TYPE,
@@ -1149,8 +1173,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 vr_dsorgrec_out := '0202';
               END IF;
             END IF;
-          ELSE --se for BNDES - SD 426476
-            vr_dsorgrec_out := '0203';
+		      ELSE --se for BNDES - SD 426476
+               vr_dsorgrec_out := '0203'; 			
           END IF;
         END IF;        
         -- Retornar
@@ -1232,6 +1256,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_dtprxpar crapris.dtprxpar%TYPE;
         vr_vlprxpar crapris.vlprxpar%TYPE;
         vr_qtparcel crapris.qtparcel%TYPE;
+        vr_dtvencop crapris.dtvencop%TYPE;
+        vr_qtdiaatr crapris.qtdiaatr%TYPE;
              
       BEGIN
         -- Efetua loop sobre os dados da central de risco (Exceto 301 - Dsc Titulos)
@@ -1271,6 +1297,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_dtprxpar := NULL;
             vr_vlprxpar := 0;
             vr_qtparcel := 0;
+            vr_dtvencop := rw_crapris_dsctit.dtvencop;
+            vr_qtdiaatr := 0;
           END IF;
           -- Sempre acumularemos a maior quantidade de parcelas 
           vr_qtparcel := greatest(vr_qtparcel,rw_crapris_dsctit.qtparcel);
@@ -1288,6 +1316,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- mesmo mÊs da próxima parcela mais próxima.
             vr_vlprxpar := vr_vlprxpar + rw_crapris_dsctit.vlprxpar;
           END IF;          
+          --Guardar a maior data de vencimento
+          vr_dtvencop := GREATEST(rw_crapris_dsctit.dtvencop,vr_dtvencop);
+          vr_qtdiaatr := GREATEST(rw_crapris_dsctit.qtdiaatr,vr_qtdiaatr);
+          
           -- Se for o ultimo registro da conta / contrato de limite do bordero, grava os valores
           IF rw_crapris_dsctit.nrseq = rw_crapris_dsctit.qtreg THEN
             -- Incrementar contador
@@ -1297,7 +1329,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_tab_ris(vr_indice_ris).nrdconta := rw_crapris_dsctit.nrdconta;
             vr_tab_ris(vr_indice_ris).dtrefere := rw_crapris_dsctit.dtrefere;
             vr_tab_ris(vr_indice_ris).innivris := rw_crapris_dsctit.innivris;
-            vr_tab_ris(vr_indice_ris).qtdiaatr := rw_crapris_dsctit.qtdiaatr;
+            vr_tab_ris(vr_indice_ris).qtdiaatr := vr_qtdiaatr;
             vr_tab_ris(vr_indice_ris).vldivida := vr_vldivida_0301;
             vr_tab_ris(vr_indice_ris).vlvec180 := rw_crapris_dsctit.vlvec180;
             vr_tab_ris(vr_indice_ris).vlvec360 := rw_crapris_dsctit.vlvec360;
@@ -1333,7 +1365,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_tab_ris(vr_indice_ris).dtprxpar := rw_crapris_dsctit.dtprxpar;
             vr_tab_ris(vr_indice_ris).vlprxpar := rw_crapris_dsctit.vlprxpar;
             vr_tab_ris(vr_indice_ris).qtparcel := rw_crapris_dsctit.qtparcel;
-            vr_tab_ris(vr_indice_ris).dtvencop := rw_crapris_dsctit.dtvencop;
+            vr_tab_ris(vr_indice_ris).dtvencop := vr_dtvencop;
             -- Zera a variavel acumuladora
             vr_vldivida_0301 := 0;
           END IF;
@@ -1610,6 +1642,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       -- Carrega a temp-table vr_tab_saida com base na tabela CRAPRIS
       PROCEDURE pc_carrega_base_saida(pr_dtrefere DATE) IS
 
+        -- Descricao dos bens da proposta de emprestimo do cooperado.
+        CURSOR cr_crapris_renegociacao(pr_cdcooper crapris.cdcooper%TYPE,
+                                       pr_nrdconta crapris.nrdconta%TYPE,
+                                       pr_nrctremp crapris.nrctremp%TYPE,
+                                       pr_dtrefere crapris.dtrefere%TYPE) IS
+          SELECT cdmodali,
+                 dsinfaux
+            FROM crapris
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctremp = pr_nrctremp
+             AND dtrefere = pr_dtrefere
+             AND cdorigem = 3
+             AND inddocto = 1
+             AND rownum   = 1;
+        rw_crapris_renegociacao cr_crapris_renegociacao%ROWTYPE;
+        
         -- Cursor sobre a tabela de risco com modalidade diferente de 301
         CURSOR cr_crapris IS
           SELECT nrdconta,
@@ -1761,6 +1810,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           vr_tab_saida(vr_indice_crapris).qtparcel := rw_crapris.qtparcel;
           vr_tab_saida(vr_indice_crapris).sbcpfcgc := rw_crapris.sbcpfcgc;
           vr_tab_saida(vr_indice_crapris).dtvencop := rw_crapris.dtvencop;
+          
+          -- Vamos verificar se o contrato é de renegociacao
+          IF vr_tab_saida(vr_indice_crapris).nrctrnov > 0 THEN
+            -- Busca as informacoes do novo contrato
+            OPEN cr_crapris_renegociacao(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => vr_tab_saida(vr_indice_crapris).nrdconta
+                                        ,pr_nrctremp => vr_tab_saida(vr_indice_crapris).nrctrnov
+                                        ,pr_dtrefere => vr_tab_saida(vr_indice_crapris).dtrefere);
+            FETCH cr_crapris_renegociacao INTO rw_crapris_renegociacao;
+            IF cr_crapris_renegociacao%FOUND THEN
+              CLOSE cr_crapris_renegociacao;
+              vr_tab_saida(vr_indice_crapris).cdmodnov := rw_crapris_renegociacao.cdmodali;
+              vr_tab_saida(vr_indice_crapris).dsinfnov := rw_crapris_renegociacao.dsinfaux;
+            ELSE
+              CLOSE cr_crapris_renegociacao;
+            END IF;  
+          END IF;
+          
         END LOOP;
 
         vr_vldivida_0301 := 0;
@@ -2362,11 +2429,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 -- Somente se encontrar Linha de Credito e a linha for Financiamento (Mod=4)
                 -- e (Sub=01) Aquis de bens – veic automotores
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
+                   -- Condicao para verificar se o bem estah baixado ou cancelado
+                   IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
                   -- Informação do Empréstimo
                   gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                          ,pr_texto_completo => vr_xml_3040_temp
                                          ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
                                                             || rw_crapbpr.dschassi || '" />' || chr(10));
+                   ELSE
+                     
+                     /*********************************************************************************
+                     ** Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+                     ** Renato Darosci - Supero
+                     ** 24/10/2016
+                     *********************************************************************************/
+                   
+                   	 -- Informação do Empréstimo
+                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                            ,pr_texto_completo => vr_xml_3040_temp
+                                            ,pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10));
+                   END IF;
                 END IF;
               END IF;  
             END IF;
@@ -2810,11 +2892,26 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                           ,vr_tab_saida(pr_idxsaida).cdorigem
                                           ,vr_tab_saida(pr_idxsaida).dsinfaux);
 
+          -- Busca a modalidade com base nos emprestimos
+          vr_cdmodali := fn_busca_modalidade_bacen(vr_tab_saida(pr_idxsaida).cdmodnov
+                                                  ,pr_cdcooper
+                                                  ,vr_tab_saida(pr_idxsaida).nrdconta
+                                                  ,vr_tab_saida(pr_idxsaida).nrctrnov
+                                                  ,vr_tab_saida(pr_idxsaida).inpessoa
+                                                  ,vr_tab_saida(pr_idxsaida).cdorigem
+                                                  ,vr_tab_saida(pr_idxsaida).dsinfnov);
+                                                  
+          -- Formata o numero do contrato
+          vr_nrcontrato_3040 := fn_formata_numero_contrato(pr_cdcooper => pr_cdcooper
+                                                          ,pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
+                                                          ,pr_nrctremp => vr_tab_saida(pr_idxsaida).nrctrnov
+                                                          ,pr_cdmodali => vr_cdmodali);
+
           -- Enviar informação adicional do contrato
           gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                  ,pr_texto_completo => vr_xml_3040_temp
                                  ,pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '"' 
-                                                    || ' Cd="' ||vr_tab_saida(pr_idxsaida).nrctrnov || '"'  
+                                                    || ' Cd="' ||vr_nrcontrato_3040 || '"'  
                                                     || ' Ident="' || to_char(vr_iddident,'fm0000') || '"' 
                                                     || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
                                                     || ' />' || chr(10));
@@ -3615,7 +3712,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Traz o intervalo válido para a parcela em atrazo 
             vr_flgatras := 1;
             -- Para empréstimo / financiamentos
-            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
+            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499,301,302) THEN
               vr_stdiasat := ' DiaAtraso = "' || vr_tab_individ(vr_idx_individ).qtdiaatr || '"';
 
               IF vr_tab_venc(vr_indice_venc).cdvencto = 205 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 1  OR
