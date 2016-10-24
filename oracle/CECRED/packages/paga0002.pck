@@ -5879,6 +5879,8 @@ create or replace package body cecred.PAGA0002 is
     vr_dscritic VARCHAR2(4000);
     --Tabela de memoria de erros
     vr_tab_erro GENE0001.typ_tab_erro;
+		
+		vr_idlancto craplau.idlancto%type;
       
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
