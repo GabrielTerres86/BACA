@@ -1222,7 +1222,7 @@ create or replace package body cecred.PCAP0001 is
          AND craptfc.nrdconta = pr_nrdconta
          AND craptfc.idseqttl = pr_idseqttl
          AND craptfc.tptelefo <> 2
-   ORDER BY craptfc.cdseqtfc;
+   ORDER BY craptfc.tptelefo, craptfc.cdseqtfc;
     rw_craptfc cr_craptfc%rowtype;
 
 
