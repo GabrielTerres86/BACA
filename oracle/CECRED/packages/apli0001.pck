@@ -6923,7 +6923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
              AND cp1.nrdconta = pr_nrdconta
              AND cp1.nraplica = pr_nraplica
              AND cp1.dtmvtolt >= pr_dtmvtolt 
-             AND cp1.cdhistor  = pr_cdhistor --IN (529, 531) --retirado hist 532, pois nao utiliza valor carregado 
+             AND cp1.cdhistor IN (529, 531) --retirado hist 532, pois nao utiliza valor carregado 
            GROUP BY cp1.cdhistor;
 
         -- Cursor sobre a tabela CRAPLAP, criado novamente pois o campo do anterior CDHISTOR
