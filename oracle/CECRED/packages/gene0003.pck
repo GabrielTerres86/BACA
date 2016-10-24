@@ -1264,7 +1264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     else
       return 0;
     end if;
-  END;  
+  END fn_valida_email;  
 
   -- Rotina para geracao de mensagens para o servico do site
   PROCEDURE pc_gerar_mensagem(pr_cdcooper IN crapmsg.cdcooper%TYPE
@@ -1291,6 +1291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --
     -- Frequencia: -----
     -- Objetivo  : Geracao de mensagens para o servico do site
+    --
+    -- Alterações: 20/10/2016 - Utilização da fn_sequence. (Pablão)
     ---------------------------------------------------------------------------------------------------------------
     
     /* Busca dos dados do associado */
@@ -1306,25 +1308,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        WHERE crapass.cdcooper = pr_cdcooper
              AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
-    
-    -- Cursor para buscar o maior numero da ultima mensagem
-    CURSOR cr_crapmsg(pr_cdcooper IN crapmsg.cdcooper%TYPE
-                     ,pr_nrdconta IN crapmsg.nrdconta%TYPE) IS
-      SELECT nvl(MAX(nrdmensg), 0) + 1
-        FROM crapmsg
-       WHERE cdcooper = pr_cdcooper
-             AND nrdconta = pr_nrdconta;
   
-    vr_ultnrmsg crapmsg.nrdmensg%TYPE := 0;
+    vr_nrdmensg crapmsg.nrdmensg%TYPE := 0;
     vr_dsdmensg crapmsg.dsdmensg%TYPE := ' ';
     
   BEGIN
   
-    -- Abre o cursor para buscar o maior numero da ultima mensagem
-    OPEN cr_crapmsg(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapmsg
-      INTO vr_ultnrmsg;
-    CLOSE cr_crapmsg;
+    -- Obtém o proximo valor da sequence
+    vr_nrdmensg := fn_sequence(pr_nmtabela => 'CRAPMSG'
+                              ,pr_nmdcampo => 'NRDMENSG'
+                              ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
+                              ,pr_flgdecre => 'N');
   
     -- Busca os dados do associado
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
@@ -1372,7 +1366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         (pr_cdcooper
         ,pr_nrdconta
         ,pr_idseqttl
-        ,vr_ultnrmsg
+        ,vr_nrdmensg
         ,pr_cdprogra
         ,trunc(SYSDATE)
         ,to_char(SYSDATE, 'sssss')
@@ -1388,8 +1382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       WHEN OTHERS THEN
         pr_dscritic := 'Erro ao inserir CRAPMSG: ' || SQLERRM;
     END;
-  END;
+  END pc_gerar_mensagem;
 
 END gene0003;
 /
-
