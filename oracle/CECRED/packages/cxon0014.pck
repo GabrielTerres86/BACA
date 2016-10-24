@@ -7851,7 +7851,7 @@ END pc_gera_titulos_iptu_prog;
       IF vr_tpdarf = 1 THEN
         vr_tab_literal(vr_iLnAut):= '    VALOR TOTAL (R$):      '||
                                     TO_CHAR((rw_craplft.vllanmto + rw_craplft.vlrjuros +
-                                            rw_craplft.vlrmulta),'999g999g999g990d00')|| '   ';
+                                            rw_craplft.vlrmulta),'999g999g999g990d00')|| '  ';
       ELSE
         vr_tab_literal(vr_iLnAut):= '    N. DO DOCUMENTO:    '||
                                     gene0002.fn_mask(vr_cdseqfat,'99.99.99999.9999999-9')|| '    ';
