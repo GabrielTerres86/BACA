@@ -14944,19 +14944,6 @@ END pc_consulta_ir_pj_trim;
             pr_nmarqpdf:= vr_nmendter || '.pdf';
           END IF;  
 
-btch0001.pc_gera_log_batch(pr_cdcooper => 1, 
-                           pr_ind_tipo_log => 2, 
-pr_des_log => 'Teste: ' || 
- 'nnpr_cdcooper  - ' || pr_cdcooper ||
- 'nnpr_cdagenci  - ' || pr_cdagenci || 'nnpr_nrdcaixa  - ' || pr_nrdcaixa ||
- 'nnpr_idorigem  - ' || pr_idorigem || 'nnpr_nmdatela  - ' || pr_nmdatela ||
- 'nnpr_dtmvtolt  - ' || pr_dtmvtolt || 'nnpr_inproces  - ' || pr_inproces ||
- 'nnpr_cdprogra  - ' || pr_cdprogra || 'nnpr_cdoperad  - ' || pr_cdoperad || 
- 'nnpr_dsiduser  - ' || pr_dsiduser || 'nnpr_nrdconta  - ' || pr_nrdconta ||
- 'nnpr_dtrefere  - ' || pr_dtrefere || 'nnpr_idseqttl  - ' || pr_idseqttl ||
- 'nnpr_nmarqimp  - ' || pr_nmarqimp || 'nnpr_nmarqpdf  - ' || pr_nmarqpdf 
- ,pr_nmarqlog => 'teste_extr'  
-);             
           --Selecionar associado
           OPEN cr_crapass (pr_cdcooper => pr_cdcooper
                           ,pr_nrdconta => pr_nrdconta);
@@ -15024,20 +15011,6 @@ pr_des_log => 'Teste: ' ||
             
             --Popular Clob do relatorio interno
             gene0002.pc_escreve_xml(vr_clobxml143, vr_dstexto143,vr_dstexto);
-
-btch0001.pc_gera_log_batch(pr_cdcooper => 1, 
-                           pr_ind_tipo_log => 2, 
-pr_des_log => 'vr_exc_sair vr_dstexto: ' || vr_dstexto ||
- 'nnpr_cdcooper  - ' || pr_cdcooper ||
- 'nnpr_cdagenci  - ' || pr_cdagenci || 'nnpr_nrdcaixa  - ' || pr_nrdcaixa ||
- 'nnpr_idorigem  - ' || pr_idorigem || 'nnpr_nmdatela  - ' || pr_nmdatela ||
- 'nnpr_dtmvtolt  - ' || pr_dtmvtolt || 'nnpr_inproces  - ' || pr_inproces ||
- 'nnpr_cdprogra  - ' || pr_cdprogra || 'nnpr_cdoperad  - ' || pr_cdoperad || 
- 'nnpr_dsiduser  - ' || pr_dsiduser || 'nnpr_nrdconta  - ' || pr_nrdconta ||
- 'nnpr_dtrefere  - ' || pr_dtrefere || 'nnpr_idseqttl  - ' || pr_idseqttl ||
- 'nnpr_nmarqimp  - ' || pr_nmarqimp || 'nnpr_nmarqpdf  - ' || pr_nmarqpdf 
- ,pr_nmarqlog => 'teste_extr'  
-);        
 
             --Levantar Excecao
             RAISE vr_exc_sair;          
@@ -15184,13 +15157,6 @@ pr_des_log => 'vr_exc_sair vr_dstexto: ' || vr_dstexto ||
 
         EXCEPTION
           WHEN vr_exc_sair THEN
-            
-btch0001.pc_gera_log_batch(pr_cdcooper => 1, 
-                           pr_ind_tipo_log => 2, 
-pr_des_log => 'vr_exc_sair  '
- ,pr_nmarqlog => 'teste_extr'  
-);             
-          
             vr_cdcritic:= NULL;
             vr_dscritic:= NULL;
           WHEN vr_exc_erro THEN
@@ -17525,23 +17491,7 @@ pr_des_log => 'vr_exc_sair  '
                                 ,pr_tab_erro => pr_tab_erro       --Tabela de Erros
                                 ,pr_des_reto => vr_des_reto);     --Descricao Erro
         ELSIF pr_tpextrat = 8 THEN /* Capital */
-          
-
-/*
-btch0001.pc_gera_log_batch(pr_cdcooper => 1, 
-                           pr_ind_tipo_log => 2, 
-pr_des_log => 'Teste: ' || 
- 'nnpr_cdcooper  - ' || pr_cdcooper ||
- 'nnpr_cdagenci  - ' || pr_cdagenci || 'nnpr_nrdcaixa  - ' || pr_nrdcaixa ||
- 'nnpr_idorigem  - ' || pr_idorigem || 'nnpr_nmdatela  - ' || pr_nmdatela ||
- 'nnpr_dtmvtolt  - ' || pr_dtmvtolt || 'nnpr_inproces  - ' || pr_inproces ||
- 'nnpr_cdprogra  - ' || pr_cdprogra || 'nnpr_cdoperad  - ' || pr_cdoperad || 
- 'nnpr_dsiduser  - ' || pr_dsiduser || 'nnpr_nrdconta  - ' || pr_nrdconta ||
- 'nnpr_dtrefere  - ' || pr_dtrefere || 'nnpr_idseqttl  - ' || pr_idseqttl,
- pr_nmarqlog => 'teste_extr'  
-);   
-*/        
-          --Extrato Capital
+              --Extrato Capital
               pc_gera_impextcap (pr_cdcooper => pr_cdcooper       --Codigo Cooperativa
                                 ,pr_cdagenci => pr_cdagenci       --Codigo Agencia
                                 ,pr_nrdcaixa => pr_nrdcaixa       --Numero do Caixa
