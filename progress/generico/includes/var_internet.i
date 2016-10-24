@@ -88,10 +88,10 @@ DEF VAR aux_srvintra AS CHAR                                           NO-UNDO.
 /** -> Origem = 5 - INTRANET (AYLLOS WEB)                     **/
 /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                 **/
 /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB) **/
-/** -> Origem = 9 - ESTEIRA (ESTEIRA DE CREDITO IBRATAN)      **/
+/** -> Origem = 9 - WEBSERVICE                                **/
 /** --------------------------------------------------------- **/
 
-ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,INTRANET,URA,PROCESSO,MENSAGERIA,ESTEIRA".
+ASSIGN des_dorigens = "AYLLOS,CAIXA,INTERNET,CASH,INTRANET,URA,PROCESSO,MENSAGERIA,WEBSERVICE".
 
 /** Armazenar data do servidor **/
 ASSIGN aux_datdodia = TODAY.

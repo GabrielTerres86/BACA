@@ -61,11 +61,11 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   /** -> Origem = 6 - URA                                      **/
   /** -> Origem = 7 - PROCESSO (PROCESSO BATCH)                **/
   /** -> Origem = 8 - MENSAGERIA (DEBITO ONLINE CARTAO BANCOOB)**/
-  /** -> Origem = 9 - ESTEIRA (ESTEIRA DE CREDITO IBRATAN)     **/
+  /** -> Origem = 9 - WEBSERVICE                               **/
   /** ---------------------------------------------------------**/
 
   TYPE typ_des_dorigens IS VARRAY(9) OF VARCHAR2(10);
-  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','INTRANET','URA','PROCESSO','MENSAGERIA','ESTEIRA');
+  vr_vet_des_origens typ_des_dorigens := typ_des_dorigens('AYLLOS','CAIXA','INTERNET','CASH','INTRANET','URA','PROCESSO','MENSAGERIA','WEBSERVICE');
 
 
   /** ---------------------------------------------------- **/

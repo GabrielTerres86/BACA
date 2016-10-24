@@ -962,6 +962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
     vr_dsparcel gene0002.typ_split;
 		vr_vldpagto crapepr.vlsdeved%TYPE;    
     vr_flgdel   BOOLEAN;
+    vr_flgativo PLS_INTEGER;
 
     -------------------------- TABELAS TEMPORARIAS --------------------------
 
@@ -1077,6 +1078,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         vr_dscritic := 'Boleto vencido';
 				-- Gera exceção												
         RAISE vr_exc_saida;
+      END IF;
+
+      /* Condicao para verificar se o acordo estah ativo, caso o acordo estiver ativo
+         nao podemos efetuar o pagamento de emprestimo  */
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_flgativo,0) = 1 THEN
+        RETURN;
       END IF;
 
       /* se tipo de emprestimo for TR */
@@ -5045,7 +5059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				END IF;
 				
 				-- Efetua baixa
-				PAGA0001.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
+				COBR0007.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
 				                             ,pr_cdocorre => 0
 																		 ,pr_dtmvtolt => pr_dtmvtolt
 																		 ,pr_cdoperad => pr_cdoperad
