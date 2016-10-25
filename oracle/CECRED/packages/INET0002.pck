@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
 
     Programa: INET0002                         
     Autor   : Jorge Hamaguchi / Jean Deschamps
-    Data    : Novembro/2015                      Ultima Atualizacao: 18/07/2016
+    Data    : Novembro/2015                      Ultima Atualizacao: 02/09/2016
 
     Dados referentes ao programa:
 
@@ -23,7 +23,10 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                              varias procedures desta package.(Carlos Rafael Tanholi). 
                 
                 18/07/2016 - Criação da procedure pc_cria_trans_pend_darf_das para o
-                             Prj. 338, Pagamento de DARF e DAS (Jean Michel)                              
+                             Prj. 338, Pagamento de DARF e DAS (Jean Michel) 
+
+                02/09/2016 - Ajustes na procedure pc_busca_trans_pend, SD 514239 (Jean Michel).
+
 ..............................................................................*/
 
   --Tipo de Registro para limites transacoes pendentes
@@ -512,7 +515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --  Sistema  : Procedimentos Multiplas Assinaturas PJ
   --  Sigla    : CRED
   --  Autor    : Jorge Hamaguchi / Jean Deschamps
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 18/07/2016
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 02/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -535,7 +538,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   -- 					               (Adriano).
   --
   --             18/07/2016 - Criação da procedure pc_cria_trans_pend_darf_das para o
-  --                          Prj. 338, Pagamento de DARF e DAS (Jean Michel)                              
+  --                          Prj. 338, Pagamento de DARF e DAS (Jean Michel)    
+  --
+  --             02/09/2016 - Ajustes na procedure pc_busca_trans_pend, SD 514239 (Jean Michel).                  	
+                          
 
   ---------------------------------------------------------------------------------------------------------------
 
@@ -2283,7 +2289,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 							-- Fecha cursor
 							CLOSE cr_pactar;
 							vr_cdcritic := 0;
-							vr_dscritic := 'Registro de Adesao de pacote nao encontrado.';
+							vr_dscritic := 'Registro de Adesao de servico nao encontrado.';
 							-- Levantar exceção
 							RAISE vr_exc_erro;
 						ELSE
@@ -2291,7 +2297,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 							CLOSE cr_pactar;							
 						END IF;
 						pr_dsdmensg := pr_dsdmensg ||
-													    '<b>Adesão do pacote de tarifas</b> ' ||
+													    '<b>Adesão do Serviço Cooperativo</b> ' ||
 															TO_CHAR(rw_pactar.cdpacote,'fm999') || ' - ' ||
                               rw_pactar.dspacote || '.<br>';
 						
@@ -4842,7 +4848,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
      Sistema : Transacoes Pendentes
      Sigla   : INET
      Autor   : Jorge Hamaguchi
-     Data    : Dezembro/2015.                  Ultima atualizacao: 19/07/2016
+     Data    : Dezembro/2015.                  Ultima atualizacao: 02/09/2016
 
      Dados referentes ao programa:
 
@@ -4862,6 +4868,11 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 
                  19/07/2016 - Ajustes para o Prj. 338 - Pagamento de DARF/DAS (Jean Michel).             
 
+	             04/08/2016 - Ajustes realizado na tela conforme solicitado no chamado
+                              442860 (Kelvin).
+
+                 02/09/2016 - Ajustada para retornar os aprovadores da transação que
+                              está sendo consultada., SD 514239 (Jean Michel).                          
     ..............................................................................*/
     DECLARE
      
@@ -4923,28 +4934,67 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                  ,pr_dtiniper IN tbgen_trans_pend.dtregistro_transacao%TYPE
                                  ,pr_dtfimper IN tbgen_trans_pend.dtregistro_transacao%TYPE
                                  ,pr_insittra IN tbgen_trans_pend.idsituacao_transacao%TYPE) IS
-      SELECT tbgen_trans_pend.nrdconta,
-             tbgen_trans_pend.tptransacao,
-             tbgen_trans_pend.cdtransacao_pendente,
-             tbgen_trans_pend.dtregistro_transacao,
-             tbgen_trans_pend.hrregistro_transacao,
-             tbgen_trans_pend.idorigem_transacao,
-             tbgen_trans_pend.dtmvtolt,
-             tbgen_trans_pend.idsituacao_transacao,
-             tbgen_trans_pend.dtalteracao_situacao,
-             tbgen_trans_pend.dscritica,
-             tbgen_trans_pend.dtcritica,
-             tbgen_trans_pend.nrcpf_representante,
-             tbgen_trans_pend.nrcpf_operador
-      FROM   tbgen_trans_pend
-      WHERE  tbgen_trans_pend.cdcooper = pr_cdcooper
-      AND    tbgen_trans_pend.nrdconta = pr_nrdconta
-      AND    tbgen_trans_pend.dtregistro_transacao BETWEEN pr_dtiniper AND pr_dtfimper
-      AND    tbgen_trans_pend.idsituacao_transacao <> 2
-      AND    ((pr_insittra = 15 AND (tbgen_trans_pend.idsituacao_transacao = 1 OR --Pendente 
-                                     tbgen_trans_pend.idsituacao_transacao = 5))  --Parcialmente Aprovado
-             OR                        
-             (tbgen_trans_pend.idsituacao_transacao = DECODE(pr_insittra,0,tbgen_trans_pend.idsituacao_transacao,pr_insittra)));
+        SELECT dados.nrdconta nrdconta
+              ,dados.tptransacao tptransacao
+              ,dados.cdtransacao_pendente cdtransacao_pendente
+              ,dados.dtregistro_transacao dtregistro_transacao
+              ,dados.hrregistro_transacao hrregistro_transacao
+              ,dados.idorigem_transacao idorigem_transacao
+              ,dados.dtmvtolt dtmvtolt
+              ,dados.idsituacao_transacao idsituacao_transacao
+              ,dados.dtalteracao_situacao dtalteracao_situacao
+              ,dados.dscritica dscritica
+              ,dados.dtcritica dtcritica
+              ,dados.nrcpf_representante nrcpf_representante
+              ,dados.nrcpf_operador nrcpf_operador
+              ,nvl(dados.ord1,0) + nvl(dados.ord2,0) + nvl(dados.ord3,0) + nvl(dados.ord4,0) + 
+               nvl(dados.ord5,0) + nvl(dados.ord6,0) + nvl(dados.ord7,0) + nvl(dados.ord8,0) orderby
+          FROM (SELECT gtp.nrdconta nrdconta
+                      ,gtp.tptransacao tptransacao
+                      ,gtp.cdtransacao_pendente cdtransacao_pendente
+                      ,gtp.dtregistro_transacao dtregistro_transacao
+                      ,gtp.hrregistro_transacao hrregistro_transacao
+                      ,gtp.idorigem_transacao idorigem_transacao
+                      ,gtp.dtmvtolt dtmvtolt
+                      ,gtp.idsituacao_transacao idsituacao_transacao
+                      ,gtp.dtalteracao_situacao dtalteracao_situacao
+                      ,gtp.dscritica dscritica
+                      ,gtp.dtcritica dtcritica
+                      ,gtp.nrcpf_representante nrcpf_representante
+                      ,gtp.nrcpf_operador nrcpf_operador
+                      ,(SELECT DECODE(ttp.idagendamento,1,1,0)
+                          FROM tbtransf_trans_pend ttp
+                         WHERE ttp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord1
+                      ,(SELECT DECODE(ptp.idagendamento,1,1,0)
+                          FROM tbpagto_trans_pend ptp
+                         WHERE ptp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord2    
+                      ,(SELECT DECODE(stp.idagendamento,1,1,0)
+                          FROM tbspb_trans_pend stp
+                         WHERE stp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord3   
+                      ,(SELECT 1
+                          FROM tbepr_trans_pend etp
+                         WHERE etp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord4    
+                      ,(SELECT DECODE(ctp.tpoperacao,1,1,0)
+                          FROM tbcapt_trans_pend ctp
+                         WHERE ctp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord5    
+                      ,(SELECT DECODE(ctp.tpoperacao,2,1,0)
+                          FROM tbcapt_trans_pend ctp
+                         WHERE ctp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord6      
+                      ,(SELECT 1
+                          FROM tbconv_trans_pend vtp
+                         WHERE vtp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord7 
+                      ,(SELECT 1
+                          FROM tbtarif_pacote_trans_pend tptp
+                         WHERE tptp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord8  
+                  FROM tbgen_trans_pend gtp
+                 WHERE gtp.cdcooper = pr_cdcooper
+                   AND gtp.nrdconta = pr_nrdconta
+                   AND gtp.idsituacao_transacao <> 2
+                   AND ((pr_insittra = 15 AND (gtp.idsituacao_transacao = 1 OR /*Pendente*/ gtp.idsituacao_transacao = 5))
+                                OR (gtp.idsituacao_transacao = DECODE(pr_insittra,0,gtp.idsituacao_transacao,pr_insittra)))
+                 ORDER BY ord1) dados
+                ORDER BY orderby DESC
+                        ,dados.tptransacao;                                 
       rw_tbgen_trans_pend cr_tbgen_trans_pend%ROWTYPE;  
         
       --Tipo Transacao 1,3,5 (Transferencia)
@@ -4955,7 +5005,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             ,tbtransf_trans_pend.vltransferencia
             ,tbtransf_trans_pend.dtdebito
       FROM   tbtransf_trans_pend 
-      WHERE  tbtransf_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      WHERE  tbtransf_trans_pend.cdtransacao_pendente = pr_cddoitem
+        AND  tbtransf_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbtransf_trans_pend cr_tbtransf_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 2 (Pagamento)
@@ -4971,7 +5022,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             ,tbpagto_trans_pend.vldocumento
             ,tbpagto_trans_pend.idtitulo_dda
       FROM   tbpagto_trans_pend 
-      WHERE  tbpagto_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      WHERE  tbpagto_trans_pend.cdtransacao_pendente = pr_cddoitem
+        AND  tbpagto_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbpagto_trans_pend cr_tbpagto_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 4 (TED)
@@ -4991,7 +5043,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             ,tbspb_trans_pend.nrcpfcnpj_favorecido
             ,tbspb_trans_pend.nmtitula_favorecido
       FROM   tbspb_trans_pend 
-      WHERE  tbspb_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      WHERE  tbspb_trans_pend.cdtransacao_pendente = pr_cddoitem
+        AND  tbspb_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbspb_trans_pend cr_tbspb_trans_pend%ROWTYPE;
   	  
       --Tipo Transacao 6 (Credito Pre-Aprovado)
@@ -5040,7 +5093,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             ,tbconv_trans_pend.dshist_debito
             ,tbconv_trans_pend.vlmaximo_debito
       FROM   tbconv_trans_pend 
-      WHERE  tbconv_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      WHERE  tbconv_trans_pend.cdtransacao_pendente = pr_cddoitem
+        AND  tbconv_trans_pend.dtdebito_fatura BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbconv_trans_pend cr_tbconv_trans_pend%ROWTYPE;
       	  
       --Tipo Transacao 9 (Folha de Pagamento)
@@ -5051,7 +5105,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             ,tbfolha_trans_pend.idestouro
             ,tbfolha_trans_pend.vltarifa
       FROM   tbfolha_trans_pend 
-      WHERE  tbfolha_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      WHERE  tbfolha_trans_pend.cdtransacao_pendente = pr_cddoitem
+        AND  tbfolha_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbfolha_trans_pend cr_tbfolha_trans_pend%ROWTYPE;
 
       --Tipo Transacao 10 - Cursor para buscar a transação de adesão de pacote de tarifa pendente
@@ -5166,6 +5221,15 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
            AND nrcpf_responsavel_aprov = pr_nrcpfope;
 
       rw_tbaprova cr_tbaprova%ROWTYPE;     
+
+      CURSOR cr_tbaprova_rep(pr_cdtransa IN tbgen_aprova_trans_pend.cdtransacao_pendente%TYPE) IS
+        SELECT apr.cdtransacao_pendente
+              ,apr.nrcpf_responsavel_aprov AS cpf_responsavel
+              ,DECODE(apr.idsituacao_aprov,1,'Pendente',2,'Aprovada',3,'Reprovada',4,'Expirada','Sem Situacao') AS situacao
+          FROM tbgen_aprova_trans_pend apr
+         WHERE cdtransacao_pendente = pr_cdtransa;
+
+      rw_tbaprova_rep cr_tbaprova_rep%ROWTYPE;
 
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -5612,6 +5676,39 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       --------------------------------------------------------------------------------------
       --Buscar transacoes pendentes (pai)
       --------------------------------------------------------------------------------------
+      --Limpar Tabela Memoria
+      vr_tab_crapavt.DELETE;
+            
+      CADA0001.pc_busca_dados_58(pr_cdcooper => pr_cdcooper
+                                ,pr_cdagenci => pr_cdagenci
+                                ,pr_nrdcaixa => 900
+                                ,pr_cdoperad => '996'
+                                ,pr_nmdatela => 'INTERNETBANK'
+                                ,pr_idorigem => 3
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_idseqttl => 0
+                                ,pr_flgerlog => FALSE
+                                ,pr_cddopcao => 'C'
+                                ,pr_nrdctato => 0
+                                ,pr_nrcpfcto => 0
+                                ,pr_nrdrowid => NULL
+                                ,pr_tab_crapavt => vr_tab_crapavt
+                                ,pr_tab_bens => vr_tab_bens
+                                ,pr_tab_erro => vr_tab_erro
+                                ,pr_cdcritic => vr_cdcritic
+                                ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR 
+         vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Verifica se existem representantes legais para conta
+      IF vr_tab_crapavt.COUNT() <= 0 THEN
+        vr_dscritic := 'Nao existem responsaveis legais para a conta informada.';
+        RAISE vr_exc_erro;
+      END IF; 
+
       FOR rw_tbgen_trans_pend IN cr_tbgen_trans_pend (pr_cdcooper => pr_cdcooper
                                                      ,pr_nrdconta => pr_nrdconta
                                                      ,pr_dtiniper => pr_dtiniper
@@ -5773,15 +5870,18 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  IF cr_tbtransf_trans_pend%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_tbtransf_trans_pend;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de ' || 
-                                  (CASE WHEN vr_tptranpe = 3 THEN 'Credito Salario' ELSE 'Transferencia' END) ||
-                                  'pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_tbtransf_trans_pend;
+                    
+                    --Controle de paginacao
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
+
                  END IF;
                  
                  OPEN cr_crapcop (pr_cdagectl => rw_tbtransf_trans_pend.cdagencia_coop_destino);
@@ -5836,13 +5936,17 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  IF cr_tbpagto_trans_pend%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_tbpagto_trans_pend;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de Pagamento pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_tbpagto_trans_pend;
+                   
+                    --Controle de paginação
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
                  END IF;
                  
                  --Valor a somar
@@ -5871,13 +5975,17 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  IF cr_tbspb_trans_pend%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_tbspb_trans_pend;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de TED pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_tbspb_trans_pend;
+
+                    --Controle de paginação
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
                  END IF;
                  
                  --Cadastro de Transferencias pela Internet
@@ -5972,13 +6080,17 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  IF cr_tbepr_trans_pend%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_tbepr_trans_pend;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de Credito Pre-Aprovado pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_tbepr_trans_pend;
+                    
+                    --Controle de paginação
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
                  END IF;
                  
                  --Valor a somar
@@ -6008,13 +6120,17 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  IF cr_tbcapt_trans_pend%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_tbcapt_trans_pend;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de Aplicacao pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_tbcapt_trans_pend;
+                    
+                    --Controle de paginação
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
                  END IF;
                  
                  vr_tpopeapl := rw_tbcapt_trans_pend.tpoperacao; -- Tipo de Operacao (da Aplicacao)
@@ -6139,6 +6255,10 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                             END IF;                    
                           END IF;
 
+                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                            CONTINUE;                                                               
+                          END IF;
+                          
                           vr_dsdescri := 'RESGATE COM AGENDAMENTO ' || (CASE WHEN rw_tbcapt_trans_pend.idperiodo_agendamento = 0 THEN 'ÚNICO' ELSE 'MENSAL' END);-- Descricao
                           vr_dstptran := 'Agendamento de Resgate'; -- Tipo de Transacao
                           vr_dsagenda := 'SIM'; -- Agendamento                       
@@ -6178,6 +6298,10 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                               EXIT;
                           END LOOP; 
 
+                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                            CONTINUE;                                                               
+                          END IF;                    
+                          
                      WHEN rw_tbcapt_trans_pend.tpoperacao = 5 THEN --Cancelamento Item Agendamento
                           --aplicacao
                           IF rw_tbcapt_trans_pend.tpagendamento = 0 THEN
@@ -6228,6 +6352,11 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                              
                              EXIT;
                           END LOOP;  
+                          
+                          IF to_date(vr_dsdtefet,'dd/mm/rrrr') NOT BETWEEN pr_dtiniper AND pr_dtfimper THEN
+                            CONTINUE;                                                               
+                          END IF;   
+                          
                  END CASE; -- END CASE
                
             WHEN vr_tptranpe = 8 THEN --Debito Automatico
@@ -6237,13 +6366,17 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  IF cr_tbconv_trans_pend%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_tbconv_trans_pend;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de Debito Automatico pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_tbconv_trans_pend;
+                    
+                    --Controle de paginação
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
                  END IF;
                  
                  vr_tpopconv := rw_tbconv_trans_pend.tpoperacao;
@@ -6317,13 +6450,17 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  IF cr_tbfolha_trans_pend%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_tbfolha_trans_pend;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de Folha de Pagamento pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_tbfolha_trans_pend;
+                    
+                    --Controle de paginação
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
                  END IF;
                  
                  --Valor a somar
@@ -6347,20 +6484,24 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 								 IF cr_pactar%NOTFOUND THEN
                     --Fechar Cursor
                     CLOSE cr_pactar;
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de Adesao de Pacote pendente nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+                    CONTINUE;
                  ELSE
                     --Fechar Cursor
                     CLOSE cr_pactar;
+                    
+                    --Controle de paginação
+                    vr_qttotpen := vr_qttotpen + 1;
+                    IF ((vr_qttotpen <= pr_nriniseq) OR
+                       (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                       CONTINUE;
+                    END IF;
                  END IF;
 						
 								 vr_vlasomar := 0;
 								 vr_dsvltran := ' '; -- Valor
 								 vr_dsdtefet := 'Mes atual'; -- Data Efetivacao
-								 vr_dsdescri := 'PACOTE DE TARIFAS'; -- Descricao
-								 vr_dstptran := 'Adesão Pacote de Tarifas'; -- Tipo de Transacao
+								 vr_dsdescri := 'SERVIÇOS COOPERATIVOS'; -- Descricao
+								 vr_dstptran := 'Adesão de Serviços Cooperativos'; -- Tipo de Transacao
 								 vr_dsagenda := 'NÃO'; -- Agendamento
 								 
 								 vr_vlpacote := to_char(rw_pactar.vlpacote,'fm999g999g990d00');
@@ -6614,7 +6755,13 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             || '<dados_campo><label>Solicitado Estouro</label><valor>'       ||vr_solestou||'</valor></dados_campo>'
             || '<dados_campo><label>Data de Débito</label><valor>'           ||vr_dsdtefet||'</valor></dados_campo>'
             || '<dados_campo><label>Valor da Tarifa</label><valor>'          ||vr_vltarifa||'</valor></dados_campo>';
-         ELSIF vr_tptranpe = 11 THEN --DARF/DAS
+		     ELSIF vr_tptranpe = 10 THEN --Pacote de Tarifas
+            vr_xml_auxi := vr_xml_auxi
+            || '<dados_campo><label>Serviço</label><valor>'            ||vr_dspacote||'</valor></dados_campo>'
+            || '<dados_campo><label>Valor</label><valor>'             ||vr_vlpacote||'</valor></dados_campo>'
+            || '<dados_campo><label>Dia do Débito</label><valor>'     ||vr_dtdiadeb||'</valor></dados_campo>'
+            || '<dados_campo><label>Início da Vigência</label><valor>'||vr_dtinivig||'</valor></dados_campo>';
+         ELSIF vr_tptranpe = 11 THEN --Pagamento DARF/DAS
             vr_xml_auxi := vr_xml_auxi
             || '<dados_campo><label>Representante ou Operador</label><valor>'||vr_nmagenda||'</valor></dados_campo>'
             || '<dados_campo><label>Data da Transação</label><valor>'||vr_dttranpe||'</valor></dados_campo>'
@@ -6694,14 +6841,33 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
          
+				 vr_xml_auxi := vr_xml_auxi || '<aprovadores>';
+         vr_nmagenda := '';
+
+         FOR rw_tbaprova_rep IN cr_tbaprova_rep (pr_cdtransa  => vr_cdtranpe) LOOP
+           
+           vr_ind := vr_tab_crapavt.FIRST;
+           WHILE vr_ind IS NOT NULL LOOP
+             -- Operação realizada por responsável da assinatura conjunta
+             IF vr_tab_crapavt(vr_ind).nrcpfcgc = rw_tbaprova_rep.cpf_responsavel THEN
+               vr_nmagenda := vr_tab_crapavt(vr_ind).nmdavali;
+               EXIT;
+             END IF;
+             vr_ind := vr_tab_crapavt.NEXT(vr_ind);
+           END LOOP;
+
+           vr_xml_auxi := vr_xml_auxi || '<aprovador><nmaprova>' || TO_CHAR(NVL(vr_nmagenda,TO_CHAR(rw_tbaprova_rep.cpf_responsavel) || '-' || 'APROVADOR NAO CADASTRADO')) || '</nmaprova>'
+                                      || '<situacao>' || rw_tbaprova_rep.situacao || '</situacao></aprovador>';
+
+         END LOOP;
+
+         vr_xml_auxi := vr_xml_auxi || '</aprovadores></transacao>';	
+				 
          --Dados Detalhados da transacao
          gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                 ,pr_texto_completo => vr_xml_temp 
                                 ,pr_texto_novo     => vr_xml_auxi);
-         --Fecha tag transacao
-         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
-                                ,pr_texto_completo => vr_xml_temp 
-                                ,pr_texto_novo     => '</transacao>');                       
+                           
 			END LOOP;
       --Fim loop de transacoes
       
