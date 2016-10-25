@@ -881,16 +881,14 @@ function controlaFocoFormulariosEmpresa() {
                 return false;
             }
         });
-        cNrdconta.unbind('keypress').bind('keypress', function(e) {
-            if (e.keyCode == 9 || e.keyCode == 13) {
-                    cNrdconta.unbind('change').bind('change', function(e) {
-                        if (normalizaNumero(cNrdconta.val()) > 0){
-                            buscaContaEmp(1);
-                        }
-                    });
-                cNmcontat.focus();
-                return false;
+        
+        cNrdconta.unbind('change').bind('change', function(e) {
+
+            if (normalizaNumero(cNrdconta.val()) > 0){
+                buscaContaEmp(1);
             }
+            cNmcontat.focus();
+            return false;
         });
         cNmcontat.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
@@ -1966,7 +1964,7 @@ function buscaContaEmp(opcao) {
     var cdempres = $('#cdempres','#frmInfEmpresa').val();
     var nrdconta = normalizaNumero($('#nrdconta','#frmInfEmpresa').val());
     var nmprimtl = $('#nmprimtl','#frmContaEmp').val();
-
+    
     // Inicializa se estiver indefinido os campos
     if (nrdconta === undefined){ nrdconta = 0;}
     if (nmprimtl === undefined){ nmprimtl = "";}

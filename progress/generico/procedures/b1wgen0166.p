@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0166.p
     Autor   : Oliver Fagionato (GATI)
-    Data    : Agosto/2013                               Alteracao: 26/09/2016
+    Data    : Agosto/2013                               Alteracao: 21/10/2016
 
     Objetivo  : Alterar, consultar, incluir e gerar relatório de empresas.
 
@@ -76,6 +76,9 @@
                 26/09/2016 - Alterar na procedure Altera_inclui, para gravarmos 
                              a data de inclusao/cancelamento do produto Folha
                              (Lucas Ranghetti #480384)
+
+                21/10/2016 - Ajuste na mascara do cdempres na "Busca_Conta_Emp"
+                             (Guilherme/SUPERO)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1848,7 +1851,7 @@ PROCEDURE Busca_Conta_Emp:
                     IF  AVAIL crapemp THEN DO:
                         ASSIGN aux_cdcritic = 0
                                aux_dscritic = "Conta informada ja utilizada por outra empresa: " +
-                                              STRING(crapemp.cdempres,"999") + " - " + crapemp.nmresemp.
+                                              STRING(crapemp.cdempres,"z999") + " - " + crapemp.nmresemp.
     
                         RUN gera_erro (INPUT par_cdcooper,
                                        INPUT 0,
@@ -1886,7 +1889,7 @@ PROCEDURE Busca_Conta_Emp:
                 IF  AVAIL crapemp THEN DO:
                     ASSIGN aux_cdcritic = 0
                            aux_dscritic = "Conta informada ja utilizada por outra empresa: " +
-                                          STRING(crapemp.cdempres,"999") + " - " + crapemp.nmresemp.
+                                          STRING(crapemp.cdempres,"z999") + " - " + crapemp.nmresemp.
     
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT 0,
