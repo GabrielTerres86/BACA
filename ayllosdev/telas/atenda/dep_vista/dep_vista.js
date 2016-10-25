@@ -364,7 +364,7 @@ function navega(iniregis) {
 // Função que formata o layout
 function controlaLayout( nomeForm ){
 
-	var altura = '233px';
+	var altura = '253px';
 
 	if( nomeForm == 'frmDadosDepVista' ){
 	  

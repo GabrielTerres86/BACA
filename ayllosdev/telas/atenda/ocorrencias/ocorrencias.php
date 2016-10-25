@@ -11,6 +11,8 @@
 		
 					29/10/2012 - Inclusão da opção "Grupo Economico" (Adriano)
 
+					25/07/2016 - Adicionado classe (SetWindow) - necessaria para naveção com teclado - (Evandro - RKAM)
+
 					28/09/2016 - Inclusão da opção "Acordos", Prj. 302 (Jean Michel)
 
 	************************************************************************/
