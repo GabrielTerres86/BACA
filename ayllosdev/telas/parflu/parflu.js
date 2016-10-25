@@ -287,7 +287,7 @@ function formataFormulario() {
 
         }
 
-    } else { // cddopcao == 'H'
+    } else if (cddopcao == 'R') {
 
         var rRemessa    = $('label[for="remessa"]', '#frmParflu');
         var cHdnremessa = $('#hdnremessa',          '#frmParflu');
@@ -312,8 +312,6 @@ function formataFormulario() {
                 }
             });
         } else {
-            $('#tabFieldH input').desabilitaCampo();
-
             var cCdremessa = $('#cdremessa', '#frmParflu');
             var cNmremessa = $('#nmremessa', '#frmParflu');
             var cCdhistor  = $('#cdhistor',  '#frmParflu');
@@ -329,7 +327,7 @@ function formataFormulario() {
 
             $("#divRemessa2", "#frmParflu").show();
             $('#nmremessa', '#frmParflu').focus();
-            trocaBotao('Salvar','alterarDadosH()','btnVoltar()');
+            trocaBotao('Salvar','alterarDadosR()','btnVoltar()');
 
             cCdhistor.bind('keydown', function (e) {
                 var keyValue = getKeyValue(e);
@@ -364,6 +362,92 @@ function formataFormulario() {
             });
 
         }
+    }  else if (cddopcao == 'H') {
+
+        var rCdcooper  = $('label[for="cdcooper"]', '#frmParflu');
+        var cHdncooper = $('#hdncooper',            '#frmParflu');
+
+        rCdcooper.addClass('rotulo').css('width', '90px');
+
+        $("#divCooper1", "#frmParflu").hide();
+        $("#divCooper2", "#frmParflu").hide();
+
+        if (normalizaNumero(cHdncooper.val()) == 0) {
+            var cCooper = $('#cooper', '#frmParflu');
+
+            cCooper.css('width', '350px');
+
+            $("#divCooper1", "#frmParflu").show();
+            cCooper.focus();
+
+            cCooper.keypress(function (e) {
+                if (e.keyCode == 13 || e.keyCode == 09) {
+                    $("#btProsseguir", "#frmParflu").focus();
+                    return false;
+                }
+            });
+        } else {
+            var cCdcooper = $('#cdcooper', '#frmParflu');
+            var cNmcooper = $('#nmcooper', '#frmParflu');
+            var cDshora   = $('#dshora',   '#frmParflu');
+
+            cCdcooper.css({'width':'50px','text-align':'center'}).desabilitaCampo();
+            cNmcooper.css({'width':'350px'}).desabilitaCampo();
+            cDshora.css({'width':'50px'}).setMask('STRING','99:99',':','');
+
+            $("#divCooper2", "#frmParflu").show();
+            $('#dshora', '#frmParflu').focus();
+            trocaBotao('Salvar','alterarDadosH()','btnVoltar()');
+
+            cDshora.keypress(function (e) {
+                if (e.keyCode == 13 || e.keyCode == 09) {
+                    alterarDadosH();
+                    return false;
+                }
+            });
+        }
+    } else if (cddopcao == 'M') {
+
+        var cMargem_doc = $('#margem_doc', '#frmParflu');
+        var cMargem_chq = $('#margem_chq', '#frmParflu');
+        var cMargem_tit = $('#margem_tit', '#frmParflu');
+        var cDevolu_chq = $('#devolu_chq', '#frmParflu');
+
+        cMargem_doc.css({'width':'120px','text-align':'right'}).attr('alt', 'n2p2c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+        cMargem_chq.css({'width':'120px','text-align':'right'}).attr('alt', 'n2p2c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+        cMargem_tit.css({'width':'120px','text-align':'right'}).attr('alt', 'n2p2c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+        cDevolu_chq.css({'width':'120px','text-align':'right'}).attr('alt', 'n2p2c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+
+        $('#margem_doc', '#frmParflu').focus();
+        trocaBotao('Salvar','alterarDadosM()','btnVoltar()');
+
+        cMargem_doc.keypress(function(e) {
+            if (e.keyCode == 13 || e.keyCode == 09) {
+                cMargem_chq.focus();
+                return false;
+            }
+        });
+
+        cMargem_chq.keypress(function(e) {
+            if (e.keyCode == 13 || e.keyCode == 09) {
+                cMargem_tit.focus();
+                return false;
+            }
+        });
+
+        cMargem_tit.keypress(function(e) {
+            if (e.keyCode == 13 || e.keyCode == 09) {
+                cDevolu_chq.focus();
+                return false;
+            }
+        });
+
+        cDevolu_chq.keypress(function(e) {
+            if (e.keyCode == 13 || e.keyCode == 09) {
+                alterarDadosM();
+                return false;
+            }
+        });
     }
 
     return false;
@@ -379,6 +463,7 @@ function controlaOperacao(nriniseq,nrregist) {
 	
     var cddopcao   = $("#cddopcao", "#frmCab").val();
     var hdnconta   = normalizaNumero($("#hdnconta", "#frmParflu").val());
+    var hdncooper  = normalizaNumero($("#hdncooper", "#frmParflu").val());
     var hdnremessa = normalizaNumero($("#hdnremessa", "#frmParflu").val());
 
     // Mostra mensagem de aguardo
@@ -394,6 +479,7 @@ function controlaOperacao(nriniseq,nrregist) {
             nriniseq   : nriniseq,
             nrregist   : nrregist,
             hdnconta   : hdnconta,
+            hdncooper  : hdncooper,
             hdnremessa : hdnremessa,
             redirect   : "script_ajax" // Tipo de retorno do ajax
         },
@@ -431,13 +517,24 @@ function mostraOpcaoC() {
     }
 }
 
-function mostraOpcaoH() {
+function mostraOpcaoR() {
     var remessa = normalizaNumero($('#remessa','#frmParflu').val());
     
     if (remessa == 0) {
         showError("error", "Informe a Remessa.", "Alerta - Ayllos", "$('#remessa','#frmParflu').focus();");
     } else {
         $('#hdnremessa','#frmParflu').val(remessa);
+        controlaOperacao(1,30);
+    }
+}
+
+function mostraOpcaoH() {
+    var cooper = normalizaNumero($('#cooper','#frmParflu').val());
+    
+    if (cooper == 0) {
+        showError("error", "Informe a Cooperativa.", "Alerta - Ayllos", "$('#cooper','#frmParflu').focus();");
+    } else {
+        $('#hdncooper','#frmParflu').val(cooper);
         controlaOperacao(1,30);
     }
 }
@@ -456,8 +553,16 @@ function alterarDadosC() {
     showConfirmacao('Confirma atualiza&ccedil;&atilde;o dos per&iacute;odos?', 'PARFLU', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
 }
 
-function alterarDadosH() {
+function alterarDadosR() {
     showConfirmacao('Confirma inclus&atilde;o dos hist&oacute;ricos?', 'PARFLU', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
+}
+
+function alterarDadosH() {
+    showConfirmacao('Confirma atualiza&ccedil;&atilde;o do hor&aacute;rio?', 'PARFLU', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
+}
+
+function alterarDadosM() {
+    showConfirmacao('Confirma atualiza&ccedil;&atilde;o dos percentuais?', 'PARFLU', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
 }
 
 function grava_dados() {
@@ -500,14 +605,14 @@ function grava_dados() {
                 return false;
             }
         });
-        
+
         if (nmIdField != '') {
             showError("error", "Percentual m&aacute;ximo permitido: 100,00.", "Alerta - Ayllos", "$('#" + nmIdField + "','#frmParflu').focus();");
             return false;
         }
 
-    } else { // cddopcao == 'H'
-    
+    } else if (cddopcao == 'R') {
+
         var cdremessa = normalizaNumero($('#cdremessa', '#frmParflu').val());
         var nmremessa = $('#nmremessa', '#frmParflu').val();
         var strReHiFl  = '';
@@ -522,7 +627,45 @@ function grava_dados() {
                 strReHiFl += (strReHiFl == '' ? '' : '#') + $(this).attr('id');
             }
         });
-        
+
+    } else if (cddopcao == 'H') {
+
+        var cdcooper = normalizaNumero($('#cdcooper', '#frmParflu').val());
+        var dshora   = $('#dshora', '#frmParflu').val();
+        var inallcop = ($("#inallcop", "#frmParflu").prop("checked") ? 1 : 0);
+
+        if (dshora == '') {
+            showError("error", "Informe o horario.", "Alerta - Ayllos", "$('#dshora','#frmParflu').focus();");
+            return false;
+        }
+
+    } else if (cddopcao == 'M') {
+
+        var margem_doc = $('#margem_doc', '#frmParflu').val();
+        var margem_chq = $('#margem_chq', '#frmParflu').val();
+        var margem_tit = $('#margem_tit', '#frmParflu').val();
+        var devolu_chq = $('#devolu_chq', '#frmParflu').val();
+
+        if (margem_doc == '') {
+            showError("error", "Informe o valor.", "Alerta - Ayllos", "$('#margem_doc','#frmParflu').focus();");
+            return false;
+        }
+
+        if (margem_chq == '') {
+            showError("error", "Informe o valor.", "Alerta - Ayllos", "$('#margem_chq','#frmParflu').focus();");
+            return false;
+        }
+
+        if (margem_tit == '') {
+            showError("error", "Informe o valor.", "Alerta - Ayllos", "$('#margem_tit','#frmParflu').focus();");
+            return false;
+        }
+
+        if (devolu_chq == '') {
+            showError("error", "Informe o valor.", "Alerta - Ayllos", "$('#devolu_chq','#frmParflu').focus();");
+            return false;
+        }
+
     }
 
     // Mostra mensagem de aguardo
@@ -556,10 +699,19 @@ function grava_dados() {
             perc_5040 : perc_5040,
             perc_5400 : perc_5400,
             perc_5401 : perc_5401,
-            // OPCAO H
+            // OPCAO R
             cdremessa : cdremessa,
             nmremessa : nmremessa,
             strReHiFl : strReHiFl,
+            // OPCAO H
+            cdcooper  : cdcooper,
+            inallcop  : inallcop,
+            dshora    : dshora,
+            // OPCAO M
+            margem_doc : margem_doc,
+            margem_chq : margem_chq,
+            margem_tit : margem_tit,
+            devolu_chq : devolu_chq,
 
             redirect  : "script_ajax" // Tipo de retorno do ajax
         },

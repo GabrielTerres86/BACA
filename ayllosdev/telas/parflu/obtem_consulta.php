@@ -73,7 +73,7 @@
             }
         }
 
-    } else { // cddopcao == 'H'
+    } else if ($cddopcao == 'R') {
 
         // Montar o xml de Requisicao
         $xml  = "";
@@ -103,7 +103,54 @@
             $reghistor = $xmlObject->roottag->tags[0]->tags;
         }
 
+        include('form_r.php');
+
+    } else if ($cddopcao == 'H') {
+
+        // Montar o xml de Requisicao
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <cdcooper>0</cdcooper>";
+        $xml .= "   <flgativo>1</flgativo>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+        
+        $xmlResult = mensageria($xml, "CADA0001", "LISTA_COOPERATIVAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+        $list_coop = $xmlObject->roottag->tags[0]->tags;
+        $cooper    = (isset($_POST["hdncooper"])) ? $_POST["hdncooper"] : 0;
+        
+        if ($cooper) {
+            // Montar o xml de Requisicao
+            $xml  = "";
+            $xml .= "<Root>";
+            $xml .= " <Dados>";
+            $xml .= "   <cdcooper>".$cooper."</cdcooper>";
+            $xml .= " </Dados>";
+            $xml .= "</Root>";
+
+            // Requisicao dos dados de parametrizacao da conta sysphera
+            $xmlResult = mensageria($xml, "TELA_PARFLU", "PARFLU_BUSCA_HORARIO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+            $xmlObject = getObjectXML($xmlResult);
+            $dshora    = $xmlObject->roottag->tags[0]->tags[0]->cdata;
+        }
+
         include('form_h.php');
+
+    } else if ($cddopcao == 'M') {
+
+        // Montar o xml de Requisicao
+        $xml  = "";
+        $xml .= "<Root>";
+        $xml .= " <Dados />";
+        $xml .= "</Root>";
+
+        // Requisicao dos dados de parametrizacao da conta sysphera
+        $xmlResult = mensageria($xml, "TELA_PARFLU", "PARFLU_BUSCA_MARGEM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+        $xmlRegist = $xmlObject->roottag->tags[0];
+
+        include('form_m.php');
 
     }
 ?>

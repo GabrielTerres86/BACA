@@ -41,6 +41,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARFLU IS
                                ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
                                ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
 
+  PROCEDURE pc_busca_horario(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+                            ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                            ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                            ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2); --> Erros do processo
+
+  PROCEDURE pc_busca_margem(pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                           ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                           ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                           ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2); --> Erros do processo
+
   PROCEDURE pc_grava_dados_sysphera(pr_cdconta  IN tbfin_conta_sysphera.cdconta%TYPE --> Codigo da Conta Sysphera
                                    ,pr_nmconta  IN tbfin_conta_sysphera.nmconta%TYPE --> Nome da conta Sysphera
                                    ,pr_dspercen IN VARCHAR2 --> Contem os percentuais e prazos
@@ -61,6 +76,27 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARFLU IS
                                  ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
                                  ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
 
+  PROCEDURE pc_grava_horario(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+                            ,pr_dshora   IN VARCHAR2 --> Horario bloqueio
+                            ,pr_inallcop IN VARCHAR2 --> Indicador de todas as cooperativas
+                            ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                            ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                            ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2); --> Erros do processo
+
+  PROCEDURE pc_grava_margem(pr_margem_doc IN VARCHAR2 --> Margem SR Doc
+                           ,pr_margem_chq IN VARCHAR2 --> Margem SR Cheques
+                           ,pr_margem_tit IN VARCHAR2 --> Margem SR Titulos
+                           ,pr_devolu_chq IN VARCHAR2 --> Base de Calculo Devolucao Cheques
+                           ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
+                           ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
+                           ,pr_dscritic   OUT VARCHAR2 --> Descricao da critica
+                           ,pr_retxml     IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                           ,pr_nmdcampo   OUT VARCHAR2 --> Nome do campo com erro
+                           ,pr_des_erro   OUT VARCHAR2); --> Erros do processo
+
 END TELA_PARFLU;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
@@ -78,6 +114,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
   -- Alteracoes:
   --
   ---------------------------------------------------------------------------
+
+  -- Busca operador
+  CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
+                   ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
+    SELECT dsdepart
+      FROM crapope
+     WHERE crapope.cdcooper = pr_cdcooper
+       AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
+  rw_crapope cr_crapope%ROWTYPE;
 
   PROCEDURE pc_busca_conta_sysphera(pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
                                    ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
@@ -658,6 +703,202 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
 
   END pc_lista_historicos;
 
+  PROCEDURE pc_busca_horario(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+                            ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                            ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                            ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_busca_horario
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Outubro/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar horario de bloqueio.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis
+      vr_dshora VARCHAR2(5);
+
+    BEGIN
+      vr_dshora := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => 00
+                                             ,pr_cdacesso => 'PARFLUXOFINAN'
+                                             ,pr_tpregist => 0);
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'horario'
+                            ,pr_tag_cont => vr_dshora
+                            ,pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARFLU: ' || SQLERRM;
+
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_busca_horario;
+
+  PROCEDURE pc_busca_margem(pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                           ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                           ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                           ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                           ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                           ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_busca_margem
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Outubro/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar as margens de seguranca.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis
+      vr_dstextab  craptab.dstextab%TYPE;
+
+    BEGIN
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 3
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 00
+                                               ,pr_cdacesso => 'PARFLUXOFINAN'
+                                               ,pr_tpregist => 0);
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'margem_doc'
+                            ,pr_tag_cont => GENE0002.fn_busca_entrada(2,vr_dstextab,';')
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'margem_chq'
+                            ,pr_tag_cont => GENE0002.fn_busca_entrada(3,vr_dstextab,';')
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'margem_tit'
+                            ,pr_tag_cont => GENE0002.fn_busca_entrada(4,vr_dstextab,';')
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'devolu_chq'
+                            ,pr_tag_cont => GENE0002.fn_busca_entrada(5,vr_dstextab,';')
+                            ,pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARFLU: ' || SQLERRM;
+
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_busca_margem;
+
   PROCEDURE pc_grava_dados_sysphera(pr_cdconta  IN tbfin_conta_sysphera.cdconta%TYPE --> Codigo da Conta Sysphera
                                    ,pr_nmconta  IN tbfin_conta_sysphera.nmconta%TYPE --> Nome da conta Sysphera
                                    ,pr_dspercen IN VARCHAR2 --> Contem os percentuais e prazos
@@ -725,6 +966,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
 
+      -- Busca operador
+      OPEN cr_crapope(pr_cdcooper => vr_cdcooper
+                     ,pr_cdoperad => vr_cdoperad);
+      FETCH cr_crapope INTO rw_crapope;
+      CLOSE cr_crapope;
+
+      -- Se NAO fizer parte dos departamentos abaixo
+      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
+         rw_crapope.dsdepart <> 'TI'                   AND
+         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+        vr_dscritic := 'Permissao de acesso negada.';
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Efetua a busca do registro
       OPEN cr_conta(pr_cdconta => pr_cdconta);
       FETCH cr_conta INTO rw_conta;
@@ -733,7 +988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
       -- Fecha cursor
       CLOSE cr_conta;
 
-      -- Se nao achou faz raise
+      -- Se NAO achou faz raise
       IF NOT vr_blnfound THEN
         vr_dscritic := 'Conta Sysphera nao encontrada.';
         RAISE vr_exc_saida;
@@ -865,6 +1120,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
 
+      -- Busca operador
+      OPEN cr_crapope(pr_cdcooper => vr_cdcooper
+                     ,pr_cdoperad => vr_cdoperad);
+      FETCH cr_crapope INTO rw_crapope;
+      CLOSE cr_crapope;
+
+      -- Se NAO fizer parte dos departamentos abaixo
+      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
+         rw_crapope.dsdepart <> 'TI'                   AND
+         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+        vr_dscritic := 'Permissao de acesso negada.';
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Efetua a busca do registro
       OPEN cr_remessa(pr_cdremessa => pr_cdremessa);
       FETCH cr_remessa INTO rw_remessa;
@@ -937,6 +1206,256 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
     END;
 
   END pc_grava_dados_histor;
+
+  PROCEDURE pc_grava_horario(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
+                            ,pr_dshora   IN VARCHAR2 --> Horario bloqueio
+                            ,pr_inallcop IN VARCHAR2 --> Indicador de todas as cooperativas
+                            ,pr_xmllog   IN VARCHAR2 --> XML com informacoes de LOG
+                            ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                            ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
+                            ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                            ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                            ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_grava_horario
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Outubro/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para gravar o horario.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar cooperativa
+      CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+        SELECT cdcooper
+          FROM crapcop
+         WHERE cdcooper <> 3
+           AND flgativo = 1
+           AND cdcooper = DECODE(pr_cdcooper, 0, cdcooper, pr_cdcooper);
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Busca operador
+      OPEN cr_crapope(pr_cdcooper => vr_cdcooper
+                     ,pr_cdoperad => vr_cdoperad);
+      FETCH cr_crapope INTO rw_crapope;
+      CLOSE cr_crapope;
+
+      -- Se NAO fizer parte dos departamentos abaixo
+      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
+         rw_crapope.dsdepart <> 'TI'                   AND
+         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+        vr_dscritic := 'Permissao de acesso negada.';
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Listagem de cooperativa
+      FOR rw_crapcop IN cr_crapcop(pr_cdcooper => (CASE WHEN pr_inallcop = 1 THEN 0 ELSE pr_cdcooper END)) LOOP
+
+        BEGIN
+          UPDATE craptab
+             SET dstextab        = pr_dshora
+           WHERE cdcooper        = rw_crapcop.cdcooper
+             AND UPPER(nmsistem) = 'CRED'
+             AND UPPER(tptabela) = 'GENERI'
+             AND cdempres        = 00
+             AND UPPER(cdacesso) = 'PARFLUXOFINAN'
+             AND tpregist        = 0;
+        EXCEPTION
+          WHEN OTHERS THEN
+          vr_dscritic := 'Problema ao atualizar PARFLUXOFINAN: ' || SQLERRM;
+          RAISE vr_exc_saida;
+        END;
+
+      END LOOP; -- cr_crapcop
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARFLU: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_grava_horario;
+
+  PROCEDURE pc_grava_margem(pr_margem_doc IN VARCHAR2 --> Margem SR Doc
+                           ,pr_margem_chq IN VARCHAR2 --> Margem SR Cheques
+                           ,pr_margem_tit IN VARCHAR2 --> Margem SR Titulos
+                           ,pr_devolu_chq IN VARCHAR2 --> Base de Calculo Devolucao Cheques
+                           ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
+                           ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
+                           ,pr_dscritic   OUT VARCHAR2 --> Descricao da critica
+                           ,pr_retxml     IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                           ,pr_nmdcampo   OUT VARCHAR2 --> Nome do campo com erro
+                           ,pr_des_erro   OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_grava_margem
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Outubro/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para gravar o horario.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+
+      -- Selecionar cooperativa
+      CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+        SELECT cdcooper
+          FROM crapcop
+         WHERE cdcooper <> 3
+           AND flgativo = 1
+           AND cdcooper = DECODE(pr_cdcooper, 0, cdcooper, pr_cdcooper);
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+      -- Variaveis
+      vr_dstextab  craptab.dstextab%TYPE;
+
+    BEGIN
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Busca operador
+      OPEN cr_crapope(pr_cdcooper => vr_cdcooper
+                     ,pr_cdoperad => vr_cdoperad);
+      FETCH cr_crapope INTO rw_crapope;
+      CLOSE cr_crapope;
+
+      -- Se NAO fizer parte dos departamentos abaixo
+      IF rw_crapope.dsdepart <> 'COORD.ADM/FINANCEIRO' AND
+         rw_crapope.dsdepart <> 'TI'                   AND
+         rw_crapope.dsdepart <> 'FINANCEIRO'           THEN
+        vr_dscritic := 'Permissao de acesso negada.';
+        RAISE vr_exc_saida;
+      END IF;
+
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 3
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 00
+                                               ,pr_cdacesso => 'PARFLUXOFINAN'
+                                               ,pr_tpregist => 0);
+
+      vr_dstextab := GENE0002.fn_busca_entrada(1,vr_dstextab,';')
+                  || ';' || pr_margem_doc
+                  || ';' || pr_margem_chq
+                  || ';' || pr_margem_tit
+                  || ';' || pr_devolu_chq;
+
+      BEGIN
+        UPDATE craptab
+           SET dstextab        = vr_dstextab
+         WHERE cdcooper        = 3
+           AND UPPER(nmsistem) = 'CRED'
+           AND UPPER(tptabela) = 'GENERI'
+           AND cdempres        = 00
+           AND UPPER(cdacesso) = 'PARFLUXOFINAN'
+           AND tpregist        = 0;
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao atualizar PARFLUXOFINAN: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;
+
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela PARFLU: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+    END;
+
+  END pc_grava_margem;
 
 END TELA_PARFLU;
 /

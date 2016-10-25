@@ -15,7 +15,9 @@
 	<label for="cddopcao">Op&ccedil;&atilde;o:</label>
 	<select id="cddopcao" name="cddopcao">
 		<option value="C"> C - Distribui&ccedil;&atilde;o de valores Sysphera X Prazo</option> 
-		<option value="H"> H - Configura&ccedil;&atilde;o Históricos por Remessas</option>
+		<option value="R"> R - Configura&ccedil;&atilde;o das Remessas do Fluxo</option>
+		<option value="H"> H - Hor&aacute;rio de Bloqueio do Fluxo</option>
+		<option value="M"> M - Margens de seguran&ccedil;a para o Fluxo</option>
 	</select>
 	
 	<a href="#" class="botao" id="btnOK" onClick="btnOK();return false;" style="text-align: right;">OK</a>

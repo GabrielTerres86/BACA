@@ -17,7 +17,7 @@
 	require_once("../../class/xmlfile.php");
     isPostMethod();
 
-    $cddopcao = 'H';
+    $cddopcao = 'R';
     $cdhistor = (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : 0;
     $nriniseq = 1;
     $nrregist = 1;

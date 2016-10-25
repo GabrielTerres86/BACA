@@ -32,6 +32,15 @@
     $nmremessa = (isset($_POST['nmremessa'])) ? $_POST['nmremessa'] : '' ;
     $strReHiFl = (isset($_POST['strReHiFl'])) ? $_POST['strReHiFl'] : '' ;
 
+    $cdcooper  = (isset($_POST['cdcooper'])) ? $_POST['cdcooper']   : 0 ;
+    $dshora    = (isset($_POST['dshora']))   ? $_POST['dshora']     : '' ;
+    $inallcop  = (isset($_POST['inallcop'])) ? $_POST['inallcop']   : 0 ;
+
+    $margem_doc = (isset($_POST['margem_doc'])) ? $_POST['margem_doc'] : 0 ;
+    $margem_chq = (isset($_POST['margem_chq'])) ? $_POST['margem_chq'] : 0 ;
+    $margem_tit = (isset($_POST['margem_tit'])) ? $_POST['margem_tit'] : 0 ;
+    $devolu_chq = (isset($_POST['devolu_chq'])) ? $_POST['devolu_chq'] : 0 ;
+
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao,false)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
@@ -46,8 +55,12 @@
             }
         }
         $nmdeacao = 'PARFLU_GRAVA_SYSPHERA';
-    } else { // cddopcao == 'H'
+    } else if ($cddopcao == 'R') {
         $nmdeacao = 'PARFLU_GRAVA_HISTOR';
+    } else if ($cddopcao == 'H') {
+        $nmdeacao = 'PARFLU_GRAVA_HORARIO';
+    } else if ($cddopcao == 'M') {
+        $nmdeacao = 'PARFLU_GRAVA_MARGEM';
     }
 
     // Montar o xml de Requisicao
@@ -58,10 +71,19 @@
 	$xmlCarregaDados .= "   <cdconta>".$cdconta."</cdconta>";
 	$xmlCarregaDados .= "   <nmconta>".utf8_decode($nmconta)."</nmconta>";
 	$xmlCarregaDados .= "   <dspercen>".$dspercen."</dspercen>";
-	// OPCAO H
+	// OPCAO R
 	$xmlCarregaDados .= "   <cdremessa>".$cdremessa."</cdremessa>";
 	$xmlCarregaDados .= "   <nmremessa>".$nmremessa."</nmremessa>";
 	$xmlCarregaDados .= "   <strrehifl>".$strReHiFl."</strrehifl>";
+	// OPCAO H
+	$xmlCarregaDados .= "   <cdcooper>".$cdcooper."</cdcooper>";
+	$xmlCarregaDados .= "   <dshora>".$dshora."</dshora>";
+	$xmlCarregaDados .= "   <inallcop>".$inallcop."</inallcop>";
+	// OPCAO M
+	$xmlCarregaDados .= "   <margem_doc>".$margem_doc."</margem_doc>";
+	$xmlCarregaDados .= "   <margem_chq>".$margem_chq."</margem_chq>";
+	$xmlCarregaDados .= "   <margem_tit>".$margem_tit."</margem_tit>";
+	$xmlCarregaDados .= "   <devolu_chq>".$devolu_chq."</devolu_chq>";
 	// Fecha o xml de Requisicao
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";
@@ -72,7 +94,7 @@
 	echo 'hideMsgAguardo();';
 
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObject->roottag->tags[0]->cdata,'Alerta - Ayllos',"bloqueiaFundo($('#divRotina'));",false);
+		exibirErro('error',$xmlObject->roottag->tags[0]->cdata,'Alerta - Ayllos',"",false);
 	}
 
     echo "showError('inform','Dados gravados com sucesso!','PARFLU','fechaRotina($(\'#divRotina\'));estadoInicial();');";
