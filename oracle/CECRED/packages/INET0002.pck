@@ -4948,7 +4948,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               ,dados.nrcpf_representante nrcpf_representante
               ,dados.nrcpf_operador nrcpf_operador
               ,nvl(dados.ord1,0) + nvl(dados.ord2,0) + nvl(dados.ord3,0) + nvl(dados.ord4,0) + 
-               nvl(dados.ord5,0) + nvl(dados.ord6,0) + nvl(dados.ord7,0) + nvl(dados.ord8,0) orderby
+               nvl(dados.ord5,0) + nvl(dados.ord6,0) + nvl(dados.ord7,0) + nvl(dados.ord8,0) + 
+               nvl(dados.ord9,0) orderby
           FROM (SELECT gtp.nrdconta nrdconta
                       ,gtp.tptransacao tptransacao
                       ,gtp.cdtransacao_pendente cdtransacao_pendente
@@ -4986,6 +4987,9 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                       ,(SELECT 1
                           FROM tbtarif_pacote_trans_pend tptp
                          WHERE tptp.cdtransacao_pendente = gtp.cdtransacao_pendente) ord8  
+                      ,(SELECT 1
+                          FROM tbpagto_darf_das_trans_pend darf
+                         WHERE darf.cdtransacao_pendente = gtp.cdtransacao_pendente) ord9   
                   FROM tbgen_trans_pend gtp
                  WHERE gtp.cdcooper = pr_cdcooper
                    AND gtp.nrdconta = pr_nrdconta
