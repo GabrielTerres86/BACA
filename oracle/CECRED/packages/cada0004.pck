@@ -5151,7 +5151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     
     IF vr_flgativo = 1 THEN
-      pc_cria_registro_msg(pr_dsmensag             => 'Atencao! Cooperado possui contrato de acordo.',
+      pc_cria_registro_msg(pr_dsmensag             => 'Atencao! Cooperado possui contrato em acordo.',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
     END IF;
  
