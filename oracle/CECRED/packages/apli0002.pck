@@ -14676,7 +14676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               vr_vlrnmmrg := 0;
             END IF;
 
-            var_cdpactra := pr_cdagenci;
+            var_cdpactra := NVL(pr_cdagenci, 0);
             IF var_cdpactra = 0 tHEN
               SELECT cdpactra INTO var_cdpactra FROM crapope WHERE cdoperad = pr_cdoperad AND cdcooper = pr_cdcooper;
             END IF;
@@ -14687,7 +14687,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                      ca.dtatslmm = vr_dtmvtolt,                     
                   -- Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM)
                       ca.cdopeexc = pr_cdoperad,
-                      ca.cdageexc = var_cdpactra,
+                      ca.cdageexc = NVL(var_cdpactra, 0),
                       ca.dtinsexc = SYSDATE,
                   -- Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM)
                      ca.vlsltxmx = NVL(ca.vlsltxmx,0) - NVL(vr_vllan531, 0) + NVL(vr_vllan529, 0) + NVL(vr_vllan532, 0) - NVL(vr_vllan533, 0) - NVL(vr_vllan534, 0),
@@ -15039,7 +15039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                     ,cp.vlslfmes = 0
                      -- Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM)
                       ,cp.cdopeexc = pr_cdoperad
-                      ,cp.cdageexc = var_cdpactra
+                      ,cp.cdageexc = NVL(var_cdpactra, 0)
                       ,cp.dtinsexc = SYSDATE
                      -- Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM)
                     ,cp.dtsdfmes = NULL
