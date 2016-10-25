@@ -5247,6 +5247,7 @@ PROCEDURE obtem-dados-titulares:
 
     DEF VAR h-b1wgen0058 AS HANDLE NO-UNDO.
 
+	DEF VAR aux_qtminast AS INTEGER NO-UNDO.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter dados dos titulares".
@@ -5356,6 +5357,7 @@ PROCEDURE obtem-dados-titulares:
                                              INPUT ?,
                                             OUTPUT TABLE tt-crapavt,
                                             OUTPUT TABLE tt-bens,
+											OUTPUT aux_qtminast,
                                             OUTPUT TABLE tt-erro) NO-ERROR.
                 
                 /* Representantes Legais */
@@ -10681,6 +10683,8 @@ PROCEDURE gera-termo-responsabilidade:
                                          "DE  SETEMBRO DE","DE  OUTUBRO  DE",
                                          "DE  NOVEMBRO DE","DE  DEZEMBRO DE"]
                                                                      NO-UNDO.
+																	   
+    DEF VAR aux_qtminast AS INTE NO-UNDO.
 
     FORM  
         /* Titulo em negrito inicio */
@@ -11266,6 +11270,7 @@ PROCEDURE gera-termo-responsabilidade:
                                                      INPUT ?,
                                                     OUTPUT TABLE tt-crapavt,
                                                     OUTPUT TABLE tt-bens,
+													OUTPUT aux_qtminast,
                                                     OUTPUT TABLE tt-erro) NO-ERROR.
                 
                     IF  RETURN-VALUE <> "OK"   THEN
