@@ -6973,6 +6973,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
     vr_dscritic crapcri.dscritic%TYPE := '';
     vr_cdtranpe tbgen_trans_pend.cdtransacao_pendente%TYPE;
     vr_tab_crapavt CADA0001.typ_tab_crapavt_58; -- Tabela Avalistas 
+    vr_lindigit VARCHAR2(500) := '';
 
     -- Variaveis de Excecao
     vr_exc_erro EXCEPTION;
@@ -7001,6 +7002,15 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
+
+    vr_lindigit := SUBSTR(TO_CHAR(pr_lindigi1,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi1,'fm000000000000'),12,1) ||' '||
+                   SUBSTR(TO_CHAR(pr_lindigi2,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi2,'fm000000000000'),12,1) ||' '||
+                   SUBSTR(TO_CHAR(pr_lindigi3,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi3,'fm000000000000'),12,1) ||' '||
+                   SUBSTR(TO_CHAR(pr_lindigi4,'fm000000000000'),1,11) ||'-'||
+                   SUBSTR(TO_CHAR(pr_lindigi4,'fm000000000000'),12,1);
 
     BEGIN
       INSERT INTO
@@ -7037,7 +7047,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
           ,pr_dsidepag
           ,pr_dsnomfon
           ,pr_cdbarras
-          ,(pr_lindigi1 || pr_lindigi2 || pr_lindigi3 || pr_lindigi4)
+          ,vr_lindigit
           ,pr_dtapurac
           ,pr_nrcpfcgc
           ,pr_cdtribut
