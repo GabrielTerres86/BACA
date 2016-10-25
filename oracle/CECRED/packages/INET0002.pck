@@ -6478,13 +6478,16 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                IF cr_tbpagto_darf_das_trans_pend%NOTFOUND THEN
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
-                  vr_cdcritic:= 0;
-                  vr_dscritic:= 'Registro de Pagamento DARF/DAS pendente nao encontrado.';
-                  --Levantar Excecao
-                  RAISE vr_exc_erro;
+                  CONTINUE;
                ELSE
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
+				  --Controle de paginação
+                  vr_qttotpen := vr_qttotpen + 1;
+                  IF ((vr_qttotpen <= pr_nriniseq) OR
+                    (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                    CONTINUE;
+                  END IF;	
                END IF;
 
                -- Tipo de Captura (1 => Código de Barras / 2 => Manual)
