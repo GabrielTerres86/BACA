@@ -497,6 +497,7 @@
 { includes/var_landpv.i }
 { includes/var_cmedep.i "NEW" }
 
+
 DEF VAR h-b1wgen0001 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
 DEF VAR h-b1wgen0134 AS HANDLE                                  NO-UNDO.
@@ -2031,7 +2032,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
       
       IF   aux_nrtrfcta > 0 THEN
            DO:
-            
                glb_cdcritic = 156.
                RUN fontes/critic.p.
 
@@ -2080,7 +2080,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                HIDE FRAME f_autentica.
       
            END.
-          
+           
       /***** Tratamento da Compensacao Eletronica ***/
       IF   NOT CAN-DO("3,4,372,386",STRING(tel_cdhistor))   THEN
            LEAVE.
@@ -2090,7 +2090,6 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
       IF   tel_cdhistor <> 386   THEN
            DO:
-            
                /*  Verifica o horario de corte  */
                
                FIND craptab WHERE craptab.cdcooper = glb_cdcooper   AND
@@ -2583,6 +2582,60 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
             RETURN.  /* Volta pedir a opcao para o operador */
         END.    
+        
+        /* Historicos de pagamento de emprestimo */
+        IF CAN-DO("275,394,428",STRING(tel_cdhistor)) THEN
+          DO:
+         
+              /* Procedure para buscar o saldo disponivel da conta */
+              RUN obtem_saldo_dia_prog (INPUT glb_cdcooper,
+                                        INPUT tel_cdagenci,
+                                        INPUT tel_cdbccxlt,
+                                        INPUT glb_cdoperad,
+                                        INPUT tel_nrdctabb,
+                                        INPUT glb_dtmvtolt,
+                                        OUTPUT glb_cdcritic,
+                                        OUTPUT glb_dscritic,
+                                        OUTPUT TABLE tt-saldos).
+                                   
+              /* Condicao para verificar se houve erro */                          
+              IF glb_cdcritic <> 0 OR glb_dscritic <> "" THEN
+                 DO:
+                     NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
+                     UNDO, NEXT INICIO.
+                 END.
+
+              /* Condicao para verifica se possui saldo disponivel */
+              FIND FIRST tt-saldos NO-LOCK NO-ERROR.
+              IF AVAILABLE tt-saldos THEN
+                 DO:
+                     ASSIGN aux_vlsddisp = tt-saldos.vlsddisp +
+                                           tt-saldos.vlsdchsl + 
+                                           tt-saldos.vlsdbloq + 
+                                           tt-saldos.vlsdblpr +
+                                           tt-saldos.vlsdblfp + 
+                                           tt-saldos.vllimcre.
+                 END.
+                 
+                 IF aux_indebcre = "D" THEN
+                    DO:
+                       /* Condicao para verifica se possui saldo disponivel */
+                       IF tel_vllanmto > aux_vlsddisp THEN
+                          DO:
+                            
+                            RUN fontes/confirma.p
+                              (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
+                                      + ". Confirma estouro de conta? S/N",
+                               OUTPUT aux_confirma).
+                            
+                            IF aux_confirma <> "S" THEN
+                              UNDO, NEXT INICIO.
+                            
+                        END.
+                    END.                 
+              
+        END. /* END IF  CAN-DO("275,394,428",STRING(tel_cdhistor)) */        
+      
 
    DO TRANSACTION:
 
@@ -4177,6 +4230,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                        IF   LOCKED crablot   THEN
                             DO:
                                 glb_cdcritic = 84.
+                                PAUSE 1 NO-MESSAGE.
                                 NEXT.
                             END.
                        ELSE
@@ -4353,6 +4407,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                 IF   LOCKED crapcot   THEN
                                      DO:
                                         glb_cdcritic = 77.
+                                        PAUSE 1 NO-MESSAGE.
                                         NEXT.
                                      END.
                                  ELSE
@@ -4494,8 +4549,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                   IF   LOCKED crapcot   THEN             
                                        DO:                               
                                            glb_cdcritic = 77.
-                                           NEXT.
-                                                             
+                                           PAUSE 1 NO-MESSAGE.
+                                           NEXT.                                                             
                                        END.                              
                                    ELSE                                  
                                    DO:                                   
@@ -5264,6 +5319,7 @@ PROCEDURE gera_lancamentos_craplci_credito:
             IF  LOCKED crablot   THEN
                 DO:
                     glb_cdcritic = 77.
+                    PAUSE 1 NO-MESSAGE.
                     NEXT.
                 END.
             ELSE
@@ -5350,6 +5406,7 @@ PROCEDURE gera_lancamentos_craplci_debito:
             IF  LOCKED crablot   THEN
                 DO:
                     glb_cdcritic = 77.
+                    PAUSE 1 NO-MESSAGE.
                     NEXT.
                 END.
             ELSE

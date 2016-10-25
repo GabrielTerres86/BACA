@@ -464,8 +464,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        -- Consulta contratos ativos de acordos
        CURSOR cr_ctr_acordo IS
        SELECT tbrecup_acordo_contrato.nracordo
-             ,tbrecup_acordo_contrato.cdcooper
-             ,tbrecup_acordo_contrato.nrdconta
+             ,tbrecup_acordo.cdcooper
+             ,tbrecup_acordo.nrdconta
              ,tbrecup_acordo_contrato.cdorigem
              ,tbrecup_acordo_contrato.nrctremp
          FROM tbrecup_acordo_contrato
@@ -2537,12 +2537,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                     crapcob,
                     crapcco,
                     crapoco,
-                    tbrecup_acordo_parcela
+                    tbrecup_acordo_parcela,
+                    tbrecup_acordo
               WHERE crapret.cdcooper = pr_cdcooper
                 AND crapret.nrcnvcob = pr_nrcnvcob
                 AND crapret.dtocorre = pr_dtmvtolt
                 AND crapret.cdocorre IN (6,76) -- liquidacao normal COO/CEE
-                AND tbrecup_acordo_parcela.nrdconta = pr_nrdconta
+                AND tbrecup_acordo.nrdconta = pr_nrdconta
+                AND tbrecup_acordo.cdcooper = pr_cdcooper
                 AND crapcob.cdcooper = crapret.cdcooper
                 AND crapcob.nrcnvcob = crapret.nrcnvcob
                 AND crapcob.nrdconta = crapret.nrdconta
@@ -2550,14 +2552,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 AND crapcob.nrdctabb = crapcco.nrdctabb
                 AND crapcob.cdbandoc = crapcco.cddbanco
                 
-                AND crapcco.cdcooper = tbrecup_acordo_parcela.cdcooper
+                AND tbrecup_acordo_parcela.nracordo = tbrecup_acordo.nracordo
+                AND crapcco.cdcooper = tbrecup_acordo.cdcooper
                 AND crapcco.nrconven = tbrecup_acordo_parcela.nrconvenio
                 
                 AND crapoco.cdcooper = crapcob.cdcooper
                 AND crapoco.cddbanco = crapcob.cdbandoc
                 AND crapoco.cdocorre = crapret.cdocorre
                 AND crapoco.tpocorre = 2
-                AND tbrecup_acordo_parcela.cdcooper     = crapcob.cdcooper
+               
                 AND tbrecup_acordo_parcela.nrdconta_cob = crapcob.nrdconta
                 AND tbrecup_acordo_parcela.nrconvenio   = crapcob.nrcnvcob
                 AND tbrecup_acordo_parcela.nrboleto     = crapcob.nrdocmto;

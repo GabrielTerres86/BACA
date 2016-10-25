@@ -244,8 +244,8 @@ BEGIN
     -- Consulta contratos ativos de acordos
    CURSOR cr_ctr_acordo IS
    SELECT tbrecup_acordo_contrato.nracordo
-         ,tbrecup_acordo_contrato.cdcooper
-         ,tbrecup_acordo_contrato.nrdconta
+         ,tbrecup_acordo.cdcooper
+         ,tbrecup_acordo.nrdconta
          ,tbrecup_acordo_contrato.nrctremp
      FROM tbrecup_acordo_contrato
      JOIN tbrecup_acordo

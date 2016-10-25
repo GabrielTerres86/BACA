@@ -497,9 +497,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS171 (pr_cdcooper IN crapcop.cdcooper%T
       -- Consulta contratos ativos de acordos
        CURSOR cr_ctr_acordo IS
        SELECT tbrecup_acordo_contrato.nracordo
-             ,tbrecup_acordo_contrato.cdcooper
-             ,tbrecup_acordo_contrato.nrdconta
              ,tbrecup_acordo_contrato.nrctremp
+             ,tbrecup_acordo.cdcooper
+             ,tbrecup_acordo.nrdconta
          FROM tbrecup_acordo_contrato
          JOIN tbrecup_acordo
            ON tbrecup_acordo.nracordo   = tbrecup_acordo_contrato.nracordo

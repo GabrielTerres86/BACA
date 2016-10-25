@@ -1087,10 +1087,8 @@ function controlaOperacao(operacao) {
             // Busca os valores selecionados
             $('table > tbody > tr', 'div.divRegistros').each(function() {
                 if ($(this).hasClass('corSelecao')) {
-                    //portabil = $('#portabil', $(this)).val();
-                    var portabil = $('#portabil', '#frmNovaProp').val();
-                    //err_efet = $('#err_efet', $(this)).val();
-                    var err_efet = $('#err_efet', '#frmNovaProp').val();
+                    portabil = $('#portabil', $(this)).val();
+                    err_efet = $('#err_efet', $(this)).val();
                 }
             });
 

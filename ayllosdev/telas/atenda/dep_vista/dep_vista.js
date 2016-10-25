@@ -10,16 +10,14 @@
                02/09/2010 - Ajuste na função obtemSaldos (David).		
                29/06/2011 - Imprimir Extrato - Alterado para layout padrão (Rogerius - DB1).
                29/08/2011 - Imprimir Extrato - Nova coluna: Parcela (Marcelo L. Pereira - GATI).
-			   01/09/2011 - Incluir informacoes de historico e data liberacao no rodape (Gabriel)
-			   26/06/2012 - Alterado funcao Gera_Impressao(), novo esquema para impressao (Jorge)			   
-			   31/05/2013 - Fixado valor do campo inisenta e na procedure validarImpressao (Daniel)			   
-			   04/06/2013 - Incluir label[for="vlblqjud"] em controlaLayout (Lucas R.)           	   
-			   27/08/2015 - Ajuste para inclusão da nova rotina "Créditos Recebidos"
-						   (Gabriel - RKAM -> Projeto 127).	
-               14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos.
-							SD 320300 (Kelvin).
-               06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco",
-						    Prj. 302 (Jean Michel).
+							 01/09/2011 - Incluir informacoes de historico e data liberacao no rodape (Gabriel)
+							 26/06/2012 - Alterado funcao Gera_Impressao(), novo esquema para impressao (Jorge)			   
+							 31/05/2013 - Fixado valor do campo inisenta e na procedure validarImpressao (Daniel)			   
+							 04/06/2013 - Incluir label[for="vlblqjud"] em controlaLayout (Lucas R.)           	   
+							 27/08/2015 - Ajuste para inclusão da nova rotina "Créditos Recebidos" (Gabriel - RKAM -> Projeto 127).	
+							 14/10/2015 - Adicionado novos campos média do mês atual e dias úteis decorridos. SD 320300 (Kelvin).
+							 25/07/2016 - Adicionado função controlaFoco (Evandro - RKAM)
+							 06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos "vlblqaco", Prj. 302 (Jean Michel).
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -56,8 +54,9 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 	
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando " + msg + " ...");
-	
+		
 	// Atribui cor de destaque para aba da opção
+	nrOpcoes = nrOpcoes + 1;
 	for (var i = 0; i < nrOpcoes; i++) {
 		if (id == i) { // Atribui estilos para foco da opção
 			$("#linkAba" + id).attr("class","txtBrancoBold");
@@ -91,6 +90,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 
 	}else if (opcao == "5") {	// Opção saldos anteriores		
@@ -109,6 +109,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 
 	}else if (opcao == "6") {	// Opção Cash		
@@ -127,6 +128,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 
 	} else { // Demais Opções
@@ -145,9 +147,101 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 			},
 			success: function(response) {
 				$("#divConteudoOpcao").html(response);
+				controlaFoco(opcao);
 			}				
 		}); 		
 	}
+}
+
+//controle de foco de navegação
+function controlaFoco(opcao) {
+    var IdForm = '';
+    var formid;
+
+    if (opcao == "0") { //Principal
+        $('.FirstInput:first ').focus();
+    }
+    if (opcao == "1") { //Extrato 
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmExtDepVista") {
+                $(this).find("#frmExtDepVista > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmExtDepVista > :input").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                    });
+                });
+
+            };
+        });
+        $('.FirstInputModal:first ').focus();
+    }
+    if (opcao == "4") { //Imprimir extrato
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmExtrato") {
+                $(this).find("#frmExtrato > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmExtrato > :input").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                    });
+                });
+            };
+        });
+        $('.FirstInputModal:first ').focus();
+    }
+    if (opcao == "5") { //Saldos anteriores
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmSaldoAnt") {
+                $(this).find("#frmSaldoAnt > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmSaldoAnt > :input[type=image]").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                    });
+                });
+            };
+        });
+        $('.FirstInputModal:first ').focus();
+    }
+    if (opcao == "6") { //Cash
+        $('#divConteudoOpcao').each(function () {
+            formid = $('#divConteudoOpcao form');
+            IdForm = $(formid).attr('id');//Seleciona o id do formulario
+            if (IdForm == "frmExtCash") {
+                $(this).find("#frmExtCash > :input[type=text]").first().addClass("FirstInputModal").focus();
+                $(this).find("#frmExtCash > :input").last().addClass("LastInputModal");
+
+                //Se estiver com foco na classe LastInputModal
+                $(".LastInputModal").focus(function () {
+                    $(this).bind('keydown', function (e) {
+                        if (e.keyCode == 13) {
+                            $(".LastInputModal").click();
+                        }
+                    });
+                });
+            };
+        });
+    }
+    $('.FirstInputModal:first ').focus();
 }
 
 // Função para confirmar saque na conta investimento

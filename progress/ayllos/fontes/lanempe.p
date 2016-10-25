@@ -524,7 +524,6 @@ DO WHILE TRUE:
       IF   KEYFUNCTION(LASTKEY) = "END-ERROR"   OR
            aux_confirma <> "S" THEN
            DO:
-           MESSAGE "JMD"
                glb_cdcritic = 79.
                RUN fontes/critic.p.
                BELL.

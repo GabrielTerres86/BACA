@@ -13,6 +13,8 @@
 				29/10/2012 - Ajustes referente a inclusão da opção "Grupo Economico". 
 						     Projeto GE (Adriano).
 
+                01/08/2016 - Adicionado função controlaFoco (Evandro - RKAM).     
+                
                 29/09/2016 - Ajustes referente a inclusão da opção "Acordos". 
 						     Projeto 302 (Jean Michel).
 
@@ -82,10 +84,18 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},
 		success: function(response) {
 			$("#divConteudoOpcao").html(response);
+			controlaFoco();
 		}				
 	}); 		
 }
 
+//Função para controle de navegação pelas abas
+function controlaFoco() {
+	$('#divRotina').each(function () {
+	    $(this).find("#linkAba0").focus();
+	    $("#linkAba0:focus").css({ 'border': 'none', 'outline': 'none' });
+	});
+}
 // Formata o layout principal
 function formataPrincipal() {
 
