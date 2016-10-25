@@ -1006,8 +1006,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       END IF;
       
       IF SUBSTR(rw_crapstb.dsrestri,3,1) = 'S' THEN
-        IF pr_dtapurac <> TO_CHAR('01/01/1980','MM/dd/RRRR') AND
-           pr_dtapurac <> TO_CHAR('08/08/1980','MM/dd/RRRR') THEN
+        IF pr_dtapurac <> TO_DATE('01/01/1980','MM/dd/RRRR') AND
+           pr_dtapurac <> TO_DATE('08/08/1980','MM/dd/RRRR') THEN
 
           IF vr_inpessoa <> 1 THEN
             
