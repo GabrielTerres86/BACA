@@ -979,14 +979,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     -- OBS: Apenas para quando a captura for através da linha digitavel
     CURSOR cr_trans_pend (pr_dtmvtopg IN DATE
                          ,pr_cdhistor IN NUMBER
-                         ,pr_cdseqfat IN NUMBER) IS
+                         ,pr_cdseqfat IN NUMBER
+						 ,pr_tpdaguia IN NUMBER) IS
     SELECT 1
       FROM tbpagto_darf_das_trans_pend darf_das
           ,tbgen_trans_pend            pend
      WHERE pend.cdtransacao_pendente = darf_das.cdtransacao_pendente
        AND pend.idorigem_transacao = pr_idorigem
        AND pend.idsituacao_transacao IN (1, 5) /* Pendente */
-       AND darf_das.tppagamento = 1 /* Convênio */
+       AND darf_das.tppagamento = pr_tpdaguia
        AND darf_das.cdcooper = pr_cdcooper
        AND darf_das.dtdebito = pr_dtmvtopg
        AND cxon0014.fn_busca_sequencial_fatura(pr_cdhistor
@@ -1018,14 +1019,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     -- Busca as transações pendentes
     -- OBS: Apenas para quando a captura for através da digitação dos campos da guia
     CURSOR cr_trans_pend2(pr_dtmvtopg IN tbpagto_darf_das_trans_pend.dtdebito%TYPE
-                         ,pr_cdseqfat IN NUMBER) IS
+                         ,pr_cdseqfat IN NUMBER
+						 ,pr_tpdaguia IN NUMBER) IS
     SELECT 1
       FROM tbpagto_darf_das_trans_pend darf_das
           ,tbgen_trans_pend            pend
      WHERE pend.cdtransacao_pendente = darf_das.cdtransacao_pendente
        AND pend.idorigem_transacao = pr_idorigem
        AND pend.idsituacao_transacao IN (1, 5) /* Pendente */
-       AND darf_das.tppagamento = 1 /* Convênio */
+       AND darf_das.tppagamento = pr_tpdaguia
        AND darf_das.cdcooper = pr_cdcooper
        AND darf_das.dtdebito = pr_dtmvtopg
        AND cxon0041.fn_busca_sequencial_darf(pr_dtapurac => darf_das.dtapuracao -- Data da Apuracao
@@ -1298,7 +1300,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --Selecionar transações pendentes de operador jurídico
         OPEN cr_trans_pend(pr_dtmvtopg => vr_dtmvtopg
                           ,pr_cdhistor => rw_crapcon.cdhistor
-                          ,pr_cdseqfat => pr_cdseqfat); --Sequencial faturamento
+                          ,pr_cdseqfat => pr_cdseqfat --Sequencial faturamento
+						  ,pr_tpdaguia => pr_tpdaguia); 
         FETCH cr_trans_pend INTO rw_trans_pend;
         cr_trans_pend_found := cr_trans_pend%FOUND;
         CLOSE cr_trans_pend;
@@ -1371,7 +1374,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       IF pr_indvalid = 1 THEN
         -- Verifica se a guia já consta nas transações pendentes do operador de pessoa jurídica
         OPEN cr_trans_pend2(pr_dtmvtopg => vr_dtmvtopg
-                           ,pr_cdseqfat => pr_cdseqfat);
+                           ,pr_cdseqfat => pr_cdseqfat --Sequencial faturamento
+						   ,pr_tpdaguia => pr_tpdaguia); 
         FETCH cr_trans_pend2
         INTO rw_trans_pend2;
         cr_trans_pend2_found := cr_trans_pend2%FOUND;
@@ -2751,7 +2755,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 					TRIM(vr_dscritic) IS NOT NULL THEN
 					RAISE vr_exc_erro; 
 				END IF;
-			END IF;
+				
+			ELSE -- Efetiva, nao exige assinatura multipla
 					
 			-- Nesta data
 			IF  pr_idagenda = 1 THEN 
@@ -2840,6 +2845,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				
 			END IF;
 			
+			END IF;
+
 			
 			-- compor mensagem de retorno da operacao
 			
