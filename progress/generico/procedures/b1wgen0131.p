@@ -2577,7 +2577,7 @@ PROCEDURE pi_sr_ted_f:
     FIND FIRST tt-logspb-totais NO-LOCK NO-ERROR.
 
     IF AVAIL tt-logspb-totais THEN
-       ASSIGN aux_vlrtedsr = tt-logspb-totais.vlrenvok.
+       ASSIGN aux_vlrtedsr = tt-logspb-totais.vlrrecok.
     ELSE
        ASSIGN aux_vlrtedsr = 0.
 

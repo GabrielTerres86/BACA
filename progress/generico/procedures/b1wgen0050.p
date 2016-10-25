@@ -714,8 +714,6 @@ PROCEDURE obtem-log-cecred:
                                            INPUT par_cdifconv,
                                            INPUT par_vlrdated,
                                            OUTPUT ?,  /* pr_clob_logspb */
-                                           OUTPUT ?,  /* pr_clob_logspb_detalhe */
-                                           OUTPUT ?,  /* pr_clob_logspb_totais */
                                            OUTPUT 0, /* cdcritic */
                                            OUTPUT ""). /* dscritic */
     
@@ -797,25 +795,8 @@ PROCEDURE obtem-log-cecred:
 								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
 								  NEXT.
 							   
-							   ASSIGN tt-logspb-detalhe.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"         
-									  tt-logspb-detalhe.cdbandst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbandst"
-										tt-logspb-detalhe.cdagedst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagedst"
-										tt-logspb-detalhe.nrctadst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctadst"
-										tt-logspb-detalhe.dsnomdst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomdst"
-										tt-logspb-detalhe.dscpfdst = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfdst"
-										tt-logspb-detalhe.cdbanrem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbanrem"
-										tt-logspb-detalhe.cdagerem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagerem"
-										tt-logspb-detalhe.nrctarem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctarem"
-										tt-logspb-detalhe.dsnomrem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomrem"
-										tt-logspb-detalhe.dscpfrem = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfrem"
-										tt-logspb-detalhe.hrtransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "hrtransa"
-										tt-logspb-detalhe.vltransa = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vltransa"
-										tt-logspb-detalhe.dsmotivo =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsmotivo"
-										tt-logspb-detalhe.dstransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dstransa"
-										tt-logspb-detalhe.dsorigem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsorigem"
-										tt-logspb-detalhe.cdagenci = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagenci"
-										tt-logspb-detalhe.nrdcaixa = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrdcaixa"
-										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad".
+							   ASSIGN tt-logspb.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"
+                        tt-logspb.dslinlog = hTextTag:NODE-VALUE  WHEN xField2:NAME = "dslinlog".
 				 
 							 END. 
 							 
@@ -871,7 +852,16 @@ PROCEDURE obtem-log-cecred:
 										tt-logspb-detalhe.dsorigem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsorigem"
 										tt-logspb-detalhe.cdagenci = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagenci"
 										tt-logspb-detalhe.nrdcaixa = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrdcaixa"
-										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad".
+										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad"
+                    
+                    tt-logspb-detalhe.dttransa = DATE(hTextTag:NODE-VALUE)  WHEN xField2:NAME = "dttransa"
+                    tt-logspb-detalhe.nrsequen = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrsequen"
+										tt-logspb-detalhe.cdisprem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdisprem"
+										tt-logspb-detalhe.cdispdst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdispdst"
+										tt-logspb-detalhe.cdtiptra = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdtiptra"
+										tt-logspb-detalhe.dstiptra =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dstiptra"
+                    tt-logspb-detalhe.nmevento =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nmevento"
+                    tt-logspb-detalhe.nrctrlif =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctrlif"     .
 				 
 							 END. 
 							 
@@ -909,8 +899,17 @@ PROCEDURE obtem-log-cecred:
 								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
 								  NEXT.
 							   
-							   ASSIGN tt-logspb-totais.qtdenvok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtsitlog"         
-									  tt-logspb-totais.vlrenvok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlsitlog".
+							   ASSIGN tt-logspb-totais.qtdenvok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtdenvok"         
+									      tt-logspb-totais.vlrenvok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrenvok"                        
+                        tt-logspb-totais.qtenvnok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtenvnok"         
+									      tt-logspb-totais.vlenvnok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlenvnok"                        
+                        tt-logspb-totais.qtdrecok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtdrecok"         
+									      tt-logspb-totais.vlrrecok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrrecok"                        
+                        tt-logspb-totais.qtrecnok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtrecnok"         
+									      tt-logspb-totais.vlrecnok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrecnok"                        
+                        tt-logspb-totais.qtdrejok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtdrejok"         
+									      tt-logspb-totais.vlrrejok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrrejok"                        
+                        tt-logspb-totais.qtrejeit = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtrejeit".
 				 
 							 END. 
 							 
@@ -928,11 +927,11 @@ PROCEDURE obtem-log-cecred:
     DELETE OBJECT xDoc. 
     DELETE OBJECT xRoot. 
     DELETE OBJECT xRoot2. 
-	DELETE OBJECT xRoot3. 
+	  DELETE OBJECT xRoot3. 
     DELETE OBJECT xField. 
-	DELETE OBJECT xField2. 
+	  DELETE OBJECT xField2. 
     DELETE OBJECT xText.
-	DELETE OBJECT hTextTag.
+	  DELETE OBJECT hTextTag.
     
     /* Chegou ao fim com sucesso */
     RETURN "OK".
