@@ -5718,14 +5718,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                                      ,pr_dtiniper => pr_dtiniper
                                                      ,pr_dtfimper => pr_dtfimper
                                                      ,pr_insittra => pr_insittra) LOOP
-         
-         --Controle de paginacao
-         vr_qttotpen := vr_qttotpen + 1;
-         IF ((vr_qttotpen <= pr_nriniseq) OR
-             (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
-            CONTINUE;
-         END IF;
-         
+                  
          --Zerando Variaveis
          vr_indiacao := 0;   vr_cddbanco := 0;   vr_vlasomar := 0;   vr_vlaplica := 0;   vr_vllanaut := 0;
          vr_cdcopdes := ' '; vr_nrcondes := ' '; vr_dtdebito := ' '; vr_nmcednte := ' '; vr_nrcodbar := ' ';
@@ -5785,40 +5778,6 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                                         ,pr_inpessoa => 1) || ' - ' || vr_nmagenda;                
             END IF;
          ELSE -- Consultar Representante
-            
-            --Limpar Tabela Memoria
-            vr_tab_crapavt.DELETE;
-            
-            CADA0001.pc_busca_dados_58(pr_cdcooper => pr_cdcooper
-                                      ,pr_cdagenci => pr_cdagenci
-                                      ,pr_nrdcaixa => 900
-                                      ,pr_cdoperad => '996'
-                                      ,pr_nmdatela => 'INTERNETBANK'
-                                      ,pr_idorigem => 3
-                                      ,pr_nrdconta => pr_nrdconta
-                                      ,pr_idseqttl => 0
-                                      ,pr_flgerlog => FALSE
-                                      ,pr_cddopcao => 'C'
-                                      ,pr_nrdctato => 0
-                                      ,pr_nrcpfcto => 0
-                                      ,pr_nrdrowid => NULL
-                                      ,pr_tab_crapavt => vr_tab_crapavt
-                                      ,pr_tab_bens => vr_tab_bens
-                                      ,pr_tab_erro => vr_tab_erro
-                                      ,pr_cdcritic => vr_cdcritic
-                                      ,pr_dscritic => vr_dscritic);
-
-            IF NVL(vr_cdcritic,0) > 0 OR 
-               vr_dscritic IS NOT NULL THEN
-              RAISE vr_exc_erro;
-            END IF;
-
-            -- Verifica se existem representantes legais para conta
-            IF vr_tab_crapavt.COUNT() <= 0 THEN
-              vr_dscritic := 'Nao existem responsaveis legais para a conta informada.';
-              RAISE vr_exc_erro;
-            END IF; 
-
             vr_ind := vr_tab_crapavt.FIRST;
             WHILE vr_ind IS NOT NULL LOOP
               -- Operação realizada por responsável da assinatura conjunta
