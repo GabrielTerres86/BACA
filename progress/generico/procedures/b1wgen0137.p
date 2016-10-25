@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 14/10/2016
+    Data      : Abril/2012                      Ultima Atualizacao: 25/10/2016
     
     Dados referentes ao programa:
 
@@ -296,6 +296,9 @@
                 
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
+
+	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				             Melhoria 310 (Tiago/Thiago).
 .............................................................................*/
 
 
@@ -617,37 +620,37 @@ PROCEDURE efetua_batimento_ged:
             /* Tela prcged */
             IF  par_inchamad = 1 THEN 
                 DO:
-                    RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
-                                                     INPUT aux_dtcreini,
-                                                     INPUT aux_dtcrefim,
-                                                     INPUT par_inchamad,
-                                                     INPUT par_emailbat,
-                                                    OUTPUT par_nmarqcre,
-                                                    OUTPUT TABLE tt-erro).
+            RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
+                                             INPUT aux_dtcreini,
+                                             INPUT aux_dtcrefim,
+                                             INPUT par_inchamad,
+                                             INPUT par_emailbat,
+                                            OUTPUT par_nmarqcre,
+                                            OUTPUT TABLE tt-erro).
 
-                    IF  RETURN-VALUE <> "OK"  THEN
+            IF  RETURN-VALUE <> "OK"  THEN
+                DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+            
+                    IF  AVAIL tt-erro  THEN
+                        ASSIGN aux_dscritic = tt-erro.dscritic.
+                    ELSE
                         DO:
-                            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-                    
-                            IF  AVAIL tt-erro  THEN
-                                ASSIGN aux_dscritic = tt-erro.dscritic.
-                            ELSE
-                                DO:
-                                    ASSIGN aux_dscritic = "Erro ao listar documentos digitalizados no Smartshare.".
-                                    
-                                    RUN gera_erro (INPUT par_cdcooper,
-                                                   INPUT 1,
-                                                   INPUT 1,
-                                                   INPUT 1, /* SEQUENCIA */
-                                                   INPUT aux_cdcritic,
-                                                   INPUT-OUTPUT aux_dscritic).
-                                END.
-                    
-                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                              " - " + "crps620" + "' --> '"  + " b1wgen00137 " +
-                                              aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
-                            RETURN "NOK".
-                        END. 
+                            ASSIGN aux_dscritic = "Erro ao listar documentos digitalizados no Smartshare.".
+                            
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT 1,
+                                           INPUT 1,
+                                           INPUT 1, /* SEQUENCIA */
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                        END.
+            
+                    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                      " - " + "crps620" + "' --> '"  + " b1wgen00137 " +
+                                      aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
+                    RETURN "NOK".
+                END. 
                 END.
 
              RUN efetua_batimento_ged_termos(INPUT crapcop.cdcooper,
@@ -722,38 +725,38 @@ PROCEDURE efetua_batimento_ged:
             /* Tela prcged */
             IF  par_inchamad = 1 THEN 
                 DO:
-                    RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
-                                                     INPUT aux_dtcreini,
-                                                     INPUT aux_dtcrefim,
-                                                     INPUT par_inchamad,
-                                                     INPUT par_emailbat,
-                                                    OUTPUT par_nmarqcre,
-                                                    OUTPUT TABLE tt-erro).
+            RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
+                                             INPUT aux_dtcreini,
+                                             INPUT aux_dtcrefim,
+                                             INPUT par_inchamad,
+                                             INPUT par_emailbat,
+                                            OUTPUT par_nmarqcre,
+                                            OUTPUT TABLE tt-erro).
 
-                    IF  RETURN-VALUE <> "OK"  THEN
+            IF  RETURN-VALUE <> "OK"  THEN
+                DO:
+                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+            
+                    IF  AVAIL tt-erro  THEN
+                        ASSIGN aux_dscritic = tt-erro.dscritic.
+                    ELSE
                         DO:
-                            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-                    
-                            IF  AVAIL tt-erro  THEN
-                                ASSIGN aux_dscritic = tt-erro.dscritic.
-                            ELSE
-                                DO:
-                                    ASSIGN aux_dscritic = "Erro ao listar documentos digitalizados no Smartshare.".
-                                    
-                                    RUN gera_erro (INPUT par_cdcooper,
-                                                   INPUT 1,
-                                                   INPUT 1,
-                                                   INPUT 1, /* SEQUENCIA */
-                                                   INPUT aux_cdcritic,
-                                                   INPUT-OUTPUT aux_dscritic).
-                                END.
-                    
-                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                              " - " + "crps620" + "' --> '"  + " b1wgen00137 " +
-                                              aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
-                            RETURN "NOK".
-                        END. 
-                END.
+                            ASSIGN aux_dscritic = "Erro ao listar documentos digitalizados no Smartshare.".
+                            
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT 1,
+                                           INPUT 1,
+                                           INPUT 1, /* SEQUENCIA */
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                        END.
+            
+                    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                                      " - " + "crps620" + "' --> '"  + " b1wgen00137 " +
+                                      aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
+                    RETURN "NOK".
+                END. 
+        END.
         END.
     ELSE
     IF  par_tipopcao = 3 THEN /* MATRICULA */
@@ -1239,6 +1242,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
          tt-contr_ndigi_cadastro.tpdocctc  FORMAT "x(14)"      COLUMN-LABEL "  Cta. CNPJ   "
          tt-contr_ndigi_cadastro.tpdocidp  FORMAT "x(15)"      COLUMN-LABEL "Doc. Ident - PJ"
          tt-contr_ndigi_cadastro.tpdocdfi  FORMAT "x(14)"      COLUMN-LABEL " Demons. Finan"
+		 tt-contr_ndigi_cadastro.tpdoclic  FORMAT "x(18)"      COLUMN-LABEL "Lic. Soc.Ambiental"
          tt-contr_ndigi_cadastro.idseqttl  FORMAT "99"         COLUMN-LABEL "   Titular   "
          tt-contr_ndigi_cadastro.dtmvtolt  FORMAT "99/99/9999" COLUMN-LABEL "    Data    "
          WITH DOWN WIDTH 234 CENTERED FRAME f_contr_2.
@@ -1259,7 +1263,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101", ENTRY(3,craptab.dstextab,";")) THEN
+        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,131", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1328,7 +1332,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             /* ZERAR VARIAVEIS DE CONTROLE DE PARAMETROS */ 
             
-            DO aux_contdocs = 1 TO 12:
+            DO aux_contdocs = 1 TO 40:
                 
                 ASSIGN aux_tpdocmto = 0.
     
@@ -1357,6 +1361,10 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 16. /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                     WHEN 12 THEN
                         ASSIGN aux_conttabs = 17. /*DEMONSTRATIVO FINANCEIRO*/
+                    WHEN 40 THEN 
+                        ASSIGN aux_conttabs = 40. /*LICENCAS SOCIO AMBIENTAIS*/
+                    OTHERWISE
+                        NEXT.
                 END CASE.
                
                 /* Obs: As matriculas tpdocmto = 8, nao sera necessario gerar neste relatorio
@@ -1435,7 +1443,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                  (crapdoc.tpdocmto = 12 AND crapass.inpessoa = 1)   OR /* Somente pessoa juridica */
                                  (crapdoc.tpdocmto = 1 AND crapass.inpessoa <> 1)   OR /* Somente pessoa fisica */
                                  (crapdoc.tpdocmto = 2 AND crapass.inpessoa <> 1)   OR /* Somente pessoa fisica */
-                                 (crapdoc.tpdocmto = 5 AND crapass.inpessoa <> 1) THEN /* Somente pessoa fisica */
+                                 (crapdoc.tpdocmto = 5 AND crapass.inpessoa <> 1)   OR /* Somente pessoa fisica */
+								 (crapdoc.tpdocmto = 40 AND crapass.inpessoa = 1)  THEN  /* Somente pessoa juridica */
                                  NEXT.
 
                              FIND tt-contr_ndigi_cadastro WHERE tt-contr_ndigi_cadastro.cdcooper = crapdoc.cdcooper AND
@@ -1478,6 +1487,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                             ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "       X". /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                                         WHEN 12 THEN 
                                             IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DEMONSTRATIVO FINANCEIRO*/
+                                        WHEN 40 THEN 
+										    IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSAS*/
                                     END CASE.
                                     
                                     IF  crapass.inpessoa = 1 THEN
@@ -1512,6 +1523,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                         ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "       X". /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                                     WHEN 12 THEN
                                         IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DEMONSTRATIVO FINANCEIRO*/
+                                    WHEN 40 THEN
+                                        IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSA*/
                                 END CASE.
                         END.
                 END.
@@ -1580,6 +1593,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                       tt-contr_ndigi_cadastro.tpdocctc
                                       tt-contr_ndigi_cadastro.tpdocdfi
                                       tt-contr_ndigi_cadastro.tpdocidp
+									  tt-contr_ndigi_cadastro.tpdoclic
                                       tt-contr_ndigi_cadastro.idseqttl 
                                       tt-contr_ndigi_cadastro.dtmvtolt 
                                       WITH FRAME f_contr_2.
@@ -1675,6 +1689,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                              tt-contr_ndigi_cadastro.tpdocctc
                              tt-contr_ndigi_cadastro.tpdocdfi
                              tt-contr_ndigi_cadastro.tpdocidp
+							 tt-contr_ndigi_cadastro.tpdoclic
                              tt-contr_ndigi_cadastro.idseqttl 
                              tt-contr_ndigi_cadastro.dtmvtolt 
                              WITH FRAME f_contr_2.
@@ -2982,7 +2997,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
     DO  aux_data = par_datainic TO par_datafina:    
 
-        FOR EACH crapemp FIELDS(cdcooper cdempres nrdconta nmresemp 
+    FOR EACH crapemp FIELDS(cdcooper cdempres nrdconta nmresemp 
                                 nmcontat cdoperad dtinccan)
                      WHERE crapemp.cdcooper = par_cdcooper AND
                            crapemp.flgpgtib = TRUE         AND
@@ -3045,9 +3060,9 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.dtincalt = crapemp.dtinccan
                        tt-documentos-termo.cdoperad = crapemp.cdoperad
                        tt-documentos-termo.idseqite = aux_conttabs. /* Adesao */
-                END.
             END.
         END.
+    END.
     END.
 
     /*TIPO DE DOCUMENTO: 21 Termo Cancelamento*/
@@ -3063,7 +3078,7 @@ PROCEDURE efetua_batimento_ged_termos:
 
     DO  aux_data = par_datainic TO par_datafina:    
         
-        FOR EACH crapemp FIELDS(cdcooper cdempres nrdconta nmresemp 
+    FOR EACH crapemp FIELDS(cdcooper cdempres nrdconta nmresemp 
                                 nmcontat cdoperad dtinccan)
                      WHERE crapemp.cdcooper = par_cdcooper AND
                            crapemp.flgpgtib = FALSE        AND
@@ -3129,9 +3144,9 @@ PROCEDURE efetua_batimento_ged_termos:
                        tt-documentos-termo.dtincalt = crapemp.dtinccan
                        tt-documentos-termo.cdoperad = crapemp.cdoperad 
                        tt-documentos-termo.idseqite = aux_conttabs. /* Cancelamento */
-                END.
             END.
         END.
+    END.
     END.
 
     /* TIPO DE DOCUMENTO: 37 Termo PEP - pessoa exposta politicamente */
@@ -3149,80 +3164,80 @@ PROCEDURE efetua_batimento_ged_termos:
     
     DO  aux_data = par_datainic TO par_datafina:
 
-        FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
+    FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
                                crapdoc.dtmvtolt = aux_data     AND
-                               crapdoc.tpdocmto = aux_conttabs AND
-                               crapdoc.flgdigit = FALSE
-                               NO-LOCK:
-                                   
-            /* Se cooperado estiver demitido nao gera no relatorio */
-            FIND FIRST crapass WHERE 
-                       crapass.cdcooper = crapdoc.cdcooper AND
-                       crapass.nrdconta = crapdoc.nrdconta NO-LOCK NO-ERROR.
-                
-            IF  NOT AVAIL crapass THEN 
-                NEXT.
-                
-            IF  crapass.dtdemiss <> ? THEN
-                NEXT.
+                           crapdoc.tpdocmto = aux_conttabs AND
+                           crapdoc.flgdigit = FALSE
+                           NO-LOCK:
+                               
+        /* Se cooperado estiver demitido nao gera no relatorio */
+        FIND FIRST crapass WHERE 
+                   crapass.cdcooper = crapdoc.cdcooper AND
+                   crapass.nrdconta = crapdoc.nrdconta NO-LOCK NO-ERROR.
+            
+        IF  NOT AVAIL crapass THEN 
+            NEXT.
+            
+        IF  crapass.dtdemiss <> ? THEN
+            NEXT.
 
-            /* Verifica se a declaracao de pep foi digitalizada */
-            FIND FIRST tt-documento-digitalizado WHERE
-                       tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
-                       tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
+        /* Verifica se a declaracao de pep foi digitalizada */
+        FIND FIRST tt-documento-digitalizado WHERE
+                   tt-documento-digitalizado.cdcooper = crapdoc.cdcooper AND
+                   tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
                        tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                        tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
-                       NO-LOCK NO-ERROR NO-WAIT.
+                   NO-LOCK NO-ERROR NO-WAIT.
 
-            /*Verifica se registro existe*/
-            IF  AVAIL tt-documento-digitalizado  THEN DO:
-                /*Verifica se documento foi digitalizado*/
-                FIND FIRST b-crapdoc
-                     WHERE b-crapdoc.cdcooper = crapdoc.cdcooper
-                       AND b-crapdoc.dtmvtolt = crapdoc.dtmvtolt
-                           AND b-crapdoc.tpdocmto = crapdoc.tpdocmto
+        /*Verifica se registro existe*/
+        IF  AVAIL tt-documento-digitalizado  THEN DO:
+            /*Verifica se documento foi digitalizado*/
+            FIND FIRST b-crapdoc
+                 WHERE b-crapdoc.cdcooper = crapdoc.cdcooper
+                   AND b-crapdoc.dtmvtolt = crapdoc.dtmvtolt
+                       AND b-crapdoc.tpdocmto = crapdoc.tpdocmto
                            AND b-crapdoc.nrdconta = crapdoc.nrdconta
                            AND b-crapdoc.idseqttl = crapdoc.idseqttl
-                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
-                /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
-                IF  AVAIL b-crapdoc THEN
-                    ASSIGN b-crapdoc.flgdigit = TRUE.
+            /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
+            IF  AVAIL b-crapdoc THEN
+                ASSIGN b-crapdoc.flgdigit = TRUE.
 
-                NEXT.
+            NEXT.
 
-            END.
-            ELSE DO:
-                FIND FIRST tt-documentos-termo
-                     WHERE tt-documentos-termo.cdcooper = crapdoc.cdcooper
-                       AND tt-documentos-termo.cdagenci = crapass.cdagenci
-                       AND tt-documentos-termo.nrdconta = crapdoc.nrdconta
-                       AND tt-documentos-termo.dstpterm = "DECLARACAOPEP"
-                   NO-LOCK NO-ERROR.
+        END.
+        ELSE DO:
+            FIND FIRST tt-documentos-termo
+                 WHERE tt-documentos-termo.cdcooper = crapdoc.cdcooper
+                   AND tt-documentos-termo.cdagenci = crapass.cdagenci
+                   AND tt-documentos-termo.nrdconta = crapdoc.nrdconta
+                   AND tt-documentos-termo.dstpterm = "DECLARACAOPEP"
+               NO-LOCK NO-ERROR.
 
-                /*Verifica se registro existe*/
-                IF  NOT AVAIL tt-documentos-termo  THEN DO:
+            /*Verifica se registro existe*/
+            IF  NOT AVAIL tt-documentos-termo  THEN DO:
                          
                         /* Buscar agencia em que o operador trabalha */
                         FIND FIRST crapope WHERE crapope.cdcooper = crapdoc.cdcooper
                                              AND crapope.cdoperad = crapdoc.cdoperad
                                              NO-LOCK NO-ERROR.
                          
-                    /* Criar registro para listar no relatorio */
-                    CREATE tt-documentos-termo.
-                    ASSIGN tt-documentos-termo.cdcooper = crapdoc.cdcooper
+                /* Criar registro para listar no relatorio */
+                CREATE tt-documentos-termo.
+                ASSIGN tt-documentos-termo.cdcooper = crapdoc.cdcooper
                            tt-documentos-termo.cdagenci = crapope.cdpactra WHEN AVAILABLE crapope 
-                           tt-documentos-termo.dstpterm = "DECLARACAOPEP"
+                       tt-documentos-termo.dstpterm = "DECLARACAOPEP"
                            tt-documentos-termo.dsempres = crapass.nmprimtl
-                           tt-documentos-termo.nrdconta = crapdoc.nrdconta
+                       tt-documentos-termo.nrdconta = crapdoc.nrdconta
                            tt-documentos-termo.nmcontat = " "
                            tt-documentos-termo.dtincalt = crapdoc.dtmvtolt
                            tt-documentos-termo.cdoperad = crapdoc.cdoperad 
                            tt-documentos-termo.idseqite = aux_conttabs. /* Declaracao PEP */
-                               
-                END.
+                           
             END.
-        END. /* fim for each crapdoc */
+        END.
+    END. /* fim for each crapdoc */
     END.
     /* fim tipo de documento 37 */
 

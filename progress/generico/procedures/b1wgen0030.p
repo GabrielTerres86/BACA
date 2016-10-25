@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 27/06/2016
+    Data    : Julho/2008                     Ultima Atualizacao: 25/10/2016
            
     Dados referentes ao programa:
                 
@@ -478,6 +478,7 @@
                02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
                             (Jaison/Anderson)
 
+               25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3057,6 +3058,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR aux_dsdidade         AS CHAR                    NO-UNDO.
     DEF VAR aux_dsoperac         AS CHAR                    NO-UNDO.
     DEF VAR aux_nriniseq 	     AS INTE					NO-UNDO.
+	DEF VAR aux_flgrestrito      AS INTE                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -3129,6 +3131,34 @@ PROCEDURE busca_dados_limite_incluir:
 
         END.
     
+		/*Se tem cnae verificar se e um cnae restrito*/
+		IF  crapass.cdclcnae > 0 THEN
+			DO:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Busca a se o CNAE eh restrito */
+                RUN STORED-PROCEDURE pc_valida_cnae_restrito
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                    ,0).
+
+                CLOSE STORED-PROC pc_valida_cnae_restrito
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                            WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+				IF  aux_flgrestrito = 1 THEN
+					DO:
+    						CREATE tt-msg-confirma.
+							ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+								   tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+					END.
+
+			END.
+
         /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND
                              crapttl.nrdconta = par_nrdconta   AND

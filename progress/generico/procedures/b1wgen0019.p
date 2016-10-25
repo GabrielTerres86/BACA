@@ -1,28 +1,8 @@
-/******************************************************************************
-                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
-            ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
-  +-------------------------------------+--------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                  |
-  +-------------------------------------+--------------------------------------+
-  | b1wgen0019.p                        | LIMI0001                             |
-  | obtem-dados-contrato                | LIMI0001.pc_obtem_dados_contrato     |
-  | gera-impressao-limite(contrato)     | LIMI0001.pc_impres_contrato_limite   |  
-  +-------------------------------------+--------------------------------------+
-
-  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
-  SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
-
-  PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
-  PESSOAS:
-   - GUILHERME STRUBE    (CECRED)
-   - MARCOS MARTINI      (SUPERO)
-
-*******************************************************************************/
 /*..............................................................................
 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                        Ultima atualizacao: 07/06/2016
+   Data    : 21/06/2007                        Ultima atualizacao: 25/10/2016
 
    Objetivo  : BO LIMITE DE CRÉDITO
 
@@ -292,9 +272,14 @@
                             nao conta como uma pagina nova (Douglas - Chamado 405904)
                             
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+						
+                02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
+                             = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
 
 				15/09/2016 - Inclusao dos parametros default na rotina oracle
 				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
+
+		        25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
 ..............................................................................*/
 
 
@@ -976,7 +961,7 @@ PROCEDURE confirmar-novo-limite:
                                INPUT TRUE,
                               OUTPUT TABLE tt-erro).
 
-    IF  RETURN-VALUE = "NOK"  THEN
+    IF  RETURN-VALUE <> "OK"  THEN
         DO:
             IF  par_flgerlog  THEN
                 RUN proc_gerar_log (INPUT par_cdcooper,
@@ -1067,7 +1052,7 @@ PROCEDURE confirmar-novo-limite:
                                               OUTPUT aux_vlutiliz,
                                               OUTPUT TABLE tt-erro).
                                               
-            IF  RETURN-VALUE = "NOK"  THEN
+            IF  RETURN-VALUE <> "OK"  THEN
                 DO:
                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
                     
@@ -1438,7 +1423,7 @@ PROCEDURE confirmar-novo-limite:
                                          INPUT craplim.inbaslim,
                                         OUTPUT TABLE tt-erro).
                                          
-        IF  RETURN-VALUE = "NOK"  THEN
+        IF  RETURN-VALUE <> "OK"  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
 
         RUN sistema/generico/procedures/b1wgen0043.p 
@@ -1511,7 +1496,7 @@ PROCEDURE confirmar-novo-limite:
 
         DELETE PROCEDURE h-b1wgen0043.
 
-        IF  RETURN-VALUE = "NOK"  THEN
+        IF  RETURN-VALUE <> "OK"  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
                 
         ASSIGN aux_flgtrans = TRUE. 
@@ -3453,6 +3438,7 @@ PROCEDURE cadastrar-novo-limite:
     DEF VAR aux_vlsldcap AS DECI                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
+    DEF VAR aux_flgrestrito AS INTE                                 NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     
@@ -3575,6 +3561,36 @@ PROCEDURE cadastrar-novo-limite:
                                        
         IF   crapass.inpessoa > 1   THEN
              DO:
+
+                /*Se tem cnae verificar se e um cnae restrito*/
+                IF  crapass.cdclcnae > 0 THEN
+                    DO:
+
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                      /* Busca a se o CNAE eh restrito */
+                      RUN STORED-PROCEDURE pc_valida_cnae_restrito
+                      aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                          ,0).
+
+                      CLOSE STORED-PROC pc_valida_cnae_restrito
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                      ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                               WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+                      IF  aux_flgrestrito = 1 THEN
+                          DO:
+                             CREATE tt-msg-confirma.
+                             ASSIGN aux_contador = aux_contador + 1				  
+                                    tt-msg-confirma.inconfir = aux_contador
+                                    tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
+                          END.
+
+                    END.
+
                  DO aux_contador = 1 TO 10:
 
                     FIND crapjfn WHERE crapjfn.cdcooper = par_cdcooper   AND
@@ -5277,13 +5293,12 @@ PROCEDURE gera-impressao-limite:
                    END.
      
                /* somente ira mostar este form se houver registro na crapdoc */
-               /* Informacoes para digitalizacao apenas no contrato
                IF  tt-dados-prp.tpregist = 84 THEN 
                    DISPLAY STREAM str_limcre tt-dados-prp.nrdconta 
                                              tt-dados-prp.nrctrlim 
                                              tt-dados-prp.tpregist 
                                              WITH FRAME f_digitaliza.
-               */    
+     
                RUN sistema/generico/procedures/b1wgen0043.p PERSISTENT 
                    SET h-b1wgen0043.
        
@@ -6451,6 +6466,8 @@ PROCEDURE atualiza-registro-associado:
            crapass.dtultlcr = par_dtmvtolt
            crapass.cdtipcta = par_cdtipcta.
             
+    VALIDATE crapass.
+    
     RETURN "OK".
     
 END PROCEDURE.
@@ -8465,7 +8482,6 @@ PROCEDURE renovar_limite_credito_manual:
     
 END PROCEDURE.
 
-/*************************TIAGO*********************************************/
 /******************************************************************************/
 /**           Procedure para validar proposta de limite de credito           **/
 /******************************************************************************/

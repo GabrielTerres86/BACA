@@ -36,6 +36,10 @@
  * 014: [15/12/2015] Douglas          (CECRED)  : Ajustado para quando sair do campo CPF, limpar os campos apenas quando a opcao da tela eh "I" (Chamado -
  369594)
  * 015: [17/05/2016] Kelvin 		  (CECRED)  : Adicionado inclusão de nacionalidade, conforme solicitado no chamado 422806. (Kelvin)
+ * 016: [06/07/2016] Lucas Ranghetti  (CECRED)  : Alterar campo cCnae para suportar até 7 posicoes. (#481816)
+ * 017: [22/07/2016] Maciel 		  (RKAM)  : Ajustes no JS para o conportamento correto da consulta a receita
+ * 018: [22/07/2016] Maciel 		  (RKAM)  : Aumento do tempo para consulta na receita federal
+ * 019: [25/10/2016] Tiago            (CECRED): M310 Tratamento para abertura de conta com CNAE CPF/CPNJ restrito ou proibidos.
  */
 
 // Definição de algumas variáveis globais 
@@ -95,7 +99,6 @@ var outconta = '';
 exibeAlerta = false;
 
 $(document).ready(function() {
-	
 	// Inicializa algumas variáveis
 	idseqttl 	= 1;
 	exibeAlerta = false;
@@ -294,81 +297,101 @@ function manterRotina() {
 	//-------------------------------------------------------------------------------------------------
 	if ( ( in_array(operacao,['VI','IV','VA','AV','PI','PA']) ) && ( inpessoa == 1 )  ) {
 	
-		cdtipcta = $('#cdtipcta','#frmFisico').val();
-		nmprimtl = normalizaTexto($('#nmprimtl','#frmFisico').val());
-		nmttlrfb = normalizaTexto($('#nmttlrfb','#frmFisico').val());
-		nrcpfcgc = normalizaNumero($('#nrcpfcgc','#frmFisico').val());
-		dtcnscpf = $('#dtcnscpf','#frmFisico').val();
-		nrdocptl = normalizaTexto($('#nrdocptl','#frmFisico').val());
-		cdoedptl = normalizaTexto($('#cdoedptl','#frmFisico').val());
-		dtemdptl = $('#dtemdptl','#frmFisico').val();
-		tpnacion = $('#tpnacion','#frmFisico').val();
-		dsnacion = $('#dsnacion','#frmFisico').val();
-		dtnasctl = $('#dtnasctl','#frmFisico').val();
-		dsnatura = $('#dsnatura','#frmFisico').val();
-		inhabmen = $('#inhabmen','#frmFisico').val();
-		dthabmen = $('#dthabmen','#frmFisico').val();
-		cdestcvl = $('#cdestcvl','#frmFisico').val();
-		nmconjug = normalizaTexto($('#nmconjug','#frmFisico').val());
-		cdempres = $('#cdempres','#frmFisico').val()
-		nrcadast = normalizaNumero($('#nrcadast','#frmFisico').val());
-		cdocpttl = $('#cdocpttl','#frmFisico').val();
-		rowidcem = $("#rowidcem","#frmFisico").val();
-		dsdemail = $("#dsdemail","#frmFisico").val();
-		nrdddres = $("#nrdddres","#frmFisico").val();
-		nrtelres = $("#nrtelres","#frmFisico").val();
-		nrdddcel = $("#nrdddcel","#frmFisico").val();
-		nrtelcel = $("#nrtelcel","#frmFisico").val();
-		cdopetfn = $("#cdopetfn","#frmFisico").val();			
-		nmmaettl = normalizaTexto($('#nmmaettl','#frmFisico').val());
-		nmpaittl = normalizaTexto($('#nmpaittl','#frmFisico').val());
-		dsendere = $('#dsendere','#frmFisico').val();
-		nrendere = normalizaNumero($('#nrendere','#frmFisico').val());
-		complend = $('#complend','#frmFisico').val();
-		nmbairro = normalizaTexto($('#nmbairro','#frmFisico').val());
-		nrcepend = normalizaNumero($('#nrcepend','#frmFisico').val());
-		nmcidade = normalizaTexto($('#nmcidade','#frmFisico').val());
-		nrcxapst = normalizaNumero($('#nrcxapst','#frmFisico').val());
-		dtadmiss = $('#dtadmiss','#frmFisico').val();
-		dtdemiss = $('#dtdemiss','#frmFisico').val();
-		cdmotdem = $('#cdmotdem','#frmFisico').val();
-		cdsitcpf = $('#cdsitcpf option:selected','#frmFisico').val();
-		tpdocptl = $('#tpdocptl option:selected','#frmFisico').val();
-		cdufdptl = $('#cdufdptl option:selected','#frmFisico').val();
-		cdufnatu = $('#cdufnatu option:selected','#frmFisico').val();
-		cdufende = $('#cdufende option:selected','#frmFisico').val();		
-		cdsexotl = $('input[name="cdsexotl"]:checked','#frmFisico').val();
-		dsproftl = $('#dsproftl','#frmFisico').val();
-		nmmaeptl = $('#nmmaeptl','#frmFisico').val();
-		nmpaiptl = $('#nmpaiptl','#frmFisico').val();
-		nmsegntl = $('#nmsegntl','#frmFisico').val();
-		inconrfb = $('#inconrfb','#frmFisico').val();
-		idorigee = $('#idorigee','#frmFisico').val();
-		// Indicador se esta conectado no banco de producao
-		inbcprod = $('#inbcprod','#frmFisico').val();
+	    cdtipcta = $('#cdtipcta','#frmFisico').val();
+	    nmprimtl = normalizaTexto($('#nmprimtl','#frmFisico').val());
+	    nmttlrfb = normalizaTexto($('#nmttlrfb','#frmFisico').val());
+	    nrcpfcgc = normalizaNumero($('#nrcpfcgc','#frmFisico').val());
+	    dtcnscpf = $('#dtcnscpf','#frmFisico').val();
+	    nrdocptl = normalizaTexto($('#nrdocptl','#frmFisico').val());
+	    cdoedptl = normalizaTexto($('#cdoedptl','#frmFisico').val());
+	    dtemdptl = $('#dtemdptl','#frmFisico').val();
+	    tpnacion = $('#tpnacion','#frmFisico').val();
+	    dsnacion = $('#dsnacion','#frmFisico').val();
+	    dtnasctl = $('#dtnasctl','#frmFisico').val();
+	    dsnatura = $('#dsnatura','#frmFisico').val();
+	    inhabmen = $('#inhabmen','#frmFisico').val();
+	    dthabmen = $('#dthabmen','#frmFisico').val();
+	    cdestcvl = $('#cdestcvl','#frmFisico').val();
+	    nmconjug = normalizaTexto($('#nmconjug','#frmFisico').val());
+	    cdempres = $('#cdempres','#frmFisico').val()
+	    nrcadast = normalizaNumero($('#nrcadast','#frmFisico').val());
+	    cdocpttl = $('#cdocpttl','#frmFisico').val();
+	    rowidcem = $("#rowidcem","#frmFisico").val();
+	    dsdemail = $("#dsdemail","#frmFisico").val();
+	    nrdddres = $("#nrdddres","#frmFisico").val();
+	    nrtelres = $("#nrtelres","#frmFisico").val();
+	    nrdddcel = $("#nrdddcel","#frmFisico").val();
+	    nrtelcel = $("#nrtelcel","#frmFisico").val();
+	    cdopetfn = $("#cdopetfn","#frmFisico").val();			
+	    nmmaettl = normalizaTexto($('#nmmaettl','#frmFisico').val());
+	    nmpaittl = normalizaTexto($('#nmpaittl','#frmFisico').val());
+	    dsendere = $('#dsendere','#frmFisico').val();
+	    nrendere = normalizaNumero($('#nrendere','#frmFisico').val());
+	    complend = $('#complend','#frmFisico').val();
+	    nmbairro = normalizaTexto($('#nmbairro','#frmFisico').val());
+	    nrcepend = normalizaNumero($('#nrcepend','#frmFisico').val());
+	    nmcidade = normalizaTexto($('#nmcidade','#frmFisico').val());
+	    nrcxapst = normalizaNumero($('#nrcxapst','#frmFisico').val());
+	    dtadmiss = $('#dtadmiss','#frmFisico').val();
+	    dtdemiss = $('#dtdemiss','#frmFisico').val();
+	    cdmotdem = $('#cdmotdem','#frmFisico').val();
+	    cdsitcpf = $('#cdsitcpf option:selected','#frmFisico').val();
+	    tpdocptl = $('#tpdocptl option:selected','#frmFisico').val();
+	    cdufdptl = $('#cdufdptl option:selected','#frmFisico').val();
+	    cdufnatu = $('#cdufnatu option:selected','#frmFisico').val();
+	    cdufende = $('#cdufende option:selected','#frmFisico').val();		
+	    cdsexotl = $('input[name="cdsexotl"]:checked','#frmFisico').val();
+	    dsproftl = $('#dsproftl','#frmFisico').val();
+	    nmmaeptl = $('#nmmaeptl','#frmFisico').val();
+	    nmpaiptl = $('#nmpaiptl','#frmFisico').val();
+	    nmsegntl = $('#nmsegntl','#frmFisico').val();
+	    inconrfb = $('#inconrfb','#frmFisico').val();
+	    idorigee = $('#idorigee','#frmFisico').val();
+	    // Indicador se esta conectado no banco de producao
+        inbcprod = $('#inbcprod', '#frmCabMatric').val();
 		
-		//Normalilza os campos de valor
-		vlparcel = number_format( parseFloat( vlparcel.replace(/[.R$ ]*/g,'').replace(',','.') ),2,',','' );
+	    //Normalilza os campos de valor
+	    vlparcel = number_format( parseFloat( vlparcel.replace(/[.R$ ]*/g,'').replace(',','.') ),2,',','' );
 						
-		//Valida CPF	
-		if ( !validaCpfCnpj(nrcpfcgc ,1) && operacao == 'IV' ) { 
-			hideMsgAguardo();
-			showError('error','CPF inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');');
-			return false; 
-		}
-		// Somente executa se esta conectado no banco de producao
-		if (inbcprod == 'S' && inconrfb == "" && operacao == 'IV') { 
-			hideMsgAguardo();
-			showError('error','Deve ser feita a consulta na RFB.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');');
-			return false; 
-		}
+	    //Valida CPF	
+	    if ( !validaCpfCnpj(nrcpfcgc ,1) && operacao == 'IV' ) { 
+	        hideMsgAguardo();
+	        showError('error','CPF inv&aacute;lido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');');
+	        return false; 
+	    }
+	    // Somente executa se esta conectado no banco de producao
+        if (inbcprod == 'S' && dtcnscpf == "" && operacao == 'IV') {
+	        hideMsgAguardo();
+	        showError('error','Deve ser feita a consulta na RFB.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');');
+	        return false; 
+	    }
 		
-		if (inconrfb == -1 && operacao == 'IV') {
-			hideMsgAguardo();
-			showError('error','CPF/CNPJ com situa&ccedil&atilde;o diferente de regular. Cadastro n&atilde;o permitido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');');
-			return false; 
-		}
-							
+        if (cdsitcpf == "" && operacao == 'IV') {
+	        hideMsgAguardo();
+	        showError('error','CPF/CNPJ com situa&ccedil&atilde;o diferente de regular. Cadastro n&atilde;o permitido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');');
+	        return false; 
+	    }
+
+        if (dsdemail != '') {
+            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+        }
+
+        if (nmprimtl != '') {
+            nmprimtl = removeAcentos(removeCaracteresInvalidos(nmprimtl));
+        }
+
+        if (nmconjug != '') {
+            nmconjug = removeAcentos(removeCaracteresInvalidos(nmconjug));
+        }
+
+        if (nmsegntl != '') {
+            nmsegntl = removeAcentos(removeCaracteresInvalidos(nmsegntl));
+        }
+
+        if (nmttlrfb != '') {
+            nmttlrfb = removeAcentos(removeCaracteresInvalidos(nmttlrfb));
+        }
+
 		$.ajax({		
 			type: 'POST',
 			url: UrlSite + 'telas/matric/manter_fisico.php', 		
@@ -452,7 +475,7 @@ function manterRotina() {
 		idorigee = $('#idorigee','#frmJuridico').val();
 		nrlicamb = $('#nrlicamb','#frmJuridico').val();
 		// Indicador se estã conectado no banco de producao
-		inbcprod = $('#inbcprod','#frmJuridico').val();
+        inbcprod = $('#inbcprod', '#frmCabMatric').val();
 					
 		//Normalilza os campos de valor
 		vlparcel = number_format( parseFloat( vlparcel.replace(/[.R$ ]*/g,'').replace(',','.') ),2,',','' );	
@@ -464,18 +487,34 @@ function manterRotina() {
 			return false; 
 		}	
 		// Somente executa se esta conectado no banco de producao	
-		if (inbcprod == 'S' && inconrfb == "" && operacao == 'IV') { 
+        if (inbcprod == 'S' && dtcnscpf == "" && operacao == 'IV') {
 			hideMsgAguardo();
 			showError('error','Deve ser feita a consulta na RFB.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmFisico\');');
 			return false; 
 		}	
 		
-		if (inconrfb == -1 && operacao == 'IV') {
+        if (cdsitcpf == "" && operacao == 'IV') {
 			hideMsgAguardo();
 			showError('error','CPF/CNPJ com situa&ccedil&atilde;o diferente de regular. Cadastro n&atilde;o permitido.','Alerta - Ayllos','focaCampoErro(\'nrcpfcgc\',\'frmJuridico\');');
 			return false; 
 		}
 			
+        if (dsdemail != '') {
+            dsdemail = removeAcentos(removeCaracteresInvalidos(dsdemail));
+        }
+
+        if (nmprimtl != '') {
+            nmprimtl = removeAcentos(removeCaracteresInvalidos(nmprimtl));
+        }
+
+        if (nmfansia != '') {
+            nmfansia = removeAcentos(removeCaracteresInvalidos(nmfansia));
+        }
+
+        if (nmttlrfb != '') {
+            nmttlrfb = removeAcentos(removeCaracteresInvalidos(nmttlrfb));
+        }
+
 		$.ajax({		
 			type: 'POST',
 			url: UrlSite + 'telas/matric/manter_juridico.php', 		
@@ -514,6 +553,34 @@ function manterRotina() {
 		});			        
 	}                                 
 }       	
+
+function verificaCpfCgcRespSocial(inpessoa, nrcpfcgc) {
+    
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'telas/matric/valida_responsabilidade_social.php',
+        data: {
+            inpessoa: inpessoa,
+            nrcpfcgc: nrcpfcgc,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+        },
+        success: function (response) {
+            try {
+                eval(response);
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+            }
+        }
+    });
+
+    return false;
+}
 
 //Função criado para resolver problema de mensagens no IE.
 function estadoInicial() {
@@ -1123,7 +1190,7 @@ function formataPessoaFisica() {
 	var cDtEmissao		= $('#dtemdptl','#frmFisico');
 	var cNrcxapst		= $('#nrcxapst','#frmFisico');
 	// Indicador se estã conectado no banco de producao
-	var inbcprod		= $('#inbcprod','#frmFisico');	
+    var inbcprod = $('#inbcprod', '#frmCabMatric');
 	
 	cTodosPF1.desabilitaCampo();
 	cNomeTitular.addClass('alphanum').css('width','586px').attr('maxlength','50');
@@ -1179,7 +1246,6 @@ function formataPessoaFisica() {
 				$("#dtcnscpf","#frmFisico").val("");
 				$("#dtnasctl","#frmFisico").val("");
 				$("#inconrfb","#frmFisico").val("");
-				$("#inbcprod","#frmFisico").val("");
 				
 				nrcpfcgc = $(this).val();
 			}
@@ -1302,31 +1368,9 @@ function formataPessoaFisica() {
 				
 		if (cCPF.val() == "" || cDtNasc.val() == "" || cDtConsulta.val() != "") {
 			return false;
-		}
-				
-			var url = UrlSite + "includes/consulta_rfb/getcaptcha.php";
-			var metodo = '$("#divBloqueio").css("display", "")';
-			var mensagem = "Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente. ";
-			var tipo = "error";
-			var titulo = "Alerta - Ayllos";
-					
-			$.ajax({
-					type: "GET",
-					url:  url,
-					timeout: 5000,
-					data: {},
-					error: function(objAjax,responseError,objExcept) {	
-						showError(tipo,mensagem,titulo, metodo);
-					},
-					success: function(response) {
-						if(response != ""){
-		abrirRotina('','Consulta RFB','consulta_rfb','consulta_rfb','RFB');
 						}else{
-							showError(tipo,mensagem,titulo, metodo);
-						}
-					}
-				}
-			);					
+                validaAcessoEexecuta(UrlSite, 'CPF');
+            }
 	});
 	}
 	cNomeTitular.unbind('blur').bind('blur', function(e) { 
@@ -1490,7 +1534,7 @@ function formataPessoaJuridica() {
 	var cDscnae         = $('#dscnae','#frmJuridico');
 	var cNrcxapst		= $('#nrcxapst','#frmJuridico');
 	// Indicador se estã conectado no banco de producao
-	var inbcprod		= $('#inbcprod','#frmJuridico');
+    var inbcprod = $('#inbcprod', '#frmCabMatric');
 	
 	
 	var cNrlicamb       = $('#nrlicamb','#frmJuridico');
@@ -1507,7 +1551,7 @@ function formataPessoaJuridica() {
 	cEmail.css('width','180px');
 	cCodNatJuridica.css('width','60px').addClass('inteiro');
 	cDesNatJuridica.css('width','259px');
-	cCnae.css('width','60px').attr('maxlength','6');
+    cCnae.css('width', '60px').attr('maxlength', '7');
 	cDscnae.css('width','259px');
 	cNrlicamb.css('width','135px').attr('maxlength','15');
 	
@@ -1554,7 +1598,6 @@ function formataPessoaJuridica() {
 			$("#cdsitcpf","#frmJuridico").val(0);
 			$("#dtcnscpf","#frmJuridico").val("");
 			$("#inconrfb","#frmJuridico").val("");
-			$("#inbcprod","#frmJuridico").val("");
 		}
 		
 		nrcpfcgc = $(this).val();
@@ -1572,10 +1615,9 @@ function formataPessoaJuridica() {
 					
 		if (cCNPJ.val() == "" || cDtConsulta.val() != "") {
 			return false;
+            } else {
+                validaAcessoEexecuta(UrlSite, 'CNPJ');
 		}
-					
-		abrirRotina('','Consulta RFB','consulta_rfb','consulta_rfb','RFB');
-						
 	});
 	}
 	
@@ -2464,14 +2506,14 @@ function abrirRotina(nomeValidar,nomeTitulo,nomeScript,nomeURL,ope) {
 		
 	// Carrega biblioteca javascript da rotina
 	// Ao carregar efetua chamada do conteúdo da rotina através de ajax
-	$.getScript(urlScript + ".js",function() {
+    $.getScript(urlScript + ".js?keyrand="+Math.floor((Math.random() * 1000) + 1), function () {
 																		
 		operacao_rsp = operacao;
 	
 		$.ajax({
 			type: "POST",
 			dataType: "html",
-			url: url + ".php",
+            url: url + ".php?keyrand="+Math.floor((Math.random() * 1000) + 1),
 			data: {
 				nrdconta: nrdconta,
 				idseqttl: 1,
@@ -2913,6 +2955,10 @@ function manterOutros(nomeForm){
 		showMsgAguardo( mensagem );	
 	}
 	
+    if (nmprimtl != '') {
+        nmprimtl = removeAcentos(removeCaracteresInvalidos(nmprimtl));
+    }
+
 	$.ajax({		
 		type  : 'POST',
 		async : true ,
@@ -3026,4 +3072,72 @@ function mostraNacionalidade() {
 			
 		}				
 	});
+}
+
+function validaAcessoEexecuta(UrlSite, tipo) {
+    //alert('in');
+
+    //abrirRotina('', 'Consulta RFB', 'consulta_rfb', 'consulta_rfb', 'RFB');
+    if((tipo) && (tipo == 'CPF')){
+        var url = UrlSite + "includes/consulta_rfb/rfb/cpf/getcaptcha.php";
+    }else{
+        var url = UrlSite + "includes/consulta_rfb/rfb/cnpj/getcaptcha.php";
+    }
+    var metodo = '$("#divBloqueio").css("display", "")';
+    var mensagem = "Site de consulta da Receita Federal do Brasil indisponível. Efetue a consulta manualmente. ";
+    var tipo = "error";
+    var titulo = "Alerta - Ayllos";
+    var cDtConsulta = $('#dtcnscpf');
+    //console.log('Primeiro ['+cDtConsulta.attr('receitadisponivel')+']');
+    if ((!(cDtConsulta.attr('receitadisponivel')) || (cDtConsulta.attr('receitadisponivel') == undefined) || (cDtConsulta.attr('receitadisponivel') == 'vazio'))) {
+        showMsgAguardo("Aguarde, consulta a receita ...");
+        //console.log('Entrou ['+cDtConsulta.attr('receitadisponivel')+']');
+        $('#nrcpfcgc', '#frmFisico').bind('blur', function(){
+            //console.log('entrou - change nrcpfcgc');
+            $('#dtcnscpf').attr('receitadisponivel', 'vazio');
+        });
+
+        $('#nrcpfcgc', '#frmJuridico').bind('blur', function(){
+            //console.log('entrou - change nrcpfcgc');
+            $('#dtcnscpf').attr('receitadisponivel', 'vazio');
+        });
+
+        $('#dtnasctl', '#frmFisico').bind('blur', function(){
+            //console.log('entrou - change dtcnscpf');
+            $('#dtcnscpf').attr('receitadisponivel', 'vazio');
+        });
+
+        //console.log('Antes do ajax ['+cDtConsulta.attr('receitadisponivel')+']');
+
+        $.ajax({
+            type: "GET",
+            url: url,
+            timeout: 10000,
+            data: {},
+            complete: function () {
+                hideMsgAguardo();
+            },
+            error: function (objAjax, responseError, objExcept) {
+                var cDtConsulta = $('#dtcnscpf');
+                //console.log('Erro ['+cDtConsulta.attr('receitadisponivel')+']');
+                cDtConsulta.attr('receitadisponivel', 'false');
+                //console.log('Erro - deveria apresentar mensagem');
+                showError(tipo, mensagem, titulo, metodo);
+            },
+            success: function (response) {
+                var cDtConsulta = $('#dtcnscpf');
+                if (response != "") {
+                    //console.log('Sucesso ['+cDtConsulta.attr('receitadisponivel')+']');
+                    cDtConsulta.attr('receitadisponivel', 'true');
+                    abrirRotina('', 'Consulta RFB', 'consulta_rfb', 'consulta_rfb', 'RFB');
+                } else {
+                    //console.log('Erro2 ['+cDtConsulta.attr('receitadisponivel')+']');
+                    cDtConsulta.attr('receitadisponivel', 'false');
+                    showError(tipo, mensagem, titulo, metodo);
+                }
+            }
+        });
+    }
+
+
 }

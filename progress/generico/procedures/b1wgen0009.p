@@ -1,36 +1,8 @@
-/********************************************************************************
-                           ATENCAO!    CONVERSAO PROGRESS - ORACLE
-            ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
-  +-------------------------------------+---------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                   |
-  +-------------------------------------+---------------------------------------+
-  | busca_parametros_dscchq             | DSCC0001.pc_busca_parametros_dscchq   |
-  | busca_dados_bordero                 | DSCC0001.pc_busca_dados_bordero       |
-  | busca_cheques_bordero               | DSCC0001.pc_busca_cheques_bordero     |
-  | carrega_dados_bordero_cheques       | DSCC0001.pc_carrega_dados_bordero_chq |
-  | carrega_dados_nota_promissoria      | DSCC0001.pc_dados_nota_promissoria    |
-  | busca_dados_limite                  | DSCT0002.pc_busca_dados_limite        |
-  | busca_dados_limite_consulta         | DSCT0002.pc_busca_dados_limite_cons   |
-  | carrega_dados_contrato_limite       | DSCT0002.pc_carrega_dados_ctrlim      |
-  | busca_dados_impressao_dscchq        | DSCT0002.pc_busca_dados_imp_descont   |
-  | gera-impressao-limite               | DSCT0002.pc_gera_impressao_limite     |
-  +-------------------------------------+---------------------------------------+
-
-  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
-  SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
-
-  PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
-  PESSOAS:
-   - DANIEL ZIMMERMANN   (CECRED)
-   - MARCOS MARTINI      (SUPERO)
-
-*******************************************************************************/
-
 /* ............................................................................
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 07/06/2016
+   Data    : Marco/2009                     Última atualizacao: 25/10/2016
    
    Dados referentes ao programa:
 
@@ -268,6 +240,8 @@
             20/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                          efetua_liber_anali_bordero. Inclusao de funcionamento
                          de pedir senha do coordenador. (Jaison/James)
+
+	       25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago)
 
 ............................................................................. */
 
@@ -630,6 +604,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR         aux_nrdmeses AS INTE            NO-UNDO.
     DEF VAR         aux_dsdidade AS CHAR            NO-UNDO.
     DEF VAR         aux_dsoperac AS CHAR            NO-UNDO.
+	DEF VAR      aux_flgrestrito AS INTE            NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -756,7 +731,35 @@ PROCEDURE busca_dados_limite_incluir:
            RETURN "NOK".        
 
        END.
-    
+
+   /*Se tem cnae verificar se e um cnae restrito*/
+   IF  crapass.cdclcnae > 0 THEN
+	   DO:
+
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a se o CNAE eh restrito */
+            RUN STORED-PROCEDURE pc_valida_cnae_restrito
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                ,0).
+
+            CLOSE STORED-PROC pc_valida_cnae_restrito
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                        WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+			IF  aux_flgrestrito = 1 THEN
+				DO:
+    					CREATE tt-msg-confirma.
+						ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+				END.
+
+		END.
+
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p
            PERSISTENT SET h-b1wgen0110.
@@ -12453,8 +12456,8 @@ PROCEDURE imprime_cet:
                           INPUT p-vlemprst, /* Valor emprestado */
                           INPUT p-txmensal, /* Taxa mensal/crapldc.txmensal */
                           INPUT 0,          /* 0 - false pr_flretxml*/
-                         OUTPUT "",
-                         OUTPUT "", 
+                         OUTPUT "",              
+			             OUTPUT "", 
                          OUTPUT 0,
                          OUTPUT "").
 
