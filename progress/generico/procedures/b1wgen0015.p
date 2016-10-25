@@ -379,10 +379,13 @@
 
                21/09/2016 - Ajuste na validacao do horario de envio da TED (Diego).
 			                  
-         28/09/2016 - #474660 Alterada a regra de impressao de termo de responsabilidade
-                      na rotina liberar-senha-internet para nao imprimir quando o cooperado
-                      estava com o acesso bloqueado ou quando o mesmo foi admitido na
-                      cooperativa depois de 11/2015 (Carlos)
+			   28/09/2016 - #474660 Alterada a regra de impressao de termo de responsabilidade
+                            na rotina liberar-senha-internet para nao imprimir quando o cooperado
+                            estava com o acesso bloqueado ou quando o mesmo foi admitido na
+                            cooperativa depois de 11/2015 (Carlos)
+
+			   25/10/2016 - Novo ajuste na validacao do horario de envio da TED, solicitado 
+			                pelo financeiro (Diego).
 
 ..............................................................................*/
 
@@ -453,8 +456,6 @@ PROCEDURE horario_operacao:
     DEF VAR aux_hrinipag AS INTE                                    NO-UNDO.
     DEF VAR aux_hrfimpag AS INTE                                    NO-UNDO.
     DEF VAR aux_qtmesagd AS INTE                                    NO-UNDO.
-    DEF VAR aux_flgutstr AS LOGICAL                                 NO-UNDO.
-    DEF VAR aux_flgutpag AS LOGICAL                                 NO-UNDO.
 
     EMPTY TEMP-TABLE tt-limite.
 
@@ -674,34 +675,35 @@ PROCEDURE horario_operacao:
               END.
             ELSE
               DO:
+
+			    /*****
+                Por solicitacao do financeiro, iremos apenas verificar se a cooperativa esta operante
+                no STR/PAG, sem a necessidade de verificar o horario de operacao. Devera prevalecer o 
+                horario da STR, e somente quando este nao estiver ATIVO mostrara horario da PAG.
+                Por regra, o STR sempre terá um período maior    
+                *****/
+			 
                 /*-- Operando com mensagens STR --*/
                 IF   crapcop.flgopstr THEN
-                     IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
+				     ASSIGN aux_hrinipag = crapcop.iniopstr
+					        aux_hrfimpag = crapcop.fimopstr.
+                     
+					 /**
+					 IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
                         ASSIGN aux_flgutstr = TRUE.
-                  
-                 /*-- Operando com mensagens PAG --*/
-                IF   crapcop.flgoppag  THEN 
-                     IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
-                        ASSIGN aux_flgutpag = TRUE.
+				     **/
+			    ELSE
+				     DO:
+                         /*-- Operando com mensagens PAG --*/
+                         IF   crapcop.flgoppag  THEN 
+						      ASSIGN aux_hrinipag = crapcop.inioppag
+							         aux_hrfimpag = crapcop.fimoppag.
 
-                /* Se opera com PAG e está dentro do horario permitido */
-                IF   aux_flgutpag THEN 
-                     ASSIGN aux_hrinipag = crapcop.inioppag
-                            aux_hrfimpag = crapcop.fimoppag.
-                ELSE
-                    DO:
-					    /* Se opera com STR */
-                        IF   crapcop.flgopstr THEN 
-                             /* independente de estar ou não dentro do horário 
-                                permitido, mostra hora do STR. Por regra, o STR 
-                                sempre terá um período maior */ 
-                             ASSIGN aux_hrinipag = crapcop.iniopstr
-						            aux_hrfimpag = crapcop.fimopstr.
-                        ELSE
-                             /* Só opera com PAG e está fora do horário */
-                             ASSIGN aux_hrinipag = crapcop.inioppag
-                                    aux_hrfimpag = crapcop.fimoppag.
-                    END. 
+				              /**
+                              IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
+                                 ASSIGN aux_flgutpag = TRUE.
+				              **/
+				     END.
 			  END.
 
             CREATE tt-limite.
