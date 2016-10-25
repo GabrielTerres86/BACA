@@ -8715,15 +8715,15 @@ create or replace package body cecred.PAGA0002 is
         vr_tab_dados_agendamento(vr_cdindice).cdtiptra := rw_craplau.cdtiptra;
         vr_tab_dados_agendamento(vr_cdindice).dstiptra := vr_dstiptra;
         vr_tab_dados_agendamento(vr_cdindice).dtmvtage := rw_craplau.dtmvtolt;
-        vr_tab_dados_agendamento(vr_cdindice).incancel := vr_incancel;
+        vr_tab_dados_agendamento(vr_cdindice).incancel := NVL(vr_incancel,0);
         vr_tab_dados_agendamento(vr_cdindice).nmprimtl := vr_nmprimtl;
         vr_tab_dados_agendamento(vr_cdindice).nmprepos := (CASE WHEN rw_craplau.nmprepos IS NOT NULL THEN rw_craplau.nmprepos ELSE '' END);
         vr_tab_dados_agendamento(vr_cdindice).nrcpfpre := rw_craplau.nrcpfpre;
         vr_tab_dados_agendamento(vr_cdindice).nmoperad := vr_nmoperad;
         vr_tab_dados_agendamento(vr_cdindice).nrcpfope := rw_craplau.nrcpfope;
         vr_tab_dados_agendamento(vr_cdindice).idtitdda := rw_craplau.idtitdda;
-		vr_tab_dados_agendamento(vr_cdindice).nrcpfcgc := vr_nrcpfcgc;
-		vr_tab_dados_agendamento(vr_cdindice).dtvendrf := vr_dtvencto;
+		    vr_tab_dados_agendamento(vr_cdindice).nrcpfcgc := vr_nrcpfcgc;
+		    vr_tab_dados_agendamento(vr_cdindice).dtvendrf := vr_dtvencto;
         vr_tab_dados_agendamento(vr_cdindice).cdageban := vr_cdageban;
         vr_tab_dados_agendamento(vr_cdindice).dtagenda := vr_dtagenda; 
         vr_tab_dados_agendamento(vr_cdindice).tpcaptur := vr_tpcaptur;
@@ -8885,9 +8885,9 @@ create or replace package body cecred.PAGA0002 is
                                                   ||  '<cdtiptra>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).cdtiptra)              || '</cdtiptra>'
                                                   ||  '<dstiptra>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dstiptra) || '</dstiptra>'
                                                   ||  '<dtagenda>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dtagenda,'DD/MM/RRRR') || '</dtagenda>'
-												  ||  '<tpcaptur>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).tpcaptur)              || '</tpcaptur>'
+												                          ||  '<tpcaptur>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).tpcaptur)              || '</tpcaptur>'
                                                   ||  '<dtvendrf>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dtvendrf,'DD/MM/RRRR') || '</dtvendrf>'
-												  ||  '<nrcpfcgc>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).nrcpfcgc)              || '</nrcpfcgc>'
+												                          ||  '<nrcpfcgc>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).nrcpfcgc)              || '</nrcpfcgc>'
                                                   ||  '<dstipcat>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dstipcat) || '</dstipcat>'
                                                   ||  '<dsidpgto>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dsidpgto) || '</dsidpgto>'
                                                   ||  '<dsnomfon>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dsnomfon) || '</dsnomfon>'
@@ -8900,7 +8900,7 @@ create or replace package body cecred.PAGA0002 is
                                                   ||  '<vlrtotal>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).vlrtotal) || '</vlrtotal>'
                                                   ||  '<vlrrecbr>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).vlrrecbr) || '</vlrrecbr>'
                                                   ||  '<vlrperce>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).vlrperce) || '</vlrperce>'
-                                                  ||  '<incancel>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).incancel) || '</idcancel>'
+                                                  ||  '<incancel>' || NVL(TO_CHAR(vr_tab_dados_agendamento(vr_contador).incancel),0) || '</incancel>'
                                                 || '</dados>');                                                                     
       END LOOP;
     			
