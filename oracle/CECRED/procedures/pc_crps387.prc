@@ -394,7 +394,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
       CURSOR cr_gncvcop IS
         SELECT cdconven
           FROM gncvcop
-         WHERE gncvcop.cdcooper = pr_cdcooper AND cdconven = 55
+         WHERE gncvcop.cdcooper = pr_cdcooper
          ORDER BY cdconven;
 
       -- Cursor sobre o cadastro de convenios
