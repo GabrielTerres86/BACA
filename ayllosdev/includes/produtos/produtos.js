@@ -11,6 +11,9 @@
 			
 			11/08/2016 - Adicionado função controlaFoco.
 			(Evandro - RKAM).
+			
+			26/10/2016 - Chamado 536620 - Modificado as chamadas da funcao acessaRotina que passam pela tela Atenda.
+            (Gil Furtado - Mouts)
                                                                   
 
 ************************************************************************/
@@ -255,7 +258,6 @@ function controlaLayout(ope) {
 
         // Percorrendo todos os checkbox do frmServicosAdicionais
         $('input[type="checkbox"]', '#frmServicosAdicionais').each(function (i) {
-
             if ($(this).attr('id').indexOf('ofertar') >= 0) {
 
                 var elemento;
@@ -270,7 +272,6 @@ function controlaLayout(ope) {
 
                             // Percorrendo todos os elementos do frmServicosAdicionais
                             $('input[name="' + $(this).attr('name') + '"]', '#frmServicosAdicionais').each(function (i) {
-
                                 if ($(this).attr('id').indexOf('ofertar') == -1) {
 
                                     if ($(this).attr('id') == "outras") {
@@ -300,7 +301,6 @@ function controlaLayout(ope) {
                         } else {
                             // Percorrendo todos os checkbox do frmServicosAdicionais
                             $('input[name="' + $(this).attr('name') + '"]', '#frmServicosAdicionais').each(function (i) {
-
                                 if ($(this).attr('id').indexOf('ofertar') == -1) {
                                     if ($(this).attr('type') == 'checkbox') {
                                         $(this).css({ 'display': 'none' }).prop('checked', false);
@@ -439,7 +439,7 @@ function alimtentaTelas(operacao) {
 
         if (kitBoasVindas == '1') {
 
-            produtosTelasServicos[index] = 'acessaRotina(\'RELACIONAMENTO\',\'Relacionamento\',\'relacionamento\');';
+            produtosTelasServicos[index] = 'acessaRotina(\'\',\'RELACIONAMENTO\',\'Relacionamento\',\'relacionamento\');';
             index++;
         }
 
@@ -452,7 +452,7 @@ function alimtentaTelas(operacao) {
                     //ACESSO A INTERNET
                     case "1":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'INTERNET\',\'Internet\',\'internet\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'INTERNET\',\'Internet\',\'internet\');';
                         index++;
 
                         break;
@@ -460,7 +460,7 @@ function alimtentaTelas(operacao) {
                         //ACESSO AO TELE SALDO
                     case "2":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'TELE ATEN\',\'Tele Atendimento\',\'tele_atendimento\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'TELE ATEN\',\'Tele Atendimento\',\'tele_atendimento\');';
                         index++;
 
                         break;
@@ -468,7 +468,7 @@ function alimtentaTelas(operacao) {
                         //APLICACAO
                     case "3":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'APLICACOES\',\'Aplica&ccedil;&otilde;es\',\'aplicacoes\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'APLICACOES\',\'Aplica&ccedil;&otilde;es\',\'aplicacoes\');';
                         index++;
 
                         break;
@@ -476,7 +476,7 @@ function alimtentaTelas(operacao) {
                         //CARTAO DE CREDITO
                     case "4":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'CARTAO CRED\',\'Cart&otilde;es de Cr&eacute;dito\',\'cartao_credito\');'
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'CARTAO CRED\',\'Cart&otilde;es de Cr&eacute;dito\',\'cartao_credito\');'
                         index++;
 
                         break;
@@ -484,7 +484,7 @@ function alimtentaTelas(operacao) {
                         //CARTAO MAGNETICO
                     case "5":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'MAGNETICO\',\'Cart&otilde;es Magn&eacute;ticos\',\'magneticos\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'MAGNETICO\',\'Cart&otilde;es Magn&eacute;ticos\',\'magneticos\');';
                         index++;
 
                         break;
@@ -492,7 +492,7 @@ function alimtentaTelas(operacao) {
                         //COBRANCA BANCARIA
                     case "6":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'COBRANCA\',\'Cobran&ccedil;a\',\'cobranca\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'COBRANCA\',\'Cobran&ccedil;a\',\'cobranca\');';
                         index++;
 
                         break;
@@ -516,7 +516,7 @@ function alimtentaTelas(operacao) {
                         //DDA
                     case "9":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'DDA\',\'DDA\',\'dda\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'DDA\',\'DDA\',\'dda\');';
                         index++;
 
                         break;
@@ -540,7 +540,7 @@ function alimtentaTelas(operacao) {
                         //INTEGRALIZACAO DO CAPITAL
                     case "12":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'CAPITAL\',\'Capital\',\'capital\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'CAPITAL\',\'Capital\',\'capital\');';
                         index++;
 
                         break;
@@ -549,9 +549,9 @@ function alimtentaTelas(operacao) {
                     case "13":
 
                         if (inpessoa == 1) {
-                            produtosTelasServicos[index] = 'acessaRotina(\'LIMITE CRED\',\'Limite de Cr&eacute;dito\',\'limite_credito\');';
+                            produtosTelasServicos[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite de Cr&eacute;dito\',\'limite_credito\');';
                         } else {
-                            produtosTelasServicos[index] = 'acessaRotina(\'LIMITE CRED\',\'Limite Empresarial\',\'limite_credito\');';
+                            produtosTelasServicos[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite Empresarial\',\'limite_credito\');';
                         }
                         index++;
 
@@ -560,7 +560,7 @@ function alimtentaTelas(operacao) {
                         //LIMITE INTERNET
                     case "14":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'INTERNET\',\'Internet\',\'internet\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'INTERNET\',\'Internet\',\'internet\');';
                         index++;
 
                         break;
@@ -568,7 +568,7 @@ function alimtentaTelas(operacao) {
                         //PLANO COTAS
                     case "15":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'CAPITAL\',\'Capital\',\'capital\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'CAPITAL\',\'Capital\',\'capital\');';
                         index++;
 
                         break;
@@ -576,7 +576,7 @@ function alimtentaTelas(operacao) {
                         //POUPANCA PROGRAMADA
                     case "16":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'POUP. PROG\',\'oupan&ccedil;a Programada\',\'poupanca_programada\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'POUP. PROG\',\'oupan&ccedil;a Programada\',\'poupanca_programada\');';
                         index++;
 
                         break;
@@ -592,7 +592,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO VIDA
                     case "18":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'SEGURO\',\'Seguro\',\'seguro\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');';
                         index++;
 
                         break;
@@ -600,7 +600,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO RESIDENCIA
                     case "19":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'SEGURO\',\'Seguro\',\'seguro\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');';
                         index++;
 
                         break;
@@ -608,7 +608,7 @@ function alimtentaTelas(operacao) {
                         // GUIAS DE BOAS VINDAS
                     case "20":
 
-                        produtosTelasServicos[index] = 'acessaRotina(\'Relacionamento\',\'Relacionamento\',\'relacionamento\');';
+                        produtosTelasServicos[index] = 'acessaRotina(\'\',\'Relacionamento\',\'Relacionamento\',\'relacionamento\');';
                         index++;
 
                         break;
@@ -654,7 +654,7 @@ function alimtentaTelas(operacao) {
         });
 
         if (produtosTelasServicos.length > 0) {
-            produtosTelasServicos[index] = 'executandoProdutosServicos = false;acessaRotina(\'PRODUTOS\',\'Produtos\',\'produtos\',\'2\',atualizarServicos);';
+            produtosTelasServicos[index] = 'executandoProdutosServicos = false;acessaRotina(\'\',\'PRODUTOS\',\'Produtos\',\'produtos\',\'2\',atualizarServicos);';
         }
 
     } else {
@@ -672,7 +672,7 @@ function alimtentaTelas(operacao) {
                     //ACESSO A INTERNET
                     case "1":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'INTERNET\',\'Internet\',\'internet\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'INTERNET\',\'Internet\',\'internet\');';
                         index++;
 
                         break;
@@ -680,7 +680,7 @@ function alimtentaTelas(operacao) {
                         //ACESSO AO TELE SALDO
                     case "2":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'TELE ATEN\',\'Tele Atendimento\',\'tele_atendimento\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'TELE ATEN\',\'Tele Atendimento\',\'tele_atendimento\');';
                         index++;
 
                         break;
@@ -688,7 +688,7 @@ function alimtentaTelas(operacao) {
                         //APLICACAO
                     case "3":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'APLICACOES\',\'Aplica&ccedil;&otilde;es\',\'aplicacoes\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'APLICACOES\',\'Aplica&ccedil;&otilde;es\',\'aplicacoes\');';
                         index++;
 
                         break;
@@ -696,7 +696,7 @@ function alimtentaTelas(operacao) {
                         //CARTAO DE CREDITO
                     case "4":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'CARTAO CRED\',\'Cart&otilde;es de Cr&eacute;dito\',\'cartao_credito\');'
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'CARTAO CRED\',\'Cart&otilde;es de Cr&eacute;dito\',\'cartao_credito\');'
                         index++;
 
                         break;
@@ -704,7 +704,7 @@ function alimtentaTelas(operacao) {
                         //CARTAO MAGNETICO
                     case "5":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'MAGNETICO\',\'Cart&otilde;es Magn&eacute;ticos\',\'magneticos\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'MAGNETICO\',\'Cart&otilde;es Magn&eacute;ticos\',\'magneticos\');';
                         index++;
 
                         break;
@@ -712,7 +712,7 @@ function alimtentaTelas(operacao) {
                         //COBRANCA BANCARIA
                     case "6":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'COBRANCA\',\'Cobran&ccedil;a\',\'cobranca\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'COBRANCA\',\'Cobran&ccedil;a\',\'cobranca\');';
                         index++;
 
                         break;
@@ -736,7 +736,7 @@ function alimtentaTelas(operacao) {
                         //DDA
                     case "9":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'DDA\',\'DDA\',\'dda\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'DDA\',\'DDA\',\'dda\');';
                         index++;
 
                         break;
@@ -760,7 +760,7 @@ function alimtentaTelas(operacao) {
                         //INTEGRALIZACAO DO CAPITAL
                     case "12":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'CAPITAL\',\'Capital\',\'capital\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'CAPITAL\',\'Capital\',\'capital\');';
                         index++;
 
                         break;
@@ -769,9 +769,9 @@ function alimtentaTelas(operacao) {
                     case "13":
 
                         if (inpessoa == 1) {
-                            produtosTelasServicosAdicionais[index] = 'acessaRotina(\'LIMITE CRED\',\'Limite de Cr&eacute;dito\',\'limite_credito\');';
+                            produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite de Cr&eacute;dito\',\'limite_credito\');';
                         } else {
-                            produtosTelasServicosAdicionais[index] = 'acessaRotina(\'LIMITE CRED\',\'Limite Empresarial\',\'limite_credito\');';
+                            produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'LIMITE CRED\',\'Limite Empresarial\',\'limite_credito\');';
                         }
 
                         index++;
@@ -781,7 +781,7 @@ function alimtentaTelas(operacao) {
                         //LIMITE PARA INTERNET
                     case "14":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'INTERNET\',\'Internet\',\'internet\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\', \'INTERNET\',\'Internet\',\'internet\');';
                         index++;
 
                         break;
@@ -789,7 +789,7 @@ function alimtentaTelas(operacao) {
                         //PLANMO COTAS
                     case "15":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'CAPITAL\',\'Capital\',\'capital\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'CAPITAL\',\'Capital\',\'capital\');';
                         index++;
 
                         break;
@@ -797,7 +797,7 @@ function alimtentaTelas(operacao) {
                         //POUPANCA PROGRAMADA
                     case "16":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'POUP. PROG\',\'oupan&ccedil;a Programada\',\'poupanca_programada\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'POUP. PROG\',\'oupan&ccedil;a Programada\',\'poupanca_programada\');';
                         index++;
 
                         break;
@@ -813,7 +813,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO VIDA
                     case "18":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'SEGURO\',\'Seguro\',\'seguro\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');';
                         index++;
 
                         break;
@@ -821,7 +821,7 @@ function alimtentaTelas(operacao) {
                         //SEGURO RESIDENCIAL 
                     case "19":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'SEGURO\',\'Seguro\',\'seguro\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'SEGURO\',\'Seguro\',\'seguro\');';
                         index++;
 
                         break;
@@ -829,7 +829,7 @@ function alimtentaTelas(operacao) {
                         // GUIA DE BOAS VINDAS
                     case "20":
 
-                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'Relacionamento\',\'Relacionamento\',\'relacionamento\');';
+                        produtosTelasServicosAdicionais[index] = 'acessaRotina(\'\',\'Relacionamento\',\'Relacionamento\',\'relacionamento\');';
                         index++;
 
                         break;
@@ -873,7 +873,7 @@ function alimtentaTelas(operacao) {
 
         });
 
-        produtosTelasServicosAdicionais[index] = 'executandoProdutosServicosAdicionais = false;acessaRotina(\'PRODUTOS\',\'Produtos\',\'produtos\',\'3\',atualizarServicos);';
+        produtosTelasServicosAdicionais[index] = 'executandoProdutosServicosAdicionais = false;acessaRotina(\'\',\'PRODUTOS\',\'Produtos\',\'produtos\',\'3\',atualizarServicos);';
 
 
     }
