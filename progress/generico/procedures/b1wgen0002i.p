@@ -2,7 +2,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0002i.p
    Autor   : André - DB1.
-   Data    : 23/03/2011                        Ultima atualizacao: 23/09/2016
+   Data    : 23/03/2011                        Ultima atualizacao: 10/10/2016
     
    Dados referentes ao programa:
 
@@ -235,6 +235,7 @@
                             Correçao deletar o Handle da b1wgen0024 esta gerando erro na geraçao
                             do PDF para envio da esteira (Oscar).
                                                    
+               10/10/2016 - Ajuste sempre gerar o PDF para esteira de credito (Oscar).                                    
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -1006,7 +1007,8 @@ PROCEDURE gera-impressao-empr:
        
             END.
 
-        IF  (crawepr.flgimppr   OR   crawepr.flgimpnp)  THEN
+        IF  (crawepr.flgimppr   OR   crawepr.flgimpnp OR  
+            (par_idorigem = 9 AND par_idimpres = 3))  THEN  /* Sempre gerar o PDF para esteira de credito */
             DO:
                 IF  par_idimpres = 1  THEN /* COMPLETA */
                     DO:
@@ -1043,7 +1045,8 @@ PROCEDURE gera-impressao-empr:
                         aux_dstransa = "Gerar impressao da proposta de " +
                                        "emprestimo.".
                 
-                         IF  NOT crawepr.flgimppr   THEN
+                         IF  (NOT crawepr.flgimppr) AND 
+                             (par_idorigem <> 9) /* Esteira */  THEN 
                              DO:
                                  ASSIGN aux_cdcritic = 14
                                         aux_dscritic = "".
