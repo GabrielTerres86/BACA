@@ -873,6 +873,7 @@ PROCEDURE obtem-log-cecred:
 			   ELSE
 			   IF xRoot2:name = "linhas_logspb_totais" THEN
 			      DO:
+				     CREATE tt-logspb-totais.
 				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
 					   xRoot2:GET-CHILD(xField,aux_cont). 
@@ -880,9 +881,6 @@ PROCEDURE obtem-log-cecred:
 					   IF xField:SUBTYPE <> "ELEMENT" THEN 
 						  NEXT. 
 
-					   IF xRoot2:NUM-CHILDREN > 0 THEN
-                          CREATE tt-logspb-totais.
-						  
 					   DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
 						
    						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
