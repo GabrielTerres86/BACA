@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 13/11/2015
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 20/09/2016
   --
   --  Dados referentes ao programa:
   --
@@ -307,6 +307,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --              13/11/2015 - Correcao na rotina pc_grava_arquivo_reafor, existia uma
   --                           chamada da rotina pc_incrementa_linha passando 8 como parametro
   --                           quando o correto seria passar 1. Chamado 347582 (Heitor - RKAM)
+  --
+  --              20/09/2016 - #523936 Criação de log de controle de início, erros e fim de execução
+  --                           do job pc_controle_remessas (Carlos)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -7174,9 +7177,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
+      vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_REMESSAS';
+      vr_nomdojob    VARCHAR2(40) := 'JBCYBER_CONTROLE_REMESSAS';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;
+
     BEGIN
       -- Esta rotina somente poderá ser executada de 2ª a 6ª
       IF to_char(SYSDATE,'d') NOT IN(1,7) THEN
+
+        -- Log de inicio de execucao
+        pc_controla_log_batch(pr_dstiplog => 'I');
 
         -- Buscar parâmetros gerais
         vr_hora_envio      := gene0001.fn_param_sistema('CRED',0,'AUTBUR_HORA_ENVIO');      --> Hora de início da preparação / Envio
@@ -7209,6 +7232,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             IF vr_dscritic IS NOT NULL THEN
               -- Desfazer agendamentos
               ROLLBACK;
+              
+              -- Log de erro de execucao
+              pc_controla_log_batch(pr_dstiplog => 'E',
+                                    pr_dscritic => vr_dscritic);
+              
               -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
               -- arquivo deste Bureaux juntamente dos problemas ocorridos.
               gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7247,6 +7275,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                               ,pr_dscritic => vr_dscritic);
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
+
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_dscritic);
+
             -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
             -- arquivo deste Bureaux juntamente dos problemas ocorridos.
             gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7313,6 +7346,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             IF vr_dscritic IS NOT NULL THEN
               -- rollback das informa
               ROLLBACK;
+
+              -- Log de erro de execucao
+              pc_controla_log_batch(pr_dstiplog => 'E',
+                                    pr_dscritic => vr_dscritic);
+
               -- Fecha cursor
               IF cr_verf_remessa%ISOPEN THEN
                 CLOSE cr_verf_remessa;
@@ -7347,6 +7385,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                           ,pr_dscritic => vr_dscritic);
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
+
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_dscritic);  
+
             -- Enviaremos e-mail para a área de crédito para avisar do problema no envio
             -- do arquivo deste Bureaux juntamente dos problemas ocorridos.
             gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7383,6 +7426,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                             ,pr_dscritic => vr_dscritic);
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
+            
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_dscritic);
+
             -- Enviaremos e-mail para a área de crédito para avisar do problema no envio
             -- do arquivo deste Bureaux juntamente dos problemas ocorridos.
             gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7437,6 +7485,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                               ,pr_dscritic => vr_dscritic);
               -- Se houver retorno de crítica
               IF vr_dscritic IS NOT NULL THEN
+
+                -- Log de erro de execucao
+                pc_controla_log_batch(pr_dstiplog => 'E',
+                                      pr_dscritic => vr_dscritic);  
+
                 -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
                 -- arquivo deste Bureaux juntamente dos problemas ocorridos.
                 gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7460,6 +7513,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                             ,pr_dscritic =>  vr_dscritic);
         -- Gravação final
         COMMIT;
+
+        -- Log de fim da execucao
+        pc_controla_log_batch(pr_dstiplog => 'F');
 
       END IF; --> Somente de 2ª a 6ª
 

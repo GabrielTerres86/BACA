@@ -831,8 +831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    ,pr_nmsistem IN craptab.nmsistem%TYPE
                    ,pr_tptabela IN craptab.tptabela%TYPE
                    ,pr_cdempres IN craptab.cdempres%TYPE
-                   ,pr_cdacesso IN craptab.cdacesso%TYPE
-                   ,pr_tpregist IN craptab.tpregist%TYPE) IS
+                   ,pr_cdacesso IN craptab.cdacesso%TYPE) IS
     SELECT tab.dstextab
           ,tab.tpregist
           ,tab.ROWID
@@ -841,8 +840,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND UPPER(tab.nmsistem) = pr_nmsistem
            AND UPPER(tab.tptabela) = pr_tptabela
            AND tab.cdempres = pr_cdempres
-           AND UPPER(tab.cdacesso) = pr_cdacesso
-           AND tab.tpregist = NVL(pr_tpregist, tab.tpregist);
+           AND UPPER(tab.cdacesso) = pr_cdacesso;
   rw_craptab cr_craptab%ROWTYPE;
 
   /* Cursor de Linha de Credito */
@@ -2157,7 +2155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                         Ultima atualizacao: 21/05/2015
+       Data    : Fevereiro/2013.                         Ultima atualizacao: 21/10/2016
     
        Dados referentes ao programa:
     
@@ -2179,6 +2177,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 financiamento.(James)             
                                 
                    21/05/2015 - Ajuste para verificar se Cobra Multa. (James)
+
+				   21/10/2016 - Ajuste para utilização do cursor padrão da craptab. (Rodrigo)
     ............................................................................. */
     DECLARE
       -- Saida com erro opção 2
@@ -2245,6 +2245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_qtdianor INTEGER; --> Qtde de dias passados da data do vcto
       vr_qtdiamor NUMBER; --> Qtde de dias entre a data atual e a calculada
       vr_txdiaria NUMBER(18, 10); --> Taxa para calculo de mora
+      vr_dstextab craptab.dstextab%TYPE;
     
     BEGIN
       -- Criar um bloco para faciliar o tratamento de erro
@@ -2285,29 +2286,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Verifica se a Linha de Credito Cobra Multa
         IF rw_craplcr.flgcobmu = 1 THEN
           -- Obter o % de multa da CECRED - TAB090
-          rw_craptab := NULL;
-          OPEN cr_craptab(pr_cdcooper => 3 -- Fixo 3 - Cecred
+          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 3 -- Fixo 3 - Cecred
                          ,pr_nmsistem => 'CRED'
                          ,pr_tptabela => 'USUARI'
                          ,pr_cdempres => 11
                          ,pr_cdacesso => 'PAREMPCTL'
                          ,pr_tpregist => 01);
-          FETCH cr_craptab
-            INTO rw_craptab;
-          -- Se não encontrar
-          IF cr_craptab%NOTFOUND THEN
-            -- Fechar o cursor pois teremos raise
-            CLOSE cr_craptab;
+          IF vr_dstextab IS NULL THEN
             -- Gerar erro com critica 55
             vr_cdcritic := 55;
             vr_des_erro := gene0001.fn_busca_critica(55);
             RAISE vr_exc_erro;
-          ELSE
-            -- Fecha o cursor para continuar o processo
-            CLOSE cr_craptab;
           END IF;
           -- Utilizar como % de multa, as 6 primeiras posições encontradas
-          vr_percmult := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
+          vr_percmult := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,1,6));
         ELSE
           vr_percmult := 0;
         END IF;       
@@ -2522,7 +2514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 21/05/2015
+       Data    : 06/03/2012                         Ultima atualizacao: 21/10/2016
     
        Dados referentes ao programa:
     
@@ -2552,6 +2544,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     21/05/2015 - Ajuste para verificar se a Linha de Crédito Cobra Multa. (James)
                     
                     09/10/2015 - Inclusao de histórico de estorno PP. (Oscar)
+
+				    21/10/2016 - Ajuste para utilização do cursor padrão da craptab. (Rodrigo)
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -2662,6 +2656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_vlmrapar crappep.vlmrapar%TYPE := 0;
     vr_vlprvenc NUMBER := 0;
     vr_vlpraven NUMBER := 0;
+    vr_dstextab craptab.dstextab%TYPE;
   
   BEGIN
 
@@ -2682,30 +2677,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Verifica se Cobra Multa
       IF rw_craplcr.flgcobmu = 1 THEN
         -- Obter o % de multa da CECRED - TAB090
-        rw_craptab := NULL;
-        OPEN cr_craptab(pr_cdcooper => 3 -- Fixo 3 - Cecred
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 3 -- Fixo 3 - Cecred
                        ,pr_nmsistem => 'CRED'
                        ,pr_tptabela => 'USUARI'
                        ,pr_cdempres => 11
                        ,pr_cdacesso => 'PAREMPCTL'
                        ,pr_tpregist => 01);
-        FETCH cr_craptab
-          INTO rw_craptab;
         -- Se não encontrar
-        IF cr_craptab%NOTFOUND THEN
-          -- Fechar o cursor pois teremos raise
-          CLOSE cr_craptab;
+        IF vr_dstextab IS NULL THEN
           -- Gerar erro com critica 55
           vr_cdcritic := 55;
           vr_des_erro := gene0001.fn_busca_critica(55);
           RAISE vr_exc_erro;
-        ELSE
-          -- Fecha o cursor para continuar o processo
-          CLOSE cr_craptab;
         END IF;
         
         -- Utilizar como % de multa, as 6 primeiras posições encontradas
-        vr_percmult := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
+        vr_percmult := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,1,6));
       ELSE  
         vr_percmult := 0;
       END IF;        
@@ -3382,7 +3369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                    Ultima atualizacao: 03/08/2015
+       Data    : Fevereiro/2013.                    Ultima atualizacao: 21/10/2016
     
        Dados referentes ao programa:
     
@@ -3404,6 +3391,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 
                    03/08/2015 - Ajuste em adicionar NVL em dados do DIADOPAGTO.
                                 (Jorge/Elton) - SD 303248
+
+				   21/10/2016 - Ajuste para utilização do cursor padrão da craptab e
+                                carga da temp-table completa apenas no batch. (Rodrigo)
     ............................................................................. */
     DECLARE
       -- Busca dos dados do associado
@@ -3430,35 +3420,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Empresa encontrada nos cursores acima
       vr_cdempres crapttl.cdempres%TYPE;
       vr_nrindice VARCHAR2(15);
+      vr_dstextab craptab.dstextab%TYPE;
+        
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     BEGIN 
-      -- Se o vetor não estiver carregado para a cooperativa
-      IF NOT vr_tab_diadopagto.EXISTS(pr_cdcooper) THEN
-        
-        --Cria um primeiro registro apenas com o indice da cooperativa, para controle
-        vr_tab_diadopagto(pr_cdcooper).diapgtoh := 0;
-        
-        -- Busca de todos registros para atualizar o vetor
-        FOR rw_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 00
-                                    ,pr_cdacesso => 'DIADOPAGTO'
-                                    ,pr_tpregist => NULL) LOOP
-                                    
-          -- Indice da tabela temporaria, cdcooper || cdempres Ex: 000010000000081
-          vr_nrindice := LPAD(pr_cdcooper,5,'0') || LPAD(rw_craptab.tpregist,10,'0');
-                                    
-          -- Adicionar no vetor cmfe a empresa encontrada (tpregist)
-          vr_tab_diadopagto(vr_nrindice).diapgtoh := NVL(TRIM(SUBSTR(
-                                                     rw_craptab.dstextab,7,2)),0);
-          vr_tab_diadopagto(vr_nrindice).diapgtom := NVL(TRIM(SUBSTR(
-                                                     rw_craptab.dstextab,4,2)),0);
-          vr_tab_diadopagto(vr_nrindice).flgfolha := NVL(TRIM(SUBSTR(
-                                                     rw_craptab.dstextab,14,1)),0);
-          vr_tab_diadopagto(vr_nrindice).ddmesnov := NVL(TRIM(SUBSTR(
-                                                     rw_craptab.dstextab,1,2)),0);
-        END LOOP;
-      END IF;
       -- Busca dos dados do associado
       OPEN cr_crapass;
       FETCH cr_crapass
@@ -3495,6 +3461,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             CLOSE cr_crapjur;
           END IF;
         END IF;
+      END IF;
+      
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+      INTO  rw_crapdat;
+      CLOSE btch0001.cr_crapdat; 
+
+      -- Se o vetor não estiver carregado para a cooperativa e estiver no batch
+      IF NOT vr_tab_diadopagto.EXISTS(pr_cdcooper) AND rw_crapdat.inproces > 1 THEN
+        
+        --Cria um primeiro registro apenas com o indice da cooperativa, para controle
+        vr_tab_diadopagto(pr_cdcooper).diapgtoh := 0;
+        
+        -- Busca de todos registros para atualizar o vetor
+        FOR rw_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
+                                    ,pr_nmsistem => 'CRED'
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => 00
+                                    ,pr_cdacesso => 'DIADOPAGTO') LOOP
+                                    
+          -- Indice da tabela temporaria, cdcooper || cdempres Ex: 000010000000081
+          vr_nrindice := LPAD(pr_cdcooper,5,'0') || LPAD(rw_craptab.tpregist,10,'0');
+                                    
+          -- Adicionar no vetor cmfe a empresa encontrada (tpregist)
+          vr_tab_diadopagto(vr_nrindice).diapgtoh := NVL(TRIM(SUBSTR(
+                                                     rw_craptab.dstextab,7,2)),0);
+          vr_tab_diadopagto(vr_nrindice).diapgtom := NVL(TRIM(SUBSTR(
+                                                     rw_craptab.dstextab,4,2)),0);
+          vr_tab_diadopagto(vr_nrindice).flgfolha := NVL(TRIM(SUBSTR(
+                                                     rw_craptab.dstextab,14,1)),0);
+          vr_tab_diadopagto(vr_nrindice).ddmesnov := NVL(TRIM(SUBSTR(
+                                                     rw_craptab.dstextab,1,2)),0);
+        END LOOP;
+      ELSE
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'GENERI'
+                                                 ,pr_cdempres => 00
+                                                 ,pr_cdacesso => 'DIADOPAGTO'
+                                                 ,pr_tpregist => vr_cdempres);
+                                                 
+        -- Indice da tabela temporaria, cdcooper || cdempres Ex: 000010000000081
+          vr_nrindice := LPAD(pr_cdcooper,5,'0') || LPAD(vr_cdempres,10,'0');
+                                    
+          -- Adicionar no vetor cmfe a empresa encontrada (tpregist)
+          vr_tab_diadopagto(vr_nrindice).diapgtoh := NVL(TRIM(SUBSTR(vr_dstextab,7,2)),0);
+          vr_tab_diadopagto(vr_nrindice).diapgtom := NVL(TRIM(SUBSTR(vr_dstextab,4,2)),0);
+          vr_tab_diadopagto(vr_nrindice).flgfolha := NVL(TRIM(SUBSTR(vr_dstextab,14,1)),0);
+          vr_tab_diadopagto(vr_nrindice).ddmesnov := NVL(TRIM(SUBSTR(vr_dstextab,1,2)),0);
       END IF;
       
       -- Indice a procurar, composto pelo codigo da empresa do cooperado

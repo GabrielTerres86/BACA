@@ -1308,9 +1308,15 @@ IF REQUEST_METHOD = "POST":U THEN
                    RUN RodaJavaScript('window.opener.Restaurar();').
                    RUN RodaJavaScript('self.close();').
                    RUN RodaJavaScript('window.opener.location.reload(); ').*/
-                   RUN RodaJavaScript('self.close();').
+                   /*RUN RodaJavaScript('self.close();').*/
                    /*RUN RodaJavaScript('window.opener.Recarrega(); ').*/
-                   RUN RodaJavaScript('window.opener.restaurar(); '). 
+                   /*RUN RodaJavaScript('window.opener.restaurar(); ').*/ 
+                   
+                   /* Alterado pois ao criar uma proposta e adicionar um facilitador
+                     ao retornar estava sendo apagados alguns dados da proposta */
+                   RUN RodaJavaScript('self.close();').
+                   RUN RodaJavaScript('window.opener.Recarrega(); ').
+                   
                    
                 END.
          

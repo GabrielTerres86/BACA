@@ -32,7 +32,7 @@
 
     Programa: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 25/08/2016
+    Data    : Outubro/2009                    Ultima Atualizacao: 19/09/2016
            
     Dados referentes ao programa:
                 
@@ -144,6 +144,10 @@
                              
                 29/08/2016 - #456682 Inclusao de validacao de fraude de TED na
                              rotina proc_envia_tec_ted (Carlos)
+
+				19/09/2016 - Removida a validacao de horario cadastrado na TAB085
+							 para a geracao de TED dos convenios. SD 519980.
+							 (Carlos Rafael Tanholi)
 ..............................................................................*/                                                                             
 { sistema/generico/includes/b1wgen0046tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -450,10 +454,11 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
     ELSE 
          ASSIGN aux_ispbcred = STRING(crapban.nrispbif,"99999999").
 
-    /*-- Operando com mensagens STR --*/
+    /*-- Operando com mensagens STR --
     IF   crapcop.flgopstr   THEN
          IF   crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME   THEN
               ASSIGN aux_flgutstr = TRUE.             
+    */
          
     /*-- Operando com mensagens PAG --*/
     IF   crapcop.flgoppag   THEN
@@ -465,7 +470,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
             ASSIGN aux_flpagmax = TRUE
 			       aux_flgutpag = FALSE. /* Altera para nao operante */
 
-    IF   aux_flgutstr = FALSE AND aux_flgutpag = FALSE    THEN
+    IF  aux_flgutpag = FALSE    THEN
          DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = IF  aux_flpagmax  THEN
@@ -1622,7 +1627,7 @@ DEFINE VARIABLE aux_nrinssac         AS CHARACTER                    NO-UNDO.
             RETURN "NOK".
          END.
 
-    /*-- Operando com mensagens STR --*/
+    /*-- Operando com mensagens STR --
     IF   crapcop.flgopstr   THEN
          IF   crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME   THEN
               ASSIGN aux_flgutstr = TRUE.             
@@ -1640,7 +1645,7 @@ DEFINE VARIABLE aux_nrinssac         AS CHARACTER                    NO-UNDO.
                            INPUT-OUTPUT aux_dscritic).
             RETURN "NOK".
          END.
-
+	*/
     /* Alimenta variaveis default */
     ASSIGN /* CPF/CNPJ Cedente */
            aux_nrinsced = IF   par_tppesced = "F"   THEN

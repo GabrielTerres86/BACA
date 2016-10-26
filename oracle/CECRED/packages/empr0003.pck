@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 03/08/2015
+  --  Data     : agosto/2014.                   Ultima atualizacao: 20/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -22,6 +22,14 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0003 AS
   --
   --             26/11/2015 - Adicionado nova validacao de origem "MICROCREDITO PNMPO BNDES CECRED" na procedure 
   --                          pc_imprime_contrato_xml conforme solicitado no chamado 360165 (Kelvin)  
+  --
+  --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
+  --                          desta package.(Carlos Rafael Tanholi).  
+  --
+  --             24/08/2016 - (Projeto 343)
+  --                        - Adicionada varíavel para verificação de  versão para 
+  --                          impressão de novos parágros nos contratos de forma condicional; 
+  --                          (Ricardo Linhares)    
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -108,7 +116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --  Sistema  : Impressão de contratos de emprestimos
   --  Sigla    : EMPR
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : agosto/2014.                   Ultima atualizacao: 03/08/2015
+  --  Data     : agosto/2014.                   Ultima atualizacao: 20/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -128,6 +136,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --             20/01/2016 - Adicionei o parametro pr_idorigem na chamada da procedure pc_imprime_emprestimos_cet
   --                          dentro da procedure pc_imprime_contrato_xml.
   --                          (Carlos Rafael Tanholi - Projeto 261 Pré-aprovado fase 2)                          
+  --
+  --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB na function fn_verifica_interv 
+  --                          desta package.(Carlos Rafael Tanholi).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -199,10 +210,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
     SELECT  decode(substr(craptab.dstextab,56,03),'yes', 'TRUE', 'FALSE') habilitado
     FROM    craptab
     WHERE   craptab.cdcooper = pr_cdcooper
-    AND     craptab.nmsistem = 'CRED'
-    AND     craptab.tptabela = 'USUARI'
+    AND     UPPER(craptab.nmsistem) = 'CRED'
+    AND     UPPER(craptab.tptabela) = 'USUARI'
     AND     craptab.cdempres = 11
-    AND     craptab.cdacesso = 'PROPOSTEPR'
+    AND     UPPER(craptab.cdacesso) = 'PROPOSTEPR'
     AND     craptab.tpregist IN (pr_cdagenci,0);
 
     vr_flg_inter VARCHAR2(5);-- flag de interveniente habilitado
@@ -749,6 +760,12 @@ BEGIN
                    26/11/2015 - Adicionado nova validacao de origem 
                                 "MICROCREDITO PNMPO BNDES CECRED" conforme solicitado
                                 no chamado 360165 (Kelvin)             
+                                no chamado 360165 (Kelvin)
+                                
+                    24/08/2016 - (Projeto 343)
+                               - Adicionada varíavel para verificação de  versão para 
+                                 impressão de novos parágros nos contratos de forma condicional; 
+                                 (Ricardo Linhares)             
 
     ............................................................................. */
 
@@ -967,6 +984,9 @@ BEGIN
       vr_nmconjug2      crapavt.nmconjug%TYPE;
       vr_nrcpfcjg2      VARCHAR2(50);
 
+      -- controle versão
+      vr_nrversao       NUMBER;
+
       -- variaveis de críticas
       vr_tab_erro       GENE0001.typ_tab_erro;
       vr_des_reto       VARCHAR2(10);
@@ -994,6 +1014,13 @@ BEGIN
         RAISE vr_exc_saida; -- encerra programa e retorna critica
       END IF;
       CLOSE cr_crawepr;
+
+      -- Verifica a versão do contrato
+      IF rw_crawepr.dtmvtolt < TO_DATE('26/10/2016','DD/MM/RRRR') THEN
+        vr_nrversao := 0;
+      ELSE
+        vr_nrversao := 1;
+      END IF;
 
       -- Abre o cursor com as informacoes do emprestimo
       OPEN cr_crapepr;
@@ -1437,6 +1464,7 @@ BEGIN
           END IF;
           -- gera corpo do xml
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                                 '<versao>'        ||vr_nrversao                             ||'</versao>' ||
                                  '<digitalizacao>' ||vr_digitalizacao                        ||'</digitalizacao>'||
                                  '<titulo>'        ||vr_dstitulo                             || '</titulo>'||
                                  '<nmemitente>'    ||rw_crawepr.nmprimtl                     ||'</nmemitente>'||
@@ -1876,7 +1904,7 @@ BEGIN
             LOOP        
               gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_arquivo,pr_des_text => vr_des_linha);        
 
-              IF vr_contador = 0 AND NOT vr_des_linha IS NULL THEN
+              IF vr_contador = 0 AND vr_des_linha IS NOT NULL THEN
                  gene0002.pc_escreve_xml(vr_clobxml711,vr_dstexto711,'<cabecalho>');
                  --Escreve o cabecalho do arquivo no XML de dados do relatorio
                  gene0002.pc_escreve_xml(vr_clobxml711, vr_dstexto711, vr_des_linha,TRUE);                 

@@ -23,6 +23,9 @@ NomeDoProgramaPrincipal  = '/wpgd0029a.w';
   <input type="hidden" name="aux_cdcooper" value="">
   <input type="hidden" name="aux_cdagenci" value="">
   <input type="hidden" name="aux_qtavares" value="">
+  <input type="hidden" name="aux_qtavares_ass" value="">
+  <input type="hidden" name="aux_qtavares_coop" value="">
+  <input type="hidden" name="aux_qtavares_forn" value="">
   <input type="hidden" name="aux_nrseqeve" value="">
   <input type="hidden" name="aux_cdevento" value="">
   <input type="hidden" name="idevento" value="">
@@ -45,10 +48,12 @@ NomeDoProgramaPrincipal  = '/wpgd0029a.w';
       <td>
         <table width="100%" border="0" cellpadding="0" cellspacing="0" class="dataTable">
           <tr>
-            <td id="separador1" width="5" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
-            <td width="80" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col1">Grupo</td>
-            <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-            <td width="80" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col2">Item</td>
+            <td width="1%" background="/cecred/images/menu/fnd_title.jpg">&nbsp;</td>
+            <td width="13%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col0">Relatório</td>
+            <td width="1%" background="/cecred/images/menu/fnd_title.jpg" id="separador1" ><img src="/cecred/images/geral/div.gif" height="15"></td>
+            <td width="42%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col1">Grupo</td>
+            <td width="1%" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" height="15"></td>
+            <td width="42%" height="25" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbavalia_col2">Item</td>
           </tr>
         </table>
       </td>
@@ -144,13 +149,35 @@ function mostraItens()
       row=tbavalia.insertRow();  // nova linha
       row.id=i;
       row.onclick=mudaCor;
+      
+      cell=row.insertCell();   // Separador
+      cell.className = 'txtNormal';
+      cell.height = 26;
+      cell.width= document.all.separador1.width;
+      cell.align = 'left';
+      cell.innerText=' ';
+      
+      // Tipo de relatorio
+      cell=row.insertCell();      
+      cell.style.cursor = 'hand';
+      cell.className = 'txtNormal';
+      cell.width = document.all.tbavalia_col0.width;
+      linky='&nbsp;&nbsp;' + mavalia[i].tprelgru;
+      cell.innerHTML=linky;
    
+      cell=row.insertCell();   // Separador
+      cell.className = 'txtNormal';
+      cell.height = 26;
+      cell.width= document.all.separador1.width;
+      cell.align = 'left';
+      cell.innerText=' ';
+      
       // Grupo de Avaliação
       cell=row.insertCell();      
       cell.style.cursor = 'hand';
       cell.className = 'txtNormal';
       cell.width = document.all.tbavalia_col1.width;
-      linky='&nbsp;&nbsp;' + mavalia[i].dsgruava;
+      linky='&nbsp;' + mavalia[i].dsgruava;
       cell.innerHTML=linky;
    
       cell=row.insertCell();   // Separador
@@ -165,7 +192,7 @@ function mostraItens()
       cell.style.cursor = 'hand';
       cell.className = 'txtNormal';
       cell.width = document.all.tbavalia_col2.width;
-      linky='&nbsp;&nbsp;' + mavalia[i].dsiteava + '<in' + 'put type="hidden" name="aux_cditeava" value="' + mavalia[i].cditeava + '">';
+      linky='&nbsp;' + mavalia[i].dsiteava + '<in' + 'put type="hidden" name="aux_cditeava" value="' + mavalia[i].cditeava + '">';
       cell.innerHTML=linky;
    }
 }

@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 
  *				  05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+ *                17/10/2016 - #524686 Correção de format do nrdconta (Carlos) 
  * --------------
  */
 ?>
@@ -44,7 +45,7 @@
 						</td>
 						<td>
 							<span><? echo getByTagName($values->tags, 'nrdconta') ?></span>
-							      <? echo mascara(getByTagName($values->tags, 'nrdconta'),'###.###.#');?>
+							      <? echo mascara(getByTagName($values->tags, 'nrdconta'),'####.###.#');?>
 						</td>
 						<td>
 							<span><? echo converteFloat(getByTagName($values->tags, 'vlrendim') ,'MOEDA') ?></span>

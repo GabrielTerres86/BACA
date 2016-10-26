@@ -1,9 +1,9 @@
-/* .............................................................................
+/*..............................................................................................
    Programa: wcrm0004_xml.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Junho/2006                   Ultima Atualizacao: 06/10/2015
+   Data    : Junho/2006                   Ultima Atualizacao: 26/08/2016
    Dados referentes ao programa:
    Frequencia: Diario (internet)
    Objetivo  : Gerar arquivo XML para a tela wcrm0004 - historico do cooperado
@@ -17,7 +17,10 @@
                             
                06/10/2015 - Alterar forma do for each crapidp para utilizar o 
                             indice e listar os eventos corretamente (Lucas Ranghetti #328446)
-..............................................................................*/
+														
+							 26/08/2016 - Alteração para impressão do certificado, Prj. 229 (Jean Michel).							
+														
+..............................................................................................*/
  
 create widget-pool.
  
@@ -32,6 +35,7 @@ DEFINE VARIABLE aux_flgexist AS LOGICAL         INIT FALSE            NO-UNDO.
 DEFINE VARIABLE aux_nrctaant AS INTE                           		  NO-UNDO.
 DEFINE VARIABLE aux_cdcopant AS INTE                          		  NO-UNDO.
 DEFINE VARIABLE aux_nmevento AS CHAR                          		  NO-UNDO.
+DEFINE VARIABLE aux_lsmesctb AS CHAR                          		  NO-UNDO.
 
 /* Variaveis de controle do XML */
 DEFINE VARIABLE xDoc         AS HANDLE                                NO-UNDO.
@@ -61,9 +65,9 @@ OUTPUT-CONTENT-TYPE ("text/xml":U).
 
 ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper"))
        par_nrdconta = INT(GET-VALUE("aux_nrdconta"))
+       par_idseqttl = INT(GET-VALUE("aux_idseqttl"))
        par_dtinihis = DATE(GET-VALUE("aux_dtinihis"))
-       par_dtfimhis = DATE(GET-VALUE("aux_dtfimhis"))
-       par_idseqttl = INT(GET-VALUE("aux_idseqttl")).
+       par_dtfimhis = DATE(GET-VALUE("aux_dtfimhis")).
        
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
@@ -108,18 +112,18 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
                         BREAK BY crapidp.nminseve
                               BY crapadp.dtinieve DESC
                               BY crapidp.nrseqeve:
-                              
-    IF  FIRST-OF(crapidp.nrseqeve)    THEN
-        DO:
-            /* Dados do evento */
-            FIND crapedp WHERE crapedp.idevento = crapidp.idevento   AND
-                               crapedp.cdcooper = crapidp.cdcooper   AND
-                               crapedp.dtanoage = crapidp.dtanoage   AND
-                               crapedp.cdevento = crapidp.cdevento   NO-LOCK NO-ERROR.
-                               
+    
+    /* Dados do evento */
+    FIND crapedp WHERE crapedp.idevento = crapidp.idevento
+                   AND crapedp.cdcooper = crapidp.cdcooper
+                   AND crapedp.dtanoage = crapidp.dtanoage
+                   AND crapedp.cdevento = crapidp.cdevento NO-LOCK NO-ERROR.
+           
+    IF FIRST-OF(crapidp.nrseqeve) THEN
+        DO:                               
             /* Se percentual de faltas passar do percentual mínimo exigido, nao pode considerar */
-            IF   ((crapidp.qtfaleve * 100) / crapadp.qtdiaeve) > (100 - crapedp.prfreque)   THEN
-                 NEXT.
+            IF ((crapidp.qtfaleve * 100) / crapadp.qtdiaeve) > (100 - crapedp.prfreque)   THEN
+              NEXT.
             
             /* Datas de inicio e fim do evento */
             IF   crapadp.dtinieve <> ?   THEN
@@ -153,10 +157,32 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
                     xDoc:CREATE-NODE( xRoot3, "EVENTO", "ELEMENT" ).
                     xRoot2:APPEND-CHILD( xRoot3 ).
                     
+                    FOR FIRST gnpapgd FIELDS(lsmesctb) WHERE gnpapgd.idevento = crapidp.idevento
+                                                         AND gnpapgd.cdcooper = crapidp.cdcooper
+                                                         AND gnpapgd.dtanoage = crapidp.dtanoage NO-LOCK. END.
+
+                    
+                    IF CAN-DO(gnpapgd.lsmesctb,STRING(INT(SUBSTR(aux_dtfineve,4,2)))) THEN
+                      DO:
+                        ASSIGN aux_lsmesctb = "1".
+                      END.
+                    ELSE
+                      DO:
+                        ASSIGN aux_lsmesctb = "0".
+                      END.
+                    
                     criaCampo("NMEVENTO",aux_nmevento).
                     criaCampo("DTINIEVE",aux_dtinieve).
                     criaCampo("DTFINEVE",aux_dtfineve).
-                      
+                    criaCampo("FLGCERTI",STRING(INT(crapedp.flgcerti))).
+                    criaCampo("LSMESCTB",STRING(INT(aux_lsmesctb))).
+                    criaCampo("TPEVENTO",STRING(crapedp.tpevento)).
+                    criaCampo("DTANOAGE",STRING(crapidp.dtanoage)).
+                    criaCampo("IDEVENTO",STRING(crapidp.idevento)).
+                    criaCampo("CDEVENTO",STRING(crapidp.cdevento)).
+                    criaCampo("CDAGENCI",STRING(crapidp.cdagenci)).
+                    criaCampo("NRSEQEVE",STRING(crapidp.nrseqeve)).
+										
                     aux_flgexist = TRUE.
 
                    NEXT.
@@ -166,10 +192,32 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
             xDoc:CREATE-NODE( xRoot3, "EVENTO", "ELEMENT" ).
             xRoot2:APPEND-CHILD( xRoot3 ).
             
+            FOR FIRST gnpapgd FIELDS(lsmesctb) WHERE gnpapgd.idevento = crapidp.idevento
+                                                 AND gnpapgd.cdcooper = crapidp.cdcooper
+                                                 AND gnpapgd.dtanoage = crapidp.dtanoage NO-LOCK. END.
+
+            
+            IF CAN-DO(gnpapgd.lsmesctb,STRING(INT(SUBSTR(aux_dtfineve,4,2)))) THEN
+              DO:
+                ASSIGN aux_lsmesctb = "1".
+              END.
+            ELSE
+              DO:
+                ASSIGN aux_lsmesctb = "0".
+              END.
+              
             criaCampo("NMEVENTO",crapedp.nmevento).
             criaCampo("DTINIEVE",aux_dtinieve).
             criaCampo("DTFINEVE",aux_dtfineve).
-            
+            criaCampo("FLGCERTI",STRING(INT(crapedp.flgcerti))).
+            criaCampo("LSMESCTB",STRING(aux_lsmesctb)).
+						criaCampo("TPEVENTO",STRING(crapedp.tpevento)).
+            criaCampo("DTANOAGE",STRING(crapidp.dtanoage)).
+            criaCampo("IDEVENTO",STRING(crapidp.idevento)).
+            criaCampo("CDEVENTO",STRING(crapidp.cdevento)).
+            criaCampo("CDAGENCI",STRING(crapidp.cdagenci)).
+            criaCampo("NRSEQEVE",STRING(crapidp.nrseqeve)).
+                    
             aux_flgexist = TRUE.
         END.
 END.
@@ -183,10 +231,10 @@ IF   NOT aux_flgexist   THEN
          xRoot2:APPEND-CHILD(xText).
          xText:NODE-VALUE = "Não há registros de histórico para as datas informadas!".
      END.
+     
 xDoc:SAVE("STREAM","WEBSTREAM").
+
 DELETE OBJECT xDoc.
 DELETE OBJECT xRoot.
 DELETE OBJECT xField.
 DELETE OBJECT xText.
-  
-/* .......................................................................... */

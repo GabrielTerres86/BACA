@@ -4,6 +4,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
 			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
 						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+      
+      09/08/2016 - Incluir filtro por tipo de evento
+                   PRJ229 - Melhorias OQS  (Odirlei-AMcom)
 
 ...............................................................................*/
 
@@ -20,6 +23,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cdcooper AS CHARACTER        
        FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_nrmeseve AS CHARACTER 
+       FIELD aux_tpevento AS CHARACTER 
        FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_dtanoage AS CHARACTER 
@@ -128,7 +132,7 @@ DEFINE TEMP-TABLE cratidp             LIKE crapidp.
 ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ~
 ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdeixtem     ~
-ab_unmap.cdcooper     ab_unmap.cdagenci     ab_unmap.aux_nrmeseve
+ab_unmap.cdcooper ab_unmap.cdagenci ab_unmap.aux_nrmeseve ab_unmap.aux_tpevento
 &Scoped-Define DISPLAYED-FIELDS crapidp.idevento 
 &Scoped-define DISPLAYED-TABLES ab_unmap crapidp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
@@ -137,7 +141,7 @@ ab_unmap.cdcooper     ab_unmap.cdagenci     ab_unmap.aux_nrmeseve
 ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ~
 ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ~
 ab_unmap.aux_stdopcao ab_unmap.cdeixtem     ab_unmap.cdcooper ~
-ab_unmap.cdagenci     ab_unmap.aux_nrmeseve     ab_unmap.nrmeseve
+ab_unmap.cdagenci ab_unmap.aux_nrmeseve ab_unmap.nrmeseve ab_unmap.aux_tpevento
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -185,6 +189,13 @@ DEFINE FRAME Web-Frame
                           "Novembro","11",
                           "Dezembro","12"
           SIZE 20 BY 4 
+     ab_unmap.aux_tpevento AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          LIST-ITEM-PAIRS "EAD + PRESENCIAL","0",
+                          "EAD","1",
+                          "PRESENCIAL","2"
+          SIZE 20 BY 4    
      ab_unmap.aux_dsendurl AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -384,6 +395,8 @@ PROCEDURE htmOffsets :
     ("aux_cddopcao":U,"ab_unmap.aux_cddopcao":U,ab_unmap.aux_cddopcao:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_nrmeseve":U,"ab_unmap.aux_nrmeseve":U,ab_unmap.aux_nrmeseve:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_tpevento":U,"ab_unmap.aux_tpevento":U,ab_unmap.aux_tpevento:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
     ("aux_dsendurl":U,"ab_unmap.aux_dsendurl":U,ab_unmap.aux_dsendurl:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate

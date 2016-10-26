@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 18/09/2015
+   Data    : Marco/2004                        Ultima Atualizacao: 14/09/2016
 
    Dados referentes ao programa:
                      
@@ -115,9 +115,11 @@
                             
                18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)
  
+               14/09/2016 - Incluir chamada da rotina var_oracle.i (Lucas Ranghetti #484556)
 ............................................................................. */
 
 { includes/var_online.i  }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR tel_nrseqatu    LIKE gnconve.nrseqatu                 NO-UNDO.
 DEF        VAR tel_nrseqint    LIKE gnconve.nrseqint                 NO-UNDO.

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
-	<property name="ireport.zoom" value="1.5"/>
+	<property name="ireport.zoom" value="1.3636363636363635"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="0"/>
+	<property name="ireport.y" value="3968"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -171,6 +171,9 @@
 	</field>
 	<field name="negociavel" class="java.lang.String">
 		<fieldDescription><![CDATA[negociavel]]></fieldDescription>
+	</field>
+	<field name="versao" class="java.lang.Integer">
+		<fieldDescription><![CDATA[versao]]></fieldDescription>
 	</field>
 	<background>
 		<band height="850" splitType="Stretch">
@@ -679,9 +682,9 @@ b) Sempre que o dia do vencimento da parcela não ocorrer em dia útil, será pr
 				</box>
 			</frame>
 		</band>
-		<band height="850">
+		<band height="366">
 			<staticText>
-				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="94" width="466" height="704"/>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="94" width="466" height="272"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false"/>
 				</textElement>
@@ -697,8 +700,27 @@ g) O Emitente pagará também o Imposto sobre Operações Financeiras (IOF) conf
 <u> 5. Vencimento antecipado</u> - A Cooperativa poderá considerar antecipadamente vencida esta cédula e exigir, de imediato, o pagamento do saldo devedor, se o Emitente:<br>
 a) Não cumprir com qualquer das suas obrigações previstas neste contrato;<br>
 b) Não realizar o pagamento, na data de vencimento pactuada, de 02 (duas) prestações mensais consecutivas ou alternadas, independentemente de qualquer notificação judicial ou extrajudicial;<br>
-c) Vier a falecer.<br>
-<u> 6. Atraso no Pagamento e Multa</u> - Caso ocorra atraso no pagamento ou vencimento antecipado, serão devidos os juros remuneratórios do período, acrescidos de juros moratórios, desde o atraso, e multa moratória nos percentuais informados nos subitens 1.11 e 1.12, incidentes sobre o valor em atraso.<br>
+c) Vier a falecer.]]></text>
+			</staticText>
+		</band>
+		<band height="55">
+			<printWhenExpression><![CDATA[$F{versao} > 0]]></printWhenExpression>
+			<staticText>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="0" width="466" height="55"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[d) Desenvolver atividades que importem em incentivo à prostituição, que utilizem mão de obra infantil, que tenham mantido seus trabalhadores em condições análogas à escravidão ou crime contra o meio ambiente, salvo se efetuada reparação imposta ou quando eventualmente estiver sendo cumprida a pena imposta à <b>Emitente</b>.<br>
+e) Descumprir qualquer das disposições constantes na Política de Responsabilidade Socioambiental da <b>Cooperativa</b>.]]></text>
+			</staticText>
+		</band>
+		<band height="475">
+			<staticText>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="0" width="466" height="383"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false"/>
+				</textElement>
+				<text><![CDATA[<u> 6. Atraso no Pagamento e Multa</u> - Caso ocorra atraso no pagamento ou vencimento antecipado, serão devidos os juros remuneratórios do período, acrescidos de juros moratórios, desde o atraso, e multa moratória nos percentuais informados nos subitens 1.11 e 1.12, incidentes sobre o valor em atraso.<br>
 a) Para fins de cobrança dos juros moratórios e da multa, fica estabelecido o prazo de tolerância previsto no item 1.13, contados da data do vencimento da parcela não paga. Decorrido o prazo indicado, incidirão sobre o encargo mensal vencido e não pago, juros moratórios e multa, retroativos a data de vencimento da parcela, sem prejuízo dos demais encargos contratualmente previstos.<br>
 b) Caso seja necessário realizar a cobrança judicial ou administrativa de quaisquer valores em atraso, o Emitente deverá pagar todas as despesas desta cobrança, incluindo custos de postagem de carta de cobrança, cobrança telefônica, inclusão de dados nos cadastros de proteção ao crédito, custas e honorários advocatícios. O Emitente também poderá reembolsar-se de todos os custos que tiver com a cobrança de qualquer obrigação da Cooperativa<br>
 c) O recebimento, pela Cooperativa, de determinada parcela não significará quitação das anteriores.<br>
@@ -710,12 +732,12 @@ b) Na hipótese de liquidação total ou parcial da operação de crédito contr
 a) As aplicações financeiras atuais cedidas em garantia são aquelas consolidadas em extrato disponível nesta data e as futuras integrarão automaticamente esta garantia assim que realizadas, valendo o respectivo extrato de aplicação para identificá-las e aperfeiçoar esta cessão fiduciária.<br>]]></text>
 			</staticText>
 			<break>
-				<reportElement uuid="584c2636-53cc-4695-861e-5b552df4716c" x="0" y="829" width="100" height="1"/>
+				<reportElement uuid="584c2636-53cc-4695-861e-5b552df4716c" x="0" y="454" width="100" height="1"/>
 			</break>
 		</band>
 		<band height="850">
 			<staticText>
-				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="95" width="466" height="644"/>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="95" width="466" height="635"/>
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
 				</textElement>
@@ -745,16 +767,35 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				<reportElement uuid="4599e1a1-3747-48bd-8ed3-adf73ac832fe" positionType="FixRelativeToBottom" x="0" y="827" width="100" height="1"/>
 			</break>
 			<textField>
-				<reportElement uuid="b71853e8-3bcc-4f09-8b39-97edab1045b3" x="4" y="738" width="466" height="29"/>
+				<reportElement uuid="b71853e8-3bcc-4f09-8b39-97edab1045b3" x="4" y="730" width="466" height="29"/>
 				<textElement textAlignment="Justified">
 					<font fontName="Courier New" size="8"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{amigalvel}]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="850">
+		<band height="122">
+			<staticText>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="94" width="466" height="28"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[<u> 18. Declaração de Leitura</u> - O Emitente e o(s) Devedor(es) Solidário(s), ao assinarem as Condições Específicas desta Cédula, declaram que a leram previamente e que não possuem nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
+			</staticText>
+		</band>
+		<band height="66">
+			<printWhenExpression><![CDATA[$F{versao} > 0]]></printWhenExpression>
+			<staticText>
+				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="0" width="466" height="66"/>
+				<textElement textAlignment="Justified" markup="html">
+					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
+				</textElement>
+				<text><![CDATA[<u>19. Declaração de Responsabilidade Socioambiental</u> – Declara conhecer a Política de Responsabilidade Socioambiental da Cooperativa e cumprir o disposto na legislação referente à Política Nacional do Meio Ambiente, não destinando os recursos decorrentes desta Cédula a quaisquer finalidades e/ou projetos que possam causar danos ambientais e/ou sociais, adotando durante o prazo de vigência desta Cédula, medidas e ações destinadas a evitar ou corrigir danos causados ao Meio Ambiente, segurança e medicina do trabalho, mantendo ainda, em situação regular suas obrigações junto aos órgãos do meio ambiente.]]></text>
+			</staticText>
+		</band>
+		<band height="717">
 			<frame>
-				<reportElement uuid="01ed3805-603c-489b-aa55-932af2729f7b" x="5" y="466" width="467" height="158"/>
+				<reportElement uuid="01ed3805-603c-489b-aa55-932af2729f7b" x="5" y="333" width="467" height="158"/>
 				<box>
 					<pen lineWidth="1.0"/>
 					<topPen lineWidth="1.0"/>
@@ -764,14 +805,14 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 				</box>
 			</frame>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="470" width="461" height="11"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="337" width="461" height="11"/>
 				<textElement>
 					<font fontName="Courier New" size="8" isBold="true" isUnderline="true"/>
 				</textElement>
 				<text><![CDATA[Declaração se analfabeto ou impedido de assinar]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="487" width="461" height="28"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="354" width="461" height="28"/>
 				<textElement>
 					<font fontName="Courier New" size="8" isBold="false"/>
 				</textElement>
@@ -779,20 +820,20 @@ Para efeito de aplicação do art. 766 do Código Civil, o Emitente declara que 
 compreendido seu conteúdo e estando ciente das condições e obrigações que assumi na presente operação.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="530" width="179" height="11"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="390" width="179" height="19"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
-				<text><![CDATA[A rogo do EMITENTE assina o rogado:]]></text>
+				<text><![CDATA[A rogo do EMITENTE/INTERVENIENTE/ DEVEDOR SOLIDÁRIO assina o rogado:]]></text>
 			</staticText>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="190" y="540" width="204" height="1"/>
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="190" y="407" width="204" height="1"/>
 			</line>
 			<rectangle>
-				<reportElement uuid="4931c65d-2114-4daf-9c07-5b7a6c0ce87b" x="398" y="522" width="68" height="92"/>
+				<reportElement uuid="4931c65d-2114-4daf-9c07-5b7a6c0ce87b" x="398" y="389" width="68" height="92"/>
 			</rectangle>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="541" width="38" height="23"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="408" width="38" height="23"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
@@ -800,14 +841,14 @@ compreendido seu conteúdo e estando ciente das condições e obrigações que a
 CPF:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="573" width="80" height="11"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="440" width="80" height="11"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
 				<text><![CDATA[Testemunhas: 1)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="379" width="54" height="39" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="246" width="54" height="39" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -819,12 +860,12 @@ Endereço:
 ]]></text>
 			</staticText>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="19" y="378" width="214" height="1" isRemoveLineWhenBlank="true">
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="19" y="245" width="214" height="1" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="368" width="10" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="235" width="10" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -833,7 +874,7 @@ Endereço:
 				<text><![CDATA[2)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="65" y="586" width="38" height="23"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="65" y="453" width="38" height="23"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
@@ -841,20 +882,20 @@ Endereço:
 CPF:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="187" y="573" width="75" height="11"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="187" y="440" width="75" height="11"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
 				<text><![CDATA[Testemunhas: 2)]]></text>
 			</staticText>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="80" y="583" width="96" height="1"/>
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="80" y="450" width="96" height="1"/>
 			</line>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="258" y="585" width="96" height="1"/>
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="258" y="452" width="96" height="1"/>
 			</line>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="586" width="38" height="23"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="453" width="38" height="23"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
@@ -862,21 +903,21 @@ CPF:]]></text>
 CPF:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="629" width="327" height="11"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="496" width="327" height="11"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="8"/>
 				</textElement>
 				<text><![CDATA[Esta folha é parte integrante da Cédula de Crédito Bancário N.°]]></text>
 			</staticText>
 			<textField>
-				<reportElement uuid="86f1b8ee-72df-4945-a3dc-89caf02b96aa" x="337" y="629" width="100" height="11"/>
+				<reportElement uuid="86f1b8ee-72df-4945-a3dc-89caf02b96aa" x="337" y="496" width="100" height="11"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nrctremp}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="562ed096-ca8a-4954-86b7-d8701234cac9" x="40" y="379" width="193" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="562ed096-ca8a-4954-86b7-d8701234cac9" x="40" y="246" width="193" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -885,7 +926,7 @@ CPF:]]></text>
 				<textFieldExpression><![CDATA[$F{nmaval02}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="7f4abd0f-d5e6-4cf9-8c3a-3079a6b653d1" x="40" y="388" width="178" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="7f4abd0f-d5e6-4cf9-8c3a-3079a6b653d1" x="40" y="255" width="178" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -894,7 +935,7 @@ CPF:]]></text>
 				<textFieldExpression><![CDATA[$F{cpfava02}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="7dfdc4b2-d13f-4839-bf5a-3cc6e8a60b6a" x="55" y="398" width="178" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="7dfdc4b2-d13f-4839-bf5a-3cc6e8a60b6a" x="55" y="265" width="178" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -903,7 +944,7 @@ CPF:]]></text>
 				<textFieldExpression><![CDATA[$F{endava02}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="70b843df-c184-4fc5-8cda-5aba0b045031" x="55" y="429" width="163" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="70b843df-c184-4fc5-8cda-5aba0b045031" x="55" y="296" width="163" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -912,7 +953,7 @@ CPF:]]></text>
 				<textFieldExpression><![CDATA[$F{celava02}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="398" y="559" width="67" height="22"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="398" y="426" width="67" height="22"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="8"/>
 				</textElement>
@@ -920,7 +961,7 @@ CPF:]]></text>
 Emitente]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="358216d5-250d-407e-b6cd-8c21db3c1abd" x="296" y="429" width="161" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="358216d5-250d-407e-b6cd-8c21db3c1abd" x="296" y="296" width="161" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -929,7 +970,7 @@ Emitente]]></text>
 				<textFieldExpression><![CDATA[$F{celcjg02}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="246" y="378" width="59" height="37" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="246" y="245" width="59" height="37" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -941,7 +982,7 @@ Endereço:
 ]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="b79bfbea-295c-49e6-8463-401a1873343a" x="277" y="388" width="179" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="b79bfbea-295c-49e6-8463-401a1873343a" x="277" y="255" width="179" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -950,7 +991,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{cpfcjg02}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="3f8350d4-839d-4ae4-a189-2455a7f5f846" x="277" y="378" width="193" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="3f8350d4-839d-4ae4-a189-2455a7f5f846" x="277" y="245" width="193" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -959,7 +1000,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{nmcjg02}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="ddfbf6c0-c07e-4f19-841c-2c20cd5fc3a1" x="296" y="398" width="178" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="ddfbf6c0-c07e-4f19-841c-2c20cd5fc3a1" x="296" y="265" width="178" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -968,12 +1009,12 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{endcjg02}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="261" y="377" width="211" height="1" isRemoveLineWhenBlank="true">
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="261" y="244" width="211" height="1" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="246" y="367" width="13" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="246" y="234" width="13" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -982,17 +1023,17 @@ Endereço:
 				<text><![CDATA[2)]]></text>
 			</staticText>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="6" y="218" width="224" height="1"/>
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="6" y="85" width="224" height="1"/>
 			</line>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="6" y="219" width="150" height="11"/>
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="6" y="86" width="150" height="11"/>
 				<textElement>
 					<font fontName="Courier New" size="8"/>
 				</textElement>
 				<text><![CDATA[Emitente]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="243" width="198" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="110" width="198" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1001,12 +1042,12 @@ Endereço:
 				<text><![CDATA[Devedores Solidários:]]></text>
 			</staticText>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="21" y="277" width="212" height="1" isRemoveLineWhenBlank="true">
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="21" y="144" width="212" height="1" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="267" width="13" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="134" width="13" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1015,7 +1056,7 @@ Endereço:
 				<text><![CDATA[1)]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="278" width="59" height="39" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="145" width="59" height="39" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1027,7 +1068,7 @@ Endereço:
 ]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="f6b0ae58-dd15-4c23-8594-b902521a218a" x="37" y="278" width="193" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="f6b0ae58-dd15-4c23-8594-b902521a218a" x="37" y="145" width="193" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1036,7 +1077,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{nmaval01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="39205f8a-24e5-45ed-88e6-e05858316e98" x="37" y="287" width="167" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="39205f8a-24e5-45ed-88e6-e05858316e98" x="37" y="154" width="167" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1045,7 +1086,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{cpfava01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="f0510262-3445-49d7-97e3-9f127aec0dc7" x="52" y="297" width="178" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="f0510262-3445-49d7-97e3-9f127aec0dc7" x="52" y="164" width="178" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1054,7 +1095,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{endava01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="ad273934-494d-43c1-ab99-5962f927e7f4" x="53" y="328" width="152" height="10" isRemoveLineWhenBlank="true">
+				<reportElement uuid="ad273934-494d-43c1-ab99-5962f927e7f4" x="53" y="195" width="152" height="10" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1063,7 +1104,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{celava01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="c168af1e-1424-4209-85b5-f3c3b8f419f5" x="276" y="275" width="193" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="c168af1e-1424-4209-85b5-f3c3b8f419f5" x="276" y="142" width="193" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1072,7 +1113,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{nmcjg01}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="263" width="13" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="130" width="13" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1081,7 +1122,7 @@ Endereço:
 				<text><![CDATA[1)]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="3257e6eb-71ff-47f2-b657-6983a328000e" x="294" y="295" width="178" height="32" isRemoveLineWhenBlank="true">
+				<reportElement uuid="3257e6eb-71ff-47f2-b657-6983a328000e" x="294" y="162" width="178" height="32" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1090,7 +1131,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{endcjg01}]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="275" width="59" height="37" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="142" width="59" height="37" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1102,7 +1143,7 @@ Endereço:
 ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="243" width="198" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="110" width="198" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1111,7 +1152,7 @@ Endereço:
 				<text><![CDATA[Cônjuge dos Devedores Solidários:]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="4cb53ab2-a36c-4921-89bd-28c33493d82a" x="276" y="285" width="161" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="4cb53ab2-a36c-4921-89bd-28c33493d82a" x="276" y="152" width="161" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1120,7 +1161,7 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{cpfcjg01}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement uuid="458cc7f1-1955-4e42-93cb-22cb0f6858a2" x="294" y="326" width="171" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="458cc7f1-1955-4e42-93cb-22cb0f6858a2" x="294" y="193" width="171" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1129,12 +1170,12 @@ Endereço:
 				<textFieldExpression><![CDATA[$F{celcjg01}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="260" y="274" width="212" height="1" isRemoveLineWhenBlank="true">
+				<reportElement uuid="2d9dde0c-848c-4559-b22f-4b98c1f981af" x="260" y="141" width="212" height="1" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 			</line>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="328" width="50" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="195" width="50" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1143,7 +1184,7 @@ Endereço:
 				<text><![CDATA[Telefone:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="326" width="50" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="245" y="193" width="50" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg01}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1152,7 +1193,7 @@ Endereço:
 				<text><![CDATA[Telefone:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="429" width="50" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="8" y="296" width="50" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmaval02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1161,7 +1202,7 @@ Endereço:
 				<text><![CDATA[Telefone:]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="246" y="429" width="50" height="11" isRemoveLineWhenBlank="true">
+				<reportElement uuid="bef923a0-bd37-4bc2-b7e8-95c010d37a01" x="246" y="296" width="50" height="11" isRemoveLineWhenBlank="true">
 					<printWhenExpression><![CDATA[$F{nmcjg02}.length()>0]]></printWhenExpression>
 				</reportElement>
 				<textElement>
@@ -1169,15 +1210,8 @@ Endereço:
 				</textElement>
 				<text><![CDATA[Telefone:]]></text>
 			</staticText>
-			<staticText>
-				<reportElement uuid="597cdc48-95d8-4e22-abd0-5b039496e17a" x="4" y="94" width="466" height="39"/>
-				<textElement textAlignment="Justified" markup="html">
-					<font fontName="Courier New" size="8" isBold="false" isPdfEmbedded="false"/>
-				</textElement>
-				<text><![CDATA[<u> 18. Declaração de Leitura</u> - O Emitente e o(s) Devedor(es) Solidário(s), ao assinarem as Condições Específicas desta Cédula, declaram que a leram previamente e que não possuem nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
-			</staticText>
 			<subreport>
-				<reportElement uuid="36ec6feb-fb37-4e16-b3f1-4730a66c9c4f" positionType="Float" x="6" y="671" width="467" height="45"/>
+				<reportElement uuid="36ec6feb-fb37-4e16-b3f1-4730a66c9c4f" positionType="Float" x="6" y="538" width="467" height="45"/>
 				<subreportParameter name="PR_SQSOLICI"/>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//cet")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["cet_emprestimos.jasper"]]></subreportExpression>

@@ -1115,7 +1115,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 13/09/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1386,17 +1386,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        15/07/2016 - #433568 na procedure pc_executa_transferencia da PAGA0001 permitir que se gere o 
                     protocolo para os agendamentos feitos através do TAA (Carlos)
 
-	     18/07/2016 - Ajuste para incluir end if perdido no merge
-			   	          (Adriano)
-                    
+	     18/07/2016 - Ajuste para incluir end if perdido no merge (Adriano)
+                                                                              
 			 04/08/2016 - Alterado rotinas pc_gera_arq_coop_cnab240 e pc_gera_arq_coop_cnab400
 			              para tratar envio via ftp. (Reinert)
-                    
+                                                                              
        23/08/2016 - Incluir tratamento para autorizações suspensas na procedure
                     pc_debita_convenio_cecred (Lucas Ranghetti #499496)
        13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
                    (Adriano - SD 495293). 
-                                                                              
+                   
+       21/09/2016 - #523944 Criação de log de controle de início, erros e fim de execução
+                    do job pc_processa_crapdda (Carlos)
+              
+       28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
+                    na procedure pc_paga_titulo (Lucas Ranghetti #511679)                      
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -7966,7 +7970,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --  Sistema  : Rotinas Internet
     --  Sigla    : AGEN
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Junho/2013.                   Ultima atualizacao: 05/02/2016
+    --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -8015,6 +8019,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --                             já foi atulizada e enviado a JDDA.
     --                            (Adriano - SD 394710)
     --
+    --                28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
+    --                             (Lucas Ranghetti #511679)                      
     -- ..........................................................................
 
   BEGIN
@@ -8674,6 +8680,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
       -- se encontrou erro ao buscar lote, abortar programa
       IF vr_dscritic IS NOT NULL THEN
+        -- Rollback da transação
+        ROLLBACK TO undopoint;
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -11522,7 +11530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                 
                    13/09/2016 - Ajuste para buscar corretamente o registro de favorecidos
                                (Adriano - SD 495293).       
-                                
+
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -12204,7 +12212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 							--Atualizar flag para true
 								vr_flgalter := TRUE;
 								pr_flgalter := TRUE;
-						END IF;
+        END IF;
 					END IF;
         END IF;
 
@@ -18633,6 +18641,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     -- Erro no envio
     vr_dserro     VARCHAR2(4000);
 
+    vr_cdprogra    VARCHAR2(40) := 'PC_PROCESSA_CRAPDDA';
+    vr_nomdojob    VARCHAR2(40) := 'JBDDA_PROCESSA_CRAPDDA';
+    vr_flgerlog    BOOLEAN := FALSE;
+
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
+
     /*montar descrição de erro para envio email*/
     procedure pc_monta_erro ( pr_crapdda cr_crapdda%rowtype,
                               pr_dscritic varchar2 )is
@@ -18674,6 +18699,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     END pc_monta_erro;
 
   BEGIN
+
+    -- Log de inicio de execucao
+    pc_controla_log_batch(pr_dstiplog => 'I');
 
     --buscar registros não processados
     FOR rw_crapdda IN cr_crapdda LOOP
@@ -18751,16 +18779,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --Comitar alterações
     COMMIT;
 
+    -- Log de fim de execucao
+    pc_controla_log_batch(pr_dstiplog => 'F');
+
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PAGA0001.pc_processa_crapdda: '||SQLErrm;
       ROLLBACK;
-      -- Gerar log
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3/*CECRED*/
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                || 'PAGA0001.pc_processa_crapdda' || ' --> '
-                                                || pr_dscritic );
+
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => pr_dscritic);
 
   END pc_processa_crapdda;
 

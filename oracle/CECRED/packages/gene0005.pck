@@ -221,26 +221,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   vr_des_reto VARCHAR2(3);
   vr_tab_erro GENE0001.typ_tab_erro;
 
-  /* Cursor generico de parametrizacão */
-  CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE           --> Cooperativa
-                   ,pr_nmsistem IN craptab.nmsistem%TYPE           --> Nome sistema
-                   ,pr_tptabela IN craptab.tptabela%TYPE           --> Tipo de tabela
-                   ,pr_cdempres IN craptab.cdempres%TYPE           --> Codigo empresa
-                   ,pr_cdacesso IN craptab.cdacesso%TYPE           --> Codigo de acesso
-                   ,pr_tpregist IN craptab.tpregist%TYPE           --> Tipo de registro
-                   ,pr_dstextab IN craptab.dstextab%TYPE) IS       --> Texto de parametros
-    SELECT tab.dstextab
-          ,tab.rowid
-    FROM craptab tab
-    WHERE tab.cdcooper = pr_cdcooper
-      AND upper(tab.nmsistem) = nvl(upper(pr_nmsistem), upper(tab.nmsistem))
-      AND upper(tab.tptabela) = nvl(upper(pr_tptabela), upper(tab.tptabela))
-      AND tab.cdempres = nvl(pr_cdempres, tab.cdempres)
-      AND upper(tab.cdacesso) = nvl(upper(pr_cdacesso), upper(tab.cdacesso))
-      AND tab.tpregist = nvl(pr_tpregist, tab.tpregist)
-      AND SUBSTR(tab.dstextab,1,7) = nvl(pr_dstextab, SUBSTR(tab.dstextab,1,7));
-  rw_craptab cr_craptab%ROWTYPE;
-
   /* Procedimento padrão de busca de informacões de CPMF */
   PROCEDURE pc_busca_cpmf(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                          ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
@@ -269,38 +249,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --               12/11/2012 - Conversão Progress --> Oracle PLSQL (Marcos - Supero)
     -- .............................................................................
     DECLARE
-      -- Definir outro rowtype para não misturar ao principal
-      rw_craptab cr_craptab%ROWTYPE;
+      vr_dstextab craptab.dstextab%TYPE;
     BEGIN
       -- Buscar dados de CPMF na tabela de parametros
-      OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                      ,pr_nmsistem => 'CRED'
                      ,pr_tptabela => 'USUARI'
                      ,pr_cdempres => 11
                      ,pr_cdacesso => 'CTRCPMFCCR'
-                     ,pr_tpregist => 1
-                     ,pr_dstextab => NULL);
-      FETCH cr_craptab
-       INTO rw_craptab;
-      -- Se não encontrar
-      IF cr_craptab%FOUND THEN
-        -- Fechar o cursor
-        CLOSE cr_craptab;
+                                               ,pr_tpregist => 1);       
+      -- Se encontrar
+      IF vr_dstextab IS NOT NULL THEN        
         -- Povoar as informacões conforme as regras da versão anterior
-        pr_dtinipmf := TO_DATE(SUBSTR(rw_craptab.dstextab,1,10),'DD/MM/YYYY');
-        pr_dtfimpmf := TO_DATE(SUBSTR(rw_craptab.dstextab,12,10),'DD/MM/YYYY');
+        pr_dtinipmf := TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY');
+        pr_dtfimpmf := TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY');
         IF pr_dtmvtolt >= pr_dtinipmf AND pr_dtmvtolt <= pr_dtfimpmf THEN
-          pr_txcpmfcc := GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,23,13));
-          pr_txrdcpmf := GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,38,13));
+          pr_txcpmfcc := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,13));
+          pr_txrdcpmf := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,38,13));
         ELSE
           pr_txcpmfcc := 0;
           pr_txrdcpmf := 1;
         END IF;
-        pr_indabono := SUBSTR(rw_craptab.dstextab,51,1); /* 0 = abona 1 = nao abona */
-        pr_dtiniabo := TO_DATE(SUBSTR(rw_craptab.dstextab,53,10)); /* data de inicio do abono */
+        pr_indabono := SUBSTR(vr_dstextab,51,1); /* 0 = abona 1 = nao abona */
+        pr_dtiniabo := TO_DATE(SUBSTR(vr_dstextab,53,10)); /* data de inicio do abono */
       ELSE
-        -- Fechar o cursor
-        CLOSE cr_craptab;
         -- Montar retorno de erro
         pr_cdcritic := 641;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 641);
@@ -336,36 +308,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --   Alteracoes:  29/01/2013 - Conversão Progress --> Oracle PLSQL (Alisson - Amcom)
     -- .............................................................................
     DECLARE
-      -- Definir outro rowtype para não misturar ao principal
-      rw_craptab cr_craptab%ROWTYPE;
+      vr_dstextab craptab.dstextab%TYPE;
     BEGIN
       --Inicializa variavel de erro
       pr_dscritic := NULL;
       -- Buscar dados de CPMF na tabela de parametros
-      OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                      ,pr_nmsistem => 'CRED'
                      ,pr_tptabela => 'USUARI'
                      ,pr_cdempres => 11
                      ,pr_cdacesso => 'VLIOFOPFIN'
-                     ,pr_tpregist => 1
-                     ,pr_dstextab => NULL);
-      FETCH cr_craptab
-       INTO rw_craptab;
-      -- Se não encontrar
-      IF cr_craptab%FOUND THEN
-        -- Fechar o cursor
-        CLOSE cr_craptab;
+                     ,pr_tpregist => 1);
+      -- Se encontrar
+      IF vr_dstextab IS NOT NULL THEN
         -- Povoar as informacões conforme as regras da versão anterior
-        pr_dtiniiof := TO_DATE(SUBSTR(rw_craptab.dstextab,1,10),'DD/MM/YYYY');
-        pr_dtfimiof := TO_DATE(SUBSTR(rw_craptab.dstextab,12,10),'DD/MM/YYYY');
+        pr_dtiniiof := TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY');
+        pr_dtfimiof := TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY');
         IF pr_dtmvtolt BETWEEN  pr_dtiniiof AND pr_dtfimiof THEN
-          pr_txccdiof := GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,23,14));
+          pr_txccdiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
         ELSE
           pr_txccdiof := 0;
         END IF;
       ELSE
-        -- Fechar o cursor
-        CLOSE cr_craptab;
         -- Montar retorno de erro
         pr_cdcritic := 915;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 915);
@@ -1379,20 +1343,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --                            - Alterado para tratar o ultimo dia util do ano ao invez do ultimo dia do ano
     --                              devido a compe financeira utlizar o ultimo dia util do ano para o fechamento anual
     --                              SD 240181 (Odirlei-AMcom)
+    --
+    --                 19/10/2016 - Alterado a busca de feriados de acordo com a situação do processo 
+    --                                batch  -> carrega toda a tabela de feriados
+    --                                online -> verifica apenas se a data "à buscar" é um feriado
+    --                              (Rodrigo)
     -- .............................................................................
     DECLARE
       -- Data auxiliar
       vr_dtmvtolt  crapdat.dtmvtolt%TYPE;
       vr_excultdia INTEGER;
       vr_dtultano  crapdat.dtmvtolt%TYPE;
+      vr_dtbuscar  crapdat.dtmvtolt%TYPE;
       
       -- Buscar informacoes dos feriados
-      CURSOR cr_crapfer (pr_excultdia IN INTEGER) IS
+      CURSOR cr_crapfer IS
         SELECT fer.dtferiad
           FROM crapfer fer
          WHERE fer.cdcooper = pr_cdcooper;
+         
+      -- Verificar se a data a buscar é um feriado
+      CURSOR cr_crapfer_unico (pr_dtbuscar IN crapfer.dtferiad%TYPE) IS
+        SELECT fer.dtferiad
+          FROM crapfer fer
+         WHERE fer.cdcooper = pr_cdcooper
+           AND fer.dtferiad = pr_dtbuscar;
+      rw_crapfer cr_crapfer%ROWTYPE;
+
       -- Indica pra tabela de feriados
       vr_index BINARY_INTEGER;
+      
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     BEGIN
       -- Iniciar com a data passada removendo as horas
       vr_dtmvtolt := TRUNC(pr_dtmvtolt);
@@ -1404,18 +1386,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         vr_excultdia:= 0;
       END IF;
       
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+      INTO  rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      
+      IF rw_crapdat.inproces > 1 THEN
       -- Se a tabela de feriados estiver vazia
       IF vr_tab_feriado.COUNT = 0 THEN
         -- Alimentar vetor com os feriados
         vr_tab_feriado.DELETE;        
 
-        FOR rw_crapfer IN cr_crapfer (pr_excultdia => vr_excultdia)  LOOP
+          FOR rw_crapfer IN cr_crapfer LOOP
           --Montar o indice para o vetor
           vr_index := To_Number(To_Char(rw_crapfer.dtferiad,'YYYYMMDD'));
           --Atribuir o valor selecionado ao vetor
           vr_tab_feriado(vr_index):= rw_crapfer.dtferiad;
         END LOOP;
       END IF;
+      ELSE
+        -- Decrementa um dia da data para proceder o loop
+        vr_dtbuscar := vr_dtmvtolt;
+        
+        LOOP          
+          OPEN  cr_crapfer_unico(pr_dtbuscar => vr_dtbuscar);
+          FETCH cr_crapfer_unico 
+          INTO  rw_crapfer;
+          
+          IF cr_crapfer_unico%FOUND THEN          
+          --Montar o indice para o vetor
+          vr_index := To_Number(To_Char(rw_crapfer.dtferiad,'YYYYMMDD'));
+          --Atribuir o valor selecionado ao vetor
+          vr_tab_feriado(vr_index):= rw_crapfer.dtferiad;
+          ELSE
+            CLOSE cr_crapfer_unico;
+            EXIT;
+          END IF;
+          
+          CLOSE cr_crapfer_unico;
+          vr_dtbuscar := vr_dtbuscar+1;
+        END LOOP;
+      END IF;
+        
       -- Testes para garantir que seja util
       LOOP
         -- Montar a data em numero para busca no vetor de feriados

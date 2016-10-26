@@ -2251,6 +2251,7 @@ PROCEDURE carrega_dados_proposta_finalidade:
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_tpemprst,
                                                   INPUT aux_cdfinemp,
+                                                  INPUT aux_cdlcremp,
                                                   INPUT TRUE,
                                                   INPUT aux_dsctrliq,
                                                   OUTPUT TABLE tt-erro,
@@ -2279,6 +2280,43 @@ PROCEDURE carrega_dados_proposta_finalidade:
         END.                   
     
 END PROCEDURE.
+
+PROCEDURE carrega_dados_proposta_linha_credito:
+
+    RUN carrega_dados_proposta_linha_credito IN hBO (INPUT aux_cdcooper, 
+                                                     INPUT aux_cdagenci, 
+                                                     INPUT aux_nrdcaixa, 
+                                                     INPUT aux_cdoperad, 
+                                                     INPUT aux_nmdatela, 
+                                                     INPUT aux_idorigem, 
+                                                     INPUT aux_dtmvtolt,
+                                                     INPUT aux_nrdconta,
+                                                     INPUT aux_cdfinemp,
+                                                     INPUT aux_cdlcremp,
+                                                     OUTPUT TABLE tt-erro,
+                                                     OUTPUT aux_dsnivris).
+
+    IF RETURN-VALUE <> "OK"  THEN
+       DO:
+           FIND FIRST tt-erro NO-LOCK NO-ERROR.      
+           IF  NOT AVAILABLE tt-erro  THEN
+               DO:
+                   CREATE tt-erro.
+                   ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                             "operacao.".
+               END.
+           
+           RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                           INPUT "Erro").
+       END.
+    ELSE 
+       DO: 
+           RUN piXmlNew.
+           RUN piXmlAtributo (INPUT "dsnivris",INPUT aux_dsnivris).            
+           RUN piXmlSave.
+       END.                   
+    
+END PROCEDURE.    
 
 PROCEDURE atualiza_risco_proposta:
 

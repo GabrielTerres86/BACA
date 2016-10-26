@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps521(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Gabriel
-     Data    : Novembro/2008                       Ultima Atualizacao : 05/03/2015
+     Data    : Novembro/2008                       Ultima Atualizacao : 14/06/2016
   
      Dados referente ao programa:
   
@@ -18,6 +18,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps521(pr_cdcooper IN crapcop.cdcooper%TY
   
      Alteracoes: 05/03/2015 - Conversão Progress >> Oracle PL-Sql (Dionathan)
   
+                 14/06/2016 - P187.2 - Sicredi Seguros (Guilherme/SUPERO)
+
   ............................................................................. */
   ------------------------------- CURSORES ---------------------------------
   -- Busca dos dados da cooperativa
@@ -99,13 +101,32 @@ BEGIN
        AND crapseg.flgconve = 1
        AND crapseg.cdsitseg IN (1, 3) -- Novo, Renovado
        AND crapseg.dtfimvig <= vr_dtmvtolt;
-  
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := ' Erro ao atualizar a tabela CRAPSEG: ' || SQLERRM;
       RAISE vr_exc_saida;
   END;
+
+
+  -- NOVO SEGURO AUTO - SICREDI/SIS
+  BEGIN
+    -- Executa update que altera o status de todos os seguros autos vencidos.
+    UPDATE tbseg_contratos seg
+       SET seg.indsituacao = 'V' -- Atualiza para Vencido
+     WHERE seg.cdcooper    = pr_cdcooper
+       AND seg.tpseguro    = 'A' -- Auto
+       AND seg.indsituacao = 'A' -- Ativo
+       AND seg.nrapolice   > 0   -- Se for 0, é proposta, e nao precisa atualizar
+       AND seg.dttermino_vigencia <= vr_dtmvtolt;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := ' Erro ao atualizar a tabela TBSEG_CONTRATOS: ' || SQLERRM;
+      RAISE vr_exc_saida;
+  END;
+
 
   -- Se retornar crítica
   IF vr_dscritic IS NOT NULL THEN

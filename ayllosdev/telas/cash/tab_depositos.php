@@ -8,12 +8,10 @@
  * ALTERAÇÕES   :  17/09/2012 - Implementação do novo layout (David Kruger).
  *                27/05/2014 - Incluido a informação de espécie de deposito e
 							   relatório do mesmo. (Andre Santos - SUPERO)
+							   
+			      14/09/2016 - #462247 Inclusão da opção de exportar para arquivo csv as transações de depósitos (Carlos)
  * --------------
  */
- 
-?>
-
-<?php
 	/*
  	session_start();
 	require_once('../../includes/config.php');
@@ -22,7 +20,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();	
 	*/
-?>
+	?>
 
 <form id="frmDepositos" name="frmDepositos" class="formulario" onSubmit="return false;">
 
@@ -44,10 +42,19 @@
 				</tr>
 			</thead>
 			<tbody>
-				<? 
-				foreach( $envelope as $r ) { 
-								
-				?>
+				<?php
+				$csv = utf8_decode('Data;Hora;Conta Fav;Envelope;Esp;Valor Inf; Valor Comp;Situação')."\r\n";
+
+				foreach( $envelope as $r ) {
+
+					$csv .= getByTagName($r->tags,'dtmvtolt') . ';' .
+					        getByTagName($r->tags,'hrtransa') . ';' .
+							getByTagName($r->tags,'nrdconta') . ';' .							
+							getByTagName($r->tags,'nrseqenv') . ';' .
+							getByTagName($r->tags,'dsespeci') . ';' .
+							getByTagName($r->tags,'vlenvinf') . ';' .
+							getByTagName($r->tags,'vlenvcmp') . ';' .
+							getByTagName($r->tags,'dssitenv') . "\r\n"; ?>
 					<tr>
 						<td><span><? echo dataParaTimestamp(getByTagName($r->tags,'dtmvtolt')); ?></span>
 							      <? echo getByTagName($r->tags,'dtmvtolt'); ?>
@@ -75,7 +82,12 @@
 								  <? echo getByTagName($r->tags,'dssitenv'); ?>
 						</td>
 					</tr>
-			<? } ?>	
+			<? }
+			   // Salva arquivo csv com nome em microsegundos
+			   $nmarquivo   = 'cash_depositos_' . round(microtime(true) * 1000) . '.xls';
+			   $nmdir       = '../../documentos/'.$glbvars['dsdircop'].'/temp/';
+			   file_put_contents($nmdir.$nmarquivo, $csv);
+			?>
 			</tbody>
 		</table>
 	</div>	
@@ -84,7 +96,8 @@
 </form>
 
 <div id="divBotoes" style="margin-bottom:8px">
-    <a href="#" class="botao" id="btVoltar" onclick="fechaOpcao(); return false;">Voltar</a>     
+    <a href="#" class="botao" id="btVoltar" onclick="fechaOpcao(); return false;">Voltar</a>
+	<a href="baixar.php?arquivo=<?php echo $nmarquivo; ?>&coop=<?php echo $glbvars['dsdircop']?>" class="botao" id="btExportar" target="_blank">Exportar</a>
 </div>
 
 <script> 

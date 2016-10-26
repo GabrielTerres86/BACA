@@ -265,6 +265,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                             TARI0001.pc_carrega_dados_tarifa_cobr. (Jaison/Marcos)
                             
                07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago).
+               
+               20/09/2016 - #523941 Criação de log de controle de início, erros e fim de execução
+                            do job pc_processo_controlador (Carlos)
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -5339,7 +5342,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   -- Variaveis Excecao
   vr_exc_erro EXCEPTION;
 
+  vr_cdprogra    VARCHAR2(40) := 'PC_PROCESSO_CONTROLADOR';
+  vr_nomdojob    VARCHAR2(40) := 'JBFOLHA_PROCESSO_CONTROLADOR';
+  vr_flgerlog    BOOLEAN := FALSE;
+
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                  pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
   BEGIN
+    --> Controlar geração de log de execução dos jobs 
+    BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                             ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                             ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                             ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                             ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                             ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+  END pc_controla_log_batch;
+
+  BEGIN
+    
+    -- Log de inicio de execucao
+    pc_controla_log_batch(pr_dstiplog => 'I');
+  
     -- Faz laço com todas as cooperativas
     FOR rw_crapcop IN cr_crapcop LOOP
       BEGIN
@@ -5638,6 +5662,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         END IF;
       EXCEPTION
       WHEN vr_exc_erro THEN
+        
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dscritic);
+      
         -- Desfazer a operacao
         ROLLBACK;
         -- envia ao LOG o problema ocorrido
@@ -5647,6 +5676,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                   ,pr_nmarqlog     => 'FOLHIB');
 
       WHEN OTHERS THEN
+
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => vr_dscritic);
+
         -- Desfazer a operacao
         ROLLBACK;
         -- envia ao LOG o problema ocorrido
@@ -5657,6 +5691,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
       END;
     END LOOP;
+
+    -- Log de fim da execucao
+    pc_controla_log_batch(pr_dstiplog => 'F');
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Desfazer a operacao

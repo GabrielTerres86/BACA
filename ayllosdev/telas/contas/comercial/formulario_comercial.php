@@ -11,6 +11,9 @@
  *                 18/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *				   21/06/2016 - Ajustado o nome da cidade que não carregava ao selecionar
 								uma empresa, conforme solicitado no chamado 469194. (Kelvin)
+				   07/10/2016 - Correcao no carregamento do campo justificativa devido ao uso de
+								caracteres especiais que geravam erro no retorno do Ajax. 
+								SD 535228. (Carlos Rafael Tanholi).
  */	
 ?>
 <form name="frmDadosComercial" id="frmDadosComercial" class="formulario">	
@@ -159,7 +162,7 @@
 	<textarea name="dsjusren" id="dsjusren"></textarea>
 		
 	<script type="text/javascript"> 
-		$('#dsjusren','#frmJustificativa').val( '<?php echo getByTagName($comercial,'dsjusren') ?>' )
+		$('#dsjusren','#frmJustificativa').val( '<?php echo preg_replace('/(\r\n|\r|\n)+/', "", getByTagName($comercial,'dsjusren')); ?>' )
 	</script>	
 	<br style="class:both" />	
 		

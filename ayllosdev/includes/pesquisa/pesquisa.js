@@ -538,7 +538,7 @@ function selecionaPesquisa(resultado, idForm) {
 		$('input[name="'+campoNome+'"]','#'+idForm).focus();
 	}else if(idForm == "frmAgenci"){
 		$('input[name="cdageban"]','#'+idForm).focus();
-	}else if(campoNome == "cdlcremp" && tipoPessoaRegra != 'undefined'){
+	}else if(campoNome == "cdlcremp" && typeof tipoPessoaRegra != 'undefined'){
 		var arrayResultado2 = arrayCampos[1].split(";");
         var campoValor2     = arrayResultado2[1];
         if (tipoPessoaRegra == 'PF') {
@@ -838,8 +838,8 @@ function pesquisaAssociado_2_OnKeyDown(nriniseq) {
     $('#integra').bind('keydown', function (e) {
         if (e.keyCode == 13) {
 
-            showMsgAguardo('Aguarde, pesquisando associados ...');
-
+	showMsgAguardo('Aguarde, pesquisando associados ...');
+	
             var cdpesqui = $('input[type="radio"]:checked', '#frmPesquisaAssociado').val();
             var nmdbusca = $('#nmdbusca', '#frmPesquisaAssociado').val();
             var tpdapesq = $('#tpdapesq', '#frmPesquisaAssociado').val();

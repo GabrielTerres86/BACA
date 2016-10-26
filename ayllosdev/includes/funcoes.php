@@ -62,6 +62,8 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 039: [20/07/2016] Carlos Rafael Tanholi: Correcao na funcao formataMoeda que passava um parametro do tipo STRING para number_format. SD 448397.
  * 040: [25/07/2016] Carlos Rafael Tanholi: Correcao na expressao regular da funcao formatar(). SD 479874. 
  * 038: [24/08/2016] Carlos (CECRED)        : Criada a classe XmlMensageria para auxiliar a montagem do xml usado para mensageria
+ 
+ * 041: [22/09/2016] Carlos Rafael Tanholi: Alterei a função cecredCript e cecredDecript que usava mcrypt_cbc depreciada. SD 495858.
  */
 ?>
 <?php
@@ -670,7 +672,7 @@ function formatar($campo,$tipo,$formatado=true) {
 	
 	$codigoLimpo = preg_replace("/[' '-.]/", '', $campo);
     
-    $tamanho = (strlen($codigoLimpo) -2);
+	$tamanho = (strlen($codigoLimpo) -2);
 
     if ($tamanho != 9 && $tamanho != 12) { return $campo; }
     if ($formatado){
@@ -1290,12 +1292,12 @@ function dbOracle() {
 
 /* Funcao para criptografar o texto enviado conforme chave secreta */
 function cecredCript($texto) {
-	return mcrypt_cbc(MCRYPT_BLOWFISH,KEY,$texto,MCRYPT_ENCRYPT,IV);
+	return mcrypt_encrypt(MCRYPT_BLOWFISH, KEY, $texto, MCRYPT_MODE_CBC, IV);
 }
 
 /* Funcao para descriptografar o texto enviado conforme chave secreta */
 function cecredDecript($texto) {
-	return mcrypt_cbc(MCRYPT_BLOWFISH,KEY,$texto,MCRYPT_DECRYPT,IV);
+	return mcrypt_decrypt(MCRYPT_BLOWFISH, KEY, $texto, MCRYPT_MODE_CBC, IV);
 }
 
 /* Funcao para separar a connect string OCI em User, Pwd e Senha */
@@ -1458,7 +1460,7 @@ function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $
     $xml = xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag);
 		
 	$retXML = dbProcedure($xml);
-
+	
 	return $retXML;
 }
 

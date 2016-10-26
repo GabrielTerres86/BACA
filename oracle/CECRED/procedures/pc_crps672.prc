@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 14/07/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 10/10/2016
 
        Dados referentes ao programa:
 
@@ -85,6 +85,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    14/07/2016 - Ajustado a identificacao dos dados da conta e controle na leitura do
                                 numero da conta quando o valor recebido eh zero
                                 (Douglas - Chamado 465010, 478018)
+
+                   04/10/2016 - Ajustado para gravar o nome da empresa do plastico quando criar uma
+                                nova proposta de cartao (Douglas - Chamado 488392)
+                                
+                   10/10/2016 - Ajuste para nao voltar para Aprovado uma solicitacao que
+                                retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
+                                (Chamado 532712) - (Fabrício)
     ............................................................................ */
 
     DECLARE
@@ -286,6 +293,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
             ,pcr.nrdoccrd
             ,pcr.dtcancel
             ,pcr.flgdebit
+            ,pcr.nmempcrd
             ,pcr.rowid
         FROM crawcrd pcr
        WHERE pcr.cdcooper = pr_cdcooper  AND
@@ -339,6 +347,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
             ,pcr.nrdoccrd
             ,pcr.dtcancel
             ,pcr.flgdebit
+            ,pcr.nmempcrd
             ,pcr.rowid
         FROM crawcrd pcr
        WHERE ROWID = pr_rowid;
@@ -1517,6 +1526,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 
                 -- Se for dados do cartão, e os dados forem de um CNPJ (pos93 = 3)
                 IF TO_NUMBER(substr(vr_des_text,93,02)) = '03' THEN                  
+                  /* nao deve solicitar cartao novamente caso retorne critica 080
+                     (pessoa ja tem cartao nesta conta) */
+                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                    continue;
+                  END IF;
                   
                   vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,250,23)||substr(vr_des_text,7,2);
                   
@@ -1746,6 +1760,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 
                 -- Verifica se houve rejeição do Tipo de Registro 2
                 IF substr(vr_des_text,211,3) <> '000'  THEN
+                  /* nao deve solicitar cartao novamente caso retorne critica 080
+                     (pessoa ja tem cartao nesta conta) */
+                  IF substr(vr_des_text, 211, 3) = '080' THEN
+                    continue;
+                  END IF;
                   
                   BEGIN                  
                     vr_nmtitcrd := substr(vr_des_text,38,19)||substr(vr_des_text,57,23)||substr(vr_des_text,7,2);
@@ -2247,7 +2266,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             nrseqcrd,
                             dtentr2v,
                             dtpropos,
-                            flgdebit)
+                            flgdebit,
+                            nmempcrd)
                         VALUES
                            (rw_crawcrd.nrdconta,
                             TO_NUMBER(substr(vr_des_text,38,19)), -- número cartão vindo do arquivo
@@ -2274,7 +2294,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             vr_nrseqcrd,
                             vr_dtentr2v,
                             rw_crapdat.dtmvtolt,
-                            rw_crawcrd.flgdebit)
+                            rw_crawcrd.flgdebit,
+                            rw_crawcrd.nmempcrd)
                             RETURNING ROWID INTO rw_crawcrd.rowid;
                       EXCEPTION
                         WHEN OTHERS THEN

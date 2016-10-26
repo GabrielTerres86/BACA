@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 23/02/2015
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 29/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -26,6 +26,15 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --             16/02/2016 - Ajustes referentes ao projeto melhoria 157 (Lucas Ranghetti #330322)
   --             23/02/2016 - Quando for verificar o saldo retirar a subtracao do valor do bloqueio judicial
   --                          da somatoria (Tiago/Rodrigo SD405466)
+  --  
+  --             14/09/2016 - #519895 No procedimento pc_debita_fatura_job, incluído log de início, fim e 
+  --                          erro na execução do job (Carlos)
+  --
+  --             29/09/2016 - Executar o comando ux2dos no dir /bancoob para
+  --                          nao correr o risco de enviar o arquivo CSDC*
+  --                          incompleto ao parceiro por "demora" na execução do
+  --                          comando (pc_crps669). (Chamado 521613) - (Fabricio)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -1445,7 +1454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 14/07/2016
+    Data    : Maio/14.                    Ultima atualizacao: 29/09/2016
 
     Dados referentes ao programa:
 
@@ -1477,6 +1486,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 14/07/2016 - Adequacoes no layout do CSDC solicitados pela Cabal.
                              (Chamado 482238) - (Fabrício)
+                             
+                29/09/2016 - Executar o comando ux2dos no dir /bancoob para
+                             nao correr o risco de enviar o arquivo CSDC*
+                             incompleto ao parceiro por "demora" na execução do
+                             comando. (Chamado 521613) - (Fabricio)
     ..............................................................................*/
     DECLARE
        ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -1753,6 +1767,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
         -- Executa comando UNIX para converter arq para Dos
         vr_dscomando := 'ux2dos ' || vr_direto_connect || '/TMP_'||vr_nmrquivo||' > '
+                                  || vr_direto_connect || '/' || vr_nmrquivo || ' 2>/dev/null';
+
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_dscomando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_dscritic);
+                             
+        IF vr_typ_saida = 'ERR' THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
+        -- Move arquivo convertido para a pasta de envio
+        vr_dscomando := 'mv ' || vr_direto_connect || '/' || vr_nmrquivo || ' '
                                   || vr_direto_connect||'/envia/'|| vr_nmrquivo || ' 2>/dev/null';
 
         -- Executar o comando no unix
@@ -1760,6 +1788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              ,pr_des_comando => vr_dscomando
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
+                             
         IF vr_typ_saida = 'ERR' THEN
           RAISE vr_exc_saida;
         END IF;
@@ -6734,7 +6763,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_cdcritic NUMBER;
       vr_dscritic VARCHAR(4000);
        
+      vr_cdprogra    VARCHAR2(40) := 'PC_DEBITA_FATURA_JOB';
+      vr_nomdojob    VARCHAR2(40) := 'JBCRD_DEBITA_FATURA';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;
+
+    BEGIN
+      
+      -- Log de inicio de execucao
+      pc_controla_log_batch(pr_dstiplog => 'I');
       
       FOR rw_crapcop IN cr_crapcop LOOP
 
@@ -6774,18 +6823,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            END IF;
            
            -- Envio centralizado de log de erro
-           btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                     ,pr_des_log      => to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||' - '
-                                                      || 'REPIQUE --> '
-                                                      || vr_dscritic );
+           pc_controla_log_batch(pr_dstiplog => 'E',
+                                 pr_dscritic => 'Coop: ' || rw_crapcop.cdcooper || 
+                                                ' - ' || vr_dscritic);
+
            CONTINUE;
         END IF;   
       
         COMMIT;
       END LOOP;   
       
+      -- Log de fim de execucao
+      pc_controla_log_batch(pr_dstiplog => 'F');
       
     END;                                                                 
   END pc_debita_fatura_job;    

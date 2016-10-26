@@ -142,21 +142,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             Melhoria 155 (Heitor - RKAM)
 
                15/01/2016 - Alteracoes para o Prj. 131 - Assinatura conjunta (Jean Michel)
-			   
+
                01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
                             Transferencia entre PAs (Heitor - RKAM)
 
                23/02/2016 - Chamado 374738 - Alteracao na busca das informacoes de pagamentos em
                             conta corrente. Estava buscando indevidamente da tabela craplem, quando
                             o correto deveria ser craplcm (Heitor - RKAM)
-               
+
                18/03/2016 - Chamado 374738 - Alteracao na busca das informacoes de pagamentos de
                             multa e juros de mora em emprestimos. Estava buscando indevidamente da
                             tabela craplem, quando o correto deveria ser craplcm (Heitor - RKAM)
 
                             
                26/07/2016 - Correção não estava trazendo o nome da acessoria de cobrança
-                            na manutenção cadastral. (Oscar)             
+                            na manutenção cadastral. (Oscar)
+               27/09/2016 - Correcao na chamada da gene0007 para remocao de caracteres especiais.
+			                Nao deve remover o @ devido ao campo de email.
+							Heitor (RKAM) - Chamado 521909
+
+               10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
+                            do cyber. (Gil - Mouts)
      ............................................................................. */
 
      DECLARE
@@ -368,6 +374,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcyb.ROWID
              ,crapass.cdagenci cdagenci_ass
              ,crapass.nrcpfcgc
+			 ,(select sum(x.vlmtapar)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and x.inliquid = 0) vlmtapar
+             ,(select sum(x.vlmrapar)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and x.inliquid = 0) vlmrapar
        FROM crapcyb
            ,crapass
        WHERE crapass.cdcooper = crapcyb.cdcooper
@@ -756,7 +774,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Concatena os espaços em branco e o novo texto
          vr_linha := vr_linha || rpad(' ', vr_qtd_brancos, ' ') || pr_text;
          --Modificar vetor com a linha atualizada
-         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,1),1,'`´','  ');
+         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,0),1,'`´#$&%¹²³ªº°*!?<>/\|','                    ');
        END pc_monta_linha;
 
        --Procedure para incrementar contador linha
@@ -2035,7 +2053,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              pc_monta_linha(rpad(rw_craplcr.dslcremp,29,' '),110,pr_idarquivo);
            END IF;
 
-           pc_monta_linha(to_char(pr_rw_crapcyb.vlsdeved*100,'00000000000000'),139,pr_idarquivo);
+           pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0))*100,'00000000000000'),139,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vljura60*100,'00000000000000'),154,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreemp*100,'00000000000000'),169,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtpreatr,3,' '),184,pr_idarquivo);
@@ -3430,7 +3448,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_cddbloco     crapenc.cddbloco%TYPE;
            vr_nrcxapst     crapenc.nrcxapst%TYPE;
            vr_cdorigem     crapcyc.cdorigem%TYPE;
-           
+
            /* Cursores Locais */
            --Selecionar Cadastro Cyber
            CURSOR cr_crapcyc (pr_cdcooper IN crapcyc.cdcooper%type

@@ -22,6 +22,9 @@
  *                008: [28/04/2016] Douglas: Adicionar o campo flgdebit para verificar se o primeiro cartao solicitado possui a opcao de debito habilitada. 
  *                                           Quando o primeiro cartao for solicitado sem a opcao de debito todos os cartoes adicionais devem ser identicos 
  *                                           (Chamado 415437)
+ *
+ *				  009: [05/10/2016] Kelvin: Ajuste feito ao realizar o cadastro de um novo cartão no campo  "habilita funcao debito"
+ *										    conforme solicitado no chamado 508426. (Kelvin)				  
  * --------------
  */
 
@@ -48,6 +51,7 @@
 	$cdadmcrd = $_POST["cdadmcrd"];
 	$nrcpfcgc = $_POST["nrcpfcgc"];
 	$nmtitcrd = $_POST["nmtitcrd"];
+	$floutros = $_POST["floutros"];
 	
 	$inpessoa = $_POST["inpessoa"];
 	
@@ -131,6 +135,19 @@
 			echo "$('#tpenvcrd').attr('disabled', true);";
 			echo "atualizaCampoLimiteProposto(new Array('".formataMoeda($vllimcrd)."'));";
 
+			//Administradora apenas débito (Maestro)
+			if ($cdadmcrd == 16 ||
+			    $cdadmcrd == 17) {
+				echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+				echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
+			} 
+			else {
+				//Outros
+				if($floutros == 1) {
+					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";	
+					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
+				} 
+				else {
 			// Habilitar o campo "Habilita Funcao de Debito"
 			echo "$('#flgdebit','#frmNovoCartao').habilitaCampo();";
 			// Verificar se retornou a funcao debito
@@ -139,11 +156,14 @@
 				if (strtoupper($flgdebit) == "YES"){
 					// Marcar o campo no novo cartao
 					echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
-				} else {
+						} 
+						else {
 					// Desabilitar o campo para nao permitir alterar
 					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
 					// Somente quando o primeiro cartao for SOMENTE CREDITO que a opção deve ficar desabilitada
 					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
+				}
+			}
 				}
 			}
 			
@@ -190,6 +210,19 @@
 				echo '$("#tpdpagto","#frmNovoCartao").val("0");';
 			} 
 
+			//Administradora apenas débito (Maestro)
+			if ($cdadmcrd == 16 ||
+			    $cdadmcrd == 17) {
+				echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+				echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
+			} 
+			else {
+				//Outros
+				if($floutros == 1) {
+					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";	
+					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
+				} 
+				else {
 			// Habilitar o campo "Habilita Funcao de Debito"
 			echo "$('#flgdebit','#frmNovoCartao').habilitaCampo();";
 			// Verificar se retornou a funcao debito
@@ -198,13 +231,16 @@
 				if (strtoupper($flgdebit) == "YES"){
 					// Marcar o campo no novo cartao
 					echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
-				} else {
+						} 
+						else {
 					// Desabilitar o campo para nao permitir alterar
 					echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
 					// Somente quando o primeiro cartao for SOMENTE CREDITO que a opção deve ficar desabilitada
 					echo "$('#flgdebit','#frmNovoCartao').attr('checked', false);";
 				}
 			}
+		}
+	}
 		}
 	}
 ?>

@@ -1,54 +1,72 @@
 <!--
 Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
+
+						 08/08/2016 - Alterações para Aba de "Fechamento", Prj. 229 (Jean Michel).
 -->
 
 <html>
-<head>
-<title>Parametros da Agenda</title>
-</head>
-<body style="margin-left: 3px; ">
-<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
-<script SRC="/cecred/jsbiblio/sorttable.js"></script>
-<script language="JavaScript">
-   NomeDoProgramaPrincipal  = '/wpgd0021.w';
-   NomeDoProgramaDeListagem = '/wpgd0021ls.w';
-   NomeDoProgramaDeAjuda    = '/wpgd0021aj.w';
-   NomeDoProgramaDeZoom     = '/zoom/zwpgd0021.w';
-
-</script>
-<form action="#." method="POST" name="form">
-<input type="hidden" name="aux_dsendurl" value="">
-<input type="hidden" name="pagina" value="">
-<input type="hidden" name="idevento" value="">
-<input type="hidden" name="cdcooper" value="">
-<input type="hidden" name="cdfreint" value="">
-<input type="hidden" name="aux_idevento" value="">
-<input type="hidden" name="aux_cddopcao" value="">
-<input type="hidden" name="aux_nrdrowid" value="">
-<input type="hidden" name="aux_lspermis" value="">
-<input type="hidden" name="aux_dsretorn" value="">
-<input type="hidden" name="aux_stdopcao" value="">
-<input type="hidden" name="aux_idexclui" value="">
-<input type="hidden" name="aux_mesatual" value="">
-<input type="hidden" name="aux_dtanonov" value="">
-<input type="hidden" name="aux_fechamen" value="">
-
-<!-- Inicio do modelo com abas -->
-<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
-  <table width="575" height="360" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
-    <tr>
-      <td height="20" colspan="5">
-          <table width="100%"  border="0" cellspacing="0" cellpadding="0">
-        <tr>
-                  <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
-                  <td width="55"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
-                  <td width="427" height="20" align="left" class="linkGuia">Parâmetros das Agendas</td>
-                  <td width="71" height="20" align="right" class="linkGuia">wpgd0021</td>          
-                  <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
-                </tr>
-      </table></td>
-    </tr>
+	<head>
+		<title>Parametros da Agenda</title>
+	</head>
+	<body style="margin-left: 3px; ">
+	
+		<link href="/cecred/css/jquery.ui.datepicker.css" rel="stylesheet" type="text/css">
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+		<link rel="stylesheet" href="/cecred/css/base/jquery.ui.all.css">   
+   
+		<script type="text/javascript" src="/cecred/scripts/scripts.js"></script>	
+    <script type="text/javascript" src="/cecred/scripts/jquery.ui.core.js"></script>
+    <script type="text/javascript" src="/cecred/scripts/jquery.ui.datepicker.js"></script>
+    <script type="text/javascript" src="/cecred/scripts/i18n/jquery.ui.datepicker-pt-BR.js"></script>	
+		<script type="text/javascript" src="/cecred/scripts/funcoes.js"></script>	
+		<script SRC="/cecred/jsbiblio/sorttable.js"></script>    		
     
+		<script language="JavaScript">
+			 function aguarde() {
+				 // abre a janela com a mesagem de aguarde
+			 	 showMsgAguardo("Carregando Dados...");
+       }
+			 NomeDoProgramaPrincipal  = '/wpgd0021.w';
+			 NomeDoProgramaDeListagem = '/wpgd0021ls.w';
+			 NomeDoProgramaDeAjuda    = '/wpgd0021aj.w';
+			 NomeDoProgramaDeZoom     = '/zoom/zwpgd0021.w';
+		</script>
+		<form action="#." method="POST" name="form">
+			<input type="hidden" name="aux_dsendurl" value="">
+			<input type="hidden" name="pagina" value="">
+			<input type="hidden" name="idevento" value="">
+			<input type="hidden" name="cdcooper" value="">
+			<input type="hidden" name="cdfreint" value="">
+			<input type="hidden" name="aux_idevento" value="">
+			<input type="hidden" name="aux_cddopcao" value="">
+			<input type="hidden" name="aux_nrdrowid" value="">
+			<input type="hidden" name="aux_lspermis" value="">
+			<input type="hidden" name="aux_dsretorn" value="">
+			<input type="hidden" name="aux_stdopcao" value="">
+			<input type="hidden" name="aux_idexclui" value="">
+			<input type="hidden" name="aux_mesatual" value="">
+			<input type="hidden" name="aux_dtanonov" value="">
+			<input type="hidden" name="aux_fechamen" value="">
+			<input type="hidden" name="aux_cdcopope" value="">
+			<input type="hidden" name="aux_cdoperad" value="">
+			<input type="hidden" name="aux_dsaltfec" id="aux_dsaltfec" value="0">
+
+			<!-- Inicio do modelo com abas -->
+			<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
+				<table width="575" height="360" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+					<tr>
+						<td height="20" colspan="5">
+							<table width="100%"  border="0" cellspacing="0" cellpadding="0">
+								<tr>
+									<td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+									<td width="55"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+									<td width="427" height="20" align="left" class="linkGuia">Parâmetros das Agendas</td>
+									<td width="71" height="20" align="right" class="linkGuia">wpgd0021</td>          
+									<td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+								</tr>
+							</table>
+						</td>
+					</tr>    
     <tr valign="top" bgcolor="#FFFFFF">
       <td colspan="5">
         <table width="100%" height="100%"  border="0" align="left" cellpadding="0" cellspacing="1" bgcolor="#999999">
@@ -64,8 +82,8 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
                         </select></td>
                       </tr>
                     </table>
-                                  </td>
-                                </tr>
+									</td>
+								</tr>
                 <tr>
                   <td height="15" align="left">&nbsp;</td>                                
                   <td height="10" colspan="3" align="left">                                  
@@ -82,9 +100,9 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
                                 <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
                               </tr>
                             </table>
-                                                  </div>
-                                                </td>                                
-                                                <td width="102" height="15" align="left">
+													</div>
+												</td>                                
+												<td width="102" height="15" align="left">
                           <table width="100" id="AbaGeral" border="0" cellpadding="0" cellspacing="0">
                             <tr style="cursor:hand;">
                               <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
@@ -93,8 +111,8 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
                             </tr>
                           </table>
                         </td>
-                                                <td width="102" align="left" height="15">
-                                                    <div id="divAbaEventos">                                                
+												<td width="102" align="left" height="15">
+														<div id="divAbaEventos">                                                
                             <table width="100" id="AbaEventos" border="0" cellpadding="0" cellspacing="0">
                               <tr style="cursor:hand;">
                                 <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
@@ -102,10 +120,10 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
                                 <td background="/cecred/images/menu/mnu_nld.gif" width="4" height="21"></td>
                               </tr>
                             </table>
-                                                  </div>                                                                                    
+													</div>                                                                                    
                         </td>                                                
                         <td width="102" height="15" align="left">
-                                                  <div id="divAbaIntegra">
+													<div id="divAbaIntegra">
                             <table width="100" id="AbaIntegra" border="0" cellpadding="0" cellspacing="0">
                               <tr style="cursor:hand;">
                                 <td background="/cecred/images/menu/mnu_nle.gif" width="4" height="21"></td>
@@ -270,7 +288,7 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
                                                                   <td align="left"><input name="qtpreeve" type="text" size="5" maxlength="5" class="Campo" id="qtpreeve" value="" ></td>
                                 </tr>
                                 <tr>
-                                  <td class="NomeCampo" align="right"><strong>Quantidade de eventos permitidos por mes: </strong></td>
+                                  <td class="NomeCampo" align="right"><strong>Quantidade de eventos permitidos por mês: </strong></td>
                                   <td align="left"><input name="qtmpreve" type="text" size="5" maxlength="5" class="Campo" id="qtmpreve" value="" ></td>
                                 </tr>
                               </table>
@@ -479,230 +497,235 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
   </table>
 <!-- fim do modelo -->
 </form>
-<script language="JavaScript">
-NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
-document.form.action = NomeDoProgramaPrincipal;
+	<script language="JavaScript">
+		NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+		document.form.action = NomeDoProgramaPrincipal;
 
-function CarregaPrincipal () {
-   window.status = "";
-}
+		function CarregaPrincipal () {
+			 window.status = "";
+		}
 
-function Habilita(){}
-function HabilitaSalvar(){}
+		function Habilita(){}
+		function HabilitaSalvar(){}
 
-function ValidaDados(form)
-    { 
-        var msg="";
-         
-        if (msg == "")
-            return true
-        else
-        {
-           top.frcod.MostraResultado('1',msg);
-           return false
-        }
-    }
+		function ValidaDados(form)
+				{ 
+						var msg="";
+						 
+						if (msg == "")
+								return true
+						else
+						{
+							 top.frcod.MostraResultado('1',msg);
+							 return false
+						}
+				}
 
-function Recarrega()
-{
-   VarURL = NomeDoProgramaPrincipal + '?LinkRowid=' + document.form.aux_nrdrowid.value + '&pagina='  + document.form.pagina.value;
-   window.open(VarURL,'mainFrame','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=600,height=300');
-}
+		function Recarrega()
+		{
+			 VarURL = NomeDoProgramaPrincipal + '?LinkRowid=' + document.form.aux_nrdrowid.value + '&pagina='  + document.form.pagina.value;
+			 window.open(VarURL,'mainFrame','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=600,height=300');
+		}
 
-function atualizaDados(op){
+		function atualizaDados(op){
 
-   // Valida a cooperativa
-   if (document.form.aux_cdcooper.value == ""){
-      alert('A Cooperativa deve ser escolhida!');
-           return false;
-   }
-   
-   if (op == 'eve'){
-      document.form.aux_dtanoage_int.value = document.form.aux_dtanoage_eve.value;
-      document.form.aux_dtanoage_que.value = document.form.aux_dtanoage_eve.value;
-   }          
-   else{          
-      if (op == 'int'){
-         document.form.aux_dtanoage_eve.value = document.form.aux_dtanoage_int.value;
-         document.form.aux_dtanoage_que.value = document.form.aux_dtanoage_int.value;
-          }
-      else{
-         if (op == 'que'){
-            document.form.aux_dtanoage_eve.value = document.form.aux_dtanoage_que.value;
-                        document.form.aux_dtanoage_int.value = document.form.aux_dtanoage_que.value;
-             } 
-      }
-   }
-   
-   document.form.submit();
-}
+			 // Valida a cooperativa
+			 if (document.form.aux_cdcooper.value == ""){
+					alert('A Cooperativa deve ser escolhida!');
+							 return false;
+			 }
+			 
+			 if (op == 'eve'){
+					document.form.aux_dtanoage_int.value = document.form.aux_dtanoage_eve.value;
+					document.form.aux_dtanoage_que.value = document.form.aux_dtanoage_eve.value;
+			 }          
+			 else{          
+					if (op == 'int'){
+						 document.form.aux_dtanoage_eve.value = document.form.aux_dtanoage_int.value;
+						 document.form.aux_dtanoage_que.value = document.form.aux_dtanoage_int.value;
+							}
+					else{
+						 if (op == 'que'){
+								document.form.aux_dtanoage_eve.value = document.form.aux_dtanoage_que.value;
+														document.form.aux_dtanoage_int.value = document.form.aux_dtanoage_que.value;
+								 } 
+					}
+			 }
+			 aguarde();
+			 document.form.submit();
+			 
+		}
 
-function mostraDiv(nomediv)
-{   
-   var nomeaba = '';
-   
-   document.form.aux_fechamen.value = ' ';
+		function mostraDiv(nomediv)
+		{   
+			 var nomeaba = '';
+			 
+			 document.form.aux_fechamen.value = ' ';
 
-   // esconde botão Salvar quando não for Ano Atual        
-   if ((nomediv=='divEvento') || (nomediv=='divIntegracao') || (nomediv=='divQuest'))
-      {    
-            if ((document.form.aux_dtanonov.value != document.form.aux_dtanoage_eve.value) ||
-            (document.form.aux_dtanonov.value != document.form.aux_dtanoage_int.value) ||
-            (document.form.aux_dtanonov.value != document.form.aux_dtanoage_que.value)) 
-           {
-             for (i=0;i<3;i++){
-                     document.form.salvar[i].style.filter='progid:DXImageTransform.Microsoft.BasicImage(opacity=0.2)';  
-                       document.form.salvar[i].style.cursor='default';
-                       document.form.salvar[i].disabled=true;
-                 }
-           }
-          }        
-   
-   if (nomediv=='') {nomediv='divGeral';}
+			 // esconde botão Salvar quando não for Ano Atual        
+			 if ((nomediv=='divEvento') || (nomediv=='divIntegracao') || (nomediv=='divQuest'))
+					{    
+								if ((document.form.aux_dtanonov.value != document.form.aux_dtanoage_eve.value) ||
+								(document.form.aux_dtanonov.value != document.form.aux_dtanoage_int.value) ||
+								(document.form.aux_dtanonov.value != document.form.aux_dtanoage_que.value)) 
+							 {
+								 for (i=0;i<3;i++){
+												 document.form.salvar[i].style.filter='progid:DXImageTransform.Microsoft.BasicImage(opacity=0.2)';  
+													 document.form.salvar[i].style.cursor='default';
+													 document.form.salvar[i].disabled=true;
+										 }
+							 }
+							}        
+			 
+			 if (nomediv=='') {nomediv='divGeral';}
 
-   if (nomediv=='divGeral')      {nomeaba='AbaGeral';}
-   if (nomediv=='divEvento')     {nomeaba='AbaEventos';}
-   if (nomediv=='divIntegracao') {nomeaba='AbaIntegra';}
-   if (nomediv=='divQuest')      {nomeaba='AbaQuest';}  
-   if (nomediv=='divFechamento') {nomeaba='AbaFechamento'; document.form.aux_fechamen.value = 'Sim';}  
- 
-   document.form.pagina.value=nomediv;
-   document.all.divGeral.style.display = 'none';
-   document.all.divEvento.style.display = 'none';
-   document.all.divIntegracao.style.display = 'none';
-   document.all.divQuest.style.display = 'none'; 
-   document.all.divFechamento.style.display = 'none'; 
+			 if (nomediv=='divGeral')      {nomeaba='AbaGeral';}
+			 if (nomediv=='divEvento')     {nomeaba='AbaEventos';}
+			 if (nomediv=='divIntegracao') {nomeaba='AbaIntegra';}
+			 if (nomediv=='divQuest')      {nomeaba='AbaQuest';}  
+			 if (nomediv=='divFechamento') {nomeaba='AbaFechamento'; document.form.aux_fechamen.value = 'Sim';}  
+		 
+			 document.form.pagina.value=nomediv;
+			 document.all.divGeral.style.display = 'none';
+			 document.all.divEvento.style.display = 'none';
+			 document.all.divIntegracao.style.display = 'none';
+			 document.all.divQuest.style.display = 'none'; 
+			 document.all.divFechamento.style.display = 'none'; 
 
-   document.all.AbaGeral.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaGeral.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaGeral.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaGeral.rows[0].cells[1].className="txtTituloHid";
-   
-   document.all.AbaEventos.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaEventos.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaEventos.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaEventos.rows[0].cells[1].className="txtTituloHid";
+			 document.all.AbaGeral.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+			 document.all.AbaGeral.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+			 document.all.AbaGeral.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+			 document.all.AbaGeral.rows[0].cells[1].className="txtTituloHid";
+			 
+			 document.all.AbaEventos.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+			 document.all.AbaEventos.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+			 document.all.AbaEventos.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+			 document.all.AbaEventos.rows[0].cells[1].className="txtTituloHid";
 
-   document.all.AbaIntegra.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaIntegra.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaIntegra.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaIntegra.rows[0].cells[1].className="txtTituloHid";
-   
-   document.all.AbaQuest.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaQuest.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaQuest.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaQuest.rows[0].cells[1].className="txtTituloHid";   
-   
-   document.all.AbaFechamento.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
-   document.all.AbaFechamento.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
-   document.all.AbaFechamento.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
-   document.all.AbaFechamento.rows[0].cells[1].className="txtTituloHid";
+			 document.all.AbaIntegra.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+			 document.all.AbaIntegra.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+			 document.all.AbaIntegra.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+			 document.all.AbaIntegra.rows[0].cells[1].className="txtTituloHid";
+			 
+			 document.all.AbaQuest.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+			 document.all.AbaQuest.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+			 document.all.AbaQuest.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+			 document.all.AbaQuest.rows[0].cells[1].className="txtTituloHid";   
+			 
+			 document.all.AbaFechamento.rows[0].cells[0].background="/cecred/images/menu/mnu_nle.gif";
+			 document.all.AbaFechamento.rows[0].cells[1].background="/cecred/images/menu/mnu_nlc.gif";
+			 document.all.AbaFechamento.rows[0].cells[2].background="/cecred/images/menu/mnu_nld.gif";
+			 document.all.AbaFechamento.rows[0].cells[1].className="txtTituloHid";
 
-   document.all[nomeaba].rows[0].cells[0].background="/cecred/images/menu/mnu_sle.gif";
-   document.all[nomeaba].rows[0].cells[1].background="/cecred/images/menu/mnu_slc.gif";
-   document.all[nomeaba].rows[0].cells[2].background="/cecred/images/menu/mnu_sld.gif";
-   document.all[nomeaba].rows[0].cells[1].className="txtTituloVis";
+			 document.all[nomeaba].rows[0].cells[0].background="/cecred/images/menu/mnu_sle.gif";
+			 document.all[nomeaba].rows[0].cells[1].background="/cecred/images/menu/mnu_slc.gif";
+			 document.all[nomeaba].rows[0].cells[2].background="/cecred/images/menu/mnu_sld.gif";
+			 document.all[nomeaba].rows[0].cells[1].className="txtTituloVis";
 
-   document.all[nomediv].style.display = 'block';
-}
+			 document.all[nomediv].style.display = 'block';
+		}
 
-function setaOpcao(op){
+		function setaOpcao(op){
 
-   // Verifica se o usuário tem permissão de salvar
-   if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
-      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-      return false;
-   }
+			 // Verifica se o usuário tem permissão de salvar
+			 if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+					alert('Desculpe, mas você nao tem permissão para executar esta função.'); 
+					return false;
+			 }
 
-  // Valida a cooperativa
-  if (document.form.aux_cdcooper.value == ""){
-     alert('A Cooperativa deve ser escolhida!');
-         return false;
-  }
+			// Valida a cooperativa
+			if (document.form.aux_cdcooper.value == ""){
+				 alert('A Cooperativa deve ser escolhida!');
+						 return false;
+			}
 
-  if (op == 1){
-     document.form.aux_cddopcao.value = "nova";
-         
-     // Valida o ano da nova agenda
-     if (document.form.dtanonov.value <= document.form.dtanoage.value){
-            alert('O ano não pode ser menor ou igual ao ano da agenda atual!');
-                document.form.dtanonov.focus();
-            return false;
-     }
+			if (op == 1){
+				 document.form.aux_cddopcao.value = "nova";
+						 
+				 // Valida o ano da nova agenda
+				 if (document.form.dtanonov.value <= document.form.dtanoage.value){
+								alert('O ano não pode ser menor ou igual ao ano da agenda atual!');
+										document.form.dtanonov.focus();
+								return false;
+				 }
 
-     if ((document.form.dtanonov.value > parseInt(document.form.dtanoage.value) + 1) &&
-            (document.form.dtanoage.value != 0)){
-        alert('O ano não pode ser maior ou igual a 2 anos além da agenda atual!');
-                document.form.dtanonov.focus();
-                return false;
-     }           
-  }
-         
-  if (op == 2){
-     document.form.aux_cddopcao.value = "atual";
-         
-         // Valida o ano da agenda atual
-         if (document.form.dtanoage.value > document.form.dtanonov.value){
-            alert('O ano da agenda atual não pode ser maior que o ano da nova agenda!');
-                document.form.dtanoage.focus();
-                return false;
-         }
-  }
-  
-  // Zera as datas para atualizar o registro
-  document.form.aux_dtanoage_eve.value = '';
-  document.form.aux_dtanoage_int.value = '';
-  document.form.aux_dtanoage_que.value = '';
+				 if ((document.form.dtanonov.value > parseInt(document.form.dtanoage.value) + 1) &&
+								(document.form.dtanoage.value != 0)){
+						alert('O ano não pode ser maior ou igual a 2 anos além da agenda atual!');
+										document.form.dtanonov.focus();
+										return false;
+				 }           
+			}
+						 
+			if (op == 2){
+				 document.form.aux_cddopcao.value = "atual";
+						 
+						 // Valida o ano da agenda atual
+						 if (document.form.dtanoage.value > document.form.dtanonov.value){
+								alert('O ano da agenda atual não pode ser maior que o ano da nova agenda!');
+										document.form.dtanoage.focus();
+										return false;
+						 }
+			}
+			
+			// Zera as datas para atualizar o registro
+			document.form.aux_dtanoage_eve.value = '';
+			document.form.aux_dtanoage_int.value = '';
+			document.form.aux_dtanoage_que.value = '';
 
-  document.form.submit();         
-}
+			aguarde();	
+			document.form.submit();         
+		}
 
-function confirmacao(){
+		function confirmacao(){
 
-  // Valida a cooperativa
-  if (document.form.aux_cdcooper.value == ""){
-     alert('A Cooperativa deve ser escolhida!');
-         return false;
-  }
-  
-  // Verifica se o usuário tem permissão de salvar
-  if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
-     alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-     return false;
-  }  
-   
-  if (document.form.aux_fechamen.value != 'Sim'){
-     if (confirm("Serão salvas alterações de EVENTOS, INTEGRAÇÕES e QUESTIONÁRIOS. Deseja prosseguir?"))
-        return top.frcod.Salvar();
-         }
-  else
-       return top.frcod.Salvar();
-}
+			// Valida a cooperativa
+			if (document.form.aux_cdcooper.value == ""){
+				 alert('A Cooperativa deve ser escolhida!');
+						 return false;
+			}
+			
+			// Verifica se o usuário tem permissão de salvar
+			if (document.form.aux_lspermis.value.substring(1,2) != 'A'){ 
+				 alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+				 return false;
+			}  
+			 
+			if (document.form.aux_fechamen.value != 'Sim'){
+				if (confirm("Serão salvas alterações de EVENTOS, INTEGRAÇÕES e QUESTIONÁRIOS. Deseja prosseguir?")){
+					aguarde();
+					return top.frcod.Salvar();				
+				}
+			}else{
+				if(document.getElementById("aux_dsaltfec").value == '1'){
+					if (confirm("ATENÇÃO! Os eventos deste(s) mês(es) que estão em aberto serão automaticamente encerrados.")){
+						aguarde();
+						return top.frcod.Salvar();
+					}
+				}						
+			}
+		}
 
-function verifica_mes(mes)
-{
-   if(document.form[mes].checked == true) 
-     {
-           /* Incluido parametro "10" para solucionar problema da funcao parseInt com os meses 08 e 09 */
-           if(document.form[mes].value >= parseInt(document.form.aux_mesatual.value.substring(0,2),10))
-             {
-                   if (document.form.dtanonov.value == parseInt(document.form.aux_mesatual.value.substring(2,6),10))
-                      {
-                        alert("Só poderão ser fechados meses anteriores ao mes atual.");
-                        document.form[mes].checked = false;
-              }
-                 }
-         } 
-}
+		function verifica_mes(mes){
+			
+			if(document.form[mes].checked == true){
+				/* Incluido parametro "10" para solucionar problema da funcao parseInt com os meses 08 e 09 */
+				if(document.form[mes].value >= parseInt(document.form.aux_mesatual.value.substring(0,2),10)){
+					if (document.form.dtanonov.value == parseInt(document.form.aux_mesatual.value.substring(2,6),10)){
+						alert("Só poderão ser fechados meses anteriores ao mês atual.");
+						document.form[mes].checked = false;
+					}
+				}
+			}
+			document.getElementById("aux_dsaltfec").value = "1";
+		}
 
-mostraDiv(document.form.pagina.value);
+		mostraDiv(document.form.pagina.value);
 
-// posiciona a periodicidade
-if (document.form.cdfreint.value != '')
-    document.form.aux_cdfreint.value = document.form.cdfreint.value;
-else
-    document.form.aux_cdfreint.value = '';
-        
-
-</script>
+		// posiciona a periodicidade
+		if (document.form.cdfreint.value != '')
+				document.form.aux_cdfreint.value = document.form.cdfreint.value;
+		else
+				document.form.aux_cdfreint.value = '';
+	</script>
 </body>

@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 03/03/2016
+    Data    : Agosto/2006                     Ultima Atualizacao: 21/09/2016
 
     Dados referentes ao programa:
 
@@ -190,6 +190,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                 03/03/2016 - Adicionado replace no Subject da pc_envia_email pois estava cortando o assunto pela
                              metade, o motivo era que a funcao quebrava linha e nao mostrava o
                              texto completo (Lucas Ranghetti #410456)                             
+                             
+                21/09/2016 - #523938 Criação de log de controle de início, erros e fim de execução
+                             do job pc_process_email_penden (Carlos)
 ..............................................................................*/
 
   /* Saída com erro */
@@ -699,7 +702,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
            AND trim(sle.dserrenv) IS NULL --> Sem erros
            AND ROWNUM <= vr_qtdemailjob --> Somente qtde parametrizada por Job
          ORDER BY sle.nrseqsol; --> Os mais antigos primeiro
+        
+      vr_cdprogra    VARCHAR2(40) := 'PC_PROCESS_EMAIL_PENDEN';
+      vr_nomdojob    VARCHAR2(40) := 'JBEMAIL_PROCESS_PENDENTES';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;
+         
+    BEGIN
+      
+      -- Log de inicio de execucao
+      pc_controla_log_batch(pr_dstiplog => 'I');
+    
       -- Se estiver rodando no processo automatizado
       IF pr_nrseqsol IS NULL THEN
         -- Buscar quantidade de dias que os emails devem ficar armazenados
@@ -735,6 +760,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
              AND sle.flenviad = 'S';
         EXCEPTION
           WHEN OTHERS THEN
+
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => '--> Problema ao eliminar os e-mails antigos: '||sqlerrm||'.');
+
             pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> Problema ao eliminar os e-mails antigos: '||sqlerrm||'.');
         END;
         -- Buscar quantidade de e-mails a processar no Job
@@ -760,6 +790,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           END;
           -- Se houve erro
           IF trim(vr_des_erro) IS NOT NULL THEN
+            
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_des_erro);
+          
             -- Adicionar no arquivo de log o problema na execução
             pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
           END IF;
@@ -780,14 +815,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         END;
         -- Se houve erro
         IF trim(vr_des_erro) IS NOT NULL THEN
+
+          -- Log de erro de execucao
+          pc_controla_log_batch(pr_dstiplog => 'E',
+                                pr_dscritic => vr_des_erro);
+
           -- Adicionar no arquivo de log o problema na execução
           pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
         END IF;
       END IF;
+
+    -- Log de fim da execucao
+    pc_controla_log_batch(pr_dstiplog => 'F');
+
     EXCEPTION
       WHEN OTHERS THEN
         -- Gravar pois não podemos reenviar os e-mails
         COMMIT;
+        
+        -- Log de erro de execucao
+        pc_controla_log_batch(pr_dstiplog => 'E',
+                              pr_dscritic => ' --> Erro não tratado ao processar emails pendentes --> '|| sqlerrm);
+        
         -- Gerar Log
         pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> Erro não tratado ao processar emails pendentes --> '|| sqlerrm);
     END;
@@ -1487,4 +1536,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
   END pc_buscar_mensagem;
 END gene0003;
 /
-

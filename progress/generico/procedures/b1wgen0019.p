@@ -2,7 +2,7 @@
 
    Programa: b1wgen0019.p
    Autor   : Murilo/David
-   Data    : 21/06/2007                        Ultima atualizacao: 02/08/2016
+   Data    : 21/06/2007                        Ultima atualizacao: 14/09/2016
 
    Objetivo  : BO LIMITE DE CRÉDITO
 
@@ -271,10 +271,10 @@
                             que qnd quebra a pagina e a primeira linha esta em branco
                             nao conta como uma pagina nova (Douglas - Chamado 405904)
                             
-                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
-                
-                02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
-                             = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
+               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+
+			   14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
+							(Andrey Formigari - RKAM)
 ..............................................................................*/
 
 
@@ -5549,7 +5549,8 @@ PROCEDURE gera-impressao-limite:
                                  OUTPUT aux_dscetan1, 
                                  OUTPUT aux_dscetan2).
                
-               ASSIGN aux_dscetan1 = STRING(tt-dados-ctr.txcetano,"zz9.99") + 
+			   /* Ajuste em (14/09/2016) Aceitar uma dígito a mais no CET */
+               ASSIGN aux_dscetan1 = STRING(tt-dados-ctr.txcetano,"zzz9.99") + 
                                      " % (" + LC(aux_dscetan1).
                
                IF   LENGTH(TRIM(aux_dscetan2)) = 0   THEN

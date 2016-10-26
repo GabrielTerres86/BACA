@@ -3623,7 +3623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 01/12/2015
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 04/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -3645,6 +3645,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              01/12/2015 - Alterar validacao de contratos em cobrança no 
     --                           CYBER para verificar na cracyc ao inves da crapcyb
     --                           (Douglas)
+    --
+    --              04/10/2016 - Validação de emprestimo em atraso da própria conta e como fiador.
+    --                           Incluído uma cláusula "and" no lugar de utilizar 2 if's.
+    --                           Dessa forma permite que as demais condições (else e elsif) sejam validadas
+    --                           #487823 (AJFink)
+    --
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4508,10 +4514,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         
         vr_dsmensag := NULL;
 
-        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1   THEN
-          IF vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN 
+        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
             vr_dsmensag := 'Associado com emprestimo em atraso.';
-          END IF;            
         ELSIF (vr_tab_dados_epr(vr_idxepr).qtmesdec - vr_tab_dados_epr(vr_idxepr).qtprecal) >= 0.01  AND
                vr_tab_dados_epr(vr_idxepr).dtdpagto < pr_rw_crapdat.dtmvtolt                    THEN
           --> Verificar se a data de pagamento é um dia util
@@ -4643,10 +4647,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       vr_dsmensag := NULL;
                 
-      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1   THEN
-        IF vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN 
+      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
           vr_dsmensag := 'Fiador de emprestimo em atraso: ';
-        END IF;
       ELSIF rw_crapavl.inprejuz = 1 AND rw_crapavl.vlsdprej > 0  THEN
         vr_dsmensag := 'Fiador de emprestimo em atraso: ';
       ELSE

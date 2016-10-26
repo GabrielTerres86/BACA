@@ -41,8 +41,12 @@
                               e EAD Assemblear nao sejam apresentados.
                               Projeto 229 - Melhorias OQS (Lombardi)  
                                
-                 21/06/2016 - Ajustes para a RF 05 (Jean Michel).             
+                 21/06/2016 - Ajustes para a RF 05 (Jean Michel).    
+                 
+                 19/08/2016 - Melhorias OQS - RF07 (Odirlei - AMcom).
+                 
   ...............................................................................*/
+{ includes/var_progrid.i }
 
   &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
   &ANALYZE-RESUME
@@ -55,14 +59,19 @@
   DEFINE TEMP-TABLE ab_unmap
          FIELD aux_cdagenci AS CHARACTER 
          FIELD aux_cdcooper AS CHARACTER 
+         FIELD aux_cdcopope AS CHARACTER
+         FIELD aux_cdoperad     AS CHARACTER
          FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
+         FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U 
+         FIELD aux_idcokses AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_dtanoage AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_iditeava AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_lsaltern AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_lsavabom AS CHARACTER FORMAT "X(256)":U 
+         FIELD aux_lsavares AS CHARACTER FORMAT "X(256)":U /* Respondidos*/
          FIELD aux_lsavains AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_lsavaoti AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_lsavareg AS CHARACTER FORMAT "X(256)":U 
@@ -79,7 +88,13 @@
          FIELD cdagenci AS CHARACTER FORMAT "X(256)":U 
          FIELD cdcooper AS CHARACTER FORMAT "X(256)":U 
          FIELD nrseqeve AS CHARACTER FORMAT "X(256)":U 
-         FIELD pagina AS CHARACTER FORMAT "X(256)":U .
+         FIELD idfimava AS CHARACTER FORMAT "X(256)":U 
+         FIELD dsdemail_fornec AS CHARACTER FORMAT "X(256)":U 
+         FIELD aux_cdevento AS CHARACTER FORMAT "X(256)":U 
+         FIELD pagina AS CHARACTER FORMAT "X(256)":U 
+         FIELD qtavares_coop AS CHARACTER
+         FIELD qtavares_ass  AS CHARACTER
+         FIELD qtavares_forn AS CHARACTER.
 
   DEFINE TEMP-TABLE tt-avaliacoes
        FIELD cdagenci AS CHARACTER
@@ -102,13 +117,14 @@
        FIELD peavaoti AS CHARACTER
        FIELD qtavareg AS CHARACTER
        FIELD peavareg AS CHARACTER
-       FIELD qtavares AS CHARACTER
+       FIELD qtavares AS CHARACTER       
        FIELD qtpartic AS CHARACTER
        FIELD qtavanre AS CHARACTER
        FIELD peavanre AS CHARACTER
        FIELD nrseqdig AS CHARACTER
        FIELD qtsugeve AS CHARACTER
-       FIELD dssugeve AS CHARACTER.
+       FIELD dssugeve AS CHARACTER
+       FIELD nrordgru AS CHARACTER.
        
   &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
   /*------------------------------------------------------------------------
@@ -221,16 +237,16 @@
   &Scoped-define FRAME-NAME Web-Frame
 
   /* Standard List Definitions                                            */
-  &Scoped-Define ENABLED-FIELDS craprap.qtavares 
+  &Scoped-Define ENABLED-FIELDS craprap.qtavares ab_unmap.qtavares_coop ab_unmap.qtavares_ass ab_unmap.qtavares_forn
   &Scoped-define ENABLED-TABLES ab_unmap craprap
   &Scoped-define FIRST-ENABLED-TABLE ab_unmap
   &Scoped-define SECOND-ENABLED-TABLE craprap
-  &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_nrseqeve ab_unmap.nrseqeve ab_unmap.aux_lsiteav2 ab_unmap.aux_lsobserv ab_unmap.arrQtsugeve ab_unmap.aux_lsavabom ab_unmap.aux_lsavains ab_unmap.aux_lsavaoti ab_unmap.aux_lsavareg ab_unmap.aux_lsiteava ab_unmap.aux_iditeava ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lsaltern ab_unmap.aux_lsdescri ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_qtdparti ab_unmap.aux_stdopcao ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.pagina 
-  &Scoped-Define DISPLAYED-FIELDS craprap.qtavares 
+  &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_nrseqeve ab_unmap.nrseqeve ab_unmap.idfimava ab_unmap.dsdemail_fornec ab_unmap.aux_cdevento ab_unmap.aux_lsiteav2 ab_unmap.aux_lsobserv ab_unmap.arrQtsugeve ab_unmap.aux_lsavabom ab_unmap.aux_lsavares ab_unmap.aux_lsavains ab_unmap.aux_lsavaoti ab_unmap.aux_lsavareg ab_unmap.aux_lsiteava ab_unmap.aux_iditeava ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cdcopope ab_unmap.aux_cdoperad ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsurlphp ab_unmap.aux_idcokses ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lsaltern ab_unmap.aux_lsdescri ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_qtdparti ab_unmap.aux_stdopcao ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.pagina 
+  &Scoped-Define DISPLAYED-FIELDS craprap.qtavares ab_unmap.qtavares_coop ab_unmap.qtavares_ass ab_unmap.qtavares_forn
   &Scoped-define DISPLAYED-TABLES ab_unmap craprap
   &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
   &Scoped-define SECOND-DISPLAYED-TABLE craprap
-  &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_nrseqeve ab_unmap.nrseqeve ab_unmap.aux_lsiteav2 ab_unmap.aux_lsobserv ab_unmap.arrQtsugeve ab_unmap.aux_lsavabom ab_unmap.aux_lsavains ab_unmap.aux_lsavaoti ab_unmap.aux_lsavareg ab_unmap.aux_lsiteava ab_unmap.aux_iditeava ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lsaltern ab_unmap.aux_lsdescri ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_qtdparti ab_unmap.aux_stdopcao ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.pagina 
+  &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_nrseqeve ab_unmap.nrseqeve ab_unmap.idfimava ab_unmap.dsdemail_fornec ab_unmap.aux_cdevento ab_unmap.aux_lsiteav2 ab_unmap.aux_lsobserv ab_unmap.arrQtsugeve ab_unmap.aux_lsavabom ab_unmap.aux_lsavares ab_unmap.aux_lsavains ab_unmap.aux_lsavaoti ab_unmap.aux_lsavareg ab_unmap.aux_lsiteava ab_unmap.aux_iditeava ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cdcopope ab_unmap.aux_cdoperad ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsurlphp ab_unmap.aux_idcokses ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lsaltern ab_unmap.aux_lsdescri ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_qtdparti ab_unmap.aux_stdopcao ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.pagina 
 
   /* Custom List Definitions                                              */
   /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -251,6 +267,18 @@
             "" NO-LABEL FORMAT "X(256)":U
             VIEW-AS FILL-IN 
             SIZE 20 BY 1
+       ab_unmap.idfimava AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1
+       ab_unmap.dsdemail_fornec AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1
+       ab_unmap.aux_cdevento AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1            
        ab_unmap.aux_lsiteav2 AT ROW 1 COL 1 HELP
             "" NO-LABEL FORMAT "X(256)":U
             VIEW-AS FILL-IN 
@@ -267,6 +295,10 @@
             "" NO-LABEL FORMAT "X(256)":U
             VIEW-AS FILL-IN 
             SIZE 20 BY 1
+       ab_unmap.aux_lsavares AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1        
        ab_unmap.aux_lsavains AT ROW 1 COL 1 HELP
             "" NO-LABEL FORMAT "X(256)":U
             VIEW-AS FILL-IN 
@@ -291,6 +323,14 @@
             "" NO-LABEL
             VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
             SIZE 20 BY 4
+       ab_unmap.aux_cdcopope  AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1
+       ab_unmap.aux_cdoperad  AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1      
        ab_unmap.aux_cdcooper AT ROW 1 COL 1 HELP
             "" NO-LABEL
             VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
@@ -303,6 +343,14 @@
             "" NO-LABEL FORMAT "X(256)":U
             VIEW-AS FILL-IN 
             SIZE 20 BY 1
+       ab_unmap.aux_dsurlphp AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1     
+       ab_unmap.aux_idcokses AT ROW 1 COL 1 HELP
+            "" NO-LABEL FORMAT "X(256)":U
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1    
        ab_unmap.aux_dsretorn AT ROW 1 COL 1 HELP
             "" NO-LABEL FORMAT "X(256)":U
             VIEW-AS FILL-IN 
@@ -361,6 +409,15 @@
        craprap.qtavares AT ROW 1 COL 1 NO-LABEL
             VIEW-AS FILL-IN 
             SIZE 20 BY 1
+       ab_unmap.qtavares_coop AT ROW 1 COL 1 NO-LABEL
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1
+       ab_unmap.qtavares_ass AT ROW 1 COL 1 NO-LABEL
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1
+       ab_unmap.qtavares_forn AT ROW 1 COL 1 NO-LABEL
+            VIEW-AS FILL-IN 
+            SIZE 20 BY 1     
       WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
            SIDE-LABELS 
            AT COL 1 ROW 1
@@ -546,7 +603,12 @@
                              crapiap.cditeava = craprap.cditeava NO-LOCK,
          FIRST crapgap WHERE crapgap.cdcooper = 0                AND
                              crapgap.cdgruava = crapiap.cdgruava NO-LOCK
-                                 BY crapgap.nrordgru:
+                                 BY crapgap.nrordgru
+                                    BY craprap.nrseqeve
+                                      BY crapgap.tpiteava
+                                        BY craprap.cdagenci
+                                          BY craprap.cdgruava
+                                            BY craprap.cditeava:
       
           aux_qtpartic = 0.
       
@@ -657,7 +719,8 @@
                 tt-avaliacoes.peavanre = STRING(aux_peavanre)     
                 tt-avaliacoes.nrseqdig = STRING(0)                
                 tt-avaliacoes.qtsugeve = STRING(0)                
-                tt-avaliacoes.dssugeve = STRING(aux_sugestao).
+                tt-avaliacoes.dssugeve = STRING(aux_sugestao)
+                tt-avaliacoes.nrordgru = STRING(crapgap.nrordgru).
                    
       END.
 
@@ -726,14 +789,21 @@
                         tt-avaliacoes.peavanre = STRING(0)               
                         tt-avaliacoes.nrseqdig = STRING(crapsdp.nrseqdig)
                         tt-avaliacoes.qtsugeve = STRING(crapsdp.qtsugeve)
-                        tt-avaliacoes.dssugeve = STRING(aux_sugestao).
+                        tt-avaliacoes.dssugeve = STRING(aux_sugestao)
+                        tt-avaliacoes.nrordgru = STRING(crapgap.nrordgru).
              END.
           END.
       END.
       
       RUN RodaJavaScript("var mava = new Array();").
       
-      FOR EACH tt-avaliacoes NO-LOCK BY tt-avaliacoes.tprelgru BY tt-avaliacoes.dsgruava BY tt-avaliacoes.dsiteava:
+      FOR EACH tt-avaliacoes NO-LOCK 
+          BY tt-avaliacoes.nrordgru
+            BY tt-avaliacoes.nrseqeve
+              BY tt-avaliacoes.tpiteava
+                BY tt-avaliacoes.cdagenci
+                  BY tt-avaliacoes.cdgruava
+                    BY tt-avaliacoes.cditeava:
       
         ASSIGN aux_contador = aux_contador + 1.
         
@@ -803,6 +873,7 @@
       DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
       DEFINE VARIABLE aux_nrdturma AS INT  NO-UNDO.
       DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+      DEFINE VARIABLE aux_dsdemail_fornec AS CHAR NO-UNDO.
       DEFINE VARIABLE vetormes     AS CHAR EXTENT 12.
       DEF VAR aux_contador    AS INT  NO-UNDO.
       
@@ -868,6 +939,31 @@
               IF crapidp.idstains = 2 THEN
                   aux_nrconfir = aux_nrconfir + 1.
           END.
+          
+          /* Listar emails de contato do fornecedor do evento */
+          ASSIGN aux_dsdemail_fornec = "".
+          FOR EACH crapcdp
+             WHERE crapcdp.cdcooper = crapeap.cdcooper
+               AND crapcdp.dtanoage = crapeap.dtanoage
+               AND crapcdp.cdagenci = crapeap.cdagenci
+               AND crapcdp.tpcuseve = 1
+               AND crapcdp.cdcuseve = 1
+               AND crapcdp.cdevento = crapeap.cdevento NO-LOCK, 
+              EACH gnapcfp
+             WHERE gnapcfp.cdcooper = 0
+               AND gnapcfp.idevento = crapcdp.idevento
+               AND gnapcfp.nrcpfcgc = crapcdp.nrcpfcgc NO-LOCK:
+               
+           IF gnapcfp.dsdemail = "" THEN
+              NEXT.
+              
+           IF aux_dsdemail_fornec = "" THEN   
+              ASSIGN aux_dsdemail_fornec = gnapcfp.dsdemail.
+            ELSE
+              ASSIGN aux_dsdemail_fornec = aux_dsdemail_fornec + "," + gnapcfp.dsdemail.
+           
+               
+          END.     
       
           aux_nrseqeve = IF crapadp.nrseqdig <> ? THEN crapadp.nrseqdig ELSE 0.
                   aux_nmevento = crapedp.nmevento.
@@ -893,7 +989,9 @@
                                     + "',qtmaxtur:'" +  STRING(aux_qtmaxtur)    
                                     + "',nrinscri:'" +  STRING(aux_nrinscri)    
                                     + "',nrconfir:'" +  STRING(aux_nrconfir)    
-                                    + "',nrseqeve:'" +  STRING(aux_nrseqeve)    
+                                    + "',nrseqeve:'" +  STRING(aux_nrseqeve)   
+                                    + "',idfimava:'" +  STRING(crapadp.idfimava)
+                                    + "',dsdemail_fornec:'" +  aux_dsdemail_fornec
                                     + "',tppartic:'" +  STRING(aux_tppartic) + "'~}".
           
           IF aux_contador = 50 THEN
@@ -987,6 +1085,55 @@
 
   /* _UIB-CODE-BLOCK-END */
   &ANALYZE-RESUME
+  
+  /* Encerrar avaliaçoes do evento  */
+  &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE EncerrarAvaliacao w-html 
+  PROCEDURE EncerrarAvaliacao :
+  
+      FIND FIRST crapadp WHERE crapadp.idevento = 1 
+                           AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                           AND crapadp.dtanoage = INT(ab_unmap.aux_dtanoage)
+                           AND crapadp.cdevento = INT(ab_unmap.aux_cdevento)
+                           AND crapadp.cdagenci = INT(ab_unmap.cdagenci)
+                           AND crapadp.nrseqdig = INT(ab_unmap.nrseqeve) EXCLUSIVE-LOCK NO-ERROR.
+      
+      IF AVAILABLE crapadp THEN
+      DO.
+         ASSIGN crapadp.idfimava = 1 
+                crapadp.cdoperad = ab_unmap.aux_cdoperad 
+                crapadp.cdcopope = INT(ab_unmap.aux_cdcopope) .
+         VALIDATE crapadp.
+      END.  
+
+  END PROCEDURE.
+  
+  /* _UIB-CODE-BLOCK-END */
+  &ANALYZE-RESUME
+  
+  /* Encerrar avaliaçoes do evento  */
+  &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE ReabrirAvaliacao w-html 
+  PROCEDURE ReabrirAvaliacao :
+  
+      FIND FIRST crapadp WHERE crapadp.idevento = 1 
+                           AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                           AND crapadp.dtanoage = INT(ab_unmap.aux_dtanoage)
+                           AND crapadp.cdevento = INT(ab_unmap.aux_cdevento)
+                           AND crapadp.cdagenci = INT(ab_unmap.cdagenci)
+                           AND crapadp.nrseqdig = INT(ab_unmap.nrseqeve) EXCLUSIVE-LOCK NO-ERROR.
+      
+      IF AVAILABLE crapadp THEN
+      DO.
+         ASSIGN crapadp.idfimava = 0
+                crapadp.cdoperad = ab_unmap.aux_cdoperad 
+                crapadp.cdcopope = INT(ab_unmap.aux_cdcopope) .
+         VALIDATE crapadp.
+      END.  
+
+  END PROCEDURE.
+
+  /* _UIB-CODE-BLOCK-END */
+  &ANALYZE-RESUME
+
 
   &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
   PROCEDURE htmOffsets :
@@ -1000,11 +1147,19 @@
     RUN htmAssociate
       ("aux_cdagenci":U,"ab_unmap.aux_cdagenci":U,ab_unmap.aux_cdagenci:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
-      ("aux_cdcooper":U,"ab_unmap.aux_cdcooper":U,ab_unmap.aux_cdcooper:HANDLE IN FRAME {&FRAME-NAME}).
+      ("aux_cdcooper":U,"ab_unmap.aux_cdcooper":U,ab_unmap.aux_cdcooper:HANDLE IN FRAME {&FRAME-NAME}).    
+    RUN htmAssociate
+      ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
+    RUN htmAssociate
+      ("aux_cdoperad":U,"ab_unmap.aux_cdoperad":U,ab_unmap.aux_cdoperad:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
       ("aux_cddopcao":U,"ab_unmap.aux_cddopcao":U,ab_unmap.aux_cddopcao:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
       ("aux_dsendurl":U,"ab_unmap.aux_dsendurl":U,ab_unmap.aux_dsendurl:HANDLE IN FRAME {&FRAME-NAME}).
+    RUN htmAssociate
+      ("aux_dsurlphp":U,"ab_unmap.aux_dsurlphp":U,ab_unmap.aux_dsurlphp:HANDLE IN FRAME {&FRAME-NAME}).      
+    RUN htmAssociate
+      ("aux_idcokses":U,"ab_unmap.aux_idcokses":U,ab_unmap.aux_idcokses:HANDLE IN FRAME {&FRAME-NAME}).    
     RUN htmAssociate
       ("aux_dsretorn":U,"ab_unmap.aux_dsretorn":U,ab_unmap.aux_dsretorn:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
@@ -1017,6 +1172,8 @@
       ("aux_lsaltern":U,"ab_unmap.aux_lsaltern":U,ab_unmap.aux_lsaltern:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
       ("aux_lsavabom":U,"ab_unmap.aux_lsavabom":U,ab_unmap.aux_lsavabom:HANDLE IN FRAME {&FRAME-NAME}).
+    RUN htmAssociate
+      ("aux_lsavares":U,"ab_unmap.aux_lsavares":U,ab_unmap.aux_lsavares:HANDLE IN FRAME {&FRAME-NAME}).  
     RUN htmAssociate
       ("aux_lsavains":U,"ab_unmap.aux_lsavains":U,ab_unmap.aux_lsavains:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
@@ -1050,9 +1207,21 @@
     RUN htmAssociate
       ("nrseqeve":U,"ab_unmap.nrseqeve":U,ab_unmap.nrseqeve:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
+      ("idfimava":U,"ab_unmap.idfimava":U,ab_unmap.idfimava:HANDLE IN FRAME {&FRAME-NAME}).  
+    RUN htmAssociate
+      ("dsdemail_fornec":U,"ab_unmap.dsdemail_fornec":U,ab_unmap.dsdemail_fornec:HANDLE IN FRAME {&FRAME-NAME}).  
+    RUN htmAssociate
+      ("aux_cdevento":U,"ab_unmap.aux_cdevento":U,ab_unmap.aux_cdevento:HANDLE IN FRAME {&FRAME-NAME}).  
+    RUN htmAssociate
       ("pagina":U,"ab_unmap.pagina":U,ab_unmap.pagina:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
       ("qtavares":U,"craprap.qtavares":U,craprap.qtavares:HANDLE IN FRAME {&FRAME-NAME}).
+    RUN htmAssociate
+      ("qtavares_ass":U,"ab_unmap.qtavares_ass":U,ab_unmap.qtavares_ass:HANDLE IN FRAME {&FRAME-NAME}).  
+    RUN htmAssociate
+      ("qtavares_coop":U,"ab_unmap.qtavares_coop":U,ab_unmap.qtavares_coop:HANDLE IN FRAME {&FRAME-NAME}).  
+    RUN htmAssociate
+      ("qtavares_forn":U,"ab_unmap.qtavares_forn":U,ab_unmap.qtavares_forn:HANDLE IN FRAME {&FRAME-NAME}).    
   END PROCEDURE.
 
 
@@ -1101,7 +1270,7 @@
                                  cratrap.cditeava = craprap.cditeava
                                  cratrap.dtanoage = craprap.dtanoage
                                  cratrap.idevento = craprap.idevento
-                                 cratrap.qtavares = INPUT craprap.qtavares                  
+                                 cratrap.qtavares = INT(ENTRY(i, ab_unmap.aux_lsavares)) /*INPUT craprap.qtavares                  */
                                  cratrap.qtavabom = INT(ENTRY(i, ab_unmap.aux_lsavabom))
                                  cratrap.qtavains = INT(ENTRY(i, ab_unmap.aux_lsavains))
                                  cratrap.qtavaoti = INT(ENTRY(i, ab_unmap.aux_lsavaoti))
@@ -1430,8 +1599,12 @@
   ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
          FlagPermissoes           = GET-VALUE("aux_lspermis")
          msg-erro-aux             = 0
+         ab_unmap.aux_cdcopope    = GET-VALUE("aux_cdcopope")
+         ab_unmap.aux_cdoperad    = GET-VALUE("aux_cdoperad")
          ab_unmap.aux_idevento    = GET-VALUE("aux_idevento")
-         ab_unmap.aux_dsendurl    = AppURL                        
+         ab_unmap.aux_dsendurl    = AppURL      
+         ab_unmap.aux_dsurlphp    = aux_srvprogrid
+         ab_unmap.aux_idcokses    = v-identificacao
          ab_unmap.aux_lspermis    = FlagPermissoes                
          ab_unmap.aux_nrdrowid    = GET-VALUE("aux_nrdrowid")         
          ab_unmap.aux_stdopcao    = GET-VALUE("aux_stdopcao")
@@ -1443,14 +1616,21 @@
          ab_unmap.aux_lsiteava    = GET-VALUE("aux_lsiteava")
          ab_unmap.aux_lsavaoti    = GET-VALUE("aux_lsavaoti")
          ab_unmap.aux_lsavabom    = GET-VALUE("aux_lsavabom")
+         ab_unmap.aux_lsavares    = GET-VALUE("aux_lsavares")
          ab_unmap.aux_lsavareg    = GET-VALUE("aux_lsavareg")
          ab_unmap.aux_lsavains    = GET-VALUE("aux_lsavains")
          ab_unmap.pagina          = GET-VALUE("pagina")
          ab_unmap.aux_lsiteav2    = GET-VALUE("aux_lsiteav2")
          ab_unmap.aux_lsobserv    = GET-VALUE("aux_lsobserv")
          ab_unmap.aux_dtanoage    = GET-VALUE("aux_dtanoage")
-         ab_unmap.arrQtsugeve    = GET-VALUE("arrQtsugeve").
-         
+         ab_unmap.arrQtsugeve     = GET-VALUE("arrQtsugeve")
+         ab_unmap.qtavares_ass    = GET-VALUE("qtavares_ass")
+         ab_unmap.qtavares_coop   = GET-VALUE("qtavares_coop")
+         ab_unmap.qtavares_forn   = GET-VALUE("qtavares_forn")
+         ab_unmap.aux_cdevento    = GET-VALUE("aux_cdevento")
+         ab_unmap.dsdemail_fornec = GET-VALUE("dsdemail_fornec")
+         .
+      
   RUN outputHeader.
 
   {includes/wpgd0098.i}
@@ -1699,7 +1879,21 @@
                  IF   msg-erro = ""   THEN
                       msg-erro-aux = 10.
              END.
-      
+             
+             WHEN "enc" THEN /* encerrar avaliaçao */
+             DO:
+                 RUN EncerrarAvaliacao.
+                 
+                 IF   msg-erro = ""   THEN
+                      msg-erro-aux = 10.
+             END.
+             WHEN "rea" THEN /* reabrir avaliaçao */
+             DO:
+                 RUN ReabrirAvaliacao.
+                 
+                 IF   msg-erro = ""   THEN
+                      msg-erro-aux = 10.
+             END.
         END CASE.
 
         IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
@@ -1747,6 +1941,12 @@
         END CASE.     
 
         RUN RodaJavaScript('top.frames[0].ZeraOp()').   
+        
+        /* Apos encerrar é necessario enviar email da avaliaçao para o facilitador */
+        IF opcao = "enc" AND dsdemail_fornec <> "" THEN
+        DO:
+          RUN RodaJavaScript('EmailAvaliacao();').   
+        END.        
 
      END. /* Fim do método POST */
   ELSE /* Método GET */ 

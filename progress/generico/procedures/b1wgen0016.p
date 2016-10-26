@@ -446,7 +446,9 @@
 			
 			  06/09/2016 - Ajuste no horario de permissao de cancelamento de agendamento de TED
 						   (Adriano - SD 509480).
-                           
+              
+			  15/09/2016 - Caso for agendamento de GPS alterar aux_incancel para passar 3 (Lucas Ranghetti #501845)
+			               
               26/09/2016 - Ajuste para enviar mais de um email para monitoracao de fraude
                            qdo o corpo do email ultrapassar 25 titulos pois estava
                            acarretando em problemas no IB (Tiago/Elton SD 521667).             
@@ -3915,21 +3917,21 @@ PROCEDURE paga_titulo:
 
                                 IF  aux_nrsequen > 0 THEN
                                 DO:
-                                    RUN enviar_email_completo IN h-b1wgen0011
-                                      (INPUT par_cdcooper,
-                                       INPUT "INTERNETBANK",
-                                       INPUT "cpd@cecred.coop.br",
-                                       INPUT "monitoracaodefraudes@cecred.coop.br",
-                                       INPUT "PAGTO " +
-                                             crapcop.nmrescop + " " +
-                                             TRIM(STRING(par_nrdconta,
-                                                         "zzzz,zzz,9")) + " R$ " +
-                                             TRIM(STRING(par_vllanmto,
-                                                         "zzz,zzz,zzz,zz9.99")),
-                                       INPUT "",
-                                       INPUT "",
+                                RUN enviar_email_completo IN h-b1wgen0011
+                                  (INPUT par_cdcooper,
+                                   INPUT "INTERNETBANK",
+                                   INPUT "cpd@cecred.coop.br",
+                                   INPUT "monitoracaodefraudes@cecred.coop.br",
+                                   INPUT "PAGTO " +
+                                         crapcop.nmrescop + " " +
+                                         TRIM(STRING(par_nrdconta,
+                                                     "zzzz,zzz,9")) + " R$ " +
+                                         TRIM(STRING(par_vllanmto,
+                                                     "zzz,zzz,zzz,zz9.99")),
+                                   INPUT "",
+                                   INPUT "",
                                        INPUT aux_conteudo + "\n" + aux_dspagtos,
-                                       INPUT TRUE).
+                                   INPUT TRUE).
 
                                     ASSIGN aux_dspagtos = ""
                                            aux_nrsequen = 0.
@@ -4331,7 +4333,7 @@ PROCEDURE obtem-agendamentos:
 
                         /** Se for GPS, nao permite cancelar na tela de Agendamentos **/
                         IF  craplau.dscedent MATCHES "*GPS IDENTIFICADOR*" THEN
-                            ASSIGN aux_incancel = 2.
+                            ASSIGN aux_incancel = 3. /* Indicador eh 3 para mudar a mensagem de exibicao caso for gps */
                 END.
                 END.
                 ELSE

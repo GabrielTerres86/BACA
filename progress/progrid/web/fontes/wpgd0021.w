@@ -7,11 +7,12 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
 
              10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			 
-			 05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						  busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
-
-             14/04/2016 - Adicionar condicao para que sempre carregue o PA OQS para a viacredi 
-                          na procedure carrega_PACS (Lucas Ranghetti #428357)
+						 05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						              busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+													
+					   08/08/2016 - Alterações para Aba de "Fechamento", Prj. 229, alterações
+												  dos registro com situação do evento(1 – Agendado,3 – Transferido,
+													5 – Realizado, 6 - Acrescido) para 4 – Encerrado(Jean Michel).
 
 .................................................................................. */
 
@@ -32,14 +33,14 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_idexclui AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_mes01eve AS LOGICAL 
-	   FIELD aux_mes01int AS LOGICAL 
+       FIELD aux_mes01int AS LOGICAL 
        FIELD aux_mes01fec AS LOGICAL
-	   FIELD aux_mes02eve AS LOGICAL 
+       FIELD aux_mes02eve AS LOGICAL 
        FIELD aux_mes02int AS LOGICAL
-	   FIELD aux_mes02fec AS LOGICAL 
+			 FIELD aux_mes02fec AS LOGICAL 
        FIELD aux_mes03eve AS LOGICAL 
        FIELD aux_mes03int AS LOGICAL
-	   FIELD aux_mes03fec AS LOGICAL 
+	     FIELD aux_mes03fec AS LOGICAL 
        FIELD aux_mes04eve AS LOGICAL 
        FIELD aux_mes04int AS LOGICAL
 	   FIELD aux_mes04fec AS LOGICAL 
@@ -79,8 +80,10 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD cdfreint     AS CHARACTER
        FIELD aux_mesatual AS CHARACTER
 	   FIELD aux_fechamen AS CHARACTER
-	   FIELD aux_dtanonov AS CHARACTER.
-
+	   FIELD aux_dtanonov AS CHARACTER
+		 FIELD aux_cdcopope AS CHARACTER
+		 FIELD aux_dsaltfec AS CHARACTER
+	   FIELD aux_cdoperad AS CHARACTER.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
@@ -136,6 +139,7 @@ DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE aux_meses             AS CHARACTER  EXTENT 12 INITIAL ["1","2","3","4","5","6","7","8","9","10","11","12"] NO-UNDO.
 DEFINE VARIABLE aux_crapcop           AS CHARACTER                      NO-UNDO.
+DEFINE VARIABLE aux_mesfech           AS CHARACTER  										NO-UNDO.
 
 /*** Declarao de BOs ***/
 DEFINE VARIABLE h-b1wpgd0021          AS HANDLE                         NO-UNDO.
@@ -188,7 +192,8 @@ ab_unmap.aux_mes11fec ab_unmap.aux_mes12fec ab_unmap.aux_nrdrowid ~
 ab_unmap.aux_stdopcao ab_unmap.pagina ab_unmap.aux_cdcooper ~
 ab_unmap.aux_idevento ab_unmap.aux_dtanoage_eve ab_unmap.aux_dtanoage_int ~
 ab_unmap.cdfreint     ab_unmap.aux_dtanoage_que ab_unmap.aux_dtanoage_fec ~
-ab_unmap.aux_mesatual ab_unmap.aux_fechamen ab_unmap.aux_dtanonov
+ab_unmap.aux_mesatual ab_unmap.aux_fechamen ab_unmap.aux_dtanonov ~
+ab_unmap.aux_cdcopope ab_unmap.aux_cdoperad ab_unmap.aux_dsaltfec
 &Scoped-Define DISPLAYED-FIELDS gnpapgd.cdcooper gnpapgd.dtanoage ~
 gnpapgd.idevento gnpapgd.qtmpreve gnpapgd.qtpreeve gnpapgd.qtpreint ~
 gnpapgd.dtanonov gnpapgd.dtiniage gnpapgd.dtmvtolt gnpapgd.qtretque
@@ -213,7 +218,8 @@ ab_unmap.aux_mes11fec ab_unmap.aux_mes12fec ab_unmap.aux_nrdrowid ~
 ab_unmap.aux_stdopcao ab_unmap.pagina ab_unmap.aux_cdcooper ~
 ab_unmap.aux_idevento ab_unmap.aux_dtanoage_eve ab_unmap.aux_dtanoage_int ~
 ab_unmap.cdfreint     ab_unmap.aux_dtanoage_que ab_unmap.aux_dtanoage_fec ~
-ab_unmap.aux_mesatual ab_unmap.aux_fechamen ab_unmap.aux_dtanonov
+ab_unmap.aux_mesatual ab_unmap.aux_fechamen ab_unmap.aux_dtanonov ~
+ab_unmap.aux_cdcopope ab_unmap.aux_cdoperad abunmap.aux_dsaltfec
 
 
 /* Custom List Definitions                                              */
@@ -477,6 +483,18 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1 
+		ab_unmap.aux_cdoperad AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1 
+     ab_unmap.aux_cdcopope AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1 					
+		ab_unmap.aux_dsaltfec AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1 					
      gnpapgd.qtmpreve AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -558,6 +576,9 @@ DEFINE FRAME Web-Frame
 		  FIELD aux_mesatual AS CHARACTER 
 		  FIELD aux_dtanonov AS CHARACTER
 		  FIELD aux_fechamen AS CHARACTER
+			FIELD aux_cdcopope AS CHARACTER
+			FIELD aux_dsfecalt AS CHARACTER
+		  FIELD aux_cdoperad AS CHARACTER
       END-FIELDS.
    END-TABLES.
  */
@@ -864,7 +885,12 @@ PROCEDURE htmOffsets :
     ("aux_dtanonov":U,"ab_unmap.aux_dtanonov":U,ab_unmap.aux_dtanonov:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_fechamen":U,"ab_unmap.aux_fechamen":U,ab_unmap.aux_fechamen:HANDLE IN FRAME {&FRAME-NAME}).
-
+  RUN htmAssociate
+    ("aux_cdoperad":U,"ab_unmap.aux_cdoperad":U,ab_unmap.aux_cdoperad:HANDLE IN FRAME {&FRAME-NAME}).
+	RUN htmAssociate
+    ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
+	RUN htmAssociate
+    ("aux_dsaltfec":U,"ab_unmap.aux_dsaltfec":U,ab_unmap.aux_dsaltfec:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 
@@ -1140,10 +1166,13 @@ ASSIGN opcao                     = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_dtanoage_que = GET-VALUE("aux_dtanoage_que")
 	   ab_unmap.aux_dtanoage_fec = GET-VALUE("aux_dtanoage_fec")
 	   ab_unmap.aux_mesatual     = STRING(MONTH(TODAY),"99") + STRING(YEAR(TODAY),"9999")
-	   ab_unmap.aux_fechamen     = GET-VALUE("aux_fechamen").
+	   ab_unmap.aux_fechamen     = GET-VALUE("aux_fechamen")
+		 ab_unmap.aux_cdcopope     = GET-VALUE("aux_cdcopope")
+		 ab_unmap.aux_cdoperad     = GET-VALUE("aux_cdoperad")
+		 ab_unmap.aux_dsaltfec     = GET-VALUE("aux_dsaltfec").
 	   
 RUN recebeMeses.
-
+       
 FIND LAST gnpapgd WHERE gnpapgd.idevento = INT(ab_unmap.aux_idevento)  AND
                         gnpapgd.cdcooper = INT(ab_unmap.aux_cdcooper) NO-LOCK NO-ERROR.
 						
@@ -1155,7 +1184,6 @@ RUN outputHeader.
 /* Carrega o combo das cooperativas */
 {includes/wpgd0098.i}
 ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_crapcop.
-
 
 /* Valida a existência de parâmetros após a escolha da cooperativa, somente
    permite que não haja parâmetros cadastrados, caso for a execução de uma
@@ -1170,7 +1198,6 @@ IF   NOT AVAILABLE gnpapgd             AND
          RUN RodaJavaScript("alert('Parâmetro da Agenda Não Encontrado!!!');").
          LEAVE.
      END.
-
 
 RUN CriaLista.
 
@@ -1357,7 +1384,7 @@ IF REQUEST_METHOD = "POST":U THEN
 	  /* Tratar aba "Fechamento" diferente das demais */ 
 	  IF   ab_unmap.aux_fechamen = "Sim"  THEN
 	       DO:
-			   /* Busca a ultima data de agenda da cooperativa com a data informada */
+						/* Busca a ultima data de agenda da cooperativa com a data informada */
       		   FIND LAST gnpapgd WHERE gnpapgd.idevento = INTEGER(ab_unmap.aux_idevento)       AND
                          		       gnpapgd.cdcooper = INTEGER(ab_unmap.aux_cdcooper)       AND
                               		   gnpapgd.dtanonov = INTEGER(ab_unmap.aux_dtanoage_fec)   NO-LOCK NO-ERROR.
@@ -1373,6 +1400,23 @@ IF REQUEST_METHOD = "POST":U THEN
 						ASSIGN ab_unmap.aux_dtanoage_fec = STRING(gnpapgd.dtanonov)
 						       ab_unmap.aux_nrdrowid     = STRING(ROWID(gnpapgd)). 
 	                END.
+									
+					/* Se for alterado algum mes na aba de fechamento, encerra alguns eventos */		
+					IF INT(aux_dsaltfec) = 1 THEN
+						DO:					
+							FOR EACH crapadp WHERE crapadp.idevento = INTEGER(ab_unmap.aux_idevento)
+																 AND crapadp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
+                                 AND crapadp.dtanoage = INTEGER(ab_unmap.aux_dtanoage_fec) 
+																 AND CAN-DO("1,3,5,6",STRING(crapadp.idstaeve))
+																 AND CAN-DO(aux_mesfech,STRING(crapadp.nrmeseve))
+                                 AND crapadp.cdevento < 50000 EXCLUSIVE-LOCK:
+								
+								ASSIGN crapadp.idstaeve = 4
+											 crapadp.cdcopope = INTEGER(ab_unmap.aux_cdcopope)
+											 crapadp.cdoperad = STRING(ab_unmap.aux_cdoperad).
+											 
+							END.
+						END.
 		   END.
 	  ELSE
 	       DO:
@@ -1429,13 +1473,13 @@ IF REQUEST_METHOD = "POST":U THEN
            WHEN 1 THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
-                           v-descricaoerro = 'Registro esta em uso por outro usurio. Solicitao no pode ser executada. Espere alguns instantes e tente novamente.'.
+                           v-descricaoerro = 'Registro esta em uso por outro usuário. Solicitação não pode ser executada. Espere alguns instantes e tente novamente.'.
 
                     RUN RodaJavaScript(' top.frames[0].MostraResultado(' + STRING(v-qtdeerro) + ',"'+ v-descricaoerro + '"); ').
                 END.
 
            WHEN 2 THEN
-                RUN RodaJavaScript(" top.frames[0].MostraMsg('Registro foi excludo. Solicitao no pode ser executada.')").
+                RUN RodaJavaScript(" top.frames[0].MostraMsg('Registro foi excluído. Solicitação não pode ser executada.')").
       
            WHEN 3 THEN
                 DO:
@@ -1455,7 +1499,7 @@ IF REQUEST_METHOD = "POST":U THEN
 
            WHEN 10 THEN
                 IF opcao <> "" THEN
-                   RUN RodaJavaScript('alert("Atualizacao executada com sucesso.")'). 
+                   RUN RodaJavaScript('alert("Atualização executada com sucesso.")'). 
          
       END CASE.     
 
@@ -1520,7 +1564,7 @@ ELSE /* Mtodo GET */
                                                    NO-LOCK NO-ERROR.
                            
                            /* Atualiza os campos para a agenda que está sendo preparada */
-                           IF   AVAILABLE gnpapgd   THEN
+                           IF   AVAILABLE gnpapgd THEN
                                 DO:
 									ASSIGN ab_unmap.aux_dtanoage_eve = STRING(gnpapgd.dtanonov)
                                            ab_unmap.aux_dtanoage_int = STRING(gnpapgd.dtanonov)
@@ -1808,52 +1852,91 @@ PROCEDURE recebeMeses:
   ELSE
     ASSIGN ab_unmap.aux_mes12int = FALSE.
 	
+	/*MESES DE FECHAMENTO*/
+	ASSIGN aux_mesfech = "".
   IF GET-VALUE("aux_mes01fec") = "1" THEN
-    ASSIGN ab_unmap.aux_mes01fec = TRUE.
+	DO:
+    ASSIGN ab_unmap.aux_mes01fec = TRUE
+					 aux_mesfech = aux_mesfech + "1".
+	END.
   ELSE
     ASSIGN ab_unmap.aux_mes01fec = FALSE.
+		
   IF GET-VALUE("aux_mes02fec") = "2" THEN
-    ASSIGN ab_unmap.aux_mes02fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes02fec = TRUE
+					 aux_mesfech = aux_mesfech + ",2".
+		 END.
   ELSE
     ASSIGN ab_unmap.aux_mes02fec = FALSE.
   IF GET-VALUE("aux_mes03fec") = "3" THEN
-    ASSIGN ab_unmap.aux_mes03fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes03fec = TRUE
+					 aux_mesfech = aux_mesfech + ",3".
+		 END.
   ELSE
     ASSIGN ab_unmap.aux_mes03fec = FALSE.
   IF GET-VALUE("aux_mes04fec") = "4" THEN
-    ASSIGN ab_unmap.aux_mes04fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes04fec = TRUE
+					 aux_mesfech = aux_mesfech + ",4".
+		 END.
   ELSE
     ASSIGN ab_unmap.aux_mes04fec = FALSE.
   IF GET-VALUE("aux_mes05fec") = "5" THEN
-    ASSIGN ab_unmap.aux_mes05fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes05fec = TRUE
+					 aux_mesfech = aux_mesfech + ",5".
+		 END.
   ELSE
     ASSIGN ab_unmap.aux_mes05fec = FALSE.
   IF GET-VALUE("aux_mes06fec") = "6" THEN
-    ASSIGN ab_unmap.aux_mes06fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes06fec = TRUE
+					 aux_mesfech = aux_mesfech + ",6".
+		 END.
   ELSE
     ASSIGN ab_unmap.aux_mes06fec = FALSE.
   IF GET-VALUE("aux_mes07fec") = "7" THEN
-    ASSIGN ab_unmap.aux_mes07fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes07fec = TRUE
+					 aux_mesfech = aux_mesfech + ",7".
+		 END.
   ELSE
     ASSIGN ab_unmap.aux_mes07fec = FALSE.
   IF GET-VALUE("aux_mes08fec") = "8" THEN
-    ASSIGN ab_unmap.aux_mes08fec = TRUE.
+   DO:
+			ASSIGN ab_unmap.aux_mes08fec = TRUE
+					 aux_mesfech = aux_mesfech + ",8".
+		 END.
   ELSE
     ASSIGN ab_unmap.aux_mes08fec = FALSE.
   IF GET-VALUE("aux_mes09fec") = "9" THEN
-    ASSIGN ab_unmap.aux_mes09fec = TRUE.
+		DO:
+			ASSIGN ab_unmap.aux_mes09fec = TRUE
+					 aux_mesfech = aux_mesfech + ",9".
+		END.
   ELSE
     ASSIGN ab_unmap.aux_mes09fec = FALSE.
   IF GET-VALUE("aux_mes10fec") = "10" THEN
-    ASSIGN ab_unmap.aux_mes10fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes10fec = TRUE
+					 aux_mesfech = aux_mesfech + ",10".
+		END.
   ELSE
     ASSIGN ab_unmap.aux_mes10fec = FALSE.
   IF GET-VALUE("aux_mes11fec") = "11" THEN
-    ASSIGN ab_unmap.aux_mes11fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes11fec = TRUE
+					 aux_mesfech = aux_mesfech + ",11".
+		END.
   ELSE
     ASSIGN ab_unmap.aux_mes11fec = FALSE.
   IF GET-VALUE("aux_mes12fec") = "12" THEN
-    ASSIGN ab_unmap.aux_mes12fec = TRUE.
+    DO:
+			ASSIGN ab_unmap.aux_mes12fec = TRUE
+					 aux_mesfech = aux_mesfech + ",12".
+		END.
   ELSE
     ASSIGN ab_unmap.aux_mes12fec = FALSE.	
 END PROCEDURE.
@@ -2135,12 +2218,8 @@ PROCEDURE carrega_PACS :
     
               IF   NOT AVAILABLE crapagp THEN
                    DO:
-                       /* se PA for participante do progrid e ativo OU for o PA OQS e 
-                          for viacredi devera criar na tabela */
-                       IF (crapage.insitage = 1    AND
-                           crapage.flgdopgd = YES) OR
-                          (crapage.cdagenci = 93   AND
-                           crapage.cdcooper = 1)   THEN
+                       IF  crapage.insitage = 1 AND
+                           crapage.flgdopgd = YES   THEN
                        DO:
                        /* Limpa a temp-table */
                            EMPTY TEMP-TABLE cratagp.

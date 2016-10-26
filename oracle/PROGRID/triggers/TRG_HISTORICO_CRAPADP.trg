@@ -22,6 +22,10 @@ DECLARE
 
   ww_cdoperad_ant varchar2(100);
   ww_cdoperad_atu varchar2(100);
+  
+  ww_idfimava_ant varchar2(100);
+  ww_idfimava_atu varchar2(100);
+  
   -- local variables here
   PROCEDURE grava_historico (id_acao IN VARCHAR2,
                              nm_campo IN VARCHAR2,
@@ -38,8 +42,16 @@ DECLARE
   wr_cdcopope craphea.cdcopope%TYPE;
   wr_cdoperad craphea.cdoperad%TYPE;
 
+  
+
   BEGIN
 
+    SELECT DECODE(:OLD.IDFIMAVA, 0, 'NÃO', 1, 'SIM', ' ')
+        ,DECODE(:NEW.IDFIMAVA, 0, 'NÃO', 1, 'SIM', ' ')
+    INTO ww_idfimava_ant
+        ,ww_idfimava_atu
+    FROM DUAL;
+    
     IF id_acao = 'A' then -- Alteração
       wr_idevento := :NEW.IDEVENTO;
       wr_cdcooper := :NEW.CDCOOPER;
@@ -459,7 +471,12 @@ BEGIN
        --grava_historico('A','CDCOPOPE',:OLD.CDCOPOPE,:NEW.CDCOPOPE );
        grava_historico('A','CDCOPOPE',ww_cdcopope_ant,ww_cdcopope_atu);
     END IF;
-
+    
+    --IDFIMAVA
+    IF :NEW.IDFIMAVA <> :OLD.IDFIMAVA THEN
+       grava_historico('A','IDFIMAVA',ww_idfimava_ant,ww_idfimava_atu);
+    END IF;
+   
   ELSIF DELETING THEN
 
       grava_historico('E','CDLOCALI',ww_cdlocali_ant,' ' );--:OLD.cdlocali,'' );
@@ -480,6 +497,7 @@ BEGIN
       grava_historico('E','NRSEQPRI',ww_nrseqpri_ant,' ' );--:OLD.NRSEQPRI,'' );
       grava_historico('E','DSJUSTIF',:OLD.DSJUSTIF,' ' );
       grava_historico('E','CDCOPOPE',ww_cdcopope_ant,' ' );--OLD.CDCOPOPE,'' );
+      grava_historico('E','IDFIMAVA',ww_idfimava_ant,' ' );
 
   END IF;
 
