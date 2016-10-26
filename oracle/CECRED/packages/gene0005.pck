@@ -1378,8 +1378,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
           vr_index := To_Number(To_Char(rw_crapfer.dtferiad,'YYYYMMDD'));
           --Atribuir o valor selecionado ao vetor
           vr_tab_feriado(vr_index):= rw_crapfer.dtferiad;
-          CLOSE cr_crapfer_unico;
-          vr_dtbuscar := vr_dtbuscar+1;
         END LOOP;
       END IF;
       -- Testes para garantir que seja util
