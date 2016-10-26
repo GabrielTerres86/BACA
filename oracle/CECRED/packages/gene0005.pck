@@ -173,6 +173,12 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                          ,pr_inpessoa IN crapass.inpessoa%TYPE      --> Tipo de Pessoa(1 - Fisica / 2 - Juridica / 3 - Conta Administrativa)
                          ,pr_des_erro  OUT VARCHAR2) RETURN BOOLEAN;--> Mensagem de erro / (Retorno TRUE -> OK, FALSE -> NOK)
 
+  /* Procedimento para busca de motivos */												 
+  PROCEDURE pc_busca_motivos (pr_cdproduto  IN tbgen_motivo.cdproduto%TYPE --> Cod. Produto
+		                     ,pr_clobxmlc  OUT CLOB                        --XML com informações de LOG
+                             ,pr_des_erro  OUT VARCHAR2                    --> Status erro
+                             ,pr_dscritic  OUT VARCHAR2);
+
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -194,6 +200,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          de performance.
   --                          Chamado 291693 (Heitor - RKAM)
   --
+  --             30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+  --
   --             10/06/2016 - Ajuste para inlcuir UPPER na leitura da tabela
   --                          crapass em campos de indice que possuem UPPER
   --                          (Adriano - SD 463762).
@@ -212,26 +220,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   /* Erro em chamadas da pc_gera_erro */
   vr_des_reto VARCHAR2(3);
   vr_tab_erro GENE0001.typ_tab_erro;
-
-  /* Cursor generico de parametrizacão */
-  CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE           --> Cooperativa
-                   ,pr_nmsistem IN craptab.nmsistem%TYPE           --> Nome sistema
-                   ,pr_tptabela IN craptab.tptabela%TYPE           --> Tipo de tabela
-                   ,pr_cdempres IN craptab.cdempres%TYPE           --> Codigo empresa
-                   ,pr_cdacesso IN craptab.cdacesso%TYPE           --> Codigo de acesso
-                   ,pr_tpregist IN craptab.tpregist%TYPE           --> Tipo de registro
-                   ,pr_dstextab IN craptab.dstextab%TYPE) IS       --> Texto de parametros
-    SELECT tab.dstextab
-          ,tab.rowid
-    FROM craptab tab
-    WHERE tab.cdcooper = pr_cdcooper
-      AND upper(tab.nmsistem) = nvl(upper(pr_nmsistem), upper(tab.nmsistem))
-      AND upper(tab.tptabela) = nvl(upper(pr_tptabela), upper(tab.tptabela))
-      AND tab.cdempres = nvl(pr_cdempres, tab.cdempres)
-      AND upper(tab.cdacesso) = nvl(upper(pr_cdacesso), upper(tab.cdacesso))
-      AND tab.tpregist = nvl(pr_tpregist, tab.tpregist)
-      AND SUBSTR(tab.dstextab,1,7) = nvl(pr_dstextab, SUBSTR(tab.dstextab,1,7));
-  rw_craptab cr_craptab%ROWTYPE;
 
   /* Procedimento padrão de busca de informacões de CPMF */
   PROCEDURE pc_busca_cpmf(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -261,38 +249,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --               12/11/2012 - Conversão Progress --> Oracle PLSQL (Marcos - Supero)
     -- .............................................................................
     DECLARE
-      -- Definir outro rowtype para não misturar ao principal
-      rw_craptab cr_craptab%ROWTYPE;
+      vr_dstextab craptab.dstextab%TYPE;
     BEGIN
       -- Buscar dados de CPMF na tabela de parametros
-      OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                      ,pr_nmsistem => 'CRED'
                      ,pr_tptabela => 'USUARI'
                      ,pr_cdempres => 11
                      ,pr_cdacesso => 'CTRCPMFCCR'
-                     ,pr_tpregist => 1
-                     ,pr_dstextab => NULL);
-      FETCH cr_craptab
-       INTO rw_craptab;
-      -- Se não encontrar
-      IF cr_craptab%FOUND THEN
-        -- Fechar o cursor
-        CLOSE cr_craptab;
+                                               ,pr_tpregist => 1);       
+      -- Se encontrar
+      IF vr_dstextab IS NOT NULL THEN        
         -- Povoar as informacões conforme as regras da versão anterior
-        pr_dtinipmf := TO_DATE(SUBSTR(rw_craptab.dstextab,1,10),'DD/MM/YYYY');
-        pr_dtfimpmf := TO_DATE(SUBSTR(rw_craptab.dstextab,12,10),'DD/MM/YYYY');
+        pr_dtinipmf := TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY');
+        pr_dtfimpmf := TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY');
         IF pr_dtmvtolt >= pr_dtinipmf AND pr_dtmvtolt <= pr_dtfimpmf THEN
-          pr_txcpmfcc := GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,23,13));
-          pr_txrdcpmf := GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,38,13));
+          pr_txcpmfcc := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,13));
+          pr_txrdcpmf := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,38,13));
         ELSE
           pr_txcpmfcc := 0;
           pr_txrdcpmf := 1;
         END IF;
-        pr_indabono := SUBSTR(rw_craptab.dstextab,51,1); /* 0 = abona 1 = nao abona */
-        pr_dtiniabo := TO_DATE(SUBSTR(rw_craptab.dstextab,53,10)); /* data de inicio do abono */
+        pr_indabono := SUBSTR(vr_dstextab,51,1); /* 0 = abona 1 = nao abona */
+        pr_dtiniabo := TO_DATE(SUBSTR(vr_dstextab,53,10)); /* data de inicio do abono */
       ELSE
-        -- Fechar o cursor
-        CLOSE cr_craptab;
         -- Montar retorno de erro
         pr_cdcritic := 641;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 641);
@@ -328,36 +308,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --   Alteracoes:  29/01/2013 - Conversão Progress --> Oracle PLSQL (Alisson - Amcom)
     -- .............................................................................
     DECLARE
-      -- Definir outro rowtype para não misturar ao principal
-      rw_craptab cr_craptab%ROWTYPE;
+      vr_dstextab craptab.dstextab%TYPE;
     BEGIN
       --Inicializa variavel de erro
       pr_dscritic := NULL;
       -- Buscar dados de CPMF na tabela de parametros
-      OPEN cr_craptab(pr_cdcooper => pr_cdcooper
+       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                      ,pr_nmsistem => 'CRED'
                      ,pr_tptabela => 'USUARI'
                      ,pr_cdempres => 11
                      ,pr_cdacesso => 'VLIOFOPFIN'
-                     ,pr_tpregist => 1
-                     ,pr_dstextab => NULL);
-      FETCH cr_craptab
-       INTO rw_craptab;
-      -- Se não encontrar
-      IF cr_craptab%FOUND THEN
-        -- Fechar o cursor
-        CLOSE cr_craptab;
+                     ,pr_tpregist => 1);
+      -- Se encontrar
+      IF vr_dstextab IS NOT NULL THEN
         -- Povoar as informacões conforme as regras da versão anterior
-        pr_dtiniiof := TO_DATE(SUBSTR(rw_craptab.dstextab,1,10),'DD/MM/YYYY');
-        pr_dtfimiof := TO_DATE(SUBSTR(rw_craptab.dstextab,12,10),'DD/MM/YYYY');
+        pr_dtiniiof := TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY');
+        pr_dtfimiof := TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY');
         IF pr_dtmvtolt BETWEEN  pr_dtiniiof AND pr_dtfimiof THEN
-          pr_txccdiof := GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,23,14));
+          pr_txccdiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
         ELSE
           pr_txccdiof := 0;
         END IF;
       ELSE
-        -- Fechar o cursor
-        CLOSE cr_craptab;
         -- Montar retorno de erro
         pr_cdcritic := 915;
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 915);
@@ -1406,6 +1378,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
           vr_index := To_Number(To_Char(rw_crapfer.dtferiad,'YYYYMMDD'));
           --Atribuir o valor selecionado ao vetor
           vr_tab_feriado(vr_index):= rw_crapfer.dtferiad;
+          CLOSE cr_crapfer_unico;
+          vr_dtbuscar := vr_dtbuscar+1;
         END LOOP;
       END IF;
       -- Testes para garantir que seja util
@@ -2368,6 +2342,99 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     END;
 
   END fn_valida_nome;   
+
+  PROCEDURE pc_busca_motivos (pr_cdproduto  IN tbgen_motivo.cdproduto%TYPE --> Cod. Produto
+		                     ,pr_clobxmlc  OUT CLOB                        --XML com informações de LOG
+                             ,pr_des_erro  OUT VARCHAR2                    --> Status erro
+                             ,pr_dscritic  OUT VARCHAR2) IS                --> Retorno de erro
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : pc_busca_motivos
+    --   Sistema : Conta-Corrente - Cooperativa de Credito
+    --   Sigla   : CRED
+    --   Autor   : Lucas Lunelli
+    --   Data    : Maio/2016                      Ultima atualizacao:           
+    --
+    --   Dados referentes ao programa:
+    --   Frequencia: Diario (on-line)
+    --   Objetivo  : Procedimento para busca de motivos.
+    --
+    --   Alteracoes:                                                                     
+    -- .............................................................................
+    DECLARE
+		
+		  -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+			
+      -- Variaveis de XML 
+      vr_xml_temp VARCHAR2(32767);
+    
+       CURSOR cr_tbgen_motivo(pr_cdproduto IN tbgen_motivo.cdproduto%TYPE) IS
+         SELECT mot.idmotivo
+				       ,mot.dsmotivo
+           FROM tbgen_motivo mot
+          WHERE cdproduto = pr_cdproduto;
+       rw_tbgen_motivo cr_tbgen_motivo%ROWTYPE;
+			 
+    BEGIN
+      --Inicializa variavel de erro
+      vr_dscritic := NULL;
+			vr_cdcritic := 0;
+			
+      OPEN cr_tbgen_motivo(pr_cdproduto => pr_cdproduto);
+      FETCH cr_tbgen_motivo INTO rw_tbgen_motivo;
+
+      IF cr_tbgen_motivo%NOTFOUND THEN
+        
+				CLOSE cr_tbgen_motivo;				
+								
+				vr_dscritic := 'Registros de Motivos nao encontrados para o produto.';
+				RAISE vr_exc_saida;
+				
+      END IF;
+			
+			CLOSE cr_tbgen_motivo;
+						
+			-- Criar documento XML
+			dbms_lob.createtemporary(pr_clobxmlc, TRUE); 
+			dbms_lob.open(pr_clobxmlc, dbms_lob.lob_readwrite);       
+
+			-- Insere o cabeçalho do XML 
+			gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+														 ,pr_texto_completo => vr_xml_temp 
+														 ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+  			                                        															 														
+      FOR rw_tbgen_motivo IN cr_tbgen_motivo (pr_cdproduto => pr_cdproduto) LOOP														 
+  			                                        															 														
+			-- Montar XML com registros de aplicação
+			gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc
+														 ,pr_texto_completo => vr_xml_temp 
+														 ,pr_texto_novo     => '<motivos>'															                    
+																								||  '<idmotivo>' || NVL(TO_CHAR(rw_tbgen_motivo.idmotivo),'0') || '</idmotivo>'
+																								||  '<dsmotivo>' || NVL(TO_CHAR(rw_tbgen_motivo.dsmotivo),' ') || '</dsmotivo>'
+																								|| '</motivos>');  			
+      END LOOP;
+						
+			-- Encerrar a tag raiz 
+			gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
+														 ,pr_texto_completo => vr_xml_temp 
+														 ,pr_texto_novo     => '</root>' 
+														 ,pr_fecha_xml      => TRUE);						
+			pr_des_erro := 'OK';
+			
+    EXCEPTION
+			WHEN vr_exc_saida THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := gene0007.fn_caract_acento(gene0007.fn_convert_web_db(vr_dscritic));
+      WHEN OTHERS THEN
+        pr_dscritic := 'Problemas ao buscar Tabela de Motivos '||pr_cdproduto||'. Erro na GENE0005.pc_busca_motivos: '||sqlerrm;
+    END;
+  END pc_busca_motivos;
 
 END GENE0005;
 /
