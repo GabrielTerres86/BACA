@@ -3,7 +3,7 @@
 /*
     Programa: sspb0001                        Antigo: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 19/09/2016
+    Data    : Outubro/2009                    Ultima Atualizacao: 18/10/2016
 
     Dados referentes ao programa:
 
@@ -66,6 +66,9 @@
                 19/09/2016 - Removida a validacao de horario cadastrado na TAB085
                              para a geracao de TED dos convenios. SD 519980.
                              (Carlos Rafael Tanholi)
+                             
+                18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
+                             catalogo 4.07 na procedure pc_gera_xml (Lucas Ranghetti #537580)
 ..............................................................................*/
 
   --criação TempTable
@@ -74,7 +77,7 @@
   TYPE typ_reg_logspb IS
       RECORD (nrseqlog PLS_INTEGER,
               dslinlog VARCHAR2(4000));
-  TYPE typ_tab_logspb IS
+   TYPE typ_tab_logspb IS
     TABLE OF typ_reg_logspb
     INDEX BY PLS_INTEGER;
 
@@ -249,7 +252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 22/09/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 18/10/2016
   --
   -- Dados referentes ao programa:
   --
@@ -264,6 +267,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --
   --             22/09/2016 - Arrumar validacao para horario limite de envio de ted na 
   --                          procedure pc_trfsal_opcao_b (Lucas Ranghetti #500917)
+  --
+  --             18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
+  --                          catalogo 4.07 na procedure pc_gera_xml (Lucas Ranghetti #537580)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -1130,8 +1136,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmcopcta;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfcop;
 
-         END IF;
-
+         END IF;         
+         
          pr_tab_logspb_detalhe(vr_idx).hrtransa := rw_craplmt.hrtransa;
          pr_tab_logspb_detalhe(vr_idx).vltransa := rw_craplmt.vldocmto;
          pr_tab_logspb_detalhe(vr_idx).dsmotivo := rw_craplmt.dsmotivo;
@@ -1890,7 +1896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
-
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro
@@ -2075,7 +2081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
+      Data     : Junho/2015.                   Ultima atualizacao: 18/10/2016
 
       Dados referentes ao programa:
 
@@ -2090,6 +2096,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                              grava-log-ted e tratamento de erro na chamada do gera_xml
                              quando aux_nmmsgenv = "STR0008" (Douglas - Chamado 294944).
 
+                  18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
+                               catalogo 4.07 (Lucas Ranghetti #537580)
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
     ------------> ESTRUTURAS DE REGISTRO <-----------
@@ -2196,10 +2204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <TpCtCredtd>'||  pr_dsdctacr ||'</TpCtCredtd>
                         <CtCredtd>'||    pr_nrcctrcb ||'</CtCredtd>
                         <TpPessoaCredtd>'||           pr_dspesrec||'</TpPessoaCredtd>
-                        <CNPJ_CPFCliCredtdTitlar1>'|| pr_cpfcgrcb ||'</CNPJ_CPFCliCredtdTitlar1>
-                        <NomCliCredtdTitlar1>'||      pr_nmpesrcb ||'</NomCliCredtdTitlar1>
-                        <CNPJ_CPFCliCredtdTitlar2></CNPJ_CPFCliCredtdTitlar2>
-                        <NomCliCredtdTitlar2></NomCliCredtdTitlar2>
+                        <CNPJ_CPFCliCredtd>'|| pr_cpfcgrcb ||'</CNPJ_CPFCliCredtd>
+                        <NomCliCredtd>'||      pr_nmpesrcb ||'</NomCliCredtd>                        
                         <NumContrtoOpCred></NumContrtoOpCred>
                         <VlrLanc>'||         pr_vldocmto ||'</VlrLanc>
                         <FinlddIF>'||        pr_cdfinrcb ||'</FinlddIF>
