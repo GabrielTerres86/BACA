@@ -729,6 +729,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         NVL(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_erro;   
       END IF;
+	  
+	  pr_cdseqfat := vr_cdseqfat;
 
       vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                ,pr_nmsistem => 'CRED'
