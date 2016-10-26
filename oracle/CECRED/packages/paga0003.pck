@@ -1083,6 +1083,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_qtddaglf  crapage.qtddaglf%TYPE;
     vr_dtminage  DATE;
     vr_dtmaxage  DATE;
+	vr_lindigit  NUMBER;
+    vr_nrdigito  INTEGER;
+	vr_flgretor  BOOLEAN;
     
     --Tipo de registro de data
     rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
@@ -1097,17 +1100,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     --Seta a Agência e Caixa
     vr_cdagenci := 90; -- InternetBank
     vr_nrdcaixa := 900;
-    
-    -- Caso o o código de barras estiver vazio popula com base na linha digitável
-    IF TRIM(pr_cdbarras) IS NULL THEN
-       --Se possuir linha digitável popula o código de barras
-       IF TRIM(pr_lindigi1) IS NOT NULL THEN
-         pr_cdbarras := SUBSTR(to_char(pr_lindigi1, 'fm000000000000'), 1, 11) ||
-                        SUBSTR(to_char(pr_lindigi2, 'fm000000000000'), 1, 11) ||
-                        SUBSTR(to_char(pr_lindigi3, 'fm000000000000'), 1, 11) ||
-                        SUBSTR(to_char(pr_lindigi4, 'fm000000000000'), 1, 11);
-       END IF;
-    END IF;
     
     -- Obtém a data de movimento cadastrada
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -1125,6 +1117,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       CLOSE BTCH0001.cr_crapdat;
     END IF;
   
+		
+		
+		/* Verifica se foi digitado manualmente ou via leitora de cod. barras */
+      IF trim(pr_cdbarras) IS NULL AND nvl(pr_lindigi1,0) <> 0 AND nvl(pr_lindigi2,0) <> 0 THEN
+        --Montar Codigo Barras
+        pr_cdbarras:= SUBSTR(gene0002.fn_mask(pr_lindigi1,'999999999999'),1,11)||
+                      SUBSTR(gene0002.fn_mask(pr_lindigi2,'999999999999'),1,11)||
+                      SUBSTR(gene0002.fn_mask(pr_lindigi3,'999999999999'),1,11)||
+                      SUBSTR(gene0002.fn_mask(pr_lindigi4,'999999999999'),1,11);
+      ELSIF trim(pr_cdbarras) IS NOT NULL AND nvl(pr_lindigi1,0) = 0 AND nvl(pr_lindigi2,0) = 0 AND
+            nvl(pr_lindigi3,0) = 0 AND nvl(pr_lindigi4,0) = 0 THEN
+
+        /* Monta os campos manuais e pega o digito */
+        FOR idx IN 1..4 LOOP
+
+          --Retornar o valor de cada parametro
+          CASE idx
+            WHEN 1 THEN
+              pr_lindigi1:= TO_NUMBER(SUBSTR(pr_cdbarras,1,11));
+              vr_lindigit:= pr_lindigi1;
+            WHEN 2 THEN
+              pr_lindigi2:= TO_NUMBER(SUBSTR(pr_cdbarras,12,11));
+              vr_lindigit:= pr_lindigi2;
+            WHEN 3 THEN
+              pr_lindigi3:= TO_NUMBER(SUBSTR(pr_cdbarras,23,11));
+              vr_lindigit:= pr_lindigi3;
+            WHEN 4 THEN
+              pr_lindigi4:= TO_NUMBER(SUBSTR(pr_cdbarras,34,11));
+              vr_lindigit:= pr_lindigi4;
+          END CASE;
+
+          --Verificar qual o modulo de calculo do digito
+          IF SUBSTR(pr_cdbarras,3,1) IN ('6','7') THEN
+            /** Verificacao pelo modulo 10**/
+            CXON0000.pc_calc_digito_iptu_samae (pr_valor    => vr_lindigit   --> Valor Calculado
+                                               ,pr_nrdigito => vr_nrdigito   --> Digito Verificador
+                                               ,pr_retorno  => vr_flgretor); --> Retorno digito correto
+          ELSE
+            /** Verificacao pelo modulo 11 **/
+            CXON0014.pc_verifica_digito (pr_nrcalcul => vr_lindigit  --Numero a ser calculado
+                                        ,pr_nrdigito => vr_nrdigito); --Digito verificador
+          END IF;
+
+          --Retornar parametro digitavel
+          CASE idx
+            WHEN 1 THEN
+              pr_lindigi1:= TO_NUMBER(gene0002.fn_mask(pr_lindigi1,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+            WHEN 2 THEN
+              pr_lindigi2:= TO_NUMBER(gene0002.fn_mask(pr_lindigi2,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+            WHEN 3 THEN
+              pr_lindigi3:= TO_NUMBER(gene0002.fn_mask(pr_lindigi3,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+            WHEN 4 THEN
+              pr_lindigi4:= TO_NUMBER(gene0002.fn_mask(pr_lindigi4,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+          END CASE;
+        END LOOP;
+      END IF;
+			
     --Se for Agendamento
     IF pr_idagenda = 2 THEN
     
@@ -1416,10 +1465,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         vr_dtmaxage := LAST_DAY(vr_dtminage + vr_qtddaglf);
         
         --[TODO] Conversar com o David sobre a mensagem, pois o limite funciona até o dia 1º do mês, e a mensagem faz parecer que considera o mês inteiro
-        IF (pr_dtagenda NOT BETWEEN vr_dtminage AND vr_dtmaxage) THEN
+        IF (pr_dtapurac NOT BETWEEN vr_dtminage AND vr_dtmaxage) THEN
           vr_dscritic := 'A data de apuração do pagamento não pode ser inferior a #dtminage# ou superior a #dtmaxage#.';
-          vr_dscritic := REPLACE(vr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY'));
-          vr_dscritic := REPLACE(vr_dscritic, '#dtmaxage#', TO_CHAR(vr_dtmaxage,'fmMonth/YYYY'));
+		  vr_dscritic := REPLACE(vr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));
+          vr_dscritic := REPLACE(vr_dscritic, '#dtmaxage#', TO_CHAR(vr_dtmaxage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));
+					
           RAISE vr_exc_erro;
         END IF;        
         
@@ -1720,7 +1770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                            ,pr_dtlimite => pr_dtvencto -- Data de Limite
                            ,pr_vlrecbru => pr_vlrecbru -- Valor da receita bruta acumulada
                            ,pr_vlpercen => pr_vlpercen -- Percentual da guia
-                           ,pr_vllanmto => pr_vlrtotal -- Valor da fatura informado
+                           ,pr_vllanmto => pr_vlrprinc -- Valor da fatura informado
                            ,pr_vlrmulta => pr_vlrmulta -- Valor da multa
                            ,pr_vlrjuros => pr_vlrjuros -- Valor dos juros
                            ,pr_dsnomfon => pr_dsnomfon -- Nome / Telefone
@@ -2624,17 +2674,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																							 pr_dtmvtolt => pr_dtmvtopg, 
 																							 pr_tipo     => 'A');
 		-- linha digitavel
-		vr_dslindig := SUBSTR(to_char(pr_lindigi1,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(pr_lindigi1,'fm000000000000'),12,1) ||' '||
+		vr_dslindig := SUBSTR(to_char(vr_lindigi1,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi1,'fm000000000000'),12,1) ||' '||
                        
-									 SUBSTR(to_char(pr_lindigi2,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(pr_lindigi2,'fm000000000000'),12,1) ||' '||
+									 SUBSTR(to_char(vr_lindigi2,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi2,'fm000000000000'),12,1) ||' '||
                        
-									 SUBSTR(to_char(pr_lindigi3,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(pr_lindigi3,'fm000000000000'),12,1) ||' '||
+									 SUBSTR(to_char(vr_lindigi3,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi3,'fm000000000000'),12,1) ||' '||
                        
-									 SUBSTR(to_char(pr_lindigi4,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(pr_lindigi4,'fm000000000000'),12,1);
+									 SUBSTR(to_char(vr_lindigi4,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi4,'fm000000000000'),12,1);
 
 		-- Procedure para validar limites para transacoes
     INET0001.pc_verifica_operacao (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
@@ -2723,11 +2773,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																							pr_dtmvtolt => rw_crapdat.dtmvtolt,
 																							pr_tpdaguia => pr_tpdaguia,
 																							pr_tpcaptur => pr_tpcaptur,
-																							pr_lindigi1 => pr_lindigi1,
-																							pr_lindigi2 => pr_lindigi2,
-																							pr_lindigi3 => pr_lindigi3,
-																							pr_lindigi4 => pr_lindigi4,
-																							pr_cdbarras => pr_cdbarras,
+																							pr_lindigi1 => vr_lindigi1,
+																							pr_lindigi2 => vr_lindigi2,
+																							pr_lindigi3 => vr_lindigi3,
+																							pr_lindigi4 => vr_lindigi4,
+																							pr_cdbarras => vr_cdbarras,
 																							pr_dsidepag => pr_dsidepag,
 																							pr_vlrtotal => pr_vlrtotal,
 																							pr_dsnomfon => pr_dsnomfon,
@@ -2766,11 +2816,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_tpcaptur => pr_tpcaptur,
 																	 pr_cdseqfat => vr_cdseqfat,
 																	 pr_nrdigfat => vr_nrdigfat,
-																	 pr_lindigi1 => pr_lindigi1,
-																	 pr_lindigi2 => pr_lindigi2,
-																	 pr_lindigi3 => pr_lindigi3,
-																	 pr_lindigi4 => pr_lindigi4,
-																	 pr_cdbarras => pr_cdbarras,
+																	 pr_lindigi1 => vr_lindigi1,
+																	 pr_lindigi2 => vr_lindigi2,
+																	 pr_lindigi3 => vr_lindigi3,
+																	 pr_lindigi4 => vr_lindigi4,
+																	 pr_cdbarras => vr_cdbarras,
 																	 pr_dsidepag => pr_dsidepag,
 																	 pr_vlrtotal => pr_vlrtotal,
 																	 pr_dsnomfon => pr_dsnomfon,
@@ -2810,11 +2860,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																pr_tpdaguia => pr_tpdaguia,
 																pr_tpcaptur => pr_tpcaptur,
 																pr_cdhistor => 508,
-																pr_lindigi1 => pr_lindigi1,
-																pr_lindigi2 => pr_lindigi2,
-																pr_lindigi3 => pr_lindigi3,
-																pr_lindigi4 => pr_lindigi4,
-																pr_cdbarras => pr_cdbarras,
+																pr_lindigi1 => vr_lindigi1,
+																pr_lindigi2 => vr_lindigi2,
+																pr_lindigi3 => vr_lindigi3,
+																pr_lindigi4 => vr_lindigi4,
+																pr_cdbarras => vr_cdbarras,
 																pr_dsidepag => pr_dsidepag,
 																pr_vlrtotal => pr_vlrtotal,
 																pr_dsnomfon => pr_dsnomfon,
