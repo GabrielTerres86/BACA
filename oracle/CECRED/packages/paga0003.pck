@@ -1053,11 +1053,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        AND lau.insitlau IN (1,2)
        AND lau.cdcooper = pr_cdcooper
        AND lau.dtmvtopg = pr_dtmvtopg
-       AND cxon0041.fn_busca_sequencial_darf(pr_dtapurac => pr_dtapurac -- Data da Apuracao
-                                            ,pr_nrcpfcgc => pr_nrcpfcgc -- CPF/CNPJ
-                                            ,pr_cdtribut => pr_cdtribut -- Codigo do Tributo
-                                            ,pr_dtlimite => pr_dtvencto -- Data de Limite
-                                            ,pr_vlrtotal => pr_vlrtotal -- Valor Total
+       AND cxon0041.fn_busca_sequencial_darf(pr_dtapurac => darf_das.dtapuracao -- Data da Apuracao
+                                            ,pr_nrcpfcgc => darf_das.nrcpfcgc -- CPF/CNPJ
+                                            ,pr_cdtribut => darf_das.cdtributo -- Codigo do Tributo
+                                            ,pr_dtlimite => darf_das.dtvencto -- Data de Limite
+                                            ,pr_vlrtotal => lau.vllanaut -- Valor Total
                                             ) = pr_cdseqfat;
     rw_craplau_pend2 cr_craplau_pend%ROWTYPE;
     cr_craplau_pend2_found BOOLEAN := FALSE;
@@ -1308,8 +1308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         
         --Se encontrar transação pendente dispara exceção
         IF cr_trans_pend_found THEN
-          vr_dscritic:= 'Esta guia já foi registrada para aprovação. ' ||
-                        'Verifique suas transacoes pendentes.';
+          vr_dscritic:= 'Esta guia já foi registrada para aprovação.';
           RAISE vr_exc_erro;
         END IF;
       END IF;
@@ -1328,8 +1327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           
         --Se a encontrou agendamento com o mesmo sequencial aborta
         IF cr_craplau_pend_found THEN
-          vr_dscritic:= 'O pagamento desta guia já está agendando. ' ||
-                        'Verifique seus agendamentos.';
+          vr_dscritic:= 'O pagamento desta guia já está agendando.';
           RAISE vr_exc_erro;
         END IF;
       END IF;
@@ -1383,8 +1381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         
         --Se encontrar transação pendente dispara exceção
         IF cr_trans_pend2_found THEN
-          vr_dscritic:= 'Esta guia já foi registrada para aprovação. ' ||
-                        'Verifique suas transacoes pendentes.';
+          vr_dscritic:= 'Esta guia já foi registrada para aprovação.';
           RAISE vr_exc_erro;
         END IF;
       END IF;
@@ -1402,8 +1399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           
         --Se a encontrou agendamento com o mesmo sequencial aborta
         IF cr_craplau_pend2_found THEN
-          vr_dscritic:= 'O pagamento desta guia já está agendando. ' ||
-                        'Verifique seus agendamentos.';
+          vr_dscritic:= 'O pagamento desta guia já está agendando.';
           RAISE vr_exc_erro;
         END IF;
         
