@@ -1018,7 +1018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos Ernani Martini
-       Data    : Junho/2013.                          Ultima Atualizacao: 04/06/2013
+       Data    : Junho/2013.                          Ultima Atualizacao: 25/10/2016
 
        Dados referentes ao programa:
 
@@ -1026,7 +1026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Objetivo  : Retornar valor parametrizado de rating na TAB036 para a Cooperativa.
 
        Alteracoes: 04/06/2013 - Conversão Progress -> Oracle - Marcos (Supero)
-
+                                      
     ............................................................................. */
     DECLARE
       /* Cursor genérico de parametrização */
@@ -3342,7 +3342,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Objetivo  : Direcionar a obtenção as descricoes do risco, provisao , etc ...
 
        Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
-
+                   
+                   25/10/2016 - Correção do problema relatado no chamado 541414. (Kelvin)
     ............................................................................. */
     DECLARE
 	  /* Cursor genérico de parametrização */
@@ -3358,8 +3359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
            AND UPPER(tab.nmsistem) = pr_nmsistem
            AND UPPER(tab.tptabela) = pr_tptabela
            AND tab.cdempres        = pr_cdempres
-           AND UPPER(tab.cdacesso) = pr_cdacesso
-           AND tab.tpregist        = pr_tpregist;
+           AND UPPER(tab.cdacesso) = pr_cdacesso;
 
       -- Indice para gravacao nas temptables
       vr_contador NUMBER;
@@ -4693,8 +4693,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                               Ajuste nos codigos de natureza juridica para o
                               existente na receita federal. (Tiago Castro - RKAM)
 
-		         10/05/2016 - Ajuste para iniciar corretamente a pltable
-							  (Andrei - RKAM).
+		             10/05/2016 - Ajuste para iniciar corretamente a pltable
+							                (Andrei - RKAM).
+                 
+                 25/10/2016 - Ajuste no calculo da quantidade de anos, permitindo
+                              duas posições decimais. (Kelvin)
+                
   ............................................................................. */
   ---------------- CURSORES ----------------
 
@@ -4744,7 +4748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
     vr_fcraplim  BOOLEAN := FALSE;
     vr_fcrapjfn  BOOLEAN := FALSE;
     -- Tempo de operação da empresa no mercado
-    vr_nranoope PLS_INTEGER;
+    vr_nranoope NUMBER(6,2);
     vr_nrseqite PLS_INTEGER;
     -- Valor da nota
     vr_vldanota  NUMBER := 0;
@@ -4859,7 +4863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
     *************************************************************************/
 
     -- Calcular a qtd de anos do associado na cooperativa
-    vr_nranoope := ((pr_rw_crapdat.dtmvtolt - rw_crapjur.dtiniatv) / 365);
+    vr_nranoope := trunc(((pr_rw_crapdat.dtmvtolt - rw_crapjur.dtiniatv) / 365),2);
     -- Gerar valor do item conforme o periodo de operação
     IF vr_nranoope > 8    THEN
       vr_nrseqite := 1;
