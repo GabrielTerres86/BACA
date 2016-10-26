@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 13/11/2015
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 20/09/2016
   --
   --  Dados referentes ao programa:
   --
@@ -307,6 +307,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --              13/11/2015 - Correcao na rotina pc_grava_arquivo_reafor, existia uma
   --                           chamada da rotina pc_incrementa_linha passando 8 como parametro
   --                           quando o correto seria passar 1. Chamado 347582 (Heitor - RKAM)
+  --
+  --              20/09/2016 - #523936 Criação de log de controle de início, erros e fim de execução
+  --                           do job pc_controle_remessas (Carlos)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -347,6 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           ,dtmvtolt
           ,nrseqarq
           ,nmarquiv
+          ,blarquiv
       FROM craparb
      WHERE ROWID = pr_rowid;
   rw_craparb_r cr_craparb_r%ROWTYPE;
@@ -375,6 +379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      WHERE crb.idtpreme = nvl(pr_idtpreme,crb.idtpreme)
        AND crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
        AND crb.idtpreme = pbc.idtpreme
+       AND pbc.idtpreme <> 'SMSDEBAUT'  -- Darosci - 26/10/2016
        AND pbc.flgativo = 1   --> Somente Bureauxs Ativos
        AND crb.dtcancel IS NULL --> Desconsiderar as canceladas
        -- Sem o arquivo da preparação ou Envio
@@ -399,6 +404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      WHERE crb.idtpreme = nvl(pr_idtpreme,crb.idtpreme)
        AND crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
        AND crb.idtpreme = pbc.idtpreme
+       AND pbc.idtpreme <> 'SMSDEBAUT'  -- Darosci - 26/10/2016
        AND pbc.flgativo = 1   --> Somente ativos
        AND ((pr_flcsdcnl = 'S' AND crb.dtcancel IS NULL) OR pr_flcsdcnl = 'N') --> Desconsiderar as canceladas quando solicitado
        -- Existe envio pendentes
@@ -1068,7 +1074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     /* .............................................................................
     Programa: fn_nmarquiv_dev_serasa
     Autor   : Marcos Martini - Supero
-    Data    : 30/12/2014                     Ultima atualizacao: 07/04/2015
+    Data    : 30/12/2014                     Ultima atualizacao: 25/08/2016
 
     Dados referentes ao programa:
 
@@ -1082,6 +1088,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                               solicitado pela PeopleWare, alterando de "SER008" para "SER00008"
                               (Guilherme/SUPERO)
 
+                 25/08/2016 - SD511112 - Ajuste para incluir o numero da remessa na extensao de 
+				              retorno (Marcos-Supero)
     /* ...........................................................................*/
     DECLARE
       -- Cooperativa conforme codigo cliente serasa
@@ -1095,7 +1103,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Nome da cooperativa
       vr_nmrescop crapcop.nmrescop%TYPE;
       -- Extensão aleatória
-      vr_nmextale VARCHAR2(3);
+      vr_nmextale VARCHAR2(20);
+      -- Auxiliares para leitura do clob e arquivo
+      vr_qtdbytes PLS_INTEGER := 3;
+      vr_idposlei PLS_INTEGER := 123;
+      vr_deslinha VARCHAR2(32767);      
+      vr_nrremret VARCHAR2(3);
     BEGIN
       -- Busca informações do arquivo retornado
       OPEN cr_craparb_r(pr_rowid);
@@ -1113,14 +1126,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       CLOSE cr_crapcop;
       -- Buscamos o nome da Cooperativa conforme o código encontrado
       vr_nmrescop := fn_nom_cooperativa(vr_cdcooper);
-      -- Montamos a extensão genérica conforme o dia
-      vr_nmextale := 'D'||to_char(rw_craparb_r.dtmvtolt,'dd');
+      -- Ler a remessa no clob
+      dbms_lob.read(rw_craparb_r.blarquiv, vr_qtdbytes, vr_idposlei, vr_deslinha);
+      -- Convertemos de Raw para Varchar2, pois os Blobs estão em Raw
+      vr_nrremret := UTL_RAW.CAST_TO_VARCHAR2(vr_deslinha);
+      -- Montamos a extensão genérica conforme o dia + remessa
+      vr_nmextale := 'D'||to_char(rw_craparb_r.dtmvtolt,'dd')||'_'||vr_nrremret;
       -- Nome de Retorno ao PPWare:
-      -- XXXXXXXXXXXXXXXXXXXXXXSER00008.Ddd
+      -- XXXXXXXXXXXXXXXXXXXXXXSER00008.Ddd_RRR
       -- Onde:
       --      X é o nome da Cooperativa
       --      D é fixo o caracter 'D'
       --      d é o dia da remessa
+      --      R é o numero da remessa
       RETURN vr_nmrescop||'SER00008.'||vr_nmextale;
     END;
   END fn_nmarquiv_dev_serasa;
@@ -4187,7 +4205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   -- Objetivo  : Busca os dados de parametros de sistema para exibir na tela
   --
   -- Alteracoes: 07/10/2015 - Inclusao dos campos hrinterv e idtpsoli. (Jaison/Marcos-Supero)
-  --
+  --             
   --             23/03/2016 - Inclusão do campo idenvseg conforme solicitado no 
   --                          chamado 412682. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
@@ -4629,7 +4647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   -- Objetivo  : Efetuar a gravacao de parametros de sistema
   --
   -- Alteracoes: 07/10/2015 - Inclusao dos campos hrinterv e idtpsoli. (Jaison/Marcos-Supero)
-  --
+  --                       
   --             23/03/2016 - Inclusão do campo idenvseg conforme solicitado no 
   --                          chamado 412682. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
@@ -5500,8 +5518,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       IF pr_idenvseg = 'S' THEN
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
       ELSE
-      -- Buscar script para conexão FTP
-      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+        -- Buscar script para conexão FTP
+        vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
       END IF;                                      
       
       -- Preparar o comando de conexão e envio ao FTP
@@ -5514,7 +5532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                     || ' -dir_local '    || CHR(39) || pr_nmdireto || CHR(39)
                     || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
                     || ' -log /usr/coop/cecred/log/proc_autbur.log';
-
+      
       -- Chama procedure de envio e recebimento via ftp
       GENE0001.pc_OScommand_Shell(pr_des_comando => vr_comand_ftp
                                  ,pr_typ_saida   => vr_typ_saida
@@ -6112,8 +6130,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
       ELSE 
-      -- Buscar script para conexão FTP
-      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+        -- Buscar script para conexão FTP
+        vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');   
       END IF;                      
       
       -- Preparar o comando de conexão e envio ao FTP
@@ -6833,7 +6851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --  Sistema  : CYBER
     --  Sigla    : CRED
     --  Autor    : Marcos - SUPERO
-    --  Data     : Dezembro/2014.                   Ultima atualizacao: 07/10/2015
+    --  Data     : Dezembro/2014.                   Ultima atualizacao: 25/08/2016
     --
     -- Dados referentes ao programa:
     --
@@ -6844,6 +6862,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --
     -- 07/10/2015 - PRJ210 - Adaptação para que a rotina fique genérica e não mais específica a PPWare (Marcos-Supero)
     --
+    -- 25/08/2016 - SD511112 - Utilizar função gene0001.pc_lista_arquivos ao invés do OSCOmmand, pois quando 
+    --                         havia muitos arquivos ocorria erro. (Marcos-Supero)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Buscar caracteristicas do Bureaux
@@ -6877,8 +6897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_dir_temp   VARCHAR2(1000);        --> Dir temporário para trabalho com os arquivos
       vr_typ_said   VARCHAR2(3);           --> Retorno das chamadas ao SO
       --
-      vr_dslstarq VARCHAR2(4000);        --> Lista de arquivos encontrados
-      vr_lstarqre gene0002.typ_split;    --> Split de arquivos encontrados
+      vr_dslstarq cecred.typ_simplestringarray; --> Lista de arquivos encontrados
     BEGIN
       -- Buscar caracteristicas do Bureaux
       OPEN cr_crappbc;
@@ -6907,29 +6926,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
       -- Testar se há arquivos movidos manualmente a pasta RECEBE do Bureaux
       -- Notem que desconsideramos ZIP e zip o resultado total e os sub-diretorios existentes
-      gene0001.pc_OScommand_Shell(pr_des_comando => 'ls -l '||rw_pbc.dsdirret||' |grep -Ev "total|^d|zip|ZIP" | awk ''{print $9}'''
-                                 ,pr_typ_saida   => vr_typ_said
-                                 ,pr_des_saida   => vr_dslstarq);
-      -- Somente se houver retorno OUT
-      IF vr_typ_said = 'OUT' THEN
-        -- Separar a lista de arquivos encontradas com função existente [Chr(10) é quebra de linha]
-        vr_lstarqre := fn_quebra_string(pr_string => vr_dslstarq, pr_delimit => chr(10));
+      gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_dslstarq 
+                                ,pr_path          => rw_pbc.dsdirret 
+                                ,pr_pesq          => '');
+
         -- Se encontrou algum arquivo
-        IF vr_lstarqre.count() > 0 THEN
+      IF vr_dslstarq.count() > 0 THEN
           -- Para cada arquivo encontrado no dir
-          FOR vr_idx IN 1..vr_lstarqre.count LOOP
-            -- Se há informação
-            IF trim(vr_lstarqre(vr_idx)) IS NOT NULL THEN
+        FOR vr_idx IN 1..vr_dslstarq.count LOOP
+          -- Se há informação, e não for um arquivo ZIP/RAR
+          IF trim(vr_dslstarq(vr_idx)) IS NOT NULL AND lower(gene0001.fn_extensao_arquivo(vr_dslstarq(vr_idx))) NOT IN('zip','rar')  THEN
               -- Temos de mover todos os arquivos que não estão compactados
               -- para a pasta temporária para que os mesmos sejam
-              gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||rw_pbc.dsdirret||'/'||vr_lstarqre(vr_idx)||' '||vr_dir_temp);
+            gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||rw_pbc.dsdirret||'/'||vr_dslstarq(vr_idx)||' '||vr_dir_temp);
               -- Obs: Não fazemos tratamento de erro pois está é uma situação
               --      que não precisa parar o processo de devolução ao Cyber
               --      se houver problema.
             END IF;
           END LOOP;
         END IF;
-      END IF;
 
       -- Buscamos todos os arquivos de retorno não processados
       FOR rw_arb IN cr_arb LOOP
@@ -6967,7 +6982,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme
                                   ,pr_dtmvtolt => rw_arb.dtmvtolt
                                   ,pr_nrseqarq => rw_arb.nrseqarq
-                                  ,pr_cdesteve => 2 --> Fixo - Preparação
+                                  ,pr_cdesteve => 5 --> Fixo - Devolucao
                                   ,pr_flerreve => 1 --> Erro
                                   ,pr_dslogeve => vr_dscritic
                                   ,pr_dscritic => pr_dscritic);
@@ -6999,7 +7014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
           pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme
                                   ,pr_dtmvtolt => rw_arb.dtmvtolt
                                   ,pr_nrseqarq => rw_arb.nrseqarq
-                                  ,pr_cdesteve => 2 --> Fixo - Preparação
+                                  ,pr_cdesteve => 5 --> Fixo - Encerramento
                                   ,pr_flerreve => 1 --> Erro
                                   ,pr_dslogeve => vr_dscritic
                                   ,pr_dscritic => pr_dscritic);
@@ -7024,7 +7039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme
                                     ,pr_dtmvtolt => rw_arb.dtmvtolt
                                     ,pr_nrseqarq => rw_arb.nrseqarq
-                                    ,pr_cdesteve => 2 --> Fixo - Preparação
+                                    ,pr_cdesteve => 5 --> Fixo - Encerramento
                                     ,pr_flerreve => 1 --> Erro
                                     ,pr_dslogeve => vr_dscritic
                                     ,pr_dscritic => pr_dscritic);
@@ -7116,6 +7131,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     -- 09/06/2015 - Inclusão de lógica para não mais devolver ZIP a PPWare
     --              em feriados, pois eles não vem buscar os arquivos (Marcos-Supero)
     --
+    -- 26/10/2016 - Incluir condição nos cursores CR_PREP_PENDEM e CR_ENV_PENDEM para não retornar
+    --              registros referente ao tipo de remessa SMSDEBAUT. (Renato Darosci - Supero)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis para exceção
@@ -7164,9 +7181,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Dia anterior
       vr_dtprocan    DATE;
 
+      vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_REMESSAS';
+      vr_nomdojob    VARCHAR2(40) := 'JBCYBER_CONTROLE_REMESSAS';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+      BEGIN
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;
+
     BEGIN
       -- Esta rotina somente poderá ser executada de 2ª a 6ª
       IF to_char(SYSDATE,'d') NOT IN(1,7) THEN
+
+        -- Log de inicio de execucao
+        pc_controla_log_batch(pr_dstiplog => 'I');
 
         -- Buscar parâmetros gerais
         vr_hora_envio      := gene0001.fn_param_sistema('CRED',0,'AUTBUR_HORA_ENVIO');      --> Hora de início da preparação / Envio
@@ -7199,6 +7236,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             IF vr_dscritic IS NOT NULL THEN
               -- Desfazer agendamentos
               ROLLBACK;
+              
+              -- Log de erro de execucao
+              pc_controla_log_batch(pr_dstiplog => 'E',
+                                    pr_dscritic => vr_dscritic);
+              
               -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
               -- arquivo deste Bureaux juntamente dos problemas ocorridos.
               gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7237,6 +7279,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                               ,pr_dscritic => vr_dscritic);
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
+
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_dscritic);
+
             -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
             -- arquivo deste Bureaux juntamente dos problemas ocorridos.
             gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7303,6 +7350,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             IF vr_dscritic IS NOT NULL THEN
               -- rollback das informa
               ROLLBACK;
+
+              -- Log de erro de execucao
+              pc_controla_log_batch(pr_dstiplog => 'E',
+                                    pr_dscritic => vr_dscritic);
+
               -- Fecha cursor
               IF cr_verf_remessa%ISOPEN THEN
                 CLOSE cr_verf_remessa;
@@ -7337,6 +7389,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                           ,pr_dscritic => vr_dscritic);
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
+
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_dscritic);  
+
             -- Enviaremos e-mail para a área de crédito para avisar do problema no envio
             -- do arquivo deste Bureaux juntamente dos problemas ocorridos.
             gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7373,6 +7430,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                             ,pr_dscritic => vr_dscritic);
           -- Se houver retorno de crítica
           IF vr_dscritic IS NOT NULL THEN
+            
+            -- Log de erro de execucao
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_dscritic);
+
             -- Enviaremos e-mail para a área de crédito para avisar do problema no envio
             -- do arquivo deste Bureaux juntamente dos problemas ocorridos.
             gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7427,6 +7489,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                               ,pr_dscritic => vr_dscritic);
               -- Se houver retorno de crítica
               IF vr_dscritic IS NOT NULL THEN
+
+                -- Log de erro de execucao
+                pc_controla_log_batch(pr_dstiplog => 'E',
+                                      pr_dscritic => vr_dscritic);  
+
                 -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
                 -- arquivo deste Bureaux juntamente dos problemas ocorridos.
                 gene0003.pc_solicita_email(pr_cdcooper    => 3
@@ -7450,6 +7517,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                             ,pr_dscritic =>  vr_dscritic);
         -- Gravação final
         COMMIT;
+
+        -- Log de fim da execucao
+        pc_controla_log_batch(pr_dstiplog => 'F');
 
       END IF; --> Somente de 2ª a 6ª
 
