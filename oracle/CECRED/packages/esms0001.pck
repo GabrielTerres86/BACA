@@ -496,6 +496,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         Objetivo  : Rotina para buscar os arquivos de retorno de SMS no ftp da ZENVIA
     
         Alteracoes:
+        
+              26/10/2016 - Incluso verificação de existencia do arquivo, antes da abertura
+                           do mesmo. Estavam ocorrendo erros no log de produção por tentar
+                           abrir arquivos ainda não recebidos. (Renato Darosci - Supero)
+                           
     ..............................................................................*/
     
     -- Variável de críticas
@@ -579,6 +584,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                              ,pr_dslogeve => 'Retorno do lote '||vr_nmarquiv||' cancelado por movito de erro em '||to_char(SYSDATE,'dd/mm/yyyy')||' as '||to_char(SYSDATE,'hh24:mi:ss') ||': '||vr_dscritic
                                              ,pr_dscritic => pr_dscritic); --> Retorno de crítica
         vr_dscritic := NULL;
+        CONTINUE;
+      END IF;
+      
+      -- Deve verificar se o arquivo foi encontrado antes de tentar abrir o mesmo
+      -- O arquivo não ser encontrado não caracteriza erro necessariamente, pois pode
+      -- ser apenas que ele ainda não tenha sido disponibilizado devido ao horário
+      IF vr_nmarqenc IS NULL THEN
+        -- Neste caso, deve pular para o próximo
         CONTINUE;
       END IF;
       

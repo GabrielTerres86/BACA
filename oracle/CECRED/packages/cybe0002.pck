@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 20/09/2016
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 26/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -379,6 +379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      WHERE crb.idtpreme = nvl(pr_idtpreme,crb.idtpreme)
        AND crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
        AND crb.idtpreme = pbc.idtpreme
+       AND pbc.idtpreme <> 'SMSDEBAUT'  -- Darosci - 26/10/2016
        AND pbc.flgativo = 1   --> Somente Bureauxs Ativos
        AND crb.dtcancel IS NULL --> Desconsiderar as canceladas
        -- Sem o arquivo da preparação ou Envio
@@ -403,6 +404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      WHERE crb.idtpreme = nvl(pr_idtpreme,crb.idtpreme)
        AND crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
        AND crb.idtpreme = pbc.idtpreme
+       AND pbc.idtpreme <> 'SMSDEBAUT'  -- Darosci - 26/10/2016
        AND pbc.flgativo = 1   --> Somente ativos
        AND ((pr_flcsdcnl = 'S' AND crb.dtcancel IS NULL) OR pr_flcsdcnl = 'N') --> Desconsiderar as canceladas quando solicitado
        -- Existe envio pendentes
@@ -4203,7 +4205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   -- Objetivo  : Busca os dados de parametros de sistema para exibir na tela
   --
   -- Alteracoes: 07/10/2015 - Inclusao dos campos hrinterv e idtpsoli. (Jaison/Marcos-Supero)
-  --             
+  --
   --             23/03/2016 - Inclusão do campo idenvseg conforme solicitado no 
   --                          chamado 412682. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
@@ -4645,7 +4647,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   -- Objetivo  : Efetuar a gravacao de parametros de sistema
   --
   -- Alteracoes: 07/10/2015 - Inclusao dos campos hrinterv e idtpsoli. (Jaison/Marcos-Supero)
-  --                       
+  --
   --             23/03/2016 - Inclusão do campo idenvseg conforme solicitado no 
   --                          chamado 412682. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
@@ -5516,8 +5518,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       IF pr_idenvseg = 'S' THEN
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
       ELSE
-        -- Buscar script para conexão FTP
-        vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+      -- Buscar script para conexão FTP
+      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
       END IF;                                      
       
       -- Preparar o comando de conexão e envio ao FTP
@@ -5530,7 +5532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                     || ' -dir_local '    || CHR(39) || pr_nmdireto || CHR(39)
                     || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
                     || ' -log /usr/coop/cecred/log/proc_autbur.log';
-      
+
       -- Chama procedure de envio e recebimento via ftp
       GENE0001.pc_OScommand_Shell(pr_des_comando => vr_comand_ftp
                                  ,pr_typ_saida   => vr_typ_saida
@@ -6128,8 +6130,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
       ELSE 
-        -- Buscar script para conexão FTP
-        vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');   
+      -- Buscar script para conexão FTP
+      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
       END IF;                      
       
       -- Preparar o comando de conexão e envio ao FTP
@@ -7129,6 +7131,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     -- 09/06/2015 - Inclusão de lógica para não mais devolver ZIP a PPWare
     --              em feriados, pois eles não vem buscar os arquivos (Marcos-Supero)
     --
+    -- 26/10/2016 - Incluir condição nos cursores CR_PREP_PENDEM e CR_ENV_PENDEM para não retornar
+    --              registros referente ao tipo de remessa SMSDEBAUT. (Renato Darosci - Supero)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis para exceção
@@ -7184,7 +7188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
+      BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
