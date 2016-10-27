@@ -634,20 +634,6 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                   STRING(MONTH(TODAY),"99")       +
                                   STRING(DAY(TODAY),"99") + ".log".           
                        
-            /* Se clicou no OK */           
-            IF  get-value('ok') <> '' THEN                           
-                UNIX SILENT VALUE("echo " +  
-                                  STRING(TIME,"HH:MM:SS") + "' --> '" +
-                                  "ROTINA: " + CAPS(v_programa) +  "/CRAP051f" +                                      
-                                  " PA: " + STRING(v_pac)                      +
-                                  " CAIXA: " + STRING(v_caixa)                 +
-                                  " OPERADOR: " + STRING(v_operador)           +
-                                  " CONTA: " + STRING(v_nrccdrcb)              +                                      
-                                  " VALOR: " + STRING(vh_valor)                +
-                                  " - Selecionado botao: "                     + 
-                                  CAPS(get-value('ok'))                        + 
-                                  " >> " + aux_nmarqlog).                 
-            
             RUN dbo/b1crap51.p PERSISTENT SET h-b1crap51.
 
             RUN elimina-erro 
@@ -886,6 +872,19 @@ IF REQUEST_METHOD = 'POST':U   THEN
                              END.
                              
                       END. /*transaction*/
+                      
+                      /* Se clicou no OK */           
+                      IF  get-value('ok') <> '' THEN                           
+                          UNIX SILENT VALUE("echo " +  
+                                            STRING(TIME,"HH:MM:SS") + "' --> '" +
+                                            "ROTINA: " + CAPS(v_programa) +  "/CRAP051f" +
+                                            " PA: " + STRING(v_pac)                      +
+                                            " CAIXA: " + STRING(v_caixa)                 +
+                                            " OPERADOR: " + STRING(v_operador)           +
+                                            " CONTA SACADOR: " + STRING(INTE(v_nrccdrcb),"zzzz,zzz,9") +
+                                            " NOME SACADOR: " + v_nmpesrcb +
+                                            " VALOR: " + STRING(vh_valor,"zzz,zzz,zz9.99")       +
+                                            " >> " + aux_nmarqlog).  
                       
                       IF l-houve-erro THEN
                          DO:

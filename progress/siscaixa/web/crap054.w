@@ -960,8 +960,10 @@ PROCEDURE process-web-request :
                                                         " PA: " + STRING(v_pac)                      +
                                                         " CAIXA: " + STRING(v_caixa)                 +
                                                         " OPERADOR: " + STRING(v_operador)           +
-                                                        " - Chamada rotina: "                        + 
-                                                        "CONTROLE DE MOVIMENTACAO EM ESPECIE"        + 
+                                                        " CONTA SAQUE: " + STRING(aux_nrdconta,"zzzz,zzz,z") +
+                                                        " VALOR: " + STRING(aux_vllanmto,"zzz,zzz,zz9.99")                 +
+                                                        " AUTENTICACAO: " + STRING(p-ult-sequencia)  +
+                                                        " - ROTINA: CONTROLE DE MOVIMENTACAO EM ESPECIE" +
                                                         " >> " + aux_nmarqlog).    
                                  
                                      ASSIGN p-nrdolote = 11000 + INT(v_caixa). 

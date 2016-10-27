@@ -591,23 +591,8 @@ IF REQUEST_METHOD = 'POST':U   THEN
             ASSIGN v_nrccdrcb = REPLACE(v_nrccdrcb,'.','')
                   v_cpfcgrcb = REPLACE(v_cpfcgrcb,'/','')
                    v_cpfcgrcb = REPLACE(v_cpfcgrcb,'.','')
-                   v_cpfcgrcb = REPLACE(v_cpfcgrcb,'-','').
-                           
-            
-                       
-            /* Se clicou no OK */           
-            IF  get-value('ok') <> '' THEN                           
-                UNIX SILENT VALUE("echo " +  
-                                  STRING(TIME,"HH:MM:SS") + "' --> '" +
-                                  "ROTINA: " + CAPS(v_programa) +  "/CRAP051e"   +                                      
-                                  " PA: " + STRING(v_pac)             +
-                                  " CAIXA: " + STRING(v_caixa)        +
-                                  " OPERADOR: " + STRING(v_operador)  +
-                                  " CONTA: " + STRING(v_nrccdrcb)     +                                      
-                                  " VALOR: " + STRING(v_valor)        +
-                                  " - Selecionado botao: "            + 
-                                  CAPS(get-value('ok'))               + 
-                                  " >> " + aux_nmarqlog).                 
+                   v_cpfcgrcb = REPLACE(v_cpfcgrcb,'-','')
+                   v_nrceprcb = REPLACE(v_nrceprcb,'-','').                      
             
                            
             RUN dbo/b1crap51.p PERSISTENT SET h-b1crap51.
@@ -682,7 +667,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                   RUN valida-recurso IN h-bo-depos (INPUT v_coop,
                                                     INPUT INTE(v_pac),
                                                     INPUT INTE(v_caixa),
-                                                    INPUT v_recurso,
+                                                    INPUT v_recursos, 
                                                     INPUT flinfdst).
                   DELETE PROCEDURE h-bo-depos.
                END.
@@ -703,7 +688,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                  IN h-bo-depos (INPUT v_coop,
                                                 INPUT INTE(v_pac),
                                                 INPUT INTE(v_caixa),
-                                                INPUT v_recurso,
+                                                INPUT v_recursos,
                                                 INPUT flinfdst).
 
                       DELETE PROCEDURE h-bo-depos.
@@ -827,9 +812,22 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                  END.
                       END. /*transaction*/
                       
+                      /* Se clicou no OK */           
+                      IF  get-value('ok') <> '' THEN                           
+                          UNIX SILENT VALUE("echo " +  
+                                            STRING(TIME,"HH:MM:SS") + "' --> '" +
+                                            "ROTINA: " + CAPS(v_programa) +  "/CRAP051e"   +                                      
+                                            " PA: " + STRING(v_pac)             +
+                                            " CAIXA: " + STRING(v_caixa)        +
+                                            " OPERADOR: " + STRING(v_operador)  +
+                                            " CONTA DEPOSITANTE: " + STRING(INTE(v_nrccdrcb),"zzzz,zzz,9") +
+                                            " NOME DEPOSITANTE: " + v_nmpesrcb  +
+                                            " VALOR: " + STRING(v_valor)        + 
+                                            " >> " + aux_nmarqlog).     
+                      
                       IF l-houve-erro THEN
                          DO:
-
+  
                            FOR EACH craperr WHERE 
                                     craperr.cdcooper = crapcop.cdcooper  AND
                                     craperr.cdagenci = INTE(v_pac)       AND
