@@ -45,6 +45,9 @@
 			   
 			   04/02/2016 - Chamado 376144, Atualizar data de manutencao cadastral
 			                ao alterar dados na CADCYB (Heitor - RKAM)
+
+			   13/10/2016 - 533466-Cyber, Atualizar data de manutencao cadastral
+			                ao inserir dados na CADCYB (Gil Furtado - Mouts)
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -269,6 +272,7 @@ PROCEDURE grava-dados-crapcyc:
     DEF VAR aux_conta    AS  INTE                                      NO-UNDO.
     DEF VAR aux_contaok  AS  INTE                                      NO-UNDO.
     DEF VAR aux_contanok AS  INTE                                      NO-UNDO.
+    DEF VAR h-b1wgen0168 AS HANDLE                                     NO-UNDO.
 
     ASSIGN aux_cdcritic = 0  
            aux_dscritic = ""
@@ -334,6 +338,27 @@ PROCEDURE grava-dados-crapcyc:
 
         IF  NOT AVAIL crapcyc THEN
             DO:
+                 /* INICIO - Atualizar os dados da tabela crapcyb (CYBER) */
+                 IF NOT VALID-HANDLE(h-b1wgen0168) THEN
+                    RUN sistema/generico/procedures/b1wgen0168.p
+                        PERSISTENT SET h-b1wgen0168.
+                              
+                 EMPTY TEMP-TABLE tt-crapcyb.
+                
+                 CREATE tt-crapcyb.
+                 ASSIGN tt-crapcyb.cdcooper = par_cdcooper
+                        tt-crapcyb.nrdconta = par_nrdconta
+                        tt-crapcyb.dtmancad = par_dtmvtolt.
+                
+                 RUN atualiza_data_manutencao_cadastro
+                     IN h-b1wgen0168(INPUT TABLE tt-crapcyb,
+                                     OUTPUT aux_cdcritic,
+                                     OUTPUT aux_dscritic).
+                              
+                 IF VALID-HANDLE(h-b1wgen0168) THEN
+                    DELETE PROCEDURE(h-b1wgen0168).
+        
+                /*   Bloco de atualisacao da crapcyb  */
                 CREATE crapcyc.
                 ASSIGN crapcyc.cdcooper = par_cdcooper
                        crapcyc.cdorigem = aux_cdorigem
