@@ -470,8 +470,10 @@ function reabilitaForm() {
                                                                           " PA: " + STRING(v_pac)                      +
                                                                           " CAIXA: " + STRING(v_caixa)                 +
                                                                           " OPERADOR: " + STRING(v_operador)           +
-                                                                          " - Chamada rotina: "                        + 
-                                                                          "CONTROLE DE MOVIMENTACAO EM ESPECIE"        + 
+                                                                          " CONTA DEPOSITO: " + STRING(v_conta)        +
+                                                                          " VALOR: " + STRING(v_valor)                 +
+                                                                          " AUTENTICACAO: " + STRING(p-ult-sequencia)  +
+                                                                          " - ROTINA: CONTROLE DE MOVIMENTACAO EM ESPECIE" +
                                                                           " >> " + aux_nmarqlog).    
                                                         
                                                    RUN JavaScript("window.location='crap051e.w?v_pconta=" + STRING(v_conta) + "&v_pnome=" + STRING(v_nome) + "&v_ppoup=" + STRING(v_poupanca) + "&v_pidentifica=" + STRING(v_identifica) + "&v_pvalor=" + STRING(v_valor) + "&v_pvalor1=" + STRING(v_valor1) + "&v_pult_sequencia=" + STRING(p-ult-sequencia) + "&v_pprograma=" + STRING(p-programa) + "'").

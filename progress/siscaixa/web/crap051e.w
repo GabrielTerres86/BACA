@@ -589,25 +589,10 @@ IF REQUEST_METHOD = 'POST':U   THEN
          DO:
          
             ASSIGN v_nrccdrcb = REPLACE(v_nrccdrcb,'.','')
-                  v_cpfcgrcb = REPLACE(v_cpfcgrcb,'/','')
+                   v_cpfcgrcb = REPLACE(v_cpfcgrcb,'/','')
                    v_cpfcgrcb = REPLACE(v_cpfcgrcb,'.','')
-                   v_cpfcgrcb = REPLACE(v_cpfcgrcb,'-','').
-                           
-            
-                       
-            /* Se clicou no OK */           
-            IF  get-value('ok') <> '' THEN                           
-                UNIX SILENT VALUE("echo " +  
-                                  STRING(TIME,"HH:MM:SS") + "' --> '" +
-                                  "ROTINA: " + CAPS(v_programa) +  "/CRAP051e"   +                                      
-                                  " PA: " + STRING(v_pac)             +
-                                  " CAIXA: " + STRING(v_caixa)        +
-                                  " OPERADOR: " + STRING(v_operador)  +
-                                  " CONTA: " + STRING(v_nrccdrcb)     +                                      
-                                  " VALOR: " + STRING(v_valor)        +
-                                  " - Selecionado botao: "            + 
-                                  CAPS(get-value('ok'))               + 
-                                  " >> " + aux_nmarqlog).                 
+                   v_cpfcgrcb = REPLACE(v_cpfcgrcb,'-','')
+                   v_nrceprcb = REPLACE(v_nrceprcb,'-','').                      
             
                            
             RUN dbo/b1crap51.p PERSISTENT SET h-b1crap51.
@@ -682,7 +667,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                   RUN valida-recurso IN h-bo-depos (INPUT v_coop,
                                                     INPUT INTE(v_pac),
                                                     INPUT INTE(v_caixa),
-                                                    INPUT v_recurso,
+                                                    INPUT v_recursos, 
                                                     INPUT flinfdst).
                   DELETE PROCEDURE h-bo-depos.
                END.
@@ -696,14 +681,14 @@ IF REQUEST_METHOD = 'POST':U   THEN
                     
                IF get-value('Ok') <> '' AND 
                   NOT l-houve-erro THEN 
-                  DO:
+                  DO: 
                       RUN dbo/bo_controla_depositos.p 
                           PERSISTENT SET h-bo-depos.
                       RUN valida-recurso 
                                  IN h-bo-depos (INPUT v_coop,
                                                 INPUT INTE(v_pac),
                                                 INPUT INTE(v_caixa),
-                                                INPUT v_recurso,
+                                                INPUT v_recursos,
                                                 INPUT flinfdst).
 
                       DELETE PROCEDURE h-bo-depos.
@@ -720,7 +705,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                       DO TRANSACTION ON ERROR UNDO:
                           
                          ASSIGN l-houve-erro = NO.
-
+                         
                          RUN dbo/bo_controla_depositos.p 
                              PERSISTENT SET h-bo-depos.
                          RUN atualiza-crapcme
@@ -745,7 +730,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                                   INPUT flinfdst).
 
                          DELETE PROCEDURE h-bo-depos.
-                   
+                             
                              IF RETURN-VALUE = 'NOK' THEN
                                 DO:
                                  ASSIGN l-houve-erro = YES.
@@ -778,7 +763,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                              
                              IF  v_programa = "CRAP051" AND
                                  NOT l-houve-erro THEN
-                                 DO:
+                                 DO: 
                                      /* Forçar a verificação da tabela crapcme para garantirmos que o operador irá ter 
                                         digitado as informações */
                                      FOR EACH craplcm WHERE craplcm.cdcooper = crapcop.cdcooper   AND
@@ -792,7 +777,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                          ASSIGN aux_nrdctabb = craplcm.nrdctabb
                                                 aux_nrdocmto = craplcm.nrdocmto.
                                      END. 
-                                 
+                                     
                                      FIND crapcme WHERE crapcme.cdcooper = crapcop.cdcooper   AND
                                                         crapcme.dtmvtolt = DATE(v_data)       AND
                                                         crapcme.cdagenci = inte(v_pac)        AND
@@ -826,6 +811,19 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                          END.
                                  END.
                       END. /*transaction*/
+                      
+                      /* Se clicou no OK */           
+                      IF  get-value('ok') <> '' THEN                           
+                          UNIX SILENT VALUE("echo " +  
+                                            STRING(TIME,"HH:MM:SS") + "' --> '" +
+                                            "ROTINA: " + CAPS(v_programa) +  "/CRAP051e"   +                                      
+                                            " PA: " + STRING(v_pac)             +
+                                            " CAIXA: " + STRING(v_caixa)        +
+                                            " OPERADOR: " + STRING(v_operador)  +
+                                            " CONTA DEPOSITANTE: " + STRING(INTE(v_nrccdrcb),"zzzz,zzz,9") +
+                                            " NOME DEPOSITANTE: " + v_nmpesrcb  +
+                                            " VALOR: " + STRING(v_valor)        + 
+                                            " >> " + aux_nmarqlog).     
                       
                       IF l-houve-erro THEN
                          DO:
