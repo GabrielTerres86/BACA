@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 22/09/2016
+  --  Data    : Abril/2006                     Ultima Atualizacao: 27/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -269,6 +269,9 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --        31/08/2016 - Removida procedure pc_verifica_sit_transacao, SD 514239 (Jean Michel).
   --		
   --		22/09/2016 - Ajuste nos cursores que buscam títulos em aberto para arquivo de retorno (Rodrigo)
+  --
+  --        06/10/2016 - SD 489677 - Alteração de DELETE p/ UPDATE na CRAPLGP,
+  --                     alterando o "flgativo" (Guilherme/SUPERO)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -11111,7 +11114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
              -- Chamar a procedure para CANCELAR o Agendamento
              BEGIN
                -- Excluir
-               DELETE craplgp lgp
+               UPDATE craplgp lgp
+                  SET lgp.flgativo = 0 -- Guia GPS Inativa
                 WHERE lgp.cdcooper = pr_cdcooper
                   AND lgp.nrctapag = rw_craplau.nrdconta
                   AND lgp.nrseqagp = rw_craplau.nrseqagp
@@ -11126,7 +11130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                -- Atualizar
                UPDATE tbinss_agendamento_gps gps
                   SET gps.insituacao        = 1  -- Fixo -- Cancelada
-                    , gps.dtcancelamento    = btch0001.rw_crapdat.dtmvtolt
+                    , gps.dtcancelamento    = rw_crapdat.dtmvtocd
                     , gps.cdoperador_cancel = pr_cdoperad
                 WHERE gps.cdcooper = pr_cdcooper
                   AND gps.nrdconta = rw_craplau.nrdconta
