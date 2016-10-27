@@ -575,6 +575,18 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                            ,pr_des_erro  OUT VARCHAR2             -- Retorno Erro OK/NOK
                            ,pr_tab_erro  OUT gene0001.typ_tab_erro); --Tabela Erros
 
+  -- Rotina para verificar pacote de tarifas via web
+  PROCEDURE pc_buscar_plaseg_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da Conta
+                                ,pr_cdsegura IN crapseg.cdsegura%type -- Codigo Seguradora
+                                ,pr_tpseguro IN craptsg.tpseguro%type -- Tipo Seguro
+                                ,pr_tpplaseg IN craptsg.tpplaseg%type -- Tipo Plano Seguro
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da Critica
+                                ,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2);
+
   -- Efetuar a importação dos dados Seguro Auto Sicredi recebido separado por ";" (SEGURO_CECRED_AAAAMMDD)
   PROCEDURE pc_importa_seg_auto_sicr(pr_cdcooper IN PLS_INTEGER);
 
@@ -599,13 +611,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 22/08/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para busca de dados de seguros
-
+  --
+  -- Alteracao : 22/08/2016 - Criada procedure pc_buscar_plaseg_web que buscar o valor do plano
+  --                          de acordo com os parametros (Tiago/Thiago #462910)
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -4707,6 +4721,154 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
     END;
   END pc_cria_seguro;
 
+  -- Rotina para verificar pacote de tarifas via web
+  PROCEDURE pc_buscar_plaseg_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da Conta
+                                ,pr_cdsegura IN crapseg.cdsegura%type -- Codigo Seguradora
+                                ,pr_tpseguro IN craptsg.tpseguro%type -- Tipo Seguro
+                                ,pr_tpplaseg IN craptsg.tpplaseg%type -- Tipo Plano Seguro
+                                ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da Critica
+                                ,pr_dscritic OUT crapcri.dscritic%TYPE --> Descrição da crítica
+                                ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
+                                ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                                ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+      BEGIN
+    DECLARE
+
+      --Tabelas de Dados
+      vr_tab_plano_seg  segu0001.typ_tab_plano_seg;
+
+      --Variaveis Indice
+      vr_index_plano      PLS_INTEGER;
+      vr_achou_plano      BOOLEAN;
+
+     -- Variaveis de log
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+      --Variaveis de Erro
+      vr_cdcritic integer;
+      vr_dscritic varchar2(4000);
+      vr_des_erro varchar2(3);
+      vr_tab_erro GENE0001.typ_tab_erro;
+
+      vr_exc_sair EXCEPTION;
+      vr_exc_erro EXCEPTION;
+
+      BEGIN
+
+       -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+              IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+              END IF;
+
+        --Buscar Plano Seguro
+      pc_buscar_plano_seguro (pr_cdcooper => vr_cdcooper        -- Cooperativa
+                             ,pr_cdagenci => vr_cdagenci        -- Agencia
+                             ,pr_nrdcaixa => vr_nrdcaixa        -- Numero Caixa
+                             ,pr_cdoperad => Vr_cdoperad        -- Operador
+                             ,pr_dtmvtolt => SYSDATE --pr_dtmvtolt        -- Data Movimento
+                             ,pr_nrdconta => pr_nrdconta        -- Numero Conta
+                             ,pr_idseqttl => 1                  -- Sequencial Titular
+                             ,pr_idorigem => vr_idorigem        -- Origem Informacao
+                             ,pr_nmdatela => vr_nmdatela        -- Programa Chamador
+                             ,pr_flgerlog => TRUE               -- Escrever Erro Log
+                             ,pr_cdsegura => pr_cdsegura        -- Codigo Seguradora
+                             ,pr_tpseguro => pr_tpseguro        -- Tipo Seguro
+                             ,pr_tpplaseg => pr_tpplaseg        -- Tipo Plano Seguro
+                             ,pr_tab_plano_seg => vr_tab_plano_seg   -- Tabela Plano Seguros
+                             ,pr_des_erro => vr_des_erro        -- Descricao Erro
+                             ,pr_tab_erro => vr_tab_erro);      -- Tabela Erros
+      --Se ocorreu erro
+      IF vr_des_erro = 'NOK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+    ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao buscar plano seguro.';
+    END IF;
+        --Levantar Excecao
+        RAISE vr_exc_sair;
+      END IF;
+
+      --Encontrar o Primeiro Plano
+      vr_achou_plano := FALSE;
+      vr_index_plano := vr_tab_plano_seg.FIRST;
+
+      WHILE vr_index_plano IS NOT NULL LOOP
+
+        IF vr_tab_plano_seg(vr_index_plano).cdcooper = vr_cdcooper AND
+           vr_tab_plano_seg(vr_index_plano).cdsegura = pr_cdsegura AND
+           vr_tab_plano_seg(vr_index_plano).tpseguro = pr_tpseguro AND
+           vr_tab_plano_seg(vr_index_plano).tpplaseg = pr_tpplaseg THEN
+
+           vr_achou_plano := TRUE;
+           EXIT;
+
+        END IF;
+
+        --Proximo Registro
+        vr_index_plano:= vr_tab_plano_seg.NEXT(vr_index_plano);
+      END LOOP;
+
+      --Se encontrou o plano devolve os dados
+      IF vr_achou_plano THEN
+         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="UTF-8"?>' ||
+                                        '<dados/>');
+
+         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'dados', pr_posicao => 0, pr_tag_nova => 'vlplaseg', pr_tag_cont => To_Char(NVL(vr_tab_plano_seg(vr_index_plano).vlplaseg,0),'fm999g999g999g990d00'), pr_des_erro => vr_dscritic);  --valor do plano
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao buscar plano seguro.';
+          --Levantar Excecao
+          RAISE vr_exc_sair;
+          END IF;
+
+      --Retorno OK
+      pr_des_erro:= 'OK';
+                EXCEPTION
+      WHEN vr_exc_sair THEN
+        -- Retorno não OK
+        pr_des_erro:= 'NOK';
+
+        -- Erro
+        pr_cdcritic:= vr_cdcritic;
+        pr_dscritic:= vr_dscritic;
+
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+                  WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_erro:= 'NOK';
+
+        -- Erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Erro na rotina SEGU0001.pc_buscar_seguros. '||SQLERRM;
+
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_buscar_plaseg_web;
 
   PROCEDURE pc_importa_seg_auto_sicr(pr_cdcooper IN PLS_INTEGER) IS
     /* ............................................................................
@@ -4925,13 +5087,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         BEGIN
          IF p_valor THEN
            RETURN 'SIM';
-         ELSE 
+         ELSE
            RETURN 'NAO';
-         END IF;                 
-                  
-      END fn_conv;      
-      
-      
+         END IF;
+
+      END fn_conv;
+
+
       --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2,
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -5028,6 +5190,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             WHEN OTHERS THEN
               vr_dscritic := 'SEGU0001.pc_controla_execucao: Erro ao atualizar PRM[0] => ' ||
                              SQLERRM ;
+              --> Final da execução com ERRO
+              pc_controla_log_batch(pr_dstiplog => 'E',
+                                    pr_dscritic => vr_dscritic);
               -- Gera LOG
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_cdprogra
@@ -5061,6 +5226,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
           WHEN OTHERS THEN
             vr_dscritic := 'SEGU0001.pc_controla_execucao: Erro ao atualizar PRM[1] => ' ||
                            SQLERRM ;
+            --> Final da execução com ERRO
+            pc_controla_log_batch(pr_dstiplog => 'E',
+                                  pr_dscritic => vr_dscritic);
             -- Gera LOG
             gera_log(pr_cdcooper => 3 --pr_cdcooper
                     ,pr_cdprogra => vr_cdprogra
@@ -5105,6 +5273,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                         ,pr_des_erro        => vr_dscritic);
               -- Se houver erros
               IF vr_dscritic IS NOT NULL THEN
+                --> Final da execução com ERRO
+                pc_controla_log_batch(pr_dstiplog => 'E',
+                                      pr_dscritic => vr_dscritic);
                 -- Gera critica
                 vr_cdcritic := 0;
                 vr_dscritic := 'Erro no envio do Email!' || '. Erro: '||vr_dscritic;
@@ -5116,10 +5287,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         END IF; -- Ultima Execução - as 12h
 
      END pc_controla_execucao;
-     
-     
+
+
      -- FUNÇÃO TEM POR OBJETITVO VALIDAR O TEXTO IMPORTADO
-     -- POIS HOUVERAM CASOS DE ARQUIVOS RECEBIDOS COM FORMATAÇÃO 
+     -- POIS HOUVERAM CASOS DE ARQUIVOS RECEBIDOS COM FORMATAÇÃO
      -- UTF-8, E O PADRÃO DEVE SER ANSI. APENAS PARA EVITAR
      -- INCONSISTÊNCIAS NA IMPORTAÇÃO
      FUNCTION fn_valida_seguradora (pr_texto   VARCHAR2  -- Texto a ser validado
@@ -5127,7 +5298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                  RETURN BOOLEAN IS
        BEGIN
 
-       	 -- PADRÃO ANSI
+          -- PADRÃO ANSI
          IF  pr_texto = pr_compara THEN
            RETURN TRUE;
          END IF;
@@ -5135,10 +5306,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
          -- SE O TEXTO VEIO EM UTF-8
          IF gene0007.fn_convert_web_db(pr_texto) = pr_compara THEN
            RETURN TRUE;
-         END IF; 
+         END IF;
 
          RETURN FALSE;
-     
+
      END fn_valida_seguradora;
 
   BEGIN
@@ -5156,6 +5327,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
      FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
 
+
+    pc_controla_log_batch(pr_dstiplog => 'I');
 
     -- Gera LOG - Inicio do processamento
     gera_log(pr_cdcooper => 3 --pr_cdcooper
@@ -5177,7 +5350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             ,pr_cdprogra => vr_cdprogra
             ,pr_indierro => 1 -- 1-Log Geral 2-Log Especifico Arquivo
             ,pr_cdcritic => 0
-            ,pr_dscritic => ' TOTAL ARQUIVOS ENCONTRADOS: ' || 
+            ,pr_dscritic => ' TOTAL ARQUIVOS ENCONTRADOS: ' ||
                             vr_tab_arqtmp.count
              );
 
@@ -5528,7 +5701,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
               -- SEGURADORA - ATENÇÃO: SICREDI MANDA SEGURADORA PELO NOME E NAO POR CODIGO OU CNPJ
               -- SICREDI AUTO POSSUÍA APENAS 3 SEGURADORAS ATE O MOMENTO DA LIBERAÇÃO DO PROJETO (JUL/2016)
-              
+
               IF fn_valida_seguradora(UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')))
                                      ,'HDI SEGUROS S/A') THEN
                   -- Verificar se o seguro é do tipo "Carta Verde"
@@ -5538,7 +5711,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     CONTINUE;
                   END IF;
                   vr_reg_arquivo.cdsegura := 6572;
-                  
+
               ELSIF fn_valida_seguradora(UPPER(TRIM(REPLACE(vr_tab_linhas(vr_indice2)('SEGURADORANOME').texto,'"','')))
                                        ,'MAPFRE SEGURADORA S/A') THEN
                  vr_reg_arquivo.cdsegura := 12;
@@ -5557,7 +5730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                         ,pr_dscritic => ' Linha '|| vr_indice2 || ': ' || vr_dscritic
                         );
                 CONTINUE; -- Passa para proxima linha
-                                       
+
               END IF;
 
               lt_d_nr_do_ci := TRIM(REPLACE(vr_tab_linhas(vr_indice2)('NUMEROCI'      ).texto,'"',''));
@@ -5639,7 +5812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                   CLOSE cr_crapass;
                 END IF; -- FIM cr_crapass
               END IF; -- FIM cr_CRAPCOP
-              
+
               -- TENTAR LOCALIZAR COOP/CONTA PELO CPF/CNPJ
               IF vr_reg_arquivo.inerro_import = 1 THEN
                 OPEN cr_ass_cpfcnpj (p_nrcpfcgc => vr_reg_arquivo.nrcpf_cnpj_segurado);
@@ -5653,7 +5826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                 END IF;
                 CLOSE cr_ass_cpfcnpj;
               END IF;
-              
+
             END IF;
 
             -- Validar PRESTACAO
@@ -5723,7 +5896,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               vr_reg_auto.vlfranquia := to_number( SUBSTR(vr_tab_linhas(vr_indice2)('VLRFRANQUIA').texto,
                                         INSTR(vr_tab_linhas(vr_indice2)('VLRFRANQUIA').texto,'-') ) ) / 100;
             END IF;
-
 
             --    TERMINOU DE LER O CONTEUDO DO ARQUIVO
             --    INICIO DAS VALIDAÇÕES
@@ -5857,8 +6029,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               vr_reg_tpatu.tp_seguro    := 'I'; -- INSERE DADOS
               vr_reg_tpatu.tp_auto      := 'I'; -- INSERE DADOS
               vr_reg_arquivo.flgvigente  := 1;
-              
-              
+
+
               IF vr_tpdseguro = 2 THEN -- APOLICE
                 -- VALIDAR SE PROPOSTA JA EXISTE NESSA COOPER/CONTA
                 OPEN cr_seg_proposta(p_cdcooper => vr_reg_arquivo.cdcooper
@@ -5880,7 +6052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                   -- AQUI
                   vr_reg_arquivo.idcontrato := rw_seg_base.idcontrato;
                   vr_reg_auto.idcontrato    := rw_auto_base.idcontrato;
-                  
+
 
                   -- QUANDO PROPOSTA JA FOI ENVIADA E É RECEBIDA UMA APOLICE
                   -- O VALOR DA FRANQUIA ESTA VINDO ZERO NA COLUNA DA APOLICE.
@@ -5889,7 +6061,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     vr_reg_auto.vlfranquia := rw_auto_base.vlfranquia;
                   END IF;
                 END IF;
-              
+
               ELSIF  vr_tpdseguro = 3 THEN
                 -- Se é um Endosso e nao existir na base ainda, já cria como CANCELADO
 
@@ -6263,6 +6435,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+          --> Final da execução com ERRO
+          pc_controla_log_batch(pr_dstiplog => 'E',
+                                pr_dscritic => vr_dscritic);
           -- Gera LOG
           gera_log(pr_cdcooper => 3 --pr_cdcooper
                   ,pr_cdprogra => vr_cdprogra
@@ -6282,6 +6457,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         -- Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
+          --> Final da execução com ERRO
+          pc_controla_log_batch(pr_dstiplog => 'E',
+                                pr_dscritic => vr_dscritic);
           -- Gera LOG
           gera_log(pr_cdcooper => 3 --pr_cdcooper
                   ,pr_cdprogra => vr_cdprogra
@@ -6306,18 +6484,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
-
-    -- Gerar hora Fim no log
-    gera_log(pr_cdcooper => 3 --pr_cdcooper
-            ,pr_cdprogra => vr_cdprogra
-            ,pr_indierro => 1
-            ,pr_cdcritic => 0
-            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
-                                    ' - TERMINO DO PROCESSAMENTO.');
-
-
-    --> Log de final de execução
-    pc_controla_log_batch(pr_dstiplog => 'F');
 
     -- se for a ultima execução do dia,
     -- move arquivo de log de execução pra pasta /micros/cecred/segauto
@@ -6346,6 +6512,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
       END IF;
     END IF;
 
+
+    -- Gerar hora Fim no log
+    gera_log(pr_cdcooper => 3 --pr_cdcooper
+            ,pr_cdprogra => vr_cdprogra
+            ,pr_indierro => 1
+            ,pr_cdcritic => 0
+            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                    ' - TERMINO DO PROCESSAMENTO.');
+
+    --> Log de final de execução
+    pc_controla_log_batch(pr_dstiplog => 'F');
 
     -- Finalizar a sessão com a efetivação dos dados
     COMMIT;
@@ -6866,7 +7043,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
   END pc_insere_seguro;
-
 
 
 END SEGU0001;
