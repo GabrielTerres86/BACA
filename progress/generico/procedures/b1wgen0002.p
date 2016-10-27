@@ -625,8 +625,11 @@
 
               23/09/2016 - Correçao deletar o Handle da b1wgen0114 esta gerando erro na geraçao
                            do PDF para envio da esteira (Oscar).
-                           
 
+
+			  26/10/2016 - Chamado 537058 - Correcao referente a linhas de creditos inativas.
+						   (Gil - MOUTS)
+             
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -1335,7 +1338,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                    ASSIGN par_tpdretor = "M".
 
               ASSIGN par_msgretor =
-                            "Saldo a liquidar e' maior que o valor a " +
+                            "Saldo a liquidar e maior que o valor a " +
                             "emprestar. Confirme (S/N):".
               LEAVE Valida.
            END.
@@ -3233,6 +3236,7 @@ PROCEDURE valida-dados-gerais:
             NOT CAN-FIND(craplcr WHERE
                          craplcr.cdcooper = par_cdcooper AND
                          craplcr.cdlcremp = par_cdlcremp AND
+						 craplcr.flgstlcr <> 0 AND
                          craplcr.cdmodali = SUBSTRING(par_cdmodali,1,2) AND 
                          craplcr.cdsubmod = SUBSTRING(par_cdmodali,3,2)) THEN
             DO:
@@ -5184,7 +5188,7 @@ PROCEDURE verifica-outras-propostas:
                                                    "PRESTAMISTA!".
         
               END.
-        
+
           /* Existe outra proposta de emprestimo */
           IF aux_contaepr > 0 THEN
              DO:
