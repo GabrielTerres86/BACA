@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 15/08/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 27/09/2016
     
    Dados referentes ao programa:
    
@@ -120,14 +120,36 @@
               
               18/04/2016 - Incluir procedure para validar senha do cartao 
                            magnetico e também atualizar o indicador na crapatr (Lucas Ranghetti #436229)
+                           
               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+              
               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli 
                            e Odirlei AMCOM - [PROJ320])
+                           
+              28/07/2016 - Ajustar log da procedure atualiza_inassele (Lucas Ranghetti #488149)
                            
               03/08/2016 - Correçao reativaçao de débito automático (Lucas Lunelli [PROJ320])
                            
               15/08/2016 - Adicionar validacao para a Aguas de Camboriu e Aguas de Penha 
                            para 10 digitos (Lucas Ranghetti #502275)
+              
+              23/08/2016 - Incluir tratamento na procedure grava-dados para nao permitir
+                           a inclusao de faturas caso a empresa e segmento estiverem zerados
+                           (Lucas Ranghetti #499006)
+                           
+              24/08/2016 - Na procedure valida-dados, incluir tratamento de final de 
+                           semana na busca na craplau (Lucas Ranghetti #510617)
+                           
+              01/09/2016 - Incluir validacao de senha para o cooperado buscando os 
+                           dados da tabela crapcrd tambem (Lucas Ranghetti #499733)
+                           
+              20/09/2016 - Incluir tratamento para o convenio Aguas de Schroeder aparecer
+                           na oferta de debito automatico na procedure busca_convenios_codbarras
+                           (Lucas Ranghetti #488846)
+
+			  27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+			               mais referencias iguais para a mesma conta (busca-autori).
+						   (Chamado 528246) - (Fabricio)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -209,7 +231,8 @@ PROCEDURE busca-autori:
             DO: 
                 FIND crapatr WHERE crapatr.cdcooper = par_cdcooper  AND
                                    crapatr.nrdconta = par_nrdconta  AND
-                                   crapatr.cdrefere = par_cdrefere
+                                   crapatr.cdrefere = par_cdrefere  AND
+								   crapatr.cdhistor = INT(par_cdhistor)
                                    USE-INDEX crapatr1
                                    NO-LOCK NO-ERROR NO-WAIT.
               
@@ -1031,6 +1054,15 @@ PROCEDURE valida-dados:
     
     Valida: DO WHILE TRUE:
 
+        FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
+                       NO-LOCK NO-ERROR.
+              
+        IF  NOT AVAILABLE crapdat THEN           
+            DO:
+                ASSIGN aux_cdcritic = 1.
+                LEAVE Valida.
+            END.
+
         IF  par_cddopcao = "I"  THEN
             DO:   
                               
@@ -1382,7 +1414,8 @@ PROCEDURE valida-dados:
                                           craplau.nrdconta = par_nrdconta AND
                                           craplau.cdhistor = par_cdhistor AND
                                           craplau.nrdocmto = par_cdrefere AND
-                                          craplau.dtmvtopg = par_dtmvtolt
+                                          craplau.dtmvtopg > crapdat.dtmvtoan AND 
+                                          craplau.dtmvtopg <= crapdat.dtmvtolt
                                           NO-LOCK NO-ERROR.
   
                   IF  AVAIL craplau THEN
@@ -1743,6 +1776,14 @@ PROCEDURE grava-dados:
                 /* Se for SICREDI... */
                 IF  aux_flgsicre = TRUE THEN
                     DO:
+                        /* Caso a empresa e segmento estejam zerados */
+                        IF  INT(aux_cdempcon) = 0 AND 
+                            INT(aux_cdsegmto) = 0 THEN
+                            DO:
+                                ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                    
                         /* Busca origem do convenio SICREDI e verifica se é habilitado para Deb Autom */
                         FIND FIRST crapscn WHERE 
                                    crapscn.dsoparre = "E"           AND
@@ -1768,8 +1809,7 @@ PROCEDURE grava-dados:
                     DO:
                         FIND FIRST gnconve WHERE gnconve.flgativo = TRUE            AND
                                                 (gnconve.cdhisdeb = aux_cdhistor    AND
-                                                 gnconve.cdhisdeb <> 0)             AND
-                                                 gnconve.nmarqatu <> ""              
+                                                 gnconve.cdhisdeb <> 0)              
                                            NO-LOCK NO-ERROR NO-WAIT.
 
                         IF  NOT AVAIL gnconve THEN
@@ -1777,6 +1817,15 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
                                 UNDO Grava, LEAVE Grava.
                             END.
+
+                        IF  AVAIL gnconve AND
+                            gnconve.nmarqatu = "" THEN
+                            DO:
+                                ASSIGN aux_dscritic = "A inclusao do debito deste convenio deve ser " +
+                                                      "solicitada diretamente na empresa conveniada".
+                                UNDO Grava, LEAVE Grava.
+                            END.
+
                     END.
                     
                 /* registra tp com base no idorigem, AUTORI = 0. Assim, se <> 0 entao é Debito Fácil */
@@ -2191,14 +2240,23 @@ PROCEDURE busca_convenios_codbarras:
             END.
         ELSE
             DO:                
-                FIND FIRST gnconve WHERE gnconve.cdhiscxa = crapcon.cdhistor AND
+                /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
+                   buasca anterior nao funciona */
+                FIND FIRST gnconve WHERE 
+                           (gnconve.cdhiscxa = crapcon.cdhistor AND
                             gnconve.flgativo = TRUE             AND
                             gnconve.nmarqatu <> ""              AND
-                            gnconve.cdhisdeb <> 0 NO-LOCK NO-ERROR.
+                           gnconve.cdhisdeb <> 0)               OR 
+                           (gnconve.cdconven = 87               AND
+                           gnconve.flgativo = TRUE              AND
+                           gnconve.nmarqatu <> ""               AND
+                           gnconve.cdhisdeb <> 0)
+                           NO-LOCK NO-ERROR.
                                          
-                IF  NOT AVAIL gnconve THEN
+                IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
+                    IF gnconve.cdconven <> 87 THEN
                     ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
 
@@ -5420,6 +5478,21 @@ PROCEDURE valida_senha_cooperado:
 
   IF  aux_flgsevld = FALSE THEN
       DO:
+          FOR EACH crapcrd FIELDS (dssentaa) 
+                           WHERE  crapcrd.cdcooper = par_cdcooper
+                             AND  crapcrd.nrdconta = par_nrdconta
+                             NO-LOCK:                
+                      
+              IF  CAPS(ENCODE(STRING(par_cddsenha))) = CAPS(crapcrd.dssentaa) THEN
+                  DO:
+                      ASSIGN aux_flgsevld = TRUE.
+                      LEAVE.
+           END.
+   END.
+      END. 
+
+  IF  aux_flgsevld = FALSE THEN
+      DO:
           ASSIGN aux_cdcritic  = 0
                  aux_dscritic = "Senha invalida!".
 
@@ -5642,6 +5715,9 @@ PROCEDURE sms-cooperado-debaut:
              par_nrdddtfc = DECI(aux_nrdddtfc)
              par_nrtelefo = DECI(aux_nrtelefo).
              
+      IF  par_idorigem = 4 THEN
+          assign par_dsmsgsms = replace(par_dsmsgsms, "#", " ").
+             
       CREATE tt-sms-telefones-atl.
       ASSIGN tt-sms-telefones-atl.nrdddtfc = par_nrdddtfc
              tt-sms-telefones-atl.nrtelefo = par_nrtelefo.  
@@ -5832,6 +5908,9 @@ PROCEDURE atualiza_inassele:
    DEF VAR aux_vlrantes AS INTEGER                                 NO-UNDO.
    DEF VAR aux_vldepois AS INTEGER                                 NO-UNDO.        
   
+   DEF VAR aux_dsdantes AS CHAR                                    NO-UNDO.
+   DEF VAR aux_dsdepois AS CHAR                                    NO-UNDO.        
+  
    ASSIGN aux_cdcritic = 0
           aux_dscritic = ""
           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -5850,25 +5929,31 @@ PROCEDURE atualiza_inassele:
   IF  NOT AVAILABLE crapatr THEN
       ASSIGN aux_dscritic = "Autorizacao nao encontrada.".
    
-   /*ASSIGN aux_vlrantes = crapatr.inassele
-          aux_vldepois = par_inassele.*/
+   ASSIGN aux_vlrantes = crapatr.inassele
+          aux_vldepois = par_inassele.
    
    IF  aux_dscritic = "" OR aux_cdcritic = 0 THEN
        DO:  
           /* 1- Por senha / 2 - Autorizacao Assinada */
-          /*ASSIGN crapatr.inassele = par_inassele.   */
-            VALIDATE crapatr.            
-            RELEASE crapatr.
+          ASSIGN crapatr.inassele = par_inassele.             
             
+          IF  aux_vlrantes = 2 THEN
+              ASSIGN aux_dsdantes = "NAO"
+                     aux_dsdepois = "SIM".
+          ELSE 
+              ASSIGN aux_dsdepois = "NAO"
+                     aux_dsdantes = "SIM".
+
+          IF  aux_vlrantes <> aux_vldepois THEN          
           UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999") + " " +
                           STRING(TIME,"HH:MM:SS") + "' --> '"  +
                           " Operador " + par_cdoperad +
-                          " Incluir/Alterou '    'a Fatura " + STRING(par_cdrefere) +
+                              " Incluir/Alterou a Fatura " + STRING(par_cdrefere) +
                           " - " + "Conta " +
                           STRING(par_nrdconta,"zzzz,zzz,9") + 
-                          "' --> '" + "inassele" +
-                          " de " + STRING(aux_vlrantes) +
-                          " para " + STRING(aux_vldepois) +
+                              "' --> '" + "Assinatura Eletronica" +
+                              " de " + aux_dsdantes +
+                              " para " + aux_dsdepois +
                           " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                           "/log/autori.log").
           
