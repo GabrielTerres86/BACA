@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
 
     Programa: SEGU0001 (Antigo b1wgen0045.p)
     Autor   : Guilherme/SUPERO
-    Data    : Outubro/2009                       Ultima Atualizacao: 30/09/2016
+    Data    : Outubro/2009                       Ultima Atualizacao: 26/10/2016
 
     Dados referentes ao programa:
 
@@ -54,6 +54,8 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
 
                 20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em procedures
                              desta package.(Carlos Rafael Tanholi).
+
+                26/10/2016 - PRJ 187.2 - Ajuste nas datas na importação (Guilherme/SUPERO)
 ..............................................................................*/
 
   --  Tipo de registro para PlTable de seguros
@@ -5131,7 +5133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
         IF pr_indierro = 1 THEN
-          vr_nmarqlog := 'log_SEGUROS_' || to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
+          vr_nmarqlog := 'log_SEGUROS_' || to_char(rw_crapdat.dtmvtocd,'RRRRMMDD');
           vr_flfinmsg := 'S';
         ELSE
           -- BLOCO PRA EXTRAIR A DATA DO NOME DO ARQUIVO
@@ -5250,7 +5252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
               vr_mailtitu := gene0001.fn_param_sistema('CRED', 0, 'AUTO_TITL_SEM_ARQ');
               vr_mailbody := REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_SEM_ARQ')
                                      ,'##DATA##'
-                                     ,to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR'));
+                                     ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'));
               -- Gera LOG
               gera_log(pr_cdcooper => 3 --pr_cdcooper
                       ,pr_cdprogra => vr_cdprogra
@@ -5513,7 +5515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_reg_arquivo.cdparceiro    := 1;           -- SICREDI
         vr_reg_arquivo.tpseguro      := 'A';         -- [P]restamista,[V]ida,[A]uto,[C]asa
         vr_reg_arquivo.inerro_import := 0;           -- Registro SEM ERRO de Agencia ou Conta
-        vr_reg_arquivo.dtmvtolt      := rw_crapdat.dtmvtolt; -- Data da Importação/Cadastro do Seguro
+        vr_reg_arquivo.dtmvtolt      := rw_crapdat.dtmvtocd; -- Data da Importação/Cadastro do Seguro
         -- Tipo atualização dos Dados (I-Inclusão / A-Alteração / M-Manter)
         vr_reg_tpatu.tp_seguro       := 'I';
         vr_reg_tpatu.tp_auto         := 'I';
@@ -5692,7 +5694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
               -- Verifica Data Fim Vigencia e muda situação
               IF  vr_reg_arquivo.indsituacao = 'A'  -- ATIVA
-              AND vr_reg_arquivo.dttermino_vigencia <= rw_crapdat.dtmvtolt THEN
+              AND vr_reg_arquivo.dttermino_vigencia <= rw_crapdat.dtmvtocd THEN
                 vr_reg_arquivo.indsituacao := 'V'; -- VENCIDA
               END IF;
 
@@ -6094,7 +6096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
                   IF vr_reg_arquivo.tpendosso IN (4,5) THEN
                     vr_reg_arquivo.indsituacao := 'C'; -- Altera a situado Seguro para CANCELADO
-                    vr_reg_arquivo.dtcancela   := rw_crapdat.dtmvtolt;
+                    vr_reg_arquivo.dtcancela   := rw_crapdat.dtmvtocd;
 
                     -- QUANDO CANCELAMENTO, MANTEM OS DADOS DO
                     -- ULTIMO VEICULO DA APOLICE ATIVA
@@ -6299,11 +6301,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
             END IF;
 
             IF vr_reg_tpatu.tp_seguro IN ('I','Y') THEN
-              vr_reg_arquivo.dsobservacao  := 'Incluido em ' || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR') ||
+              vr_reg_arquivo.dsobservacao  := 'Incluido em ' || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR') ||
                                              ' as ' || to_char(SYSDATE,'hh24:mi:ss');
             ELSE
               vr_reg_arquivo.dsobservacao  := 'Atualizado em '
-                                             || to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')
+                                             || to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR')
                                              || ' as ' || to_char(SYSDATE,'hh24:mi:ss');
             END IF;
 
@@ -6362,7 +6364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
         vr_mailbody := REPLACE(REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_E')
                                        ,'##DATA##'
-                                       ,to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR'))
+                                       ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
         -- Gera LOG
@@ -6375,7 +6377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         vr_dsdanexo := NULL;
         vr_mailbody := REPLACE(REPLACE(gene0001.fn_param_sistema('CRED', 0, 'AUTO_BODY_FIM_PROC_S')
                                        ,'##DATA##'
-                                       ,to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR'))
+                                       ,to_char(rw_crapdat.dtmvtocd,'DD/MM/RRRR'))
                                ,'##NMARQ##'
                                ,vr_tab_arqtmp(idx));
         -- Gera LOG
@@ -6829,7 +6831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                     ,seg.dsobservacao        = pr_seguros(vr_indice).dsobservacao
                     ,seg.vlcapital           = pr_seguros(vr_indice).vlcapital
                     ,seg.dsplano             = pr_seguros(vr_indice).dsplano
-                    ,seg.dtmvtolt            = rw_crapdat.dtmvtolt
+                    ,seg.dtmvtolt            = rw_crapdat.dtmvtocd
                     ,seg.inerro_import       = pr_seguros(vr_indice).inerro_import
                     ,seg.flgvigente          = pr_seguros(vr_indice).flgvigente
                WHERE seg.idcontrato = vr_idcontrato(vr_indice);
