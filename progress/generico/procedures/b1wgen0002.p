@@ -625,11 +625,15 @@
 
               23/09/2016 - Correçao deletar o Handle da b1wgen0114 esta gerando erro na geraçao
                            do PDF para envio da esteira (Oscar).
-                           
+
+              19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
+						  o valor do emprestimo, SD-507761 (Jean Michel).
+						               
 			  25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago).
 
-             19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
-						  o valor do emprestimo, SD-507761 (Jean Michel).
+			  26/10/2016 - Chamado 537058 - Correcao referente a linhas de creditos inativas.
+						   (Gil - MOUTS)
+             
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3236,6 +3240,7 @@ PROCEDURE valida-dados-gerais:
             NOT CAN-FIND(craplcr WHERE
                          craplcr.cdcooper = par_cdcooper AND
                          craplcr.cdlcremp = par_cdlcremp AND
+						 craplcr.flgstlcr <> 0 AND
                          craplcr.cdmodali = SUBSTRING(par_cdmodali,1,2) AND 
                          craplcr.cdsubmod = SUBSTRING(par_cdmodali,3,2)) THEN
             DO:
