@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 18/07/2016
+   Data    : Marco/2001                      Ultima atualizacao: 27/10/2016
 
    Dados referentes ao programa:
 
@@ -156,6 +156,11 @@
 			   18/07/2016 - Tratamento para inclusao de chave duplicada 
 			                quando realizar deposito via envolope rotina 61
 							e 51 (Tiago/Thiago).
+
+               27/10/2016 - Alterado validacao para nao permitir o recebimento 
+                            de cheques de bancos que nao participam da COMPE
+                            Utilizar apenas BANCO e FLAG ativo
+                            (Tiago - Chamado 546031)
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -933,27 +938,22 @@ PROCEDURE valida-codigo-cheque:
         END.
 
     /* Buscar os dados da agencia do cheque */
-    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,2,3))
-                         AND crapagb.cdageban = INT(SUBSTRING(c-cmc-7,5,4))
+    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,02,03))
+                         AND crapagb.cdsitagb = "S"
                        NO-LOCK NO-ERROR.
-    IF AVAILABLE crapagb THEN
+    IF NOT AVAILABLE crapagb THEN
     DO:
-        /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
+        /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
            por isso rejeitamos o cheque */
-        IF crapagb.cdsitagb = "N" THEN
-        DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = "".
-                   
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-                           
-            RETURN "NOK".    
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
     END.
 
     ASSIGN p-nrcheque = INT(SUBSTR(c-cmc-7,14,06)) NO-ERROR.
@@ -1108,27 +1108,22 @@ PROCEDURE valida-deposito-com-captura:
         ASSIGN c-cmc-7 = p-cmc-7-dig. /* <99999999<9999999999>999999999999: */
 
     /* Buscar os dados da agencia do cheque */
-    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,2,3))
-                         AND crapagb.cdageban = INT(SUBSTRING(c-cmc-7,5,4))
+    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,02,03))
+                         AND crapagb.cdsitagb = "S"
                        NO-LOCK NO-ERROR.
-    IF AVAILABLE crapagb THEN
+    IF NOT AVAILABLE crapagb THEN
     DO:
-        /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
+        /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
            por isso rejeitamos o cheque */
-        IF crapagb.cdsitagb = "N" THEN
-        DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = "".
-                   
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-                           
-            RETURN "NOK".    
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
     END.
 
     ASSIGN i-nro-lote = 11000 + p-nro-caixa.
@@ -2066,27 +2061,22 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
         ASSIGN c-cmc-7 = p-cmc-7-dig. /* <99999999<9999999999>999999999999: */
 
     /* Buscar os dados da agencia do cheque */
-    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,2,3))
-                         AND crapagb.cdageban = INT(SUBSTRING(c-cmc-7,5,4))
+    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,02,03))
+                         AND crapagb.cdsitagb = "S"
                        NO-LOCK NO-ERROR.
-    IF AVAILABLE crapagb THEN
+    IF NOT AVAILABLE crapagb THEN
     DO:
-        /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
+        /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
            por isso rejeitamos o cheque */
-        IF crapagb.cdsitagb = "N" THEN
-        DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = "".
-                   
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-                           
-            RETURN "NOK".    
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
     END.
 
     ASSIGN i-nro-lote = 11000 + p-nro-caixa.
@@ -3124,28 +3114,23 @@ PROCEDURE valida-deposito-com-captura-migrado:
     ELSE
         ASSIGN c-cmc-7 = p-cmc-7-dig. /* <99999999<9999999999>999999999999: */
 
-    /* Buscar os dados da agencia do cheque */
-    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,2,3))
-                         AND crapagb.cdageban = INT(SUBSTRING(c-cmc-7,5,4))
+   /* Buscar os dados da agencia do cheque */
+    FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(c-cmc-7,02,03))
+                         AND crapagb.cdsitagb = "S"
                        NO-LOCK NO-ERROR.
-    IF AVAILABLE crapagb THEN
+    IF NOT AVAILABLE crapagb THEN
     DO:
-        /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
+        /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
            por isso rejeitamos o cheque */
-        IF crapagb.cdsitagb = "N" THEN
-        DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = "".
-                   
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-                           
-            RETURN "NOK".    
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
     END.
     
     ASSIGN i-nro-lote = 11000 + p-nro-caixa.
