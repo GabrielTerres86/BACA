@@ -22,6 +22,9 @@
  *                008: [28/04/2016] Douglas: Adicionar o campo flgdebit para verificar se o primeiro cartao solicitado possui a opcao de debito habilitada. 
  *                                           Quando o primeiro cartao for solicitado sem a opcao de debito todos os cartoes adicionais devem ser identicos 
  *                                           (Chamado 415437)
+				  
+				  009: [21/10/2016] Kelvin : #530857 Ajustado o campo "Envio" que no IE nao carregava a informacao correta.
+											 
  * --------------
  */
 
@@ -120,11 +123,9 @@
 				echo '$("#tpdpagto","#frmNovoCartao").val(3);';
 			}
 			
-			if ($tpenvcrd == 1){
-				echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
-			}else if ($tpenvcrd == 0){
-				echo '$("#tpenvcrd","#frmNovoCartao").val(0);';
-			}
+			/*Como foi removido a opcao cooperado no campo Envio
+			  neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
+			echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
 			
 			echo '$("#dddebito","#frmNovoCartao").val("'.$dddebito.'");';
 			echo "$('#dddebito').attr('disabled', true);";
@@ -165,11 +166,9 @@
 					echo '$("#tpdpagto","#frmNovoCartao").val("3");';
 				}
 				
-				if ($tpenvcrd == 0){
-					echo '$("#tpenvcrd","#frmNovoCartao").val(0);';
-				}else if ($tpenvcrd == 1){
-					echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
-				}
+				/*Como foi removido a opcao cooperado no campo Envio
+				  neste momento, forcamos o valor 1 ("Cooperativa") no campo*/
+				echo '$("#tpenvcrd","#frmNovoCartao").val(1);';
 				
 				echo '$("#dddebito","#frmNovoCartao").val("'.$dddebito.'");';
 				echo '$("#nmempres","#frmNovoCartao").val("'.$nmempres.'");'; // Daniel
