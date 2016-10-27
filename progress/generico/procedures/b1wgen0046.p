@@ -32,7 +32,7 @@
 
     Programa: b1wgen0046.p
     Autor   : David/Fernando/Guilherme
-    Data    : Outubro/2009                    Ultima Atualizacao: 19/09/2016
+    Data    : Outubro/2009                    Ultima Atualizacao: 25/08/2016
            
     Dados referentes ao programa:
                 
@@ -144,10 +144,6 @@
                              
                 29/08/2016 - #456682 Inclusao de validacao de fraude de TED na
                              rotina proc_envia_tec_ted (Carlos)
-
-				19/09/2016 - Removida a validacao de horario cadastrado na TAB085
-							 para a geracao de TED dos convenios. SD 519980.
-							 (Carlos Rafael Tanholi)
 ..............................................................................*/                                                                             
 { sistema/generico/includes/b1wgen0046tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -178,18 +174,18 @@ PROCEDURE proc_pag0101:
     
     DEF VAR aux_xmlsitif AS LONGCHAR                                NO-UNDO. 
     DEF VAR aux_desretor AS CHAR                                    NO-UNDO.
-    
+
     /* Abrir tag raiz do xml */
     ASSIGN aux_xmlsitif = "<root>".
     
-    FOR EACH tt-situacao-if NO-LOCK:
+        FOR EACH tt-situacao-if NO-LOCK:
       /* Monta xml da temp-table */
       ASSIGN aux_xmlsitif = aux_xmlsitif +
                             "<dados>" +
                               "<nrispbif>" + STRING(tt-situacao-if.nrispbif) + "</nrispbif>" +
                               "<cdsitope>" + STRING(tt-situacao-if.cdsitope) + "</cdsitope>" +
                             "</dados>".        
-    END. /** Fim do FOR EACH tt-situacao-if **/
+        END. /** Fim do FOR EACH tt-situacao-if **/
 
     /* Fechar tag raiz do xml */
     ASSIGN aux_xmlsitif = aux_xmlsitif + "</root>".
@@ -259,7 +255,7 @@ PROCEDURE proc_opera_str:
                           WHEN pc_proc_opera_str.pr_des_erro <> ?.
             
     RETURN aux_desretor.
-    
+
 END PROCEDURE.
 
 
@@ -405,7 +401,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
             RETURN "NOK".
          END.
     ELSE      
-         ASSIGN aux_ispbdebt = DECIMAL(craptab.dstextab).    
+         ASSIGN aux_ispbdebt = DECIMAL(craptab.dstextab).
 
     /* Verificar se o Banco de destino esta operando com o PAG */
     IF par_cdbccxlt > 0 THEN
@@ -454,11 +450,10 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
     ELSE 
          ASSIGN aux_ispbcred = STRING(crapban.nrispbif,"99999999").
 
-    /*-- Operando com mensagens STR --
+    /*-- Operando com mensagens STR --*/
     IF   crapcop.flgopstr   THEN
          IF   crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME   THEN
               ASSIGN aux_flgutstr = TRUE.             
-    */
          
     /*-- Operando com mensagens PAG --*/
     IF   crapcop.flgoppag   THEN
@@ -470,14 +465,14 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
             ASSIGN aux_flpagmax = TRUE
 			       aux_flgutpag = FALSE. /* Altera para nao operante */
 
-    IF  aux_flgutpag = FALSE    THEN
+    IF   aux_flgutstr = FALSE AND aux_flgutpag = FALSE    THEN
          DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = IF  aux_flpagmax  THEN
                                       "Limite máximo por operaçao: R$ " +
                                       STRING(crapcop.vlmaxpag,"zz,zzz,zz9.99")
                                   ELSE "Horário de envio de TEDs encerrado.".
-            
+
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
@@ -619,7 +614,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
             ELSE
                 DO:
                    IF  aux_flgutstr  THEN /* Se STR Disponivel */
-                       ASSIGN aux_nmmsgenv = "STR0037".
+                 ASSIGN aux_nmmsgenv = "STR0037".
                    ELSE
                        DO:
                           ASSIGN aux_cdcritic = 0
@@ -636,7 +631,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
                           RETURN "NOK".
                        END.
                 END.
-				                    
+                               
             RUN gera_xml(INPUT par_cdcooper,
                          INPUT par_cdorigem,
                          INPUT aux_nmmsgenv, /* Cod. da Mensagem */
@@ -692,7 +687,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
             ELSE
                 DO:
                    IF  aux_flgutstr  THEN /* Se STR Disponivel */
-                       ASSIGN aux_nmmsgenv = "STR0005".
+                 ASSIGN aux_nmmsgenv = "STR0005".
                    ELSE
                        DO:
                           ASSIGN aux_cdcritic = 0
@@ -709,7 +704,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
                           RETURN "NOK".
                        END.
                 END.
-				                                
+                                           
             RUN gera_xml(INPUT par_cdcooper,
                          INPUT par_cdorigem,
                          INPUT aux_nmmsgenv, /* Cod. da Mensagem */
@@ -831,7 +826,7 @@ DEF VAR aux_conteudo                 AS CHARACTER                    NO-UNDO.
             ELSE
                 DO:
                    IF  aux_flgutstr  THEN /* Se STR Disponivel */
-                       ASSIGN aux_nmmsgenv = "STR0008".
+                 ASSIGN aux_nmmsgenv = "STR0008".
                    ELSE
                        DO:
                           ASSIGN aux_cdcritic = 0
@@ -1627,7 +1622,7 @@ DEFINE VARIABLE aux_nrinssac         AS CHARACTER                    NO-UNDO.
             RETURN "NOK".
          END.
 
-    /*-- Operando com mensagens STR --
+    /*-- Operando com mensagens STR --*/
     IF   crapcop.flgopstr   THEN
          IF   crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME   THEN
               ASSIGN aux_flgutstr = TRUE.             
@@ -1645,7 +1640,7 @@ DEFINE VARIABLE aux_nrinssac         AS CHARACTER                    NO-UNDO.
                            INPUT-OUTPUT aux_dscritic).
             RETURN "NOK".
          END.
-	*/
+
     /* Alimenta variaveis default */
     ASSIGN /* CPF/CNPJ Cedente */
            aux_nrinsced = IF   par_tppesced = "F"   THEN

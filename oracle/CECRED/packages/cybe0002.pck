@@ -379,6 +379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      WHERE crb.idtpreme = nvl(pr_idtpreme,crb.idtpreme)
        AND crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
        AND crb.idtpreme = pbc.idtpreme
+       AND pbc.idtpreme <> 'SMSDEBAUT'  -- Darosci - 26/10/2016
        AND pbc.flgativo = 1   --> Somente Bureauxs Ativos
        AND crb.dtcancel IS NULL --> Desconsiderar as canceladas
        -- Sem o arquivo da preparação ou Envio
@@ -403,6 +404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      WHERE crb.idtpreme = nvl(pr_idtpreme,crb.idtpreme)
        AND crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
        AND crb.idtpreme = pbc.idtpreme
+       AND pbc.idtpreme <> 'SMSDEBAUT'  -- Darosci - 26/10/2016
        AND pbc.flgativo = 1   --> Somente ativos
        AND ((pr_flcsdcnl = 'S' AND crb.dtcancel IS NULL) OR pr_flcsdcnl = 'N') --> Desconsiderar as canceladas quando solicitado
        -- Existe envio pendentes
@@ -7129,6 +7131,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     -- 09/06/2015 - Inclusão de lógica para não mais devolver ZIP a PPWare
     --              em feriados, pois eles não vem buscar os arquivos (Marcos-Supero)
     --
+    -- 26/10/2016 - Incluir condição nos cursores CR_PREP_PENDEM e CR_ENV_PENDEM para não retornar
+    --              registros referente ao tipo de remessa SMSDEBAUT. (Renato Darosci - Supero)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis para exceção
@@ -7184,7 +7188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
+      BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
