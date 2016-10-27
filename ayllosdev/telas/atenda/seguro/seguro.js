@@ -1773,7 +1773,7 @@ function carregaPropriedadesFormPrestVida() {
             $('#tpplaseg').unbind('blur').bind('blur', function () {
                 buscaValorPlano($('#tpplaseg').val());
             })
-            //$('#vlpreseg').desabilitaCampo();
+            $('#vlpreseg').desabilitaCampo();
             $('#vlcapseg').focus();
         }
 
