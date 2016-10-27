@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Agosto/2003                     Ultima atualizacao: 28/10/2015
+   Data    : Agosto/2003                     Ultima atualizacao: 04/10/2016
 
    Dados referentes ao programa:
 
@@ -43,6 +43,9 @@
                             atraves do programa chamador pois em alguns casos 
                             o valor passado por javascript (window.location) 
                             vem vazio (Carlos)
+                            
+               04/10/2016 - Verificar se existe registro criado na tabela de controle de 
+                            movimentacoes em especie. (Lucas Ranghetti #463572)
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -130,6 +133,9 @@ DEF VAR v_cooppara         AS INTE       NO-UNDO.
 
 DEF VAR aux_flgconta       AS LOGICAL    NO-UNDO.
 DEF VAR aux_focoerro       AS CHAR       NO-UNDO.
+DEF VAR aux_nrdctabb       AS DECI       NO-UNDO.
+DEF VAR aux_nrdocmto       AS DECI       NO-UNDO.
+DEF VAR aux_nmarqlog       AS CHAR       NO-UNDO.
                                    
 DEF VAR l-houve-erro       AS LOG        NO-UNDO.
 DEF VAR i-cod-erro         AS INTE       NO-UNDO.
@@ -622,6 +628,26 @@ IF REQUEST_METHOD = 'POST':U   THEN
                    v_cpfcgrcb = REPLACE(v_cpfcgrcb,'-','')
                    v_dtnasrcb = REPLACE(v_dtnasrcb,'/','').
             
+            ASSIGN aux_nmarqlog = "/usr/coop/" + crapcop.dsdircop + 
+                                  "/log/caixa_online_"            +
+                                  STRING(YEAR(TODAY),"9999")      +
+                                  STRING(MONTH(TODAY),"99")       +
+                                  STRING(DAY(TODAY),"99") + ".log".           
+                       
+            /* Se clicou no OK */           
+            IF  get-value('ok') <> '' THEN                           
+                UNIX SILENT VALUE("echo " +  
+                                  STRING(TIME,"HH:MM:SS") + "' --> '" +
+                                  "ROTINA: " + CAPS(v_programa) +  "/CRAP051f" +                                      
+                                  " PA: " + STRING(v_pac)                      +
+                                  " CAIXA: " + STRING(v_caixa)                 +
+                                  " OPERADOR: " + STRING(v_operador)           +
+                                  " CONTA: " + STRING(v_nrccdrcb)              +                                      
+                                  " VALOR: " + STRING(vh_valor)                +
+                                  " - Selecionado botao: "                     + 
+                                  CAPS(get-value('ok'))                        + 
+                                  " >> " + aux_nmarqlog).                 
+            
             RUN dbo/b1crap51.p PERSISTENT SET h-b1crap51.
 
             RUN elimina-erro 
@@ -808,6 +834,57 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                  END.
                                  UNDO.
                              END.
+                             
+                         IF  v_programa = "CRAP054" AND
+                             NOT l-houve-erro THEN
+                             DO:
+                                 /* Forçar a verificação da tabela crapcme para garantirmos que o operador irá ter 
+                                    digitado as informações */
+                                 FOR EACH craplcm WHERE craplcm.cdcooper = crapcop.cdcooper   AND
+                                                        craplcm.dtmvtolt = DATE(v_data)       AND
+                                                        craplcm.cdagenci = inte(v_pac)        AND
+                                                        craplcm.cdbccxlt = 11                 AND
+                                                        craplcm.nrdolote = 11000 + inte(v_caixa) AND
+                                                        craplcm.nrautdoc = p-ult-sequencia    
+                                                        USE-INDEX craplcm3  NO-LOCK:
+
+                                     ASSIGN aux_nrdctabb = craplcm.nrdctabb
+                                            aux_nrdocmto = craplcm.nrdocmto.
+                                 END. 
+                             
+                                 FIND crapcme WHERE crapcme.cdcooper = crapcop.cdcooper   AND
+                                                    crapcme.dtmvtolt = DATE(v_data)       AND
+                                                    crapcme.cdagenci = inte(v_pac)        AND
+                                                    crapcme.cdbccxlt = 11                 AND
+                                                    crapcme.nrdolote = 11000 + inte(v_caixa)   AND
+                                                    crapcme.nrdctabb = aux_nrdctabb        AND
+                                                    crapcme.nrdocmto = aux_nrdocmto   
+                                                    NO-LOCK NO-ERROR.
+                                                         
+                                 IF  NOT AVAILABLE crapcme   THEN
+                                     DO:
+                                         ASSIGN l-houve-erro = YES.
+                                         FOR EACH w-craperr:
+                                             DELETE w-craperr.
+                                         END.
+                                     
+                                         FIND FIRST w-craperr WHERE                                                  
+                                                    w-craperr.cdagenci = INT(v_pac)        AND
+                                                    w-craperr.nrdcaixa = INT(v_caixa) 
+                                                    NO-LOCK NO-ERROR.
+                                                    
+                                         IF  NOT AVAILABLE w-craperr THEN
+                                             DO:
+                                                 CREATE w-craperr.
+                                                 ASSIGN w-craperr.cdagenci = INT(v_pac) 
+                                                        w-craperr.nrdcaixa = INT(v_caixa)
+                                                        w-craperr.nrsequen = p-ult-sequencia 
+                                                        w-craperr.cdcritic = 0
+                                                        w-craperr.dscritic = "Controle de movimentacao em especie inexistente.".
+                                             END.                                             
+                                     END.
+                             END.
+                             
                       END. /*transaction*/
                       
                       IF l-houve-erro THEN
