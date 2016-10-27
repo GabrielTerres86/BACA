@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 27/09/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 27/10/2016
     
    Dados referentes ao programa:
    
@@ -147,9 +147,13 @@
                            na oferta de debito automatico na procedure busca_convenios_codbarras
                            (Lucas Ranghetti #488846)
 
-			  27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
-			               mais referencias iguais para a mesma conta (busca-autori).
-						   (Chamado 528246) - (Fabricio)
+              27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+                           mais referencias iguais para a mesma conta (busca-autori).
+                           (Chamado 528246) - (Fabricio)
+                           
+              27/10/2016 - Incluir condicao na busca dos convenios aceitos para debito 
+                           automatico na procedure busca_convenios_codbarras
+                           (Lucas Ranghetti #547474)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -2250,7 +2254,8 @@ PROCEDURE busca_convenios_codbarras:
                            (gnconve.cdconven = 87               AND
                            gnconve.flgativo = TRUE              AND
                            gnconve.nmarqatu <> ""               AND
-                           gnconve.cdhisdeb <> 0)
+                           gnconve.cdhisdeb <> 0                AND 
+                           crapcon.cdempcon = 1058)
                            NO-LOCK NO-ERROR.
                                          
                 IF  NOT AVAILABLE gnconve THEN
