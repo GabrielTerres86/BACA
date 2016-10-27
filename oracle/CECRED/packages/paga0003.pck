@@ -2673,18 +2673,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
 																							 pr_dtmvtolt => pr_dtmvtopg, 
 																							 pr_tipo     => 'A');
-		-- linha digitavel
-		vr_dslindig := SUBSTR(to_char(vr_lindigi1,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(vr_lindigi1,'fm000000000000'),12,1) ||' '||
-                       
-									 SUBSTR(to_char(vr_lindigi2,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(vr_lindigi2,'fm000000000000'),12,1) ||' '||
-                       
-									 SUBSTR(to_char(vr_lindigi3,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(vr_lindigi3,'fm000000000000'),12,1) ||' '||
-                       
-									 SUBSTR(to_char(vr_lindigi4,'fm000000000000'),1,11) ||'-'||
-									 SUBSTR(to_char(vr_lindigi4,'fm000000000000'),12,1);
 
 		-- Procedure para validar limites para transacoes
     INET0001.pc_verifica_operacao (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
@@ -2751,6 +2739,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        TRIM(vr_dscritic) IS NOT NULL THEN
        RAISE vr_exc_erro; 
     END IF;
+		
+		-- linha digitavel
+		vr_dslindig := SUBSTR(to_char(vr_lindigi1,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi1,'fm000000000000'),12,1) ||' '||
+
+									 SUBSTR(to_char(vr_lindigi2,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi2,'fm000000000000'),12,1) ||' '||
+
+									 SUBSTR(to_char(vr_lindigi3,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi3,'fm000000000000'),12,1) ||' '||
+
+									 SUBSTR(to_char(vr_lindigi4,'fm000000000000'),1,11) ||'-'||
+									 SUBSTR(to_char(vr_lindigi4,'fm000000000000'),12,1);
 		
 		-- efetivar
 		IF pr_idefetiv = 1 THEN
