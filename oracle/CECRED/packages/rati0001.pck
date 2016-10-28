@@ -1018,7 +1018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos Ernani Martini
-       Data    : Junho/2013.                          Ultima Atualizacao: 04/06/2013
+       Data    : Junho/2013.                          Ultima Atualizacao: 25/10/2016
 
        Dados referentes ao programa:
 
@@ -3343,6 +3343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
 
        Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
 
+                   25/10/2016 - Correção do problema relatado no chamado 541414. (Kelvin)
     ............................................................................. */
     DECLARE
 	  /* Cursor genérico de parametrização */
@@ -3358,8 +3359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
            AND UPPER(tab.nmsistem) = pr_nmsistem
            AND UPPER(tab.tptabela) = pr_tptabela
            AND tab.cdempres        = pr_cdempres
-           AND UPPER(tab.cdacesso) = pr_cdacesso
-           AND tab.tpregist        = pr_tpregist;
+           AND UPPER(tab.cdacesso) = pr_cdacesso;
 
       -- Indice para gravacao nas temptables
       vr_contador NUMBER;
@@ -3369,10 +3369,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       IF vr_tab_provisao_cl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => '00'
-                                             ,pr_cdacesso => 'PROVISAOCL'
-                                             ,pr_tpregist => null) LOOP
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => '00'
+                                    ,pr_cdacesso => 'PROVISAOCL'
+                                    ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_cl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -3400,10 +3400,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       IF vr_tab_provisao_tl.count() = 0 THEN
         -- Busca de todos os riscos conforme chave de acesso enviada
         FOR rw_craptab IN cr_craptab(pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => '00'
-                                             ,pr_cdacesso => 'PROVISAOTL'
-                                             ,pr_tpregist => null) LOOP
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => '00'
+                                    ,pr_cdacesso => 'PROVISAOTL'
+                                    ,pr_tpregist => null) LOOP
           -- Carregar na tabela
           vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_tl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
@@ -4695,6 +4695,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
 
 		         10/05/2016 - Ajuste para iniciar corretamente a pltable
 							  (Andrei - RKAM).
+                 
+                 25/10/2016 - Ajuste no calculo da quantidade de anos, permitindo
+                              duas posições decimais. (Kelvin)
+                
   ............................................................................. */
   ---------------- CURSORES ----------------
 
