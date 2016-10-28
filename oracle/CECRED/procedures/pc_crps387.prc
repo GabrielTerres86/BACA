@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 25/10/2016
+   Data    : Abril/2004                        Ultima atualizacao: 28/10/2016
 
    Dados referentes ao programa:
 
@@ -354,6 +354,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                25/10/2016 - Arrumar validacao para caracteres invalidos nos campos de referencia
                             e numero da conta (Lucas Ranghetti #532367)                            
                           - Gerar critica para a cecred apenas de agencia invalida (Lucas Ranghetti #537658)
+                          
+               28/10/2016 - Adicionar validação para quando recebermos referencia nula
+                            (Lucas Ranghetti #542656)
 ............................................................................ */
 
 
@@ -2355,7 +2358,62 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         continue;                      
                     END;
                   ELSE
-                    vr_cdrefere := 0;
+                    IF SUBSTR(vr_dsrefere,1,1) IS NULL AND 
+                      vr_tpregist in('E','D') THEN 
+                      vr_cdcritic := 453; -- Autorizacao nao encontrada.
+                      vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
+                          
+                      -- Para cada regitro D rejeitado, retornamos o H
+                      IF vr_tpregist = 'D' THEN
+                        vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
+                      ELSE
+                        vr_dstexarq := 'F'||SUBSTR(vr_setlinha,2,66)||'30'||SUBSTR(vr_setlinha,70,81);
+                      END IF;          
+                          
+                      -- Arquivo com os registros de debito com caracteres invalido          
+                      BEGIN
+                        INSERT INTO crapndb
+                          (dtmvtolt,
+                           nrdconta,
+                           cdhistor,
+                           flgproce,
+                           dstexarq,
+                           cdcooper)
+                         VALUES
+                          (vr_dtultdia,
+                           vr_nrdconta,
+                           rw_gnconve.cdhisdeb,
+                           0,
+                           vr_dstexarq,
+                           pr_cdcooper);
+                      EXCEPTION
+                        WHEN OTHERS THEN
+                          vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
+                          RAISE vr_exc_saida;
+                      END;
+
+                      -- monta a chave para a pl_table vr_tab_relato
+                      vr_nrseq := vr_nrseq + 1;
+                      vr_ind := lpad(vr_cdcritic,5,'0')||'00003'|| lpad(vr_nrdconta,10,'0') ||
+                                lpad(vr_cdrefere*100,27,'0') || lpad(vr_nrseq,5,'0');
+
+                      vr_tab_relato(vr_ind).nmarquiv := vr_tab_nmarquiv(i);
+                      vr_tab_relato(vr_ind).nrdconta := vr_nrdconta;
+                      vr_tab_relato(vr_ind).contrato := SUBSTR(vr_setlinha,02,25);
+                      IF vr_cdcritic <> 13 THEN
+                        vr_tab_relato(vr_ind).dtmvtolt := vr_dtrefere;
+                      END IF;
+                      vr_tab_relato(vr_ind).nrdctabb := 0;
+                      vr_tab_relato(vr_ind).cdcritic := 453;
+                      vr_tab_relato(vr_ind).tpintegr := 3;  /* fatura rejeitada */
+                      vr_tab_relato(vr_ind).vllanmto := SUBSTR(vr_setlinha,53,15) / 100;
+                      vr_tab_relato(vr_ind).ocorrencia := SUBSTR(vr_setlinha,70,40);
+                      vr_tab_relato(vr_ind).descrica := SUBSTR(vr_setlinha,110,20);
+                      vr_flgrejei     := TRUE;                          
+                      continue;    
+                    ELSE
+                      vr_cdrefere := 0;                    
+                    END IF;
                   END IF;  
                   
                   -- Verifica se o convenio usa agencias no arquivo enviado
