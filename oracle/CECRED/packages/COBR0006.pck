@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 17/08/2016
+    Data     : Novembro/2015.                   Ultima atualizacao: 26/10/2016
   
    Dados referentes ao programa:
   
@@ -431,6 +431,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 efetuar tratamento para os segmentos R,S;
                               > Ajuste para enviar o nome original do arquivo para emissao do protocolo;
                              (Andrei - RKAM).
+                             
+                26/10/2016 - Ajuste na validacao do nome do sacado (pc_trata_segmento_q_240_85)
+                             para considerar o caracter ':' como valido.
+                             (Chamado 535830) - (Fabricio)
                                            
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -5055,7 +5059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 27/05/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 26/10/2016
 
        Dados referentes ao programa:
 
@@ -5066,7 +5070,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 		           27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
 								a rotina de validação de caracteres para endereços
-								(Andrei). 
+								(Andrei).
+                
+               26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
+                            o caracter ':' como valido.
+                            (Chamado 535830) - (Fabricio)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5219,7 +5227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Validar os caracteres do nome do sacado
     IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                             pr_flgletra => TRUE,   -- Validar Letras
-                            pr_listaesp => '.,/,-,_', -- Lista Caracteres Validos
+                            pr_listaesp => '.,/,-,_:', -- Lista Caracteres Validos
                             pr_dsvalida => pr_rec_cobranca.nmdsacad ) THEN -- Nome do Sacado
       -- Nome do Sacado Nao Informado
       vr_rej_cdmotivo := '45';
