@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 27/10/2016
+  --  Data    : Abril/2006                     Ultima Atualizacao: 28/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -273,6 +273,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --        06/10/2016 - SD 489677 - Alteração de DELETE p/ UPDATE na CRAPLGP,
   --                     alterando o "flgativo" (Guilherme/SUPERO)
   --
+  --        28/10/2016 - SD 509982 - DEBCON - Atualização criticas (Guilherme/SUPERO)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de registro de agendamento
@@ -1394,6 +1395,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                    
        21/09/2016 - #523944 Criação de log de controle de início, erros e fim de execução
                     do job pc_processa_crapdda (Carlos)
+
        31/08/2016 - Removida procedure pc_verifica_sit_transacao, SD 514239 (Jean Michel).
               
        28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
@@ -19490,52 +19492,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       -- Cursores
 
       -- Cursor para verificar se lote existe
-      CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE,
-                         pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
-                         pr_cdagenci IN craplot.cdagenci%TYPE,
-                         pr_cdbccxlt IN craplot.cdbccxlt%TYPE,
-                         pr_nrdolote IN craplot.nrdolote%TYPE) IS
-      SELECT lot.nrseqdig
-            ,lot.qtcompln
-            ,lot.qtinfoln
-            ,lot.vlcompdb
-            ,lot.nrdolote
-            ,lot.cdbccxlt
-            ,lot.cdagenci
-            ,lot.dtmvtolt
-            ,lot.ROWID
-        FROM craplot lot
-       WHERE lot.cdcooper = pr_cdcooper AND
-             lot.dtmvtolt = pr_dtmvtolt AND
-             lot.cdagenci = pr_cdagenci AND
-             lot.cdbccxlt = pr_cdbccxlt AND
-             lot.nrdolote = pr_nrdolote;
+      CURSOR cr_craplot(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                       ,pr_cdagenci IN craplot.cdagenci%TYPE
+                       ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                       ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+        SELECT lot.nrseqdig
+              ,lot.qtcompln
+              ,lot.qtinfoln
+              ,lot.vlcompdb
+              ,lot.nrdolote
+              ,lot.cdbccxlt
+              ,lot.cdagenci
+              ,lot.dtmvtolt
+              ,lot.ROWID
+          FROM craplot lot
+         WHERE lot.cdcooper = pr_cdcooper
+           AND lot.dtmvtolt = pr_dtmvtolt
+           AND lot.cdagenci = pr_cdagenci
+           AND lot.cdbccxlt = pr_cdbccxlt
+           AND lot.nrdolote = pr_nrdolote;
       rw_craplot cr_craplot%ROWTYPE;
 
-      CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE,
-                         pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
-                         pr_cdagenci IN crapage.cdagenci%TYPE,
-                         pr_cdbccxlt IN craplcm.cdbccxlt%TYPE,
-                         pr_nrdolote IN craplcm.nrdolote%TYPE,
-                         pr_nrdconta IN craplau.nrdconta%TYPE,
-                         pr_nrdocmto IN craplau.nrdocmto%TYPE) IS
-      SELECT lcm.nrseqdig
-            ,lcm.nrdolote
-        FROM craplcm lcm
-       WHERE lcm.cdcooper = pr_cdcooper AND
-             lcm.dtmvtolt = pr_dtmvtolt AND
-             lcm.cdagenci = pr_cdagenci AND
-             lcm.cdbccxlt = pr_cdbccxlt AND
-             lcm.nrdolote = pr_nrdolote AND
-             lcm.nrdctabb = pr_nrdconta AND
-             lcm.nrdocmto = pr_nrdocmto;
+      CURSOR cr_craplcm(pr_cdcooper IN craplcm.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                       ,pr_cdagenci IN crapage.cdagenci%TYPE
+                       ,pr_cdbccxlt IN craplcm.cdbccxlt%TYPE
+                       ,pr_nrdolote IN craplcm.nrdolote%TYPE
+                       ,pr_nrdconta IN craplau.nrdconta%TYPE
+                       ,pr_nrdocmto IN craplau.nrdocmto%TYPE) IS
+        SELECT lcm.nrseqdig
+              ,lcm.nrdolote
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper
+           AND lcm.dtmvtolt = pr_dtmvtolt
+           AND lcm.cdagenci = pr_cdagenci
+           AND lcm.cdbccxlt = pr_cdbccxlt
+           AND lcm.nrdolote = pr_nrdolote
+           AND lcm.nrdctabb = pr_nrdconta
+           AND lcm.nrdocmto = pr_nrdocmto;
       rw_craplcm cr_craplcm%ROWTYPE;
 
       -- BUSCA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
-      CURSOR cr_crapatr(pr_cdcooper IN crapcop.cdcooper%TYPE,
-                        pr_nrdconta IN crapass.nrdconta%TYPE,
-                        pr_cdhistor IN craphis.cdhistor%TYPE,
-                        pr_nrcrcard IN craplau.nrcrcard%TYPE) IS
+      CURSOR cr_crapatr(pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE
+                       ,pr_cdhistor IN craphis.cdhistor%TYPE
+                       ,pr_nrcrcard IN craplau.nrcrcard%TYPE) IS
 
       SELECT atr.dtfimatr
             ,atr.cdrefere
@@ -19568,8 +19570,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       rw_crapatr cr_crapatr_rowid%ROWTYPE;
          
       CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-      SELECT crapcop.cdagesic,
-             crapcop.nmrescop
+      SELECT crapcop.cdagesic
+            ,crapcop.nmrescop
         FROM crapcop
        WHERE crapcop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
@@ -19584,7 +19586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       rw_gnconve cr_gnconve%ROWTYPE;
       
       --Selecionar titulares com senhas ativas 
-      CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
+      CURSOR cr_crapsnh (pr_cdcooper  IN crapsnh.cdcooper%TYPE
                          ,pr_nrdconta IN crapsnh.nrdconta%TYPE
                          ,pr_cdsitsnh IN crapsnh.cdsitsnh%TYPE
                          ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE) IS
@@ -19600,9 +19602,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       rw_crapsnh cr_crapsnh%ROWTYPE;
       
       --Selecionar informacoes do titular
-      CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%type
-                        ,pr_nrdconta IN crapttl.nrdconta%type
-                        ,pr_idseqttl IN crapttl.idseqttl%type) IS
+      CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE
+                        ,pr_nrdconta IN crapttl.nrdconta%TYPE
+                        ,pr_idseqttl IN crapttl.idseqttl%TYPE) IS
         SELECT crapttl.nmextttl
               ,crapttl.nrcpfcgc
           FROM crapttl
@@ -19685,8 +19687,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                       ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
                                       ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
 
-      IF nvl(vr_cdcritic,0) > 0 OR
-         TRIM(vr_dscritic) IS NOT NULL THEN
+      IF nvl(vr_cdcritic,0) > 0
+      OR TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro; 
       END IF; 
       
@@ -19779,9 +19781,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           BEGIN
             -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
             UPDATE craplau
-               SET insitlau = 3,
-                   dtdebito = rw_crapdat.dtmvtolt,
-                   cdcritic = vr_auxcdcri
+               SET insitlau = 3
+                  ,dtdebito = rw_crapdat.dtmvtolt
+                  ,cdcritic = vr_auxcdcri
             WHERE craplau.rowid = rw_craplau.rowid;
 
             -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -19826,9 +19828,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           BEGIN
             -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
             UPDATE craplau
-               SET insitlau = 3,
-                   dtdebito = rw_crapdat.dtmvtolt,
-                   cdcritic = vr_auxcdcri
+               SET insitlau = 3
+                  ,dtdebito = rw_crapdat.dtmvtolt
+                  ,cdcritic = vr_auxcdcri
             WHERE craplau.rowid = rw_craplau.rowid;
 
             -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -19875,9 +19877,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           BEGIN
             -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
             UPDATE craplau
-               SET insitlau = 3,
-                   dtdebito = rw_crapdat.dtmvtolt,
-                   cdcritic = vr_auxcdcri
+               SET insitlau = 3
+                  ,dtdebito = rw_crapdat.dtmvtolt
+                  ,cdcritic = vr_auxcdcri
             WHERE craplau.rowid = rw_craplau.rowid;
 
             -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -19891,8 +19893,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           pr_dscritic := vr_auxdscri;
         
         -- Valor limite débito automatico excedido
-        ELSIF rw_crapatr.flgmaxdb = 1 AND
-             rw_craplau.vllanaut > rw_crapatr.vlrmaxdb THEN
+        ELSIF rw_crapatr.flgmaxdb = 1
+		  AND rw_craplau.vllanaut > rw_crapatr.vlrmaxdb THEN
 									
               vr_cdcritic := 967;                                                   -- Limite ultrapassado.
               vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
@@ -19975,9 +19977,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               BEGIN
                 -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
                 UPDATE craplau
-                   SET insitlau = 3,
-                       dtdebito = rw_crapdat.dtmvtolt,
-                       cdcritic = NVL(vr_auxcdcri, 0)
+                   SET insitlau = 3
+                      ,dtdebito = rw_crapdat.dtmvtolt
+                      ,cdcritic = NVL(vr_auxcdcri, 0)
                  WHERE craplau.rowid = rw_craplau.rowid;
 
               -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -20025,9 +20027,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           BEGIN
             -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
             UPDATE craplau
-               SET insitlau = 3,
-                   dtdebito = rw_crapdat.dtmvtolt,
-                   cdcritic = vr_auxcdcri
+               SET insitlau = 3
+                  ,dtdebito = rw_crapdat.dtmvtolt
+                  ,cdcritic = vr_auxcdcri
             WHERE craplau.rowid = rw_craplau.rowid;
 
             -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -20036,6 +20038,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
             RAISE vr_exc_erro;
           END;
+          
+		  -- Se for a primeira tentativa apenas grava critica
+          ELSIF vr_qtdexec = 1 THEN
+            BEGIN
+              -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
+              UPDATE craplau
+                 SET cdcritic = vr_auxcdcri
+               WHERE craplau.rowid = rw_craplau.rowid;
+
+              -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' ||
+                               SQLERRM;
+                RAISE vr_exc_erro;
+            END;
           END IF;
 
           pr_cdcritic := vr_auxcdcri;
@@ -20050,6 +20068,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           
           -- Se for a primeira tentativa apenas grava a mensagem para o cooperado
           IF vr_qtdexec = 1 THEN
+
+            -- Se for a primeira tentativa / Saldo Insuficiente
+            BEGIN
+              -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
+              UPDATE craplau
+                 SET cdcritic = vr_auxcdcri
+               WHERE craplau.rowid = rw_craplau.rowid;
+
+              -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' ||
+                               SQLERRM;
+                RAISE vr_exc_erro;
+            END;
+
             OPEN cr_gnconve (rw_craplau.cdhistor);
             FETCH cr_gnconve INTO rw_gnconve;
              
@@ -20079,7 +20113,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               
             END IF;
             CLOSE cr_gnconve;
+
           ELSE
+
             -- GERAR REGISTROS NA CRAPNDB PARA DEVOLUCAO DE DEBITOS AUTOMATICOS
             CONV0001.pc_gerandb(pr_cdcooper => pr_cdcooper         -- CÓDIGO DA COOPERATIVA
                                ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
@@ -20104,9 +20140,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             BEGIN
               -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
               UPDATE craplau
-                 SET insitlau = 3,
-                     dtdebito = rw_crapdat.dtmvtolt,
-                     cdcritic = vr_auxcdcri
+                 SET insitlau = 3
+                    ,dtdebito = rw_crapdat.dtmvtolt
+                    ,cdcritic = vr_auxcdcri
               WHERE craplau.rowid = rw_craplau.rowid;
 
               -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
@@ -20146,21 +20182,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             BEGIN
               -- criar registros de lote na tabela
               INSERT INTO craplot
-              (dtmvtolt,
-               cdagenci,
-               cdbccxlt,
-               nrdolote,
-               cdbccxpg,
-               tplotmov,
-               cdcooper)
+                (dtmvtolt
+                ,cdagenci
+                ,cdbccxlt
+                ,nrdolote
+                ,cdbccxpg
+                ,tplotmov
+                ,cdcooper)
               VALUES
-              (pr_dtmvtolt,
-               vr_cdagenci,
-               vr_cdbccxlt,
-               vr_nrdolote,
-               11, --cdbccxpg
-               1,  --tplotmov
-               pr_cdcooper)
+                (pr_dtmvtolt
+                ,vr_cdagenci
+                ,vr_cdbccxlt
+                ,vr_nrdolote
+                ,11  --cdbccxpg
+                ,1   --tplotmov
+                ,pr_cdcooper)
               RETURNING ROWID,
                         craplot.dtmvtolt,
                         craplot.cdagenci,
@@ -20238,7 +20274,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                             ,pr_dscritic     => vr_dscritic);   --Descricao do erro
           
           --Se ocorreu erro
-          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          IF NVL(vr_cdcritic,0) <> 0
+          OR TRIM(vr_dscritic) IS NOT NULL THEN
             vr_cdcritic:= 0;
             vr_dscritic:= 'Erro na autenticacao do pagamento: '||vr_dscritic;
             RAISE vr_exc_erro;
@@ -20250,47 +20287,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           -- cria registro na tabela de lançamentos
           BEGIN
             INSERT INTO craplcm
-              (cdcooper,
-               dtmvtolt,
-               cdagenci,
-               cdbccxlt,
-               nrdolote,
-               nrdctabb,
-               nrdocmto,
-               vllanmto,
-               nrdconta,
-               cdhistor,
-               nrseqdig,
-               nrdctitg,
-               nrautdoc,
-               cdpesqbb)
-            VALUES (
-               pr_cdcooper,
-               rw_craplot.dtmvtolt,
-               rw_craplot.cdagenci,
-               rw_craplot.cdbccxlt,
-               rw_craplot.nrdolote,
-               rw_craplau.nrdctabb,
-               vr_nrdocmto,
-               rw_craplau.vllanaut,
-               vr_nrdconta,
-               rw_craplau.cdhistor,
-               rw_craplot.nrseqdig + 1,
-               rw_craplau.nrdctabb,
-               vr_nrautdoc,
-               'Lote '                             ||
-               to_char(rw_craplau.dtmvtolt,'dd')   ||
-               '/'                                 ||
-               to_char(rw_craplau.dtmvtolt,'mm')   ||
-               '-'                                 ||
-               GENE0002.fn_mask(vr_cdagenci,'999') || '-'  ||
-               GENE0002.fn_mask(rw_craplau.cdbccxlt,'999') ||
-               '-'                                 ||
-               GENE0002.fn_mask(rw_craplau.nrdolote,'999999') ||
-               '-'                                 ||
-               GENE0002.fn_mask(rw_craplau.nrseqdig,'99999') ||
-               '-'                                 ||
-               rw_craplau.nrdocmto );
+              (cdcooper
+              ,dtmvtolt
+              ,cdagenci
+              ,cdbccxlt
+              ,nrdolote
+              ,nrdctabb
+              ,nrdocmto
+              ,vllanmto
+              ,nrdconta
+              ,cdhistor
+              ,nrseqdig
+              ,nrdctitg
+              ,nrautdoc
+              ,cdpesqbb)
+            VALUES
+              (pr_cdcooper
+              ,rw_craplot.dtmvtolt
+              ,rw_craplot.cdagenci
+              ,rw_craplot.cdbccxlt
+              ,rw_craplot.nrdolote
+              ,rw_craplau.nrdctabb
+              ,vr_nrdocmto
+              ,rw_craplau.vllanaut
+              ,vr_nrdconta
+              ,rw_craplau.cdhistor
+              ,rw_craplot.nrseqdig + 1
+              ,rw_craplau.nrdctabb
+              ,vr_nrautdoc
+              ,'Lote ' || to_char(rw_craplau.dtmvtolt, 'dd')              || '/' ||
+                          to_char(rw_craplau.dtmvtolt, 'mm')              || '-' ||
+                          GENE0002.fn_mask(vr_cdagenci, '999')            || '-' ||
+                          GENE0002.fn_mask(rw_craplau.cdbccxlt, '999')    || '-' ||
+                          GENE0002.fn_mask(rw_craplau.nrdolote, '999999') || '-' ||
+                          GENE0002.fn_mask(rw_craplau.nrseqdig, '99999')  || '-' ||
+                          rw_craplau.nrdocmto);
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir craplcm: '||SQLERRM;
@@ -20300,11 +20331,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           -- Atualiza a capa do lote
           BEGIN
             UPDATE craplot
-              SET nrseqdig = rw_craplot.nrseqdig,
-                  qtcompln = qtcompln + 1,
-                  qtinfoln = qtinfoln + 1,
-                  vlcompdb = vlcompdb + rw_craplau.vllanaut,
-                  vlinfodb = vlcompdb + rw_craplau.vllanaut
+               SET nrseqdig = rw_craplot.nrseqdig
+                  ,qtcompln = qtcompln + 1
+                  ,qtinfoln = qtinfoln + 1
+                  ,vlcompdb = vlcompdb + rw_craplau.vllanaut
+                  ,vlinfodb = vlcompdb + rw_craplau.vllanaut
                WHERE ROWID = rw_craplot.rowid;
           EXCEPTION
             WHEN OTHERS THEN
@@ -20315,9 +20346,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           -- Atualiza registro de Lançamento Automático
           BEGIN
             UPDATE craplau
-               SET insitlau = 2,
-                   nrseqlan = rw_craplau.nrseqdig,
-                   dtdebito = rw_crapdat.dtmvtolt
+               SET insitlau = 2
+                  ,nrseqlan = rw_craplau.nrseqdig
+                  ,dtdebito = rw_crapdat.dtmvtolt
                 WHERE ROWID = rw_craplau.rowid;
           EXCEPTION
             WHEN OTHERS THEN
