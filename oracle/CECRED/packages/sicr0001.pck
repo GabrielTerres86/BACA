@@ -116,6 +116,23 @@ create or replace package cecred.SICR0001 is
                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica de erro
                               ,pr_dscritic OUT VARCHAR2);            --> Descrição do erro se ocorrer
 
+  ---> Procedure para notificar critica ao cooperado 
+  PROCEDURE pc_notif_cooperado_DEBAUT ( pr_cdcritic  IN INTEGER
+                                       ,pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                       ,pr_nmrescop  IN crapcop.nmrescop%TYPE
+                                       ,pr_cdprogra  IN crapprg.cdprogra%TYPE
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE
+                                       ,pr_nrdocmto  IN craplau.nrdocmto%TYPE
+                                       ,pr_nmconven  IN crapcon.nmextcon%TYPE
+                                       ,pr_dtmvtopg  IN craplau.dtmvtopg%TYPE
+                                       ,pr_vllanaut  IN craplau.vllanaut%TYPE
+                                       ,pr_vlrmaxdb  IN crapatr.vlrmaxdb%TYPE
+                                       ,pr_cdrefere  IN crapatr.cdrefere%TYPE  
+                                       ,pr_cdhistor  IN crapatr.cdhistor%TYPE
+                                       ,pr_tpdnotif  IN INTEGER DEFAULT 0       --> Tipo de notificação a ser enviada (0 - Todas, 1 - Msg IBank, 2 - SMS)
+                                       ,pr_flfechar_lote IN INTEGER DEFAULT 1
+                                       ,pr_idlote_sms IN OUT NUMBER);
+                                       
   /* Procedimento para efetivar os pagamentos agendados pela Internet e TAA*/
   PROCEDURE pc_efetua_debito_automatico( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
                                         ,pr_nmrescop  IN crapcop.nmrescop%TYPE        --> Nome da coopertiva
@@ -193,7 +210,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 25/02/2016
+     Data    : Abril/2013                       Ultima atualizacao: 24/08/2016
 
      Dados referentes ao programa:
 
@@ -261,6 +278,9 @@ create or replace package body cecred.SICR0001 is
                  
                  25/02/2016 - Incluir validacao de cooperado demitido critica "64" na 
                               procedure pc_efetua_debito_automatico (Lucas Ranghetti #400749)
+                              
+                 24/08/2016 - Incluir tratamento para autorizações suspensas na procedure
+                              pc_efetua_debito_automatico (Lucas Ranghetti #499496)
   ..............................................................................*/
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
@@ -934,7 +954,165 @@ create or replace package body cecred.SICR0001 is
         pr_dscritic:= 'Erro na rotina PAGA0001.pc_gera_relatorio. '||sqlerrm;
   END pc_gera_relatorio;
 
+  ---> Procedure para notificar critica ao cooperado 
+  PROCEDURE pc_notif_cooperado_DEBAUT ( pr_cdcritic  IN INTEGER                 --> Critica na qual o cooperado deve ser notificado
+                                       ,pr_cdcooper  IN crapcop.cdcooper%TYPE   --> Codigo do cooperado 
+                                       ,pr_nmrescop  IN crapcop.nmrescop%TYPE   --> Nome da cooperativa
+                                       ,pr_cdprogra  IN crapprg.cdprogra%TYPE   --> Codigo do programa
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE   --> Numero da conta
+                                       ,pr_nrdocmto  IN craplau.nrdocmto%TYPE   --> Numero do documento
+                                       ,pr_nmconven  IN crapcon.nmextcon%TYPE   --> Nome do convenio
+                                       ,pr_dtmvtopg  IN craplau.dtmvtopg%TYPE   --> Data de pagamento
+                                       ,pr_vllanaut  IN craplau.vllanaut%TYPE   --> Valor do lançamento
+                                       ,pr_vlrmaxdb  IN crapatr.vlrmaxdb%TYPE   --> Limite maximo
+                                       ,pr_cdrefere  IN crapatr.cdrefere%TYPE   --> Codigo de referencia da crapaut
+                                       ,pr_cdhistor  IN crapatr.cdhistor%TYPE   --> Codigo do histórico
+                                       ,pr_tpdnotif  IN INTEGER DEFAULT 0       --> Tipo de notificação a ser enviada (0 - Todas, 1 - Msg IBank, 2 - SMS)
+                                       ,pr_flfechar_lote IN INTEGER DEFAULT 1   --> Indica se deve fechar o lote do SMS 1-Fechar lote , 0-Manter aberto
+                                       ,pr_idlote_sms IN OUT NUMBER             --> Numero do lote do SMS para caso não for fechado o lote do SMS
+                                       ) IS
 
+  /*---------------------------------------------------------------------------------------------------------------
+  --  Programa : pc_notif_cooperado_DEBAUT
+  --   Sistema : Conta-Corrente - Cooperativa de Credito
+  --   Sigla   : CRED
+  --   Autor   : Odirlei Busana - AMcom
+  --   Data    : Maio/2016                       Ultima atualizacao: 19/05/2016
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: Sempre que chamado
+  -- Objetivo  : Procedimento para notificar as criticas ao cooperado
+  --
+  --  Alteracoes: 
+  --
+  --------------------------------------------------------------------------------------------------------------------*/
+    -------------> CURSOR <--------------
+    --Selecionar titulares com senhas ativas 
+    CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
+                       ,pr_nrdconta IN crapsnh.nrdconta%TYPE
+                       ,pr_cdsitsnh IN crapsnh.cdsitsnh%TYPE
+                       ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE) IS
+      SELECT crapsnh.nrcpfcgc
+            ,crapsnh.cdcooper
+            ,crapsnh.nrdconta
+            ,crapsnh.idseqttl
+        FROM crapsnh
+       WHERE crapsnh.cdcooper = pr_cdcooper
+         AND crapsnh.nrdconta = pr_nrdconta
+         AND crapsnh.cdsitsnh = pr_cdsitsnh
+         AND crapsnh.tpdsenha = pr_tpdsenha;
+    rw_crapsnh cr_crapsnh%ROWTYPE;
+      
+    vr_dscritic               VARCHAR2(4000);
+    vr_dsdmensg               VARCHAR2(4000);
+    vr_nmconven               crapcon.nmextcon%TYPE;
+    vr_cdtipo_mensagem_IB     tbgen_tipo_mensagem.cdtipo_mensagem%TYPE;
+    vr_cdtipo_mensagem_SMS    tbgen_tipo_mensagem.cdtipo_mensagem%TYPE;
+    vr_dsdassun               crapmsg.dsdassun%TYPE;
+    vr_dsdplchv               crapmsg.dsdplchv%TYPE;
+    vr_idmotivo               tbconv_motivo_msg.idmotivo%TYPE;
+    vr_valores_dinamicos      VARCHAR2(500);
+    
+        
+  BEGIN
+      
+    --> Definir variaveis conforme a critica
+    CASE pr_cdcritic 
+      WHEN 717 THEN -- saldo insuficiente
+        vr_cdtipo_mensagem_IB  := 3;
+        vr_cdtipo_mensagem_SMS := 5;
+        vr_dsdassun := 'Transação não efetivada';
+        vr_dsdplchv := 'Sem Saldo para Pagamento';
+        vr_idmotivo := 30;
+            
+      WHEN 967 THEN -- excede limite
+        vr_cdtipo_mensagem_IB  := 4;
+        vr_cdtipo_mensagem_SMS := 6;
+        vr_dsdassun := 'Fatura excede limite débito automático';
+        vr_dsdplchv := 'Débito Automático';
+        vr_idmotivo := 31;
+            
+      ELSE RETURN;
+    END CASE;
+    
+    --> Remove as palavras -COD.BARRAS no fim da frase
+    vr_nmconven := TRIM(regexp_replace(pr_nmconven, '\-[^-]*$')); -- Remove o último hífen e tudo após ele
+    vr_nmconven := TRIM(regexp_replace(vr_nmconven, 'COD[. ]*BAR.*$')); -- Esta é caso não possuir hífen, então remove a palavra (COD.BAR ou COD BAR) e tudo após ela
+        
+    --> Variavel para SMS
+    vr_valores_dinamicos := '#Cooperativa#=' ||pr_nmrescop ||';'||
+                            '#Convenio#='|| vr_nmconven    ||';'||
+                            '#Data#='    || to_char(pr_dtmvtopg,'DD/MM/RRRR') ||';'||
+                            '#Valor#='   || to_char(pr_vllanaut,'fm999G999G990D00') ||';'||
+                            '#Limite#='  || to_char(pr_vlrmaxdb,'fm999G999G990D00');
+        
+    --> Se for todos ou Msg Ibank
+    IF pr_tpdnotif IN (0,1) THEN
+      --> Buscar pessoas que possuem acesso a conta
+      FOR rw_crapsnh IN cr_crapsnh (pr_cdcooper  => pr_cdcooper
+                                   ,pr_nrdconta  => pr_nrdconta
+                                   ,pr_cdsitsnh  => 1
+                                   ,pr_tpdsenha  => 1) LOOP
+        --> buscar mensagem
+        vr_dsdmensg := GENE0003.fn_buscar_mensagem
+                                   (pr_cdcooper        => pr_cdcooper
+                                   ,pr_cdproduto       => 10
+                                   ,pr_cdtipo_mensagem => vr_cdtipo_mensagem_IB -- Ibank
+                                   ,pr_sms             => 0
+                                   ,pr_valores_dinamicos => vr_valores_dinamicos);
+                                                                                    
+        --> Insere na tabela de mensagens (CRAPMSG)
+        GENE0003.pc_gerar_mensagem
+                   (pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_idseqttl => rw_crapsnh.idseqttl /* Titular */
+                   ,pr_cdprogra => pr_cdprogra  /* Programa */
+                   ,pr_inpriori => 0
+                   ,pr_dsdmensg => vr_dsdmensg  /* corpo da mensagem */
+                   ,pr_dsdassun => vr_dsdassun  /* Assunto */
+                   ,pr_dsdremet => pr_nmrescop 
+                   ,pr_dsdplchv => vr_dsdplchv
+                   ,pr_cdoperad => 1
+                   ,pr_cdcadmsg => 0
+                   ,pr_dscritic => vr_dscritic);                             
+      END LOOP; -- Fim loop CRAPSNH     
+    END IF;
+            
+    -- Se for todos ou SMS
+    IF pr_tpdnotif IN (0,2) THEN        
+      ----> ENVIAR SMS              
+      --> buscar mensagem
+      vr_dsdmensg := GENE0003.fn_buscar_mensagem
+                               (pr_cdcooper        => pr_cdcooper
+                               ,pr_cdproduto       => 10
+                               ,pr_cdtipo_mensagem => vr_cdtipo_mensagem_SMS --SMS
+                               ,pr_sms             => 1
+                               ,pr_valores_dinamicos => vr_valores_dinamicos);
+                              
+      -- Garantir que o valor vá nulo na primeira SMS do lote
+      pr_idlote_sms := nullif(pr_idlote_sms,0);
+      --> Gravar SMS de alerta de limite excedido
+      ESMS0001.pc_escreve_sms_debaut ( pr_cdcooper    => pr_cdcooper
+                                      ,pr_nrdconta    => pr_nrdconta
+                                      ,pr_dsmensagem  => vr_dsdmensg
+                                      ,pr_vlfatura    => pr_vllanaut
+                                      ,pr_idmotivo    => vr_idmotivo
+                                      ,pr_cdrefere    => pr_cdrefere
+                                      ,pr_cdhistor    => pr_cdhistor
+                                      ,pr_idlote_sms  => pr_idlote_sms
+                                      ,pr_dscritic    => vr_dscritic);
+              
+      --> Concluir envio dos SMS
+      IF pr_flfechar_lote = 1 AND nvl(pr_idlote_sms,0) > 0  THEN
+        ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => pr_idlote_sms 
+                                    ,pr_dscritic    => vr_dscritic);
+        pr_idlote_sms := NULL;
+      END IF;
+      vr_dscritic := NULL;
+    END IF;  
+  END pc_notif_cooperado_DEBAUT;
+  
   /* Procedimento para efetivar os pagamentos agendados pela Internet e TAA*/
   PROCEDURE pc_efetua_debito_automatico( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
                                         ,pr_nmrescop  IN crapcop.nmrescop%TYPE        --> Nome da coopertiva
@@ -954,7 +1132,7 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Lucas Ranghetti
-  --   Data    : Maio/2014                       Ultima atualizacao: 25/02/2016
+  --   Data    : Maio/2014                       Ultima atualizacao: 24/08/2016
   --
   -- Dados referentes ao programa:
   --
@@ -977,6 +1155,21 @@ create or replace package body cecred.SICR0001 is
   --
   --             25/02/2016 - Incluir validacao de cooperado demitido critica "64" na 
   --                          procedure pc_efetua_debito_automatico (Lucas Ranghetti #400749)
+  --
+  --             18/05/2016 - Ajustes para notificar via SMS e IBank quando faturas não forem pagas devido a ultrapassar
+  --                          limite definido da crapatr ou por não possuir saldo e inclusao da criação do protocolo..
+  --                          PRJ320 - Oferta Debaut (Odirlei-AMcom) 
+  --
+  --             27/07/2016 - Desabilitar temporariamente a criação do protocolo devido existir
+  --                          diferença no tamanho do campo de protocolo entre  a tabela crappro e crapaut
+  --                          acarretando erro ao atualizar tabela crapaut.
+  --                          PRJ320 - Oferta Debaut (Odirlei-AMcom) 
+  --
+  --             24/08/2016 - Incluir tratamento para autorizações suspensas na procedure
+  --                          pc_efetua_debito_automatico (Lucas Ranghetti #499496)
+  --             08/09/2016 - Remover condicao temporaria de criacao de protocolo. Agora todos os debitos
+  --                          podem ter seu comprovante gerado normalmente, devido ao ajuste na estrutura
+  --                          da tabela crapaut. (Anderson #511078)
   --------------------------------------------------------------------------------------------------------------------
   BEGIN
 
@@ -995,6 +1188,17 @@ create or replace package body cecred.SICR0001 is
       vr_nmconven crapcon.nmextcon%TYPE;     
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;       
+      
+      vr_dsinfor1  crappro.dsinform##1%TYPE;
+      vr_dsinfor2  crappro.dsinform##1%TYPE;
+      vr_dsinfor3  crappro.dsinform##1%TYPE;
+      vr_dsprotoc  crappro.dsprotoc%TYPE;
+      vr_nrdolote_sms NUMBER;
+      
+      -- Autenticação
+      vr_dslitera  crapaut.dslitera%TYPE;
+      vr_nrautdoc  crapaut.nrsequen%TYPE;
+      vr_nrdrecid  ROWID;
       
       -- Tratamento de erros exceptions
       vr_exc_erro  EXCEPTION;
@@ -1068,10 +1272,17 @@ create or replace package body cecred.SICR0001 is
             ,ass.cdagenci cdagenci_ass
             ,ass.dtdemiss
             ,lau.flgblqdb
+            ,lau.cdcoptfn
+            ,lau.cdagetfn
+            ,lau.nrterfin
+            ,lau.nrcpfope
+            ,lau.nrcpfpre
+            ,lau.nmprepos
+            ,lau.idseqttl            
         FROM craplau lau
             ,crapass ass
        WHERE lau.cdcooper = pr_cdcooper  AND
-			       lau.dtmvtopg = pr_dtmvtolt  AND
+			 lau.dtmvtopg = pr_dtmvtolt  AND
              lau.nrdconta = pr_nrdconta  AND
              lau.nrdocmto = pr_nrdocmto  AND
              lau.cdhistor = 1019         AND
@@ -1079,10 +1290,10 @@ create or replace package body cecred.SICR0001 is
              ass.cdcooper = lau.cdcooper AND
              ass.nrdconta = lau.nrdconta 
        ORDER BY lau.cdagenci
-               ,lau.cdbccxlt
-               ,lau.cdbccxpg
-               ,lau.cdhistor
-               ,lau.nrdocmto;
+              ,lau.cdbccxlt
+              ,lau.cdbccxpg
+              ,lau.cdhistor
+              ,lau.nrdocmto;
 			rw_craplau cr_craplau%ROWTYPE;
 
       CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE,
@@ -1110,10 +1321,15 @@ create or replace package body cecred.SICR0001 is
                         pr_cdrefere IN crapatr.cdrefere%TYPE) IS
           SELECT atr.dtfimatr
                 ,atr.cdrefere
+                ,atr.cdhistor
                 ,atr.dtultdeb
                 ,atr.rowid
                 ,atr.flgmaxdb
                 ,atr.vlrmaxdb
+                ,atr.cdempcon
+                ,atr.cdsegmto
+                ,atr.dshisext
+                ,atr.dtfimsus
             FROM crapatr atr
            WHERE atr.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
              AND atr.nrdconta = pr_nrdconta -- NUMERO DA CONTA
@@ -1125,10 +1341,15 @@ create or replace package body cecred.SICR0001 is
       CURSOR cr_crapatr_rowid(pr_rowid IN ROWID) IS
         SELECT atr.dtfimatr
               ,atr.cdrefere
+              ,atr.cdhistor
               ,atr.dtultdeb
               ,atr.rowid
               ,atr.flgmaxdb
               ,atr.vlrmaxdb
+              ,atr.cdempcon
+              ,atr.cdsegmto
+              ,atr.dshisext
+              ,atr.dtfimsus
           FROM crapatr atr
          WHERE atr.rowid = pr_rowid;
       
@@ -1176,7 +1397,8 @@ create or replace package body cecred.SICR0001 is
       CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
                         ,pr_cdempcon IN crapcon.cdempcon%type
                         ,pr_cdsegmto IN crapcon.cdsegmto%type) IS
-        SELECT crapcon.nmextcon
+        SELECT crapcon.nmextcon,
+               crapcon.nmrescon
           FROM crapcon
          WHERE crapcon.cdcooper = pr_cdcooper
            AND crapcon.cdempcon = pr_cdempcon
@@ -1305,15 +1527,40 @@ create or replace package body cecred.SICR0001 is
         -- se encontrar erro
         IF vr_des_erro = 'NOK' THEN
           -- atualiza temp-table com a critica de erro
-		      pr_dscritic := 'Nao foi possivel consultar saldo para operacao.';
-
+		  pr_dscritic := 'Nao foi possivel consultar saldo para operacao.';
           -- Volta para o inicio do loop
           CONTINUE;
         END IF;
         
+        -- Identificar se conta possui autorizacao de debaut
+        pc_identifica_crapatr( pr_cdcooper  => rw_craplau.cdcooper    --> Código da coopertiva
+                              ,pr_nrdconta  => rw_craplau.nrdconta    --> Numero da conta
+                              ,pr_nrdocmto  => rw_craplau.nrdocmto    --> Documento                              
+                              ,pr_cdhistor  => rw_craplau.cdhistor    --> Codigo de historico
+                              ,pr_nrcrcard  => rw_craplau.nrcrcard    --> Numero do cartao                                  
+                              ,pr_cdprogra  => 'SICR0001'             --> Código do programa                                  
+                              ,pr_flagatr   => vr_flagatr             --> Flag se possui atr
+                              ,pr_rowid_atr => vr_rowid_atr           --> Retorna rowid do registro crapatr localizado
+                              ,pr_cdcritic  => vr_cdcritic            --> Codigo da critica de erro
+                              ,pr_dscritic  => vr_dscritic );         --> descrição do erro se ocorrer
         
-        -- Se for a primeira tentativa de debito, validar Autorizacao de debito
-        IF vr_qtdexec = 1 THEN
+        rw_crapatr := NULL;
+        OPEN cr_crapatr_rowid(pr_rowid => vr_rowid_atr);
+        FETCH cr_crapatr_rowid INTO rw_crapatr;
+        CLOSE cr_crapatr_rowid;
+        
+        --> Buscar o nome do convenio
+        OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
+                        ,pr_cdempcon => rw_crapatr.cdempcon
+                        ,pr_cdsegmto => rw_crapatr.cdsegmto);
+        --Posicionar no proximo registro
+        FETCH cr_crapcon INTO rw_crapcon;
+        --Se nao encontrar
+        IF cr_crapcon%FOUND THEN
+          vr_nmconven := rw_crapcon.nmextcon;
+        END IF;          
+        CLOSE cr_crapcon;        
+        
           OPEN cr_craphis(pr_cdcooper => vr_cdcooper,          -- CODIGO DA COOPERATIVA
                           pr_cdhistor => rw_craplau.cdhistor); -- CODIGO DO HISTORICO
           FETCH cr_craphis
@@ -1329,32 +1576,77 @@ create or replace package body cecred.SICR0001 is
           
           -- Verificar se historico é de debito autoizado
           IF rw_craphis.inautori = 1 THEN
-            -- Identificar se conta possui autorizacao de debaut
-            pc_identifica_crapatr( pr_cdcooper  => rw_craplau.cdcooper    --> Código da coopertiva
-                                  ,pr_nrdconta  => rw_craplau.nrdconta    --> Numero da conta
-                                  ,pr_nrdocmto  => rw_craplau.nrdocmto    --> Documento                              
-                                  ,pr_cdhistor  => rw_craplau.cdhistor    --> Codigo de historico
-                                  ,pr_nrcrcard  => rw_craplau.nrcrcard    --> Numero do cartao                                  
-                                  ,pr_cdprogra  => 'SICR0001'             --> Código do programa                                  
-                                  ,pr_flagatr   => vr_flagatr             --> Flag se possui atr
-                                  ,pr_rowid_atr => vr_rowid_atr           --> Retorna rowid do registro crapatr localizado
-                                  ,pr_cdcritic  => vr_cdcritic            --> Codigo da critica de erro
-                                  ,pr_dscritic  => vr_dscritic );         --> descrição do erro se ocorrer
-          
-            rw_crapatr := NULL;
-            OPEN cr_crapatr_rowid(pr_rowid => vr_rowid_atr);
-            FETCH cr_crapatr_rowid INTO rw_crapatr;
-            CLOSE cr_crapatr_rowid;
-            
             --> Verifica se existem registro na crapatr
             IF vr_flagatr = 0 THEN
               vr_cdcritic := 453;  -- Autorizacao nao encontrada
 
             -- VERIFICA DATA FIM DA AUTORIZACAO
-            ELSIF rw_crapatr.dtfimatr IS NOT NULL THEN
+            ELSIF rw_crapatr.dtfimatr IS NOT NULL OR
+                  rw_crapatr.dtfimsus >= pr_dtmvtolt THEN
               vr_cdcritic := 447; -- AUTORIZACAO CANCELADA
-            -- TRATAMENTO DÉBITO FÁCIL
-            ELSIF rw_crapatr.flgmaxdb = 1 THEN
+            END IF;
+        END IF;
+          
+        -- Validar cooperado demitido
+        IF rw_craplau.dtdemiss IS NOT NULL THEN
+        vr_cdcritic := 64; -- Cooperado demitido
+        END IF;
+          
+        IF vr_cdcritic > 0 THEN
+              
+        -- Gerar registros na crapndb para devolucao de debitos automaticos
+        CONV0001.pc_gerandb(pr_cdcooper => vr_cdcooper         -- CÓDIGO DA COOPERATIVA
+                            ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
+                            ,pr_nrdconta => rw_craplau.nrdconta -- NUMERO DA CONTA
+                            ,pr_cdrefere => rw_craplau.nrdocmto -- CÓDIGO DE REFERÊNCIA
+                            ,pr_vllanaut => rw_craplau.vllanaut -- VALOR LANCAMENTO
+                            ,pr_cdseqtel => rw_craplau.cdseqtel -- CÓDIGO SEQUENCIAL
+                            ,pr_nrdocmto => rw_craplau.nrdocmto -- NÚMERO DO DOCUMENTO
+                            ,pr_cdagesic => pr_cdagesic         -- AGÊNCIA SICREDI
+                            ,pr_nrctacns => rw_craplau.nrctacns -- CONTA DO CONSÓRCIO
+                            ,pr_cdagenci => rw_craplau.cdagenci_ass -- CODIGO DO PA
+                            ,pr_cdempres => rw_craplau.cdempres -- CODIGO EMPRESA SICREDI
+                            ,pr_codcriti => vr_cdcritic         -- CÓDIGO DO ERRO
+                            ,pr_cdcritic => vr_aux_cdcritic     -- CÓDIGO DO ERRO
+                            ,pr_dscritic => vr_dscritic);       -- DESCRICAO DO ERRO
+
+        -- VERIFICA SE HOUVE ERRO NA PROCEDURE PC_GERANDB
+        IF nvl(vr_aux_cdcritic,0) > 0 OR
+            TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_cdcritic := vr_aux_cdcritic;
+            RAISE vr_exc_erro;
+        END IF;
+                
+        IF vr_cdcritic IN (64,447,453,964,967) THEN          
+            BEGIN
+
+            -- Atualiza registros de lancamentos automaticos
+            UPDATE craplau
+                SET craplau.insitlau = 3,
+                    craplau.dtdebito = pr_dtmvtolt,
+                    craplau.cdcritic = NVL(vr_cdcritic, 0)
+                WHERE craplau.rowid = rw_craplau.rowid;
+
+            -- Verifica se houve problema na atualização do registro
+            EXCEPTION
+            WHEN OTHERS THEN
+                vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+                RAISE vr_exc_erro;
+            END;
+              
+            -- Apos colocar registro como cancelado deve retornar ao programa chamador sem dar rollback
+            vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);              
+            RAISE vr_exc_saida;
+              
+		  END IF;          
+        END IF;        
+        
+        --> Validações debaut
+        BEGIN
+        
+          -- Verificar se historico é de debito autoizado
+          IF rw_craphis.inautori = 1 THEN
+            IF rw_crapatr.flgmaxdb = 1 THEN
               IF rw_craplau.vllanaut > rw_crapatr.vlrmaxdb THEN									
                 vr_cdcritic := 967;  -- Limite ultrapassado.
               END IF;
@@ -1365,13 +1657,43 @@ create or replace package body cecred.SICR0001 is
             vr_cdcritic := 964; -- Lancamento bloqueado
           END IF;
           
-          -- Validar cooperado demitido
-          IF rw_craplau.dtdemiss IS NOT NULL THEN
-            vr_cdcritic := 64; -- Cooperado demitido
-          END IF;
-          
+          --> Se identificou critica
           IF vr_cdcritic > 0 THEN
+            -- Se for a primeira tentativa de debito
+            IF vr_qtdexec = 1 AND 
+               vr_cdcritic NOT IN (964) THEN
+              ---> Notificar critica ao cooperado 
+              pc_notif_cooperado_DEBAUT(  pr_cdcritic  => vr_cdcritic
+                                         ,pr_cdcooper  => pr_cdcooper 
+                                         ,pr_nmrescop  => pr_nmrescop
+                                         ,pr_cdprogra  => pr_cdprogra
+                                         ,pr_nrdconta  => rw_craplau.nrdconta
+                                         ,pr_nrdocmto  => rw_craplau.nrdocmto
+                                         ,pr_nmconven  => vr_nmconven
+                                         ,pr_dtmvtopg  => rw_craplau.dtmvtopg
+                                         ,pr_vllanaut  => rw_craplau.vllanaut
+                                         ,pr_vlrmaxdb  => rw_crapatr.vlrmaxdb
+                                         ,pr_cdrefere  => rw_crapatr.cdrefere
+                                         ,pr_cdhistor  => rw_crapatr.cdhistor
+                                         ,pr_tpdnotif  => 1 --> Apenas MSG IBank
+                                         ,pr_flfechar_lote => 1 -- Fechar
+                                         ,pr_idlote_sms   => vr_nrdolote_sms);
+										 
+				BEGIN
+                  -- ATUALIZA CRITICA VALOR LIMITE EXCEDIDO PARA A DEBCON
+                  UPDATE craplau
+                     SET cdcritic = vr_cdcritic
+                  WHERE craplau.rowid = rw_craplau.rowid;
+
+                  -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+                EXCEPTION
+                  WHEN OTHERS THEN
+                    vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
+                  RAISE vr_exc_erro;
+                END;
               
+            --> Se for a ultima tentativa
+            ELSIF vr_flultexe = 1 THEN
             -- Gerar registros na crapndb para devolucao de debitos automaticos
             CONV0001.pc_gerandb(pr_cdcooper => vr_cdcooper         -- CÓDIGO DA COOPERATIVA
                                ,pr_cdhistor => rw_craplau.cdhistor -- CÓDIGO DO HISTÓRICO
@@ -1395,7 +1717,6 @@ create or replace package body cecred.SICR0001 is
               RAISE vr_exc_erro;
             END IF;
                 
-            IF vr_cdcritic IN (64,447,453,964,967) THEN          
               BEGIN
 
                 -- Atualiza registros de lancamentos automaticos
@@ -1411,64 +1732,37 @@ create or replace package body cecred.SICR0001 is
                   vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
                   RAISE vr_exc_erro;
               END;
+            END IF;
               
               -- Apos colocar registro como cancelado deve retornar ao programa chamador sem dar rollback
               vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);              
               RAISE vr_exc_saida;
               
             END IF;          
-          END IF;
-        END IF;--> Fim inproces
+        END;
         
         vr_ind_sald := vr_tab_sald.last;
         -- Se o saldo disponível for menor do que o Débito a ser lançado
         IF  rw_craplau.vllanaut > ( vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre ) THEN
+          
           -- Se for a primeira tentativa do dia, apenas incluir a mensagem para o cooperado
-		      IF vr_qtdexec = 1 THEN
-            FOR rw_crapsnh IN cr_crapsnh (pr_cdcooper  => pr_cdcooper
+		  IF vr_qtdexec = 1 THEN
+          
+            ---> Notificar critica ao cooperado 
+            pc_notif_cooperado_DEBAUT( pr_cdcritic  => 717 -- Nao ha saldo suficiente para a operacao
+                                   ,pr_cdcooper  => pr_cdcooper 
+                                   ,pr_nmrescop  => pr_nmrescop
+                                   ,pr_cdprogra  => pr_cdprogra
                                          ,pr_nrdconta  => rw_craplau.nrdconta
-                                         ,pr_cdsitsnh  => 1
-                                         ,pr_tpdsenha  => 1) LOOP
-    																						 																						 							
-              OPEN cr_crapttl (pr_cdcooper  => rw_crapsnh.cdcooper
-                              ,pr_nrdconta  => rw_crapsnh.nrdconta
-                              ,pr_idseqttl  => rw_crapsnh.idseqttl);
-              FETCH cr_crapttl INTO rw_crapttl;							
-    								
-              IF cr_crapttl%FOUND THEN
-                OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
-                                ,pr_cdempcon => TO_NUMBER(SUBSTR(rw_craplau.dscodbar,16,4))
-                                ,pr_cdsegmto => TO_NUMBER(SUBSTR(rw_craplau.dscodbar,2,1)));
-                --Posicionar no proximo registro
-                FETCH cr_crapcon INTO rw_crapcon;
-                --Se nao encontrar
-                IF cr_crapcon%FOUND THEN
-                  vr_nmconven := rw_crapcon.nmextcon;
-                END IF;
-                CLOSE cr_crapcon;											
-
-                vr_dsdmensg := 'Atenção, ' || rw_crapttl.nmextttl || '! <br><br><br>' ||
-                               'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                               '<b>Pagamento de Convênio ' || vr_nmconven || '</b> agendado para <b>' ||
-                               to_char(rw_craplau.dtmvtopg, 'dd/mm/yyyy') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-                               '</b> por insuficiência de saldo.';
-    										 				 														 
-                -- Criação de mensagem de notificação no internetbank
-                GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
-                                           ,pr_nrdconta   => rw_craplau.nrdconta
-                                           ,pr_idseqttl   => rw_crapsnh.idseqttl
-                                           ,pr_cdprogra   => 'SICR0001'
-                                           ,pr_inpriori   => 0
-                                           ,pr_dsdmensg   => vr_dsdmensg
-                                           ,pr_dsdassun   => 'Transação não efetivada'
-                                           ,pr_dsdremet   => pr_nmrescop
-                                           ,pr_dsdplchv   => 'Sem Saldo para Pagamento'
-                                           ,pr_cdoperad   => '1'
-                                           ,pr_cdcadmsg   => '0'
-                                           ,pr_dscritic   => vr_dscritic);
-              END IF;								 	
-              CLOSE cr_crapttl;
-            END LOOP;							                                                 
+                                   ,pr_nrdocmto  => rw_craplau.nrdocmto
+                                   ,pr_nmconven  => vr_nmconven
+                                   ,pr_dtmvtopg  => rw_craplau.dtmvtopg
+                                   ,pr_vllanaut  => rw_craplau.vllanaut
+                                   ,pr_vlrmaxdb  => rw_crapatr.vlrmaxdb
+                                   ,pr_cdrefere  => rw_crapatr.cdrefere
+                                   ,pr_cdhistor  => rw_crapatr.cdhistor
+                                   ,pr_flfechar_lote => 1 -- Fechar
+                                   ,pr_idlote_sms   => vr_nrdolote_sms);  					                                                 
           
           /* Se for a ultima tentativa */          
           ELSIF vr_flultexe = 1 THEN
@@ -1594,6 +1888,41 @@ create or replace package body cecred.SICR0001 is
 					-- Fechar cursor de lançamento
           CLOSE cr_craplcm;
 
+          ---> Gerar autenticação do pagamento
+          CXON0000.pc_grava_autenticacao_internet 
+                            (pr_cooper       => rw_craplau.cdcooper
+                            ,pr_nrdconta     => rw_craplau.nrdconta
+                            ,pr_idseqttl     => rw_craplau.idseqttl          --Sequencial do titular
+                            ,pr_cod_agencia  => rw_craplau.cdagenci  --Codigo Agencia
+                            ,pr_nro_caixa    => 900                  --Numero do caixa
+                            ,pr_cod_operador => 996                  --Codigo Operador
+
+                            ,pr_valor        => rw_craplau.vllanaut  --Valor da transacao
+                            ,pr_docto        => vr_nrdocmto          --Numero documento
+                            ,pr_operacao     => TRUE                 --Indicador Operacao Debito
+                            ,pr_status       => '1'                  --Status da Operacao - Online
+                            ,pr_estorno      => FALSE                --Indicador Estorno
+                            ,pr_histor       => rw_craplau.cdhistor  --Historico Debito (Sicredi é 1019 pode passar fixo)
+
+                            ,pr_data_off     => NULL            --Data Transacao
+                            ,pr_sequen_off   => 0               --Sequencia
+                            ,pr_hora_off     => 0               --Hora transacao
+                            ,pr_seq_aut_off  => 0               --Sequencia automatica
+                            ,pr_cdempres     => NULL            --Descricao Observacao
+
+                            ,pr_literal      => vr_dslitera     --Descricao literal lcm
+                            ,pr_sequencia    => vr_nrautdoc     --Sequencia
+                            ,pr_registro     => vr_nrdrecid     --ROWID do registro debito
+                            ,pr_cdcritic     => vr_cdcritic     --Código do erro
+                            ,pr_dscritic     => vr_dscritic);   --Descricao do erro
+          
+          --Se ocorreu erro
+          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro na autenticacao do pagamento: '||vr_dscritic;
+            RAISE vr_exc_erro;
+          END IF;  
+          
           -- Atualiza o sequencial da capa do lote
           rw_craplot.nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
 
@@ -1612,6 +1941,7 @@ create or replace package body cecred.SICR0001 is
                  cdhistor,
                  nrseqdig,
                  nrdctitg,
+                 nrautdoc,
                  cdpesqbb)
             VALUES (
                 rw_craplau.cdcooper,
@@ -1626,6 +1956,7 @@ create or replace package body cecred.SICR0001 is
                 rw_craplau.cdhistor,
                 rw_craplot.nrseqdig + 1,
                 rw_craplau.nrdctabb,
+                vr_nrautdoc,
                 'Lote '                               ||
                 to_char(rw_craplau.dtmvtolt,'dd')     ||
                 '/'                                   ||
@@ -1672,6 +2003,60 @@ create or replace package body cecred.SICR0001 is
                 vr_dscritic := 'Erro ao atualizar craplau: '||SQLERRM;
                 RAISE vr_exc_erro;
             END;
+
+            -- GERAR PROTOCOLO
+            -->Campos gravados na crappro para visualizacao na internet
+              vr_dsinfor1 := 'Pagamento';
+              vr_dsinfor2 := ' ';
+              vr_dsinfor3 := 'Convênio: '||rw_crapcon.nmextcon||
+                             '#Número Identificador:'||rw_crapatr.cdrefere ||'#'|| rw_crapatr.dshisext;
+
+              --> Se TAA 
+              IF rw_craplau.dsorigem= 'TAA' THEN
+                vr_dsinfor3:= vr_dsinfor3 ||'#TAA: '||gene0002.fn_mask(rw_craplau.cdcoptfn,'9999')||'/'||
+                                                      gene0002.fn_mask(rw_craplau.cdagetfn,'9999')||'/'||
+                                                      gene0002.fn_mask(rw_craplau.nrterfin,'9999');
+              END IF;
+              --> Gera um protocolo para o pagamento
+              GENE0006.pc_gera_protocolo(pr_cdcooper => rw_craplau.cdcooper  --> Código da cooperativa
+                                        ,pr_dtmvtolt => rw_craplot.dtmvtolt  --> Data movimento
+                                        ,pr_hrtransa => gene0002.fn_busca_time --> Hora da transação
+                                        ,pr_nrdconta => rw_craplau.nrdconta  --> Número da conta
+                                        ,pr_nrdocmto => vr_nrdocmto          --> Número do documento
+                                        ,pr_nrseqaut => vr_nrautdoc          --> Número da sequencia
+                                        ,pr_vllanmto => rw_craplau.vllanaut  --> Valor lançamento
+                                        ,pr_nrdcaixa => 900                  --> Número do caixa
+                                        ,pr_gravapro => TRUE                 --> Controle de gravação do crappro
+                                        ,pr_cdtippro => 15 -- convenio       --> Código do tipo protocolo
+                                        ,pr_dsinfor1 => vr_dsinfor1          --> Descrição 1
+                                        ,pr_dsinfor2 => vr_dsinfor2          --> Descrição 2
+                                        ,pr_dsinfor3 => vr_dsinfor3          --> Descrição 3
+                                        ,pr_dscedent => rw_crapcon.nmextcon  --> Descritivo Cedente
+                                        ,pr_flgagend => FALSE                --> Controle de agenda
+                                        ,pr_nrcpfope => rw_craplau.nrcpfope  --> Número de operação
+                                        ,pr_nrcpfpre => rw_craplau.nrcpfpre  --> Número pré operação
+                                        ,pr_nmprepos => rw_craplau.nmprepos  --> Nome
+                                        ,pr_dsprotoc => vr_dsprotoc          --> Descrição do protocolo
+                                        ,pr_dscritic => vr_dscritic          --> Descrição crítica
+                                        ,pr_des_erro => vr_des_erro);        --> Descrição dos erros de processo
+              --Se ocorreu erro
+              IF vr_dscritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
+              
+              --> Armazena protocolo na autenticacao 
+              BEGIN
+                UPDATE crapaut 
+                   SET crapaut.dsprotoc = vr_dsprotoc
+                 WHERE crapaut.ROWID = vr_nrdrecid;
+              EXCEPTION
+                WHEN OTHERS THEN
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Erro ao atualizar registro da autenticacao. '||sqlerrm;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END;
 
 						-- Atualiza data do último débito da autorização
             OPEN cr_crapatr(pr_cdcooper => rw_craplau.cdcooper,
