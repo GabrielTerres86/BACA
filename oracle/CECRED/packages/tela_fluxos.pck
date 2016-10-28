@@ -1411,6 +1411,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
     GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                           ,pr_tag_pai  => 'total'
                           ,pr_posicao  => 0
+                          ,pr_tag_nova => 'nmrescop'
+                          ,pr_tag_cont => (CASE WHEN pr_cdcooper = 0 THEN 'TODAS' ELSE CYBE0002.fn_nom_cooperativa(pr_cdcooper) END)
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'total'
+                          ,pr_posicao  => 0
                           ,pr_tag_nova => 'tot_projetado'
                           ,pr_tag_cont => TO_CHAR(vr_tot_projetado,'FM999G999G999G990D00')
                           ,pr_des_erro => vr_dscritic);
@@ -1747,8 +1754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
 
       -- Busca tranferencia de valores
       CURSOR cr_craptvl(pr_cdcooper IN craptvl.cdcooper%TYPE
-                       ,pr_dtmvtolt IN craptvl.dtmvtolt%TYPE
-                       ,pr_cdbcoenv IN craptvl.cdbcoenv%TYPE) IS
+                       ,pr_dtmvtolt IN craptvl.dtmvtolt%TYPE) IS
         SELECT cdcooper
               ,cdagenci
               ,cdbcoenv
@@ -1756,7 +1762,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
           FROM craptvl
          WHERE cdcooper = pr_cdcooper
            AND dtmvtolt = pr_dtmvtolt
-           AND cdbcoenv = DECODE(pr_cdbcoenv, 0, cdbcoenv, pr_cdbcoenv)
            AND tpdoctrf <> 3; -- DOC
 
       -- Busca titulos acolhidos
@@ -1780,6 +1785,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
          WHERE cdcooper = pr_cdcooper
            AND flgdsede = 1;
       rw_crapage cr_crapage%ROWTYPE;
+
+      -- Busca informacoes da movimentacao
+      CURSOR cr_crapffm(pr_cdcooper IN crapffm.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapffm.dtmvtolt%TYPE) IS
+        SELECT vltotdoc + vltottit vldoctit
+          FROM crapffm 
+         WHERE cdcooper = pr_cdcooper
+           AND cdbccxlt = 85
+           AND dtmvtolt = pr_dtmvtolt
+           AND tpdmovto = 1; -- Entrada
+      rw_crapffm cr_crapffm%ROWTYPE;
 
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1811,13 +1827,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       vr_valorchq NUMBER;
       vr_vlcobbil NUMBER := 0;
       vr_vlcobmlt NUMBER := 0;
-      vr_vlcobtit NUMBER := 0; 
-      vr_vlcobdoc NUMBER := 0;
+      vr_vldoctit NUMBER := 0;
       vr_vlchqnot NUMBER := 0;
       vr_vlchqdia NUMBER := 0;
-      vr_vlrdocnr NUMBER := 0;
-      vr_vlrtitnr NUMBER := 0;
-      vr_idbcoctl INTEGER;
       vr_dstextab craptab.dstextab%TYPE;
 
     BEGIN
@@ -1867,11 +1879,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       ELSE
         vr_dtliquid := GENE0005.fn_valida_dia_util
                                (pr_cdcooper => pr_cdcooper
-                               ,pr_dtmvtolt => vr_dtrefere
+                               ,pr_dtmvtolt => vr_dtrefere - 1
                                ,pr_tipo     => 'A');
         vr_dtliqui2 := GENE0005.fn_valida_dia_util
                                (pr_cdcooper => pr_cdcooper
-                               ,pr_dtmvtolt => vr_dtliquid
+                               ,pr_dtmvtolt => vr_dtliquid - 1
                                ,pr_tipo     => 'A');
 
         -- Busca as informacoes da cooperativa
@@ -1967,8 +1979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
 
           -- Busca tranferencia de valores
           FOR rw_craptvl IN cr_craptvl(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtmvtolt => vr_dtliquid
-                                      ,pr_cdbcoenv => 0) LOOP
+                                      ,pr_dtmvtolt => vr_dtliquid) LOOP
             IF rw_craptvl.vldocrcb >= vr_valorvlb THEN
               vr_vlcobbil := vr_vlcobbil + rw_craptvl.vldocrcb;
             ELSE
@@ -1986,57 +1997,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
             END IF;
           END LOOP;
 
-          -- Busca tranferencia de valores
-          FOR rw_craptvl IN cr_craptvl(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtmvtolt => vr_dtliquid
-                                      ,pr_cdbcoenv => 85) LOOP
-            CASE rw_craptvl.cdbcoenv
-              -- Somar se o banco enviado pelo banco 85
-              WHEN 85 THEN
-                vr_vlrdocnr := vr_vlrdocnr + NVL(rw_craptvl.vldocrcb,0);
-              WHEN 0 THEN
-                vr_idbcoctl := FLXF0001.fn_identifica_bcoctl
-                                       (pr_cdcooper => rw_craptvl.cdcooper -- Codigo da cooperativa
-                                       ,pr_cdagenci => rw_craptvl.cdagenci -- Codigo da agencia
-                                       ,pr_idtpdoct => 'D');               -- Tipo de documento (T-titulo,D-doc,C-cheque)
-                -- Somar se o banco de cheques da agencia for 85
-                IF vr_idbcoctl = 1 THEN
-                  vr_vlrdocnr := vr_vlrdocnr + NVL(rw_craptvl.vldocrcb,0);
-                END IF;
-            END CASE;
-          END LOOP;
-
-          -- Somar titulos encontrados
-          vr_vlcobdoc := vr_vlcobdoc + vr_vlrdocnr;
-
-          -- Busca titulos acolhidos
-          FOR rw_craptit IN cr_craptit(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtdpagto => vr_dtliquid) LOOP
-            CASE rw_craptit.cdbcoenv
-              -- Somar se o banco enviado pelo banco 85
-              WHEN 85 THEN
-                vr_vlrtitnr := vr_vlrtitnr + NVL(rw_craptit.vldpagto,0);
-              WHEN 0 THEN
-                vr_idbcoctl := FLXF0001.fn_identifica_bcoctl
-                                       (pr_cdcooper => rw_craptit.cdcooper -- codigo da cooperativa
-                                       ,pr_cdagenci => rw_craptit.cdagenci -- Codigo da agencia
-                                       ,pr_idtpdoct => 'T');               -- Tipo de documento (T-titulo,D-doc,C-cheque)
-                -- Somar se o banco de cheques da agencia for 85
-                IF vr_idbcoctl = 1 THEN
-                  vr_vlrtitnr := vr_vlrtitnr + NVL(rw_craptit.vldpagto,0);
-                END IF;
-
-            END CASE;
-          END LOOP;
-
-          -- Somar titulos encontrados
-          vr_vlcobtit := vr_vlcobtit + vr_vlrtitnr;
+          -- Busca informacoes da movimentacao
+          OPEN cr_crapffm(pr_cdcooper => rw_crapcop.cdcooper
+                         ,pr_dtmvtolt => vr_dtliquid);
+          FETCH cr_crapffm INTO rw_crapffm;
+          CLOSE cr_crapffm;
+          -- Soma dos DOC e Titulos
+          vr_vldoctit := vr_vldoctit + NVL(rw_crapffm.vldoctit,0);
 
         END LOOP; -- cr_crapcop
 
         vr_vlcbdonr := vr_vlcobbil + vr_vlcobmlt;
-        vr_vlcbdosr := vr_vlcobtit + vr_vlcobdoc;
-        vr_vlpreliq := (vr_vlcobtit + vr_vlcobdoc ) - (vr_vlcobbil + vr_vlcobmlt);
+        vr_vlcbdosr := vr_vldoctit;
+        vr_vlpreliq := vr_vldoctit - vr_vlcbdonr;
         vr_vlcmpnot := vr_vlchqnot;
         vr_vlcmpdiu := vr_vlchqdia;
       END IF;

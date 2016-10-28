@@ -536,5 +536,5 @@
     var cTodosFormulario = $('input[type="text"]', '#frmOpcaoF');
     cTodosFormulario.css('text-align', 'right').desabilitaCampo();
     $('.clsDestacar','#frmOpcaoF').css({'background-color': '#FFEFB5'});
-    trocaBotao('','','btnVoltar()');
+    trocaBotao('','','btnVoltarOpcaoF()');
 </script>

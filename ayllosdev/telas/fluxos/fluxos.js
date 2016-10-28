@@ -100,6 +100,13 @@ function btnVoltar() {
     return false;
 }
 
+function btnVoltarOpcaoF() {
+    estadoInicial();
+    $('#cddopcao', '#frmCab').val('F');
+    ativaCampoCabecalho();
+    return false;
+}
+
 function ativaCampoCabecalho() {
 
 	cCddopcao.desabilitaCampo();
@@ -133,7 +140,11 @@ function ativaCampoCabecalho() {
 
             cTpdmovto.unbind('keypress').bind('keypress', function(e) {
                 if (e.keyCode == 13 || e.keyCode == 9) {
-                    cCdcooper.focus();
+                    if (glb_cdcooper == 3) {
+                        cCdcooper.focus();
+                    } else {
+                        controlaOperacao();
+                    }
                     return false;
                 }
             });
@@ -160,6 +171,7 @@ function ativaCampoCabecalho() {
             break;
 
         case 'G':
+            cDtlimite.val(glb_dtmvtolt)
             trocaBotao('Prosseguir','abreDownload()','btnVoltar()');
             cCddopcao.css('width', '145px');
             rDtmvtolt.show();
@@ -178,7 +190,11 @@ function ativaCampoCabecalho() {
 
             cDtlimite.unbind('keypress').bind('keypress', function(e) {
                 if (e.keyCode == 13 || e.keyCode == 9) {
-                    cCdcooper.focus();
+                    if (glb_cdcooper == 3) {
+                        cCdcooper.focus();
+                    } else {
+                        abreDownload();
+                    }
                     return false;
                 }
             });
@@ -205,7 +221,11 @@ function ativaCampoCabecalho() {
 
             cDtmvtolt.unbind('keypress').bind('keypress', function(e) {
                 if (e.keyCode == 13 || e.keyCode == 9) {
-                    cCdcooper.focus();
+                    if (glb_cdcooper == 3) {
+                        cCdcooper.focus();
+                    } else {
+                        controlaOperacao();
+                    }
                     return false;
                 }
             });
@@ -332,6 +352,13 @@ function formataOpcaoR() {
     var cVldiv748 = $('#vldiv748', '#frmOpcaoR');
     var cVlresgat = $('#vlresgat', '#frmOpcaoR');
     var cVlaplica = $('#vlaplica', '#frmOpcaoR');
+    
+    cVldiv085.attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+    cVldiv001.attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+    cVldiv756.attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+    cVldiv748.attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+    cVlresgat.attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
+    cVlaplica.attr('alt', 'n9p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');
 
     cVldiv085.unbind('blur').bind('blur', function(e) {
         carregaValorDiversos();

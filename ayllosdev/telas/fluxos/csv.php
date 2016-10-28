@@ -43,6 +43,7 @@
     }
 
     $registros = $xmlObject->roottag->tags[0]->tags[0]->tags;
+    $reg_total = $xmlObject->roottag->tags[0]->tags[1];
 
     $arrRegist = array();
     foreach( $registros as $r ) {
@@ -194,8 +195,15 @@
     $str .= 'SICREDI;Saída;GPS;'.$arrRegist['7484']['VLTTINSS'].';'.$arrRegist['7482']['VLTTINSS'].';'.$arrRegist['7484']['DIF_RS_VLTTINSS'].';'.$arrRegist['7484']['DIF_PC_VLTTINSS']."\r\n";
     $str .= 'SICREDI;Saída;CONVÊNIOS;'.$arrRegist['7484']['VLCONVEN'].';'.$arrRegist['7482']['VLCONVEN'].';'.$arrRegist['7484']['DIF_RS_VLCONVEN'].';'.$arrRegist['7484']['DIF_PC_VLCONVEN']."\r\n";
 
+    $nmrescop = strtolower(getByTagName($reg_total->tags,'NMRESCOP'));
+    $ardatini = explode('/', $dtrefini);
+    $ardatfim = explode('/', $dtreffim);
+    $dtnomini = date("dmy", strtotime($ardatini[2].'-'.$ardatini[1].'-'.$ardatini[0]));
+    $dtnomfim = date("dmy", strtotime($ardatfim[2].'-'.$ardatfim[1].'-'.$ardatfim[0]));
+    $filename = 'fluxo_'.$nmrescop.'_'.$dtnomini.'_'.$dtnomfim.'.csv';
+
     header('Content-type: text/csv');
-    header('Content-Disposition: attachment; filename="fluxo.csv"');
+    header('Content-Disposition: attachment; filename="'.$filename.'"');
 
     echo $str;
 ?>
