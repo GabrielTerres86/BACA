@@ -540,9 +540,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --             18/07/2016 - Criação da procedure pc_cria_trans_pend_darf_das para o
   --                          Prj. 338, Pagamento de DARF e DAS (Jean Michel)    
   --
-  --             02/09/2016 - Ajustes na procedure pc_busca_trans_pend, SD 514239 (Jean Michel).                  	
-                          
-
+  --             02/09/2016 - Ajustes na procedure pc_busca_trans_pend, SD 514239 (Jean Michel).                  	                         
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   
@@ -2320,7 +2319,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 							 pr_dsdmensg := pr_dsdmensg || 
 															'<b>Pagamento de ' ||
 															(CASE WHEN rw_tbpagto_darf_das_trans_pend.tppagamento = 1 THEN 'DARF' ELSE 'DAS' END) || '</b>' ||
-															(CASE WHEN rw_tbpagto_darf_das_trans_pend.dsidentif_pagto IS NOT NULL THEN
+															(CASE WHEN TRIM(rw_tbpagto_darf_das_trans_pend.dsidentif_pagto) IS NOT NULL THEN
                                ' para ' || '<b>' || rw_tbpagto_darf_das_trans_pend.dsidentif_pagto || '</b>' ELSE '' END) ||
 															(CASE WHEN rw_tbpagto_darf_das_trans_pend.idagendamento = 1 THEN ' com débito em ' ELSE ' agendado para ' END) ||
 															'<b>' || TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>' || ' no valor de <b>R$ ' ||
@@ -4868,7 +4867,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 
                  19/07/2016 - Ajustes para o Prj. 338 - Pagamento de DARF/DAS (Jean Michel).             
 
-	             04/08/2016 - Ajustes realizado na tela conforme solicitado no chamado
+	               04/08/2016 - Ajustes realizado na tela conforme solicitado no chamado
                               442860 (Kelvin).
 
                  02/09/2016 - Ajustada para retornar os aprovadores da transação que
@@ -5245,6 +5244,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       --Variáveis locais
       vr_idastcjt NUMBER := 0;
       vr_nrcpfcgc NUMBER(14) := 0;
+      vr_nrcpfope NUMBER(14) := 0;
       vr_nrdctato crapavt.nrdctato%TYPE;
       vr_nmprimtl crapass.nmprimtl%TYPE;
       vr_dstransa VARCHAR2(500);
@@ -6511,11 +6511,11 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  
                --DADOS ESPECIFICOS
                IF vr_tpcaptura = 1 THEN
-                 vr_dslinha_digitavel := rw_tbpagto_darf_das_trans_pend.dscod_barras; -- Código de Barras
-                 vr_dscod_barras := rw_tbpagto_darf_das_trans_pend.dslinha_digitavel; -- Linha Digitável
+                 vr_dslinha_digitavel := rw_tbpagto_darf_das_trans_pend.dslinha_digitavel; -- Linha Digitável
+                 vr_dscod_barras := rw_tbpagto_darf_das_trans_pend.dscod_barras; -- Código de Barras
                ELSIF vr_tpcaptura = 2 THEN 
                  vr_dtapuracao      := rw_tbpagto_darf_das_trans_pend.dtapuracao;
-                 vr_nrcpfcgc        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
+                 vr_nrcpfope        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
                  vr_cdtributo       := NVL(rw_tbpagto_darf_das_trans_pend.cdtributo,0);
                  vr_nrrefere        := NVL(rw_tbpagto_darf_das_trans_pend.nrrefere,0);
                  vr_dtvencto        := rw_tbpagto_darf_das_trans_pend.dtvencto;
@@ -6774,7 +6774,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             ELSIF vr_tpcaptura = 2 THEN
               vr_xml_auxi := vr_xml_auxi
               || '<dados_campo><label>Período de Apuração</label><valor>'||vr_dtapuracao||'</valor></dados_campo>'
-              || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||vr_nrcpfcgc||'</valor></dados_campo>'
+              || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||vr_nrcpfope||'</valor></dados_campo>'
               || '<dados_campo><label>Código da Receita</label><valor>'||vr_cdtributo||'</valor></dados_campo>';
               
               IF vr_nrrefere IS NOT NULL THEN
@@ -7105,7 +7105,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 			vr_ind_darf_das PLS_INTEGER := 0;
 
       -- Seleciona registro de DARF/DAS    
-	    CURSOR cr_darfdas(pr_nrdconta IN crapass.nrdconta%TYPE) IS 
+	    CURSOR cr_darfdas(pr_cdcooper IN crapass.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS 
 			  SELECT darf.cdtransacao_pendente AS cdtransacao_pendente
               ,darf.cdcooper             AS cdcooper
               ,darf.nrdconta             AS nrdconta
@@ -7131,8 +7132,9 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               ,darf.idagendamento        AS idagendamento
               ,ROWID
 				  FROM tbpagto_darf_das_trans_pend darf
-         WHERE darf.nrdconta = pr_nrdconta OR pr_nrdconta = 0
-          AND (pr_cdtrapen IS NULL OR (darf.cdtransacao_pendente IN (SELECT regexp_substr(pr_cdtrapen, '[^;]+', 1, ROWNUM) parametro
+         WHERE darf.cdcooper = pr_cdcooper OR pr_cdcooper = 0
+           AND darf.nrdconta = pr_nrdconta OR pr_nrdconta = 0
+           AND (pr_cdtrapen IS NULL OR (darf.cdtransacao_pendente IN (SELECT regexp_substr(pr_cdtrapen, '[^;]+', 1, ROWNUM) parametro
                FROM dual CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_cdtrapen ,'[^;]+','')) + 1)));
 
 			rw_darfdas cr_darfdas%ROWTYPE;
@@ -7143,7 +7145,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 	  BEGIN
 			
 			-- Para cada registro de DARF/DAS
-			FOR rw_darfdas IN cr_darfdas(pr_nrdconta => pr_nrdconta) LOOP      
+			FOR rw_darfdas IN cr_darfdas(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta) LOOP      
 
 	      -- Buscar qual a quantidade atual de registros na tabela para posicionar na próxima
 	      vr_ind_darf_das := vr_tab_darf_das.COUNT() + 1;
@@ -7275,30 +7278,30 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 					gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
 																 ,pr_texto_novo     => '<darf>'
-                                                      || '<cdtransacao_pendente>' || vr_tab_darf_das(vr_contador).cdtransacao_pendente || '</cdtransacao_pendente>'
-                                                      || '<cdcooper>'             || vr_tab_darf_das(vr_contador).cdcooper             || '</cdcooper>'
-                                                      || '<nrdconta>'             || vr_tab_darf_das(vr_contador).nrdconta             || '</nrdconta>'
-                                                      || '<tppagamento>'          || vr_tab_darf_das(vr_contador).tppagamento          || '</tppagamento>'
-                                                      || '<tpcaptura>'            || vr_tab_darf_das(vr_contador).tpcaptura            || '</tpcaptura>'
-                                                      || '<dsidentif_pagto>'      || vr_tab_darf_das(vr_contador).dsidentif_pagto      || '</dsidentif_pagto>'
-                                                      || '<dsnome_fone>'          || vr_tab_darf_das(vr_contador).dsnome_fone          || '</dsnome_fone>'
-                                                      || '<dscod_barras>'         || vr_tab_darf_das(vr_contador).dscod_barras         || '</dscod_barras>'
-                                                      || '<dslinha_digitavel>'    || vr_tab_darf_das(vr_contador).dslinha_digitavel    || '</dslinha_digitavel>'
-                                                      || '<dtapuracao>'           || vr_tab_darf_das(vr_contador).dtapuracao           || '</dtapuracao>'
-                                                      || '<nrcpfcgc>'             || vr_tab_darf_das(vr_contador).nrcpfcgc             || '</nrcpfcgc>'
-                                                      || '<cdtributo>'            || vr_tab_darf_das(vr_contador).cdtributo            || '</cdtributo>'
-                                                      || '<nrrefere>'             || vr_tab_darf_das(vr_contador).nrrefere             || '</nrrefere>'
-                                                      || '<vlprincipal>'          || vr_tab_darf_das(vr_contador).vlprincipal          || '</vlprincipal>'
-                                                      || '<vlmulta>'              || vr_tab_darf_das(vr_contador).vlmulta              || '</vlmulta>'
-                                                      || '<vljuros>'              || vr_tab_darf_das(vr_contador).vljuros              || '</vljuros>'
-                                                      || '<vlreceita_bruta>'      || vr_tab_darf_das(vr_contador).vlreceita_bruta      || '</vlreceita_bruta>'
-                                                      || '<vlpercentual>'         || vr_tab_darf_das(vr_contador).vlpercentual         || '</vlpercentual>'
-                                                      || '<dtvencto>'             || vr_tab_darf_das(vr_contador).dtvencto             || '</dtvencto>'
-                                                      || '<tpleitura_docto>'      || vr_tab_darf_das(vr_contador).tpleitura_docto      || '</tpleitura_docto>'
-                                                      || '<vlpagamento>'          || vr_tab_darf_das(vr_contador).vlpagamento          || '</vlpagamento>'
-                                                      || '<dtdebito>'             || vr_tab_darf_das(vr_contador).dtdebito             || '</dtdebito>'
-                                                      || '<idagendamento>'        || vr_tab_darf_das(vr_contador).idagendamento        || '</idagendamento>'
-                                                      || '<idrowid>'              || vr_tab_darf_das(vr_contador).idrowid              || '</idrowid>'
+                                                      || '<cdtransacao_pendente>' || NVL(vr_tab_darf_das(vr_contador).cdtransacao_pendente,0)               || '</cdtransacao_pendente>'
+                                                      || '<cdcooper>'             || NVL(vr_tab_darf_das(vr_contador).cdcooper,0)                           || '</cdcooper>'
+                                                      || '<nrdconta>'             || NVL(vr_tab_darf_das(vr_contador).nrdconta,0)                           || '</nrdconta>'
+                                                      || '<tppagamento>'          || NVL(vr_tab_darf_das(vr_contador).tppagamento,0)                        || '</tppagamento>'
+                                                      || '<tpcaptura>'            || NVL(vr_tab_darf_das(vr_contador).tpcaptura,0)                          || '</tpcaptura>'
+                                                      || '<dsidentif_pagto>'      || NVL(vr_tab_darf_das(vr_contador).dsidentif_pagto,' ')                  || '</dsidentif_pagto>'
+                                                      || '<dsnome_fone>'          || NVL(vr_tab_darf_das(vr_contador).dsnome_fone,' ')                      || '</dsnome_fone>'
+                                                      || '<dscod_barras>'         || NVL(vr_tab_darf_das(vr_contador).dscod_barras,' ')                     || '</dscod_barras>'
+                                                      || '<dslinha_digitavel>'    || NVL(vr_tab_darf_das(vr_contador).dslinha_digitavel,' ')                || '</dslinha_digitavel>'
+                                                      || '<dtapuracao>'           || NVL(TO_CHAR(vr_tab_darf_das(vr_contador).dtapuracao,'dd/mm/RRRR'),' ') || '</dtapuracao>'
+                                                      || '<nrcpfcgc>'             || NVL(vr_tab_darf_das(vr_contador).nrcpfcgc,0)                           || '</nrcpfcgc>'
+                                                      || '<cdtributo>'            || NVL(vr_tab_darf_das(vr_contador).cdtributo,0)                          || '</cdtributo>'
+                                                      || '<nrrefere>'             || NVL(vr_tab_darf_das(vr_contador).nrrefere,0)                           || '</nrrefere>'
+                                                      || '<vlprincipal>'          || NVL(vr_tab_darf_das(vr_contador).vlprincipal,0)                        || '</vlprincipal>'
+                                                      || '<vlmulta>'              || NVL(vr_tab_darf_das(vr_contador).vlmulta,0)                            || '</vlmulta>'
+                                                      || '<vljuros>'              || NVL(vr_tab_darf_das(vr_contador).vljuros,0)                            || '</vljuros>'
+                                                      || '<vlreceita_bruta>'      || NVL(vr_tab_darf_das(vr_contador).vlreceita_bruta,0)                    || '</vlreceita_bruta>'
+                                                      || '<vlpercentual>'         || NVL(vr_tab_darf_das(vr_contador).vlpercentual,0)                       || '</vlpercentual>'
+                                                      || '<dtvencto>'             || NVL(TO_CHAR(vr_tab_darf_das(vr_contador).dtvencto,'dd/mm/RRRR'),' ')   || '</dtvencto>'
+                                                      || '<tpleitura_docto>'      || vr_tab_darf_das(vr_contador).tpleitura_docto                           || '</tpleitura_docto>'
+                                                      || '<vlpagamento>'          || vr_tab_darf_das(vr_contador).vlpagamento                               || '</vlpagamento>'
+                                                      || '<dtdebito>'             || NVL(TO_CHAR(vr_tab_darf_das(vr_contador).dtdebito,'dd/mm/RRRR'),' ')   || '</dtdebito>'
+                                                      || '<idagendamento>'        || NVL(vr_tab_darf_das(vr_contador).idagendamento,0)                      || '</idagendamento>'
+                                                      || '<idrowid>'              || NVL(vr_tab_darf_das(vr_contador).idrowid,0)                            || '</idrowid>'
 																										|| '</darf>');
         END LOOP;
 
