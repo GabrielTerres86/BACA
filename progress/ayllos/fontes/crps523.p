@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Elton
-   Data    : Janeiro/2009                   Ultima alteracao:   05/08/2014          
+   Data    : Janeiro/2009                   Ultima alteracao:   06/10/2016
    
    Dados referentes ao programa:
 
@@ -14,9 +14,10 @@
                Emite relatorio 427.
                Ordem: 52
     
-   Alteracoes:  
-   
-   05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+   Alteracoes: 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+
+               06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                           (Guilherme/SUPERO)
 ............................................................................ */
 
 DEF     STREAM str_1. /* relatorio */
@@ -70,16 +71,18 @@ DISPLAY STREAM str_1  crapban.nmresbcc
                       glb_dtmvtolt       
                       WITH FRAME f_titulo_guias.  
                        
-FOR EACH craplgp WHERE  craplgp.cdcooper  = glb_cdcooper      AND
-                        craplgp.dtmvtolt  = glb_dtmvtolt      AND  
-                        craplgp.flgenvio  = YES               NO-LOCK,
-                  FIRST crapope WHERE 
-                        crapope.cdcooper = glb_cdcooper       AND
-                        crapope.cdoperad = craplgp.cdopecxa   NO-LOCK
-                                BREAK BY craplgp.cdagenci                 
-                                         BY craplgp.nrdcaixa
-                                            BY craplgp.nrdolote           
-                                               BY craplgp.nrautdoc:
+FOR EACH craplgp
+   WHERE craplgp.cdcooper  = glb_cdcooper
+     AND craplgp.dtmvtolt  = glb_dtmvtolt
+     AND craplgp.flgenvio  = YES
+     AND craplgp.flgativo  = YES               NO-LOCK,
+   FIRST crapope
+   WHERE crapope.cdcooper        = glb_cdcooper
+     AND UPPER(crapope.cdoperad) = UPPER(craplgp.cdopecxa)   NO-LOCK
+   BREAK BY craplgp.cdagenci
+         BY craplgp.nrdcaixa
+         BY craplgp.nrdolote           
+         BY craplgp.nrautdoc:
                                    
     IF   LINE-COUNTER(str_1) >= (PAGE-SIZE(str_1) - 4)  THEN
          DO:

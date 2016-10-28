@@ -251,7 +251,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --                     já foi atulizada e enviado a JDDA.
   --                     (Adriano - SD 394710)
   --
-  --		    28/03/2016 - Adicionados parâmetros para geraçao de LOG
+  --        28/03/2016 - Adicionados parâmetros para geraçao de LOG
   --                     (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
   --
   --
@@ -264,7 +264,6 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --					 (Adriano - M117).
   --
   --        30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-  --
   --
   --        31/08/2016 - Removida procedure pc_verifica_sit_transacao, SD 514239 (Jean Michel).
   --		

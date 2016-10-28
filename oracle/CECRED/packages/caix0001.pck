@@ -6,15 +6,16 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
   --  Sistema  : Rotinas referentes a Tela BCAIXA
   --  Sigla    : CAIX
   --  Autor    : Lucas Ranghetti
-  --  Data     : Fevereiro/2015.                   Ultima atualizacao:
+  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 06/10/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar procedures referentes a tela bcaixa
 
-  -- Alteracoes:
-
+  -- Alteracoes: 06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
+  --
+  --
   -----------------------------------------------------------------------------------------------------------
 
   TYPE typ_reg_crapbcx IS
@@ -101,7 +102,6 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
 
 END CAIX0001;
 /
-
 create or replace package body cecred.CAIX0001 is
 
   -----------------------------------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ create or replace package body cecred.CAIX0001 is
   --  Sistema  : Rotinas referentes a Tela BCAIXA
   --  Sigla    : CAIX
   --  Autor    : Lucas Ranghetti
-  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 11/03/2015
+  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 24/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -118,7 +118,9 @@ create or replace package body cecred.CAIX0001 is
   -- Objetivo  : Agrupar procedures referentes a tela bcaixa Opcao T
 
   -- Alteracoes: 11/03/2015 - Conversao de Progress -->> Oracle (Lucas R. #245838)
-
+  --
+  --             24/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
+  --                          sobre o campo cdopecxa.(Carlos Rafael Tanholi).
   -----------------------------------------------------------------------------------------------------------
 
   -- Cursores genericos
@@ -128,7 +130,7 @@ create or replace package body cecred.CAIX0001 is
         ,ope.dsimpres
     FROM crapope ope
    WHERE ope.cdcooper = pr_cdcooper
-     AND upper(ope.cdoperad) = upper(pr_cdoperad);
+     AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);
   rw_crapope cr_crapope%ROWTYPE;
 
   -- Variaveis Globais dentro da package
@@ -1237,6 +1239,7 @@ create or replace package body cecred.CAIX0001 is
          AND lgp.cdbccxlt = pr_cdbccxlt
          AND lgp.nrdolote = pr_nrdolote
          AND lgp.idsicred <> 0   -- GPS pagas pelo novo sistema
+         AND lgp.flgativo = 1
          AND lgp.nrseqagp = 0;   --Nao pegar GPS agendada
       rw_lgp_gps cr_lgp_gps%ROWTYPE;
 
@@ -1377,7 +1380,7 @@ create or replace package body cecred.CAIX0001 is
           AND lcx.dtmvtolt = pr_dtmvtolt
           AND lcx.cdagenci = pr_cdagenci
           AND lcx.nrdcaixa = pr_nrdcaixa
-          AND lcx.cdopecxa = pr_cdopecxa;
+          AND UPPER(lcx.cdopecxa) = UPPER(pr_cdopecxa);
         rw_craplcx cr_craplcx%ROWTYPE;
 
       -- buscar tranferencia de valores (DOC C, DOC D E TEDS)
@@ -2361,4 +2364,3 @@ create or replace package body cecred.CAIX0001 is
 
 end CAIX0001;
 /
-

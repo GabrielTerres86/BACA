@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego/Mirtes
-   Data    : Julho/2005                         Ultima alteracao: 19/04/2016
+   Data    : Julho/2005                         Ultima alteracao: 06/10/2016
  
    Dados referentes ao programa:
 
@@ -92,6 +92,9 @@
 
                18/04/2016 - Ajustado buscas na LGP para nao trazer GPS's
                             agendadas(nrseqagp) (Guilherme/SUPERO)
+
+               06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                            (Guilherme/SUPERO)
 ............................................................................ */
 
 { includes/var_online.i }
@@ -653,11 +656,12 @@ DO WHILE TRUE:
                                     craplgp.nrdcaixa <= aux_nrdcaixa    AND
                                     craplgp.flgenvio  = aux_flgenvio    AND 
                                     craplgp.idsicred  = 0               AND
-                                    craplgp.nrseqagp  = 0               NO-LOCK,
-                            FIRST crapope WHERE 
-                                  crapope.cdcooper  = glb_cdcooper      AND
-                                  crapope.cdoperad  = craplgp.cdopecxa  NO-LOCK,
-                            FIRST crapcgp WHERE
+                                    craplgp.nrseqagp  = 0
+                                AND craplgp.flgativo  = YES             NO-LOCK,
+                              FIRST crapope
+                              WHERE crapope.cdcooper        = glb_cdcooper
+                                AND UPPER(crapope.cdoperad) = UPPER(craplgp.cdopecxa)   NO-LOCK,
+                              FIRST crapcgp WHERE
                                   crapcgp.cdcooper  = glb_cdcooper      AND
                                   crapcgp.cdidenti  = craplgp.cdidenti  AND 
                                   crapcgp.cddpagto  = craplgp.cddpagto  NO-LOCK
@@ -678,7 +682,8 @@ DO WHILE TRUE:
                                   craplgp.nrdcaixa <= aux_nrdcaixa      AND
                                   craplgp.flgenvio  = aux_flgenvio      AND
                                   craplgp.cdidenti  = tel_cdidenti      AND
-                                  craplgp.nrseqagp  = 0                 NO-LOCK,
+                                  craplgp.nrseqagp  = 0
+                              AND craplgp.flgativo = YES                NO-LOCK,
                             FIRST crapope WHERE 
                                   crapope.cdcooper  = glb_cdcooper      AND
                                   crapope.cdoperad  = craplgp.cdopecxa  NO-LOCK,
@@ -1375,7 +1380,8 @@ DO WHILE TRUE:
                      craplgp.cdagenci <= aux_cdagefim AND
                      craplgp.flgenvio  = YES          AND
                      craplgp.idsicred  = 0            AND
-                     craplgp.nrseqagp  = 0            NO-LOCK,           
+                     craplgp.nrseqagp  = 0
+                 AND craplgp.flgativo  = YES          NO-LOCK,
                      FIRST crapope WHERE 
                            crapope.cdcooper = glb_cdcooper     AND 
                            crapope.cdoperad = craplgp.cdopecxa NO-LOCK,
@@ -1641,7 +1647,8 @@ PROCEDURE processa_craplgp:
                           craplgp.nrdcaixa <= aux_nrdcaixa   AND
                           craplgp.flgenvio  = aux_flgenvio   AND 
                           craplgp.idsicred  = 0              AND
-                          craplgp.nrseqagp  = 0              NO-LOCK:
+                          craplgp.nrseqagp  = 0
+                      AND craplgp.flgativo  = YES            NO-LOCK:
      
        ASSIGN tel_qttitrec = tel_qttitrec + 1
               tel_vltitrec = tel_vltitrec + craplgp.vlrtotal. 
@@ -1694,7 +1701,8 @@ PROCEDURE p_regera_crawlgp:
            craplgp.nrdcaixa <= aux_nrdcaixa   AND
            craplgp.flgenvio  = aux_flgenvio   AND 
            craplgp.idsicred  = 0              AND
-           craplgp.nrseqagp  = 0              NO-LOCK, 
+           craplgp.nrseqagp  = 0
+       AND craplgp.flgativo  = YES            NO-LOCK,
                    FIRST crapope WHERE 
                          crapope.cdcooper = glb_cdcooper        AND
                          crapope.cdoperad = craplgp.cdopecxa    NO-LOCK,
@@ -2339,7 +2347,8 @@ PROCEDURE atualiza_lancamentos_regerar:
             craplgp.cdagenci <= aux_cdagefim     AND
             craplgp.idsicred  = 0                AND /** GPS Bancoob **/
             craplgp.nrseqagp  = 0                AND
-            craplgp.flgenvio  = YES              NO-LOCK:            
+            craplgp.flgenvio  = YES
+        AND craplgp.flgativo  = YES              NO-LOCK:
                             
        FIND crablgp WHERE RECID(crablgp) = RECID(craplgp) 
                           EXCLUSIVE-LOCK NO-ERROR.

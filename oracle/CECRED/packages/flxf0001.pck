@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.flxf0001 AS
 
     Programa: FLXF0001                        Antiga: sistema/generico/procedures/b1wgen0131.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Dezembro/2011                     Ultima Atualizacao: 20/02/2014
+    Data    : Dezembro/2011                     Ultima Atualizacao: 06/10/2016
 
     Dados referentes ao programa:
 
@@ -45,6 +45,8 @@ CREATE OR REPLACE PACKAGE CECRED.flxf0001 AS
                 20/02/2014 - Conversão para PLSQL das alterações de 12/2013 e 01/2014 (Daniel - Supero)
 
                 24/01/2014 - Alteracao no FIND LASTtt-per-datas (Oscar)
+
+                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
 
   -------------------------------------------------------------------------------------------------------------*/
 
@@ -3622,13 +3624,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 20/11/2013
+    --  Data     : novembro/2013.                   Ultima atualizacao: 06/10/2016
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Gravar movimento financeiro das Guias de recolhimento da Previdencia Social
     --
     --   Atualizacao: 20/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
+    --
+	--                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -3645,7 +3649,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
          AND cdagenci >= 1
          AND cdagenci <= 9999
          AND nrdcaixa >= 1
-         AND nrdcaixa <= 9999;
+         AND nrdcaixa <= 9999
+         AND flgativo = 1;
 
   BEGIN
 

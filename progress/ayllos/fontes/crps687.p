@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Carlos Henrique
-   Data    : Maio/2014                       Ultima atualizacao: 23/09/2015
+   Data    : Maio/2014                       Ultima atualizacao: 06/10/2016
 
    Dados referentes ao programa:
 
@@ -17,6 +17,9 @@
                
    Alteracoes: 23/09/2015 - Incluindo calculo de pagamentos GPS.
                             (André Santos - SUPERO)
+
+               06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                            (Guilherme/SUPERO)
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -205,10 +208,11 @@ IF glb_cdcooper <> 3 THEN DO:
                              crapthi.cdhistor = 1414         AND 
                              crapthi.dsorigem = 'AYLLOS' NO-LOCK.
 
-    FOR EACH craplgp WHERE craplgp.cdcooper = glb_cdcooper AND
-                           craplgp.dtmvtolt = glb_dtmvtolt AND
-                           craplgp.idsicred <> 0
-                           NO-LOCK:
+    FOR EACH craplgp
+       WHERE craplgp.cdcooper = glb_cdcooper
+         AND craplgp.dtmvtolt = glb_dtmvtolt
+         AND craplgp.idsicred <> 0
+         AND craplgp.flgativo = YES  NO-LOCK:
         CREATE tt-rel.
         ASSIGN tt-rel.cdcooper = craplgp.cdcooper
                tt-rel.cdagenci = craplgp.cdagenci
@@ -218,10 +222,11 @@ IF glb_cdcooper <> 3 THEN DO:
 END.
 ELSE 
 DO:
-    FOR EACH craplgp WHERE craplgp.cdcooper <> 3           AND
-                           craplgp.dtmvtolt = glb_dtmvtolt AND
-                           craplgp.idsicred <> 0
-                           NO-LOCK:
+    FOR EACH craplgp
+       WHERE craplgp.cdcooper <> 3
+         AND craplgp.dtmvtolt = glb_dtmvtolt
+         AND craplgp.idsicred <> 0
+         AND craplgp.flgativo = YES   NO-LOCK:
         CREATE tt-rel.
         ASSIGN tt-rel.cdcooper = craplgp.cdcooper
                tt-rel.cdagenci = craplgp.cdagenci
@@ -357,10 +362,11 @@ IF glb_cdcooper <> 3 THEN DO:
                              crapthi.dsorigem = 'AYLLOS' NO-LOCK.
 
     DO aux_data = data_ini TO data_fim:
-        FOR EACH craplgp WHERE craplgp.cdcooper = glb_cdcooper AND
-                               craplgp.dtmvtolt = aux_data     AND
-                               craplgp.idsicred <> 0
-                               NO-LOCK:
+        FOR EACH craplgp
+           WHERE craplgp.cdcooper = glb_cdcooper
+             AND craplgp.dtmvtolt = aux_data
+             AND craplgp.idsicred <> 0
+             AND craplgp.flgativo = YES NO-LOCK:
             CREATE tt-rel.
             ASSIGN tt-rel.cdcooper = craplgp.cdcooper
                    tt-rel.cdagenci = craplgp.cdagenci
@@ -373,10 +379,11 @@ END.
 ELSE 
 DO:
     DO aux_data = data_ini TO data_fim:
-        FOR EACH craplgp WHERE craplgp.cdcooper <> 3       AND
-                               craplgp.dtmvtolt = aux_data AND
-                               craplgp.idsicred <> 0
-                               NO-LOCK:
+        FOR EACH craplgp
+           WHERE craplgp.cdcooper <> 3
+             AND craplgp.dtmvtolt = aux_data
+             AND craplgp.idsicred <> 0
+             AND craplgp.flgativo = YES  NO-LOCK:
             CREATE tt-rel.
             ASSIGN tt-rel.cdcooper = craplgp.cdcooper
                    tt-rel.cdagenci = craplgp.cdagenci
