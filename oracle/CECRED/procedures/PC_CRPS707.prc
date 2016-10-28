@@ -480,7 +480,11 @@ BEGIN
 
                -- Busca do CPF da TED
                BEGIN
-                 vr_nrcpfcgc := substr(vr_dslinharq,209,14);
+                 IF substr(vr_dslinharq,1,2) = '05' THEN
+                   vr_nrcpfcgc := substr(vr_dslinharq,209,14);
+                 ELSE
+                   vr_nrcpfcgc := substr(vr_dslinharq,274,14);
+                 END IF;
                EXCEPTION
                  WHEN OTHERS THEN
                    vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);

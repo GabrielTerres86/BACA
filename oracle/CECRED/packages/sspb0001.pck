@@ -1706,10 +1706,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     rw_crapban cr_crapban%ROWTYPE;   
   
   BEGIN
-    /*********************************************************************
-     * pr_numedlog => 1 - ENVIADAS / 2 - RECEBIDAS / 3 - DEMAIS MSG'S   *
-     * pr_cdsitlog => "P" - MSG'S PROCESSADAS / "D" - MSG'S DEVOLVIDAS  *
-     *                "R" - MSG'S REJEITADAS                            *
+    /**********************************************************************
+     * pr_numedlog => 1-ENVIADAS / 2-RECEBIDAS / 3-DEMAIS MSG'S / 4-TODOS *
+     * pr_cdsitlog => "P" - MSG'S PROCESSADAS / "D" - MSG'S DEVOLVIDAS    *
+     *                "R" - MSG'S REJEITADAS / "T" - TODOS                * 
     /*********************************************************************/
 
     -- Verifica se a cooperativa esta cadastrada
@@ -1768,9 +1768,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     CLOSE cr_crapban;
 
     -- BUSCAR LOGS
-    IF pr_numedlog = 0    OR
-      (pr_numedlog = 1    AND   /** ENVIADAS    **/
-       pr_cdsitlog = 'P') THEN  /** PROCESSADAS **/
+    
+    IF pr_numedlog = 0 OR
+      -- Enviadas ou Todas          E  Processadas ou Todas 
+      (pr_numedlog IN(1,4) AND pr_cdsitlog IN('P','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
@@ -1792,8 +1793,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     IF pr_numedlog = 0    OR
-       (pr_numedlog = 1    AND  /** ENVIADAS   **/
-        pr_cdsitlog = 'D') THEN /** DEVOLVIDAS **/
+        -- Enviadas ou Todas          E  Devolvidas ou Todas 
+       (pr_numedlog IN(1,4) AND pr_cdsitlog IN ('D','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
@@ -1816,8 +1817,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     IF pr_numedlog = 0     OR
-       (pr_numedlog = 1     AND  /** ENVIADAS   **/
-        pr_cdsitlog = 'R')  THEN /** ENVIADAS REJEITADAS **/
+       -- Enviadas ou Todas          E  Retornadas ou Todas 
+       (pr_numedlog IN(1,4) AND pr_cdsitlog IN('R','T')) THEN
+       
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
                                 ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
@@ -1837,10 +1839,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 );
 
     END IF;
-
+    
     IF  pr_numedlog = 0     OR
-        (pr_numedlog  = 2   AND  /** RECEBIDAS   **/
-         pr_cdsitlog = 'P') THEN /** PROCESSADAS **/
+         -- Recebidas ou Todas          E  Processadas ou Todas 
+        (pr_numedlog  IN(2,4)  AND pr_cdsitlog IN('P','T'))  THEN 
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
@@ -1861,9 +1863,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 );
     END IF;
 
-    IF pr_numedlog = 0      OR
-       (pr_numedlog = 2     AND    /** RECEBIDAS   **/
-        pr_cdsitlog = 'D')  THEN  /** RECEBIDAS DEVOLVIDAS  **/
+    IF pr_numedlog = 0   OR
+         -- Recebidas ou Todas          E  Devolvidas ou Todas 
+       (pr_numedlog IN(2,4) AND pr_cdsitlog IN('D','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
