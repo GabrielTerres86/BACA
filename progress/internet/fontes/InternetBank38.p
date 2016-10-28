@@ -145,7 +145,7 @@ IF  VALID-HANDLE(h-b1wgen0016)  THEN
                                                              ELSE STRING(tt-dados-agendamento.dtagenda,"99/99/9999"))    + "</dtagenda>"
                    xml_operacao38.dtperiod = "<dtperiod>" + (IF  tt-dados-agendamento.dtperiod = ?  THEN "" 
                                                              ELSE STRING(tt-dados-agendamento.dtperiod,"99/99/9999"))    + "</dtperiod>"
-                   xml_operacao38.dtvendrf = "<dtvendrf>" + STRING(tt-dados-agendamento.dtvendrf)                        + "</dtvendrf>"
+                   xml_operacao38.dtvendrf = "<dtvendrf>" + STRING(tt-dados-agendamento.dtvendrf,"99/99/9999")           + "</dtvendrf>"
                    xml_operacao38.nrcpfcgc = "<nrcpfcgc>" + STRING(tt-dados-agendamento.nrcpfcgc)                        + "</nrcpfcgc>"
                    xml_operacao38.dscabfim = "</AGENDAMENTO>".
                    

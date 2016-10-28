@@ -1668,9 +1668,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_cdhisdeb:= 508;
     
     -- Descrição do Cedente
-    vr_dsidepag := NVL(pr_dsidepag, CASE pr_tpdaguia 
-                                    WHEN 1 THEN 'DARF'
-                                    WHEN 2 THEN 'DAS' END);
+    vr_dsidepag := NVL(trim(pr_dsidepag), CASE pr_tpdaguia
+                                    		WHEN 1 THEN 'DARF'
+                                    		WHEN 2 THEN 'DAS' END);
     
     -- Obtem o código do operador
     IF pr_idagenda = 2 THEN -- Agendamento
@@ -2438,7 +2438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_dstransa  VARCHAR2(200) := ''; -- log
 		vr_dsmsgope  VARCHAR2(200) := ''; -- msg da operacao
     vr_dstrans1  VARCHAR2(200) := '';		
-		vr_vllanmto  NUMBER;
+		vr_vlrvalid  NUMBER;              -- Valor a ser validado pela rotina
 		vr_idastcjt  crapass.idastcjt%TYPE;
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
@@ -2660,8 +2660,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
     END IF; -- Fim IF verificar saldo
 						
+    -- Antes de efeivar, envia o valor somado de todos os pagamentos do lote (vlapagar)
+    vr_vlrvalid := CASE WHEN pr_idefetiv = 0 THEN nvl(pr_vlapagar,0) ELSE nvl(pr_vlrtotal,0) END;
+
 		-- inicializar variaveis
-		vr_vllanmto := pr_vlrtotal;							
     vr_lindigi1 := pr_lindigi1;
     vr_lindigi2 := pr_lindigi2;
     vr_lindigi3 := pr_lindigi3;
@@ -2683,7 +2685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dtmvtolt     => rw_crapdat.dtmvtolt --> Data Movimento
                                   ,pr_idagenda     => pr_idagenda         --> Indicador agenda
                                   ,pr_dtmvtopg     => vr_dtmvtopg         --> Data Pagamento
-                                  ,pr_vllanmto     => vr_vllanmto         --> Valor Lancamento
+                                  ,pr_vllanmto     => vr_vlrvalid         --> Valor a ser Validado
                                   ,pr_cddbanco     => 0                   --> Codigo banco
                                   ,pr_cdageban     => 0                   --> Codigo Agencia
                                   ,pr_nrctatrf     => 0                   --> Numero Conta Transferencia
@@ -2765,7 +2767,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																							pr_cdagenci => 90,
 																							pr_nrdconta => pr_nrdconta,
 																							pr_idseqttl => pr_idseqttl,
-																							pr_nrcpfrep => vr_nrcpfcgc,           -- CPF Rep. Legal
+																							pr_nrcpfrep => (CASE WHEN pr_nrcpfope > 0 THEN 0 ELSE NVL(vr_nrcpfcgc,0) END), --> Numero do cpf do representante legal
 																							pr_cdcoptfn => 0,
 																							pr_cdagetfn => 0,
 																							pr_nrterfin => 0,
@@ -3074,9 +3076,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;
 		rw_crabass cr_crapass%ROWTYPE;
 		
+	CURSOR cr_crapass_titular(pr_cdcooper crapass.cdcooper%TYPE
+							 ,pr_nrdconta crapass.nrdconta%TYPE
+							 ,pr_idseqttl crapttl.idseqttl%TYPE) IS
+    -- Pessoa Fídica
+    SELECT ass.cdcooper
+          ,ass.nrdconta
+          ,ass.inpessoa
+          ,ass.nrcpfcgc
+          ,ass.dtabtcct
+          ,ass.idastcjt
+          ,ttl.nmextttl
+      FROM crapass ass
+          ,crapttl ttl
+     WHERE ass.cdcooper = ttl.cdcooper
+       AND ass.nrdconta = ttl.nrdconta
+       AND ass.inpessoa = 1 -- Pessoa Física
+
+       AND ass.cdcooper = pr_cdcooper
+       AND ass.nrdconta = pr_nrdconta
+       AND ttl.idseqttl = pr_idseqttl
+    UNION ALL
+    -- Pessoa Jurídica
+    SELECT ass.cdcooper
+          ,ass.nrdconta
+          ,ass.inpessoa
+          ,ass.nrcpfcgc
+          ,ass.dtabtcct
+          ,ass.idastcjt
+          ,ass.nmprimtl nmextttl
+      FROM crapass ass
+     WHERE ass.inpessoa <> 1 -- Pessoa Jurídica
+       AND ass.cdcooper = pr_cdcooper
+       AND ass.nrdconta = pr_nrdconta
+       AND ROWNUM = 1;
+	  rw_crapass cr_crapass_titular%ROWTYPE;
+
     CURSOR cr_crapcon (pr_cdcooper  crapcon.cdcooper%TYPE,
                        pr_cdempcon  crapcon.cdempcon%TYPE,
                        pr_cdsegmto  crapcon.cdsegmto%TYPE ) IS
@@ -3166,16 +3203,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                                pr_dtmvtolt => pr_dtagenda, 
                                                pr_tipo     => 'A');
 		-- Buscar dados do associado
-    OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
+    OPEN cr_crapass_titular (pr_cdcooper => pr_cdcooper,
+                             pr_nrdconta => pr_nrdconta,
+							 pr_idseqttl => pr_idseqttl);
+    FETCH cr_crapass_titular INTO rw_crapass;
 		
-    IF cr_crapass%NOTFOUND THEN
-      CLOSE cr_crapass;
+    IF cr_crapass_titular%NOTFOUND THEN
+      CLOSE cr_crapass_titular;
       vr_dscritic := 'Associado nao cadastrado.';
       RAISE vr_exc_erro;
     ELSE
-      CLOSE cr_crapass;
+      CLOSE cr_crapass_titular;
     END IF;
 		
 		vr_nrdolote := 11000 + pr_nrdcaixa;
@@ -3372,7 +3410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      ,vr_dsorigem               -- craplau.dsorigem
                      ,1  /** PENDENTE  **/      -- craplau.insitlau
                      ,10                        -- craplau.cdtiptra
-                     ,' '                       -- craplau.dscedent
+                     ,pr_dsidepag               -- craplau.dscedent
                      ,pr_cdbarras               -- craplau.dscodbar
                      ,nvl(vr_dslindig,' ')      -- craplau.dslindig
                      ,pr_dtagenda               -- craplau.dtmvtopg
@@ -3506,13 +3544,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			-- Gera um protocolo para o pagamento
 			paga0003.pc_cria_comprovante_darf_das(pr_cdcooper => rw_crapass.cdcooper -- Código da cooperativa
 																					 ,pr_nrdconta => rw_crapass.nrdconta -- Número da conta
-																					 ,pr_nmextttl => rw_crapass.nmprimtl -- Nome do Titular
+																					 ,pr_nmextttl => rw_crapass.nmextttl -- Nome do Titular
 																					 ,pr_nrcpfope => pr_nrcpfope         -- CPF do operador PJ
 																					 ,pr_tpcaptur => pr_tpcaptur         -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
 																					 ,pr_cdtippro => vr_cdtippro         -- Código do tipo do comprovante
 																					 ,pr_dtmvtolt => rw_craplau.dtmvtolt -- Data de movimento da autenticação
 																					 ,pr_hrautent => rw_craplau.hrtransa -- Horário da autenticação
-																					 ,pr_nrdocmto => rw_craplau.idlancto -- Número do documento
+																					 ,pr_nrdocmto => rw_craplau.nrdocmto -- Número do documento
 																					 ,pr_nrseqaut => rw_craplau.idlancto -- Sequencial da autenticação
 																					 ,pr_nrdcaixa => pr_nrdcaixa         -- Número do caixa da autenticação
 																					 ,pr_nmconven => vr_dsnomcnv         -- Nome do convênio da guia
