@@ -249,6 +249,10 @@
 							manutencao (gera-dados), conforme solicitado no chamado 
 							497079. (Kelvin)
 
+			   13/10/2016 - Ajuste na aux_flprotes para buscar apenas o convênio
+							do tipo INTERNET crapcco.dsorgarq = 'INTERNET'
+							(Andrey Formigari - Mouts - SD: 533201)
+
 .............................................................................*/
 
 
@@ -2270,6 +2274,7 @@ PROCEDURE gera-dados:
 	   ,FIRST  crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
 	                         crapcco.nrconven = crapceb.nrconven AND
                              crapcco.cddbanco = 85               AND /*Cecred*/
+							 crapcco.dsorgarq = 'INTERNET' 		 AND /*ORIGEM INTERNET*/
 	                         crapcco.flginter = TRUE NO-LOCK:
 
 		IF aux_flserasa = FALSE THEN
