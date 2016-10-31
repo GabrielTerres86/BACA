@@ -6,15 +6,16 @@ CREATE OR REPLACE PACKAGE CECRED.CAIX0001 IS
   --  Sistema  : Rotinas referentes a Tela BCAIXA
   --  Sigla    : CAIX
   --  Autor    : Lucas Ranghetti
-  --  Data     : Fevereiro/2015.                   Ultima atualizacao:
+  --  Data     : Fevereiro/2015.                   Ultima atualizacao: 06/10/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar procedures referentes a tela bcaixa
 
-  -- Alteracoes:
-
+  -- Alteracoes: 06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
+  --
+  --
   -----------------------------------------------------------------------------------------------------------
 
   TYPE typ_reg_crapbcx IS
@@ -1238,6 +1239,7 @@ create or replace package body cecred.CAIX0001 is
          AND lgp.cdbccxlt = pr_cdbccxlt
          AND lgp.nrdolote = pr_nrdolote
          AND lgp.idsicred <> 0   -- GPS pagas pelo novo sistema
+         AND lgp.flgativo = 1
          AND lgp.nrseqagp = 0;   --Nao pegar GPS agendada
       rw_lgp_gps cr_lgp_gps%ROWTYPE;
 

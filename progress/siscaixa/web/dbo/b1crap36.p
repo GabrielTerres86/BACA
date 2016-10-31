@@ -2,7 +2,7 @@
 
     b1crap36. - Controle Lancamentos GPS
     
-    Ultima Atualizacao: 05/08/2014
+    Ultima Atualizacao: 06/10/2016
     
     Alteracoes:
                 23/02/2006 - Unificacao dos bancos - SQLWorks - Eder
@@ -25,6 +25,9 @@
                              apenas WHEN AVAIL crapcgp (Carlos)
                              
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+
+                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                             (Guilherme/SUPERO)
 -----------------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -327,7 +330,8 @@ PROCEDURE proc_gps:
                            craplgp.dtmvtolt = craplot.dtmvtolt  AND
                            craplgp.cdagenci = craplot.cdagenci  AND
                            craplgp.cdbccxlt = craplot.cdbccxlt  AND
-                           craplgp.nrdolote = craplot.nrdolote  NO-LOCK:
+                           craplgp.nrdolote = craplot.nrdolote
+                       AND craplgp.flgativo = YES               NO-LOCK:
                            
         ASSIGN aux_qtgps    = aux_qtgps     + 1
                aux_vlgps    = aux_vlgps     + craplgp.vlrtotal.
@@ -344,7 +348,8 @@ PROCEDURE proc_lista:
                            craplgp.dtmvtolt = crapdat.dtmvtolt  AND
                            craplgp.cdagenci = tt-lote.cdagenci  AND
                            craplgp.cdbccxlt = tt-lote.cdbccxlt  AND
-                           craplgp.nrdolote = tt-lote.nrdolote  NO-LOCK
+                           craplgp.nrdolote = tt-lote.nrdolote
+                       AND craplgp.flgativo = YES               NO-LOCK
                            BY craplgp.nrseqdig:
 
         FIND crapcgp WHERE  crapcgp.cdcooper = craplgp.cdcooper AND

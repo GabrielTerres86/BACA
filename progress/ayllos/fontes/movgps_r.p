@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego/Mirtes
-   Data    : Julho/2005                     Ultima alteracao: 02/06/2014     
+   Data    : Julho/2005                     Ultima alteracao: 06/10/2016
    
    Dados referentes ao programa:
 
@@ -42,6 +42,9 @@
                             
                02/06/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM).
+
+               06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                            (Guilherme/SUPERO)
 ............................................................................ */
 
 DEF     STREAM str_1. /* relatorio */
@@ -151,10 +154,11 @@ IF  rel_tipo_relatorio = 1 THEN
                                 craplgp.nrdcaixa <= aux_nrdcaixa      AND 
                                 craplgp.idsicred  = 0                 AND
                                (craplgp.flgenvio  = par_flgenvio      OR      
-                                craplgp.flgenvio  = par_flgenvi2)     NO-LOCK,
-                          FIRST crapope WHERE 
-                                crapope.cdcooper = glb_cdcooper       AND
-                                crapope.cdoperad = craplgp.cdopecxa   NO-LOCK
+                                craplgp.flgenvio  = par_flgenvi2)
+                            AND craplgp.flgativo  = YES               NO-LOCK,
+                          FIRST crapope
+                          WHERE crapope.cdcooper        = glb_cdcooper
+                            AND UPPER(crapope.cdoperad) = UPPER(craplgp.cdopecxa)   NO-LOCK
                                      BREAK BY craplgp.cdagenci                 
                                               BY craplgp.nrdcaixa
                                                  BY craplgp.nrdolote           
