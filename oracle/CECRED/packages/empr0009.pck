@@ -138,8 +138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
     END;
   END;  
   
-  FUNCTION fn_calc_data_pagamento(pr_qtpreemp IN crapepr.qtpreemp%TYPE  --> Quantidade de prestacao do emprestimo
-                                 ,pr_qtmesdec IN crapepr.qtmesdec%TYPE  --> Quantidade dos meses decorridos
+  FUNCTION fn_calc_data_pagamento(pr_qtmesdec IN crapepr.qtmesdec%TYPE  --> Quantidade dos meses decorridos
                                  ,pr_qtprecal IN crapepr.qtprecal%TYPE  --> Quantidade de Prestacao Calculada
                                  ,pr_dtdpagto IN crapepr.dtdpagto%TYPE  --> Data de Pagamento
                                  ,pr_dtcalcul IN DATE)                  --> Data de Calculo
@@ -150,14 +149,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Agosto/2016                        Ultima atualizacao:
+       Data    : Agosto/2016                        Ultima atualizacao: 25/08/2016
     
        Dados referentes ao programa:
     
        Frequencia: Diaria - Sempre que for chamada
        Objetivo  : Calcular a data real de pagamento
     
-       Alteracoes:     
+       Alteracoes: 25/08/2016 - Ajuste na vr_dtdpagto_result e remocao da pr_qtpreemp.
+                                (Jaison/James)
     ............................................................................. */
     DECLARE
       --Variaveis locais
@@ -173,7 +173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
       vr_dtdpagto := ADD_MONTHS(vr_dtdpagto, - vr_nrparepr);
       -- Calcula a nova data de pagamento
       BEGIN
-        vr_dtdpagto_result := to_date((to_char(pr_dtdpagto,'DD'))||(to_char(vr_dtdpagto,'MM'))||'/'||to_char(vr_dtdpagto,'RRRR'),'DD/MM/RRRR');
+        vr_dtdpagto_result := to_date(to_char(pr_dtdpagto,'DD')||'/'||to_char(vr_dtdpagto,'MM')||'/'||to_char(vr_dtdpagto,'RRRR'),'DD/MM/RRRR');
       EXCEPTION
         WHEN OTHERS THEN
           vr_dtdpagto_result := ADD_MONTHS(vr_dtdpagto, 1);
@@ -862,8 +862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
       END IF;
       
       -- Calcular a real data de pagamento
-      vr_dtdpagto := fn_calc_data_pagamento(pr_qtpreemp => rw_crapepr.qtpreemp
-                                           ,pr_qtmesdec => vr_qtmesdec
+      vr_dtdpagto := fn_calc_data_pagamento(pr_qtmesdec => vr_qtmesdec
                                            ,pr_qtprecal => pr_qtprecal
                                            ,pr_dtdpagto => rw_crapepr.dtdpagto
                                            ,pr_dtcalcul => vr_dtcalcul);
