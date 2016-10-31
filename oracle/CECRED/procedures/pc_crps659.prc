@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS659
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Douglas
-   Data    : Outubro/2013.                  Ultima atualizacao: 11/01/2016
+   Data    : Outubro/2013.                  Ultima atualizacao: 29/07/2016
 
    Dados referentes ao programa:
 
@@ -46,6 +46,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS659
               11/01/2016 - Ajuste na leitura da tabela crapsqu para utilizar UPPER nos campos VARCHAR
                            pois será incluido o UPPER no indice desta tabela - SD 375854
                            (Adriano).  
+                           
+              23/06/2016 - Correcao para o uso da function fn_busca_dstextab 
+                            da TABE0001. (Carlos Rafael Tanholi). 
+                  
+              29/07/2016 - Ajuste na leitura da tabela craptex para efetuar delete da cooperativa
+			               que efetuou a chamada do programa e não de todas cooperativas (Daniel)
                                              
   ................................................................................*/
 
@@ -117,20 +123,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS659
      WHERE crapmof.cdcooper = pr_cdcooper
        AND crapmof.dtenvpbc = pr_ultdiame;
 
-  -- Buscar informação da tabela CRAPTAB
-  CURSOR cr_craptab(pr_nmsistem   craptab.nmsistem%TYPE
-                   ,pr_tptabela   craptab.tptabela%TYPE
-                   ,pr_cdempres   craptab.cdempres%TYPE
-                   ,pr_cdacesso   craptab.cdacesso%TYPE
-                   ,pr_tpregist   craptab.tpregist%TYPE) IS
-     SELECT craptab.dstextab
-       FROM craptab
-      WHERE craptab.cdcooper = pr_cdcooper
-        AND craptab.nmsistem = pr_nmsistem
-        AND craptab.tptabela = pr_tptabela
-        AND craptab.cdempres = pr_cdempres
-        AND craptab.cdacesso = pr_cdacesso
-        AND craptab.tpregist = pr_tpregist;
       
   CURSOR cr_gncontr IS
     SELECT gnconve.cdconven, gnconve.nmempres, MAX(gncontr.dtmvtolt) AS dtmvtolt
@@ -192,9 +184,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS659
            , craptab.dstextab
         FROM craptab
        WHERE craptab.cdcooper = pr_cdcooper
-         AND craptab.nmsistem = 'CRED'
-         AND craptab.tptabela = 'CONFIG'
-         AND craptab.cdacesso = 'TXADIAPLIC';
+         AND UPPER(craptab.nmsistem) = 'CRED'
+         AND UPPER(craptab.tptabela) = 'CONFIG'
+         AND UPPER(craptab.cdacesso) = 'TXADIAPLIC';
 
     -- Buscar taxas de RDCA
     CURSOR cr_craptrd(pr_prxdttrd craptrd.dtiniper%TYPE
@@ -688,7 +680,8 @@ BEGIN -- Principal
   /* Limpeza dos registros com emissao maior que 45 dias */
   BEGIN
     DELETE craptex
-     WHERE craptex.dtemiext < (vr_dtmvtolt - 45);
+     WHERE craptex.cdcooper = pr_cdcooper
+	   AND craptex.dtemiext < (vr_dtmvtolt - 45);
   EXCEPTION
     WHEN OTHERS THEN
       -- Definir mensagem de erro
@@ -1379,19 +1372,13 @@ BEGIN -- Principal
       -- Se ainda não foi realizado o envio
       IF rw_crapmof.flgenvio = 0 THEN
 
-        -- Buscar o endereço de e-mail
-        OPEN  cr_craptab('CRED'       -- pr_nmsistem
-                        ,'USUARI'     -- pr_tptabela
-                        ,0            -- pr_cdempres
-                        ,'EMLCTBCOOP' -- pr_cdacesso
-                        ,0);          -- pr_tpregist
-        FETCH cr_craptab INTO vr_dsdestin;
-        -- Se não encontrar registro
-        IF cr_craptab%NOTFOUND THEN
-          vr_dsdestin := NULL;
-        END IF;
-        -- Fecha o cursor
-        CLOSE cr_craptab;
+        -- Buscar configuração na tabela
+        vr_dsdestin := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'USUARI'
+                                                 ,pr_cdempres => 0
+                                                 ,pr_cdacesso => 'EMLCTBCOOP'
+                                                 ,pr_tpregist => 0);  
 
         -- Monta o corpo do e-mail
         vr_conteudo := 'Informamos que dia '                       ||
@@ -1460,4 +1447,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS659;
 /
-

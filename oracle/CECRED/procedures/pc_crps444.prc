@@ -328,6 +328,9 @@ BEGIN
 				           
                  15/06/2016 - Ajustes para realizar debito de devolucao de cheque(0114 BB)
 				              na hora (Tiago/Elton SD 464916).
+										   
+                 23/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
+                              (Carlos Rafael Tanholi).
 
                  12/07/2016 - Ajustes para realizar debito de devolucao de cheque
 				              apenas (0114 BB) na hora (Tiago/Thiago SD 480694).
@@ -508,10 +511,10 @@ BEGIN
        SELECT craptab.dstextab, craptab.rowid
          FROM craptab
         WHERE craptab.cdcooper = pr_cdcooper
-          AND craptab.nmsistem = pr_nmsistem
-          AND craptab.tptabela = pr_tptabela
+          AND UPPER(craptab.nmsistem) = pr_nmsistem
+          AND UPPER(craptab.tptabela) = pr_tptabela
           AND craptab.cdempres = pr_cdempres
-          AND craptab.cdacesso = pr_cdacesso
+          AND UPPER(craptab.cdacesso) = pr_cdacesso
           AND craptab.tpregist = pr_tpregist;
      rw_craptab cr_craptab%ROWTYPE;
 
@@ -721,8 +724,8 @@ BEGIN
                                  ORDER BY craptab.cdacesso,craptab.tpregist) seqreg
        FROM craptab
        WHERE craptab.cdcooper = pr_cdcooper
-       AND  craptab.nmsistem  = pr_nmsistem
-       AND  craptab.tptabela  = pr_tptabela
+       AND  UPPER(craptab.nmsistem)  = pr_nmsistem
+       AND  UPPER(craptab.tptabela)  = pr_tptabela
        AND  craptab.cdempres  = pr_cdempres;
      rw_craptab_tot cr_craptab_tot%ROWTYPE;
 

@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 25/04/2016
+   Data    : Novembro/91.                    Ultima atualizacao: 21/06/2016
 
    Dados referentes ao programa:
 
@@ -186,6 +186,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             
                25/04/2016 - Incluso tratamento para efetuar o lancamento do juros do cheque especial  
                             na tabela CRAPLAU quando for uma conta com restricao judicial (Daniel)            
+                            
+               21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
+                            (Carlos Rafael Tanholi).                                                              
      ............................................................................. */
 
      DECLARE
@@ -356,10 +359,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                 ,craptab.rowid
          FROM craptab  craptab
          WHERE craptab.cdcooper = pr_cdcooper
-         AND   craptab.nmsistem = pr_nmsistem
-         AND   craptab.tptabela = pr_tptabela
+         AND   UPPER(craptab.nmsistem) = pr_nmsistem
+         AND   UPPER(craptab.tptabela) = pr_tptabela
          AND   craptab.cdempres = pr_cdempres
-         AND   craptab.cdacesso = pr_cdacesso
+         AND   UPPER(craptab.cdacesso) = pr_cdacesso
          AND   craptab.tpregist = pr_tpregist;
        rw_craptab  cr_craptab%ROWTYPE;
 
