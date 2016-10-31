@@ -7132,8 +7132,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               ,darf.idagendamento        AS idagendamento
               ,ROWID
 				  FROM tbpagto_darf_das_trans_pend darf
-         WHERE darf.cdcooper = pr_cdcooper OR pr_cdcooper = 0
-           AND darf.nrdconta = pr_nrdconta OR pr_nrdconta = 0
+         WHERE (darf.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
+           AND (darf.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
            AND (pr_cdtrapen IS NULL OR (darf.cdtransacao_pendente IN (SELECT regexp_substr(pr_cdtrapen, '[^;]+', 1, ROWNUM) parametro
                FROM dual CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_cdtrapen ,'[^;]+','')) + 1)));
 

@@ -1,4 +1,5 @@
 /******************************************************************************
+
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +------------------------------------+--------------------------------------+
@@ -6650,7 +6651,6 @@ PROCEDURE busca_darf_das:
               NEXT. 
             
             xField:GET-CHILD(xText,1).
-            
             ASSIGN tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "cdtransacao_pendente".
             ASSIGN tt-tbpagto_darf_das_trans_pend.cdcooper             =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "cdcooper".
             ASSIGN tt-tbpagto_darf_das_trans_pend.nrdconta             =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta".
@@ -6674,7 +6674,7 @@ PROCEDURE busca_darf_das:
             ASSIGN tt-tbpagto_darf_das_trans_pend.vlpagamento          =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "vlpagamento".
             ASSIGN tt-tbpagto_darf_das_trans_pend.dtdebito             = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdebito".
             ASSIGN tt-tbpagto_darf_das_trans_pend.idagendamento        =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "idagendamento".
-            ASSIGN tt-tbpagto_darf_das_trans_pend.idrowid              =      xText:NODE-VALUE  WHEN xField:NAME = "idrowid".
+            ASSIGN tt-tbpagto_darf_das_trans_pend.idrowid              =      xText:NODE-VALUE  WHEN xField:NAME = "idrowid".    
             
           END.                
         END.
@@ -6804,9 +6804,9 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_cobregis AS LOGI                                    NO-UNDO.
     DEF VAR aux_msgalert AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtminast AS INTE                                    NO-UNDO.
-	DEF VAR aux_contapro AS INTE
+    DEF VAR aux_contapro AS INTE                                    NO-UNDO.    
         
-    DEF VAR aux_flagdarf AS LOGICAL                                    NO-UNDO.
+    DEF VAR aux_flagdarf AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_trandarf AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtdregis AS INT                                     NO-UNDO.
     
@@ -7303,50 +7303,51 @@ PROCEDURE aprova_trans_pend:
         
                               ASSIGN tt-tbgen_trans_pend.idmovimento_conta  = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0).
                           END.
+                       ELSE
+                          DO:
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = "Registro de Pacote de Tarifas Pendente Inexistente.".
+                    
+                            RUN gera_erro (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT 1,            /** Sequencia **/
+                                           INPUT aux_cdcritic,
+                                           INPUT-OUTPUT aux_dscritic).
+                            
+                            IF par_flgerlog THEN
+                              DO:
+                                  RUN proc_gerar_log (INPUT par_cdcooper,
+                                                      INPUT par_cdoperad,
+                                                      INPUT aux_dscritic,
+                                                      INPUT aux_dsorigem,
+                                                      INPUT aux_dstransa,
+                                                      INPUT FALSE,
+                                                      INPUT 1,
+                                                      INPUT par_nmdatela,
+                                                      INPUT par_nrdconta,
+                                                     OUTPUT aux_nrdrowid).
+                                END.
+                
+                            RETURN "NOK".
+                          END.
                   END.
-        ELSE IF tbgen_trans_pend.tptransacao = 11 THEN /* DARF-DAS */
-          DO:
-            ASSIGN tt-tbgen_trans_pend.idmovimento_conta = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0)
-                   aux_flagdarf = TRUE.
-            
-            IF aux_trandarf <> ? THEN
-              ASSIGN aux_trandarf = aux_trandarf + ";".
-              
-            ASSIGN aux_trandarf = aux_trandarf + STRING(aux_cddoitem).
-            
-          END.
-        ELSE
-          DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Registro de Pacote de Tarifas Pendente Inexistente.".
+                ELSE IF tbgen_trans_pend.tptransacao = 11 THEN /* DARF-DAS */
+                  DO:
+                    ASSIGN tt-tbgen_trans_pend.idmovimento_conta = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0)
+                           aux_flagdarf = TRUE.
+                    
+                    IF aux_trandarf <> ? THEN
+                      ASSIGN aux_trandarf = aux_trandarf + ";".
+                      
+                    ASSIGN aux_trandarf = aux_trandarf + STRING(aux_cddoitem).
+                    
+                  END.
+       
+            END. /*IF AVAILABLE tbgen_trans_pend THEN*/
+             
+    END. /*DO aux_contador = 1 */
     
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-            
-            IF par_flgerlog THEN
-              DO:
-                  RUN proc_gerar_log (INPUT par_cdcooper,
-                                      INPUT par_cdoperad,
-                                      INPUT aux_dscritic,
-                                      INPUT aux_dsorigem,
-                                      INPUT aux_dstransa,
-                                      INPUT FALSE,
-                                      INPUT 1,
-                                      INPUT par_nmdatela,
-                                      INPUT par_nrdconta,
-                                     OUTPUT aux_nrdrowid).
-                END.
-
-            RETURN "NOK".
-          END.
-        END.
-      END.        
-    
-
     /* Verifica se existem transacoes referentes a DARF/DAS */
     IF aux_flagdarf THEN
       DO:
@@ -7390,9 +7391,7 @@ PROCEDURE aprova_trans_pend:
             RETURN "NOK".
           END.                  
       END. /* FIM IF aux_flagdarf */
-
-      FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR NO-WAIT.
-
+      
     FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR NO-WAIT.
 	    
     FOR EACH tt-tbgen_trans_pend NO-LOCK BY tt-tbgen_trans_pend.idmovimento_conta
@@ -11876,7 +11875,7 @@ PROCEDURE aprova_trans_pend:
                                                SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,41,1))
                            aux_lindigi4 = DECI(SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,43,11) + 
                                                SUBSTR(tt-tbpagto_darf_das_trans_pend.dslinha_digitavel,55,1)).
-                                               
+                      
                     /* Procedimento do internetbank pc_verifica_operacao_prog */
                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -11911,7 +11910,7 @@ PROCEDURE aprova_trans_pend:
                                                          OUTPUT 0,                                              /* Valor da guia */
                                                          OUTPUT 0,                                              /* Código do erro */
                                                          OUTPUT ?).                                             /* Descriçao do erro */
-                                        
+                       
                     IF  ERROR-STATUS:ERROR  THEN DO:
                         DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
                             ASSIGN aux_msgerora = aux_msgerora + 
@@ -11991,7 +11990,7 @@ PROCEDURE aprova_trans_pend:
     
                         UNDO TRANSACAO, LEAVE TRANSACAO.
                       END.
-                                            
+                               
                     /* Efetivaçao */ 
                     IF par_indvalid = 1 AND aux_conttran = 1 THEN
                       DO:
@@ -12122,7 +12121,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT par_cdoperad,  /* Codigo do operador */
                                                                   INPUT tt-tbgen_trans_pend.nrcpf_operador,  /* CPF do operador PJ */
                                                                   INPUT par_idorigem,  /* Canal de origem da operaçao */
-                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,  /* Tipo da guia (1 – DARF / 2 – DAS) JMD */
+                                                                  INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,  /* Tipo da guia (1 – DARF / 2 – DAS) */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,  /* Tipo de captura da guia (1 – Código Barras / 2 – Manual) */
                                                                   INPUT 508, /* Historico */
                                                                   INPUT aux_lindigi1,  /* Primeiro campo da linha digitável da guia*/
@@ -12226,7 +12225,23 @@ PROCEDURE aprova_trans_pend:
                           END. /* ELSE IF tt-tbpagto_darf_das_trans_pend.idagendamento = 2 THEN */
                       
                       END. /* EFETIVACAO */
-
+                      
+                    RUN gera_erro_transacao(INPUT par_cdcooper,
+                                              INPUT par_cdoperad,
+                                              INPUT aux_dscritic,
+                                              INPUT aux_dsorigem,
+                                              INPUT aux_dstransa,
+                                              INPUT FALSE,
+                                              INPUT par_nmdatela,
+                                              INPUT par_nrdconta,
+                                              INPUT STRING(ROWID(tbgen_trans_pend)),
+                                              INPUT TRUE,
+                                              INPUT par_indvalid,
+                                              INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,
+                                              INPUT tt-tbpagto_darf_das_trans_pend.vlpagamento,
+                                              INPUT aux_conttran).
+                                                
+                  
                   END. /* = 11 */
     
                 IF par_indvalid = 1 THEN
@@ -12275,8 +12290,10 @@ PROCEDURE aprova_trans_pend:
     ASSIGN aux_dstransa = "Aprovacao de Transacoes Pendentes".
 
     FOR EACH tt-criticas_transacoes_oper NO-LOCK:
+      
         IF par_indvalid = 1 OR (par_indvalid = 0 AND tt-criticas_transacoes_oper.flgtrans = FALSE)THEN
             DO:
+              
                 RUN proc_gerar_log (INPUT par_cdcooper,
                                     INPUT par_cdoperad,
                                     INPUT tt-criticas_transacoes_oper.dscritic,
