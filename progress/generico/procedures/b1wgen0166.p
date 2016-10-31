@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0166.p
     Autor   : Oliver Fagionato (GATI)
-    Data    : Agosto/2013                               Alteracao: 04/08/2016
+    Data    : Agosto/2013                               Alteracao: 21/10/2016
 
     Objetivo  : Alterar, consultar, incluir e gerar relatório de empresas.
 
@@ -54,24 +54,31 @@
                 27/11/2015 - Incluir substr na inclusao/alteracao nos campos
                              nmextemp e nmresemp, tambem ajustado procedure
                              Gera_arquivo_log_2 (Lucas Ranghetti #357980)
-                                                                          
+
                 15/02/2016 - Inclusao do parametro conta na chamada da
                              fn_valor_tarifa_folha. (Jaison/Marcos)
 
-                                15/03/2016 - Correção nos cadastros de empresas com & (e comercial)
-                                                         no nome, desta forma limpando este caracter do mesmo.
-                                                         (Carlos Rafael Tanholi - SD 413044)                                                          
-                                                         
+        				15/03/2016 - Correção nos cadastros de empresas com & (e comercial)
+				              			 no nome, desta forma limpando este caracter do mesmo.
+							               (Carlos Rafael Tanholi - SD 413044)           
+							 
                 12/04/2016 - Incluir crapemp.cdoperad na procedure Altera_inclui 
                              (Lucas Ranghetti #410302)
-
-                18/05/2016 - Inclusao do campo dtlimdeb. (Jaison/Marcos)                                                                                                        
+                                                                          
+                18/05/2016 - Inclusao do campo dtlimdeb. (Jaison/Marcos)							                                                
 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181
                              ( Rafael Maciel - RKAM)
 
                 04/08/2016 - SD495726 - Folha: Correcao gravacao/alteracao
                              de empresa (Guilherme/SUPERO)
+                             
+                26/09/2016 - Alterar na procedure Altera_inclui, para gravarmos 
+                             a data de inclusao/cancelamento do produto Folha
+                             (Lucas Ranghetti #480384)
+
+                21/10/2016 - Ajuste na mascara do cdempres na "Busca_Conta_Emp"
+                             (Guilherme/SUPERO)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -537,9 +544,14 @@ PROCEDURE Altera_inclui:
 
         IF  AVAIL crapemp THEN 
             DO:
-                            /* SD 413044 */
+			    /* SD 413044 */
                 par_nmextemp = REPLACE(par_nmextemp,"&","").
                 par_nmresemp = REPLACE(par_nmresemp,"&","").
+
+                /* Se alterou(Incluiu/Alterou) o inidicador de servico de folha de pagamento,
+                  iremos atualizar a data de Inclusao do servico ou Cancelamento */
+                IF  crapemp.flgpgtib <> par_flgpgtib THEN
+                    ASSIGN crapemp.dtinccan = TODAY. 
 
                 ASSIGN crapemp.cdempfol = par_cdempfol
                        crapemp.cdempres = par_cdempres
@@ -1837,7 +1849,7 @@ PROCEDURE Busca_Conta_Emp:
                     IF  AVAIL crapemp THEN DO:
                         ASSIGN aux_cdcritic = 0
                                aux_dscritic = "Conta informada ja utilizada por outra empresa: " +
-                                              STRING(crapemp.cdempres,"999") + " - " + crapemp.nmresemp.
+                                              STRING(crapemp.cdempres,"z999") + " - " + crapemp.nmresemp.
     
                         RUN gera_erro (INPUT par_cdcooper,
                                        INPUT 0,
@@ -1875,7 +1887,7 @@ PROCEDURE Busca_Conta_Emp:
                 IF  AVAIL crapemp THEN DO:
                     ASSIGN aux_cdcritic = 0
                            aux_dscritic = "Conta informada ja utilizada por outra empresa: " +
-                                          STRING(crapemp.cdempres,"999") + " - " + crapemp.nmresemp.
+                                          STRING(crapemp.cdempres,"z999") + " - " + crapemp.nmresemp.
     
                     RUN gera_erro (INPUT par_cdcooper,
                                    INPUT 0,
