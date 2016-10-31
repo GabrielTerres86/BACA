@@ -1255,6 +1255,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       END IF;
 
      INSERT INTO craplft(cdcooper
+		                ,nrdconta
                         ,dtapurac
                         ,nrcpfcgc
                         ,cdtribut
@@ -1279,6 +1280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                         ,cdhistor
                         ,dsnomfon)
             VALUES(pr_cdcooper
+				  ,pr_nrdconta
                   ,pr_dtapurac
                   ,pr_nrcpfcgc
                   ,LPAD(pr_cdtribut,4,'0')
