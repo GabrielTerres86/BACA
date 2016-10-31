@@ -856,40 +856,6 @@ function trocaBotao( botao,funcao ) {
 	
 }
 
-
-function validaHorario(){
-
-	var mensagem = 'Aguarde, validando horário ...';
-	
-	showMsgAguardo( mensagem );	
-
-	// Gera requisição ajax para validar horário limite para alteração de valores
-	$.ajax({		
-		type	: 'POST',
-		dataType: 'html',
-		url		: UrlSite + 'telas/previs/valida_horario.php', 
-		data    : 
-				{ 
-					cddopcao    : cddopcao,
-					cdmovmto	: cdmovmto,
-					redirect	: 'script_ajax' 
-				},
-		error   : function(objAjax,responseError,objExcept) {
-					hideMsgAguardo();
-					showError('error','Não foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
-				},
-		success : function(response) {
-					hideMsgAguardo();
-					eval( response );
-													
-				}
-				
-	});
-
-	return false;
-	
-}
-
 function bloqueiaCampo(){
 	
 	singulae = $('#vlrepass1,#vlrepass2,#vlrepass3,#vlrfolha2,#vlnumera2,#vloutros1,#vloutros2,#vloutros3,#vloutros4','#frmFluxo');

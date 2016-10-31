@@ -989,44 +989,5 @@ PROCEDURE libera_acesso:
 
 END PROCEDURE.
 
-FUNCTION valida_horario RETURNS LOGICAL 
-   (INPUT par_cdcooper AS INT,                            
-    INPUT par_hrmvtolt AS INT,
-    OUTPUT par_hrpermit AS LOG,
-    OUTPUT par_dscritic AS CHAR):                            
-
-   DEF VAR aux_hrlimite AS INT                                      NO-UNDO.
-
-   ASSIGN aux_hrlimite = 0.
-          
-   
-   FIND craptab WHERE craptab.cdcooper = par_cdcooper    AND
-                      craptab.nmsistem = "CRED"          AND
-                      craptab.tptabela = "GENERI"        AND
-                      craptab.cdempres = 00              AND
-                      craptab.cdacesso = "PARFLUXOFINAN" AND
-                      craptab.tpregist = 0 
-                      NO-LOCK NO-ERROR.
-               
-   IF AVAIL craptab THEN
-      DO:
-         IF INT(ENTRY(1,ENTRY(8,craptab.dstextab,";"),":")) = 0 THEN
-            ASSIGN aux_hrlimite = (24 * 3600) +
-                                  (INT(ENTRY(2,ENTRY(8,craptab.dstextab,";"),":")) * 60).  
-         ELSE
-            ASSIGN aux_hrlimite = (INT(ENTRY(1,ENTRY(8,craptab.dstextab,";"),":")) * 
-                                   3600) +
-                                  (INT(ENTRY(2,ENTRY(8,craptab.dstextab,";"),":")) * 
-                                   60).
-         
-         ASSIGN par_hrpermit = par_hrmvtolt <= aux_hrlimite.
-
-         IF par_hrpermit = FALSE THEN
-            ASSIGN par_dscritic = "676 - Horario esgotado para digitacao.".
-
-      END.
-
-   RETURN par_hrpermit.
-
 
 END FUNCTION.

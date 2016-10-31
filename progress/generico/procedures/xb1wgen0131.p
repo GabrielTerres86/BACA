@@ -370,26 +370,6 @@ PROCEDURE Busca_Cooperativas:
 
 END PROCEDURE. /* Busca_Cooperativas */
 
-
-/* ------------------------------------------------------------------------- */
-/*    VALIDA O HORAIO PARA DIGITACAO DE CAMPOS                               */
-/* ------------------------------------------------------------------------- */
-PROCEDURE valida_horario:
-
-    DYNAMIC-FUNCTION("valida_horario" IN hBO, 
-                     INPUT aux_cdcooper,
-                     INPUT TIME,
-                     OUTPUT aux_hrpermit,
-                     OUTPUT aux_dscritic).
-
-   RUN piXmlNew.
-   RUN piXmlAtributo (INPUT "hrpermit", INPUT aux_hrpermit).
-   RUN piXmlAtributo (INPUT "dscritic", INPUT aux_dscritic).
-   RUN piXmlSave.
-
-END PROCEDURE.
-
-
 /* ------------------------------------------------------------------------- */
 /*    VERIFICA SE TELA ESTA SENDO USADA                                      */
 /* ------------------------------------------------------------------------- */

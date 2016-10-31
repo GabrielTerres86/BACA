@@ -1151,7 +1151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : Web - Cooperativa de Credito
    Sigla   : CADA
    Autor   : Odirlei Busana (AMcom)
-   Data    : novembro/2013.                        Ultima atualizacao:22/11/2013
+   Data    : novembro/2013.                        Ultima atualizacao:14/10/2016
 
    Dados referentes ao programa:
 
@@ -1163,6 +1163,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                   - Saques feitos por meus Assoc. em outras Coops (par_cdcooper <> 0)
 
    Alteracoes: 22/11/2013 - Conversção Progress >> Oracle (PLSQL) (Odirlei-AMcom)
+   
+               14/10/2016 - Ajuste para remoção de históricos fixos (Marcos-Supero)
 
   ............................................................................. */
 
@@ -1170,42 +1172,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
 
     -- Buscar lançamentos de deposito avista da cooperativa cash
     CURSOR cr_craplcm IS
-      SELECT cdcooper,
-             cdcoptfn,
-             cdagetfn,
-             nrdconta,
-             vllanmto,
-             cdhistor,
-             ROW_NUMBER() OVER(PARTITION BY cdcooper, nrdconta
-                               ORDER BY cdcooper, nrdconta) nrseq_conta
-        FROM craplcm
-       WHERE craplcm.cdcoptfn = pr_cdcoptfn
-         AND craplcm.cdhistor in (918 -- SAQUE TAA
-                                 ,920)-- EST.SAQUE TAA
-         AND craplcm.dtmvtolt >= pr_dtmvtoin
-         AND craplcm.dtmvtolt <= pr_dtmvtofi
-         AND craplcm.cdcooper <> craplcm.cdcoptfn
-       ORDER BY cdcooper, nrdconta;
+      SELECT lcm.cdcooper,
+             lcm.cdcoptfn,
+             lcm.cdagetfn,
+             lcm.nrdconta,
+             lcm.vllanmto,
+             lcm.cdhistor,
+             ROW_NUMBER() OVER(PARTITION BY lcm.cdcooper, lcm.nrdconta
+                               ORDER BY lcm.cdcooper, lcm.nrdconta) nrseq_conta
+        FROM craplcm                  lcm
+            ,tbfin_histor_fluxo_caixa his
+       WHERE lcm.cdcoptfn = pr_cdcoptfn
+       
+         AND lcm.cdhistor = his.cdhistor         
+         AND his.tpfluxo  = 'E'
+         AND his.cdremessa = 9 /* Saque TAA */
+         
+         AND lcm.dtmvtolt >= pr_dtmvtoin
+         AND lcm.dtmvtolt <= pr_dtmvtofi
+         AND lcm.cdcooper <> lcm.cdcoptfn
+       ORDER BY lcm.cdcooper, lcm.nrdconta;
 
     -- Buscar lançamentos de deposito avista da cooperativa
     CURSOR cr_craplcm_cop IS
-      SELECT cdcooper,
-             cdcoptfn,
-             cdagetfn,
-             nrdconta,
-             vllanmto,
-             cdhistor,
-             ROW_NUMBER() OVER(PARTITION BY cdcooper, nrdconta
-                               ORDER BY cdcooper, nrdconta) nrseq_conta
-        FROM craplcm
-       WHERE craplcm.cdcooper = pr_cdcooper
-         AND craplcm.cdhistor IN (918, -- SAQUE TAA
-                                  920) -- EST.SAQUE TAA
-         AND craplcm.dtmvtolt >= pr_dtmvtoin
-         AND craplcm.dtmvtolt <= pr_dtmvtofi
-         AND craplcm.cdcooper <> craplcm.cdcoptfn
-         AND craplcm.cdcoptfn <> 0
-       ORDER BY cdcooper, nrdconta;
+      SELECT lcm.cdcooper
+            ,lcm.cdcoptfn
+            ,lcm.cdagetfn
+            ,lcm.nrdconta
+            ,lcm.vllanmto
+            ,lcm.cdhistor
+            ,ROW_NUMBER() OVER(PARTITION BY lcm.cdcooper, lcm.nrdconta
+                                   ORDER BY lcm.cdcooper, lcm.nrdconta) nrseq_conta
+        FROM craplcm                  lcm
+            ,tbfin_histor_fluxo_caixa his
+       WHERE lcm.cdcooper = pr_cdcooper
+       
+         AND lcm.cdhistor = his.cdhistor         
+         AND his.tpfluxo  = 'S'
+         AND his.cdremessa = 9 /* Saque TAA */
+         
+         AND lcm.dtmvtolt >= pr_dtmvtoin
+         AND lcm.dtmvtolt <= pr_dtmvtofi
+         AND lcm.cdcooper <> lcm.cdcoptfn
+         AND lcm.cdcoptfn <> 0
+       ORDER BY lcm.cdcooper, lcm.nrdconta;
 
   BEGIN
 

@@ -1,7 +1,6 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS624(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa solicitada
                                       ,pr_cdagenci  IN crapage.cdagenci%type  --> Codigo da agencia logada
                                       ,pr_cdoperad  IN crapope.cdoperad%type  --> Codigo do operador logado
-                                      ,pr_nmdatela  IN varchar2               --> Nome da tela logada
                                       ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                                       ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                       ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -52,11 +51,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS624(pr_cdcooper  IN crapcop.cdcooper%T
   /* Cursor generico de calendario */
   RW_CRAPDAT BTCH0001.CR_CRAPDAT%ROWTYPE;
 
-  /* Ler cooperativas */
+  /* Ler todas as cooperativas ativas */
   CURSOR cr_lista_crapcop IS
-    SELECT cop.cdcooper
+    SELECT cop.cdcooper, cop.nmrescop
       FROM crapcop cop
-     WHERE cop.cdcooper <> 3;
+     WHERE cop.cdcooper <> 3
+       AND cop.flgativo = 1;
 
 BEGIN
 
@@ -106,175 +106,40 @@ BEGIN
   END IF;
 
   -- Iniciando a busca das cooperativas para processo
-  FOR rw_lcrapcop IN cr_lista_crapcop LOOP
+  FOR rw_coop IN cr_lista_crapcop LOOP
 
     -- Gravar movimento do fluxo financeiro
-    FLXF0001.pc_grava_fluxo_financeiro( pr_cdcooper => rw_lcrapcop.cdcooper -- Codigo da Cooperativa
+    FLXF0001.pc_grava_fluxo_financeiro( pr_cdcooper => rw_coop.cdcooper     -- Codigo da Cooperativa
+                                       ,pr_nmrescop => rw_coop.nmrescop     -- Nome resumido da Coop
                                        ,pr_cdagenci => pr_cdagenci          -- Codigo da agencia
                                        ,pr_nrdcaixa => 0                    -- Numero da caixa
                                        ,pr_cdoperad => pr_cdoperad          -- Codigo do operador
                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt  -- Data de movimento
-                                       ,pr_nmdatela => pr_nmdatela          -- Nome da tela
-                                       ,pr_cdcoopex => 0                    -- Codigo da Cooperativa
+                                       ,pr_cdprogra => vr_cdprogra          -- Nome da tela
                                        ,pr_dtmvtoan => rw_crapdat.dtmvtoan  -- Data de movimento anterior
-                                       ,pr_cdagefim => 9999                 -- Codigo da agencia
+                                       ,pr_dtmvtopr => rw_crapdat.dtmvtopr  -- Data do movimento posterior
                                        ,pr_tab_erro => vr_tab_erro          -- Tabela contendo os erros
                                        ,pr_dscritic => vr_dscritic);
 
-    IF vr_dscritic <> 'OK' THEN
-      -- Se não existe registro na temptable de erro
-      IF NVL(vr_tab_erro.COUNT,0) = 0 THEN
-        vr_dscritic := 'Nao foi possivel realizar o calculo do fluxo de entrada.';
-      ELSE
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      END IF;
-
+    IF vr_dscritic <> 'OK' OR vr_tab_erro.count > 0 THEN
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
                                 ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic );
-      RAISE vr_exc_saida;
-    END IF;
-
-    -- Gravar movimento financeiro dos docs
-    FLXF0001.pc_grava_mvt_doc ( pr_cdcooper => rw_lcrapcop.cdcooper    -- Codigo da Cooperativa
-                               ,pr_cdagenci => pr_cdagenci             -- Codigo da agencia
-                               ,pr_nrdcaixa => 0                       -- Numero da caixa
-                               ,pr_cdoperad => pr_cdoperad             -- Codigo do operador
-                               ,pr_dtmvtolt => rw_crapdat.dtmvtopr     -- Data de movimento
-                               ,pr_nmdatela => pr_nmdatela             -- Nome da tela
-                               ,pr_tab_erro => vr_tab_erro
-                               ,pr_dscritic => vr_dscritic) ;
-
-    IF vr_dscritic <> 'OK' THEN
-      -- Se não existe registro na temptable de erro
-      IF NVL(vr_tab_erro.COUNT,0) = 0 THEN
-        vr_dscritic := 'Nao foi possivel realizar o calculo do SR DOC.';
-      ELSE
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      END IF;
-
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
-      RAISE vr_exc_saida;
-    END IF;
-
-    -- Gravar movimento financeiro dos titulos
-    FLXF0001.pc_grava_mvt_titulos ( pr_cdcooper => rw_lcrapcop.cdcooper     -- Codigo da Cooperativa
-                                   ,pr_cdagenci => pr_cdagenci              -- Codigo da agencia
-                                   ,pr_nrdcaixa => 0                        -- Numero da caixa
-                                   ,pr_cdoperad => pr_cdoperad              -- Codigo do operador
-                                   ,pr_dtmvtolt => rw_crapdat.dtmvtopr      -- Data de movimento
-                                   ,pr_nmdatela => vr_cdprogra              -- Nome da tela
-                                   ,pr_dtmvtoan => rw_crapdat.dtmvtoan      -- Data de movimento anterior
-                                   ,pr_cdcoopex => rw_lcrapcop.cdcooper     -- Codigo da Cooperativa
-                                   ,pr_calcproj => TRUE                     -- Identificador se calcula projeção
-                                   ,pr_tab_erro => vr_tab_erro
-                                   ,pr_dscritic => vr_dscritic);
-
-    IF vr_dscritic <> 'OK' THEN
-      -- Se não existe registro na temptable de erro
-      IF NVL(vr_tab_erro.COUNT,0) = 0 THEN
-        vr_dscritic := 'Nao foi possivel realizar o calculo do SR Titulos.';
-      ELSE
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      END IF;
-
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
-      RAISE vr_exc_saida;
-    END IF;
-
-    -- Procedure para gravar movimento financeiro de cheques saida
-    FLXF0001.pc_grava_mvt_cheques ( pr_cdcooper => rw_lcrapcop.cdcooper  -- Codigo da Cooperativa
-                                   ,pr_cdagenci => pr_cdagenci           -- Codigo da agencia
-                                   ,pr_nrdcaixa => 0                     -- Numero da caixa
-                                   ,pr_cdoperad => pr_cdoperad           -- Codigo do operador
-                                   ,pr_dtmvtolt => rw_crapdat.dtmvtopr   -- Data de movimento
-                                   ,pr_nmdatela => pr_nmdatela           -- Nome da tela
-                                   ,pr_tab_erro => vr_tab_erro           -- Tabela contendo os erros
-                                   ,pr_dscritic => vr_dscritic);
-
-    IF vr_dscritic <> 'OK' THEN
-      -- Se não existe registro na temptable de erro
-      IF NVL(vr_tab_erro.COUNT,0) = 0 THEN
-        vr_dscritic := 'Nao foi possivel realizar o calculo do SR Cheques.';
-      ELSE
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      END IF;
-
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
-      RAISE vr_exc_saida;
-    END IF;
-
-    -- Gravar movimento financeiro das contas Itg - Entrada
-    FLXF0001.pc_grava_mvt_conta_itg ( pr_cdcooper => rw_lcrapcop.cdcooper  -- Codigo da Cooperativa
-                                     ,pr_cdagenci => pr_cdagenci           -- Codigo da agencia
-                                     ,pr_nrdcaixa => 0                     -- Numero da caixa
-                                     ,pr_cdoperad => pr_cdoperad           -- Codigo do operador
-                                     ,pr_dtmvtolt => rw_crapdat.dtmvtopr   -- Data de movimento
-                                     ,pr_nmdatela => pr_nmdatela           -- Nome da tela
-                                     ,pr_tpdmovto => 1                     -- tipo de movimento(1-entrada 2-saida)
-                                     ,pr_cdcoopex => rw_lcrapcop.cdcooper  -- Codigo da Cooperativa
-                                     ,pr_dscritic => vr_dscritic );
-
-    IF vr_dscritic <> 'OK' THEN
-      -- Se não existe registro na temptable de erro
-      IF NVL(vr_tab_erro.COUNT,0) = 0 THEN
-        vr_dscritic := 'Nao foi possivel realizar o calculo do Mov. Conta ITG.';
-      ELSE
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      END IF;
-
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
-      RAISE vr_exc_saida;
-    END IF;
-
-    -- Procedure para gravar movimento financeiro das contas Itg -- Saida
-    FLXF0001.pc_grava_mvt_conta_itg ( pr_cdcooper => rw_lcrapcop.cdcooper  -- Codigo da Cooperativa
-                                     ,pr_cdagenci => pr_cdagenci           -- Codigo da agencia
-                                     ,pr_nrdcaixa => 0                     -- Numero da caixa
-                                     ,pr_cdoperad => pr_cdoperad           -- Codigo do operador
-                                     ,pr_dtmvtolt => rw_crapdat.dtmvtopr   -- Data de movimento
-                                     ,pr_nmdatela => pr_nmdatela           -- Nome da tela
-                                     ,pr_tpdmovto => 2                     -- tipo de movimento(1-entrada 2-saida)
-                                     ,pr_cdcoopex => rw_lcrapcop.cdcooper  -- Codigo da Cooperativa
-                                     ,pr_dscritic => vr_dscritic );
-
-    IF vr_dscritic <> 'OK' THEN
-      -- Se não existe registro na temptable de erro
-      IF NVL(vr_tab_erro.COUNT,0) = 0 THEN
-        vr_dscritic := 'Nao foi possivel realizar o calculo do Mov. Conta ITG.';
-      ELSE
-        vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-      END IF;
-
-      -- Envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic );
+      -- Iterar todos os erros da tab erro
+      IF vr_tab_erro.count > 0 THEN
+        FOR vr_idx IN vr_tab_erro.first..vr_tab_erro.last LOOP
+          -- Envio ao log
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '
+                                                     || vr_tab_erro(vr_idx).dscritic );
+        END LOOP;
+      END IF;  
+      -- Direcionar a saida para desfazer as alterações
       RAISE vr_exc_saida;
     END IF;
 
@@ -330,4 +195,3 @@ EXCEPTION
 
 END PC_CRPS624;
 /
-
