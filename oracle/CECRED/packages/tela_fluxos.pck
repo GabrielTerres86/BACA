@@ -2571,26 +2571,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
 
         END CASE;
         
-        -- Se NAO for Resgate ou Aplicacao ou for Resgate com valor ou Aplicacao com valor
-        IF (vr_dsbancos(vr_idx) NOT IN ('TRSG','TAPL'))       OR
-           (vr_dsbancos(vr_idx) = 'TRSG' AND vr_vldcampo > 0) OR
-           (vr_dsbancos(vr_idx) = 'TAPL' AND vr_vldcampo > 0) THEN
+        -- Grava as informacoes do fluxo financeiro consolidado
+        FLXF0001.pc_grava_consolidado_singular
+                (pr_cdcooper => pr_cdcooper
+                ,pr_cdbccxlt => vr_cdbccxlt
+                ,pr_dtmvtolt => vr_dtrefere
+                ,pr_tpdcampo => vr_tpdcampo
+                ,pr_vldcampo => vr_vldcampo
+                ,pr_cdoperad => vr_cdoperad
+                ,pr_dscritic => vr_dscritic);
 
-          -- Grava as informacoes do fluxo financeiro consolidado
-          FLXF0001.pc_grava_consolidado_singular
-                  (pr_cdcooper => pr_cdcooper
-                  ,pr_cdbccxlt => vr_cdbccxlt
-                  ,pr_dtmvtolt => vr_dtrefere
-                  ,pr_tpdcampo => vr_tpdcampo
-                  ,pr_vldcampo => vr_vldcampo
-                  ,pr_cdoperad => vr_cdoperad
-                  ,pr_dscritic => vr_dscritic);
-
-          -- Se retornou erro
-          IF vr_dscritic <> 'OK' THEN
-            RAISE vr_exc_saida;
-          END IF;
-
+        -- Se retornou erro
+        IF vr_dscritic <> 'OK' THEN
+          RAISE vr_exc_saida;
         END IF;
 
       END LOOP; -- vr_dsbancos

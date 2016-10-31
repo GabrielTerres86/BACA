@@ -249,6 +249,10 @@
             }
             break;
 
+        case 'G':
+            exit; // Utilizado apenas para validar a permissao da opcao
+            break;
+
     }
 
 	include('form_'.strtolower($cddopcao).'.php');

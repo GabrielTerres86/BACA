@@ -27,6 +27,7 @@ $xmlRegist = $xmlObject->roottag->tags[0]->tags;
 	<select id="cddopcao" name="cddopcao">
 		<option value=""></option>
 		<option value="F"> F - Consulta Fluxo de caixa</option>
+        <option value="G"> G - Gera&ccedil;&atilde;o de CSV</option>
 		<option value="L"> L - Liquida&ccedil;&otilde;es das previs&otilde;es financeiras</option>
 		<?php
             // Somente CECRED pode utilizar
@@ -36,7 +37,6 @@ $xmlRegist = $xmlObject->roottag->tags[0]->tags;
                 <?php
             }
         ?>
-        <option value="G"> G - Gera&ccedil;&atilde;o de CSV</option>
 		<option value="R"> R - Resultado do Fluxo do dia</option>
 	</select>
 

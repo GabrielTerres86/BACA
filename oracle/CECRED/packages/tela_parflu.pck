@@ -1288,7 +1288,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
         RAISE vr_exc_saida;
       END IF;
 
-      vr_dshora := TO_DATE(pr_dshora, 'hh24:mi');
+      BEGIN
+        vr_dshora := TO_DATE(pr_dshora, 'hh24:mi');
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Horario invalido!';
+        RAISE vr_exc_saida;
+      END;
 
       -- Listagem de cooperativa
       FOR rw_crapcop IN cr_crapcop(pr_cdcooper => (CASE WHEN pr_inallcop = 1 THEN 0 ELSE pr_cdcooper END)) LOOP

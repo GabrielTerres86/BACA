@@ -249,26 +249,55 @@ function ativaCampoCabecalho() {
 
 function abreDownload() {
 
-    if (cDtmvtolt.val() == '') {
-        showError("error", "Informe a data.", "Alerta - Ayllos", "cDtmvtolt.focus()");
-        return false;
-    }
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
 
-    var dtIni = new Date(cDtmvtolt.val());
-    var dtFim = new Date(cDtlimite.val());
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        dataType: 'html',
+        url: UrlSite + "telas/fluxos/obtem_consulta.php",
+        data: {
+            cddopcao: cCddopcao.val(),
+            dtmvtolt: cDtmvtolt.val(),
+            dtlimite: cDtlimite.val(),
+            tpdmovto: cTpdmovto.val(),
+            cdcooper: cCdcooper.val(),
+            redirect: "script_ajax" // Tipo de retorno do ajax
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".", "Alerta - Ayllos", "$('#cddopcao','#frmCab').focus()");
+        },
+        success: function(response) {
+            if (response.substr(0, 14) == 'hideMsgAguardo') {
+                eval(response);
+            } else {
+                hideMsgAguardo();
 
-    if (cDtlimite.val() == '') {
-        showError("error", "Informe a data.", "Alerta - Ayllos", "cDtlimite.focus()");
-        return false;
-    } else if (dtIni > dtFim) {
-        showError("error", "Informe uma data superior a data de referência.", "Alerta - Ayllos", "cDtlimite.val('').focus()");
-        return false;
-    } else if (diffDays(cDtmvtolt.val(),cDtlimite.val()) > 365) {
-        showError("error", "Informe uma data com o prazo máximo de 12 meses.", "Alerta - Ayllos", "cDtlimite.val('').focus()");
-        return false;
-    }
+                var dtIni = new Date(cDtmvtolt.val());
+                var dtFim = new Date(cDtlimite.val());
 
-    window.open('csv.php?glb_cdcooper=' + glb_cdcooper + '&glb_cdagenci=' + glb_cdagenci + '&glb_nrdcaixa=' + glb_nrdcaixa + '&glb_idorigem=' + glb_idorigem + '&glb_cdoperad=' + glb_cdoperad + '&cdcooper=' + cCdcooper.val() + '&dtrefini=' + cDtmvtolt.val() + '&dtreffim=' + cDtlimite.val());
+                if (cDtmvtolt.val() == '') {
+                    showError("error", "Informe a data.", "Alerta - Ayllos", "cDtmvtolt.focus()");
+                    return false;
+                } else if (cDtlimite.val() == '') {
+                    showError("error", "Informe a data.", "Alerta - Ayllos", "cDtlimite.focus()");
+                    return false;
+                } else if (dtIni > dtFim) {
+                    showError("error", "Informe uma data superior a data de referência.", "Alerta - Ayllos", "cDtlimite.val('').focus()");
+                    return false;
+                } else if (diffDays(cDtmvtolt.val(),cDtlimite.val()) > 365) {
+                    showError("error", "Informe uma data com o prazo máximo de 12 meses.", "Alerta - Ayllos", "cDtlimite.val('').focus()");
+                    return false;
+                }
+
+                window.open('csv.php?glb_cdcooper=' + glb_cdcooper + '&glb_cdagenci=' + glb_cdagenci + '&glb_nrdcaixa=' + glb_nrdcaixa + '&glb_idorigem=' + glb_idorigem + '&glb_cdoperad=' + glb_cdoperad + '&cdcooper=' + cCdcooper.val() + '&dtrefini=' + cDtmvtolt.val() + '&dtreffim=' + cDtlimite.val());
+            }
+		
+		}
+
+    });
 
 }
 
