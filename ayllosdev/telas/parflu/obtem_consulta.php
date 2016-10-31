@@ -61,7 +61,16 @@
 
         include('form_c.php');
 
-        if ($conta_sysphera) {
+        if ($conta_sysphera) {            
+            $arrPrazo = array(90, 180, 270, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3600, 3960, 4320, 4680, 5040, 5400, 5401);
+            foreach ($arrPrazo as $cdprazo) {
+                ?>
+                <script type="text/javascript">
+                    $("#perc_<?php echo $cdprazo; ?>","#frmParflu").val("0,00");
+                </script>
+                <?php
+            }
+            // Carrega os valores do banco de dados
             foreach ($param as $reg) {
                 $cdprazo = getByTagName($reg->tags,'CDPRAZO');
                 $perdistrib = getByTagName($reg->tags,'PERDISTRIB');

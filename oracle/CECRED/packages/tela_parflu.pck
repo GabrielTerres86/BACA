@@ -1258,6 +1258,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
+      
+      -- Variaveis gerais
+      vr_dshora   DATE;
 
     BEGIN
       -- Extrai os dados vindos do XML
@@ -1285,12 +1288,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
         RAISE vr_exc_saida;
       END IF;
 
+      vr_dshora := TO_DATE(pr_dshora, 'hh24:mi');
+
       -- Listagem de cooperativa
       FOR rw_crapcop IN cr_crapcop(pr_cdcooper => (CASE WHEN pr_inallcop = 1 THEN 0 ELSE pr_cdcooper END)) LOOP
 
         BEGIN
           UPDATE craptab
-             SET dstextab        = pr_dshora
+             SET dstextab        = TO_CHAR(vr_dshora,'hh24:mi')
            WHERE cdcooper        = rw_crapcop.cdcooper
              AND UPPER(nmsistem) = 'CRED'
              AND UPPER(tptabela) = 'GENERI'

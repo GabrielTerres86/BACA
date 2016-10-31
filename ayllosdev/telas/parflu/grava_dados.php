@@ -92,10 +92,14 @@
 	$xmlObject = getObjectXML($xmlResult);
 
 	echo 'hideMsgAguardo();';
-
-	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObject->roottag->tags[0]->cdata,'Alerta - Ayllos',"",false);
-	}
+    
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+        $msgErro = $xmlObject->roottag->tags[0]->cdata;
+        if ($msgErro == '') {
+            $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        }
+        exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+    }
 
     echo "showError('inform','Dados gravados com sucesso!','PARFLU','fechaRotina($(\'#divRotina\'));estadoInicial();');";
 ?>

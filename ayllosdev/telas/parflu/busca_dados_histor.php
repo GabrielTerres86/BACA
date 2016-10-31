@@ -19,6 +19,7 @@
 
     $cddopcao = 'R';
     $cdhistor = (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : 0;
+    $dsaction = (isset($_POST['dsaction'])) ? $_POST['dsaction'] : 'carrega';
     $nriniseq = 1;
     $nrregist = 1;
 
@@ -42,10 +43,14 @@
     $xmlObject = getObjectXML($xmlResult);
     $qtdHistor = $xmlObject->roottag->tags[0]->attributes["QTREGIST"];
     $regHistor = $xmlObject->roottag->tags[0]->tags[0];
-
+    
     if ($qtdHistor) {
-        echo "$('#dshistor','#frmParflu').val('".getByTagName($regHistor->tags,'DSHISTOR')."');";
-        echo "$('#tphistor','#frmParflu').val('".getByTagName($regHistor->tags,'TPHISTOR')."');";
+        if ($dsaction == 'carrega') {
+            echo "$('#dshistor','#frmParflu').val('".getByTagName($regHistor->tags,'DSHISTOR')."');";
+            echo "$('#tphistor','#frmParflu').val('".getByTagName($regHistor->tags,'TPHISTOR')."');";
+        } else {
+            echo "confirmaInclusao()";
+        }
     } else {
         exibirErro('error','Hist&oacute;rico inv&aacute;lido!','Alerta - Ayllos',"resetaInclusao()",false);
     }

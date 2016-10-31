@@ -60,7 +60,7 @@
                     <option value="S">Saída</option>
                     </select>
                 </td>
-                <td><a href="#" class="botao" id="btAdicionar"  onClick="confirmaInclusao();return false;" style="text-align: right; float: none;">Adicionar</a></td>
+                <td><a href="#" class="botao" id="btAdicionar"  onClick="validaInclusao();return false;" style="text-align: right; float: none;">Adicionar</a></td>
             </tr>
             </table>
         </fieldset>

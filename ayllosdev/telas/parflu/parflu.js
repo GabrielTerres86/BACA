@@ -337,7 +337,7 @@ function formataFormulario() {
             });
 	
             cCdhistor.unbind('blur').bind('blur', function(e) {		
-                 carregaDadosHistor();
+                 carregaDadosHistor('carrega');
             });
 
             cNmremessa.keypress(function(e) {
@@ -393,6 +393,7 @@ function formataFormulario() {
 
             cCdcooper.css({'width':'50px','text-align':'center'}).desabilitaCampo();
             cNmcooper.css({'width':'350px'}).desabilitaCampo();
+            cDshora.mask('00:00');
             cDshora.css({'width':'50px'}).setMask('STRING','99:99',':','');
 
             $("#divCooper2", "#frmParflu").show();
@@ -770,7 +771,7 @@ function mostraPesquisaHistor() {
 	return false;
 }
 
-function carregaDadosHistor() {
+function carregaDadosHistor(dsaction) {
 
 	var cdhistor = normalizaNumero($('#cdhistor','#frmParflu').val());
     if (cdhistor > 0) {
@@ -780,6 +781,7 @@ function carregaDadosHistor() {
             url: UrlSite + "telas/parflu/busca_dados_histor.php",
             data: {
                 cdhistor : cdhistor,
+                dsaction : dsaction,
                 redirect : "script_ajax" // Tipo de retorno do ajax
             },
             error: function(objAjax, responseError, objExcept) {
@@ -795,7 +797,7 @@ function carregaDadosHistor() {
     }
 }
 
-function confirmaInclusao() {
+function validaInclusao() {
 
     var cdhistor = normalizaNumero($('#cdhistor',  '#frmParflu').val());
     if (cdhistor == 0) {
@@ -817,10 +819,14 @@ function confirmaInclusao() {
         if (blnAchou) {
             showError("error", "Este registro já está adicionado na lista.", "Alerta - Ayllos", "resetaInclusao()");
         } else {
-            showConfirmacao("Deseja incluir este registro na lista?", 'Confirma&ccedil;&atilde;o - Ayllos', 'adicionaLinha()', '', 'sim.gif', 'nao.gif');
+            carregaDadosHistor('confirma');
         }
     }
 
+}
+
+function confirmaInclusao() {
+    showConfirmacao("Deseja incluir este registro na lista?", 'Confirma&ccedil;&atilde;o - Ayllos', 'adicionaLinha()', '', 'sim.gif', 'nao.gif');
 }
 
 function resetaInclusao() {
