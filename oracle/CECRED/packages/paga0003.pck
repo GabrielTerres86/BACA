@@ -1937,7 +1937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                          ,pr_lindigi3 => pr_lindigi3 -- Terceiro campo da linha digitável da guia
                                          ,pr_lindigi4 => pr_lindigi4 -- Quarto campo da linha digitável da guia
                                          ,pr_cdbarras => pr_cdbarras -- Código de barras da guia
-                                         ,pr_dsidepag => pr_dsidepag -- Descrição da identificação do pagamento
+                                         ,pr_dsidepag => vr_dsidepag -- Descrição da identificação do pagamento
                                          ,pr_vlrtotal => rw_crapaut.vldocmto -- Valor total do pagamento da guia
                                          ,pr_dsnomfon => pr_dsnomfon -- Nome e telefone da guia
                                          ,pr_dtapurac => pr_dtapurac -- Período de apuração da guia
@@ -3182,6 +3182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	vr_dtagenda DATE;
 	vr_dtvencto DATE;
 	vr_dsnomcnv VARCHAR2(200);
+	vr_dsidepag VARCHAR(100);
 	vr_nrdolote NUMBER;
 	vr_dslindig VARCHAR2(200);
 	vr_tpdvalor INTEGER;
@@ -3199,6 +3200,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;	
 	
+		-- Descrição do Cedente
+    vr_dsidepag := NVL(trim(pr_dsidepag), CASE pr_tpdaguia
+                                          WHEN 1 THEN 'DARF'
+                                          WHEN 2 THEN 'DAS' END);
+
 		vr_dtagenda := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper, 
                                                pr_dtmvtolt => pr_dtagenda, 
                                                pr_tipo     => 'A');
@@ -3410,7 +3416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      ,vr_dsorigem               -- craplau.dsorigem
                      ,1  /** PENDENTE  **/      -- craplau.insitlau
                      ,10                        -- craplau.cdtiptra
-                     ,pr_dsidepag               -- craplau.dscedent
+                     ,vr_dsidepag               -- craplau.dscedent
                      ,pr_cdbarras               -- craplau.dscodbar
                      ,nvl(vr_dslindig,' ')      -- craplau.dslindig
                      ,pr_dtagenda               -- craplau.dtmvtopg
@@ -3474,7 +3480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 										,pr_nrdconta
 										,pr_tpdaguia
 										,pr_tpcaptur
-										,pr_dsidepag
+										,vr_dsidepag
 										,pr_dsnomfon
 										,pr_cdbarras
 										,nvl(vr_dslindig,' ')
@@ -3559,7 +3565,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																					 ,pr_lindigi3 => pr_lindigi3         -- Terceiro campo da linha digitável da guia
 																					 ,pr_lindigi4 => pr_lindigi4         -- Quarto campo da linha digitável da guia
 																					 ,pr_cdbarras => pr_cdbarras         -- Código de barras da guia
-																					 ,pr_dsidepag => pr_dsidepag         -- Descrição da identificação do pagamento
+																					 ,pr_dsidepag => vr_dsidepag         -- Descrição da identificação do pagamento
 																					 ,pr_vlrtotal => rw_craplau.vllanaut -- Valor total do pagamento da guia
 																					 ,pr_dsnomfon => pr_dsnomfon         -- Nome e telefone da guia
 																					 ,pr_dtapurac => pr_dtapurac         -- Período de apuração da guia
