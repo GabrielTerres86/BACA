@@ -3190,7 +3190,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         END IF;
             
         IF vr_flgativo = 1 THEN
-          vr_dscritic := 'Geracao do boleto nao permitido, emprestimo em acordo.';
+          IF pr_tpdenvio = 1 THEN
+            vr_dscritic := 'Envio de e-mail nao permitido, emprestimo em acordo.';
+          ELSIF pr_tpdenvio = 2 THEN
+            vr_dscritic := 'Envio de SMS nao permitido, emprestimo em acordo.';
+          ELSIF pr_tpdenvio = 3 THEN
+            vr_dscritic := 'Impressao nao permitida, emprestimo em acordo.';    
+          END IF;
           -- Gerar exceção
           RAISE vr_exc_erro;
         END IF;

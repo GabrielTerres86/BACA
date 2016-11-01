@@ -1341,7 +1341,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                   
                 IF aux_flgativo = 1 THEN
                   DO:
-                    ASSIGN aux_dscritic = "Nao e possivel selecionar contratos que estao em acordo.".
+                    ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(par_nrctremp) + " para liquidar, pois o mesmo esta em acordo.".
                     LEAVE Valida.
                   END.  
              END.
@@ -3436,7 +3436,7 @@ PROCEDURE valida-dados-gerais:
         
           DO aux_contador = 1 TO aux_contaliq:
 
-            IF crawepr.nrctrliq[aux_contador] > 0 THEN
+            IF NUM-ENTRIES(par_dsctrliq) > 0 THEN
               DO:
 
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -3472,6 +3472,7 @@ PROCEDURE valida-dados-gerais:
                             
               IF aux_flgativo = 1 THEN
                 DO:
+				ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))) + " para liquidar, pois o mesmo esta em acordo.".	
                 ASSIGN aux_dscritic = "Lancamento nao permitido, contrato para liquidar esta em acordo".
                 LEAVE.
                 END.

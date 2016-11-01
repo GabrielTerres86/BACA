@@ -46,6 +46,44 @@ DEF  INPUT PARAM par_dtmvtoan AS DATE                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
+DEF VAR aux_cdcritic AS INTE NO-UNDO.
+DEF VAR aux_dscritic AS CHAR NO-UNDO.
+DEF VAR aux_flgativo AS INTE NO-UNDO.
+
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+/* Verifica se ha contratos de acordo */
+RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                        ,INPUT par_nrdconta
+                                        ,INPUT par_nrctremp
+                                        ,OUTPUT 0
+                                        ,OUTPUT 0
+                                        ,OUTPUT "").
+
+CLOSE STORED-PROC pc_verifica_acordo_ativo
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+       aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+       aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+        
+IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
+    DO:
+		ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
+
+IF aux_flgativo = 1 THEN
+    DO:
+		ASSIGN xml_dsmsgerr = "<dsmsgerr>Pagamento nao permitido, emprestimo em acordo.</dsmsgerr>".
+        RETURN "NOK".
+    END.
+
 RUN sistema/generico/procedures/b1wgen0084a.p PERSISTENT SET h-b1wgen0084a.
 
 IF VALID-HANDLE(h-b1wgen0084a) THEN

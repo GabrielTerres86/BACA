@@ -2695,7 +2695,7 @@ PROCEDURE valida_dados_efetivacao_proposta:
           DO:
             
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Lancamento nao permitido, contrato para liquidar esta em acordo.".
+                   aux_dscritic = "A proposta nao pode ser efetivada, contrato marcado para liquidar esta em acordo.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -4244,7 +4244,7 @@ PROCEDURE transf_contrato_prejuizo.
         IF aux_flgativo = 1 THEN
           DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Lancamento nao permitido, contrato para liquidar esta em acordo.".
+                   aux_dscritic = "Transferencia para prejuizo nao permitida, emprestimo em acordo.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -4767,61 +4767,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
     ASSIGN aux_flgtrans = FALSE.
 
     TRANSFERE:
-    DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:
-
-      /* Verificacao de contrato de acordo */  
-      
-      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-      /* Verifica se ha contratos de acordo */
-      RUN STORED-PROCEDURE pc_verifica_acordo_ativo
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
-                                            ,INPUT par_nrdconta
-                                            ,INPUT par_nrctremp
-                                            ,0
-                                            ,0
-                                            ,"").
-
-      CLOSE STORED-PROC pc_verifica_acordo_ativo
-                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-      ASSIGN aux_cdcritic = 0
-             aux_dscritic = ""
-             aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
-             aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
-             aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
-      
-      IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
-        DO:
-          RUN gera_erro (INPUT par_cdcooper,
-                         INPUT par_cdagenci,
-                         INPUT 1, /* nrdcaixa  */
-                         INPUT 1, /* sequencia */
-                         INPUT aux_cdcritic,
-                         INPUT-OUTPUT aux_dscritic).
-
-          RETURN "NOK".
-        END.        
-        
-      IF aux_flgativo = 1 THEN
-        DO:
-          ASSIGN aux_cdcritic = 0
-                 aux_dscritic = "Lancamento nao permitido, contrato para liquidar esta em acordo.".
-
-          RUN gera_erro (INPUT par_cdcooper,
-                         INPUT par_cdagenci,
-                         INPUT 1, /* nrdcaixa  */
-                         INPUT 1, /* sequencia */
-                         INPUT aux_cdcritic,
-                         INPUT-OUTPUT aux_dscritic).
-
-          RETURN "NOK".
-           
-        END.
-     
-     /* Fim verificacao contrato acordo */    
+    DO ON ENDKEY UNDO , LEAVE ON ERROR UNDO , LEAVE:   
 
         FOR FIRST crapepr
             WHERE crapepr.cdcooper = par_cdcooper
@@ -4903,6 +4849,60 @@ PROCEDURE desfaz_transferencia_prejuizo.
 
                 RETURN "NOK".
             END.
+
+			/* Verificacao de contrato de acordo */  
+      
+			{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+			/* Verifica se ha contratos de acordo */
+			RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+			aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+												,INPUT par_nrdconta
+												,INPUT par_nrctremp
+												,0
+												,0
+												,"").
+
+			CLOSE STORED-PROC pc_verifica_acordo_ativo
+					aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+			ASSIGN aux_cdcritic = 0
+					aux_dscritic = ""
+					aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+					aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+					aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+      
+			IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+			DO:
+				RUN gera_erro (INPUT par_cdcooper,
+								INPUT par_cdagenci,
+								INPUT 1, /* nrdcaixa  */
+								INPUT 1, /* sequencia */
+								INPUT aux_cdcritic,
+								INPUT-OUTPUT aux_dscritic).
+
+				RETURN "NOK".
+			END.        
+        
+			IF aux_flgativo = 1 THEN
+			DO:
+				ASSIGN aux_cdcritic = 0
+						aux_dscritic = "Desfazimento de prejuizo nao permitido, emprestimo em acordo.".
+
+				RUN gera_erro (INPUT par_cdcooper,
+								INPUT par_cdagenci,
+								INPUT 1, /* nrdcaixa  */
+								INPUT 1, /* sequencia */
+								INPUT aux_cdcritic,
+								INPUT-OUTPUT aux_dscritic).
+
+				RETURN "NOK".
+           
+			END.
+     
+			/* Fim verificacao contrato acordo */
 
             IF NOT VALID-HANDLE(h-b1wgen0043) THEN
                RUN sistema/generico/procedures/b1wgen0043.p

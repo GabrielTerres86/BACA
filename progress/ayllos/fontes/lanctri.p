@@ -667,6 +667,9 @@ DO WHILE TRUE:
                            glb_cdcritic = pc_verifica_acordo_ativo.pr_cdcritic WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
                            glb_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
                            aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+
+					IF aux_flgativo = 1 THEN
+					  LEAVE.
                                       
                 END.
            END.

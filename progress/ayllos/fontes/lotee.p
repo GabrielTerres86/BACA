@@ -1010,22 +1010,25 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                   
                   IF glb_cdcritic > 0 THEN
                     DO:
-                        RUN fontes/critic.p.
+						RUN fontes/critic.p.
                         BELL.
                         MESSAGE glb_dscritic.
-                        ASSIGN glb_cdcritic = 0.
+                        ASSIGN glb_cdcritic = 0
+						       par_situacao = FALSE.
                         LEAVE.
                     END.
                   ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
                     DO:
-                      MESSAGE glb_dscritic.
-                      ASSIGN glb_cdcritic = 0.
+					  MESSAGE glb_dscritic.
+                      ASSIGN glb_cdcritic = 0
+							 par_situacao = FALSE.
                       LEAVE.
                     END.
                     
                   IF aux_flgativo = 1 THEN
                     DO:
-                      MESSAGE "Nao e possivel excluir o lote, contem emprestimo em acordo.".
+					  ASSIGN par_situacao = FALSE.
+                      MESSAGE "Nao e possivel excluir o lote, contem lancamentos de emprestimo em acordo.".
                       PAUSE 3 NO-MESSAGE.
                       LEAVE.
                     END.            

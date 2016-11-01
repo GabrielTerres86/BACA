@@ -459,10 +459,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
           BEGIN
             -- Atualiza os campos da tabela crapepr
             UPDATE crapepr
-               SET crapepr.vlsdprej = crapepr.vlsdprej + vr_vljurmes
+               SET crapepr.vlsprjat = crapepr.vlsdprej
+				  ,crapepr.vlsdprej = crapepr.vlsdprej + vr_vljurmes
                   ,crapepr.vljraprj = crapepr.vljraprj + vr_vljurmes
                   ,crapepr.vljrmprj = vr_vljurmes
-                  ,crapepr.vlsprjat = crapepr.vlsdprej
+                  
             WHERE crapepr.ROWID = rw_crapepr_crapass.ROWID
               RETURNING vlsdprej
                        ,vljraprj

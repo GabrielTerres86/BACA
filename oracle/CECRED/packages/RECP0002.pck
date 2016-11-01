@@ -812,7 +812,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_cdcritic   INTEGER;
     vr_exc_erro   EXCEPTION;
     
-    
   BEGIN
   
     --> Buscar contrado no cyber
@@ -1163,6 +1162,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
   	rw_crapepr cr_crapepr%ROWTYPE;
 
+    CURSOR cr_portab(pr_cdcooper crapepr.cdcooper%TYPE
+                    ,pr_nrdconta crapepr.nrdconta%TYPE
+                    ,pr_dtmvtolt crapepr.dtmvtolt%TYPE
+                    ,pr_nrctremp crapepr.nrctremp%TYPE) IS
+      SELECT *
+        FROM tbepr_portabilidade epr
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp
+         AND epr.tpoperacao = 2
+         AND epr.dtaprov_portabilidade >= pr_dtmvtolt;
+
+    rw_portab cr_portab%ROWTYPE;
+     
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
     vr_dscritic   VARCHAR2(10000);
@@ -1425,6 +1438,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
       END IF;
       
+      -- Verifica se contrato esta em acordo
+      OPEN cr_portab(pr_cdcooper => vr_cdcooper_aux
+                    ,pr_nrdconta => vr_nrdconta_aux
+                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                    ,pr_nrctremp => vr_nrctremp_aux);
+
+      FETCH cr_portab INTO rw_portab;
+
+      IF cr_portab%FOUND THEN
+        CLOSE cr_portab;
+        vr_dscritic := 'Nao e possivel realizar acordo, contrato ' || gene0002.fn_mask_contrato(vr_nrctremp_aux) || ' esta em processo de portabilidade.';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_portab;
+      END IF;
+
       -- Verifica se contrato esta para liquidar
       OPEN cr_crapepr(pr_cdcooper => vr_cdcooper_aux
                      ,pr_nrdconta => vr_nrdconta_aux
@@ -1433,7 +1462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       FETCH cr_crapepr INTO rw_crapepr;
       IF cr_crapepr%FOUND THEN
         CLOSE cr_crapepr;
-        vr_dscritic := 'Nao foi possivel gerar boleto, contrato ' || gene0002.fn_mask_contrato(vr_nrctremp_aux) || ' marcado para liquidar.';
+        vr_dscritic := 'Nao e possivel realizar acordo, contrato ' || gene0002.fn_mask_contrato(vr_nrctremp_aux) || ' marcado para liquidar.';
         RAISE vr_exc_erro;
       ELSE
         CLOSE cr_crapepr;

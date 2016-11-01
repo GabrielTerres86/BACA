@@ -170,6 +170,7 @@
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgen0084tt.i }
@@ -1125,6 +1126,7 @@ PROCEDURE gera_pagamentos_parcelas:
 
     DEF VAR aux_menor_parcela     AS INTE                           NO-UNDO.
     DEF VAR aux_nrseqpgo          AS INTE                           NO-UNDO.
+	DEF VAR aux_flgativo          AS INTE                           NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro. 
     
@@ -1147,13 +1149,43 @@ PROCEDURE gera_pagamentos_parcelas:
              RETURN "NOK".
          END.
 
+	{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-    FOR FIRST crapprm
-    WHERE crapprm.cdcooper = par_cdcooper AND
-          crapprm.cdacesso = "COBEMP_BLQ_RESG_CC"
-         NO-LOCK:
+    /* Verifica se ha contratos de acordo */
+    RUN STORED-PROCEDURE pc_verifica_acordo_ativo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                            ,INPUT par_nrdconta
+                                            ,INPUT par_nrctremp
+                                            ,OUTPUT 0
+                                            ,OUTPUT 0
+                                            ,OUTPUT "").
 
-        IF  crapprm.dsvlrprm = "S" THEN
+    CLOSE STORED-PROC pc_verifica_acordo_ativo
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = INT(pc_verifica_acordo_ativo.pr_cdcritic) WHEN pc_verifica_acordo_ativo.pr_cdcritic <> ?
+           aux_dscritic = pc_verifica_acordo_ativo.pr_dscritic WHEN pc_verifica_acordo_ativo.pr_dscritic <> ?
+           aux_flgativo = INT(pc_verifica_acordo_ativo.pr_flgativo).
+        
+    IF aux_cdcritic > 0 OR (aux_dscritic <> ? AND aux_dscritic <> "") THEN
+        DO:
+			RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1, 
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+
+    FOR FIRST crapprm WHERE crapprm.cdcooper = par_cdcooper
+                        AND crapprm.cdacesso = "COBEMP_BLQ_RESG_CC" NO-LOCK:
+
+        IF  crapprm.dsvlrprm = "S" AND aux_flgativo = 0 THEN
             DO:
                 /* buscar ultimo boleto do contratos */
                 FOR EACH tbepr_cobranca FIELDS (cdcooper nrdconta_cob nrcnvcob nrboleto nrctremp)

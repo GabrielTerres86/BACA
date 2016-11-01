@@ -915,7 +915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       END IF;
 
       IF vr_flgativo = 1 THEN
-        vr_dscritic := 'Lancamento nao permitido, contrato para liquidar esta em acordo.';
+        vr_dscritic := 'Estorno nao permitido, emprestimo em acordo.';
         RAISE vr_exc_saida;
       END IF;
                  

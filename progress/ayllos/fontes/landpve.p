@@ -1823,7 +1823,7 @@ DO WHILE TRUE:
                         
                       IF aux_flgativo = 1 THEN
                         DO:
-                          MESSAGE "Lancamento nao permitido, contrato para liquidar esta em acordo".                          
+                          MESSAGE "Lancamento nao permitido, emprestimo em acordo.".
                           PAUSE 3 NO-MESSAGE.
                           UNDO, NEXT.
                         END.
