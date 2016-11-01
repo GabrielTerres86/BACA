@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Junho/2006                   Ultima Atualizacao: 29/10/2015
+   Data    : Junho/2006                   Ultima Atualizacao: 01/11/2016
    
    Dados referentes ao programa:
    
@@ -26,6 +26,13 @@
 			   29/10/2015 - Incluida verificacao de qtmaxtur na crapeap antes
                             da atribuicao da crapedp Projeto 229 (Jean Michel).
  
+               27/06/2016 - Apensa apresentar os eventos que possuam data final 
+                            de evento maior ou igual a data atual.
+                            PRJ229 - Melhorias OQS (Odirlei-AMcom)
+ 
+			   01/11/2016 - Correcao na query que filtra a agenda para filtrar
+							a data correta ocasionando menos fetch na base
+							SD 549857. (Carlos Rafael Tanholi)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -130,6 +137,7 @@ FOR EACH crapadp WHERE (crapadp.cdcooper =  par_cdcooper     AND
                         crapadp.dtanoage =  aux_dtanoage     AND
                         crapadp.dtlibint <= TODAY            AND
                         crapadp.dtretint >= TODAY            AND
+						crapadp.dtfineve >= (TODAY - 1)      AND						
                         crapadp.idstaeve = 1)                OR
                        (crapadp.cdcooper =  par_cdcooper     AND
                         crapadp.idevento =  1                AND 
