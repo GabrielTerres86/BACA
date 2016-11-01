@@ -5307,57 +5307,49 @@ PROCEDURE valida_responsaveis:
     
 	IF par_nmdatela = "CONTAS" THEN
 		DO:
-	
-			ASSIGN aux_contarep = 0.
-
-			FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
-							   AND crappod.nrdconta = par_nrdconta
-							   AND crappod.cddpoder = 10
-							   AND crappod.flgconju = TRUE NO-LOCK:
-				
-				ASSIGN aux_contarep = aux_contarep + 1.
-
-			END.
-	
-			FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
-												 AND crappod.nrdconta = par_nrdconta
-												 AND crappod.nrcpfpro = DEC(ENTRY(1,par_dscpfcgc,'#'))
-												 AND crappod.cddpoder = 10  NO-LOCK. END.	
-
-			IF AVAILABLE crappod THEN
-				DO:
-					IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
-						DO:
-							IF LOGICAL(par_flgconju) then
-								ASSIGN aux_contarep = aux_contarep + 1.
-							ELSE
-								ASSIGN aux_contarep = aux_contarep - 1.	
-						END.
-				END.
-			ELSE
-				DO:
-					
-					EMPTY TEMP-TABLE tt-erro.
-					CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Registro de poder nao encontrado.".
-					
-					RETURN "NOK".
-				END.
-				
 			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
 										         AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
 												 
-		    IF AVAIL crapass THEN
+		    IF AVAIL crapass AND crapass.qtminast > 2 THEN
 				DO:
-					IF aux_contarep < 2 THEN
+					ASSIGN aux_contarep = 0.
+
+					FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
+									   AND crappod.nrdconta = par_nrdconta
+									   AND crappod.cddpoder = 10
+									   AND crappod.flgconju = TRUE NO-LOCK:
+				
+						ASSIGN aux_contarep = aux_contarep + 1.
+
+					END.
+	
+					FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
+														 AND crappod.nrdconta = par_nrdconta
+														 AND crappod.nrcpfpro = DEC(ENTRY(1,par_dscpfcgc,'#'))
+														 AND crappod.cddpoder = 10  NO-LOCK. END.	
+
+					IF AVAILABLE crappod THEN
 						DO:
+							IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
+								DO:
+									IF LOGICAL(par_flgconju) then
+										ASSIGN aux_contarep = aux_contarep + 1.
+									ELSE
+										ASSIGN aux_contarep = aux_contarep - 1.	
+								END.
+						END.
+					ELSE
+						DO:
+					
 							EMPTY TEMP-TABLE tt-erro.
 							CREATE tt-erro.
-							ASSIGN tt-erro.dscritic = "A quantidade minima de assinaturas deve ser maior ou igual a 2.".
+							ASSIGN tt-erro.dscritic = "Registro de poder nao encontrado.".
 					
 							RETURN "NOK".
 						END.
-					ELSE IF qtminast > aux_contarep THEN
+				
+			
+					IF qtminast > aux_contarep THEN
 						DO:
 							EMPTY TEMP-TABLE tt-erro.
 							CREATE tt-erro.
@@ -5365,15 +5357,16 @@ PROCEDURE valida_responsaveis:
 
 							RETURN "NOK".
 						END.
-				END.
-			ELSE
-				DO:
-					EMPTY TEMP-TABLE tt-erro.
-					CREATE tt-erro.
-					ASSIGN tt-erro.dscritic = "Cooperado Inexistente.".
+				
+					ELSE
+						DO:
+							EMPTY TEMP-TABLE tt-erro.
+							CREATE tt-erro.
+							ASSIGN tt-erro.dscritic = "Cooperado Inexistente.".
 								   
-					RETURN "NOK".
-				END.
+							RETURN "NOK".
+						END.
+		        END. /*IF AVAIL CRAPASS */
 		END.
 	ELSE /* ATENDA */
 		DO:	
@@ -5498,7 +5491,7 @@ PROCEDURE grava_resp_ass_conjunta:
 		END.
 	ELSE
 		DO:
-			FIND FIRST tt-erro NO-LOCK NO-ERROR.
+			FIND FIRST tt-erro NO-LOCK NO-ERROR NO-WAIT.
         
             IF  NOT AVAILABLE tt-erro  THEN
                 DO:
