@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Setembro/2004.                  Ultima atualizacao: 22/01/2016
+   Data    : Setembro/2004.                  Ultima atualizacao: 25/10/2016
 
    Dados referentes ao programa:
 
@@ -168,6 +168,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 							
 			   01/09/2016 - Geração de arquivos de formularios continuos para
                             RRD (Elton - SD 511158)			                   
+                            
+               25/10/2016 - #524279 Ajustado para que os pedidos sejam acumulados e enviados ao fornecedor 
+                            quinzenalmente (todo dia 1º e todo dia 15 de cada mês, quando se tratar de finais 
+                            de semana ou feriados devem ser enviados no primeiro dia útil posterior). (Carlos)
+
 ............................................................................. */
 
   -- Data do movimento
@@ -232,6 +237,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
   -- Codigo da Empresa a ser Impresso os Cheques
   vr_cdempres      NUMBER := 0;
+  vr_cdempres2     NUMBER := 0;
   vr_nmempres      VARCHAR2(20);
 
   -- Quantidade de Linhas no Arquivo
@@ -311,8 +317,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
          AND (crapreq.tprequis  = 1
           OR  (crapreq.tprequis = 3
          AND   crapreq.tpformul = 999))
-         AND crapreq.cdtipcta >= pr_cdtipcta_ini
-         AND crapreq.cdtipcta <= pr_cdtipcta_fim
+         AND crapreq.cdtipcta BETWEEN pr_cdtipcta_ini and pr_cdtipcta_fim         
          AND crapreq.insitreq IN (1,4,5)
          AND crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta
@@ -492,6 +497,9 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     -- Variável que indica se foi gerado arquivo de requisicao de talao/formulario de cheque
     vr_flggerou        boolean;
 
+    -- variavel para verificacao do dia de processamento de envio da requisicao
+    vr_dtcalcul        DATE;
+
   BEGIN
 
     -- Verifica arquivo de controle para buscar sequencial do talao.
@@ -613,11 +621,46 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                  pr_cdtipcta_ini,
                                  pr_cdtipcta_fim) LOOP
 
-      IF ( rw_crapreq.tprequis = 3   AND 
-           rw_crapreq.tpformul = 999 AND
-           pr_cdempres <> 2 ) THEN
+      -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
+      -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
+      IF (rw_crapreq.tprequis = 3 AND 
+          rw_crapreq.tpformul = 999) THEN
+        
+        IF pr_cdempres <> 2 THEN
         CONTINUE;
       END IF;                           
+
+        -- Definindo a data do calculo
+        -- se for primeira quinzena
+        IF vr_dtmvtolt < to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR') THEN
+          -- primeiro dia útil do mes atual
+          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
+                                                     pr_dtmvtolt => trunc(vr_dtmvtolt,'MM')); 
+        ELSE
+          vr_dtcalcul := to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
+          -- primeiro dia útil da segunda quinzena do mes atual
+          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
+                                                     pr_dtmvtolt => vr_dtcalcul);
+        END IF;
+
+        -- Incrementa a data do processamento enquanto a empresa for diferente de 2
+        vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
+        vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
+        WHILE vr_dtcalcul <= vr_dtmvtolt AND 
+              vr_cdempres2 <> 2 LOOP
+          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
+                                                     pr_dtmvtolt => vr_dtcalcul + 1);
+          vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
+          vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
+        END LOOP;        
+        
+        -- Se a data atual for diferente da data a ser processada é pq não é a primeira ter, qua ou sex da 
+        -- quinzena; vai para a próxima rw_crapreq
+        IF vr_dtmvtolt <> vr_dtcalcul THEN
+          continue; 
+        END IF;
+
+      END IF;
 
       -- Busca os dados do associado
       OPEN cr_crapass(pr_cdcooper,
@@ -1363,6 +1406,13 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                   pr_sqcabrel  => 3,
                                   pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
                                   pr_nrcopias  => 1,                  --> Numero de copias
+                                  
+                                  pr_dsextmail => 'pdf', 
+                                  pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
+                                  pr_dsassmail => 'REQUISICAO DE FORMULARIO CONTINUO - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
+                                  pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
+                                  pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
+
                                   pr_des_erro  => pr_dscritic);       --> Saida com erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
@@ -1578,6 +1628,13 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                   pr_sqcabrel  => 3,
                                   pr_flg_impri => pr_flg_impri,       --> Indicador se imprimira o relatorio
                                   pr_nrcopias  => 2,                  --> Numero de copias
+                                  
+                                  pr_dsextmail => 'pdf', 
+                                  pr_dsmailcop => vr_email_dest, --> Lista sep. por ';' de emails para envio do arquivo
+                                  pr_dsassmail => 'RESUMO REQUISICOES DE FORMULARIO CONTINUO - ' || rw_crapcop.nmrescop, --> Assunto do e-mail que enviará o arquivo
+                                  pr_dscormail => NULL, --> HTML corpo do email que enviará o arquivo
+                                  pr_fldosmail => 'S', --> Flag para converter o arquivo gerado em DOS antes do e-mail
+                                  
                                   pr_des_erro  => pr_dscritic);       --> Saida com erro
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
@@ -1648,7 +1705,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
         --vr_comando := replace(vr_comando,'coopd','coop');
         --vr_comando := replace(vr_comando,'cooph','coop');
-
+        
         -- Ajuste temporario, apenas para garantir a
         -- geração do arquivo antes de enviar.
         IF pr_cdcooper = 1 THEN
