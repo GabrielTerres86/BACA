@@ -27,6 +27,9 @@
  *										    conforme solicitado no chamado 508426. (Kelvin)
  *
  *				  010: [21/10/2016] Kelvin : #530857 Ajustado o campo "Envio" que no IE nao carregava a informacao correta.
+ *
+ *                011: [01/11/2016] Fabrício: Para solicitação de cartão PF, o campo 'Habilita função débito' deve sempre vir marcado.
+ *                                            Não há solicitação de cartão Puro Crédito para PF. (Chamado 545667)
  * --------------
  */
 
@@ -134,7 +137,14 @@
 			echo "$('#dddebito').attr('disabled', true);";
 			echo "$('#tpenvcrd').attr('disabled', true);";
 			echo "atualizaCampoLimiteProposto(new Array('".formataMoeda($vllimcrd)."'));";
-
+			
+			
+			echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
+			echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";			
+			/* comentar todo o trecho de codigo abaixo que trata o campo flgdebit para PF 
+			   pois esse campo para PF tem que vir sempre marcado nao permitindo alteracao - Fabricio - 01/11/2016 */
+			
+		/*	
 			//Administradora apenas débito (Maestro)
 			if ($cdadmcrd == 16 ||
 			    $cdadmcrd == 17) {
@@ -166,7 +176,7 @@
 			}
 				}
 			}
-			
+			*/
 		} else {
 
 			if ($nmempres <> "") {
@@ -209,8 +219,7 @@
 			} 
 
 			//Administradora apenas débito (Maestro)
-			if ($cdadmcrd == 16 ||
-			    $cdadmcrd == 17) {
+			if ($cdadmcrd == 17) {
 				echo "$('#flgdebit','#frmNovoCartao').desabilitaCampo();";
 				echo "$('#flgdebit','#frmNovoCartao').attr('checked', true);";
 			} 
