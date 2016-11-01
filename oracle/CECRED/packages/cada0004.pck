@@ -529,11 +529,13 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   PROCEDURE pc_importa_arq_cnae(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                ,pr_dsarquiv  IN VARCHAR2
                                ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
                                ,pr_dscritic  OUT VARCHAR2
                                ,pr_retxml    OUT CLOB);
                                
   PROCEDURE pc_importa_arq_cnae_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
                                    ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER             --> 1 - Limpa tabela ou 2 - só atualiza as informaçoes
                                    ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
@@ -617,11 +619,13 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   PROCEDURE pc_importa_arq_cnpj(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                ,pr_dsarquiv  IN VARCHAR2
                                ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
                                ,pr_dscritic  OUT VARCHAR2
                                ,pr_retxml    OUT CLOB);
                                
   PROCEDURE pc_importa_arq_cnpj_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
                                    ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER             --> Limpar base de dados
                                    ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
@@ -3795,7 +3799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 01/12/2015
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 04/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -3817,6 +3821,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              01/12/2015 - Alterar validacao de contratos em cobrança no 
     --                           CYBER para verificar na cracyc ao inves da crapcyb
     --                           (Douglas)
+    --
+    --              04/10/2016 - Validação de emprestimo em atraso da própria conta e como fiador.
+    --                           Incluído uma cláusula "and" no lugar de utilizar 2 if's.
+    --                           Dessa forma permite que as demais condições (else e elsif) sejam validadas
+    --                           #487823 (AJFink)
+    --
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4680,10 +4690,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         
         vr_dsmensag := NULL;
 
-        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1   THEN
-          IF vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN 
+        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
             vr_dsmensag := 'Associado com emprestimo em atraso.';
-          END IF;            
         ELSIF (vr_tab_dados_epr(vr_idxepr).qtmesdec - vr_tab_dados_epr(vr_idxepr).qtprecal) >= 0.01  AND
                vr_tab_dados_epr(vr_idxepr).dtdpagto < pr_rw_crapdat.dtmvtolt                    THEN
           --> Verificar se a data de pagamento é um dia util
@@ -4815,10 +4823,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       vr_dsmensag := NULL;
                 
-      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1   THEN
-        IF vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN 
+      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
           vr_dsmensag := 'Fiador de emprestimo em atraso: ';
-        END IF;
       ELSIF rw_crapavl.inprejuz = 1 AND rw_crapavl.vlsdprej > 0  THEN
         vr_dsmensag := 'Fiador de emprestimo em atraso: ';
       ELSE
@@ -8819,10 +8825,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END;    
   END pc_exclui_cnae_proibido_web;  
 
+  PROCEDURE pc_limpa_cnae_bloqueado(pr_cdcritic   OUT PLS_INTEGER    --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2) IS   --> Descrição da crítica
+
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN 
+      
+      BEGIN
+        DELETE FROM tbcc_cnae_bloqueado;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE vr_exc_saida;  
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Nao foi possivel limpar a tabela de CNAEs bloqueados.';
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral em CADA0004.pc_limpa_cnae_bloqueado: ' || SQLERRM;
+        
+        ROLLBACK;
+
+    END;    
+  END pc_limpa_cnae_bloqueado;
+
   /* Rotina para a validação do arquivo de folha - Através do IB */
   PROCEDURE pc_importa_arq_cnae(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                ,pr_dsarquiv  IN VARCHAR2
                                ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
                                ,pr_dscritic  OUT VARCHAR2
                                ,pr_retxml    OUT CLOB) IS
   ---------------------------------------------------------------------------------------------------------------
@@ -8982,6 +9030,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
        vr_dscritic := 'Arquivo ' || pr_dsarquiv || ' não possui conteúdo!';
     END IF;   
 
+    -- Se flglimpa = 1 entao devo limpar a tabela
+    IF pr_flglimpa = 1 THEN
+       pc_limpa_cnae_bloqueado(pr_cdcritic => vr_cdcritic
+                              ,pr_dscritic => vr_dscritic);
+                              
+       IF vr_cdcritic > 0 OR
+          vr_dscritic IS NOT NULL THEN
+          RAISE vr_excerror;
+       END IF;
+    END IF;    
+
     -- Excluir o arquivo, pois desse ponto em diante irá trabalhar com o registro
     -- de memória. Em caso de erros o programa abortará e o usuário irá realizar
     -- novamente o envio do arquivo
@@ -9061,6 +9120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   /* Rotina para importacao do arquivo de cnae para tela COCNAE Através do AyllosWeb */
   PROCEDURE pc_importa_arq_cnae_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
                                    ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER             --> 1 - Limpa tabela ou 2 - só atualiza as informaçoes
                                    ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
@@ -9121,6 +9181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pc_importa_arq_cnae(pr_cdcooper => vr_cdcooper
                        ,pr_dsarquiv => pr_dsarquiv
                        ,pr_dsdireto => pr_dsdireto
+                       ,pr_flglimpa => pr_flglimpa
                        ,pr_dscritic => pr_dscritic
                        ,pr_retxml   => vr_retxml);
 
@@ -9922,10 +9983,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END;    
   END pc_exclui_cnpj_proibido_web;  
 
+  PROCEDURE pc_limpa_cnpj_proibido(pr_cdcritic   OUT PLS_INTEGER    --> Código da crítica
+                                  ,pr_dscritic   OUT VARCHAR2) IS   --> Descrição da crítica
+
+  BEGIN  
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN 
+      
+      BEGIN
+        DELETE FROM tbcc_cnpjcpf_bloqueado;
+      EXCEPTION
+        WHEN OTHERS THEN
+          RAISE vr_exc_saida;  
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Nao foi possivel limpar a tabela de CNPJ/CPF bloqueados.';
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        ROLLBACK;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral em CADA0004.pc_limpa_cnpj_proibido: ' || SQLERRM;
+        
+        ROLLBACK;
+
+    END;    
+  END pc_limpa_cnpj_proibido;  
+
   /* Rotina para a validação do arquivo de folha - Através do IB */
   PROCEDURE pc_importa_arq_cnpj(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                ,pr_dsarquiv  IN VARCHAR2
                                ,pr_dsdireto  IN VARCHAR2
+                               ,pr_flglimpa  IN INTEGER
                                ,pr_dscritic  OUT VARCHAR2
                                ,pr_retxml    OUT CLOB) IS
   ---------------------------------------------------------------------------------------------------------------
@@ -10046,6 +10149,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- novamente o envio do arquivo
     GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
 
+    -- Se flglimpa = 1 entao devo limpar a tabela
+    IF pr_flglimpa = 1 THEN
+       pc_limpa_cnpj_proibido(pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic);
+                              
+       IF vr_cdcritic > 0 OR
+          vr_dscritic <> '' THEN
+          RAISE vr_excerror;
+       END IF;
+    END IF;    
+
     FOR vr_indice IN vr_tab_linhas.FIRST..vr_tab_linhas.LAST LOOP --LINHAS ARQUIVO
         
       IF vr_tab_linhas(vr_indice).exists('$ERRO$') THEN
@@ -10120,6 +10234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   /* Rotina para importacao do arquivo de cnae para tela COCNAE Através do AyllosWeb */
   PROCEDURE pc_importa_arq_cnpj_web(pr_dsarquiv   IN VARCHAR2            --> Informações do arquivo
                                    ,pr_dsdireto   IN VARCHAR2            --> Informações do diretório do arquivo
+                                   ,pr_flglimpa   IN INTEGER
                                    ,pr_xmllog     IN VARCHAR2            --> XML com informações de LOG
                                    ,pr_cdcritic  OUT PLS_INTEGER         --> Código da crítica
                                    ,pr_dscritic  OUT VARCHAR2            --> Descrição da crítica
@@ -10180,6 +10295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pc_importa_arq_cnpj(pr_cdcooper => vr_cdcooper
                        ,pr_dsarquiv => pr_dsarquiv
                        ,pr_dsdireto => pr_dsdireto
+                       ,pr_flglimpa => pr_flglimpa
                        ,pr_dscritic => pr_dscritic
                        ,pr_retxml   => vr_retxml);
 
