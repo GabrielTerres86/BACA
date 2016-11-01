@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 25/07/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 28/09/2016
     
     Dados referentes ao programa:
 
@@ -335,8 +335,7 @@
 		       24/02/2016 - Adicionado validacao na procedure acesso-cadastro-favorecidos
 							para listar somente bancos ativos flgdispb = TRUE (Lucas Ranghetti #400055)
 							    
-			        23/03/2016 - Ajuste para controlar o lock de tabelas de forma correta
-							            (Adriano).
+			   23/03/2016 - Ajuste para controlar o lock de tabelas de forma correta (Adriano).
 										    
                24/03/2016 - Adicionados parâmetros para geraçao de LOG
                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)										    										    
@@ -373,6 +372,21 @@
 			   25/07/2016 - Ajuste na rotina executa-envio-ted para corrigir nomenclatura 
 			                das tags do xml
 							(Adriano).
+               30/08/2016 - Inclusao dos campos de último acesso via Mobile na procedure 
+                            obtem-dados-titulares - PRJ286.5 - Cecred Mobile (Dionathan)
+
+               02/09/2016 - Alteracao da procedure obtem-dados-titulares, SD 514239 (Jean Michel).
+
+               21/09/2016 - Ajuste na validacao do horario de envio da TED (Diego).
+			                  
+			   28/09/2016 - #474660 Alterada a regra de impressao de termo de responsabilidade
+                            na rotina liberar-senha-internet para nao imprimir quando o cooperado
+                            estava com o acesso bloqueado ou quando o mesmo foi admitido na
+                            cooperativa depois de 11/2015 (Carlos)
+
+			   25/10/2016 - Novo ajuste na validacao do horario de envio da TED, solicitado 
+			                pelo financeiro (Diego).
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -442,8 +456,6 @@ PROCEDURE horario_operacao:
     DEF VAR aux_hrinipag AS INTE                                    NO-UNDO.
     DEF VAR aux_hrfimpag AS INTE                                    NO-UNDO.
     DEF VAR aux_qtmesagd AS INTE                                    NO-UNDO.
-    DEF VAR aux_flgutstr AS LOGICAL                                 NO-UNDO.
-    DEF VAR aux_flgutpag AS LOGICAL                                 NO-UNDO.
 
     EMPTY TEMP-TABLE tt-limite.
 
@@ -663,23 +675,36 @@ PROCEDURE horario_operacao:
               END.
             ELSE
               DO:
-                /*-- Operando com mensagens STR --*/
-                IF crapcop.flgopstr THEN
-                   IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
-                       ASSIGN aux_flgutstr = TRUE.
-                  
-                 /*-- Operando com mensagens PAG --*/
-            IF  crapcop.flgoppag  THEN 
-                    IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
-                        ASSIGN aux_flgutpag = TRUE.
 
-                IF aux_flgutpag THEN  
-                ASSIGN aux_hrinipag = crapcop.inioppag
-                       aux_hrfimpag = crapcop.fimoppag.
-            ELSE
-                ASSIGN aux_hrinipag = crapcop.iniopstr
-                       aux_hrfimpag = crapcop.fimopstr.
-                END.
+			    /*****
+                Por solicitacao do financeiro, iremos apenas verificar se a cooperativa esta operante
+                no STR/PAG, sem a necessidade de verificar o horario de operacao. Devera prevalecer o 
+                horario da STR, e somente quando este nao estiver ATIVO mostrara horario da PAG.
+                Por regra, o STR sempre terá um período maior    
+                *****/
+			 
+                /*-- Operando com mensagens STR --*/
+                IF   crapcop.flgopstr THEN
+				     ASSIGN aux_hrinipag = crapcop.iniopstr
+					        aux_hrfimpag = crapcop.fimopstr.
+                     
+					 /**
+                     IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
+                        ASSIGN aux_flgutstr = TRUE.
+				     **/
+			    ELSE
+				     DO:
+                 /*-- Operando com mensagens PAG --*/
+                         IF   crapcop.flgoppag  THEN 
+						      ASSIGN aux_hrinipag = crapcop.inioppag
+							         aux_hrfimpag = crapcop.fimoppag.
+
+				              /**
+                     IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
+                        ASSIGN aux_flgutpag = TRUE.
+				              **/
+				     END.
+			  END.
 
             CREATE tt-limite.
             ASSIGN tt-limite.idtpdpag = 4
@@ -5224,6 +5249,7 @@ PROCEDURE obtem-dados-titulares:
 
     DEF VAR h-b1wgen0058 AS HANDLE NO-UNDO.
 
+
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter dados dos titulares".
 
@@ -7013,7 +7039,13 @@ PROCEDURE liberar-senha-internet:
         crapass.idastcjt = 0 OR 
        (crapass.idastcjt > 0 AND crapass.idimprtr = 1) THEN
         ASSIGN par_flgimpte = TRUE.
- 
+
+    /* Cooperados admitidos após novembro/2015 ou desbloqueio de senha,
+       nao precisa imprimir termo de responsabilidade */
+    IF (crapass.dtadmiss > 11/30/2015) OR 
+       (aux_cdsitsnh = 2) THEN
+        ASSIGN par_flgimpte = FALSE. 
+
     IF  par_flgerlog  THEN
         DO:
             RUN proc_gerar_log (INPUT par_cdcooper,
@@ -8563,6 +8595,8 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = ?
                    tt-dados-titular.dtultace = ?
                    tt-dados-titular.hrultace = ""
+                   tt-dados-titular.dtacemob = ?
+                   tt-dados-titular.hracemob = ""
                    tt-dados-titular.nmoperad = ""
                    tt-dados-titular.vllimweb = 0
                    tt-dados-titular.vllimtrf = 0
@@ -8627,6 +8661,9 @@ PROCEDURE cria-registro-titular:
                    tt-dados-titular.dtaltsit = cratsnh.dtaltsit
                    tt-dados-titular.dtultace = cratsnh.dtultace
                    tt-dados-titular.hrultace = STRING(cratsnh.hrultace,
+                                                      "HH:MM:SS")
+                   tt-dados-titular.dtacemob = cratsnh.dtacemob
+                   tt-dados-titular.hracemob = STRING(cratsnh.hracemob,
                                                       "HH:MM:SS")
                    tt-dados-titular.vllimweb = cratsnh.vllimweb
                    tt-dados-titular.vllimtrf = cratsnh.vllimtrf
