@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 24/08/2016
+   Data    : Outubro/91.                     Ultima atualizacao: 31/10/2016
 
    Dados referentes ao programa:
 
@@ -479,6 +479,8 @@
 
 			   24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
 						   (Adriano - SD 511318 ).
+               
+               31/10/2016 - Bloquear os historicos 354 e 451 para a cooperativa Transulcred. (James)
 							
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -1030,6 +1032,13 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                NEXT.
            END.
 
+      IF   glb_cdcooper = 17 AND CAN-DO("354,451",STRING(tel_cdhistor)) THEN
+           DO:
+               MESSAGE "Historico nao disponivel.".
+               PAUSE 3 NO-MESSAGE.
+               NEXT.
+           END.
+           
       IF   CAN-FIND(FIRST crapfvl WHERE crapfvl.cdhistor = tel_cdhistor 
                              NO-LOCK) OR
            CAN-FIND(FIRST crapfvl WHERE crapfvl.cdhisest = tel_cdhistor 
