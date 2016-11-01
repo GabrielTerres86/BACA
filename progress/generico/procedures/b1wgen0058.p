@@ -5311,7 +5311,7 @@ PROCEDURE valida_responsaveis:
 			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
 										         AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
 												 
-		    IF AVAIL crapass AND crapass.qtminast > 2 THEN
+		    IF AVAIL crapass AND crapass.qtminast >= 2 THEN
 				DO:
 					ASSIGN aux_contarep = 0.
 
@@ -5350,7 +5350,7 @@ PROCEDURE valida_responsaveis:
 						END.
 				
 			
-					IF qtminast > aux_contarep THEN
+					IF crapass.qtminast > aux_contarep THEN
 						DO:
 							EMPTY TEMP-TABLE tt-erro.
 							CREATE tt-erro.
