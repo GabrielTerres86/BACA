@@ -585,8 +585,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       pr_tab_cooperado(vr_nrindice).nrdconta := rw_crapass_ttl.nrdconta;
       pr_tab_cooperado(vr_nrindice).nrcpfcgc := rw_crapass_ttl.nrcpfcgc;
       
-       vr_dscritic := 'ERRROOOOO  DDDDEEEE TESTESSSS';
-      
        -- Gerar registro de erro      
       GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => 1
@@ -1718,19 +1716,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   PROCEDURE pc_efetua_desbloqueio_jud_web(pr_cdcooper  IN NUMBER
                                          ,pr_dtmvtolt  IN VARCHAR2
                                          ,pr_cdoperad  IN VARCHAR2
-                                         --,pr_cdtipmov  IN VARCHAR2
-                                         --,pr_cdmodali  IN VARCHAR2
-                                         --,pr_vlbloque  IN VARCHAR2
-                                         --,pr_vlresblq  IN VARCHAR2
                                          ,pr_nroficio  IN VARCHAR2
-                                         --,pr_nrproces  IN VARCHAR2
-                                         --,pr_dsjuizem  IN VARCHAR2
-                                         --,pr_dsresord  IN VARCHAR2
-                                         --,pr_flblcrft  IN NUMBER 
-                                         --,pr_dtenvres  IN VARCHAR2
-                                         --,pr_nroficon  IN VARCHAR2
                                          ,pr_nrctacon  IN VARCHAR2
-                                         --,pr_dsinfadc  IN VARCHAR2
                                          ,pr_nrofides  IN VARCHAR2
                                          ,pr_dtenvdes  IN VARCHAR2
                                          ,pr_dsinfdes  IN VARCHAR2
@@ -1746,10 +1733,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_tab_erro      GENE0001.typ_tab_erro;
     vr_cdcritic      NUMBER;
     vr_dscritic      VARCHAR2(2000);
-    --vr_flblcrft      BOOLEAN;
     vr_fldestrf      BOOLEAN;
     vr_dtmvtolt      DATE := to_date(pr_dtmvtolt,'DD/MM/YYYY');
-    --vr_dtenvres      DATE := to_date(pr_dtenvres,'DD/MM/YYYY');
     vr_dtenvdes      DATE := to_date(pr_dtenvdes,'DD/MM/YYYY');
     
     -- EXCEPTIONS
@@ -1760,14 +1745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     pr_des_erro := 'OK';
     
     gene0001.pc_informa_acesso(pr_module => 'BLQJ0001');
-    
-    -- Verifica se foi passado true ou false
-    /*IF NVL(pr_flblcrft,0) = 0 THEN
-      vr_flblcrft := FALSE;
-    ELSE
-      vr_flblcrft := TRUE;
-    END IF;*/
-    
+        
     -- Verifica se foi passado true ou false
     IF NVL(pr_fldestrf,0) = 0 THEN
       vr_fldestrf := FALSE;
@@ -1779,19 +1757,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     BLQJ0001.pc_efetua_desbloqueio_jud(pr_cdcooper => pr_cdcooper
                                       ,pr_dtmvtolt => vr_dtmvtolt
                                       ,pr_cdoperad => pr_cdoperad
-                                      --,pr_cdtipmov => pr_cdtipmov
-                                      --,pr_cdmodali => pr_cdmodali
-                                      --,pr_vlbloque => pr_vlbloque
-                                      --,pr_vlresblq => pr_vlresblq
                                       ,pr_nroficio => pr_nroficio
-                                      --,pr_nrproces => pr_nrproces
-                                      --,pr_dsjuizem => pr_dsjuizem
-                                      --,pr_dsresord => pr_dsresord
-                                      --,pr_flblcrft => vr_flblcrft
-                                      --,pr_dtenvres => vr_dtenvres
-                                      --,pr_nroficon => pr_nroficon
                                       ,pr_nrctacon => pr_nrctacon
-                                      --,pr_dsinfadc => pr_dsinfadc
                                       ,pr_nrofides => pr_nrofides
                                       ,pr_dtenvdes => vr_dtenvdes
                                       ,pr_dsinfdes => pr_dsinfdes
@@ -1842,19 +1809,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   PROCEDURE pc_efetua_desbloqueio_jud(pr_cdcooper IN NUMBER
                                      ,pr_dtmvtolt IN DATE
                                      ,pr_cdoperad IN VARCHAR2
-                                     --,pr_cdtipmov IN VARCHAR2
-                                     --,pr_cdmodali IN VARCHAR2
-                                     --,pr_vlbloque IN VARCHAR2
-                                     --,pr_vlresblq IN VARCHAR2
                                      ,pr_nroficio IN VARCHAR2
-                                     --,pr_nrproces IN VARCHAR2
-                                     --,pr_dsjuizem IN VARCHAR2
-                                     --,pr_dsresord IN VARCHAR2
-                                     --,pr_flblcrft IN BOOLEAN 
-                                     --,pr_dtenvres IN DATE
-                                     --,pr_nroficon IN VARCHAR2
                                      ,pr_nrctacon IN VARCHAR2
-                                     --,pr_dsinfadc IN VARCHAR2
                                      ,pr_nrofides IN VARCHAR2
                                      ,pr_dtenvdes IN DATE
                                      ,pr_dsinfdes IN VARCHAR2
