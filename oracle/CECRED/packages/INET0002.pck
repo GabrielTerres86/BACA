@@ -5244,7 +5244,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       --Variáveis locais
       vr_idastcjt NUMBER := 0;
       vr_nrcpfcgc NUMBER(14) := 0;
-      vr_nrcpfope NUMBER(14) := 0;
+      vr_nrcpfgui NUMBER(14) := 0;
       vr_nrdctato crapavt.nrdctato%TYPE;
       vr_nmprimtl crapass.nmprimtl%TYPE;
       vr_dstransa VARCHAR2(500);
@@ -6482,7 +6482,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                ELSE
                   --Fechar Cursor
                   CLOSE cr_tbpagto_darf_das_trans_pend;
-				  --Controle de paginação
+				          --Controle de paginação
                   vr_qttotpen := vr_qttotpen + 1;
                   IF ((vr_qttotpen <= pr_nriniseq) OR
                     (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
@@ -6502,7 +6502,6 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                                   (CASE WHEN rw_tbpagto_darf_das_trans_pend.tppagamento = 1 
                                     THEN 'Pagamento de DARF' ELSE 'Pagamento de DAS' END) 
                                       ELSE rw_tbpagto_darf_das_trans_pend.dsidentif_pagto END) ;  -- Descrição
-               vr_tptranpe := rw_tbpagto_darf_das_trans_pend.tppagamento;                         -- Código do Tipo da Transação
                vr_dstptran := (CASE WHEN rw_tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
                                 'Pagamento de DARF' ELSE 'Pagamento de DAS' END);                 -- Tipo da Transação
                vr_dsagenda := (CASE WHEN rw_tbpagto_darf_das_trans_pend.IDAGENDAMENTO = 1 THEN
@@ -6515,7 +6514,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  vr_dscod_barras := rw_tbpagto_darf_das_trans_pend.dscod_barras; -- Código de Barras
                ELSIF vr_tpcaptura = 2 THEN 
                  vr_dtapuracao      := rw_tbpagto_darf_das_trans_pend.dtapuracao;
-                 vr_nrcpfope        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
+                 vr_nrcpfgui        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
                  vr_cdtributo       := NVL(rw_tbpagto_darf_das_trans_pend.cdtributo,0);
                  vr_nrrefere        := NVL(rw_tbpagto_darf_das_trans_pend.nrrefere,0);
                  vr_dtvencto        := rw_tbpagto_darf_das_trans_pend.dtvencto;
@@ -6526,7 +6525,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  vr_vlpercentual    := NVL(rw_tbpagto_darf_das_trans_pend.vlpercentual,0);
                END IF; 
                vr_vlrtotal        := (NVL(rw_tbpagto_darf_das_trans_pend.vlprincipal,0) + NVL(rw_tbpagto_darf_das_trans_pend.vlmulta,0) + NVL(rw_tbpagto_darf_das_trans_pend.vljuros,0));
-               vr_dtdebito        := rw_tbpagto_darf_das_trans_pend.dtdebito;
+               vr_dtdebito        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'DD/MM/RRRR');
                vr_idagendamento   := NVL(rw_tbpagto_darf_das_trans_pend.idagendamento,0); 
                vr_vlasomar        := vr_vlrtotal;            
             ELSE
@@ -6723,47 +6722,31 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             || '<dados_campo><label>Valor da Tarifa</label><valor>'          ||vr_vltarifa||'</valor></dados_campo>';
 		     ELSIF vr_tptranpe = 10 THEN --Pacote de Tarifas
             vr_xml_auxi := vr_xml_auxi
-            || '<dados_campo><label>Serviço</label><valor>'            ||vr_dspacote||'</valor></dados_campo>'
+            || '<dados_campo><label>Serviço</label><valor>'           ||vr_dspacote||'</valor></dados_campo>'
             || '<dados_campo><label>Valor</label><valor>'             ||vr_vlpacote||'</valor></dados_campo>'
             || '<dados_campo><label>Dia do Débito</label><valor>'     ||vr_dtdiadeb||'</valor></dados_campo>'
             || '<dados_campo><label>Início da Vigência</label><valor>'||vr_dtinivig||'</valor></dados_campo>';
          ELSIF vr_tptranpe = 11 THEN --Pagamento DARF/DAS
-            vr_xml_auxi := vr_xml_auxi
-            || '<dados_campo><label>Representante ou Operador</label><valor>'||vr_nmagenda||'</valor></dados_campo>'
-            || '<dados_campo><label>Data da Transação</label><valor>'||vr_dttranpe||'</valor></dados_campo>'
-            || '<dados_campo><label>Hora da Transação</label><valor>'||vr_hrtranpe||'</valor></dados_campo>'
-            || '<dados_campo><label>Data de Movimentação</label><valor>'||vr_dtmvttra||'</valor></dados_campo>'
-            || '<dados_campo><label>Situação</label><valor>'||vr_dssittra||'</valor></dados_campo>'
-            || '<dados_campo><label>Tipo de Transação</label><valor>'|| vr_dsdescri ||'</valor></dados_campo>'
-            || '<dados_campo><label>Origem da Transação</label><valor>'||vr_dsoritra||'</valor></dados_campo>';
-            
-            IF vr_dtreptra IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Reprovação</label><valor>'||vr_dtreptra||'</valor></dados_campo>';
+ 
+            IF TRIM(vr_dtreptra) IS NOT NULL THEN
+              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Reprovação</label><valor>'||TO_CHAR(vr_dtreptra,'dd/mm/RRRR')||'</valor></dados_campo>';
             END IF;
             
-            IF vr_dtexctra IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Exclusão</label><valor>'||vr_dtexctra||'</valor></dados_campo>';
+            IF TRIM(vr_dtexctra) IS NOT NULL THEN
+              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Exclusão</label><valor>'||TO_CHAR(vr_dtexctra,'dd/mm/RRRR')||'</valor></dados_campo>';
             END IF;
             
-            IF vr_dtexptra IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Expiração</label><valor>'||vr_dtexptra||'</valor></dados_campo>';
-            END IF;
-            
-            IF vr_dscritra IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Crítica de Validação</label><valor>'||vr_dscritra||'</valor></dados_campo>';
-            END IF;
-
-            IF vr_dscritra IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Validação</label><valor>'||vr_dtvalida||'</valor></dados_campo>';
+            IF TRIM(vr_dtexptra) IS NOT NULL THEN
+              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Expiração</label><valor>'||TO_CHAR(vr_dtexptra,'dd/mm/RRRR')||'</valor></dados_campo>';
             END IF;
 
             vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Tipo de Captura</label><valor>'||vr_dstipcapt||'</valor></dados_campo>';
             
-            IF vr_dsdescri IS NOT NULL THEN
+            IF TRIM(vr_dsdescri) IS NOT NULL THEN
               vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Identificação do Pagamento</label><valor>'||vr_dsdescri||'</valor></dados_campo>';
             END IF;
             
-            IF vr_dsnomfone IS NOT NULL THEN
+            IF TRIM(vr_dsnomfone) IS NOT NULL THEN
               vr_xml_auxi := vr_xml_auxi|| '<dados_campo><label>Nome e Telefone</label><valor>'||vr_dsnomfone||'</valor></dados_campo>';
             END IF;
 
@@ -6773,8 +6756,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               || '<dados_campo><label>Linha Digitável</label><valor>'||vr_dslinha_digitavel||'</valor></dados_campo>';
             ELSIF vr_tpcaptura = 2 THEN
               vr_xml_auxi := vr_xml_auxi
-              || '<dados_campo><label>Período de Apuração</label><valor>'||vr_dtapuracao||'</valor></dados_campo>'
-              || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||vr_nrcpfope||'</valor></dados_campo>'
+              || '<dados_campo><label>Período de Apuração</label><valor>'||TO_CHAR(vr_dtapuracao,'dd/mm/RRRR')||'</valor></dados_campo>'
+              || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||vr_nrcpfgui||'</valor></dados_campo>'
               || '<dados_campo><label>Código da Receita</label><valor>'||vr_cdtributo||'</valor></dados_campo>';
               
               IF vr_nrrefere IS NOT NULL THEN
@@ -6782,27 +6765,27 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               END IF;
 
               vr_xml_auxi := vr_xml_auxi   
-              || '<dados_campo><label>Data de Vencimento</label><valor>'||vr_dtvencto||'</valor></dados_campo>'
-              || '<dados_campo><label>Valor do Principal</label><valor>'||vr_vlprincipal||'</valor></dados_campo>'
-              || '<dados_campo><label>Valor da Multa</label><valor>'||vr_vlmulta||'</valor></dados_campo>'
-              || '<dados_campo><label>Valor dos Juros</label><valor>'||vr_vljuros||'</valor></dados_campo>';
+              || '<dados_campo><label>Data de Vencimento</label><valor>'||TO_CHAR(vr_dtvencto,'dd/mm/RRRR')||'</valor></dados_campo>'
+              || '<dados_campo><label>Valor do Principal</label><valor>'||TO_CHAR(vr_vlprincipal,'fm999g999g990d00')||'</valor></dados_campo>'
+              || '<dados_campo><label>Valor da Multa</label><valor>'||TO_CHAR(vr_vlmulta,'fm999g999g990d00')||'</valor></dados_campo>'
+              || '<dados_campo><label>Valor dos Juros</label><valor>'||TO_CHAR(vr_vljuros,'fm999g999g990d00')||'</valor></dados_campo>';
             END IF;
 
-            vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Valor Total</label><valor>'||vr_vlrtotal||'</valor></dados_campo>';           
+            vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Valor Total</label><valor>'||TO_CHAR(vr_vlrtotal,'fm999g999g990d00')||'</valor></dados_campo>';           
 
             IF vr_tpcaptura = 2 THEN
               IF vr_vlreceita_bruta IS NOT NULL THEN
-                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Receita Bruta Acumulada</label><valor>'||vr_vlreceita_bruta||'</valor></dados_campo>';
+                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Receita Bruta Acumulada</label><valor>'||TO_CHAR(vr_vlreceita_bruta,'fm999g999g990d00')||'</valor></dados_campo>';
               END IF;
               IF vr_vlpercentual IS NOT NULL THEN
-                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Percentual (retornar se estiver preenchido)</label><valor>'||vr_vlpercentual||'</valor></dados_campo>';
+                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Percentual</label><valor>'||TO_CHAR(vr_vlpercentual,'fm999g999g990d00')||'</valor></dados_campo>';
               END IF;
-            END IF;            
+            END IF;           
 
-            vr_xml_auxi := vr_xml_auxi
-            || '<dados_campo><label>Débito Em</label><valor>'||vr_dtdebito||'</valor></dados_campo>'
-            || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_idagendamento||'</valor></dados_campo>';
-
+            vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Débito Em</label><valor>'||vr_dtdebito||'</valor></dados_campo>'
+                                       || '<dados_campo><label>Indicador de Agendamento</label><valor>'||(CASE WHEN vr_idagendamento = 1 THEN
+                                                                                                          'NAO' ELSE 'SIM' END)||'</valor></dados_campo>';
+ 
          END IF;
          
          vr_xml_auxi := vr_xml_auxi || '</dados_detalhe>';
