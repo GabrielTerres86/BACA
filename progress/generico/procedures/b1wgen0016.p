@@ -4249,8 +4249,8 @@ PROCEDURE obtem-agendamentos:
             ASSIGN tt-dados-agendamento.nmprimtl =      xText:NODE-VALUE  WHEN xField:NAME = "nmprimtl".
             ASSIGN tt-dados-agendamento.nmprepos =      xText:NODE-VALUE  WHEN xField:NAME = "nmprepos".
             ASSIGN tt-dados-agendamento.nmoperad =      xText:NODE-VALUE  WHEN xField:NAME = "nmoperad".
-            ASSIGN tt-dados-agendamento.idtitdda = INTE(xText:NODE-VALUE) WHEN xField:NAME = "idtitdda".
-            ASSIGN tt-dados-agendamento.tpcaptur = INTE(xText:NODE-VALUE) WHEN xField:NAME = "tpcaptur".
+            ASSIGN tt-dados-agendamento.idtitdda =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "idtitdda".
+            ASSIGN tt-dados-agendamento.tpcaptur =  INT(xText:NODE-VALUE) WHEN xField:NAME = "tpcaptur".
             ASSIGN tt-dados-agendamento.dstipcat =      xText:NODE-VALUE  WHEN xField:NAME = "dstipcat".
             ASSIGN tt-dados-agendamento.dsidpgto =      xText:NODE-VALUE  WHEN xField:NAME = "dsidpgto".
             ASSIGN tt-dados-agendamento.dsnomfon =      xText:NODE-VALUE  WHEN xField:NAME = "dsnomfon".

@@ -2162,9 +2162,11 @@ function validaResponsaveis(){
 	var qtminast = $("#qtminast").val();
 
 	$('input[type=checkbox]').each(function () {
-	    if($(this).prop('checked')){
-			dscpfcgc += "#" + $(this).val();
-		}
+	    if ($(this).val() != "on") {
+	        if ($(this).prop('checked')) {
+	            dscpfcgc += "#" + $(this).val();
+	        }
+	    }
 	});
 		
 	dscpfcgc = dscpfcgc.substring(1,dscpfcgc.length);
