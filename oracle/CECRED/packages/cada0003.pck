@@ -466,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 19/08/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 03/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -503,6 +503,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
   --                          de cheques (Lucas Ranghetti #484923)
+  --
+  --             03/11/2016 - Ajuste realizado na fn_produto_habilitado para validar contas de 
+  --                          assinatura multiplas, onde por acidente foi comentado no cursor
+  --                          uma regra que não incluia as assinaturas multiplas, conforme 
+  --                          solicitado no chamado 548898. (Kelvin)                              
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -3329,8 +3334,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            AND snh.tpdsenha = pr_tpdsenha
            AND snh.cdsitsnh = 1  -- Ativa
            AND ((ass.idastcjt = 0 AND snh.idseqttl = DECODE(pr_tpdsenha,2,0,1))
-            --OR ass.idastcjt = 1
-            ); -- JMD
+            OR ass.idastcjt = 1
+            ); 
 
       rw_crapsnh cr_crapsnh%ROWTYPE;
 
