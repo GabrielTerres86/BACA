@@ -5125,10 +5125,11 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
 			rw_pactar cr_pactar%ROWTYPE;
 
       --Tipo Transacao 11 (DARF/DAS)
-      CURSOR cr_tbpagto_darf_das_trans_pend( pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
+      CURSOR cr_tbpagto_darf_das_trans_pend(pr_cddoitem IN tbgen_trans_pend.cdtransacao_pendente%TYPE) IS  
       SELECT tbpagto_darf_das_trans_pend.*
       FROM   tbpagto_darf_das_trans_pend
-      WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cddoitem;
+      WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cddoitem
+        AND  tbpagto_darf_das_trans_pend.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
       rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
            
       --Cadastro de Transferencias pela Internet.
@@ -6495,13 +6496,13 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                vr_dstipcapt := (CASE WHEN vr_tpcaptura = 1 THEN 'Com Código de Barras' ELSE 'Sem Código de Barras' END);
                -- DADOS DO RESUMO
                vr_cdtranpe := rw_tbpagto_darf_das_trans_pend.cdtransacao_pendente;                -- Código Único da Transação
-               vr_dsdtefet := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'dd/MM/RRRR');      -- Data de Efetivação (retornar termo 'Nesta Data' para efetivação online ou a data do agendamento)
-               vr_dsvltran := rw_tbpagto_darf_das_trans_pend.vlpagamento;                         -- Valor (retornar valor total do pagamento)
-               vr_dsdescri := (CASE
-                                WHEN rw_tbpagto_darf_das_trans_pend.dsidentif_pagto IS NULL THEN 
+               vr_dsdtefet := CASE WHEN rw_tbpagto_darf_das_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao 
+               vr_dsvltran := TO_CHAR(rw_tbpagto_darf_das_trans_pend.vlpagamento,'fm999g999g990d00'); -- Valor (retornar valor total do pagamento)
+               vr_dsdescri := TRIM((CASE
+                                WHEN TRIM(rw_tbpagto_darf_das_trans_pend.dsidentif_pagto) IS NULL THEN 
                                   (CASE WHEN rw_tbpagto_darf_das_trans_pend.tppagamento = 1 
                                     THEN 'Pagamento de DARF' ELSE 'Pagamento de DAS' END) 
-                                      ELSE rw_tbpagto_darf_das_trans_pend.dsidentif_pagto END) ;  -- Descrição
+                                ELSE TRIM(rw_tbpagto_darf_das_trans_pend.dsidentif_pagto) END));  -- Descrição
                vr_dstptran := (CASE WHEN rw_tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
                                 'Pagamento de DARF' ELSE 'Pagamento de DAS' END);                 -- Tipo da Transação
                vr_dsagenda := (CASE WHEN rw_tbpagto_darf_das_trans_pend.IDAGENDAMENTO = 1 THEN
@@ -6517,7 +6518,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  vr_nrcpfgui        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
                  vr_cdtributo       := NVL(rw_tbpagto_darf_das_trans_pend.cdtributo,0);
                  vr_nrrefere        := NVL(rw_tbpagto_darf_das_trans_pend.nrrefere,0);
-                 vr_dtvencto        := rw_tbpagto_darf_das_trans_pend.dtvencto;
+                 vr_dtvencto        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtvencto,'dd/mm/RRRR');
                  vr_vlprincipal     := NVL(rw_tbpagto_darf_das_trans_pend.vlprincipal,0);
                  vr_vlmulta         := NVL(rw_tbpagto_darf_das_trans_pend.vlmulta,0);
                  vr_vljuros         := NVL(rw_tbpagto_darf_das_trans_pend.vljuros,0);
@@ -6726,19 +6727,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             || '<dados_campo><label>Valor</label><valor>'             ||vr_vlpacote||'</valor></dados_campo>'
             || '<dados_campo><label>Dia do Débito</label><valor>'     ||vr_dtdiadeb||'</valor></dados_campo>'
             || '<dados_campo><label>Início da Vigência</label><valor>'||vr_dtinivig||'</valor></dados_campo>';
-         ELSIF vr_tptranpe = 11 THEN --Pagamento DARF/DAS
- 
-            IF TRIM(vr_dtreptra) IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Reprovação</label><valor>'||TO_CHAR(vr_dtreptra,'dd/mm/RRRR')||'</valor></dados_campo>';
-            END IF;
-            
-            IF TRIM(vr_dtexctra) IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Exclusão</label><valor>'||TO_CHAR(vr_dtexctra,'dd/mm/RRRR')||'</valor></dados_campo>';
-            END IF;
-            
-            IF TRIM(vr_dtexptra) IS NOT NULL THEN
-              vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data da Expiração</label><valor>'||TO_CHAR(vr_dtexptra,'dd/mm/RRRR')||'</valor></dados_campo>';
-            END IF;
+         ELSIF vr_tptranpe = 11 THEN --Pagamento DARF/DAS          
 
             vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Tipo de Captura</label><valor>'||vr_dstipcapt||'</valor></dados_campo>';
             
@@ -6765,7 +6754,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               END IF;
 
               vr_xml_auxi := vr_xml_auxi   
-              || '<dados_campo><label>Data de Vencimento</label><valor>'||TO_CHAR(vr_dtvencto,'dd/mm/RRRR')||'</valor></dados_campo>'
+              || '<dados_campo><label>Data de Vencimento</label><valor>'||vr_dtvencto||'</valor></dados_campo>'
               || '<dados_campo><label>Valor do Principal</label><valor>'||TO_CHAR(vr_vlprincipal,'fm999g999g990d00')||'</valor></dados_campo>'
               || '<dados_campo><label>Valor da Multa</label><valor>'||TO_CHAR(vr_vlmulta,'fm999g999g990d00')||'</valor></dados_campo>'
               || '<dados_campo><label>Valor dos Juros</label><valor>'||TO_CHAR(vr_vljuros,'fm999g999g990d00')||'</valor></dados_campo>';

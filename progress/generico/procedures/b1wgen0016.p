@@ -1439,10 +1439,10 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     FIND tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK NO-ERROR NO-WAIT.
                             
                     ASSIGN aux_dtdebito = (IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN "Nesta Data" ELSE STRING(tt-tbpagto_darf_das_trans_pend.dtdebito,"99/99/9999"))
-                           aux_vllantra = (tt-tbpagto_darf_das_trans_pend.vlprincipal + tt-tbpagto_darf_das_trans_pend.vlmulta + tt-tbpagto_darf_das_trans_pend.vljuros).
+						   aux_vllantra = tt-tbpagto_darf_das_trans_pend.vlpagamento.
                            
-                    IF tt-tbpagto_darf_das_trans_pend.dsidentif_pagto <> ? THEN 
-                      ASSIGN aux_dscedent = tt-tbpagto_darf_das_trans_pend.dsidentif_pagto.
+                    IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? THEN 
+                      ASSIGN aux_dscedent = TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto).
                     ELSE DO: 
                       IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
                         ASSIGN aux_dscedent = "Pagamento de DARF".
@@ -11904,34 +11904,13 @@ PROCEDURE aprova_trans_pend:
                                                           INPUT tt-tbpagto_darf_das_trans_pend.vlpercentual,    /* Valor do percentual da guia */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1-Nesta Data/2-Agendamento */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,        /* Data de agendamento */
-                                                          INPUT pr_indvalid,                                    /* Indicador de controle de validaçoes (1-Operaçao Online/2-Operaçao Batch) */
+                                                          INPUT 0,                                    /* Indicador de controle de validaçoes (1-Operaçao Online/2-Operaçao Batch) */
                                                          OUTPUT 0,                                              /* Código sequencial da guia */
                                                          OUTPUT 0,                                              /* Digito do Faturamento */
                                                          OUTPUT 0,                                              /* Valor da guia */
                                                          OUTPUT 0,                                              /* Código do erro */
                                                          OUTPUT ?).                                             /* Descriçao do erro */
-                       
-                    IF  ERROR-STATUS:ERROR  THEN DO:
-                        DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
-                            ASSIGN aux_msgerora = aux_msgerora + 
-                                                  ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
-                        END.
-                        ASSIGN aux_dscritic = "pc_verifica_darf_das --> "  +
-                                              "Erro ao executar Stored Procedure: " +
-                                              aux_msgerora. 
-
-                        ASSIGN aux_dscritic = "pc_verifica_darf_das --> "  +
-                                              "Erro ao executar Stored Procedure: " +
-                                              aux_msgerora.      
-                        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + 
-                                                   "Erro inesperado. Nao foi possivel efetuar a verificacao." + 
-                                                   " Tente novamente ou contate seu PA" +
-                                              "</dsmsgerr>".                        
-                        RUN proc_geracao_log.
-                        RETURN "NOK".
-                        
-                    END. 
-                    
+                                        
                     /* Fechar o procedimento para buscarmos o resultado */ 
                     CLOSE STORED-PROC pc_verifica_darf_das
                           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -12034,25 +12013,7 @@ PROCEDURE aprova_trans_pend:
                                                                   OUTPUT ?,                                              /* Descricao do protocolo */
                                                                  OUTPUT 0,                                              /* Código do erro */
                                                                  OUTPUT ?).                                             /* Descriçao do erro */ 
-                                                              
-                            IF ERROR-STATUS:ERROR THEN DO:
-                              DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
-                                  ASSIGN aux_msgerora = aux_msgerora + 
-                                                        ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
-                              END.
-                                                                               
-                              ASSIGN aux_dscritic = "pc_paga_darf_das --> "  +
-                                                    "Erro ao executar Stored Procedure: " +
-                                                    aux_msgerora.      
-                              ASSIGN xml_dsmsgerr = "<dsmsgerr>" + 
-                                                         "Erro inesperado. Nao foi possivel efetuar a verificacao." + 
-                                                         " Tente novamente ou contate seu PA" +
-                                                    "</dsmsgerr>".                        
-                              RUN proc_geracao_log.
-                              RETURN "NOK".
-                              
-                            END.
-                            
+                                                        
                             /* Fechar o procedimento para buscarmos o resultado */ 
                             CLOSE STORED-PROC pc_paga_darf_das aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
                             

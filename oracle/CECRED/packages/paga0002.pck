@@ -8348,8 +8348,8 @@ create or replace package body cecred.PAGA0002 is
     vr_hrfimcan INTEGER := 0;
     vr_cdindice INTEGER := 0;
     vr_tpcaptur INTEGER := 0;		
-	vr_nrcpfcgc NUMBER  := 0;
-	vr_dtvencto DATE;
+	  vr_nrcpfcgc NUMBER  := 0;
+	  vr_dtvencto DATE;
     vr_datdodia DATE := SYSDATE;
     vr_dssgproc VARCHAR2(500) := '';
     vr_dssitlau VARCHAR2(500) := '';
@@ -8572,6 +8572,7 @@ create or replace package body cecred.PAGA0002 is
            rw_craplau.cdtiptra = 5  THEN -- AGENDAMENTO
         
           OPEN cr_crabcop(pr_cdagectl => rw_craplau.cdageban);
+          FETCH cr_crabcop INTO rw_crabcop;
 
           IF cr_crabcop%NOTFOUND THEN
             -- Fecha cursor
@@ -8595,7 +8596,7 @@ create or replace package body cecred.PAGA0002 is
           END IF;
 
           vr_dsageban := LPAD(rw_crabcop.cdagectl,4,'0') || ' - ' || rw_crabcop.nmrescop;
-          vr_nrctadst := TRIM(GENE0002.fn_mask(rw_craplau.nrctadst,'zzzz,zz9,9'));
+          vr_nrctadst := TRIM(GENE0002.fn_mask_conta(rw_craplau.nrctadst));
           vr_nrctadst := vr_nrctadst ||  ' - ' || rw_crapass.nmprimtl;                      
                     
         ELSIF rw_craplau.cdtiptra = 4 THEN -- TED
@@ -8641,12 +8642,12 @@ create or replace package body cecred.PAGA0002 is
           IF cr_crapcti%FOUND THEN
             -- Fecha cursor
             CLOSE cr_crapcti;
-            vr_nrctadst := TRIM(GENE0002.fn_mask(rw_crapcti.nrctatrf,'zzzzzzzzzz,zz9,9'));
+            vr_nrctadst := TRIM(GENE0002.fn_mask_conta(rw_crapcti.nrctatrf));
             vr_nrctadst := vr_nrctadst || ' - ' || rw_crapcti.nmtitula;
           ELSE   
             -- Fecha cursor
             CLOSE cr_crapcti;              
-            vr_nrctadst := TRIM(GENE0002.fn_mask(rw_craplau.nrctadst,'zzzzzzzzzz,zz9,9')) || ' - FAVORECIDO NAO CADASTRADO';
+            vr_nrctadst := TRIM(GENE0002.fn_mask_conta(rw_craplau.nrctadst)) || ' - FAVORECIDO NAO CADASTRADO';
           END IF;
         ELSIF rw_craplau.cdtiptra = 10 THEN
           
