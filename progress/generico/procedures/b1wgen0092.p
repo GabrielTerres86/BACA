@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 13/10/2016
+   Data    : 04/05/2011                        Ultima atualizacao: 27/10/2016
     
    Dados referentes ao programa:
    
@@ -154,6 +154,10 @@
               13/10/2016 - Tratamento para permitir a exclusao da autorizacao do debito
                            automatico somente no proximo dia util apos o cancelamento 
                            (Lucas Ranghetti #531786)
+                           
+              27/10/2016 - Incluir novo tratamento na procedure grava-dados para nao permitir
+                           a inclusao de faturas caso a empresa e segmento estiverem zerados
+                           (Lucas Ranghetti #542571)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1803,7 +1807,8 @@ PROCEDURE grava-dados:
                                   (crapscn.cddmoden = "A"           OR
                                    crapscn.cddmoden = "C")          AND
                                    crapscn.cdempcon = aux_cdempcon  AND
-                                   crapscn.cdsegmto = aux_cdsegmto
+                                   crapscn.cdsegmto = aux_cdsegmto  AND
+                                   crapscn.cdempcon <> 0            
                                    NO-LOCK NO-ERROR NO-WAIT.
             
                         IF  AVAIL crapscn THEN
@@ -1927,6 +1932,18 @@ PROCEDURE grava-dados:
                 IF  aux_flgachtr = FALSE  OR 
                     aux_cdhistor = 31     THEN 
                     DO:
+                        /* Se for SICREDI... */
+                        IF  aux_flgsicre = TRUE THEN
+                            DO:
+                                /* Caso a empresa e segmento estejam zerados */
+                                IF  INT(aux_cdempcon) = 0 OR 
+                                    INT(aux_cdsegmto) = 0 THEN
+                                    DO:
+                                        ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
+                                        UNDO Grava, LEAVE Grava.
+                                    END. 
+                            END.                      
+                      
                         CREATE crapatr.
                         ASSIGN crapatr.cdcooper = par_cdcooper
                                crapatr.nrdconta = par_nrdconta
