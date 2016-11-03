@@ -1456,7 +1456,7 @@ PROCEDURE imprime_simulacao:
               ASSIGN 
                   aux_codigesq = fnFormataValor("",
                                                 DEC(tt-parcelas-epr.nrparepr),
-                                                ">9",
+                                                ">>9",
                                                 ") ")
                   aux_valoresq = fnFormataValor("R$ ",
                                                 tt-parcelas-epr.vlparepr,
@@ -1464,7 +1464,7 @@ PROCEDURE imprime_simulacao:
                                                 "")
                   aux_codigdir = fnFormataValor("",
                                                 DEC(tt-parcelas-epr.nrparepr),
-                                                ">9",
+                                                ">>9",
                                                 ") ")
                   aux_valordir = fnFormataValor("R$ ",
                                                 tt-parcelas-epr.vlparepr,

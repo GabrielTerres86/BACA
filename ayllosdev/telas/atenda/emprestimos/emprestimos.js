@@ -102,6 +102,7 @@
  * 081: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
  *
  * 082: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
+ * 083: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -9003,8 +9004,15 @@ function atualizaCampoData()
 
         //pega a data de pagamento
         var dataPag = $('#dtdpagto', '#frmNovaProp').val();
-        //quantidade de meses * 30 - 30 pois a primeia parcela sera na data de liberacao
-        var qtdDias = ($('#qtpreemp', '#frmNovaProp').val() * 30.5) - 30;
+        //correcao da contagem de datas erradas, apos o dia 22; 
+        var vr_dt = dataPag.split('/');
+        if (vr_dt[0] > 22) {
+            var ndias = 45;
+        } else {
+            var ndias = 30;
+        }
+        //quantidade de meses * 30 - 30 ou 45 pois a primeia parcela sera na data de liberacao
+        var qtdDias = ($('#qtpreemp', '#frmNovaProp').val() * 30.5) - ndias;
         //retorno da consulta
         var retorno = SomarData(dataPag, qtdDias);
         //atualiza data ultimo pagamento
