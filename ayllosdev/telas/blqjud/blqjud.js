@@ -1064,11 +1064,14 @@ function gravarBloqueio() {
 
             // Bloqueia Creditos Futuros ? Sim/Nao
            if (this.checked) {
-               flblcrft = 'true';              
+               //flblcrft = 'true';              
+               flblcrft = 1;  // Deverá passar o valor do Flag como 0 ou 1
            }
-           else {flblcrft    = 'false';
-                 vlrSaldoLau = 0; // Se nao bloqueia, vlr para LAUTOM é zero.
-                }
+           else {
+               //flblcrft = 'false';
+               flblcrft = 0;
+               vlrSaldoLau = 0; // Se nao bloqueia, vlr para LAUTOM é zero.
+           }
     });
 	
     var nrSeqAtual  = 0;
@@ -1263,7 +1266,15 @@ function efetuaDesbloqueio() {
 	
 	var nrofides = $("#nrofides","#frmDesbloqueio").val();
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
-	var dsinfdes = $("#dsinfdes","#frmDesbloqueio").val();	
+	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
+
+	var fldestrf = 0;
+
+	if (flgradio == 'true') {
+	    fldestrf = 1;
+	} else {
+	    fldestrf = 0;
+	}
 	
 	if (nrofides == '') {
 		showError('error','Número do Ofício de Desbloqueio não informado.','Alerta - BLQJUD','focaCampoErro(\'nrofides\',\'frmDesbloqueio\');');
@@ -1291,7 +1302,7 @@ function efetuaDesbloqueio() {
 		dataType: "html",
 		url: UrlSite + "telas/blqjud/efetua_desbloqueio.php", 
 		data: {
-		    nroficio: nroficio,
+		    nroficio: nroficio,         
 			nrproces: nrproces,
 			dsjuizem: dsjuizem, 
 			dsresord: dsresord, 
@@ -1305,7 +1316,7 @@ function efetuaDesbloqueio() {
 			nrofides: nrofides,
 			dtenvdes: dtenvdes,
 			dsinfdes: dsinfdes,
-			fldestrf: flgradio,
+			fldestrf: fldestrf,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) { 

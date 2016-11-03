@@ -1,12 +1,15 @@
 /******************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
-  +------------------------------------------+---------------------------------+
-  | Rotina Progress                          | Rotina Oracle PLSQL             |
-  +------------------------------------------+---------------------------------+
-  | sistema/generico/procedures/b1wgen0155.p |                                 |
-  |    retorna-valor-blqjud                  |GENE0005.pc_retorna_valor_blqjud |
-  +------------------------------------------+---------------------------------+
+  +------------------------------------------+----------------------------------+
+  | Rotina Progress                          | Rotina Oracle PLSQL              |
+  +------------------------------------------+----------------------------------+
+  | sistema/generico/procedures/b1wgen0155.p |                                  |
+  |    retorna-valor-blqjud                  |GENE0005.pc_retorna_valor_blqjud  |
+  |    busca-contas-cooperado                |BLQJ0001.pc_busca_contas_cooperado|
+  |    inclui-bloqueio-jud                   |BLQJ0001.pc_inclui_bloqueio_jud   |
+  |    efetua-desbloqueio-jud                |BLQJ0001.pc_efetua_desbloqueio_jud|
+  +------------------------------------------+----------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
@@ -16,7 +19,7 @@
    - GUILHERME STRUBE    (CECRED)
    - MARCOS MARTINI      (SUPERO)
 
-*******************************************************************************/
+********************************************************************************/
 
 
 

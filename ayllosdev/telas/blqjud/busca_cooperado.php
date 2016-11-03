@@ -19,6 +19,14 @@
 	//***            10/12/2014 - Adicionado vreificacao do valor, caso venha*//
 	//***                         com valor 0, desabilita o checkbox       ***//
 	//***						   (Jorge/Rosangela) - SD 228463           ***//
+	//***					                                               ***//
+	//***			 31/10/2016 - Realizar a chamada da rotina busca-contas-**//
+	//***					      cooperado diretamente do oracle via      ***//
+	//***					      mensageria (Renato Darosci - Supero)     ***//
+	//***					    - Alterado html de retorno, para que o     ***//
+	//***					      mesmo apresente cores nas linhas e um    ***//
+	//***					      cabeçalho destacado (Renato Darosci)     ***//
+	//***					                                               ***//
 	//************************************************************************//
 	
 	session_start();
@@ -33,19 +41,15 @@
 	
 	// Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
-	
-	
+		
 	$cooperad = $_POST["nrdconta"];
     $cdtppesq = $_POST["cdtppesq"];
 	$cddopcao = $_POST["cddopcao"];
-					
+
+				
 	// Monta o xml de requisição
 	$xmlRegistro  = "";
 	$xmlRegistro .= "<Root>";
-	$xmlRegistro .= "	<Cabecalho>";
-	$xmlRegistro .= "		<Bo>b1wgen0155.p</Bo>";
-	$xmlRegistro .= "		<Proc>busca-contas-cooperado</Proc>";
-	$xmlRegistro .= "	</Cabecalho>";
 	$xmlRegistro .= "	<Dados>";
     $xmlRegistro .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xmlRegistro .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
@@ -54,20 +58,18 @@
 	$xmlRegistro .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlRegistro .= "		<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
 	$xmlRegistro .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";	
-	$xmlRegistro .= "		<dtiniper>".date("d/m/Y")."</dtiniper>";
+    $xmlRegistro .= "		<dtiniper>".date("d/m/Y")."</dtiniper>";
 	$xmlRegistro .= "		<dtfimper>".date("d/m/Y")."</dtfimper>";
 	$xmlRegistro .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xmlRegistro .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xmlRegistro .= "		<idseqttl>1</idseqttl>";
 	$xmlRegistro .= "		<inproces>".$glbvars["inproces"]."</inproces>";
-
 	$xmlRegistro .= "		<cooperad>".$cooperad."</cooperad>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
-		
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlRegistro);
-		
+	
+	$xmlResult = mensageria($xmlRegistro, "BLQJUD", "CONTAS_COOPERADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjRegistro = getObjectXML($xmlResult);
 		
@@ -95,12 +97,12 @@
         $tabela .=  "<input id=\'vlsaldo\' name=\'vlsaldo\' type=\'text\' maxlength=\'12\' disabled /> <br /><br />";
 		$tabela .= 	"<table WIDTH=\'100%\'>";
 		$tabela .=		"<thead>";
-		$tabela .=			"<tr>";
-		$tabela .=				"<th align=\'CENTER\'>CONTA/DV</th>";
+		$tabela .=			"<tr style=\'background-color:#f7d3ce;\'>";
+		$tabela .=				"<th rowspan=\'2\' align=\'CENTER\'>CONTA/DV</th>";
 		$tabela .=				"<th colspan=\'" . $cdtppesq . "\' align=\'CENTER\'>MODALIDADES</th>";
 		$tabela .=			"</tr>";
-        $tabela .=			"<tr>";
-        $tabela .=				"<td>&nbsp;</td>";
+        $tabela .=			"<tr style=\'background-color:#f7d3ce;\'>";
+        //$tabela .=				"<td>&nbsp;</td>";
 		if ($cdtppesq == 1) { $tabela .=				"<th align=\'CENTER\'>Capital</th>";}
 		if ($cdtppesq == 4) { $tabela .=				"<th align=\'CENTER\'>Aplica&ccedil;&atilde;o</th>";
                               $tabela .=				"<th align=\'CENTER\'>Conta Corrente</th>";
@@ -121,9 +123,13 @@
 
             $idchkbox = 'chk-cta';
             $nmchkbox = $cdcooper. '-'. $nrdconta. '-'. $nrcpfcgc;
-        
-            $tabela .=		"<tr>";
-            $tabela .=			"<td align=\'center\'>";
+			
+			if (($i % 2) == 0) {
+				$tabela .=		"<tr style=\'background-color: #eeeaee;\' >";
+			} else {
+				$tabela .=		"<tr>";
+			}
+            $tabela .=			"<td rowspan=\'2\' align=\'center\'>";
             $tabela .=				 formataContaDV($nrdconta);
             $tabela .=			"</td>";
        
@@ -144,9 +150,15 @@
             $tabela .=			"</td>";
         }
             $tabela .=		"</tr>";
-            $tabela .=		"<tr>";
-            $tabela .=			"<td>&nbsp;";
-            $tabela .=			"</td>";
+            
+			if (($i % 2) == 0) {
+				$tabela .=		"<tr style=\'background-color: #eeeaee;\' >";
+			} else {
+				$tabela .=		"<tr>";
+			}
+			//$tabela .=		"<tr>";
+            //$tabela .=			"<td>&nbsp;";
+            //$tabela .=			"</td>";
         if ($cdtppesq == 1) {    
             $tabela .=			"<td style=\'text-align:center;\'>";
             $tabela .=			    "<input type=\'checkbox\' style=\'float:none;\' id=\'" . $idchkbox . "\' name=\'4-" . $nmchkbox . "\' value=\'" . $vlcapita ."\' onClick=\'atualizaSaldo(this);\' />";
