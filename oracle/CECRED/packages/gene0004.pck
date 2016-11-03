@@ -14,10 +14,17 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0004 IS
   --
   --  Alteracoes: 15/08/2014 - Adicionado TRIM na pc_extrai_dados (Jean Michel).
   --              31/07/2015 - Criada funcao generica fn_executa_job 
-  --              
+  --              10/06/2016 - Criada procedure pc_reagenda_job SD402010 (Tiago/Thiago).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Definições das procedures de uso público */
+
+  /* Procedure para reagender job passando nome, nova data e novo horario*/
+  PROCEDURE pc_reagenda_job(pr_job_name IN  Dba_Scheduler_Jobs.job_name%TYPE
+                           ,pr_dtagenda IN  DATE
+                           ,pr_hragenda IN  INTEGER
+                           ,pr_mmagenda IN  INTEGER
+                           ,pr_dscritic OUT VARCHAR2);
 
   /* Procedure que será a interface entre o Oracle e sistema Web */
   PROCEDURE pc_xml_web(pr_xml_req IN CLOB                --> Arquivo XML de retorno
@@ -77,7 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 06/06/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 03/11/2016
   --
   --  Dados referentes ao programa:
   --
@@ -105,18 +112,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --              03/03/2015 - Alteracao do tamanho da variavel vr_sql para o max
   --                           do tipo varchar2 da pc_redir_acao (Tiago). 
   --
+  --              03/05/2016 - Alterado paramtro fixo do tempo para reagendar a job para
+  --                           buscar da crapprm (Lucas Ranghetti #412789)
   --
-  --               03/05/2016 - Alterado paramtro fixo do tempo para reagendar a job para
-  --                            buscar da crapprm (Lucas Ranghetti #412789)
   --              11/05/2016 - Ajustado o cursor da procedure pc_verifica_permissao_operacao que 
   --                           busca dados do cadastro com permissoes de acesso as telas do 
   --                           sistema para utilizar o indice da tabela (Douglas - Chamado 450570)
   --
-  --               06/06/2016 - Ajustes realizados:
-  --                            -> Incluido upper nos campos que são indice da tabela craprdr
-  --                            -> Incluido upper nos campos que são indice da tabela crapprg
-  --                            (Adriano - SD 464741).
+  --              06/06/2016 - Ajustes realizados:
+  --                        -> Incluido upper nos campos que são indice da tabela craprdr
+  --                        -> Incluido upper nos campos que são indice da tabela crapprg
+  --                           (Adriano - SD 464741).
   --
+  --              26/06/2016 - Correcao para o uso do indice no cursor sobre a craptel na 
+  --                           procedure pc_valida_acesso_sistema.(Carlos Rafael Tanholi).
+  --
+  --              10/06/2016 - Criada procedure pc_reagenda_job SD402010 (Tiago/Thiago).
+  --
+  --              03/11/2016 - Ajuste na procedure pc_reagenda_job para reagendar o job com
+  --                           o fusohorario do servidor que esta executando GMT (Tiago/Thiago SD532302)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedures/functions de uso privado */
@@ -137,7 +151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 06/06/2016
+    --  Data     : Maio/2014.                   Ultima atualizacao: 21/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -150,6 +164,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --               06/06/2016 - Ajustes realizados:
     --                            -> Incluido upper nos campos que são indice da tabela CRAPPRG
     --                            (Adriano - SD 464741).
+    --
+    --               26/06/2016 - Correcao para o uso do indice no cursor sobre a craptel na 
+    --                            procedure pc_valida_acesso_sistema.(Carlos Rafael Tanholi).   
+    --
+    --               05/07/2016 - Realizado a retirada da chamada da FN_DIRETORIO com o intuíto de conseguir 
+    --                            alguma melhora na performance das chamadas, visto que estavam sendo 
+    --                            feitas muitas chamadas da função. Dúvidas sobre a alteração podem ser 
+    --                            tratadas também com o Rodrigo Siewerdt. (Renato Darosci - Supero)
+	--
+	--				 21/10/2016 - Ajustado cursor da craptel para não executar função desnecessariamente
+	--							  (Rodrigo)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -160,9 +185,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       
       -- Busca dados da cooperativa
       CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS   --> Código da cooperativa
-      SELECT cop.cdcooper
+      /*SELECT cop.cdcooper  -- Renato Darosci (05/07/2016)
         FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+       WHERE cop.cdcooper = pr_cdcooper;*/
+      SELECT cop.cdcooper, prm.dsvlrprm||cop.dsdircop dsdircop
+        FROM crapprm prm
+           , crapcop cop
+       WHERE prm.cdacesso = 'ROOT_DIRCOOP'
+         AND cop.cdcooper =  DECODE(prm.cdcooper,0, cop.cdcooper, prm.cdcooper)
+         AND prm.nmsistem = 'CRED'
+         AND cop.cdcooper = pr_cdcooper
+       ORDER BY prm.cdcooper DESC;
       rw_crapcop cr_crapcop%ROWTYPE;
 
       -- Busca dados do cadastro dos operadores
@@ -184,8 +217,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
             ,el.flgtelbl
         FROM craptel el
        WHERE el.cdcooper = pr_cdcooper
-         AND el.nmdatela = pr_nmdatela
-         AND NVL(el.nmrotina, ' ') = NVL(pr_nmrotina, ' ')
+         AND UPPER(el.nmdatela) = UPPER(pr_nmdatela)
+         AND UPPER(el.nmrotina) = UPPER(pr_nmrotina)
          AND el.idsistem = pr_idsistem;
       rw_craptel cr_craptel%ROWTYPE;
 
@@ -211,6 +244,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
         RAISE vr_exc_saida;
       ELSE
+        /* Pega o caminho absoluto -- Renato Darosci (05/07/2016) */
+        vr_dsdircop:= rw_crapcop.dsdircop;
+        
         CLOSE cr_crapcop;
       END IF;
 
@@ -230,7 +266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       END IF;
 
       -- Verifica se a tela está cadastrada no sistema
-      OPEN cr_craptel(pr_cdcooper, pr_nmdatela, pr_nmrotina, pr_idsistem);
+      OPEN cr_craptel(pr_cdcooper, pr_nmdatela, NVL(pr_nmrotina, ' '), pr_idsistem);
       FETCH cr_craptel INTO rw_craptel;
 
       -- Verifica se a tela foi encontrada
@@ -257,9 +293,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         CLOSE cr_crapprg;
       END IF;
 
+      -- Renato Darosci (05/07/2016)
       /* Pega o caminho absoluto */
-      vr_dsdircop:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
-                                          ,pr_cdcooper => rw_crapcop.cdcooper);
+      /*vr_dsdircop:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
+                                          ,pr_cdcooper => rw_crapcop.cdcooper);*/
                              
       -- Verifica se encontrou o caminho
       IF vr_dsdircop IS NULL THEN
@@ -429,6 +466,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         pr_dscritic := 'Erro em PC_VERIFICA_PERMISSAO_OPERACAO: ' || SQLERRM;
     END;
   END pc_verifica_permissao_operacao;
+
+  PROCEDURE pc_reagenda_job(pr_job_name IN  Dba_Scheduler_Jobs.job_name%TYPE
+                           ,pr_dtagenda IN  DATE    /*data*/
+                           ,pr_hragenda IN  INTEGER /*horas*/
+                           ,pr_mmagenda IN  INTEGER /*minutos*/
+                           ,pr_dscritic OUT VARCHAR2) IS
+  BEGIN    
+    DECLARE
+    
+      CURSOR cr_job(pr_job_name dba_scheduler_jobs.job_name%TYPE) IS
+        SELECT j.job_name, j.JOB_ACTION, j.start_date
+          FROM Dba_Scheduler_Jobs j       
+         WHERE j.owner = 'CECRED'
+           AND upper(j.job_name) LIKE '%'||upper(pr_job_name)||'%' ESCAPE '\';
+           
+      rw_job cr_job%ROWTYPE;   
+        
+      vr_jobname  VARCHAR2(100);  
+      vr_dscritic VARCHAR2(1000);
+      
+      vr_dscomando VARCHAR2(4000);
+      vr_dtagenda  TIMESTAMP;
+      
+    BEGIN
+      
+      vr_dtagenda := TO_TIMESTAMP_TZ(to_char(pr_dtagenda,'DD/MM/RRRR')||' '||to_char(pr_hragenda,'00')||':'
+                     ||to_char(pr_mmagenda,'00')||':'||'00 ' || to_char( SYSTIMESTAMP, 'TZH:TZM' ),'dd/mm/yyyy hh24:mi:ss TZH:TZM');
+    
+      FOR rw_job IN cr_job(pr_job_name => pr_job_name) LOOP    
+      
+        vr_dscomando := 'BEGIN 
+                            DBMS_SCHEDULER.SET_ATTRIBUTE(NAME => ''' || 'CECRED' || '.' || rw_job.job_name || ''', 
+                                                         attribute => ''start_date'', 
+                                                         VALUE => TO_TIMESTAMP_TZ(''' || to_char(vr_dtagenda, 'dd/mm/yyyy hh24:mi:ss') || ' ' || to_char( SYSTIMESTAMP, 'TZH:TZM' )  || ''',''DD/MM/RRRR HH24:MI:SS TZH:TZM''));
+                         END;';
+        EXECUTE IMMEDIATE vr_dscomando;  
+        
+        gene0001.pc_gera_log_job(pr_cdcooper => 3
+                                ,pr_des_log  => '*******************************************************************************************************'||chr(13)||
+                                       'Coop: 3 --> Progr: GEBE0004.PC_REAGENDA_JOB Em: '||to_char(sysdate,'dd/mm/yyyy hh24:mi:ss')||chr(13)||
+                                       'JobNM: '||rw_job.job_name||' - Alterado start_date de '|| to_char(rw_job.start_date,'dd/mm/yyyy hh24:mi:ss') ||
+                                       '  para: '||to_char(vr_dtagenda, 'dd/mm/yyyy hh24:mi:ss') );
+        
+        COMMIT;
+      END LOOP;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        ROLLBACK;
+    END;  
+  END pc_reagenda_job;
 
   PROCEDURE pc_executa_job(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
                           ,pr_fldiautl IN INTEGER                 --> Flag se deve validar dia util
@@ -859,7 +947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 30/04/2014 - Implementação do cadastro de ações para execução (Petter - Supero).
     --   
     --               03/03/2015 - Alteracao do tamanho da variavel vr_sql para o max
-    --                            do tipo varchar2 (Tiago).    
+    --                            do tipo varchar2 (Tiago).                                       
     --
     --               06/06/2016 - Ajustes realizados:
     --                            -> Incluido upper nos campos que são indice da tabela craprdr
