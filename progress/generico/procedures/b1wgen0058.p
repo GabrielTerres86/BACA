@@ -5358,16 +5358,15 @@ PROCEDURE valida_responsaveis:
 
 							RETURN "NOK".
 						END.
-				
-					ELSE
-						DO:
-							EMPTY TEMP-TABLE tt-erro.
-							CREATE tt-erro.
-							ASSIGN tt-erro.dscritic = "Cooperado Inexistente.".
-								   
-							RETURN "NOK".
-						END.
 		        END. /*IF AVAIL CRAPASS */
+			ELSE IF NOT AVAIL crapass THEN
+				DO:
+					EMPTY TEMP-TABLE tt-erro.
+					CREATE tt-erro.
+					ASSIGN tt-erro.dscritic = "Cooperado Inexistente.".
+								   
+					RETURN "NOK".
+				END.
 		END.
 	ELSE /* ATENDA */
 		DO:	
