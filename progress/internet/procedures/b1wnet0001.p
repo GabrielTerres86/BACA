@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 01/06/2016
+   Data    : 14/07/2006                        Ultima atualizacao: 15/08/2016
 
    Dados referentes ao programa:
 
@@ -236,10 +236,18 @@
                01/06/2016 - Ajuste na validacao da crapsnh para nao verificar
                             idseqttl para operadores de contas PJ com assinatura 
                             conjunta. (Jaison/David - SD: 449958)
-               
+
+               13/07/2016 - #480828 Ajuste do procedimento gerencia-sacados para limpar
+                            os espacos antes e depois do nome do sacado ao cadastra-lo
+                            e demais campos texto (Carlos)
+
                22/07/2016 - Atribuir informacoes nas variaveis de protesto e numero do convenio
                             somente quando o flag serasa for falso na procedure gera-dados.
                             Chamado 490114 - Heitor (RKAM)
+
+			   15/08/2016 - Removido validacao de convenio na consulta da tela
+							manutencao (gera-dados), conforme solicitado no chamado 
+							497079. (Kelvin)
 
 .............................................................................*/
 
@@ -2264,43 +2272,17 @@ PROCEDURE gera-dados:
                              crapcco.cddbanco = 85               AND /*Cecred*/
 	                         crapcco.flginter = TRUE NO-LOCK:
 
-        IF aux_flserasa = FALSE THEN
-          ASSIGN aux_nrconven = crapcco.nrconven
-                 aux_flprotes = crapceb.flprotes
-			           aux_flserasa = crapceb.flserasa.
+		IF aux_flserasa = FALSE THEN
+        ASSIGN aux_nrconven = crapcco.nrconven
+               aux_flprotes = crapceb.flprotes
+			   aux_flserasa = crapceb.flserasa.
+
     END.
 
     IF  aux_nrconven > 0 THEN
         FIND crapcco WHERE crapcco.cdcooper = par_cdcooper AND
                            crapcco.nrconven = aux_nrconven
                            NO-LOCK NO-ERROR.
-
-    IF  aux_intipcob = 0  THEN
-        DO:
-            ASSIGN aux_cdcritic = 563 
-                   aux_dscritic = "".
-           
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-                                   
-            IF  par_flgerlog  THEN
-                RUN proc_gerar_log (INPUT par_cdcooper,
-                                    INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
-                                    INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
-
-            RETURN "NOK".
-        END.
 
     FIND FIRST crapenc WHERE crapenc.cdcooper = par_cdcooper AND
                              crapenc.nrdconta = par_nrdconta AND
@@ -3190,19 +3172,19 @@ PROCEDURE gerencia-sacados:
                        crapsab.nrdconta = par_nrdconta
                        crapsab.nrinssac = par_nrinssac
                        crapsab.cdtpinsc = par_cdtpinsc
-                       crapsab.nmdsacad = CAPS(par_nmdsacad)
-                       crapsab.dsendsac = CAPS(par_dsendsac)
+                       crapsab.nmdsacad = TRIM(CAPS(par_nmdsacad))
+                       crapsab.dsendsac = TRIM(CAPS(par_dsendsac))
                        crapsab.nrendsac = par_nrendsac
                        crapsab.nrcepsac = par_nrcepsac
                        crapsab.complend = par_complend
-                       crapsab.nmbaisac = CAPS(par_nmbaisac)
-                       crapsab.nmcidsac = CAPS(par_nmcidsac)
-                       crapsab.cdufsaca = CAPS(par_cdufsaca)
+                       crapsab.nmbaisac = TRIM(CAPS(par_nmbaisac))
+                       crapsab.nmcidsac = TRIM(CAPS(par_nmcidsac))
+                       crapsab.cdufsaca = TRIM(CAPS(par_cdufsaca))
                        crapsab.cdsitsac = par_cdsitsac
                        crapsab.cdoperad = par_cdoperad
                        crapsab.dtmvtolt = par_dtmvtolt
                        crapsab.hrtransa = TIME
-                       crapsab.dsdemail = par_dsdemail
+                       crapsab.dsdemail = TRIM(par_dsdemail)
                        crapsab.nrcelsac = par_nrcelsac.
             END.
         ELSE
