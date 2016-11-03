@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima atualizacao: 26/01/2015
+   Data    : Agosto/2000.                    Ultima atualizacao: 03/11/2016
 
    Dados referentes ao programa:
 
@@ -77,6 +77,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
 
                26/01/2015 - Alterado o formato do campo nrctremp para 8
                             caracters (Kelvin - 233714)
+                            
+               03/11/2016 - Aumentar tamanho das variaveis que escrevem no xml, pois
+                            estava estourando o tamanho (Lucas Ranghetti #550880)
     ............................................................................ */
 
     DECLARE
@@ -111,8 +114,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
       -- Variavel de Controle de XML
       vr_crrl244_xml      CLOB;
       vr_crrl394_xml      CLOB;
-      vr_detalhe          VARCHAR2(4000);
-      vr_detalhe394       VARCHAR2(4000);
+      vr_detalhe          VARCHAR2(32600);
+      vr_detalhe394       VARCHAR2(32600);
 
       ------------------------------- CURSORES ---------------------------------
 
@@ -1450,4 +1453,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps294 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps294;
 /
-
