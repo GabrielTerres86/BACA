@@ -277,10 +277,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
                     
                     24/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.(Carlos Rafael Tanholi).
-                    
+
                     20/07/2016 - Resolucao dos chamados 491068, 488220 e 486570. (James)
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
+
+			          		26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+                                 da data de vencimento e quantidade de dias atraso.
+                                 SD488220 (Odirlei-AMcom)
+                                 
+                    03/11/2016 - Alterada a função de classificação do porte de pessoa física, para que sejam considerados
+                                 como "sem redimento", rendas mensais de até 0.01 (inclusive) e não mais rendas com valor 
+                                 zero apenas. Esta alteração corrige o problema relatado no chamado SD 549969, onde contas
+                                 cadastradas com rendimento igual a 0.01 estavam sendo enviadas com código de porte igual
+                                 a 2 - ATÉ 1 SALÁRIO MÍNIMO. (Renato Darosci - Supero)
+                                 
 .............................................................................................................................*/
 
     DECLARE
@@ -628,7 +639,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
-             AND crapbpr.tpctrpro = pr_tpctrpro             
+             AND crapbpr.tpctrpro = pr_tpctrpro
              AND crapbpr.flgalien = 1;
 
 
@@ -1248,6 +1259,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_dtprxpar crapris.dtprxpar%TYPE;
         vr_vlprxpar crapris.vlprxpar%TYPE;
         vr_qtparcel crapris.qtparcel%TYPE;
+        vr_dtvencop crapris.dtvencop%TYPE;
+        vr_qtdiaatr crapris.qtdiaatr%TYPE;
              
       BEGIN
         -- Efetua loop sobre os dados da central de risco (Exceto 301 - Dsc Titulos)
@@ -1287,6 +1300,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_dtprxpar := NULL;
             vr_vlprxpar := 0;
             vr_qtparcel := 0;
+            vr_dtvencop := rw_crapris_dsctit.dtvencop;
+            vr_qtdiaatr := 0;
           END IF;
           -- Sempre acumularemos a maior quantidade de parcelas 
           vr_qtparcel := greatest(vr_qtparcel,rw_crapris_dsctit.qtparcel);
@@ -1304,6 +1319,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- mesmo mÊs da próxima parcela mais próxima.
             vr_vlprxpar := vr_vlprxpar + rw_crapris_dsctit.vlprxpar;
           END IF;          
+          --Guardar a maior data de vencimento
+          vr_dtvencop := GREATEST(rw_crapris_dsctit.dtvencop,vr_dtvencop);
+          vr_qtdiaatr := GREATEST(rw_crapris_dsctit.qtdiaatr,vr_qtdiaatr);
+          
           -- Se for o ultimo registro da conta / contrato de limite do bordero, grava os valores
           IF rw_crapris_dsctit.nrseq = rw_crapris_dsctit.qtreg THEN
             -- Incrementar contador
@@ -1313,7 +1332,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_tab_ris(vr_indice_ris).nrdconta := rw_crapris_dsctit.nrdconta;
             vr_tab_ris(vr_indice_ris).dtrefere := rw_crapris_dsctit.dtrefere;
             vr_tab_ris(vr_indice_ris).innivris := rw_crapris_dsctit.innivris;
-            vr_tab_ris(vr_indice_ris).qtdiaatr := rw_crapris_dsctit.qtdiaatr;
+            vr_tab_ris(vr_indice_ris).qtdiaatr := vr_qtdiaatr;
             vr_tab_ris(vr_indice_ris).vldivida := vr_vldivida_0301;
             vr_tab_ris(vr_indice_ris).vlvec180 := rw_crapris_dsctit.vlvec180;
             vr_tab_ris(vr_indice_ris).vlvec360 := rw_crapris_dsctit.vlvec360;
@@ -1349,7 +1368,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_tab_ris(vr_indice_ris).dtprxpar := rw_crapris_dsctit.dtprxpar;
             vr_tab_ris(vr_indice_ris).vlprxpar := rw_crapris_dsctit.vlprxpar;
             vr_tab_ris(vr_indice_ris).qtparcel := rw_crapris_dsctit.qtparcel;
-            vr_tab_ris(vr_indice_ris).dtvencop := rw_crapris_dsctit.dtvencop;
+            vr_tab_ris(vr_indice_ris).dtvencop := vr_dtvencop;
             -- Zera a variavel acumuladora
             vr_vldivida_0301 := 0;
           END IF;
@@ -2415,11 +2434,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
                    -- Condicao para verificar se o bem estah baixado ou cancelado
                    IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
-                     -- Informação do Empréstimo
-                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                            ,pr_texto_completo => vr_xml_3040_temp
-                                            ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                               || rw_crapbpr.dschassi || '" />' || chr(10));
+                  -- Informação do Empréstimo
+                  gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                         ,pr_texto_completo => vr_xml_3040_temp
+                                         ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
+                                                            || rw_crapbpr.dschassi || '" />' || chr(10));
                    ELSE
                    	 -- Informação do Empréstimo
                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
@@ -3068,9 +3087,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       -- Classifica o porte do PF
       FUNCTION fn_classifi_porte_pf(pr_vlrrendi IN NUMBER) RETURN pls_integer IS
       BEGIN  
-        IF pr_vlrrendi = 0 THEN
+        
+        --> 03/11/2016 - Renato Darosci - Alterado para considerar faixa "sem rendimento" até 0.01 - SD 549969
+      
+        IF pr_vlrrendi <= 0.01 THEN
           RETURN 1;
-        ELSIF pr_vlrrendi > 0 AND pr_vlrrendi <= vr_vlsalmin THEN
+        ELSIF pr_vlrrendi > 0.01 AND pr_vlrrendi <= vr_vlsalmin THEN
           RETURN 2;
         ELSIF pr_vlrrendi > vr_vlsalmin AND pr_vlrrendi <= (vr_vlsalmin * 2) THEN
           RETURN 3;
@@ -3689,7 +3711,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Traz o intervalo válido para a parcela em atrazo 
             vr_flgatras := 1;
             -- Para empréstimo / financiamentos
-            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
+            IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499,301,302) THEN
               vr_stdiasat := ' DiaAtraso = "' || vr_tab_individ(vr_idx_individ).qtdiaatr || '"';
 
               IF vr_tab_venc(vr_indice_venc).cdvencto = 205 AND (vr_tab_individ(vr_idx_individ).qtdiaatr < 1  OR
