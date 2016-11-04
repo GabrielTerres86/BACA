@@ -5293,7 +5293,8 @@ PROCEDURE valida_responsaveis:
 
 	FOR FIRST tbgen_trans_pend FIELDS(cdcooper) WHERE tbgen_trans_pend.cdcooper             = par_cdcooper 
 												  AND tbgen_trans_pend.nrdconta			    = par_nrdconta
-												  AND tbgen_trans_pend.idsituacao_transacao = 1 NO-LOCK. END.	
+												  AND (tbgen_trans_pend.idsituacao_transacao = 1 OR 
+													   tbgen_trans_pend.idsituacao_transacao = 5) NO-LOCK. END.
    
 	IF AVAILABLE tbgen_trans_pend THEN
 		DO:		
