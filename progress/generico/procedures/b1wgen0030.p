@@ -15368,7 +15368,7 @@ PROCEDURE analisar-titulo-bordero:
                 ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pctitemi     THEN
                 DO:
                     ASSIGN aux_dsrestri = "Percentual de titulo do " +
-                                          "pagador excedido no contrato"
+                                          "pagador excedido no bordero"
                            aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 52
                                           ELSE 2.
 
