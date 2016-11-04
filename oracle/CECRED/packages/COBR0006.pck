@@ -377,7 +377,7 @@ PROCEDURE pc_importa_cnab400_085 (pr_cdcooper    IN crapcop.cdcooper%TYPE      -
                                    ,pr_nmarqint IN VARCHAR2               --> Nome do arquivo
                                    ,pr_tparquiv OUT VARCHAR2              --> Tipo do arquivo
                                    ,pr_cddbanco OUT INTEGER               --> Codigo do banco
-								   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado    
+                   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado    
                                    ,pr_rec_rejeita OUT COBR0006.typ_tab_rejeita --> Tabela com rejeitados
                                    ,pr_cdcritic OUT INTEGER               --> CÛdigo da critica
                                    ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da critica
@@ -435,12 +435,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 26/10/2016 - Ajuste na validacao do nome do sacado (pc_trata_segmento_q_240_85)
                              para considerar o caracter ':' como valido.
                              (Chamado 535830) - (Fabricio)
-                                           
+
 				01/11/2016 - Incluido tratamento NVL no campo QTDIAPRT ao inserir na CRAPCOB.
 				             Alterado local de atribuicao de valores nos campos da pc_rec_cobranca
 							 na rotina pc_trata_detalhe_cnab400. Estava gerando erro nas instrucoes
 							 enviadas pelos cooperados.
 							 Heitor (Mouts) - Chamado 545476
+                                           
+				04/11/2016 - Removidas validacoes de CEP quanto a UF, se a UF que vier no arquivo for
+				             diferente da UF da base de enderecos, nao vai rejeitar.
+							 Heitor (Mouts) - Chamado 523346
                                            
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -536,7 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dsvalida VARCHAR2(30000);
       
     vr_numeros  VARCHAR2(10) := '0123456789';
-	--Necessario acrescentar esta variavel por causa da 
+  --Necessario acrescentar esta variavel por causa da 
     --funcao CAN-DO do Progress, que permite simbolos como "(" e ")";
     vr_simbolos VARCHAR2(10) := '()';
     vr_letras   VARCHAR2(49) := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ¡¿ƒ¬√…»À ÕÃœŒ”“÷‘’⁄Ÿ‹€«';
@@ -571,7 +575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_validar:= vr_validar || pr_listaesp;
     END IF;
 
-	--Necessario permitir simbolos "(" e ")";
+  --Necessario permitir simbolos "(" e ")";
     vr_validar := vr_validar || vr_simbolos;
     FOR vr_pos IN 1..length(vr_validar) LOOP
       vr_caracter:= SUBSTR(vr_validar,vr_pos,1);
@@ -1018,7 +1022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.cdocorre := NULL;
     -- Inicializa como NAO rejeitada
     pr_rec_cobranca.flgrejei := FALSE;
-	pr_rec_cobranca.inserasa := 0;
+  pr_rec_cobranca.inserasa := 0;
     pr_rec_cobranca.flserasa := 0;
   END pc_inicializa_cobranca;
   
@@ -1193,7 +1197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).qtdiaprt := pr_rec_cobranca.qtdiaprt;
     pr_tab_crapcob(vr_index).inemiexp := pr_rec_cobranca.inemiexp;
     
-	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
+  pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
     pr_tab_crapcob(vr_index).flserasa := pr_rec_cobranca.flserasa;
     pr_tab_crapcob(vr_index).qtdianeg := pr_rec_cobranca.qtdianeg;
     -- Atualizar os totalizadores
@@ -1493,9 +1497,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 foi descomentado o cÛdigo para trata-lo
                                 (Andrei - RKAM).
 
-				   27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
-								a rotina de validaÁ„o de caracteres para endereÁos
-								(Andrei). 
+           27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
+                a rotina de validaÁ„o de caracteres para endereÁos
+                (Andrei). 
 
     ............................................................................ */   
     
@@ -1725,11 +1729,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         CLOSE cr_crapdne;
       END IF;
       
+      /*
       IF pr_tab_linhas('CDUFSACA').texto <> rw_crapdne.cduflogr THEN
         --  CEP incompativel com a Unidade da Federacao
         pr_cdmotivo := '51';
         RAISE vr_exc_motivo;
       END IF;
+	  */
     END IF;
     
   EXCEPTION
@@ -3452,7 +3458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                    ,pr_nmarqint IN VARCHAR2               --> Nome do arquivo
                                    ,pr_tparquiv OUT VARCHAR2              --> Tipo do arquivo
                                    ,pr_cddbanco OUT INTEGER               --> Codigo do banco
-								   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado
+                   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                    ,pr_rec_rejeita OUT COBR0006.typ_tab_rejeita --> Tabela com rejeitados
                                    ,pr_cdcritic OUT INTEGER               --> CÛdigo da critica
                                    ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da critica
@@ -3491,7 +3497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_ind_arquiv utl_file.file_type;
     
     -- Tratamento de erros
-		vr_exc_saida EXCEPTION;
+    vr_exc_saida EXCEPTION;
     
   BEGIN
 
@@ -3577,12 +3583,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           IF pr_tparquiv = 'CNAB240' THEN
             
             pr_cddbanco := to_number(substr(vr_dslinha,1,3));
-		    pr_nrdconta := to_number(substr(vr_dslinha,59,13));
+        pr_nrdconta := to_number(substr(vr_dslinha,59,13));
             
           ELSIF pr_tparquiv = 'CNAB400' THEN
             
             pr_cddbanco := to_number(substr(vr_dslinha,77,3));
-			pr_nrdconta := to_number(substr(vr_dslinha,32,9));
+      pr_nrdconta := to_number(substr(vr_dslinha,32,9));
                                 
           END IF;           
         
@@ -3858,7 +3864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
     vr_tparquiv   VARCHAR2(100);
     vr_cddbanco   INTEGER;
-	vr_nrdconta   crapass.nrdconta%TYPE;
+  vr_nrdconta   crapass.nrdconta%TYPE;
     
   BEGIN
        
@@ -3866,7 +3872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      pr_nmarqint => pr_nmarqint,  --> Numero da conta do cooperado
                                      pr_tparquiv => vr_tparquiv,  --> Data de movimento
                                      pr_cddbanco => vr_cddbanco,  --> Operador
-									 pr_nrdconta => vr_nrdconta,  --> Conta do cooperado (header do arq)
+                   pr_nrdconta => vr_nrdconta,  --> Conta do cooperado (header do arq)
                                      pr_rec_rejeita => pr_rec_rejeita, --> Tabela com rejeitados
                                      pr_cdcritic => vr_cdcritic,  --> CÛdigo da critica
                                      pr_dscritic => vr_dscritic,  -->DescriÁ„o da critica
@@ -4661,7 +4667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.vltitulo:= pr_tab_linhas('VLTITULO').numero;
     pr_rec_cobranca.dtvencto:= pr_tab_linhas('DTVENCTO').data;
     pr_rec_cobranca.dtemscob:= pr_tab_linhas('DTEMSCOB').data;
-	pr_rec_cobranca.vlabatim:= pr_tab_linhas('VLABATIM').numero;	
+  pr_rec_cobranca.vlabatim:= pr_tab_linhas('VLABATIM').numero;  
 
     --> Validacao de Comandos de Instrucao
     IF pr_rec_cobranca.cdocorre <> 1 THEN -- 01 - Remessa
@@ -5074,9 +5080,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 06/01/2016 - Convers„o Progress -> Oracle (Douglas Quisinski)
 
-		           27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
-								a rotina de validaÁ„o de caracteres para endereÁos
-								(Andrei).
+               27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
+                a rotina de validaÁ„o de caracteres para endereÁos
+                (Andrei).
                 
                26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
                             o caracter ':' como valido.
@@ -5294,11 +5300,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 
     -- 16.3Q Valida UF do Sacado
+	/*
     IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
       --  CEP incompativel com a Unidade da Federacao
       vr_rej_cdmotivo := '51';
       RAISE vr_exc_reje;
     END IF;
+	*/
 
     -- 17.3Q Valida Tipo de Inscricao Avalista
     pr_rec_cobranca.cdtpinav := nvl(pr_tab_linhas('CDTPINAV').numero,0);
@@ -7168,8 +7176,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha de detalhe do arquivo cnab400
 
        Alteracoes: 27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
-								a rotina de validaÁ„o de caracteres para endereÁos
-								(Andrei). 
+                a rotina de validaÁ„o de caracteres para endereÁos
+                (Andrei). 
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -7267,7 +7275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.dsdoccop := TRIM(pr_tab_linhas('NRDOCMTO').texto);
     pr_rec_cobranca.dsusoemp := pr_tab_linhas('DSUSOEMP').texto;
     pr_rec_cobranca.cdocorre := pr_tab_linhas('TPCOMAND').numero;
-    
+
     --Registros de controle serasa
     pr_rec_cobranca.flserasa := 0;
     pr_rec_cobranca.qtdianeg := 0;
@@ -7896,6 +7904,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
   
     -- 46.7 UF do Sacado
+    /*
     IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
       
       --  CEP Incompativel com a Unidade da Federacao
@@ -7903,6 +7912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
       
     END IF;
+	*/
   
     -- 47.7 Mensagem ou Sacador/Avalista 
     IF pr_tab_linhas('INDMENSA').texto = 'A' THEN
@@ -9448,13 +9458,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         --> Varrer linhas do arquivo
         FOR vr_idlinha IN vr_tab_linhas.first..vr_tab_linhas.last LOOP
           
-		  --Gerar critica do arquivo quando os erros forem nos HA, HL, TL, TA;
+      --Gerar critica do arquivo quando os erros forem nos HA, HL, TL, TA;
           IF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto IN ('HA','HL','TL','TA') THEN
              IF vr_tab_linhas(vr_idlinha).exists('$ERRO$') THEN --Problemas com importacao do layout
                vr_dscritic := 'Linha '||vr_idlinha||' '|| vr_tab_linhas(vr_idlinha)('$ERRO$').texto;
                vr_nrdoccri := 0;      
                RAISE vr_exc_saida;
-			 END IF;
+       END IF;
           END IF;
           
           -------------------  Header do Arquivo --------------------
@@ -10495,7 +10505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     ,pr_rec_cobranca  => vr_rec_cobranca           --> Dados da Cobranca
                                     ,pr_tab_rejeitado => vr_tab_rejeitado          --> Tabela de Rejeitados
                                     ,pr_tab_sacado    => vr_tab_sacado             --> Tabela de Sacados
-                                    ,pr_des_reto      => pr_des_reto);	
+                                    ,pr_des_reto      => pr_des_reto);  
              
              END IF;
                       
@@ -14445,7 +14455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      ,pr_nmarqint => vr_dsdircop || '/upload/' || pr_nmarquiv --> Nome do arquivo
                                      ,pr_tparquiv => vr_tparquiv               --> Tipo do arquivo
                                      ,pr_cddbanco => vr_cddbanco               --> Codigo do banco
-									 ,pr_nrdconta => vr_nrdconta               --> Recebe nrdconta
+                   ,pr_nrdconta => vr_nrdconta               --> Recebe nrdconta
                                      ,pr_rec_rejeita => vr_tab_rejeita         --> Dados invalidados
                                      ,pr_cdcritic => vr_cdcritic               --> CÛdigo da critica
                                      ,pr_dscritic => vr_dscritic               -->DescriÁ„o da critica
