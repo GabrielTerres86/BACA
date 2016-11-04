@@ -79,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     Programa: pc_insere_localidade
     Sistema : Ayllos Web
     Autor   : Douglas Quisinski
-    Data    : Setembro/2016                 Ultima atualizacao: 
+    Data    : Setembro/2016                 Ultima atualizacao: 04/11/2016 
 
     Dados referentes ao programa:
 
@@ -87,7 +87,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
     Objetivo  : Inserir os Enderecos
     
-    Alteracoes: 
+    Alteracoes: 04/11/2016 - Adicionar NVL para os campos de texto no cadastro 
+                             de endereço ao importar os arquivos do correio
+                             (Douglas - Chamado 542799)
     ..............................................................................*/
     BEGIN
       --Inserir dados do endereco na tabela em um unico momento
@@ -106,15 +108,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                              ,idoricad
                              ,idtipdne)
                        VALUES(pr_tab_logradouro(idx).cep
-                             ,pr_tab_logradouro(idx).nome_rua
-                             ,pr_tab_logradouro(idx).nome_rua_res
-                             ,pr_tab_logradouro(idx).complemento
-                             ,pr_tab_logradouro(idx).tipo
-                             ,pr_tab_logradouro(idx).bairro_nome
-                             ,pr_tab_logradouro(idx).bairro_res
-                             ,pr_tab_logradouro(idx).cidade_nome
-                             ,pr_tab_logradouro(idx).cidade_res
-                             ,pr_tab_logradouro(idx).estado
+                             ,NVL(TRIM(pr_tab_logradouro(idx).nome_rua),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).nome_rua_res),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).complemento),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).tipo),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).bairro_nome),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).bairro_res),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).cidade_nome),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).cidade_res),' ')
+                             ,NVL(TRIM(pr_tab_logradouro(idx).estado),' ')
                              ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
                              ,pr_idtipdne); -- Tipo de Enderecao
       EXCEPTION
