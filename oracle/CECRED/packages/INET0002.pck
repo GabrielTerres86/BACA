@@ -6515,7 +6515,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  vr_dscod_barras := rw_tbpagto_darf_das_trans_pend.dscod_barras; -- Código de Barras
                ELSIF vr_tpcaptura = 2 THEN 
                  vr_dtapuracao      := rw_tbpagto_darf_das_trans_pend.dtapuracao;
-                 vr_nrcpfgui        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
+                 vr_nrcpfgui        := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbpagto_darf_das_trans_pend.nrcpfcgc,pr_inpessoa => 1);
                  vr_cdtributo       := NVL(rw_tbpagto_darf_das_trans_pend.cdtributo,0);
                  vr_nrrefere        := NVL(rw_tbpagto_darf_das_trans_pend.nrrefere,0);
                  vr_dtvencto        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtvencto,'dd/mm/RRRR');
@@ -6749,12 +6749,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
               || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||vr_nrcpfgui||'</valor></dados_campo>'
               || '<dados_campo><label>Código da Receita</label><valor>'||vr_cdtributo||'</valor></dados_campo>';
               
-              IF vr_nrrefere IS NOT NULL THEN
-                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Número de Referência</label><valor>'||vr_nrrefere||'</valor></dados_campo>';
-              END IF;
-
               vr_xml_auxi := vr_xml_auxi   
-              || '<dados_campo><label>Data de Vencimento</label><valor>'||vr_dtvencto||'</valor></dados_campo>'
               || '<dados_campo><label>Valor do Principal</label><valor>'||TO_CHAR(vr_vlprincipal,'fm999g999g990d00')||'</valor></dados_campo>'
               || '<dados_campo><label>Valor da Multa</label><valor>'||TO_CHAR(vr_vlmulta,'fm999g999g990d00')||'</valor></dados_campo>'
               || '<dados_campo><label>Valor dos Juros</label><valor>'||TO_CHAR(vr_vljuros,'fm999g999g990d00')||'</valor></dados_campo>';
@@ -6763,11 +6758,12 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Valor Total</label><valor>'||TO_CHAR(vr_vlrtotal,'fm999g999g990d00')||'</valor></dados_campo>';           
 
             IF vr_tpcaptura = 2 THEN
-              IF vr_vlreceita_bruta IS NOT NULL THEN
-                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Receita Bruta Acumulada</label><valor>'||TO_CHAR(vr_vlreceita_bruta,'fm999g999g990d00')||'</valor></dados_campo>';
-              END IF;
-              IF vr_vlpercentual IS NOT NULL THEN
-                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Percentual</label><valor>'||TO_CHAR(vr_vlpercentual,'fm999g999g990d00')||'</valor></dados_campo>';
+              IF vr_cdtributo = 6106 THEN
+                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Receita Bruta Acumulada</label><valor>'||TO_CHAR(vr_vlreceita_bruta,'fm999g999g990d00')||'</valor></dados_campo>'
+                                           || '<dados_campo><label>Percentual</label><valor>'||TO_CHAR(vr_vlpercentual,'fm999g999g990d00')||'</valor></dados_campo>';
+              ELSE
+                vr_xml_auxi := vr_xml_auxi || '<dados_campo><label>Data de Vencimento</label><valor>'||vr_dtvencto||'</valor></dados_campo>'
+                                           || '<dados_campo><label>Número de Referência</label><valor>'||vr_nrrefere||'</valor></dados_campo>';
               END IF;
             END IF;           
 
