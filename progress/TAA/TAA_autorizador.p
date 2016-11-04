@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 20/07/2016
+      Data: Janeiro/2010                        Ultima alteracao: 02/08/2016
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -269,6 +269,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
             20/07/2016 - Inclusao dos parametros pr_cdfinali, pr_dstransf e pr_dshistor 
                          na rotina pc_cadastrar_agendamento e pc_agendamento_recorrente (Carlos)
+
+            02/08/2016 - Tratada procedure 'obtem_tarifa_extrato' para nao validar
+                         extratos isentos da cooperativa quando o cooperado possuir
+                         o servico "extrato" no pacote de tarifas (Diego).
 
 ............................................................................. */
 
@@ -2487,6 +2491,7 @@ PROCEDURE obtem_tarifa_extrato:
     DEFINE VARIABLE aux_cdcritic    AS INTE         NO-UNDO.
     DEFINE VARIABLE aux_tpservic    AS INTE         NO-UNDO.
     DEFINE VARIABLE aux_dscritic    AS CHAR         NO-UNDO.
+    DEFINE VARIABLE aux_flservic    AS INTEGER      NO-UNDO.
 
     ASSIGN  tab_vltarifa = 0
             tab_qtextper = 0
@@ -2589,7 +2594,10 @@ PROCEDURE obtem_tarifa_extrato:
                  RETURN "NOK".
              END.
                                                    
-        ASSIGN aux_qtopdisp = pc_verifica_pacote_tarifas.pr_qtopdisp.
+        ASSIGN /* retorna qtd. de extratos isentos que ainda possui disponivel no pacote de tarifas */
+               aux_qtopdisp = pc_verifica_pacote_tarifas.pr_qtopdisp
+               /* retorna pr_flservic = 1 quando existir o servico "extrato" no pacote */
+               aux_flservic = pc_verifica_pacote_tarifas.pr_flservic.
 
         IF aux_qtopdisp > 0 THEN
             DO:
@@ -2599,6 +2607,12 @@ PROCEDURE obtem_tarifa_extrato:
           
         /*FIM VERIFICACAO TARIFAS DE SAQUE*/
     
+        /* Quando o cooperado NAO possuir o servico "extrato" contemplado no pacote de tarifas,
+           devera validar a qtd. de extratos isentos oferecidos pela cooperativa(parametro). 
+           Caso contrario, o cooperado tera direito apenas a qtd. disponibilizada no pacote */
+        IF   aux_flservic = 0 THEN
+             DO:
+                /* Verifica se isento da tarifacao do extrato */
         IF NOT VALID-HANDLE(h-b1wgen0001) THEN
             RUN sistema/generico/procedures/b1wgen0001.p PERSISTENT SET h-b1wgen0001.
 
@@ -2613,7 +2627,7 @@ PROCEDURE obtem_tarifa_extrato:
     
         IF  VALID-HANDLE(h-b1wgen0001) THEN
                DELETE PROCEDURE h-b1wgen0001.
-
+             END.
    
         IF  aux_inisenta = 1  THEN
             tab_vltarifa = 0.
