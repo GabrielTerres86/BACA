@@ -27,6 +27,10 @@
 	//***					      mesmo apresente cores nas linhas e um    ***//
 	//***					      cabeçalho destacado (Renato Darosci)     ***//
 	//***					                                               ***//
+	//***			 04/11/2016 - Retirar os parametros fixos e as datas   ***//
+	//***					      que deverão ser lidas da crapdat na      ***//
+	//***					      rotina (Renato Darosci - Supero)         ***//
+	//***					                                               ***//
 	//************************************************************************//
 	
 	session_start();
@@ -55,14 +59,8 @@
 	$xmlRegistro .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
 	$xmlRegistro .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
 	$xmlRegistro .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xmlRegistro .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xmlRegistro .= "		<dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";
-	$xmlRegistro .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";	
-    $xmlRegistro .= "		<dtiniper>".date("d/m/Y")."</dtiniper>";
-	$xmlRegistro .= "		<dtfimper>".date("d/m/Y")."</dtfimper>";
 	$xmlRegistro .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xmlRegistro .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";
-	$xmlRegistro .= "		<idseqttl>1</idseqttl>";
 	$xmlRegistro .= "		<inproces>".$glbvars["inproces"]."</inproces>";
 	$xmlRegistro .= "		<cooperad>".$cooperad."</cooperad>";
 	$xmlRegistro .= "	</Dados>";

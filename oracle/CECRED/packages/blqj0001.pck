@@ -32,14 +32,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                          ,pr_cdagenci  IN VARCHAR2                  
                                          ,pr_nrdcaixa  IN VARCHAR2                  
                                          ,pr_cdoperad  IN VARCHAR2                  
-                                         ,pr_dtmvtolt  IN VARCHAR2                  
-                                         ,pr_dtmvtopr  IN VARCHAR2                  
-                                         ,pr_dtmvtoan  IN VARCHAR2                  
-                                         ,pr_dtiniper  IN VARCHAR2                  
-                                         ,pr_dtfimper  IN VARCHAR2                  
                                          ,pr_nmdatela  IN VARCHAR2                  
                                          ,pr_idorigem  IN NUMBER                    
-                                         ,pr_idseqttl  IN NUMBER                    
                                          ,pr_inproces  IN NUMBER                    
                                          ,pr_cooperad  IN NUMBER                    
                                          ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
@@ -54,14 +48,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                      ,pr_cdagenci IN VARCHAR2
                                      ,pr_nrdcaixa IN VARCHAR2               
                                      ,pr_cdoperad IN VARCHAR2
-                                     ,pr_dtmvtolt IN DATE
-                                     ,pr_dtmvtopr IN DATE
-                                     ,pr_dtmvtoan IN DATE
-                                     ,pr_dtiniper IN DATE
-                                     ,pr_dtfimper IN DATE
                                      ,pr_nmdatela IN VARCHAR2
                                      ,pr_idorigem IN NUMBER    
-                                     ,pr_idseqttl IN NUMBER    
                                      ,pr_inproces IN NUMBER    
                                      ,pr_cooperad IN NUMBER
                                      ,pr_nmprimtl      OUT VARCHAR2            
@@ -81,7 +69,6 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                       ,pr_flblcrft  IN NUMBER  -- 0 para FALSE / 1 para TRUE      
                                       ,pr_dtenvres  IN VARCHAR2      
                                       ,pr_vlrsaldo  IN VARCHAR2      
-                                      ,pr_dtmvtolt  IN VARCHAR2      
                                       ,pr_cdoperad  IN VARCHAR2      
                                       ,pr_dsinfadc  IN VARCHAR2                  
                                       ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
@@ -104,7 +91,6 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                   ,pr_flblcrft    IN BOOLEAN      
                                   ,pr_dtenvres    IN DATE      
                                   ,pr_vlrsaldo    IN NUMBER      
-                                  ,pr_dtmvtolt    IN DATE      
                                   ,pr_cdoperad    IN VARCHAR2      
                                   ,pr_dsinfadc    IN VARCHAR2         
                                   ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);  --> Retorno de erro                          
@@ -257,15 +243,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   PROCEDURE pc_busca_contas_cooperado_web(pr_cdcooper  IN crapcop.cdcooper%TYPE   
                                          ,pr_cdagenci  IN VARCHAR2                
                                          ,pr_nrdcaixa  IN VARCHAR2                
-                                         ,pr_cdoperad  IN VARCHAR2                
-                                         ,pr_dtmvtolt  IN VARCHAR2                
-                                         ,pr_dtmvtopr  IN VARCHAR2                
-                                         ,pr_dtmvtoan  IN VARCHAR2                
-                                         ,pr_dtiniper  IN VARCHAR2                
-                                         ,pr_dtfimper  IN VARCHAR2                
+                                         ,pr_cdoperad  IN VARCHAR2                  
                                          ,pr_nmdatela  IN VARCHAR2                
                                          ,pr_idorigem  IN NUMBER                  
-                                         ,pr_idseqttl  IN NUMBER                  
                                          ,pr_inproces  IN NUMBER                  
                                          ,pr_cooperad  IN NUMBER                  
                                          ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
@@ -281,14 +261,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_nmprimtl      VARCHAR2(200);
     vr_cdcritic      NUMBER;
     vr_dscritic      VARCHAR2(2000);
-    
-    -- Converte a data passada por parametro para tipo correto
-    vr_dtmvtolt      DATE := TO_DATE(pr_dtmvtolt,'dd/mm/yyyy');
-    vr_dtmvtopr      DATE := TO_DATE(pr_dtmvtopr,'dd/mm/yyyy');
-    vr_dtmvtoan      DATE := TO_DATE(pr_dtmvtoan,'dd/mm/yyyy');
-    vr_dtiniper      DATE := TO_DATE(pr_dtiniper,'dd/mm/yyyy');
-    vr_dtfimper      DATE := TO_DATE(pr_dtfimper,'dd/mm/yyyy');
-        
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
@@ -316,14 +288,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                       ,pr_cdagenci => pr_cdagenci
                                       ,pr_nrdcaixa => pr_nrdcaixa
                                       ,pr_cdoperad => pr_cdoperad
-                                      ,pr_dtmvtolt => vr_dtmvtolt
-                                      ,pr_dtmvtopr => vr_dtmvtopr
-                                      ,pr_dtmvtoan => vr_dtmvtoan
-                                      ,pr_dtiniper => vr_dtiniper
-                                      ,pr_dtfimper => vr_dtfimper
                                       ,pr_nmdatela => pr_nmdatela
                                       ,pr_idorigem => pr_idorigem
-                                      ,pr_idseqttl => pr_idseqttl
                                       ,pr_inproces => pr_inproces
                                       ,pr_cooperad => pr_cooperad
                                       ,pr_nmprimtl => vr_nmprimtl
@@ -406,14 +372,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                      ,pr_cdagenci IN VARCHAR2
                                      ,pr_nrdcaixa IN VARCHAR2               
                                      ,pr_cdoperad IN VARCHAR2
-                                     ,pr_dtmvtolt IN DATE
-                                     ,pr_dtmvtopr IN DATE
-                                     ,pr_dtmvtoan IN DATE
-                                     ,pr_dtiniper IN DATE
-                                     ,pr_dtfimper IN DATE
                                      ,pr_nmdatela IN VARCHAR2
                                      ,pr_idorigem IN NUMBER    
-                                     ,pr_idseqttl IN NUMBER    
                                      ,pr_inproces IN NUMBER    
                                      ,pr_cooperad IN NUMBER
                                      ,pr_nmprimtl      OUT VARCHAR2            
@@ -453,13 +413,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     
     -- Buscar dados dos titulares de conta
     CURSOR cr_crapttl(pr_cdcooper IN crapttl.cdcooper%TYPE
-                     ,pr_nrdconta IN crapttl.nrdconta%TYPE
-                     ,pr_idseqttl IN crapttl.idseqttl%TYPE) IS
+                     ,pr_nrdconta IN crapttl.nrdconta%TYPE) IS
       SELECT ttl.idseqttl
         FROM crapttl ttl
        WHERE ttl.cdcooper = pr_cdcooper 
          AND ttl.nrdconta = pr_nrdconta 
-         AND ttl.idseqttl = pr_idseqttl;
+         AND ttl.idseqttl = 1; -- fixo
     rw_crapttl  cr_crapttl%ROWTYPE;
     
     -- Buscar dados do cadastro de bloqueio judicial
@@ -638,8 +597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         IF rw_crapass.inpessoa = 1 THEN
           -- Deve buscar os dados da CRAPTTL
           OPEN cr_crapttl(pr_tab_cooperado(vr_ind_cooperado).cdcooper
-                         ,pr_tab_cooperado(vr_ind_cooperado).nrdconta
-                         ,pr_idseqttl);
+                         ,pr_tab_cooperado(vr_ind_cooperado).nrdconta);
           FETCH cr_crapttl INTO rw_crapttl;
           
           -- Verifica se foi encontrado registro do titular
@@ -679,15 +637,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                         ,pr_cdagenci => pr_cdagenci                     --> Codigo de agencia
                                         ,pr_nrdcaixa => pr_nrdcaixa                     --> Numero do caixa
                                         ,pr_cdoperad => pr_cdoperad                     --> Codigo do operador
-                                        ,pr_dtmvtolt => pr_dtmvtolt                     --> Data do movimento
-                                        ,pr_dtmvtopr => pr_dtmvtopr                     --> Proxima data do movimento
-                                        ,pr_dtmvtoan => pr_dtmvtoan                     --> Data anterior do movimento
-                                        ,pr_dtiniper => pr_dtiniper                     --> Data inicial do periodo
-                                        ,pr_dtfimper => pr_dtfimper                     --> data final do periodo
+                                        ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt    --> Data do movimento
+                                        ,pr_dtmvtopr => BTCH0001.rw_crapdat.dtmvtopr    --> Proxima data do movimento
+                                        ,pr_dtmvtoan => BTCH0001.rw_crapdat.dtmvtoan    --> Data anterior do movimento
+                                        ,pr_dtiniper => TRUNC(SYSDATE)                  --> Data inicial do periodo
+                                        ,pr_dtfimper => TRUNC(SYSDATE)                  --> data final do periodo
                                         ,pr_nmdatela => pr_nmdatela                     --> Nome da tela
                                         ,pr_idorigem => pr_idorigem                     --> Identificado de oriem
                                         ,pr_nrdconta => rw_crapass.nrdconta             --> Numero da conta
-                                        ,pr_idseqttl => pr_idseqttl                     --> Sequencial do titular
+                                        ,pr_idseqttl => 1                               --> Sequencial do titular
                                         ,pr_nrdctitg => rw_crapass.nrdctitg             --> Numero da conta itg
                                         ,pr_inproces => pr_inproces                     --> Indicador do processo
                                         ,pr_flgerlog => 'N'                             --> identificador se deve gerar log S-Sim e N-Nao                                    
@@ -724,7 +682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                         ,pr_cdprogra => pr_nmdatela         -- Codigo do Programa
                                         ,pr_nraplica => 0                   -- Número da Aplicaçao 
                                         ,pr_cdprodut => 0                   -- Código do Produto
-                                        ,pr_dtmvtolt => pr_dtmvtolt         -- Data de Movimento
+                                        ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt -- Data de Movimento
                                         ,pr_idconsul => 6                   -- Identificador de Consulta
                                         ,pr_idgerlog => 1                   -- Identificador de Log (0 – Nao / 1 – Sim)
                                         ,pr_clobxmlc => vr_clobxmlc         -- XML com informaçoes 
@@ -830,10 +788,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                      ,pr_cdoperad      => pr_cdoperad
                                      ,pr_idorigem      => 1 -- pr_nmdatela
                                      ,pr_nrdconta      => rw_crapass.nrdconta
-                                     ,pr_idseqttl      => pr_idseqttl
+                                     ,pr_idseqttl      => 1
                                      ,pr_nrctrrpp      => 0
-                                     ,pr_dtmvtolt      => pr_dtmvtolt
-                                     ,pr_dtmvtopr      => pr_dtmvtopr
+                                     ,pr_dtmvtolt      => BTCH0001.rw_crapdat.dtmvtolt
+                                     ,pr_dtmvtopr      => BTCH0001.rw_crapdat.dtmvtopr
                                      ,pr_inproces      => 1
                                      ,pr_cdprogra      => pr_nmdatela
                                      ,pr_flgerlog      => FALSE
@@ -1000,7 +958,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                       ,pr_flblcrft  IN NUMBER  -- 0 para FALSE / 1 para TRUE      
                                       ,pr_dtenvres  IN VARCHAR2      
                                       ,pr_vlrsaldo  IN VARCHAR2      
-                                      ,pr_dtmvtolt  IN VARCHAR2      
                                       ,pr_cdoperad  IN VARCHAR2      
                                       ,pr_dsinfadc  IN VARCHAR2                  
                                       ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
@@ -1016,7 +973,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_dscritic      VARCHAR2(2000);
     vr_flblcrft      BOOLEAN;
     vr_dtenvres      DATE := to_date(pr_dtenvres,'DD/MM/YYYY');
-    vr_dtmvtolt      DATE := to_date(pr_dtmvtolt,'DD/MM/YYYY');
     vr_vlrsaldo      NUMBER := GENE0002.fn_char_para_number(pr_vlrsaldo);
     
     -- EXCEPTIONS
@@ -1041,7 +997,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                    ,pr_cdtipmov => pr_cdtipmov
                                    ,pr_cdmodali => pr_cdmodali
                                    ,pr_vlbloque => pr_vlbloque
-                                   --,pr_vlresblq => pr_vlresblq
                                    ,pr_nroficio => pr_nroficio
                                    ,pr_nrproces => pr_nrproces 
                                    ,pr_dsjuizem => pr_dsjuizem 
@@ -1049,7 +1004,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                    ,pr_flblcrft => vr_flblcrft    
                                    ,pr_dtenvres => vr_dtenvres 
                                    ,pr_vlrsaldo => vr_vlrsaldo   
-                                   ,pr_dtmvtolt => vr_dtmvtolt 
                                    ,pr_cdoperad => pr_cdoperad    
                                    ,pr_dsinfadc => pr_dsinfadc 
                                    ,pr_tab_erro => vr_tab_erro);
@@ -1101,7 +1055,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                   ,pr_cdtipmov    IN VARCHAR2  /*LISTAS*/
                                   ,pr_cdmodali    IN VARCHAR2  /*LISTAS*/
                                   ,pr_vlbloque    IN VARCHAR2  /*LISTAS*/
-                                  --,pr_vlresblq    IN VARCHAR2  /*LISTAS*/
                                   ,pr_nroficio    IN VARCHAR2  
                                   ,pr_nrproces    IN VARCHAR2  
                                   ,pr_dsjuizem    IN VARCHAR2  
@@ -1109,7 +1062,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                   ,pr_flblcrft    IN BOOLEAN      
                                   ,pr_dtenvres    IN DATE      
                                   ,pr_vlrsaldo    IN NUMBER      
-                                  ,pr_dtmvtolt    IN DATE      
                                   ,pr_cdoperad    IN VARCHAR2      
                                   ,pr_dsinfadc    IN VARCHAR2         
                                   ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
@@ -1148,7 +1100,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     
     -- Buscar pelo lançamento
     CURSOR cr_craplcm(pr_nrdconta  craplcm.nrdconta%TYPE
-                     ,pr_nrdocmto  craplcm.nrdocmto%TYPE) IS
+                     ,pr_nrdocmto  craplcm.nrdocmto%TYPE
+                     ,pr_dtmvtolt  craplcm.dtmvtolt%TYPE) IS
       SELECT 1
         FROM craplcm lcm
        WHERE lcm.cdcooper = pr_cdcooper
@@ -1161,7 +1114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     
     -- Buscar lançamento automático
     CURSOR cr_craplau(pr_nrdconta  craplau.nrdconta%TYPE
-                     ,pr_nrdocmto  craplau.nrdocmto%TYPE) IS
+                     ,pr_nrdocmto  craplau.nrdocmto%TYPE
+                     ,pr_dtmvtolt  craplau.dtmvtolt%TYPE) IS
       SELECT 1
         FROM craplau lau
        WHERE lau.cdcooper = pr_cdcooper     
@@ -1217,7 +1171,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         vr_flgbloqu := FALSE;
       END IF;
     END IF;
-
+    
+    -- Buscar a CRAPDAT para a cooperativa
+    OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO BTCH0001.rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+    
     -- Se encontrar registros
     IF vr_tbcontas.COUNT() > 0 THEN
       
@@ -1269,7 +1228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           IF vr_flgbloqu THEN
             vr_dtblqfim := NULL;
           ELSE 
-            vr_dtblqfim := pr_dtmvtolt;
+            vr_dtblqfim := BTCH0001.rw_crapdat.dtmvtolt;
           END IF;
           
           -- Se a modalidade for 1
@@ -1305,7 +1264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                              ,TO_NUMBER(vr_tbmodali(vr_indice)) -- cdmodali
                              ,TO_NUMBER(vr_tbtipmov(vr_indice)) -- cdtipmov
                              ,vr_flblcrft                       -- flblcrft
-                             ,pr_dtmvtolt                       -- dtblqini
+                             ,BTCH0001.rw_crapdat.dtmvtolt      -- dtblqini
                              ,vr_dtblqfim                       -- dtblqfim
                              ,TO_NUMBER(vr_tbbloque(vr_indice)) -- vlbloque
                              ,pr_cdoperad                       -- cdopdblq /* Operador Bloqueio    */
@@ -1331,7 +1290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         IF TO_NUMBER(vr_tbmodali(vr_indice)) = 1 AND TO_NUMBER(vr_tbbloque(vr_indice)) > 0 THEN
           -- Buscar o lote para o lançamento
           OPEN  cr_craplot(pr_cdcooper
-                          ,pr_dtmvtolt
+                          ,BTCH0001.rw_crapdat.dtmvtolt
                           ,6880);
           FETCH cr_craplot INTO rw_craplot;
           
@@ -1347,7 +1306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,tplotmov
                                  ,nrseqdig)
                            VALUES(pr_cdcooper
-                                 ,pr_dtmvtolt
+                                 ,BTCH0001.rw_crapdat.dtmvtolt
                                  ,1           
                                  ,100          
                                  ,6880
@@ -1357,7 +1316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                          
                -- Atualizar o registro do lote        
                rw_craplot.cdcooper := pr_cdcooper;
-               rw_craplot.dtmvtolt := pr_dtmvtolt;
+               rw_craplot.dtmvtolt := BTCH0001.rw_crapdat.dtmvtolt;
                rw_craplot.cdagenci := 1;
                rw_craplot.cdbccxlt := 100;        
                rw_craplot.nrdolote := 6880;
@@ -1380,7 +1339,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           LOOP
             -- Buscar por lançamento pelo número do documento
             OPEN  cr_craplcm(rw_crapass.nrdconta
-                            ,vr_nrdocmto);
+                            ,vr_nrdocmto
+                            ,BTCH0001.rw_crapdat.dtmvtolt);
             FETCH cr_craplcm INTO vr_nrdregis;
             
             -- Se encontrou registro
@@ -1416,8 +1376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,nrseqdig
                                ,cdpesqbb)
                          VALUES(pr_cdcooper                       -- cdcooper
-                               ,pr_dtmvtolt                       -- dtmvtolt
-                               ,pr_dtmvtolt                       -- dtrefere
+                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtmvtolt
+                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtrefere
                                ,rw_craplot.cdagenci               -- cdagenci
                                ,rw_craplot.cdbccxlt               -- cdbccxlt
                                ,rw_craplot.nrdolote               -- nrdolote
@@ -1508,7 +1468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,1  /* Dep. a Vista */             -- cdmodali
                                ,TO_NUMBER(vr_tbtipmov(vr_indice)) -- cdtipmov
                                ,vr_flblcrft                       -- flblcrft
-                               ,pr_dtmvtolt                       -- dtblqini
+                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtblqini
                                ,NULL                              -- dtblqfim
                                ,0                                 -- vlbloque
                                ,pr_cdoperad                       -- cdopdblq /* Operador Bloqueio    */
@@ -1553,7 +1513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                             
           -- Buscar o lote para o lançamento
           OPEN  cr_craplot(pr_cdcooper
-                          ,pr_dtmvtolt
+                          ,BTCH0001.rw_crapdat.dtmvtolt
                           ,6870);
           FETCH cr_craplot INTO rw_craplot;
           
@@ -1569,7 +1529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                  ,tplotmov
                                  ,nrseqdig)
                            VALUES(pr_cdcooper
-                                 ,pr_dtmvtolt
+                                 ,BTCH0001.rw_crapdat.dtmvtolt
                                  ,1           
                                  ,100          
                                  ,6870
@@ -1579,7 +1539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                          
                -- Atualizar o registro do lote        
                rw_craplot.cdcooper := pr_cdcooper;
-               rw_craplot.dtmvtolt := pr_dtmvtolt;
+               rw_craplot.dtmvtolt := BTCH0001.rw_crapdat.dtmvtolt;
                rw_craplot.cdagenci := 1;
                rw_craplot.cdbccxlt := 100;        
                rw_craplot.nrdolote := 6870;
@@ -1602,7 +1562,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           LOOP
             -- Buscar por lançamento pelo número do documento
             OPEN  cr_craplau(rw_contcpf.nrdconta
-                            ,vr_nrdocmto);
+                            ,vr_nrdocmto
+                            ,BTCH0001.rw_crapdat.dtmvtolt);
             FETCH cr_craplau INTO vr_nrdregis;
             
             -- Se encontrou registro
@@ -1641,8 +1602,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,dsorigem
                                ,cdseqtel)
                          VALUES(pr_cdcooper                       -- cdcooper
-                               ,pr_dtmvtolt                       -- dtmvtolt
-                               ,pr_dtmvtolt                       -- dtmvtopg
+                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtmvtolt
+                               ,BTCH0001.rw_crapdat.dtmvtolt      -- dtmvtopg
                                ,rw_craplot.cdagenci               -- cdagenci
                                ,rw_craplot.cdbccxlt               -- cdbccxlt
                                ,rw_craplot.nrdolote               -- nrdolote

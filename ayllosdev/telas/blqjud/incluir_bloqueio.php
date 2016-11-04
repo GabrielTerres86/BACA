@@ -32,7 +32,6 @@
     $cdtipmov = $_POST["cdtipmov"];     // LISTA
     $cdmodali = $_POST["cdmodali"];     // LISTA
     $vlbloque = $_POST["vlbloque"];     // LISTA
-    //$vlresblq = $_POST["vlresblq"];     // LISTA
     $nroficio = $_POST["nroficio"];
     $nrproces = $_POST["nrproces"];
     $dsjuizem = $_POST["dsjuizem"];
@@ -52,7 +51,6 @@
 	$xmlRegistro .= "		<cdtipmov>".$cdtipmov."</cdtipmov>";
 	$xmlRegistro .= "		<cdmodali>".$cdmodali."</cdmodali>";	
 	$xmlRegistro .= "		<vlbloque>".$vlbloque."</vlbloque>";
-	//$xmlRegistro .= "		<vlresblq>".$vlresblq."</vlresblq>"; não utilizado
 	$xmlRegistro .= "		<nroficio>".$nroficio."</nroficio>";
     $xmlRegistro .= "		<nrproces>".$nrproces."</nrproces>";
     $xmlRegistro .= "		<dsjuizem>".$dsjuizem."</dsjuizem>";
@@ -60,7 +58,6 @@
     $xmlRegistro .= "		<flblcrft>".$flblcrft."</flblcrft>";
     $xmlRegistro .= "		<dtenvres>".$dtenvres."</dtenvres>";    
     $xmlRegistro .= "		<vlrsaldo>".$vlrsaldo."</vlrsaldo>";
-	$xmlRegistro .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
     $xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
     $xmlRegistro .= "       <dsinfadc>".$dsinfadc."</dsinfadc>";
 	$xmlRegistro .= "	</Dados>";
