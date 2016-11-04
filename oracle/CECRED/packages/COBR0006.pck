@@ -431,10 +431,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 efetuar tratamento para os segmentos R,S;
                               > Ajuste para enviar o nome original do arquivo para emissao do protocolo;
                              (Andrei - RKAM).
-                                           
+                             
                 26/10/2016 - Ajuste na validacao do nome do sacado (pc_trata_segmento_q_240_85)
                              para considerar o caracter ':' como valido.
                              (Chamado 535830) - (Fabricio)
+                                           
+				01/11/2016 - Incluido tratamento NVL no campo QTDIAPRT ao inserir na CRAPCOB.
+				             Alterado local de atribuicao de valores nos campos da pc_rec_cobranca
+							 na rotina pc_trata_detalhe_cnab400. Estava gerando erro nas instrucoes
+							 enviadas pelos cooperados.
+							 Heitor (Mouts) - Chamado 545476
                                            
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1950,7 +1956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).flgaceit,
                 pr_tab_crapcob(vr_idx_cob).idseqttl,
                 pr_tab_crapcob(vr_idx_cob).cdoperad,
-                pr_tab_crapcob(vr_idx_cob).qtdiaprt,
+                nvl(pr_tab_crapcob(vr_idx_cob).qtdiaprt,0),
                 nvl(pr_tab_crapcob(vr_idx_cob).inemiexp,0),
                 0, -- idopeleg
                 0, -- idtitleg
@@ -5070,7 +5076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 		           27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
 								a rotina de validação de caracteres para endereços
-								(Andrei). 
+								(Andrei).
                 
                26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
                             o caracter ':' como valido.
@@ -7267,6 +7273,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.qtdianeg := 0;
     pr_rec_cobranca.inserasa := 0;
     pr_rec_cobranca.serasa := 0;    
+    
+    -- Carregar os valores necessarios para criar os rejeitados
+    pr_rec_cobranca.vltitulo:= pr_tab_linhas('VLTITULO').numero;
+    pr_rec_cobranca.dtvencto:= pr_tab_linhas('DTVENCTO').data;
+    pr_rec_cobranca.dtemscob:= pr_tab_linhas('DTEMSCOB').data;
+    pr_rec_cobranca.instcodi:= pr_tab_linhas('INSTCODI').numero;
+    pr_rec_cobranca.instcodi2:= pr_tab_linhas('INSTCODI2').numero;
+    
+    -- Formatar nosso numero com 17 posicoes para separa o numero da conta e o numero do boleto
+    pr_rec_cobranca.dsnosnum := to_char(TRIM(pr_tab_linhas('DSNOSNUM').texto),'fm00000000000000000');
+    pr_rec_cobranca.nrdconta := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,1,8));
+    pr_rec_cobranca.nrbloque := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,9,9));
+
     --> tratar flag aceite enviada no arquivo motivo 23 - Aceite invalido, nao sera tratado
     --  para nao impactar nos cooperados que ignoravam essa informacao*/                   
     IF upper(pr_tab_linhas('ACEITITU').texto) = 'A' THEN
@@ -7334,13 +7353,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;      
      
-    -- Carregar os valores necessarios para criar os rejeitados
-    pr_rec_cobranca.vltitulo:= pr_tab_linhas('VLTITULO').numero;
-    pr_rec_cobranca.dtvencto:= pr_tab_linhas('DTVENCTO').data;
-    pr_rec_cobranca.dtemscob:= pr_tab_linhas('DTEMSCOB').data;
-    pr_rec_cobranca.instcodi:= pr_tab_linhas('INSTCODI').numero;
-    pr_rec_cobranca.instcodi2:= pr_tab_linhas('INSTCODI2').numero;
-    
     -- 02.7 Tipo de Inscricao do Cedente
     IF pr_tab_linhas('TPINSCRI').numero <> 1 AND
        pr_tab_linhas('TPINSCRI').numero <> 2 THEN
@@ -7408,11 +7420,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;
   
-    -- Formatar nosso numero com 17 posicoes para separa o numero da conta e o numero do boleto
-    pr_rec_cobranca.dsnosnum := to_char(TRIM(pr_tab_linhas('DSNOSNUM').texto),'fm00000000000000000');
-    pr_rec_cobranca.nrdconta := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,1,8));
-    pr_rec_cobranca.nrbloque := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,9,9));
-
     -- Verificacao para impedir cadastro de titulo sem numero
     IF pr_rec_cobranca.nrbloque = 0 THEN
       
