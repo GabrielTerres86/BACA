@@ -16,6 +16,7 @@
  * 23/06/2014 - Rodrigo Bertelli (RKAM): Ajuste de quebra na tabela de depósitos.
  * 14/11/2014 - Jean Reddiga (RKAM) : Ajuste na função FormataData para obedecer ao parametro operação 
  * 22/04/2015 - Jaison/Elton(CECRED): Ajustado o cabecalho da tabela de listagem de depositos
+ * 27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
  * --------------
  */
 
@@ -157,7 +158,19 @@ function manterRotina( operacao ) {
 	var dsterfin = cddopcao == 'I' ? cDsterfin.val() : $('#dsterfin', '#'+frmDados).val();
 	var qttotalp = $('#qttotalP', '#'+frmDados).val();
 	var tprecolh = $('#tprecolh', '#frmOpcaoL').val();
-	
+
+    var nmterminal     = $('#nmterminal',    '#frmOpcaoS').val();
+    var flganexo_pa    = $('#flganexo_pa',   '#frmOpcaoS').prop("checked") == true ? 1 : 0;
+    var dslogradouro   = $('#dslogradouro',  '#frmOpcaoS').val();
+    var dscomplemento  = $('#dscomplemento', '#frmOpcaoS').val();
+    var nrendere       = $('#nrendere',      '#frmOpcaoS').val();
+    var nmbairro       = $('#nmbairro',      '#frmOpcaoS').val();
+    var nrcep          = $('#nrcep',         '#frmOpcaoS').val();
+    var idcidade       = $('#idcidade',      '#frmOpcaoS').val();
+    var nrlatitude     = $('#nrlatitude ',   '#frmOpcaoS').val();
+    var nrlongitude    = $('#nrlongitude ',  '#frmOpcaoS').val();
+    var dshorario      = $('#dshorario',     '#frmOpcaoS').val();
+
 	if ( $('#opcaorel', '#frmRelatorio').val() == 3 ) {
 		opreldep = "Depositos";
 	}
@@ -165,11 +178,12 @@ function manterRotina( operacao ) {
 	var mensagem = 'Aguarde, realizando operação...';
 	
 	switch( operacao ) {
-		case 'BDCM':
-		case 'BD'  : mensagem = 'Aguarde, buscando informacoes...'; break;		
-		case 'VP'  : mensagem = 'Aguarde, validando...'; 		    break;
-		case 'VD'  : mensagem = 'Aguarde, validando...'; 		    break;
-		case 'GD'  : mensagem = 'Aguarde, gravando...';  		    break;
+		case 'BDCM'      :
+		case 'BD'        : mensagem = 'Aguarde, buscando informacoes...'; break;		
+		case 'VP'        : mensagem = 'Aguarde, validando...';            break;
+		case 'VD'        : mensagem = 'Aguarde, validando...';            break;
+        case 'CASH_DADOS_SITE':
+		case 'GD'        : mensagem = 'Aguarde, gravando...';             break;
 	}
 
 	fechaRotina( $('#divUsoGenerico') );
@@ -208,7 +222,19 @@ function manterRotina( operacao ) {
 				tiprelat	: tiprelat,
 				
 				nmarqimp	: nmarqimp,
-				
+
+                nmterminal    : nmterminal,
+                flganexo_pa   : flganexo_pa,
+                dslogradouro  : dslogradouro,
+                dscomplemento : dscomplemento,
+                nrendere      : normalizaNumero(nrendere),
+                nmbairro      : nmbairro,
+                nrcep         : normalizaNumero(nrcep),
+                idcidade      : normalizaNumero(idcidade),
+                nrlatitude    : nrlatitude,
+                nrlongitude   : nrlongitude,
+                dshorario     : dshorario,
+
 				redirect	: 'script_ajax'
 			}, 
 			error: function(objAjax,responseError,objExcept) {
@@ -328,7 +354,29 @@ function controlaPesquisas() {
 		buscaDescricao(bo,procedure,titulo,$(this).attr('name'),'dsagetfn',$(this).val(),'dsagepac',filtrosDesc,'divRotina');
 		bloqueiaFundo( $('#divRotina') );
 		return false;
-	});	
+	});
+
+	/*---------------------*/
+	/*   CONTROLE CIDADE   */
+	/*---------------------*/
+	var linkCidade = $('a:eq(0)','#frmOpcaoS');
+	if ( linkCidade.prev().hasClass('campoTelaSemBorda') ) {
+		linkCidade.addClass('lupa').css('cursor','auto').unbind('click').bind('click', function() { return false; });
+	} else {
+		linkCidade.css('cursor','pointer').unbind('click').bind('click', function() {			
+			
+			var cdestado    = $('#cdestado', '#frmOpcaoS').val();
+            var bo          = 'CADA0003'
+            var procedure   = 'LISTA_CIDADES';
+            var titulo      = 'Cidades';
+            var qtReg       = '20';
+            var filtrosPesq = 'Codigo;idcidade;70px;S;;S;codigo|Cidade;dscidade;200px;S;;S;descricao|UF;cdestado;40px;S;' + cdestado + ';S;descricao|;infiltro;;N;1;N;codigo|;intipnom;;N;1;N;codigo|;cdcidade;;N;0;N;codigo';
+            var colunas     = 'Codigo;idcidade;30%;center|Cidade;dscidade;60%;left|UF;cdestado;10%;center';
+            mostraPesquisa(bo,procedure,titulo,qtReg,filtrosPesq,colunas,$('#divRotina'));
+	        return false;
+		});
+    }
+
 	return false;
 }
 
@@ -337,7 +385,7 @@ function controlaLayout( operacao ) {
 	formataCabecalho();
 	
 	//operacao = 'BD';
-	if ( (cddopcao == 'A' || cddopcao == 'B' || cddopcao == 'C' || cddopcao == 'I' || cddopcao == 'L' ) && operacao == '' ) {
+	if ( (cddopcao == 'A' || cddopcao == 'B' || cddopcao == 'C' || cddopcao == 'I' || cddopcao == 'L' || cddopcao == 'S' ) && operacao == '' ) {
 		cCddopcao.desabilitaCampo();		
 		if ( cddopcao == 'I' ) {
 			// Buscar o código do próximo terminal e carregar na tela.
@@ -417,6 +465,15 @@ function controlaLayout( operacao ) {
 			hideMsgAguardo();			
 			showError('inform','Relatório gerado com sucesso!' ,'Alerta - Ayllos','fechaOpcao()');
 		}
+	} else if ( cddopcao == 'S' && operacao == 'BD' ) {
+		$('#frmCash').css({'display':'none'});
+		$('#divBotoes:eq(0)', '#divTela').remove();
+		mostraOpcao('opcaoS');
+
+	} else if ( cddopcao == 'S' && operacao == 'CASH_DADOS_SITE' ) {
+		hideMsgAguardo();
+		showError('inform','Dados gravados com sucesso!','Alerta - Ayllos','fechaOpcao();');
+
 	}
 	controlaPesquisas();
 	return false;
@@ -1866,6 +1923,7 @@ function buscaOpcao( operacao ) {
 						case 'monitorar'		: 	formataMonitorar();		break;
 						case 'relatorio'		: 	formataRelatorio();		break;
 						case 'diretorio'		: 	formataDiretorio();		break;
+						case 'opcaoS'    		: 	formataOpcaoS();		break;
 					}
 					
 				} catch(error) {
@@ -1898,7 +1956,8 @@ function fechaOpcao() {
 		 cddopcao == 'I' || 
 		 cddopcao == 'L' || 
 		 cddopcao == 'M' || 
-	     cddopcao == 'R' ){ 
+	     cddopcao == 'R' || 
+	     cddopcao == 'S' ){ 
 		estadoInicial(); 
 	}
 	
@@ -2024,11 +2083,14 @@ function btnContinuar() {
 	if ( cCddopcao.hasClass('campo')  ) {  
 		btnOK.click();	
 	
-	} else if ( ( cddopcao == 'A'|| cddopcao == 'B' || cddopcao == 'C' || cddopcao == 'L') && (cNrterfin.hasClass('campo') || cNrterfin.hasClass('campoFocusIn') ) ) {
+	} else if ( ( cddopcao == 'A'|| cddopcao == 'B' || cddopcao == 'C' || cddopcao == 'L' || cddopcao == 'S') && (cNrterfin.hasClass('campo') || cNrterfin.hasClass('campoFocusIn') ) ) {
 		controlaOperacao('BD');
 		
 	} else if ( cddopcao == 'A' && cNrterfin.hasClass('campoTelaSemBorda') ) { 
 		manterRotina('VD');
+
+	} else if ( cddopcao == 'S' && cNrterfin.hasClass('campoTelaSemBorda') ) { 
+		btnConfirmar( "manterRotina('CASH_DADOS_SITE');", "fechaOpcao();");
 
 	} else if ( cddopcao == 'B' && cNrterfin.hasClass('campoTelaSemBorda') ) { 
 		// se for igual 0 abre a listagem
@@ -2099,4 +2161,213 @@ function trocaBotao( botao ) {
     $('#divBotoes','#divTela').append('<a href="#" class="botao" id="btSalvar" onclick="btnContinuar(); return false;">'+botao+'</a>');
 	
 	return false;
+}
+
+function formataOpcaoS() {
+
+	var legend = $('legend', '#frmOpcaoS');
+    var blnChecked = $('#flganexo_pa', '#frmOpcaoS').prop("checked");
+
+	// label
+	rIdcidade       = $('label[for="idcidade"]',      '#frmOpcaoS');
+	rNmterminal     = $('label[for="nmterminal"]',    '#frmOpcaoS');
+    rFlganexo_pa    = $('label[for="flganexo_pa"]',   '#frmOpcaoS');
+    rNmresage       = $('label[for="nmresage"]',      '#frmOpcaoS');
+	rDslogradouro   = $('label[for="dslogradouro"]',  '#frmOpcaoS');
+	rDscomplemento  = $('label[for="dscomplemento"]', '#frmOpcaoS');
+	rNrendere       = $('label[for="nrendere"]',      '#frmOpcaoS');
+	rNmbairro       = $('label[for="nmbairro"]',      '#frmOpcaoS');
+	rNrcep          = $('label[for="nrcep"]',         '#frmOpcaoS');
+	rNrlatitude     = $('label[for="nrlatitude"]',    '#frmOpcaoS');
+    rNrlongitude    = $('label[for="nrlongitude"]',   '#frmOpcaoS');
+	rDshorario      = $('label[for="dshorario"]',     '#frmOpcaoS');
+
+	rIdcidade.addClass('rotulo').css({'width':'130px'});
+    rNmterminal.addClass('rotulo').css({'width':'130px'});
+    rFlganexo_pa.addClass('rotulo').css({'width':'130px'});
+    rNmresage.addClass('rotulo').css({'width':'130px'});
+	rDslogradouro.addClass('rotulo').css({'width':'130px'});	
+	rDscomplemento.addClass('rotulo').css({'width':'130px'});	
+	rNrendere.addClass('rotulo').css({'width':'130px'});
+	rNmbairro.addClass('rotulo-linha').css({'width':'50px'});	
+	rNrcep.addClass('rotulo').css({'width':'130px'});
+	rNrlatitude.addClass('rotulo').css({'width':'130px'});
+    rNrlongitude.addClass('rotulo').css({'width':'130px'});
+	rDshorario.addClass('rotulo').css({'width':'130px'});
+
+	// campos
+    cIdcidade      = $('#idcidade',      '#frmOpcaoS');
+	cNmterminal    = $('#nmterminal',    '#frmOpcaoS');
+    cFlganexo_pa   = $('#flganexo_pa',   '#frmOpcaoS');
+    cNmresage      = $('#nmresage',      '#frmOpcaoS');
+	cDslogradouro  = $('#dslogradouro',  '#frmOpcaoS');
+	cDscomplemento = $('#dscomplemento', '#frmOpcaoS');
+	cNrendere      = $('#nrendere',      '#frmOpcaoS');
+	cNmbairro      = $('#nmbairro',      '#frmOpcaoS');
+	cNrcep         = $('#nrcep',         '#frmOpcaoS');
+    cNrlatitude    = $('#nrlatitude',    '#frmOpcaoS');
+    cNrlongitude   = $('#nrlongitude',   '#frmOpcaoS');
+	cDshorario     = $('#dshorario',     '#frmOpcaoS');
+
+    cIdcidade.addClass('campo pesquisa').css({'width':'50px'}).attr('maxlength','8').setMask('INTEGER','zzzzzzzz','','');
+    cNmterminal.addClass('campo').css({'width':'240px'}).attr('maxlength','200').focus();
+    cNmresage.addClass('campo').css({'width':'220px'}).desabilitaCampo();
+    cDslogradouro.addClass('campo').css({'width':'240px'}).attr('maxlength','200');
+	cDscomplemento.addClass('campo').css({'width':'240px'}).attr('maxlength','200');
+	cNrendere.addClass('campo').css({'width':'50px'}).attr('maxlength','10').setMask('INTEGER','zzzzzzzzzz','','');
+	cNmbairro.addClass('campo').css({'width':'134px'}).attr('maxlength','200');
+	cNrcep.addClass('campo').css({'width':'240px'}).attr('maxlength','10').setMask('INTEGER','zz.zzz-zzz','','');
+	cNrlatitude.addClass('campo').css({'width':'240px'});
+    cNrlongitude.addClass('campo').css({'width':'240px'});
+	cDshorario.addClass('campo').css({'width':'240px','height':'70px','float':'left','margin':'3px 0px 3px 3px'}).attr('maxlength','500');
+
+    cNmterminal.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 ) {
+            // Se possuir o mesmo endereco do PA
+            if (blnChecked) {
+                cDshorario.focus();
+            } else {
+                cDslogradouro.focus();
+            }
+            return false;
+        } 
+    });
+    
+    cDslogradouro.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 ) {
+            cDscomplemento.focus();
+            return false;
+        } 
+    });	
+    
+    cDscomplemento.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 ) {
+            cNrendere.focus();
+            return false;
+        } 
+    });	
+    
+    cNrendere.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 ) {
+            cNmbairro.focus();
+            return false;
+        } 
+    });	
+    
+    cNmbairro.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 ) {
+            cNrcep.focus();
+            return false;
+        } 
+    });
+    
+    cNrcep.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 ) {
+           cIdcidade.focus();
+           return false;
+        } 
+    });
+    
+    cIdcidade.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 ) {
+           cNrlatitude.focus();
+           return false;
+        } 
+    });
+    
+    cNrlatitude.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 && !e.shiftKey ) {
+           cNrlongitude.focus();
+           return false;
+        } 
+    });
+    cNrlatitude.keyup(function () { 
+        this.value = this.value.replace(/[^0-9.-]/g,''); // Deixa digitar somente hífen, ponto e número
+        
+        if ((this.value.match(/^\-$/g) || []).length == 0) //Remove a última ocorrência do hífen
+            this.value = this.value.replace(/\-$/g,'');
+        
+        if ((this.value.match(/\./g) || []).length > 1) //Remove as ocorrências de ponto (.), deixando apenas a primeira
+            this.value = this.value.replace(/\.$/g,'');
+        
+    });
+    
+    cNrlongitude.unbind('keypress').bind('keypress', function(e) {
+        // Se é a tecla ENTER, 
+        if ( e.keyCode == 13 && !e.shiftKey ) {
+           cDshorario.focus();
+           return false;
+        } 
+    });
+    cNrlongitude.keyup(function () { 
+        this.value = this.value.replace(/[^0-9.-]/g,''); // Deixa digitar somente hífen, ponto e número
+        
+        if ((this.value.match(/^\-$/g) || []).length == 0) //Remove a última ocorrência do hífen
+            this.value = this.value.replace(/\-$/g,'');
+        
+        if ((this.value.match(/\./g) || []).length > 1) //Remove as ocorrências de ponto (.), deixando apenas a primeira
+            this.value = this.value.replace(/\.$/g,'');
+        
+    });
+	
+	cDshorario.unbind('keypress').bind('keypress', function(e) {
+	    // Se é a tecla ENTER, 
+		if ( e.keyCode == 13 && !e.shiftKey ) {
+		      btnContinuar();
+			return false;
+		} 
+	});
+    cDshorario.bind('input propertychange', function() {
+        var maxLength = $(this).attr('maxlength');
+        if ($(this).val().length > maxLength) {
+            $(this).val($(this).val().substring(0, maxLength));
+        }
+    });
+
+	// centraliza a divRotina
+	$('#divRotina').css({'width':'425px'});
+	$('#divConteudo').css({'width':'400px'});
+	$('#divRotina').centralizaRotinaH();
+	
+	layoutPadrao();
+	hideMsgAguardo();
+	bloqueiaFundo( $('#divRotina') );
+	
+	return false;
+}
+
+function carregaEnderecoPA() {
+    var blnChecked = $('#flganexo_pa', '#frmOpcaoS').prop("checked");
+    if (blnChecked) {
+        $('#dscidade',      '#frmOpcaoS').val($('#dscidade',      '#frmOpcaoS').attr('pa_dscidade'));
+        $('#idcidade',      '#frmOpcaoS').val($('#idcidade',      '#frmOpcaoS').attr('pa_idcidade')).desabilitaCampo();
+        $('#dslogradouro',  '#frmOpcaoS').val($('#dslogradouro',  '#frmOpcaoS').attr('pa_dsendcop')).desabilitaCampo();
+        $('#dscomplemento', '#frmOpcaoS').val($('#dscomplemento', '#frmOpcaoS').attr('pa_dscomple')).desabilitaCampo();
+        $('#nmbairro',      '#frmOpcaoS').val($('#nmbairro',      '#frmOpcaoS').attr('pa_nmbairro')).desabilitaCampo();
+        $('#nrcep',         '#frmOpcaoS').val($('#nrcep',         '#frmOpcaoS').attr('pa_nrcepend')).desabilitaCampo();
+        $('#nrendere',      '#frmOpcaoS').val($('#nrendere',      '#frmOpcaoS').attr('pa_nrendere')).desabilitaCampo();
+        $('#nrlatitude',    '#frmOpcaoS').val($('#nrlatitude',    '#frmOpcaoS').attr('pa_nrlatitude')).desabilitaCampo();
+        $('#nrlongitude',   '#frmOpcaoS').val($('#nrlongitude',   '#frmOpcaoS').attr('pa_nrlongitude')).desabilitaCampo();
+    } else {
+        $('#dscidade',      '#frmOpcaoS').val($('#dscidade',      '#frmOpcaoS').attr('taa_dscidade'));
+        $('#idcidade',      '#frmOpcaoS').val($('#idcidade',      '#frmOpcaoS').attr('taa_idcidade')).habilitaCampo();
+        $('#dslogradouro',  '#frmOpcaoS').val($('#dslogradouro',  '#frmOpcaoS').attr('taa_dsendcop')).habilitaCampo();
+        $('#dscomplemento', '#frmOpcaoS').val($('#dscomplemento', '#frmOpcaoS').attr('taa_dscomple')).habilitaCampo();
+        $('#nmbairro',      '#frmOpcaoS').val($('#nmbairro',      '#frmOpcaoS').attr('taa_nmbairro')).habilitaCampo();
+        $('#nrcep',         '#frmOpcaoS').val($('#nrcep',         '#frmOpcaoS').attr('taa_nrcepend')).habilitaCampo();
+        $('#nrendere',      '#frmOpcaoS').val($('#nrendere',      '#frmOpcaoS').attr('taa_nrendere')).habilitaCampo();
+        $('#nrlatitude',    '#frmOpcaoS').val($('#nrlatitude',    '#frmOpcaoS').attr('taa_nrlatitude')).habilitaCampo();
+        $('#nrlongitude',   '#frmOpcaoS').val($('#nrlongitude',   '#frmOpcaoS').attr('taa_nrlongitude')).habilitaCampo();
+        $('#dslogradouro',  '#frmOpcaoS').focus();
+    }
+    $('#dscidade', '#frmOpcaoS').css({'width':'170px'}).desabilitaCampo();
+    controlaPesquisas();
 }
