@@ -11905,7 +11905,7 @@ PROCEDURE aprova_trans_pend:
                                                           INPUT tt-tbpagto_darf_das_trans_pend.idagendamento,   /* Indicador de agendamento (1-Nesta Data/2-Agendamento */
                                                           INPUT tt-tbpagto_darf_das_trans_pend.dtdebito,        /* Data de agendamento */
                                                           INPUT 0,                                    /* Indicador de controle de validaçoes (1-Operaçao Online/2-Operaçao Batch) */
-                                                         OUTPUT 0,                                              /* Código sequencial da guia */
+                                                         OUTPUT "",                                              /* Código sequencial da guia */
                                                          OUTPUT 0,                                              /* Digito do Faturamento */
                                                          OUTPUT 0,                                              /* Valor da guia */
                                                          OUTPUT 0,                                              /* Código do erro */
