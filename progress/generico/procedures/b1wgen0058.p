@@ -5238,79 +5238,118 @@ FUNCTION ListaPoderes RETURNS CHAR
 END FUNCTION.
 
 PROCEDURE valida_responsaveis:
-    DEF  INPUT PARAM par_cdcooper AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_nrdcaixa AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_cdoperad AS CHAR NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR NO-UNDO.    
-    DEF  INPUT PARAM par_idorigem AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_cdagenci AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
-    DEF  INPUT PARAM par_nrdconta AS INTE NO-UNDO.
-    DEF  INPUT PARAM par_dscpfcgc AS CHAR NO-UNDO.
-	DEF  INPUT PARAM par_flgconju AS CHAR NO-UNDO.
-	DEF  INPUT PARAM par_qtminast AS INTE NO-UNDO.
-	DEF OUTPUT PARAM par_flgpende AS INTE NO-UNDO.
-	DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+  DEF  INPUT PARAM par_cdcooper AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_nrdcaixa AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_cdoperad AS CHAR NO-UNDO.
+  DEF  INPUT PARAM par_nmdatela AS CHAR NO-UNDO.    
+  DEF  INPUT PARAM par_idorigem AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_cdagenci AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_dtmvtolt AS DATE NO-UNDO.
+  DEF  INPUT PARAM par_nrdconta AS INTE NO-UNDO.
+  DEF  INPUT PARAM par_dscpfcgc AS CHAR NO-UNDO.
+  DEF  INPUT PARAM par_flgconju AS CHAR NO-UNDO.
+  DEF  INPUT PARAM par_qtminast AS INTE NO-UNDO.
+  DEF OUTPUT PARAM par_flgpende AS INTE NO-UNDO.
+  DEF OUTPUT PARAM TABLE FOR tt-erro.
  
-    EMPTY TEMP-TABLE tt-erro.
+  EMPTY TEMP-TABLE tt-erro.
     
-    DEF VAR aux_nrcpfcgc AS INT NO-UNDO.
-    DEF VAR aux_contador AS INT NO-UNDO.
-	DEF VAR aux_contarep AS INT NO-UNDO.
+  DEF VAR aux_nrcpfcgc AS INT INIT 0 NO-UNDO.
+  DEF VAR aux_contador AS INT INIT 0 NO-UNDO.
+  DEF VAR aux_contarep AS INT INIT 0 NO-UNDO.
     
-	ASSIGN par_flgpende = 0
-		   aux_contarep = 0.
+  DEF VAR aux_dscpfcgc AS CHAR INIT "" NO-UNDO.
+  DEF VAR aux_dscpftel AS CHAR INIT "" NO-UNDO.
 
-    Contador: DO aux_contador = 1 TO NUM-ENTRIES(par_dscpfcgc,'#'):
-	
-	   FOR FIRST tbgen_trans_pend FIELDS(cdcooper) WHERE tbgen_trans_pend.cdcooper             = par_cdcooper 
-	   											     AND tbgen_trans_pend.nrdconta			   = par_nrdconta
-													 AND tbgen_trans_pend.idsituacao_transacao = 1 NO-LOCK. END.	
-	   
-	   IF AVAILABLE tbgen_trans_pend THEN
-		   DO:	
-			   FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
-                                              AND crappod.nrdconta = par_nrdconta
-                                              AND crappod.nrcpfpro = DEC(ENTRY(aux_contador,par_dscpfcgc,'#'))
-                                              AND crappod.cddpoder = 10  NO-LOCK. END.	
+  DEF VAR aux_flgretir AS LOGI INIT FALSE NO-UNDO.
 
-				IF AVAILABLE crappod THEN
-				  DO:
-					IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
-					  DO:
-						ASSIGN par_flgpende = 1.
-					  END.
-				  END.
-			END.
-
-        FOR FIRST crapavt FIELDS(cdcooper nrdconta) WHERE crapavt.cdcooper = par_cdcooper
-                                                      AND crapavt.nrdconta = par_nrdconta
-                                                      AND crapavt.nrcpfcgc = DEC(ENTRY(aux_contador,par_dscpfcgc,'#')) NO-LOCK. END.
-
-        IF AVAIL crapavt THEN
-			DO:
-				ASSIGN aux_contarep = aux_contarep + 1.
-				NEXT.
-			END.
-        ELSE
-            DO:
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,           
-                               INPUT "Responsavel Inexistente.",
-                               INPUT-OUTPUT aux_dscritic).
-
-                RETURN "NOK".
-            END.
-    END.
+  ASSIGN par_flgpende = 0
+		 aux_dscpftel = REPLACE(par_dscpfcgc,"#",",").
     
+  /* Busca CPF dos Representantes atuais */
+  FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
+                     AND crappod.nrdconta = par_nrdconta
+                     AND crappod.cddpoder = 10
+					 AND crappod.flgconju = TRUE NO-LOCK:
+
+    IF TRIM(aux_dscpfcgc) <> ? AND TRIM(aux_dscpfcgc) <> "" THEN
+		ASSIGN aux_dscpfcgc = aux_dscpfcgc + ",".
+
+    ASSIGN aux_dscpfcgc = aux_dscpfcgc + STRING(crappod.nrcpfpro).
+
+  END.
+  
+  IF par_nmdatela = "ATENDA" THEN
+	DO:
+	  /* Verifica se esta excluindo representantes */
+	  RepresentantesAdicionar: DO aux_contador = 1 TO NUM-ENTRIES(aux_dscpfcgc,','):
+		IF NOT CAN-DO(aux_dscpftel,STRING(ENTRY(aux_contador,aux_dscpfcgc,','))) THEN
+		  ASSIGN aux_flgretir = TRUE.		
+	  END.
+	END.
+
+	Contador: DO aux_contador = 1 TO NUM-ENTRIES(par_dscpfcgc,'#'):
+
+	FOR FIRST tbgen_trans_pend FIELDS(cdcooper) WHERE tbgen_trans_pend.cdcooper             = par_cdcooper 
+												  AND tbgen_trans_pend.nrdconta			    = par_nrdconta
+												  AND tbgen_trans_pend.idsituacao_transacao = 1 NO-LOCK. END.	
+   
+	IF AVAILABLE tbgen_trans_pend THEN
+		DO:		
+			IF par_nmdatela = "CONTAS" AND NOT LOGICAL(par_flgconju) THEN
+				DO:		
+					
+					FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
+															AND crappod.nrdconta = par_nrdconta
+															AND crappod.nrcpfpro = DEC(ENTRY(aux_contador,par_dscpfcgc,'#'))
+															AND crappod.cddpoder = 10  NO-LOCK. END.	
+
+					IF AVAILABLE crappod THEN
+						DO:
+						IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
+							DO:
+								ASSIGN par_flgpende = 1.
+							END.
+						END.
+				END.
+			ELSE IF par_nmdatela = "ATENDA" THEN
+				DO:
+					IF aux_flgretir THEN
+						DO:
+							ASSIGN par_flgpende = 1.
+						END.
+				END.
+		END.
+
+	FOR FIRST crapavt FIELDS(cdcooper nrdconta) WHERE crapavt.cdcooper = par_cdcooper
+													AND crapavt.nrdconta = par_nrdconta
+													AND crapavt.nrcpfcgc = DEC(ENTRY(aux_contador,par_dscpfcgc,'#')) NO-LOCK. END.
+
+	IF AVAILABLE crapavt THEN
+		DO:
+			ASSIGN aux_contarep = aux_contarep + 1.
+			NEXT.
+		END.
+	ELSE
+		DO:
+			RUN gera_erro (INPUT par_cdcooper,
+							INPUT par_cdagenci,
+							INPUT par_nrdcaixa,
+							INPUT 1,           
+							INPUT "Responsavel Inexistente.",
+							INPUT-OUTPUT aux_dscritic).
+
+			RETURN "NOK".
+		END.
+	END. /* CONTADOR */
+		  
 	IF par_nmdatela = "CONTAS" THEN
 		DO:
 			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
-										         AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
+                                           AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
 												 
-		    IF AVAIL crapass AND crapass.qtminast >= 2 THEN
+			IF AVAILABLE crapass AND crapass.qtminast >= 2 THEN
 				DO:
 					ASSIGN aux_contarep = 0.
 
@@ -5357,7 +5396,7 @@ PROCEDURE valida_responsaveis:
 
 							RETURN "NOK".
 						END.
-		        END. /*IF AVAIL CRAPASS */
+				END. /*IF AVAIL CRAPASS */
 			ELSE IF NOT AVAIL crapass THEN
 				DO:
 					EMPTY TEMP-TABLE tt-erro.
