@@ -1279,8 +1279,8 @@ PROCEDURE extrai_valor_codbar :
                                       INPUT "    ATENÇÃO",
                                       INPUT "",
                                       INPUT "",
-                                      INPUT "",/*Documento Inválido*/
-                                      INPUT "",/*Valor Incorreto*/
+                                      INPUT "Documento Inválido",
+                                      INPUT "Valor Incorreto",
                                       INPUT "").
                       PAUSE 3 NO-MESSAGE.
                       h_mensagem:HIDDEN = YES.
