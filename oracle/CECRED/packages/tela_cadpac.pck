@@ -3449,7 +3449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         -- Destinatarios das alteracoes dos dados para o site
         vr_emaildst :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                  ,pr_cdcooper => vr_cdcooper
-                                                 ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE');
+                                                 ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE_PA');
 
         -- Adiciona cooperativa e pac
         vr_dscnteml := '<b>' || rw_crapcop.nmrescop ||'</b><br>'
@@ -4164,7 +4164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         -- Destinatarios das alteracoes dos dados para o site
         vr_emaildst :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                  ,pr_cdcooper => vr_cdcooper
-                                                 ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE');
+                                                 ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE_PA');
 
         -- Adiciona cooperativa e pac
         vr_dscnteml := '<b>' || rw_crapcop.nmrescop ||'</b><br>'

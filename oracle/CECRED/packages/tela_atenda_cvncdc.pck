@@ -985,7 +985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
         -- Destinatarios das alteracoes dos dados para o site
         vr_emaildst :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                  ,pr_cdcooper => vr_cdcooper
-                                                 ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE');
+                                                 ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE_CDC');
 
         -- Adiciona cooperativa e conta
         vr_dsconteudo_mail := '<b>' || vr_nmrescop ||'</b><br>'
@@ -1295,7 +1295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
       -- Destinatarios das alteracoes dos dados para o site
       vr_emaildst :=  GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                ,pr_cdcooper => vr_cdcooper
-                                               ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE');
+                                               ,pr_cdacesso => 'EMAIL_ALT_DADOS_SITE_CDC');
 
       -- Adiciona cooperativa e conta
       vr_dsconteudo_mail := '<b>' || vr_nmrescop ||'</b><br>'
