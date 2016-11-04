@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Elton
-   Data    : Julho/2010                          Ultima atualizacao: 25/06/2014
+   Data    : Julho/2010                          Ultima atualizacao: 02/08/2016
 
    Dados referentes ao programa:
 
@@ -42,6 +42,10 @@
                           terminal (Tiago-RKAM).
                                                   
                25/06/2014 - Ajuste leitura CRAPRIS (Daniel) SoftDesk 137892. 
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+
 ............................................................................. */
 
 {includes/var_online.i }  
@@ -915,7 +919,8 @@ DO  WHILE TRUE  ON ENDKEY UNDO, LEAVE :
                     
                     FIND crapage WHERE    crapage.cdcooper = glb_cdcooper AND
                                           crapage.cdagenci = tel_cdagenci AND
-                                          crapage.insitage = 1 /* Ativo */
+                                         (crapage.insitage = 1 OR /* Ativo */
+                                          crapage.insitage = 3)   /* Temporariamente Indisponivel */
                                           NO-LOCK NO-ERROR.
                                        
                     IF  NOT AVAIL crapage THEN

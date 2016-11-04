@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Novembro/2010                       Ultima alteracao: 19/09/2014
+   Data    : Novembro/2010                       Ultima alteracao: 02/08/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -28,7 +28,10 @@
                19/09/2014 - Alteração da mensagem com critica 77 substituindo pela 
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
-                        
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -166,7 +169,8 @@ DO WHILE TRUE:
           tel_insitage = IF   crapage.insitage = 0  THEN
                               "0 - EM OBRAS"
                          ELSE
-                         IF   crapage.insitage = 1  THEN
+                         IF   crapage.insitage = 1  OR   /* Ativo */
+                              crapage.insitage = 3  THEN /* Temporariamente Indisponivel */
                               "1 - ATIVO"
                          ELSE
                               "2 - INATIVO".

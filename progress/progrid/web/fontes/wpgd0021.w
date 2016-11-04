@@ -7,12 +7,15 @@ Alterações:  26/02/2007 - Incluída Aba de "Fechamento" (Diego).
 
              10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			 
-						 05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						              busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
-													
-					   08/08/2016 - Alterações para Aba de "Fechamento", Prj. 229, alterações
-												  dos registro com situação do evento(1 – Agendado,3 – Transferido,
-													5 – Realizado, 6 - Acrescido) para 4 – Encerrado(Jean Michel).
+			 05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						  busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+
+             08/08/2016 - Alterações para Aba de "Fechamento", Prj. 229, alterações
+                          dos registro com situação do evento(1 – Agendado,3 – Transferido,
+                          5 – Realizado, 6 - Acrescido) para 4 – Encerrado(Jean Michel).
+
+             02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                          (Jaison/Anderson)
 
 .................................................................................. */
 
@@ -33,14 +36,14 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_idexclui AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_mes01eve AS LOGICAL 
-       FIELD aux_mes01int AS LOGICAL 
+	   FIELD aux_mes01int AS LOGICAL 
        FIELD aux_mes01fec AS LOGICAL
-       FIELD aux_mes02eve AS LOGICAL 
+	   FIELD aux_mes02eve AS LOGICAL 
        FIELD aux_mes02int AS LOGICAL
-			 FIELD aux_mes02fec AS LOGICAL 
+	   FIELD aux_mes02fec AS LOGICAL 
        FIELD aux_mes03eve AS LOGICAL 
        FIELD aux_mes03int AS LOGICAL
-	     FIELD aux_mes03fec AS LOGICAL 
+	   FIELD aux_mes03fec AS LOGICAL 
        FIELD aux_mes04eve AS LOGICAL 
        FIELD aux_mes04int AS LOGICAL
 	   FIELD aux_mes04fec AS LOGICAL 
@@ -1172,7 +1175,7 @@ ASSIGN opcao                     = GET-FIELD("aux_cddopcao")
 		 ab_unmap.aux_dsaltfec     = GET-VALUE("aux_dsaltfec").
 	   
 RUN recebeMeses.
-       
+
 FIND LAST gnpapgd WHERE gnpapgd.idevento = INT(ab_unmap.aux_idevento)  AND
                         gnpapgd.cdcooper = INT(ab_unmap.aux_cdcooper) NO-LOCK NO-ERROR.
 						
@@ -1384,7 +1387,7 @@ IF REQUEST_METHOD = "POST":U THEN
 	  /* Tratar aba "Fechamento" diferente das demais */ 
 	  IF   ab_unmap.aux_fechamen = "Sim"  THEN
 	       DO:
-						/* Busca a ultima data de agenda da cooperativa com a data informada */
+			   /* Busca a ultima data de agenda da cooperativa com a data informada */
       		   FIND LAST gnpapgd WHERE gnpapgd.idevento = INTEGER(ab_unmap.aux_idevento)       AND
                          		       gnpapgd.cdcooper = INTEGER(ab_unmap.aux_cdcooper)       AND
                               		   gnpapgd.dtanonov = INTEGER(ab_unmap.aux_dtanoage_fec)   NO-LOCK NO-ERROR.
@@ -1415,7 +1418,7 @@ IF REQUEST_METHOD = "POST":U THEN
 											 crapadp.cdcopope = INTEGER(ab_unmap.aux_cdcopope)
 											 crapadp.cdoperad = STRING(ab_unmap.aux_cdoperad).
 											 
-							END.
+		   END.
 						END.
 		   END.
 	  ELSE
@@ -1861,7 +1864,7 @@ PROCEDURE recebeMeses:
 	END.
   ELSE
     ASSIGN ab_unmap.aux_mes01fec = FALSE.
-		
+
   IF GET-VALUE("aux_mes02fec") = "2" THEN
     DO:
 			ASSIGN ab_unmap.aux_mes02fec = TRUE
@@ -2218,7 +2221,8 @@ PROCEDURE carrega_PACS :
     
               IF   NOT AVAILABLE crapagp THEN
                    DO:
-                       IF  crapage.insitage = 1 AND
+                       IF (crapage.insitage = 1   OR   /* Ativo */
+                           crapage.insitage = 3)  AND  /* Temporariamente Indisponivel */
                            crapage.flgdopgd = YES   THEN
                        DO:
                        /* Limpa a temp-table */
@@ -2247,7 +2251,8 @@ PROCEDURE carrega_PACS :
                        CREATE cratagp.
     
                        /* Se o pac estiver com  insitage <> 1 ele será excluido (1-pac ativo)*/
-                       IF  crapage.insitage = 1     AND
+                       IF (crapage.insitage = 1     OR   /* Ativo */
+                           crapage.insitage = 3)    AND  /* Temporariamente Indisponivel */
                            crapage.flgdopgd = YES   THEN
                        DO:
                             BUFFER-COPY crapagp EXCEPT crapagp.cdageagr crapagp.dtmvtolt TO cratagp.

@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0125.p
     Autor   : Rogerius Militao (DB1)
-    Data    : Novembro/2011                     Ultima atualizacao: 15/04/2014
+    Data    : Novembro/2011                     Ultima atualizacao: 02/08/2016
 
     Objetivo  : Tranformacao BO tela CONSCR
 
@@ -28,6 +28,10 @@
                             data server (Daniel). 
                             
                15/04/2014 - Correcao leitura crapopf. (Daniel)             
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -893,7 +897,8 @@ PROCEDURE Imprimir_Risco:
                  
                  FIND crapage WHERE    crapage.cdcooper = par_cdcooper AND
                                        crapage.cdagenci = par_cdagenci AND
-                                       crapage.insitage = 1 /* Ativo */
+                                      (crapage.insitage = 1 OR /* Ativo */
+                                       crapage.insitage = 3)   /* Temporariamente Indisponivel */
                                        NO-LOCK NO-ERROR.
         
                  IF  NOT AVAIL crapage THEN

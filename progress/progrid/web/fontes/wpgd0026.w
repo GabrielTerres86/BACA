@@ -33,7 +33,9 @@ Alterações: 10/12/2008 - Paginação (Diego);
                          cdcopope na seleção do local RF05 - (Vanessa K.)
                          
             07/07/2016 - Ajuste no filtro de data para trazer os eventos sem data mas com Mês (Vanessa)
-          
+
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)          
 ...............................................................................*/
 
 
@@ -945,7 +947,8 @@ PROCEDURE CriaListaEventos :
                                    DO:
                                        
                                        /* Se o PA nao esta ativo e não for progrid, despreza */
-                                       IF   crapage.insitage <> 1 AND 
+                                       IF   crapage.insitage <> 1  AND  /* Ativo */
+                                            crapage.insitage <> 3  AND  /* Temporariamente Indisponivel */
                                             INT(ab_unmap.aux_idevento) <> 1 THEN
                                             NEXT. 
 

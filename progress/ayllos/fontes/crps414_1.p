@@ -26,7 +26,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2011.                   Ultima atualizacao: 04/08/2014
+   Data    : Agosto/2011.                   Ultima atualizacao: 02/08/2016
 
    Dados referentes ao programa:
 
@@ -61,6 +61,10 @@
                             Softdesk 137074 (Lucas R.)
                             
                04/08/2014 - Alteração da Nomeclatura para PA (Vanessa).
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+
 ............................................................................ */
 { includes/var_batch.i "NEW" } 
 { includes/var_atenda.i "NEW" }
@@ -547,7 +551,8 @@ IF (age_qtcapati + res_vlcapati + aux_vldscchq + aux_vldsctit +
     OR
    (aux_cdagenci     <> 90  AND   /* INTERNET  */
     aux_cdagenci     <> 91  AND   /* TAA       */
-    crapage.insitage  = 1)        /* PA ATIVO */
+   (crapage.insitage  = 1 OR      /* PA ATIVO */
+    crapage.insitage  = 3))       /* TEMPORARIAMENTE INDISPONIVEL */
     THEN
     DO:
         DO WHILE TRUE:

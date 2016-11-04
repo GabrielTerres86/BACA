@@ -28,7 +28,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 27/06/2016
+    Data    : Julho/2008                     Ultima Atualizacao: 25/10/2016
            
     Dados referentes ao programa:
                 
@@ -453,9 +453,9 @@
                             (carencia debito titulos vencidos) 
                             (Tiago/Rodrigo Melhoria 116).
 
-              16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
-			               tarifa de resgate na data de resgate e não na data na qual
-						   foi criado o bordero de desconto de titulo.
+               16/05/2016 - Ajustado rotina efetua_resgate_tit_bordero para gerar
+			                tarifa de resgate na data de resgate e não na data na qual
+				  		   foi criado o bordero de desconto de titulo.
 						   PRJ318 - Nova plataforma de cobrança (Odirlei-AMcom)
 
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
@@ -463,6 +463,9 @@
                27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. Inclusao de funcionamento
                             de pedir senha do coordenador. (Jaison/James)
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
 
 ..............................................................................*/
 
@@ -1560,7 +1563,7 @@ PROCEDURE efetua_liber_anali_bordero:
                   VALIDATE tt-msg-confirma.
                   RETURN "OK".
              END.
-             
+
       END.
    
    /*  Calculo do juros sobre o desconto do titulo .......................... */
@@ -6728,7 +6731,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_cecred_dsctit.qtnaopag,"9999")
                                + ";" + STRING(tt-dados_cecred_dsctit.qtprotes,"9999").
 
-     
+
         DO aux_contador = 1 TO 10:
 
             FIND b-craptab WHERE b-craptab.cdcooper = par_cdcooper    AND
@@ -16101,7 +16104,8 @@ PROCEDURE valida_situacao_pa:
     IF  NOT AVAILABLE crapage   THEN
         ASSIGN aux_cdcritic = 15.
     ELSE    
-    IF  crapage.insitage <> 1   THEN
+    IF  crapage.insitage <> 1   AND   /* Ativo */
+        crapage.insitage <> 3   THEN  /* Temporariamente Indisponivel */
         ASSIGN aux_cdcritic = 856.
 
     IF  aux_cdcritic <> 0 THEN

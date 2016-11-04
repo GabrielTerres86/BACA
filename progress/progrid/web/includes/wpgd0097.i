@@ -5,7 +5,10 @@ Objetivo: Criar um vetor de PACs, contendo código da cooperativa, código do PAC 
           Nesta include os PACs não são agrupados
           
           14/06/2010 - Tratamento para PAC 91 - TAA (Elton).
-          
+
+          02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                       (Jaison/Anderson)
+
 .............................................................................. */
 
 /* "97" para nao conflitar com outros fontes */
@@ -22,7 +25,8 @@ IF   AVAILABLE gnapses   THEN
          IF   gnapses.nvoperad = 0   OR
               gnapses.nvoperad = 3   THEN
               FOR EACH crapage WHERE crapage.cdcooper = par_cdcooper97   AND
-                                     crapage.insitage = 1 /* Ativo */    NO-LOCK
+                                    (crapage.insitage = 1  OR       /* Ativo */
+                                     crapage.insitage = 3) NO-LOCK  /* Temporariamente Indisponivel */
                                      BY crapage.nmresage:
 
                   /* Despreza PAC 90-INTERNET e PAC 91-TAA */
@@ -44,7 +48,8 @@ IF   AVAILABLE gnapses   THEN
               DO:
                   FIND crapage WHERE crapage.cdcooper = par_cdcooper97     AND
                                      crapage.cdagenci = gnapses.cdagenci   AND
-                                     crapage.insitage = 1 /* Ativo */                    
+                                    (crapage.insitage = 1 OR /* Ativo */
+                                     crapage.insitage = 3)   /* Temporariamente Indisponivel */
                                      NO-LOCK NO-ERROR.
                   IF   AVAILABLE crapage   THEN
                        vetorpac = "~{" + "cdcooper:"   + "'" + TRIM(STRING(crapage.cdcooper))

@@ -8,6 +8,10 @@ Alteraçoes: 04/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
                          busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
                          
             19/05/2016 - Alteraçoes para o Prj. 229 (Jean Michel).            
+
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)
+
 ...............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -551,7 +555,8 @@ PROCEDURE ListaCustosOrcados :
          vetoreventos  = "".
 
   FOR EACH crapage WHERE crapage.cdcooper = INT(ab_unmap.aux_cdcooper)
-                     AND crapage.insitage = 1 
+                     AND (crapage.insitage = 1  OR  /* Ativo */
+                          crapage.insitage = 3)     /* Temporariamente Indisponivel */
                      AND crapage.flgdopgd = TRUE NO-LOCK
                            BY crapage.nmresage:
 
@@ -837,7 +842,8 @@ PROCEDURE CalculoCustosOrcados:
                          AND crapage.cdagenci <> 90                       
                          AND crapage.cdagenci <> 91 
                          AND (crapage.cdagenci = par_cdagenci OR par_cdagenci = 0)
-                         AND crapage.insitage = 1
+                         AND (crapage.insitage = 1  OR  /* Ativo */
+                              crapage.insitage = 3)     /* Temporariamente Indisponivel */
                          AND crapage.flgdopgd = TRUE NO-LOCK:
             
         /* Para Progrid, os PACs sao agrupados */
@@ -943,7 +949,8 @@ PROCEDURE CalculoCustosOrcados:
     ASSIGN aux_vlrecpor = 0.
     
     FOR EACH crapage WHERE crapage.cdcooper = INT(ab_unmap.aux_cdcooper)    
-                       AND crapage.insitage = 1 
+                       AND (crapage.insitage = 1  OR  /* Ativo */
+                            crapage.insitage = 3)     /* Temporariamente Indisponivel */
                        AND crapage.flgdopgd = TRUE
                        AND (CAN-DO(STRING(par_cdagenci),STRING(crapage.cdagenci))
                           OR par_cdagenci = 0) NO-LOCK
@@ -2151,7 +2158,8 @@ PROCEDURE CriaListaTermo :
 
     /* Segundo, monta as informaçoes relativas a cada PAC */
     FOR EACH crapage WHERE crapage.cdcooper = INT(ab_unmap.aux_cdcooper)    AND
-                           crapage.insitage = 1                             NO-LOCK
+                          (crapage.insitage = 1  OR       /* Ativo */
+                           crapage.insitage = 3) NO-LOCK  /* Temporariamente Indisponivel */
                            BY crapage.nmresage:
 
         /* Controle de visualizaçao por PAC */

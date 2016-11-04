@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Agosto/2005.                       Ultima atualizacao: 13/02/2006
+   Data    : Agosto/2005.                       Ultima atualizacao: 02/08/2016
 
    Dados referentes ao programa:
 
@@ -15,6 +15,9 @@
 
               13/02/2006 - Inclusao do parametro cdcooper para a unificacao
                            dos bancos de dados - SQLWorks - Fernando.
+
+              02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                           (Jaison/Anderson)
 
 ............................................................................. */
 
@@ -30,7 +33,8 @@ FIND crapage WHERE crapage.cdcooper = par_cdcooper AND
 IF   NOT AVAILABLE crapage   THEN
      par_cdcritic = 15.
 ELSE     
-IF   crapage.insitage <> 1   THEN
+IF   crapage.insitage <> 1   AND   /* Ativo */
+     crapage.insitage <> 3   THEN  /* Temporariamente Indisponivel */
      par_cdcritic = 856.
 
 /* .......................................................................... */
