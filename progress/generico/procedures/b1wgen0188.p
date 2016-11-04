@@ -2804,7 +2804,7 @@ PROCEDURE verifica_mostra_banner_taa:
     /* Dados de parametrizacao do credito pre-aprovado */
     FOR crappre FIELDS(cdfinemp)
                 WHERE crappre.cdcooper = par_cdcooper            AND
-                      crappre.inpessoa = tt-dados-assoc.inpessoa
+                      crappre.inpessoa = tt-dados-cpa.inpessoa
                       NO-LOCK: END.
 
     IF NOT AVAIL crappre THEN

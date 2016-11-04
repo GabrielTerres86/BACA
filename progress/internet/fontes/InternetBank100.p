@@ -316,7 +316,7 @@ DO:
 
        IF RETURN-VALUE <> "OK" THEN
           DO:
-              FIND tt-erro NO-LOCK NO-ERROR.
+              FIND FIRST tt-erro NO-LOCK NO-ERROR.
               IF AVAIL tt-erro THEN
                  ASSIGN xml_dsmsgerr = "<dsmsgerr>" + tt-erro.dscritic + "</dsmsgerr>".
               ELSE   

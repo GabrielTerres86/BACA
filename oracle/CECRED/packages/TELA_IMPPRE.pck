@@ -737,7 +737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
                               ,pr_des_erro => vr_dscritic);
                                         
         -- Comando para mover o arquivo para a pasta importados
-        vr_comando := 'mv ' || pr_dir_importar || rw_carga.nmarquivo || '.csv ' || pr_dir_importados ||  rw_carga.nmarquivo || '.csv';
+        vr_comando := 'mv ' || pr_dir_importar || rw_carga.nmarquivo || '.csv ' || pr_dir_importados ||  to_char(SYSDATE,'RRMMDD') || 'Carga' || pr_idcarga || '.csv';
         -- Mover o arquivo
         GENE0001.pc_OScommand_Shell(pr_des_comando => vr_comando
                                    ,pr_typ_saida   => vr_typ_said
@@ -746,6 +746,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
         IF vr_typ_said = 'ERR' THEN
           RAISE vr_exc_erro;
         END IF;
+        
+        BEGIN
+          UPDATE tbepr_carga_pre_aprv
+             SET nmarquivo = to_char(SYSDATE,'RRMMDD') || 'Carga' || pr_idcarga || '.csv'
+         WHERE idcarga = pr_idcarga;
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := 'Erro ao atualizar nome do arquivo. ' || SQLERRM;
+            RAISE vr_exc_erro;
+        END;
         
         COMMIT;
       EXCEPTION        

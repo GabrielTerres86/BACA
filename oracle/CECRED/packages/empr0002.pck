@@ -136,9 +136,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE    --> Numero da conta do cooperado
                                     ,pr_idseqttl  IN crapttl.idseqttl%TYPE    --> Sequencial do titular
                                     ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
-                                    ,pr_clob_cpa  OUT CLOB                --> Retorna dados do credito pre aprovado
+                                    ,pr_clob_cpa  OUT VARCHAR2            --> Retorna dados do credito pre aprovado
                                     ,pr_des_reto  OUT VARCHAR2            --> Retorno OK/NOK
-                                    ,pr_clob_erro OUT CLOB);              --> Retorna os erros
+                                    ,pr_clob_erro OUT VARCHAR2);              --> Retorna os erros
   
   PROCEDURE pc_busca_alinea(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
                            ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
@@ -182,6 +182,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   -- Mantem status do pre aprovado do cooperado
   PROCEDURE pc_mantem_param_conta (pr_cdcooper              IN crapcop.cdcooper%TYPE
                                   ,pr_nrdconta              IN crapass.nrdconta%TYPE
+                                  ,pr_flgrenli              IN crapass.flgrenli%TYPE
                                   ,pr_flglibera_pre_aprv    IN NUMBER
                                   ,pr_dtatualiza_pre_aprv   IN DATE DEFAULT SYSDATE
                                   ,pr_idmotivo              IN NUMBER DEFAULT 0
@@ -236,6 +237,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     FROM crapcop 
    WHERE cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
+  
+  /* Mostrar o texto dos motivos na tela de acordo com o ocorrido. */
+  FUNCTION fn_busca_motivo(pr_idmotivo IN tbgen_motivo.idmotivo%TYPE) RETURN VARCHAR2 IS
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : fn_busca_motivo
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Lombardi
+    --  Data     : Outubro/2016.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que chamado por outros programas.
+    --   Objetivo  : Mostrar o texto dos motivos na tela de acordo com o ocorrido.
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+
+    DECLARE
+      -- Efetuar a busca da descrição na tabela
+      CURSOR cr_tbgen_motivo IS
+        SELECT mot.dsmotivo
+          FROM tbgen_motivo mot
+         WHERE mot.idmotivo = pr_idmotivo;
+      vr_dsmotivo tbgen_motivo.dsmotivo%TYPE;
+    BEGIN
+      -- Busca descrição da critica cfme parâmetro passado
+      OPEN cr_tbgen_motivo;
+      FETCH cr_tbgen_motivo
+       INTO vr_dsmotivo;
+      -- Se não encontrou nenhum registro
+      IF cr_tbgen_motivo%NOTFOUND THEN
+        -- Montar descrição padrão
+        vr_dsmotivo := pr_idmotivo || ' - Critica nao cadastrada!';
+      END IF;
+      -- Apenas fechar o cursor
+      CLOSE cr_tbgen_motivo;
+      -- Retornar a string montada
+      RETURN vr_dsmotivo;
+    END;
+  END fn_busca_motivo;
   
   PROCEDURE pc_valida_operador(pr_cdcooper  IN crapope.cdcooper%TYPE --> Codigo da Carga
                               ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Descrição da crítica
@@ -1492,7 +1536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            AND carga.flgcarga_bloqueada = 0 -- Liberada
            AND carga.tpcarga            = 2 -- Automática
            AND (carga.dtfinal_vigencia IS NULL
-            OR  carga.dtfinal_vigencia >= SYSDATE)
+            OR  carga.dtfinal_vigencia >= TRUNC(SYSDATE))
            AND EXISTS (SELECT 1 -- Cargas que a conta está relacionada
                          FROM crapcpa cpa
                         WHERE cpa.cdcooper = carga.cdcooper
@@ -1508,7 +1552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            AND carga.flgcarga_bloqueada = 0 -- Liberada
            AND carga.tpcarga            = 1 -- Manual
            AND (carga.dtfinal_vigencia IS NULL
-            OR  carga.dtfinal_vigencia >= SYSDATE)
+            OR  carga.dtfinal_vigencia >= TRUNC(SYSDATE))
            AND EXISTS (SELECT 1 -- Cargas que a conta está relacionada
                          FROM crapcpa cpa
                         WHERE cpa.cdcooper = pr_cdcooper
@@ -2045,9 +2089,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE    --> Numero da conta do cooperado
                                     ,pr_idseqttl  IN crapttl.idseqttl%TYPE    --> Sequencial do titular
                                     ,pr_nrcpfope  IN crapopi.nrcpfope%TYPE    --> CPF do operador juridico
-                                    ,pr_clob_cpa  OUT CLOB                --> Retorna dados do credito pre aprovado
+                                    ,pr_clob_cpa  OUT VARCHAR2            --> Retorna dados do credito pre aprovado
                                     ,pr_des_reto  OUT VARCHAR2            --> Retorno OK/NOK
-                                    ,pr_clob_erro OUT CLOB) IS            --> Retorna os erros
+                                    ,pr_clob_erro OUT VARCHAR2) IS            --> Retorna os erros
   BEGIN
 
     /* .............................................................................
@@ -2075,7 +2119,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_dscritic      VARCHAR2(4000);
       vr_idx           PLS_INTEGER;
       vr_xml_temp      VARCHAR2(32767);
-
+      vr_clob_cpa      CLOB;
+      vr_clob_erro     CLOB;
+      
     BEGIN
       -- Procedimento para buscar dados do credito pré-aprovado (crapcpa)
       EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
@@ -2094,10 +2140,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
       -- Gerar xml a partir da temptable
       IF vr_tab_erro.count > 0 THEN
+        
         GENE0001.pc_xml_tab_erro(pr_tab_erro => vr_tab_erro, --> TempTable de erro
-                                 pr_xml_erro => pr_clob_erro, --> XML dos registros da temptable de erro
+                                 pr_xml_erro => vr_clob_erro, --> XML dos registros da temptable de erro
                                  pr_tipooper => 1,           --> Tipo de operação, 1 - Gerar XML, 2 --Gerar pltable
                                  pr_dscritic => vr_dscritic);
+                                 
       END IF;
       
       -- Chave inicial
@@ -2107,16 +2155,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
          vr_tab_dados_cpa(vr_idx).vldiscrd > 0 THEN
 
         -- Criar documento XML
-        dbms_lob.createtemporary(pr_clob_cpa, TRUE);
-        dbms_lob.open(pr_clob_cpa, dbms_lob.lob_readwrite);
+        dbms_lob.createtemporary(vr_clob_cpa, TRUE);
+        dbms_lob.open(vr_clob_cpa, dbms_lob.lob_readwrite);
 
         -- Insere o cabeçalho do XML 
-        GENE0002.pc_escreve_xml(pr_xml            => pr_clob_cpa 
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob_cpa 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
                                
         -- Escreve o registro
-        GENE0002.pc_escreve_xml(pr_xml            => pr_clob_cpa
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob_cpa
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo => '<registro>'||
                                                    '<cdcooper>'||vr_tab_dados_cpa(vr_idx).cdcooper||'</cdcooper>'||
@@ -2128,13 +2176,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                  '</registro>');
 
         -- Encerrar a tag raiz 
-        GENE0002.pc_escreve_xml(pr_xml            => pr_clob_cpa 
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob_cpa 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '</raiz>' 
                                ,pr_fecha_xml      => TRUE);
 
       END IF;
-
+      pr_clob_cpa := to_char(vr_clob_cpa);
+      pr_clob_erro := to_char(vr_clob_erro);
     END;
 
   END pc_busca_dados_cpa_prog;
@@ -2720,6 +2769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
   -- Mantem status do pre aprovado do cooperado
   PROCEDURE pc_mantem_param_conta (pr_cdcooper              IN crapcop.cdcooper%TYPE
                                   ,pr_nrdconta              IN crapass.nrdconta%TYPE
+                                  ,pr_flgrenli              IN crapass.flgrenli%TYPE
                                   ,pr_flglibera_pre_aprv    IN NUMBER
                                   ,pr_dtatualiza_pre_aprv   IN DATE DEFAULT SYSDATE
                                   ,pr_idmotivo              IN NUMBER DEFAULT 0
@@ -2759,9 +2809,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            AND nrdconta = pr_nrdconta;
       rw_param_conta cr_param_conta%ROWTYPE;
       
+      -- buscar parametros de emprestimo da conta
+      CURSOR cr_crapass (pr_cdcooper crapcop.cdcooper%TYPE
+                        ,pr_nrdconta crapass.nrdconta%TYPE) IS
+        SELECT flgrenli
+          FROM crapass
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+      
       --Variaveis Auxiliares
-      vr_nrdrowid ROWID;
+      vr_nrdrowid            ROWID;
       vr_dtatualiza_pre_aprv DATE;
+      vr_flgrenli            crapass.flgrenli%TYPE;
       
       -- Variaveis de Erro
       vr_dscritic  VARCHAR2(1000);
@@ -2775,9 +2835,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       ELSE
         vr_dtatualiza_pre_aprv := pr_dtatualiza_pre_aprv;
       END IF;
-        
+      
+      OPEN cr_crapass (pr_cdcooper, pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      CLOSE cr_crapass;
+      
+      IF pr_flgrenli IS NOT NULL THEN
+        vr_flgrenli := pr_flgrenli;
+      ELSE
+        vr_flgrenli := rw_crapass.flgrenli;
+      END IF;
+      
       -- Cria registro para bloquear pre aprovado do cooperado
       BEGIN
+        
         INSERT INTO tbepr_param_conta (cdcooper
                                       ,nrdconta
                                       ,flglibera_pre_aprv
@@ -2829,7 +2900,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'Motivo do bloqueio do pre-aprovado.'
                                  ,pr_dsdadant => NULL
-                                 ,pr_dsdadatu => pr_idmotivo);
+                                 ,pr_dsdadatu => fn_busca_motivo(pr_idmotivo));
+                                 
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Renova Limite Credito Automatico.'
+                                 ,pr_dsdadant => CASE rw_crapass.flgrenli
+                                                   WHEN 1 THEN 'Sim'
+                                                   ELSE 'Nao'
+                                                 END
+                                 ,pr_dsdadatu => CASE vr_flgrenli
+                                                   WHEN 1 THEN 'Sim'
+                                                   ELSE 'Nao'
+                                                 END);
         
       EXCEPTION
         WHEN dup_val_on_index THEN
@@ -2884,8 +2966,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           
           gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                    ,pr_nmdcampo => 'Motivo do bloqueio do pre-aprovado.'
-                                   ,pr_dsdadant => rw_param_conta.idmotivo
-                                   ,pr_dsdadatu => pr_idmotivo);
+                                   ,pr_dsdadant => fn_busca_motivo(rw_param_conta.idmotivo)
+                                   ,pr_dsdadatu => fn_busca_motivo(pr_idmotivo));
+                                   
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Renova Limite Credito Automatico.'
+                                   ,pr_dsdadant => CASE rw_crapass.flgrenli
+                                                     WHEN 1 THEN 'Sim'
+                                                     ELSE 'Nao'
+                                                   END
+                                   ,pr_dsdadatu => CASE vr_flgrenli
+                                                     WHEN 1 THEN 'Sim'
+                                                     ELSE 'Nao'
+                                                   END);
       END;
       
     EXCEPTION
@@ -2971,6 +3064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       -- Bloqueia pre aprovado na conta do cooperado
       EMPR0002.pc_mantem_param_conta (pr_cdcooper => vr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
+                                     ,pr_flgrenli => NULL
                                      ,pr_flglibera_pre_aprv =>  0
                                      ,pr_dtatualiza_pre_aprv => NULL
                                      ,pr_idmotivo => 32 -- Refinanciamento
@@ -3086,6 +3180,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         ROLLBACK;
     END;
   END pc_habilita_contas_suspensas;
-    
+
 END EMPR0002;
 /

@@ -36,7 +36,7 @@ $xml .= "    <inpessoa>".$inpessoa."</inpessoa>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 	
-$xmlResult = mensageria($xml, "CADPRE" , 'BUSCA_PER_BLOQ_REF', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["nmoperad"], "</Root>");	
+$xmlResult = mensageria($xml, "CADPRE" , 'BUSCA_PER_BLOQ_REF', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");	
 $xmlObj    = getObjectXML($xmlResult);	
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {

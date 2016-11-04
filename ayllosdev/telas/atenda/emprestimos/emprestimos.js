@@ -1574,7 +1574,7 @@ function manterRotina(operacao) {
             vlpreant: vlpreant, nrctrant: nrctrant, operacao: operacao,
             tpemprst: tpemprst, nrcpfcgc: nrcpfcgc, dsjusren: dsjusren,
             dtlibera: dtlibera, inconcje: inconcje, flgconsu: flgconsu,
-			blqpreap: bloquear_pre_aprovado,
+            blqpreap: (bloquear_pre_aprovado ? 1 : 0),
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
@@ -7290,7 +7290,7 @@ function confirmaConsultas(flmudfai, cddopcao) {
 //***************************************************
 
 function buscaLiquidacoes(operacao) {
-
+	
     var dsctrliq = $('#dsctrliq', '#' + nomeForm).val();
     //variavel que contem o valor de "Emprestimos" na tela atenda    
     var vltotemp = parseFloat($('#valueRot1').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
@@ -7587,7 +7587,7 @@ function fechaLiquidacoes(operacao) {
     dsctrliq = dsctrliq.slice(0, -1);
 	
 	if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')
-		showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' meses?',
+		showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' mes(es)?',
 						'Confirma&ccedil;&atilde;o - Ayllos', 
 						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
 						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
@@ -7694,7 +7694,7 @@ function controlaFoco(operacao) {
         $(this).bind('keyup', function (e) {
             if (e.keyCode == 16) {
                 pressedShift = false;//Quando tecla shift for solta passa valor false 
-            }
+    }
         })
 
         $(this).bind('keydown', function (e) {
@@ -9168,5 +9168,5 @@ function validaDadosAlterarSomenteValorProposta(){
 			}
 		}
 	});	
-	return false;
+    return false;
 }

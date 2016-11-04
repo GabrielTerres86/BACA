@@ -398,6 +398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
         -- Bloqueia pre aprovado na conta do cooperado
         EMPR0002.pc_mantem_param_conta (pr_cdcooper => vr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
+                                       ,pr_flgrenli => pr_flgrenli
                                        ,pr_flglibera_pre_aprv =>  pr_flgcrdpa
                                        ,pr_dtatualiza_pre_aprv => NULL
                                        ,pr_idmotivo => NULL -- Sem motivo
