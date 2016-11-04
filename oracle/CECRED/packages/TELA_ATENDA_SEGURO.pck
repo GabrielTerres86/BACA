@@ -63,6 +63,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Atenda Seguros
   --
+  -- Alteracoes: 28/10/2016 - Alterado pc_busca_seguros para que os resultados da 
+  --                          consulta nao se lmitem apenas a um ano (Tiago/Thiago 506860)
   ---------------------------------------------------------------------------------------------------------------
   
   /* Busca quantidade de seguros do Cooperado */
@@ -282,12 +284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                              AND seg.cdcooper = wseg.cdcooper (+)
                                              AND seg.nrdconta = wseg.nrdconta (+)
                                              AND seg.nrctrseg = wseg.nrctrseg (+)
-                                             AND ( ( seg.cdsitseg = 2 AND
-                                                     seg.dtcancel > (add_months('''||vr_dtmvtolt||''',-12))) OR
-                                                   ( seg.cdsitseg = 4 AND
-                                                     seg.dtfimvig > (add_months('''||vr_dtmvtolt||''',-12))) OR
-                                                   ( seg.cdsitseg IN (1,3,11))
-                                                 )
+                                             AND seg.cdsitseg in (1,2,3,4,11)
                                             UNION ALL
                                           SELECT decode(segNov.tpseguro,''C'',''CASA''
                                                                        ,''A'',''AUTO''
