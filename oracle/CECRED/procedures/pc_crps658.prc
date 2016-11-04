@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-                pc_crps658 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps658 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                            ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                            ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                            ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -12,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       Sistema : Conta-Corrente - Cooperativa de Credito
       Sigla   : CRED
       Autora  : Lucas R.
-      Data    : Setembro/2013                        Ultima atualizacao: 25/01/2016
+      Data    : Setembro/2013                        Ultima atualizacao: 28/10/2016
 
       Dados referentes ao programa:
 
@@ -33,7 +32,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                de e-mail para a area responsavel (Lucas Ranghetti #332179)
                                
                   25/01/2016 - Ajustes de perfomace, alterar leitura da crapass para 
-                               incluir contas em temptable evitando leitura na crapass (Odirlei-AMcom)             
+                               incluir contas em temptable evitando leitura na crapass (Odirlei-AMcom)
+                               
+                  28/10/2016 - Incluir replace de "&" por "e" no nome do consorciado, 
+                               pois estava estourando o xml na hora de gerar o relatorio
+                               (Lucas Ranghetti #520936)
       ............................................................................*/
 
 
@@ -175,6 +178,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
       vr_flgconta        BOOLEAN;               --> Indicador de existencia de associado
       vr_nrdconta        crapass.nrdconta%TYPE; --> Numero da conta do associado
       vr_qtparcns        crapcns.qtparcns%TYPE; --> Total de parcelas
+      vr_nmconsor        crapcns.nmconsor%TYPE; --> Nome consorciado
       vr_segmento        VARCHAR2(09):= ' ';    --> Segmento do consorcio
       vr_emaildst        VARCHAR2(200);         --> Email para os casos de critica
       vr_texto_email     VARCHAR2(4000);        --> Texto do email de erro
@@ -529,6 +533,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
             vr_nrctrato := SUBSTR(vr_setlinha,14,8);
             vr_tpconsor := SUBSTR(vr_setlinha,86,2);
             vr_qtparres := SUBSTR(vr_setlinha,101,3);
+            vr_nmconsor := REPLACE(SUBSTR(vr_setlinha,22,40),'&','E');
             BEGIN
               vr_dtinicns := to_date(trim(SUBSTR(vr_setlinha,88,8)) ,'ddmmyyyy');
               vr_dtfimcns := to_date(trim(SUBSTR(vr_setlinha,126,8)),'ddmmyyyy');
@@ -632,7 +637,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                     SUBSTR(vr_setlinha,12,2),
                     vr_tpconsor,
                     vr_nrctrato,
-                    SUBSTR(vr_setlinha,22,40),
+                    vr_nmconsor,
                     SUBSTR(vr_setlinha,62,14),
                     SUBSTR(vr_setlinha,96,2),
                     vr_dtinicns,
@@ -653,7 +658,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                   -- Se ja existir atualiza o registro
                   BEGIN
                     UPDATE crapcns
-                       SET crapcns.nmconsor = SUBSTR(vr_setlinha,22,40),
+                       SET crapcns.nmconsor = vr_nmconsor,
                            crapcns.nrcpfcgc = SUBSTR(vr_setlinha,62,14),
                            crapcns.nrdiadeb = SUBSTR(vr_setlinha,96,2),
                            crapcns.dtinicns = vr_dtinicns,
@@ -711,11 +716,11 @@ CREATE OR REPLACE PROCEDURE CECRED.
                 vr_tab_relato(vr_ind).cdcooper := vr_cdcooper;
                 vr_tab_relato(vr_ind).nrdconta := vr_nrdconta;
                 vr_tab_relato(vr_ind).nrdgrupo := vr_nrdgrupo;
-                vr_tab_relato(vr_ind).nrcotcns := vr_nrcotcns ;
+                vr_tab_relato(vr_ind).nrcotcns := vr_nrcotcns;
                 vr_tab_relato(vr_ind).nrctacns := vr_nrctacns;
                 vr_tab_relato(vr_ind).nrctrato := vr_nrctrato;
                 vr_tab_relato(vr_ind).segmento := vr_segmento;
-                vr_tab_relato(vr_ind).nmconsor := SUBSTR(vr_setlinha,22,40);
+                vr_tab_relato(vr_ind).nmconsor := vr_nmconsor;
                 vr_tab_relato(vr_ind).nrcpfcgc := SUBSTR(vr_setlinha,62,14);
                 vr_tab_relato(vr_ind).nrdiadeb := SUBSTR(vr_setlinha,96,2);
                 vr_tab_relato(vr_ind).dtinicns := vr_dtinicns;
@@ -998,4 +1003,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
   END pc_crps658;
 /
-

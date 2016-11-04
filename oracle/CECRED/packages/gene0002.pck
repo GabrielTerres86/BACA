@@ -321,7 +321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 29/09/2016
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 26/10/2016
   --
   -- Dados referentes ao programa:
   --
@@ -348,6 +348,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             29/09/2016 - #523947 No procedimento pc_controle_filas_relato, incluído log de início, fim e 
   --                          erro na execução do job (Carlos)
+  --
+  --             26/10/2016 - Gravado em log a execução da rotina procedimento pc_controle_filas_relato apenas
+  --                          apenas quando tiverem relatórios pendentes para execução (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -3863,7 +3866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   BEGIN
     -- ..........................................................................
     --
-    --  Programa : pc_controle_filas_relato
+    --  Programa : pc_aviso_erros_procrel
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini
@@ -4116,7 +4119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
            AND dtfimger IS NULL;
       -- Var genérica para a quantidade pendente
       vr_qtrel_penden NUMBER;
-      
+
       vr_cdprogra    VARCHAR2(40) := 'PC_CONTROLE_FILAS_RELATO';
       vr_nomdojob    VARCHAR2(40) := 'JBGEN_CONTROLE_FILAS_RELATO';
       vr_flgerlog    BOOLEAN := FALSE;
@@ -4124,7 +4127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-    BEGIN
+      BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -4132,12 +4135,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                                  ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-      END pc_controla_log_batch;      
-
+      END pc_controla_log_batch;     
+      
     BEGIN
-
-      -- Log de inicio de execucao
-      pc_controla_log_batch(pr_dstiplog => 'I');
 
       -- Somente trabalhar com os arquivos de controle na base de produção
       IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
@@ -4188,6 +4188,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         CLOSE cr_crapslr_fila;
         -- Somente continuar se a fila possui relatórios pendentes
         IF vr_qtrel_penden > 0 THEN
+          
+          -- Log de inicio de execucao
+          pc_controla_log_batch(pr_dstiplog => 'I');
+
           -- Contar a quantidade de Jobs ativos da fila
           OPEN cr_jobs(pr_cdfilrel => rw_crapfil.cdfilrel);
           FETCH cr_jobs
@@ -4229,6 +4233,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                     ,pr_des_erro  => vr_des_erro);
               -- Testar saida com erro
               IF vr_des_erro IS NOT NULL THEN
+                
+                pc_controla_log_batch(pr_dstiplog => 'E',
+                                      pr_dscritic => 'Problema na rotina controladora das filas ao escalonar job para a fila '||rw_crapfil.cdfilrel||'. Detalhes: '||sqlerrm||'.');
+              
                 -- Enviar ao LOG
                  pc_gera_log_relato(pr_cdcooper => 0
                                    ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema na rotina controladora das filas ao escalonar job para a fila '||rw_crapfil.cdfilrel||'. Detalhes: '||sqlerrm||'.');
@@ -4237,9 +4245,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           END IF;
         END IF;
       END LOOP;
-
+      
       -- Chamar rotina que verifica possíveis erros nos relatórios e avisa os responsáveis
       pc_aviso_erros_procrel;
+
+      IF vr_qtrel_penden > 0 THEN 
+        -- Log de inicio de execucao
+        pc_controla_log_batch(pr_dstiplog => 'F');
+      END IF;
 
       -- Somente trabalhar com os arquivos de controle na base de produção
       IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
@@ -4277,17 +4290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
       -- Gravar as alterações
       COMMIT;
-
-      -- Log de fim de execucao
-      pc_controla_log_batch(pr_dstiplog => 'F');
-      
     EXCEPTION
       WHEN OTHERS THEN
-        
-        -- Envio centralizado de log de erro
-        pc_controla_log_batch(pr_dstiplog => 'E',
-                              pr_dscritic => 'Problema na rotina controladora das filas. Detalhes: '||sqlerrm||'.');
-      
         pc_gera_log_relato(pr_cdcooper => 0
                           ,pr_des_log  => to_char(sysdate,'hh24:mi:ss')||' --> Problema na rotina controladora das filas. Detalhes: '||sqlerrm||'.');
     END;

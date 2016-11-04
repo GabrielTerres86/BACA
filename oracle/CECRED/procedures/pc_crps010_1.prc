@@ -45,7 +45,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Abril/95.                           Ultima atualizacao: 14/02/2006
+     Data    : Abril/95.                           Ultima atualizacao: 21/06/2016
 
      Dados referentes ao programa:
 
@@ -59,28 +59,12 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
 
                  12/03/2013 - Conversão Progress -> Oracle - Alisson (AMcom)
 
+                 21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
+                              SD 470740.(Carlos Rafael Tanholi).     
   ............................................................................. */
     DECLARE
 
       /* Cursores Locais */
-
-      -- Selecionar os dados da tabela Generica
-      CURSOR cr_craptab  (pr_cdcooper   craptab.cdcooper%TYPE
-                         ,pr_nmsistem   craptab.nmsistem%TYPE
-                         ,pr_tptabela   craptab.tptabela%TYPE
-                         ,pr_cdempres   craptab.cdempres%TYPE
-                         ,pr_cdacesso   craptab.cdacesso%TYPE
-                         ,pr_tpregist   craptab.tpregist%TYPE) IS
-        SELECT  craptab.dstextab
-               ,craptab.rowid
-        FROM craptab  craptab
-        WHERE craptab.cdcooper = pr_cdcooper
-        AND   craptab.nmsistem = pr_nmsistem
-        AND   craptab.tptabela = pr_tptabela
-        AND   craptab.cdempres = pr_cdempres
-        AND   craptab.cdacesso = pr_cdacesso
-        AND   craptab.tpregist = pr_tpregist;
-      rw_craptab  cr_craptab%ROWTYPE;
 
       --Selecionar informacoes das Matriculas
       CURSOR cr_crapmat (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -101,6 +85,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
       --Variaveis Locais
       vr_des_erro     VARCHAR2(4000);
       vr_exc_erro     EXCEPTION;
+      -- Guardar registro dstextab
+      vr_dstextab craptab.dstextab%TYPE;
 
     BEGIN
       
@@ -210,36 +196,34 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
 
       --Se o mes de atualização for Junho ou Dezembro
       IF To_Number(To_Char(pr_dtmvtolt,'MM')) IN (6,12) THEN
-        --Leitura da tabela com os valores do capital baixado
-        OPEN cr_craptab (pr_cdcooper => pr_cdcooper
+
+         -- Buscar configuração na tabela
+         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                          ,pr_nmsistem => 'CRED'
                          ,pr_tptabela => 'GENERI'
                          ,pr_cdempres => 0
                          ,pr_cdacesso => 'VALORBAIXA'
                          ,pr_tpregist => 0);
-         --Posicionar no proximo registro
-         FETCH cr_craptab INTO rw_craptab;
+         
          --Se nao encontrou entao
-         IF cr_craptab%NOTFOUND THEN
-           --Fechar cursor
-           CLOSE cr_craptab;
+         IF TRIM(vr_dstextab) IS NULL THEN
            -- Montar mensagem de critica
            pr_cdcritic := 409;
            vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic => 409);
            RAISE vr_exc_erro;
          ELSE
            --Valor Capital recebe valor tabela
-           pr_res_vlcapcrz_exc:= GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,001,016));
+           pr_res_vlcapcrz_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,001,016));
            --Valor Cota CMI recebe valor tabela
-           pr_res_vlcmicot_exc:= GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,018,016));
+           pr_res_vlcmicot_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,018,016));
            --Valor cota CMM recebe valor tabela
-           pr_res_vlcmmcot_exc:= GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,035,016));
+           pr_res_vlcmmcot_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,035,016));
            --Valor Capital moeda fixa recebe valor tabela
-           pr_res_vlcapmfx_exc:= GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,052,016));
+           pr_res_vlcapmfx_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,052,016));
            --Valor Capital recebe valor tabela por PF
-           pr_res_vlcapexc_fis:= GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,069,016));
+           pr_res_vlcapexc_fis:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,069,016));
            --Valor Capital recebe valor tabela por PJ
-           pr_res_vlcapexc_jur:= GENE0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,086,016));           
+           pr_res_vlcapexc_jur:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,086,016));           
            --Quantidade Cotistas excluidos recebe total associados excluidos
            pr_res_qtcotist_exc:= pr_tot_qtassexc;
            --Quantidade Cotistas excluidos recebe total associados excluidos por PF
@@ -265,8 +249,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
            --Quantidade Total Cotistas recebe total associados excluidos por PJ
            pr_res_qtcottot_jur:= pr_tot_qtasexpj;
          END IF;
-         --Fechar cursor
-         CLOSE cr_craptab;
       ELSE
         --Valor Capital recebe zero
         pr_res_vlcapcrz_exc:= 0;
@@ -315,4 +297,3 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
     END;
   END PC_CRPS010_1;
 /
-

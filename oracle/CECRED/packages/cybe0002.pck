@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 20/09/2016
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 31/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -310,6 +310,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --              20/09/2016 - #523936 Criação de log de controle de início, erros e fim de execução
   --                           do job pc_controle_remessas (Carlos)
+  --
+  --              31/10/2016 - #550394 Tratadas as mensagens de críticas de busca de arquivos do ftp 
+  --                           da rotina pc_controle_remessas para não enviar mais email, apenas 
+  --                           logar no proc_message (Carlos)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -6168,8 +6172,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_lstarqre := fn_quebra_string(pr_string => vr_dslstarq, pr_delimit => ',');
         -- Se não encontrou nenhum arquivo
         IF vr_lstarqre.count() = 0 THEN
-          -- Gerar erro
-          pr_dscritic := 'Retorno ainda nao encontrado no FTP.';
+          -- Gravar no proc_message e retornar para o programa
+          btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
+                                     pr_ind_tipo_log => 2, -- erro tratado 
+                                     pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                        || 'CYBE0002.pc_retorno_arquivo_ftp --> '
+                                                        || 'Retorno ainda nao encontrado no FTP.', 
+                                     pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
           RETURN;
         END IF;
         -- Para cada arquivo encontrado no ZIP
@@ -7188,7 +7197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-      BEGIN
+    BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa

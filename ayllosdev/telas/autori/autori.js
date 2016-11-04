@@ -41,6 +41,9 @@
  *
  *				  31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
  *
+ *                31/10/2016 - Incluir validação para passar histórico 1019 caso for Sicredi e não for 
+ *							   operação de consulta (Lucas Ranghetti #547448)
+ *
  */
 
 // Definição de algumas variáveis globais 
@@ -104,6 +107,10 @@ function controlaOperacao( novaOp ) {
 
 	}
 
+	if ((flgsicre == 'S') && (operacao != 'C2') ) {
+		cdhistor = 1019;
+	}	
+	
 	showMsgAguardo( mensagem );
 	
 	// Carrega dados da conta através de ajax

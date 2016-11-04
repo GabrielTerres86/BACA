@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 12/07/2016
+     Data    : Marco/2005.                     Ultima atualizacao: 23/06/2016
 
      Dados referentes ao programa:
 
@@ -324,13 +324,12 @@ BEGIN
 
 
 				 31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
-				              (Adriano - SD 426308).
+							 (Adriano - SD 426308).
 				           
                  15/06/2016 - Ajustes para realizar debito de devolucao de cheque(0114 BB)
-				                      na hora (Tiago/Elton SD 464916).
-
-                 12/07/2016 - Ajustes para realizar debito de devolucao de cheque
-				              apenas (0114 BB) na hora (Tiago/Thiago SD 480694).
+				              na hora (Tiago/Elton SD 464916).
+                 23/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
+                              (Carlos Rafael Tanholi).
      ............................................................................. */
 
   DECLARE
@@ -508,10 +507,10 @@ BEGIN
        SELECT craptab.dstextab, craptab.rowid
          FROM craptab
         WHERE craptab.cdcooper = pr_cdcooper
-          AND craptab.nmsistem = pr_nmsistem
-          AND craptab.tptabela = pr_tptabela
+          AND UPPER(craptab.nmsistem) = pr_nmsistem
+          AND UPPER(craptab.tptabela) = pr_tptabela
           AND craptab.cdempres = pr_cdempres
-          AND craptab.cdacesso = pr_cdacesso
+          AND UPPER(craptab.cdacesso) = pr_cdacesso
           AND craptab.tpregist = pr_tpregist;
      rw_craptab cr_craptab%ROWTYPE;
 
@@ -721,8 +720,8 @@ BEGIN
                                  ORDER BY craptab.cdacesso,craptab.tpregist) seqreg
        FROM craptab
        WHERE craptab.cdcooper = pr_cdcooper
-       AND  craptab.nmsistem  = pr_nmsistem
-       AND  craptab.tptabela  = pr_tptabela
+       AND  UPPER(craptab.nmsistem)  = pr_nmsistem
+       AND  UPPER(craptab.tptabela)  = pr_tptabela
        AND  craptab.cdempres  = pr_cdempres;
      rw_craptab_tot cr_craptab_tot%ROWTYPE;
 
@@ -1367,8 +1366,10 @@ BEGIN
              WHEN '0144' THEN vr_cdhistor := 471;
              ELSE vr_cdhistor := 661;
            END CASE;
-         ELSIF SUBSTR(vr_dshistor,01,04) = '0114' THEN /* Devolucoes recebidas */              
+         ELSIF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Devolucoes */  
+           IF SUBSTR(vr_dshistor,01,04) = '0114' THEN
               vr_cdhistor := 351;
+           END IF;
          END IF;
 
          IF gene0002.fn_existe_valor(vr_dshstdeb,SUBSTR(vr_dshistor,01,04),',') = 'S' OR
@@ -1561,7 +1562,7 @@ BEGIN
      pr_cdcritic:= NULL;
      pr_dscritic:= NULL;
 
-     --Atribuir o nome do programa que esta¡ executando
+     --Atribuir o nome do programa que estÃ¡ executando
      vr_cdprogra:= 'CRPS444';
 
      -- Incluir nome do modulo logado
@@ -1571,9 +1572,9 @@ BEGIN
      -- Verifica se a cooperativa esta cadastrada
      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
      FETCH cr_crapcop INTO rw_crapcop;
-     -- Se nÃo encontrar
+     -- Se nÃ£o encontrar
      IF cr_crapcop%NOTFOUND THEN
-       -- Fechar o cursor pois havera¡ raise
+       -- Fechar o cursor pois haverÃ¡ raise
        CLOSE cr_crapcop;
        -- Montar mensagem de critica
        vr_cdcritic:= 651;
@@ -2134,7 +2135,7 @@ BEGIN
      /*  Este Utilizado Somente para o Relatorio (Nao Cria Lanctos) */
 
      --Historico devolucao
-     vr_dshstdev:= '0603,0686,0705,0718';
+     vr_dshstdev:= '0114,0603,0686,0705,0718';
      vr_regexist:= FALSE;
      vr_flgfinal:= FALSE;
      vr_cdcritic:= 0;
@@ -2616,7 +2617,7 @@ BEGIN
            vr_flgestor:= FALSE;
            vr_flgdebit:= TRUE;
            vr_flgdevol:= FALSE;
-         ELSIF SUBSTR(vr_dshistor,01,04) = '0114' THEN /* Devolucoes recebidas 0114*/  
+         ELSIF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Devolucoes */  
            vr_flgdepos:= FALSE;
            vr_flgchequ:= FALSE;
            vr_flgestor:= FALSE;
@@ -3268,10 +3269,12 @@ BEGIN
              vr_nrdocmto:= vr_nrdocmt2;
            END IF;
 
-           /* Devolucoes recebidas 0114*/
-           IF vr_cdcritic = 0 AND vr_flgdevol THEN                          
-             vr_cdhistor:= 351;
-             vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
+           /* Devolucoes */
+           IF vr_cdcritic = 0 AND vr_flgdevol THEN             
+             IF SUBSTR(vr_dshistor,01,04) = '0114' THEN
+                vr_cdhistor:= 351;
+                vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
+             END IF;
 
              vr_nrdocmt2:= vr_nrdocmto;
              WHILE TRUE LOOP
@@ -4617,8 +4620,7 @@ BEGIN
                                               ,pr_tpintegr => vr_contaarq) LOOP
            /*   Utilizado para a Somatoria dos Valores de Devolucao  */
            vr_dshistor:= TRIM(SUBSTR(rw_craprej_tot.dshistor,1,15));
-           IF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 OR 
-              SUBSTR(vr_dshistor,01,04) = '0114' THEN
+           IF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 THEN
              --Se existir crawtot
              IF vr_tab_crawtot.EXISTS(vr_dshistor) THEN
                vr_tab_crawtot(vr_dshistor).qtlancto:= vr_tab_crawtot(vr_dshistor).qtlancto + 1;
