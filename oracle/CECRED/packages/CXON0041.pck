@@ -884,7 +884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         -- FIM DARF-SIMPLES
       ELSE -- DARF PRETO EUROPA
         IF pr_dtapurac < TO_DATE('01/01/1980','MM/dd/RRRR') OR
-           pr_dtapurac > TO_DATE('12/31/2016','MM/dd/RRRR') THEN
+           pr_dtapurac > (ADD_MONTHS(rw_crapdat.dtmvtocd,60)) THEN
 
           vr_cdcritic := 0;
           vr_dscritic := 'Periodo de apuracao incorreto.';
