@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 10/10/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 01/11/2016
 
        Dados referentes ao programa:
 
@@ -92,6 +92,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    10/10/2016 - Ajuste para nao voltar para Aprovado uma solicitacao que
                                 retornar com critica 80 do Bancoob (pessoa ja tem cartao nesta conta).
                                 (Chamado 532712) - (Fabrício)
+
+				   01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
+                                (Chamado 532712) - (Fabricio)
     ............................................................................ */
 
     DECLARE
@@ -1646,7 +1649,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
                                            ,vr_nrdconta                 -- pr_nrdconta
                                            ,substr(vr_des_text,25,13)   -- pr_nrcctitg
-                                           ,NULL                        -- pr_nrcpftit
+                                           ,TO_NUMBER(substr(vr_des_text,95,15)) -- pr_nrcpftit
                                            ,NULL                        -- pr_insitcrd -- EM USO
                                            ,1 );                        -- pr_flgprcrd
                   FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
@@ -1658,6 +1661,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                   IF cr_crawcrd_cdgrafin%NOTFOUND THEN
                     -- Fechar o cursor
                     CLOSE cr_crawcrd_cdgrafin;
+                    
+                    -- Buscar registro de solicitacao
+                    OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                             ,vr_nrdconta                 -- pr_nrdconta
+                                             ,NULL                        -- pr_nrcctitg
+                                             ,TO_NUMBER(substr(vr_des_text,95,15)) -- pr_nrcpftit
+                                             ,2                             -- pr_insitcrd -- SOLICITADO
+                                             ,NULL);                        -- pr_flgprcrd
+                    FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                 , vr_dddebito
+                                                 , vr_vllimcrd
+                                                 , vr_tpdpagto
+                                                 , vr_flgdebcc;
+                    -- Se não encontrar registros
+                    IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                      -- Fechar o cursor
+                      CLOSE cr_crawcrd_cdgrafin;                                     
                     
                     -- Buscar pelo CPF do titular
                     OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
@@ -1731,6 +1751,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                                    
                       END IF;
                     END IF;
+                  END IF;
                   END IF;
                   
                   -- Fecha o cursor
@@ -2122,6 +2143,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                     -- Se não encontrar registro do cartão de crédito,
                     IF cr_crapcrd%NOTFOUND THEN
                       -- Cria registro de Cartão de Crédito
+
                       BEGIN
                         INSERT INTO crapcrd
                            (cdcooper,
@@ -2322,6 +2344,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                     FETCH cr_crawcrd_rowid INTO rw_crawcrd;
 
                     -- cria novo registro de cartão de crédito
+
                     BEGIN
                       INSERT INTO crapcrd
                          (cdcooper,
