@@ -6525,7 +6525,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  vr_vlreceita_bruta := NVL(rw_tbpagto_darf_das_trans_pend.vlreceita_bruta,0);
                  vr_vlpercentual    := NVL(rw_tbpagto_darf_das_trans_pend.vlpercentual,0);
                END IF; 
-               vr_vlrtotal        := (NVL(rw_tbpagto_darf_das_trans_pend.vlprincipal,0) + NVL(rw_tbpagto_darf_das_trans_pend.vlmulta,0) + NVL(rw_tbpagto_darf_das_trans_pend.vljuros,0));
+               vr_vlrtotal        := NVL(rw_tbpagto_darf_das_trans_pend.vlpagamento,0);
                vr_dtdebito        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtdebito,'DD/MM/RRRR');
                vr_idagendamento   := NVL(rw_tbpagto_darf_das_trans_pend.idagendamento,0); 
                vr_vlasomar        := vr_vlrtotal;            
