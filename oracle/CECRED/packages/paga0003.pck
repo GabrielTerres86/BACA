@@ -53,7 +53,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                 ,pr_idagenda IN INTEGER -- Indicador de agendamento (1-Nesta Data/2-Agendamento
                                 ,pr_dtagenda IN DATE -- Data de agendamento
                                 ,pr_indvalid IN INTEGER -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
-                                ,pr_cdseqfat OUT NUMBER -- Código sequencial da guia
+                                ,pr_cdseqfat OUT VARCHAR2 -- Código sequencial da guia
                                 ,pr_vldocmto OUT NUMBER -- Valor da guia
                                 ,pr_nrdigfat OUT NUMBER -- Digito do faturamento
                                 ,pr_cdcritic OUT INTEGER -- Código do erro
@@ -916,7 +916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ,pr_idagenda IN INTEGER -- Indicador de agendamento (1-Nesta Data/2-Agendamento
                                 ,pr_dtagenda IN DATE -- Data de agendamento
                                 ,pr_indvalid IN INTEGER -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
-                                ,pr_cdseqfat OUT NUMBER -- Código sequencial da guia
+                                ,pr_cdseqfat OUT VARCHAR2 -- Código sequencial da guia
                                 ,pr_vldocmto OUT NUMBER -- Valor da guia
                                 ,pr_nrdigfat OUT NUMBER -- Digito do faturamento
                                 ,pr_cdcritic OUT INTEGER -- Código do erro
@@ -1349,7 +1349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --Selecionar transações pendentes de operador jurídico
         OPEN cr_trans_pend(pr_dtmvtopg => vr_dtmvtopg
                           ,pr_cdhistor => rw_crapcon.cdhistor
-                          ,pr_cdseqfat => pr_cdseqfat --Sequencial faturamento
+                          ,pr_cdseqfat => TO_NUMBER(pr_cdseqfat) --Sequencial faturamento
 						  ,pr_tpdaguia => pr_tpdaguia); 
         FETCH cr_trans_pend INTO rw_trans_pend;
         cr_trans_pend_found := cr_trans_pend%FOUND;
@@ -1368,7 +1368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         OPEN cr_craplau_pend (pr_cdcooper => pr_cdcooper
                              ,pr_dtmvtopg => pr_dtagenda
                              ,pr_cdhistor => rw_crapcon.cdhistor
-                             ,pr_cdseqfat => pr_cdseqfat);
+                             ,pr_cdseqfat => TO_NUMBER(pr_cdseqfat));
         FETCH cr_craplau_pend
         INTO rw_craplau_pend;
         cr_craplau_pend_found := cr_craplau_pend%FOUND;
@@ -1421,8 +1421,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       IF pr_indvalid = 1 THEN
         -- Verifica se a guia já consta nas transações pendentes do operador de pessoa jurídica
         OPEN cr_trans_pend2(pr_dtmvtopg => vr_dtmvtopg
-                           ,pr_cdseqfat => pr_cdseqfat --Sequencial faturamento
-						   ,pr_tpdaguia => pr_tpdaguia); 
+                           ,pr_cdseqfat => TO_NUMBER(pr_cdseqfat) --Sequencial faturamento
+						               ,pr_tpdaguia => pr_tpdaguia); 
         FETCH cr_trans_pend2
         INTO rw_trans_pend2;
         cr_trans_pend2_found := cr_trans_pend2%FOUND;
@@ -1440,7 +1440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- Verifica se ja existe fatura agendada com o sequencial
         OPEN cr_craplau_pend2(pr_cdcooper => pr_cdcooper
                              ,pr_dtmvtopg => vr_dtmvtopg
-                             ,pr_cdseqfat => pr_cdseqfat);
+                             ,pr_cdseqfat => TO_NUMBER(pr_cdseqfat));
         FETCH cr_craplau_pend2
         INTO rw_craplau_pend2;
         cr_craplau_pend2_found := cr_craplau_pend2%FOUND;
@@ -2443,7 +2443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_nrcpfcgc  INTEGER := 0;
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
-		vr_cdseqfat  NUMBER;
+		vr_cdseqfat  VARCHAR2(500);
 		vr_vldocmto  NUMBER;
 		vr_nrdigfat  NUMBER;
     vr_lindigi1  NUMBER;
@@ -2817,7 +2817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_idorigem => pr_idorigem,
                                    pr_tpdaguia => pr_tpdaguia,
 																	 pr_tpcaptur => pr_tpcaptur,
-																	 pr_cdseqfat => vr_cdseqfat,
+																	 pr_cdseqfat => TO_NUMBER(vr_cdseqfat),
 																	 pr_nrdigfat => vr_nrdigfat,
 																	 pr_lindigi1 => vr_lindigi1,
 																	 pr_lindigi2 => vr_lindigi2,
@@ -2985,7 +2985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																												<cdbarras>'|| vr_cdbarras           ||'</cdbarras> 
 																												<dtmvtopg>'|| to_char(vr_dtmvtopg,'DD/MM/RRRR')||'</dtmvtopg>
 																												<vlrtotal>'|| pr_vlrtotal            ||'</vlrtotal>
-																												<cdseqfat>'|| to_char(vr_cdseqfat)   ||'</cdseqfat>
+																												<cdseqfat>'|| vr_cdseqfat            ||'</cdseqfat>
 																												<nrdigfat>'|| vr_nrdigfat            ||'</nrdigfat>
 																												<dttransa>'|| to_char(SYSDATE,'DD/MM/RRRR') ||'</dttransa>
 																												<dsmsgope>'|| nvl(vr_dsmsgope,' ')   ||'</dsmsgope>																												

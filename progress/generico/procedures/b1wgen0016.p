@@ -11924,7 +11924,7 @@ PROCEDURE aprova_trans_pend:
                                           WHEN pc_verifica_darf_das.pr_dscritic <> ?
                            aux_dscritic = pc_verifica_darf_das.pr_dscritic 
                                           WHEN pc_verifica_darf_das.pr_dscritic <> ?
-                           aux_cdseqfat = pc_verifica_darf_das.pr_cdseqfat 
+                           aux_cdseqfat = DEC(pc_verifica_darf_das.pr_cdseqfat)
                            aux_vldocmto = pc_verifica_darf_das.pr_vldocmto
                            aux_nrdigfat = pc_verifica_darf_das.pr_nrdigfat.
                     
