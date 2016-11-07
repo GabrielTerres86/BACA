@@ -5,11 +5,13 @@
  * OBJETIVO     : Mostrar tela DEVOLU
  * --------------
  * ALTERAÇÕES   : #273953 Alinhamento das colunas das tabelas (Carlos)
- *
+ * --------------
  *                12/07/2016 #451040 Retirar o botão "Executar Devolução" (Carlos)
  *
  *				  19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques(Lucas Ranghetti #484923)
- * --------------
+ * 
+ *				  07/11/2016 - Validar horario para devolucao de acordo com o parametrizado na TAB055(Lucas Ranghetti #539626)
+ * 
  */
 
 // Definição de algumas variáveis globais
@@ -660,19 +662,13 @@ function marcar_cheque_devolu() {
 		success: function(response) {
 			try {
 				hideMsgAguardo();
-				eval(response);
-			   // Solicitado pela Pamela para não pedir mais a senha do coordenador após as 11:30
-               // if(execucao == 'yes'){
-                   // if(pedsenha == 'yes'){ // Mostra campo de senha para o coordenador autorizar a devolução
-                   //     showError('inform',dscritic,'Alerta - Ayllos','mostraSenhaCoord();');
-						//showError('error',dscritic,'Alerta - Ayllos',"unblockBackground();");
-                   // }else {
-                   //     showError('inform',dscritic,'Alerta - Ayllos','estadoInicial();');
-                  //  }
-               // }else{				   
+				eval(response);			    
+				// validar horario para devolução de acordo com o parametrizado na TAB055
+                if(execucao == 'yes'){                   
+                    showError('inform',dscritic,'Alerta - Ayllos','estadoInicial();');                
+                }else{				   
                     verifica_folha_cheque();
-               // }
-
+                }
 			} catch(error) {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");

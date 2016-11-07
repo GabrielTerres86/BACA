@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 21/07/2016
+   Data    : Setembro/2013                      Ultima atualizacao: 07/11/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -79,6 +79,9 @@
    
    19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
                 de cheques (Lucas Ranghetti #484923)
+                
+   07/11/2016 - Validar horario para devolucao de acordo com o parametrizado na TAB055
+                (Lucas Ranghetti #539626)
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -7688,9 +7691,10 @@ PROCEDURE marcar_cheque_devolu:
 
             END.
             ELSE DO:
+                /* Validar ultimo horario para devolucao */
                 RUN verifica_hora_execucao(INPUT par_cdcooper,
                                            INPUT par_dtmvtolt,
-                                           INPUT 4,
+                                           INPUT 6,
                                            OUTPUT ret_execucao,
                                            OUTPUT TABLE tt-erro).
             
