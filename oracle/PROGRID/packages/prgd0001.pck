@@ -88,7 +88,7 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                        ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                        ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                        ,pr_des_erro OUT VARCHAR2); --> Descricao do Erro
-                        
+
   /* Procedure para listar os eixos do sistema */
   PROCEDURE pc_lista_eixo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -119,8 +119,8 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                            ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro                                              
-  
+                           ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro    
+                           
   /* Procedure para retornar data base da agenda da cooperativa */
   PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
                         ,pr_idevento IN VARCHAR2     --> Ide do evento
@@ -131,11 +131,11 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                         ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                         ,pr_nmdcampo OUT VARCHAR2    --> Nome do campo com erro
                         ,pr_des_erro OUT VARCHAR2);  --> Descricao do Erro
-  
+                        
   /* Informação do modulo em execução na sessão do Progrid */
   PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
-                                     ,pr_action IN VARCHAR2 DEFAULT NULL);                         
-
+                                     ,pr_action IN VARCHAR2 DEFAULT NULL);                             
+                         
 END PRGD0001;
 /
 CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
@@ -749,13 +749,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+    
       -- Valida ID do cookie da sessao
       pc_valida_cookie(pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
                       ,pr_cdoperad => vr_cdoperad   --> Codigo do operador
                       ,pr_idcokses => vr_idcokses   --> ID cookie da sessao
                       ,pr_dscritic => vr_dscritic); --> Descricao de erros     
-      
+    
       -- Verifica se houve erro na validacao do cookie
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
@@ -804,7 +804,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       END IF;
     
       vr_sql := vr_sql || rw_craprdr.nmproced || '(';
-
+    
       pc_informa_acesso_progrid(pr_module => vr_nmdatela || '|' || vr_cdcooper || '|' ||
                                              vr_cdoperad || '|' || vr_nmdeacao || '|'
                                             ||vr_idsistem || '|' || vr_cddopcao
@@ -1206,10 +1206,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     DECLARE
     
       -- Cursores
-      CURSOR cr_crapage(vr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT age.cdcooper, age.cddregio, age.cdagenci, age.nmresage
           FROM crapage age
-         WHERE (age.cdcooper = vr_cdcooper OR vr_cdcooper = 0)
+         WHERE (age.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
            AND (age.cddregio = pr_cddregio OR pr_cddregio = 0)
            AND (age.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
            AND age.cdagenci NOT IN (90, 91)
@@ -1440,7 +1440,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
        ORDER BY edp.nmevento;
         
       rw_crapedp_age cr_crapedp_age%ROWTYPE;
-        
+            
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_coop_age(pr_cdcoop_agenci IN VARCHAR2) IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -1518,7 +1518,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
 
   END pc_lista_evento;
-
+  
+                       
   /* Procedure para retornar data base da agenda da cooperativa */
   PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
                         ,pr_idevento IN VARCHAR2     --> Ide do evento
@@ -1565,7 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
              ;
     
     rw_gnpapgd cr_gnpapgd%ROWTYPE;    
-
+    
     vr_dtanoage gnpapgd.dtanoage%TYPE;
     
   BEGIN
