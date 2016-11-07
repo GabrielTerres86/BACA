@@ -3036,7 +3036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
     Sistema  : Rotina para buscar as parcelas que pertencem a um carnê, de acordo com a parcela selecionada
     Sigla    : COBR
     Autor    : Douglas Quisinski - CECRED
-    Data     : Junho/2015.                      Ultima atualizacao: 08/07/2015
+    Data     : Junho/2015.                      Ultima atualizacao: 03/10/2016
 
     Dados referentes ao programa:
     
@@ -3045,6 +3045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
 
     Alteracoes: 08/07/2015 - Alterar o tipo das variaveis do xml para CLOB (Douglas - Chamado 303663)
 
+			    03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
     ............................................................................. */
     DECLARE
       -- Variáveis para identificar os boletos
@@ -3053,12 +3054,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
       vr_dsdoccop crapcob.dsdoccop%TYPE;
       vr_nrconven crapcco.nrconven%TYPE;
 
+      -- Email do pagador
+      vr_dsdemail    VARCHAR2(5000);
+
       vr_xml_tab_temp VARCHAR2(32767) := '';
 
       -- Variaveis de Exception
       vr_exc_erro EXCEPTION;
       vr_cdcritic PLS_INTEGER;
       vr_dscritic VARCHAR2(4000);
+      vr_des_erro VARCHAR2(1000);
 
       vr_ret_all_boletos gene0002.typ_split;
       vr_ret_boleto      gene0002.typ_split;
@@ -3339,6 +3344,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
             END IF;
             CLOSE cr_crapceb;
             
+            COBR0009.pc_busca_emails_pagador(pr_cdcooper  => rw_crapsab.cdcooper
+                                            ,pr_nrdconta  => rw_crapsab.nrdconta
+                                            ,pr_nrinssac  => rw_crapsab.nrinssac
+                                            ,pr_dsdemail  => vr_dsdemail
+                                            ,pr_des_erro  => vr_des_erro
+                                            ,pr_dscritic  => vr_dscritic);
+            
             -- Gerar a tag que agrupa todas as informações de carnê
             gene0002.pc_escreve_xml(pr_xml            => pr_tab_boleto
                                    ,pr_texto_completo => vr_xml_tab_temp
@@ -3359,7 +3371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                                                         || ' <cdtpinsc>' || rw_crapsab.cdtpinsc || '</cdtpinsc>'
                                                         || ' <complend>' || rw_crapsab.complend || '</complend>'
                                                         || ' <flgemail>' || rw_crapsab.flgemail || '</flgemail>'
-                                                        || ' <dsdemail>' || rw_crapsab.dsdemail || '</dsdemail>'
+                                                        || ' <dsdemail>' || vr_dsdemail || '</dsdemail>'
                                                         || '</pagador>');
 
             -- Gerar a tag que agrupa todos boletos

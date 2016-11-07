@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 02/08/2016
+      Data: Janeiro/2010                        Ultima alteracao: 07/10/2016
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -274,6 +274,7 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          extratos isentos da cooperativa quando o cooperado possuir
                          o servico "extrato" no pacote de tarifas (Diego).
 
+			07/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -428,6 +429,13 @@ DEFINE TEMP-TABLE tt-demonst-ldcb NO-UNDO
        FIELD dsrubric AS CHAR /* Descricao da rubrica */
        FIELD vlrubric AS DECI. /* Valor da rubrica */
 
+/* Operacao 63 */
+DEFINE VARIABLE aux_titulo1 AS DECI                         NO-UNDO.
+DEFINE VARIABLE aux_titulo2 AS DECI                         NO-UNDO.
+DEFINE VARIABLE aux_titulo3 AS DECI                         NO-UNDO.
+DEFINE VARIABLE aux_titulo4 AS DECI                         NO-UNDO.
+DEFINE VARIABLE aux_titulo5 AS DECI                         NO-UNDO.
+DEFINE VARIABLE aux_codigo_barras AS CHAR                   NO-UNDO.
 
 /* Usado no pre-aprovado */
 DEFINE VARIABLE aux_vlemprst AS DECI                        NO-UNDO.
@@ -890,8 +898,24 @@ DO:
         ELSE
         IF   xField:NAME = "FLGACSMS" THEN
              aux_flgacsms = INTE(xText:NODE-VALUE).
-
-
+		ELSE
+		IF   xField:NAME = "TITULO1" THEN
+             aux_titulo1 = DECI(xText:NODE-VALUE).
+		ELSE
+		IF   xField:NAME = "TITULO2" THEN
+             aux_titulo2 = DECI(xText:NODE-VALUE).
+		ELSE
+		IF   xField:NAME = "TITULO3" THEN
+             aux_titulo3 = DECI(xText:NODE-VALUE).
+		ELSE
+		IF   xField:NAME = "TITULO4" THEN
+             aux_titulo4 = DECI(xText:NODE-VALUE).
+		ELSE
+		IF   xField:NAME = "TITULO5" THEN
+             aux_titulo5 = DECI(xText:NODE-VALUE).
+		ELSE
+		IF   xField:NAME = "CODIGO_BARRAS" THEN
+             aux_codigo_barras = STRING(xText:NODE-VALUE).
 
     END.
 
@@ -1459,7 +1483,14 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
+		IF   aux_operacao = 63   THEN
+             DO:               
+                 RUN calcula_valor_titulo_vencido.
              
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+
 
         LEAVE.
     END.
@@ -8538,4 +8569,142 @@ PROCEDURE alterar-autorizacao-debito:
 
 END PROCEDURE.
 /* Fim 62 - alterar-autorizacao-debito */
+
+/*Inicio 63 - calcula_valor_titulo_vencido*/
+PROCEDURE calcula_valor_titulo_vencido:
+
+    DEF VAR aux_vlfatura                AS DECI         NO-UNDO.
+	DEF VAR aux_vlrjuros                AS DECI         NO-UNDO.
+	DEF VAR aux_vlrmulta                AS DECI         NO-UNDO.
+	DEF VAR aux_fltitven                AS INTE         NO-UNDO.
+													   
+	DEF VAR aux_des_erro                AS CHAR         NO-UNDO.
+	DEF VAR aux_dscritic                AS CHAR         NO-UNDO.
+	
+	/*REMOVER*/
+	DEFINE VARIABLE ponteiro_xml AS MEMPTR      NO-UNDO.
+	
+	/* Variaveis para o XML */ 
+    DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
+    DEF VAR xRoot_ora           AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2_ora          AS HANDLE   NO-UNDO.  
+    DEF VAR xField_ora          AS HANDLE   NO-UNDO. 
+    DEF VAR xText_ora           AS HANDLE   NO-UNDO. 
+    DEF VAR aux_cont_raiz   	AS INTEGER  NO-UNDO. 
+    DEF VAR aux_cont        	AS INTEGER  NO-UNDO. 
+    DEF VAR ponteiro_xml_ora    AS MEMPTR   NO-UNDO. 
+    DEF VAR xml_req_ora         AS LONGCHAR NO-UNDO.
+	
+    /* Inicializando objetos para leitura do XML */ 
+	CREATE X-DOCUMENT xDoc_ora.    /* Vai conter o XML completo */ 
+	CREATE X-NODEREF  xRoot_ora.   /* Vai conter a tag DADOS em diante */ 
+	CREATE X-NODEREF  xRoot2_ora.  /* Vai conter a tag INF em diante */ 
+	CREATE X-NODEREF  xField_ora.  /* Vai conter os campos dentro da tag INF */ 
+	CREATE X-NODEREF  xText_ora.   /* Vai conter o texto que existe dentro da tag xField */ 
+	
+	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+	RUN STORED-PROCEDURE pc_retorna_vlr_tit_vencto
+	  aux_handproc = PROC-HANDLE NO-ERROR
+						 (INPUT aux_cdcooper,
+						  INPUT aux_nrdconta,
+						  INPUT 1,
+						  INPUT 63,
+						  INPUT 1,
+						  INPUT aux_titulo1,
+						  INPUT aux_titulo2,
+						  INPUT aux_titulo3,
+						  INPUT aux_titulo4,
+						  INPUT aux_titulo5,
+						  INPUT aux_codigo_barras,
+						  OUTPUT 0,
+						  OUTPUT 0,
+						  OUTPUT 0,
+						  OUTPUT 0,
+						  OUTPUT "",
+						  OUTPUT "").
+	
+	/* Fechar o procedimento para buscarmos o resultado */ 
+	CLOSE STORED-PROC pc_retorna_vlr_tit_vencto
+		   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+	
+	{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+	
+	/* Busca possíveis erros */ 
+	ASSIGN aux_des_erro = ""
+           aux_dscritic = ""
+           aux_vlfatura = 0
+           aux_vlrjuros = 0
+           aux_vlrmulta = 0
+           aux_fltitven = 0
+           aux_vlfatura = pc_retorna_vlr_tit_vencto.pr_vlfatura
+                          WHEN pc_retorna_vlr_tit_vencto.pr_vlfatura <> ?        
+           aux_vlrjuros = pc_retorna_vlr_tit_vencto.pr_vlrjuros
+                          WHEN pc_retorna_vlr_tit_vencto.pr_vlrjuros <> ?
+           aux_vlrmulta = pc_retorna_vlr_tit_vencto.pr_vlrmulta
+                          WHEN pc_retorna_vlr_tit_vencto.pr_vlrmulta <> ?
+           aux_fltitven = pc_retorna_vlr_tit_vencto.pr_fltitven
+                          WHEN pc_retorna_vlr_tit_vencto.pr_fltitven <> ?
+           aux_des_erro = pc_retorna_vlr_tit_vencto.pr_des_erro
+                          WHEN pc_retorna_vlr_tit_vencto.pr_des_erro <> ?
+           aux_dscritic = pc_retorna_vlr_tit_vencto.pr_dscritic
+                          WHEN pc_retorna_vlr_tit_vencto.pr_dscritic <> ?.
+	
+	
+	/*---------------*/
+    xDoc:CREATE-NODE(xField,"VLFATURA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_vlfatura,'zzz,zzz,z99.99').
+    xField:APPEND-CHILD(xText).
+	
+    /*---------------*/
+    xDoc:CREATE-NODE(xField,"VLRJUROS","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_vlrjuros).
+    xField:APPEND-CHILD(xText).
+	
+    /*---------------*/
+    xDoc:CREATE-NODE(xField,"VLRMULTA","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_vlrmulta).
+    xField:APPEND-CHILD(xText).
+
+    /*---------------*/
+    xDoc:CREATE-NODE(xField,"FLTITVEN","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_fltitven).
+    xField:APPEND-CHILD(xText).
+
+    /*---------------*/
+    xDoc:CREATE-NODE(xField,"DES_ERRO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_des_erro).
+    xField:APPEND-CHILD(xText).	
+	
+    IF TRIM(aux_dscritic) <> "" AND 
+	   aux_des_erro <> "OK" THEN
+	   DO:
+	      /*---------------*/
+ 		  xDoc:CREATE-NODE(xField,"DSCRITIC","ELEMENT").
+		  xRoot:APPEND-CHILD(xField).
+		
+		  xDoc:CREATE-NODE(xText,"","TEXT").
+	      xText:NODE-VALUE = STRING(aux_dscritic).
+		  xField:APPEND-CHILD(xText).
+	   END.
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*Fim 63 - calcula_valor_titulo_vencido*/
 /* .......................................................................... */

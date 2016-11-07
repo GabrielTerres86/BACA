@@ -47,6 +47,8 @@
                             do envio por e-mail (Projeto Boleto Formato Carnê - Douglas)
                             
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
+               
+               28/10/2016 - Ajustes realizados referente a melhoria 271. (Kelvin)
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -115,6 +117,9 @@ DEF VAR aux_nmprimtl_ben LIKE crapass.nmprimtl                         NO-UNDO.
 DEF VAR aux_nrcpfcgc_ben LIKE crapass.nrcpfcgc                         NO-UNDO.
 DEF VAR aux_inpessoa_ben LIKE crapass.inpessoa                         NO-UNDO.
 DEF VAR aux_dsdemail_ben LIKE crapcem.dsdemail                         NO-UNDO.
+
+DEF VAR aux_ctdemail AS INTE                                           NO-UNDO.
+DEF VAR aux_qtdemail AS INTE                                           NO-UNDO.
 
 /* sistema deve atribuir data do dia vindo da crapdat
    Rafael Cechet - 06/04/2011 */
@@ -449,12 +454,17 @@ FOR EACH tt-consulta-blt NO-LOCK:
                 DO:
                     IF VALID-HANDLE(h-b1wgen0088) THEN
                     DO:
+                    
+                        ASSIGN aux_qtdemail = NUM-ENTRIES(tt-dados-sacado-blt.dsdemail,";").
+                        
+                        DO aux_ctdemail = 1 TO aux_qtdemail:
                         /* Cria o log da cobrança informando que o boleto foi enviado por e-mail */
                         RUN cria-log-cobranca IN h-b1wgen0088
                               (INPUT ROWID(crapcob),
                                INPUT "996", /* cdoperad */
                                INPUT TODAY,
-                               INPUT "ENVIADO EMAIL: " + TRIM(tt-dados-sacado-blt.dsdemail) ).
+                               INPUT "ENVIADO EMAIL: " + TRIM(ENTRY(aux_ctdemail,tt-dados-sacado-blt.dsdemail,";"))).  
+                        END.		   
                     END.
                 END.
             END.
