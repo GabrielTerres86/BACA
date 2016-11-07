@@ -75,6 +75,7 @@ DEFINE INPUT PARAM par_tpcptdoc     AS INTE         NO-UNDO. /* 1- Codigo de bar
 DEFINE VARIABLE aux_flgderro        AS LOGICAL      NO-UNDO.
 DEFINE VARIABLE aux_vlsddisp        AS DECIMAL      NO-UNDO.  
 DEFINE VARIABLE aux_vllautom        AS DECIMAL      NO-UNDO.  
+DEFINE VARIABLE aux_vllaucre        AS DECIMAL      NO-UNDO.
 DEFINE VARIABLE aux_vlsdbloq        AS DECIMAL      NO-UNDO.  
 DEFINE VARIABLE aux_vlblqtaa        AS DECIMAL      NO-UNDO.  
 DEFINE VARIABLE aux_vlsdblpr        AS DECIMAL      NO-UNDO.  
@@ -512,6 +513,7 @@ DO:
             RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                                  OUTPUT aux_vlsddisp,
                                                  OUTPUT aux_vllautom,
+												 OUTPUT aux_vllaucre,
                                                  OUTPUT aux_vlsdbloq,
                                                  OUTPUT aux_vlblqtaa,
                                                  OUTPUT aux_vlsdblpr,
