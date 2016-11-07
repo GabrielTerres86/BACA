@@ -11,6 +11,8 @@
  *							   Softdesk 148330 (Lucas R.)
  *
  *                14/10/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *
+ *				  07/11/2016 - Adicionar keyrand (Lucas Ranghetti)
  */
 ?>
 
@@ -38,7 +40,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="autori.js"></script>
+		<script type="text/javascript" src="autori.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
