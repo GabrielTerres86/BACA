@@ -1487,6 +1487,7 @@ create or replace package body cecred.PCAP0001 is
                vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
                vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
              END IF;
+		  ELSE
             CLOSE cr_craptfc;
           END IF;
 
