@@ -4,8 +4,10 @@
  * DATA CRIAÇÃO : 04/09/2014
  * OBJETIVO     : Biblioteca de funções da tela CADPPRE
  * --------------
- * ALTERAÇÕES   : 03/08/2016 - Auste para utilizar a rotina convertida para encontrar as finalidades de empréstimos
-                              (Andrei - RKAM).
+ * ALTERAÇÕES   : 11/07/2016 - Adicionados novos campos para a fase 3 do projeto de Pre aprovado. (Lombardi)
+ *
+ *                03/08/2016 - Auste para utilizar a rotina convertida para encontrar as finalidades de empréstimos
+                               (Andrei - RKAM).
  *				  
  *				  
  * --------------
@@ -155,16 +157,9 @@ function formataRegra() {
 		var rVllimctr = $('label[for="vllimctr"]');
 		var rVlmulpli = $('label[for="vlmulpli"]');
 		var rVlpercom = $('label[for="vlpercom"]');
+		var rQtdiaver = $('label[for="qtdiaver"]');
 		var rVlmaxleg = $('label[for="vlmaxleg"]');
-
-		var rVllimcra = $('label[for="vllimcra"]');
-		var rVllimcrb = $('label[for="vllimcrb"]');
-		var rVllimcrc = $('label[for="vllimcrc"]');
-		var rVllimcrd = $('label[for="vllimcrd"]');
-		var rVllimcre = $('label[for="vllimcre"]');
-		var rVllimcrf = $('label[for="vllimcrf"]');
-		var rVllimcrg = $('label[for="vllimcrg"]');
-		var rVllimcrh = $('label[for="vllimcrh"]');
+		var rQtmesblq = $('label[for="qtmesblq"]');
 
 		var rQtdevolu = $('label[for="qtdevolu"]');
 		var rQtdiadev = $('label[for="qtdiadev"]');
@@ -173,6 +168,12 @@ function formataRegra() {
 		var rQtepratr = $('label[for="qtepratr"]');
         var rQtestour = $('label[for="qtestour"]');
 		var rQtdiaest = $('label[for="qtdiaest"]');
+		var rQtavlatr = $('label[for="qtavlatr"]');
+		var rVlavlatr = $('label[for="vlavlatr"]');
+		var rQtavlope = $('label[for="qtavlope"]');
+		var rQtcjgatr = $('label[for="qtcjgatr"]');
+		var rVlcjgatr = $('label[for="vlcjgatr"]');
+		var rQtcjgope = $('label[for="qtcjgope"]');
 
 		rCdfinemp.css({width:'200px'});
 		rCdlcremp.css({width:'200px'});
@@ -187,16 +188,9 @@ function formataRegra() {
 		rVllimctr.css({width:'200px'});
 		rVlmulpli.css({width:'200px'});
 		rVlpercom.css({width:'200px'});
+		rQtdiaver.css({width:'330px'});
 		rVlmaxleg.css({width:'200px'});
-
-		rVllimcra.css({width:'200px'});
-		rVllimcrb.css({width:'200px'});
-		rVllimcrc.css({width:'200px'});
-		rVllimcrd.css({width:'200px'});
-		rVllimcre.css({width:'200px'});
-		rVllimcrf.css({width:'200px'});
-		rVllimcrg.css({width:'200px'});
-		rVllimcrh.css({width:'200px'});
+		rQtmesblq.css({width:'330px'});
 
 		rQtdevolu.css({width:'200px'});
 		rQtdiadev.css({width:'200px'});
@@ -205,6 +199,12 @@ function formataRegra() {
 		rQtepratr.css({width:'200px'});
 		rQtestour.css({width:'200px'});
 		rQtdiaest.css({width:'200px'});
+		rQtavlatr.css({width:'200px'});
+		rVlavlatr.css({width:'200px'});
+		rQtavlope.css({width:'200px'});
+		rQtcjgatr.css({width:'200px'});
+		rVlcjgatr.css({width:'200px'});
+		rQtcjgope.css({width:'200px'});
 
 		// Campos
 		var cCdfinemp = $('#cdfinemp');
@@ -221,16 +221,9 @@ function formataRegra() {
 		var cVllimctr = $('#vllimctr');
 		var cVlmulpli = $('#vlmulpli');
 		var cVlpercom = $('#vlpercom');
+		var cQtdiaver = $('#qtdiaver');
 		var cVlmaxleg = $('#vlmaxleg');
-
-		var cVllimcra = $('#vllimcra');
-		var cVllimcrb = $('#vllimcrb');
-		var cVllimcrc = $('#vllimcrc');
-		var cVllimcrd = $('#vllimcrd');
-		var cVllimcre = $('#vllimcre');
-		var cVllimcrf = $('#vllimcrf');
-		var cVllimcrg = $('#vllimcrg');
-		var cVllimcrh = $('#vllimcrh');
+		var cQtmesblq = $('#qtmesblq');
 
 		var cQtdevolu = $('#qtdevolu');
 		var cQtdiadev = $('#qtdiadev');
@@ -239,6 +232,12 @@ function formataRegra() {
 		var cQtepratr = $('#qtepratr');
 		var cQtestour = $('#qtestour');
 		var cQtdiaest = $('#qtdiaest');
+		var cQtavlatr = $('#qtavlatr');
+		var cVlavlatr = $('#vlavlatr');
+		var cQtavlope = $('#qtavlope');
+		var cQtcjgatr = $('#qtcjgatr');
+		var cVlcjgatr = $('#vlcjgatr');
+		var cQtcjgope = $('#qtcjgope');
 
 		cCdfinemp.css({width:'70px'}).addClass('campo pesquisa').setMask('INTEGER','zzzzzzzzz9');
 		cDsfinemp.css({width:'250px'}).addClass('campo');
@@ -254,17 +253,12 @@ function formataRegra() {
 		cVllimctr.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cVlmulpli.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cVlpercom.css({width:'70px'}).addClass('campo').setMask('INTEGER','z9');
+		cQtdiaver.css({width:'25px'}).addClass('campo').setMask('INTEGER','z9');
 		cVlmaxleg.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
-
-		cVllimcra.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVllimcrb.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVllimcrc.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVllimcrd.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVllimcre.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVllimcrf.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVllimcrg.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVllimcrh.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-
+		cQtmesblq.css({width:'25px'}).addClass('campo').setMask('INTEGER','zz9');
+		
+		controlaLayoutTabelaRisco();
+		
 		cQtdevolu.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cQtdiadev.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
 
@@ -272,6 +266,12 @@ function formataRegra() {
         cQtepratr.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cQtestour.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cQtdiaest.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+        cQtavlatr.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+        cVlavlatr.css({width:'70px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+        cQtavlope.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+        cQtcjgatr.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+        cVlcjgatr.css({width:'70px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+        cQtcjgope.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
 		
 		// DIV com o Valor Maximo Legal e Sugestao de Cotas
 		$('#divLimiteCoop').css({'clear':'left','margin-left':'205px','font-size':'11px'});
@@ -285,14 +285,6 @@ function formataRegra() {
 		$('#cddopcao','#frmCab').desabilitaCampo();
 
 		$('#cdfinemp','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#cdlcremp','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#cdlcremp','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				$('#nrmcotas','#frmRegra').focus();
@@ -435,6 +427,14 @@ function formataRegra() {
 		$('#vlpercom','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtdiaver','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#qtdiaver','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				$('#vlmaxleg','#frmRegra').focus();
 				return false;
 			}
@@ -443,69 +443,141 @@ function formataRegra() {
 		$('#vlmaxleg','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#qtmesblq','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#qtmesblq','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
                 acessaOpcaoAba(1);
-				$('#vllimcra','#frmRegra').focus();
+				$('#vllimite_A','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcra','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#vllimite_A','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimcrb','#frmRegra').focus();
+                $('#cdlcremp_A','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcrb','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#cdlcremp_A','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimcrc','#frmRegra').focus();
+                $('#vllimite_B','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcrc','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#vllimite_B','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimcrd','#frmRegra').focus();
+                $('#cdlcremp_B','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcrd','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#cdlcremp_B','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimcre','#frmRegra').focus();
+                $('#vllimite_C','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcre','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#vllimite_C','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimcrf','#frmRegra').focus();
+                $('#cdlcremp_C','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcrf','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#cdlcremp_C','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimcrg','#frmRegra').focus();
+                $('#vllimite_D','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcrg','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#vllimite_D','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimcrh','#frmRegra').focus();
+                $('#cdlcremp_D','#frmRegra').focus();
 				return false;
 			}
 		});
-
-		$('#vllimcrh','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		
+		$('#cdlcremp_D','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#vllimite_E','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#vllimite_E','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#cdlcremp_E','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#cdlcremp_E','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#vllimite_F','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#vllimite_F','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#cdlcremp_F','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#cdlcremp_F','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#vllimite_G','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#vllimite_G','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#cdlcremp_G','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#cdlcremp_G','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#vllimite_H','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#vllimite_H','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+                $('#cdlcremp_H','#frmRegra').focus();
+				return false;
+			}
+		});
+		
+		$('#cdlcremp_H','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
                 acessaOpcaoAba(2);
@@ -513,7 +585,7 @@ function formataRegra() {
 				return false;
 			}
 		});
-
+		
 		$('#' + $("input[type=checkbox][name=dslstali]").attr('id'),'#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
@@ -565,6 +637,48 @@ function formataRegra() {
 
 		$('#qtdiaest','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtavlatr','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#qtavlatr','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#vlavlatr','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#vlavlatr','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtavlope','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#qtavlope','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtcjgatr','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#qtcjgatr','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#vlcjgatr','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#vlcjgatr','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtcjgope','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#qtcjgope','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				confirmaAlteracao();
 				return false;
 			}
@@ -596,6 +710,40 @@ function formataRegra() {
 
 }
 
+function controlaLayoutTabelaRisco() {
+  
+  var divRegistro = $('div.divRegistros');
+  var tabela      = $('table', divRegistro );
+ 
+  divRegistro.css('height','210px');
+  $('#divRiscos').css('width','600px');
+  
+  var ordemInicial = new Array();
+  ordemInicial = [[1,0]];
+
+  var arrayLargura = new Array();
+  arrayLargura[0] = '50px';
+  arrayLargura[1] = '170px';
+  arrayLargura[2] = '260px';
+ 
+  var arrayAlinha = new Array();
+  arrayAlinha[0] = 'center';
+  arrayAlinha[1] = 'center';
+  arrayAlinha[2] = 'center';
+  arrayAlinha[3] = 'center';
+  
+  tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+  $("th", tabela).removeClass();
+  $("th", tabela).unbind('click');
+  $('.headerSort','#frmRegra').removeClass();
+  $('.ordemInicial','#frmRegra').removeClass(); 
+  
+  $('.vllimite').css({'text-align':'right'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+  $('.cdlcremp').addClass('campo pesquisa').css({width:'50px'}).setMask('INTEGER','zzzzzzzzz9');
+  $('.dslcremp').css({width:'170px'}).addClass('campo');
+  
+}
+
 function controlaCampos(op) {
 
     var cTodosCabecalho	= $('input[type="text"],select','#frmCab'); 
@@ -617,16 +765,9 @@ function controlaCampos(op) {
 			$('#vllimctr','#frmRegra').habilitaCampo();
 			$('#vlmulpli','#frmRegra').habilitaCampo();
 			$('#vlpercom','#frmRegra').habilitaCampo();
+			$('#qtdiaver','#frmRegra').habilitaCampo();
 			$('#vlmaxleg','#frmRegra').habilitaCampo();
-
-            $('#vllimcra','#frmRegra').habilitaCampo();
-			$('#vllimcrb','#frmRegra').habilitaCampo();
-			$('#vllimcrc','#frmRegra').habilitaCampo();
-			$('#vllimcrd','#frmRegra').habilitaCampo();
-			$('#vllimcre','#frmRegra').habilitaCampo();
-			$('#vllimcrf','#frmRegra').habilitaCampo();
-			$('#vllimcrg','#frmRegra').habilitaCampo();
-			$('#vllimcrh','#frmRegra').habilitaCampo();
+			$('#qtmesblq','#frmRegra').habilitaCampo();
 
             $('.clsAlinea','#frmRegra').habilitaCampo();
             $('#qtdevolu','#frmRegra').habilitaCampo();
@@ -636,7 +777,17 @@ function controlaCampos(op) {
 			$('#qtepratr','#frmRegra').habilitaCampo();
             $('#qtestour','#frmRegra').habilitaCampo();
 			$('#qtdiaest','#frmRegra').habilitaCampo();
+			$('#qtavlatr','#frmRegra').habilitaCampo();
+			$('#vlavlatr','#frmRegra').habilitaCampo();
+			$('#qtavlope','#frmRegra').habilitaCampo();
+			$('#qtcjgatr','#frmRegra').habilitaCampo();
+			$('#vlcjgatr','#frmRegra').habilitaCampo();
+			$('#qtcjgope','#frmRegra').habilitaCampo();
 
+			
+			$('.cdlcremp').habilitaCampo().addClass('pesquisa');
+			$('.vllimite').habilitaCampo();
+			
             controlaPesquisas();
             
             $('#cdfinemp','#frmRegra').focus();
@@ -656,7 +807,6 @@ function controlaCampos(op) {
 	return false;
 	
 }
-
 
 function btnVoltar(){
 
@@ -688,7 +838,6 @@ function trocaBotao( funcaoSalvar,funcaoVoltar ) {
 	
 	return false;
 }
-
 
 function buscaRegra() {
     
@@ -775,16 +924,9 @@ function alteraRegra() {
 	var vllimctr = $('#vllimctr','#frmRegra').val();
 	var vlmulpli = $('#vlmulpli','#frmRegra').val();
 	var vlpercom = $('#vlpercom','#frmRegra').val();
+	var qtdiaver = $('#qtdiaver','#frmRegra').val();
 	var vlmaxleg = $('#vlmaxleg','#frmRegra').val();
-
-	var vllimcra = $('#vllimcra','#frmRegra').val();
-	var vllimcrb = $('#vllimcrb','#frmRegra').val();
-	var vllimcrc = $('#vllimcrc','#frmRegra').val();
-	var vllimcrd = $('#vllimcrd','#frmRegra').val();
-	var vllimcre = $('#vllimcre','#frmRegra').val();
-	var vllimcrf = $('#vllimcrf','#frmRegra').val();
-	var vllimcrg = $('#vllimcrg','#frmRegra').val();
-	var vllimcrh = $('#vllimcrh','#frmRegra').val();
+	var qtmesblq = $('#qtmesblq','#frmRegra').val();
 
     var dslstali = $("input[type=checkbox][name='dslstali']:checked");
     var vllstali = '';
@@ -796,12 +938,57 @@ function alteraRegra() {
 
 	var qtdevolu = $('#qtdevolu','#frmRegra').val();
 	var qtdiadev = $('#qtdiadev','#frmRegra').val();
-
+	
+	var vllimite_A = $('#vllimite_A','#frmRegra').val();
+	var vllimite_B = $('#vllimite_B','#frmRegra').val();
+	var vllimite_C = $('#vllimite_C','#frmRegra').val();
+	var vllimite_D = $('#vllimite_D','#frmRegra').val();
+	var vllimite_E = $('#vllimite_E','#frmRegra').val();
+	var vllimite_F = $('#vllimite_F','#frmRegra').val();
+	var vllimite_G = $('#vllimite_G','#frmRegra').val();
+	var vllimite_H = $('#vllimite_H','#frmRegra').val();
+	
+	var cdlcremp_A = $('#cdlcremp_A','#frmRegra').val();
+	var cdlcremp_B = $('#cdlcremp_B','#frmRegra').val();
+	var cdlcremp_C = $('#cdlcremp_C','#frmRegra').val();
+	var cdlcremp_D = $('#cdlcremp_D','#frmRegra').val();
+	var cdlcremp_E = $('#cdlcremp_E','#frmRegra').val();
+	var cdlcremp_F = $('#cdlcremp_F','#frmRegra').val();
+	var cdlcremp_G = $('#cdlcremp_G','#frmRegra').val();
+	var cdlcremp_H = $('#cdlcremp_H','#frmRegra').val();
+	
 	var qtctaatr = $('#qtctaatr','#frmRegra').val();
 	var qtepratr = $('#qtepratr','#frmRegra').val();
 	var qtestour = $('#qtestour','#frmRegra').val();
 	var qtdiaest = $('#qtdiaest','#frmRegra').val();
-
+	var qtavlatr = $('#qtavlatr','#frmRegra').val();
+	var vlavlatr = $('#vlavlatr','#frmRegra').val();
+	var qtavlope = $('#qtavlope','#frmRegra').val();
+	var qtcjgatr = $('#qtcjgatr','#frmRegra').val();
+	var vlcjgatr = $('#vlcjgatr','#frmRegra').val();
+	var qtcjgope = $('#qtcjgope','#frmRegra').val();
+	
+	if ((((vllimite_A != '' && vllimite_A != '0,00') && (cdlcremp_A == '' || cdlcremp_A == '0'))     ||
+	    ((cdlcremp_A  != '' && cdlcremp_A != '0')    && (vllimite_A == '' || vllimite_A == '0,00'))) ||
+		(((vllimite_B != '' && vllimite_B != '0,00') && (cdlcremp_B == '' || cdlcremp_B == '0'))     ||
+	    ((cdlcremp_B  != '' && cdlcremp_B != '0')    && (vllimite_B == '' || vllimite_B == '0,00'))) ||
+		(((vllimite_C != '' && vllimite_C != '0,00') && (cdlcremp_C == '' || cdlcremp_C == '0'))     ||
+	    ((cdlcremp_C  != '' && cdlcremp_C != '0')    && (vllimite_C == '' || vllimite_C == '0,00'))) ||
+		(((vllimite_D != '' && vllimite_D != '0,00') && (cdlcremp_D == '' || cdlcremp_D == '0'))     ||
+	    ((cdlcremp_D  != '' && cdlcremp_D != '0')    && (vllimite_D == '' || vllimite_D == '0,00'))) ||
+		(((vllimite_E != '' && vllimite_E != '0,00') && (cdlcremp_E == '' || cdlcremp_E == '0'))     ||
+	    ((cdlcremp_E  != '' && cdlcremp_E != '0')    && (vllimite_E == '' || vllimite_E == '0,00'))) ||
+		(((vllimite_F != '' && vllimite_F != '0,00') && (cdlcremp_F == '' || cdlcremp_F == '0'))     ||
+	    ((cdlcremp_F  != '' && cdlcremp_F != '0')    && (vllimite_F == '' || vllimite_F == '0,00'))) ||
+		(((vllimite_G != '' && vllimite_G != '0,00') && (cdlcremp_G == '' || cdlcremp_G == '0'))     ||
+	    ((cdlcremp_G  != '' && cdlcremp_G != '0')    && (vllimite_G == '' || vllimite_G == '0,00'))) ||
+		(((vllimite_H != '' && vllimite_H != '0,00') && (cdlcremp_H == '' || cdlcremp_H == '0'))     ||
+	    ((cdlcremp_H  != '' && cdlcremp_H != '0')    && (vllimite_H == '' || vllimite_H == '0,00')))){
+		hideMsgAguardo();
+		showError('error','Valor limite e Linha de Cr&eacute;dito devem ser preenchidos!',"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
 	// Executa script de bloqueio através de ajax
 	$.ajax({		
 		type: "POST",
@@ -821,27 +1008,43 @@ function alteraRegra() {
 			vllimctr: vllimctr,
 			vlmulpli: vlmulpli,
 			vlpercom: vlpercom,
+			qtdiaver: qtdiaver,
 			vlmaxleg: vlmaxleg,
-			vllimcra: vllimcra,
-			vllimcrb: vllimcrb,
-			vllimcrc: vllimcrc,
-			vllimcrd: vllimcrd,
-			vllimcre: vllimcre,
-			vllimcrf: vllimcrf,
-			vllimcrg: vllimcrg,
-			vllimcrh: vllimcrh,
-            dslstali: vllstali,
+			qtmesblq: qtmesblq,
+			vllimite_A: vllimite_A,
+			vllimite_B: vllimite_B,
+			vllimite_C: vllimite_C,
+			vllimite_D: vllimite_D,
+			vllimite_E: vllimite_E,
+			vllimite_F: vllimite_F,
+			vllimite_G: vllimite_G,
+			vllimite_H: vllimite_H,
+			cdlcremp_A: cdlcremp_A,
+			cdlcremp_B: cdlcremp_B,
+			cdlcremp_C: cdlcremp_C,
+			cdlcremp_D: cdlcremp_D,
+			cdlcremp_E: cdlcremp_E,
+			cdlcremp_F: cdlcremp_F,
+			cdlcremp_G: cdlcremp_G,
+			cdlcremp_H: cdlcremp_H,
+			dslstali: vllstali,
             qtdevolu: qtdevolu,
             qtdiadev: qtdiadev,
             qtctaatr: qtctaatr,
             qtepratr: qtepratr,
             qtestour: qtestour,
             qtdiaest: qtdiaest,
+            qtavlatr: qtavlatr,
+            vlavlatr: vlavlatr,
+            qtavlope: qtavlope,
+            qtcjgatr: qtcjgatr,
+            vlcjgatr: vlcjgatr,
+            qtcjgope: qtcjgope,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divTela').css('z-index')))");
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
 				try {
@@ -849,7 +1052,7 @@ function alteraRegra() {
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.',"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 				}
 			}		
 	});				
@@ -858,7 +1061,7 @@ function alteraRegra() {
 function controlaPesquisas(){
 
 	// Variável local para guardar o elemento anterior
-	var campoAnterior = '';
+	var campoAnterior = '', campo = '';
 	var bo, procedure, titulo, qtReg, filtros, colunas, varAux, cdlcremp, dslcremp;
 	
 	// Nome do Formulário que estamos trabalhando
@@ -872,16 +1075,18 @@ function controlaPesquisas(){
 	
 	// Percorrendo todos os links
 	$('a','#'+nomeFormulario).each( function(i) {
-
+		
 		if ( !$(this).prev().hasClass('campoTelaSemBorda') ) $(this).css('cursor','pointer');
 
 		$(this).click( function() {
 			if ( $(this).prev().hasClass('campoTelaSemBorda') ) {
 				return false;
 			} else {						
-				campoAnterior = $(this).prev().attr('name');
-
-				/* Finalidade */
+				campoAnterior  = $(this).prev().attr('name');
+				campoPosteiror = $(this).next().attr('name');
+				campoTaxa	   = $(this).next().next().attr('name');
+				
+				// Finalidade
                 if ( campoAnterior == 'cdfinemp' ) {
 					
 					filtros 	= 'Finalidade do Empr.;cdfinemp;30px;S;0|Descri&ccedil&atildeo;dsfinemp;200px;S;|;flgstfin;;;1;N';
@@ -891,33 +1096,34 @@ function controlaPesquisas(){
 					mostraPesquisa("zoom0001", "BUSCAFINEMPR", "Finalidade do Empr&eacutestimo", "30", filtros, colunas, divRotina, '$(\'#cdfinemp\',\'#frmConsulta\').focus();', nomeFormulario);
 
                     return false;
-				}
-
-				/* Linha de Credito */
-                if ( campoAnterior == 'cdlcremp' ) {
+                } else { //campoAnterior == 'cdlcremp_'
 					bo			= 'b1wgen0059.p';
 					procedure	= 'busca_linhas_credito';
 					titulo      = 'Linhas de Cr&eacutedito';
 					qtReg		= '20';
 					varAux      = $('#cdfinemp','#'+nomeFormulario).val();
-					filtros 	= 'C&oacuted. Linha Cr&eacutedito;cdlcremp;30px;S;0|Descri&ccedil&atildeo;dslcremp;200px;S|;'+null+';;N;;N|;'+null+';;N;;N|;'+null+';;N;;N|;cdfinemp;;;'+varAux+';N|;flgstlcr;;;yes;N';
-					colunas 	= 'C&oacutedigo;cdlcremp;15%;right|Linha de Cr&eacutedito;dslcremp;40%;left|Taxa;txbaspre;10%;right|Prest. Max.;nrfimpre;10%;right|Garantia;dsgarant;25%;left';
+					filtros 	= 'C&oacuted. Linha Cr&eacutedito;'+campoAnterior+';30px;S;0|Descri&ccedil&atildeo;'+campoPosteiror+';200px;S|;'+campoTaxa+';;N;;N|;'+null+';;N;;N|;'+null+';;N;;N|;cdfinemp;;;'+varAux+';N|;flgstlcr;;;yes;N';
+					colunas 	= 'C&oacutedigo;cdlcremp;15%;right|Linha de Cr&eacutedito;dslcremp;40%;left|Taxa;txmensal;10%;right|Prest. Max.;nrfimpre;10%;right|Garantia;dsgarant;25%;left';
 
-					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
+					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina,'populaTaxas("'+campoTaxa+'");');
 
 					return false;
 				}
 
 			}
-		});
+	});
 	});
 	
 	return false;
 }
 
+function populaTaxas(campoTaxa){
+	$('#'+campoTaxa).text(document.getElementsByName(campoTaxa)[0].value);
+}
+
 function abreTelaRegra() {
 
-    showMsgAguardo('Aguarde, carregando...');
+	showMsgAguardo('Aguarde, carregando...');
 
     // Executa script atraves de ajax
     $.ajax({		
@@ -1025,7 +1231,7 @@ function confirmarAcaoCarga(acao) {
         showError("error","Favor selecionar uma carga!","Alerta - Ayllos","bloqueiaFundo($('#divRotina'));");
     } else {
         var cddopcao = $('#cddopcao','#frmCab').val();
-        var dsmensag = (acao == 'G' ? 'Todas as cargas com situa&ccedil;&atilde;o bloqueada ser&atilde;o apagadas.<br />Deseja realmente gerar uma nova carga?' :  'Confirma a opera&ccedil;&atilde;o?');
+        var dsmensag = (acao == 'G' ? 'Aten&ccedil;&atilde;o, todas as cargas com situa&ccedil;&atilde;o bloqueada ser&atilde;o apagadas.<br />Deseja realmente gerar uma nova carga?' : 'Confirma a opera&ccedil;&atilde;o?');
         showConfirmacao(dsmensag, 'Confirma&ccedil;&atilde;o - Ayllos', "executarAcaoCarga('" + cddopcao + "','" + acao + "','" + glbIdcarga + "');", 'bloqueiaFundo($(\'#divRotina\'));', 'sim.gif', 'nao.gif');
     }
     return false;

@@ -9,6 +9,7 @@
  * ALTERACOES   :[ 27/07/2013] Controle na liquidacao de contratos (Gabriel).
  * 				 [ 29/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel). 
  * 				 [ 07/07/2015] Ajustes referente Projeto 218 (Carlos Rafael). 	 
+ * 				 [ 14/07/2016] Busca período de bloqueio de limite por refinanceamento da tela CADPRE. Projeto 299 (Lombardi).
  */
 
 session_start();
@@ -24,14 +25,34 @@ $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 $dsctrliq = (isset($_POST['dsctrliq'])) ? $_POST['dsctrliq'] : '';
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 $cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : '';
+$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 
+// Buscar período de bloqueio de limite por refinanceamento da tela CADPRE.
+// Monta o xml de requisição
+$xml  = "";
+$xml .= "<Root>";
+$xml .= " <Dados>";
+$xml .= "    <inpessoa>".$inpessoa."</inpessoa>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "CADPRE" , 'BUSCA_PER_BLOQ_REF', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");	
+$xmlObj    = getObjectXML($xmlResult);	
+
+if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+  $msgErro = $xmlObj->roottag->tags[0]->cdata;
+  exibirErro('error',$msgErro,'Alerta - Ayllos',false);
+}
+
+$qtmesblq = $xmlObj->roottag->tags[0]->cdata;
+echo 'qtmesblq = '.$qtmesblq.';';
 
 //parametro criado para tratar PORTABILIDADE
 if ($operacao != 'PORTAB_I' && $operacao != 'PORTAB_A') {
 
     // exibirErro('error',$dsctrliq,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
     // Monta o xml de requisição
-    $xml .= "<Root>";
+    $xml  = "<Root>";
     $xml .= "	<Cabecalho>";
     $xml .= "		<Bo>b1wgen0002.p</Bo>";
     $xml .= "		<Proc>obtem-dados-liquidacoes</Proc>";
@@ -65,7 +86,7 @@ if ($operacao != 'PORTAB_I' && $operacao != 'PORTAB_A') {
     if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
         exibirErro('error', $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)', false);
     }
-
+	
     $liquidacoes = $xmlObj->roottag->tags[0]->tags;
 } else { //tratamento para PORTABILIDADE 
     switch ($operacao) {
@@ -140,7 +161,6 @@ if (count($liquidacoes) == 0) {
         echo 'arrayLiquidacao' . $identificador . '[\'nrdrecid\'] = "' . getByTagName($liquidacoes[$i]->tags, 'nrdrecid') . '";';
 
         echo 'arrayLiquidacao' . $identificador . '[\'tpemprst\'] = "' . getByTagName($liquidacoes[$i]->tags, 'tpemprst') . '";';
-
 
         echo 'arrayLiquidacoes[' . $i . '] = arrayLiquidacao' . $identificador . ';';
     }
