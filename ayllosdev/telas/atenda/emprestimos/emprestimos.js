@@ -3901,7 +3901,7 @@ function attArray(novaOp, cdcooper) {
     }
 
     controlaOperacao(novaOp);
-
+    glb_codigoOperadorLiberacao = '';
     return false;
 }
 
@@ -4345,6 +4345,7 @@ function insereAlienacao(operacao, opContinua) {
     arrayAlienacoes[i]["lsbemfin"] = '( ' + contAlienacao + ' Bem )';
 
     controlaOperacao(operacao);
+    glb_codigoOperadorLiberacao = '';
     return false;
 
 }
