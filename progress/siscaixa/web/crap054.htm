@@ -3,7 +3,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 05/09/2016
+   Data    : Marco/2001                      Ultima atualizacao: 03/11/2016
 
   Alteracoes: 	03/07/2009 - Aumento do campo Operador (Diego).
   
@@ -27,6 +27,9 @@
 			                 nas rotinas do caixa online SD 474875 (Tiago/Elton).               
     
                 12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                 
+                03/11/2016 - Ajustes para TAB e ESC funcionarem de acrodo com o padrão
+                             de navegação e ajustado a chamada do callBlass para callBLass 
+                             pq nao funcionava (Tiago/Elton SD535217).
 ----------------------------------------------------------------------------------------------->
 
 <html>
@@ -545,8 +548,8 @@ function cancelFormulario() {
 function enviaFormularioPinPad(strInput, strEvent) { 
     var strSenha = document.getElementById('v_senhaCartao').value;
     
-    if (window.event.keyCode == 13 && strSenha != "" && strSenha != " ") {
-        fechaConexaoPinpadNovo(cnxPinpad);
+    if (window.event.keyCode == 13 && strSenha != "" && strSenha != " ") { 
+		fechaConexaoPinpadNovo(cnxPinpad);
         submitFormulario(); 
     }
 	
@@ -590,7 +593,7 @@ $("#v_conta").bind("keydown", function (e) {
     if (code == 13) {
         changeConta();
         e.preventDefault();
-    }
+}
 
     // Seta máscara ao campo
     return $("#v_conta").setMaskOnKeyDown("INTEGER", "zzzz.zzz.z", ".", e);

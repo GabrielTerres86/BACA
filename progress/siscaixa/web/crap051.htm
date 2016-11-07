@@ -18,7 +18,10 @@
               05/09/2016 - Melhoria para usar copiar e colar o numero de conta
 			               nas rotinas do caixa online SD 474875 (Tiago/Elton). 
 
-              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                  
+              12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).        
+    
+              03/11/2016 - Ajustes para TAB e ESC funcionarem de acrodo com o padrão
+                           de navegação (Tiago/Elton SD535217).          
 -->
 
 <html>
@@ -41,7 +44,7 @@
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event)" method=post>
 
 <input type="hidden" name="v_msg">
