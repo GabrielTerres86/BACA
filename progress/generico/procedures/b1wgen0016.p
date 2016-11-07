@@ -11782,9 +11782,9 @@ PROCEDURE aprova_trans_pend:
                           ,INPUT  0            /* par_cddbanco */
                           ,INPUT  0            /* par_cdageban */
                           ,INPUT  0            /* par_nrctatrf */
-                          ,INPUT  11           /* par_cdtiptra */
+                          ,INPUT  10           /* par_cdtiptra - DARF/DAS */
                           ,INPUT  par_cdoperad /* par_cdoperad */
-                          ,INPUT  11           /* par_tpoperac */
+                          ,INPUT  10           /* par_tpoperac - DARF/DAS */
                           ,INPUT  1            /* par_flgvalid*/
                           ,INPUT  aux_dsorigem /* par_dsorigem */
                           ,INPUT  0
