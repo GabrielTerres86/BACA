@@ -617,6 +617,9 @@
 			               ver na tabela de finalidade se eh realmente uma
 						   portabilidade de credito para ai entao bloquear
 						   a alteracao do numero da proposta (Tiago/Thiago SD466077)
+
+              13/07/2016 - Ajuste na validaçao da Linha de credito na procedure valida-dados-gerais. Agora
+                           valida pelo metodo EMPR0002.pc_busca_linha_credito_prog.
               
               07/09/2016 - Alterada forma de calculo do atraso na rotina proc_qualif_operacao
                            pois estava somando 2x o numero calculado de parcelas, impactando
@@ -3130,6 +3133,7 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_permnovo AS LOGI                           NO-UNDO.
     DEF   VAR        aux_dsoperac AS CHAR                           NO-UNDO.
     DEF   VAR        aux_inlcrmcr AS CHAR                           NO-UNDO.
+    DEF   VAR        aux_lslcremp AS CHAR                           NO-UNDO.
     DEF   VAR        aux_nrctrliq LIKE crawepr.nrctrliq             NO-UNDO.
     DEF   VAR        h-b1wgen0110 AS HANDLE                         NO-UNDO.
     DEF   VAR        h-b1wgen0188 AS HANDLE                         NO-UNDO.
@@ -3552,19 +3556,44 @@ PROCEDURE valida-dados-gerais:
 
              END.
 
-        FOR EACH crappre WHERE crappre.cdcooper = par_cdcooper NO-LOCK:
-        
             /* InternetBank e TAA nao pode validar a linha de credito */ 
             IF par_idorigem <> 3 AND par_idorigem <> 4 THEN
                DO:
-                   IF par_cdlcremp = crappre.cdlcremp THEN
-                      DO:
-                          ASSIGN aux_dscritic = "Linha de credito nao permitida".
-                          LEAVE.
-                      END.
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                 
+                 /* Efetuar a chamada a rotina Oracle  */
+                 RUN STORED-PROCEDURE pc_busca_linha_credito_prog
+                     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, 
+                                                          INPUT ?,
+                                                          INPUT ?,
+                                                         OUTPUT "",  /* Cdigos dos riscos */
+                                                         OUTPUT ""). /* Descrição da crítica */  
+
+                 /* Fechar o procedimento para buscarmos o resultado */ 
+                 CLOSE STORED-PROC pc_busca_linha_credito_prog
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                 
+                 /* Busca resultado e possiveis erros */ 
+                 ASSIGN aux_cdcritic = 0
+                        aux_lslcremp = ""
+                        aux_dscritic = ""
+                        aux_lslcremp = pc_busca_linha_credito_prog.pr_lslcremp
+                                       WHEN pc_busca_linha_credito_prog.pr_lslcremp <> ?
+                        aux_dscritic = pc_busca_linha_credito_prog.pr_dscritic
+                                       WHEN pc_busca_linha_credito_prog.pr_dscritic <> ?.
+                                       
+                 IF INDEX (aux_lslcremp, STRING(par_cdlcremp)) > 0 THEN
+                        DO:
+                            ASSIGN aux_dscritic = "Linha de credito nao permitida".
+                            LEAVE.
+                        END.
 
                END. /* END IF par_idorigem <> 3 AND par_idorigem <> 4 */
 
+        FOR EACH crappre WHERE crappre.cdcooper = par_cdcooper NO-LOCK:
+        
             IF par_cdfinemp     = crappre.cdfinemp AND 
                crapass.inpessoa = crappre.inpessoa THEN
                DO:
@@ -6542,6 +6571,7 @@ PROCEDURE altera-valor-proposta:
 
                /* Busca a carga ativa */
                RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
                                                     OUTPUT aux_idcarga).
     
                IF VALID-HANDLE(h-b1wgen0188) THEN
