@@ -14,6 +14,10 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
   --
   --        Alteracoes: 29/10/2015 - Incluido nova condicao na busca de Regionais,
   --                                 "AND reg.cddregio NOT IN (9,999)" (Jean Michel). 
+  --                                 
+  --                    19/10/2016 - Incluido chamada da pc_informa_acesso_progrid na
+  --                                 procedure pc_redir_acao_prgd para registro de LOG 
+  --                                 em qualquer acesso as rotinas (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure que será a interface entre o Oracle e sistema Web
@@ -84,7 +88,7 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                        ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                        ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                        ,pr_des_erro OUT VARCHAR2); --> Descricao do Erro
-                        
+
   /* Procedure para listar os eixos do sistema */
   PROCEDURE pc_lista_eixo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -115,11 +119,8 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                            ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro                                              
-
-  /* Procedure Envio Email de Evento sem Local */
-  --PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                                                                     
-  
+                           ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro    
+                           
   /* Procedure para retornar data base da agenda da cooperativa */
   PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
                         ,pr_idevento IN VARCHAR2     --> Ide do evento
@@ -131,8 +132,9 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                         ,pr_nmdcampo OUT VARCHAR2    --> Nome do campo com erro
                         ,pr_des_erro OUT VARCHAR2);  --> Descricao do Erro
                         
-  --> Rotina de envio de email de eventos sem local de realização
-  PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);     
+  /* Informação do modulo em execução na sessão do Progrid */
+  PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
+                                     ,pr_action IN VARCHAR2 DEFAULT NULL);                             
                          
 END PRGD0001;
 /
@@ -143,7 +145,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web PROGRID
   --  Sigla    : PRGD0001
   --  Autor    : Jean Michel
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 29/10/2015
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 19/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -167,6 +169,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   --        Alteracoes: 29/10/2015 - Incluido nova condicao na busca de Regionais,
   --                                 "AND reg.cddregio NOT IN (9,999)" (Jean Michel).
   --
+  --                    19/10/2016 - Incluido chamada da pc_informa_acesso_progrid na
+  --                                 procedure pc_redir_acao_prgd para registro de LOG 
+  --                                 em qualquer acesso as rotinas (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para validar ID do cookie da sessao
@@ -233,7 +238,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       -- Consulta registro de sessao aberta
       OPEN cr_gnapses(pr_cdcooper => pr_cdcooper,
                       pr_cdoperad => pr_cdoperad,
-                      pr_dtmvtolt => to_date(SYSDATE, 'dd/mm/RRRR'),
+                      pr_dtmvtolt => TRUNC(SYSDATE),
                       pr_idcokses => pr_idcokses);
     
       FETCH cr_gnapses
@@ -679,7 +684,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2013.                   Ultima atualizacao: 03/03/2015
+    --  Data     : Maio/2013.                   Ultima atualizacao: 19/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -692,6 +697,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --                            do tipo varchar2 (Tiago).                                       
     --
     --               09/12/2015 - Inclusao das acoes de listagem de eixo,tema,evento (Carlos Rafael Tanholi).                               
+    --
+    --               19/10/2016 - Incluido chamada da pc_informa_acesso_progrid para registro de LOG
+    --                            (Jean Michel) 
     -- .............................................................................
   BEGIN
     DECLARE
@@ -797,6 +805,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     
       vr_sql := vr_sql || rw_craprdr.nmproced || '(';
     
+      pc_informa_acesso_progrid(pr_module => vr_nmdatela || '|' || vr_cdcooper || '|' ||
+                                             vr_cdoperad || '|' || vr_nmdeacao || '|'
+                                            ||vr_idsistem || '|' || vr_cddopcao
+                               ,pr_action => rw_craprdr.nmpackag || '.' || rw_craprdr.nmproced);
+
       -- Verifica se existem parâmetros adicionais criados
       IF rw_craprdr.lstparam IS NOT NULL THEN
         -- Quebra a string de parametros
@@ -1193,10 +1206,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     DECLARE
     
       -- Cursores
-      CURSOR cr_crapage(vr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT age.cdcooper, age.cddregio, age.cdagenci, age.nmresage
           FROM crapage age
-         WHERE (age.cdcooper = vr_cdcooper OR vr_cdcooper = 0)
+         WHERE (age.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
            AND (age.cddregio = pr_cddregio OR pr_cddregio = 0)
            AND (age.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
            AND age.cdagenci NOT IN (90, 91)
@@ -1427,7 +1440,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
        ORDER BY edp.nmevento;
         
       rw_crapedp_age cr_crapedp_age%ROWTYPE;
-        
+            
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_coop_age(pr_cdcoop_agenci IN VARCHAR2) IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -1505,318 +1518,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
 
   END pc_lista_evento;
-
-  --> Rotina de envio de email de eventos sem local de realização
-  PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2)  IS
-    -- ..........................................................................
-    --
-    --  Programa : pc_envia_email_evento_local
-    --  Sistema  : Rotinas gerais
-    --  Sigla    : GENE
-    --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Junho/2016.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --  Frequencia: Sempre que for chamado
-    --  Objetivo  : Procedure envio de email de eventos sem local de realização
-    --
-    --  Alteracoes: 
-    --              
-    --
-    --              
-    --              
-    -- .............................................................................
-
-    --------> CURSORES <--------
-    -- Cursor para buscar a quantidade de dias e os endereços de email para envio 
-    CURSOR cr_parametro IS
-      SELECT cp.cdcooper
-            ,cp.dsemlesl
-            ,cp.qtdiapee
-            ,cp.qtdiasee
-            ,cp.qtdiatee
-        FROM crapppc cp
-       WHERE cp.idevento = 1
-         AND cp.dtanoage = (SELECT MAX(g.dtanoage)
-                              FROM gnpapgd g
-                             WHERE g.idevento = cp.idevento
-                               AND g.cdcooper = cp.cdcooper)
-     ORDER BY cp.cdcooper;
+  
                        
-    -- Cursor para verificar se existem eventos sem local de realização informado
-    CURSOR cr_evento(pr_qtdiaeml in number,pr_cdcooper in number) IS
-      SELECT ca.nmresage
-            ,ce.nmevento
-            ,ce.cdevento
-            ,c.dtinieve
-            ,c.dtanoage
-            ,c.cdcooper
-            ,co.nmrescop
-            ,TRIM(ca.dsdemail) dsdemail
-        FROM crapadp c
-            ,crapedp ce
-            ,crapage ca
-            ,crapcop co
-       WHERE c.idstaeve IN (1, 3, 6) --1 - AGENDADO, 3 - TRANSFERIDO, 6 - ACRESCIDO 
-         AND trunc(c.dtinieve) = trunc(SYSDATE + pr_qtdiaeml)
-         AND c.cdcooper = pr_cdcooper
-         AND nvl(c.cdlocali, 0) = 0
-         AND ce.idevento = 1
-         AND ce.tpevento NOT IN (10, 11) -- EAD
-         AND ce.idevento = c.idevento
-         AND ce.cdcooper = c.cdcooper
-         AND ce.dtanoage = c.dtanoage
-         AND ce.cdevento = c.cdevento
-         AND ca.cdcooper = c.cdcooper
-         AND ca.cdagenci = c.cdagenci
-         AND co.cdcooper = c.cdcooper
-       ORDER BY 1,2,3;
-
-    -- Variável de críticas
-    vr_dscritic      VARCHAR2(10000);
-
-    -- Tratamento de erros
-    vr_exc_saida     EXCEPTION;
-    
-    -- Variaveis gerais
-    vr_dstexto  VARCHAR2(5000); --> Texto que sera enviado no email
-    vr_emaildst VARCHAR2(400);  --> Endereco do e-mail de destino
-    vr_assunto  VARCHAR2(200);  --> Assunto do email
-    vr_dscorpo  VARCHAR2(5000); --> Corpo que sera enviado no email  
-  
-    -- Gerar log
-    PROCEDURE pc_gera_log (pr_dscritic IN VARCHAR2) IS
-  BEGIN
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                 pr_ind_tipo_log => 2, --> erro tratado
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' - PRGD0001.pc_envia_email_evento_local --> ' || pr_dscritic,
-                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
-    END pc_gera_log;
-  
-  BEGIN
-
-    -------------------------------------------------------------
-    -- Esta Rotina deverá ser executada a 01:00 horas da manha --
-    -------------------------------------------------------------
-    --> Buscar parametrização por cooperativa
-    FOR rw_parametro in cr_parametro LOOP
-      -- Primeiro envio de email
-      -- Busca os eventos para envio do email
-      FOR rw_evento in cr_evento(pr_qtdiaeml => rw_parametro.qtdiapee,
-                                 pr_cdcooper => rw_parametro.cdcooper) LOOP
-        
-        BEGIN  
-          vr_assunto := 'Evento sem local cadastrado – ' || rw_evento.nmrescop;
-          vr_dscorpo :=  'O evento <b>'||rw_evento.nmevento||'</b> do dia '||to_char(rw_evento.dtinieve,'dd/mm/yyyy')||
-                         ' do PA '||rw_evento.nmresage ||' não possui local de realização informado.<br><br>';
-          vr_dscorpo :=  vr_dscorpo||'Caso haja a necessidade de alguma alteração, por favor, envie sua solicitação via Softdesk o quanto antes.<br>';
-
-          -- Se existe endereço de email
-          -- Envia o email para o responsável do PA
-          IF rw_evento.dsdemail is not null THEN
-                    
-            -- Destinatário do email
-            vr_emaildst := rw_evento.dsdemail;      
-            vr_dstexto := '<b>ATENÇÃO!</b><br><br>';
-            vr_dscorpo := vr_dstexto || vr_dscorpo; 
-            
-          ELSE
-            -- Se o PA não tem email cadastrado, envia o email para o endereço cadastrado na tela de parametros do progrid
-            vr_emaildst:= rw_parametro.dsemlesl;
-
-            vr_dstexto := '<b>ESTE AVISO FOI GERADO POIS O PA ESTÁ SEM ENDEREÇO DE E-MAIL CADASTRADO NO SISTEMA.</b><br><br>';
-            vr_dstexto :=  vr_dstexto||'Favor encaminhar ao responsável para providências da seguinte pendência:<br><br>';
-            
-            vr_dscorpo := vr_dstexto || vr_dscorpo;            
-            vr_dscorpo := vr_dscorpo||'* Pedimos também que seja informado o e-mail de contato do PA.<br>';
-
-          END IF;
-                                 
-          -- Se existe evento sem local, envia o email
-          IF vr_dscorpo IS NOT NULL AND 
-            vr_emaildst IS NOT NULL THEN
-            -- Enviar e-mail dos dados deste sinistro
-            gene0003.pc_solicita_email(pr_cdprogra        => 'PRGD0001' --> Programa conectado
-                                      ,pr_des_destino     => vr_emaildst --> Um ou mais detinatários separados por ';' ou ','
-                                      ,pr_des_assunto     => vr_assunto --> Assunto do e-mail
-                                      ,pr_des_corpo       => vr_dscorpo --> Corpo (conteudo) do e-mail
-                                      ,pr_des_anexo       => NULL --> Um ou mais anexos separados por ';' ou ','
-                                      ,pr_flg_remove_anex => NULL --> Remover os anexos passados
-                                      ,pr_flg_log_batch   => NULL --> Incluir no log a informação do anexo?
-                                      ,pr_flg_enviar      => 'N'  --> Enviar o e-mail na hora
-                                      ,pr_des_erro        => vr_dscritic) ;                                  
-            -- Caso encontre alguma critica no envio do email                          
-            IF vr_dscritic IS NOT NULL THEN
-              vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
-              pc_gera_log (pr_dscritic => vr_dscritic);
-              vr_dscritic := NULL;
-              continue;
-            END IF;
-          END IF;  
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
-            pc_gera_log (pr_dscritic => vr_dscritic);
-            vr_dscritic := NULL;
-            continue; 
-        END;
-          
-      END LOOP;
-      
-      -- SEGUNDO ENVIO DO EMAIL
-      -- Busca os eventos para envio do email
-      FOR rw_evento in cr_evento(pr_qtdiaeml => rw_parametro.qtdiasee,
-                                 pr_cdcooper => rw_parametro.cdcooper) LOOP
-      
-        BEGIN  
-          vr_assunto := '2º aviso - Evento sem local cadastrado – ' || rw_evento.nmrescop;        
-          vr_dscorpo := ' <b>Este é o segundo aviso que o Posto de Atendimento está recebendo.</b><br><br>';
-          vr_dscorpo := vr_dscorpo || 'O evento <b>'||rw_evento.nmevento||'</b> do dia '||to_char(rw_evento.dtinieve,'dd/mm/yyyy')||
-                         ' do PA '||rw_evento.nmresage ||' ainda não possui local de realização informado.<br><br>';
-          vr_dscorpo :=  vr_dscorpo||'Solicitamos que, por gentileza, seja cadastrado para evitarmos problemas futuros.<br>';
-          
-          -- Se existe endereço de email
-          -- Envia o email para o responsável do PA
-          IF rw_evento.dsdemail is not null THEN
-            
-            -- Destinatário do email
-            vr_emaildst := rw_evento.dsdemail;  
-            IF rw_parametro.dsemlesl IS NOT NULL THEN
-               vr_emaildst := vr_emaildst||';'||rw_parametro.dsemlesl;      
-            END IF;
-
-            vr_dstexto := '<b>ATENÇÃO!</b><br><br>';        
-            vr_dscorpo := vr_dstexto || vr_dscorpo; 
-
-          ELSE
-        
-            -- Se o PA não tem email cadastrado, envia o email para o endereço cadastrado na tela de parametros do progrid
-            vr_emaildst:=rw_parametro.dsemlesl;
-
-            vr_dstexto := '<b>ESTE AVISO FOI GERADO POIS O PA ESTÁ SEM ENDEREÇO DE E-MAIL CADASTRADO NO SISTEMA.</b><br><br>';
-            vr_dstexto :=  vr_dstexto||'Favor encaminhar ao responsável para providências da seguinte pendência:<br><br>';
-
-            vr_dscorpo := vr_dstexto || vr_dscorpo;        
-            vr_dscorpo :=  vr_dscorpo||'* Pedimos também que seja informado o e-mail de contato do PA.<br>';
-
-          END IF;
-
-          -- Se existe evento sem local, envia o email
-          IF vr_dscorpo IS NOT NULL AND 
-             vr_emaildst IS NOT NULL THEN
-            -- Enviar e-mail dos dados deste sinistro
-            gene0003.pc_solicita_email(pr_cdprogra        => 'PRGD0001' --> Programa conectado
-                                      ,pr_des_destino     => vr_emaildst --> Um ou mais detinatários separados por ';' ou ','
-                                      ,pr_des_assunto     => vr_assunto --> Assunto do e-mail
-                                      ,pr_des_corpo       => vr_dscorpo --> Corpo (conteudo) do e-mail
-                                      ,pr_des_anexo       => NULL --> Um ou mais anexos separados por ';' ou ','
-                                      ,pr_flg_remove_anex => NULL --> Remover os anexos passados
-                                      ,pr_flg_log_batch   => NULL --> Incluir no log a informação do anexo?
-                                      ,pr_flg_enviar      => 'N'  --> Enviar o e-mail na hora
-                                      ,pr_des_erro        => vr_dscritic) ;                                  
-            -- Caso encontre alguma critica no envio do email                          
-            IF vr_dscritic IS NOT NULL THEN
-              vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
-              pc_gera_log (pr_dscritic => vr_dscritic);
-              vr_dscritic := NULL;
-              continue;
-            END IF;
-          END IF;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
-            pc_gera_log (pr_dscritic => vr_dscritic);
-            vr_dscritic := NULL;
-            continue; 
-        END;  
-      END LOOP;
-      
-       -- TERCEIRO ENVIO DO EMAIL
-      -- Busca os eventos para envio do email
-      FOR rw_evento in cr_evento(pr_qtdiaeml => rw_parametro.qtdiatee,
-                                 pr_cdcooper => rw_parametro.cdcooper) LOOP
-        
-        BEGIN  
-          vr_assunto := 'Aviso final - Evento sem local cadastrado - ' || rw_evento.nmrescop;        
-          vr_dscorpo := ' <b>Já foram enviados dois comunicados ao Posto de Atendimento.</b><br><br>';        
-          vr_dscorpo :=  vr_dscorpo||'Ainda não foi efetuado o cadastro de local para o evento <b>'||rw_evento.nmevento||'</b> do dia '||to_char(rw_evento.dtinieve,'dd/mm/yyyy')||
-                         ' do PA '||rw_evento.nmresage ||'.<br><br>';
-          --vr_dscorpo :=  vr_dscorpo||'Caso não seja cadastrado o local, não haverá a impressão do material de divulgação.<br>';
-          vr_dscorpo :=  vr_dscorpo||'Caso o local não seja cadastrado HOJE, teremos problemas na impressão dos'
-                         || ' materiais de divulgação e na comunicação com os convidados e ministrantes.<br>';
-          
-          -- Se existe endereço de email
-          -- Envia o email para o responsável do PA
-          IF rw_evento.dsdemail is not null THEN
-            
-            -- Destinatário do email
-            vr_emaildst := rw_evento.dsdemail;
-            IF rw_parametro.dsemlesl IS NOT NULL THEN
-               vr_emaildst := vr_emaildst||';'||rw_parametro.dsemlesl;      
-            END IF;   
-            vr_dstexto := '<b><font color = "FF0000">ATENÇÃO!</font></b><br><br>';
-            
-            vr_dscorpo := vr_dstexto || vr_dscorpo; 
-          ELSE
-            
-            -- Se o PA não tem email cadastrado, envia o email para o endereço cadastrado na tela de parametros do progrid
-            vr_emaildst:=rw_parametro.dsemlesl;
-            vr_dstexto := '<b>ESTE AVISO FOI GERADO POIS O PA ESTÁ SEM ENDEREÇO DE E-MAIL CADASTRADO NO SISTEMA.</b><br><br>';
-
-            vr_dstexto := vr_dstexto||'Favor encaminhar ao responsável para providências da seguinte pendência:<br><br>';        
-            vr_dscorpo := vr_dstexto || vr_dscorpo;        
-            vr_dscorpo := vr_dscorpo||'* Pedimos também que seja informado o e-mail de contato do PA.<br>';
-            
-          END IF;
-                                 
-          -- Se existe evento sem local, envia o email
-          IF vr_dscorpo IS NOT NULL AND 
-             vr_emaildst IS NOT NULL THEN
-            -- Enviar e-mail dos dados deste sinistro
-            gene0003.pc_solicita_email(pr_cdprogra        => 'PRGD0001' --> Programa conectado
-                                      ,pr_des_destino     => vr_emaildst --> Um ou mais detinatários separados por ';' ou ','
-                                      ,pr_des_assunto     => vr_assunto --> Assunto do e-mail
-                                      ,pr_des_corpo       => vr_dscorpo --> Corpo (conteudo) do e-mail
-                                      ,pr_des_anexo       => NULL --> Um ou mais anexos separados por ';' ou ','
-                                      ,pr_flg_remove_anex => NULL --> Remover os anexos passados
-                                      ,pr_flg_log_batch   => NULL --> Incluir no log a informação do anexo?
-                                      ,pr_flg_enviar      => 'N'  --> Enviar o e-mail na hora
-                                      ,pr_des_erro        => vr_dscritic) ;                                  
-            -- Caso encontre alguma critica no envio do email                          
-            IF vr_dscritic IS NOT NULL THEN
-              vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
-              pc_gera_log (pr_dscritic => vr_dscritic);
-              vr_dscritic := NULL;
-              continue;
-            END IF;
-          END IF;  
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possivel enviar email sobre o evento '||rw_evento.cdevento||': '||vr_dscritic;
-            pc_gera_log (pr_dscritic => vr_dscritic);
-            vr_dscritic := NULL;
-            continue; 
-        END;
-      END LOOP;
-  
-    END LOOP;
-    
-    COMMIT;
-      
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-      -- Atualiza variavel de retorno
-      pr_dscritic := vr_dscritic;
-      pc_gera_log (pr_dscritic => vr_dscritic);
-    WHEN OTHERS THEN
-      -- Efetuar retorno do erro não tratado
-      pr_dscritic := sqlerrm;
-      pc_gera_log (pr_dscritic => vr_dscritic);    
-  END pc_envia_email_evento_local;
-  ----------------*/
-
   /* Procedure para retornar data base da agenda da cooperativa */
   PROCEDURE pc_retanoage(pr_cdcooper IN VARCHAR2     --> Codigo da Cooperativa
                         ,pr_idevento IN VARCHAR2     --> Ide do evento
@@ -1846,7 +1549,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --              
     --              
     -- .............................................................................
-
+    
     -- Cursores
     --> Buscar agenda da cooperativa
     CURSOR cr_gnpapgd IS
@@ -1886,7 +1589,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
        
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><dtanoage>' || vr_dtanoage || '</dtanoage></Root>');
-
+                                     
     END IF;    
     
   EXCEPTION
@@ -1897,6 +1600,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
 
   END pc_retanoage;  
   
+  /* Informação do modulo em execução na sessão */
+  PROCEDURE pc_informa_acesso_progrid(pr_module IN VARCHAR2
+                                     ,pr_action IN VARCHAR2 DEFAULT NULL) IS
+  BEGIN
+    CECRED.GENE0001.pc_informa_acesso(pr_module => pr_module
+                                     ,pr_action => pr_action);
+  END pc_informa_acesso_progrid;
 
 END PRGD0001;
 /

@@ -45,7 +45,7 @@
    NomeDoProgramaPrincipal  = '/wpgd0013.w';
   
 </script>
-<script SRC="/modelo/js/funcoes.js"></script>
+<script SRC="/cecred/js/funcoes.js"></script>
 
 <script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
 <script type="text/javascript" src="/cecred/scripts/jquery.maskedinput.js"></script>
@@ -150,7 +150,7 @@
                                               <td height="25" align="center" valign="bottom" colspan="6">
                                                   <table border="0" align="center" cellpadding="1" cellspacing="1">
                                                   <tr>
-                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return Incluir()"></th>
+                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_limpar.gif" onClick="return Incluir()"></th>
                             <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_salvar.gif"  onClick="return Salvar()"></th>
                             <th scope="col"><div id="btexclui" align="center"><img style="cursor:hand"; src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></div></th>
                             <th scope="col"><div id="btpesqui" align="center"><img style="cursor:hand"; src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P',document.form.aux_idevento.value)"></div></th>
@@ -524,7 +524,7 @@ function validaCampos(campo){
 
 function MostraPACs()
 {
-
+   
 
    for (var i=document.all.aux_cdagenci.options.length; i>=0; i--)
       document.all.aux_cdagenci.remove(i); 
