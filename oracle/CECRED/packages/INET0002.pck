@@ -6515,7 +6515,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  vr_dscod_barras := rw_tbpagto_darf_das_trans_pend.dscod_barras; -- Código de Barras
                ELSIF vr_tpcaptura = 2 THEN 
                  vr_dtapuracao      := rw_tbpagto_darf_das_trans_pend.dtapuracao;
-                 vr_nrcpfgui        := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbpagto_darf_das_trans_pend.nrcpfcgc,pr_inpessoa => 1);
+                 vr_nrcpfgui        := rw_tbpagto_darf_das_trans_pend.nrcpfcgc;
                  vr_cdtributo       := NVL(rw_tbpagto_darf_das_trans_pend.cdtributo,0);
                  vr_nrrefere        := NVL(rw_tbpagto_darf_das_trans_pend.nrrefere,0);
                  vr_dtvencto        := TO_CHAR(rw_tbpagto_darf_das_trans_pend.dtvencto,'dd/mm/RRRR');
@@ -6746,7 +6746,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
             ELSIF vr_tpcaptura = 2 THEN
               vr_xml_auxi := vr_xml_auxi
               || '<dados_campo><label>Período de Apuração</label><valor>'||TO_CHAR(vr_dtapuracao,'dd/mm/RRRR')||'</valor></dados_campo>'
-              || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||vr_nrcpfgui||'</valor></dados_campo>'
+              || '<dados_campo><label>Número do CPF ou CNPJ</label><valor>'||TO_CHAR(vr_nrcpfgui)||'</valor></dados_campo>'
               || '<dados_campo><label>Código da Receita</label><valor>'||vr_cdtributo||'</valor></dados_campo>';
               
               vr_xml_auxi := vr_xml_auxi   

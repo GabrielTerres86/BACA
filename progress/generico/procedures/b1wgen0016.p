@@ -1441,7 +1441,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     ASSIGN aux_dtdebito = (IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN "Nesta Data" ELSE STRING(tt-tbpagto_darf_das_trans_pend.dtdebito,"99/99/9999"))
 						   aux_vllantra = tt-tbpagto_darf_das_trans_pend.vlpagamento.
                            
-                    IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? THEN 
+                    IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? AND
+					   TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> "" THEN 
                       ASSIGN aux_dscedent = TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto).
                     ELSE DO: 
                       IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
