@@ -84,7 +84,7 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                        ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                        ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                        ,pr_des_erro OUT VARCHAR2); --> Descricao do Erro
-
+                        
   /* Procedure para listar os eixos do sistema */
   PROCEDURE pc_lista_eixo(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -115,8 +115,8 @@ CREATE OR REPLACE PACKAGE PROGRID.PRGD0001 IS
                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                            ,pr_retxml   IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro    
-                           
+                           ,pr_des_erro OUT VARCHAR2);           --> Descricao do Erro                                              
+
   /* Procedure Envio Email de Evento sem Local */
   --PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2);                                                                     
   
@@ -1173,7 +1173,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --  Sistema  : Rotinas para listar os pa's do sistema por cooperativa ou regional
     --  Sigla    : GENE
     --  Autor    : Jean Michel
-    --  Data     : Julho/2015.                   Ultima atualizacao: --/--/----
+    --  Data     : Julho/2015.                   Ultima atualizacao: 02/08/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1185,20 +1185,23 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --
     --              Conforme solicitacao do Marcio implementei a consistencia para o carregamento de agencias
     --              com a flag de habilitadas para o PROGRID igual a 1 (Carlos Rafael Tanholi - 17/12/2015)
+    --
+    --              02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel. (Jaison/Anderson)
+    --
     -- .............................................................................
   BEGIN
     DECLARE
     
       -- Cursores
-      CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      CURSOR cr_crapage(vr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT age.cdcooper, age.cddregio, age.cdagenci, age.nmresage
           FROM crapage age
-         WHERE (age.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
+         WHERE (age.cdcooper = vr_cdcooper OR vr_cdcooper = 0)
            AND (age.cddregio = pr_cddregio OR pr_cddregio = 0)
            AND (age.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
            AND age.cdagenci NOT IN (90, 91)
            AND age.flgdopgd = 1
-           AND age.insitage = 1
+           AND age.insitage IN (1,3) -- 1-Ativo ou 3-Temporariamente Indisponivel
          ORDER BY age.nmresage;
     
       rw_crapage cr_crapage%ROWTYPE;
@@ -1424,7 +1427,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
        ORDER BY edp.nmevento;
         
       rw_crapedp_age cr_crapedp_age%ROWTYPE;
-            
+        
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_coop_age(pr_cdcoop_agenci IN VARCHAR2) IS
       SELECT DISTINCT edp.cdevento, edp.nmevento
@@ -1502,7 +1505,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     END;
 
   END pc_lista_evento;
-  
+
   --> Rotina de envio de email de eventos sem local de realização
   PROCEDURE pc_envia_email_evento_local(pr_dscritic OUT VARCHAR2)  IS
     -- ..........................................................................
@@ -1584,7 +1587,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   
     -- Gerar log
     PROCEDURE pc_gera_log (pr_dscritic IN VARCHAR2) IS
-    BEGIN
+  BEGIN
       btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                  pr_ind_tipo_log => 2, --> erro tratado
                                  pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
@@ -1683,23 +1686,23 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
             IF rw_parametro.dsemlesl IS NOT NULL THEN
                vr_emaildst := vr_emaildst||';'||rw_parametro.dsemlesl;      
             END IF;
-                
+
             vr_dstexto := '<b>ATENÇÃO!</b><br><br>';        
             vr_dscorpo := vr_dstexto || vr_dscorpo; 
-            
+
           ELSE
-            
+        
             -- Se o PA não tem email cadastrado, envia o email para o endereço cadastrado na tela de parametros do progrid
             vr_emaildst:=rw_parametro.dsemlesl;
 
             vr_dstexto := '<b>ESTE AVISO FOI GERADO POIS O PA ESTÁ SEM ENDEREÇO DE E-MAIL CADASTRADO NO SISTEMA.</b><br><br>';
             vr_dstexto :=  vr_dstexto||'Favor encaminhar ao responsável para providências da seguinte pendência:<br><br>';
-            
+
             vr_dscorpo := vr_dstexto || vr_dscorpo;        
             vr_dscorpo :=  vr_dscorpo||'* Pedimos também que seja informado o e-mail de contato do PA.<br>';
-            
+
           END IF;
-                                 
+
           -- Se existe evento sem local, envia o email
           IF vr_dscorpo IS NOT NULL AND 
              vr_emaildst IS NOT NULL THEN
@@ -1797,7 +1800,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
             continue; 
         END;
       END LOOP;
-      
+  
     END LOOP;
     
     COMMIT;
@@ -1843,7 +1846,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
     --              
     --              
     -- .............................................................................
-    
+
     -- Cursores
     --> Buscar agenda da cooperativa
     CURSOR cr_gnpapgd IS
@@ -1883,7 +1886,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
        
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><dtanoage>' || vr_dtanoage || '</dtanoage></Root>');
-                                     
+
     END IF;    
     
   EXCEPTION
