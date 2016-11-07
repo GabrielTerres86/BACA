@@ -527,7 +527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         vr_cddigito := 0;
       END IF;
 
-      IF (TO_NUMBER(SUBSTR(pr_cdtribut,4,1)) = vr_cddigito) THEN
+      IF (NVL(TO_NUMBER(SUBSTR(pr_cdtribut,4,1)),0) = vr_cddigito) THEN
         RAISE vr_exc_null;
       END IF;    
 
@@ -542,7 +542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         vr_cddigito := 0;
       END IF;
 
-      IF (TO_NUMBER(SUBSTR(pr_cdtribut,4,1)) = vr_cddigito) THEN
+      IF (NVL(TO_NUMBER(SUBSTR(pr_cdtribut,4,1)),0) = vr_cddigito) THEN
         RAISE vr_exc_null;
       END IF; 
 
@@ -557,7 +557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         vr_cddigito := 0;
       END IF;
 
-      IF (TO_NUMBER(SUBSTR(pr_cdtribut,4,1)) = vr_cddigito) THEN
+      IF (NVL(TO_NUMBER(SUBSTR(pr_cdtribut,4,1)),0) = vr_cddigito) THEN
         RAISE vr_exc_null;
       ELSE
         vr_cdcritic := 0;

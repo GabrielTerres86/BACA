@@ -1118,7 +1118,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     END IF;
   
 		
-		
+	--Se a captura for através do código de barras da guia
+    IF pr_tpcaptur = 1 THEN
 		/* Verifica se foi digitado manualmente ou via leitora de cod. barras */
       IF trim(pr_cdbarras) IS NULL AND nvl(pr_lindigi1,0) <> 0 AND nvl(pr_lindigi2,0) <> 0 THEN
         --Montar Codigo Barras
@@ -1173,6 +1174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           END CASE;
         END LOOP;
       END IF;
+	END IF;
 			
     --Se for Agendamento
     IF pr_idagenda = 2 THEN
