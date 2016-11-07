@@ -102,30 +102,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   --
   ---------------------------------------------------------------------------------------------------------------
 
-  -- Armazenar os valores da CRAPTAB na sessão
-  vr_dstextab craptab.dstextab%TYPE;
+    -- Armazenar os valores da CRAPTAB na sessão
+    vr_dstextab craptab.dstextab%TYPE;
   
-  -- Busca lancamentos mvto conta ITG
-  CURSOR cr_craplcm_mvt_itg (pr_cdcooper NUMBER
-                            ,pr_dtmvtolt DATE
-                            ,pr_tpdmovto NUMBER) IS
-    SELECT nvl(sum(lcm.vllanmto),0) vllanmto
-      FROM craplcm                  lcm
-          ,tbfin_histor_fluxo_caixa his
-     WHERE lcm.cdcooper = pr_cdcooper
-       AND lcm.cdhistor = his.cdhistor
-       AND his.cdremessa = 6 /* Mvt Cta ITG */
-       AND (  --Entrada
-             (pr_tpdmovto = 1 and his.tpfluxo = 'E')
-            or --Saida
-             (pr_tpdmovto = 2 and his.tpfluxo = 'S')
-            )
-       AND lcm.dtmvtolt = pr_dtmvtolt;
-
     -- Ler lancamentos de deposito a vista, do proxima data a ser simulada
-    CURSOR cr_craplcm_cheques_p(pr_dtproxim DATE
+    CURSOR cr_craplcm_cheques_p(pr_dtmvtolt DATE
                                ,pr_cdcooper NUMBER
-                               ,pr_dtmvtolt DATE) IS
+                               ,pr_dtrefere DATE) IS
       SELECT nvl(sum(lcm.vllanmto),0) vllanmto
         FROM craplcm                  lcm
             ,tbfin_histor_fluxo_caixa his
@@ -133,21 +116,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
          AND lcm.cdhistor = his.cdhistor
          AND his.tpfluxo  = 'S'
          AND his.cdremessa = 1 /* Cheques */
-         AND lcm.dtmvtolt = pr_dtproxim
-         AND lcm.dtrefere = pr_dtmvtolt;
+         AND lcm.dtmvtolt = pr_dtmvtolt
+         AND lcm.dtrefere = pr_dtrefere;
 
     -- Ler lancamentos de deposito a vista da data atual
     CURSOR cr_craplcm_cheques(pr_cdcooper NUMBER
                              ,pr_dtmvtolt DATE) IS
-      SELECT nvl(sum(lcm.vllanmto),0) vllanmto
+      SELECT  nvl(sum(lcm.vllanmto),0) vllanmto
         FROM craplcm                  lcm
             ,tbfin_histor_fluxo_caixa his
-       WHERE lcm.cdcooper = pr_cdcooper         
-         AND lcm.cdhistor = his.cdhistor
-         AND his.tpfluxo  = 'S'
+       WHERE lcm.cdcooper  = pr_cdcooper         
+         AND lcm.cdhistor  = his.cdhistor
+         AND his.tpfluxo   = 'S'
          AND his.cdremessa = 1 /* Cheques */
-         AND (    lcm.dtmvtolt = pr_dtmvtolt 
-              AND lcm.dtrefere is NULL);
+         AND lcm.dtmvtolt  = pr_dtmvtolt 
+         AND lcm.dtrefere is NULL;
               
     --Buscar lancamentos dos funcionarios das empresas que optaram por transferir o salario para outra instituicao financeira.
     CURSOR cr_craplcs_tedtec (pr_dtmvtolt DATE
@@ -164,7 +147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --Buscar Lancamentos Automaticos Fatura Bradesco 
     CURSOR cr_craplau_fatbra(pr_dtmvtolt DATE
                             ,pr_cdcooper NUMBER) IS
-      SELECT nvl(sum(lau.vllanaut),0) vllanaut
+      SELECT  nvl(sum(lau.vllanaut),0) vllanaut
         FROM craplau                  lau
             ,tbfin_histor_fluxo_caixa his
        WHERE lau.cdcooper = pr_cdcooper
@@ -174,27 +157,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
          AND his.tpfluxo   = 'S'
          AND his.cdremessa = 10;  /* Cartão de Crédito */         
 
-
-    --Buscar lancamentos em depositos a vista
-    CURSOR cr_craplcm_trans_ic(pr_dtmvtolt DATE
-                              ,pr_cdcooper NUMBER
-                              ,pr_tpdmovto INTEGER) IS
-      SELECT sum(lcm.vllanmto) vllanmto, 1 id
-        FROM craplcm                  lcm
-            ,tbfin_histor_fluxo_caixa his
-       WHERE lcm.cdcooper = pr_cdcooper
-         AND lcm.dtmvtolt = pr_dtmvtolt
-         AND lcm.cdhistor = his.cdhistor
-         AND his.cdremessa = 8 /* Transf IC */
-         AND ( (pr_tpdmovto = 1 and his.tpfluxo = 'E') OR
-               (pr_tpdmovto = 2 and his.tpfluxo = 'S')
-              );
-
     --Buscar lancamentos em depositos a vista
     CURSOR cr_craplcm_dep_ic(pr_dtmvtolt DATE
                             ,pr_cdcooper NUMBER
                             ,pr_tpdmovto INTEGER) IS
-      SELECT sum(lcm.vllanmto) vllanmto, 1 id
+      SELECT NVL(sum(lcm.vllanmto),0) vllanmto, 1 id
         FROM craplcm                  lcm
             ,tbfin_histor_fluxo_caixa his
        WHERE pr_tpdmovto = 1 
@@ -205,7 +172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
          AND his.tpfluxo   = 'E'
       UNION
       -- se for 2-saida deve buscar os lanc. do hist. 1004  do cooperativa do cash
-      SELECT Sum(lcm.vllanmto) vllanmto, 2 id
+      SELECT NVL(Sum(lcm.vllanmto),0) vllanmto, 2 id
         FROM craplcm                  lcm
             ,tbfin_histor_fluxo_caixa his
        WHERE pr_tpdmovto = 2
@@ -219,30 +186,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Buscar NR Titulos
     CURSOR cr_craptit (pr_dtmvtolt DATE,
                        pr_cdcooper NUMBER) IS
-      SELECT cdbcoenv,
-             vldpagto,
-             cdcooper,
-             cdagenci
-        FROM craptit
-       WHERE cdcooper  = pr_cdcooper
-         AND dtdpagto  = pr_dtmvtolt
-         AND tpdocmto  = 20
-         AND intitcop  = 0
-         AND insittit in (2,4);
+      SELECT NVL(sum(tit.vldpagto),0) vldpagto
+        FROM craptit tit
+            ,crapage age
+       WHERE tit.cdcooper = age.cdcooper 
+         AND tit.cdagenci = age.cdagenci
+         AND tit.cdcooper  = pr_cdcooper
+         AND tit.dtdpagto  = pr_dtmvtolt
+         AND tit.tpdocmto  = 20
+         AND tit.intitcop  = 0
+         AND tit.insittit in (2,4)
+         AND tit.cdbcoenv IN(0,85)
+         AND(tit.cdbcoenv = 85 OR age.cdbantit = 85);
          
     --Buscar Cheques acolhidos para depositos nas contas dos associados.
     CURSOR cr_crapchd (pr_dtmvtolt DATE,
                        pr_cdcooper NUMBER,
                        pr_inchqcop NUMBER) IS
-      SELECT cdbcoenv,
-             vlcheque,
-             cdcooper,
-             cdagenci
-        FROM crapchd
-       WHERE cdcooper  = pr_cdcooper
-         AND dtmvtolt  = pr_dtmvtolt
-         AND insitchq in (0,2)
-         AND inchqcop  = pr_inchqcop;         
+      SELECT NVL(SUM(vlcheque),0) vlcheque
+        FROM crapchd chd 
+            ,crapage age 
+       WHERE chd.cdcooper = age.cdcooper 
+         AND chd.cdagenci = age.cdagenci
+         AND chd.cdcooper  = pr_cdcooper
+         AND chd.dtmvtolt  = pr_dtmvtolt
+         AND chd.inchqcop  = pr_inchqcop
+         AND chd.insitchq in (0,2)         
+         AND chd.cdbcoenv IN(0,85)
+         AND(chd.cdbcoenv = 85 OR age.cdbanchq = 85);
 
     -- Buscar convenios
     CURSOR cr_gnconve(pr_cdcooper crapcop.cdcooper%TYPE) IS
@@ -259,7 +230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     CURSOR cr_craplcm_generi(pr_dtmvtolt DATE,
                              pr_cdcooper NUMBER,
                              pr_cdhistor gnconve.cdhisdeb%type) IS
-      SELECT sum(nvl(vllanmto,0)) vllanmto
+      SELECT NVL(sum(vllanmto),0) vllanmto
         FROM craplcm
        WHERE cdcooper  = pr_cdcooper
          AND dtmvtolt  = pr_dtmvtolt
@@ -270,7 +241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                             ,pr_cdcooper  NUMBER
                             ,pr_cdremessa NUMBER
                             ,pr_tpfluxo   VARCHAR2) IS
-      SELECT sum(nvl(lcm.vllanmto,0)) vllanmto
+      SELECT NVL(sum(lcm.vllanmto),0) vllanmto
         FROM craplcm                  lcm
             ,tbfin_histor_fluxo_caixa his
        WHERE lcm.cdcooper  = pr_cdcooper
@@ -283,7 +254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     CURSOR cr_craplcm_numera(pr_dtmvtolt  DATE
                             ,pr_cdcooper  NUMBER
                             ,pr_tpfluxo   VARCHAR2) IS
-      SELECT sum(nvl(lcm.vllanmto,0)) vllanmto
+      SELECT NVL(sum(lcm.vllanmto),0) vllanmto
         FROM crapcop                  cop 
             ,craplcm                  lcm
             ,tbfin_histor_fluxo_caixa his
@@ -298,7 +269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --Buscar Lancamentos em depositos a vista com devolução de cheques recebidos
     CURSOR cr_lcm_devchq_recebi(pr_dtmvtolt  DATE
                                ,pr_cdcooper  NUMBER) IS
-      SELECT sum(nvl(lcm.vllanmto,0)) vllanmto
+      SELECT NVL(sum(lcm.vllanmto),0) vllanmto
         FROM craplcm                  lcm
             ,tbfin_histor_fluxo_caixa his
        WHERE lcm.cdcooper  = pr_cdcooper
@@ -311,7 +282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --Buscar Lancamentos de creditos de beneficios do INSS Bancoob
     CURSOR cr_craplbi (pr_dtmvtolt DATE,
                        pr_cdcooper NUMBER) IS
-      SELECT sum(vlliqcre) vlliqcre
+      SELECT NVL(sum(vlliqcre),0) vlliqcre
         FROM craplbi
        WHERE cdcooper = pr_cdcooper
          AND dtdpagto = pr_dtmvtolt;  
@@ -319,7 +290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --Buscar Lancamentos de debito em cartão
     CURSOR cr_craplcm_debcar(pr_dtmvtolt DATE,
                              pr_cdcooper NUMBER) IS
-      SELECT sum(nvl(lcm.vllanmto,0)) vllanmto
+      SELECT NVL(sum(lcm.vllanmto),0) vllanmto
         FROM craplcm lcm
             ,craphcb hcb
        WHERE lcm.cdcooper  = pr_cdcooper
@@ -334,22 +305,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
              cdtransa,
              flgrgatv
         FROM craprcb
-       WHERE craprcb.cdcooper = pr_cdcooper
-         AND craprcb.dtmvtolt = pr_dtmvtolt
-         AND (craprcb.cdtransa = '268' OR /* Titulos */
-              craprcb.cdtransa = '358' OR /* Faturas */
-              craprcb.cdtransa = '284') /* Recebto INSS */
-         AND
-             craprcb.cdagenci <> 9999 /* Totais dias anteriores */
-      ;
-      
-
+       WHERE cdcooper = pr_cdcooper
+         AND dtmvtolt = pr_dtmvtolt
+         AND cdtransa IN('268','358','284') /* Titulos, Faturas OU Recebto INSS */
+         AND cdagenci <> 9999; /* Totais dias anteriores */
     
     --Buscar Lancamentos das Guias de recolhimento da Previdencia Social
     CURSOR cr_craplgp (pr_dtmvtolt DATE,
                        pr_cdcooper NUMBER) IS
       SELECT cdbccxlt
-            ,nvl(sum(vlrtotal),0) vlrtotal
+            ,nvl(sum(NVL(vlrtotal,0)),0) vlrtotal
         FROM( select 756 cdbccxlt 
                     ,lgp.vlrtotal
                 from craplgp lgp
@@ -381,24 +346,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Buscar tranferencia de valores (DOC C, DOC D E TEDS)
     CURSOR cr_craptvl_nrdoc (pr_dtmvtolt DATE,
                              pr_cdcooper NUMBER) IS
-      SELECT vldocrcb,
-             cdbcoenv,
-             cdcooper,
-             cdagenci
-        FROM craptvl
-       WHERE cdcooper  = pr_cdcooper
-         AND dtmvtolt  = pr_dtmvtolt
-         AND cdbcoenv  = 85
-         AND tpdoctrf  <> 3;/* DOC */
+      SELECT NVL(sum(tvl.vldocrcb),0) vldocrcb
+        FROM craptvl tvl
+            ,crapage age 
+       WHERE tvl.cdcooper = age.cdcooper 
+         AND tvl.cdagenci = age.cdagenci
+         AND tvl.cdcooper  = pr_cdcooper
+         AND tvl.dtmvtolt  = pr_dtmvtolt
+         AND tvl.cdbcoenv  IN(85,0)
+         AND tvl.tpdoctrf  <> 3
+         AND (   tvl.cdbcoenv = 85
+              OR ( tvl.cdbcoenv = 0 AND age.cdbandoc = 1));
                 
-  
+    -- Buscar lançamentos de deposito avista da cooperativa cash
+    CURSOR cr_craplcm_cash(pr_cdcoptfn craplcm.cdcoptfn%TYPE
+                          ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+      SELECT nvl(sum(decode(lcm.cdhistor,918,lcm.vllanmto,lcm.vllanmto*-1)),0) vllanmto
+        FROM craplcm                  lcm
+            ,tbfin_histor_fluxo_caixa his
+       WHERE lcm.cdcoptfn  = pr_cdcoptfn       
+         AND lcm.cdhistor  = his.cdhistor         
+         AND his.tpfluxo   = 'E'
+         AND his.cdremessa = 9 /* Saque TAA */         
+         AND lcm.dtmvtolt  = pr_dtmvtolt
+         AND lcm.cdcooper <> lcm.cdcoptfn;
+         
+    -- Buscar lançamentos de deposito avista da cooperativa
+    CURSOR cr_craplcm_cop(pr_cdcooper craplcm.cdcooper%TYPE
+                         ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+      SELECT nvl(sum(decode(lcm.cdhistor,918,lcm.vllanmto,lcm.vllanmto*-1)),0) vllanmto
+        FROM craplcm                  lcm
+            ,tbfin_histor_fluxo_caixa his
+       WHERE lcm.cdcooper  = pr_cdcooper
+         AND lcm.cdhistor  = his.cdhistor         
+         AND his.tpfluxo   = 'S'
+         AND his.cdremessa = 9 /* Saque TAA */
+         AND lcm.dtmvtolt  = pr_dtmvtolt
+         AND lcm.cdcooper <> lcm.cdcoptfn
+         AND lcm.cdcoptfn <> 0;  
+    
+    -- Busca das TEDs Cecred e Sicredi
+    CURSOR cr_craplmt(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
+                     ,pr_cdifconv craplmt.cdifconv%TYPE) IS 
+      SELECT nvl(sum(vldocmto),0) vldocmto
+        FROM craplmt
+       WHERE craplmt.cdcooper = pr_cdcooper
+         AND craplmt.dttransa = pr_dtmvtolt 
+         AND craplmt.cdifconv = pr_cdifconv -- 0 - Cecred / 1 - Sicredi
+         AND craplmt.idsitmsg = 3;          -- 1-Enviada-ok / 2-enviada-nok / 3-recebida-ok / 4-Recebina-nok
+    
+    -- Buscar Lancamentos de faturas de convênios
+    CURSOR cr_craplft (pr_cdcooper IN NUMBER
+                      ,pr_dtdpagto IN DATE 
+                      ,pr_flgcnvsi IN INTEGER) IS
+      SELECT nvl(sum(vllanmto + vlrmulta + vlrjuros),0) vldtotal
+        FROM craplft
+       WHERE cdcooper = pr_cdcooper
+         AND dtmvtolt = pr_dtdpagto
+         AND ( (pr_flgcnvsi = 0 AND cdhistor <> 1154) -- Diferente do Sicredi
+              OR 
+               (cdhistor = 1154)                      -- Somente para Sicredi
+              );
+    
   -- Calculo da diferença entre a projeção e o realizado, retorno numérico.
   FUNCTION fn_calcula_difere_valor(pr_vlrealizado IN NUMBER
                                   ,pr_vlprojetado IN NUMBER) RETURN NUMBER IS
   BEGIN
     BEGIN
-      -- Se houver valor de projeção:
-      IF NVL(pr_vlprojetado,0) > 0 THEN
+      -- Se houver valor realização
+      IF NVL(pr_vlrealizado,0) <> 0 THEN
         -- Retornar diferença entre o Realizado e Projetado
         RETURN pr_vlrealizado - pr_vlprojetado;
       ELSE
@@ -416,8 +433,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                     ,pr_vlprojetado IN NUMBER) RETURN NUMBER IS
   BEGIN
     BEGIN
-      -- Se houver valor de projeção:
-      IF NVL(pr_vlprojetado,0) > 0 THEN
+      -- Se houver valor reakuzadi
+      IF NVL(pr_vlrealizado,0) <> 0 THEN
         -- Retornar diferença entre o Realizado e Projetado
         RETURN ((pr_vlrealizado - pr_vlprojetado) / pr_vlrealizado) * 100;
       ELSE
@@ -755,8 +772,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
              SET vlentrad = DECODE(pr_tpdcampo,1,pr_vldcampo,vlentrad),
                  vlsaidas = DECODE(pr_tpdcampo,2,pr_vldcampo,vlsaidas),
                  vlsldcta = DECODE(pr_tpdcampo,3,pr_vldcampo,vlsldcta),
-                 vlresgat = DECODE(pr_tpdcampo,4,pr_vldcampo,DECODE(pr_tpdcampo,5,0,vlresgat)),
-                 vlaplica = DECODE(pr_tpdcampo,5,pr_vldcampo,DECODE(pr_tpdcampo,4,0,vlaplica)),
+                 vlresgat = DECODE(pr_tpdcampo,4,pr_vldcampo,vlresgat),
+                 vlaplica = DECODE(pr_tpdcampo,5,pr_vldcampo,vlaplica),
                  vloutros = DECODE(pr_tpdcampo,6,pr_vldcampo,vloutros),
                  cdoperad = nvl(vr_cdoperad,cdoperad),
                  hrtransa = nvl(vr_hrtransa,hrtransa)
@@ -2884,13 +2901,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_vlrtotal      NUMBER;
+    vr_tpdfluxo VARCHAR2(1);
     
   BEGIN
 
     vr_vlrtotal := 0;
 
+    IF pr_tpdmovto = 1 THEN
+      vr_tpdfluxo := 'E';
+    ELSE
+      vr_tpdfluxo := 'S';
+    END IF;
+
     -- buscar lançamentos
-    FOR rw_craplcm IN cr_craplcm_mvt_itg(pr_cdcooper,pr_dtmvtolt,pr_tpdmovto) LOOP
+    FOR rw_craplcm IN cr_craplcm_parame(pr_dtmvtolt  => pr_dtmvtolt
+                                       ,pr_cdcooper  => pr_cdcooper
+                                       ,pr_cdremessa => 6
+                                       ,pr_tpfluxo   => vr_tpdfluxo) LOOP
       -- Somar valores
       vr_vlrtotal := vr_vlrtotal + NVL(rw_craplcm.vllanmto,0);
     END LOOP;
@@ -2946,13 +2973,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_vlrttdev      NUMBER;
     vr_vlrmedia      NUMBER;
     vr_idx           VARCHAR2(15);
-
+    
+    vr_tpdfluxo VARCHAR2(1);
+    
   BEGIN
 
     vr_contador := 0;
     vr_vlrttdev := 0;
     vr_vlrmedia := 0;
     vr_maiorvlr := 0;
+
+    IF pr_tpdmovto = 1 THEN
+      vr_tpdfluxo := 'E';
+    ELSE
+      vr_tpdfluxo := 'S';
+    END IF;
 
     -- gerar os periodo de projeção Itg
     pc_gera_periodo_projecao_itg (pr_cdcooper => pr_cdcooper  -- Codigo da Cooperativa
@@ -2973,7 +3008,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       EXIT WHEN vr_idx IS NULL;
 
       -- buscar lançamentos
-      FOR rw_craplcm IN cr_craplcm_mvt_itg(pr_cdcooper,vr_tab_per_datas(vr_idx).dtmvtolt,pr_tpdmovto ) LOOP
+      FOR rw_craplcm IN cr_craplcm_parame(pr_dtmvtolt  => vr_tab_per_datas(vr_idx).dtmvtolt
+                                         ,pr_cdcooper  => pr_cdcooper
+                                         ,pr_cdremessa => 6
+                                         ,pr_tpfluxo   => vr_tpdfluxo) LOOP
         -- Somar valores
         vr_tab_per_datas(vr_idx).vlrtotal := NVL(vr_tab_per_datas(vr_idx).vlrtotal,0) + NVL(rw_craplcm.vllanmto,0);
       END LOOP;
@@ -3037,9 +3075,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   END pc_grava_prj_conta_itg;
 
   -- Procedure para gravar movimento financeiro de cheques saida realizado
-  PROCEDURE pc_grava_mvt_srcheques (pr_cdcooper IN INTEGER      -- Codigo da Cooperativa
-                                   ,pr_dtmvtolt IN DATE         -- Data de movimento
-                                   ,pr_dscritic OUT VARCHAR2) AS          -- Descrição da critica
+  PROCEDURE pc_grava_mvt_srcheques (pr_cdcooper IN INTEGER       -- Codigo da Cooperativa
+                                   ,pr_dtmvtolt IN DATE          -- Data de movimento
+                                   ,pr_dtmvtoan IN DATE          -- Data de movimento anterior
+                                   ,pr_dscritic OUT VARCHAR2) AS -- Descrição da critica
 
     -- .........................................................................
     --
@@ -3064,6 +3103,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     
     vr_vltotger := 0;
   
+    -- Buscar lancamentos do dia e data de referencia igual ao dia anterior
+    FOR rw_craplcm IN cr_craplcm_cheques_p (pr_dtmvtolt => pr_dtmvtolt
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_dtrefere => pr_dtmvtoan) LOOP
+      vr_vltotger := vr_vltotger + nvl(rw_craplcm.vllanmto,0);
+    END LOOP;
+  
     -- Buscar lancamentos do dia e data de referencia nula
     FOR rw_craplcm IN cr_craplcm_cheques (pr_cdcooper => pr_cdcooper
                                          ,pr_dtmvtolt => pr_dtmvtolt) LOOP
@@ -3072,9 +3118,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     END LOOP;
 
     -- Buscar lancamentos do dia e data de referencia igual a data do dia
-    FOR rw_craplcm IN cr_craplcm_cheques_p (pr_dtproxim => pr_dtmvtolt
+    FOR rw_craplcm IN cr_craplcm_cheques_p (pr_dtmvtolt => pr_dtmvtolt
                                            ,pr_cdcooper => pr_cdcooper
-                                           ,pr_dtmvtolt => pr_dtmvtolt) LOOP
+                                           ,pr_dtrefere => pr_dtmvtolt) LOOP
       vr_vltotger := vr_vltotger + nvl(rw_craplcm.vllanmto,0);
     END LOOP;
 
@@ -3124,7 +3170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_idx           VARCHAR2(15);
     vr_dtproxim      DATE;
     vr_mesanter      NUMBER := 0;
-    vr_contador      NUMBER;
+    vr_contador      NUMBER := 0;
     vr_vltotger      NUMBER(20,2);
     vr_vlrmedia      NUMBER(20,2);
     
@@ -3149,9 +3195,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                                  pr_feriado  => TRUE );
 
       -- Buscar lancamentos do proximo dia util
-      FOR rw_craplcm IN cr_craplcm_cheques_p(pr_dtproxim => vr_dtproxim,
+      FOR rw_craplcm IN cr_craplcm_cheques_p(pr_dtmvtolt => vr_dtproxim,
                                              pr_cdcooper => pr_cdcooper,
-                                             pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt) LOOP
+                                             pr_dtrefere => vr_tab_per_datas(vr_idx).dtmvtolt) LOOP
 
         vr_tab_per_datas(vr_idx).vlrtotal := nvl(vr_tab_per_datas(vr_idx).vlrtotal,0) + nvl(rw_craplcm.vllanmto,0);
       END LOOP;
@@ -3164,9 +3210,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       END LOOP;
 
       -- Buscar lancamentos do dia e data de referencia igual a data do dia
-      FOR rw_craplcm IN cr_craplcm_cheques_p (pr_dtproxim => vr_tab_per_datas(vr_idx).dtmvtolt,
+      FOR rw_craplcm IN cr_craplcm_cheques_p (pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt,
                                               pr_cdcooper => pr_cdcooper,
-                                              pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt) LOOP
+                                              pr_dtrefere => vr_tab_per_datas(vr_idx).dtmvtolt) LOOP
 
         vr_tab_per_datas(vr_idx).vlrtotal := nvl(vr_tab_per_datas(vr_idx).vlrtotal,0) + nvl(rw_craplcm.vllanmto,0);
       END LOOP;
@@ -3236,7 +3282,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_vlrchenr      NUMBER := 0;
-    vr_idbcoctl      INTEGER;
 
   BEGIN
 
@@ -3246,22 +3291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     FOR rw_crapchd IN cr_crapchd(pr_dtmvtolt
                                 ,pr_cdcooper
                                 ,0) LOOP
-
-      CASE rw_crapchd.cdbcoenv
-        -- Somar se o banco enviado pelo banco 85
-        WHEN 85 THEN
-          vr_vlrchenr := vr_vlrchenr + nvl(rw_crapchd.vlcheque,0);
-        WHEN 0 THEN
-          vr_idbcoctl := fn_identifica_bcoctl
-                            (pr_cdcooper => rw_crapchd.cdcooper, -- codigo da cooperativa
-                             pr_cdagenci => rw_crapchd.cdagenci, -- Codigo da agencia
-                             pr_idtpdoct => 'C');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-          -- Somar se o banco de cheques da agencia for 85
-          IF vr_idbcoctl = 1 THEN
-            vr_vlrchenr := vr_vlrchenr + nvl(rw_crapchd.vlcheque,0);
-          END IF;
-
-      END CASE;
+      vr_vlrchenr := vr_vlrchenr + nvl(rw_crapchd.vlcheque,0);
     END LOOP;
 
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
@@ -3311,10 +3341,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_tab_per_datas typ_tab_per_datas;
     vr_idx           VARCHAR2(15);
     vr_mesanter      NUMBER := 0;
-    vr_contador      NUMBER;
+    vr_contador      NUMBER := 0;
     vr_vltotger      NUMBER(20,2);
     vr_vlrmedia      NUMBER(20,2);
-    vr_idbcoctl      INTEGER;
     
   BEGIN
     -- Gerar período de projeção
@@ -3337,19 +3366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       FOR rw_crapchd IN cr_crapchd(vr_tab_per_datas(vr_idx).dtmvtolt
                                   ,pr_cdcooper
                                   ,0) LOOP
-        CASE rw_crapchd.cdbcoenv
-          -- Somar se o banco enviado pelo banco 85
-          WHEN 85 THEN
-            vr_tab_per_datas(vr_idx).vlrtotal := nvl(vr_tab_per_datas(vr_idx).vlrtotal,0) + nvl(rw_crapchd.vlcheque,0);      
-          WHEN 0 THEN
-            vr_idbcoctl := fn_identifica_bcoctl(pr_cdcooper => rw_crapchd.cdcooper, -- codigo da cooperativa
-                                                pr_cdagenci => rw_crapchd.cdagenci, -- Codigo da agencia
-                                                pr_idtpdoct => 'C');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-            -- Somar se o banco de cheques da agencia for 85
-            IF vr_idbcoctl = 1 THEN
-              vr_tab_per_datas(vr_idx).vlrtotal := nvl(vr_tab_per_datas(vr_idx).vlrtotal,0) + nvl(rw_crapchd.vlcheque,0);      
-            END IF;
-        END CASE;
+        vr_tab_per_datas(vr_idx).vlrtotal := nvl(vr_tab_per_datas(vr_idx).vlrtotal,0) + nvl(rw_crapchd.vlcheque,0);      
       END LOOP;
       
       -- contar os meses
@@ -3626,7 +3643,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_vltitliq      NUMBER := 0;
     vr_vlfatliq      NUMBER := 0;
     vr_vlinss        NUMBER := 0;
-    vr_idbcoctl      INTEGER;
 
   BEGIN
 
@@ -3636,21 +3652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     FOR rw_craptit IN cr_craptit(pr_dtmvtolt => pr_dtmvtolt,
                                  pr_cdcooper => pr_cdcooper) LOOP
 
-      CASE rw_craptit.cdbcoenv
-        -- Somar se o banco enviado pelo banco 85
-        WHEN 85 THEN
-          vr_vlrtitnr := vr_vlrtitnr + nvl(rw_craptit.vldpagto,0);
-        WHEN 0 THEN
-          vr_idbcoctl := fn_identifica_bcoctl
-                            (pr_cdcooper => rw_craptit.cdcooper, -- codigo da cooperativa
-                             pr_cdagenci => rw_craptit.cdagenci, -- Codigo da agencia
-                             pr_idtpdoct => 'T');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-          -- Somar se o banco de cheques da agencia for 85
-          IF vr_idbcoctl = 1 THEN
-            vr_vlrtitnr := vr_vlrtitnr + nvl(rw_craptit.vldpagto,0);
-          END IF;
-
-      END CASE;
+      vr_vlrtitnr := vr_vlrtitnr + nvl(rw_craptit.vldpagto,0);
     END LOOP;
 
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
@@ -3744,8 +3746,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_vltotger      NUMBER;
     vr_idx           VARCHAR2(15);
     
-    vr_idbcoctl      INTEGER;
-    
     vr_vltitliq      NUMBER := 0;
     vr_vlfatliq      NUMBER := 0;
     vr_vlinss        NUMBER := 0;
@@ -3778,22 +3778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       --Buscar titulos
       FOR rw_craptit IN cr_craptit(pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt,
                                    pr_cdcooper => pr_cdcooper) LOOP
-
-        CASE rw_craptit.cdbcoenv
-          -- Somar se o banco enviado pelo banco 85
-          WHEN 85 THEN
-            vr_vltotger := vr_vltotger + nvl(rw_craptit.vldpagto,0);
-          WHEN 0 THEN
-            vr_idbcoctl := fn_identifica_bcoctl
-                              (pr_cdcooper => rw_craptit.cdcooper, -- codigo da cooperativa
-                               pr_cdagenci => rw_craptit.cdagenci, -- Codigo da agencia
-                               pr_idtpdoct => 'T');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-            -- Somar se o banco de cheques da agencia for 85
-            IF vr_idbcoctl = 1 THEN
-              vr_vltotger := vr_vltotger + nvl(rw_craptit.vldpagto,0);
-            END IF;
-
-        END CASE;
+        vr_vltotger := vr_vltotger + nvl(rw_craptit.vldpagto,0);
       END LOOP;
       
       vr_contador := vr_contador + 1;
@@ -4079,20 +4064,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_vlrdocnr      NUMBER;
-    vr_idbcoctl      INTEGER;
-
-    -- Buscar tranferencia de valores (DOC C, DOC D E TEDS)
-    CURSOR cr_craptvl_nrdoc (pr_dtmvtolt DATE,
-                             pr_cdcooper NUMBER) IS
-      SELECT vldocrcb,
-             cdbcoenv,
-             cdcooper,
-             cdagenci
-        FROM craptvl
-       WHERE cdcooper  = pr_cdcooper
-         AND dtmvtolt  = pr_dtmvtolt
-         AND cdbcoenv  = 85
-         AND tpdoctrf  <> 3;/* DOC */
 
   BEGIN
 
@@ -4102,21 +4073,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     FOR rw_craptvl IN cr_craptvl_nrdoc(pr_dtmvtolt => pr_dtmvtolt,
                                        pr_cdcooper => pr_cdcooper) LOOP
 
-      CASE rw_craptvl.cdbcoenv
-        -- Somar se o banco enviado pelo banco 85
-        WHEN 85 THEN
-          vr_vlrdocnr := vr_vlrdocnr + nvl(rw_craptvl.vldocrcb,0);
-        WHEN 0 THEN
-          vr_idbcoctl := fn_identifica_bcoctl
-                            (pr_cdcooper => rw_craptvl.cdcooper, -- codigo da cooperativa
-                             pr_cdagenci => rw_craptvl.cdagenci, -- Codigo da agencia
-                             pr_idtpdoct => 'D');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-          -- Somar se o banco de cheques da agencia for 85
-          IF vr_idbcoctl = 1 THEN
-            vr_vlrdocnr := vr_vlrdocnr + nvl(rw_craptvl.vldocrcb,0);
-          END IF;
-
-      END CASE;
+      vr_vlrdocnr := vr_vlrdocnr + nvl(rw_craptvl.vldocrcb,0);
     END LOOP;
 
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
@@ -4163,7 +4120,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
-    vr_idbcoctl      INTEGER;
     
     vr_tab_per_datas typ_tab_per_datas;
     
@@ -4220,22 +4176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       /* Transferencias - DOC*/
       FOR rw_craptvl IN cr_craptvl_nrdoc(pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt,
                                          pr_cdcooper => pr_cdcooper) LOOP
-
-        CASE rw_craptvl.cdbcoenv
-          -- Somar se o banco enviado pelo banco 85
-          WHEN 85 THEN
-            vr_vltotger := vr_vltotger + nvl(rw_craptvl.vldocrcb,0);
-          WHEN 0 THEN
-            vr_idbcoctl := fn_identifica_bcoctl
-                              (pr_cdcooper => rw_craptvl.cdcooper, -- codigo da cooperativa
-                               pr_cdagenci => rw_craptvl.cdagenci, -- Codigo da agencia
-                               pr_idtpdoct => 'D');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-            -- Somar se o banco de cheques da agencia for 85
-            IF vr_idbcoctl = 1 THEN
-              vr_vltotger := vr_vltotger + nvl(rw_craptvl.vldocrcb,0);
-            END IF;
-
-        END CASE;
+        vr_vltotger := vr_vltotger + nvl(rw_craptvl.vldocrcb,0);
       END LOOP;
       
       vr_contador := vr_contador + 1;
@@ -4352,7 +4293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_tab_per_datas typ_tab_per_datas;
     
     -- variavel para calcular o movimento
-    vr_contador NUMBER;
+    vr_contador NUMBER := 0;
     vr_vlrmedia NUMBER;
     vr_vltotger NUMBER := 0;
     vr_idx      VARCHAR2(15);
@@ -4470,7 +4411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_vlremfat := 0;
     FOR rw_craplau IN cr_craplau_fatbra(pr_dtmvtolt => pr_dtmvtolt
                                        ,pr_cdcooper => pr_cdcooper) LOOP
-      vr_vlremfat := vr_vlremfat + rw_craplau.vllanaut;
+      vr_vlremfat := vr_vlremfat + nvl(rw_craplau.vllanaut,0);
 
     END LOOP;
 
@@ -4613,7 +4554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         -- Buscar os valores pagos nos ultimos 6 meses, lembrando que a data deve ser util
         FOR rw_craplau IN cr_craplau_fatbra(pr_dtmvtolt => gene0005.fn_valida_dia_util(pr_cdcooper,vr_dtmttod2)
                                            ,pr_cdcooper => pr_cdcooper) LOOP
-          vr_vltotger := vr_vltotger + rw_craplau.vllanaut;
+          vr_vltotger := vr_vltotger + nvl(rw_craplau.vllanaut,0);
 
         END LOOP;      
         -- Diminuir mais um mês
@@ -5008,6 +4949,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     ELSE
       pr_dscritic := NULL;
     END IF;
+    
+    -- Se não for encontado algum dia para projeção
+    IF vr_tab_per_datas.count() = 0 THEN
+      -- Gerar os periodo de projeção 6 meses considerando dia do mês apenas
+      pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                            ,pr_qtdmeses => 6             -- Numero de meses a procurar
+                            ,pr_fldiasem => FALSE         -- Considerar o dia da semana
+                            ,pr_flprxant => FALSE         -- Considerar 1 dia para mais ou menos
+                            ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
+                            ,pr_dscritic  => pr_dscritic);
+      IF pr_dscritic <> 'OK' THEN
+        RETURN;
+      ELSE
+        pr_dscritic := NULL;
+      END IF;
+    END IF; 
 
     -- Reiniciar valores para busca das TEDs Cecred
     vr_contador := 0;
@@ -5222,20 +5180,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     ELSE
       pr_dscritic := NULL;
     END IF;
-    -- Se chegarmos neste ponto e não encontramos nenhuma data a projetar, então buscaremos
-    -- os ultimos 12 meses considerando o dia da semana e 1 dia do mês para mais ou para menos
-    pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                          ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                          ,pr_qtdmeses => 12            -- Numero de meses a procurar
-                          ,pr_fldiasem => TRUE          -- Considerar o dia da semana
-                          ,pr_flprxant => TRUE          -- Considerar 1 dia a mais ou menos
-                          ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
-                          ,pr_dscritic  => pr_dscritic);
-    IF pr_dscritic <> 'OK' THEN
-      RETURN;
-    ELSE
-      pr_dscritic := NULL;
-    END IF;
+    -- Se chegarmos neste ponto e não encontramos nenhuma data a projetar
+    IF vr_tab_per_datas.count() = 0 THEN 
+      -- Então buscaremos os ultimos 12 meses considerando o dia da semana e 1 dia do mês para mais ou para menos
+      pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                            ,pr_qtdmeses => 12            -- Numero de meses a procurar
+                            ,pr_fldiasem => TRUE          -- Considerar o dia da semana
+                            ,pr_flprxant => TRUE          -- Considerar 1 dia a mais ou menos
+                            ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
+                            ,pr_dscritic  => pr_dscritic);
+      IF pr_dscritic <> 'OK' THEN
+        RETURN;
+      ELSE
+        pr_dscritic := NULL;
+      END IF;
+    END IF;  
     
     -- Zerar valores para busca
     vr_contador := 0; 
@@ -5406,20 +5366,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     ELSE
       pr_dscritic := NULL;
     END IF;
-    -- Se chegarmos neste ponto e não encontramos nenhuma data a projetar, então buscaremos
-    -- os ultimos 12 meses considerando o dia da semana e 1 dia do mês para mais ou para menos
-    pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                          ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                          ,pr_qtdmeses => 12            -- Numero de meses a procurar
-                          ,pr_fldiasem => TRUE          -- Considerar o dia da semana
-                          ,pr_flprxant => TRUE          -- Considerar 1 dia a mais ou menos
-                          ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
-                          ,pr_dscritic  => pr_dscritic);
-    IF pr_dscritic <> 'OK' THEN
-      RETURN;
-    ELSE
-      pr_dscritic := NULL;
-    END IF;
+    -- Se chegarmos neste ponto e não encontramos nenhuma data a projetar
+    IF vr_tab_per_datas.count() = 0 THEN 
+      -- Então buscaremos os ultimos 12 meses considerando o dia da semana e 1 dia do mês para mais ou para menos
+      pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                            ,pr_qtdmeses => 12            -- Numero de meses a procurar
+                            ,pr_fldiasem => TRUE          -- Considerar o dia da semana
+                            ,pr_flprxant => TRUE          -- Considerar 1 dia a mais ou menos
+                            ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
+                            ,pr_dscritic  => pr_dscritic);
+      IF pr_dscritic <> 'OK' THEN
+        RETURN;
+      ELSE
+        pr_dscritic := NULL;
+      END IF;
+    END IF;  
     
     -- Zerar valores para busca
     vr_contador := 0; 
@@ -5574,7 +5536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_vlrttdev := 0;
 
     /* No crps624 executa após limpeza da crapdev usar este para o mesmo */
-    IF nvl(pr_nmdatela,' ') <> 'PREVIS' THEN
+    IF nvl(pr_nmdatela,' ') <> 'FLUXOS' THEN
       --Buscar Compensacao de Cheques Devolvidos da Central
       FOR rw_gncpdev IN cr_gncpdev(pr_dtmvtolt => pr_dtmvtoan,
                                    pr_cdcooper => pr_cdcooper) LOOP
@@ -5745,7 +5707,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_vldevchq      NUMBER;
-    vr_idbcoctl      INTEGER;
     
   BEGIN
 
@@ -5753,26 +5714,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     
     -- Se houver base de calculo
     IF fn_parfluxofinan(5) > 0 THEN
-      --Buscar Lancamentos de Cheques acolhidos para depositos nas contas dos associados.
+      --Buscar Lancamentos de Cheques do Banco 85
       FOR rw_crapchd IN cr_crapchd(pr_dtmvtoan
                                   ,pr_cdcooper
                                   ,1) LOOP
-
-        CASE rw_crapchd.cdbcoenv
-          -- Somar se o banco enviado pelo banco 85
-          WHEN 85 THEN
-            vr_vldevchq := vr_vldevchq + nvl(rw_crapchd.vlcheque,0);
-          WHEN 0 THEN
-            vr_idbcoctl := fn_identifica_bcoctl
-                              (pr_cdcooper => rw_crapchd.cdcooper, -- codigo da cooperativa
-                               pr_cdagenci => rw_crapchd.cdagenci, -- Codigo da agencia
-                               pr_idtpdoct => 'C');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-            -- Somar se o banco de cheques da agencia for 85
-            IF vr_idbcoctl = 1 THEN
-              vr_vldevchq := vr_vldevchq + nvl(rw_crapchd.vlcheque,0);
-            END IF;
-
-        END CASE;
+        vr_vldevchq := vr_vldevchq + nvl(rw_crapchd.vlcheque,0);
       END LOOP;
 
       -- acrescentar percentual
@@ -5827,17 +5773,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --   Atualizacao: 08/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
     --..........................................................................
 
-    vr_exc_erro      EXCEPTION;
-    vr_vlrtsfns      NUMBER;              
-
+    vr_exc_erro EXCEPTION;
+    vr_vlrtsfns NUMBER;              
+    vr_tpdfluxo VARCHAR2(1);
+    
   BEGIN
 
     vr_vlrtsfns := 0;
+    IF pr_tpdmovto = 1 THEN
+      vr_tpdfluxo := 'E';
+    ELSE
+      vr_tpdfluxo := 'S';
+    END IF;
 
     -- buscar lançamentos
-    FOR rw_craplcm IN cr_craplcm_trans_ic(pr_dtmvtolt => pr_dtmvtolt
-                                         ,pr_cdcooper => pr_cdcooper
-                                         ,pr_tpdmovto => pr_tpdmovto) LOOP
+    FOR rw_craplcm IN cr_craplcm_parame(pr_dtmvtolt  => pr_dtmvtolt
+                                       ,pr_cdcooper  => pr_cdcooper
+                                       ,pr_cdremessa => 8
+                                       ,pr_tpfluxo   => vr_tpdfluxo) LOOP
       -- Somar valores
       vr_vlrtsfns := NVL(vr_vlrtsfns,0) + NVL(rw_craplcm.vllanmto,0);
     END LOOP;
@@ -5891,7 +5844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_contador      NUMBER;
     vr_vlrmedia      NUMBER;
     vr_vltotger      NUMBER;
-    vr_idx           VARCHAR2(15);
+    vr_idx           VARCHAR2(15);            
+    vr_tpdfluxo VARCHAR2(1);
 
   BEGIN
 
@@ -5910,11 +5864,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     ELSE
       pr_dscritic := NULL;
     END IF;
+    
+    -- Se não for encontado algum dia para projeção
+    IF vr_tab_per_datas.count() = 0 THEN
+      -- Gerar os periodo de projeção 6 meses considerando dia do mês apenas
+      pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                            ,pr_qtdmeses => 6             -- Numero de meses a procurar
+                            ,pr_fldiasem => FALSE         -- Considerar o dia da semana
+                            ,pr_flprxant => FALSE         -- Considerar 1 dia para mais ou menos
+                            ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
+                            ,pr_dscritic  => pr_dscritic);
+      IF pr_dscritic <> 'OK' THEN
+        RETURN;
+      ELSE
+        pr_dscritic := NULL;
+      END IF;
+    END IF;     
 
     -- Reiniciar valores para busca das Transferências
     vr_contador := 0;
     vr_vlrmedia := 0;
     vr_vltotger := 0;
+    
+    IF pr_tpdmovto = 1 THEN
+      vr_tpdfluxo := 'E';
+    ELSE
+      vr_tpdfluxo := 'S';
+    END IF;
 
     -- Ler todas as datas
     vr_idx := vr_tab_per_datas.first;
@@ -5922,9 +5899,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       EXIT WHEN vr_idx IS NULL;
 
       -- buscar lançamentos
-      FOR rw_craplcm IN cr_craplcm_trans_ic(pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt
-                                           ,pr_cdcooper => pr_cdcooper
-                                           ,pr_tpdmovto => pr_tpdmovto) LOOP
+      FOR rw_craplcm IN cr_craplcm_parame(pr_dtmvtolt  => vr_tab_per_datas(vr_idx).dtmvtolt
+                                         ,pr_cdcooper  => pr_cdcooper
+                                         ,pr_cdremessa => 8
+                                         ,pr_tpfluxo   => vr_tpdfluxo) LOOP
         -- Somar valores
         vr_vltotger := vr_vltotger + NVL(rw_craplcm.vllanmto,0);
       END LOOP;
@@ -6172,7 +6150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --Buscar Lancamentos em depositos a vista com devolução de cheques recebidos
     FOR rw_lcm IN cr_lcm_devchq_recebi(pr_dtmvtolt
                                       ,pr_cdcooper) LOOP
-      vr_vldevchq := vr_vldevchq + rw_lcm.vllanmto;
+      vr_vldevchq := vr_vldevchq + nvl(rw_lcm.vllanmto,0);
     END LOOP;    
 
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
@@ -6219,7 +6197,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_vldevchq      NUMBER;
-    vr_idbcoctl      INTEGER;
     
   BEGIN
 
@@ -6231,22 +6208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       FOR rw_crapchd IN cr_crapchd(pr_dtmvtoan
                                   ,pr_cdcooper
                                   ,0) LOOP
-
-        CASE rw_crapchd.cdbcoenv
-          -- Somar se o banco enviado pelo banco 85
-          WHEN 85 THEN
-            vr_vldevchq := vr_vldevchq + nvl(rw_crapchd.vlcheque,0);
-          WHEN 0 THEN
-            vr_idbcoctl := fn_identifica_bcoctl
-                              (pr_cdcooper => rw_crapchd.cdcooper, -- codigo da cooperativa
-                               pr_cdagenci => rw_crapchd.cdagenci, -- Codigo da agencia
-                               pr_idtpdoct => 'C');                -- Tipo de documento (T-titulo,D-doc,C-cheque)
-            -- Somar se o banco de cheques da agencia for 85
-            IF vr_idbcoctl = 1 THEN
-              vr_vldevchq := vr_vldevchq + nvl(rw_crapchd.vlcheque,0);
-            END IF;
-
-        END CASE;
+        vr_vldevchq := vr_vldevchq + nvl(rw_crapchd.vlcheque,0);
       END LOOP;
 
       -- acrescentar percentual
@@ -6281,10 +6243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
   -- Procedure para gravar movimento financeiro referente aos TEDs recebidos
   PROCEDURE pc_grava_mvt_srted(pr_cdcooper  IN INTEGER      -- Codigo da Cooperativa
-                              ,pr_cdagenci  IN INTEGER      -- Codigo da agencia
-                              ,pr_cdoperad  IN crapope.cdoperad%type     -- Codigo do operador
                               ,pr_dtmvtolt  IN DATE         -- Data de movimento
-                              ,pr_nmdatela  IN VARCHAR2     -- Nome da tela
                               ,pr_dscritic OUT VARCHAR2) AS -- Descrição da critica
 
     -- .........................................................................
@@ -6309,53 +6268,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_exc_erro      EXCEPTION;
     vr_vlrtedsr      NUMBER;
 
-    vr_tab_logspb          SSPB0001.typ_tab_logspb;
-    vr_tab_logspb_detalhe  SSPB0001.typ_tab_logspb_detalhe;
-    vr_tab_logspb_totais   SSPB0001.typ_tab_logspb_totais;
-    vr_tab_erro            GENE0001.typ_tab_erro;
-
 
   BEGIN
 
     vr_vlrtedsr := 0;
 
-    /** Procedimento para obter log do SPB da Cecred*/
-    SSPB0001.pc_obtem_log_cecred( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
-                                 ,pr_cdagenci  => pr_cdagenci   -- Cod. Agencia
-                                 ,pr_nrdcaixa  => 0             -- Numero Caixa
-                                 ,pr_cdoperad  => pr_cdoperad   -- Operador
-                                 ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
-                                 ,pr_cdorigem  => 0 /* TODOS */ -- Identificador Origem
-                                 ,pr_dtmvtini  => pr_dtmvtolt   -- Data de movimento de log
-                                 ,pr_dtmvtfim  => pr_dtmvtolt   -- Data de movimento de log
-                                 ,pr_numedlog  =>  2  /* RECEBIDAS */   -- Indicador de log a carregar
-                                 ,pr_cdsitlog  => 'P' /* Processadas */ -- Codigo de situação de log
-                                 ,pr_nrdconta  => 0             -- Numero da Conta
-                                 ,pr_nrsequen  => 0             -- Sequencia
-                                 ,pr_nriniseq  => 1             -- numero inicial da sequencia
-                                 ,pr_nrregist  => 99999         -- numero de registros
-                                 ,pr_cdifconv  => 0             -- Cecred 
-                                 ,pr_vlrdated  => 0             -- Valor da ted
-                                 ,pr_dscritic  => pr_dscritic
-                                 ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
-                                 ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
-                                 ,pr_tab_logspb_totais  => vr_tab_logspb_totais  --> Variavel para armazenar os totais por situação de log
-                                 ,pr_tab_erro           => vr_tab_erro           --> Tabela contendo os erros
-                                );
-
-    -- Convertido conforme o progress ignorando o retorno da package SSPB0001,
-    -- conforme passado por Diego Vincentini, será revisado todo a BO, caso necessario retornar o erro o codigo ja esta pronto
-    /*IF pr_dscritic <> 'OK' THEN
-      pr_dscritic := pr_tab_erro(1).dscritic;
-    END IF; */
-    vr_tab_erro.DELETE;
-
-    --Verificar se existe valores totais de recebido
-    IF vr_tab_logspb_totais.EXISTS('3') THEN /* RECEBIDAS-OK */
-      vr_vlrtedsr := vr_tab_logspb_totais('3').vlsitlog ;
-    ELSE
-      vr_vlrtedsr := 0;
-    END IF;
+    -- Buscar TEDs Cecred
+    FOR rw_lmt IN cr_craplmt(pr_cdcooper,pr_dtmvtolt,0) LOOP 
+      vr_vlrtedsr := vr_vlrtedsr + rw_lmt.vldocmto;
+    END LOOP;
 
     -- Enviar TEDs Cecred
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper    -- Codigo da Cooperativa
@@ -6373,43 +6294,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Buscar TEDs Sicredi
     vr_vlrtedsr := 0;
 
-    /** Procedimento para obter log do SPB da Cecred*/
-    SSPB0001.pc_obtem_log_cecred( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
-                                 ,pr_cdagenci  => pr_cdagenci   -- Cod. Agencia
-                                 ,pr_nrdcaixa  => 0             -- Numero Caixa
-                                 ,pr_cdoperad  => pr_cdoperad   -- Operador
-                                 ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
-                                 ,pr_cdorigem  => 0 /* TODOS */ -- Identificador Origem
-                                 ,pr_dtmvtini  => pr_dtmvtolt   -- Data de movimento de log
-                                 ,pr_dtmvtfim  => pr_dtmvtolt   -- Data de movimento de log
-                                 ,pr_numedlog  =>  2  /* RECEBIDAS */   -- Indicador de log a carregar
-                                 ,pr_cdsitlog  => 'P' /* Processadas */ -- Codigo de situação de log
-                                 ,pr_nrdconta  => 0             -- Numero da Conta
-                                 ,pr_nrsequen  => 0             -- Sequencia
-                                 ,pr_nriniseq  => 1             -- numero inicial da sequencia
-                                 ,pr_nrregist  => 99999         -- numero de registros
-                                 ,pr_cdifconv  => 1             -- Sicredi
-                                 ,pr_vlrdated  => 0             -- Valor da ted
-                                 ,pr_dscritic  => pr_dscritic
-                                 ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
-                                 ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
-                                 ,pr_tab_logspb_totais  => vr_tab_logspb_totais  --> Variavel para armazenar os totais por situação de log
-                                 ,pr_tab_erro           => vr_tab_erro           --> Tabela contendo os erros
-                                );
-
-    -- Convertido conforme o progress ignorando o retorno da package SSPB0001,
-    -- conforme passado por Diego Vincentini, será revisado todo a BO, caso necessario retornar o erro o codigo ja esta pronto
-    /*IF pr_dscritic <> 'OK' THEN
-      pr_dscritic := pr_tab_erro(1).dscritic;
-    END IF; */
-    vr_tab_erro.DELETE;
-
-    --Verificar se existe valores totais de recebido
-    IF vr_tab_logspb_totais.EXISTS('3') THEN /* RECEBIDAS-OK */
-      vr_vlrtedsr := vr_tab_logspb_totais('3').vlsitlog ;
-    ELSE
-      vr_vlrtedsr := 0;
-    END IF;
+    -- Buscar TEDs Sicred
+    FOR rw_lmt IN cr_craplmt(pr_cdcooper,pr_dtmvtolt,1) LOOP 
+      vr_vlrtedsr := vr_vlrtedsr + rw_lmt.vldocmto;
+    END LOOP;
 
     -- Enviar TEDs Cecred
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper    -- Codigo da Cooperativa
@@ -6423,7 +6311,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     IF pr_dscritic <> 'OK' THEN
       RAISE vr_exc_erro;
     END IF;
-    
 
     pr_dscritic := 'OK';
 
@@ -6436,10 +6323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   
   -- Procedure para gravar projeção da SR TED
   PROCEDURE pc_grava_prj_srted (pr_cdcooper IN INTEGER      -- Codigo da Cooperativa
-                               ,pr_cdagenci  IN INTEGER      -- Codigo da agencia
-                               ,pr_cdoperad  IN crapope.cdoperad%type     -- Codigo do operador
                                ,pr_dtmvtolt  IN DATE         -- Data de movimento
-                               ,pr_nmdatela  IN VARCHAR2     -- Nome da tela
                                ,pr_dscritic OUT VARCHAR2) AS -- Descrição da critica
 
     -- .........................................................................
@@ -6467,15 +6351,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_vltotger      NUMBER;
     vr_idx           VARCHAR2(15);
     
-    -- Retorno das rotinas de LOGSPB
-    vr_tab_logspb          SSPB0001.typ_tab_logspb;
-    vr_tab_logspb_detalhe  SSPB0001.typ_tab_logspb_detalhe;
-    vr_tab_logspb_totais   SSPB0001.typ_tab_logspb_totais;
-    vr_tab_erro            GENE0001.typ_tab_erro;
-
   BEGIN
     
-        -- Gerar os periodo de projeção ultimos 6 meses (dia util)
+    -- Gerar os periodo de projeção ultimos 6 meses (dia util)
     pc_gera_period_diautil (pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
                            ,pr_qtdmeses => 6             -- Ultimos 6 meses
@@ -6490,6 +6368,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     ELSE
       pr_dscritic := NULL;
     END IF;
+    
+    -- Se não for encontado algum dia para projeção
+    IF vr_tab_per_datas.count() = 0 THEN
+      -- Gerar os periodo de projeção 6 meses considerando dia do mês apenas
+      pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                            ,pr_qtdmeses => 6             -- Numero de meses a procurar
+                            ,pr_fldiasem => FALSE         -- Considerar o dia da semana
+                            ,pr_flprxant => FALSE         -- Considerar 1 dia para mais ou menos
+                            ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
+                            ,pr_dscritic  => pr_dscritic);
+      IF pr_dscritic <> 'OK' THEN
+        RETURN;
+      ELSE
+        pr_dscritic := NULL;
+      END IF;
+    END IF;     
 
     -- Reiniciar valores para busca das TEDs
     vr_contador := 0;
@@ -6501,41 +6396,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     LOOP
       EXIT WHEN vr_idx IS NULL;
 
-      /** Procedimento para obter log do SPB da Cecred*/
-      SSPB0001.pc_obtem_log_cecred( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
-                                   ,pr_cdagenci  => pr_cdagenci   -- Cod. Agencia
-                                   ,pr_nrdcaixa  => 0             -- Numero Caixa
-                                   ,pr_cdoperad  => pr_cdoperad   -- Operador
-                                   ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
-                                   ,pr_cdorigem  => 0 /* TODOS */ -- Identificador Origem
-                                   ,pr_dtmvtini  => vr_tab_per_datas(vr_idx).dtmvtolt   -- Data de movimento de log
-                                   ,pr_dtmvtfim  => vr_tab_per_datas(vr_idx).dtmvtolt   -- Data de movimento de log
-                                   ,pr_numedlog  =>  2  /* RECEBIDAS */   -- Indicador de log a carregar
-                                   ,pr_cdsitlog  => 'P' /* Processadas */ -- Codigo de situação de log
-                                   ,pr_nrdconta  => 0             -- Numero da Conta
-                                   ,pr_nrsequen  => 0             -- Sequencia
-                                   ,pr_nriniseq  => 1             -- numero inicial da sequencia
-                                   ,pr_nrregist  => 99999         -- numero de registros
-                                   ,pr_cdifconv  => 0             -- Cecred 
-                                   ,pr_vlrdated  => 0             -- Valor da ted
-                                   ,pr_dscritic  => pr_dscritic
-                                   ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
-                                   ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
-                                   ,pr_tab_logspb_totais  => vr_tab_logspb_totais  --> Variavel para armazenar os totais por situação de log
-                                   ,pr_tab_erro           => vr_tab_erro           --> Tabela contendo os erros
-                                  );
-
-      -- Convertido conforme o progress ignorando o retorno da package SSPB0001,
-      -- conforme passado por Diego Vincentini, será revisado todo a BO, caso necessario retornar o erro o codigo ja esta pronto
-      /*IF pr_dscritic <> 'OK' THEN
-        pr_dscritic := pr_tab_erro(1).dscritic;
-      END IF; */
-      vr_tab_erro.DELETE;
-
-      --Verificar se existe valores totais de recebido
-      IF vr_tab_logspb_totais.EXISTS('3') THEN /* RECEBIDAS-OK */
-        vr_vltotger := vr_vltotger + vr_tab_logspb_totais('3').vlsitlog ;
-      END IF;
+      -- Buscar TEDs Cecred
+      FOR rw_lmt IN cr_craplmt(pr_cdcooper,vr_tab_per_datas(vr_idx).dtmvtolt,0) LOOP 
+        vr_vltotger := vr_vltotger + rw_lmt.vldocmto;
+      END LOOP;
       
       vr_contador := vr_contador + 1;
       
@@ -6572,41 +6436,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     LOOP
       EXIT WHEN vr_idx IS NULL;
 
-      /** Procedimento para obter log do SPB da Cecred*/
-      SSPB0001.pc_obtem_log_cecred( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
-                                   ,pr_cdagenci  => pr_cdagenci   -- Cod. Agencia
-                                   ,pr_nrdcaixa  => 0             -- Numero Caixa
-                                   ,pr_cdoperad  => pr_cdoperad   -- Operador
-                                   ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
-                                   ,pr_cdorigem  => 0 /* TODOS */ -- Identificador Origem
-                                   ,pr_dtmvtini  => vr_tab_per_datas(vr_idx).dtmvtolt   -- Data de movimento de log
-                                   ,pr_dtmvtfim  => vr_tab_per_datas(vr_idx).dtmvtolt   -- Data de movimento de log
-                                   ,pr_numedlog  =>  2  /* RECEBIDAS */   -- Indicador de log a carregar
-                                   ,pr_cdsitlog  => 'P' /* Processadas */ -- Codigo de situação de log
-                                   ,pr_nrdconta  => 0             -- Numero da Conta
-                                   ,pr_nrsequen  => 0             -- Sequencia
-                                   ,pr_nriniseq  => 1             -- numero inicial da sequencia
-                                   ,pr_nrregist  => 99999         -- numero de registros
-                                   ,pr_cdifconv  => 3             -- Cecred 
-                                   ,pr_vlrdated  => 0             -- Valor da ted
-                                   ,pr_dscritic  => pr_dscritic
-                                   ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
-                                   ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
-                                   ,pr_tab_logspb_totais  => vr_tab_logspb_totais  --> Variavel para armazenar os totais por situação de log
-                                   ,pr_tab_erro           => vr_tab_erro           --> Tabela contendo os erros
-                                  );
-
-      -- Convertido conforme o progress ignorando o retorno da package SSPB0001,
-      -- conforme passado por Diego Vincentini, será revisado todo a BO, caso necessario retornar o erro o codigo ja esta pronto
-      /*IF pr_dscritic <> 'OK' THEN
-        pr_dscritic := pr_tab_erro(1).dscritic;
-      END IF; */
-      vr_tab_erro.DELETE;
-
-      --Verificar se existe valores totais de recebido
-      IF vr_tab_logspb_totais.EXISTS('3') THEN /* RECEBIDAS-OK */
-        vr_vltotger := vr_vltotger + vr_tab_logspb_totais('3').vlsitlog ;
-      END IF;
+      -- Buscar TEDs Sicredi
+      FOR rw_lmt IN cr_craplmt(pr_cdcooper,vr_tab_per_datas(vr_idx).dtmvtolt,1) LOOP 
+        vr_vltotger := vr_vltotger + rw_lmt.vldocmto;
+      END LOOP;
       
       vr_contador := vr_contador + 1;
       
@@ -6674,14 +6507,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     FOR rw_craplcs IN cr_craplcs_tedtec(pr_dtmvtolt => pr_dtmvtolt
                                        ,pr_cdcooper => pr_cdcooper) LOOP
 
-      vr_vlrtednr := vr_vlrtednr + rw_craplcs.vllanmto;
+      vr_vlrtednr := vr_vlrtednr + nvl(rw_craplcs.vllanmto,0);
     END LOOP;
 
     /* TED - Transferencias*/
     FOR rw_craptvl IN cr_craptvl(pr_dtmvtolt => pr_dtmvtolt,
                                  pr_cdcooper => pr_cdcooper) LOOP
 
-      vr_vlrtednr := vr_vlrtednr + rw_craptvl.vldocrcb;
+      vr_vlrtednr := vr_vlrtednr + nvl(rw_craptvl.vldocrcb,0);
 
     END LOOP;
 
@@ -6691,7 +6524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                        ,pr_cdremessa => 3
                                        ,pr_tpfluxo   => 'S') LOOP
 
-      vr_vlrtednr := vr_vlrtednr - rw_craplcm.vllanmto;
+      vr_vlrtednr := vr_vlrtednr - nvl(rw_craplcm.vllanmto,0);
 
     END LOOP;
 
@@ -6742,7 +6575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_tab_per_datas typ_tab_per_datas;
     
     -- variavel para calcular o movimento
-    vr_contador NUMBER;
+    vr_contador NUMBER := 0;
     vr_vlrmedia NUMBER;
     vr_vltotger NUMBER := 0;
     vr_idx      VARCHAR2(15);
@@ -6752,7 +6585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Gerar periodo projeção considerando somente o dia util 
     pc_gera_period_diautil (pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                           ,pr_qtdmeses => 12            -- Ultimos 12 meses
+                           ,pr_qtdmeses => 6             -- Ultimos 12 meses
                            ,pr_qtdocorr => 0             -- Limite de datas encontradas (0 não há)
                            ,pr_fldiasem => FALSE         -- Não Considerar o dia da semana
                            --out
@@ -6765,6 +6598,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       pr_dscritic := NULL;
     END IF;
     
+    -- Se não for encontado algum dia para projeção
+    IF vr_tab_per_datas.count() = 0 THEN
+      -- Gerar os periodo de projeção 6  meses considerando dia do mês apenas
+      pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                            ,pr_qtdmeses => 6              -- Numero de meses a procurar
+                            ,pr_fldiasem => FALSE         -- Considerar o dia da semana
+                            ,pr_flprxant => FALSE         -- Considerar 1 dia para mais ou menos
+                            ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
+                            ,pr_dscritic  => pr_dscritic);
+      IF pr_dscritic <> 'OK' THEN
+        RETURN;
+      ELSE
+        pr_dscritic := NULL;
+      END IF;
+    END IF;     
+    
     -- Ler todas as datas
     vr_idx := vr_tab_per_datas.first;
     LOOP
@@ -6774,14 +6624,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       FOR rw_craplcs IN cr_craplcs_tedtec(pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt
                                          ,pr_cdcooper => pr_cdcooper) LOOP
 
-        vr_vltotger := vr_vltotger + rw_craplcs.vllanmto;
+        vr_vltotger := vr_vltotger + nvl(rw_craplcs.vllanmto,0);
       END LOOP;
 
       /* TED - Transferencias*/
       FOR rw_craptvl IN cr_craptvl(pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt,
                                    pr_cdcooper => pr_cdcooper) LOOP
 
-        vr_vltotger := vr_vltotger + rw_craptvl.vldocrcb;
+        vr_vltotger := vr_vltotger + nvl(rw_craptvl.vldocrcb,0);
 
       END LOOP;
 
@@ -6790,7 +6640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                          ,pr_cdcooper  => pr_cdcooper
                                          ,pr_cdremessa => 3
                                          ,pr_tpfluxo   => 'S') LOOP
-        vr_vltotger := vr_vltotger - rw_craplcm.vllanmto;
+        vr_vltotger := vr_vltotger - nvl(rw_craplcm.vllanmto,0);
       END LOOP;      
       
       vr_contador := vr_contador + 1;
@@ -6850,42 +6700,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_vlrconve      NUMBER;
-    vr_qtregist      INTEGER;
-    vr_tab_erro      GENE0001.typ_tab_erro;
-    vr_tab_dados_pesqti CONV0001.typ_tab_dados_pesqti;
 
 
   BEGIN
 
     vr_vlrconve := 0;
-
-    /* Gerar tempTable dos Lancamentos de faturas.(craplft)  dos convenios*/
-    CONV0001.pc_consulta_faturas (pr_cdcooper  => pr_cdcooper    -- Codigo da cooperativa
-                                 ,pr_dtmvtolt  => pr_dtmvtolt    -- Data de movimento
-                                 ,pr_nrdcaixa  => 0              -- Numero da caixa
-                                 ,pr_dtdpagto  => pr_dtmvtolt    -- Data de pagamento
-                                 ,pr_vldpagto  => 0              -- Valor do pagamento
-                                 ,pr_cdagenci  => 0              -- Codigo da agencia
-                                 ,pr_cdhistor  => 0              -- Codigo do historico
-                                 ,pr_flgpagin  => FALSE          -- Indicativo  de paginação
-                                 ,pr_nrregist  => 0              -- Número de controle de registros
-                                 ,pr_nriniseq  => 0              -- Número de controle de inicio de registro
-                                 ,pr_cdempcon  => 0              -- Codigo da empresa a ser conveniada.
-                                 ,pr_cdsegmto  => 0              -- Identificacao do segmento da empresa/orgao
-                                 ,pr_flgcnvsi  => FALSE          -- Indicador SICREDI associa ao historico específico
-                                 ,pr_qtregist => vr_qtregist     -- Retorna a quantidade de registro
-                                 ,pr_vlrtotal => vr_vlrconve     -- Valor total
-                                 ,pr_dscritic => pr_dscritic     -- Descricao da critica
-                                 ,pr_tab_erro => vr_tab_erro     -- Tabela contendo os erros
-                                 ,pr_tab_dados_pesqti => vr_tab_dados_pesqti); -- tabela de historicos
-
-    IF pr_dscritic <> 'OK' THEN
-      RETURN;
-    END IF;
-
+    -- Lançamentos Faturas Cecred
+    FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
+                             ,pr_dtdpagto => pr_dtmvtolt
+                             ,pr_flgcnvsi => 0) LOOP
+      vr_vlrconve := vr_vlrconve + rw_lft.vldtotal;
+    END LOOP;
+    
     -- Ler convenios
     FOR rw_gnconve IN cr_gnconve(pr_cdcooper => pr_cdcooper) LOOP
-      --ler lancamentos
+      --ler lancamentos do convênio
       FOR rw_craplcm IN cr_craplcm_generi(pr_dtmvtolt => pr_dtmvtolt
                                          ,pr_cdcooper => pr_cdcooper
                                          ,pr_cdhistor => rw_gnconve.cdhisdeb) LOOP
@@ -6911,29 +6740,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Buscar convênios Sicredi
     vr_vlrconve := 0;
 
-    /* Gerar tempTable dos Lancamentos de faturas.(craplft)  dos convenios*/
-    CONV0001.pc_consulta_faturas (pr_cdcooper  => pr_cdcooper    -- Codigo da cooperativa
-                                 ,pr_dtmvtolt  => pr_dtmvtolt    -- Data de movimento
-                                 ,pr_nrdcaixa  => 0              -- Numero da caixa
-                                 ,pr_dtdpagto  => pr_dtmvtolt    -- Data de pagamento
-                                 ,pr_vldpagto  => 0              -- Valor do pagamento
-                                 ,pr_cdagenci  => 0              -- Codigo da agencia
-                                 ,pr_cdhistor  => 0              -- Codigo do historico
-                                 ,pr_flgpagin  => FALSE          -- Indicativo  de paginação
-                                 ,pr_nrregist  => 0              -- Número de controle de registros
-                                 ,pr_nriniseq  => 0              -- Número de controle de inicio de registro
-                                 ,pr_cdempcon  => 0              -- Codigo da empresa a ser conveniada.
-                                 ,pr_cdsegmto  => 0              -- Identificacao do segmento da empresa/orgao
-                                 ,pr_flgcnvsi  => TRUE           -- Indicador SICREDI associa ao historico específico
-                                 ,pr_qtregist => vr_qtregist     -- Retorna a quantidade de registro
-                                 ,pr_vlrtotal => vr_vlrconve     -- Valor total
-                                 ,pr_dscritic => pr_dscritic     -- Descricao da critica
-                                 ,pr_tab_erro => vr_tab_erro     -- Tabela contendo os erros
-                                 ,pr_tab_dados_pesqti => vr_tab_dados_pesqti); -- tabela de historicos
-
-    IF pr_dscritic <> 'OK' THEN
-      RETURN;
-    END IF;
+    -- Lançamentos Faturas Sicredi
+    FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
+                             ,pr_dtdpagto => pr_dtmvtolt
+                             ,pr_flgcnvsi => 1) LOOP
+      vr_vlrconve := vr_vlrconve + rw_lft.vldtotal;
+    END LOOP;
 
     --ler lancamentos
     FOR rw_craplcm IN cr_craplcm_parame(pr_dtmvtolt  => pr_dtmvtolt
@@ -6988,16 +6800,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
-    vr_tab_erro      GENE0001.typ_tab_erro;
-    vr_tab_per_datas typ_tab_per_datas;
     -- Variaveis para calculo do movimento
-    vr_qtregist      INTEGER;
-    vr_vlrconve      NUMBER;
     vr_contador      NUMBER;
     vr_vlrmedia      NUMBER;
     vr_vltotger      NUMBER;
     vr_idx           VARCHAR2(15);
-    vr_tab_dados_pesqti CONV0001.typ_tab_dados_pesqti;
+    vr_tab_per_datas typ_tab_per_datas;
     
   BEGIN
   
@@ -7024,30 +6832,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     LOOP
       EXIT WHEN vr_idx IS NULL;
       
-      /* Gerar tempTable dos Lancamentos de faturas.(craplft)  dos convenios*/
-      CONV0001.pc_consulta_faturas (pr_cdcooper  => pr_cdcooper    -- Codigo da cooperativa
-                                   ,pr_dtmvtolt  => vr_tab_per_datas(vr_idx).dtmvtolt    -- Data de movimento
-                                   ,pr_nrdcaixa  => 0              -- Numero da caixa
-                                   ,pr_dtdpagto  => vr_tab_per_datas(vr_idx).dtmvtolt    -- Data de pagamento
-                                   ,pr_vldpagto  => 0              -- Valor do pagamento
-                                   ,pr_cdagenci  => 0              -- Codigo da agencia
-                                   ,pr_cdhistor  => 0              -- Codigo do historico
-                                   ,pr_flgpagin  => FALSE          -- Indicativo  de paginação
-                                   ,pr_nrregist  => 0              -- Número de controle de registros
-                                   ,pr_nriniseq  => 0              -- Número de controle de inicio de registro
-                                   ,pr_cdempcon  => 0              -- Codigo da empresa a ser conveniada.
-                                   ,pr_cdsegmto  => 0              -- Identificacao do segmento da empresa/orgao
-                                   ,pr_flgcnvsi  => FALSE          -- Indicador SICREDI associa ao historico específico
-                                   ,pr_qtregist => vr_qtregist     -- Retorna a quantidade de registro
-                                   ,pr_vlrtotal => vr_vlrconve     -- Valor total
-                                   ,pr_dscritic => pr_dscritic     -- Descricao da critica
-                                   ,pr_tab_erro => vr_tab_erro     -- Tabela contendo os erros
-                                   ,pr_tab_dados_pesqti => vr_tab_dados_pesqti); -- tabela de historicos
-
-      IF pr_dscritic <> 'OK' THEN
-        RETURN;
-      END IF;
-
+      -- Lançamentos Faturas Cecred 
+      FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
+                               ,pr_dtdpagto => vr_tab_per_datas(vr_idx).dtmvtolt
+                               ,pr_flgcnvsi => 0) LOOP
+        vr_vltotger := vr_vltotger + rw_lft.vldtotal;
+      END LOOP;
+      
       -- Ler convenios
       FOR rw_gnconve IN cr_gnconve(pr_cdcooper => pr_cdcooper) LOOP
         --ler lancamentos
@@ -7055,32 +6846,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                            ,pr_cdcooper => pr_cdcooper
                                            ,pr_cdhistor => rw_gnconve.cdhisdeb) LOOP
 
-          vr_vlrconve := nvl(vr_vlrconve,0) + nvl(rw_craplcm.vllanmto,0);
+          vr_vltotger := nvl(vr_vltotger,0) + nvl(rw_craplcm.vllanmto,0);
 
         END LOOP; -- Fim loop craplcm
       END LOOP; -- Fim loop gncvcop
 
-      vr_vltotger := vr_vltotger + nvl(vr_vlrconve,0);
       vr_contador := vr_contador + 1;
-
-      -- Se for o ultimo registro deve calcular a media
-      IF vr_idx = vr_tab_per_datas.LAST OR
-         vr_tab_per_datas(vr_idx).cdagrupa <> vr_tab_per_datas(nvl(vr_tab_per_datas.NEXT(vr_idx),vr_idx)).cdagrupa then
-
-        vr_vlrmedia := vr_vlrmedia + (vr_vltotger  / vr_contador);
-        vr_vltotger := 0;
-        vr_contador := 0;
-
-      END IF;
 
       vr_idx := vr_tab_per_datas.NEXT(vr_idx);
     END LOOP;
+    
+    -- Se encontramos alguma ocorrência
+    IF vr_contador > 0 THEN 
+      vr_vlrmedia := vr_vlrmedia + (vr_vltotger  / vr_contador);
+    ELSE
+      vr_vlrmedia := 0;
+    END IF;  
 
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
                          ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
                          ,pr_tpdmovto => 4               -- Tipo de movimento
                          ,pr_cdbccxlt => 85              -- Codigo do banco/caixa.
-                         ,pr_tpdcampo => 4 /*VLTOTTIT*/  -- Tipo de campo
+                         ,pr_tpdcampo => 11              -- Tipo de campo
                          ,pr_vldcampo => vr_vlrmedia     -- Valor do campo
                          ,pr_dscritic => pr_dscritic);
 
@@ -7097,29 +6884,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     LOOP
       EXIT WHEN vr_idx IS NULL;
       
-      /* Gerar tempTable dos Lancamentos de faturas.(craplft)  dos convenios*/
-      CONV0001.pc_consulta_faturas (pr_cdcooper  => pr_cdcooper    -- Codigo da cooperativa
-                                   ,pr_dtmvtolt  => pr_dtmvtolt    -- Data de movimento
-                                   ,pr_nrdcaixa  => 0              -- Numero da caixa
-                                   ,pr_dtdpagto  => pr_dtmvtolt    -- Data de pagamento
-                                   ,pr_vldpagto  => 0              -- Valor do pagamento
-                                   ,pr_cdagenci  => 0              -- Codigo da agencia
-                                   ,pr_cdhistor  => 0              -- Codigo do historico
-                                   ,pr_flgpagin  => FALSE          -- Indicativo  de paginação
-                                   ,pr_nrregist  => 0              -- Número de controle de registros
-                                   ,pr_nriniseq  => 0              -- Número de controle de inicio de registro
-                                   ,pr_cdempcon  => 0              -- Codigo da empresa a ser conveniada.
-                                   ,pr_cdsegmto  => 0              -- Identificacao do segmento da empresa/orgao
-                                   ,pr_flgcnvsi  => TRUE           -- Indicador SICREDI associa ao historico específico
-                                   ,pr_qtregist => vr_qtregist     -- Retorna a quantidade de registro
-                                   ,pr_vlrtotal => vr_vlrconve     -- Valor total
-                                   ,pr_dscritic => pr_dscritic     -- Descricao da critica
-                                   ,pr_tab_erro => vr_tab_erro     -- Tabela contendo os erros
-                                   ,pr_tab_dados_pesqti => vr_tab_dados_pesqti); -- tabela de historicos
-
-      IF pr_dscritic <> 'OK' THEN
-        RETURN;
-      END IF;
+      -- Lançamentos Faturas Sicred 
+      FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
+                               ,pr_dtdpagto => vr_tab_per_datas(vr_idx).dtmvtolt
+                               ,pr_flgcnvsi => 1) LOOP
+        vr_vltotger := vr_vltotger + rw_lft.vldtotal;
+      END LOOP;
 
       --ler lancamentos
       FOR rw_craplcm IN cr_craplcm_parame(pr_dtmvtolt  => pr_dtmvtolt
@@ -7127,31 +6897,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                          ,pr_cdremessa => 11
                                          ,pr_tpfluxo   => 'S') LOOP
 
-        vr_vlrconve := nvl(vr_vlrconve,0) + nvl(rw_craplcm.vllanmto,0);
+        vr_vltotger := nvl(vr_vltotger,0) + nvl(rw_craplcm.vllanmto,0);
 
       END LOOP; -- Fim loop craplcm
       
-      vr_vltotger := vr_vltotger + nvl(vr_vlrconve,0);
       vr_contador := vr_contador + 1;
-
-      -- Se for o ultimo registro deve calcular a media
-      IF vr_idx = vr_tab_per_datas.LAST OR
-         vr_tab_per_datas(vr_idx).cdagrupa <> vr_tab_per_datas(nvl(vr_tab_per_datas.NEXT(vr_idx),vr_idx)).cdagrupa then
-
-        vr_vlrmedia := vr_vlrmedia + (vr_vltotger  / vr_contador);
-        vr_vltotger := 0;
-        vr_contador := 0;
-
-      END IF;
 
       vr_idx := vr_tab_per_datas.NEXT(vr_idx);
     END LOOP;
+    
+    -- Se encontramos alguma ocorrência
+    IF vr_contador > 0 THEN 
+      vr_vlrmedia := vr_vlrmedia + (vr_vltotger  / vr_contador);
+    ELSE
+      vr_vlrmedia := 0;
+    END IF; 
     
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
                          ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
                          ,pr_tpdmovto => 4               -- Tipo de movimento
                          ,pr_cdbccxlt => 748             -- Codigo do banco/caixa.
-                         ,pr_tpdcampo => 4 /*VLTOTTIT*/  -- Tipo de campo
+                         ,pr_tpdcampo => 11              -- Tipo de campo
                          ,pr_vldcampo => vr_vlrmedia     -- Valor do campo
                          ,pr_dscritic => pr_dscritic);
 
@@ -7192,42 +6958,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_vlsaqtaa      NUMBER;
-    vr_idx           varchar2(38);
-    vr_tab_lancamentos  CADA0001.typ_tab_lancamentos;
 
   BEGIN
 
     vr_vlsaqtaa := 0;
 
-    /* Rotina gera temptable com os movimentos de saques da cooperativa */
-    CADA0001.pc_busca_movto_saque_cooper (pr_cdcooper  => (CASE pr_tpdmovto
-                                                            WHEN 1 then 0
-                                                            WHEN 2 THEN pr_cdcooper
-                                                           END)--> Código da cooperativo
-                                         ,pr_cdcoptfn  => (CASE pr_tpdmovto
-                                                            WHEN 1 then pr_cdcooper
-                                                            WHEN 2 THEN 0
-                                                           END)  --> Codigo que identifica a Cooperativa do Cash.
-                                         ,pr_dtmvtoin  => pr_dtmvtolt    --> Data de movimento inicial
-                                         ,pr_dtmvtofi  => pr_dtmvtolt    --> Data de movimento final
-                                         ,pr_cdtplanc  => 1              --> Codigo do tipo de lançamento
-                                         ,pr_dscritic  => pr_dscritic    --> retorno da descrição de critica
-                                         ,pr_tab_lancamentos => vr_tab_lancamentos);  --> Retorno da temptable com os lançamentos
-
-    IF pr_dscritic is not null THEN
-      RETURN;
+    IF pr_tpdmovto = 1 THEN
+      FOR rw_lcm IN cr_craplcm_cash(pr_cdcoptfn => pr_cdcooper
+                                   ,pr_dtmvtolt => pr_dtmvtolt) LOOP 
+        vr_vlsaqtaa := vr_vlsaqtaa + rw_lcm.vllanmto;
+      END LOOP;                             
+    ELSE
+      FOR rw_lcm IN cr_craplcm_cop(pr_cdcooper => pr_cdcooper
+                                  ,pr_dtmvtolt => pr_dtmvtolt) LOOP
+        vr_vlsaqtaa := vr_vlsaqtaa + rw_lcm.vllanmto;                                  
+      END LOOP;                            
     END IF;
-
-    --Varrer temptable
-    vr_idx := vr_tab_lancamentos.first;
-    LOOP
-      EXIT WHEN vr_idx is null;
-
-      vr_vlsaqtaa := vr_vlsaqtaa + nvl(vr_tab_lancamentos(vr_idx).vlrtotal,0);
-
-      --buscar proximo
-      vr_idx := vr_tab_lancamentos.next(vr_idx);
-    END LOOP;
 
     -- Ler os bancos e gravar os movimentos
     pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
@@ -7274,8 +7020,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
-    vr_idxLCT        varchar2(38);
-    vr_tab_lancamentos  CADA0001.typ_tab_lancamentos;
     vr_nrdiautil     PLS_INTEGER;    
     
     -- Variaveis para calculo do movimento
@@ -7316,20 +7060,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     ELSE
       pr_dscritic := NULL;
     END IF;
-    -- Se chegarmos neste ponto e não encontramos nenhuma data a projetar, então buscaremos
-    -- os ultimos 12 meses considerando o dia da semana e 1 dia do mês para mais ou para menos
-    pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                          ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                          ,pr_qtdmeses => 12            -- Numero de meses a procurar
-                          ,pr_fldiasem => TRUE          -- Considerar o dia da semana
-                          ,pr_flprxant => TRUE          -- Considerar 1 dia a mais ou menos
-                          ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
-                          ,pr_dscritic  => pr_dscritic);
-    IF pr_dscritic <> 'OK' THEN
-      RETURN;
-    ELSE
-      pr_dscritic := NULL;
-    END IF;
+    
+    -- Se chegarmos neste ponto e não encontramos nenhuma data a projetar
+    IF vr_tab_per_datas.count() = 0 THEN 
+      -- Então buscaremos os ultimos 12 meses considerando o dia da semana e 1 dia do mês para mais ou para menos
+      pc_gera_period_dia_mes(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                            ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                            ,pr_qtdmeses => 12            -- Numero de meses a procurar
+                            ,pr_fldiasem => TRUE          -- Considerar o dia da semana
+                            ,pr_flprxant => TRUE          -- Considerar 1 dia a mais ou menos
+                            ,pr_tab_per_datas => vr_tab_per_datas -- Tabela de datas
+                            ,pr_dscritic  => pr_dscritic);
+      IF pr_dscritic <> 'OK' THEN
+        RETURN;
+      ELSE
+        pr_dscritic := NULL;
+      END IF;
+    END IF;  
     
     -- Zerar valores para busca
     vr_contador := 0; 
@@ -7341,35 +7088,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     LOOP
       EXIT WHEN vr_idx IS NULL;
 
-      /* Rotina gera temptable com os movimentos de saques da cooperativa */
-      CADA0001.pc_busca_movto_saque_cooper (pr_cdcooper  => (CASE pr_tpdmovto
-                                                              WHEN 1 then 0
-                                                              WHEN 2 THEN pr_cdcooper
-                                                             END)--> Código da cooperativo
-                                           ,pr_cdcoptfn  => (CASE pr_tpdmovto
-                                                              WHEN 1 then pr_cdcooper
-                                                              WHEN 2 THEN 0
-                                                             END)  --> Codigo que identifica a Cooperativa do Cash.
-                                           ,pr_dtmvtoin  => vr_tab_per_datas(vr_idx).dtmvtolt    --> Data de movimento inicial
-                                           ,pr_dtmvtofi  => vr_tab_per_datas(vr_idx).dtmvtolt    --> Data de movimento final
-                                           ,pr_cdtplanc  => 1              --> Codigo do tipo de lançamento
-                                           ,pr_dscritic  => pr_dscritic    --> retorno da descrição de critica
-                                           ,pr_tab_lancamentos => vr_tab_lancamentos);  --> Retorno da temptable com os lançamentos
-
-      IF pr_dscritic is not null THEN
-        RETURN;
+      -- Busca entrada ou saida conforme movimento 
+      IF pr_tpdmovto = 1 THEN
+        FOR rw_lcm IN cr_craplcm_cash(pr_cdcoptfn => pr_cdcooper
+                                     ,pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt) LOOP 
+          vr_vltotger := vr_vltotger + rw_lcm.vllanmto;
+        END LOOP;                             
+      ELSE
+        FOR rw_lcm IN cr_craplcm_cop(pr_cdcooper => pr_cdcooper
+                                    ,pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt) LOOP
+          vr_vltotger := vr_vltotger + rw_lcm.vllanmto;                                  
+        END LOOP;                            
       END IF;
-
-      --Varrer temptable
-      vr_idxLCT := vr_tab_lancamentos.first;
-      LOOP
-        EXIT WHEN vr_idx is null;
-
-        vr_vltotger := vr_vltotger + nvl(vr_tab_lancamentos(vr_idxLCT).vlrtotal,0);
-
-        --buscar proximo
-        vr_idxLCT := vr_tab_lancamentos.next(vr_idxLCT);
-      END LOOP;
 
       vr_contador := vr_contador + 1;
       
@@ -7510,7 +7240,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   PROCEDURE pc_grava_fluxo_entrada (pr_cdcooper  IN INTEGER      -- Codigo da Cooperativa
                                    ,pr_cdagenci  IN INTEGER      -- Codigo da agencia
                                    ,pr_nrdcaixa  IN INTEGER      -- Numero da caixa
-                                   ,pr_cdoperad  IN crapope.cdoperad%type     -- Codigo do operador
                                    ,pr_dtmvtolt  IN DATE         -- Data de movimento
                                    ,pr_nmdatela  IN VARCHAR2     -- Nome da tela
                                    ,pr_dtmvtoan  IN DATE         -- Data de movimento anterior
@@ -7545,10 +7274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Gravar movimento financeiro referente aos TEDs recebidos
     IF pr_tpremessa IN(0,3) THEN 
       pc_grava_mvt_srted(pr_cdcooper  => pr_cdcooper   -- Codigo da Cooperativa
-                        ,pr_cdagenci  => pr_cdagenci   -- Codigo da agencia
-                        ,pr_cdoperad  => pr_cdoperad   -- Codigo do operador
                         ,pr_dtmvtolt  => pr_dtmvtolt   -- Data de movimento
-                        ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
                         ,pr_dscritic  => vr_dscritic);
 
       IF vr_dscritic <> 'OK' THEN
@@ -7812,8 +7538,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     -- Procedure para gravar movimento financeiro de cheques saida realizado
     IF pr_tpremessa IN(0,1) THEN 
-      pc_grava_mvt_srcheques(pr_cdcooper  => pr_cdcooper      -- Codigo da Cooperativa
+      pc_grava_mvt_srcheques(pr_cdcooper  => pr_cdcooper    -- Codigo da Cooperativa
                             ,pr_dtmvtolt  => pr_dtmvtolt    -- Data de movimento
+                            ,pr_dtmvtoan  => pr_dtmvtoan    -- Dia do movimento anterior
                             ,pr_dscritic  => vr_dscritic);
 
       IF vr_dscritic <> 'OK' THEN
@@ -8103,11 +7830,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   PROCEDURE pc_grava_fluxo_projetado(pr_cdcooper  IN INTEGER      -- Codigo da Cooperativa
                                     ,pr_cdagenci  IN INTEGER      -- Codigo da agencia
                                     ,pr_nrdcaixa  IN INTEGER      -- Numero da caixa
-                                    ,pr_cdoperad  IN VARCHAR2     -- Codigo do operador
                                     ,pr_dtmvtolt  IN DATE         -- Data do dial atual
                                     ,pr_dtmvtopr  IN DATE         -- Data de movimento anterior
-                                    ,pr_dtmvtoan  IN DATE         -- Data do dia anterior
-                                    ,pr_nmdatela  IN VARCHAR2     -- Nome da tela
                                     ,pr_tpremessa IN NUMBER DEFAULT 0 -- Tipo da remessa (0 para todas)
                                     ,pr_tpfluxo   IN NUMBER DEFAULT 0 -- TIpo do fluxo (0 para todos)
                                     ,pr_tab_erro OUT GENE0001.typ_tab_erro -- Tabela contendo os erros
@@ -8133,10 +7857,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_exc_erro      EXCEPTION;
     vr_dscritic      VARCHAR2(4000) ;
     vr_nrsequen      NUMBER;
-
+    
+    vr_tab_cdbccxlt  gene0002.typ_split;    
+    
   BEGIN
 
     vr_dscritic := null;
+    
+    -- Durante o processo noturno
+    IF pr_tpfluxo = 0 AND pr_tpremessa = 0 THEN 
+      -- Garantir inicialização do registro CRAPFFM de todas as entidades para o próximo dia
+      vr_tab_cdbccxlt := gene0002.fn_quebra_string('01,85,756,748',',');
+
+      FOR idx IN vr_tab_cdbccxlt.first..vr_tab_cdbccxlt.last LOOP
+        -- Gerar registro 1 - Entrada Realizado
+        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                             ,pr_dtmvtolt => pr_dtmvtopr   -- Data de movimento
+                             ,pr_tpdmovto => 1             -- Tipo de movimento(E)
+                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
+                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
+                             ,pr_vldcampo => 0             -- Valor do campo
+                             ,pr_dscritic => pr_dscritic);
+
+        IF pr_dscritic <> 'OK' THEN
+          RAISE vr_exc_erro;
+        END IF;  
+        -- Gerar registro 2 - Saída Realizado
+        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                             ,pr_dtmvtolt => pr_dtmvtopr   -- Data de movimento
+                             ,pr_tpdmovto => 2             -- Tipo de movimento(E)
+                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
+                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
+                             ,pr_vldcampo => 0             -- Valor do campo
+                             ,pr_dscritic => pr_dscritic);
+
+        IF pr_dscritic <> 'OK' THEN
+          RAISE vr_exc_erro;
+        END IF;
+        -- Gerar registro 3 - Entrada Projetada
+        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                             ,pr_dtmvtolt => pr_dtmvtopr   -- Data de movimento
+                             ,pr_tpdmovto => 3             -- Tipo de movimento(E)
+                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
+                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
+                             ,pr_vldcampo => 0             -- Valor do campo
+                             ,pr_dscritic => pr_dscritic);
+
+        IF pr_dscritic <> 'OK' THEN
+          RAISE vr_exc_erro;
+        END IF;
+        -- Gerar registro 4 - Saida Projetada
+        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                             ,pr_dtmvtolt => pr_dtmvtopr   -- Data de movimento
+                             ,pr_tpdmovto => 4             -- Tipo de movimento(E)
+                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
+                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
+                             ,pr_vldcampo => 0             -- Valor do campo
+                             ,pr_dscritic => pr_dscritic);
+
+        IF pr_dscritic <> 'OK' THEN
+          RAISE vr_exc_erro;
+        END IF;            
+      END LOOP;--Fim loop bancos
+    END IF;
     
     -- Docs
     IF pr_tpremessa IN(0,2) THEN     
@@ -8144,7 +7927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       IF pr_tpfluxo IN(0,3) THEN 
         -- Gravar movimento financeiro dos docs
         pc_grava_prj_nrdoc(pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
-                          ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
+                          ,pr_dtmvtolt => pr_dtmvtopr     -- Data de movimento
                           ,pr_dscritic => vr_dscritic);
 
         IF vr_dscritic <> 'OK' THEN
@@ -8208,10 +7991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       IF pr_tpfluxo IN(0,4) THEN 
         -- Gravar projeção financeiro SRTED
         pc_grava_prj_srted(pr_cdcooper  => pr_cdcooper   -- Codigo da Cooperativa
-                          ,pr_cdagenci  => pr_cdagenci   -- Codigo da agencia
-                          ,pr_cdoperad  => pr_cdoperad   -- Codigo do operador
                           ,pr_dtmvtolt  => pr_dtmvtopr   -- Data de movimento
-                          ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
                           ,pr_dscritic => vr_dscritic) ;
 
         IF vr_dscritic <> 'OK' THEN
@@ -8229,12 +8009,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       END IF;
     END IF;  
     
-    -- Cheques
-    IF pr_tpremessa IN(0,1) THEN 
+    -- Titulos
+    IF pr_tpremessa IN(0,4) THEN 
       
       IF pr_tpfluxo IN(0,3) THEN 
         -- Gravar movimento financeiro dos titulos nr
-        pc_grava_prj_nrtitulos(pr_cdcooper => pr_cdcooper              -- Codigo da Cooperativa
+        pc_grava_prj_srtitulos(pr_cdcooper => pr_cdcooper              -- Codigo da Cooperativa
                               ,pr_dtmvtolt => pr_dtmvtopr              -- Data de movimento
                               ,pr_dscritic => vr_dscritic);
 
@@ -8254,7 +8034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       
       IF pr_tpfluxo IN(0,4) THEN 
         -- Gravar movimento financeiro dos titulos sr
-        pc_grava_prj_srtitulos(pr_cdcooper => pr_cdcooper              -- Codigo da Cooperativa
+        pc_grava_prj_nrtitulos(pr_cdcooper => pr_cdcooper              -- Codigo da Cooperativa
                               ,pr_dtmvtolt => pr_dtmvtopr              -- Data de movimento
                               ,pr_dscritic => vr_dscritic);
 
@@ -8524,8 +8304,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       IF pr_tpfluxo IN(0,3) THEN 
         -- Procedure para gravar movimento financeiro das devoluções de cheques de outros bancos
         pc_grava_prj_dev_cheque_rem (pr_cdcooper => pr_cdcooper           -- Codigo da Cooperativa
-                                    ,pr_dtmvtolt => pr_dtmvtolt           -- Data de movimento
-                                    ,pr_dtmvtoan => pr_dtmvtoan           -- Dia anterior
+                                    ,pr_dtmvtolt => pr_dtmvtopr           -- Data de movimento
+                                    ,pr_dtmvtoan => pr_dtmvtolt           -- Dia anterior
                                     ,pr_dscritic => vr_dscritic );
 
         IF vr_dscritic <> 'OK' THEN
@@ -8545,8 +8325,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       IF pr_tpfluxo IN(0,4) THEN 
         -- Gravar movimento financeiro das devoluções de cheques de outros bancos
         pc_grava_prj_dev_cheque_rec(pr_cdcooper => pr_cdcooper      -- Codigo da Cooperativa
-                                   ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
-                                   ,pr_dtmvtoan => pr_dtmvtoan     -- Data de movimento anterior
+                                   ,pr_dtmvtolt => pr_dtmvtopr     -- Data de movimento
+                                   ,pr_dtmvtoan => pr_dtmvtolt     -- Data de movimento anterior
                                    ,pr_dscritic => vr_dscritic);
 
         IF vr_dscritic <> 'OK' THEN
@@ -8568,7 +8348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     IF pr_tpremessa in(0,9) THEN
       IF pr_tpfluxo IN (0,3) THEN    
         -- gravar movimento financeiro referente aos saques no TAA das intercoop
-        pc_grava_mvt_saq_taa_ic(pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
+        pc_grava_prj_saq_taa_ic(pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
                                ,pr_dtmvtolt  => pr_dtmvtopr     -- Data de movimento
                                ,pr_tpdmovto  => 1               -- Tipo de movimento (1-Entrada 2-saida)
                                ,pr_dscritic  => vr_dscritic);
@@ -8589,7 +8369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     
       IF pr_tpfluxo IN (0,4) THEN    
         -- gravar movimento financeiro referente aos saques no TAA das intercoop
-        pc_grava_mvt_saq_taa_ic(pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
+        pc_grava_prj_saq_taa_ic(pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
                                ,pr_dtmvtolt  => pr_dtmvtopr     -- Data de movimento
                                ,pr_tpdmovto  => 2               -- Tipo de movimento (1-Entrada 2-saida)
                                ,pr_dscritic  => vr_dscritic);
@@ -8614,7 +8394,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       -- Gravar movimento financeiro de Projetado de Recolhimento Numerário
       IF pr_tpfluxo IN (0,3) THEN     
         pc_grava_prj_recol_numerario(pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
-                                    ,pr_dtmvtolt  => pr_dtmvtolt     -- Data de movimento
+                                    ,pr_dtmvtolt  => pr_dtmvtopr     -- Data de movimento
                                     ,pr_dscritic  => vr_dscritic);
         IF vr_dscritic <> 'OK' THEN
           vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
@@ -8633,7 +8413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       -- Gravar movimento financeiro de Projetado de Suprimento Numerário
       IF pr_tpfluxo IN (0,4) THEN     
         pc_grava_prj_suprim_numerario(pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
-                                     ,pr_dtmvtolt  => pr_dtmvtolt     -- Data de movimento
+                                     ,pr_dtmvtolt  => pr_dtmvtopr     -- Data de movimento
                                      ,pr_dscritic  => vr_dscritic);
         IF vr_dscritic <> 'OK' THEN
           vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
@@ -8653,7 +8433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Gravar movimento projetado financeiro das faturas do Cartão de Crédito
     IF pr_tpremessa in(0,10) AND pr_tpfluxo IN (0,4) THEN 
       pc_grava_prj_fatura_cart_credi(pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
-                                    ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
+                                    ,pr_dtmvtolt => pr_dtmvtopr     -- Data de movimento
                                     ,pr_dscritic => vr_dscritic);
 
       IF vr_dscritic <> 'OK' THEN
@@ -8890,79 +8670,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     vr_exc_erro      EXCEPTION;
     vr_dscritic      VARCHAR2(4000) ;
     vr_nrsequen      NUMBER;
-    vr_tab_cdbccxlt  gene0002.typ_split;
 
   BEGIN
     
-    -- Garantir inicialização do registro CRAPFFM
-    vr_tab_cdbccxlt := gene0002.fn_quebra_string('01,85,756,748',',');
-
-    FOR idx IN vr_tab_cdbccxlt.first..vr_tab_cdbccxlt.last LOOP
-      -- Gerar registro 1 - Entrada Realizado
-      IF pr_tpfluxo IN(1,0) THEN 
-        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                             ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                             ,pr_tpdmovto => 1             -- Tipo de movimento(E)
-                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
-                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
-                             ,pr_vldcampo => 0             -- Valor do campo
-                             ,pr_dscritic => pr_dscritic);
-
-        IF pr_dscritic <> 'OK' THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;  
-      -- Gerar registro 2 - Saída Realizado
-      IF pr_tpfluxo IN(2,0) THEN 
-        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                             ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                             ,pr_tpdmovto => 2             -- Tipo de movimento(E)
-                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
-                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
-                             ,pr_vldcampo => 0             -- Valor do campo
-                             ,pr_dscritic => pr_dscritic);
-
-        IF pr_dscritic <> 'OK' THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-      -- Gerar registro 3 - Entrada Projeta
-      IF pr_tpfluxo IN(3,0) THEN 
-        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                             ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                             ,pr_tpdmovto => 3             -- Tipo de movimento(E)
-                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
-                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
-                             ,pr_vldcampo => 0             -- Valor do campo
-                             ,pr_dscritic => pr_dscritic);
-
-        IF pr_dscritic <> 'OK' THEN
-          RAISE vr_exc_erro;
-        END IF;
-      END IF;
-      -- Gerar registro 4 - Saida Projetado
-      IF pr_tpfluxo IN(4,0) THEN 
-        pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                             ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                             ,pr_tpdmovto => 4             -- Tipo de movimento(E)
-                             ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
-                             ,pr_tpdcampo => 0             -- Tipo de campo(0) pra criar o registro
-                             ,pr_vldcampo => 0             -- Valor do campo
-                             ,pr_dscritic => pr_dscritic);
-
-        IF pr_dscritic <> 'OK' THEN
-          RAISE vr_exc_erro;
-        END IF;            
-      END IF;  
-    END LOOP;--Fim loop bancos
-    
-  
     -- Gravar movimento financeiro do fluxo de entrada
     IF pr_tpfluxo IN(1,0) THEN 
       pc_grava_fluxo_entrada (pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
                              ,pr_cdagenci => pr_cdagenci     -- Codigo da agencia
                              ,pr_nrdcaixa => pr_nrdcaixa     -- Numero da caixa
-                             ,pr_cdoperad => pr_cdoperad     -- Codigo do operador
                              ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
                              ,pr_nmdatela => pr_cdprogra     -- Nome da tela
                              ,pr_dtmvtoan => pr_dtmvtoan     -- Data de movimento anterior
@@ -9009,78 +8724,83 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       END IF;
     END IF;  
 
-    -- Gravar Informacoes do fluxo financeiro consolidado da Cooperativa
-    IF pr_tpremessa = 0 THEN 
-      pc_gera_consolidado_singular( pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
-                                   ,pr_cdoperad => pr_cdoperad     -- Codigo do operador
-                                   ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
-                                   ,pr_dscritic => vr_dscritic);
-
-      IF vr_dscritic <> 'OK' THEN
-        vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
-        vr_dscritic := 'Calculo das entradas/saidas nao foi efetuado - '||pr_cdcooper||'.';
-
-        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
-                              pr_cdagenci => pr_cdagenci,
-                              pr_nrdcaixa => pr_nrdcaixa,
-                              pr_nrsequen => vr_nrsequen,
-                              pr_cdcritic => 0,
-                              pr_dscritic => vr_dscritic,
-                              pr_tab_erro => pr_tab_erro);
-      END IF;
-    END IF;  
-
-    -- Projeção e atualização do saldo só podem ser efetuadas no processo noturno (CRPS624)
-    IF pr_tpfluxo IN(3,4,0) AND pr_cdprogra = 'CRPS624' THEN  
+    
+    -- Durante o processo noturno 
+    IF pr_cdprogra = 'CRPS624' THEN
       
-      -- Gravar movimento financeiro consolidado do saldo do dia anterior
-      pc_saldo_consolid_dia_ant(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
-                               ,pr_cdoperad => pr_cdoperad   -- Codigo do operador
-                               ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
-                               ,pr_nmdatela => pr_cdprogra   -- Nome da tela
-                               ,pr_dtmvtoan => pr_dtmvtoan   -- Data de movimento anterior
-                               ,pr_dscritic => vr_dscritic);
-
-      IF vr_dscritic <> 'OK' THEN
-        vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
-        vr_dscritic := 'Calculo do saldo do dia anterior nao foi efetuado - '||pr_cdcooper||'.';
-
-        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
-                              pr_cdagenci => pr_cdagenci,
-                              pr_nrdcaixa => pr_nrdcaixa,
-                              pr_nrsequen => vr_nrsequen,
-                              pr_cdcritic => 0,
-                              pr_dscritic => vr_dscritic,
-                              pr_tab_erro => pr_tab_erro);
-      END IF;
+      -- Gerar a projeção do próximo dia util
+      IF pr_tpfluxo IN(3,4,0) THEN  
         
-      -- Gravar movimento financeiro do fluxo Projetado
-      pc_grava_fluxo_projetado (pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
-                               ,pr_cdagenci  => pr_cdagenci     -- Codigo da agencia
-                               ,pr_cdoperad  => pr_cdoperad     -- Operador
-                               ,pr_nrdcaixa  => pr_nrdcaixa     -- Numero da caixa
-                               ,pr_dtmvtolt  => pr_dtmvtolt     -- Data do movimento atual
-                               ,pr_dtmvtopr  => pr_dtmvtopr     -- Data de movimento próximo
-                               ,pr_dtmvtoan  => pr_dtmvtoan     -- Data do movimento anterior
-                               ,pr_nmdatela  => pr_cdprogra     -- Nome da tela
-                               ,pr_tpremessa => pr_tpremessa   -- Tipo da remessa (0 para todas)
-                               ,pr_tpfluxo   => pr_tpfluxo     -- TIpo do fluxo (0 para todos)
-                               ,pr_tab_erro  => pr_tab_erro     -- Tabela contendo os erros
-                               ,pr_dscritic  => vr_dscritic);
+        -- Gravar movimento financeiro do fluxo Projetado
+        pc_grava_fluxo_projetado (pr_cdcooper  => pr_cdcooper     -- Codigo da Cooperativa
+                                 ,pr_cdagenci  => pr_cdagenci     -- Codigo da agencia
+                                 ,pr_nrdcaixa  => pr_nrdcaixa     -- Numero da caixa
+                                 ,pr_dtmvtolt  => pr_dtmvtolt     -- Data do movimento atual
+                                 ,pr_dtmvtopr  => pr_dtmvtopr     -- Data de movimento próximo
+                                 ,pr_tpremessa => pr_tpremessa   -- Tipo da remessa (0 para todas)
+                                 ,pr_tpfluxo   => pr_tpfluxo     -- TIpo do fluxo (0 para todos)
+                                 ,pr_tab_erro  => pr_tab_erro     -- Tabela contendo os erros
+                                 ,pr_dscritic  => vr_dscritic);
 
-      IF vr_dscritic <> 'OK' THEN
-        vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
-        vr_dscritic := 'Calculo do fluxo de Projeção nao foi efetuado plenamente - '||pr_cdcooper||'.';
+        IF vr_dscritic <> 'OK' THEN
+          vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
+          vr_dscritic := 'Calculo do fluxo de Projeção nao foi efetuado plenamente - '||pr_cdcooper||'.';
 
-        GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
-                              pr_cdagenci => pr_cdagenci,
-                              pr_nrdcaixa => pr_nrdcaixa,
-                              pr_nrsequen => vr_nrsequen,
-                              pr_cdcritic => 0,
-                              pr_dscritic => vr_dscritic,
-                              pr_tab_erro => pr_tab_erro);
+          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
+                                pr_cdagenci => pr_cdagenci,
+                                pr_nrdcaixa => pr_nrdcaixa,
+                                pr_nrsequen => vr_nrsequen,
+                                pr_cdcritic => 0,
+                                pr_dscritic => vr_dscritic,
+                                pr_tab_erro => pr_tab_erro);
+        END IF;
       END IF;
+    
+      -- Somente quando a execução não é para remessa e fluxo específico 
+      IF pr_tpremessa = 0 AND pr_tpfluxo = 0 THEN 
         
+        -- Gravar Informacoes do fluxo financeiro consolidado da Cooperativa para o dia do processo
+        pc_gera_consolidado_singular( pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
+                                     ,pr_cdoperad => pr_cdoperad     -- Codigo do operador
+                                     ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
+                                     ,pr_dscritic => vr_dscritic);
+
+        IF vr_dscritic <> 'OK' THEN
+          vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
+          vr_dscritic := 'Calculo das entradas/saidas nao foi efetuado - '||pr_cdcooper||'.';
+
+          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
+                                pr_cdagenci => pr_cdagenci,
+                                pr_nrdcaixa => pr_nrdcaixa,
+                                pr_nrsequen => vr_nrsequen,
+                                pr_cdcritic => 0,
+                                pr_dscritic => vr_dscritic,
+                                pr_tab_erro => pr_tab_erro);
+        END IF;
+        
+        -- Gravar movimento financeiro consolidado do saldo do dia anterior
+        pc_saldo_consolid_dia_ant(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                                 ,pr_cdoperad => pr_cdoperad   -- Codigo do operador
+                                 ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                                 ,pr_nmdatela => pr_cdprogra   -- Nome da tela
+                                 ,pr_dtmvtoan => pr_dtmvtoan   -- Data de movimento anterior
+                                 ,pr_dscritic => vr_dscritic);
+
+        IF vr_dscritic <> 'OK' THEN
+          vr_nrsequen := NVL(pr_tab_erro.COUNT,0)+ 1;
+          vr_dscritic := 'Calculo do saldo do dia anterior nao foi efetuado - '||pr_cdcooper||'.';
+
+          GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper,
+                                pr_cdagenci => pr_cdagenci,
+                                pr_nrdcaixa => pr_nrdcaixa,
+                                pr_nrsequen => vr_nrsequen,
+                                pr_cdcritic => 0,
+                                pr_dscritic => vr_dscritic,
+                                pr_tab_erro => pr_tab_erro);
+        END IF;
+        
+      END IF;
+      
     END IF;   
     
     pr_dscritic := 'OK';
