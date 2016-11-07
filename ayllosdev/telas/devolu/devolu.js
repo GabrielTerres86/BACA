@@ -250,7 +250,7 @@ function formataAlinea() {
 // Controle dos Campos
 function controlaFoco() {
 
-	$('#cdagenci','#'+frmCab).unbind('keypress').bind('keypress', function(e) {
+	$('#cdagenci','#'+frmCab).unbind('keydown').bind('keydown', function(e) {
         if ( e.keyCode == 9 || e.keyCode == 13 ) { 
 			$('#nrdconta','#frmCab').select().val('');
 			return false;

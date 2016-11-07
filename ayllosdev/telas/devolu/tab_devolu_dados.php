@@ -94,7 +94,7 @@
 							<a href="#" onClick="mostraContatos();"><img src="<?php echo $UrlImagens; ?>geral/telefone.png" width="15" height="15" border="0"></a>
 						</td>
 						<td id="imagcheq">
-							<a href="#" onClick="consultaCheque('<? echo getByTagName($devolucoes[$i]->tags,'cdagechq'); ?>','<? echo getByTagName($devolucoes[$i]->tags,'nrctachq'); ?>','<? echo getByTagName($devolucoes[$i]->tags,'nrcheque'); ?>');">
+							<a href="#" onClick="consultaCheque('<? echo getByTagName($devolucoes[$i]->tags,'cdagechq'); ?>','<? echo getByTagName($devolucoes[$i]->tags,'nrdconta'); ?>','<? echo getByTagName($devolucoes[$i]->tags,'nrcheque'); ?>');">
 							    <img src="<?php echo $UrlImagens; ?>geral/documento.png" width="15" height="15" border="0">
 							</a>
 						</td>
