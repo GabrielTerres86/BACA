@@ -1341,8 +1341,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       
       vr_qrcode   := pr_cdcooper ||'_'||
                      vr_cdageqrc ||'_'||
-                     pr_nrdconta ||'_'||
-                     pr_nrborder ||'_'||
+                     TRIM(gene0002.fn_mask_conta(   pr_nrdconta)) ||'_'||
+                     TRIM(gene0002.fn_mask_contrato(pr_nrborder)) ||'_'||
                      0           ||'_'||
                      0           ||'_'||
                      vr_cdtipdoc;

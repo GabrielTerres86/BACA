@@ -4540,9 +4540,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       
       vr_qrcode := pr_cdcooper ||'_'||
                    vr_cdageqrc ||'_'||
-                   pr_nrdconta ||'_'||
+                   TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'_'||
                    0           ||'_'||
-                   pr_nrctrlim ||'_'||
+                   TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'_'||
                    0           ||'_'||
                    vr_cdtipdoc;
       
@@ -5163,8 +5163,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       
       vr_qrcode   := pr_cdcooper ||'_'||
                      vr_cdageqrc ||'_'||
-                     pr_nrdconta ||'_'||
-                     pr_nrborder ||'_'||
+                     TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
+                     TRIM(gene0002.fn_mask_contrato(pr_nrborder)) ||'_'||
                      0           ||'_'||
                      0           ||'_'||
                      vr_cdtipdoc;

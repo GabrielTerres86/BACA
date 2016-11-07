@@ -172,9 +172,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
   
     vr_qrcode := pr_cdcooper ||'_'||
                  pr_cdagenci ||'_'||
-                 pr_nrdconta ||'_'||
-                 pr_nrborder ||'_'||
-                 pr_nrcontra ||'_'||
+                 TRIM(gene0002.fn_mask_conta(pr_nrdconta))   ||'_'||
+                 TRIM(gene0002.fn_mask_contrato(pr_nrborder))||'_'||
+                 TRIM(gene0002.fn_mask_contrato(pr_nrcontra))||'_'||
                  pr_nraditiv ||'_'||
                  pr_cdtipdoc;
     RETURN vr_qrcode;

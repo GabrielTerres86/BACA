@@ -1372,9 +1372,9 @@ BEGIN
           -- Gera o QR Code para uso da digitalizacao
           vr_qrcode   := pr_cdcooper ||'_'||
                          rw_crawepr.cdageepr ||'_'||
-                         pr_nrdconta ||'_'||
+                         TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
                          0           ||'_'||
-                         pr_nrctremp ||'_'||
+                         TRIM(gene0002.fn_mask_contrato(pr_nrctremp)) ||'_'||
                          0           ||'_'||
                          vr_cdtipdoc;
 

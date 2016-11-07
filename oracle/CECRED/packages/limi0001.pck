@@ -1881,9 +1881,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         
     vr_qrcode := pr_cdcooper ||'_'||
                  vr_cdageqrc ||'_'||
-                 pr_nrdconta ||'_'||
+                 TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
                  0           ||'_'||
-                 pr_nrctrlim ||'_'||
+                 TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'_'||
                  0           ||'_'||
                  vr_tpdocged;
     
