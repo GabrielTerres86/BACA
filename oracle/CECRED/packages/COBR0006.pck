@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 17/08/2016
+    Data     : Novembro/2015.                   Ultima atualizacao: 07/11/2016
   
    Dados referentes ao programa:
   
@@ -431,7 +431,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 efetuar tratamento para os segmentos R,S;
                               > Ajuste para enviar o nome original do arquivo para emissao do protocolo;
                              (Andrei - RKAM).
-                                           
+
+                07/11/2016 - Ajustado a validacao de Data de Emissao, para que a quantidade 
+                             de dias seja parametrizada. Foi definido o parametro na crapprm
+                             cdacesso = "QTD_DIAS_EMISSAO_RETR" para armazenar o valor.
+                             Sera alterado de 90 para 365 dias. (Douglas - Chamado 523329)
+
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -497,6 +502,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
      AND rtc.nrremret = pr_nrremret
      AND rtc.intipmvt = pr_intipmvt
    ORDER BY rtc.progress_recid DESC;
+
+  ---------------------------------
+  -- Quantidade de dias para emissão retroativa
+  vr_qtd_emi_ret CONSTANT INTEGER := NVL(gene0001.fn_param_sistema('CRED',0,'QTD_DIAS_EMISSAO_RETR'), 90);
+  ---------------------------------
   
   /* Funcao para validacao dos caracteres */
   FUNCTION fn_valida_caracteres (pr_flgnumer IN BOOLEAN,  -- Validar Numeros?
@@ -4538,7 +4548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 25/11/2015
+       Data    : Novembro/2015.                   Ultima atualizacao: 07/11/2015
 
        Dados referentes ao programa:
 
@@ -4546,6 +4556,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquivo tipo de segmento P
 
        Alteracoes: 25/11/2015 - Conversão Progress -> Oracle (Douglas Quisinski)
+       
+                   07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
+                                quantidade de dias seja parametrizada. Sera alterado 
+                                de 90 para 365 dias. (Douglas - Chamado 523329)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4792,7 +4806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- 26.3P Valida Data de Emissao
     IF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
-       TRUNC(SYSDATE) - 90      > pr_rec_cobranca.dtemscob           THEN
+       TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob    THEN
 
       -- Data de documento superior ao limite 13/10/2049 ou
       -- Data retroativa maior que 90 dias.
@@ -5971,14 +5985,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 07/11/2016
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquivo tipo de segmento P
 
-       Alteracoes:  
+       Alteracoes: 07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
+                                quantidade de dias seja parametrizada. Sera alterado 
+                                de 90 para 365 dias. (Douglas - Chamado 523329)
+       
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6053,12 +6070,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
     END IF;
     
-    IF TRUNC(SYSDATE) - 90 > pr_rec_cobranca.dtemscob THEN
+    IF TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob THEN
     
       COBR0006.pc_grava_critica(pr_cdcooper => pr_cdcooper,
                                 pr_nrdconta => pr_nrdconta,
                                 pr_nrdocmto => 999999,
-                                pr_dscritic => 'Data retroativa maior que 90 dias.',
+                                pr_dscritic => 'Data retroativa maior que ' || 
+                                               to_char(vr_qtd_emi_ret) ||
+                                               ' dias.',
                                 pr_tab_crawrej => pr_tab_crawrej);
                                 
     END IF;
@@ -7155,7 +7174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 27/05/2016 
+       Data    : Marco/2016.                   Ultima atualizacao: 07/11/2016 
 
        Dados referentes ao programa:
 
@@ -7165,6 +7184,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Alteracoes: 27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
 								a rotina de validação de caracteres para endereços
 								(Andrei). 
+                                
+                   07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
+                                quantidade de dias seja parametrizada. Sera alterado 
+                                de 90 para 365 dias. (Douglas - Chamado 523329)
+
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -7565,7 +7589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_rec_cobranca.dtemscob IS NOT NULL THEN
       
       IF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
-         TRUNC(SYSDATE) - 90      > pr_rec_cobranca.dtemscob           THEN
+         TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob    THEN
 
         -- Data de documento superior ao limite 13/10/2049 ou
         -- Data retroativa maior que 90 dias.
@@ -12230,6 +12254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Alteracoes: 17/08/2016 - Ajuste para retirar tratementos do Trailer de Lote e
                                 efetuar tratamento para os segmentos R,S
                                 (Andrei - RKAM).
+                                
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
