@@ -9028,8 +9028,17 @@ function atualizaCampoData()
 
         //pega a data de pagamento
         var dataPag = $('#dtdpagto', '#frmNovaProp').val();
-        //quantidade de meses * 30 - 30 pois a primeia parcela sera na data de liberacao
-        var qtdDias = ($('#qtpreemp', '#frmNovaProp').val() * 30.5) - 30;
+        
+		//correcao da contagem de datas erradas, apos o dia 22; 
+        var vr_dt = dataPag.split('/');
+        if (vr_dt[0] > 22) {
+            var ndias = 45;
+        } else {
+            var ndias = 30;
+        }
+        //quantidade de meses * 30 - 30 ou 45 pois a primeia parcela sera na data de liberacao
+        var qtdDias = ($('#qtpreemp', '#frmNovaProp').val() * 30.5) - ndias;
+		
         //retorno da consulta
         var retorno = SomarData(dataPag, qtdDias);
         //atualiza data ultimo pagamento
