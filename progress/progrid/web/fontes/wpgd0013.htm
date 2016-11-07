@@ -1,45 +1,54 @@
 <!--
       Alterações: 14/09/2009 - Tratamento na digitação do apóstrofe (Diego).
                                 
-                                  07/12/2011 - Inclusão de todos os campos no tratamento da
-                                                           digitação do apóstrofo (Isara - RKAM).
-                                                           
-                                  18/10/2012 - Tratar quantidade maxima de caracteres (Gabriel).        
+				  07/12/2011 - Inclusão de todos os campos no tratamento da
+										   digitação do apóstrofo (Isara - RKAM).
+										   
+  			      18/10/2012 - Tratar quantidade maxima de caracteres (Gabriel).        
 
-                                 22/10/2012 - Incluso chamada para biblioteca de funções funcoes.js,
-                                                          incluso validação tamanho maximo dos campos Referência,
-                                                          Estrutura e Considerações usando função ValidaTamanho 
-                                                          Limitado tamanho do campo R$ dia e Cep, incluso validação
-                                                          inteiros no campo Cap.Max.(pessoas) (Daniel).                        
+				  22/10/2012 - Incluso chamada para biblioteca de funções funcoes.js,
+										  incluso validação tamanho maximo dos campos Referência,
+										  Estrutura e Considerações usando função ValidaTamanho 
+										  Limitado tamanho do campo R$ dia e Cep, incluso validação
+										  inteiros no campo Cap.Max.(pessoas) (Daniel).                        
 
-                                  23/10/2012 - Incluso validação campo Cep e R$ dia para não 
-                                                           aceitar caracteres (Daniel)         
+				  23/10/2012 - Incluso validação campo Cep e R$ dia para não aceitar caracteres (Daniel)
+
+				  24/06/2016 - Inclusão da janela na tela de Agenda Anual RF05 - Vanessa	
 -->
-
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta name="wsoptions" content="no-output">
 <title>Locais para Eventos</title>
-<base target="mainFrame">
+<!--base target="mainFrame"-->
 <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
 </head>
 <body style="margin-left: 3px; ">
 <form action="#." method="POST" name="form">
-    <input name="aux_cddopcao" type="hidden" value="">
+ <input name="aux_cddopcao" type="hidden" value="">
     <input name="aux_lspermis" type="hidden" value="">
     <input name="aux_nrdrowid" type="hidden" value="">    
     <input name="aux_dsretorn" type="hidden" value="">    
     <input name="aux_stdopcao" type="hidden" value="">    
     <input name="aux_dsendurl" type="hidden" value="">
     <input name="aux_nrseqdig" type="hidden" value="">
-    <input name="aux_idevento" type="hidden" value="">    
-  <input name="cdagenci"     type="hidden" value="">
+    <input name="aux_idevento" type="hidden" value="">
+	<input name="aux_origem"   type="hidden" value="">	
+    <input name="cdagenci"     type="hidden" value="">
+	<input name="aux_cdageevt" type="hidden" value="">
+	<input name="aux_cdcopope" type="hidden" value="">
+	<input name="cdcooper"     type="hidden" value="">
+	<input name="aux_cdoperad" type="hidden" value="">
+
 <script language="JavaScript">
    NomeDoProgramaPrincipal  = '/wpgd0013.w';
-   NomeDoProgramaDeZoom     = '/zwpgd0013.w';
+  
 </script>
 <script SRC="/cecred/js/funcoes.js"></script>
+
+<script type="text/javascript" src="/cecred/scripts/jquery.js"></script>
+<script type="text/javascript" src="/cecred/scripts/jquery.maskedinput.js"></script>
 <!-- Início do modelo geral -->
 <div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom">        </div>
   <table width="575" height="360"  border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
@@ -68,7 +77,7 @@
                         <td height="22" align="right"><span class="NomeCampo">Cooperativa</span>: </td>
                         <td height="22"><select name="aux_cdcooper" class="Campo" id="cdcooper" onchange=" document.form.submit();">
                         </select></td>
-           <td height="22"><div align="right" class="NomeCampo">PA:</div></td>
+						<td height="22"><div align="right" class="NomeCampo">PA:</div></td>
                         <td height="22" colspan="3"><select name="aux_cdagenci" class="Campo" id="aux_cdagenci">
                         </select></td>
                       </tr>
@@ -141,10 +150,10 @@
                                               <td height="25" align="center" valign="bottom" colspan="6">
                                                   <table border="0" align="center" cellpadding="1" cellspacing="1">
                                                   <tr>
-                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></th>
-                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_salvar.gif"  onClick="Habilita(); return top.frcod.Salvar()"></th>
-                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></th>
-                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P',document.form.aux_idevento.value)"></th>
+                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_limpar.gif" onClick="return Incluir()"></th>
+                            <th scope="col"><img style="cursor:hand"; src="/cecred/images/botoes/btn_salvar.gif"  onClick="return Salvar()"></th>
+                            <th scope="col"><div id="btexclui" align="center"><img style="cursor:hand"; src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></div></th>
+                            <th scope="col"><div id="btpesqui" align="center"><img style="cursor:hand"; src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P',document.form.aux_idevento.value)"></div></th>
                                                   </tr>        
                                                   </table>
                                                 </td>
@@ -170,9 +179,53 @@
    NomeDoProgramaDeListagem = '/wpgd0013ls.w';
    NomeDoProgramaDeAjuda    = '/wpgd0013aj.w';
    NomeDoProgramaDeZoom     = '/zoom/zwpgd0013.w';
+  
    
    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
    document.form.action = NomeDoProgramaPrincipal;
+   
+    
+
+
+function LimparCampos()
+{
+     // Habilita os campos chave
+  if(document.form.aux_origem.value == 'agenda'){
+	  document.form.aux_cdcooper.disabled = true;
+	  document.form.aux_cdagenci.disabled = true;
+   }else{
+	   document.form.aux_cdcooper.disabled = false;
+	   document.form.aux_cdagenci.disabled = false;
+	}
+
+   //document.form.aux_cdagenci.value = ''; 
+   //document.form.aux_cdcooper.value = ''; 
+   document.form.dsendloc.value     = '';  
+   document.form.dsestloc.value     = '';  
+   document.form.dslocali.value     = '';  
+   document.form.dsobserv.value     = '';  
+   //document.form.aux_idevento.value = '';  
+   document.form.nmbailoc.value     = '';  
+   document.form.nmcidloc.value     = '';  
+   document.form.nmconloc.value     = '';  
+   document.form.nrceploc.value     = '';  
+   document.form.nrdddfax.value     = '';  
+   document.form.nrdddtel.value     = '';  
+   document.form.nrfaxsim.value     = '';  
+   //document.form.nrseqdig.value     = '';  
+   document.form.nrtelefo.value     = '';  
+   document.form.qtmaxpes.value     = '';  
+   document.form.vldialoc.value     = '';
+   document.form.cdagenci.value     = '';
+   document.form.dsrefloc.value     = '';
+   document.form.aux_nrdrowid.value = '?';
+}
+
+function CarregaPrincipal()
+{  
+   //jan3 = open('wpgd0011a.htm','fraux');
+}   
+
 
 function Habilita()
 {
@@ -185,15 +238,16 @@ function HabilitaSalvar()
 {
   
 }
+
 function ValidaDados(form){
    var msg="";
    var i;
          
-   msg = msg + top.frcod.VE("ca",form.dslocali,"A descrição do local","nao");
-   msg = msg + top.frcod.VE("ca",form.dsendloc,"O endereço do local","nao");
-   msg = msg + top.frcod.VE("ca",form.nmcidloc,"A cidade do local","nao");
-   msg = msg + top.frcod.VE("ca",form.nmbailoc,"O bairro do local","nao");
-   msg = msg + top.frcod.VE("ca",form.dsestloc,"A estrutura do local","nao");
+   msg = msg + VE("ca",form.dslocali,"A descrição do local","nao");
+   msg = msg + VE("ca",form.dsendloc,"O endereço do local","nao");
+   msg = msg + VE("ca",form.nmcidloc,"A cidade do local","nao");
+   msg = msg + VE("ca",form.nmbailoc,"O bairro do local","nao");
+   msg = msg + VE("ca",form.dsestloc,"A estrutura do local","nao");
                
    //verifica se há caracteres inválidos no telefone
    for(i=0;i<document.form.nrtelefo.value.length;i++){
@@ -265,11 +319,11 @@ function ValidaDados(form){
    if(msg == "")
       return true
    else{
-      top.frcod.MostraResultado('1',msg);
+      alert(msg);
       return false
    }
 }
-
+	
 // Não permite digitar vírgulas e apóstrofes na descrição do Local
 function validaCampos(campo){
 
@@ -468,43 +522,10 @@ function validaCampos(campo){
    
 }
 
-
-function LimparCampos()
-{
-   // Habilita os campos chave
-   document.form.aux_cdcooper.disabled = false;
-   document.form.aux_cdagenci.disabled = false;
-
-   //document.form.aux_cdagenci.value = ''; 
-   //document.form.aux_cdcooper.value = ''; 
-   document.form.dsendloc.value     = '';  
-   document.form.dsestloc.value     = '';  
-   document.form.dslocali.value     = '';  
-   document.form.dsobserv.value     = '';  
-   //document.form.aux_idevento.value = '';  
-   document.form.nmbailoc.value     = '';  
-   document.form.nmcidloc.value     = '';  
-   document.form.nmconloc.value     = '';  
-   document.form.nrceploc.value     = '';  
-   document.form.nrdddfax.value     = '';  
-   document.form.nrdddtel.value     = '';  
-   document.form.nrfaxsim.value     = '';  
-   //document.form.nrseqdig.value     = '';  
-   document.form.nrtelefo.value     = '';  
-   document.form.qtmaxpes.value     = '';  
-   document.form.vldialoc.value     = '';
-   document.form.cdagenci.value     = '';
-   document.form.dsrefloc.value     = '';
-   document.form.aux_nrdrowid.value = '?';
-
-}
-function CarregaPrincipal()
-    {  
-      //top.topFrame.document.all.titulo.innerHTML = 'Cadastro de Locais para Eventos';
-    }   
-
 function MostraPACs()
-{
+{ 
+   
+  
    for (var i=document.all.aux_cdagenci.options.length; i>=0; i--)
       document.all.aux_cdagenci.remove(i); 
 
@@ -518,44 +539,316 @@ function MostraPACs()
          document.all.aux_cdagenci.options.add(oOption);
          oOption.innerText = mpac[i].nmresage.substring(0, 15);
          oOption.value = mpac[i].cdagenci;
+		 if(mpac[i].cdagenci == document.form.aux_cdageevt.value){
+			oOption.selected = 'selected';
+		 }
       }
    } 
+  
+   // Habilita os campos chave
+     
 }
 
 function PosicionaPAC()
-{
-   if(document.form.cdagenci.value != "")
-   {
-      //document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
-      MostraPACs();
-      document.form.aux_cdagenci.value = document.form.cdagenci.value;
-   }
-   else
-   {
-      // posiciona a seleção no primeiro registro de Cooperativas, se só tiver 1
-      if(document.all.aux_cdcooper.options.length == 1)
-         document.form.aux_cdcooper.value = document.all.aux_cdcooper.options[0].value;
-      else
-         document.form.aux_cdcooper.value = '';
+{ 
+   if(document.form.aux_origem.value == ""){
+	   if(document.form.cdagenci.value != "")
+	   {
+		  //document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
+		  MostraPACs();
+		  document.form.aux_cdagenci.value = document.form.cdagenci.value;
+	   }
+	   else
+	   {
+		  // posiciona a seleção no primeiro registro de Cooperativas, se só tiver 1
+		  if(document.all.aux_cdcooper.options.length == 1)
+			 document.form.aux_cdcooper.value = document.all.aux_cdcooper.options[0].value;
+		  else
+			 document.form.aux_cdcooper.value = '';
 
-      // posiciona a seleção no primeiro registro de PAs, se só tiver 1
-      if(document.all.aux_cdagenci.options.length == 1)
-         document.form.aux_cdagenci.value = document.all.aux_cdagenci.options[0].value;
-      else
-         document.form.aux_cdagenci.value = '';
+		  // posiciona a seleção no primeiro registro de PAs, se só tiver 1
+		  if(document.all.aux_cdagenci.options.length == 1)
+			 document.form.aux_cdagenci.value = document.all.aux_cdagenci.options[0].value;
+		  else
+			 document.form.aux_cdagenci.value = '';
+	   }
+	}else{
+		 document.form.aux_cdcooper.disabled = true;
+		 document.form.aux_cdagenci.disabled = true;
+		 document.getElementById("btexclui").style.display = 'none';
+		 document.getElementById("btpesqui").style.display = 'none';
+	}
+	
+}
+
+
+
+// Funcao: Incluir
+// Objetivo: Funcao acionada quando selecionado o botao de incluir da tela
+// Parametros de Entrada: nenhum
+// Parametros de Saida: 
+//    aux_cddopcao = 'in' - Modo de Inclusao
+//    aux_stdopcao = 'i' - Status de Inclusão
+//    Funcao MostraResultado, caso o usuário não tenha permissão para inclusão ou já esteja em 
+//       modo de inclusão
+function Incluir()
+{
+   var vaux = document.form.aux_lspermis.value; 
+   if (vaux.substring(0,1) == 'I') 
+   { 
+      if (document.form.aux_stdopcao.value == 'i') 
+      {
+         alert('Você já esta no modo de inclusão.'); 
+         return false;
+      } 
+      else 
+      {
+         document.form.aux_cddopcao.value='in'; 
+         document.form.aux_stdopcao.value='i';
+         LimparCampos(); 
+         return true;
+      } 
+   } 
+   else 
+   {
+      alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+      return false;
    }
 }
 
+  
+// Funcao: VE(Valida Elemento)
+// Objetivo: verificar se um elemento(componente) está no formato adequado (caracter, inteiro, data, decimal)
+// Parametros de entrada:
+//    tc = tipo do componente. "ca":caracter, "da":data, "de":decimal, "in":inteiro
+//    nc = nome do componente.
+//    lc = label do componente.
+//    pn = componente pode ser nulo? "sim"/"nao"
+//    mi = valor mínimo do componente
+//    ma = valor máximo do componente
+// Parametros de saída:
+//    msg = Mensagem de Erro da validação
+
+function VE(tc,nc,lc,pn,mi,ma)
+{  
+  var msg = "";
+  var p = "xx";
+  var z = 1;
+  var x = 0; 
+  var cv = 0;
+  var dia = 0;
+  var mes = 0;
+  var ano = 0;
+  var aux = "";
+  var aux2 = nc.value;
+  pn.toLowerCase();
+  tc.toLowerCase();
+
+  if (tc == "de") {
+    for (var x = 0; x < aux2.length; x++) {
+      if (aux2.substring(x,x+1) != " ")
+        aux = aux + aux2.substring(x,x+1);
+    } 
+    nc.value = aux;
+  }
+  if (tc == "ca") {
+    if (pn == "sim")
+      {}
+    else {
+      if (nc.value == "")
+        msg = lc + " não pode ser nulo.";
+    }
+    if (nc.value.substring(0,1) == " ")
+      msg = msg + lc + " não pode começar com branco.";
+  }
+  else
+  if (tc == "in") {
+    p = "0123456789";
+    if (pn == "sim") {  
+      if (nc.value == "")
+        nc.value = "0";
+      else {
+        for (var x = 0; x < nc.value.length; x++)  {
+          if (p.indexOf(nc.value.substring(x,x+1)) == -1)
+            z = 0;
+        } 
+        if (z == 0)
+          msg = msg + lc + " possui caracteres que não são validos.";  
+        if (msg == "") {
+          if (nc.value < mi)
+            msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+          if (nc.value > ma)
+            msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+        }
+      }
+    }
+    else {
+      if (nc.value == "")
+        msg = msg + lc + " não pode ser nulo.";
+        for (var x = 0; x < nc.value.length; x++) {
+        if (p.indexOf(nc.value.substring(x,x+1)) == -1)
+                      z = 0;
+               } 
+               if (z == 0)
+                  msg = msg + lc + " possui caracteres que não são validos.";  
+               if (msg == "") {
+                  if (nc.value < mi)
+                     msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+                  if (nc.value > ma)
+                     msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+               }
+         }
+      }
+      else
+      if (tc == "de") {
+         p = ",0123456789";
+         if (pn == "sim") {  
+            if (nc.value == "")
+               nc.value = "0";
+            else {
+                 for (var x = 0; x < nc.value.length; x++) {
+                     if (p.indexOf(nc.value.substring(x,x+1)) == -1 & nc.value.substring(x,x+1) != ".") {
+                        z = 0;
+                     }
+                     if (nc.value.substring(x,x+1) == ".")
+                        cv = cv + 1;
+                 } 
+                 if (cv > 2)
+                    z = 0;
+                 if (z == 0) {
+                    msg = msg + lc + " possui caracteres que não são validos.";  
+                 }
+                 if (msg == "") {
+                    if (nc.value < mi) 
+                       msg = msg + lc + " deve ser maior que " + mi.toString() + ".";  
+                    if (nc.value > ma)
+                       msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+                 }
+            }
+         }
+         else {
+              if (nc.value == "")
+                 msg = msg + lc + " não pode ser nulo.";
+              for (var x = 0; x < nc.value.length; x++) {
+                  if (p.indexOf(nc.value.substring(x,x+1)) == -1  & nc.value.substring(x,x+1) != ".")
+                     z = 0;
+                  if (nc.value.substring(x,x+1) == ".")
+                     cv = cv + 1;
+              } 
+              if (cv > 1)
+                 z = 0;
+              if (z == 0) {
+                 msg = msg + lc + " possui caracteres que não são validos.";  
+              }
+              if (msg == "") {
+                 if (nc.value < mi)
+                    msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+                 if (nc.value > ma)
+                    msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+              }
+         }
+      }
+      else
+      if (tc == "da") {
+         p = "0123456789/";
+         if (pn == "sim") {  
+            if (nc.value == "")
+               {}
+            else {
+                 for (var x = 0; x < nc.value.length; x++) {
+                     if (p.indexOf(nc.value.substring(x,x+1)) == -1)
+                        z = 0;
+                     if (nc.value.substring(x,x+1) == "/")
+                        cv = cv + 1;
+                 } 
+                 if (cv != 2)
+                    z = 0;
+                 if (z == 0)
+                    msg = msg + lc + " possui caracteres que não são validos.";  
+                 if (msg == "") {
+                    p1 = nc.value.indexOf("/") ;
+                    p2 = nc.value.lastIndexOf("/") ;
+                    if ((p2 == (p1 + 1)) || (nc.value.substring(0,p1).length == 0) || (nc.value.substring(p1+1,p2).length == 0) || (nc.value.substring(p2+1,nc.value.length).length == 0))
+                       msg = msg + lc + " possui os separadores fora de lugar.";
+                    else {
+                          dia = parseInt(nc.value.substring(0,p1),10);
+                          mes = parseInt(nc.value.substring(p1+1,p2),10);
+                          ano = parseInt(nc.value.substring(p2+1,nc.value.length),10);
+                          if ((mes < 1) || (mes > 12))
+                             msg = msg + lc + " deve possuir o mês entre 1 e 12.";
+                          if ((mes==1) || (mes==3) || (mes==5) || (mes==7) || (mes==8) || (mes==10) || (mes==12))  {
+                             if ((dia < 1) || (dia > 31))
+                                msg = msg + lc + " deve possuir o dia entre 1 e 31.";
+                             }
+                             else {        
+                                  if (mes!=2) {
+                                     if ((dia < 1) || (dia > 30))
+                                        msg = msg + lc + " deve possuir o dia entre 1 e 30.";
+                                  }
+                                  else {
+                                       if (mes==2) {
+                                          if ((ano % 4) == 0) { 
+                                             if ((dia < 1) || (dia > 29))
+                                                msg = msg + lc + " deve possuir o dia entre 1 e 29.";
+                                          }
+                                          else  {
+                                                if ((dia < 1) || (dia > 28))
+                                                msg = msg + lc + " deve possuir o dia entre 1 e 28.";
+                                          }
+                                       }
+                                  }
+                             }
+                         }
+                     }
+                 }
+              }
+          }
+          else
+            msg = "Validação não pode ser realizada.<br> Tipo de dado do campo não identificado.";                                
+          return msg;
+}
+// Funcao: Salvar
+// Objetivo: Funcao acionada quando selecionado o botão de Salvar da tela
+// Parametros de Entrada: 
+//    Funcao ValidaDados
+// Parametros de Saida: 
+//    aux_cddopcao = "sa" - Operação de Salvar
+//    submit() - Manda para o progress a instrução de salvar o registro
+//    MostraResultado, caso o usuário não tenha permissão de Salvar
+function Salvar()
+{
+   var vaux = document.form.aux_lspermis.value; 
+   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
+        if ( document.form.aux_cddopcao.value!='sa')  {
+           if (ValidaDados(document.forms[0])) { 
+			     Habilita();
+               document.form.aux_cddopcao.value='sa'; 
+               status = 'Salvando. Por favor, aguarde ...'; 
+               document.form.submit(); 
+               return true;
+			} 
+		     else { 
+				return false;
+			} 
+        } 
+   }
+   else { 
+         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+         return false;
+   }
+}
 
 // Desabilita os campos chaves, se estiver posicionado em algum registro
 if(document.form.aux_nrdrowid.value != "?")
 {
    document.form.aux_cdcooper.disabled = true;
    document.form.aux_cdagenci.disabled = true;
+}	
+
+if(document.form.aux_origem.value == "agenda"){ 
+	document.getElementById("btexclui").style.display = 'none';
+	document.getElementById("btpesqui").style.display = 'none';
 }
 
-
-MostraPACs();
+MostraPACs();        
 </SCRIPT>
-
-

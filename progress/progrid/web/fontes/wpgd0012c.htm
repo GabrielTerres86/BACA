@@ -22,7 +22,7 @@
 <meta name="wsoptions" content="no-output">
 <title>Propostas (wpgd0012c)</title>
 <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
-<script SRC="/modelo/js/funcoes.js"></script>
+<script SRC="/cecred/js/funcoes.js"></script>
 </head>
 <body onunload="fecharTela();" >
 <form action="#." method="POST" name="form">
@@ -77,10 +77,10 @@
                   <td width="203"><input name="dtvalpro" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="FormataData(this.name, this.value)" value=""></td>
                 </tr>
               </table>
-				  <div id="divProposta">
-					<br>
-					<table border="0" align="center" cellspacing="1">
-					  <tr>
+              <div id="divProposta">
+			    <br>
+                <table border="0" align="center" cellspacing="1">
+                  <tr>
 						<td class="NomeCampo" align="right">Tema:</td>
 						<td colspan="4">
 						  <select name="aux_cdtemeix" size="1" class="Campo" onChange="MostraEixos();MostraEventos(this.value)">
@@ -90,37 +90,37 @@
 						<td >&nbsp;</td>
 					  </tr>
 					   <tr>
-						<td class="NomeCampo" align="right">Eixo tem&aacute;tico:</td>
+                    <td class="NomeCampo" align="right">Eixo tem&aacute;tico:</td>
 						<td colspan="4">
 						  <select name="aux_cdeixtem" size="1" class="Campo" >
-							<option>Selecione um eixo tem&aacute;tico</option>
-						  </select>
-						</td>
-						<td >&nbsp;</td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Vincular ao evento:</td>
+                        <option>Selecione um eixo tem&aacute;tico</option>
+                      </select>
+                    </td>
+                    <td >&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Vincular ao evento:</td>
 						<td colspan="4" >
-						  <select name="aux_cdevento" size="1" class="Campo" id="aux_cdevento">
-							<option selected>Selecione um evento</option>
-						  </select>
-						</td>
-						<td >&nbsp;</td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Evento:</td>
+		              <select name="aux_cdevento" size="1" class="Campo" id="aux_cdevento">
+                        <option selected>Selecione um evento</option>
+                      </select>
+		            </td>
+                    <td >&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Evento:</td>
 						<td colspan="5"><input name="nmevefor" type="text" class="Campo" maxlength="50" size=50></td>
-					  </tr>
-					  <tr>
-						<td width="141" class="NomeCampo" align="right">Objetivo:</td>
+                  </tr>
+                  <tr>
+                    <td width="141" class="NomeCampo" align="right">Objetivo:</td>
 						<td colspan="6" ><textarea name="dsobjeti" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsobjeti,4000)" onKeyDown="ValidaTamanho(this.form.dsobjeti,4000)"></textarea></td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Conte&uacute;do:</td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Conte&uacute;do:</td>
 						<td colspan="6" ><textarea name="dsconteu" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsconteu,4000)" onKeyDown="ValidaTamanho(this.form.dsconteu,4000)"></textarea></td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Metodologia:</td>
+                  </tr>
+                  <tr>
+                    <td class="NomeCampo" align="right">Metodologia:</td>
 						<td colspan="6" ><textarea name="dsmetodo" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsmetodo,4000)" onKeyDown="ValidaTamanho(this.form.dsmetodo,4000)"></textarea></td>
 					  </tr>
 					  <!--tr>
@@ -134,35 +134,35 @@
 					  <tr>
 						<td class="NomeCampo" align="right">Observa&ccedil;&otilde;es:</td>
 						<td colspan="6" ><textarea name="dsobserv" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsobserv,4000)" onKeyDown="ValidaTamanho(this.form.dsobserv,4000)"></textarea></td>
-					  </tr>	
+                  </tr>
 					
 					  <!--tr>
 						<td class="NomeCampo" align="right">Idade do P&uacute;blico Alvo:</td>
 						<td colspan="6" ><input name="dsidadpa" type="text" class="Campo" maxlength="50" size=50>
 					  </tr-->
-					  <tr>
+                  <tr>
 						<td class="NomeCampo" align="right">Forma Realização Evento:</td>
 						<td colspan="6" >
 							<select name="aux_idforrev" size="1" class="Campo" id="aux_idforrev">								
 						  </select>
-					  </tr>
-					  <tr>
+                  </tr>
+                  <tr>
 						<td class="NomeCampo" align="right">Pr&eacute;-Requisitos para<br> Participar do Evento:</td>
 						<td colspan="6" ><textarea name="dsprereq" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsobserv,1000)" onKeyDown="ValidaTamanho(this.form.dsobserv,1000)"></textarea></td>
-					  </tr>	
+                  </tr>		
 					  
-					  <tr>
+                  <tr>
 						<td align="right" colspan="6" class="txtTituloHid" height="30" valign="bottom">
-						  <a href="#." onClick="mostraDiv('divFacili')">Selecionar Facilitadores</a>
-						</td>
-					  </tr>	
-					  <tr>
-						<td class="NomeCampo" align="right">Facilitadores:</td>
+                      <a href="#." onClick="mostraDiv('divFacili')">Selecionar Facilitadores</a>
+                    </td>
+				  </tr>	
+				  <tr>
+					<td class="NomeCampo" align="right">Facilitadores:</td>
 							<td colspan="6">
-							  <textarea name="txfacili" class="TextoFormulario" rows="3" cols="80" readonly="true"></textarea>
-						</td>
-					  </tr>	
-					  <tr>
+						  <textarea name="txfacili" class="TextoFormulario" rows="3" cols="80" readonly="true"></textarea>
+					</td>
+				  </tr>				
+				  <tr>
 						<td align="right" colspan="6" class="txtTituloHid" height="30" valign="bottom">
 						  <a href="#." name='selrecurso' onClick="mostraDiv('divRecurso')">Selecionar Recurso</a>
 						</td>
@@ -174,52 +174,52 @@
 						</td>
 					  </tr>		
 					  <tr>
-						<td class="NomeCampo" align="right">Investimento(R$):</td>
+					<td class="NomeCampo" align="right">Investimento(R$):</td>
 						<td width="40" ><input name="vlinvest" type="text" class="Campo" size="5" maxlength="25" onkeyup="formataNum(this,event,'.,')"></td> 
 						<td class="NomeCampo" align="right">Transporte Incluso:</td>
 						<td width="40" class="NomeCampo" align="l"><input type="checkbox" value="on" name="aux_flgtrinc" checked onFocus="window.status = 'Permite Alterar.'"></td>
 						<td class="NomeCampo" align="right">Carga hor&aacute;ria:</td>
 						<td width="41"><input name="qtcarhor" type="text" class="Campo" size="5" maxlength="5" onkeyup="formataNum(this,event,':')"></td>
-					  </tr> 
-						  <tr>
-									<td colspan="6" align="center">
-							  <img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar()">
-							</td>
-						  </tr>
-					</table>
-				  </div>
-					
-				  <div id="divFacili">
-					<table border="0" align="center" width="90%" height="585">
-					  <tr valign="top">
-						<td>
-							<table width="100%" border="0" align="center" cellspacing="0">
-							  <tr>
-								<td height="20" colspan="2">&nbsp;</td>
-							  <tr>
-								<td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Facilitador(es) do Fornecedor</td>
-								<td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
-								<a href="#." onclick="AdFacili();">Cadastrar</a>
-								</td>							
-							  </tr>
-							</table>
-						</td>					
-					  </tr>
-					  <tr valign="top">
-						<td>
-						  <div style="overflow: auto; height:'347';">
-							<table width="100%" id="tbfacili" border="1" bordercolor="#CCCCCC" align="center" cellspacing="0">
-							  <!-- INCUI DADOS -->
-							</table>
-						  </div>
-						</td>					
-					  </tr>
-					  <tr align="center">
-						<td>
-						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaFacili(); mostraDiv('divProposta');">
-						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_restaurar.gif" onClick="restaurar();">
+				  </tr>
+					  <tr>
+								<td colspan="6" align="center">
+						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar()">
 						</td>
 					  </tr>
+			    </table>
+      		  </div>
+				
+	      <div id="divFacili">
+					<table border="0" align="center" width="90%" height="585">
+	      	  <tr valign="top">
+	      	    <td>
+					<table width="100%" border="0" align="center" cellspacing="0">
+					  <tr>
+					    <td height="20" colspan="2">&nbsp;</td>
+					  <tr>
+                        <td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Facilitador(es) do Fornecedor</td>
+                        <td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
+                        <a href="#." onclick="AdFacili();">Cadastrar</a>
+                        </td>							
+                      </tr>
+                    </table>
+                </td>					
+              </tr>
+			  <tr valign="top">
+	      	    <td>
+	              <div style="overflow: auto; height:'347';">
+					<table width="100%" id="tbfacili" border="1" bordercolor="#CCCCCC" align="center" cellspacing="0">
+					  <!-- INCUI DADOS -->
+                    </table>
+                  </div>
+                </td>					
+              </tr>
+              <tr align="center">
+                <td>
+                  <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaFacili(); mostraDiv('divProposta');">
+                  <img style="cursor:hand;" src="/cecred/images/botoes/btn_restaurar.gif" onClick="restaurar();">
+                </td>
+              </tr>
 					</table>			    
 				  </div>
 			  
@@ -244,21 +244,21 @@
 						  <div style="overflow: auto; height:'347';">
 							<table width="100%" id="tbrecurs" border="0" bordercolor="#CCCCCC" align="center" cellspacing="0">
 							  <!-- INCUI DADOS -->
-							</table>
-						  </div>
-						</td>					
-					  </tr>
+            </table>			    
+	      </div>
+            </td>
+          </tr>
 					  <tr align="center">
 						<td>
 						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaRecurso(); mostraDiv('divProposta');">
 						    <!--<img style="cursor:hand;" src="/cecred/images/botoes/btn_restaurar.gif" onClick="restaurar();"> -->
 						</td>
 					  </tr>
-					</table>			    
+        </table>
 				</div>
-            </td>
-          </tr>
-		 </table>
+      </td>
+    </tr>
+  </table>  
       </td>
     </tr>
   </table>  
@@ -279,30 +279,30 @@
 function ValidaDados(form){
    var msg=""; 
 
-	if (document.form.dtmvtolt.value == "") {
-	  msg = msg + "Data de Recebimento não pode ser vazia. ";
-	}
+   if (document.form.dtmvtolt.value == "") {
+      msg = msg + "Data de Recebimento não pode ser vazia. ";
+   }
 
-	if (document.form.dtvalpro.value == "") {
-	  msg = msg + "Data de Validade não pode ser vazia. ";
-	}
-
+   if (document.form.dtvalpro.value == "") {
+      msg = msg + "Data de Validade não pode ser vazia. ";
+   }
+   
 	if (document.form.aux_cdtemeix.value == "") {
 	  msg = msg + "Selecione um tema. ";
 	}
 	
-	if (document.form.qtcarhor.value.length > 5)
-	   msg = msg + "Carga horária incorreta";
-	   
+   if (document.form.qtcarhor.value.length > 5)
+       msg = msg + "Carga horária incorreta";
+   
 	// valida carga horaria com 99:99
-	if ((document.form.qtcarhor.value != '') &&
-	   (document.form.qtcarhor.value.substring(2,3) != ','))
-	   msg = msg + "Formato da hora invalido. Utilize HH:MM";	   
-	
+   if ((document.form.qtcarhor.value != '') &&
+   	   (document.form.qtcarhor.value.substring(2,3) != ','))
+   	   msg = msg + "Formato da hora invalido. Utilize HH:MM";	   
+
 	if (document.form.aux_idforrev.value == 0) {
 	  msg = msg + "Selecione a Forma Realização Evento. ";
 	}
-    
+      
   /*if (document.form.aux_dspublic.value == 0) {
 	  msg = msg + "Selecione O Público Alvo. ";
 	}else{
@@ -320,19 +320,19 @@ function ValidaDados(form){
 function LimparCampos()
 {
    document.form.cdevento.value = '';
-   document.form.cdeixtem.value = '';  
+   document.form.cdeixtem.value = '';
 }
 
-function Recarrega(){ 
+function Recarrega(){
   
   document.form.cdeixtem.value = document.form.aux_cdtemeix.value;
   document.form.cdevento.value = document.form.aux_cdevento.value;
   //document.form.dspublic.value = document.form.aux_dspublic.value;
   document.form.idforrev.value = document.form.aux_idforrev.value; 
 
-    
+
   document.form.aux_cddopcao.value='rec';
-  armazenaFacili(); 
+  armazenaFacili();  
   document.form.nrpropos.disabled = false;
   document.form.submit();  
 }
@@ -373,11 +373,12 @@ function Salvar(){
    if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
       if (ValidaDados(document.forms[0])) {
          document.form.aux_cddopcao.value='sa';
-
 		 document.form.cdeixtem.value = document.form.aux_cdeixtem.value;
+         
          document.form.cdevento.value = document.form.aux_cdevento.value;
-		 
-		 armazenaFacili(); 		
+         document.form.idforrev.value = document.form.aux_idforrev.value; 
+
+		 armazenaFacili(); 
          status = 'Salvando. Por favor, aguarde ...';
          document.form.nrpropos.disabled = false;
          document.form.submit(); 
@@ -397,7 +398,7 @@ function Salvar(){
 function MostraEixos(){
   for (var i=document.all.aux_cdeixtem.options.length; i>=0; i--){
     document.all.aux_cdeixtem.remove(i); 
-  }
+}
    //alert("MostraEixos: " + document.form.aux_cdtemeix.value);
   var oOption;
   var idevento;
@@ -410,12 +411,12 @@ function MostraEixos(){
 	   oOption.value = 0;
 	   arrayinfos = document.form.aux_cdtemeix.value.split("-");
 	   //arrayinfos = document.form.cdeixtem.value.split("-");
-	   
+
 	   nrseqtem = arrayinfos[0];
 	   idevento = arrayinfos[1]; 
 	   cdcooper = arrayinfos[2]; 
 	   cdeixtem = arrayinfos[3]; 
-	   
+
 	   for(i=0;i<meixos.length;i++){     
 		if (meixos[i].idevento == idevento && meixos[i].cdcooper == cdcooper && meixos[i].cdeixtem == cdeixtem ){	
 			 oOption = document.createElement("OPTION");
@@ -431,39 +432,41 @@ function MostraEixos(){
 }
 
 function MostraEventos(arrayDados){
+
   for (var i=document.all.aux_cdevento.options.length; i>=0; i--){
-    document.all.aux_cdevento.remove(i); 
+      document.all.aux_cdevento.remove(i); 
   }
-  
-  var oOption;
+
+   var oOption;
   arrayinfos = arrayDados.split("-");
   nrseqtem = arrayinfos[0];
   idevento = arrayinfos[1]; 
   cdcooper = arrayinfos[2]; 
   cdeixtem = arrayinfos[3]; 	
   cdevento = document.form.cdevento.value;
-  
-  oOption = document.createElement("OPTION");
-  document.all.aux_cdevento.options.add(oOption);
-  oOption.innerText = "Sem vínculo";
-  oOption.value = 0;
 
-  for(i=0;i<mevento.length;i++){   
+   oOption = document.createElement("OPTION");
+   document.all.aux_cdevento.options.add(oOption);
+   oOption.innerText = "Sem vínculo";
+   oOption.value = 0;
+   
+   for(i=0;i<mevento.length;i++){    
     if(mevento[i].nrseqtem == nrseqtem){	    
-      oOption = document.createElement("OPTION");
-      document.all.aux_cdevento.options.add(oOption);
-      oOption.innerText = mevento[i].nmevento;
-      oOption.value = mevento[i].cdevento;
+         oOption = document.createElement("OPTION");
+         document.all.aux_cdevento.options.add(oOption);
+         oOption.innerText = mevento[i].nmevento;
+         oOption.value = mevento[i].cdevento;
       
       if(mevento[i].cdevento == cdevento){ 
         oOption.selected = mevento[i].cdevento;
       }
       
-    }
+      }
   }
 }
 
 function MostraPublico(){
+
    for (var i=document.all.aux_dspublic.options.length; i>=0; i--)
       document.all.aux_dspublic.remove(i); 
 
@@ -490,11 +493,12 @@ function MostraPublico(){
 }
 
 function MostraFormaRealizacao(){
+
    for (var i=document.all.aux_idforrev.options.length; i>=0; i--)
       document.all.aux_idforrev.remove(i); 
 
    var oOption;
-  
+
    idforrev = document.form.idforrev.value;
    
    oOption = document.createElement("OPTION");
@@ -576,22 +580,23 @@ function AdRecurso(){
   '&dsprereq=' + document.form.dsprereq.value+'&qtcarhor=' + document.form.qtcarhor.value +
   '&aux_lsfacili=' + document.form.aux_lsfacili.value +'&aux_idvapost=1'  ;
    
-  
+
   window.open(VarURL,'Recurso','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=720,height=200,top=10,left=10');
 }
 
-function PosicionaEvento(){ 
+function PosicionaEvento(){
 
-   document.form.aux_cdtemeix.value = document.form.cdeixtem.value;
+   document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
+
    document.form.aux_cdevento.value = document.form.cdevento.value;
    //setTimeout(function(){MostraEixos;},1000);   
    MostraEixos(); 
    MostraFormaRealizacao();      
    //MostraPublico();
  
-   setTimeout(function(){MostraEventos(document.form.cdeixtem.value);},2000);
-} 
-function mostraFacili(){ 
+   setTimeout(function(){MostraEventos(document.form.aux_cdtemeix.value);},2000);
+}
+function mostraFacili(){
   var row;var cell;
 
   for(var i=document.all.tbfacili.rows.length; i>1; i--)
@@ -730,9 +735,9 @@ function mostraDiv(nomediv){
   }else{
     if(document.form.aux_nrdrowid.value != "?"){
       document.form.nrpropos.readOnly = false;
-    }
-		document.form.dtmvtolt.readOnly = false;
-		document.form.dtvalpro.readOnly = false;
+  }
+     document.form.dtmvtolt.readOnly = false;
+     document.form.dtvalpro.readOnly = false;
   }
 }
 
@@ -752,7 +757,7 @@ function montaFacili(){
 
 function montaRecurso(){
   
-  // mostra os facilitadores na textarea 
+  // mostra os recursos na textarea 
   document.form.txrecurs.value = '';  
   for(var i=0;i<tbrecurs.rows.length; i++)
   {
@@ -765,14 +770,16 @@ function montaRecurso(){
 }
 
 function armazenaFacili(){
-  //document.form.aux_lsfacili.value = '';
+
+   document.form.aux_lsfacili.value = '';
+
    for(var i=0;i<tbfacili.rows.length; i++){ 
 	 if(tbfacili.rows[i].checked)
 	   if(document.form.aux_lsfacili.value=='')
-		 document.form.aux_lsfacili.value = mfacili[i].idfacili;
+	     document.form.aux_lsfacili.value = mfacili[i].idfacili;
 	   else
-		 document.form.aux_lsfacili.value = document.form.aux_lsfacili.value  + ',' + mfacili[i].idfacili;
-	}
+	     document.form.aux_lsfacili.value = document.form.aux_lsfacili.value  + ',' + mfacili[i].idfacili;
+   }
 
 }
 
@@ -791,6 +798,9 @@ function armazenaFacili(){
 function restaurar(){ //alert('restaurar');
   document.form.aux_cddopcao.value='';		
   
+  armazenaFacili();    
+  document.form.aux_nrpropos.value = document.form.nrpropos.value;  
+  
   status = 'Fechando tela. Por favor, aguarde ...';
   document.form.submit();   
   mostraFacili();
@@ -803,7 +813,7 @@ function restaurar(){ //alert('restaurar');
 function excluido(){ 
  alert('Atualizacao executada com sucesso');
  window.opener.mostraDiv('divRecurso');
- 
+
 
 }
 
@@ -816,6 +826,8 @@ mostraFacili();
 montaFacili();
 mostraRecurso();
 montaRecurso();
+
+
 
 if (document.form.idtrainc.value == 'S') {
 	document.getElementById("aux_flgtrinc").checked = true;
@@ -858,6 +870,10 @@ function fecharTela(){
     document.form.submit(); 
 }
 
+//Garantir que não seja perdido o numero da proposta ao restaurar a tela
+if (document.form.nrpropos.value == ""){  
+  document.form.nrpropos.value = document.form.aux_nrpropos.value;
+}
 
 // Desabilita os campos chaves, se estiver posicionado em algum registro
 if(document.form.aux_nrdrowid.value != "?")

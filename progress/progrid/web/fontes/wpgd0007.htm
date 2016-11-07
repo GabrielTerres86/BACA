@@ -20,7 +20,7 @@
     <input name="aux_dsretorn" type="hidden" id="aux_dsretorn"  value="">    
     <input name="aux_stdopcao" type="hidden" id="aux_stdopcao"  value="">    
     <input name="aux_dsendurl" type="hidden" id="aux_dsendurl"  value="">    
-	<script SRC="/modelo/js/funcoes.js"></script>
+	<script SRC="/cecred/js/funcoes.js"></script>
 <script language="JavaScript">
 NomeDoProgramaPrincipal  = '/wpgd0007.w';
 NomeDoProgramaDeZoom     = '/zoom/zwpgd0007.w';
@@ -58,7 +58,7 @@ NomeDoProgramaDeZoom     = '/zoom/zwpgd0007.w';
 				  <td height="15" colspan="4" align="center" valign="bottom">
                     <table border="0" align="center" cellpadding="1" cellspacing="1">				  					  					  
                       <tr>
-                        <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_cadastrar.gif" onClick="return top.frcod.Incluir()"></th>
+                        <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_limpar.gif" onClick="return top.frcod.Incluir()"></th>
                         <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif"  onClick="return top.frcod.Salvar()"></th>
                         <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_excluir_botao.gif" onClick="return top.frcod.Excluir()"></th>
                         <th scope="col"><img style="cursor:hand;" src="/cecred/images/botoes/btn_procurar.gif" onClick="return top.frcod.AbreZoom(parent.mainFrame.NomeDoProgramaDeZoom,parent.mainFrame.NomeDoProgramaPrincipal,'','P',document.form.aux_idevento.value)"></th>
@@ -85,7 +85,7 @@ NomeDoProgramaDeZoom     = '/zoom/zwpgd0007.w';
    
    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
    document.form.action = NomeDoProgramaPrincipal;
-
+   
 
 function Habilita()
 {
@@ -113,7 +113,7 @@ function ValidaDados(form)
 function LimparCampos()
     {
         document.form.cdeixtem.value = '';
-	document.form.dseixtem.value = '';
+		document.form.dseixtem.value = '';
         focus();
         document.form.dseixtem.focus();
         document.form.dseixtem.select();
