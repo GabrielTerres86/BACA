@@ -419,7 +419,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                             ,pr_cdagetfn      IN INTEGER      --Agencia do terminal financeiro
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
                             ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
-                            ,pr_dsnomfon      IN VARCHAR2 DEFAULT '' -- Numero do Telefone
+                            ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
@@ -8047,7 +8047,7 @@ END pc_gera_titulos_iptu_prog;
                             ,pr_cdagetfn      IN INTEGER      --Agencia do terminal financeiro
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
                             ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
-                            ,pr_dsnomfon      IN VARCHAR2 DEFAULT '' -- Numero do Telefone
+                            ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
