@@ -1016,8 +1016,6 @@ BEGIN
                                            ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_nmarquiv    --> Arquivo final com o path
                                            ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                           ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
-                                           ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
                                            ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                            ,pr_des_erro  => vr_des_erro);
                                    --> Saída com erro
@@ -1033,7 +1031,7 @@ BEGIN
           END IF;                                   
 
          -- Executa comando UNIX para converter arq para Dos
-           vr_dscomand := 'ux2dos '||vr_dircon||'/'||vr_nmarquiv||' > '||
+           vr_dscomand := 'ux2dos '||vr_nom_direto || '/contab/' || vr_nmarquiv || ' > '||
                                       vr_dircon||'/'||vr_arqcon||' 2>/dev/null';                                           
                                                 
             -- Executar o comando no unix

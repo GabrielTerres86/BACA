@@ -1745,15 +1745,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,pr_dsarqsaid => vr_caminho_puro || '/contab/' || vr_nmarquiv_cri    --> Arquivo final com o path
                                                 ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                                 ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                                ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
-                                                ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
                                                 ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                                 ,pr_des_erro  => vr_des_erro2);            --> Saída com erro
 
            IF vr_des_erro2 IS NULL THEN
 
                  -- Executa comando UNIX para converter arq para Dos
-                 vr_dscomand := 'ux2dos '||vr_dircon||'/'||vr_nmarquiv||' > '||
+                 vr_dscomand := 'ux2dos '||vr_caminho_puro || '/contab/' || vr_nmarquiv_cri||' > '||
                                             vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
 
                   -- Executar o comando no unix
