@@ -82,7 +82,12 @@ CREATE OR REPLACE PACKAGE CECRED.flxf0001 AS
                                     ,pr_vldcampo IN NUMBER            -- Valor do campo
                                     ,pr_cdoperad IN VARCHAR2          -- Operador
                                     ,pr_dscritic OUT VARCHAR2);       -- Descrição da critica
-                                      
+
+  -- Procedure para gravar Informacoes do fluxo financeiro consolidado de entrada ou saida
+  PROCEDURE pc_gera_consolidado_singular (pr_cdcooper  IN INTEGER      -- Codigo da Cooperativa
+                                         ,pr_dtmvtolt  IN DATE         -- Data de movimento
+                                         ,pr_cdoperad  IN VARCHAR2     -- Codigo do operador
+                                         ,pr_dscritic OUT VARCHAR2);   -- Descrição da critica
            
 END FLXF0001;
 /
