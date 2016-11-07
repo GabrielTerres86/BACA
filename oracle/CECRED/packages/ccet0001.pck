@@ -163,7 +163,6 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                       
 END CCET0001;
 /
-
 create or replace package body cecred.CCET0001 is
 
   ---------------------------------------------------------------------------------------------------------------
@@ -1670,7 +1669,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 13/09/2016
+  Data    : Julho/2014                        Ultima atualizacao: 07/11/2016
 
   Dados referentes ao programa:
 
@@ -1687,6 +1686,12 @@ create or replace package body cecred.CCET0001 is
                   
               13/09/2016 - Alterado para gerar o relatorio com a nova versão do Gera relatorio.
                            PRJ314 - Indexação Centralizada (Odirlei-AMcom)         
+
+              07/11/2016 - Alterado cursor cr_craplat_bem para buscar somatória das tarifas.
+                           Buscava apenas o primeiro e quanto o empréstimo possui mais de 1 bem
+                           alienado não fechava o valor da tarifa cobrada na conta e impressa no CET.
+                           (SD#551769 - AJFink)
+
   ............................................................................. */
     DECLARE
     
@@ -1777,7 +1782,7 @@ create or replace package body cecred.CCET0001 is
                          ,pr_nrdconta IN crapass.nrdconta%TYPE
                          ,pr_nrctremp IN crapepr.nrctremp%TYPE
                          ,pr_cdhistor IN craplat.cdhistor%TYPE) IS
-      SELECT lat.vltarifa
+      SELECT nvl(sum(lat.vltarifa),0) vltarifa --SD#551769
         FROM craplat lat
         WHERE lat.cdcooper = pr_cdcooper
           AND lat.nrdconta = pr_nrdconta
@@ -2305,14 +2310,18 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas R.
-  Data    : Setembro/2014                        Ultima atualizacao: 00/00/0000
+  Data    : Setembro/2014                        Ultima atualizacao: 07/11/2016
 
   Dados referentes ao programa:
 
   Frequencia: Diaria - Sempre que for chamada
   Objetivo  : Rotina para calcular o Custo Efetivo Total(CET) dos Emprestimos.
 
-  Alteracoes:                  
+  Alteracoes: 07/11/2016 - Alterado cursor cr_craplat_bem para buscar somatória das tarifas.
+                           Buscava apenas o primeiro e quanto o empréstimo possui mais de 1 bem
+                           alienado não fechava o valor da tarifa cobrada na conta e impressa no CET.
+                           (SD#551769 - AJFink)
+
   ............................................................................. */
     DECLARE
       vr_vlrdocet NUMBER;                -- Valor do CET
@@ -2372,13 +2381,13 @@ create or replace package body cecred.CCET0001 is
                          ,pr_nrdconta IN crapass.nrdconta%TYPE
                          ,pr_nrctremp IN crapepr.nrctremp%TYPE
                          ,pr_cdhistor IN craplat.cdhistor%TYPE) IS
-      SELECT lat.vltarifa
+      SELECT nvl(sum(lat.vltarifa),0) vltarifa --SD#551769
         FROM craplat lat
         WHERE lat.cdcooper = pr_cdcooper
           AND lat.nrdconta = pr_nrdconta
           AND lat.nrdocmto = pr_nrctremp
           AND lat.cdhistor = pr_cdhistor
-          AND lat.nrdocmto <> 0;
+          AND nvl(lat.nrdocmto,0) <> 0;
       rw_craplat_bem cr_craplat_bem%ROWTYPE; 
          
       /* cursor para saber o tipo da finalidade */
@@ -2558,4 +2567,3 @@ create or replace package body cecred.CCET0001 is
                          
 end CCET0001;
 /
-
