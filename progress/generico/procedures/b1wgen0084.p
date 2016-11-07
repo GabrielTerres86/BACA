@@ -3068,6 +3068,7 @@ PROCEDURE grava_efetivacao_proposta:
                      
               /* Busca a carga ativa */
               RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                    INPUT par_nrdconta,
                                                    OUTPUT aux_idcarga).
         
               IF VALID-HANDLE(h-b1wgen0188) THEN
@@ -3928,6 +3929,7 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                      
                /* Busca a carga ativa */
                RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
                                                      OUTPUT aux_idcarga).
             
                IF VALID-HANDLE(h-b1wgen0188) THEN

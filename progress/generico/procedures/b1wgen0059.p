@@ -177,6 +177,9 @@
                 20/07/2016 - Realizado a conversao das rotinas busca-craplcr,
 				             busca-crapfin 
 							  (Andrei - RKAM).
+
+                17/08/2016 - Incluido campo txmensal na table tt-craplcr
+                             busca-craplcr. (Lombardi)
 .............................................................................*/
 
 
@@ -3144,6 +3147,7 @@ PROCEDURE busca-craplcr:
                                        tt-craplcr.flgstlcr = craplcr.flgstlcr
                                        tt-craplcr.tpctrato = craplcr.tpctrato
                                        tt-craplcr.txbaspre = craplcr.txbaspre
+                                       tt-craplcr.txmensal = craplcr.txmensal
                                        tt-craplcr.nrfimpre = craplcr.nrfimpre
                                        tt-craplcr.tpgarant = craplcr.tpctrato.
 
@@ -3197,6 +3201,7 @@ PROCEDURE busca-craplcr:
                                        tt-craplcr.flgstlcr = craplcr.flgstlcr
                                        tt-craplcr.tpctrato = craplcr.tpctrato
                                        tt-craplcr.txbaspre = craplcr.txbaspre
+                                       tt-craplcr.txmensal = craplcr.txmensal
                                        tt-craplcr.nrfimpre = craplcr.nrfimpre
                                        tt-craplcr.tpgarant = craplcr.tpctrato.
 
