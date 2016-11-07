@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2016-09-15T14:01:58 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="cet" language="groovy" pageWidth="595" pageHeight="670" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.5026296018031553"/>
 	<property name="ireport.x" value="0"/>
@@ -124,7 +126,7 @@
 	<summary>
 		<band height="655">
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="d27cb37c-e0fb-4a01-ae79-e5a7358797b8" x="36" y="480" width="529" height="25"/>
+				<reportElement x="36" y="480" width="529" height="25" uuid="d27cb37c-e0fb-4a01-ae79-e5a7358797b8"/>
 				<textElement verticalAlignment="Bottom" markup="none">
 					<font fontName="Courier New" size="10" isBold="false" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -132,24 +134,24 @@
 				<textFieldExpression><![CDATA["4. CUSTO EFETIVO TOTAL (CET)"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="07f34747-2839-4dfc-9f80-e6706054dd1b" x="36" y="26" width="523" height="14"/>
+				<reportElement x="36" y="26" width="523" height="14" uuid="07f34747-2839-4dfc-9f80-e6706054dd1b"/>
 				<textElement markup="none">
-					<font fontName="Courier New" size="10" isBold="false"/>
+					<font fontName="Courier New" size="10" isBold="false" pdfFontName="Courier"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA["                                          DATA DO CALCULO: " + $F{dtmvtolt}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="e69c28b6-e91a-4763-81bf-fb6312eaae08" x="36" y="504" width="529" height="23"/>
+				<reportElement x="36" y="504" width="529" height="23" uuid="e69c28b6-e91a-4763-81bf-fb6312eaae08"/>
 				<textElement verticalAlignment="Middle" markup="none">
-					<font fontName="Courier New" size="10"/>
+					<font fontName="Courier New" size="10" pdfFontName="Courier"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA["4.1. " + $F{txanocet} + " % AO ANO\n" +
 "4.2. " + $F{txmescet} + " % AO MES"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="9d44c2f4-a381-424f-ba0d-2b2812a5a1ee" x="36" y="526" width="529" height="33"/>
+				<reportElement x="36" y="526" width="529" height="33" uuid="9d44c2f4-a381-424f-ba0d-2b2812a5a1ee"/>
 				<textElement verticalAlignment="Bottom" markup="none">
 					<font fontName="Courier New" size="10" isBold="false" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -158,7 +160,7 @@
 "REGULAMENTACAO DO CONSELHO MONETARIO NACIONAL."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="07f34747-2839-4dfc-9f80-e6706054dd1b" x="36" y="181" width="417" height="20"/>
+				<reportElement x="36" y="181" width="417" height="20" uuid="07f34747-2839-4dfc-9f80-e6706054dd1b"/>
 				<textElement verticalAlignment="Bottom" markup="none">
 					<font fontName="Courier New" size="10" isBold="false" isStrikeThrough="false" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -166,7 +168,7 @@
 				<textFieldExpression><![CDATA["2. DADOS DA OPERACAO"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="">
-				<reportElement uuid="212221d4-b6db-4459-8712-b2fed8cce0a5" x="36" y="39" width="417" height="21">
+				<reportElement x="36" y="39" width="417" height="21" uuid="212221d4-b6db-4459-8712-b2fed8cce0a5">
 					<property name="net.sf.jasperreports.export.pdf.tag.table" value="full"/>
 				</reportElement>
 				<textElement markup="none">
@@ -176,9 +178,9 @@
 				<textFieldExpression><![CDATA["PLANILHA DE DEMONSTRACAO DE CUSTO EFETIVO TOTAL (CET)"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true" pattern="">
-				<reportElement uuid="07f34747-2839-4dfc-9f80-e6706054dd1b" x="36" y="76" width="529" height="105" isRemoveLineWhenBlank="true"/>
+				<reportElement x="36" y="76" width="529" height="105" isRemoveLineWhenBlank="true" uuid="07f34747-2839-4dfc-9f80-e6706054dd1b"/>
 				<textElement verticalAlignment="Middle" markup="none">
-					<font fontName="Courier New" size="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" isPdfEmbedded="false"/>
+					<font fontName="Courier New" size="10" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA["1.1. CET - CUSTO  EFETIVO  TOTAL  -  E  O CUSTO  TOTAL  DA OPERACAO DE\n" +
@@ -192,7 +194,7 @@
 "DESPESAS, CONFORME INFORMACOES DOS ITENS 2 E 3.\n"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="0dd0be5d-0726-4790-917a-2c71fbe88dca" mode="Transparent" x="36" y="314" width="529" height="12"/>
+				<reportElement mode="Transparent" x="36" y="314" width="529" height="12" uuid="0dd0be5d-0726-4790-917a-2c71fbe88dca"/>
 				<textElement markup="none">
 					<font fontName="Courier New" size="10" isBold="false" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -200,7 +202,7 @@
 				<textFieldExpression><![CDATA["3. FLUXOS DA OPERACAO                 " + "        VALORES          % VALOR"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="07f34747-2839-4dfc-9f80-e6706054dd1b" x="36" y="52" width="417" height="25"/>
+				<reportElement x="36" y="52" width="417" height="25" uuid="07f34747-2839-4dfc-9f80-e6706054dd1b"/>
 				<textElement verticalAlignment="Bottom" markup="none">
 					<font fontName="Courier New" size="10" isBold="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -208,9 +210,9 @@
 				<textFieldExpression><![CDATA["1. INFORMACOES PREVIAS"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="19a4fc61-bc3b-43b6-832e-bd816715de8d" x="36" y="570" width="529" height="83" isRemoveLineWhenBlank="true"/>
+				<reportElement x="36" y="570" width="529" height="83" isRemoveLineWhenBlank="true" uuid="19a4fc61-bc3b-43b6-832e-bd816715de8d"/>
 				<textElement verticalAlignment="Middle" markup="none">
-					<font fontName="Courier New" size="10" isStrikeThrough="false"/>
+					<font fontName="Courier New" size="10" isStrikeThrough="false" pdfFontName="Courier"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA["EM CASO DE DUVIDAS,  SUGESTOES  OU  RECLAMACOES, DIRIJA-SE AO POSTO DE\n" +
@@ -222,9 +224,9 @@
 "UTEIS, DAS 08H00MIN AS 17H00MIN."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="0e77a2ad-217c-4e5c-bae3-080459475bd2" x="36" y="446" width="529" height="35"/>
+				<reportElement x="36" y="446" width="529" height="35" uuid="0e77a2ad-217c-4e5c-bae3-080459475bd2"/>
 				<textElement verticalAlignment="Middle" markup="none">
-					<font fontName="Courier New" size="10"/>
+					<font fontName="Courier New" size="10" pdfFontName="Courier"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA["CONFORME  INFORMACOES  DOS  ITENS 2 E 3, VIGENTES  NA DATA DO  CALCULO\n" +
@@ -232,9 +234,9 @@
 "PRETENDIDA, E O INDICADO NO ITEM 4."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="07f34747-2839-4dfc-9f80-e6706054dd1b" x="36" y="201" width="529" height="105"/>
+				<reportElement x="36" y="201" width="529" height="105" uuid="07f34747-2839-4dfc-9f80-e6706054dd1b"/>
 				<textElement verticalAlignment="Middle" markup="none">
-					<font fontName="Courier New" size="10" isBold="false"/>
+					<font fontName="Courier New" size="10" isBold="false" pdfFontName="Courier"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA["2.1. NUMERO DA CONTA _______________________________________"+$F{nrdconta}+ "\n" +
@@ -248,7 +250,7 @@
 "2.7. PRAZO DO CONTRATO _______________________________________"+$F{dsdprazo}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="9f594b38-b4fc-43ea-a744-32b05984abaa" mode="Transparent" x="36" y="395" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="395" width="529" height="13" uuid="9f594b38-b4fc-43ea-a744-32b05984abaa"/>
 				<textElement verticalAlignment="Bottom" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -256,7 +258,7 @@
 				<textFieldExpression><![CDATA["3.6. VALOR DE CADA PARCELA______________________________ R\$ " + $F{vlparemp}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="9f594b38-b4fc-43ea-a744-32b05984abaa" mode="Transparent" x="36" y="407" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="407" width="529" height="13" uuid="9f594b38-b4fc-43ea-a744-32b05984abaa"/>
 				<textElement verticalAlignment="Bottom" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -264,7 +266,7 @@
 				<textFieldExpression><![CDATA["3.7. VALOR TOTAL DA DIVIDA____________________________ R\$ " + $F{vltotemp}]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="9f594b38-b4fc-43ea-a744-32b05984abaa" mode="Transparent" x="36" y="419" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="419" width="529" height="13" uuid="9f594b38-b4fc-43ea-a744-32b05984abaa"/>
 				<textElement verticalAlignment="Bottom" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -272,21 +274,21 @@
 				<textFieldExpression><![CDATA["3.8. DATA DO VENCIMENTO DA PRIMEIRA PARCELA_________________"+$F{dtpripag}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="7fd33a9f-9605-4667-8a9f-b0c1df077cf7" x="36" y="11" width="523" height="16"/>
+				<reportElement x="36" y="11" width="523" height="16" uuid="7fd33a9f-9605-4667-8a9f-b0c1df077cf7"/>
 				<textElement>
-					<font fontName="Courier New"/>
+					<font fontName="Courier New" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dscooper}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement uuid="b71c4827-e0f4-436f-92ad-9fd73a17bd4a" x="36" y="326" width="529" height="12"/>
+				<reportElement x="36" y="326" width="529" height="12" uuid="b71c4827-e0f4-436f-92ad-9fd73a17bd4a"/>
 				<textElement>
-					<font fontName="Courier New"/>
+					<font fontName="Courier New" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA["                                                            FINANCIADO"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="bc5578cc-ff52-40a0-aeb2-f2b83688d18e" mode="Transparent" x="36" y="371" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="371" width="529" height="13" uuid="bc5578cc-ff52-40a0-aeb2-f2b83688d18e"/>
 				<textElement verticalAlignment="Top" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -295,7 +297,7 @@
 $F{txjurseg} + " %"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="54db1bad-6597-4956-9a82-a3925e6e9e40" mode="Transparent" x="36" y="336" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="336" width="529" height="13" uuid="54db1bad-6597-4956-9a82-a3925e6e9e40"/>
 				<textElement verticalAlignment="Top" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -304,7 +306,7 @@ $F{txjurseg} + " %"]]></textFieldExpression>
 $F{txjurlim} + " %"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="4efee47e-764d-47b5-b389-a50b8e217498" mode="Transparent" x="36" y="347" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="347" width="529" height="13" uuid="4efee47e-764d-47b5-b389-a50b8e217498"/>
 				<textElement verticalAlignment="Top" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -313,7 +315,7 @@ $F{txjurlim} + " %"]]></textFieldExpression>
 $F{txjuriof} + " %"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="9f594b38-b4fc-43ea-a744-32b05984abaa" mode="Transparent" x="36" y="383" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="383" width="529" height="13" uuid="9f594b38-b4fc-43ea-a744-32b05984abaa"/>
 				<textElement verticalAlignment="Top" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>
@@ -322,7 +324,7 @@ $F{txjuriof} + " %"]]></textFieldExpression>
 $F{txjuremp} + " %"]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
-				<reportElement uuid="b7b2fc39-47e0-4c97-b106-112b6403ad38" mode="Transparent" x="36" y="359" width="529" height="13"/>
+				<reportElement mode="Transparent" x="36" y="359" width="529" height="13" uuid="b7b2fc39-47e0-4c97-b106-112b6403ad38"/>
 				<textElement verticalAlignment="Top" markup="none">
 					<font fontName="Courier New" size="10" pdfFontName="Courier" isPdfEmbedded="true"/>
 					<paragraph lineSpacing="Single"/>

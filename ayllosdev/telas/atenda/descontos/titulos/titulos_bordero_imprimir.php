@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_bordero_imprimir.php
 	 Autor: Guilherme
-	 Data : November/2008                 Última Alteração: 12/07/2011
+	 Data : November/2008                 Última Alteração: 12/09/2016
 
 	 Objetivo  : Mostrar opção Imprimir da rotina de Descontos de títulos
 				 subrotina borderôs
@@ -13,6 +13,8 @@
 							  
 							  
 			     12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
+
+				 12/09/2016 - Removido o botao Completa. (Jaison/Daniel)
 	************************************************************************/
 	
 	session_start();
@@ -49,7 +51,6 @@
 			<legend><? echo utf8ToHtml('Impressão') ?></legend>
 			
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="carregaBorderosTitulos();return false;" />
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/completa.gif" onClick="gerarImpressao(5,2,'no');return false;" />
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/titulos.gif" onClick="gerarImpressao(7,2,'no');return false;" />
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/proposta.gif" onClick="gerarImpressao(6,2,'no');return false;" />
 			

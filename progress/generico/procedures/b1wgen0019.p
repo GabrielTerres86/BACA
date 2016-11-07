@@ -275,6 +275,9 @@
 
 			   14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
 							(Andrey Formigari - RKAM)
+			  
+               15/09/2016 - Inclusao dos parametros default na rotina oracle
+				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
 ..............................................................................*/
 
 
@@ -8165,6 +8168,8 @@ PROCEDURE imprime_cet:
                           INPUT p-qtdiavig, /* Dias de vigencia */                                     
                           INPUT p-vlemprst, /* Valor emprestado */
                           INPUT p-txmensal, /* Taxa mensal/craplrt.txmensal */
+						  INPUT 0,          /* 0 - false pr_flretxml*/
+                         OUTPUT "", 
                          OUTPUT "", 
                          OUTPUT 0,
                          OUTPUT "").

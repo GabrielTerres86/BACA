@@ -12,6 +12,14 @@
   |   busca_total_descto_lim        | DSCT0001.pc_busca_total_descto_lim      |
   |   busca_total_descontos         | DSCT0001.pc_busca_total_descontos       |
   |   efetua_resgate_tit_bordero    | DSCT0001.pc_efetua_resgate_tit_bord     |
+  |   busca_parametros_dsctit       | DSCT0002.pc_busca_parametros_dsctit     |
+  |   busca_dados_limite            | DSCT0002.pc_busca_dados_limite          |
+  |   busca_dados_limite_consulta   | DSCT0002.pc_busca_dados_limite_cons     |
+  |   busca_restricoes              | DSCT0002.pc_busca_restricoes            |
+  |   busca_dados_bordero           | DSCT0002.pc_busca_dados_bordero         |
+  |   busca_titulos_bordero         | DSCT0002.pc_busca_titulos_bordero       |
+  |   carrega_dados_bordero_titulos | DSCT0002.pc_carrega_dados_bordero_tit   |
+  |   busca_dados_impressao_dsctit  | DSCT0002.pc_busca_dados_imp_descont     |
   +---------------------------------+-----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA

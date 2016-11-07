@@ -785,6 +785,7 @@ BEGIN
                crapass.nrcpfcgc,
                crapass.nrdocptl,
                crapass.cdagenci,
+               crawepr.cdagenci cdageepr,
                crapass.nmprimtl,
                crawepr.tpemprst,
                crawepr.flgpagto,
@@ -961,6 +962,9 @@ BEGIN
       vr_dtlibera       DATE;                      --> Data de liberacao do contrato
       vr_cdc            crapprm.dsvlrprm%TYPE;     --> String com valores de linha CDC
       vr_negociavel     VARCHAR2(1);               --> Identificados para impressao dos textos "Para uso da digitalizacao" e "nao negociavel"
+      vr_qrcode         VARCHAR2(100);             --> QR Code para uso da digitalizacao
+      vr_cdtipdoc       INTEGER;                   --> Codigo do tipo de documento
+      vr_dstextab       craptab.dstextab%TYPE;     --> Descritivo da tab
 
       -- Variáveis de portabilidade
       nrcnpjbase_if_origem VARCHAR2(100);
@@ -1375,6 +1379,32 @@ BEGIN
         vr_dscritic := 'Conta/Contrato fora do padrao de layout';--monta critica
         RAISE vr_exc_saida; -- encerra programa e retorna critica
       ELSE
+          --> Buscar identificador para digitalização
+          vr_dstextab :=  TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper, 
+                                                     pr_nmsistem => 'CRED'      , 
+                                                     pr_tptabela => 'GENERI'    , 
+                                                     pr_cdempres => 00          , 
+                                                     pr_cdacesso => 'DIGITALIZA', 
+                                                     pr_tpregist => 5);
+
+          IF TRIM(vr_dstextab) IS NULL THEN
+            vr_dscritic := 'Falta registro na Tabela "DIGITALIZA".';
+            RAISE vr_exc_saida;
+          END IF;
+
+          vr_cdtipdoc :=  gene0002.fn_busca_entrada(pr_postext => 3, 
+                                                    pr_dstext  => vr_dstextab, 
+                                                    pr_delimitador => ';');
+
+          -- Gera o QR Code para uso da digitalizacao
+          vr_qrcode   := pr_cdcooper ||'_'||
+                         rw_crawepr.cdageepr ||'_'||
+                         TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
+                         0           ||'_'||
+                         TRIM(gene0002.fn_mask_contrato(pr_nrctremp)) ||'_'||
+                         0           ||'_'||
+                         vr_cdtipdoc;
+
           -- Busca a descricao do titulo e gera o arquivo XML ----------
           vr_digitalizacao := 'Conta: '   ||gene0002.fn_mask_conta(pr_nrdconta)  ||
                               '     Contrato: '||gene0002.fn_mask(pr_nrctremp,'99.999.999')||
@@ -1466,6 +1496,7 @@ BEGIN
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                  '<versao>'        ||vr_nrversao                             ||'</versao>' ||
                                  '<digitalizacao>' ||vr_digitalizacao                        ||'</digitalizacao>'||
+                                 '<dsqrcode>'      || vr_qrcode                              ||'</dsqrcode>'||
                                  '<titulo>'        ||vr_dstitulo                             || '</titulo>'||
                                  '<nmemitente>'    ||rw_crawepr.nmprimtl                     ||'</nmemitente>'||
                                  '<campo_01>'      ||vr_campo_01                             ||'</campo_01>'||
@@ -1614,6 +1645,8 @@ BEGIN
                                  , pr_flg_impri => 'S'
                                  , pr_nmformul  => ' '
                                  , pr_nrcopias  => 1
+                                 , pr_nrvergrl  => 1
+                                 , pr_parser    => 'R'           --> Seleciona o tipo do parser. "D" para VTD e "R" para Jasper padrão
                                  , pr_des_erro  => vr_dscritic);
 
 

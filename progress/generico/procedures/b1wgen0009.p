@@ -241,6 +241,9 @@
                          efetua_liber_anali_bordero. Inclusao de funcionamento
                          de pedir senha do coordenador. (Jaison/James)
 
+
+          07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
+
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -12424,6 +12427,8 @@ PROCEDURE imprime_cet:
                           INPUT p-qtdiavig, /* Dias de vigencia */                                     
                           INPUT p-vlemprst, /* Valor emprestado */
                           INPUT p-txmensal, /* Taxa mensal/crapldc.txmensal */
+                          INPUT 0,          /* 0 - false pr_flretxml*/
+                         OUTPUT "",              
                          OUTPUT "", 
                          OUTPUT 0,
                          OUTPUT "").

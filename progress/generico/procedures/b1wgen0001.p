@@ -22,6 +22,8 @@
   | b1wgen0001.fgetdssitdct	           | CADA0004.fn_dssitdct               |
   | b1wgen0001.completa-cabecalho      | CADA0004.pc_completa_cab_atenda    |
   | b1wgen0001.carrega_dep_vista       | CADA0004.pc_carrega_dep_vista      |
+  | b1wgen0001.pc_obtem_medias         | EXTR0001.obtem-medias              |
+  | b1wgen0001.pc_carrega_medias       | EXTR0001.carrega_medias            |
   +------------------------------------+------------------------------------+
   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
