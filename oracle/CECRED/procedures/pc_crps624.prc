@@ -110,7 +110,6 @@ BEGIN
 
     -- Gravar movimento do fluxo financeiro
     FLXF0001.pc_grava_fluxo_financeiro( pr_cdcooper => rw_coop.cdcooper     -- Codigo da Cooperativa
-                                       ,pr_nmrescop => rw_coop.nmrescop     -- Nome resumido da Coop
                                        ,pr_cdagenci => pr_cdagenci          -- Codigo da agencia
                                        ,pr_nrdcaixa => 0                    -- Numero da caixa
                                        ,pr_cdoperad => pr_cdoperad          -- Codigo do operador
