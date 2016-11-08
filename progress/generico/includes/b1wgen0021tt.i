@@ -2,7 +2,7 @@
 
    Programa: b1wgen0021tt.i                  
    Autor   : Murilo
-   Data    : Agosto/2007                       Ultima atualizacao: 06/02/2014
+   Data    : Agosto/2007                       Ultima atualizacao: 27/09/2016
 
    Dados referentes ao programa:
 
@@ -37,6 +37,9 @@
                             Removido campo flgplano da temp-table tt-novo-plano.
                             (Fabricio)
                             
+               27/09/2016 - Ajuste das Rotinade Integralização/Estorno integralizaçao
+                            M169 (Ricardo Linhares)                            
+                            
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-saldo-cotas NO-UNDO
@@ -55,7 +58,7 @@ DEF TEMP-TABLE tt-extrato_cotas NO-UNDO
     FIELD cdbccxlt AS INTE
     FIELD nrdolote AS INTE
     FIELD dsextrat AS CHAR.
-    
+        
 DEF TEMP-TABLE tt-dados-capital NO-UNDO
     FIELD vldcotas AS DECI
     FIELD vlcmicot AS DECI
@@ -141,7 +144,8 @@ DEF TEMP-TABLE cratpla NO-UNDO LIKE crappla.
 
 DEF TEMP-TABLE tt-lancamentos NO-UNDO
     FIELD nrdocmto AS DECI
-    FIELD vllanmto AS DECI.
+    FIELD vllanmto AS DECI
+    FIELD lctrowid AS INTE.
 
 DEF TEMP-TABLE tt-estornos NO-UNDO LIKE tt-lancamentos.
 
