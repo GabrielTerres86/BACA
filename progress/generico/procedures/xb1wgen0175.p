@@ -2,14 +2,15 @@
 
    Programa: xb1wgen0175.p
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                     Ultima atualizacao:  /  /
+   Data    : Setembro/2013                     Ultima atualizacao: 19/08/2016
 
    Dados referentes ao programa:
 
    Objetivo  : BO de Comunicacao referente a tela DEVOLU, 
                Devolucoes.
 
-   Alteracoes: 
+   Alteracoes: 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
+                            de cheques (Lucas Ranghetti #484923)
    
 ............................................................................ */
 
@@ -73,6 +74,8 @@ DEF VAR aux_flgpagin AS LOG                                            NO-UNDO.
 
 PROCEDURE valores_entrada:
     
+    DEFINE VARIABLE aux_rowid AS ROWID       NO-UNDO.
+    
     FOR EACH tt-param:
 
         CASE tt-param.nomeCampo:
@@ -110,9 +113,53 @@ PROCEDURE valores_entrada:
             WHEN "banco"    THEN aux_banco    = INTE(tt-param.valorCampo).
             WHEN "vllanmto" THEN aux_vllanmto = DECI(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
+            WHEN "cdagenci" THEN aux_cdagenci = INTE(tt-param.valorCampo).
+            
         END CASE.
 
     END. /** Fim do FOR EACH tt-param **/
+
+    FOR EACH tt-param-i 
+        BREAK BY tt-param-i.nomeTabela
+              BY tt-param-i.sqControle:
+
+        CASE tt-param-i.nomeTabela:
+
+            WHEN "Desmarcar" THEN DO:
+            
+               IF  FIRST-OF(tt-param-i.sqControle) THEN
+                    DO:
+                       CREATE tt-desmarcar.
+                       ASSIGN aux_rowid = ROWID(tt-desmarcar).
+                    END.
+                    
+               FIND tt-desmarcar WHERE ROWID(tt-desmarcar) = aux_rowid NO-ERROR.
+                  
+               CASE tt-param-i.nomeCampo:
+                    WHEN "banco" THEN
+                        tt-desmarcar.cdbanchq = INT(tt-param-i.valorCampo).
+                    WHEN "cdagechq" THEN
+                        tt-desmarcar.cdagechq = INT(tt-param-i.valorCampo).
+                    WHEN "nrctachq" THEN
+                        tt-desmarcar.nrctachq = DEC(tt-param-i.valorCampo).
+                    WHEN "nrcheque" THEN
+                        tt-desmarcar.nrcheque = DEC(tt-param-i.valorCampo).
+                    WHEN "nrdconta" THEN
+                         tt-desmarcar.nrdconta = DEC(tt-param-i.valorCampo).
+                    WHEN "vllanmto" THEN
+                        tt-desmarcar.vllanmto = DEC(tt-param-i.valorCampo).
+                    WHEN "cdalinea" THEN
+                        tt-desmarcar.cdalinea = INT(tt-param-i.valorCampo).
+                    WHEN "nrdctitg" THEN
+                        tt-desmarcar.nrdctitg = DEC(tt-param-i.valorCampo).
+                    WHEN "nrdrecid" THEN
+                        STRING(tt-desmarcar.nrdrecid) = STRING(tt-param-i.valorCampo).
+                    WHEN "flag" THEN
+                        tt-desmarcar.flag = LOGICAL(tt-param-i.valorCampo). 
+               END CASE.
+            END.            
+        END CASE.
+    END.
 
 END PROCEDURE.
 
@@ -126,6 +173,7 @@ PROCEDURE busca-devolucoes-cheque:
                                 INPUT aux_dtmvtoan, 
                                 INPUT TRUE,
                                 INPUT aux_nrdconta,
+                                INPUT aux_cdagenci,
                                 INPUT aux_flgpagin,
                                 INPUT aux_nriniseq,
                                 INPUT aux_nrregist,
@@ -133,9 +181,9 @@ PROCEDURE busca-devolucoes-cheque:
                                 OUTPUT aux_nmprimtl,
                                 OUTPUT ret_dsdctitg,
                                 OUTPUT TABLE tt-lancto,
-                                OUTPUT TABLE tt-devolu,
-                                OUTPUT TABLE tt-erro).
-
+                                OUTPUT TABLE tt-devolu,                                
+                                OUTPUT TABLE tt-erro).   
+    
     IF  RETURN-VALUE <> "OK" THEN DO:
         FIND FIRST tt-erro NO-LOCK NO-ERROR.
         
@@ -151,7 +199,7 @@ PROCEDURE busca-devolucoes-cheque:
         RUN piXmlExport (INPUT TEMP-TABLE tt-devolu:HANDLE,
                          INPUT "Devolucoes").
         RUN piXmlExport (INPUT TEMP-TABLE tt-lancto:HANDLE,
-                         INPUT "Lancamento").
+                         INPUT "Lancamento").        
         RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
         RUN piXmlAtributo (INPUT "nmprimtl",INPUT STRING(aux_nmprimtl)).
         RUN piXmlSave.
@@ -159,6 +207,34 @@ PROCEDURE busca-devolucoes-cheque:
     
 END PROCEDURE.
 
+PROCEDURE busca-telefone-email:
+
+      RUN busca-telefone-email IN hBO
+                              (INPUT aux_cdcooper
+                              ,INPUT aux_nrdconta
+                              ,OUTPUT TABLE tt-telefones
+                              ,OUTPUT TABLE tt-emails).
+                              
+      IF  RETURN-VALUE <> "OK" THEN DO:
+          FIND FIRST tt-erro NO-LOCK NO-ERROR.
+          
+          IF  NOT AVAILABLE tt-erro THEN DO:
+              CREATE tt-erro.
+              ASSIGN tt-erro.dscritic = "Operacao nao efetuada.".
+          END.
+
+          RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
+      END.
+      ELSE DO:
+          RUN piXmlNew.          
+          RUN piXmlExport (INPUT TEMP-TABLE tt-telefones:HANDLE,
+                           INPUT "Telefones").
+          RUN piXmlExport (INPUT TEMP-TABLE tt-emails:HANDLE,
+                           INPUT "Emails").          
+          RUN piXmlSave.
+      END.
+
+END PROCEDURE.
 
 PROCEDURE marcar_cheque_devolu:
 
@@ -249,15 +325,22 @@ PROCEDURE verifica_alinea:
                         OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN DO:
+    
         FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
         IF  NOT AVAILABLE tt-erro THEN DO:
             CREATE tt-erro.
             ASSIGN tt-erro.dscritic = "Operacao nao efetuada.".
         END.
-
+        
         RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
+        
     END.
+    ELSE
+    DO:
+        RUN piXmlNew.
+        RUN piXmlSave.
+    END.  
 
 END PROCEDURE.
 
@@ -282,6 +365,7 @@ PROCEDURE geracao-devolu:
                     INPUT aux_nrdocmto,
                     INPUT aux_nmdatela,
                     INPUT aux_flag,
+                    INPUT TABLE tt-desmarcar,
                     OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN DO:
@@ -312,6 +396,7 @@ PROCEDURE gera_log:
                  INPUT aux_cdbanchq,
                  INPUT aux_cdalinea,
                  INPUT aux_nmdatela,
+                 INPUT TABLE tt-desmarcar,
                  OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE <> "OK" THEN DO:
@@ -397,4 +482,33 @@ PROCEDURE executa-processo-devolu:
         RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
     END.
     
+END PROCEDURE.
+
+PROCEDURE altera-alinea:
+
+    RUN altera-alinea IN hBO(INPUT aux_cdcooper,                        
+                             INPUT aux_cdbanchq,
+                             INPUT aux_cdagechq,
+                             INPUT aux_nrctachq,
+                             INPUT aux_nrdocmto,
+                             INPUT aux_cdalinea,
+                             INPUT aux_cdoperad,                             
+                             OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE <> "OK" THEN DO:
+        FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+        IF  NOT AVAILABLE tt-erro THEN DO:
+            CREATE tt-erro.
+            ASSIGN tt-erro.dscritic = "Operacao nao efetuada.".
+        END.
+
+        RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
+    END.
+    ELSE
+    DO:
+        RUN piXmlNew.
+        RUN piXmlSave.
+    END.  
+
 END PROCEDURE.

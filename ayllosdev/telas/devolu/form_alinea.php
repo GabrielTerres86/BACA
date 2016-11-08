@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Exibe a tela de Alinea - tela DEVOLU
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923) 
  * 
  * --------------
  */ 
@@ -27,7 +27,7 @@
 		<legend><? echo utf8ToHtml('Informe a Alinea') ?></legend>
 		<br />
 		<label for="cdalinea"><? echo utf8ToHtml('C&oacute;digo da Alinea:') ?></label>
-		<input name="cdalinea" id="cdalinea" />
+		<input name="cdalinea" id="cdalinea" type="text"/>
 		<br />
 	</fieldset>	
 </form>

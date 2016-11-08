@@ -12,8 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 17/06/2015
-
+   Data    : Novembro/91.                    Ultima atualizacao: 28/09/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch - Background).
@@ -366,7 +365,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                             
                17/06/2015 - #295005 Alterado o campo usado como filtro do tipo de linha de 
                             crédito, de dslcremp para dsorgrec (Carlos)
-			   
+               
+               26/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
+                            (Lucas Ranghetti #484923)
+                            							 
      ............................................................................. */
 
      DECLARE
@@ -501,7 +503,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               ,qtcmpctl NUMBER
               ,vlcmpctl NUMBER
               ,qtcstdct NUMBER
-              ,vlcstdct NUMBER);
+              ,vlcstdct NUMBER
+              ,flsldapl VARCHAR2(3)
+              ,flgdevolu_autom VARCHAR2(3)
+              ,qtdevolu INTEGER);
 
        --Definicao do tipo de registro para relatorio crat007_final
        TYPE typ_reg_crat007_final IS
@@ -515,7 +520,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               ,qtcmptot NUMBER
               ,vlcmptot NUMBER
               ,qtcstdct NUMBER
-              ,vlcstdct NUMBER);
+              ,vlcstdct NUMBER
+              ,flsldapl VARCHAR2(3)
+              ,flgdevolu_autom VARCHAR2(3)
+              ,qtdevolu INTEGER);
 
        --Definicao do tipo de registro para relatorio crat225
        TYPE typ_reg_crat225 IS
@@ -903,6 +911,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                ,craplcm.cdagenci
                ,craplcm.cdbccxlt
                ,craplcm.nrdolote
+               ,craplcm.cdcooper
+               ,craplcm.nrdconta
+               ,craplcm.nrdocmto
          FROM craplcm craplcm
          WHERE craplcm.cdcooper = pr_cdcooper
          AND   craplcm.nrdconta = pr_nrdconta
@@ -1028,8 +1039,43 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                  ,craptfc.progress_recid DESC;
        rw_craptfc cr_craptfc%ROWTYPE;
 
+
+       CURSOR cr_crapneg( pr_cdcooper IN crapcop.cdcooper%TYPE,
+                          pr_nrdconta IN crapass.nrdconta%TYPE,
+                          pr_nrdocmto IN crapneg.nrdocmto%TYPE,
+                          pr_vlestour IN crapneg.vlestour%TYPE) IS
+        SELECT 1 
+          FROM crapneg       
+         WHERE crapneg.cdcooper = pr_cdcooper
+           AND crapneg.nrdconta = pr_nrdconta
+           AND crapneg.cdhisest = 1
+           AND crapneg.nrdocmto = pr_nrdocmto
+           AND crapneg.vlestour = pr_vlestour;
+
        /* Variaveis Locais da pc_crps005 */
 
+
+       --Tabelas de Memoria
+       vr_tab_saldo_rdca  APLI0001.typ_tab_saldo_rdca;
+       vr_tab_erro        gene0001.typ_tab_erro;
+       -- TempTables para APLI0001.pc_consulta_poupanca
+       vr_tab_conta_bloq APLI0001.typ_tab_ctablq;
+       vr_tab_craplpp    APLI0001.typ_tab_craplpp;
+       vr_tab_craplrg    APLI0001.typ_tab_craplpp;
+       vr_tab_resgate    APLI0001.typ_tab_resgate;
+       vr_tab_dados_rpp  APLI0001.typ_tab_dados_rpp;
+
+       --Indices das temp-tables       
+       vr_ind PLS_INTEGER;
+       
+       vr_vlsldapl NUMBER;
+       vr_vlsldrgt NUMBER;
+       vr_vlsldtot NUMBER;
+       vr_vlsldppr NUMBER;
+       vr_percenir NUMBER;
+       vr_flgdevolu_autom INTEGER;
+       vr_qtdevolu INTEGER;
+       
        vr_index     NUMBER:= 0;
        vr_pessajur  NUMBER:= 0;
        vr_pessafis  NUMBER:= 0;
@@ -1062,7 +1108,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_qtprecal   crapepr.qtprecal%TYPE;
        vr_nmprimtl   crapass.nmprimtl%TYPE;
        vr_dstextab   craptab.dstextab%TYPE;
-
+       vr_des_reto  VARCHAR2(10);
+       
        -- Variavies do proc_conta_integracao
        vr_ctpsqitg   craplcm.nrdctabb%TYPE;
 
@@ -2243,7 +2290,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                vr_tab_crat007_final(vr_index_crat007_final).vlcmptot:= vr_vlcmptot;
                vr_tab_crat007_final(vr_index_crat007_final).qtcstdct:= vr_tab_crat007(vr_des_chave).qtcstdct;
                vr_tab_crat007_final(vr_index_crat007_final).vlcstdct:= vr_tab_crat007(vr_des_chave).vlcstdct;
-
+               vr_tab_crat007_final(vr_index_crat007_final).flgdevolu_autom:= vr_tab_crat007(vr_des_chave).flgdevolu_autom;
+               vr_tab_crat007_final(vr_index_crat007_final).qtdevolu:= vr_tab_crat007(vr_des_chave).qtdevolu;
+               vr_tab_crat007_final(vr_index_crat007_final).flsldapl:= vr_tab_crat007(vr_des_chave).flsldapl;
              END IF;
              -- Buscar o próximo registro da tabela
              vr_des_chave := vr_tab_crat007.NEXT(vr_des_chave);
@@ -2267,7 +2316,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                              <qtcmptot>'||to_char(vr_tab_crat007_final(vr_des_chave).qtcmptot,'fm9990')||'</qtcmptot>
                              <vlcmptot>'||to_char(vr_tab_crat007_final(vr_des_chave).vlcmptot,'fm999g990d00')||'</vlcmptot>
                              <qtcstdct>'||to_char(vr_tab_crat007_final(vr_des_chave).qtcstdct,'fm9990')||'</qtcstdct>
-                             <vlcstdct>'||to_char(vr_tab_crat007_final(vr_des_chave).vlcstdct,'fm999g990d00')||'</vlcstdct>
+                             <vlcstdct>'||to_char(vr_tab_crat007_final(vr_des_chave).vlcstdct,'fm999g990d00')||'</vlcstdct>                             
+                             <flgdevolu_autom>'||vr_tab_crat007_final(vr_des_chave).flgdevolu_autom||'</flgdevolu_autom>
+                             <flsldapl>'||vr_tab_crat007_final(vr_des_chave).flsldapl||'</flsldapl>
+                             <qtdevolu>'||to_char(vr_tab_crat007_final(vr_des_chave).qtdevolu,'fm999g990')||'</qtdevolu>
                            </cheque>');
              -- Atribuir true para parametro que imprime informacoes no relatorio
              vr_flgimpchq:= 'S';
@@ -2388,12 +2440,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                                       ,pr_dsparams  =>   'PR_CDAGENCI##'||vr_cdagenci||'@@PR_NMRESAGE##'||vr_nmresage||'@@PR_VLREFERE##'||To_Char(vr_rel_vlsldneg,'999g990d00')||
                                                        '@@PR_FLIMPCHQ##'||vr_flgimpchq||'@@PR_DSLIMITE##'||trim(vr_rel_dslimite) --> Enviar como parâmetros a agencia e descricao
                                       ,pr_dsarqsaid => vr_nom_direto||'/'||vr_nom_arquivo||'.lst' --> Arquivo final com código da agência
-                                      ,pr_qtcoluna  => 132                 --> 132 colunas
+                                      ,pr_qtcoluna  => 234                 --> 132 colunas
                                       ,pr_sqcabrel  => 2                   --> Sequencia do Relatorio {includes/cabrel132_2.i}
                                       ,pr_flg_impri => 'S'                 --> Chamar a impressão (Imprim.p)
-                                      ,pr_nmformul  => '132dm'             --> Nome do formulário para impressão
+                                      ,pr_nmformul  => '234dh'             --> Nome do formulário para impressão
                                       ,pr_nrcopias  => 1                   --> Número de cópias
-                                      ,pr_flg_gerar => 'N'                --> gerar PDF
+                                      ,pr_flg_gerar => 'N'                --> gerar PDF TESTE RANGHETTI PADRAO 'N'
                                       ,pr_des_erro  => vr_des_erro);       --> Saída com erro
 
               -- Testar se houve erro
@@ -5608,10 +5660,142 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
                 /* FIM - Renato Darosci(Supero) - 30/09/2013 - Atualizar os dados da tabela crapcyb */
 
+                /* Buscar se conta possui devolucao automatica de cheques ou nao */
+
+
+
+                cada0003.pc_verifica_sit_dev(pr_cdcooper => pr_cdcooper, 
+                                             pr_nrdconta => rw_crapass.nrdconta, 
+                                             pr_flgdevolu_autom => vr_flgdevolu_autom);
+                                              
+                --Obtem Dados Aplicacoes
+                APLI0002.pc_obtem_dados_aplicacoes (pr_cdcooper    => pr_cdcooper          --Codigo Cooperativa
+                                                   ,pr_cdagenci    => vr_cdagenci          --Codigo Agencia
+                                                   ,pr_nrdcaixa    => 1          --Numero do Caixa
+                                                   ,pr_cdoperad    => '1'          --Codigo Operador
+                                                   ,pr_nmdatela    => 'CRPS005'          --Nome da Tela
+                                                   ,pr_idorigem    => 1          --Origem dos Dados
+                                                   ,pr_nrdconta    => rw_crapass.nrdconta  --Numero da Conta do Associado
+                                                   ,pr_idseqttl    => 1          --Sequencial do Titular
+                                                   ,pr_nraplica    => 0                    --Numero da Aplicacao
+                                                   ,pr_cdprogra    => 'CRPS005'          --Nome da Tela
+                                                   ,pr_flgerlog    => 0 /*FALSE*/          --Imprimir log
+                                                   ,pr_dtiniper    => NULL                 --Data Inicio periodo   
+                                                   ,pr_dtfimper    => NULL                 --Data Final periodo
+                                                   ,pr_vlsldapl    => vr_vlsldtot          --Saldo da Aplicacao
+                                                   ,pr_tab_saldo_rdca  => vr_tab_saldo_rdca    --Tipo de tabela com o saldo RDCA
+                                                   ,pr_des_reto    => vr_des_reto          --Retorno OK ou NOK
+                                                   ,pr_tab_erro    => vr_tab_erro);        --Tabela de Erros
+                --Se retornou erro
+                IF vr_des_reto = 'NOK' THEN
+                  --Se possuir erro na temp-table
+                  IF vr_tab_erro.COUNT > 0 THEN
+                      vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+                  ELSE
+                      vr_dscritic := 'Nao foi possivel carregar o aplicacoes.';      
+                  END IF; 
+                  
+                  -- Limpar tabela de erros
+                  vr_tab_erro.DELETE;
+                  
+                  RAISE vr_exc_saida;
+                END IF;                            
+                
+                vr_vlsldapl := nvl(vr_vlsldtot,0);
+               
+                --> Buscar saldo das aplicacoes
+                APLI0005.pc_busca_saldo_aplicacoes(pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
+                                                  ,pr_cdoperad => '1'   --> Código do Operador
+                                                  ,pr_nmdatela => 'CRPS005'   --> Nome da Tela
+                                                  ,pr_idorigem => 1   --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
+                                                  ,pr_nrdconta => rw_crapass.nrdconta   --> Número da Conta
+                                                  ,pr_idseqttl => 1   --> Titular da Conta
+                                                  ,pr_nraplica => 0             --> Número da Aplicação / Parâmetro Opcional
+                                                  ,pr_dtmvtolt => vr_dtmvtolt   --> Data de Movimento
+                                                  ,pr_cdprodut => 0             --> Código do Produto -–> Parâmetro Opcional
+                                                  ,pr_idblqrgt => 1             --> Identificador de Bloqueio de Resgate (1 – Todas / 2 – Bloqueadas / 3 – Desbloqueadas)
+                                                  ,pr_idgerlog => 0             --> Identificador de Log (0 – Não / 1 – Sim)
+                                                  ,pr_vlsldtot => vr_vlsldtot   --> Saldo Total da Aplicação
+                                                  ,pr_vlsldrgt => vr_vlsldrgt   --> Saldo Total para Resgate
+                                                  ,pr_cdcritic => vr_cdcritic   --> Código da crítica
+                                                  ,pr_dscritic => vr_dscritic); --> Descrição da crítica
+                                                        
+                IF nvl(vr_cdcritic,0) <> 0 OR 
+                   TRIM(vr_dscritic) IS NOT NULL THEN
+                  RAISE vr_exc_saida;
+                END IF;  
+                
+                vr_vlsldapl := vr_vlsldapl + vr_vlsldrgt;
+               
+                -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
+                vr_percenir:= GENE0002.fn_char_para_number
+                                    (TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                               ,pr_nmsistem => 'CRED'
+                                                               ,pr_tptabela => 'CONFIG'
+                                                               ,pr_cdempres => 0
+                                                               ,pr_cdacesso => 'PERCIRAPLI'
+                                                               ,pr_tpregist => 0));
+                
+                --Executar rotina consulta poupanca
+                apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
+                                              ,pr_cdagenci => vr_cdagenci            --> Codigo da Agencia
+                                              ,pr_nrdcaixa => 1            --> Numero do caixa 
+                                              ,pr_cdoperad => '1'            --> Codigo do Operador
+                                              ,pr_idorigem => 1            --> Identificador da Origem
+                                              ,pr_nrdconta => rw_crapass.nrdconta            --> Nro da conta associado
+                                              ,pr_idseqttl => 1            --> Identificador Sequencial
+                                              ,pr_nrctrrpp => 0                      --> Contrato Poupanca Programada 
+                                              ,pr_dtmvtolt => vr_dtmvtolt            --> Data do movimento atual
+                                              ,pr_dtmvtopr => vr_dtmvtopr            --> Data do proximo movimento
+                                              ,pr_inproces => rw_crapdat.inproces            --> Indicador de processo
+                                              ,pr_cdprogra => 'CRPS005'            --> Nome do programa chamador
+                                              ,pr_flgerlog => FALSE                  --> Flag erro log
+                                              ,pr_percenir => vr_percenir            --> % IR para Calculo Poupanca
+                                              ,pr_tab_craptab => vr_tab_conta_bloq   --> Tipo de tabela de Conta Bloqueada
+                                              ,pr_tab_craplpp => vr_tab_craplpp      --> Tipo de tabela com lancamento poupanca
+                                              ,pr_tab_craplrg => vr_tab_craplrg      --> Tipo de tabela com resgates
+                                              ,pr_tab_resgate => vr_tab_resgate      --> Tabela com valores dos resgates das contas por aplicacao
+                                              ,pr_vlsldrpp    => vr_vlsldppr         --> Valor saldo poupanca programada
+                                              ,pr_retorno     => vr_des_reto         --> Descricao de erro ou sucesso OK/NOK 
+                                              ,pr_tab_dados_rpp => vr_tab_dados_rpp  --> Poupancas Programadas
+                                              ,pr_tab_erro      => vr_tab_erro);     --> Saida com erros;
+                --Se retornou erro
+                IF vr_des_reto = 'NOK' THEN
+                  -- Extrair o codigo e critica de erro da tabela de erro
+                  vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+                  vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+                  
+                  -- Limpar tabela de erros
+                  vr_tab_erro.DELETE;
+                  
+                  RAISE vr_exc_saida;      
+                END IF;
+                
+                vr_vlsldapl := nvl(vr_vlsldapl,0) + nvl(vr_vlsldppr,0);
+                
                 --Selecionar os lancamentos de cheques da conta
                 FOR rw_craplcm_cheque IN cr_craplcm_cheque (pr_cdcooper => pr_cdcooper
                                                            ,pr_nrdconta => rw_crapass.nrdconta
                                                            ,pr_dtmvtolt => vr_dtmvtolt) LOOP
+                  
+                  -- nao possui valor aplicado maior que valor do cheque
+                  IF rw_craplcm_cheque.vllanmto < nvl(vr_vlsldapl,0) THEN
+                    vr_tab_crat007(vr_index_crat007).flsldapl:= 'SIM';
+                  ELSE
+                    vr_tab_crat007(vr_index_crat007).flsldapl:= 'NAO';
+                  END IF;
+                
+                  vr_qtdevolu := 0;
+           
+                  /* Quantidade de devolucoes que o cheque ja teve */
+                  FOR rw_crapneg IN cr_crapneg ( pr_cdcooper => rw_craplcm_cheque.cdcooper,
+                                                 pr_nrdconta => rw_craplcm_cheque.nrdconta,
+                                                 pr_nrdocmto => rw_craplcm_cheque.nrdocmto,
+                                                 pr_vlestour => rw_craplcm_cheque.vllanmto) LOOP
+                                       
+                     vr_qtdevolu := vr_qtdevolu + 1;
+                  END LOOP;
+                  
                   CASE
                     --Se tiver cheque compensado no dia para Banco do Brasil
                     WHEN rw_craplcm_cheque.cdhistor IN (50,59) THEN  --cheque comp, cheque trf comp
@@ -5642,6 +5826,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                       END IF;
                   END CASE;
                 END LOOP;
+
+                IF vr_flgdevolu_autom = 1 THEN
+                  vr_tab_crat007(vr_index_crat007).flgdevolu_autom:= 'SIM';
+                ELSE
+                  vr_tab_crat007(vr_index_crat007).flgdevolu_autom:= 'NAO';
+                END IF;
+                
+                vr_tab_crat007(vr_index_crat007).qtdevolu:= nvl(vr_qtdevolu,0);                                
 
                 --Executar rotina para extrair digito zero da conta integracao
                 gene0005.pc_conta_itg_digito_zero (pr_nrdctitg => rw_crapass.nrdctitg

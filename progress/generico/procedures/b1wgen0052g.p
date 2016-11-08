@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 07/06/2016
+    Data    : Junho/2010                      Ultima atualizacao: 15/07/2016
   
     Dados referentes ao programa:
   
@@ -145,8 +145,10 @@
                              matricula PRJ318. (Odirlei-AMcom)
 
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
-				
-				
+
+                15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
+                             (Lucas Ranghetti #484923)
+                
 .............................................................................*/
                                                      
 
@@ -387,6 +389,33 @@ PROCEDURE Grava_Dados :
                        IF  RETURN-VALUE <> "OK" THEN
                            UNDO Grava, LEAVE Grava.
 
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+                       RUN STORED-PROCEDURE pc_grava_tbchq_param_conta 
+                            aux_handproc = PROC-HANDLE NO-ERROR
+                                             (INPUT "I",  /* Opcao, Incluir*/
+                                              INPUT par_cdcooper,  /* Cooperativa */
+                                              INPUT par_nrdconta,  /* Numero da Conta */
+                                              INPUT 1,  /* Flag devolucao automatica/ 1=sim/0=nao */
+                                              INPUT par_cdoperad,  /* Operador */  
+                                              INPUT " ", /* Operador Coordenador */
+                                             OUTPUT "").
+
+                        CLOSE STORED-PROC pc_grava_tbchq_param_conta 
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_dscritic = ""                         
+                               aux_dscritic = pc_grava_tbchq_param_conta.pr_dscritic 
+                                              WHEN pc_grava_tbchq_param_conta.pr_dscritic <> ?.
+                            
+                        IF  aux_dscritic <> ""  THEN
+                            DO:  
+                                ASSIGN par_dscritic = aux_dscritic.
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                       
                        /* Parcelamento do Capital - 'fontes/matric_pc.p' */
                        IF  par_inpessoa <> 3  THEN
                            DO:

@@ -5,8 +5,7 @@
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Requisição da tela DEVOLU
  * --------------
- * ALTERAÇÕES   :
- * 
+ * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
  * --------------
  */
 ?>
@@ -35,6 +34,8 @@
 	$nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : 0  ;
 	$cdbanchq = (isset($_POST['cdbanchq'])) ? $_POST['cdbanchq'] : 0  ;
 	$cdalinea = (isset($_POST['cdalinea'])) ? $_POST['cdalinea'] : 0  ;
+	$camposDc = (isset($_POST['camposDc']))  ? $_POST['camposDc']  : '' ;
+	$dadosDc  = (isset($_POST['dadosDc']))   ? $_POST['dadosDc']   : '' ;
 	
 	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\');';
 
@@ -60,6 +61,7 @@
 	$xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
 	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
 	$xml .= '		<flag>'.$flag.'</flag>';
+	$xml .= 		retornaXmlFilhos( $camposDc, $dadosDc, 'Desmarcar', 'Itens');
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 
