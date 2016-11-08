@@ -1894,7 +1894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         RETURN(NULL);
     END;
   END fn_busca_datdodia;
-
+  
   /* Procedimento do internetbank operação 23 - Transferencia */ 
   PROCEDURE pc_InternetBank23 ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
                                ,pr_nrdconta IN crapttl.nrdconta%TYPE   --> Numero da conta
@@ -3065,7 +3065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
         --Atualizar registro movimento da internet
         IF rw_crapass.idastcjt = 0 THEN
-        
+          
           BEGIN
             UPDATE crapmvi SET crapmvi.vlmovweb = (CASE rw_crapass.inpessoa --Atribuir valor no campo web somente para pessoa fisica(1)
                                                    WHEN 1 THEN
@@ -3112,10 +3112,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                 WHEN OTHERS THEN
                   vr_cdcritic:= 0;
                   vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
-                  --Levantar Excecao
-                  RAISE vr_exc_erro;
+          --Levantar Excecao
+             RAISE vr_exc_erro;
               END;
-            END IF;
+          END IF;
           EXCEPTION
             WHEN OTHERS THEN
               vr_cdcritic:= 0;
@@ -3140,7 +3140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             ELSE
               CLOSE cr_crapsnh2;
             END IF;
-
+            
             BEGIN
               UPDATE crapmvi SET crapmvi.vlmovweb = (CASE rw_crapass.inpessoa --Atribuir valor no campo web somente para pessoa fisica(1)
                                                    WHEN 1 THEN
@@ -3154,7 +3154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               AND   crapmvi.nrdconta = pr_nrdconta
               AND   crapmvi.idseqttl = rw_crapsnh2.idseqttl
               AND   crapmvi.dtmvtolt = pr_dtmvtolt;
-
+                   
               --Nao atualizou nenhum registro
               IF SQL%ROWCOUNT = 0 THEN
                 -- Cria o registro do movimento da internet
@@ -3188,10 +3188,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   WHEN OTHERS THEN
                     vr_cdcritic:= 0;
                     vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+            --Levantar Excecao
+               RAISE vr_exc_erro;
                 END;
-              END IF;
+            END IF;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic:= 0;
@@ -4540,7 +4540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         IF rw_crapass.idastcjt = 0 THEN
 		
           BEGIN
-          
+                   
               UPDATE crapmvi 
                  SET crapmvi.vlmovweb = nvl(crapmvi.vlmovweb,0) + nvl(vr_vlmovweb,0)
                     ,crapmvi.vlmovtrf = nvl(crapmvi.vlmovtrf,0) + nvl(vr_vlmovtrf,0)
@@ -4576,10 +4576,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   WHEN OTHERS THEN
                     vr_cdcritic:= 0;
                     vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+          --Levantar Excecao
+             RAISE vr_exc_erro;
                 END;
-              END IF;
+          END IF;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic:= 0;
@@ -4603,7 +4603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             ELSE
               CLOSE cr_crapsnh2;
 	          END IF;
-
+            
             BEGIN
               UPDATE crapmvi SET crapmvi.vlmovweb = nvl(crapmvi.vlmovweb,0) + nvl(vr_vlmovweb,0)
                               ,crapmvi.vlmovtrf = nvl(crapmvi.vlmovtrf,0) + nvl(vr_vlmovtrf,0)
@@ -4638,10 +4638,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   WHEN OTHERS THEN
                     vr_cdcritic:= 0;
                     vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+            --Levantar Excecao
+               RAISE vr_exc_erro;
                 END;
-              END IF;
+            END IF;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic:= 0;
@@ -6999,7 +6999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           /*** Calculo digito verificador pelo modulo 10 ***/
           CXON0000.pc_calc_digito_iptu_samae (pr_valor    => vr_cdcalcul       --> Valor Calculado
                                            ,pr_nrdigito => vr_nrdigito    --> Digito Verificador
-                                           ,pr_retorno  => vr_flgretor);  --> Retorno digito correto
+                                             ,pr_retorno  => vr_flgretor);  --> Retorno digito correto
         ELSE
           /*** Verificacao pelo modulo 11 ***/
           CXON0014.pc_verifica_digito (pr_nrcalcul => vr_cdcalcul  --Numero a ser calculado
@@ -7333,8 +7333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               AND   crapmvi.nrdconta = pr_nrdconta
               AND   crapmvi.idseqttl = pr_idseqttl
               AND   crapmvi.dtmvtolt = rw_crapaut.dtmvtolt;
-
-
+            
+                   
               --Nao atualizou nenhum registro
               IF SQL%ROWCOUNT = 0 THEN
                 -- Cria o registro do movimento da internet
@@ -7363,13 +7363,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   WHEN OTHERS THEN
                     vr_cdcritic:= 0;
                     vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+            --Levantar Excecao
+               RAISE vr_exc_erro;
 
               END;
 
             END IF;
-
+            
           EXCEPTION
             WHEN OTHERS THEN
               vr_cdcritic:= 0;
@@ -7393,8 +7393,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                 CONTINUE;
               ELSE
                 CLOSE cr_crapsnh2;
-        END IF;
-
+              END IF;
+              
               --Atualizar registro movimento da internet
               BEGIN
                 UPDATE crapmvi SET crapmvi.vlmovweb = crapmvi.vlmovweb + vr_vlmovweb
@@ -7404,7 +7404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                 AND   crapmvi.nrdconta = pr_nrdconta
                 AND   crapmvi.idseqttl = rw_crapsnh2.idseqttl
                 AND   crapmvi.dtmvtolt = rw_crapaut.dtmvtolt;
-
+                     
 
                 --Nao atualizou nenhum registro
                 IF SQL%ROWCOUNT = 0 THEN
@@ -7434,12 +7434,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     WHEN OTHERS THEN
                       vr_cdcritic:= 0;
                       vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
-                      --Levantar Excecao
-                      RAISE vr_exc_erro;
+              --Levantar Excecao
+                 RAISE vr_exc_erro;
                 END;
 
               END IF;
-
+              
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic:= 0;
@@ -8984,10 +8984,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
                   -- Rollback da transação
                   ROLLBACK TO undopoint;
-                  --Levantar Excecao
-                  RAISE vr_exc_erro;
+          --Levantar Excecao
+             RAISE vr_exc_erro;
               END;
-            END IF;
+          END IF;
           EXCEPTION
             WHEN OTHERS THEN
               vr_cdcritic:= 0;
@@ -9051,10 +9051,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                     vr_dscritic:= 'Erro ao inserir movimento na internet. '||sqlerrm;
                     -- Rollback da transação
                     ROLLBACK TO undopoint;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
+            --Levantar Excecao
+               RAISE vr_exc_erro;
                 END;
-              END IF;
+            END IF;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic:= 0;
@@ -12107,9 +12107,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         ELSE
 			-- Adesão de pacote de tarifas não permite agendamento
 			IF vr_tptransa <> 10 THEN
-				vr_idagenda := 1;
-				vr_dtmvtopg := rw_tbgen_trans_pend.dtmvtolt;
-			END IF;
+            vr_idagenda := 1;
+            vr_dtmvtopg := rw_tbgen_trans_pend.dtmvtolt;
+        END IF;
         
 		END IF;
 
@@ -12202,19 +12202,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 						 END IF;							 
 					ELSE
 						--Debito por agendamento
-						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-																											,pr_dtmvtolt => TRUNC(SYSDATE) --> Data do movimento
-																											,pr_tipo     => 'P');
-						IF Trunc(vr_dtmvtopg) <= Trunc(SYSDATE) OR
-							 (Trunc(pr_dtmvtolt) > Trunc(SYSDATE)      AND
-								Trunc(vr_dtmvtopg) <= Trunc(pr_dtmvtolt) AND
-								vr_dtmvtopg <> vr_dtauxili               AND --Verificarcao de final de semana ou feriado
-											pr_dssgproc = 'NAO') THEN
-							--Atualizar flag para true
-								vr_flgalter := TRUE;
-								pr_flgalter := TRUE;
+          vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                    ,pr_dtmvtolt => TRUNC(SYSDATE) --> Data do movimento
+                                                    ,pr_tipo     => 'P');
+          IF Trunc(vr_dtmvtopg) <= Trunc(SYSDATE) OR
+             (Trunc(pr_dtmvtolt) > Trunc(SYSDATE)      AND
+              Trunc(vr_dtmvtopg) <= Trunc(pr_dtmvtolt) AND
+              vr_dtmvtopg <> vr_dtauxili               AND --Verificarcao de final de semana ou feriado
+              pr_dssgproc = 'NAO') THEN
+              --Atualizar flag para true
+              vr_flgalter := TRUE;
+              pr_flgalter := TRUE;
+          END IF;
         END IF;
-					END IF;
         END IF;
 
         --Se deve alterar
@@ -19471,7 +19471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       vr_dsdmensg  VARCHAR2(4000);
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;
-      
+
       vr_dsinfor1  crappro.dsinform##1%TYPE;
       vr_dsinfor2  crappro.dsinform##1%TYPE;
       vr_dsinfor3  crappro.dsinform##1%TYPE;
@@ -19615,7 +19615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            AND crapttl.nrdconta = pr_nrdconta
            AND crapttl.idseqttl = pr_idseqttl;
       rw_crapttl cr_crapttl%ROWTYPE;
-
+	
     BEGIN
       --Se a cooperativa origem nao existir
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -19993,8 +19993,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               END;                  
                     
               pr_cdcritic := vr_auxcdcri;
-              pr_dscritic := vr_auxdscri;
-              
+              pr_dscritic := vr_auxdscri;   
+                 
             END IF;
               
         -- lançamento bloqueado
@@ -20041,7 +20041,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
             RAISE vr_exc_erro;
           END;
-          
+          END IF;
+
 		  -- Se for a primeira tentativa apenas grava critica
           ELSIF vr_qtdexec < 3 THEN
             BEGIN
@@ -20092,7 +20093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
              
             IF cr_gnconve%FOUND THEN
               IF rw_gnconve.flgdbssd = 0 THEN
-              
+                    																				
                 ---> Notificar critica ao cooperado via mensagens do internetbank e/ou SMS 
                 sicr0001.pc_notif_cooperado_debaut(pr_cdcritic      => vr_auxcdcri -- 717 - Nao ha saldo suficiente para a operacao
                                                   ,pr_cdcooper      => pr_cdcooper
@@ -20358,18 +20359,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               vr_dscritic := 'Erro ao atualizar craplau: '||SQLERRM;
               RAISE vr_exc_erro;
           END;
-          
-          BEGIN
-            -- ATUALIZA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
-            UPDATE crapatr
-               SET dtultdeb = pr_dtmvtolt -- ATUALIZA DATA DO ULTIMO DEBITO
-             WHERE ROWID = rw_crapatr.rowid;
-            -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Problema ao atualizar registro na tabela CRAPATR: ' || sqlerrm;
-              RAISE vr_exc_erro;
-          END;
+
+            BEGIN
+              -- ATUALIZA CADASTRO DAS AUTORIZACOES DE DEBITO EM CONTA
+              UPDATE crapatr
+                 SET dtultdeb = pr_dtmvtolt -- ATUALIZA DATA DO ULTIMO DEBITO
+               WHERE ROWID = rw_crapatr.rowid;
+              -- VERIFICA SE HOUVE PROBLEMA NA ATUALIZAÇÃO DO REGISTRO
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Problema ao atualizar registro na tabela CRAPATR: ' || sqlerrm;
+                RAISE vr_exc_erro;
+            END;
           
           -- GERAR PROTOCOLO
           -->Campos gravados na crappro para visualizacao na internet
@@ -20415,8 +20416,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             IF vr_dscritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
               --Levantar Excecao
               RAISE vr_exc_erro;
-            END IF;
-            
+          END IF;
+
             --> Armazena protocolo na autenticacao 
             BEGIN
               UPDATE crapaut 
@@ -20769,15 +20770,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
          AND c.cddbanco = pr_cddbanco
          AND c.nrctatrf = pr_nrctatrf
          AND c.cdageban = pr_cdageban;
-      rw_crapcti cr_crapcti%ROWTYPE;          
-      
+      rw_crapcti cr_crapcti%ROWTYPE;
+          
       --Selecionar informacoes dos bancos
       CURSOR cr_crapban (pr_cdbccxlt IN crapban.cdbccxlt%type) IS
-      SELECT crapban.nmresbcc
-            ,crapban.nmextbcc
-            ,crapban.nrispbif
-      FROM crapban
-      WHERE crapban.cdbccxlt = pr_cdbccxlt;
+        SELECT crapban.nmresbcc
+              ,crapban.nmextbcc
+              ,crapban.nrispbif
+        FROM crapban
+        WHERE crapban.cdbccxlt = pr_cdbccxlt;
       rw_crapban cr_crapban%ROWTYPE;
       
       --Selecionar informacoes dos lancamentos automaticos

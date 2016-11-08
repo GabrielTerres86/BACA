@@ -1,4 +1,4 @@
-/******************************************************************************
+ /******************************************************************************
                  ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +--------------------------------------+--------------------------------------+
@@ -335,11 +335,10 @@
 		       24/02/2016 - Adicionado validacao na procedure acesso-cadastro-favorecidos
 							para listar somente bancos ativos flgdispb = TRUE (Lucas Ranghetti #400055)
 							    
-			        23/03/2016 - Ajuste para controlar o lock de tabelas de forma correta
-							            (Adriano).
+			   23/03/2016 - Ajuste para controlar o lock de tabelas de forma correta (Adriano).
 										    
                24/03/2016 - Adicionados parâmetros para geraçao de LOG
-                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)										    										    
+                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)										    										    
 
                29/03/2016 - Ajuste na rotina executa_transferencia para não validar mais
                             TED duplicadas considerando um valor x de tempo entre uma 
@@ -367,7 +366,7 @@
 							(Adriano).			
 
                17/06/2016 - Inclusão de campos de controle de vendas ( Rafael Maciel [RKAM] )
-
+							    							
 			   30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 			   25/07/2016 - Ajuste na rotina executa-envio-ted para corrigir nomenclatura 
@@ -857,6 +856,38 @@ PROCEDURE horario_operacao:
         END.
 
          
+			/* Exemplo de horários encontrados nestes FINDs (convertidos):
+			   DEBNET -> hriniexe = 21:04
+			             hrfimexe = 21:30
+			   DEBSIC -> hriniexe = 19:01
+			             hrfimexe = 19:43 */
+
+            /* Se for SICREDI , reduz 1h do prazo por segurança */      
+            ASSIGN aux_hrinipag = IF par_tpoperac = 13 THEN (craphec.hriniexe - 3600) ELSE craphec.hriniexe
+                   aux_hrfimpag = craphec.hrfimexe.
+
+            CREATE tt-limite.
+            ASSIGN tt-limite.idtpdpag = 11
+                   tt-limite.hrinipag = STRING(aux_hrinipag,"HH:MM")
+                   tt-limite.hrfimpag = STRING(aux_hrfimpag,"HH:MM")
+                   tt-limite.nrhorini = aux_hrinipag
+                   tt-limite.nrhorfim = aux_hrfimpag.
+
+			/* Se passou o horário de início de execução do DEBNET / DEBSIC */
+            IF  TIME >= aux_hrinipag  THEN
+                ASSIGN tt-limite.idesthor = 1. /** Estourou lim. de hor. **/ 
+            ELSE
+                ASSIGN tt-limite.idesthor = 2. /** Dentro do horario limite **/
+
+            IF  CAN-DO("1,7",STRING(WEEKDAY(aux_datdodia)))             OR
+                CAN-FIND(crapfer WHERE crapfer.cdcooper = par_cdcooper  AND
+                                       crapfer.dtferiad = aux_datdodia) THEN
+                ASSIGN tt-limite.iddiauti = 2.  /* Nao eh dia util */
+            ELSE
+                ASSIGN tt-limite.iddiauti = 1.  /* Dia util */
+        END.
+
+         
     RETURN "OK".
 
 END.
@@ -1270,13 +1301,13 @@ PROCEDURE verifica_operacao:
     RUN STORED-PROCEDURE pc_horario_operacao_prog
     aux_handproc = PROC-HANDLE NO-ERROR      
     (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_tpoperac,
-                          INPUT crapass.inpessoa,
+     INPUT par_cdagenci,
+     INPUT par_tpoperac,
+     INPUT crapass.inpessoa,
      OUTPUT "", 
      OUTPUT 0,
      OUTPUT "").
-
+    
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_horario_operacao_prog
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -1298,9 +1329,9 @@ PROCEDURE verifica_operacao:
     
 			ASSIGN par_dscritic = aux_dscritic.
     
-        RETURN "NOK".
+			RETURN "NOK".
 		END.
-    
+
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
     PUT-STRING(ponteiro_xml,1) = xml_req. 
@@ -1450,9 +1481,9 @@ PROCEDURE verifica_operacao:
                     RETURN "NOK".
                 END.
 
-                    IF  par_tpoperac = 6 THEN /* VR Boleto */
+            IF  par_tpoperac = 6 THEN /* VR Boleto */
                 ASSIGN aux_vllimptl = tt-limites-internet.vllimvrb.
-                        ELSE                
+            ELSE                
             IF  par_tpoperac = 4   THEN /* TED */
                 ASSIGN aux_vldspptl = tt-limites-internet.vldspted
                        aux_vllimptl = tt-limites-internet.vllimted.
@@ -1659,7 +1690,7 @@ PROCEDURE verifica_operacao:
                         END.               
                  END.
     END.
-    ELSE
+    ELSE    
     IF  par_tpoperac = 2  THEN  /** Pagamento **/
         DO:
             /** Critica se data do pagamento for no ultimo dia util do ano **/
@@ -1677,11 +1708,11 @@ PROCEDURE verifica_operacao:
                 END.
         END. 
 
-        IF  par_vllanmto = 0   THEN
-        DO:
-            ASSIGN par_dscritic = "O valor da transacao nao pode ser 0 (zero).". 
-            RETURN "NOK".
-        END.
+    IF  par_vllanmto = 0   THEN
+    DO:
+        ASSIGN par_dscritic = "O valor da transacao nao pode ser 0 (zero).". 
+        RETURN "NOK".
+    END.
     
     /** Verifica se pode movimentar o valor desejado - limite diario **/
     IF  par_vllanmto > aux_vllimptl  THEN
@@ -1853,7 +1884,7 @@ PROCEDURE verifica_operacao:
         END.    
     ELSE
     DO:
-    IF  par_idagenda >= 2  THEN /** Agendamento normal e recorrente **/ 
+        IF  par_idagenda >= 2  THEN /** Agendamento normal e recorrente **/ 
         DO:
             /** Verifica se data de debito e uma data futura **/
             IF  par_dtmvtopg <= aux_datdodia  THEN
@@ -1913,7 +1944,7 @@ PROCEDURE verifica_operacao:
                 END.
         END. 
     END.
-                     
+    
 
     RETURN "OK".
 
@@ -2267,8 +2298,8 @@ PROCEDURE verifica_agendamento_recorrente:
     DEF OUTPUT PARAM par_dstransa AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic LIKE crapcri.dscritic             NO-UNDO.
 
-    DEF OUTPUT PARAM TABLE FOR tt-agenda-recorrente.
-    
+    DEF OUTPUT PARAM TABLE FOR tt-agenda-recorrente. 
+ 
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_ddagenda AS INTE                                    NO-UNDO.
     DEF VAR aux_mmagenda AS INTE                                    NO-UNDO.
@@ -2292,19 +2323,19 @@ PROCEDURE verifica_agendamento_recorrente:
     DEF VAR xText         AS HANDLE   NO-UNDO. 
     DEF VAR xml_req       AS LONGCHAR NO-UNDO.
     DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
-
+    
     /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
     CREATE X-NODEREF  xRoot.   /* Vai conter a tag Root em diante */ 
     CREATE X-NODEREF  xRoot2.  /* Vai conter a tag horario em diante */ 
     CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag horario */ 
     CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
-        
+
     DEF VAR aux_nmdatela AS CHAR NO-UNDO.
     DEF VAR aux_flgtrans AS INTEGER NO-UNDO.
-
+    
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-                        
+    
     /* Procedure para verificar agendamento recorrente (paga0002)*/    
     RUN STORED-PROCEDURE pc_verif_agend_recor_prog
     aux_handproc = PROC-HANDLE NO-ERROR      
@@ -2332,13 +2363,13 @@ PROCEDURE verifica_agendamento_recorrente:
      OUTPUT "",  /*pr_tab_agenda_recorrente*/
      OUTPUT 0,   /*pr_cdcritic*/
      OUTPUT ""). /*pr_dscritic*/
-
+    
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROCEDURE pc_verif_agend_recor_prog
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-            
+
     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
-            
+    
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_req      = pc_verif_agend_recor_prog.pr_tab_agenda_recorrente   
            par_dstransa = pc_verif_agend_recor_prog.pr_dstransa
@@ -2347,17 +2378,17 @@ PROCEDURE verifica_agendamento_recorrente:
                              WHEN pc_verif_agend_recor_prog.pr_cdcritic <> ?
            aux_dscritic = pc_verif_agend_recor_prog.pr_dscritic
                              WHEN pc_verif_agend_recor_prog.pr_dscritic <> ?. 
-            
+    
     IF aux_cdcritic <> 0  OR 
        aux_dscritic <> "" THEN
-                DO:
+       DO: 
            IF aux_dscritic = "" THEN
               ASSIGN aux_dscritic =  "Nao foi possivel verificar o horario.".
-                
+    
            ASSIGN par_dscritic = aux_dscritic.
-
-                    RETURN "NOK".
-                END.
+    
+           RETURN "NOK".
+       END.
 
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
@@ -2373,49 +2404,49 @@ PROCEDURE verifica_agendamento_recorrente:
 
         IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
         NEXT. 
-        
+
         IF xRoot2:NUM-CHILDREN > 0 THEN               
         CREATE tt-agenda-recorrente.
-            
+
         DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
           xRoot2:GET-CHILD(xField,aux_cont).
-            
+
           IF xField:SUBTYPE <> "ELEMENT" THEN 
-                    NEXT.
+          NEXT.
 
           xField:GET-CHILD(xText,1) NO-ERROR.
-            
+		  
 		  /* Se nao vier conteudo na TAG */
           IF ERROR-STATUS:ERROR             OR
              ERROR-STATUS:NUM-MESSAGES > 0  THEN
              NEXT.          
-
+          
           ASSIGN tt-agenda-recorrente.dtmvtopg = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtopg"
                  tt-agenda-recorrente.dtpagext = STRING(xText:NODE-VALUE) WHEN xField:NAME = "dtpagext"
                  tt-agenda-recorrente.dscritic = (xText:NODE-VALUE) WHEN xField:NAME = "dscritic"
                  aux_flgtrans                  = INTEGER(xText:NODE-VALUE) WHEN xField:NAME = "flgtrans".
-
+          
           IF aux_flgtrans = 1 THEN
             ASSIGN tt-agenda-recorrente.flgtrans = YES.
           ELSE 
             ASSIGN tt-agenda-recorrente.flgtrans = NO.
-
-            END.
-      END.    
-
-      SET-SIZE(ponteiro_xml) = 0.   
-                
-            END.
             
+        END.
+      END.    
+	    
+      SET-SIZE(ponteiro_xml) = 0.   
+	   
+    END.
+
 	/* Elimina objetos para leitura do XML */ 
 	DELETE OBJECT xDoc.    /* Vai conter o XML completo */ 
 	DELETE OBJECT xRoot.   /* Vai conter a tag Root em diante */ 
 	DELETE OBJECT xRoot2.  /* Vai conter a tag horario em diante */ 
 	DELETE OBJECT xField.  /* Vai conter os campos dentro da tag horario */ 
 	DELETE OBJECT xText.   /* Vai conter o texto que existe dentro da tag xField */
-                                          
+
     RETURN "OK".
- 
+
 END PROCEDURE.
 
 
@@ -2454,33 +2485,33 @@ PROCEDURE verifica-dados-ted:
     RUN STORED-PROCEDURE pc_verifica_dados_ted
     aux_handproc = PROC-HANDLE NO-ERROR      
     (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,    
+     INPUT par_cdagenci,
+     INPUT par_nrdcaixa,
      INPUT par_idorigem,
-                                   INPUT par_nrdconta,
-                                   INPUT par_idseqttl,
-                                   INPUT par_cddbanco, 
-                                   INPUT par_cdageban, 
-                                   INPUT par_nrctatrf, 
-                                   INPUT par_nmtitula, 
-                                   INPUT par_nrcpfcgc, 
-                                   INPUT par_inpessoa, 
-                                   INPUT par_intipcta, 
+     INPUT par_nrdconta,
+     INPUT par_idseqttl,
+     INPUT par_cddbanco,
+     INPUT par_cdageban,
+     INPUT par_nrctatrf,
+     INPUT par_nmtitula,
+     INPUT par_nrcpfcgc,
+     INPUT par_inpessoa,
+     INPUT par_intipcta,
      INPUT par_vllanmto,
-                                   INPUT par_cdfinali,
-                                   INPUT par_dshistor,
+     INPUT par_cdfinali,
+     INPUT par_dshistor,
      INPUT par_cdispbif,
      INPUT par_idagenda,
      OUTPUT "",  /*par_dstransa*/     
      OUTPUT 0,  /*par_cdcritic*/     
      OUTPUT ""). /*par_dscritic*/
-
+    
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_verifica_dados_ted
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-    
+
     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
-       
+
     ASSIGN par_dstransa = pc_verifica_dados_ted.pr_dstransa 
                      WHEN pc_verifica_dados_ted.pr_dstransa <> ?
 		   aux_cdcritic = pc_verifica_dados_ted.pr_cdcritic
@@ -2490,17 +2521,17 @@ PROCEDURE verifica-dados-ted:
 
     IF aux_cdcritic <> 0  OR 
        aux_dscritic <> "" THEN
-        DO:
+       DO: 
            IF aux_dscritic = "" THEN
               ASSIGN aux_dscritic =  "Nao foi possivel verificar dados da TED.".
-                                      
-           ASSIGN par_dscritic = aux_dscritic.
-                  
-            RETURN "NOK".
-        END.
     
-    RETURN "OK".
+           ASSIGN par_dscritic = aux_dscritic.
 
+      RETURN "NOK".
+       END.
+
+    RETURN "OK".
+    
 END PROCEDURE.
 
 /******************************************************************************/
@@ -2554,105 +2585,105 @@ PROCEDURE executa-envio-ted:
     CREATE X-NODEREF  xRoot2.  /* Vai conter a tag horario em diante */ 
     CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag horario */ 
     CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
-    
+
     IF par_flmobile THEN 
       ASSIGN aux_flmobile = 1.
-                                        ELSE
+    ELSE 
       ASSIGN aux_flmobile = 0.
-    
+
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-       
+
     /* Procedure para executar envio de ted (cxon0020)*/
     RUN STORED-PROCEDURE pc_executa_envio_ted_prog
     aux_handproc = PROC-HANDLE NO-ERROR      
     (INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
+     INPUT par_cdagenci,
+     INPUT par_nrdcaixa,
+     INPUT par_cdoperad,
      INPUT par_idorigem,
      INPUT par_dtmvtolt,     
-                                      INPUT par_nrdconta,
-                                      INPUT par_idseqttl,
-                                         INPUT par_nrcpfope,
-                                         INPUT par_cddbanco,
-                                         INPUT par_cdageban,
-                                         INPUT par_nrctatrf,
-                                         INPUT par_nmtitula,
-                                         INPUT par_nrcpfcgc,
-                                         INPUT par_inpessoa,
-                                         INPUT par_intipcta,
-                                         INPUT par_vllanmto,
-                                         INPUT par_dstransf,
-                                         INPUT par_cdfinali,
+     INPUT par_nrdconta,     
+     INPUT par_idseqttl,
+     INPUT par_nrcpfope,     
+     INPUT par_cddbanco,     
+     INPUT par_cdageban,     
+     INPUT par_nrctatrf,     
+     INPUT par_nmtitula,
+     INPUT par_nrcpfcgc,
+     INPUT par_inpessoa,     
+     INPUT par_intipcta,
+     INPUT par_vllanmto,     
+     INPUT par_dstransf,
+     INPUT par_cdfinali,
      INPUT par_dshistor,
-                                         INPUT par_cdispbif,
+     INPUT par_cdispbif,
      INPUT aux_flmobile,
      INPUT par_idagenda,
     OUTPUT "",  /*pr_dsprotoc*/
     OUTPUT "",  /*pr_tab_protocolo_ted CLOB --> dados do protocolo */
     OUTPUT 0,   /*pr_cdcritic               --> Codigo do erro*/
     OUTPUT ""). /*pr_dscritic*/    
-
+    
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_executa_envio_ted_prog
         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-        
+
     { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
 
     ASSIGN xml_req      = pc_executa_envio_ted_prog.pr_tab_protocolo_ted                     
-
+                     
            par_dsprotoc = pc_executa_envio_ted_prog.pr_dsprotoc 
                      WHEN pc_executa_envio_ted_prog.pr_dsprotoc <> ?
-        
+           
            aux_cdcritic = pc_executa_envio_ted_prog.pr_cdcritic           
                      WHEN pc_executa_envio_ted_prog.pr_cdcritic <> ?
-      
+                     
            aux_dscritic = pc_executa_envio_ted_prog.pr_dscritic           
                      WHEN pc_executa_envio_ted_prog.pr_dscritic <> ?.
 
 
     IF aux_cdcritic <> 0  OR
        aux_dscritic <> "" THEN
-                        DO:
+       DO: 
            IF aux_dscritic = "" THEN
               ASSIGN aux_dscritic =  "Nao foi possivel enviar a TED.".
-        
+    
            ASSIGN par_dscritic = aux_dscritic.
-
+    
       RETURN "NOK".
-            END.
+       END.
 
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
     PUT-STRING(ponteiro_xml,1) = xml_req. 
-       
+
     IF ponteiro_xml <> ? THEN
-        DO:
+    DO:
       xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
       xDoc:GET-DOCUMENT-ELEMENT(xRoot).
 
       DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN:
         xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
-    
+
         IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
         NEXT. 
-                    
+
         IF xRoot2:NUM-CHILDREN > 0 THEN               
-                    CREATE tt-protocolo-ted.
+        CREATE tt-protocolo-ted.
 
         DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
           xRoot2:GET-CHILD(xField,aux_cont).
-    
+
           IF xField:SUBTYPE <> "ELEMENT" THEN 
-                                NEXT.
+          NEXT.
 
           xField:GET-CHILD(xText,1) NO-ERROR.
-        
+
 		  /* Se nao vier conteudo na TAG */
           IF ERROR-STATUS:ERROR             OR
              ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                                NEXT.
-        
+             NEXT.
+
           ASSIGN tt-protocolo-ted.cdtippro    = INTEGER(xText:NODE-VALUE) WHEN xField:NAME = "cdtippro"
                  tt-protocolo-ted.dtmvtolt    = DATE(xText:NODE-VALUE)    WHEN xField:NAME = "dtmvtolt"
                  tt-protocolo-ted.dttransa    = DATE(xText:NODE-VALUE)    WHEN xField:NAME = "dttransa"
@@ -2670,12 +2701,12 @@ PROCEDURE executa-envio-ted:
                  tt-protocolo-ted.nrcpfope    = DECIMAL(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfope"
                  tt-protocolo-ted.cdbcoctl    = INTEGER(xText:NODE-VALUE) WHEN xField:NAME = "cdbcoctl"
                  tt-protocolo-ted.cdagectl    = INTEGER(xText:NODE-VALUE) WHEN xField:NAME = "cdagectl".
-                            
-                    END.
-        END.
-      SET-SIZE(ponteiro_xml) = 0.      
 
         END.
+      END.      
+      SET-SIZE(ponteiro_xml) = 0.      
+
+    END.
 
 	/* Elimina objetos para leitura do XML */ 
 	DELETE OBJECT xDoc.    /* Vai conter o XML completo */ 
@@ -2683,7 +2714,7 @@ PROCEDURE executa-envio-ted:
 	DELETE OBJECT xRoot2.  /* Vai conter a tag horario em diante */ 
 	DELETE OBJECT xField.  /* Vai conter os campos dentro da tag horario */ 
 	DELETE OBJECT xText.   /* Vai conter o texto que existe dentro da tag xField */
-    
+
     RETURN "OK".
 
 END PROCEDURE.
@@ -3001,7 +3032,7 @@ PROCEDURE executa_transferencia:
                DO aux_contador = 1 TO 10:
                     
                   ASSIGN par_dscritic = "".
-                    
+            
                    FIND craptfn WHERE craptfn.cdcooper = par_cdcoptfn   AND 
                                       craptfn.nrterfin = par_nrterfin
                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
@@ -3027,11 +3058,11 @@ PROCEDURE executa_transferencia:
                    
                IF par_dscritic <> ""   THEN
                   UNDO, RETURN "NOK".
-            
+
                ASSIGN craptfn.nrultaut = craptfn.nrultaut + 1.
 
-           END.
-       
+            END.
+            
        /* Cria o lancamento do DEBITO */
        EMPTY TEMP-TABLE cratlcm.
        CREATE cratlcm.
@@ -3384,7 +3415,7 @@ PROCEDURE executa_transferencia:
             DO:
                /* Leitura do terminal  */
                DO aux_contador = 1 TO 10:
-                    
+                 
                   ASSIGN par_dscritic = "".
                     
                    FIND craptfn WHERE craptfn.cdcooper = par_cdcoptfn   AND 
@@ -3400,8 +3431,8 @@ PROCEDURE executa_transferencia:
                              END.
                         ELSE
                         ASSIGN par_dscritic = "Terminal Financeiro nao cadastrado.".
-                
-                   LEAVE.
+                        
+                 LEAVE.
                 
                END. /* Fim do WHILE */
              
@@ -9908,7 +9939,7 @@ PROCEDURE inclui-conta-transferencia:
 
     DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
-                
+
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_inclui_conta_transf
         aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,

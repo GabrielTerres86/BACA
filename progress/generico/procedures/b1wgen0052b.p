@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052b.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 05/10/2015
+    Data    : Junho/2010                      Ultima atualizacao: 09/09/2016
   
     Dados referentes ao programa:
   
@@ -54,6 +54,10 @@
                 01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
 				             Transferencia entre PAs (Heitor - RKAM)							 
 
+				09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						     aux_qtminast referente a quantidade minima de assinatura
+						     conjunta, SD 514239 (Jean Michel).
+			 
 .............................................................................*/
 
 
@@ -113,6 +117,7 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS DATE                                    NO-UNDO.
+	DEF VAR aux_qtminast AS INTE									NO-UNDO.
 
     ASSIGN par_dscritic = ""
            par_cdcritic = 0
@@ -226,6 +231,7 @@ PROCEDURE Busca_Dados:
              INPUT ?,
             OUTPUT TABLE tt-crapavt,
             OUTPUT TABLE tt-bens,
+			OUTPUT aux_qtminast,
             OUTPUT TABLE tt-erro) NO-ERROR.
         
         IF VALID-HANDLE(h-b1wgen0058) THEN

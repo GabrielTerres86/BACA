@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Maio/2006                         Ultima Atualizacao: 05/11/2015
+   Data    : Maio/2006                         Ultima Atualizacao: 09/09/2016
       
    Dados referentes ao programa:
    
@@ -97,7 +97,11 @@
               22/07/2015 - Reformulacao cadastral (Gabriel-RKAM).                                        
 			  
 			  05/11/2015 - Inclusao de tratamento para novo poder(cddpoder = 10),
-						   PRJ 131 - Ass. Conjunta (Jean Michel). 
+						   PRJ 131 - Ass. Conjunta (Jean Michel).
+						   
+			  09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						   aux_qtminast referente a quantidade minima de assinatura
+						   conjunta, SD 514239 (Jean Michel).			    
 .............................................................................*/
 
 { includes/var_online.i }
@@ -2853,6 +2857,8 @@ PROCEDURE Busca_Dados:
 
     DEFINE INPUT  PARAMETER par_cddopcao AS CHARACTER   NO-UNDO.
 
+	DEF VAR aux_qtminast AS INTE NO-UNDO.
+
     EMPTY TEMP-TABLE tt-bens.
     EMPTY TEMP-TABLE tt-crapavt.
 
@@ -2876,6 +2882,7 @@ PROCEDURE Busca_Dados:
                                      INPUT aux_nrdrowid,
                                     OUTPUT TABLE tt-crapavt,
                                     OUTPUT TABLE tt-bens,
+									OUTPUT aux_qtminast,
                                     OUTPUT TABLE tt-erro) NO-ERROR.
 
     IF ERROR-STATUS:ERROR THEN
@@ -3532,6 +3539,8 @@ PROCEDURE Busca_Procurador:
 
     DEFINE INPUT  PARAMETER par_cddopcao AS CHARACTER   NO-UNDO.
 
+	DEF VAR aux_qtminast AS INTE NO-UNDO.
+
     EMPTY TEMP-TABLE tt-crabavt.
     EMPTY TEMP-TABLE tt-bensb.
     EMPTY TEMP-TABLE tt-erro.
@@ -3551,6 +3560,7 @@ PROCEDURE Busca_Procurador:
                                      INPUT aux_nrdrowid,
                                     OUTPUT TABLE tt-crabavt,
                                     OUTPUT TABLE tt-bensb,
+									OUTPUT aux_qtminast,
                                     OUTPUT TABLE tt-erro) NO-ERROR.
 
     IF ERROR-STATUS:ERROR THEN
