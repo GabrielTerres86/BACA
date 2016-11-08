@@ -650,6 +650,8 @@
               23/09/2016 - Correçao deletar o Handle da b1wgen0114 esta gerando erro na geraçao
                            do PDF para envio da esteira (Oscar).
 
+			  25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago).
+
 			  19/10/2016 - Incluido registro de log sobre liberacao de alienacao de bens 10x maior que 
 						   o valor do emprestimo, SD-507761 (Jean Michel).
 						  	               
@@ -5109,10 +5111,12 @@ PROCEDURE verifica-outras-propostas:
     DEF  VAR aux_vltotemp AS DECI                                   NO-UNDO.
     DEF  VAR aux_vlemprst AS DECI                                   NO-UNDO.
     DEF  VAR aux_qtprecal AS DECI                                   NO-UNDO.
+	DEF  VAR aux_flgrestrito AS DECI                                NO-UNDO.
     DEF  VAR h-b1wgen0147 AS HANDLE                                 NO-UNDO.
     
     DEF  BUFFER b1-craplcr FOR craplcr.
     DEF  BUFFER b2-craplcr FOR craplcr.
+	DEF  BUFFER b1-crapass FOR crapass.
 
     EMPTY TEMP-TABLE tt-grupo.
     EMPTY TEMP-TABLE tt-erro.
@@ -5240,6 +5244,42 @@ PROCEDURE verifica-outras-propostas:
                                                    "PRESTAMISTA!".
         
               END.
+        
+	      FIND b1-crapass WHERE b1-crapass.cdcooper = par_cdcooper
+		                    AND b1-crapass.nrdconta = par_nrdconta
+							NO-LOCK NO-ERROR.  
+
+		  IF  AVAIL(b1-crapass) THEN
+			  DO:
+			    /*Se tem cnae verificar se e um cnae restrito*/
+			    IF  b1-crapass.cdclcnae > 0 THEN
+				    DO:
+
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                        /* Busca a se o CNAE eh restrito */
+                        RUN STORED-PROCEDURE pc_valida_cnae_restrito
+                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT b1-crapass.cdclcnae
+                                                            ,0).
+
+                        CLOSE STORED-PROC pc_valida_cnae_restrito
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                        ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                                 WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+						IF  aux_flgrestrito = 1 THEN
+						    DO:
+    							 CREATE tt-msg-confirma.
+								 ASSIGN aux_contador = aux_contador + 1				  
+										tt-msg-confirma.inconfir = aux_contador
+										tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.".
+							END.
+
+					END.
+			  END.
         
           /* Existe outra proposta de emprestimo */
           IF aux_contaepr > 0 THEN

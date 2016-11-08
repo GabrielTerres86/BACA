@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 14/10/2016
+    Data      : Abril/2012                      Ultima Atualizacao: 25/10/2016
     
     Dados referentes ao programa:
 
@@ -296,6 +296,9 @@
                 
                 14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
                              (Lucas Ranghetti #510032)
+
+	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
+				             Melhoria 310 (Tiago/Thiago).
 .............................................................................*/
 
 
@@ -1239,6 +1242,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
          tt-contr_ndigi_cadastro.tpdocctc  FORMAT "x(14)"      COLUMN-LABEL "  Cta. CNPJ   "
          tt-contr_ndigi_cadastro.tpdocidp  FORMAT "x(15)"      COLUMN-LABEL "Doc. Ident - PJ"
          tt-contr_ndigi_cadastro.tpdocdfi  FORMAT "x(14)"      COLUMN-LABEL " Demons. Finan"
+		 tt-contr_ndigi_cadastro.tpdoclic  FORMAT "x(18)"      COLUMN-LABEL "Lic. Soc.Ambiental"
          tt-contr_ndigi_cadastro.idseqttl  FORMAT "99"         COLUMN-LABEL "   Titular   "
          tt-contr_ndigi_cadastro.dtmvtolt  FORMAT "99/99/9999" COLUMN-LABEL "    Data    "
          WITH DOWN WIDTH 234 CENTERED FRAME f_contr_2.
@@ -1259,7 +1263,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101", ENTRY(3,craptab.dstextab,";")) THEN
+        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,131", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1328,7 +1332,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             /* ZERAR VARIAVEIS DE CONTROLE DE PARAMETROS */ 
             
-            DO aux_contdocs = 1 TO 12:
+            DO aux_contdocs = 1 TO 40:
                 
                 ASSIGN aux_tpdocmto = 0.
     
@@ -1357,6 +1361,10 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 16. /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                     WHEN 12 THEN
                         ASSIGN aux_conttabs = 17. /*DEMONSTRATIVO FINANCEIRO*/
+                    WHEN 40 THEN 
+                        ASSIGN aux_conttabs = 40. /*LICENCAS SOCIO AMBIENTAIS*/
+                    OTHERWISE
+                        NEXT.
                 END CASE.
                
                 /* Obs: As matriculas tpdocmto = 8, nao sera necessario gerar neste relatorio
@@ -1435,7 +1443,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                  (crapdoc.tpdocmto = 12 AND crapass.inpessoa = 1)   OR /* Somente pessoa juridica */
                                  (crapdoc.tpdocmto = 1 AND crapass.inpessoa <> 1)   OR /* Somente pessoa fisica */
                                  (crapdoc.tpdocmto = 2 AND crapass.inpessoa <> 1)   OR /* Somente pessoa fisica */
-                                 (crapdoc.tpdocmto = 5 AND crapass.inpessoa <> 1) THEN /* Somente pessoa fisica */
+                                 (crapdoc.tpdocmto = 5 AND crapass.inpessoa <> 1)   OR /* Somente pessoa fisica */
+								 (crapdoc.tpdocmto = 40 AND crapass.inpessoa = 1)  THEN  /* Somente pessoa juridica */
                                  NEXT.
 
                              FIND tt-contr_ndigi_cadastro WHERE tt-contr_ndigi_cadastro.cdcooper = crapdoc.cdcooper AND
@@ -1478,6 +1487,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                             ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "       X". /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                                         WHEN 12 THEN 
                                             IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DEMONSTRATIVO FINANCEIRO*/
+                                        WHEN 40 THEN 
+										    IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSAS*/
                                     END CASE.
                                     
                                     IF  crapass.inpessoa = 1 THEN
@@ -1512,6 +1523,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                         ASSIGN tt-contr_ndigi_cadastro.tpdocidp = "       X". /*DOCUMENTO DE IDENTIFICACAO - PJ*/
                                     WHEN 12 THEN
                                         IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdocdfi = "      X". /*DEMONSTRATIVO FINANCEIRO*/
+                                    WHEN 40 THEN
+                                        IF crapass.inpessoa <> 1 THEN ASSIGN tt-contr_ndigi_cadastro.tpdoclic = "        X". /*LICENSA*/
                                 END CASE.
                         END.
                 END.
@@ -1580,6 +1593,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                       tt-contr_ndigi_cadastro.tpdocctc
                                       tt-contr_ndigi_cadastro.tpdocdfi
                                       tt-contr_ndigi_cadastro.tpdocidp
+									  tt-contr_ndigi_cadastro.tpdoclic
                                       tt-contr_ndigi_cadastro.idseqttl 
                                       tt-contr_ndigi_cadastro.dtmvtolt 
                                       WITH FRAME f_contr_2.
@@ -1675,6 +1689,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                              tt-contr_ndigi_cadastro.tpdocctc
                              tt-contr_ndigi_cadastro.tpdocdfi
                              tt-contr_ndigi_cadastro.tpdocidp
+							 tt-contr_ndigi_cadastro.tpdoclic
                              tt-contr_ndigi_cadastro.idseqttl 
                              tt-contr_ndigi_cadastro.dtmvtolt 
                              WITH FRAME f_contr_2.
