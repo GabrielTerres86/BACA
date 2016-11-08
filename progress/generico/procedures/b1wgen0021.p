@@ -278,6 +278,7 @@ PROCEDURE extrato_cotas:
     DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
     DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
     DEF VAR xml_req       AS LONGCHAR NO-UNDO. 
+    DEF VAR aux_incancel  AS CHAR NO-UNDO.
 
      /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
@@ -376,7 +377,15 @@ PROCEDURE extrato_cotas:
                         tt-extrato_cotas.nrctrpla = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrctrpla"
                         tt-extrato_cotas.vllanmto = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vllanmto"
                         tt-extrato_cotas.vlsldtot = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vlsldtot"
-                        tt-extrato_cotas.dsextrat = xText:NODE-VALUE  WHEN xField:NAME = "dsextrat".
+                        tt-extrato_cotas.dsextrat = xText:NODE-VALUE  WHEN xField:NAME = "dsextrat"
+                        tt-extrato_cotas.lctrowid = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "lctrowid"
+                        aux_incancel = xText:NODE-VALUE  WHEN xField:NAME = "incancel".
+
+                  IF(aux_incancel = "S") THEN
+                    tt-extrato_cotas.incancel = YES.
+                  ELSE
+                    tt-extrato_cotas.incancel = NO.
+
                END.              
 
            END.    
