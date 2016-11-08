@@ -264,7 +264,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "63".
+    xText:NODE-VALUE = "64".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
