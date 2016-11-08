@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Março/2016                     Ultima atualizacao: 22/03/2016
+     Data    : Março/2016                     Ultima atualizacao: 08/11/2016
 
      Dados referentes ao programa:
 
@@ -13,6 +13,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%T
      Objetivo  : Enviar cancelamento das propostas que serão excluidas pelo proceso de limpeza
 
      Alteracoes: 
+
+     08/11/2016 - #551196 padronizar os nomes do job por produto e monitorar a sua 
+                  execução em log (Carlos)
 
   ............................................................................ */
 
@@ -79,7 +82,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%T
   vr_dtlimepr     DATE;
   vr_qtderros     NUMBER  := 0;
   vr_qtsucess     NUMBER  := 0;
-  vr_tempo        NUMBER  := 0;  
   
   -- Nome do arquivo de limpeza
   vr_nmarqlmp VARCHAR2(500) := 'arquivos/.limpezaok';
@@ -88,10 +90,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps704 (pr_cdcooper IN crapcop.cdcooper%T
   
   --------------------------- SUBROTINAS INTERNAS --------------------------
 
+  vr_nomdojob    VARCHAR2(40) := 'JBEPR_CANCELA_PROPOSTA';
+  vr_flgerlog    BOOLEAN := FALSE;
+
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                  pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+BEGIN
+    --> Controlar geração de log de execução dos jobs 
+    BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                             ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                             ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                             ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                             ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                             ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+  END pc_controla_log_batch;
 BEGIN
 
   --------------- VALIDACOES INICIAIS -----------------
-  vr_tempo := DBMS_UTILITY.get_time;   
   
   -- Incluir nome do módulo logado
   GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
@@ -109,15 +125,6 @@ BEGIN
     vr_cdcooper := pr_cdcooper;
   END IF;
   
-  
-  -- Gerar log
-  vr_dscritic := 'Inicio da execucao: '|| vr_cdprogra ||' - '|| rw_crapprg.dsprogra##1;
-                 
-  btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                             pr_ind_tipo_log => 1, 
-                             pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                ' - '||vr_cdprogra ||' --> '|| vr_dscritic); 
-                            
   -- Leitura do calendário da cooperativa
   OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
   FETCH btch0001.cr_crapdat
@@ -155,6 +162,9 @@ BEGIN
     vr_dtlimepr := TRUNC(add_months(rw_crapdat.dtmvtolt,vr_qtmeslim*-1),'MONTH');                                      
   END IF;
   
+  -- Log de início da execução
+  pc_controla_log_batch('I');
+
   FOR rw_crapcop IN cr_crapcop LOOP 
   
     -- Buscar diretorio da cooperativa
@@ -231,28 +241,20 @@ BEGIN
                    vr_qtsucess ||' com sucesso e '||
                    vr_qtderros ||' com erro.';
   ELSE
-    vr_dscritic := 'Nenhum cancelamento de proposta envido.';
+    vr_dscritic := 'Nenhum cancelamento de proposta enviado.';
   END IF;               
   
   btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
                              pr_ind_tipo_log => 1, 
                              pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                ' - '||vr_cdprogra ||' --> '|| vr_dscritic);                                 
+                                                ' - '||vr_nomdojob ||' --> '|| vr_dscritic);                                 
 
   vr_dscritic := NULL;
   ----------------- ENCERRAMENTO DO PROGRAMA -------------------
   
-  -- Gerar log
-  vr_tempo := trunc((DBMS_UTILITY.get_time - vr_tempo)/100);
-  vr_dscritic := 'Stored Procedure rodou em '|| to_char(to_date(vr_tempo,'SSSSS'),'HH24:MI:SS') || '.';
+  -- Log de fim da execução
+  pc_controla_log_batch('F');
                  
-  btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
-                             pr_ind_tipo_log => 1, 
-                             pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') ||
-                                                ' - '||vr_cdprogra ||' --> '|| vr_dscritic);                                 
-
-  
-  
   -- Salvar informações atualizadas
   COMMIT;
 
@@ -277,11 +279,8 @@ EXCEPTION
     vr_dscritic := sqlerrm;
     
     -- Envio centralizado de log de erro
-    btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || vr_cdprogra || ' --> '
-                                               || vr_dscritic );
+    vr_flgerlog := TRUE;
+    pc_controla_log_batch('E', vr_dscritic);
                                                
     -- Efetuar rollback
     ROLLBACK;

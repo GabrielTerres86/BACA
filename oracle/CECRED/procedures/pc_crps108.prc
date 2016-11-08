@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps108(pr_cdcooper IN crapcop.cdcooper%TY
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Dezembro/94                     Ultima atualizacao: 17/03/2014
+       Data    : Dezembro/94                     Ultima atualizacao: 22/09/2016
 
        Dados referentes ao programa:
 
@@ -36,6 +36,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps108(pr_cdcooper IN crapcop.cdcooper%TY
 
                    17/03/2014 - Conversão Progress >> Oracle (Petter - Supero)
 
+                   22/09/2016 - Alterei a gravacao do log 661,662 do proc_batch para 
+                                o proc_message SD 402979. (Carlos Rafael Tanholi)
     ............................................................................ */
 
     DECLARE
@@ -242,13 +244,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps108(pr_cdcooper IN crapcop.cdcooper%TY
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 3
                                 ,pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic ||
-                                                    ' LRG = ' || TO_CHAR(vr_qtlrgdel, 'FM9G999G990'));
+                                                    ' LRG = ' || TO_CHAR(vr_qtlrgdel, 'FM9G999G990')
+	                              ,pr_nmarqlog     => 'proc_message'); 
 
       -- Gerar mensagem no LOG
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 3
                                 ,pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic ||
-                                                    ' LOT = ' || TO_CHAR(vr_qtlotdel, 'FM9G999G990'));
+                                                    ' LOT = ' || TO_CHAR(vr_qtlotdel, 'FM9G999G990')
+                                ,pr_nmarqlog     => 'proc_message');                                                     
 
       -- Gerar código de crítica
       vr_cdcritic := 662;
@@ -258,7 +262,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps108(pr_cdcooper IN crapcop.cdcooper%TY
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 3
                                 ,pr_des_log      => TO_CHAR(sysdate,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic ||
-                                                    ' LRG = ' || TO_CHAR(vr_qtlotres, 'FM9G999G990'));
+                                                    ' LRG = ' || TO_CHAR(vr_qtlotres, 'FM9G999G990')
+                                ,pr_nmarqlog     => 'proc_message');                                                     
 
       ----------------- ENCERRAMENTO DO PROGRAMA -------------------
       -- Processo OK, devemos chamar a fimprg
@@ -312,4 +317,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps108(pr_cdcooper IN crapcop.cdcooper%TY
     END;
   END pc_crps108;
 /
-
