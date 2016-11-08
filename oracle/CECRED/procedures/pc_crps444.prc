@@ -324,10 +324,12 @@ BEGIN
 
 
 				 31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
-				              (Adriano - SD 426308).
+							 (Adriano - SD 426308).
 				           
                  15/06/2016 - Ajustes para realizar debito de devolucao de cheque(0114 BB)
-				                      na hora (Tiago/Elton SD 464916).
+				              na hora (Tiago/Elton SD 464916).
+                 23/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
+                              (Carlos Rafael Tanholi).
 
                  12/07/2016 - Ajustes para realizar debito de devolucao de cheque
 				              apenas (0114 BB) na hora (Tiago/Thiago SD 480694).
@@ -508,10 +510,10 @@ BEGIN
        SELECT craptab.dstextab, craptab.rowid
          FROM craptab
         WHERE craptab.cdcooper = pr_cdcooper
-          AND craptab.nmsistem = pr_nmsistem
-          AND craptab.tptabela = pr_tptabela
+          AND UPPER(craptab.nmsistem) = pr_nmsistem
+          AND UPPER(craptab.tptabela) = pr_tptabela
           AND craptab.cdempres = pr_cdempres
-          AND craptab.cdacesso = pr_cdacesso
+          AND UPPER(craptab.cdacesso) = pr_cdacesso
           AND craptab.tpregist = pr_tpregist;
      rw_craptab cr_craptab%ROWTYPE;
 
@@ -721,8 +723,8 @@ BEGIN
                                  ORDER BY craptab.cdacesso,craptab.tpregist) seqreg
        FROM craptab
        WHERE craptab.cdcooper = pr_cdcooper
-       AND  craptab.nmsistem  = pr_nmsistem
-       AND  craptab.tptabela  = pr_tptabela
+       AND  UPPER(craptab.nmsistem)  = pr_nmsistem
+       AND  UPPER(craptab.tptabela)  = pr_tptabela
        AND  craptab.cdempres  = pr_cdempres;
      rw_craptab_tot cr_craptab_tot%ROWTYPE;
 
@@ -1369,7 +1371,7 @@ BEGIN
            END CASE;
          ELSIF SUBSTR(vr_dshistor,01,04) = '0114' THEN /* Devolucoes recebidas */              
               vr_cdhistor := 351;
-         END IF;
+           END IF;
 
          IF gene0002.fn_existe_valor(vr_dshstdeb,SUBSTR(vr_dshistor,01,04),',') = 'S' OR
             gene0002.fn_existe_valor(vr_dshstest,SUBSTR(vr_dshistor,01,04),',') = 'S' THEN
@@ -3269,9 +3271,9 @@ BEGIN
            END IF;
 
            /* Devolucoes recebidas 0114*/
-           IF vr_cdcritic = 0 AND vr_flgdevol THEN                          
-             vr_cdhistor:= 351;
-             vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
+           IF vr_cdcritic = 0 AND vr_flgdevol THEN             
+                vr_cdhistor:= 351;
+                vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
 
              vr_nrdocmt2:= vr_nrdocmto;
              WHILE TRUE LOOP

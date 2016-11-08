@@ -12,7 +12,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Abril/2003.                     Ultima atualizacao: 27/07/2012
+   Data    : Abril/2003.                     Ultima atualizacao: 22/06/2016
 
    Dados referentes ao programa:
 
@@ -36,6 +36,8 @@ BEGIN
 
                24/06/2014 - Conversão Progress >> Oracle (Renato - Supero)
 
+               22/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta 
+                            rotina. (Carlos Rafael Tanholi).
   ............................................................................. */
   DECLARE
 
@@ -59,10 +61,10 @@ BEGIN
            , COUNT(*) over (PARTITION BY 1) qtregist
         FROM craptab
        WHERE craptab.cdcooper = pr_cdcooper
-         AND craptab.nmsistem = pr_nmsistem
-         AND craptab.tptabela = pr_tptabela
+         AND UPPER(craptab.nmsistem) = pr_nmsistem
+         AND UPPER(craptab.tptabela) = pr_tptabela
          AND craptab.cdempres = pr_cdempres
-         AND craptab.cdacesso = pr_cdacesso
+         AND UPPER(craptab.cdacesso) = pr_cdacesso
          AND craptab.tpregist = pr_tpregist;
     rw_craptab   cr_craptab%ROWTYPE;
 
@@ -605,4 +607,3 @@ BEGIN
 
 END pc_crps338;
 /
-

@@ -51,6 +51,10 @@ BEGIN
 
                  18/06/2014 - Exclusao da tabela craplli/crapcar.
                               (Chamado 118128) (Tiago Castro - RKAM)
+                              
+	               21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
+                              (Carlos Rafael Tanholi).
+                              
   ............................................................................. */
 
   DECLARE
@@ -65,6 +69,8 @@ BEGIN
     vr_exc_fimprg EXCEPTION;
     vr_cdcritic PLS_INTEGER;
     vr_dscritic VARCHAR2(4000);
+    -- Guardar registro dstextab
+    vr_dstextab craptab.dstextab%TYPE;    
 
     ------------------------------- CURSORES ---------------------------------
 
@@ -76,18 +82,6 @@ BEGIN
     rw_crapcop cr_crapcop%ROWTYPE;
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-
-    -- Cursor para verificar se programa deve executar
-    CURSOR cr_craptab IS
-      SELECT tab.dstextab
-        FROM craptab tab
-       WHERE tab.cdcooper = pr_cdcooper  AND  -- Cooperativa
-             tab.nmsistem = 'CRED'       AND  -- Nome do sistema
-             tab.tptabela = 'GENERI'     AND  -- Tipo da tabela
-             tab.cdempres = 00           AND  -- Código da empresa
-             tab.cdacesso = 'EXELIMPEZA' AND  -- Código de acesso
-             tab.tpregist = 001;              -- Tipo de registro
-    rw_craptab cr_craptab%ROWTYPE;
 
     -- Cursor para verificar os lotes que devem ser excluidos
     CURSOR cr_craplot(pr_dtmvtolt IN craplot.dtmvtolt%TYPE) IS
@@ -164,12 +158,15 @@ BEGIN
 
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
 
-    -- Verifica se programa deve executar
-    OPEN cr_craptab;
-    FETCH cr_craptab
-      INTO rw_craptab;
+    -- Buscar configuração na tabela
+    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                             ,pr_nmsistem => 'CRED'
+                                             ,pr_tptabela => 'GENERI'
+                                             ,pr_cdempres => 00
+                                             ,pr_cdacesso => 'EXELIMPEZA'
+                                             ,pr_tpregist => 001);
 
-    IF cr_craptab%NOTFOUND THEN
+    IF TRIM(vr_dstextab) IS NULL THEN
       -- Critica: 176 - Falta tabela de execucao de limpeza - registro 001.
       vr_cdcritic := 176;
       -- Busca critica
@@ -182,7 +179,7 @@ BEGIN
                                                     ' - ' || vr_cdprogra  ||
                                                     ' --> ' || vr_dscritic);
       RAISE vr_exc_saida;
-    ELSIF rw_craptab.dstextab = '1' THEN
+    ELSIF vr_dstextab = '1' THEN
 			-- Critica: 177 - Limpeza ja rodou este mes.
 			vr_cdcritic := 177;
 			-- Busca Critica
@@ -287,4 +284,3 @@ BEGIN
 
 END pc_crps020;
 /
-

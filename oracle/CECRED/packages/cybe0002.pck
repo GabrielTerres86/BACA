@@ -295,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 26/10/2016
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 31/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -310,6 +310,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --              20/09/2016 - #523936 Criação de log de controle de início, erros e fim de execução
   --                           do job pc_controle_remessas (Carlos)
+  --
+  --              31/10/2016 - #550394 Tratadas as mensagens de críticas de busca de arquivos do ftp 
+  --                           da rotina pc_controle_remessas para não enviar mais email, apenas 
+  --                           logar no proc_message (Carlos)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -4205,7 +4209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   -- Objetivo  : Busca os dados de parametros de sistema para exibir na tela
   --
   -- Alteracoes: 07/10/2015 - Inclusao dos campos hrinterv e idtpsoli. (Jaison/Marcos-Supero)
-  --
+  --             
   --             23/03/2016 - Inclusão do campo idenvseg conforme solicitado no 
   --                          chamado 412682. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
@@ -4647,7 +4651,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   -- Objetivo  : Efetuar a gravacao de parametros de sistema
   --
   -- Alteracoes: 07/10/2015 - Inclusao dos campos hrinterv e idtpsoli. (Jaison/Marcos-Supero)
-  --
+  --                       
   --             23/03/2016 - Inclusão do campo idenvseg conforme solicitado no 
   --                          chamado 412682. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
@@ -5518,8 +5522,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       IF pr_idenvseg = 'S' THEN
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
       ELSE
-      -- Buscar script para conexão FTP
-      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+        -- Buscar script para conexão FTP
+        vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
       END IF;                                      
       
       -- Preparar o comando de conexão e envio ao FTP
@@ -5532,7 +5536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                     || ' -dir_local '    || CHR(39) || pr_nmdireto || CHR(39)
                     || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
                     || ' -log /usr/coop/cecred/log/proc_autbur.log';
-
+      
       -- Chama procedure de envio e recebimento via ftp
       GENE0001.pc_OScommand_Shell(pr_des_comando => vr_comand_ftp
                                  ,pr_typ_saida   => vr_typ_saida
@@ -6130,8 +6134,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
       ELSE 
-      -- Buscar script para conexão FTP
-      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+        -- Buscar script para conexão FTP
+        vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');   
       END IF;                      
       
       -- Preparar o comando de conexão e envio ao FTP
@@ -6168,8 +6172,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_lstarqre := fn_quebra_string(pr_string => vr_dslstarq, pr_delimit => ',');
         -- Se não encontrou nenhum arquivo
         IF vr_lstarqre.count() = 0 THEN
-          -- Gerar erro
-          pr_dscritic := 'Retorno ainda nao encontrado no FTP.';
+          -- Gravar no proc_message e retornar para o programa
+          btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
+                                     pr_ind_tipo_log => 2, -- erro tratado 
+                                     pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                        || 'CYBE0002.pc_retorno_arquivo_ftp --> '
+                                                        || 'Retorno ainda nao encontrado no FTP.', 
+                                     pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
           RETURN;
         END IF;
         -- Para cada arquivo encontrado no ZIP
