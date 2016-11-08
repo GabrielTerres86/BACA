@@ -1,13 +1,16 @@
-<?php
+<? 
 /*!
  * FONTE        : valida_senha.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
  * DATA CRIAÇÃO : 08/07/2011 
  * OBJETIVO     : Rotina para manter validar senha do operador
  * --------------
- * ALTERAÇÕES   :  Correcao na forma de recuperacao dos dados do XML. SD 479874. (Carlos R.)
+ * ALTERAÇÕES   : 
  * -------------- 
  */
+?> 
+
+<?	
     session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -53,7 +56,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
-	if (isset($xmlObjeto->roottag->tags[0]->name) && strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
 		$mtdErro = 'bloqueiaFundo( $(\'#divRotina\') ); $(\'#operauto\',\'#frmSenha\').focus();';
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$mtdErro,false);
@@ -64,7 +67,7 @@
 	if ($opcao == "L")
 		echo "estornaIntegralizacao();";
 	else
-		echo "integralizaCotas(true);";
+		echo "integralizaCotas(false);";
 	
 	echo "fechaRotina($('#divRotina'));";
 	echo "acessaOpcaoAba(7, 5, 'I');";

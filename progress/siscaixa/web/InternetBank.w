@@ -588,7 +588,6 @@
                               plataformas de autoatendimento. E alteracao do retorno
                               da operacao 13 com o novo campo recidepr.
                               (Carlos Rafael Tanholi - Prj 216 - Pré-aprovado fase 2)								                                    
-
 				         11/03/2016 - Inclusao da operacao 166 para buscar as permissoes
 							                dos itens do menu do mobile. Projeto 286_3 - Mobile
                               (Lombardi)
@@ -629,9 +628,12 @@
 							  xml_operacao11 para utilizacao da tabela generica
 							  na operacao 11.
 							  PRJ286.5 - Cecred Mobile (Dionathan)
-                              
-				 22/08/2016 - Adicao do parametro par_indlogin nas operacoes 2 e 18
+                 22/08/2016 - Adicao do parametro par_indlogin nas operacoes 2 e 18
 							  PRJ286.5 - Cecred Mobile (Dionathan)
+          
+		         21/09/2016 -  P169 Integralização de cotas no IB
+                                adição das funções 176 e 177 (Ricardo Linhares)   
+
 		         03/10/2016 - Ajustes referente a melhoria M271 (Operacao 174, 175, 186). (Kelvin)
 ------------------------------------------------------------------------------*/
 
@@ -1096,6 +1098,9 @@ DEF VAR aux_titulo3  AS DECI								           NO-UNDO.
 DEF VAR aux_titulo4  AS DECI								 		   NO-UNDO.
 DEF VAR aux_titulo5  AS DECI				 						   NO-UNDO.
 DEF VAR aux_codigo_barras AS CHAR      								   NO-UNDO.
+
+/*  Operacao 176/177 */
+DEF VAR aux_vintegra AS DECIMAL
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -2045,6 +2050,12 @@ PROCEDURE process-web-request :
 		ELSE
             IF  aux_operacao = 175 THEN /* Grava configurações de nome da emissão */
                 RUN proc_operacao175.
+		ELSE
+		    IF  aux_operacao = 176 THEN /* Integralizar cotas de capital */
+                RUN proc_operacao176. 
+        ELSE
+		    IF  aux_operacao = 177 THEN     /* Cancelar integralização */
+                RUN proc_operacao177.
 		ELSE
             IF  aux_operacao = 186 THEN /* Retorna valor atualizado de titulos vencidos */
                 RUN proc_operacao186.
@@ -7610,6 +7621,61 @@ PROCEDURE proc_operacao175:
 
 END PROCEDURE.
 
+/* Integralizar as cotas de capital */
+PROCEDURE proc_operacao176:
+    
+    ASSIGN aux_vintegra = DECIMAL(GET-VALUE("vlintegr")).
+    
+    RUN sistema/internet/fontes/InternetBank176.p (INPUT aux_cdcooper,
+                           												 INPUT 90,             /* par_cdagenci */
+                                                   INPUT 900,            /* par_nrdcaixa */
+                                                   INPUT 996,            /* par_cdoperad */
+                                                   INPUT "INTERNETBANK", /* par_nmdatela */
+                                                   INPUT 3,              /* par_idorigem */
+                                                   INPUT aux_nrdconta,   /* par_nrdconta */
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_vintegra,   /* valor integralizacao */
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+        FOR EACH xml_operacao NO-LOCK:
+            {&out} xml_operacao.dslinxml.
+        END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Cancelar integralizacao de cotas de capital */
+PROCEDURE proc_operacao177:
+    
+    ASSIGN aux_nrdrowid = GET-VALUE("nrdrowid").    
+    
+    RUN sistema/internet/fontes/InternetBank177.p (INPUT aux_cdcooper,
+                           												 INPUT 90,             /* par_cdagenci */
+                                                   INPUT 900,            /* par_nrdcaixa */
+                                                   INPUT 996,            /* par_cdoperad */
+                                                   INPUT "INTERNETBANK", /* par_nmdatela */
+                                                   INPUT 3,              /* par_idorigem */
+                                                   INPUT aux_nrdconta,   /* par_nrdconta */
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_dtmvtolt,
+                                                   INPUT aux_nrdrowid,   /* id do lancamento a ser excluído */
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr.
+    ELSE
+        FOR EACH xml_operacao NO-LOCK:
+            {&out} xml_operacao.dslinxml.
+        END.
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
 
 /* Operação para buscar valor do titulo vencido */
 PROCEDURE proc_operacao186:
@@ -7623,7 +7689,7 @@ PROCEDURE proc_operacao186:
 	       aux_titulo4 		 = DECI(GET-VALUE("aux_titulo4"))
 	       aux_titulo5       = DECI(GET-VALUE("aux_titulo5"))
 	       aux_codigo_barras = GET-VALUE("aux_codigo_barras").
-
+			
 	RUN sistema/internet/fontes/InternetBank186.p (INPUT aux_cdcooper,
 	                                               INPUT aux_nrdconta,
 	                                               INPUT aux_idseqttl,
@@ -7650,7 +7716,6 @@ PROCEDURE proc_operacao186:
     {&out} aux_tgfimprg.  
 
 END PROCEDURE.
-
 /*............................................................................*/
 
 /* _UIB-CODE-BLOCK-END */

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Agosto/2007                        Ultima alteracao: 17/05/2016
+   Data    : Agosto/2007                        Ultima alteracao: 08/09/2016
 
    Dados referentes ao programa:
 
@@ -83,13 +83,15 @@
                             Quantidade de meses para agendamento TED e
                             Qtd. meses p/ agendamento recorrente TED (Carlos)
                                          
-			   24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
-                                         
+               24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+                                               
                06/05/2016 - Projeto 117 - aumento dos formats do log para a tab045
                             (Carlos)
 
-			   17/05/2016 - Ajuste no tamanho do frame (Adriano - M117)
-                                         
+               17/05/2016 - Ajuste no tamanho do frame (Adriano - M117)
+              
+               08/09/2016 - Adição do campo para valor máximo de integralização (Ricardo Linhares - M169)
+               
 ............................................................................. */
 
 { includes/var_online.i }
@@ -118,6 +120,8 @@ DEF VAR tel_vlvrbole AS DECI FORMAT "zzz,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 DEF VAR tel_vlmaxapl AS DECI FORMAT "z,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 DEF VAR tel_vlminapl AS DECI FORMAT "z,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 DEF VAR tel_vlmaxres AS DECI FORMAT "z,zzz,zz9.99"    EXTENT 2        NO-UNDO.
+
+DEF VAR tel_vllimint AS DECI FORMAT "z,zzz,zz9.99"  EXTENT 2        NO-UNDO. /* Valor maximo integralizacao de capital */
 
 /* qtd maxima de MESES para agendamento de TED (maximo de meses p/ frente) */
 DEF VAR tel_mesested AS INTE FORMAT "zz9"    EXTENT 2        NO-UNDO. 
@@ -156,7 +160,8 @@ FORM tel_inpessoa LABEL "Tipo de Pessoa" AUTO-RETURN
                   HELP "Informe 'F' para fisica 'J' para juridica."
      WITH ROW 6 COLUMN 30 WIDTH  50 OVERLAY SIDE-LABELS 
                                     NO-BOX FRAME f_inpessoa.
-     
+
+    
 FORM "Operacional"   AT 48
      "CECRED"        AT 69
      SKIP(1)
@@ -305,8 +310,8 @@ FORM "Operacional"   AT 47
      WITH ROW 8 OVERLAY SIDE-LABELS NO-BOX WIDTH 78 CENTERED 
           FRAME f_dados_juridica.      
 
-FORM "Operacional"   AT 46
-     "CECRED"        AT 68
+FORM "Operacional"   AT 48
+     "CECRED"        AT 69
      SKIP(1)
      "Valor maximo aplicacao:"          AT 21
      tel_vlmaxapl[1] NO-LABEL 
@@ -331,6 +336,11 @@ FORM "Operacional"   AT 46
      "Qtd. meses p/ agendamento recorrente TED:" AT 3
      tel_mrecoted[1] NO-LABEL           AT 54
      tel_mrecoted[2] NO-LABEL           AT 71
+     SKIP
+     "Valor maximo integralizacao de capital:" AT 5
+     tel_vllimint[1] NO-LABEL           AT 45
+     tel_vllimint[2] NO-LABEL           AT 62     
+    
      SKIP(5)
      WITH ROW 7 OVERLAY SIDE-LABELS NO-BOX WIDTH 78 CENTERED 
           FRAME f_dados_captacao.      
@@ -345,6 +355,7 @@ RUN fontes/inicia.p.
  
 DO WHILE TRUE:
        
+   CLEAR FRAME f_tipo_valor     NO-PAUSE.
    CLEAR FRAME f_dados_fisica   NO-PAUSE.
    CLEAR FRAME f_dados_juridica NO-PAUSE.
    CLEAR FRAME f_captacao       NO-PAUSE.
@@ -354,7 +365,8 @@ DO WHILE TRUE:
    HIDE  FRAME f_dados_fisica   
          FRAME f_dados_juridica
          FRAME f_captacao      
-         FRAME f_dados_captacao 
+         FRAME f_dados_captacao
+         FRAME f_tipo_valor
          FRAME f_inpessoa NO-PAUSE.
 
    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -464,7 +476,9 @@ DO WHILE TRUE:
              tel_mesested[1] = INTE(ENTRY(31,aux_dstextab,";"))
              tel_mesested[2] = INTE(ENTRY(32,aux_dstextab,";"))
              tel_mrecoted[1] = INTE(ENTRY(33,aux_dstextab,";"))
-             tel_mrecoted[2] = INTE(ENTRY(34,aux_dstextab,";")).
+             tel_mrecoted[2] = INTE(ENTRY(34,aux_dstextab,";"))
+             tel_vllimint[1] = DECI(ENTRY(35,aux_dstextab,";"))
+             tel_vllimint[2] = DECI(ENTRY(36,aux_dstextab,";")).             
    ELSE
       ASSIGN tel_vllimtrf[1] = DECI(ENTRY(01,aux_dstextab,";"))
              tel_nrderros[1] = INTE(ENTRY(02,aux_dstextab,";"))
@@ -499,7 +513,9 @@ DO WHILE TRUE:
              tel_mesested[1] = INTE(ENTRY(31,aux_dstextab,";"))
              tel_mesested[2] = INTE(ENTRY(32,aux_dstextab,";"))
              tel_mrecoted[1] = INTE(ENTRY(33,aux_dstextab,";"))
-             tel_mrecoted[2] = INTE(ENTRY(34,aux_dstextab,";")).
+             tel_mrecoted[2] = INTE(ENTRY(34,aux_dstextab,";"))
+             tel_vllimint[1] = DECI(ENTRY(35,aux_dstextab,";"))
+             tel_vllimint[2] = DECI(ENTRY(36,aux_dstextab,";")).
 
    IF glb_cddopcao = "C" THEN
       DO:  
@@ -527,11 +543,13 @@ DO WHILE TRUE:
                         tel_vlmaxres[1]
                         tel_mesested[1]
                         tel_mrecoted[1]
+                        tel_vllimint[1]
                         tel_vlmaxapl[2]
                         tel_vlminapl[2]
                         tel_vlmaxres[2]
                         tel_mesested[2]
                         tel_mrecoted[2]
+                        tel_vllimint[2]
                         WITH FRAME f_dados_captacao.
                 
                 MESSAGE "Tecle <Enter> para continuar ou <End> para encerrar".
@@ -566,6 +584,7 @@ DO WHILE TRUE:
                        tel_vlmaxres[1]
                        tel_mesested[1]
                        tel_mrecoted[1]
+                       tel_vllimint[1]                       
                        tel_vlmaxapl[2]
                        tel_vlminapl[2]
                        tel_vlmaxres[2]
@@ -574,6 +593,7 @@ DO WHILE TRUE:
                        tel_textoaux
                        tel_vctoproc[1]
                        tel_vctoproc[2]
+                       tel_vllimint[2]                       
                        WITH FRAME f_dados_captacao.
 
                MESSAGE "Tecle <Enter> para continuar ou <End> para encerrar".
@@ -593,6 +613,9 @@ DO WHILE TRUE:
       
                IF tel_inpessoa  THEN
                   DO:
+                    
+                     HIDE FRAME f_dados_captacao.
+                  
                      DISPLAY tel_vllimweb[2]
                              tel_vllimted[2]
                              tel_vlvrbole[2]
@@ -683,10 +706,12 @@ DO WHILE TRUE:
                            NEXT.
       
                         END.
-      
                   END.
                ELSE
                   DO:
+                      
+                     HIDE FRAME f_dados_captacao.
+                  
                      DISPLAY tel_vllimtrf[2]  
                              tel_vllimpgo[2]  
                              tel_vllimted[2]  
@@ -697,7 +722,7 @@ DO WHILE TRUE:
                              tel_qtdiablo[2]
                              tel_nrderros[2]  
                              tel_vlpconfe[2]
-                             tel_qtmesagd[2]  
+                             tel_qtmesagd[2] 
                              WITH FRAME f_dados_juridica.
 
                      UPDATE tel_vllimtrf[1] 
@@ -1009,8 +1034,8 @@ DO WHILE TRUE:
                   
                      END. /* Fim do DO WHILE TRUE */
                    
-                     IF KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN 
-                        NEXT.
+                     IF KEYFUNCTION(LASTKEY) = "END-ERROR" THEN
+                      NEXT.
       
                   END.
                
@@ -1024,6 +1049,7 @@ DO WHILE TRUE:
                               tel_vlmaxres[2]
                               tel_mesested[2]
                               tel_mrecoted[2]
+                              tel_vllimint[2]
                               WITH FRAME f_dados_captacao.
                     ELSE
                       DISPLAY tel_vlmaxapl[2]
@@ -1033,6 +1059,7 @@ DO WHILE TRUE:
                               tel_mrecoted[2]
                               tel_textoaux
                               tel_vctoproc[2]
+                              tel_vllimint[2]
                               WITH FRAME f_dados_captacao.
                      
                      DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
@@ -1043,6 +1070,7 @@ DO WHILE TRUE:
                                  tel_vlmaxres[1]
                                  tel_mesested[1]
                                  tel_mrecoted[1]
+                                 tel_vllimint[1]
                                  WITH FRAME f_dados_captacao.
                         ELSE
                           UPDATE tel_vlmaxapl[1]
@@ -1051,6 +1079,7 @@ DO WHILE TRUE:
                                  tel_vctoproc[1]
                                  tel_mesested[1]
                                  tel_mrecoted[1]
+                                 tel_vllimint[1]
                                  WITH FRAME f_dados_captacao.
 
                         IF tel_vlmaxapl[1] > tel_vlmaxapl[2]  THEN
@@ -1124,8 +1153,17 @@ DO WHILE TRUE:
                               NEXT.
       
                            END.
-
                            
+                       /* Limite integralização */
+                       IF tel_vllimint[1] > tel_vllimint[2]  THEN
+                          DO:
+                             MESSAGE "O valor deve ser inferior ou igual " +
+                                     "ao estipulado pela CECRED.".
+        
+                             NEXT-PROMPT tel_vllimint[1]
+                                         WITH FRAME f_dados_captacao.
+                             NEXT.
+                          END.                                  
 
                         DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                         
@@ -1135,6 +1173,7 @@ DO WHILE TRUE:
                                     tel_vlmaxres[2]
                                     tel_mesested[2]
                                     tel_mrecoted[2]
+                                    tel_vllimint[2]
                                     WITH FRAME f_dados_captacao.
                            ELSE
                              UPDATE tel_vlmaxapl[2]
@@ -1143,6 +1182,7 @@ DO WHILE TRUE:
                                       tel_vctoproc[2]
                                       tel_mesested[2]
                                       tel_mrecoted[2]
+                                      tel_vllimint[2]
                                       WITH FRAME f_dados_captacao.
                         
                            IF tel_vlmaxapl[1] > tel_vlmaxapl[2]  THEN
@@ -1209,6 +1249,18 @@ DO WHILE TRUE:
                                  NEXT.
                         
                               END.
+                              
+                         /* Limite integralização */
+                         IF tel_vllimint[1] > tel_vllimint[2]  THEN
+                            DO:
+                               MESSAGE  "O valor deve ser maior"
+                                         "ou igual ao estipulado"
+                                         "para o Operacional.".
+          
+                               NEXT-PROMPT tel_vllimint[2]
+                                           WITH FRAME f_dados_captacao.
+                               NEXT.
+                            END.                                
                         
                            LEAVE.
                         
@@ -1231,7 +1283,7 @@ DO WHILE TRUE:
             END. /* Fim do DO WHILE TRUE */
       
             IF KEYFUNCTION(LASTKEY) = "END-ERROR" THEN
-               NEXT.
+              NEXT.
             
             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                         
@@ -1284,6 +1336,7 @@ DO WHILE TRUE:
                             INPUT tel_mesested,
                             INPUT tel_mrecoted,
                             INPUT tel_vctoproc,
+                            INPUT tel_vllimint,
                             OUTPUT TABLE tt-erro).
 
             IF RETURN-VALUE <> "OK" THEN
@@ -1392,9 +1445,8 @@ PROCEDURE grava_dados:
    DEF INPUT PARAM par_vlmaxres AS DECI EXTENT 2                    NO-UNDO.
    DEF INPUT PARAM par_mesested AS INTE EXTENT 2                    NO-UNDO.
    DEF INPUT PARAM par_mrecoted AS INTE EXTENT 2                    NO-UNDO.
-
    DEF INPUT PARAM par_vctoproc AS INTE EXTENT 2                    NO-UNDO.
-   
+   DEF INPUT PARAM par_vllimint AS DECI EXTENT 2                    NO-UNDO.
    DEF OUTPUT PARAM TABLE FOR tt-erro.
 
    DEF VAR aux_cdcritic AS INT                                      NO-UNDO.
@@ -1530,8 +1582,9 @@ PROCEDURE grava_dados:
                           ";" + STRING(par_mesested[1],"999") +
                           ";" + STRING(par_mesested[2],"999") + 
                           ";" + STRING(par_mrecoted[1],"999") + 
-                          ";" + STRING(par_mrecoted[2],"999").
-
+                          ";" + STRING(par_mrecoted[2],"999") +
+                          ";" + STRING(par_vllimint[1],"999999999999.99") + 
+                          ";" + STRING(par_vllimint[2],"999999999999.99").
                           
          ELSE /* dados pessoa juridica */
             ASSIGN craptab.dstextab = STRING(par_vllimtrf[1],
@@ -1572,7 +1625,9 @@ PROCEDURE grava_dados:
                           ";" + STRING(par_mesested[1],"999") + 
                           ";" + STRING(par_mesested[2],"999") + 
                           ";" + STRING(par_mrecoted[1],"999") + 
-                          ";" + STRING(par_mrecoted[2],"999").
+                          ";" + STRING(par_mrecoted[2],"999") +
+                          ";" + STRING(par_vllimint[1],"999999999999.99") + 
+                          ";" + STRING(par_vllimint[2],"999999999999.99").                          
                           
 
          LEAVE  Contador.
@@ -1979,7 +2034,27 @@ PROCEDURE grava_dados:
                 " da CECRED de " + STRING(INTE(ENTRY(34,aux_dstextab,";")),"999") +
                 " para " + STRING(par_mrecoted[1],"999")                       +
                 " >> log/tab045.log").
-      
+                
+          /* Valor maximo integralizacao de capital */
+          IF par_vllimint[1] <> INTE(ENTRY(35,aux_dstextab,";"))  THEN
+              UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999")      +
+                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
+                  " Operador " + par_cdoperad + " alterou o valor maximo " +
+                  "de integralizacao de cotas de pessoa " + aux_dspessoa + 
+                  " de " + STRING(INTE(ENTRY(35,aux_dstextab,";")),"zzz,zzz,zzz,zz9.99") +
+                  " para " + STRING(par_vllimint[1],"zzz,zzz,zzz,zz9.99")                       +
+                  " >> log/tab045.log").        
+                  
+          /* Valor maximo integralizacao de capital */
+          IF par_vllimint[2] <> INTE(ENTRY(36,aux_dstextab,";"))  THEN
+              UNIX SILENT VALUE("echo " + STRING(par_dtmvtolt,"99/99/9999")      +
+                  " " + STRING(TIME,"HH:MM:SS") + "' -->'"                       +
+                  " Operador " + par_cdoperad + " alterou o valor maximo " +
+                  " de integralizacao de cotas de pessoa " + aux_dspessoa + 
+                  " da CECRED de " + STRING(INTE(ENTRY(36,aux_dstextab,";")),"zzz,zzz,zzz,zz9.99") +
+                  " para " + STRING(par_vllimint[2],"zzz,zzz,zzz,zz9.99")                       +
+                  " >> log/tab045.log").                
+        
       END.
         
    RETURN aux_returnvl.

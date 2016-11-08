@@ -26,10 +26,10 @@ strHTML += '		<tbody>';
 			
 				$nrdocmto = formataNumericos("zz.zzz.zzz",getByTagName($lancamentos[$i]->tags,"NRDOCMTO"),".");
 				$vllanmto = number_format(str_replace(",",".",getByTagName($lancamentos[$i]->tags,"VLLANMTO")),2,",",".");
+				$lctrowid = getByTagName($lancamentos[$i]->tags,"LCTROWID");
 			?>
 				objLancamentos = new Object();
-				objLancamentos.nrdocmto = "<?php echo $nrdocmto; ?>";
-				objLancamentos.vllanmto = "<?php echo $vllanmto; ?>";
+				objLancamentos.lctrowid = "<?php echo $lctrowid; ?>";
 				lstLancamentos[<?php echo $i; ?>] = objLancamentos;
 				
 strHTML += '				<tr id="trLancamentos<?php echo $i; ?>" style="cursor: pointer;">';
@@ -41,7 +41,7 @@ strHTML += '				</tr>';
 strHTML += '		</tbody>';
 strHTML += '	</table>';
 strHTML += '</div>';
-strHTML += '<input type="image" id="btnEstorna" src="<?php echo $UrlImagens; ?>botoes/estornar_integralizacao.gif" onClick="mostraSenha();return false;">';
+strHTML += '<input type="image" style="padding-top: 7px" id="btnEstorna" src="<?php echo $UrlImagens; ?>botoes/estornar_integralizacao.gif" onClick="mostraSenha();return false;">';
 
 $('#divEstorno').html(strHTML);
 controlaLayout('ESTORNO');

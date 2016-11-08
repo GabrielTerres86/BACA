@@ -28,6 +28,9 @@
                07/06/2013 - Incluir procedure retorna-valor-blqjud e tag xml
                             <vlblqjud> (Lucas R.).
  
+			   21/09/2016 - P169 Adicionada novas tags para o projeto de integralizacao
+							de cotas (Ricardo Linhares).
+ 
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -126,7 +129,7 @@ ASSIGN xml_operacao.dslinxml = "<SALDO_ANTERIOR>" +
                                "</vlsldant><vlblqjud>" +
                                TRIM(STRING(aux_vlblqjud,
                                            "zzz,zzz,zzz,zz9.99")) +
-                               "</vlblqjud></SALDO_ANTERIOR>".
+                               "</vlblqjud><incancel></incancel><lctrowid></lctrowid></SALDO_ANTERIOR>".
        
 
 
@@ -147,7 +150,12 @@ FOR EACH tt-extrato_cotas NO-LOCK BY tt-extrato_cotas.dtmvtolt:
                   TRIM(STRING(tt-extrato_cotas.vllanmto,"zzz,zzz,zz9.99-")) +
                                    "</vllanmto><vlsldtot>" +
                   TRIM(STRING(tt-extrato_cotas.vlsldtot,"zzz,zzz,zz9.99-")) +
-                                   "</vlsldtot></LANCAMENTO>".
+                                   "</vlsldtot><incancel>" +
+                                   TRIM(STRING(tt-extrato_cotas.incancel)) +
+                                   "</incancel>"+
+                                   "<lctrowid>" + 
+                                   TRIM(STRING(tt-extrato_cotas.lctrowid)) +
+                                   "</lctrowid></LANCAMENTO>".
 END.
     
 RETURN "OK".
