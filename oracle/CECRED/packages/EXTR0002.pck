@@ -742,6 +742,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                              cálculos errados na composição do extrato das contas migradas, procedure
                              pc_extrato_cotas (Carlos)
 
+				08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. Lenilson (Mouts)
+
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
