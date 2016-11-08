@@ -3897,7 +3897,7 @@ function attArray(novaOp, cdcooper) {
     }
 
     controlaOperacao(novaOp);
-
+    glb_codigoOperadorLiberacao = '';
     return false;
 }
 
@@ -4341,6 +4341,7 @@ function insereAlienacao(operacao, opContinua) {
     arrayAlienacoes[i]["lsbemfin"] = '( ' + contAlienacao + ' Bem )';
 
     controlaOperacao(operacao);
+    glb_codigoOperadorLiberacao = '';
     return false;
 
 }
@@ -7286,7 +7287,7 @@ function confirmaConsultas(flmudfai, cddopcao) {
 //***************************************************
 
 function buscaLiquidacoes(operacao) {
-
+	
     var dsctrliq = $('#dsctrliq', '#' + nomeForm).val();
     //variavel que contem o valor de "Emprestimos" na tela atenda    
     var vltotemp = parseFloat($('#valueRot1').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
@@ -7580,22 +7581,22 @@ function fechaLiquidacoes(operacao) {
     }
 
     dsctrliq = dsctrliq.slice(0, -1);
+	
+	$('#dsctrliq', '#' + nomeForm).val(dsctrliq);
 
-    $('#dsctrliq', '#' + nomeForm).val(dsctrliq);
-
-    if ($('#dsctrliq', '#' + nomeForm).val() != '') {
-        qualificaOperacao();
-    } else {
-        $('#idquapro', '#' + nomeForm).val(1);
-        $('#dsquapro', '#' + nomeForm).val('Operacao normal');
-    }
+	if ($('#dsctrliq', '#' + nomeForm).val() != '') {
+		qualificaOperacao();
+	} else {
+		$('#idquapro', '#' + nomeForm).val(1);
+		$('#dsquapro', '#' + nomeForm).val('Operacao normal');
+	}
 
 	limpaDivGenerica();
 	fechaRotina($('#divUsoGenerico'), $('#divRotina'));
 	showMsgAguardo('Aguarde, carregando...');
 
 	validaLiquidacoes(true, operacao);
-
+	
     return false;
 }
 
@@ -7675,7 +7676,7 @@ function controlaFoco(operacao) {
         $(this).bind('keyup', function (e) {
             if (e.keyCode == 16) {
                 pressedShift = false;//Quando tecla shift for solta passa valor false 
-            }
+    }
         })
 
         $(this).bind('keydown', function (e) {
@@ -9149,5 +9150,5 @@ function validaDadosAlterarSomenteValorProposta(){
 			}
 		}
 	});	
-	return false;
+    return false;
 }

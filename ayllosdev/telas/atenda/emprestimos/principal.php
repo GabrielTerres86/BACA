@@ -34,6 +34,7 @@
  * 024: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
  * 025: [23/03/2016] PRJ Esteira de Credito. (Daniel/Oscar)
  * 026: [14/07/2016] Correcao na forma de recuperacao dos dados do array $_POST. SD 479874 (Carlos Rafael Tanholi).
+ * 026: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel)
  */
 
 	session_start();
@@ -413,6 +414,7 @@
 				arrayAlienacao<? echo $i; ?>['vlmerbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlmerbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['idalibem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idalibem'); ?>';
                 arrayAlienacao<? echo $i; ?>['idseqbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idseqbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['cdcoplib'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdcoplib'); ?>';
 
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 
