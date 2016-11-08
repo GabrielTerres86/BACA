@@ -8809,6 +8809,8 @@ create or replace package body cecred.PAGA0002 is
     vr_dstransa VARCHAR2(100) := ''; -- Descricao de Transacoes
     vr_qttotage INTEGER       := 0;  -- Quantidade de registros de agendamentos
     vr_contador INTEGER       := 0;
+	vr_stsnrcal BOOLEAN;
+	vr_inpessoa INTEGER;
 
     -- Variaveis de XML 
     vr_xml_temp VARCHAR2(32767);
@@ -8859,6 +8861,11 @@ create or replace package body cecred.PAGA0002 is
           CONTINUE;
         END IF;
         
+		vr_inpessoa := 0;
+		gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_tab_dados_agendamento(vr_contador).nrcpfcgc,
+                                    pr_stsnrcal => vr_stsnrcal,
+                                    pr_inpessoa => vr_inpessoa);
+        
         -- Montar XML com registros de aplicação
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc
                                ,pr_texto_completo => vr_xml_temp 
@@ -8888,7 +8895,7 @@ create or replace package body cecred.PAGA0002 is
                                                   ||  '<dtagenda>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dtagenda,'DD/MM/RRRR') || '</dtagenda>'
 												                          ||  '<tpcaptur>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).tpcaptur)              || '</tpcaptur>'
                                                   ||  '<dtvendrf>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dtvendrf,'DD/MM/RRRR') || '</dtvendrf>'
-												                          ||  '<nrcpfcgc>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).nrcpfcgc)              || '</nrcpfcgc>'
+												  ||  '<nrcpfcgc>' || TO_CHAR(gene0002.fn_mask_cpf_cnpj(vr_tab_dados_agendamento(vr_contador).nrcpfcgc,vr_inpessoa)) || '</nrcpfcgc>'																								 
                                                   ||  '<dstipcat>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dstipcat) || '</dstipcat>'
                                                   ||  '<dsidpgto>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dsidpgto) || '</dsidpgto>'
                                                   ||  '<dsnomfon>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dsnomfon) || '</dsnomfon>'

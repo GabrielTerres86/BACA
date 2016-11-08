@@ -369,6 +369,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                         ,pr_cdsegmto      IN crapcon.cdsegmto%TYPE -- Codigo Segmento Convenio
                                         ,pr_codigo_barras IN VARCHAR2    -- Codigo barras
                                         ,pr_dtmvtopg      IN DATE        -- Data da operação
+										,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
                                         ,pr_cdcritic      OUT INTEGER    -- Codigo do erro
                                         ,pr_dscritic      OUT VARCHAR2);
   
@@ -6532,6 +6533,7 @@ END pc_gera_titulos_iptu_prog;
                                         ,pr_cdsegmto      IN crapcon.cdsegmto%TYPE -- Codigo Segmento Convenio
                                         ,pr_codigo_barras IN VARCHAR2    -- Codigo barras
                                         ,pr_dtmvtopg      IN DATE        -- Data da operação
+										,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
                                         ,pr_cdcritic      OUT INTEGER    -- Codigo do erro
                                         ,pr_dscritic      OUT VARCHAR2) IS
   --------------------------------------------------------------------------------------------------------------
@@ -6697,6 +6699,9 @@ END pc_gera_titulos_iptu_prog;
         NULL;
       END;
     END IF;
+	-- sem críticas, devolve data calculada
+	pr_dttolera := vr_dttolera;		
+
   END IF;
   
   EXCEPTION
@@ -6772,6 +6777,7 @@ END pc_gera_titulos_iptu_prog;
       rw_lft_ult_pag_sicredi cr_lft_ult_pag_sicredi%ROWTYPE;
 
       --Variaveis Locais
+	  vr_dttolera  DATE;
       vr_hhsicini  INTEGER;
       vr_hhsicfim  INTEGER;
       vr_flgachou  BOOLEAN;
@@ -7033,6 +7039,7 @@ END pc_gera_titulos_iptu_prog;
                                     ,pr_cdsegmto      => pr_cdsegmto
                                     ,pr_codigo_barras => pr_codigo_barras
                                     ,pr_dtmvtopg      => rw_crapdat.dtmvtocd
+									,pr_dttolera      => vr_dttolera
                                     ,pr_cdcritic      => pr_cdcritic
                                     ,pr_dscritic      => pr_dscritic);
         

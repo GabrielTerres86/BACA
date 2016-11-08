@@ -779,6 +779,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        AND agb.cdageban = pr_cdageban;
     rw_arrec cr_arrec%ROWTYPE;
   
+	vr_inpessoa INTEGER;
+	vr_stsnrcal BOOLEAN;		
     vr_dsinfor1 crappro.dsinform##1%TYPE;
     vr_dsinfor2 crappro.dsinform##2%TYPE;
     vr_dsinfor3 crappro.dsinform##3%TYPE;
@@ -787,6 +789,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
   BEGIN
     
+	vr_inpessoa := 0;
+	gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc,
+								pr_stsnrcal => vr_stsnrcal,
+								pr_inpessoa => vr_inpessoa);  
+	
     --Título do comprovante
     vr_dsinfor1 := CASE pr_cdtippro
                      WHEN 16 THEN 'DARF'
@@ -826,14 +833,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			
       --Apenas para DAS
       IF pr_cdtippro IN (17, 19) THEN
-         vr_dsinfor3 := vr_dsinfor3 || '#Número Documento: '	|| SUBSTR(pr_cdbarras,25,17);
+         vr_dsinfor3 := vr_dsinfor3 || '#Número Documento (DAS): '	|| SUBSTR(pr_cdbarras,25,17);
       END IF;
       
     -- Se for Captura Manual
     ELSIF pr_tpcaptur = 2 THEN
 
       vr_dsinfor3 := vr_dsinfor3 || '#Período de Apuração: '    || TO_CHAR(pr_dtapurac,'DD/MM/YYYY');
-      vr_dsinfor3 := vr_dsinfor3 || '#Número do CPF ou CNPJ: '  || pr_nrcpfcgc;
+      vr_dsinfor3 := vr_dsinfor3 || '#Número do CPF ou CNPJ: '  || TO_CHAR(gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,vr_inpessoa));
       vr_dsinfor3 := vr_dsinfor3 || '#Código da Receita: '      || pr_cdtribut;
       
       IF pr_cdtribut = 6106 THEN
@@ -1079,6 +1086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_nrdcaixa  NUMBER;
     vr_dtmvtopg  DATE;
     vr_datdodia  DATE;
+	vr_dttolera  DATE;
     vr_foco      VARCHAR2(3);
     vr_qtddaglf  crapage.qtddaglf%TYPE;
     vr_dtminage  DATE;
@@ -1118,63 +1126,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     END IF;
   
 		
-	--Se a captura for através do código de barras da guia
-    IF pr_tpcaptur = 1 THEN
-		/* Verifica se foi digitado manualmente ou via leitora de cod. barras */
-      IF trim(pr_cdbarras) IS NULL AND nvl(pr_lindigi1,0) <> 0 AND nvl(pr_lindigi2,0) <> 0 THEN
-        --Montar Codigo Barras
-        pr_cdbarras:= SUBSTR(gene0002.fn_mask(pr_lindigi1,'999999999999'),1,11)||
-                      SUBSTR(gene0002.fn_mask(pr_lindigi2,'999999999999'),1,11)||
-                      SUBSTR(gene0002.fn_mask(pr_lindigi3,'999999999999'),1,11)||
-                      SUBSTR(gene0002.fn_mask(pr_lindigi4,'999999999999'),1,11);
-      ELSIF trim(pr_cdbarras) IS NOT NULL AND nvl(pr_lindigi1,0) = 0 AND nvl(pr_lindigi2,0) = 0 AND
-            nvl(pr_lindigi3,0) = 0 AND nvl(pr_lindigi4,0) = 0 THEN
-
-        /* Monta os campos manuais e pega o digito */
-        FOR idx IN 1..4 LOOP
-
-          --Retornar o valor de cada parametro
-          CASE idx
-            WHEN 1 THEN
-              pr_lindigi1:= TO_NUMBER(SUBSTR(pr_cdbarras,1,11));
-              vr_lindigit:= pr_lindigi1;
-            WHEN 2 THEN
-              pr_lindigi2:= TO_NUMBER(SUBSTR(pr_cdbarras,12,11));
-              vr_lindigit:= pr_lindigi2;
-            WHEN 3 THEN
-              pr_lindigi3:= TO_NUMBER(SUBSTR(pr_cdbarras,23,11));
-              vr_lindigit:= pr_lindigi3;
-            WHEN 4 THEN
-              pr_lindigi4:= TO_NUMBER(SUBSTR(pr_cdbarras,34,11));
-              vr_lindigit:= pr_lindigi4;
-          END CASE;
-
-          --Verificar qual o modulo de calculo do digito
-          IF SUBSTR(pr_cdbarras,3,1) IN ('6','7') THEN
-            /** Verificacao pelo modulo 10**/
-            CXON0000.pc_calc_digito_iptu_samae (pr_valor    => vr_lindigit   --> Valor Calculado
-                                               ,pr_nrdigito => vr_nrdigito   --> Digito Verificador
-                                               ,pr_retorno  => vr_flgretor); --> Retorno digito correto
-          ELSE
-            /** Verificacao pelo modulo 11 **/
-            CXON0014.pc_verifica_digito (pr_nrcalcul => vr_lindigit  --Numero a ser calculado
-                                        ,pr_nrdigito => vr_nrdigito); --Digito verificador
-          END IF;
-
-          --Retornar parametro digitavel
-          CASE idx
-            WHEN 1 THEN
-              pr_lindigi1:= TO_NUMBER(gene0002.fn_mask(pr_lindigi1,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
-            WHEN 2 THEN
-              pr_lindigi2:= TO_NUMBER(gene0002.fn_mask(pr_lindigi2,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
-            WHEN 3 THEN
-              pr_lindigi3:= TO_NUMBER(gene0002.fn_mask(pr_lindigi3,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
-            WHEN 4 THEN
-              pr_lindigi4:= TO_NUMBER(gene0002.fn_mask(pr_lindigi4,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
-          END CASE;
-        END LOOP;
-      END IF;
-	END IF;
+		
+	/* Verifica se foi digitado manualmente ou via leitora de cod. barras */
+	  IF trim(pr_cdbarras) IS NULL AND nvl(pr_lindigi1,0) <> 0 AND nvl(pr_lindigi2,0) <> 0 THEN
+	    --Montar Codigo Barras
+	    pr_cdbarras:= SUBSTR(gene0002.fn_mask(pr_lindigi1,'999999999999'),1,11)||
+	                  SUBSTR(gene0002.fn_mask(pr_lindigi2,'999999999999'),1,11)||
+	                  SUBSTR(gene0002.fn_mask(pr_lindigi3,'999999999999'),1,11)||
+	                  SUBSTR(gene0002.fn_mask(pr_lindigi4,'999999999999'),1,11);
+	  ELSIF trim(pr_cdbarras) IS NOT NULL AND nvl(pr_lindigi1,0) = 0 AND nvl(pr_lindigi2,0) = 0 AND
+	        nvl(pr_lindigi3,0) = 0 AND nvl(pr_lindigi4,0) = 0 THEN
+	
+	    /* Monta os campos manuais e pega o digito */
+	    FOR idx IN 1..4 LOOP
+	
+	      --Retornar o valor de cada parametro
+	      CASE idx
+	        WHEN 1 THEN
+	          pr_lindigi1:= TO_NUMBER(SUBSTR(pr_cdbarras,1,11));
+	          vr_lindigit:= pr_lindigi1;
+	        WHEN 2 THEN
+	          pr_lindigi2:= TO_NUMBER(SUBSTR(pr_cdbarras,12,11));
+	          vr_lindigit:= pr_lindigi2;
+	        WHEN 3 THEN
+	          pr_lindigi3:= TO_NUMBER(SUBSTR(pr_cdbarras,23,11));
+	          vr_lindigit:= pr_lindigi3;
+	        WHEN 4 THEN
+	          pr_lindigi4:= TO_NUMBER(SUBSTR(pr_cdbarras,34,11));
+	          vr_lindigit:= pr_lindigi4;
+	      END CASE;
+	
+	      --Verificar qual o modulo de calculo do digito
+	      IF SUBSTR(pr_cdbarras,3,1) IN ('6','7') THEN
+	        /** Verificacao pelo modulo 10**/
+	        CXON0000.pc_calc_digito_iptu_samae (pr_valor    => vr_lindigit   --> Valor Calculado
+	                                           ,pr_nrdigito => vr_nrdigito   --> Digito Verificador
+	                                           ,pr_retorno  => vr_flgretor); --> Retorno digito correto
+	      ELSE
+	        /** Verificacao pelo modulo 11 **/
+	        CXON0014.pc_verifica_digito (pr_nrcalcul => vr_lindigit  --Numero a ser calculado
+	                                    ,pr_nrdigito => vr_nrdigito); --Digito verificador
+	      END IF;
+	
+	      --Retornar parametro digitavel
+	      CASE idx
+	        WHEN 1 THEN
+	          pr_lindigi1:= TO_NUMBER(gene0002.fn_mask(pr_lindigi1,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+	        WHEN 2 THEN
+	          pr_lindigi2:= TO_NUMBER(gene0002.fn_mask(pr_lindigi2,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+	        WHEN 3 THEN
+	          pr_lindigi3:= TO_NUMBER(gene0002.fn_mask(pr_lindigi3,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+	        WHEN 4 THEN
+	          pr_lindigi4:= TO_NUMBER(gene0002.fn_mask(pr_lindigi4,'99999999999')||gene0002.fn_mask(vr_nrdigito,'9'));
+	      END CASE;
+	    END LOOP;
+	  END IF;
 			
     --Se for Agendamento
     IF pr_idagenda = 2 THEN
@@ -1285,6 +1291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                            ,pr_cdsegmto      => rw_crapcon.cdsegmto
                                            ,pr_codigo_barras => pr_cdbarras
                                            ,pr_dtmvtopg      => vr_dtmvtopg
+										   ,pr_dttolera      => vr_dttolera
                                            ,pr_cdcritic      => vr_cdcritic
                                            ,pr_dscritic      => vr_dscritic);
                                            
@@ -1655,6 +1662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_dslitera VARCHAR2(32000);
     vr_datdodia DATE;
     vr_dtvencto DATE;		
+	vr_dttolera DATE;
     vr_vlmovweb NUMBER;
     vr_vlmovpgo NUMBER;
     vr_nrautdoc craplcm.nrautdoc%TYPE;
@@ -1830,6 +1838,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			vr_cdtippro:= 16; -- DARF
 				
 			IF pr_tpcaptur = 1 THEN -- CD BARRAS									
+								
+			    -- Pega o nome do convenio
+			    OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
+			                    ,pr_cdempcon => TO_NUMBER(SUBSTR(vr_cdbarras,16,4))
+			                    ,pr_cdsegmto => TO_NUMBER(SUBSTR(vr_cdbarras,2,1)));
+			    FETCH cr_crapcon INTO rw_crapcon;
+			    cr_crapcon_found := cr_crapcon%FOUND;
+			    CLOSE cr_crapcon;
+			    
+			    --Se nao encontrar
+			    IF NOT cr_crapcon_found THEN
+			      vr_cdcritic:= 0;
+			      vr_dscritic:= 'Convenio nao encontrado.';
+			      RAISE vr_exc_erro;
+			    END IF;
+									
 				-- Validação referente aos dias de tolerancia
 				cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
 																						 ,pr_cdagenci      => vr_cdagenci
@@ -1837,6 +1861,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																						 ,pr_cdsegmto      => rw_crapcon.cdsegmto
 																						 ,pr_codigo_barras => vr_cdbarras
 																						 ,pr_dtmvtopg      => vr_dtvencto
+																						 ,pr_dttolera      => vr_dttolera
 																						 ,pr_cdcritic      => vr_cdcritic
 																						 ,pr_dscritic      => vr_dscritic);
 		                                           
@@ -1844,22 +1869,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 					 TRIM(vr_dscritic) IS NOT NULL THEN
 					RAISE vr_exc_erro;
 				END IF;
-								
-    -- Pega o nome do convenio
-    OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
-                    ,pr_cdempcon => TO_NUMBER(SUBSTR(vr_cdbarras,16,4))
-                    ,pr_cdsegmto => TO_NUMBER(SUBSTR(vr_cdbarras,2,1)));
-    FETCH cr_crapcon INTO rw_crapcon;
-    cr_crapcon_found := cr_crapcon%FOUND;
-    CLOSE cr_crapcon;
-    
-    --Se nao encontrar
-    IF NOT cr_crapcon_found THEN
-      vr_cdcritic:= 0;
-      vr_dscritic:= 'Convenio nao encontrado.';
-      RAISE vr_exc_erro;
-    END IF;
-				vr_dsnomcnv := rw_crapcon.nmrescon;
+																
+				vr_dsnomcnv := rw_crapcon.nmextcon;
+				vr_dtvencto := vr_dttolera;
     
 			ELSE -- MANUAL
 			  -- Pega o nome do convenio
@@ -1882,22 +1894,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 								
 			END IF;								
 		ELSE  -- DAS
+      		vr_cdtippro := 17;
 			
-			-- Validação referente aos dias de tolerancia
-			cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
-																					 ,pr_cdagenci      => vr_cdagenci
-																					 ,pr_cdempcon      => rw_crapcon.cdempcon
-																					 ,pr_cdsegmto      => rw_crapcon.cdsegmto
-																					 ,pr_codigo_barras => vr_cdbarras
-																					 ,pr_dtmvtopg      => vr_dtvencto
-																					 ,pr_cdcritic      => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic);
-
-			IF nvl(vr_cdcritic,0) > 0 OR
-				 TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-    
 			-- Pega o nome do convenio
 			OPEN cr_crapcon (pr_cdcooper => pr_cdcooper
 											,pr_cdempcon => TO_NUMBER(SUBSTR(vr_cdbarras,16,4))
@@ -1913,9 +1911,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 				RAISE vr_exc_erro;
 			END IF;
 			
-			vr_dsnomcnv := rw_crapcon.nmrescon;		
-			vr_cdtippro := 17;
-			vr_dtvencto := pr_dtvencto;
+			-- Validação referente aos dias de tolerancia
+			cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
+												,pr_cdagenci      => vr_cdagenci
+												,pr_cdempcon      => rw_crapcon.cdempcon
+												,pr_cdsegmto      => rw_crapcon.cdsegmto
+												,pr_codigo_barras => vr_cdbarras
+												,pr_dtmvtopg      => vr_dtvencto
+												,pr_dttolera      => vr_dttolera
+												,pr_cdcritic      => vr_cdcritic
+                           						,pr_dscritic => vr_dscritic);
+
+			IF nvl(vr_cdcritic,0) > 0 OR
+				 TRIM(vr_dscritic) IS NOT NULL THEN
+		      RAISE vr_exc_erro;
+		    END IF;
+    
+			vr_dsnomcnv := rw_crapcon.nmextcon;		
+			vr_dtvencto := vr_dttolera;
+			
 		END IF;
     
     --Obtem flag de agendamento
@@ -2684,7 +2698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_nrdcaixa     => 900                 --> Numero caixa
                                   ,pr_nrdconta     => pr_nrdconta         --> Numero da conta
                                   ,pr_idseqttl     => pr_idseqttl         --> Identificador Sequencial titulo
-                                  ,pr_dtmvtolt     => rw_crapdat.dtmvtolt --> Data Movimento
+                                  ,pr_dtmvtolt     => rw_crapdat.dtmvtocd --> Data Movimento
                                   ,pr_idagenda     => pr_idagenda         --> Indicador agenda
                                   ,pr_dtmvtopg     => vr_dtmvtopg         --> Data Pagamento
                                   ,pr_vllanmto     => vr_vlrvalid         --> Valor a ser Validado
@@ -2775,7 +2789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																							pr_nrterfin => 0,
 																							pr_nrcpfope => pr_nrcpfope,
 																							pr_idorigem => pr_idorigem,
-																							pr_dtmvtolt => rw_crapdat.dtmvtolt,
+																							pr_dtmvtolt => rw_crapdat.dtmvtocd,
 																							pr_tpdaguia => pr_tpdaguia,
 																							pr_tpcaptur => pr_tpcaptur,
 																							pr_lindigi1 => vr_lindigi1,
@@ -2957,7 +2971,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 														 ,pr_fecha_xml      => TRUE);
 			
 		  pc_proc_geracao_log(pr_flgtrans => 1 /* TRUE */);
-      pr_dsretorn := 'OK';
+      	  pr_dsretorn := 'OK';
 						
 		ELSE --validação
 		
@@ -3183,6 +3197,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
 	vr_dtagenda DATE;
 	vr_dtvencto DATE;
+	vr_dttolera DATE;
 	vr_dsnomcnv VARCHAR2(200);
 	vr_dsidepag VARCHAR(100);
 	vr_nrdolote NUMBER;
@@ -3224,6 +3239,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       CLOSE cr_crapass_titular;
     END IF;
 		
+		-- Convênios Sicredi
+		vr_tpdvalor := 1;
+		
 		vr_nrdolote := 11000 + pr_nrdcaixa;
 		
 		-- Compor linha digitável
@@ -3260,7 +3278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
 			END IF;
 														
-				vr_dsnomcnv := rw_crapcon.nmrescon;											
+			vr_dsnomcnv := rw_crapcon.nmextcon;											
 		ELSE 
 			CLOSE cr_crapcon; 
 			vr_dscritic := 'Convenio nao encontrado.';
@@ -3269,9 +3287,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		
 		ELSE --manual				
 			OPEN cr_crapscn2 (pr_cdempres => CASE pr_cdtribut
-																		   WHEN 6106 THEN 'D0'
-																			 ELSE 'A0' 
-																			 END);
+											WHEN 6106 THEN 'D0'
+												ELSE 'A0' 
+												END);
 			FETCH cr_crapscn2 INTO rw_crapscn2;
 					    
 			--Se nao encontrar
@@ -3288,7 +3306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		
 		-- criação lote 
 		LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
-                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                           ,pr_dtmvtolt => rw_crapdat.dtmvtocd
                            ,pr_cdagenci => pr_cdagenci
                            ,pr_cdbccxlt => 100
                            ,pr_nrdolote => vr_nrdolote
@@ -3408,7 +3426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      ,pr_idseqttl               -- craplau.idseqttl
                      ,SYSDATE                   -- craplau.dttransa
                      ,gene0002.fn_busca_time    -- craplau.hrtransa
-                     ,rw_crapdat.dtmvtolt       -- craplau.dtmvtolt
+                     ,rw_crapdat.dtmvtocd       -- craplau.dtmvtolt
                      ,pr_cdagenci               -- craplau.cdagenci
                      ,rw_craplot.cdbccxlt       -- craplau.cdbccxlt
                      ,rw_craplot.nrdolote       -- craplau.nrdolote
@@ -3504,10 +3522,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           RAISE vr_exc_erro; 
       END;
 			
-		  -- tipo do protocolo
-			IF pr_tpdaguia = 1 THEN
-        vr_cdtippro:= 18; -- DARF
-				
 				IF pr_tpcaptur = 1 THEN -- CD BARRAS
 					-- Caso o o código de barras estiver vazio popula com base na linha digitável
 					IF TRIM(pr_cdbarras) IS NULL THEN
@@ -3524,30 +3538,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 					
 					-- Validação referente aos dias de tolerancia
 					cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
-																							 ,pr_cdagenci      => pr_cdagenci
-																							 ,pr_cdempcon      => rw_crapcon.cdempcon
-																							 ,pr_cdsegmto      => rw_crapcon.cdsegmto
-																							 ,pr_codigo_barras => vr_cdbarras
-																							 ,pr_dtmvtopg      => vr_dtvencto
-																							 ,pr_cdcritic      => vr_cdcritic
-																							 ,pr_dscritic      => vr_dscritic);
+														 ,pr_cdagenci      => pr_cdagenci
+														 ,pr_cdempcon      => rw_crapcon.cdempcon
+														 ,pr_cdsegmto      => rw_crapcon.cdsegmto
+														 ,pr_codigo_barras => vr_cdbarras
+														 ,pr_dtmvtopg      => vr_dtvencto
+														 ,pr_dttolera      => vr_dttolera
+														 ,pr_cdcritic      => vr_cdcritic
+														 ,pr_dscritic      => vr_dscritic);
 		                                           
 					IF nvl(vr_cdcritic,0) > 0 OR
 						 TRIM(vr_dscritic) IS NOT NULL THEN
 						RAISE vr_exc_erro;
 					END IF;
-					
+					vr_dtvencto := vr_dttolera;					
 				ELSE -- MANUAL
 					vr_dtvencto := pr_dtvencto;
 				END IF;
 								
-			ELSE  -- DAS
-				vr_cdtippro := 19;
-				vr_dtvencto := pr_dtvencto;
-		  END IF;
+		  -- tipo do protocolo
+	      vr_cdtippro := CASE pr_tpdaguia
+	                     WHEN 1 THEN 18
+	                     ELSE 19
+	                    END;
     
-      --Obtem flag de agendamento
-      vr_flgagend := TRUE;
+	      --Obtem flag de agendamento
+	      vr_flgagend := TRUE;
 			
 			-- Gera um protocolo para o pagamento
 			paga0003.pc_cria_comprovante_darf_das(pr_cdcooper => rw_crapass.cdcooper -- Código da cooperativa
