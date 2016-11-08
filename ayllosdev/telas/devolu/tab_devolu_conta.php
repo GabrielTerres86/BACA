@@ -1,5 +1,5 @@
-<?
-/*!
+<? 
+/*! 
  * FONTE        : tab_devolu_conta.php
  * CRIAÇÃO      : Andre Santos - SUPERO
  * DATA CRIAÇÃO : 25/09/2013
@@ -98,8 +98,8 @@
 							      <? echo getByTagName($lancamento->tags,'cdagechq'); ?>
 						</td>
 
-						<td><span><? echo getByTagName($lancamento->tags,'nrdocmto'); ?></span>
-							      <? echo getByTagName($lancamento->tags,'nrdocmto'); ?>
+						<td><span><? echo formataContaDVsimples(getByTagName($lancamento->tags,'nrdocmto')); ?></span>
+							      <? echo formataContaDVsimples(getByTagName($lancamento->tags,'nrdocmto')); ?>
 						</td>
 						<td><span><? echo formataMoeda(getByTagName($lancamento->tags,'vllanmto')) ; ?></span>
 								  <? echo formataMoeda(getByTagName($lancamento->tags,'vllanmto')) ; ?>
