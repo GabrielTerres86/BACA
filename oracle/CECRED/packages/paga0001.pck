@@ -10258,6 +10258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             ,darf_das.nrcpfcgc
             ,darf_das.cdtributo
             ,darf_das.nrrefere
+			,darf_das.dtvencto
             ,darf_das.vlprincipal
             ,darf_das.vlmulta
             ,darf_das.vljuros
@@ -10819,7 +10820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                        ,pr_nrcpfcgc => rw_craplau.nrcpfcgc -- CPF/CNPJ da guia
                                        ,pr_cdtribut => rw_craplau.cdtributo -- Código de tributação da guia
                                        ,pr_nrrefere => rw_craplau.nrrefere -- Número de referência da guia
-                                       ,pr_dtvencto => vr_dtvencto -- Data de vencimento da guia
+                                       ,pr_dtvencto => rw_craplau.dtvencto -- Data de vencimento da guia
                                        ,pr_vlrprinc => rw_craplau.vlprincipal -- Valor principal da guia
                                        ,pr_vlrmulta => rw_craplau.vlmulta -- Valor da multa da guia
                                        ,pr_vlrjuros => rw_craplau.vljuros -- Valor dos juros da guia
@@ -10853,12 +10854,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      ,pr_cdbarras => vr_dscodbar -- Código de barras da guia
                                      ,pr_dsidepag => rw_craplau.dsidentif_pagto -- Descrição da identificação do pagamento
                                      ,pr_vlrtotal => rw_craplau.vllanaut -- Valor total do pagamento da guia
-                                     ,pr_dsnomfon => rw_craplau.dsnome_fone -- Nome e telefone da guia
+                                     ,pr_dsnomfon => NVL(rw_craplau.dsnome_fone,' ') -- Nome e telefone da guia
                                      ,pr_dtapurac => rw_craplau.dtapuracao -- Período de apuração da guia
                                      ,pr_nrcpfcgc => rw_craplau.nrcpfcgc -- CPF/CNPJ da guia
                                      ,pr_cdtribut => rw_craplau.cdtributo -- Código de tributação da guia
                                      ,pr_nrrefere => rw_craplau.nrrefere -- Número de referência da guia
-                                     ,pr_dtvencto => vr_dtvencto -- Data de vencimento da guia
+                                     ,pr_dtvencto => rw_craplau.dtvencto -- Data de vencimento da guia
                                      ,pr_vlrprinc => rw_craplau.vlprincipal -- Valor principal da guia
                                      ,pr_vlrmulta => rw_craplau.vlmulta -- Valor da multa da guia
                                      ,pr_vlrjuros => rw_craplau.vljuros -- Valor dos juros da guia
@@ -11250,7 +11251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                    ,pr_nmdcampo => 'Representacao Numerica'
                                    ,pr_dsdadant => NULL
                                    ,pr_dsdadatu => CASE rw_craplau.tpcaptura
-                                                   WHEN 2 THEN rw_craplau.cdseqfat
+                                                   WHEN 2 THEN vr_cdseqfat
                                                    ELSE rw_craplau.dslindig
                                                    END);
         ELSE

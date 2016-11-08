@@ -49,7 +49,7 @@ create or replace package cecred.SICR0001 is
           ,cdagenci NUMBER(3)    --  FORMAT "zz9"
           ,nrdconta NUMBER       --  FORMAT "zzzz,zzz,9"
           ,nmprimtl crapass.nmprimtl%TYPE --  FORMAT "x(40)"
-          ,cdtiptra NUMBER(1)    --  FORMAT "9"
+          ,cdtiptra NUMBER(2)    --  FORMAT "z9"
           ,fltiptra BOOLEAN
           ,dstiptra VARCHAR2(13) --  FORMAT "x(13)"
           ,fltipdoc VARCHAR2(10) --  CONVENIO ou TITULO
@@ -460,11 +460,11 @@ create or replace package body cecred.SICR0001 is
           vr_fltiptra := FALSE;
           
           IF (rw_agen_darf.tppagamento = 1) THEN -- Se for DARF
-            vr_dstiptra := 'Pagamento DARF'; -- Tipo Transação
+            vr_dstiptra := 'Pagto DARF'; -- Tipo Transação
             vr_fltipdoc := 'DARF'; -- Tipo Documento
             
           ELSIF (rw_agen_darf.tppagamento = 2) THEN -- Se for DAS
-            vr_dstiptra := 'Pagamento DAS'; -- Tipo Transação
+            vr_dstiptra := 'Pagto DAS'; -- Tipo Transação
             vr_fltipdoc := 'DAS'; -- Tipo Documento
           END IF;
           
