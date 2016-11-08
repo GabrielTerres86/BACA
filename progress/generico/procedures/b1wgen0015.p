@@ -858,39 +858,6 @@ PROCEDURE horario_operacao:
             ELSE
                 ASSIGN tt-limite.iddiauti = 1.  /* Dia util */
         END.
-
-         
-			/* Exemplo de horários encontrados nestes FINDs (convertidos):
-			   DEBNET -> hriniexe = 21:04
-			             hrfimexe = 21:30
-			   DEBSIC -> hriniexe = 19:01
-			             hrfimexe = 19:43 */
-
-            /* Se for SICREDI , reduz 1h do prazo por segurança */      
-            ASSIGN aux_hrinipag = IF par_tpoperac = 13 THEN (craphec.hriniexe - 3600) ELSE craphec.hriniexe
-                   aux_hrfimpag = craphec.hrfimexe.
-
-            CREATE tt-limite.
-            ASSIGN tt-limite.idtpdpag = 11
-                   tt-limite.hrinipag = STRING(aux_hrinipag,"HH:MM")
-                   tt-limite.hrfimpag = STRING(aux_hrfimpag,"HH:MM")
-                   tt-limite.nrhorini = aux_hrinipag
-                   tt-limite.nrhorfim = aux_hrfimpag.
-
-			/* Se passou o horário de início de execução do DEBNET / DEBSIC */
-            IF  TIME >= aux_hrinipag  THEN
-                ASSIGN tt-limite.idesthor = 1. /** Estourou lim. de hor. **/ 
-            ELSE
-                ASSIGN tt-limite.idesthor = 2. /** Dentro do horario limite **/
-
-            IF  CAN-DO("1,7",STRING(WEEKDAY(aux_datdodia)))             OR
-                CAN-FIND(crapfer WHERE crapfer.cdcooper = par_cdcooper  AND
-                                       crapfer.dtferiad = aux_datdodia) THEN
-                ASSIGN tt-limite.iddiauti = 2.  /* Nao eh dia util */
-            ELSE
-                ASSIGN tt-limite.iddiauti = 1.  /* Dia util */
-        END.
-
          
     RETURN "OK".
 
