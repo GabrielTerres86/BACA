@@ -56,11 +56,11 @@ DEFINE VARIABLE aux_idastcjt        AS INTEGER     			NO-UNDO.
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS RECT-15 RECT-16 ed_nmtitula ed_vlsddisp ~
-ed_vllautom ed_vlsdbloq ed_vlblqtaa Btn_G ed_vlsdblpr ed_vlsdblfp ~
-ed_vlsdchsl ed_vlstotal Btn_H ed_vllimcre 
+ed_vllautom ed_valaucre ed_vlsdbloq ed_vlblqtaa Btn_G ed_vlsdblpr ~
+ed_vlsdblfp ed_vlsdchsl ed_vlstotal Btn_H ed_vllimcre 
 &Scoped-Define DISPLAYED-OBJECTS ed_nmtitula ed_vlsddisp ed_vllautom ~
-ed_vlsdbloq ed_vlblqtaa ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl ed_vlstotal ~
-ed_vllimcre 
+ed_valaucre ed_vlsdbloq ed_vlblqtaa ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl ~
+ed_vlstotal ed_vllimcre 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -93,6 +93,11 @@ DEFINE BUTTON Btn_H
 DEFINE VARIABLE ed_nmtitula AS CHARACTER 
      VIEW-AS EDITOR
      SIZE 96 BY 3.81
+     BGCOLOR 15 FGCOLOR 1 FONT 11 NO-UNDO.
+
+DEFINE VARIABLE ed_valaucre AS DECIMAL FORMAT "zz,zzz,zzz,zz9.99-":U INITIAL 0 
+     VIEW-AS FILL-IN 
+     SIZE 40 BY 1.19
      BGCOLOR 15 FGCOLOR 1 FONT 11 NO-UNDO.
 
 DEFINE VARIABLE ed_vlblqtaa AS DECIMAL FORMAT "zz,zzz,zzz,zz9.99-":U INITIAL 0 
@@ -157,7 +162,7 @@ DEFINE RECTANGLE RECT-103
 
 DEFINE RECTANGLE RECT-15
      EDGE-PIXELS 4 GRAPHIC-EDGE  NO-FILL   
-     SIZE 102 BY 18.33.
+     SIZE 102 BY 19.52.
 
 DEFINE RECTANGLE RECT-16
      EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
@@ -172,9 +177,10 @@ DEFINE RECTANGLE RECT-122
 /* ************************  Frame Definitions  *********************** */
 
 DEFINE FRAME f_cartao_saldos_conta
-     ed_nmtitula AT ROW 9.57 COL 14 NO-LABEL WIDGET-ID 96
-     ed_vlsddisp AT ROW 13.62 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 110
-     ed_vllautom AT ROW 15.05 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 98
+     ed_nmtitula AT ROW 8.29 COL 14 NO-LABEL WIDGET-ID 96
+     ed_vlsddisp AT ROW 12.33 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 110
+     ed_vllautom AT ROW 13.76 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 98
+     ed_valaucre AT ROW 15.1 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 168
      ed_vlsdbloq AT ROW 16.48 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 104
      ed_vlblqtaa AT ROW 17.91 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 140
      Btn_G AT ROW 19.1 COL 116 WIDGET-ID 86
@@ -208,8 +214,20 @@ DEFINE FRAME f_cartao_saldos_conta
      "Empréstimos a Liberar:" VIEW-AS TEXT
           SIZE 39.8 BY 1.19 AT ROW 16.48 COL 29.2 WIDGET-ID 122
           FONT 14
+     "Débitos Programados:" VIEW-AS TEXT
+          SIZE 38 BY 1.19 AT ROW 13.76 COL 30.8 WIDGET-ID 128
+          FONT 14
+     "Em Cheques Fora Praça:" VIEW-AS TEXT
+          SIZE 44 BY 1.19 AT ROW 20.76 COL 68 RIGHT-ALIGNED WIDGET-ID 116
+          FONT 14
+     "CONSULTA DE SALDOS" VIEW-AS TEXT
+          SIZE 106 BY 3.33 AT ROW 1.48 COL 28 WIDGET-ID 166
+          FGCOLOR 1 FONT 10
+     "Créditos Programados:" VIEW-AS TEXT
+          SIZE 38.8 BY 1.19 AT ROW 15.1 COL 29.4 WIDGET-ID 170
+          FONT 14
      "Disponível para Saque:" VIEW-AS TEXT
-          SIZE 40 BY 1.19 AT ROW 13.62 COL 29 WIDGET-ID 126
+          SIZE 40 BY 1.19 AT ROW 12.33 COL 29 WIDGET-ID 126
           FONT 14
      "Depósitos TAA a Confirmar:" VIEW-AS TEXT
           SIZE 47 BY 1.19 AT ROW 17.91 COL 21.6 WIDGET-ID 124
@@ -431,6 +449,7 @@ DO:
     RUN procedures/obtem_saldo_limite.p ( INPUT 2,
                                          OUTPUT ed_vlsddisp,
                                          OUTPUT ed_vllautom,
+                                         OUTPUT ed_valaucre,
                                          OUTPUT ed_vlsdbloq,
                                          OUTPUT ed_vlblqtaa,
                                          OUTPUT ed_vlsdblpr,
@@ -566,6 +585,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     RUN procedures/obtem_saldo_limite.p ( INPUT 1,
                                          OUTPUT ed_vlsddisp,
                                          OUTPUT ed_vllautom,
+                                         OUTPUT ed_valaucre,
                                          OUTPUT ed_vlsdbloq,
                                          OUTPUT ed_vlblqtaa,
                                          OUTPUT ed_vlsdblpr,
@@ -688,12 +708,13 @@ PROCEDURE enable_UI :
                Settings" section of the widget Property Sheets.
 ------------------------------------------------------------------------------*/
   RUN control_load.
-  DISPLAY ed_nmtitula ed_vlsddisp ed_vllautom ed_vlsdbloq ed_vlblqtaa 
-          ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl ed_vlstotal ed_vllimcre 
+  DISPLAY ed_nmtitula ed_vlsddisp ed_vllautom ed_valaucre ed_vlsdbloq 
+          ed_vlblqtaa ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl ed_vlstotal 
+          ed_vllimcre 
       WITH FRAME f_cartao_saldos_conta.
-  ENABLE RECT-15 RECT-16 ed_nmtitula ed_vlsddisp ed_vllautom ed_vlsdbloq 
-         ed_vlblqtaa Btn_G ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl ed_vlstotal 
-         Btn_H ed_vllimcre 
+  ENABLE RECT-15 RECT-16 ed_nmtitula ed_vlsddisp ed_vllautom ed_valaucre 
+         ed_vlsdbloq ed_vlblqtaa Btn_G ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl 
+         ed_vlstotal Btn_H ed_vllimcre 
       WITH FRAME f_cartao_saldos_conta.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_saldos_conta}
   ENABLE RECT-122 
