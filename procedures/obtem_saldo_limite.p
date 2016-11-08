@@ -16,12 +16,18 @@ Ultima alteração: 13/10/2010 - Ajustes para TAA compartilhado
                   24/12/2015 - Adicionado tratamento para contas com assinatura 
                                conjunta. (Reinert)                           
 
+Ultima alteração: 20/10/2016 - Novo Campo para lancamentos futuros
+                               par_vllaucre campo para crédito   
+                
+                               
+
 
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_tpdsaldo    AS INTEGER                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vlsddisp    AS DECIMAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vllautom    AS DECIMAL                  NO-UNDO.
+DEFINE OUTPUT PARAMETER par_vllaucre    AS DECIMAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vlsdbloq    AS DECIMAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vlblqtaa    AS DECIMAL                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_vlsdblpr    AS DECIMAL                  NO-UNDO.
@@ -330,6 +336,9 @@ DO:
             ELSE
             IF  xField:NAME = "VLLAUTOM"  THEN
                 par_vllautom = DEC(xText:NODE-VALUE).
+            ELSE
+            IF  xField:NAME = "VLLAUCRE"  THEN
+                par_vllaucre = DEC(xText:NODE-VALUE).    
             ELSE
             IF  xField:NAME = "VLSDBLOQ"  THEN
                 par_vlsdbloq = DEC(xText:NODE-VALUE).
