@@ -274,7 +274,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          extratos isentos da cooperativa quando o cooperado possuir
                          o servico "extrato" no pacote de tarifas (Diego).
 
-			07/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+			      07/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+
+            08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos Futuros. 
+                         Lenilson (Mouts)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -1483,10 +1486,20 @@ DO:
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
+             
+        ELSE
 		IF   aux_operacao = 63   THEN
              DO:               
                  RUN calcula_valor_titulo_vencido.
              
+                 IF   RETURN-VALUE <> "OK"   THEN
+                      NEXT.
+             END.
+        ELSE 
+        IF   aux_operacao = 64   THEN
+             DO:               
+                 RUN lancamentos-futuros.
+                 
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
@@ -2230,7 +2243,7 @@ PROCEDURE obtem_saldo_limite:
                                              INPUT  aux_nrdconta,
                                              INPUT  4,              /* Origem - TAA */
                                              INPUT  1,              /* Titular */
-                                             INPUT  "TAA",          /* Tela */
+                                             INPUT  "TAL",          /* Tela */
                                              INPUT  TRUE,           /* Log */
                                              OUTPUT TABLE tt-totais-futuros,
                                              OUTPUT TABLE tt-erro,
@@ -2271,9 +2284,16 @@ PROCEDURE obtem_saldo_limite:
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = STRING(tt-totais-futuros.vllautom).
+    xText:NODE-VALUE = STRING(tt-totais-futuros.VLLAUDEB).
     xField:APPEND-CHILD(xText).
 
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLLAUCRE","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-totais-futuros.VLLAUCRE).
+    xField:APPEND-CHILD(xText).
 
     /* ---------- */
     xDoc:CREATE-NODE(xField,"VLSDBLOQ","ELEMENT").
@@ -8706,5 +8726,111 @@ PROCEDURE calcula_valor_titulo_vencido:
 
 END PROCEDURE.
 
+/*64 - Consulta de lançamentos Futuros*/
+PROCEDURE lancamentos-futuros:
+   DEFINE VARIABLE aux_vlldeb    AS DECIMAL                     NO-UNDO.
+   DEFINE VARIABLE aux_vllcre    AS DECIMAL                     NO-UNDO.
+/* LANCAMENTOS FUTUROS */
+    RUN sistema/generico/procedures/b1wgen0003.p PERSISTENT SET h-b1wgen0003.
+
+    /* SE FOR INCLUSO NOVO PARAMETRO, 
+    O PROGRAMA programa tempo_execucao_taa.p DEVE SER AJUSTADO! */
+    RUN consulta-lancto-car IN h-b1wgen0003(INPUT aux_cdcooper,
+                                            INPUT 91,
+                                            INPUT 999,
+                                            INPUT "996",
+                                            INPUT aux_nrdconta,
+                                            INPUT 4,
+                                            INPUT 1,
+                                            INPUT "TAL",
+                                            INPUT 1,
+                                            INPUT DATE(aux_dtiniext),  /* DTINIPER */
+                                            INPUT DATE(aux_dtfimext),  /* DTFIMPER */
+                                            INPUT "", /* INDEBCRE */
+                                           OUTPUT TABLE tt-totais-futuros, 
+                                           OUTPUT TABLE tt-erro,
+                                           OUTPUT TABLE tt-lancamento_futuro).                                                  
+    
+    DELETE PROCEDURE h-b1wgen0003.
+
+    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE tt-erro  THEN
+        DO:
+            aux_dscritic = tt-erro.dscritic.
+            RETURN "NOK".
+        END.
+
+    FIND FIRST tt-totais-futuros NO-LOCK NO-ERROR.
+    IF  NOT AVAILABLE tt-totais-futuros  THEN
+        DO:
+            aux_dscritic = "Lançamentos não encontrados.".
+            RETURN "NOK".
+        END.
+
+    FOR EACH tt-lancamento_futuro NO-LOCK
+             BY tt-lancamento_futuro.dtmvtolt:
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"DTMVTOLT","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-lancamento_futuro.dtmvtolt).
+    xField:APPEND-CHILD(xText).
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"DSHISTOR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-lancamento_futuro.dshistor).
+    xField:APPEND-CHILD(xText).
+
+    /* ----------*/
+    xDoc:CREATE-NODE(xField,"NRDOCMTO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-lancamento_futuro.nrdocmto).
+    xField:APPEND-CHILD(xText).
+
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"INDEBCRE","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-lancamento_futuro.indebcre).
+    xField:APPEND-CHILD(xText).
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLLANMTO","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-lancamento_futuro.vllanmto).
+    xField:APPEND-CHILD(xText).
+    
+    END.
+    
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"VLLAUDEB","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-totais-futuros.vllaudeb).
+    xField:APPEND-CHILD(xText).
+    
+    /* ---------- */
+    xDoc:CREATE-NODE(xField,"vllautom","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+    
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(tt-totais-futuros.vllautom).
+    xField:APPEND-CHILD(xText).
+       
+      
+    RETURN "OK".
+END PROCEDURE.
 /*Fim 63 - calcula_valor_titulo_vencido*/
 /* .......................................................................... */
