@@ -36,7 +36,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 25/10/2016
+    Data    : Julho/2008                     Ultima Atualizacao: 27/06/2016
            
     Dados referentes ao programa:
                 
@@ -471,9 +471,6 @@
                27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. Inclusao de funcionamento
                             de pedir senha do coordenador. (Jaison/James)
-
-               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
-                            (Jaison/Anderson)
 
 ..............................................................................*/
 
@@ -3124,8 +3121,8 @@ PROCEDURE busca_dados_limite_incluir:
                 
             RETURN "NOK".    
 
-			END.
-
+        END.
+    
         /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND
                              crapttl.nrdconta = par_nrdconta   AND
@@ -16112,8 +16109,7 @@ PROCEDURE valida_situacao_pa:
     IF  NOT AVAILABLE crapage   THEN
         ASSIGN aux_cdcritic = 15.
     ELSE    
-    IF  crapage.insitage <> 1   AND   /* Ativo */
-        crapage.insitage <> 3   THEN  /* Temporariamente Indisponivel */
+    IF  crapage.insitage <> 1   THEN
         ASSIGN aux_cdcritic = 856.
 
     IF  aux_cdcritic <> 0 THEN
