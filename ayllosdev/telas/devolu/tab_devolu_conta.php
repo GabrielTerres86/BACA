@@ -98,8 +98,8 @@
 							      <? echo getByTagName($lancamento->tags,'cdagechq'); ?>
 						</td>
 
-						<td><span><? echo getByTagName($lancamento->tags,'nrdocmto'); ?></span>
-							      <? echo getByTagName($lancamento->tags,'nrdocmto'); ?>
+						<td><span><? echo formataContaDVsimples(getByTagName($lancamento->tags,'nrdocmto')); ?></span>
+							      <? echo formataContaDVsimples(getByTagName($lancamento->tags,'nrdocmto')); ?>
 						</td>
 						<td><span><? echo formataMoeda(getByTagName($lancamento->tags,'vllanmto')) ; ?></span>
 								  <? echo formataMoeda(getByTagName($lancamento->tags,'vllanmto')) ; ?>
