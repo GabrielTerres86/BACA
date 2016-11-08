@@ -472,6 +472,9 @@
                             efetua_liber_anali_bordero. Inclusao de funcionamento
                             de pedir senha do coordenador. (Jaison/James)
 
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -16109,7 +16112,8 @@ PROCEDURE valida_situacao_pa:
     IF  NOT AVAILABLE crapage   THEN
         ASSIGN aux_cdcritic = 15.
     ELSE    
-    IF  crapage.insitage <> 1   THEN
+    IF  crapage.insitage <> 1   AND   /* Ativo */
+        crapage.insitage <> 3   THEN  /* Temporariamente Indisponivel */
         ASSIGN aux_cdcritic = 856.
 
     IF  aux_cdcritic <> 0 THEN

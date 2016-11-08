@@ -10,7 +10,8 @@
  * 000: [25/02/2015] Substituicao de caracteres especiais. (Jaison/Gielow - SD: 257871)
  * 001: [23/07/2015] Reformulacao Cadastral (Gabriel/RKAM)
  * 002: [22/06/2016] Removido a validação que não permitia inserir  vazio no campo 
-				     de licença ambiental conforme solicitado no chamado 449294. (Kelvin)
+ * 		             de licença ambiental conforme solicitado no chamado 449294. (Kelvin)
+ * 003: [10/08/2016] Inclusao de obrigatoriedade do CNAE. (Jaison/Anderson)
  */
 ?>
  
@@ -183,6 +184,10 @@
 		// Ramo Atividade
 		if (!validaInteiro($GLOBALS['cdrmativ'])) exibirErro('error','Ramo de Atividade inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
 		if ($GLOBALS['cdrmativ'] == 0) exibirErro('error','Ramo de Atividade deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdrmativ\',\'frmDadosIdentJuridica\')',false);
+
+		// CNAE
+        if (!validaInteiro($GLOBALS['cdcnae'])) exibirErro('error','CNAE inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
+		if ($GLOBALS['cdcnae'] == 0) exibirErro('error','CNAE deve ser diferente de zero.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdcnae\',\'frmDadosIdentJuridica\')',false);
 
 		// Nome no Talão
 		if ($GLOBALS['nmtalttl']=='') exibirErro('error','Nome Tal&atilde;o deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nmtalttl\',\'frmDadosIdentJuridica\')',false);
