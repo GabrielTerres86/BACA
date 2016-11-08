@@ -281,14 +281,14 @@ PROCEDURE Busca_Dados:
 
         /* Verificacao de tipo de conta e se exige assinatura conjunta JMD */
         FOR FIRST crapass FIELDS(inpessoa idastcjt qtminast) WHERE crapass.cdcooper = par_cdcooper
-                                                      AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
+                                                               AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
         
         IF NOT AVAILABLE crapass then
           DO:
             ASSIGN aux_dscritic = "009 - Associado nao cadastrado.".
             UNDO Busca, LEAVE Busca.
           END.
-          
+        
 		ASSIGN par_qtminast = crapass.qtminast.
 		 
         /* Carrega a lista de procuradores */
@@ -313,7 +313,7 @@ PROCEDURE Busca_Dados:
             /* PRJ 131 - Assinatura Conjunta */
             IF crapass.idastcjt = 1 THEN
                 DO: /* Assinatura Conjunta */
-    
+				
                   FOR FIRST crappod FIELDS(flgconju) 
                                     WHERE crappod.cdcooper = crapavt.cdcooper AND
                                           crappod.nrdconta = crapavt.nrdconta AND
@@ -5251,7 +5251,7 @@ PROCEDURE valida_responsaveis:
 	DEF  INPUT PARAM par_flgconju AS CHAR NO-UNDO.
 	DEF  INPUT PARAM par_qtminast AS INTE NO-UNDO.
 	DEF OUTPUT PARAM par_flgpende AS INTE NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-erro.
+	DEF OUTPUT PARAM TABLE FOR tt-erro.
  
     EMPTY TEMP-TABLE tt-erro.
     
@@ -5285,13 +5285,13 @@ PROCEDURE valida_responsaveis:
 			END.
 
         FOR FIRST crapavt FIELDS(cdcooper nrdconta) WHERE crapavt.cdcooper = par_cdcooper
-                                               AND crapavt.nrdconta = par_nrdconta
-                                               AND crapavt.nrcpfcgc = DEC(ENTRY(aux_contador,par_dscpfcgc,'#')) NO-LOCK. END.
+                                                      AND crapavt.nrdconta = par_nrdconta
+                                                      AND crapavt.nrcpfcgc = DEC(ENTRY(aux_contador,par_dscpfcgc,'#')) NO-LOCK. END.
 
         IF AVAIL crapavt THEN
 			DO:
 				ASSIGN aux_contarep = aux_contarep + 1.
-            NEXT.
+				NEXT.
 			END.
         ELSE
             DO:
@@ -5308,7 +5308,11 @@ PROCEDURE valida_responsaveis:
     
 	IF par_nmdatela = "CONTAS" THEN
 		DO:
+			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
+										         AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
 	
+		    IF AVAIL crapass AND crapass.qtminast > 2 THEN
+				DO:
 			ASSIGN aux_contarep = 0.
 
 			FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
@@ -5318,8 +5322,8 @@ PROCEDURE valida_responsaveis:
 				
 				ASSIGN aux_contarep = aux_contarep + 1.
 
-    END.
-    
+			END.
+	
 			FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
 												 AND crappod.nrdconta = par_nrdconta
 												 AND crappod.nrcpfpro = DEC(ENTRY(1,par_dscpfcgc,'#'))
@@ -5345,28 +5349,16 @@ PROCEDURE valida_responsaveis:
 					RETURN "NOK".
 				END.
 				
-			FOR FIRST crapass FIELDS(qtminast) WHERE crapass.cdcooper = par_cdcooper
-										         AND crapass.nrdconta = par_nrdconta NO-LOCK. END.
 												 
-		    IF AVAIL crapass THEN
+					IF qtminast > aux_contarep THEN
 				DO:
-					IF aux_contarep < 2 THEN
-						DO:
-							EMPTY TEMP-TABLE tt-erro.
-							CREATE tt-erro.
-							ASSIGN tt-erro.dscritic = "A quantidade minima de assinaturas deve ser maior ou igual a 2.".
-					
-							RETURN "NOK".
-						END.
-					ELSE IF qtminast > aux_contarep THEN
-						DO:
 							EMPTY TEMP-TABLE tt-erro.
 							CREATE tt-erro.
 							ASSIGN tt-erro.dscritic = "A quantidade minima de assinaturas nao pode ser superior a quantidade de responsaveis selecionados para assinatura conjunta.".
-
+					
 							RETURN "NOK".
 						END.
-				END.
+
 			ELSE
 				DO:
 					EMPTY TEMP-TABLE tt-erro.
@@ -5375,6 +5367,7 @@ PROCEDURE valida_responsaveis:
 								   
 					RETURN "NOK".
 				END.
+		        END. /*IF AVAIL CRAPASS */
 		END.
 	ELSE /* ATENDA */
 		DO:	
@@ -5418,7 +5411,7 @@ PROCEDURE grava_resp_ass_conjunta:
     DEF VAR aux_poderres AS CHAR NO-UNDO.
     DEF VAR aux_contares AS INT  NO-UNDO.
     DEF VAR aux_qtminast AS INT  NO-UNDO.
-    
+
     EMPTY TEMP-TABLE tt-erro.
     
     Contador: DO aux_contares = 1 TO NUM-ENTRIES(par_responsa,'#'):
@@ -5499,7 +5492,7 @@ PROCEDURE grava_resp_ass_conjunta:
 		END.
 	ELSE
 		DO:
-			FIND FIRST tt-erro NO-LOCK NO-ERROR.
+			FIND FIRST tt-erro NO-LOCK NO-ERROR NO-WAIT.
         
             IF  NOT AVAILABLE tt-erro  THEN
                 DO:
@@ -5508,8 +5501,8 @@ PROCEDURE grava_resp_ass_conjunta:
                 END.
 				
             RETURN "NOK".
-    END.
-   
+		END.
+
     RETURN "OK".
 
 END PROCEDURE.

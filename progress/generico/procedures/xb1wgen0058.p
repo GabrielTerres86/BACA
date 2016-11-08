@@ -1231,22 +1231,6 @@ PROCEDURE grava_resp_ass_conjunta:
 										INPUT aux_qtminast,
                                        OUTPUT TABLE tt-erro).
 
-    IF  ERROR-STATUS:ERROR THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-    
-            IF  NOT AVAILABLE tt-erro  THEN
-                CREATE tt-erro.
-                    
-            ASSIGN tt-erro.dscritic = tt-erro.dscritic + " - " + 
-                                      ERROR-STATUS:GET-MESSAGE(1).
-    
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                            INPUT "Erro").
-
-            RETURN.
-        END.
-
     IF  RETURN-VALUE = "NOK" THEN
         DO:
             FIND FIRST tt-erro NO-LOCK NO-ERROR.
