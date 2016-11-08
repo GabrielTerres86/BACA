@@ -4338,8 +4338,7 @@ PROCEDURE obtem-agendamentos:
                         IF  craplau.dscedent MATCHES "*GPS IDENTIFICADOR*" THEN
                             ASSIGN aux_incancel = 3. /* Indicador eh 3 para mudar a mensagem de exibicao caso for gps */
                 END.
-                END.
-                END.
+                END.                
                 ELSE
                     ASSIGN aux_incancel = 2. 
                                           
@@ -6473,19 +6472,6 @@ PROCEDURE alterar_parmon:
             END.
           
        END.
-
-    IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-       DO:
-          RUN gera_erro (INPUT par_cdcooper,
-                         INPUT par_cdagenci,
-                         INPUT par_cdoperad,
-                         INPUT 1,            /** Sequencia **/
-                         INPUT aux_cdcritic,
-                         INPUT-OUTPUT aux_dscritic).
-
-          RETURN "NOK".
-
-    END.
 
     IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
        DO:
