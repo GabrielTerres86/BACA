@@ -27,10 +27,6 @@
 	// Recebe a operação que está sendo realizada
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml = '';
 	$xml .= '<Root>';
