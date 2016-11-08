@@ -373,8 +373,8 @@ function controlaPesquisaCdcnpj(){
 	procedure	= 'BUSCA_CNPJ';
 	titulo      = 'CNPJ';
 	qtReg		= '30';
-	filtrosPesq = 'Codigo;nrcpfcgc;60px;S;0;;descricao|CNPJ;dsnome;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
-	colunas     = 'Codigo;nrcpfcgc;20%;right|CNPJ;dsnome;80%;left';			
+	filtrosPesq = 'CNPJ;nrcpfcgc;60px;S;0;;descricao|Razao Social;dsnome;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
+	colunas     = 'CNPJ;nrcpfcgc;20%;right|Razao Social;dsnome;80%;left';			
 	mostraPesquisa('COCNPJ',procedure,titulo,qtReg,filtrosPesq,colunas,divRotina); //tiago era MATRIC
 	/**/
 /*	
@@ -422,8 +422,8 @@ function controlaPesquisaCdcnpjBloqueado(){
 	procedure	= 'BUSCA_CNPJ_BLOQUEADO';
 	titulo      = 'CNPJ BLOQUEADO';
 	qtReg		= '30';
-	filtrosPesq = 'Codigo;nrcpfcgc;60px;S;0;;descricao|CNPJ;dsnome;200px;S;;;descricao';
-	colunas     = 'Codigo;nrcpfcgc;20%;right|CNPJ;dsnome;80%;left';			
+	filtrosPesq = 'CNPJ;nrcpfcgc;60px;S;0;;descricao|Razao Social;dsnome;200px;S;;;descricao';
+	colunas     = 'CNPJ;nrcpfcgc;20%;right|Razao Social;dsnome;80%;left';			
 	mostraPesquisa('COCNPJ',procedure,titulo,qtReg,filtrosPesq,colunas,divRotina);
 	/**/
 /*
@@ -617,8 +617,8 @@ function realizaOperacao() {
 	
 	var nrcpfcgc = $('#nrcpfcgc','#frmCadastro').val().replace(/\W/g,'');	
 	var inpessoa = getValueInpessoa();
-	var dsnome   = $('#dsnome','#frmCadastro').val();	
-	var dsmotivo = $('#dsmotivo','#frmCadastro').val();	
+	var dsnome = removeCaracteresInvalidos( $('#dsnome', '#frmCadastro').val() );
+	var dsmotivo = removeCaracteresInvalidos( $('#dsmotivo', '#frmCadastro').val() );
 	var dtmvtolt = $('#dtmvtolt','#frmCadastro').val();		
 	
 	// Executa script de bloqueio através de ajax

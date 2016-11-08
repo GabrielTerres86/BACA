@@ -8478,6 +8478,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END;    
   END pc_inserir_cnae_bloqueado;
 
+  PROCEDURE pc_atualizar_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
+                                       ,pr_dsmotivo   IN tbcc_cnae_bloqueado.dsmotivo%TYPE       --> Motivo da inclusao
+                                       ,pr_dtarquivo  IN tbcc_cnae_bloqueado.dtarquivo%TYPE      --> Data do arquivo
+                                       ,pr_tpbloqueio IN tbcc_cnae_bloqueado.tpbloqueio%TYPE     --> Tipo de bloqueio do CNAE (0-Restrito, 1-Proibido)
+                                       ,pr_tpinclusao IN tbcc_cnae_bloqueado.tpinclusao%TYPE     --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                       ,pr_dtmvtolt   IN tbcc_cnae_bloqueado.dtmvtolt%TYPE       --> Data atual
+                                       ,pr_dslicenca  IN tbcc_cnae_bloqueado.dslicenca%TYPE      --> Licencas necessarias
+                                       ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                       ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+    
+      CURSOR cr_cnae_blq(pr_cdcnae tbcc_cnae_bloqueado.cdcnae%TYPE) IS
+        SELECT tbcc_cnae_bloqueado.cdcnae
+          FROM tbcc_cnae_bloqueado
+         WHERE tbcc_cnae_bloqueado.cdcnae = pr_cdcnae;
+      rw_cnae_blq cr_cnae_blq%ROWTYPE;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      OPEN cr_cnae_blq(pr_cdcnae => pr_cdcnae);
+      FETCH cr_cnae_blq INTO rw_cnae_blq;
+      
+      IF cr_cnae_blq%NOTFOUND THEN -->Nao disparar critica apenas nao atualiza
+         CLOSE cr_cnae_blq;
+         vr_cdcritic := 0;
+         vr_dscritic := '';
+         RAISE vr_exc_saida;
+      END IF;    
+      
+      CLOSE cr_cnae_blq;
+      
+      -- Update
+      BEGIN
+        UPDATE tbcc_cnae_bloqueado
+           SET tbcc_cnae_bloqueado.dsmotivo   = pr_dsmotivo
+              ,tbcc_cnae_bloqueado.dtarquivo  = pr_dtarquivo
+              ,tbcc_cnae_bloqueado.tpbloqueio = pr_tpbloqueio
+              ,tbcc_cnae_bloqueado.tpinclusao = pr_tpinclusao
+              ,tbcc_cnae_bloqueado.dtmvtolt   = pr_dtmvtolt
+              ,tbcc_cnae_bloqueado.dslicenca  = pr_dslicenca
+         WHERE tbcc_cnae_bloqueado.cdcnae     = pr_cdcnae;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnae_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_atualizar_cnae_bloqueado;
+
   PROCEDURE pc_excluir_cnae_bloqueado(pr_cdcnae     IN tbcc_cnae_bloqueado.cdcnae%TYPE         --> Codigo do CNAE 
                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
@@ -8889,7 +8956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Programa : pc_importa_arq_cnae                  Antigo: Não há
   --  Sistema  : IB
   --  Sigla    : CRED
-  --  Autor    : Tiago Machado flor - SUPERO
+  --  Autor    : Tiago Machado flor - CECRED
   --  Data     : SET/2015.                   Ultima atualizacao: 
   --
   -- Dados referentes ao programa:
@@ -8946,7 +9013,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     -- Registros
     TYPE typ_reccritc IS RECORD (nrdlinha NUMBER
-                                ,dscritic VARCHAR2(100));
+                                ,dscritic VARCHAR2(1000));
     TYPE typ_tbcritic IS TABLE OF typ_reccritc INDEX BY BINARY_INTEGER;
     vr_tbcritic    typ_tbcritic; -- Tabela de criticas encontradas na validação do arquivo
 
@@ -9039,6 +9106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- Se não possuir linhas - Gera log erros
     IF vr_tab_linhas.count = 0 THEN
        vr_dscritic := 'Arquivo ' || pr_dsarquiv || ' não possui conteúdo!';
+       RAISE vr_excerror;
     END IF;   
 
     -- Se flglimpa = 1 entao devo limpar a tabela
@@ -9051,6 +9119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
           RAISE vr_excerror;
        END IF;
     END IF;    
+
 
     -- Excluir o arquivo, pois desse ponto em diante irá trabalhar com o registro
     -- de memória. Em caso de erros o programa abortará e o usuário irá realizar
@@ -9068,18 +9137,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                  ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
                                  ,pr_tpbloqueio => vr_tab_linhas(vr_indice)('TPBLOQUEIO').numero
                                  ,pr_tpinclusao => 1 --Inclusao via arquivo
-                                 ,pr_dtmvtolt   => vr_tab_linhas(vr_indice)('DTINCLUSAO').data
+                                 ,pr_dtmvtolt   => SYSDATE
                                  ,pr_dslicenca  => vr_tab_linhas(vr_indice)('DSLICENCA').texto
                                  ,pr_cdcritic   => vr_cdcritic
                                  ,pr_dscritic   => vr_dscritic);
                                    
         IF vr_dscritic IS NOT NULL THEN
+           
+           -- se nao conseguir inserir tenta atualizar           
+           pc_atualizar_cnae_bloqueado(pr_cdcnae     => vr_tab_linhas(vr_indice)('CDCNAE').numero
+                                      ,pr_dsmotivo   => vr_tab_linhas(vr_indice)('DSMOTIVO').texto
+                                      ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
+                                      ,pr_tpbloqueio => vr_tab_linhas(vr_indice)('TPBLOQUEIO').numero
+                                      ,pr_tpinclusao => 1 -- Via arquivo
+                                      ,pr_dtmvtolt   => SYSDATE
+                                      ,pr_dslicenca  => vr_tab_linhas(vr_indice)('DSLICENCA').texto
+                                      ,pr_cdcritic   => vr_cdcritic
+                                      ,pr_dscritic   => vr_dscritic);
+       
+           IF vr_cdcritic > 0 OR
+              vr_dscritic IS NOT NULL THEN
+              
            pc_add_critica(pr_dscritic => vr_dscritic
                          ,pr_nrdlinha => vr_indice);
 
            CONTINUE;
+                            
         END IF;
         
+      END IF;
+
       END IF;
 
     END LOOP;
@@ -9123,6 +9210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       vr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>Rotina com erros</Erro></Root>');
+                                     
        -- Converter o XML
       pr_retxml := vr_retxml.getClobVal();
       
@@ -9638,6 +9726,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END;    
   END pc_inserir_cnpj_bloqueado;
 
+  PROCEDURE pc_atualizar_cnpj_bloqueado(pr_inpessoa   IN tbcc_cnpjcpf_bloqueado.inpessoa%TYPE    --> PF/PJ
+                                       ,pr_nrcpfcgc   IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE    --> Codigo do CNAE 
+                                       ,pr_dsnome     IN tbcc_cnpjcpf_bloqueado.dsnome%TYPE      --> Nome                                     
+                                       ,pr_dsmotivo   IN tbcc_cnpjcpf_bloqueado.dsmotivo%TYPE    --> Motivo da inclusao
+                                       ,pr_dtarquivo  IN tbcc_cnpjcpf_bloqueado.dtarquivo%TYPE   --> Data do arquivo                                     
+                                       ,pr_tpinclusao IN tbcc_cnpjcpf_bloqueado.tpinclusao%TYPE  --> Tipo de inclusão (0-Manual, 1-Arquivo)
+                                       ,pr_dtmvtolt   IN tbcc_cnpjcpf_bloqueado.dtmvtolt%TYPE    --> Data atual
+                                       ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
+                                       ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
+  BEGIN  
+    DECLARE
+    
+      CURSOR cr_cnpj_blq(pr_nrcpfcgc tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE) IS
+        SELECT tbcc_cnpjcpf_bloqueado.nrcpfcgc
+          FROM tbcc_cnpjcpf_bloqueado
+         WHERE tbcc_cnpjcpf_bloqueado.nrcpfcgc = pr_nrcpfcgc;
+      rw_cnpj_blq cr_cnpj_blq%ROWTYPE;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+    BEGIN 
+      
+      OPEN cr_cnpj_blq(pr_nrcpfcgc => pr_nrcpfcgc);
+      FETCH cr_cnpj_blq INTO rw_cnpj_blq;
+      
+      IF cr_cnpj_blq%NOTFOUND THEN -->Nao disparar critica apenas nao atualiza
+         CLOSE cr_cnpj_blq;
+         vr_cdcritic := 0;
+         vr_dscritic := '';
+         RAISE vr_exc_saida;
+      END IF;    
+      
+      CLOSE cr_cnpj_blq;
+      
+      -- Update
+      BEGIN
+        UPDATE tbcc_cnpjcpf_bloqueado
+           SET tbcc_cnpjcpf_bloqueado.dsnome     = pr_dsnome
+              ,tbcc_cnpjcpf_bloqueado.dsmotivo   = pr_dsmotivo
+              ,tbcc_cnpjcpf_bloqueado.dtarquivo  = pr_dtarquivo
+              ,tbcc_cnpjcpf_bloqueado.dtmvtolt   = pr_dtmvtolt
+              ,tbcc_cnpjcpf_bloqueado.tpinclusao = pr_tpinclusao
+              ,tbcc_cnpjcpf_bloqueado.inpessoa   = pr_inpessoa
+         WHERE tbcc_cnpjcpf_bloqueado.nrcpfcgc   = pr_nrcpfcgc;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em CADA0004.pc_atualizar_cnpj_bloqueado: ' || SQLERRM;
+
+    END;    
+  END pc_atualizar_cnpj_bloqueado;
+
   PROCEDURE pc_excluir_cnpj_bloqueado(pr_nrcpfcgc   IN tbcc_cnpjcpf_bloqueado.nrcpfcgc%TYPE    --> Codigo do CNPJ 
                                      ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                  --> Codigo de critica
                                      ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS              --> Descricao da critica
@@ -10060,7 +10215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     -- Registros
     TYPE typ_reccritc IS RECORD (nrdlinha NUMBER
-                                ,dscritic VARCHAR2(100));
+                                ,dscritic VARCHAR2(1000));
     TYPE typ_tbcritic IS TABLE OF typ_reccritc INDEX BY BINARY_INTEGER;
     vr_tbcritic    typ_tbcritic; -- Tabela de criticas encontradas na validação do arquivo
 
@@ -10153,6 +10308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- Se não possuir linhas - Gera log erros
     IF vr_tab_linhas.count = 0 THEN
        vr_dscritic := 'Arquivo ' || pr_dsarquiv || ' não possui conteúdo!';
+       RAISE vr_excerror;
     END IF;   
 
     -- Excluir o arquivo, pois desse ponto em diante irá trabalhar com o registro
@@ -10182,16 +10338,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                  ,pr_dsnome     => vr_tab_linhas(vr_indice)('DSNOME').texto
                                  ,pr_dsmotivo   => vr_tab_linhas(vr_indice)('DSMOTIVO').texto
                                  ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
-                                 ,pr_tpinclusao => vr_tab_linhas(vr_indice)('TPINCLUSAO').numero
-                                 ,pr_dtmvtolt   => vr_tab_linhas(vr_indice)('DTINCLUSAO').data
+                                 ,pr_tpinclusao => 1 --via arq
+                                 ,pr_dtmvtolt   => SYSDATE
                                  ,pr_cdcritic   => vr_cdcritic
                                  ,pr_dscritic   => vr_dscritic);
                                    
         IF vr_dscritic IS NOT NULL THEN
+          
+           -- se nao conseguir inserir tenta atualizar
+           pc_atualizar_cnpj_bloqueado(pr_inpessoa   => vr_tab_linhas(vr_indice)('INPESSOA').numero
+                                      ,pr_nrcpfcgc   => vr_tab_linhas(vr_indice)('NRCPFCGC').numero
+                                      ,pr_dsnome     => vr_tab_linhas(vr_indice)('DSNOME').texto
+                                      ,pr_dsmotivo   => vr_tab_linhas(vr_indice)('DSMOTIVO').texto
+                                      ,pr_dtarquivo  => vr_tab_linhas(vr_indice)('DTARQUIVO').data
+                                      ,pr_tpinclusao => 1 -- via arq
+                                      ,pr_dtmvtolt   => SYSDATE
+                                      ,pr_cdcritic   => vr_cdcritic
+                                      ,pr_dscritic   => vr_dscritic);
+           
+           
            pc_add_critica(pr_dscritic => vr_dscritic
                          ,pr_nrdlinha => vr_indice);
 
-           CONTINUE;
         END IF;
         
       END IF;
