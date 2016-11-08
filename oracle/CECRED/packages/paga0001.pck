@@ -1023,16 +1023,6 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   /* Procedure para processar solicitação de envio da jdda */
   PROCEDURE pc_processa_crapdda ( pr_dscritic  OUT VARCHAR2);           --Descricao da critica
 
-    /* Procedure para verificar se existem transacoes que nao podem mais ser aprovadas */
-  PROCEDURE pc_verifica_sit_transacao (pr_cdcooper  IN crapcop.cdcooper%type  --Código da Cooperativa
-                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE  --Numero da Conta
-                                      ,pr_cdagenci  IN crapass.cdagenci%TYPE  --Código da Agencia
-                                      ,pr_dtmvtolt  IN crapdat.dtmvtolt%type  --Data Proximo Pagamento
-                                      ,pr_dssgproc  IN VARCHAR2               --Indicador segundo processo
-                                      ,pr_dstransa OUT VARCHAR2               --Msg Transação
-                                      ,pr_cdcritic OUT INTEGER                --Código de erro
-                                      ,pr_dscritic OUT VARCHAR2);             --Retorno de Erro
-
   PROCEDURE pc_valores_a_creditar(pr_cdcooper IN crapcco.cdcooper%TYPE
                                  ,pr_nrcnvcob IN crapcco.nrconven%TYPE
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
@@ -1121,7 +1111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 28/09/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 04/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1409,6 +1399,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               
        28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
                     na procedure pc_paga_titulo (Lucas Ranghetti #511679)                      
+                    
+       04/11/2016 - Ajuste para tratar a terceira execucao do processo debnet M349 (Tiago/Elton)             
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -5089,7 +5081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            IF rw_craplau.vllanaut > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
                                      nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
             --> Se for a primeira execução da DEBNET/CRPS509 
-            IF vr_qtdexec = 1 THEN 
+            IF vr_qtdexec < 3 THEN 
               FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                              ,pr_nrdconta  => rw_craplau.nrdconta
                                              ,pr_cdsitsnh  => 1
@@ -5252,7 +5244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
          IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           /* Se for a primeira execução da DEBNET/CRPS509 */
-          IF vr_qtdexec = 1 THEN 
+          IF vr_qtdexec < 3 THEN 
             FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                            ,pr_nrdconta  => rw_craplau.nrdconta
                                            ,pr_cdsitsnh  => 1
@@ -10568,7 +10560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           IF rw_craplau.vllanaut > (vr_tab_saldo(vr_indsaldo).vlsddisp + vr_tab_saldo(vr_indsaldo).vllimcre) THEN
 
             --> Se for a primeira execução da DEBNET/CRPS509 
-            IF vr_qtdexec = 1 THEN
+            IF vr_qtdexec < 3 THEN
               FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                              ,pr_nrdconta  => rw_craplau.nrdconta
                                              ,pr_cdsitsnh  => 1
@@ -10744,7 +10736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
         IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           --> Se for a primeira execução da DEBNET/CRPS509 DEBSIC/CRPS642
-          IF vr_qtdexec = 1 THEN           
+          IF vr_qtdexec < 3 THEN           
             FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                            ,pr_nrdconta  => rw_craplau.nrdconta
                                            ,pr_cdsitsnh  => 1
@@ -18802,146 +18794,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
   END pc_processa_crapdda;
 
-    /******************************************************************************/
-/** Procedure para verificar se existem transacoes que serao atualizadas     **/
-/** na atualiza_transacoes_nao_efetivadas                                    **/
-/******************************************************************************/
-  PROCEDURE pc_verifica_sit_transacao (pr_cdcooper  IN crapcop.cdcooper%type  --Código da Cooperativa
-                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE  --Numero da Conta
-                                      ,pr_cdagenci  IN crapass.cdagenci%TYPE  --Código da Agencia
-                                      ,pr_dtmvtolt  IN crapdat.dtmvtolt%type  --Data Proximo Pagamento
-                                      ,pr_dssgproc  IN VARCHAR2               --Indicador segundo processo
-                                      ,pr_dstransa OUT VARCHAR2               --Msg Transação
-                                      ,pr_cdcritic OUT INTEGER                --Código de erro
-                                      ,pr_dscritic OUT VARCHAR2) IS           --Retorno de Erro
-
-  BEGIN
-    DECLARE
-      --Cursores Locais
-      CURSOR cr_craptoj (pr_cdcooper IN crapcop.cdcooper%type
-                        ,pr_nrdconta IN crapass.nrdconta%type) IS
-        SELECT craptoj.dtmvtopg
-              ,craptoj.idagenda
-              ,craptoj.cdtiptra
-              ,craptoj.ROWID
-        FROM craptoj craptoj
-        WHERE craptoj.cdcooper = pr_cdcooper
-        AND   craptoj.nrdconta = pr_nrdconta
-        AND   craptoj.insittra = 1; --Pendente
-
-      --Variaveis Locais
-      vr_hratual  INTEGER;
-      vr_hrlimite INTEGER;
-      vr_hrlimtrf INTEGER;
-      vr_hrlimpag INTEGER;
-      vr_hrlimted INTEGER;
-      vr_flgalter BOOLEAN;
-      vr_datdodia DATE;
-      vr_index_limite INTEGER;
-      --Tabela de memória de limites de horario
-      vr_tab_limite INET0001.typ_tab_limite;
-      vr_cdcritic crapcri.cdcritic%TYPE;
-      --Variaveis de erro
-      vr_des_erro     VARCHAR2(4000);
-      --Variaveis de Excecao
-      vr_exc_erro EXCEPTION;
-    BEGIN
-      --Inicializar retorno erro
-      pr_cdcritic:= NULL;
-      pr_dscritic:= NULL;
-      --Limpar tabela de memória
-      vr_tab_limite.DELETE;
-
-      --Buscar Horario Operacao
-      INET0001.pc_horario_operacao (pr_cdcooper => pr_cdcooper  --Código Cooperativa
-                                   ,pr_cdagenci => pr_cdagenci  --Agencia do Associado
-                                   ,pr_tpoperac => 0            --Tipo de Operacao (0=todos)
-                                   ,pr_inpessoa => 2            --Tipo de Pessoa
-                                   ,pr_tab_limite => vr_tab_limite --Tabelas de retorno de horarios limite
-                                   ,pr_cdcritic => vr_cdcritic    --Código do erro
-                                   ,pr_dscritic => vr_des_erro);  --Descricao do erro
-      --Se ocorreu erro
-      IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_des_erro) IS NOT NULL THEN
-        --levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-
-      --Se encontrou limites
-      vr_index_limite:= vr_tab_limite.FIRST;
-      WHILE vr_index_limite IS NOT NULL LOOP
-        CASE vr_tab_limite(vr_index_limite).idtpdpag
-          WHEN 1 THEN --Transferencia
-            vr_hrlimtrf:= vr_tab_limite(vr_index_limite).nrhorfim;
-          WHEN 2 THEN --Pagamento
-            vr_hrlimpag:= vr_tab_limite(vr_index_limite).nrhorfim;
-          WHEN 4 THEN --TED
-            vr_hrlimted:= vr_tab_limite(vr_index_limite).nrhorfim;
-          ELSE NULL;
-        END CASE;
-        --Encontrar proximo registro
-        vr_index_limite:= vr_tab_limite.NEXT(vr_index_limite);
-      END LOOP;
-
-      --Buscar a data do processamento
-      vr_datdodia:= TO_DATE(SYSDATE);
-
-      --Selecionar transacoes operador juridico
-      FOR rw_craptoj IN cr_craptoj (pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => pr_nrdconta) LOOP
-        --Atribuir FALSE para flag altera
-        vr_flgalter:= FALSE;
-
-        CASE rw_craptoj.cdtiptra
-          WHEN 4 THEN
-            --Hora limite recebe
-            vr_hrlimite:= vr_hrlimted; /* TED */
-          WHEN 2 THEN
-            --Hora limite recebe pagamento
-            vr_hrlimite:= vr_hrlimpag; /* Pagamento */
-          ELSE
-            --Hora limite recebe transferencia
-            vr_hrlimite:= vr_hrlimtrf; /* Transferencia */
-        END CASE;
-
-        --Determinar a hora atual
-        vr_hratual:= GENE0002.fn_busca_time;
-
-        IF rw_craptoj.idagenda = 1  THEN /* Debito nesta data */
-          --Se data pagamento menor data movimento
-          IF Trunc(rw_craptoj.dtmvtopg) <= Trunc(pr_dtmvtolt)  AND
-             (Trunc(rw_craptoj.dtmvtopg) < Trunc(SYSDATE) OR vr_hratual > vr_hrlimite) THEN
-            --Atualiza flag alterar para true
-            vr_flgalter:= TRUE;
-          END IF;
-        ELSE
-          --Debito por agendamento
-          IF Trunc(rw_craptoj.dtmvtopg) <= Trunc(SYSDATE) OR
-                   (Trunc(pr_dtmvtolt) > Trunc(SYSDATE) AND
-                    Trunc(rw_craptoj.dtmvtopg) <= Trunc(pr_dtmvtolt) AND
-                    Trunc(vr_datdodia) <> Trunc(SYSDATE) AND
-                    pr_dssgproc = 'NAO') THEN
-            --Atualizar flag para true
-            vr_flgalter:= TRUE;
-          END IF;
-        END IF;
-
-        pr_dstransa:= '';
-        --Se deve alterar
-        IF vr_flgalter THEN
-           pr_dstransa:= 'O dia/horario para realizar alguma(s) transacao(oes) foi excedido.' ||
-                         ' Por esse motivo o status sera alterado para nao efetivada.';
-        END IF;
-      END LOOP;
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= vr_des_erro;
-      WHEN OTHERS THEN
-        -- Erro
-        pr_dscritic:= 'Erro na rotina PAGA0001.pc_verifica_sit_transacao. '||sqlerrm;
-    END;
-  END pc_verifica_sit_transacao;
-
   PROCEDURE pc_valores_a_creditar(pr_cdcooper IN crapcco.cdcooper%TYPE
                                  ,pr_nrcnvcob IN crapcco.nrconven%TYPE
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
@@ -19593,6 +19445,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               08/09/2016 - Remover condicao temporaria de criacao de protocolo. Agora todos os debitos
     --                            podem ter seu comprovante gerado normalmente, devido ao ajuste na estrutura
     --                            da tabela crapaut. (Anderson #511078)
+    --
+    --               04/11/2016 - Ajuste para tratar a terceira execucao do processo debnet M349 (Tiago/Elton)
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -20051,7 +19905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               vr_auxdscri := vr_dscritic;
                    
           -- Se for a primeira tentativa apenas grava a mensagem para o cooperado
-          IF vr_qtdexec = 1 THEN
+          IF vr_qtdexec < 3 THEN
             -- VARIAVEIS AUXILIARES DE ERRO, PARA NAO PERDER INFORMACAO ATE O MOMENTO
             pr_cdcritic := vr_auxcdcri;
             pr_dscritic := vr_auxdscri;
@@ -20189,7 +20043,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           END;
           
 		  -- Se for a primeira tentativa apenas grava critica
-          ELSIF vr_qtdexec = 1 THEN
+          ELSIF vr_qtdexec < 3 THEN
             BEGIN
               -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
               UPDATE craplau
@@ -20216,7 +20070,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           vr_auxdscri := vr_dscritic;
           
           -- Se for a primeira tentativa apenas grava a mensagem para o cooperado
-          IF vr_qtdexec = 1 THEN
+          IF vr_qtdexec < 3 THEN
 
             -- Se for a primeira tentativa / Saldo Insuficiente
             BEGIN
