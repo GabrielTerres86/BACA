@@ -1,21 +1,21 @@
-<? 
-/*!
- * FONTE        : realiza_pesquisa.php
- * CRIAÇÃO      : Rodolpho Telmo (DB1)
- * DATA CRIAÇÃO : Janeiro/2010
- * OBJETIVO     : Realiza a pesquisa genérica
- * --------------
- * ALTERAÇÕES   :
- * --------------
- * 001: [22/10/2020] David       (CECRED) : Incluir novo parametro para a funcao getDataXML (David).
- * 002: [17/16/2011] Gabriel Capoia (DB1) : Tratamento para retornar um valor diferente do que é exibido na busca ( Ex.: Exibe completo e retorna o resumido ).
- * 003:	[07/08/2012] Adriano	 (CECRED) : Incluido o parametro rotina. Ajuste referente ao projeto GP - Sócios Menores.
- * 004:	[28/01/2014] Jorge   	 (CECRED) : Ajuste em popular tabela, verificando caso venha "yes" ou "no" e botando em portugues.
- * 005:	[16/05/2014] Jean Michel (CECRED) : inclusao do parametro nmdatela na montagem do XML (Projeto de Novos Cartões Bancoob (TELA TRNBCB)).
- * 006: [31/03/2015] Jorge       (CECRED) : Adicionado parametro $opcoesColuna[5], opcional para coluna ficar visivel ou nao. (SD 229250)
- * 007: [23/04/2015] Vanessa 	 (CECRED) : Tratamemnto para mostrar o nrispbif com 8 posições
- * 008: [17/07/2015] Gabriel     (RKAM)   : Suporte para rotinas Oracle.  
- */ 
+<?php
+   /* FONTE        : realiza_pesquisa.php
+	* CRIAÇÃO      : Rodolpho Telmo (DB1)
+	* DATA CRIAÇÃO : Janeiro/2010
+	* OBJETIVO     : Realiza a pesquisa genérica
+	* --------------
+	* ALTERAÇÕES   :
+	* --------------
+	* 001: [22/10/2020] David          (CECRED) : Incluir novo parametro para a funcao getDataXML (David).
+	* 002: [17/16/2011] Gabriel Capoia (DB1) : Tratamento para retornar um valor diferente do que é exibido na busca ( Ex.: Exibe completo e retorna o resumido ).
+	* 003: [07/08/2012] Adriano	       (CECRED) : Incluido o parametro rotina. Ajuste referente ao projeto GP - Sócios Menores.
+	* 004: [28/01/2014] Jorge   	   (CECRED) : Ajuste em popular tabela, verificando caso venha "yes" ou "no" e botando em portugues.
+	* 005: [16/05/2014] Jean Michel    (CECRED) : inclusao do parametro nmdatela na montagem do XML (Projeto de Novos Cartões Bancoob (TELA TRNBCB)).
+	* 006: [31/03/2015] Jorge          (CECRED) : Adicionado parametro $opcoesColuna[5], opcional para coluna ficar visivel ou nao. (SD 229250)
+	* 007: [23/04/2015] Vanessa 	   (CECRED) : Tratamemnto para mostrar o nrispbif com 8 posições
+	* 008: [17/07/2015] Gabriel        (RKAM)   : Suporte para rotinas Oracle.  
+	* 009: [27/07/2016] Carlos R.	   (CECRED) : Corrigi a forma de recuperacao dos dados do XML. SD 479874.
+	*/ 
 
 	session_start();
 	require_once("../config.php");
@@ -122,17 +122,18 @@
 	$xmlObjPesquisa = getObjectXML($xmlResult);	
 	
 	// Se ocorrer um erro, mostra cr&iacute;tica
-	if (strtoupper($xmlObjPesquisa->roottag->tags[0]->name) == "ERRO") exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divPesquisa\'))');
+	if (isset($xmlObjPesquisa->roottag->tags[0]->name) && strtoupper($xmlObjPesquisa->roottag->tags[0]->name) == "ERRO") 
+		exibirErro('error',$xmlObjPesquisa->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divPesquisa\'))');
 	
-	$pesquisa = $xmlObjPesquisa->roottag->tags[0]->tags; 
+	$pesquisa = ( isset($xmlObjPesquisa->roottag->tags[0]->tags) ) ? $xmlObjPesquisa->roottag->tags[0]->tags : array(); 
 	
 	// Quantidade total de cooperados na pesquisa
-	$qtregist = $xmlObjPesquisa->roottag->tags[0]->attributes["QTREGIST"]; 		
+	$qtregist = ( isset($xmlObjPesquisa->roottag->tags[0]->attributes["QTREGIST"]) ) ? $xmlObjPesquisa->roottag->tags[0]->attributes["QTREGIST"] : 0;
 ?>	
 
 <div id="divPesquisaItens" class="divPesquisaItens">
 	<table>
-		<? 
+		<?php
 		// Explodo as colunas pelo pipe "|".
 		$arrayColunas = explode("|", $colunas);
 		
@@ -146,7 +147,7 @@
 					<? echo utf8ToHtml('Não existe '.$tituloPesquisa.' com os dados informados.'); ?>
 				</td>
 			</tr> 
-			<?						
+			<?php						
 		} else {	
 			// Realiza um loop nos registros retornados e desenha cada um em uma linha da tabela
 			for($i = 0; $i < count($pesquisa); $i++) {							
@@ -162,12 +163,12 @@
 					$stringParametro .= ($stringParametro == "") ? "" : "|";						
 					
 					// Explodo os arrays para obter suas opções
-					$opcoesColunas  = explode(";", $arrayColunas[$j]);										
-					$opcoesFiltros  = explode(";", $arrayFiltros[$j]);					
+					$opcoesColunas  = ( isset($arrayColunas[$j]) ) ? explode(";", $arrayColunas[$j]) : array();
+					$opcoesFiltros  = ( isset($arrayFiltros[$j]) ) ? explode(";", $arrayFiltros[$j]) : array();
 					
-					$campoNome  = $opcoesFiltros[0];											
-					$colunaNome = $opcoesColunas[1];
-					$campoBusca = $opcoesColunas[4];
+					$campoNome  = ( isset($opcoesFiltros[0]) ) ? $opcoesFiltros[0] : '';
+					$colunaNome = ( isset($opcoesColunas[1]) ) ? $opcoesColunas[1] : '';
+					$campoBusca = ( isset($opcoesColunas[4]) ) ? $opcoesColunas[4] : '';
 					
 					$resultado  = getByTagName($pesquisa[$i]->tags,$colunaNome);
 					$resultado  = str_replace("'","\'",$resultado);
@@ -181,7 +182,7 @@
 				}
 				?> 
 				<tr onClick="selecionaPesquisa(<? echo "'".$stringParametro."'"; ?>,<? echo "'".$rotina."'"; ?>); return false;"> 
-				<?		
+				<?php		
 				// Agora monto as colunas (td) da tabela, de acordo com o parâmetro colunas
 				for($j = 0; $j < count($arrayColunas); $j++) {				
 					
@@ -189,11 +190,11 @@
 					$opcoesColuna = explode(";", $arrayColunas[$j]);
 					
 					// Recebendo os valores
-					$colunaRotulo		= $opcoesColuna[0];
-					$colunaNome			= $opcoesColuna[1];
-					$colunaLargura		= $opcoesColuna[2];
-					$colunaAlinhamento	= $opcoesColuna[3];
-					$colunaVisivel   	= ($opcoesColuna[5] != null and $opcoesColuna[5] == "N") ? "display:none;" : "";
+					$colunaRotulo		= ( isset($opcoesColuna[0]) ) ? $opcoesColuna[0] : '';
+					$colunaNome			= ( isset($opcoesColuna[1]) ) ? $opcoesColuna[1] : '';
+					$colunaLargura		= ( isset($opcoesColuna[2]) ) ? $opcoesColuna[2] : '';
+					$colunaAlinhamento	= ( isset($opcoesColuna[3]) ) ? $opcoesColuna[3] : '';
+					$colunaVisivel   	= ( isset($opcoesColuna[5]) && $opcoesColuna[5] != null && $opcoesColuna[5] == "N" ) ? "display:none;" : "";
 					
 					// Busco nas tags do resultado da pesquisa que tenha o mesmo nome da coluna que estou desenhando
 					foreach( $pesquisa[$i]->tags as $tag ) {						    
@@ -203,7 +204,7 @@
 					<td style="<? echo "width:".$colunaLargura.";text-align:".$colunaAlinhamento.";".$colunaVisivel ?>">
 						<? echo $colunaNome == 'nrispbif' || $colunaNome == 'cdispbif' ? str_pad($resultado, 8, "0", STR_PAD_LEFT) : $resultado; ?>
 					</td> 
-					<?	
+					<?php
 				} 
 				?>						
 				</tr>
@@ -231,7 +232,7 @@
 	<table>	
 		<tr>
 			<td>
-				<?
+				<?php
 					// Se a paginação não está na primeira, exibe botão voltar
 					if ($nriniseq > 1) { 
 						?> <a class='paginacaoAnt'><<< Anterior</a> <? 
@@ -244,7 +245,7 @@
 				Exibindo <? echo $nriniseq; ?> at&eacute; <? if (($nriniseq + $nrregist) > $qtregist) { echo $qtregist; } else { echo ($nriniseq + $nrregist - 1); } ?> de <? echo $qtregist; ?>
 			</td>
 			<td>
-				<?
+				<?php
 					// Se a paginação não está na &uacute;ltima página, exibe botão proximo
 					if ($qtregist > ($nriniseq + $nrregist - 1)) {
 						?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
