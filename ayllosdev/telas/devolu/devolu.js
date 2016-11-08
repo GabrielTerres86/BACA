@@ -1,14 +1,17 @@
-/*!
+/*! 
  * FONTE        : DEVOLU.php
  * CRIAÇÃO      : Andre Santos - SUPERO
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Mostrar tela DEVOLU
  * --------------
  * ALTERAÇÕES   : #273953 Alinhamento das colunas das tabelas (Carlos)
- *
+ * --------------
  *                12/07/2016 #451040 Retirar o botão "Executar Devolução" (Carlos)
  *
- * --------------
+ *				  19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques(Lucas Ranghetti #484923)
+ * 
+ *				  07/11/2016 - Validar horario para devolucao de acordo com o parametrizado na TAB055(Lucas Ranghetti #539626)
+ * 
  */
 
 // Definição de algumas variáveis globais
@@ -63,7 +66,7 @@ function estadoInicial() {
     unblockBackground();
     removeOpacidade('divTela');
 	formataCabecalho();
-
+	
 	// Limpa HTML
 	$('#divResultado').html('');
 	$('#divConteudo').html('');
@@ -84,10 +87,10 @@ function estadoInicial() {
 	$('#nrdconta','#'+frmCab).select();
 	trocaBotao('Prosseguir','btnContinuar();');
 	$('#btVoltar','#divBotoes').hide();
-
+	
     // Desabilita Campos
 	$('#nmprimtl','#'+frmCab).desabilitaCampo();
-
+	
 	$('input,select','#'+frmCab).removeClass('campoErro');
     controlaFoco();
 }
@@ -108,7 +111,7 @@ function formataCabecalho() {
 	//Rótulos
 	rNrdconta.addClass('rotulo-linha').css({'width':'80px'});
     rNmprimtl.addClass('rotulo-linha').css({'width':'0px'});
-
+	
     // Campos
 	cNrdconta.css({'width':'83px'});
     cNmprimtl.css({'width':'350px'});
@@ -227,7 +230,7 @@ function formataAlinea() {
 function controlaFoco() {
 
 	$('#nrdconta','#'+frmCab).unbind('keypress').bind('keypress', function(e) {
-        if ( e.keyCode == 9 || e.keyCode == 13 ) {
+        if ( e.keyCode == 9 || e.keyCode == 13 ) { 
             $('#nrdconta','#'+frmCab).desabilitaCampo();
 			btnContinuar();
             return false;
@@ -255,7 +258,7 @@ function controlaFoco() {
 function trocaBotao( botao , funcao ) {
 	$('#divBotoes','#divTela').html('');
 	$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;" >Voltar</a>&nbsp;');
-
+	
 	if (botao != '') {
 		$('#divBotoes','#divTela').append('<a href="#" class="botao" id="btSalvar" onclick=' + funcao + ' return false;" >' + botao + '</a>');
 	}
@@ -264,8 +267,8 @@ function trocaBotao( botao , funcao ) {
 
 
 // Botoes
-function btnVoltar() {
-    estadoInicial();
+function btnVoltar() {    
+	estadoInicial();
 	return false;
 }
 
@@ -283,13 +286,13 @@ function ExecutaDevolucao() {
 
 // Botao Devolver Cheque
 function Devolver() {
-    marcar_cheque_devolu();
-    return false;
+	marcar_cheque_devolu();	
+	return false;
 }
 
 // Botao Auxiliar - Devolver Cheque
 function proc_gera_dev() {
-    showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Ayllos",'verifica_alinea();','fechaRotina($("#divRotina"));',"sim.gif","nao.gif");
+		showConfirmacao('Confirma Opera&ccedil;&atilde;o?',"Confirma&ccedil;&atilde;o - Ayllos",'verifica_alinea();','fechaRotina($("#divRotina"));',"sim.gif","nao.gif");
     return false;
 }
 
@@ -298,7 +301,7 @@ function proc_gera_dev() {
 function BuscaDevolu(nriniseq, nrregist) {
 
     var nrdconta = $('#nrdconta','#'+frmCab).val().replace(".", "").replace("-", "");
-
+	
     showMsgAguardo("Aguarde, buscando devolu&ccedil;&otilde;es...");
 
     $.ajax({
@@ -335,7 +338,7 @@ function BuscaDevolu(nriniseq, nrregist) {
                     }
                 } else {
                     try {
-                        eval(response);
+                        eval(response);						
 						$('#nrdconta','#'+frmCab).habilitaCampo();
                         return false;
                     } catch(error) {
@@ -395,11 +398,11 @@ function formataTabelaDevolu() {
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 	hideMsgAguardo();
     	
-    $('#btSalvar','#divBotoes').hide();  
+    $('#btSalvar','#divBotoes').hide();
   
     $('#btVoltar','#divBotoes').show();
 	$('#btVoltar','#divBotoes').focus();
-
+	
 	return false;
 }
 
@@ -417,9 +420,9 @@ function formataTabelaLancto() {
 	divRegistro.css({'height':'180px','width':'650px','padding-bottom':'2px'});
 
 	var ordemInicial = new Array();
-		
+
 	var arrayLargura = new Array();
-	
+
     arrayLargura[0] = '100px'; //banco
 	arrayLargura[1] = '40px';  //ag
 	arrayLargura[2] = '60px';  //cheque/doc
@@ -428,7 +431,7 @@ function formataTabelaLancto() {
 	arrayLargura[5] = '55px';  //alinea
 	
 //    arrayLargura[6] = '260px'; //operador (deixar livre p preencher com espaco restante)
-
+	
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
 	arrayAlinha[1] = 'center';
@@ -437,23 +440,23 @@ function formataTabelaLancto() {
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'center';	
 	arrayAlinha[6] = 'left';
-
-
+	
+	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 	hideMsgAguardo();
     trocaBotao('Devolver','Devolver();'); //label e funcao
-
+	
 	/********************
 	  EVENTO COMPLEMENTO
 	*********************/
-
+	
     // seleciona o registro que é clicado
 	$('table > tbody > tr', divRegistro).click( function() {
 		selecionaTabela($(this));
 	});
 
     // seleciona o registro que é focado
-	$('table > tbody > tr', divRegistro).focus( function() {
+	$('table > tbody > tr', divRegistro).focus( function() { 
 		selecionaTabela($(this));
 	});
 
@@ -483,7 +486,7 @@ function selecionaTabela(tr) {
 function marcar_cheque_devolu() {
 
 	showMsgAguardo('Aguarde, verificando horario de execucao...');
-
+	
 	$.ajax({
 		type    : 'POST',
 		dataType: 'html',
@@ -510,18 +513,12 @@ function marcar_cheque_devolu() {
 			try {
 				hideMsgAguardo();
 				eval(response);
-			   // Solicitado pela Pamela para não pedir mais a senha do coordenador após as 11:30
-               // if(execucao == 'yes'){
-                   // if(pedsenha == 'yes'){ // Mostra campo de senha para o coordenador autorizar a devolução
-                   //     showError('inform',dscritic,'Alerta - Ayllos','mostraSenhaCoord();');
-						//showError('error',dscritic,'Alerta - Ayllos',"unblockBackground();");
-                   // }else {
-                   //     showError('inform',dscritic,'Alerta - Ayllos','estadoInicial();');
-                  //  }
-               // }else{				   
+				// validar horario para devolução de acordo com o parametrizado na TAB055
+                if(execucao == 'yes'){                   
+                    showError('inform',dscritic,'Alerta - Ayllos','estadoInicial();');                
+                }else{				   
                     verifica_folha_cheque();
-               // }
-
+                }
 			} catch(error) {
 				hideMsgAguardo();
 				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -787,7 +784,7 @@ function buscaAlinea() {
 					exibeRotina($('#divRotina'));
 					formataAlinea();
                     $('#cdalinea','#frmAlinea').focus();
-
+					
 					$('#cdalinea','#frmAlinea').unbind('keypress').bind('keypress', function(e) {
 						if ( e.keyCode == 13 || e.keyCode == 9 ) {
 							proc_gera_dev();
@@ -817,60 +814,60 @@ function buscaAlinea() {
 // Processo de Devolucao - Por Conta
 function verifica_alinea() {
 
-	var cdalinea;
-
+	var cdalinea;	
+	
 	if(flag == 'yes') {
-		cdalinea = alinea;		
+		cdalinea = alinea;
 	}else{
 		cdalinea = $('#cdalinea','#frmAlinea').val();
 		showMsgAguardo('Aguarde, validando alinea...');
 	}
 
-	$.ajax({
-        type    : 'POST',
-        dataType: 'html',
-        url     : UrlSite + 'telas/devolu/verifica_alinea.php',
-        data    :
-                {
-                    cdcooper : cdcooper,
-                    cdbanchq : cdbanchq,
-                    cdagechq : cdagechq,
-                    nrctachq : nrctachq,
+		$.ajax({
+			type    : 'POST',
+			dataType: 'html',
+			url     : UrlSite + 'telas/devolu/verifica_alinea.php',
+			data    :
+					{
+						cdcooper : cdcooper,
+						cdbanchq : cdbanchq,
+						cdagechq : cdagechq,
+						nrctachq : nrctachq,
                     nrdocmto : nrdocmto,
-                    cdalinea : cdalinea,
-                    redirect: 'script_ajax'
-                },
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
-        },
-        success: function(response) {
-            try {
-                if ( response.indexOf('showError("error"') == -1) {
-                    try {
-                        $('input,select','#frmAlinea').removeClass('campoErro');
-                        hideMsgAguardo();
-                        geracao_devolu();
-                    } catch(error) {
-                        hideMsgAguardo();
-                        showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
-                    }
-                } else {
-                    try {
-                        hideMsgAguardo();
-                        eval( response );
-                    } catch(error) {
-                        hideMsgAguardo();
-                        showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
-                    }
-                }
-                return false;
-            } catch(error) {
-                hideMsgAguardo();
-                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            }
-        }
-	});
+						cdalinea : cdalinea,
+						redirect: 'script_ajax'
+					},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();
+				showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground();");
+			},
+			success: function(response) {
+				try {
+					if ( response.indexOf('showError("error"') == -1) {
+						try {
+							$('input,select','#frmAlinea').removeClass('campoErro');
+							hideMsgAguardo();
+								geracao_devolu();
+						} catch(error) {
+							hideMsgAguardo();
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					} else {
+						try {
+							hideMsgAguardo();
+							eval( response );
+						} catch(error) {
+							hideMsgAguardo();
+							showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+						}
+					}
+					return false;
+				} catch(error) {
+					hideMsgAguardo();
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}
+		});
 
 	return false;
 }
@@ -882,7 +879,7 @@ function geracao_devolu() {
 	var nrdconta = $('#nrdconta','#frmCab').val().replace(".", "").replace(".", "").replace("-", "");
 	
 	var mensagemRetorno = 'Processo de Marca&ccedil;&atilde;o Conclu&iacute;do!';
-
+	
 //	showMsgAguardo('Aguarde...');
 
 	$.ajax({
@@ -950,7 +947,7 @@ function gera_log() {
 	}else{
 		cdalinea = $('#cdalinea','#frmAlinea').val();
 	}
-
+	
 	showMsgAguardo('Aguarde, gerando log...');
 
 	$.ajax({
