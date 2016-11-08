@@ -127,6 +127,10 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                         (Andrei - RKAM).
   --
   --			13/10/2016 - Ajuste na leitura da craptab para utilização de cursor padrão (Rodrigo)
+  --
+  --            08/11/2016 - Salvar o valor de endividamento em uma variavel de escopo global, pois em
+  --                         algumas situacoes, nao estava gravando o valor considerado para rateio
+  --                         Heitor (Mouts) - Chamado 544076
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -565,7 +569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
   index by varchar2(30); --cdcooper(10) + nrdconta(10)
 
   vr_tab_crapris_qtdiaatr typ_tab_crapris_qtdiaatr;
-
+  wglb_vlutiliz           number;
 
   /* CURSORES GENERICOS PARA OS CALCULOS DE RATING JUR E FIS */
   -- Buscar dados do emprestimo
@@ -1026,7 +1030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Objetivo  : Retornar valor parametrizado de rating na TAB036 para a Cooperativa.
 
        Alteracoes: 04/06/2013 - Conversão Progress -> Oracle - Marcos (Supero)
-
+                                      
     ............................................................................. */
     DECLARE
       /* Cursor genérico de parametrização */
@@ -3342,7 +3346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
        Objetivo  : Direcionar a obtenção as descricoes do risco, provisao , etc ...
 
        Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
-
+                   
                    25/10/2016 - Correção do problema relatado no chamado 541414. (Kelvin)
     ............................................................................. */
     DECLARE
@@ -4693,8 +4697,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
                               Ajuste nos codigos de natureza juridica para o
                               existente na receita federal. (Tiago Castro - RKAM)
 
-		         10/05/2016 - Ajuste para iniciar corretamente a pltable
-							  (Andrei - RKAM).
+		             10/05/2016 - Ajuste para iniciar corretamente a pltable
+							                (Andrei - RKAM).
                  
                  25/10/2016 - Ajuste no calculo da quantidade de anos, permitindo
                               duas posições decimais. (Kelvin)
@@ -6038,6 +6042,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
       -- Encerrar o processo
       RAISE vr_exc_erro;
     END IF;
+
+	wglb_vlutiliz := vr_vlutiliz;
 
     -- Retornar valor de parametrização do rating cadastrado na TAB036
     pc_param_valor_rating(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
@@ -8193,6 +8199,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0001 IS
 
     -- Se está setada a criação
     IF pr_flgcriar = 1 THEN
+	  IF vr_vlutiliz is null and wglb_vlutiliz is not null then
+        vr_vlutiliz := wglb_vlutiliz;
+      end if;
+
       -- Testar informações necessárias nas tabelas
       IF pr_tab_impress_risco_cl.COUNT = 0 THEN
         vr_dscritic := 'Risco da operacao nao encontrado.';
