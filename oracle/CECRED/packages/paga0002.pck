@@ -8217,7 +8217,7 @@ create or replace package body cecred.PAGA0002 is
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos Martini
-       Data    : Julho/2016                      Ultima atualizacao: 
+       Data    : Julho/2016                      Ultima atualizacao: 28/08/2016 
 
        Dados referentes ao programa:
 
@@ -8226,7 +8226,8 @@ create or replace package body cecred.PAGA0002 is
        Objetivo  : Procedure para efetuar auditoria das informações de auto
                    atendimento para calculo e retorno de Sobras posterior
     							 
-       Alterações: 
+       Alterações:  28/08/2016 - M360 - Ajustes no continue para verificação do dia util
+	                             (Marcos-Supero)
        
 	............................................................................. */
     DECLARE		
@@ -8318,7 +8319,7 @@ create or replace package body cecred.PAGA0002 is
              INTO rw_data;
             CLOSE btch0001.cr_crapdat;
             -- Na execução via JOB sonente continuar se estivermos em dia util e fora do processo
-            IF trunc(SYSDATE) = rw_data.dtmvtolt THEN
+            IF trunc(SYSDATE) != rw_data.dtmvtolt THEN
               -- Pular para a próxima cooperativa pois é feriado na mesma
               continue;
             END IF;
