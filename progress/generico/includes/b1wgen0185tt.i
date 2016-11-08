@@ -2,13 +2,17 @@
 
     Programa: sistema/generico/includes/b1wgen0185tt.i
     Autor   : Jéssica Laverde Gracino (DB1)
-    Data    : 24/02/2014                     Ultima atualizacao: 20/01/2015
+    Data    : 24/02/2014                     Ultima atualizacao: 11/10/2016
   
     Dados referentes ao programa:
   
     Objetivo  : Include com Temp-Tables para a BO b1wgen0185.
   
     Alteracoes: 20/01/2015 - Ajustes para liberacao (Adriano).
+    
+				11/10/2016 - M172 - Ajuste do formato do número de celular devido
+							ao acrescimo de mais um digito.
+							(Ricardo Linhares)
     
 .............................................................................*/
 
@@ -52,7 +56,7 @@ DEF TEMP-TABLE tt-cartoes NO-UNDO
     FIELD vllimcrd AS DECI
     FIELD vllimdeb AS DECI
     FIELD nrreside AS CHAR   FORMAT "(xx)xxxx-xxxx"
-    FIELD nrcelula AS CHAR   FORMAT "(xx)xxxx-xxxx"
+    FIELD nrcelula AS CHAR   FORMAT "(xx)xxxxx-xxxx"
     FIELD dddebito LIKE crawcrd.dddebito
     FIELD vlfatdb1 AS DECI FORMAT "zzz,zzz,zzz,zz9.99"
     FIELD vlfatdb2 AS DECI FORMAT "zzz,zzz,zzz,zz9.99"

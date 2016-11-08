@@ -23,6 +23,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 			19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanholi).
       
       31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05 (Vanessa)
+
+	        28/09/2016 - Ajuste no formato do telefone com 9 digitos (Diego).
+
 ...............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -904,10 +907,10 @@ FOR EACH gnfacep WHERE
                 gnapfep.nrtelefo[aux_contador] <> 0   THEN
                 DO:
                     IF   aux_temfones   THEN
-                         ab_unmap.nmfacili = ab_unmap.nmfacili + " / (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"9999,9999").
+                         ab_unmap.nmfacili = ab_unmap.nmfacili + " / (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999").
                     ELSE 
                          DO:
-                             ab_unmap.nmfacili = ab_unmap.nmfacili + " - DDD/Fone(s): (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"9999,9999").
+                             ab_unmap.nmfacili = ab_unmap.nmfacili + " - DDD/Fone(s): (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999").
                              aux_temfones = YES.
                          END.
                 END.
