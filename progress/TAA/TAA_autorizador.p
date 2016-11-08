@@ -273,7 +273,7 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             02/08/2016 - Tratada procedure 'obtem_tarifa_extrato' para nao validar
                          extratos isentos da cooperativa quando o cooperado possuir
                          o servico "extrato" no pacote de tarifas (Diego).
-			
+
 			07/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 ............................................................................. */
 
@@ -1486,11 +1486,11 @@ DO:
 		IF   aux_operacao = 63   THEN
              DO:               
                  RUN calcula_valor_titulo_vencido.
-                 
+             
                  IF   RETURN-VALUE <> "OK"   THEN
                       NEXT.
              END.
-             
+
 
         LEAVE.
     END.
