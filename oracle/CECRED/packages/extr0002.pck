@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.EXTR0002_LINHARES AS
+CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
 
   /* -------------------------------------------------------------------------------------------------------------
 
