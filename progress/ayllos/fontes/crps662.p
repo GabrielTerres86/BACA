@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 21/06/2016
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 24/10/2016
 
    Dados referentes ao programa:
 
@@ -69,6 +69,8 @@
 						     de comunicação com a ABBC, ao invés de deixar o IP fixo
 							 (Adriano - SD 468880).
 
+				24/10/2016 - Ajustes para terceira execucao dos proocessos
+				             DEBSIC, DEBCNS, DEBNET - Melhoria349 (Tiago/Elton).
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1221,7 +1223,7 @@ PROCEDURE gera_arq:
                                    INPUT "").
         END.                  
         
-        WHEN "DEBCNS" THEN DO:
+        WHEN "DEBCNS VESPERTINA" THEN DO:
 
             /* Grava Data e Hora da execucao */ 
             RUN grava_dthr_proc(INPUT par_cdcooper,
@@ -1233,7 +1235,33 @@ PROCEDURE gera_arq:
                                    INPUT "Inicio execucao", 
                                    INPUT par_cdcooper,
                                    INPUT "").
-            RUN gera_arq_debcns(INPUT par_cdcooper).
+                                   
+            RUN gera_arq_debcns(INPUT par_cdcooper,
+                                INPUT 1). /*Primeira execucao*/
+                                
+            RUN gera_log_execucao (INPUT par_nmprgexe,
+                                   INPUT "Fim execucao", 
+                                   INPUT par_cdcooper,
+                                   INPUT "").
+
+        END.
+        
+        WHEN "DEBCNS NOTURNA" THEN DO:
+
+            /* Grava Data e Hora da execucao */ 
+            RUN grava_dthr_proc(INPUT par_cdcooper,
+                                INPUT par_dtmvtolt,
+                                INPUT TIME,
+                                INPUT TRIM(par_nmprgexe)). 
+
+            RUN gera_log_execucao (INPUT par_nmprgexe,
+                                   INPUT "Inicio execucao", 
+                                   INPUT par_cdcooper,
+                                   INPUT "").
+                                   
+            RUN gera_arq_debcns(INPUT par_cdcooper,
+                                INPUT 2). /*Segunda execucao*/
+            
             RUN gera_log_execucao (INPUT par_nmprgexe,
                                    INPUT "Fim execucao", 
                                    INPUT par_cdcooper,
@@ -2511,6 +2539,7 @@ END PROCEDURE.
 PROCEDURE gera_arq_debcns:
 
     DEF INPUT PARAM par_cdcooper    AS  INTE                        NO-UNDO.
+    DEF INPUT PARAM par_nrseqexe    AS  INTEGER                     NO-UNDO.
     
    
     ASSIGN glb_cddopcao    = "P"
@@ -2575,6 +2604,9 @@ PROCEDURE gera_arq_debcns:
                 END.
             
             /** Verifica se horario para pagamentos nao esgotou */
+            /* M349 - Deixa de validar o horario pois ocorrera uma execucao
+			   do programa durante o dia dentro do horario que ainda nao esgotou 
+			   para pagamento					
             IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
                 TIME < INT(ENTRY(2,craptab.dstextab," ")) THEN
                 DO:
@@ -2583,7 +2615,7 @@ PROCEDURE gera_arq_debcns:
                                           "pagamentos CONSORCIO nao esgotou".
                     RUN gera_critica_procbatch.
                     RETURN "OK".
-                END. 
+                END. */
         END.
         
     /*** PROCESSA COOPERATIVA ***/
@@ -2606,7 +2638,8 @@ PROCEDURE gera_arq_debcns:
         END. 
 
     /*Debito dos consorcios*/
-    RUN efetua-debito-consorcio(FALSE).
+    RUN efetua-debito-consorcio(INPUT FALSE, 
+                                INPUT par_nrseqexe).
     
     HIDE MESSAGE NO-PAUSE.
 

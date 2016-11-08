@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                        Ultima atualizacao: 15/12/2015
+   Data    : Julho/2013                        Ultima atualizacao: 24/10/2016
 
    Dados referentes ao programa:
 
@@ -29,6 +29,9 @@
                 
    15/12/2015 - Passado parametro para procedure efetua-debito-consorcio como
                 TRUE (processo manual) - Tiago/Elton             
+				
+   24/10/2016 - Inserido nova opcao na tela "S - Sumario" para contabilizar
+                os lancamentos do dia - Melhoria349 (Tiago/Elton).       
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -104,6 +107,11 @@ DEF VAR aux_dstitulo AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstiptra AS CHAR                                           NO-UNDO.
                                                                        
 DEF VAR aux_nrdoc AS CHAR FORMAT "x(25)" NO-UNDO.                      
+                                                                       
+DEF VAR aux_qtefetiv  AS  DECIMAL                                      NO-UNDO.
+DEF VAR aux_qtnefeti  AS  DECIMAL                                      NO-UNDO.
+DEF VAR aux_qtpenden  AS  DECIMAL                                      NO-UNDO.
+DEF VAR aux_qttotlan  AS  DECIMAL                                      NO-UNDO.  
                                                                        
 DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
     FIELD cdcooper LIKE crapcop.cdcooper
@@ -217,8 +225,8 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
        ROW 4 COLUMN 1 OVERLAY SIZE 80 BY 18 FRAME f_moldura.
 
   FORM glb_cddopcao AT 03 LABEL "Opcao" AUTO-RETURN
-                    HELP "Informe a opcao (C,P)."
-                    VALIDATE (CAN-DO("C,P",glb_cddopcao),"014 - Opcao Errada")
+                    HELP "Informe a opcao (C,P,S)."
+                    VALIDATE (CAN-DO("C,P,S",glb_cddopcao),"014 - Opcao Errada")
        tel_cdcooper AT 17 LABEL "Cooperativa"
                     HELP "Selecione a Cooperativa"
        aux_dtdebito AT 50 LABEL "Data Debito" FORMAT "99/99/9999"
@@ -238,12 +246,20 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
        tt-obtem-consorcio.nrctrato AT 55 LABEL "Contrato"
        WITH ROW 18 SIDE-LABELS OVERLAY COLUMN 2 NO-BOX FRAME f_dados_consorcio.
    
+  FORM SKIP(1)
+       aux_qtefetiv FORMAT "z,zzz,zz9"  LABEL "        Efetivados" SKIP(1)
+       aux_qtnefeti FORMAT "z,zzz,zz9"  LABEL "    Nao Efetivados" SKIP(1) 
+       aux_qtpenden FORMAT "z,zzz,zz9"  LABEL "         Pendentes" SKIP(1)
+       aux_qttotlan FORMAT "z,zzz,zz9"  LABEL "             Total" SKIP(1)
+       WITH SIDE-LABELS COLUMN 2 ROW 8 OVERLAY WIDTH 78 TITLE "SUMARIO DE AGENDAMENTOS" FRAME f_sumario.
+  
 /****************************************************************************/
 /*********************** INICIO DA ROTINA DE CONSORCIOS *********************/
 /****************************************************************************/
 ON  VALUE-CHANGED, ENTRY OF b_consorcio DO:
     
-    HIDE FRAME f_dados_consorcio NO-PAUSE.
+    HIDE FRAME  f_dados_consorcio NO-PAUSE.
+    HIDE FRAME  f_sumario NO-PAUSE.
      
     DISPLAY tt-obtem-consorcio.dscooper         
             tt-obtem-consorcio.cdagenci
@@ -321,6 +337,7 @@ DO  WHILE TRUE:
                 DO:
                     HIDE FRAME f_moldura NO-PAUSE.
                     HIDE FRAME f_opcao   NO-PAUSE.
+                    HIDE FRAME f_sumario NO-PAUSE.
                     RETURN.
                 END.
             ELSE
@@ -347,6 +364,8 @@ DO  WHILE TRUE:
     ASSIGN aux_nmarqcen = "crrl663_" + STRING(TIME) + ".lst"
            aux_nmaqcesv = "rlnsv/" + aux_nmarqcen
            aux_nmarqcen = "rl/" + aux_nmarqcen.
+
+    HIDE FRAME f_sumario NO-PAUSE.
 
     IF  glb_cddopcao = "C"  THEN
         DO:
@@ -395,6 +414,7 @@ DO  WHILE TRUE:
             
             HIDE FRAME f_b_consorcio NO-PAUSE.
             HIDE FRAME f_dados_consorcio NO-PAUSE.
+            HIDE FRAME f_sumario NO-PAUSE.
              
         END.
     ELSE
@@ -507,6 +527,7 @@ DO  WHILE TRUE:
             
             HIDE FRAME f_b_consorcio NO-PAUSE.
             HIDE FRAME f_dados_consorcio NO-PAUSE.
+            HIDE FRAME  f_sumario NO-PAUSE.
 
             IF  NOT aux_flconfir OR KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                 DO:
@@ -520,7 +541,8 @@ DO  WHILE TRUE:
             
             MESSAGE "Aguarde, debitando consorcios ...".
             
-            RUN efetua-debito-consorcio(INPUT TRUE).
+            RUN efetua-debito-consorcio(INPUT TRUE,
+			                                  INPUT 2).
             
             HIDE MESSAGE NO-PAUSE.
             
@@ -575,5 +597,105 @@ DO  WHILE TRUE:
                 UNIX SILENT VALUE("rm " + aux_nmarqcen + " 2>/dev/null").
 
         END. /* fim da opcao P */
+    ELSE     
+    IF  glb_cddopcao = "S" THEN /*S - Sumario*/
+        DO:
+            MESSAGE "Carregando...".
+   
+            RUN sumario_lancamentos(INPUT  aux_cdcooper
+                                   ,INPUT  glb_dtmvtolt
+                                   ,OUTPUT aux_qtpenden
+                                   ,OUTPUT aux_qtefetiv
+                                   ,OUTPUT aux_qtnefeti).
+                                   
+            ASSIGN aux_qttotlan = 0
+			       aux_qttotlan = aux_qttotlan + aux_qtpenden + aux_qtefetiv + aux_qtnefeti. /*Total de lancamentos*/
+                        
+            HIDE FRAME f_b_consorcio NO-PAUSE.
+            HIDE FRAME f_dados_consorcio NO-PAUSE.
+        
+            DISPLAY aux_qtpenden aux_qtefetiv aux_qtnefeti aux_qttotlan WITH FRAME f_sumario.
+            
+            HIDE MESSAGE NO-PAUSE.
+        
+        END.
    
 END. /*** fim do DO WHILE TRUE: ***/
+
+PROCEDURE sumario_lancamentos:
+
+  DEF INPUT  PARAM par_cdcooper      LIKE    crapcop.cdcooper    NO-UNDO.
+  DEF INPUT  PARAM par_dtmvtolt      LIKE    crapdat.dtmvtolt    NO-UNDO.
+  
+  DEF OUTPUT PARAM par_qtpenden      AS      DECIMAL             NO-UNDO.
+  DEF OUTPUT PARAM par_qtefetiv      AS      DECIMAL             NO-UNDO.
+  DEF OUTPUT PARAM par_qtnefeti      AS      DECIMAL             NO-UNDO.
+
+  DEF VAR var_qtpenden   AS  DECIMAL       NO-UNDO.
+  DEF VAR var_qtefetiv   AS  DECIMAL       NO-UNDO.
+  DEF VAR var_qtnefeti   AS  DECIMAL       NO-UNDO.
+  DEF VAR var_insitlau   AS  INTEGER       NO-UNDO.
+  
+  DEF BUFFER crabcop FOR crapcop.
+
+  /*inicializa as variaveis*/
+  ASSIGN var_qtpenden = 0
+         var_qtefetiv = 0 
+         var_qtnefeti = 0
+         par_qtpenden = 0
+         par_qtefetiv = 0
+         par_qtnefeti = 0.
+
+  FOR EACH crabcop NO-LOCK WHERE crabcop.cdcooper <> 3
+                             AND crabcop.cdcooper = IF par_cdcooper = 0 THEN
+                                                       crabcop.cdcooper
+                                                    ELSE
+                                                       par_cdcooper:
+                     
+    ASSIGN var_insitlau = 1.
+    
+    DO WHILE var_insitlau <= 4:
+    
+      FOR EACH craplau WHERE craplau.cdcooper = crabcop.cdcooper            AND 
+                             craplau.dtmvtopg = par_dtmvtolt                AND
+                             craplau.insitlau = var_insitlau                AND 
+                            (craplau.cdhistor = 1230                        OR 
+                             craplau.cdhistor = 1231                        OR
+                             craplau.cdhistor = 1232                        OR 
+                             craplau.cdhistor = 1233                        OR 
+                             craplau.cdhistor = 1234)                       NO-LOCK:
+        
+        IF craplau.insitlau = 1 THEN
+        DO:
+            ASSIGN var_qtpenden = var_qtpenden + 1. /*lanc pendentes*/
+        END.
+        ELSE
+        DO:
+          IF craplau.insitlau = 2 THEN
+          DO:
+            ASSIGN var_qtefetiv = var_qtefetiv + 1. /*lanc efetivados*/
+          END.
+          ELSE
+          DO:
+            IF craplau.insitlau >= 3 THEN
+            DO:
+              ASSIGN var_qtnefeti = var_qtnefeti + 1. /*lanc nao efetivados*/
+            END.      
+          END.    
+        END.
+        
+      END.                     
+      
+      ASSIGN var_insitlau = var_insitlau + 1.
+   END.   
+    
+  END.
+  ASSIGN par_qtpenden = 0
+         par_qtefetiv = 0
+         par_qtnefeti = 0
+         par_qtpenden = var_qtpenden
+         par_qtefetiv = var_qtefetiv
+         par_qtnefeti = var_qtnefeti.
+  
+  RETURN "OK".
+END PROCEDURE.

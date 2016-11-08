@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Abril/2013                        Ultima atualizacao: 23/11/2015
+   Data    : Abril/2013                        Ultima atualizacao: 24/10/2016
 
    Dados referentes ao programa:
 
@@ -28,6 +28,9 @@
                             
                23/11/2015 - Inserido procedure gera_log_execucao para o log 
                             da execucao manual da DEBSIC (Tiago SD338533).             
+							
+               24/10/2016 - Inserido nova opcao na tela "S - Sumario" para contabilizar
+                            os lancamentos do dia - Melhoria349 (Tiago/Elton). 							            
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -50,6 +53,11 @@ DEF VAR aux_nmcooper AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdcooper AS INT                                            NO-UNDO.
 DEF VAR aux_cdcoopin AS INT                                            NO-UNDO.
 DEF VAR aux_cdcoopfi AS INT                                            NO-UNDO.
+
+DEF VAR aux_qtefetiv  AS  DECIMAL                                      NO-UNDO.
+DEF VAR aux_qtnefeti  AS  DECIMAL                                      NO-UNDO.
+DEF VAR aux_qtpenden  AS  DECIMAL                                      NO-UNDO.
+DEF VAR aux_qttotlan  AS  DECIMAL                                      NO-UNDO.  
 
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
 DEF VAR aux_cdcritic LIKE crapcri.cdcritic                             NO-UNDO.
@@ -107,8 +115,8 @@ FORM
     ROW 4 COLUMN 1 OVERLAY SIZE 80 BY 18 FRAME f_moldura.
 
 FORM glb_cddopcao AT 03 LABEL "Opcao" AUTO-RETURN
-                  HELP "Informe a opcao (C,P)."
-                  VALIDATE (CAN-DO("C,P",glb_cddopcao),"014 - Opcao Errada")
+                  HELP "Informe a opcao (C,P,S)."
+                  VALIDATE (CAN-DO("C,P,S",glb_cddopcao),"014 - Opcao Errada")
      tel_cdcooper AT 17 LABEL "Cooperativa"
                   HELP "Selecione a Cooperativa"
      aux_dtmvtopg AT 50 LABEL "Data Agendamento" FORMAT "99/99/9999"
@@ -138,10 +146,19 @@ FORM w_agendamentos.dscooper AT 07 LABEL "Cooperativa"
      w_agendamentos.dstransa AT 05 LABEL "Conta Destino"  FORMAT "x(55)"
      WITH ROW 18 SIDE-LABELS OVERLAY COLUMN 2 NO-BOX FRAME f_dados_transf.    
 
+FORM SKIP(1)
+     aux_qtefetiv FORMAT "z,zzz,zz9"  LABEL "        Efetivados" SKIP(1)
+     aux_qtnefeti FORMAT "z,zzz,zz9"  LABEL "    Nao Efetivados" SKIP(1) 
+     aux_qtpenden FORMAT "z,zzz,zz9"  LABEL "         Pendentes" SKIP(1)
+     aux_qttotlan FORMAT "z,zzz,zz9"  LABEL "             Total" SKIP(1)
+     WITH SIDE-LABELS COLUMN 2 ROW 8 OVERLAY WIDTH 78 TITLE "SUMARIO DE AGENDAMENTOS" FRAME f_sumario.
+       
+
 ON VALUE-CHANGED, ENTRY OF b_agendamentos DO:
   
    HIDE FRAME f_dados_pagto  NO-PAUSE.
    HIDE FRAME f_dados_transf NO-PAUSE.
+   HIDE FRAME f_sumario NO-PAUSE.
     
    IF   w_agendamentos.fltiptra  THEN 
         DISPLAY w_agendamentos.dscooper   
@@ -223,6 +240,7 @@ DO WHILE TRUE:
                 DO:
                     HIDE FRAME f_moldura NO-PAUSE.
                     HIDE FRAME f_opcao   NO-PAUSE.
+                    HIDE FRAME f_sumario NO-PAUSE.
                     RETURN.
                 END.
             ELSE
@@ -251,6 +269,8 @@ DO WHILE TRUE:
                           ELSE 
                               aux_cdcoopin.
 
+    HIDE FRAME f_sumario NO-PAUSE.
+    
     IF  glb_cddopcao = "C"  THEN
         DO:
             /*** PROCESSA COOPERATIVAS ***/
@@ -299,6 +319,7 @@ DO WHILE TRUE:
             HIDE FRAME f_b_agendamentos NO-PAUSE.
             HIDE FRAME f_dados_pagto    NO-PAUSE.
             HIDE FRAME f_dados_transf   NO-PAUSE.
+            HIDE FRAME f_sumario NO-PAUSE.
          END.
     ELSE
     IF  glb_cddopcao = "P"  THEN
@@ -352,6 +373,7 @@ DO WHILE TRUE:
             HIDE FRAME f_b_agendamentos NO-PAUSE.
             HIDE FRAME f_dados_pagto    NO-PAUSE.
             HIDE FRAME f_dados_transf   NO-PAUSE.
+            HIDE FRAME f_sumario NO-PAUSE.
    
             IF  NOT aux_flconfir OR KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                 DO:
@@ -416,6 +438,27 @@ DO WHILE TRUE:
                 UNIX SILENT VALUE("rm " + aux_nmarqcen + " 2>/dev/null").
    
         END.
+    ELSE     
+    IF  glb_cddopcao = "S" THEN /*S - Sumario*/
+        DO:
+            MESSAGE "Carregando...".
+
+            RUN sumario_lancamentos(INPUT  aux_cdcoopin
+                                   ,INPUT  aux_cdcoopfi
+                                   ,INPUT  glb_dtmvtolt
+                                   ,OUTPUT aux_qtpenden
+                                   ,OUTPUT aux_qtefetiv
+                                   ,OUTPUT aux_qtnefeti
+                                   ,OUTPUT aux_qttotlan).
+   
+            HIDE FRAME f_b_consorcio NO-PAUSE.
+            HIDE FRAME f_dados_consorcio NO-PAUSE.
+        
+            DISPLAY aux_qtpenden aux_qtefetiv aux_qtnefeti aux_qttotlan WITH FRAME f_sumario.
+            
+            HIDE MESSAGE NO-PAUSE.
+        
+        END.        
    
    END. /** Fim do DO WHILE TRUE **/
 
@@ -724,4 +767,112 @@ PROCEDURE gera_log_execucao:
                       " >> " + aux_nmarqlog).
 
     RETURN "OK".  
+END PROCEDURE.
+
+/*sumario*/
+PROCEDURE sumario_lancamentos:
+
+  DEF INPUT  PARAM par_cdcooper      LIKE    crapcop.cdcooper    NO-UNDO.
+  DEF INPUT  PARAM par_cdcopfin      LIKE    crapcop.cdcooper    NO-UNDO.
+  DEF INPUT  PARAM par_dtmvtolt      LIKE    crapdat.dtmvtolt    NO-UNDO.
+  
+  DEF OUTPUT PARAM par_qtpenden      AS      DECIMAL             NO-UNDO.
+  DEF OUTPUT PARAM par_qtefetiv      AS      DECIMAL             NO-UNDO.
+  DEF OUTPUT PARAM par_qtnefeti      AS      DECIMAL             NO-UNDO.
+  DEF OUTPUT PARAM par_qtdtotal      AS      DECIMAL             NO-UNDO.
+
+  DEF VAR var_qtpenden   AS  DECIMAL       NO-UNDO.
+  DEF VAR var_qtefetiv   AS  DECIMAL       NO-UNDO.
+  DEF VAR var_qtnefeti   AS  DECIMAL       NO-UNDO.
+  DEF VAR var_qtdtotal   AS  DECIMAL       NO-UNDO.
+
+  /*inicializa as variaveis*/
+  ASSIGN var_qtpenden = 0
+         var_qtefetiv = 0 
+         var_qtnefeti = 0
+         var_qtdtotal = 0
+         par_qtpenden = 0
+         par_qtefetiv = 0
+         par_qtnefeti = 0
+         par_qtdtotal = 0.
+    
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+  /* Buscar as informações dos agendamentos */ 
+  RUN STORED-PROCEDURE pc_sumario_debsic
+      aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_cdcooper,
+                               INPUT par_cdcopfin,
+                              OUTPUT ?,   /* clobxmlc */
+                              OUTPUT 0,   /* cdcritic */ 
+                              OUTPUT ""). /* dscritic */
+
+  CLOSE STORED-PROC pc_sumario_debsic
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+  ASSIGN aux_cdcritic = 0
+         aux_dscritic = ""
+         aux_dsxmlage = ""
+         aux_cdcritic = pc_sumario_debsic.pr_cdcritic 
+                            WHEN pc_sumario_debsic.pr_cdcritic <> ?
+         aux_dscritic = pc_sumario_debsic.pr_dscritic 
+                            WHEN pc_sumario_debsic.pr_dscritic <> ?
+         aux_dsxmlage = pc_sumario_debsic.pr_clobxmlc.
+
+  IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+  DO:
+      ASSIGN glb_dscritic = aux_dscritic.
+      RETURN "NOK".
+  END.
+
+  /* Inicializando objetos para leitura do XML */ 
+  CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+  CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+  CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+  CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+  /*Leitura do XML de retorno da proc e criacao dos registros na w_agendamentos
+  para visualizacao dos registros na tela */
+
+  /* Efetuar a leitura do XML*/ 
+  SET-SIZE(ponteiro_xml) = LENGTH(aux_dsxmlage) + 1. 
+  PUT-STRING(ponteiro_xml,1) = aux_dsxmlage. 
+
+  IF ponteiro_xml <> ? THEN
+      DO:
+          xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+          xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+          DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+              xRoot:GET-CHILD(xField,aux_cont_raiz).
+
+              IF xField:SUBTYPE <> "ELEMENT" THEN 
+                 NEXT. 
+
+              xField:GET-CHILD(xText,1).
+
+              ASSIGN var_qtpenden =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "qtdpendentes"
+                     var_qtefetiv =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "qtefetivados"
+                     var_qtnefeti =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "qtnaoefetiva"
+                     var_qtdtotal =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "qtdtotallanc".
+          END.
+
+          SET-SIZE(ponteiro_xml) = 0. 
+      END.
+
+  DELETE OBJECT xDoc. 
+  DELETE OBJECT xRoot. 
+  DELETE OBJECT xField. 
+  DELETE OBJECT xText.
+
+  ASSIGN par_qtpenden = var_qtpenden
+         par_qtefetiv = var_qtefetiv
+         par_qtnefeti = var_qtnefeti
+         par_qtdtotal = var_qtdtotal.
+
+  RETURN "OK".
+
 END PROCEDURE.

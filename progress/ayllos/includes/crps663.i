@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                       Ultima atualizacao: 25/11/2015
+   Data    : Julho/2013                       Ultima atualizacao: 24/10/2015
 
    Dados referentes ao programa:
 
@@ -34,6 +34,9 @@
                25/11/2015 - Incluida procedure gera_log_execucao_663 para gerar
                             log quando debcns for executada manualmente
                             (Tiago SD338533).
+
+		       24/10/2016 - Ajustes para que tenha uma terceira execucao
+			                da DEBCNS - Melhoria349 (Tiago/Elton).
 .............................................................................*/
 
 
@@ -120,6 +123,8 @@ END PROCEDURE.
 PROCEDURE efetua-debito-consorcio:
 
     DEF INPUT PARAM par_flmanual AS LOGICAL NO-UNDO.
+    DEF INPUT PARAM par_nrseqexe AS INTEGER NO-UNDO.
+
 
     DEF VAR aux_cdcritic AS INTE NO-UNDO.
     DEF VAR aux_dscritic AS CHAR NO-UNDO.
@@ -275,7 +280,10 @@ PROCEDURE efetua-debito-consorcio:
                 DO: 
                     ASSIGN glb_dscritic = "Nao ha saldo suficiente para a operacao.".
     
+                    IF par_nrseqexe = 2 THEN /*Segunda execucao dia*/
+                    DO:    
                     RUN cria-crapndb.
+                END.
                 END.
             ELSE                          
                 DO:
