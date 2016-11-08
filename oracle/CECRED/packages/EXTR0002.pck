@@ -3761,6 +3761,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         AND   craplau.dtmvtopg <= pr_dtfimper)       
          OR   pr_dtiniper IS NULL 
         AND   pr_dtfimper IS NULL)  
+        AND   craplau.dtdebito IS NULL
+        and   craplau.vllanaut > 0
+        union 
+                SELECT craplau.cdhistor
+              ,craplau.dtmvtopg
+              ,craplau.vllanaut
+              ,craplau.nrdocmto
+              ,craplau.dscedent
+              ,craplau.nrctadst
+              ,craplau.dsorigem
+              ,craplau.cdagenci
+              ,craplau.cdbccxlt
+              ,craplau.nrdolote
+              ,craplau.nrseqdig
+              ,craplau.dtmvtolt
+              ,craplau.progress_recid
+        FROM craplau craplau
+        WHERE craplau.cdcooper = pr_cdcooper   
+        AND   craplau.nrdconta = pr_nrdconta  
+        AND   craplau.dtmvtopg > to_date('04/30/1997','MM/DD/YYYY')     
+        AND craplau.dtmvtopg <= (SELECT crapdat.dtmvtolt from crapdat 
+                                  where crapdat.cdcooper = pr_cdcooper )
+        and   craplau.vllanaut > 0        
         AND   craplau.dtdebito IS NULL;
       --Selecionar avisos
       CURSOR cr_crapavs (pr_cdcooper IN crapavs.cdcooper%type
@@ -3806,10 +3829,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND fatura.nrdconta = pr_nrdconta
          AND fatura.insituacao = 1
          AND fatura.vlpendente > 0
-         AND ((fatura.dtvencimento >= pr_dtiniper
+         AND (fatura.dtvencimento >= pr_dtiniper
          AND fatura.dtvencimento <= pr_dtfimper) 
-          OR pr_dtiniper IS NULL 
-         AND pr_dtfimper IS NULL); 
+         union 
+        SELECT fatura.dtvencimento
+              ,fatura.dsdocumento
+              ,fatura.vlpendente
+              ,fatura.progress_recid
+          FROM  tbcrd_fatura fatura
+       WHERE fatura.cdcooper = pr_cdcooper
+         AND fatura.nrdconta = pr_nrdconta
+         AND fatura.insituacao = 1
+         AND fatura.vlpendente > 0
+         AND fatura.dtvencimento <= (SELECT crapdat.dtmvtolt from crapdat 
+                                  where crapdat.cdcooper = pr_cdcooper ); 
       
       --Selecionar Cadastro de linhas de credito rotativos
       CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE
@@ -4052,7 +4085,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         AND crapcob.nrdconta = pr_nrdconta
         AND crapcob.nrdocmto = pr_nrdocmto;
      rw_crapcob cr_crapcob%ROWTYPE;
+     Cursor cr_valoresTAA(pr_cdcooper crapcop.cdcooper%TYPE,
+                          pr_nrdconta crapcob.nrdconta%TYPE) is 
+     select crapass.cdcooper,
+            crapass.nrdconta,
+            nvl(cre.credito,0) Credito,
+            nvl(deb.debito,0)  Debito 
+       from crapass,
+            (SELECT craplau.cdcooper ,
+                    craplau.nrdconta ,   
+                    sum(craplau.vllanaut) Credito
+               FROM craplau
+             WHERE craplau.dtmvtopg > to_date('04/30/1997','MM/DD/YYYY')     
+               AND (craplau.dtmvtopg >= (select crapdat.dtmvtolt  from crapdat  
+                                         where cdcooper = pr_cdcooper)       
+               AND  craplau.dtmvtopg <= (select crapdat.dtmvtolt + 30  from crapdat  
+                                         where cdcooper = pr_cdcooper) )        
+               AND   craplau.dtdebito IS NULL
+               and   nvl(craplau.vllanaut,0) > 0
+               and exists ( select 1 from craphis
+                              where  craphis.indebcre = 'C'
+                                and craphis.cdhistor = craplau.cdhistor)
+             group by 
+             craplau.cdcooper ,
+             craplau.nrdconta ) cre ,
+            (SELECT craplau.cdcooper ,
+                    craplau.nrdconta ,
+                    sum(craplau.vllanaut) debito
+               FROM craplau craplau
+             WHERE craplau.dtmvtopg > to_date('04/30/1997','MM/DD/YYYY')     
+               AND (craplau.dtmvtopg >= (select crapdat.dtmvtolt  from crapdat  
+                                         where cdcooper = pr_cdcooper)       
+               AND   craplau.dtmvtopg <= (select crapdat.dtmvtolt + 30  from crapdat  
+                                          where cdcooper = pr_cdcooper) )        
+               AND   craplau.dtdebito IS NULL
+               and   nvl(craplau.vllanaut,0) > 0
+               and exists ( select 1 from craphis
+                            where  craphis.indebcre = 'D'
+                              and craphis.cdhistor = craplau.cdhistor)
+             group by 
+             craplau.cdcooper ,
+             craplau.nrdconta ) deb
+          where crapass.cdcooper = pr_cdcooper
+            and crapass.nrdconta = pr_nrdconta  
+            and crapass.cdcooper = cre.cdcooper(+)
+            and crapass.nrdconta = cre.nrdconta(+)
+            and crapass.cdcooper =  deb.cdcooper(+)
+            and crapass.nrdconta = deb.nrdconta(+);    
 
+           rw_valoresTAA cr_valoresTAA%ROWTYPE;    
       --Variaveis Locais
       vr_cdhistaa INTEGER;
       vr_cdhsetaa INTEGER;
@@ -4085,6 +4166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_vldpagto NUMBER;
       vr_qtdpagto INTEGER;
       vr_dtfatura DATE;
+      vr_dtiniper01 DATE;
+      vr_dtfimper01 DATE;      
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -4178,7 +4261,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       /*  .....................................................................
         Especifico para CASH - FOTON .......... Utilizado a Mesma Analise da
         versao anterior do sistema Cash (Progress) descrito no saldo_ass.p   */ 
-      IF pr_idorigem = 4 THEN
+      IF pr_idorigem = 4 and 
+         pr_nmdatela = 'TAA' THEN
         --Selecionar Saldos da Conta
         OPEN cr_crapsld (pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => pr_nrdconta);
@@ -4862,13 +4946,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           IF vr_tab_dados_epr(vr_index_epr).tpemprst = 1 THEN 
             /* Valor da parcela vencida */
             IF vr_tab_dados_epr(vr_index_epr).vlprvenc > 0 THEN
-            
-              /* Se os periodos foram informados, filtrar por eles */
-              IF (pr_dtiniper IS NULL   AND
-                  pr_dtfimper IS NULL)  OR
-                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
-                  vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN  
-                            
+              /* Se os periodos foram informados, filtrar por eles
+              IF (vr_tab_dados_epr(vr_index_epr).dtdpagto >= nvl(pr_dtiniper,vr_dtiniper)   AND
+                  vr_tab_dados_epr(vr_index_epr).dtdpagto <= nvl(pr_dtfimper,vr_dtfimper))  THEN  
+               */             
               --Incrementar contador lancamentos na tabela
               vr_index:= pr_tab_lancamento_futuro.COUNT+1;
               --Criar Lancamento Futuro na tabela
@@ -4882,7 +4963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               vr_vllautom:= nvl(vr_vllautom,0) - vr_tab_dados_epr(vr_index_epr).vlprvenc;
               --Valor Lancamento Debito
               vr_vllaudeb:= nvl(vr_vllaudeb,0) + vr_tab_dados_epr(vr_index_epr).vlprvenc; 
-            END IF;
+           -- END IF;
             END IF;
             /* Valor da parcela a vencer */
             IF vr_tab_dados_epr(vr_index_epr).vlpraven > 0 THEN
@@ -4890,11 +4971,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               vr_dtdpagto:= TO_DATE(TO_CHAR(vr_tab_dados_epr(vr_index_epr).dtdpagto,'DD')||
                                     TO_CHAR(rw_crapdat.dtmvtolt,'MMYYYY'),'DDMMYYYY');
               
-              /* Se os periodos foram informados, filtrar por eles */
+              /* Se os periodos foram informados, filtrar por eles 
               IF (pr_dtiniper IS NULL   AND
                   pr_dtfimper IS NULL)  OR
                   (vr_dtdpagto >= pr_dtiniper   AND
-                   vr_dtdpagto <= pr_dtfimper)  THEN
+                   vr_dtdpagto <= pr_dtfimper)  THEN */
   
               --Incrementar contador lancamentos na tabela
               vr_index:= pr_tab_lancamento_futuro.COUNT+1;
@@ -4909,7 +4990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               vr_vllautom:= nvl(vr_vllautom,0) - vr_tab_dados_epr(vr_index_epr).vlpraven;
               --Valor Lancamento Debito
               vr_vllaudeb:= nvl(vr_vllaudeb,0) + vr_tab_dados_epr(vr_index_epr).vlpraven; 
-            END IF;
+           -- END IF;
             END IF;
           ELSE
             /**  Magui quando a pessoa estava em atraso nao mostrava tudo */
@@ -4946,10 +5027,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             END IF; 
             
             /* Se os periodos foram informados, filtrar por eles */
-            IF pr_dtiniper IS NOT NULL   AND
+           /* IF pr_dtiniper IS NOT NULL   AND
                pr_dtfimper IS NOT NULL   AND
               (vr_tab_dados_epr(vr_index_epr).dtdpagto < pr_dtiniper   OR
-               vr_tab_dados_epr(vr_index_epr).dtdpagto > pr_dtfimper)  THEN
+               vr_tab_dados_epr(vr_index_epr).dtdpagto > pr_dtfimper)  THEN */
               --Proximo registro
               RAISE vr_next_reg;
             END IF;
@@ -4966,14 +5047,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_vllautom:= nvl(vr_vllautom,0) - vr_vlpresta;
             --Valor Lancamento Debito
             vr_vllaudeb:= nvl(vr_vllaudeb,0) + vr_vlpresta;  
-          END IF; --tpemprst = 1
+       --   END IF; --tpemprst = 1
           /* Vamos verificar se existe Juros de Mora para pagar */
           IF vr_tab_dados_epr(vr_index_epr).vlmrapar > 0 THEN
             /* Se os periodos foram informados, filtrar por eles */
-            IF (pr_dtiniper IS NULL   AND
+           /* IF (pr_dtiniper IS NULL   AND
                 pr_dtfimper IS NULL)  OR
                (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
-                vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN
+                vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN*/
             --Incrementar contador lancamentos na tabela
             vr_index:= pr_tab_lancamento_futuro.COUNT+1;
             --Criar Lancamento Futuro na tabela
@@ -4987,16 +5068,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_vllautom:= nvl(vr_vllautom,0) - vr_tab_dados_epr(vr_index_epr).vlmrapar;
             --Valor Lancamento Debito
             vr_vllaudeb:= nvl(vr_vllaudeb,0) + vr_tab_dados_epr(vr_index_epr).vlmrapar;  
-          END IF; 
+         -- END IF; 
           END IF; 
           /* Vamos verificar se existe Multa para pagar */ 
           IF vr_tab_dados_epr(vr_index_epr).vlmtapar > 0 THEN
           
             /* Se os periodos foram informados, filtrar por eles */
-            IF (pr_dtiniper IS NULL   AND
+            /*IF (pr_dtiniper IS NULL   AND
                 pr_dtfimper IS NULL)  OR
                (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
-                vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN
+                vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN*/
             --Incrementar contador lancamentos na tabela
             vr_index:= pr_tab_lancamento_futuro.COUNT+1;
             --Criar Lancamento Futuro na tabela
@@ -5010,7 +5091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_vllautom:= nvl(vr_vllautom,0) - vr_tab_dados_epr(vr_index_epr).vlmtapar;
             --Valor Lancamento Debito
             vr_vllaudeb:= nvl(vr_vllaudeb,0) + vr_tab_dados_epr(vr_index_epr).vlmtapar;  
-          END IF; 
+          --END IF; 
           END IF; 
           
           --Proximo registro
@@ -5037,11 +5118,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       --Posicionar no proximo registro
       FETCH cr_crapsld INTO rw_crapsld;
       --Se nao encontrou
-      IF cr_crapsld%FOUND AND 
+      IF cr_crapsld%FOUND /*AND 
         (rw_crapdat.dtmvtolt >= pr_dtiniper  AND 
          rw_crapdat.dtmvtolt <= pr_dtfimper) OR 
         (pr_dtiniper IS NULL                AND
-         pr_dtfimper IS NULL) THEN
+         pr_dtfimper IS NULL) */ THEN
         --Fechar Cursor
         CLOSE cr_crapsld;
         --Saldo Negativo mes
@@ -5215,11 +5296,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                     
         IF rw_crappla.flgpagto = 1 THEN /* debito em folha */
           --Se existir valor Pendente
-          IF rw_crappla.vlpenden > 0 AND 
+          IF rw_crappla.vlpenden > 0 /* AND 
            ((rw_crapdat.dtmvtolt >= pr_dtiniper  AND 
              rw_crapdat.dtmvtolt <= pr_dtfimper) OR 
             (pr_dtiniper IS NULL                 AND
-             pr_dtfimper IS NULL)) THEN
+             pr_dtfimper IS NULL))*/ THEN
             --Incrementar contador lancamentos na tabela
             vr_index:= pr_tab_lancamento_futuro.COUNT+1;
             --Criar Lancamento Futuro na tabela
@@ -5242,11 +5323,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Se existir valor Pendente
           IF rw_crappla.vlpenden > 0 THEN
             /* No dia do debito da parcela do plano nao mostra valor pendente */
-            IF rw_crappla.dtdpagto <> rw_crapdat.dtmvtolt AND 
+            IF rw_crappla.dtdpagto <> rw_crapdat.dtmvtolt/* AND 
              ((rw_crapdat.dtmvtolt >= pr_dtiniper  AND 
                rw_crapdat.dtmvtolt <= pr_dtfimper) OR 
               (pr_dtiniper IS NULL                 AND
-               pr_dtfimper IS NULL)) THEN 
+               pr_dtfimper IS NULL))*/ THEN 
               --Incrementar contador lancamentos na tabela
               vr_index:= pr_tab_lancamento_futuro.COUNT+1;
               --Criar Lancamento Futuro na tabela
@@ -5266,10 +5347,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           IF trunc(rw_crappla.dtdpagto,'MM') = trunc(rw_crapdat.dtmvtolt,'MM') AND 
              trunc(rw_crappla.dtdpagto,'YYYY') = trunc(rw_crapdat.dtmvtolt,'YYYY') THEN
           
-          IF (rw_crappla.dtdpagto >= pr_dtiniper  AND 
+         /* IF (rw_crappla.dtdpagto >= pr_dtiniper  AND 
               rw_crappla.dtdpagto <= pr_dtfimper) OR 
              (pr_dtiniper IS NULL                 AND
-              pr_dtfimper IS NULL) THEN
+              pr_dtfimper IS NULL) THEN*/
             --Incrementar contador lancamentos na tabela
             vr_index:= pr_tab_lancamento_futuro.COUNT+1;
             --Criar Lancamento Futuro na tabela
@@ -5283,7 +5364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_vllautom:= nvl(vr_vllautom,0) - rw_crappla.vlprepla;
             --Valor Lancamento Debito
             vr_vllaudeb:= nvl(vr_vllaudeb,0) + rw_crappla.vlprepla;             
-          END IF;     
+         -- END IF;     
         END IF;    
         END IF;    
       END LOOP;
@@ -5582,11 +5663,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         CLOSE cr_craphis;                           
         
         IF ((rw_craphis.indebcre = pr_indebcre OR 
-             nvl(trim(pr_indebcre),'') IS NULL) AND
+             nvl(trim(pr_indebcre),'') IS NULL)/* AND
            ((rw_craplat.dtmvtolt >= pr_dtiniper AND 
              rw_craplat.dtmvtolt <= pr_dtfimper) OR
              pr_dtiniper IS NULL AND 
-             pr_dtfimper IS NULL)) THEN
+             pr_dtfimper IS NULL)*/) THEN
         --Incrementar contador lancamentos na tabela
         vr_index:= pr_tab_lancamento_futuro.COUNT+1;
         --Criar Lancamento Futuro na tabela
@@ -5736,6 +5817,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_vllautom:= TRUNC(vr_vllautom * vr_tab_txrdcpmf,2);
       END IF; 
       /* Totais Futuros */
+      
+      /*verificar totais TAA para telas de Saldos*/
+      if pr_idorigem = 4 then 
+        
+        OPEN cr_valoresTAA( pr_cdcooper => pr_cdcooper,
+                            pr_nrdconta => pr_nrdconta);
+        FETCH cr_valoresTAA INTO rw_valoresTAA;
+        
+        IF cr_valoresTAA%NOTFOUND THEN
+          CLOSE cr_valoresTAA;
+        END IF;
+        vr_vllautom := rw_valoresTAA.Debito;   
+        vr_vllaucre := rw_valoresTAA.Credito;
+        CLOSE cr_valoresTAA;
+      end if;  
       pr_tab_totais_futuros(1).vllautom:= vr_vllautom;
       pr_tab_totais_futuros(1).vllaudeb:= vr_vllaudeb;
       pr_tab_totais_futuros(1).vllaucre:= vr_vllaucre;
@@ -18931,7 +19027,9 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
       -- Variaveis de XML 
       vr_xml_temp VARCHAR2(32767);      
       vr_xml_temp_totais VARCHAR2(32767);      
-      
+      vr_soma_deb number(8,2);
+      vr_soma_cre number(8,2);
+      vr_soma_tot number(8,2);
       BEGIN
         
         CASE pr_flgerlog 
@@ -18978,14 +19076,20 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
         -- Criar documento XML
         dbms_lob.createtemporary(pr_clobxmlc, TRUE); 
         dbms_lob.open(pr_clobxmlc, dbms_lob.lob_readwrite);       
-
+        vr_soma_deb := 0;  
+        vr_soma_cre := 0;
+        vr_soma_tot := 0;
         -- Insere o cabeçalho do XML 
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                ,pr_texto_completo => vr_xml_temp 
                                  ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
 
         FOR vr_contador IN vr_tab_lancamento_futuro.FIRST..vr_tab_lancamento_futuro.LAST LOOP
-
+           if nvl(to_char(vr_tab_lancamento_futuro(vr_contador).indebcre),' ') = 'D' then 
+             vr_soma_deb := vr_soma_deb + nvl(vr_tab_lancamento_futuro(vr_contador).vllanmto,0);
+           else 
+             vr_soma_cre :=  vr_soma_cre + nvl(vr_tab_lancamento_futuro(vr_contador).vllanmto,0);
+           end if;     
           -- Montar XML com registros de carencia
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                                  ,pr_texto_completo => vr_xml_temp 
@@ -19027,14 +19131,20 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
                                  ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
 
         FOR vr_contador_totais IN vr_tab_totais_futuros.FIRST..vr_tab_totais_futuros.LAST LOOP
-
+           if (pr_nmdatela = 'TAA') then
+             vr_soma_deb := nvl(vr_tab_totais_futuros(vr_contador_totais).vllaudeb,0);
+             vr_soma_cre := nvl(vr_tab_totais_futuros(vr_contador_totais).vllaucre,0);
+             vr_soma_tot := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
+           else 
+             vr_soma_tot :=vr_soma_cre - vr_soma_deb; 
+          end if;
           -- Montar XML com registros de carencia
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc_totais 
                                  ,pr_texto_completo => vr_xml_temp_totais 
                                  ,pr_texto_novo     => '<totais>' 
-                                                      ||   '<vllautom>'||nvl(trim(to_char(vr_tab_totais_futuros(vr_contador_totais).vllautom,'999g999g9990d00')),'0')||'</vllautom>'
-                                                      ||   '<vllaudeb>'||nvl(trim(to_char(vr_tab_totais_futuros(vr_contador_totais).vllaudeb,'999g999g9990d00')),'0')||'</vllaudeb>'
-                                                      ||   '<vllaucre>'||nvl(trim(to_char(vr_tab_totais_futuros(vr_contador_totais).vllaucre,'999g999g9990d00')),'0')||'</vllaucre>'
+                                                      ||   '<vllautom>'||nvl(trim(to_char(vr_soma_tot,'999g999g9990d00')),'0')||'</vllautom>'
+                                                      ||   '<vllaudeb>'||nvl(trim(to_char(vr_soma_deb,'999g999g9990d00')),'0')||'</vllaudeb>'
+                                                      ||   '<vllaucre>'||nvl(trim(to_char(vr_soma_cre,'999g999g9990d00')),'0')||'</vllaucre>'
                                                     || '</totais>');
         END LOOP;
          
