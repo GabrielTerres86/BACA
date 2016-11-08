@@ -76,7 +76,7 @@ DEFINE VARIABLE tmp_tximpres        AS CHAR         NO-UNDO.
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS IMAGE-34 IMAGE-38 IMAGE-40 IMAGE-35 IMAGE-39 ~
-IMAGE-41 Btn_A Btn_E Btn_B Btn_F Btn_C Btn_H 
+IMAGE-41 IMAGE-50 Btn_A Btn_E Btn_B Btn_F Btn_C Btn_G Btn_H 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -121,6 +121,11 @@ DEFINE BUTTON Btn_F
      SIZE 61 BY 3.33
      FONT 8.
 
+DEFINE BUTTON Btn_G 
+     LABEL "LANC. FUTUROS" 
+     SIZE 61 BY 3.33
+     FONT 8.
+
 DEFINE BUTTON Btn_H 
      LABEL "VOLTAR" 
      SIZE 61 BY 3.33
@@ -155,6 +160,10 @@ DEFINE IMAGE IMAGE-41
      FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
+DEFINE IMAGE IMAGE-50
+     FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
+     SIZE 5 BY 3.05.
+
 DEFINE RECTANGLE RECT-101
      EDGE-PIXELS 2 GRAPHIC-EDGE    
      SIZE 123 BY .24
@@ -179,6 +188,7 @@ DEFINE FRAME f_cartao_extrato
      Btn_B AT ROW 14.1 COL 6 WIDGET-ID 62
      Btn_F AT ROW 14.1 COL 94.4 WIDGET-ID 70
      Btn_C AT ROW 19.14 COL 6 WIDGET-ID 156
+     Btn_G AT ROW 19.19 COL 94.4 WIDGET-ID 160
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
      ed_dstarifa AT ROW 24.43 COL 5.4 NO-LABEL WIDGET-ID 96 NO-TAB-STOP 
      "EXTRATOS CONTA CORRENTE" VIEW-AS TEXT
@@ -193,6 +203,7 @@ DEFINE FRAME f_cartao_extrato
      IMAGE-35 AT ROW 14.24 COL 1 WIDGET-ID 144
      IMAGE-39 AT ROW 14.24 COL 156 WIDGET-ID 152
      IMAGE-41 AT ROW 19.24 COL 1 WIDGET-ID 158
+     IMAGE-50 AT ROW 19.33 COL 156 WIDGET-ID 162
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -219,10 +230,10 @@ IF SESSION:DISPLAY-TYPE = "GUI":U THEN
          TITLE              = ""
          HEIGHT             = 28.57
          WIDTH              = 160
-         MAX-HEIGHT         = 33.14
-         MAX-WIDTH          = 204.8
-         VIRTUAL-HEIGHT     = 33.14
-         VIRTUAL-WIDTH      = 204.8
+         MAX-HEIGHT         = 33.57
+         MAX-WIDTH          = 272.8
+         VIRTUAL-HEIGHT     = 33.57
+         VIRTUAL-WIDTH      = 272.8
          SHOW-IN-TASKBAR    = no
          CONTROL-BOX        = no
          MIN-BUTTON         = no
@@ -475,6 +486,27 @@ END.
 &ANALYZE-RESUME
 
 
+&Scoped-define SELF-NAME Btn_G
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_extrato
+ON ANY-KEY OF Btn_G IN FRAME f_cartao_extrato /* LANC. FUTUROS */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_extrato
+ON CHOOSE OF Btn_G IN FRAME f_cartao_extrato /* LANC. FUTUROS */
+DO:
+     RUN cartao_lancamentos_futuros.w.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
 &Scoped-define SELF-NAME Btn_H
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_extrato
 ON ANY-KEY OF Btn_H IN FRAME f_cartao_extrato /* VOLTAR */
@@ -655,8 +687,8 @@ PROCEDURE enable_UI :
                Settings" section of the widget Property Sheets.
 ------------------------------------------------------------------------------*/
   RUN control_load.
-  ENABLE IMAGE-34 IMAGE-38 IMAGE-40 IMAGE-35 IMAGE-39 IMAGE-41 Btn_A Btn_E 
-         Btn_B Btn_F Btn_C Btn_H 
+  ENABLE IMAGE-34 IMAGE-38 IMAGE-40 IMAGE-35 IMAGE-39 IMAGE-41 IMAGE-50 Btn_A 
+         Btn_E Btn_B Btn_F Btn_C Btn_G Btn_H 
       WITH FRAME f_cartao_extrato.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_extrato}
   VIEW w_cartao_extrato.
@@ -697,6 +729,11 @@ chtemporizador:t_cartao_extrato:INTERVAL = 0.
     IF  KEY-FUNCTION(LASTKEY) = "F"                AND
         Btn_F:SENSITIVE IN FRAME f_cartao_extrato  THEN
         APPLY "CHOOSE" TO Btn_F.
+    ELSE
+    IF  KEY-FUNCTION(LASTKEY) = "G"                AND
+        Btn_G:SENSITIVE IN FRAME f_cartao_extrato  THEN
+        APPLY "CHOOSE" TO Btn_G.
+        
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "H"                AND
         Btn_H:SENSITIVE IN FRAME f_cartao_extrato  THEN
