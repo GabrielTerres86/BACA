@@ -480,6 +480,9 @@
 			   24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
 						   (Adriano - SD 511318 ).
 							
+			   21/10/2016 - Incluir o historico 384	na listagem dos historicos para verificacao do 
+			                saldo disponivel (Renato Darosci - SD542195).
+
                31/10/2016 - Bloquear os historicos 354 e 451 para a cooperativa Transulcred. (James)
 							
 ............................................................................. */
@@ -2587,9 +2590,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
             RETURN.  /* Volta pedir a opcao para o operador */
         END.    
-        
+
         /* Historicos de pagamento de emprestimo */
-        IF CAN-DO("275,394,428",STRING(tel_cdhistor)) THEN
+        IF CAN-DO("275,394,428,384",STRING(tel_cdhistor)) THEN
           DO:
          
               /* Procedure para buscar o saldo disponivel da conta */
@@ -4248,7 +4251,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                   LEAVE.
 
                END. /* End DO...TO */
-               
+
                IF glb_cdcritic > 0 THEN
                   UNDO, NEXT INICIO.
 
@@ -4556,7 +4559,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                        DO:                               
                                            glb_cdcritic = 77.
                                            PAUSE 1 NO-MESSAGE.
-                                           NEXT.                                                             
+                                            NEXT.
                                        END.                              
                                    ELSE                                  
                                    DO:                                   
@@ -4674,7 +4677,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                              WITH FRAME f_landpv.
                                  UNDO, NEXT INICIO.
                              END.        
-        
+
                         /* Se for debito e pagamento seja menor que data atual */
                         IF aux_indebcre = "D"                   AND
                            tt-dados-epr.dtdpagto < tel_dtmvtolt THEN
@@ -4715,18 +4718,18 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                                         WHEN pc_efetiva_pag_atraso_tr.pr_cdcritic <> ?
                                       aux_dscritic = pc_efetiva_pag_atraso_tr.pr_dscritic
                                                         WHEN pc_efetiva_pag_atraso_tr.pr_dscritic <> ?.
-
+            
                                IF   aux_cdcritic <> 0   OR
                                     aux_dscritic <> ""  THEN
-                                    DO:
+                             DO:
                                         ASSIGN glb_dscritic = aux_dscritic.
 
-                                        NEXT-PROMPT tel_cdhistor 
-                                                    WITH FRAME f_landpv.
-                                        UNDO, NEXT INICIO.
-                                    END.
+                                 NEXT-PROMPT tel_cdhistor 
+                                             WITH FRAME f_landpv.
+                                 UNDO, NEXT INICIO.
+                             END.
                            END.
-                          
+
                         ASSIGN his_vlsdeved = tt-dados-epr.vlsdeved.
 
                         IF  (tel_cdhistor = 275 OR tel_cdhistor = 394) AND
@@ -5295,7 +5298,7 @@ PROCEDURE gera_lancamentos_craplci_credito:
                 ASSIGN glb_cdcritic = 0.
        LEAVE.
    END.  /*  Fim do DO...TO  */
-   
+
    IF glb_cdcritic <> 0 THEN
       RETURN.
 
@@ -5379,10 +5382,10 @@ PROCEDURE gera_lancamentos_craplci_debito:
                           crablot.nrdolote = 10006  
                           crablot.tplotmov = 29.
                 END.
-       ASSIGN glb_cdcritic = 0.
+                   ASSIGN glb_cdcritic = 0.
        LEAVE.
    END.  /*  Fim do DO...TO  */
-   
+
    IF glb_cdcritic <> 0 THEN
       RETURN.
 

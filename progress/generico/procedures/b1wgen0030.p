@@ -3124,8 +3124,8 @@ PROCEDURE busca_dados_limite_incluir:
                 
             RETURN "NOK".    
 
-        END.
-    
+			END.
+
         /* rotina para buscar o crapttl.inhabmen */
     FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper   AND
                              crapttl.nrdconta = par_nrdconta   AND
@@ -15336,7 +15336,7 @@ PROCEDURE analisar-titulo-bordero:
                 ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pctitemi     THEN
                 DO:
                     ASSIGN aux_dsrestri = "Percentual de titulo do " +
-                                          "pagador excedido no contrato"
+                                          "pagador excedido no bordero"
                            aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 52
                                           ELSE 2.
 
