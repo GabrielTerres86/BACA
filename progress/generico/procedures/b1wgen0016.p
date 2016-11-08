@@ -4278,7 +4278,7 @@ PROCEDURE obtem-agendamentos:
             ASSIGN tt-dados-agendamento.dtagenda = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtagenda".
             ASSIGN tt-dados-agendamento.dtperiod = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtperiod".
             ASSIGN tt-dados-agendamento.dtvendrf = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvendrf".
-            ASSIGN tt-dados-agendamento.nrcpfcgc =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc".
+            ASSIGN tt-dados-agendamento.nrcpfcgc =     (xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc".
                     
           END. 
                 

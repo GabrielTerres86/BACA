@@ -85,7 +85,7 @@ DEF TEMP-TABLE tt-dados-agendamento NO-UNDO
     FIELD dsidpgto AS CHAR    /* Prj. 338 */
     FIELD dsnomfon AS CHAR    /* Prj. 338 */
     FIELD dtperiod AS DATE    /* Prj. 338 */
-    FIELD nrcpfcgc AS DECIMAL /* Prj. 338 */
+    FIELD nrcpfcgc AS CHAR    /* Prj. 338 */
     FIELD cdreceit AS INT     /* Prj. 338 */
     FIELD nrrefere AS INT     /* Prj. 338 */
     FIELD vlprinci AS DECIMAL /* Prj. 338 */
