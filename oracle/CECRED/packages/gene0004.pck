@@ -84,7 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/06/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 03/11/2016
   --
   --  Dados referentes ao programa:
   --
@@ -128,6 +128,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --                           procedure pc_valida_acesso_sistema.(Carlos Rafael Tanholi).
   --
   --              10/06/2016 - Criada procedure pc_reagenda_job SD402010 (Tiago/Thiago).
+  --
+  --              03/11/2016 - Ajuste na procedure pc_reagenda_job para reagendar o job com
+  --                           o fusohorario do servidor que esta executando GMT (Tiago/Thiago SD532302)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedures/functions de uso privado */
@@ -484,19 +487,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       vr_dscritic VARCHAR2(1000);
       
       vr_dscomando VARCHAR2(4000);
-      vr_dtagenda  DATE;
+      vr_dtagenda  TIMESTAMP;
       
     BEGIN
       
-      vr_dtagenda := to_date(to_char(pr_dtagenda,'DD/MM/RRRR')||' '||to_char(pr_hragenda,'00')||':'
-                     ||to_char(pr_mmagenda,'00')||':'||'00','dd/mm/yyyy hh24:mi:ss');
+      vr_dtagenda := TO_TIMESTAMP_TZ(to_char(pr_dtagenda,'DD/MM/RRRR')||' '||to_char(pr_hragenda,'00')||':'
+                     ||to_char(pr_mmagenda,'00')||':'||'00 ' || to_char( SYSTIMESTAMP, 'TZH:TZM' ),'dd/mm/yyyy hh24:mi:ss TZH:TZM');
     
       FOR rw_job IN cr_job(pr_job_name => pr_job_name) LOOP    
       
         vr_dscomando := 'BEGIN 
                             DBMS_SCHEDULER.SET_ATTRIBUTE(NAME => ''' || 'CECRED' || '.' || rw_job.job_name || ''', 
                                                          attribute => ''start_date'', 
-                                                         VALUE => to_date(''' || to_char(vr_dtagenda, 'dd/mm/yyyy hh24:mi:ss') || ''',''DD/MM/RRRR HH24:MI:SS''));
+                                                         VALUE => TO_TIMESTAMP_TZ(''' || to_char(vr_dtagenda, 'dd/mm/yyyy hh24:mi:ss') || ' ' || to_char( SYSTIMESTAMP, 'TZH:TZM' )  || ''',''DD/MM/RRRR HH24:MI:SS TZH:TZM''));
                          END;';
         EXECUTE IMMEDIATE vr_dscomando;  
         
@@ -944,7 +947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 30/04/2014 - Implementação do cadastro de ações para execução (Petter - Supero).
     --   
     --               03/03/2015 - Alteracao do tamanho da variavel vr_sql para o max
-    --                            do tipo varchar2 (Tiago).                                       
+    --                            do tipo varchar2 (Tiago).    
     --
     --               06/06/2016 - Ajustes realizados:
     --                            -> Incluido upper nos campos que são indice da tabela craprdr
