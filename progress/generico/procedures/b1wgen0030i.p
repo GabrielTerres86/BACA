@@ -75,7 +75,7 @@
 
                 27/06/2016 - Listagem das restricoes aprovadas pelo coordenador.
                              Busca do operador que aprovou. (Jaison/James)
-
+                
 				15/09/2016 - Inclusao dos parametros default na rotina oracle
 				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
 
@@ -461,7 +461,7 @@ FORM SKIP(1)
      WITH NO-BOX WIDTH 132 FRAME f_cab_naopagos.
      
 FORM SKIP(1)
-     "RESTRICAO(OES) APROVADA(AS) PELO COORDENADOR: " aux_dsopecoo FORMAT "x(35)"
+     "RESTRICAO(OES) APROVADA(AS)"
      WITH NO-BOX NO-LABELS WIDTH 132 FRAME f_descricao_coordenador.
 
 FORM SKIP
@@ -783,7 +783,8 @@ IF  par_idimpres = 5 OR   /* COMPLETA */
                 /* Nao imprimir restriçoes referentes a 
                         titulos protestados ou em cartório */
                 IF  tt-dsctit_bordero_restricoes.nrseqdig = 90 OR
-                    tt-dsctit_bordero_restricoes.nrseqdig = 91 THEN
+                    tt-dsctit_bordero_restricoes.nrseqdig = 91 OR 
+                    tt-dsctit_bordero_restricoes.nrseqdig = 11 THEN
                     NEXT.
             
                 DISPLAY STREAM str_1 tt-dsctit_bordero_restricoes.dsrestri
