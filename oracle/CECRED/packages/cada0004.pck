@@ -379,7 +379,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                          ,pr_retxml   IN OUT NOCOPY XMLType       --> Arquivo de retorno do XML
                                          ,pr_nmdcampo OUT VARCHAR2                --> Nome do campo com erro
                                          ,pr_des_erro OUT VARCHAR2);              --> Erros do processo                                    
-	
+
 	PROCEDURE pc_alerta_fraude (pr_cdcooper IN NUMBER                   --> Cooperativa
 		                         ,pr_cdagenci IN NUMBER                   --> PA
 														 ,pr_nrdcaixa IN NUMBER                   --> Nr. do caixa
@@ -478,7 +478,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                      pr_tpcartao OUT tbcrd_log_operacao.tpcartao%TYPE, -- Tipo de cartao
                                      pr_dscritic OUT varchar2); -- Descricao do erro quando houver
 
-
+                                     
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -3646,6 +3646,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           CYBER para verificar na cracyc ao inves da crapcyb
     --                           (Douglas)
     --
+    --              01/08/2016 - Incluido mensagem do pre aprovado para cargas manuais.
+    --                           Projeto 299/3 - Pre-Aprovado (Lombardi)
+    --
     --              04/10/2016 - Validação de emprestimo em atraso da própria conta e como fiador.
     --                           Incluído uma cláusula "and" no lugar de utilizar 2 if's.
     --                           Dessa forma permite que as demais condições (else e elsif) sejam validadas
@@ -5004,13 +5007,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_idxcpa := vr_tab_dados_cpa.first;
     
-    IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
-       vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
-      --> Incluir na temptable
-      pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                      'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-    END IF;   
+    IF vr_tab_dados_cpa.exists(vr_idxcpa) THEN
+      IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
+        --> Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
+                            ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+       
+      ELSE
+        IF vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
+          --> Incluir na temptable
+          pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
+                                                          'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
+                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+        END IF;
+      END IF;
+    END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;
@@ -5400,7 +5411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --   Objetivo  : Procedure para carregar dos dados para a tela ATENDA
     --
     --  Alteração : 23/10/2015 - Conversão Progress -> Oracle (Odirlei)
-    --
+    --              
     --              23/03/2015 - Adicionar novos parametros na chamada da
     --                           EXTR0002.pc_consulta_lancamento - Melhoria 157 (Lucas Ranghetti)
 
@@ -6168,7 +6179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     OPEN cr_limite_saque;
     FETCH cr_limite_saque INTO vr_vllimite_saque;
     CLOSE cr_limite_saque;
-
+    
     --> Cria TEMP-TABLE com valores referente a conta
     vr_idxval := pr_tab_valores_conta.count + 1;
     
@@ -6635,7 +6646,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       pr_dscritic := 'Erro não tratado na pc_carrega_dados_atenda_web ' ||
                      SQLERRM;
   END pc_carrega_dados_atenda_web;  
-	
+
 	PROCEDURE pc_alerta_fraude (pr_cdcooper IN NUMBER                   --> Cooperativa
 		                         ,pr_cdagenci IN NUMBER                   --> PA
 														 ,pr_nrdcaixa IN NUMBER                   --> Nr. do caixa

@@ -6493,6 +6493,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
      Objetivo  : Procedimento para buscar informaçoes de depositos avista
 
      Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
+
+	             03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
+                              Projeto 299/3 - Pre Aprovado (Lombardi)
     ..............................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -6500,7 +6503,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     CURSOR cr_crapass IS
       SELECT ass.cdcooper
             ,ass.nrdconta
-            ,ass.flgcrdpa
             ,ass.inpessoa
             ,ass.vllimcre
             ,ass.tplimcre
