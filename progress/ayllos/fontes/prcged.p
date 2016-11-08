@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme Luis Maba
-    Data    : Maio/2012                   Ultima atualizacao: 15/03/2016
+    Data    : Maio/2012                   Ultima atualizacao: 14/10/2016
 
     Dados referentes ao programa:
 
@@ -44,6 +44,10 @@
                              (Lucas Ranghetti #394316 )
 
 				25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+                
+                14/10/2016 - Retirar validacao que desabilitava o batimento do credito para a Viacredi 
+                             (Lucas Ranghetti #510032)
+        
 .............................................................................*/
 
 { includes/var_online.i }
@@ -271,15 +275,6 @@ DO WHILE TRUE:
 
       IF   aux_confirma <> "S"   THEN
            NEXT.
-
-      /* Desabilitar batimento para viacredi e tipo Credito */    
-      IF  INT(tel_tipopcao) = 2 AND INT(tel_cdcooper) = 1 THEN
-          DO:
-              MESSAGE "Batimento desabilitado para o grupo Credito.".
-              BELL.
-              CLEAR FRAME f_dados.
-              NEXT.            
-          END.
 
       MESSAGE "Aguarde, efetuando batimento das informacoes ...".
 

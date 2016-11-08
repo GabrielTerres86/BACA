@@ -147,9 +147,9 @@
                            na oferta de debito automatico na procedure busca_convenios_codbarras
                            (Lucas Ranghetti #488846)
 
-			  27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
-			               mais referencias iguais para a mesma conta (busca-autori).
-						   (Chamado 528246) - (Fabricio)
+			        27/09/2016 - Ajuste na busca da autorizacao quando houver duas ou
+			                     mais referencias iguais para a mesma conta (busca-autori).
+						              (Chamado 528246) - (Fabricio)
                           
               13/10/2016 - Tratamento para permitir a exclusao da autorizacao do debito
                            automatico somente no proximo dia util apos o cancelamento 
@@ -158,6 +158,10 @@
               27/10/2016 - Incluir condicao na busca dos convenios aceitos para debito 
                            automatico na procedure busca_convenios_codbarras
                            (Lucas Ranghetti #547474)
+                           
+              27/10/2016 - Incluir novo tratamento na procedure grava-dados para nao permitir
+                           a inclusao de faturas caso a empresa e segmento estiverem zerados
+                           (Lucas Ranghetti #542571)
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1449,7 +1453,7 @@ PROCEDURE valida-dados:
                                        par_nmdcampo = "".
                                 LEAVE Valida.
                             END.
-
+                            
                          /* Permitir a exclusao do debito somente no proximo dia util apos 
                             o cancelamento */
                          IF  crapatr.dtfimatr = par_dtmvtolt THEN
@@ -1807,7 +1811,8 @@ PROCEDURE grava-dados:
                                   (crapscn.cddmoden = "A"           OR
                                    crapscn.cddmoden = "C")          AND
                                    crapscn.cdempcon = aux_cdempcon  AND
-                                   crapscn.cdsegmto = aux_cdsegmto
+                                   crapscn.cdsegmto = aux_cdsegmto  AND
+                                   crapscn.cdempcon <> 0            
                                    NO-LOCK NO-ERROR NO-WAIT.
             
                         IF  AVAIL crapscn THEN
@@ -1931,6 +1936,18 @@ PROCEDURE grava-dados:
                 IF  aux_flgachtr = FALSE  OR 
                     aux_cdhistor = 31     THEN 
                     DO:
+                        /* Se for SICREDI... */
+                        IF  aux_flgsicre = TRUE THEN
+                            DO:
+                                /* Caso a empresa e segmento estejam zerados */
+                                IF  INT(aux_cdempcon) = 0 OR 
+                                    INT(aux_cdsegmto) = 0 THEN
+                                    DO:
+                                        ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
+                                        UNDO Grava, LEAVE Grava.
+                                    END. 
+                            END.                      
+                      
                         CREATE crapatr.
                         ASSIGN crapatr.cdcooper = par_cdcooper
                                crapatr.nrdconta = par_nrdconta
@@ -2147,7 +2164,7 @@ PROCEDURE grava-dados:
                                 BUFFER-COPY crapatr TO tt-autori-atl.
                             END.
                         ELSE
-                            DO:
+                            DO:     
                                 CREATE tt-autori-atl.
                                 ASSIGN tt-autori-atl.cdcooper = par_cdcooper
                                        tt-autori-atl.nrdconta = par_nrdconta.

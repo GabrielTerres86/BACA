@@ -602,6 +602,8 @@ PROCEDURE Altera_inclui:
                        crapemp.flgdgfib = IF par_flgdgfib THEN FALSE ELSE crapemp.flgdgfib
                        crapemp.dtlimdeb = par_dtlimdeb
                        crapemp.cdoperad = par_cdoperad.
+                       
+                       
                 VALIDATE crapemp.
             END.
     END.

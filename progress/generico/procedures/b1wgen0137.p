@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 31/08/2016
+    Data      : Abril/2012                      Ultima Atualizacao: 14/10/2016
     
     Dados referentes ao programa:
 
@@ -292,6 +292,10 @@
                              na procedure efetua_batimento_termos para o tpdocmto 37 - PEP
                              (Lucas Ranghetti #491441)
                              
+                20/09/2016 - Adicionar filtro de data para o 620_termos (Lucas Ranghetti #480384/#469603)      
+                
+                14/10/2016 - Descontinuar batimento do 620_credito para todas as cooperativas 
+                             (Lucas Ranghetti #510032)
 .............................................................................*/
 
 
@@ -406,6 +410,8 @@ PROCEDURE efetua_batimento_ged:
     DEF VAR aux_dtcreini AS DATE                        NO-UNDO.
     DEF VAR aux_dtcadfim AS DATE                        NO-UNDO.
     DEF VAR aux_dtcrefim AS DATE                        NO-UNDO.
+    DEF VAR aux_dtterini AS DATE                        NO-UNDO.
+    DEF VAR aux_dtterfim AS DATE                        NO-UNDO.
     DEF VAR aux_contador AS INTE                        NO-UNDO.
     DEF VAR aux_dtvalida AS DATE                        NO-UNDO.
     
@@ -526,16 +532,20 @@ PROCEDURE efetua_batimento_ged:
                 DO:
                     ASSIGN aux_dtcadini = DATE(ENTRY(2,craptab.dstextab,";"))
                            aux_dtcreini = DATE(ENTRY(3,craptab.dstextab,";"))
+                           aux_dtterini = DATE(ENTRY(4,craptab.dstextab,";"))
                            aux_dtcadfim = TODAY
-                           aux_dtcrefim = TODAY.
+                           aux_dtcrefim = TODAY
+                           aux_dtterfim = TODAY.
                 END.      
 
         END.
     ELSE /* TELA */
         ASSIGN aux_dtcadini = par_datainic
                aux_dtcreini = par_datainic
+               aux_dtterini = par_datainic
                aux_dtcadfim = par_datafina
-               aux_dtcrefim = par_datafina.
+               aux_dtcrefim = par_datafina               
+               aux_dtterfim = par_datafina.
     
     /* VERIFICA QUAL BATIMENTO DEVE SER REALIZADO */
     IF  par_tipopcao = 0 THEN /** TODOS **/
@@ -604,6 +614,9 @@ PROCEDURE efetua_batimento_ged:
                     RETURN "NOK".
                 END. 
 
+            /* Tela prcged */
+            IF  par_inchamad = 1 THEN 
+                DO:
             RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
                                              INPUT aux_dtcreini,
                                              INPUT aux_dtcrefim,
@@ -635,10 +648,11 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
+                END.
 
              RUN efetua_batimento_ged_termos(INPUT crapcop.cdcooper,
-                                             INPUT aux_dtcadini,
-                                             INPUT aux_dtcadfim,
+                                             INPUT aux_dtterini,
+                                             INPUT aux_dtterfim,
                                              INPUT par_inchamad,
                                              INPUT par_emailbat,
                                             OUTPUT par_nmarqter,
@@ -705,6 +719,9 @@ PROCEDURE efetua_batimento_ged:
         END.
     ELSE IF par_tipopcao = 2 THEN /* CREDITO */
         DO: 
+            /* Tela prcged */
+            IF  par_inchamad = 1 THEN 
+                DO:
             RUN efetua_batimento_ged_credito(INPUT crapcop.cdcooper,
                                              INPUT aux_dtcreini,
                                              INPUT aux_dtcrefim,
@@ -736,6 +753,7 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
+        END.
         END.
     ELSE
     IF  par_tipopcao = 3 THEN /* MATRICULA */
@@ -775,8 +793,8 @@ PROCEDURE efetua_batimento_ged:
     ELSE IF  par_tipopcao = 4 THEN /* TERMO */
         DO:
             RUN efetua_batimento_ged_termos(INPUT crapcop.cdcooper,
-                                            INPUT aux_dtcadini,
-                                            INPUT aux_dtcadfim,
+                                            INPUT aux_dtterini,
+                                            INPUT aux_dtterfim,
                                             INPUT par_inchamad,
                                             INPUT par_emailbat,
                                            OUTPUT par_nmarqter,
@@ -2466,10 +2484,6 @@ PROCEDURE efetua_batimento_ged_credito:
         END. /* Fim do FOR EACH crpepr */
     END. /* Fim do DO aux_data */
 
-    /* Iremos descontinuar o relatorio do credito para a viacredi */
-    IF  par_cdcooper = 1 THEN 
-        NEXT.
-
     /* Verificar se existe registro para gerar no relatorio. */
     FIND FIRST tt-contr_ndigi WHERE tt-contr_ndigi.cdcooper = par_cdcooper
                               NO-LOCK NO-ERROR.
@@ -2966,11 +2980,14 @@ PROCEDURE efetua_batimento_ged_termos:
     IF  AVAIL tt-documentos  THEN
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
 
+    DO  aux_data = par_datainic TO par_datafina:    
+
     FOR EACH crapemp FIELDS(cdcooper cdempres nrdconta nmresemp 
-                            nmcontat cdoperad dtultufp)
+                                nmcontat cdoperad dtinccan)
                      WHERE crapemp.cdcooper = par_cdcooper AND
                            crapemp.flgpgtib = TRUE         AND
-                           crapemp.flgdgfib = FALSE        NO-LOCK:
+                           crapemp.flgdgfib = FALSE        AND 
+                           crapemp.dtinccan = aux_data NO-LOCK:
         
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -2987,7 +3004,8 @@ PROCEDURE efetua_batimento_ged_termos:
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper = crapemp.cdcooper AND
                    tt-documento-digitalizado.nrdconta = crapemp.nrdconta AND
-                   tt-documento-digitalizado.tpdocmto = aux_tpdocmto
+                   tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                   tt-documento-digitalizado.dtpublic >= crapemp.dtinccan
                    NO-LOCK NO-ERROR NO-WAIT.
 
         /*Verifica se registro existe*/
@@ -3024,11 +3042,12 @@ PROCEDURE efetua_batimento_ged_termos:
                                    crapemp.nmresemp
                        tt-documentos-termo.nrdconta = crapemp.nrdconta
                        tt-documentos-termo.nmcontat = crapemp.nmcontat
-                       tt-documentos-termo.dtincalt = crapemp.dtultufp
+                       tt-documentos-termo.dtincalt = crapemp.dtinccan
                        tt-documentos-termo.cdoperad = crapemp.cdoperad
                        tt-documentos-termo.idseqite = aux_conttabs. /* Adesao */
             END.
         END.
+    END.
     END.
 
     /*TIPO DE DOCUMENTO: 21 Termo Cancelamento*/
@@ -3042,12 +3061,15 @@ PROCEDURE efetua_batimento_ged_termos:
     IF  AVAIL tt-documentos  THEN
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
 
+    DO  aux_data = par_datainic TO par_datafina:    
+        
     FOR EACH crapemp FIELDS(cdcooper cdempres nrdconta nmresemp 
-                            nmcontat cdoperad dtultufp)
+                                nmcontat cdoperad dtinccan)
                      WHERE crapemp.cdcooper = par_cdcooper AND
                            crapemp.flgpgtib = FALSE        AND
                            crapemp.flgdgfib = FALSE        AND
-                           crapemp.dtultufp <> ?           NO-LOCK:
+                           crapemp.dtultufp <> ?           AND 
+                           crapemp.dtinccan = aux_data NO-LOCK:
 
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -3064,7 +3086,8 @@ PROCEDURE efetua_batimento_ged_termos:
         FIND FIRST tt-documento-digitalizado WHERE
                    tt-documento-digitalizado.cdcooper = crapemp.cdcooper AND
                    tt-documento-digitalizado.nrdconta = crapemp.nrdconta AND
-                   tt-documento-digitalizado.tpdocmto = aux_tpdocmto
+                   tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
+                   tt-documento-digitalizado.dtpublic >= crapemp.dtinccan
                    NO-LOCK NO-ERROR NO-WAIT.
 
 
@@ -3103,11 +3126,12 @@ PROCEDURE efetua_batimento_ged_termos:
                                    crapemp.nmresemp
                        tt-documentos-termo.nrdconta = crapemp.nrdconta
                        tt-documentos-termo.nmcontat = crapemp.nmcontat
-                       tt-documentos-termo.dtincalt = crapemp.dtultufp
+                       tt-documentos-termo.dtincalt = crapemp.dtinccan
                        tt-documentos-termo.cdoperad = crapemp.cdoperad 
                        tt-documentos-termo.idseqite = aux_conttabs. /* Cancelamento */
             END.
         END.
+    END.
     END.
 
     /* TIPO DE DOCUMENTO: 37 Termo PEP - pessoa exposta politicamente */
@@ -3121,6 +3145,8 @@ PROCEDURE efetua_batimento_ged_termos:
     IF  AVAIL tt-documentos  THEN
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
 
+   
+    
     DO  aux_data = par_datainic TO par_datafina:
 
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
@@ -3146,7 +3172,6 @@ PROCEDURE efetua_batimento_ged_termos:
                    tt-documento-digitalizado.nrdconta = crapdoc.nrdconta AND
                        tt-documento-digitalizado.tpdocmto = aux_tpdocmto     AND
                        tt-documento-digitalizado.dtpublic >= crapdoc.dtmvtolt
-                       USE-INDEX tt-documento-digitalizado3 
                    NO-LOCK NO-ERROR NO-WAIT.
 
         /*Verifica se registro existe*/
@@ -3154,10 +3179,10 @@ PROCEDURE efetua_batimento_ged_termos:
             /*Verifica se documento foi digitalizado*/
             FIND FIRST b-crapdoc
                  WHERE b-crapdoc.cdcooper = crapdoc.cdcooper
+                       AND b-crapdoc.dtmvtolt = crapdoc.dtmvtolt
+                           AND b-crapdoc.tpdocmto = crapdoc.tpdocmto
                    AND b-crapdoc.nrdconta = crapdoc.nrdconta
                    AND b-crapdoc.idseqttl = crapdoc.idseqttl
-                   AND b-crapdoc.dtmvtolt = crapdoc.dtmvtolt
-                       AND b-crapdoc.tpdocmto = crapdoc.tpdocmto
              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
@@ -3333,8 +3358,11 @@ PROCEDURE efetua_batimento_ged_termos:
     DELETE OBJECT xField. 
     DELETE OBJECT xText.
     
+    DO  aux_data = par_datainic TO par_datafina:
+    
     FOR EACH tt-tarif-contas-pacote FIELDS(nrdconta dtadesao cdoperador_adesao)
-                     WHERE tt-tarif-contas-pacote.dtcancel  = ?            NO-LOCK:
+                             WHERE tt-tarif-contas-pacote.dtcancel  = ?            
+                               AND tt-tarif-contas-pacote.dtadesao = aux_data NO-LOCK:
         
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -3404,6 +3432,7 @@ PROCEDURE efetua_batimento_ged_termos:
             END.
         END.
     END.
+    END.
     /* fim tipo de documento 39 */
     
     /*TIPO DE DOCUMENTO: 38 Termo Cancelamento*/
@@ -3417,8 +3446,11 @@ PROCEDURE efetua_batimento_ged_termos:
     IF  AVAIL tt-documentos  THEN
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
 
+    DO  aux_data = par_datainic TO par_datafina:
+    
     FOR EACH tt-tarif-contas-pacote FIELDS(cdcooper nrdconta dtcancelamento cdoperador_cancela)
-                     WHERE tt-tarif-contas-pacote.dtcancel  <> ?            NO-LOCK:
+                             WHERE tt-tarif-contas-pacote.dtcancel  <> ?           
+                               AND tt-tarif-contas-pacote.dtcancel = aux_data NO-LOCK:
         
         /* Se cooperado estiver demitidos nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -3487,7 +3519,10 @@ PROCEDURE efetua_batimento_ged_termos:
         END.
     END.
     /* fim tipo de documento 38 */
+
+    END. /* do aux_data */
     
+
     /* Verificar se existe registro para gerar no relatorio. */
     FIND FIRST tt-documentos-termo 
          WHERE tt-documentos-termo.cdcooper = par_cdcooper

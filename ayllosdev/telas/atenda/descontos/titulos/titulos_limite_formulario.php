@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Junho/2007
  * OBJETIVO     : Carregar formulário de dados para gerenciar limite
  * --------------
- * ALTERAÇÕES   : 27/06/2016
+ * ALTERAÇÕES   : 10/10/2016
  * --------------
  * 001: [04/05/2011] Rodolpho Telmo  (DB1) : Adaptação no formulário de avalista genérico
  * 002: [11/07/2011] Gabriel Capoia  (DB1) : Alterado para layout padrão
@@ -22,6 +22,7 @@
 					                         divergencia ao pesquisar no SmartShare.
                                              (Chamado 181988) - (Fabricio)
  * 010: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
+ * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  */
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
@@ -143,12 +144,9 @@
 		
 	<input type="image" id="btnVoltarLimite" name="btnVoltarLimite" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
 	
-	<? if ($cddopcao == "C") { 
-			$flgdigit = $dados[28]->cdata;	
-			if($flgdigit == "yes"){			?> 
+	<? if ($cddopcao == "C") { ?> 
 				<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $dados[29]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos('z.zzz.zz9',$nrctrlim,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>
-	<?	    }
-	} ?>
+	<?	} ?>
 	   
 	<input type="image" id="btnContinuarLimite" name="btnContinuarLimite" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />		
 	
