@@ -1,30 +1,12 @@
 /* ..............................................................................
 
-Procedure: obtem_extrato_conta.p 
-Objetivo : Obter o extrato de conta corrente do associado
-Autor    : Evandro
-Data     : Fevereiro 2010
+Procedure: obtem_lancamentos_futuros.p 
+Objetivo : Obter o lancamentos Futuros
+Autor    : Lenilson (Mouts)
+Data     : Outubro 2016
 
 
-Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
-                  
-                  10/10/2012 - Tratamento para novo campo da 'craphis' de descrição
-                               do histórico em extratos (Lucas) [Projeto Tarifas].
-                               
-                  18/07/2013 - Correção número da agencia da cooperativa (Lucas).
-                  
-                  07/11/2013 - Alterado Posto de Atendimento ao Cooperado para
-                               Posto de Atendimento "PA". (Jorge)
-                               
-                  20/08/2015 - Adicionado SAC e OUVIDORIA nos comprovantes
-                               (Lucas Lunelli - Melhoria 83 [SD 279180])
-                               
-                  27/01/2016 - Exibir valor disponível de pré-aprovado
-                               (Lucas Lunelli - PRJ261)
-                               
-                  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
-                               Futuros. Lenilson (Mouts)
-
+Ultima alteração: 
 ............................................................................... */
 
 DEFINE  INPUT PARAMETER par_dtiniext    AS DATE                     NO-UNDO.
@@ -33,11 +15,12 @@ DEFINE  INPUT PARAMETER par_inisenta    AS INTEGER                  NO-UNDO.
 DEFINE OUTPUT PARAMETER par_tximpres    AS CHAR                     NO-UNDO.
 DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 
-
 /* para o saldo, ao final do extrato */
 DEFINE VARIABLE aux_nmtitula            AS CHARACTER    EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_vlsddisp            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllautom            AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vlldeb              AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vllcre              AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllaucre            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vlsdbloq            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vlblqtaa            AS DECIMAL                  NO-UNDO.
@@ -49,6 +32,8 @@ DEFINE VARIABLE aux_vldiscrd            AS DECIMAL   INIT 0         NO-UNDO.
 DEFINE VARIABLE aux_vlstotal            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_tximpres            AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_idastcjt        	AS INTEGER      			NO-UNDO.
+
+
 
 /* para controle de deposito TAA */
 DEFINE VARIABLE aux_fldeptaa            AS LOGICAL      INIT NO     NO-UNDO.
@@ -71,7 +56,7 @@ DEFINE VARIABLE aux_nrtelouv            AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_flgderro            AS LOGICAL                  NO-UNDO.
 
 
-RUN procedures/grava_log.p (INPUT "Obtendo Extrato de Conta Corrente...").
+RUN procedures/grava_log.p (INPUT "Obtendo Lancamentos Futuros...").
 
 aux_hrtransa = TIME.
 
@@ -85,7 +70,7 @@ RUN mensagem.w (INPUT NO,
                 INPUT "  AGUARDE...",
                 INPUT "",
                 INPUT "",
-                INPUT "Verificando Extrato.",
+                INPUT "Verificando Lancamentos.",
                 INPUT "",
                 INPUT "").
 
@@ -109,7 +94,7 @@ ASSIGN par_tximpres = TRIM(glb_nmrescop) + " AUTOATENDIMENTO"
                                                     STRING(glb_nrterfin,"9999") +
                                                              "         " +
                       "                                                " +
-                      "           EXTRATO DE CONTA CORRENTE            " +
+                      "           LANCAMENTOS FUTUROS                  " +
                       "                                                " + 
                       "CONTA: " + STRING(glb_nrdconta,"zzzz,zzz,9")      +
                           " - " + STRING(glb_nmtitula[1],"x(28)").
@@ -125,7 +110,7 @@ par_tximpres = par_tximpres +
                " ATE " + STRING(par_dtfimext,"99/99/9999") +
                                                  "              " +
                "                                                " +
-               "DIA HISTORICO         DOCUMENTO D/C        VALOR".
+               "DTA   HISTORICO       DOCUMENTO  D/C       VALOR".
 
 
 
@@ -279,7 +264,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
     
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "6".
+    xText:NODE-VALUE = "64".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
@@ -345,7 +330,6 @@ END. /* Fim REQUISICAO */
 RESPOSTA:
 DO:
     DEFINE VARIABLE aux_contador  AS INTEGER     NO-UNDO.
-    
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
     CREATE X-NODEREF  xField.
@@ -394,7 +378,7 @@ DO:
 
             IF  xField:NAME = "DSCRITIC"  THEN
                 DO:
-                    RUN procedures/grava_log.p (INPUT "Extrato Conta - " + xText:NODE-VALUE).
+                    RUN procedures/grava_log.p (INPUT "Lancamentos Conta - " + xText:NODE-VALUE).
 
                     RUN mensagem.w (INPUT YES,
                                     INPUT "      ERRO!",
@@ -410,12 +394,12 @@ DO:
                     par_flgderro = YES.
                 END.
             ELSE
-            IF  xField:NAME = "DDMVTOLT"  THEN
-                par_tximpres = par_tximpres + STRING(xText:NODE-VALUE,"x(3)") + " ".
+            IF  xField:NAME = "DTMVTOLT"  THEN
+                par_tximpres = par_tximpres + STRING(xText:NODE-VALUE,"x(5)"+ " ").
             ELSE
-            IF  xField:NAME = "DSEXTRAT"  THEN
+            IF  xField:NAME = "DSHISTOR"  THEN
                 DO:
-                    IF  LENGTH(STRING(xText:NODE-VALUE)) > 16 THEN
+                    IF  LENGTH(STRING(xText:NODE-VALUE)) > 15 THEN
                         DO: 
                             IF (INDEX(xText:NODE-VALUE," ") = 0) THEN
                                 DO:
@@ -429,11 +413,11 @@ DO:
                                     aux_contchar = (47 - aux_contchar).
                                     
                                     par_tximpres = par_tximpres + FILL(" ", aux_contchar).
-                                    par_tximpres = par_tximpres + SUBSTRING(STRING(xText:NODE-VALUE + FILL(" ",16)),(INDEX(xText:NODE-VALUE," ") + 1),16).
+                                    par_tximpres = par_tximpres + SUBSTRING(STRING(xText:NODE-VALUE + FILL(" ",15)),(INDEX(xText:NODE-VALUE," ") + 1),15).
                                 END.
                         END.
                     ELSE
-                        par_tximpres = par_tximpres + STRING(xText:NODE-VALUE, "X(15)") + " ".
+                        par_tximpres = par_tximpres + STRING(xText:NODE-VALUE, "X(14)") + " ".
                     
                     
                     /* verifica se possui deposito TAA */
@@ -445,7 +429,7 @@ DO:
             IF  xField:NAME = "NRDOCMTO"  THEN
                 DO:
                     IF  xText:NODE-VALUE = "-"  THEN
-                        par_tximpres = par_tximpres + "            ".
+                        par_tximpres = par_tximpres + "           ".
                     ELSE
                         par_tximpres = par_tximpres + STRING(xText:NODE-VALUE,"x(11)") + " ".
                 END.
@@ -456,17 +440,39 @@ DO:
                     IF  xText:NODE-VALUE = "-"  THEN
                         par_tximpres = par_tximpres + "   ".
                     ELSE
-                        par_tximpres = par_tximpres + " " + xText:NODE-VALUE + " ".
+                        par_tximpres = par_tximpres + " " + xText:NODE-VALUE .
                 END.
             ELSE
             IF  xField:NAME = "VLLANMTO"  THEN
                 par_tximpres = par_tximpres + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-").
 
         END. /* Fim DO..TO.. */
-
-        LEAVE.
-    END. /* Fim WHILE */
         
+        LEAVE.
+
+    END. /* Fim WHILE */
+
+/* obtem os valores dos saldos - nao logar */
+RUN procedures/obtem_saldo_limite.p ( INPUT 0,
+                                     OUTPUT aux_vlsddisp,
+                                     OUTPUT aux_vllautom,
+                                     OUTPUT aux_vllaucre,
+                                     OUTPUT aux_vlsdbloq,
+                                     OUTPUT aux_vlblqtaa,
+                                     OUTPUT aux_vlsdblpr,
+                                     OUTPUT aux_vlsdblfp,
+                                     OUTPUT aux_vlsdchsl,
+                                     OUTPUT aux_vllimcre,
+                                     OUTPUT aux_idastcjt,
+                                     OUTPUT par_flgderro).
+               
+               IF  xField:NAME = "vllautom"  THEN
+par_tximpres = par_tximpres +
+               "    TOTAL DE DÉBITOS:              " + STRING(DECIMAL(aux_vllautom),"zzzzz,zz9.99-")   + 
+               "    TOTAL DE CRÉDITOS - DÉBITOS:   " + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-"). 
+                       
+        
+ 
     DELETE OBJECT xDoc.
     DELETE OBJECT xRoot.
     DELETE OBJECT xField.
@@ -536,7 +542,7 @@ RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                      OUTPUT aux_vlsdblfp,
                                      OUTPUT aux_vlsdchsl,
                                      OUTPUT aux_vllimcre,
-									 OUTPUT aux_idastcjt,
+                                     OUTPUT aux_idastcjt,
                                      OUTPUT par_flgderro).
 
 aux_vlstotal = aux_vlsddisp - aux_vllautom + aux_vlsdbloq +

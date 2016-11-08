@@ -44,6 +44,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   14/06/2016 - #413717 Retirada a verificacao de impressora antes
                                da chamada da visualizacao da impressao (Carlos)
+
+				  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
+                               Futuros. Lenilson (Mouts)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -483,7 +486,7 @@ DO:
             RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                                  OUTPUT aux_vlsddisp,
                                                  OUTPUT aux_vllautom,
-												 OUTPUT aux_vllaucre,
+                                                 OUTPUT aux_vllaucre,
                                                  OUTPUT aux_vlsdbloq,
                                                  OUTPUT aux_vlblqtaa,
                                                  OUTPUT aux_vlsdblpr,

@@ -39,6 +39,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   24/12/2015 - Adicionado tratamento para contas com assinatura 
                                conjunta. (Reinert)
 
+				  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
+                               Futuros. Lenilson (Mouts)
+
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -513,7 +516,7 @@ DO:
             RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                                  OUTPUT aux_vlsddisp,
                                                  OUTPUT aux_vllautom,
-												 OUTPUT aux_vllaucre,
+                                                 OUTPUT aux_vllaucre,
                                                  OUTPUT aux_vlsdbloq,
                                                  OUTPUT aux_vlblqtaa,
                                                  OUTPUT aux_vlsdblpr,
