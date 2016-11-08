@@ -3822,6 +3822,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           CYBER para verificar na cracyc ao inves da crapcyb
     --                           (Douglas)
     --
+    --              01/08/2016 - Incluido mensagem do pre aprovado para cargas manuais.
+    --                           Projeto 299/3 - Pre-Aprovado (Lombardi)
+    --
     --              04/10/2016 - Validação de emprestimo em atraso da própria conta e como fiador.
     --                           Incluído uma cláusula "and" no lugar de utilizar 2 if's.
     --                           Dessa forma permite que as demais condições (else e elsif) sejam validadas
@@ -5180,13 +5183,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_idxcpa := vr_tab_dados_cpa.first;
     
-    IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
-       vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
+    IF vr_tab_dados_cpa.exists(vr_idxcpa) THEN
+      IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
+        --> Incluir na temptable
+        pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
+                            ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
+       
+      ELSE
+        IF vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
           --> Incluir na temptable
           pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
                                                           'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
                                pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
         END IF;
+      END IF;
+    END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;
