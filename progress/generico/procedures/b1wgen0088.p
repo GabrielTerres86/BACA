@@ -235,6 +235,10 @@
                              carrega_dados_tarifa_cobranca. (Jaison/Marcos)
 
                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+               
+               08/11/2016 - Considerar periodo de carencia parametrizado na regra de bloqueio de baixa
+                            de titulos descontados
+                            Heitor (Mouts) - Chamado 527557
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0087tt.i }
@@ -5340,6 +5344,10 @@ PROCEDURE efetua-validacao-recusa-padrao:
     DEF  INPUT PARAM par_cdinstru AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrremass AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM ret_dsinserr AS CHAR                           NO-UNDO.
+    
+    DEF    VAR       aux_cdacesso AS CHAR                           NO-UNDO.
+    DEF    VAR       aux_qtdiacar AS INTE                           NO-UNDO.
+    DEF    VAR       aux_dtcalcul AS DATE                           NO-UNDO.
 
     FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
@@ -5535,6 +5543,24 @@ PROCEDURE efetua-validacao-recusa-padrao:
             END.
 
             /* -------------------------------------------------- */
+            IF (bcrapcob.flgregis) THEN
+              ASSIGN aux_cdacesso = "LIMDESCTITCR".
+            ELSE
+              ASSIGN aux_cdacesso = "LIMDESCTIT".
+            
+            FIND craptab WHERE 
+                 craptab.cdcooper = bcrapcob.cdcooper  AND /* Parametro Apenas Cadastrado na Cecred */
+                 craptab.nmsistem = "CRED"             AND
+                 craptab.tptabela = "USUARI"           AND
+                 craptab.cdempres = 11                 AND
+                 craptab.cdacesso = aux_cdacesso       AND
+                 craptab.tpregist = 0
+                 NO-LOCK NO-ERROR.
+
+            IF NOT AVAILABLE craptab   THEN
+              ASSIGN aux_qtdiacar = 0.
+            ELSE
+              ASSIGN aux_qtdiacar = INTE(ENTRY(32,craptab.dstextab,";")).
 
             FIND craptdb WHERE  craptdb.cdcooper = bcrapcob.cdcooper AND
                                 craptdb.nrdconta = bcrapcob.nrdconta AND
@@ -5543,10 +5569,28 @@ PROCEDURE efetua-validacao-recusa-padrao:
                                 craptdb.nrcnvcob = bcrapcob.nrcnvcob AND
                                 craptdb.nrdocmto = bcrapcob.nrdocmto
                                 NO-LOCK NO-ERROR.
+            IF AVAIL craptdb THEN
+            DO:
+              ASSIGN aux_dtcalcul = craptdb.dtvencto + aux_qtdiacar.
+
+              DO WHILE TRUE:         
+                aux_dtcalcul = aux_dtcalcul + 1.
+          
+                IF  LOOKUP(STRING(WEEKDAY(aux_dtcalcul)),"1,7") <> 0   THEN
+                  NEXT.
+          
+                IF  CAN-FIND(crapfer WHERE 
+                             crapfer.cdcooper = bcrapcob.cdcooper       AND
+                             crapfer.dtferiad = aux_dtcalcul)  THEN
+                  NEXT.
+          
+                LEAVE.
+              END.
+            END.
 
             IF AVAIL craptdb AND
             /* e a situação é em estudo e não esta vencido */
-            ( (craptdb.insittit = 0 AND craptdb.dtvencto >= par_dtmvtolt) OR
+            ( (craptdb.insittit = 0 AND aux_dtcalcul >= par_dtmvtolt) OR
               (craptdb.insittit = 4 )) THEN
               DO:
                   RUN prepara-retorno-cooperado
