@@ -51,8 +51,8 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '		<inpessoa>'.$inpessoa.'</inpessoa>';
 	$xml .= '		<nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';
-	$xml .= '		<dsnome>'.$dsnome.'</dsnome>';
-	$xml .= '		<dsmotivo>'.$dsmotivo.'</dsmotivo>';
+	$xml .= '		<dsnome>'.utf8_decode( $dsnome ).'</dsnome>';
+	$xml .= '		<dsmotivo>'.utf8_decode( $dsmotivo ).'</dsmotivo>';
 	//$xml .= '		<dtarquivo> </dtarquivo>';
 	$xml .= '		<tpinclusao>'.$tpinclusao.'</tpinclusao>';
 	$xml .= '		<flgerlog>YES</flgerlog>';

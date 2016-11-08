@@ -50,11 +50,11 @@
 	$xml .= '	<Dados>';
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '		<cdcnae>'.$cdcnae.'</cdcnae>';
-	$xml .= '		<dsmotivo>'.$dsmotivo.'</dsmotivo>';
+	$xml .= '		<dsmotivo>'.utf8_decode( $dsmotivo ).'</dsmotivo>';
 	//$xml .= '		<dtarquivo> </dtarquivo>';
 	$xml .= '		<tpbloqueio>'.$tpbloqueio.'</tpbloqueio>';
 	$xml .= '		<tpinclusao>'.$tpinclusao.'</tpinclusao>';
-	$xml .= '		<dslicenca>'.$dslicenca.'</dslicenca>';
+	$xml .= '		<dslicenca>'.utf8_decode( $dslicenca ).'</dslicenca>';
 	$xml .= '		<flgerlog>YES</flgerlog>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
