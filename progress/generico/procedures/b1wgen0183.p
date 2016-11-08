@@ -5,7 +5,7 @@
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Tiago
-  Data    : Fevereiro/14                           Ultima alteracao: 25/07/2014
+  Data    : Fevereiro/14                           Ultima alteracao: 24/10/2016
 
   Objetivo  : Procedures referentes a tela HRCOMP.
 
@@ -13,11 +13,23 @@
                            para todas cooperativas de uma vez so 
                            (Tiago/Elton SD172634).
                            
+			  10/06/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET,688)
+			               (Tiago/Thiago SD402010)             
+						           
+              13/06/2016 - Incluir flgativo na busca das cooperativas na PROCEDURE
+                           grava_dados (Lucas Ranghetti #462237)
+
+	          25/08/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET) e
+			               nao permitir alterar o horario para antes do horario
+						   atual (Tiago/Thiago #493693).
+
+			  24/10/2016 - Ajustes referentes a melhoria349 (Tiago/Elton).
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }   
+{ sistema/generico/includes/var_oracle.i }
 
 PROCEDURE busca_dados:
 
@@ -287,7 +299,7 @@ PROCEDURE grava_dados:
            aux_hrfimexe = (par_agefimhr * 3600) + (par_agefimmm * 60).
 
 
-    /*horario final não pode ser menor ou igual ao inicial*/
+    /*horario final nao pode ser menor ou igual ao inicial*/
     IF  aux_hriniexe >= aux_hrfimexe THEN
         DO:
             ASSIGN aux_cdcritic = 0
@@ -304,11 +316,18 @@ PROCEDURE grava_dados:
         END.
     /* Fim Validacoes */
 
+    TRANS_HEC:
+    DO TRANSACTION ON ENDKEY UNDO TRANS_HEC, LEAVE TRANS_HEC
+                   ON ERROR  UNDO TRANS_HEC, LEAVE TRANS_HEC
+                   ON STOP   UNDO TRANS_HEC, LEAVE TRANS_HEC:
+
     /*gravar para todas coops*/
     IF  aux_flgtodas = TRUE THEN
         DO:
 
-            FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK:
+            FOR EACH crapcop WHERE crapcop.cdcooper <> 3 
+                               AND crapcop.flgativo = TRUE NO-LOCK:
+                               
                 /*Valida sequencia da execucao dos processos para nao deixar cadastrar
                   horarios de forma que altere essa sequencia de execucao. */
                 RUN valida_seq_execucao(INPUT crapcop.cdcooper,
@@ -371,6 +390,25 @@ PROCEDURE grava_dados:
                                       " >> /usr/coop/cecred/log/hrcomp.log").
                             END.  
 
+						IF (craphec.cdprogra = "CRPS688" OR 
+						    craphec.cdprogra = "DEBNET"  OR 
+						    craphec.cdprogra = "DEBSIC") AND
+						    aux_hriniexe < TIME THEN
+						   DO:
+								ASSIGN aux_cdcritic = 0
+									   aux_dscritic = "O horario do reagendamento deve ser superior a hora atual.".
+    
+								RUN gera_erro (INPUT par_cdcooper,
+										       INPUT par_cdagenci,
+											   INPUT 0,
+											   INPUT 1,     /** Sequencia **/
+											   INPUT aux_cdcritic,
+											   INPUT-OUTPUT aux_dscritic).
+    
+								RETURN "NOK".
+						   END.
+
+
                         ASSIGN  craphec.hriniexe =   (par_ageinihr * 3600) 
                                                    + (par_ageinimm * 60)
                                 craphec.hrfimexe =   (par_agefimhr * 3600) 
@@ -379,6 +417,33 @@ PROCEDURE grava_dados:
 
                         VALIDATE craphec.
 
+    					IF  craphec.cdprogra = "CRPS688" OR 
+						    craphec.cdprogra = "DEBNET"  OR 
+						    craphec.cdprogra = "DEBSIC"  THEN
+    						DO:                                
+                                RUN reagenda_job(INPUT crapcop.cdcooper
+                								                ,INPUT craphec.cdprogra
+                                                ,INPUT craphec.dsprogra
+                                                ,INPUT par_dtmvtolt
+                                                ,INPUT par_ageinihr
+                                                ,INPUT par_ageinimm
+                                                ,OUTPUT aux_dscritic).
+
+                                IF aux_dscritic <> '' THEN
+                                DO:
+                                    ASSIGN aux_cdcritic = 0
+                                           aux_dscritic = "Problema na gravacao dos dados.".
+    
+                                    RUN gera_erro (INPUT par_cdcooper,
+                                                   INPUT par_cdagenci,
+                                                   INPUT 0,
+                                                   INPUT 1,     /** Sequencia **/
+                                                   INPUT aux_cdcritic,
+                                                   INPUT-OUTPUT aux_dscritic).
+    
+                                    RETURN "NOK".
+                    END.
+    						END.
                     END.
                 ELSE
                     DO:
@@ -471,6 +536,25 @@ PROCEDURE grava_dados:
                                   " >> /usr/coop/cecred/log/hrcomp.log").
                         END.  
     
+					IF (craphec.cdprogra = "CRPS688" OR 
+						craphec.cdprogra = "DEBNET"  OR 
+						craphec.cdprogra = "DEBSIC") AND
+						aux_hriniexe < TIME THEN
+						DO:
+							ASSIGN aux_cdcritic = 0
+									aux_dscritic = "O horario do reagendamento deve ser superior a hora atual.".
+    
+							RUN gera_erro (INPUT par_cdcooper,
+										    INPUT par_cdagenci,
+											INPUT 0,
+											INPUT 1,     /** Sequencia **/
+											INPUT aux_cdcritic,
+											INPUT-OUTPUT aux_dscritic).
+    
+							RETURN "NOK".
+						END.
+
+
                     ASSIGN  craphec.hriniexe =   (par_ageinihr * 3600) 
                                                + (par_ageinimm * 60)
                             craphec.hrfimexe =   (par_agefimhr * 3600) 
@@ -479,7 +563,35 @@ PROCEDURE grava_dados:
     
                     VALIDATE craphec.
     
+    					IF craphec.cdprogra = "CRPS688" OR 
+						   craphec.cdprogra = "DEBNET"  OR 
+						   craphec.cdprogra = "DEBSIC"  THEN
+    					DO:                           
+
+                            RUN reagenda_job(INPUT craphec.cdcooper
+							                              ,INPUT craphec.cdprogra
+                                            ,INPUT craphec.dsprogra
+                                            ,INPUT par_dtmvtolt
+                                            ,INPUT par_ageinihr
+                                            ,INPUT par_ageinimm
+                                            ,OUTPUT aux_dscritic).
+
+    						IF aux_dscritic <> '' THEN
+    						DO:
+    							ASSIGN aux_cdcritic = 0
+    								   aux_dscritic = "Problema na gravacao dos dados.".
+    
+    							RUN gera_erro (INPUT par_cdcooper,
+    										   INPUT par_cdagenci,
+    										   INPUT 0,
+    										   INPUT 1,     /** Sequencia **/
+    										   INPUT aux_cdcritic,
+    										   INPUT-OUTPUT aux_dscritic).
+    
+    							RETURN "NOK".
                 END.
+    					END.
+                    END.
             ELSE
                 DO:
                     ASSIGN aux_cdcritic = 0
@@ -495,8 +607,8 @@ PROCEDURE grava_dados:
                     RETURN "NOK".
     
                 END.
-    
         END.
+    END. /* fim TRANS_HEC*/
 
     RETURN "OK".
 
@@ -708,10 +820,10 @@ PROCEDURE valida_seq_execucao:
                     END. 
             END.
 
-        WHEN "DEBNET" THEN
+        WHEN "DEBNET VESPERTINA" THEN
             DO:
                 FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
-                                   crabhec.dsprogra  = "TAA E INTERNET" AND
+                                   crabhec.dsprogra  = "DEBNET NOTURNA" AND
                                   (crabhec.hriniexe <= par_hriniexe OR
                                    crabhec.hrfimexe <= par_hrfimexe)
                                    NO-LOCK NO-ERROR.
@@ -719,7 +831,50 @@ PROCEDURE valida_seq_execucao:
                 IF  AVAIL(crabhec) THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "DEBNET deve rodar antes do TAA E INTERNET.".
+                               aux_dscritic = "DEBNET VESPERTINA deve rodar antes do DEBNET NOTURNA.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+                    END.
+            END.
+
+        WHEN "DEBNET NOTURNA" THEN
+            DO:
+                FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
+                                   crabhec.dsprogra  = "DEBNET VESPERTINA" AND
+                                   crabhec.hrfimexe >= par_hriniexe
+                                   NO-LOCK NO-ERROR.
+    
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "DEBNET NOTURNA deve rodar depois do DEBNET VESPERTINA.".
+    
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT 0,
+                                       INPUT 0,
+                                       INPUT 1,     /** Sequencia **/
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+    
+                        RETURN "NOK".
+                    END.
+
+                FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
+                                   crabhec.dsprogra  = "TAA E INTERNET" AND
+                                   crabhec.hrfimexe <= par_hriniexe 
+                                   NO-LOCK NO-ERROR.
+    
+                IF  AVAIL(crabhec) THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "DEBNET NOTURNA deve rodar antes do TAA E INTERNET.".
     
                         RUN gera_erro (INPUT par_cdcooper,
                                        INPUT 0,
@@ -735,7 +890,7 @@ PROCEDURE valida_seq_execucao:
         WHEN "TAA E INTERNET" THEN
             DO:
                 FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
-                                   crabhec.dsprogra  = "DEBNET" AND
+                                   crabhec.dsprogra  = "DEBNET NOTURNA" AND
                                   (crabhec.hriniexe >= par_hriniexe OR
                                    crabhec.hrfimexe >= par_hrfimexe)
                                    NO-LOCK NO-ERROR.
@@ -743,7 +898,7 @@ PROCEDURE valida_seq_execucao:
                 IF  AVAIL(crabhec) THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "TAA E INTERNET deve rodar depois do DEBNET.".
+                               aux_dscritic = "TAA E INTERNET deve rodar depois do DEBNET NOTURNA.".
     
                         RUN gera_erro (INPUT par_cdcooper,
                                        INPUT 0,
@@ -794,6 +949,67 @@ PROCEDURE cria_reg_proc:
                tt-processos.hragefim = "00:00"
                tt-processos.nrseqexe = craphec.nrseqexe.
     END.
+
+    RETURN "OK".
+END PROCEDURE.
+
+PROCEDURE reagenda_job:
+
+    DEF INPUT PARAM par_cdcooper    LIKE    crapcop.cdcooper    NO-UNDO.
+	  DEF INPUT PARAM par_cdprogra    LIKE    craphec.cdprogra    NO-UNDO.
+    DEF INPUT PARAM par_dsprogra    LIKE    craphec.dsprogra    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt    LIKE    crapdat.dtmvtolt    NO-UNDO.
+    DEF INPUT PARAM par_ageinihr    AS      INTEGER             NO-UNDO.
+    DEF INPUT PARAM par_ageinimm    AS      INTEGER             NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic   LIKE    crapcri.dscritic    NO-UNDO.
+
+
+    DEF VAR         vr_jobname      AS      CHAR                NO-UNDO.
+
+    ASSIGN par_dscritic = "".
+    
+    /*M349 DEBNET e DEBSIC Passam a ter 3 execucoes diarias
+      uma logo apos o processo uma durante a tarde e uma a noite
+      por este motivo o JOB que se chamava apenas _DIA agora foi 
+      criado mais um com _NOT pra noite*/      
+    IF  par_dsprogra MATCHES '*VESPERTINA*' THEN
+    DO:
+      ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"zz")) + "\_DIA". 
+    END.
+    ELSE     
+    DO:
+      IF  par_dsprogra MATCHES '*NOTURNA*' THEN
+          DO:
+            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"zz")) + "\_NOT". 
+          END.
+      ELSE
+          DO:
+            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"zz")) + "\_DIA". /*No caso do CRPS688 continua como esta 2 exec por dia*/
+          END.
+    END.
+
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_reagenda_job
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT vr_jobname, /* jobname */
+                                          INPUT par_dtmvtolt, /* data */
+                                          INPUT par_ageinihr, /* hora  */
+                                          INPUT par_ageinimm, /* minuto */
+                                          OUTPUT "").         /* Descrição da crítica */
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_reagenda_job
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+
+    ASSIGN par_dscritic = pc_reagenda_job.pr_dscritic
+                          WHEN pc_reagenda_job.pr_dscritic <> ?.
+
+    IF par_dscritic <> "" THEN
+       RETURN "NOK".
 
     RETURN "OK".
 END PROCEDURE.

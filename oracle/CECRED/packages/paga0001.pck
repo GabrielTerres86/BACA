@@ -1434,6 +1434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               
        28/09/2016 - Incluir ROLLBACK TO undopoint na saida de critica da pc_insere_lote
                     na procedure pc_paga_titulo (Lucas Ranghetti #511679)                      
+                    
+       04/11/2016 - Ajuste para tratar a terceira execucao do processo debnet M349 (Tiago/Elton)             
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -5069,7 +5071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
            IF rw_craplau.vllanaut > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
                                      nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
             --> Se for a primeira execução da DEBNET/CRPS509 
-            IF vr_qtdexec = 1 THEN 
+            IF vr_qtdexec < 3 THEN 
               FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                              ,pr_nrdconta  => rw_craplau.nrdconta
                                              ,pr_cdsitsnh  => 1
@@ -5232,7 +5234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
          IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           /* Se for a primeira execução da DEBNET/CRPS509 */
-          IF vr_qtdexec = 1 THEN 
+          IF vr_qtdexec < 3 THEN 
             FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                            ,pr_nrdconta  => rw_craplau.nrdconta
                                            ,pr_cdsitsnh  => 1
@@ -10385,7 +10387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           IF rw_craplau.vllanaut > (vr_tab_saldo(vr_indsaldo).vlsddisp + vr_tab_saldo(vr_indsaldo).vllimcre) THEN
 
             --> Se for a primeira execução da DEBNET/CRPS509 
-            IF vr_qtdexec = 1 THEN
+            IF vr_qtdexec < 3 THEN
               FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                              ,pr_nrdconta  => rw_craplau.nrdconta
                                              ,pr_cdsitsnh  => 1
@@ -10561,7 +10563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 
         IF  vr_dscritic = 'Nao ha saldo suficiente para a operacao.' THEN
           --> Se for a primeira execução da DEBNET/CRPS509 DEBSIC/CRPS642
-          IF vr_qtdexec = 1 THEN           
+          IF vr_qtdexec < 3 THEN           
             FOR rw_crapsnh2 IN cr_crapsnh2 (pr_cdcooper  => pr_cdcooper
                                            ,pr_nrdconta  => rw_craplau.nrdconta
                                            ,pr_cdsitsnh  => 1
@@ -19270,6 +19272,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     --               08/09/2016 - Remover condicao temporaria de criacao de protocolo. Agora todos os debitos
     --                            podem ter seu comprovante gerado normalmente, devido ao ajuste na estrutura
     --                            da tabela crapaut. (Anderson #511078)
+    --
+    --               04/11/2016 - Ajuste para tratar a terceira execucao do processo debnet M349 (Tiago/Elton)
     -- ..........................................................................
   BEGIN
     DECLARE
@@ -19728,7 +19732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               vr_auxdscri := vr_dscritic;
                    
           -- Se for a primeira tentativa apenas grava a mensagem para o cooperado
-          IF vr_qtdexec = 1 THEN
+          IF vr_qtdexec < 3 THEN
             -- VARIAVEIS AUXILIARES DE ERRO, PARA NAO PERDER INFORMACAO ATE O MOMENTO
             pr_cdcritic := vr_auxcdcri;
             pr_dscritic := vr_auxdscri;
@@ -19866,7 +19870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           END;
           
 		  -- Se for a primeira tentativa apenas grava critica
-          ELSIF vr_qtdexec = 1 THEN
+          ELSIF vr_qtdexec < 3 THEN
             BEGIN
               -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS
               UPDATE craplau
@@ -19893,7 +19897,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           vr_auxdscri := vr_dscritic;
           
           -- Se for a primeira tentativa apenas grava a mensagem para o cooperado
-          IF vr_qtdexec = 1 THEN
+          IF vr_qtdexec < 3 THEN
 
             -- Se for a primeira tentativa / Saldo Insuficiente
             BEGIN

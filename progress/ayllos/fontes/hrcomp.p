@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Fevereiro/2014                       Ultima Atualizacao: 31/07/2015
+   Data    : Fevereiro/2014                       Ultima Atualizacao: 24/10/2016
 
    Dados referentes ao programa:
 
@@ -20,6 +20,11 @@
                             de fontes 
                            (Adriano - SD 314469).            
                            
+               13/06/2016 - Incluir flgativo na busca das cooperativas na PROCEDURE
+                            Busca_Cooperativas (Lucas Ranghetti #462237)
+
+			   24/10/2016 - Ajustes para modificar os processos DEBSIC,DEBNET,
+			                DEBCNS - Melhoria349 (Tiago/Elton).
 ............................................................................. */
 
 { includes/var_online.i }
@@ -287,19 +292,13 @@ PROCEDURE Busca_Cooperativas:
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  OUTPUT PARAM aux_nmcooper AS CHAR                          NO-UNDO.
     
-    /*ASSIGN aux_contador = 0.*/
-
     ASSIGN aux_nmcooper = CAPS("todas") + "," +
                           STRING(0).
 
-    FOR EACH crapcop WHERE crapcop.cdcooper <> 3 
+    FOR EACH crapcop WHERE crapcop.cdcooper <> 3 AND 
+                           crapcop.flgativo = TRUE
                            NO-LOCK BY crapcop.dsdircop:
-        /*
-        IF  aux_contador = 0 THEN
-            ASSIGN aux_nmcooper = CAPS(crapcop.dsdircop) + "," +
-                                  STRING(crapcop.cdcooper)
-                   aux_contador = 1.
-        ELSE */
+                           
              ASSIGN aux_nmcooper = aux_nmcooper + "," + CAPS(crapcop.dsdircop)
                                               + "," + STRING(crapcop.cdcooper).
 

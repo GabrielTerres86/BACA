@@ -204,6 +204,12 @@ create or replace package cecred.SICR0001 is
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                                   ,pr_dscritic OUT VARCHAR2);                   --> descrição do erro se ocorrer
 
+  /* Procedimento para sumarizar os agendamentos da debnet */
+  PROCEDURE pc_sumario_debsic(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa inicial
+                             ,pr_cdcopfin IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa final
+                             ,pr_clobxmlc OUT CLOB                  --> XML com informações dos agendamentos
+                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE    --> Codigo da critica
+                             ,pr_dscritic OUT crapcri.dscritic%TYPE);  --> Descricao critica                                                        
 END SICR0001;
 /
 create or replace package body cecred.SICR0001 is
@@ -1666,7 +1672,7 @@ create or replace package body cecred.SICR0001 is
           --> Se identificou critica
           IF vr_cdcritic > 0 THEN
             -- Se for a primeira tentativa de debito
-            IF vr_qtdexec = 1 THEN
+            IF vr_qtdexec < 3 AND 
             
               IF NOT vr_cdcritic = 964 THEN
                 ---> Notificar critica ao cooperado
@@ -1757,7 +1763,7 @@ create or replace package body cecred.SICR0001 is
            (vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vllimcre) THEN
         
           -- Se for a primeira tentativa do dia, apenas incluir a mensagem para o cooperado
-          IF vr_qtdexec = 1 THEN
+		      IF vr_qtdexec < 3 THEN
           
             ---> Notificar critica ao cooperado
             pc_notif_cooperado_DEBAUT( pr_cdcritic  => 717 -- Nao ha saldo suficiente para a operacao
@@ -2893,6 +2899,216 @@ create or replace package body cecred.SICR0001 is
       pr_dscritic := vr_dscritic;
 
   END;
+  
+ /* Procedimento para sumarizar os agendamentos da debnet */
+  PROCEDURE pc_sumario_debsic(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa inicial
+                             ,pr_cdcopfin IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa final
+                             ,pr_clobxmlc OUT CLOB                  --> XML com informações dos agendamentos
+                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Codigo da critica
+                             ,pr_dscritic OUT crapcri.dscritic%TYPE) IS  --> Descricao critica                                      
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_sumario_debsic    
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Tiago Machado Flor
+    --  Data     : Outubro/2016.                   Ultima atualizacao: 00/00/0000
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure utilizada sumarizar os agendamentos DEBSIC
+    --
+    --  Alteração : 
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <----------------- 
+    
+    /* Verifica o Lancamento de credito salario */    
+    CURSOR cr_craplau(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_insitlau craplau.insitlau%TYPE
+                     ,pr_dtmvtopg crapdat.dtmvtolt%TYPE
+                     ,pr_dtmovini crapdat.dtmvtolt%TYPE) IS
+        SELECT  craplau.*
+          FROM  craplau, 
+                craphis
+          WHERE craplau.cdcooper = craphis.cdcooper
+            AND craplau.cdhistor = craphis.cdhistor
+            AND craplau.cdcooper = pr_cdcooper             
+            AND craplau.insitlau = pr_insitlau
+            AND ((craplau.dsorigem IN ('INTERNET','TAA','CAIXA')
+            AND craplau.dtmvtopg = pr_dtmvtopg
+            AND craplau.tpdvalor = 1)
+              -- debito automatico sicredi
+            OR (craplau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
+            AND craplau.cdhistor  = 1019));
+/*                     
+                     
+        SELECT  craplau.*
+          FROM  craplau, 
+                craphis
+          WHERE craplau.cdcooper = craphis.cdcooper
+            AND craplau.cdhistor = craphis.cdhistor
+            AND ((craplau.cdcooper >= pr_cdcooper
+            AND craplau.cdcooper <= pr_cdcopfin
+            AND craplau.dtmvtopg = pr_dtmvtopg
+            AND craplau.insitlau = 1
+            AND craplau.dsorigem IN ('INTERNET','TAA','CAIXA')
+            AND craplau.tpdvalor = 1)
+              -- debito automatico sicredi
+            OR (craplau.cdcooper  >= pr_cdcooper
+            AND craplau.cdcooper  <= pr_cdcopfin
+            AND craplau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
+            AND craplau.insitlau  = 1
+            AND craplau.cdhistor  = 1019)); */
+                         
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
+    
+    CURSOR cr_crapcop1(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.cdcooper = DECODE(pr_cdcooper, 3, cop.cdcooper, pr_cdcooper)
+         AND cop.cdcooper <> 3;
+    rw_crapcop1 cr_crapcop1%ROWTYPE;   
+    
+    --Tipo de Dados para cursor data
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+    
+    ---------------> VARIAVEIS <-----------------
+    vr_cdcooper     crapcop.cdcooper%TYPE;
+    vr_qtefetivados DECIMAL(6);
+    vr_qtnaoefetiva DECIMAL(6);
+    vr_qtdpendentes DECIMAL(6);
+    vr_qtdtotallanc DECIMAL(11);
+    vr_insitlau craplau.insitlau%TYPE;
+    
+    vr_dtmovini  craplau.dtmvtopg%TYPE;
+    
+    --Variaveis de erro    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);    
+    --Variaveis de Excecao
+    vr_exc_erro EXCEPTION;
+    vr_tab_erro gene0001.typ_tab_erro;
+
+    vr_index    VARCHAR2(300);
+
+    -- Variaveis de XML
+    vr_xml_temp VARCHAR2(32767);
+    
+  BEGIN
+
+      --Inicializar variaveis
+      vr_qtefetivados := 0;
+      vr_qtnaoefetiva := 0; 
+      vr_qtdpendentes := 0; 
+      vr_qtdtotallanc := 0;
+    
+      IF pr_cdcooper = 0 THEN
+         vr_cdcooper := 3;
+      ELSE
+         vr_cdcooper := pr_cdcooper;   
+      END IF;
+    
+      OPEN cr_crapcop(pr_cdcooper => vr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      
+      IF cr_crapcop%NOTFOUND THEN
+         CLOSE cr_crapcop;         
+         RAISE vr_exc_erro;
+      END IF;
+      
+      CLOSE cr_crapcop;
+      
+       -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+
+      -- Data anterior util
+      vr_dtmovini := gene0005.fn_valida_dia_util(vr_cdcooper, 
+                                                 (rw_crapdat.dtmvtolt - 1), -- 1 dia anterior
+                                                 'A',    -- Anterior
+                                                 TRUE,   -- Feriado
+                                                 FALSE); -- Desconsiderar 31/12
+      -- Adiciona mais um 1 dia na data inicial, para pegar finais de semana e feriados
+      vr_dtmovini := vr_dtmovini + 1;     
+
+      
+      FOR rw_crapcop1 IN cr_crapcop1(pr_cdcooper => vr_cdcooper)  LOOP
+
+          FOR vr_insitlau IN 1..4 LOOP
+
+            --SOMAR OS LANCAMENTOS PARA ESCREVER DEPOIS NO XML
+            FOR rw_craplau IN cr_craplau(pr_cdcooper => rw_crapcop1.cdcooper
+                                        ,pr_insitlau => vr_insitlau
+                                        ,pr_dtmvtopg => rw_crapdat.dtmvtolt
+                                        ,pr_dtmovini => vr_dtmovini) LOOP
+
+              CASE rw_craplau.insitlau
+
+                 WHEN 1 THEN vr_qtdpendentes := vr_qtdpendentes + 1; 
+                 WHEN 2 THEN vr_qtefetivados := vr_qtefetivados + 1;
+                 ELSE vr_qtnaoefetiva := vr_qtnaoefetiva + 1; 
+
+              END CASE;
+                                        
+            END LOOP;
+
+          END LOOP;
+          
+      END LOOP;
+      
+      vr_qtdtotallanc := vr_qtefetivados + vr_qtnaoefetiva + vr_qtdpendentes;
+      
+      --FIM SOMAR OS LANCAMENTOS PARA ESCREVER DEPOIS NO XML                         
+      
+      -- Criar documento XML
+      dbms_lob.createtemporary(pr_clobxmlc, TRUE);
+      dbms_lob.open(pr_clobxmlc, dbms_lob.lob_readwrite);
+
+      -- Insere o cabeçalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc,
+                              pr_texto_completo => vr_xml_temp,
+                              pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
+  
+      
+      --DEPOIS DE SOMAR OS AGENDAMENTOS NO CURSOR
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc,
+                              pr_texto_completo => vr_xml_temp,
+                              pr_texto_novo     => '<qtefetivados>' || NVL(vr_qtefetivados,0) || '</qtefetivados>'||
+                                                   '<qtnaoefetiva>' || NVL(vr_qtnaoefetiva,0) || '</qtnaoefetiva>'||
+                                                   '<qtdpendentes>' || NVL(vr_qtdpendentes,0) || '</qtdpendentes>'||
+                                                   '<qtdtotallanc>' || NVL(vr_qtdtotallanc,0) || '</qtdtotallanc>');
+
+      -- Encerrar a tag raiz
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc,
+                              pr_texto_completo => vr_xml_temp,
+                              pr_texto_novo     => '</raiz>',
+                              pr_fecha_xml      => TRUE);
+                                                     
+  EXCEPTION
+     WHEN vr_exc_erro THEN      
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+     WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          pr_dscritic := 'Erro ao buscar convenios aceitos: '||SQLERRM;  
+  END pc_sumario_debsic;
 
 END SICR0001;
 /
