@@ -99,7 +99,6 @@
  * 079: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 080: [05/04/2016] Incluido tratamento na efetuar_consultas para para verificar se deve validar permitir consulta caso ja esteja na esteira
  *                   PRJ207 Esteira de Credito. (Odirlei-AMcom) 
- * 081: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
  * 081: [03/08/2016] Auste para utilizar a rotina convertida para encontrar as finalidades de empréstimos (Andrei - RKAM).
  * 081: [18/08/2016] Alteração da função controlaFoco - (Evandro - RKAM)
  * ##############################################################################
@@ -107,9 +106,6 @@
  * ##############################################################################
  */
 
-var qtmesblq = 0;
-var bloquear_pre_aprovado = false;
- 
 var nrctremp = '';
 var operacao = '';
 var cddopcao = '';
@@ -1572,7 +1568,6 @@ function manterRotina(operacao) {
             vlpreant: vlpreant, nrctrant: nrctrant, operacao: operacao,
             tpemprst: tpemprst, nrcpfcgc: nrcpfcgc, dsjusren: dsjusren,
             dtlibera: dtlibera, inconcje: inconcje, flgconsu: flgconsu,
-            blqpreap: (bloquear_pre_aprovado ? 1 : 0),
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
@@ -7307,7 +7302,6 @@ function buscaLiquidacoes(operacao) {
                 dsctrliq: dsctrliq,
                 operacao: operacao,
                 cdlcremp: cdlcremp,
-				inpessoa: inpessoa,
                 redirect: 'script_ajax'
             },
             error: function(objAjax, responseError, objExcept) {
@@ -7583,20 +7577,6 @@ function fechaLiquidacoes(operacao) {
 
     dsctrliq = dsctrliq.slice(0, -1);
 
-	if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')
-		showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' mes(es)?',
-						'Confirma&ccedil;&atilde;o - Ayllos', 
-						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
-						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
-						'sim.gif', 
-						'nao.gif');
-	else
-		fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
-	return false;
-}
-
-function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
-	
     $('#dsctrliq', '#' + nomeForm).val(dsctrliq);
 
     if ($('#dsctrliq', '#' + nomeForm).val() != '') {
