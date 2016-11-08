@@ -2,13 +2,13 @@
 
    Programa: xb1wgen0153.p
    Autor   : Tiago Machado 
-   Data    : Fevereiro/2014                   Ultima atualizacao: 25/02/2014
+   Data    : Fevereiro/2014                   Ultima atualizacao: 11/10/2016
 
    Dados referentes ao programa:
 
    Objetivo  : BO de Comunicacao XML VS BO183 (b1wgen0183.p) 
 
-   Alteracoes: 
+   Alteracoes: 11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
 
 ..............................................................................*/
 
@@ -26,7 +26,7 @@ DEF VAR aux_ageinihr AS INTE                                        NO-UNDO.
 DEF VAR aux_ageinimm AS INTE                                        NO-UNDO.
 DEF VAR aux_agefimhr AS INTE                                        NO-UNDO.
 DEF VAR aux_agefimmm AS INTE                                        NO-UNDO.
-
+DEF VAR aux_cddopcao AS CHAR										NO-UNDO.
 
 { sistema/generico/includes/b1wgen0183tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -58,6 +58,7 @@ PROCEDURE valores_entrada:
             WHEN "ageinimm" THEN aux_ageinimm = INTE(tt-param.valorCampo).
             WHEN "agefimhr" THEN aux_agefimhr = INTE(tt-param.valorCampo).
             WHEN "agefimmm" THEN aux_agefimmm = INTE(tt-param.valorCampo).
+			WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
         END CASE.
                                                                     
     END. /** Fim do FOR EACH tt-param **/
@@ -191,6 +192,40 @@ PROCEDURE grava_dados:
             RUN piXmlNew.
             RUN piXmlExport (INPUT TEMP-TABLE tt-processos:HANDLE,
                              INPUT "Processos").
+            RUN piXmlSave.
+        END.         
+
+END PROCEDURE.
+
+
+/******************************************************************************/
+/* verificar o acesso  as opcoes da tela por departamento                     */
+/******************************************************************************/
+PROCEDURE acesso_opcao:
+
+    RUN acesso_opcao IN hBO(INPUT  aux_cdcooper,
+                            INPUT  aux_cdagenci,                            
+							INPUT  aux_dsdepart,
+							INPUT  aux_cddopcao,
+                            OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "ERRO").
+        END.
+    ELSE
+        DO:
+            RUN piXmlNew.
             RUN piXmlSave.
         END.         
 

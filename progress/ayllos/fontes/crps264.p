@@ -328,7 +328,7 @@ RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
     RETURN.
-
+  
 /*Devido a mudancas na tela PRCCTL que podera ser acessada
  por outras coops alem da CECRED é necessario que este
  ASSIGN permaneça para um funcionamento correto*/
