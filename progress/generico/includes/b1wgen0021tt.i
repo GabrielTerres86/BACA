@@ -57,7 +57,9 @@ DEF TEMP-TABLE tt-extrato_cotas NO-UNDO
     FIELD cdagenci AS INTE
     FIELD cdbccxlt AS INTE
     FIELD nrdolote AS INTE
-    FIELD dsextrat AS CHAR.
+    FIELD dsextrat AS CHAR
+    FIELD incancel AS LOG
+    FIELD lctrowid AS INTE.
         
 DEF TEMP-TABLE tt-dados-capital NO-UNDO
     FIELD vldcotas AS DECI
