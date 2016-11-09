@@ -192,7 +192,7 @@ BEGIN
      vr_dir_sicredi_teds := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_SICREDI_TEDS');
      
      -- Executar Script para conversão dos XLS do diretório para LST
-     gene0001.pc_OScommand_Perl(pr_des_comando => gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_CONVERT_XLS_CSV')
+     gene0001.pc_OScommand_Shell(pr_des_comando => gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_CONVERT_XLS_CSV')
                                 ,pr_typ_saida   => vr_typsaida
                                 ,pr_des_saida   => vr_dscritic); 
      -- Havendo erro avisaremos o financeiro
