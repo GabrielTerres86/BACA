@@ -16,12 +16,17 @@ Data    : Junho/2006                      Ultima Atualizacao: 29/10/2015
 
                19/12/2012 - Tratar nova estrutura gnappob (Gabriel). 
  
-05/10/2015 - Incluida verificacao de qtmaxtur na crapeap antes
-da atribuicao da crapedp Projeto 229 (Jean Michel).
-
-29/10/2015 - Incluida verificação e tratamento para os dias de
-semana do evento, PRJ 229 (Jean Michel)
+			   05/10/2015 - Incluida verificacao de qtmaxtur na crapeap antes
+			   				da atribuicao da crapedp Projeto 229 (Jean Michel).
+			   
+			   29/10/2015 - Incluida verificação e tratamento para os dias de
+			   				semana do evento, PRJ 229 (Jean Michel)
+			   							
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)
 ..............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
  
 create widget-pool.
  
@@ -89,8 +94,10 @@ ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper"))
        aux_dsendloc = "INDEFINIDO"
        aux_nmbailoc = "INDEFINIDO"
        aux_nmcidloc = "INDEFINIDO".
+
+RUN insere_log_progrid("WPGD0002a_xml.p",STRING(par_cdcooper) + "|" + STRING(par_cdagenci)).
        
-       /*aux_conteudo = "".*/
+/*aux_conteudo = "".*/
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
 CREATE X-NODEREF  xField.

@@ -3,13 +3,21 @@
 Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 
 			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).  
 
             08/03/2016 - Alterado para que os eventos do tipo EAD 
                          e EAD Assemblear nÃ£o sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
+                         
+            24/06/2016 - Inclusao de tratamento para exibir CNPJ/CPF
+                         e possibilitar gerar o relatorio em branco.
+                         PRJ229 - Melhorias OQS (Odirlei-AMcom)             
 
-...............................................................................*/
+			09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -25,6 +33,9 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cdcooper AS CHARACTER 
        FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_cdevento AS CHARACTER 
+       FIELD aux_flcpfcgc AS LOGICAL
+       FIELD aux_flrelbra AS LOGICAL   
+       FIELD aux_qtlimrel AS INTEGER
        FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_dtanoage AS CHARACTER FORMAT "X(256)":U 
@@ -132,7 +143,8 @@ DEFINE TEMP-TABLE cratidp             LIKE crapidp.
 &Scoped-define SECOND-ENABLED-TABLE crapidp
 &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.cdagenci ~
 ab_unmap.aux_cdcooper ab_unmap.cdcooper ab_unmap.aux_cddopcao ~
-ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
+ab_unmap.aux_cdevento ab_unmap.aux_flcpfcgc ab_unmap.aux_flrelbra ~
+ab_unmap.aux_qtlimrel ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ~
 ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdeixtem 
 &Scoped-Define DISPLAYED-FIELDS crapidp.idevento 
@@ -141,7 +153,8 @@ ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdeixtem
 &Scoped-define SECOND-DISPLAYED-TABLE crapidp
 &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.cdagenci ~
 ab_unmap.aux_cdcooper ab_unmap.cdcooper ab_unmap.aux_cddopcao ~
-ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
+ab_unmap.aux_cdevento ab_unmap.aux_flcpfcgc ab_unmap.aux_flrelbra ~
+ab_unmap.aux_qtlimrel ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ~
 ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdeixtem 
 
@@ -182,7 +195,19 @@ DEFINE FRAME Web-Frame
      ab_unmap.aux_cdevento AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
-          SIZE 20 BY 4
+          SIZE 20 BY 4          
+     ab_unmap.aux_flcpfcgc AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS TOGGLE-BOX 
+          SIZE 20 BY 4      
+     ab_unmap.aux_flrelbra AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS TOGGLE-BOX 
+          SIZE 20 BY 4          
+     aux_qtlimrel AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 4  
      ab_unmap.aux_dsendurl AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -495,6 +520,12 @@ PROCEDURE htmOffsets :
     ("aux_cddopcao":U,"ab_unmap.aux_cddopcao":U,ab_unmap.aux_cddopcao:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_cdevento":U,"ab_unmap.aux_cdevento":U,ab_unmap.aux_cdevento:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_flcpfcgc":U,"ab_unmap.aux_flcpfcgc":U,ab_unmap.aux_flcpfcgc:HANDLE IN FRAME {&FRAME-NAME}). 
+  RUN htmAssociate
+    ("aux_flrelbra":U,"ab_unmap.aux_flrelbra":U,ab_unmap.aux_flrelbra:HANDLE IN FRAME {&FRAME-NAME}). 
+  RUN htmAssociate
+    ("aux_qtlimrel":U,"ab_unmap.aux_qtlimrel":U,ab_unmap.aux_qtlimrel:HANDLE IN FRAME {&FRAME-NAME}).     
   RUN htmAssociate
     ("aux_dsendurl":U,"ab_unmap.aux_dsendurl":U,ab_unmap.aux_dsendurl:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -850,6 +881,9 @@ RUN RodaJavaScript("var mpac=new Array();mpac=["  + vetorpac + "]").
 /* gera lista de eventos */
 RUN CriaListaEventos. 
 
+RUN insere_log_progrid("WPGD0033.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.cdcooper) + "|" + STRING(ab_unmap.cdagenci) + "|" +
+					  STRING(ab_unmap.aux_dtanoage)).
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 

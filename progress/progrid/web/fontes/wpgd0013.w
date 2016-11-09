@@ -1,19 +1,21 @@
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
-/* Connected Databases 
-          banco            PROGRESS
-*/
-
 /* ......................................................................
 
 Alterações: 24/01/2008 - Incluído campo crapldp.dsrefloc (Diego).
 
             10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			
-			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+                   busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+                   
+            24/06/2016 - Inclusão da janela na tela de Agenda Anual RF05 - Vanessa	
+
+			09/11/2016 - inclusao de LOG. (Jean Michel)
 
 ......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
 
@@ -28,7 +30,12 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_nrseqdig AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U .
+       FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_origem   AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U
+       FIELD cdcooper     AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_cdoperad AS CHARACTER FORMAT "X(256)":U
+       FIELD aux_cdageevt AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -122,7 +129,7 @@ crapldp.cdagenci crapldp.dsrefloc
 &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ~
 ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
 ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ~
-ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao 
+ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao ab_unmap.aux_origem ab_unmap.aux_cdcopope ab_unmap.cdcooper ab_unmap.aux_cdoperad ab_unmap.aux_cdageevt
 &Scoped-Define DISPLAYED-FIELDS crapldp.dsendloc crapldp.dsestloc ~
 crapldp.dslocali crapldp.dsobserv crapldp.nmbailoc crapldp.nmcidloc ~
 crapldp.nmconloc crapldp.nrceploc crapldp.nrdddfax crapldp.nrdddtel ~
@@ -134,7 +141,7 @@ crapldp.cdagenci crapldp.dsrefloc
 &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_cdagenci ~
 ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ab_unmap.aux_dsendurl ~
 ab_unmap.aux_dsretorn ab_unmap.aux_idevento ab_unmap.aux_lspermis ~
-ab_unmap.aux_nrdrowid ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao 
+ab_unmap.aux_nrdrowid ab_unmap.aux_nrseqdig ab_unmap.aux_stdopcao ab_unmap.aux_origem ab_unmap.aux_cdcopope ab_unmap.cdcooper ab_unmap.aux_cdoperad ab_unmap.aux_cdageevt
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -240,6 +247,21 @@ DEFINE FRAME Web-Frame
 	 crapldp.dsrefloc AT ROW 1 COL 1 NO-LABEL
           VIEW-AS EDITOR NO-WORD-WRAP
           SIZE 20 BY 1
+    ab_unmap.aux_origem AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+   ab_unmap.aux_cdcopope AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1 
+   ab_unmap.cdcooper AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1 
+   ab_unmap.aux_cdoperad AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1         
+   ab_unmap.aux_cdageevt AT ROW 1 COL 1 NO-LABEL
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1     
 	 WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -487,7 +509,16 @@ PROCEDURE htmOffsets :
     ("vldialoc":U,"crapldp.vldialoc":U,crapldp.vldialoc:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("dsrefloc":U,"crapldp.dsrefloc":U,crapldp.dsrefloc:HANDLE IN FRAME {&FRAME-NAME}).
-	
+	RUN htmAssociate
+    ("aux_origem":U,"ab_unmap.aux_origem":U,ab_unmap.aux_origem:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("cdcooper":U,"ab_unmap.cdcooper":U,ab_unmap.cdcooper:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_cdoperad":U,"ab_unmap.aux_cdoperad":U,ab_unmap.aux_cdoperad:HANDLE IN FRAME {&FRAME-NAME}).
+   RUN htmAssociate
+    ("aux_cdageevt":U,"ab_unmap.aux_cdageevt":U,ab_unmap.aux_cdageevt:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 
@@ -564,7 +595,7 @@ IF VALID-HANDLE(h-b1wpgd0013) THEN
                     cratldp.nrtelefo = INPUT crapldp.nrtelefo
                     cratldp.qtmaxpes = INPUT crapldp.qtmaxpes
                     cratldp.vldialoc = INPUT crapldp.vldialoc
-					cratldp.dsrefloc = INPUT crapldp.dsrefloc
+                    cratldp.dsrefloc = INPUT crapldp.dsrefloc
                     .
                  
                 RUN altera-registro IN h-b1wpgd0013(INPUT TABLE cratldp, OUTPUT msg-erro).
@@ -801,7 +832,12 @@ ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_nrdrowid    = GET-VALUE("aux_nrdrowid")         
        ab_unmap.aux_stdopcao    = GET-VALUE("aux_stdopcao")
     /* ab_unmap.aux_cdagenci    = GET-VALUE("aux_cdagenci") */
-       ab_unmap.aux_cdcooper    = GET-VALUE("aux_cdcooper").
+       ab_unmap.aux_cdcooper    = GET-VALUE("aux_cdcooper")
+       ab_unmap.aux_origem      = GET-VALUE("aux_origem")
+       ab_unmap.aux_cdcopope    = GET-VALUE("aux_cdcopope")
+       ab_unmap.cdcooper        = GET-VALUE("cdcooper")
+       ab_unmap.aux_cdoperad    = GET-VALUE("aux_cdoperad")
+       ab_unmap.aux_cdageevt    = GET-VALUE("aux_cdageevt").
 
 RUN outputHeader.
 
@@ -818,17 +854,22 @@ IF INT(ab_unmap.aux_idevento) = 1 THEN
 ELSE
    RUN CriaListaPacAssemb.
 
+RUN insere_log_progrid("WPGD0013.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdcopope) + "|" +
+					  STRING(ab_unmap.aux_cdoperad)).
+
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:
       RUN inputFields.
-
       CASE opcao:
            WHEN "sa" THEN /* salvar */
-                DO:
+                DO:  
                     IF ab_unmap.aux_stdopcao = "i" THEN /* inclusao */
-                        DO:
-                            RUN local-assign-record ("inclusao"). 
+                        DO: 
+                           
+                            RUN local-assign-record ("inclusao").
+                            
                             IF msg-erro <> "" THEN
                                ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
                             ELSE 
@@ -836,24 +877,24 @@ IF REQUEST_METHOD = "POST":U THEN
                                ASSIGN 
                                    msg-erro-aux = 10
                                    ab_unmap.aux_stdopcao = "al".
-                               FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+                                FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
 
-                               IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
-                                  IF LOCKED {&SECOND-ENABLED-TABLE} THEN
-                                     DO:
-                                         ASSIGN msg-erro-aux = 1. /* registro em uso por outro usuário */  
-                                         FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                                     END.
-                                  ELSE
-                                     DO: 
-                                         ASSIGN msg-erro-aux = 2. /* registro não existe */
-                                         RUN PosicionaNoSeguinte.
-                                     END.
+                                 IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
+                                    IF LOCKED {&SECOND-ENABLED-TABLE} THEN
+                                       DO:
+                                           ASSIGN msg-erro-aux = 1. /* registro em uso por outro usuário */  
+                                           FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
+                                       END.
+                                    ELSE
+                                       DO: 
+                                           ASSIGN msg-erro-aux = 2. /* registro não existe */
+                                           RUN PosicionaNoSeguinte.
+                                       END.
 
                             END.
                         END.  /* fim inclusao */
                     ELSE     /* alteração */ 
-                        DO: 
+                        DO:   
                             FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
 
                             IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
@@ -997,34 +1038,39 @@ IF REQUEST_METHOD = "POST":U THEN
                     ASSIGN v-qtdeerro      = 1
                            v-descricaoerro = 'Registro esta em uso por outro usuário. Solicitação não pode ser executada. Espere alguns instantes e tente novamente.'.
 
-                    RUN RodaJavaScript(' top.frames[0].MostraResultado(' + STRING(v-qtdeerro) + ',"'+ v-descricaoerro + '"); ').
+                     RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').
                 END.
 
            WHEN 2 THEN
-                RUN RodaJavaScript(" top.frames[0].MostraMsg('Registro foi excluído. Solicitação não pode ser executada.')").
-      
+            RUN RodaJavaScript('alert("Registro foi excluído. Solicitação não pode ser executada"); ').
+               
            WHEN 3 THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
                            v-descricaoerro = msg-erro.
-
-                    RUN RodaJavaScript('top.frames[0].MostraResultado(' + STRING(v-qtdeerro) + ',"'+ v-descricaoerro + '"); ').
+                    
+                    RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').
                 END.
 
            WHEN 4 THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
                            v-descricaoerro = m-erros.
-
-                    RUN RodaJavaScript('top.frames[0].MostraResultado(' + STRING(v-qtdeerro) + ',"'+ v-descricaoerro + '"); ').
+                    RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').  
                 END.
 
            WHEN 10 THEN
-                RUN RodaJavaScript('alert("Atualizacao executada com sucesso.")'). 
-         
+           DO:
+              RUN RodaJavaScript('alert("Atualização executada com sucesso.")').
+               IF aux_origem = "agenda" THEN
+               DO:
+                  RUN RodaJavaScript('window.opener.history.go();').
+                  RUN RodaJavaScript('self.close();'). 
+               END. 
+           END.
       END CASE.     
 
-      RUN RodaJavaScript('top.frames[0].ZeraOp()').   
+      /*RUN RodaJavaScript('top.frames[0].ZeraOp()').   */
 
    END. /* Fim do método POST */
 ELSE /* Método GET */ 
@@ -1090,13 +1136,15 @@ ELSE /* Método GET */
                     RUN local-display-fields.
                     RUN enableFields.
                     RUN outputFields.
-                    RUN RodaJavaScript('top.frcod.FechaZoom()').
+                    IF aux_origem <> "agenda" THEN
+                      RUN RodaJavaScript('top.frcod.FechaZoom()').
+                    
                     RUN RodaJavaScript('CarregaPrincipal()').
                     
                     IF GET-VALUE("LinkRowid") = "" THEN
                     DO:
                         RUN RodaJavaScript('LimparCampos();').
-                        RUN RodaJavaScript('top.frcod.Incluir();').
+                        RUN RodaJavaScript('Incluir();').
                     END.
 
                     RUN RodaJavaScript('PosicionaPAC();').

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Junho/2006                   Ultima Atualizacao: 29/10/2015
+   Data    : Junho/2006                   Ultima Atualizacao: 01/11/2016
    
    Dados referentes ao programa:
    
@@ -25,13 +25,27 @@
  
 			   29/10/2015 - Incluida verificacao de qtmaxtur na crapeap antes
                             da atribuicao da crapedp Projeto 229 (Jean Michel).
+               
+               27/06/2016 - Apensa apresentar os eventos que possuam data final 
+                            de evento maior ou igual a data atual.
+                            PRJ229 - Melhorias OQS (Odirlei-AMcom)
  
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)
+
+			   01/11/2016 - Correcao na query que filtra a agenda para filtrar
+							a data correta ocasionando menos fetch na base
+							SD 549857. (Carlos Rafael Tanholi)
+														
 ..............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
  
 CREATE WIDGET-POOL.
  
 DEFINE VARIABLE par_cdcooper AS INTEGER                                NO-UNDO.
 DEFINE VARIABLE par_cdagenci AS INTEGER                                NO-UNDO.
+DEFINE VARIABLE par_nrdconta AS INTEGER                                NO-UNDO.
 DEFINE VARIABLE aux_qtmaxtur AS INTEGER                                NO-UNDO.
 DEFINE VARIABLE aux_nmresage AS CHARACTER                              NO-UNDO.
 DEFINE VARIABLE aux_dtinieve AS CHARACTER                              NO-UNDO.
@@ -75,8 +89,11 @@ END FUNCTION.
 OUTPUT-CONTENT-TYPE ("text/xml":U).
 
 ASSIGN par_cdcooper = INTE(GET-VALUE("aux_cdcooper"))
-       par_cdagenci = INTE(GET-VALUE("aux_cdagenci")).
+       par_cdagenci = INTE(GET-VALUE("aux_cdagenci"))
+			 par_nrdconta = INTE(GET-VALUE("aux_nrdconta")).
 
+RUN insere_log_progrid("WPGD0005_xml.p",STRING(par_cdcooper) + "|" + STRING(par_cdagenci) + "|" + STRING(par_nrdconta)).
+			 
 CREATE X-DOCUMENT xDoc.
 
 CREATE X-NODEREF xRoot.
@@ -130,6 +147,8 @@ FOR EACH crapadp WHERE (crapadp.cdcooper =  par_cdcooper     AND
                         crapadp.dtanoage =  aux_dtanoage     AND
                         crapadp.dtlibint <= TODAY            AND
                         crapadp.dtretint >= TODAY            AND
+                        /* deve exibir um dia apos o encerramento */
+                        crapadp.dtfineve >= (TODAY - 1)      AND						
                         crapadp.idstaeve = 1)                OR
                        (crapadp.cdcooper =  par_cdcooper     AND
                         crapadp.idevento =  1                AND 

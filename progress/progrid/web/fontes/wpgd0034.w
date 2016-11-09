@@ -30,7 +30,11 @@
 
                30/12/2012 - Tratar reposition para evitar erros (Gabriel).
 
-................................................................................... */
+			   09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -1144,7 +1148,11 @@ IF AVAILABLE gnpapgd THEN
    END.
 ELSE
    ASSIGN ab_unmap.aux_dtanoage = "".        
-       
+ 
+RUN insere_log_progrid("WPGD0034.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_dtanoage) + "|" +
+					  STRING(ab_unmap.cdagenci) + "|" + STRING(ab_unmap.nrseqeve)).
+					         
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:            

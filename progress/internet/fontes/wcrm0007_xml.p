@@ -4,16 +4,25 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Anderson Fossa
-   Data    : 17/03/2016                  Ultima Atualizacao: 0
+   Data    : 17/03/2016                  Ultima Atualizacao: 28/10/2016
 
    Dados referentes ao programa:
 
    Frequencia: On-line (internet)
    Objetivo  : Gerar arquivo XML para a tela wcrm0007 e wcrm0007a
 
-   Alteracoes: 
+   Alteracoes: 24/06/2016 - Alterado para exibir o curso se estiver ativo em pelo
+                            menos 1 PA SD468459. (Odirlei-AMcom)
                             
+               23/09/2016 - Ajuste para exibir corretamente o caracter de de marcador
+                            SD525341(Odirlei-AMcom)
+														
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)
+														
 ..............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 CREATE WIDGET-POOL.
 
@@ -61,6 +70,7 @@ ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper"))
        par_dtanoage = INT(GET-VALUE("aux_dtanoage"))
        par_nmevento = STRING(GET-VALUE("aux_nmevento")).
 
+RUN insere_log_progrid("WPGD0007_xml.p",STRING(par_cdcooper) + "|" + STRING(par_cdevento) + "|" + STRING(par_idevento) + "|" + STRING(par_dtanoage) + "|" + STRING(par_nmevento)).
 
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
@@ -100,15 +110,17 @@ FOR EACH crapedp WHERE crapedp.cdcooper = par_cdcooper AND
                         crapedp.nmevento MATCHES "*" + par_nmevento + "*") AND
                        crapedp.cdevento >= 50000 NO-LOCK:
 
-    /* Se o curso estiver inativo em qualquer PA, nao apresentar na consulta */
-    FOR FIRST crapadp WHERE crapadp.cdcooper = crapedp.cdcooper AND
+    /* Apenas listar o evento se encontrar o curso ativo em algum PA
+       Na plataforma EAD nao existe distincao se turmas por PA */
+    FIND FIRST crapadp WHERE crapadp.cdcooper = crapedp.cdcooper AND
                             crapadp.idevento = crapedp.idevento AND
                             crapadp.dtanoage = crapedp.dtanoage AND
                             crapadp.cdevento = crapedp.cdevento AND
-                           (crapadp.idstaeve = 2 /* Cancelado */ OR
-                            crapadp.dtfineve < TODAY) NO-LOCK:
+                           (crapadp.idstaeve = 1 AND
+                            crapadp.dtfineve > TODAY) NO-LOCK NO-ERROR.
+    
+    IF NOT AVAILABLE crapadp THEN
       NEXT ListaEad.
-    END.
     
     CREATE tt-crapedp.
     ASSIGN tt-idevento = crapedp.idevento
@@ -129,6 +141,8 @@ END.
 FOR EACH tt-crapedp NO-LOCK
     BY tt-idevento
     BY tt-cdevento:
+    
+    tt-dsconteu = REPLACE(tt-dsconteu,'•','<br>&bull;&nbsp;').
 
     /* Cria o nó PROGRAMACAO */
     xDoc:CREATE-NODE( xRoot2, "CURSOS_EAD", "ELEMENT" ).

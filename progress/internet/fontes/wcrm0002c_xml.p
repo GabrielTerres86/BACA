@@ -2,16 +2,19 @@
    
     Programa: sistema/internet/fontes/wcrm0002c_xml.p
     Autor(a): David
-    Data    : Agosto/2010                     Ultima Atualizacao: 00/00/0000
+    Data    : Agosto/2010                     Ultima Atualizacao: 28/10/2016
     
     Dados referentes ao programa:
    
     Frequencia: Conforme acionado pelo InternetBank
     Objetivo  : Listar agenda de eventos por mes
    
-    Alteracoes: 
+    Alteracoes: 28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							 para gravar log de acesso. (Jean Michel)
  
 ..............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
  
 CREATE WIDGET-POOL.
 
@@ -48,6 +51,8 @@ ASSIGN aux_cdcooper = INTE(GET-VALUE("aux_cdcooper"))
 IF  aux_nrmesini < 1   OR
     aux_nrmesini > 12  THEN
     ASSIGN aux_nrmesini = 1.
+	
+RUN insere_log_progrid("WPGD0002c_xml.p",STRING(aux_cdcooper) + "|" + STRING(aux_dtanoage) + "|" + STRING(aux_nrmesini)).
 
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.

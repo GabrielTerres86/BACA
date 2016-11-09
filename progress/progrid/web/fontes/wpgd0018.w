@@ -25,7 +25,11 @@ Alterações: 19/11/2009 - Alterado tamanho da variavel aux_ttevento para
             02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
                          (Jaison/Anderson)
 
-...............................................................................*/
+	        09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -1342,6 +1346,10 @@ IF AVAILABLE gnpapgd THEN
    ASSIGN ab_unmap.aux_dtanoage = STRING(gnpapgd.dtanonov).
 ELSE
    ASSIGN ab_unmap.aux_dtanoage = "".
+
+RUN insere_log_progrid("WPGD0018.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdcopope) + "|" +
+					  STRING(ab_unmap.aux_cdoperad) + "|" + STRING(ab_unmap.aux_cdevento)).
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 

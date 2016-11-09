@@ -5,11 +5,17 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
                          busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
-						23/06/2015 - Inclusao de tratamento para todas as cooperativas e 
-						       			 criacao de novas funcoes para melhorar o codigo(Jean Michel).
+     		23/06/2015 - Inclusao de tratamento para todas as cooperativas e 
+		       			 criacao de novas funcoes para melhorar o codigo(Jean Michel).
                          
             25/04/2016 - Correcao na formatacao dos dados gerados (Carlos Rafael Tanholi)             
-...............................................................................*/
+
+			09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
+
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
@@ -385,7 +391,10 @@ ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = TRIM(aux_crapcop)
 
 /* carrega o combo dos tipos de relatório */
 ab_unmap.aux_tprelato:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Dados Quantitativos,1,Por Evento,2,Por PA,3".
-   
+
+RUN insere_log_progrid("WPGD0043.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdoperad) + "|" + STRING(ab_unmap.aux_dtanoage)).
+					     
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:

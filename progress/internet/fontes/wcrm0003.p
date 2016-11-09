@@ -4,7 +4,7 @@
    Sistema : CRM 
    Sigla   : CRM
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao:  08/03/2010
+   Data    : Agosto/2006                   Ultima Atualizacao:  28/10/216
    
    Dados referentes ao programa:
    
@@ -19,7 +19,12 @@
                
                08/03/2010 - Atribuir codificacao ISO-8859-1 ao XML (David).
  
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)
+														
 ..............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
  
 CREATE WIDGET-POOL.
  
@@ -86,6 +91,8 @@ ASSIGN par_idevento = INT(GET-VALUE("aux_idevento"))
        par_cdgraupr = INT(GET-VALUE("aux_cdgraupr"))
        par_tpinseve = INT(GET-VALUE("aux_tpinseve")).
 
+RUN insere_log_progrid("WPGD0003.p",STRING(par_cdcooper) + "|" + STRING(par_nrdconta)).
+			 
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
 CREATE X-NODEREF  xField.

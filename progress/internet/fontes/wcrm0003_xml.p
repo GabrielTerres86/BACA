@@ -3,14 +3,18 @@
    Sistema : CRM 
    Sigla   : CRM
    Autor   : Rosangela
-   Data    : Agosto/2006                   Ultima Atualizacao:   /  /
+   Data    : Agosto/2006                   Ultima Atualizacao: 28/10/2016
    Dados referentes ao programa:
    Frequencia: esporadica(internet)
    Objetivo  : gera arquivo com os vinculos (para inscrição de familiar)
-   Alteracoes:
-               03/11/2008 - Inclusao widget-pool (martin)
+   Alteracoes: 03/11/2008 - Inclusao widget-pool (martin)
  
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)
+														 
 ..............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
  
 create widget-pool.
  
@@ -37,9 +41,14 @@ FUNCTION criaCampo RETURNS LOGICAL
 END FUNCTION.
 /* Include para usar os comandos para WEB */
 {src/web2/wrap-cgi.i}
+
+
 /* Configura a saída como XML */
 OUTPUT-CONTENT-TYPE ("text/xml":U).
 ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper")).
+
+RUN insere_log_progrid("WPGD0003_xml.p",STRING(par_cdcooper)).
+
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
 CREATE X-NODEREF  xField.

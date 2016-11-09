@@ -5,8 +5,11 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
 						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
-...............................................................................*/
+			09/11/2016 - inclusao de LOG. (Jean Michel)
 
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -432,6 +435,10 @@ ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_crapcop.
 /* Cria o array com os pacs */
 RUN RodaJavaScript("var mpac=new Array();mpac=["  + vetorpac + "]"). 
    
+RUN insere_log_progrid("WPGD0046.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_dtanoage) + "|" + STRING(ab_unmap.cdcooper) + "|" +
+					  STRING(ab_unmap.cdagenci)).
+
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:
