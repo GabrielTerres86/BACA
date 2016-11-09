@@ -648,9 +648,9 @@ PROCEDURE obtem-log-cecred:
     /* Variaveis para o XML */ 
     DEF VAR xDoc          AS HANDLE   NO-UNDO.   
     DEF VAR xRoot         AS HANDLE   NO-UNDO.  
-    DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE   NO-UNDO.
 	DEF VAR xRoot3        AS HANDLE   NO-UNDO.   
-    DEF VAR xField        AS HANDLE   NO-UNDO. 
+    DEF VAR xField        AS HANDLE   NO-UNDO.
 	DEF VAR xField2       AS HANDLE   NO-UNDO.  
 	DEF VAR xField3       AS HANDLE   NO-UNDO. 
     DEF VAR xText         AS HANDLE   NO-UNDO. 
@@ -720,10 +720,10 @@ PROCEDURE obtem-log-cecred:
                                            OUTPUT ""). /* dscritic */
     
 	
-    /* Fechar o procedimento para buscarmos o resultado */ 
+	/* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_obtem_log_cecred_car
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
+    
     /*************************************************************/
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
     ASSIGN xml_logspb_totais = pc_obtem_log_cecred_car.pr_clob_logspb         .
@@ -735,7 +735,7 @@ PROCEDURE obtem-log-cecred:
            aux_dscritic = pc_obtem_log_cecred_car.pr_dscritic 
                           WHEN pc_obtem_log_cecred_car.pr_dscritic <> ?.
     
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }     
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
     
     IF  aux_cdcritic <> 0   OR
         aux_dscritic <> ""  THEN
@@ -746,11 +746,11 @@ PROCEDURE obtem-log-cecred:
             RETURN "NOK".
             
         END.       
-    
+        
 	EMPTY TEMP-TABLE tt-logspb.
 	EMPTY TEMP-TABLE tt-logspb-detalhe.
     EMPTY TEMP-TABLE tt-logspb-totais.
-    
+        
     /********** BUSCAR LANCAMENTOS **********/
     
     /* Efetuar a leitura do XML*/ 
@@ -761,7 +761,7 @@ PROCEDURE obtem-log-cecred:
         DO: 
            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
            xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-            
+           
            DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
                
                xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
@@ -778,9 +778,9 @@ PROCEDURE obtem-log-cecred:
 					   IF xField:SUBTYPE <> "ELEMENT" THEN 
 						  NEXT. 
 
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb.
-                  
+						IF xRoot2:NUM-CHILDREN > 0 THEN
+                           CREATE tt-logspb.
+					   
 						DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
 						
    						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
@@ -789,70 +789,14 @@ PROCEDURE obtem-log-cecred:
 							   NEXT. 
 
 						   DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
-
-							   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
-
-							   /* Se nao vier conteudo na TAG */ 
-							   IF ERROR-STATUS:ERROR             OR  
-								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                       NEXT. 
-
-							   ASSIGN tt-logspb-detalhe.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"         
-									  tt-logspb-detalhe.cdbandst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbandst"
-										tt-logspb-detalhe.cdagedst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagedst"
-										tt-logspb-detalhe.nrctadst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctadst"
-										tt-logspb-detalhe.dsnomdst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomdst"
-										tt-logspb-detalhe.dscpfdst = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfdst"
-										tt-logspb-detalhe.cdbanrem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbanrem"
-										tt-logspb-detalhe.cdagerem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagerem"
-										tt-logspb-detalhe.nrctarem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctarem"
-										tt-logspb-detalhe.dsnomrem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomrem"
-										tt-logspb-detalhe.dscpfrem = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfrem"
-										tt-logspb-detalhe.hrtransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "hrtransa"
-										tt-logspb-detalhe.vltransa = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vltransa"
-										tt-logspb-detalhe.dsmotivo =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsmotivo"
-										tt-logspb-detalhe.dstransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dstransa"
-										tt-logspb-detalhe.dsorigem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsorigem"
-										tt-logspb-detalhe.cdagenci = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagenci"
-										tt-logspb-detalhe.nrdcaixa = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrdcaixa"
-										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad".
-                        
-               END.              
-             
-           END.    
-           
-        END.      
-    
-				  END. 
-			   ELSE
-			   IF xRoot2:name = "linhas_logspb_detalhe" THEN
-        DO: 
-				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-               
-					   xRoot2:GET-CHILD(xField,aux_cont). 
-
-					   IF xField:SUBTYPE <> "ELEMENT" THEN 
-                   NEXT.            
-
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb-detalhe.
-                  
-						DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
-						
-   						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
-						
-						   IF xField2:SUBTYPE <> "ELEMENT" THEN 
-							   NEXT. 
-
-						   DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
-
+						 
 							   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
 							   
 							   /* Se nao vier conteudo na TAG */ 
 							   IF ERROR-STATUS:ERROR             OR  
 								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                       NEXT. 
-
+								  NEXT.
+							   
 							   ASSIGN tt-logspb-detalhe.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"         
 									  tt-logspb-detalhe.cdbandst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbandst"
 										tt-logspb-detalhe.cdagedst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagedst"
@@ -872,27 +816,81 @@ PROCEDURE obtem-log-cecred:
 										tt-logspb-detalhe.cdagenci = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagenci"
 										tt-logspb-detalhe.nrdcaixa = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrdcaixa"
 										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad".
-                        
-               END.              
-             
-           END.    
-           
-        END.
-    
+				 
+							 END. 
+							 
+						 END. 
+						 
+				     END. 
+				  
 				  END. 
 			   ELSE
-			   IF xRoot2:name = "linhas_logspb_totais" THEN
-        DO: 
+			   IF xRoot2:name = "linhas_logspb_detalhe" THEN
+			      DO:
 				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-               
+
 					   xRoot2:GET-CHILD(xField,aux_cont). 
 
 					   IF xField:SUBTYPE <> "ELEMENT" THEN 
-                   NEXT.            
+						  NEXT. 
+					   
+					   IF xRoot2:NUM-CHILDREN > 0 THEN
+                          CREATE tt-logspb-detalhe.
+				  
+						DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
+						
+   						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
+						
+						   IF xField2:SUBTYPE <> "ELEMENT" THEN 
+							   NEXT. 
 
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb.
-                  
+						   DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
+						 
+							   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
+							   
+							   /* Se nao vier conteudo na TAG */ 
+							   IF ERROR-STATUS:ERROR             OR  
+								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+								  NEXT.
+							   
+							   ASSIGN tt-logspb-detalhe.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"         
+									  tt-logspb-detalhe.cdbandst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbandst"
+										tt-logspb-detalhe.cdagedst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagedst"
+										tt-logspb-detalhe.nrctadst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctadst"
+										tt-logspb-detalhe.dsnomdst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomdst"
+										tt-logspb-detalhe.dscpfdst = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfdst"
+										tt-logspb-detalhe.cdbanrem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbanrem"
+										tt-logspb-detalhe.cdagerem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagerem"
+										tt-logspb-detalhe.nrctarem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctarem"
+										tt-logspb-detalhe.dsnomrem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomrem"
+										tt-logspb-detalhe.dscpfrem = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfrem"
+										tt-logspb-detalhe.hrtransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "hrtransa"
+										tt-logspb-detalhe.vltransa = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vltransa"
+										tt-logspb-detalhe.dsmotivo =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsmotivo"
+										tt-logspb-detalhe.dstransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dstransa"
+										tt-logspb-detalhe.dsorigem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsorigem"
+										tt-logspb-detalhe.cdagenci = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagenci"
+										tt-logspb-detalhe.nrdcaixa = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrdcaixa"
+										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad".
+				 
+							 END. 
+							 
+						 END. 
+						 
+				     END. 
+				  
+				  END. 
+			   ELSE
+			   IF xRoot2:name = "linhas_logspb_totais" THEN
+			      DO:
+				     CREATE tt-logspb-totais.
+				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
+
+					   xRoot2:GET-CHILD(xField,aux_cont). 
+
+					   IF xField:SUBTYPE <> "ELEMENT" THEN 
+						  NEXT. 
+
 					   DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
 						
    						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
@@ -901,38 +899,47 @@ PROCEDURE obtem-log-cecred:
 							   NEXT. 
 
 						   DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
-
+						 
 							   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
-
+							   
 							   /* Se nao vier conteudo na TAG */ 
 							   IF ERROR-STATUS:ERROR             OR  
 								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
-                       NEXT. 
-
-							   ASSIGN tt-logspb-totais.qtdenvok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtsitlog"         
-									  tt-logspb-totais.vlrenvok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlsitlog".
+								  NEXT.
+							   
+							   ASSIGN tt-logspb-totais.qtdenvok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtdenvok"         
+									      tt-logspb-totais.vlrenvok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrenvok"                        
+                        tt-logspb-totais.qtenvnok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtenvnok"         
+									      tt-logspb-totais.vlenvnok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlenvnok"                        
+                        tt-logspb-totais.qtdrecok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtdrecok"         
+									      tt-logspb-totais.vlrrecok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrrecok"                        
+                        tt-logspb-totais.qtrecnok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtrecnok"         
+									      tt-logspb-totais.vlrecnok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrecnok"                        
+                        tt-logspb-totais.qtdrejok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtdrejok"         
+									      tt-logspb-totais.vlrrejok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlrrejok"                        
+                        tt-logspb-totais.qtrejeit = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtrejeit".
 				 
 							 END. 
 							 
 						 END. 
 						 
 				     END. 
-                        
-               END.              
+				  
+				  END.      
              
            END.    
            
            SET-SIZE(ponteiro_xml) = 0.    
-        END.
+        END.           
     
     DELETE OBJECT xDoc. 
     DELETE OBJECT xRoot. 
     DELETE OBJECT xRoot2. 
-	DELETE OBJECT xRoot3. 
+	  DELETE OBJECT xRoot3. 
     DELETE OBJECT xField. 
-	DELETE OBJECT xField2. 
+	  DELETE OBJECT xField2. 
     DELETE OBJECT xText.
-	DELETE OBJECT hTextTag.
+	  DELETE OBJECT hTextTag.
     
     /* Chegou ao fim com sucesso */
     RETURN "OK".
