@@ -97,7 +97,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
       pc_gera_log_execucao(pr_indexecu  => 'Inicio execucao',
                            pr_cdcooper  => pr_cdcooper, 
                            pr_tpexecuc  => NULL,
-                           pr_idtiplog  => 'F');
+                           pr_idtiplog  => 'I');
       
       -- Verificação do calendário
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -117,7 +117,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper in crapc
       END IF;
        
       -- Somente se o processo já encerrou
-      IF rw_crapdat.inproces = 0 THEN
+      IF rw_crapdat.inproces = 1 THEN
                              
         --> Executar programa
         pc_crps707 (pr_cdcooper => pr_cdcooper, 
