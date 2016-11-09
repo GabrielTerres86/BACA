@@ -3,15 +3,20 @@
 	//************************************************************************//
 	//*** Fonte: impressao_log_pdf.php                                     ***//
 	//*** Autor: Lucas Ranghetti                                           ***//
-	//*** Data : Agosto/2015                  Última Alteração: 11/11/2015 ***//
+	//*** Data : Agosto/2015                  Última Alteração: 07/11/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Gerar impressão do log em pdf                        ***//
 	//***                                                                  ***//	 
-	//*** Alterações: 11/11/2015 - Adicionado campo "Crise" inestcri.	     ***//
-	//***						   (Jorge/Andrino)						                         ***//                        
+	//*** Alterações: 11/11/2015 - Adicionado campo "Crise" inestcri.	   ***//
+	//***						   (Jorge/Andrino)						   ***//                        
 	//***                                                                  ***//
   //***             14/09/2016 -  Adicionado novo paramentro "$cdifconv".***//
-  //***               (Evandro - RKAM)                                   ***//
+    //***                          (Evandro - RKAM)						   ***//
+	//***														           ***//
+	//***             07/11/2016 - Ajustes para corrigir problemas encontrados ***//
+    //***                          durante a homologação da área		   ***//
+	//***                          (Adriano - M211)				           ***//
+	//***														           ***//
 	//************************************************************************//
 	
 	//session_cache_limiter("private");
@@ -39,8 +44,7 @@
 	$dsorigem = $_POST["dsorigem"];
 	$inestcri = $_POST["inestcri"];
 	$vlrdated = $_POST["vlrdated"];
-  $cdifconv = $_POST["$cdifconv"];
-
+  
 	$dsiduser = session_id();
 	
 	// Monta o xml de requisição
@@ -65,7 +69,6 @@
 	$xmlGetLog .= "    <vlrdated>".$vlrdated."</vlrdated>";
 	$xmlGetLog .= "    <dsiduser>".$dsiduser."</dsiduser>";
 	$xmlGetLog .= "    <inestcri>".$inestcri."</inestcri>";
-  $xmlGetLog .= "    <cdifconv>".$cdifconv."</cdifconv>";
 	$xmlGetLog .= "  </Dados>";
 	$xmlGetLog .= "</Root>";
 	
