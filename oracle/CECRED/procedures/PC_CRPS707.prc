@@ -146,7 +146,9 @@ BEGIN
      vr_qtproces NUMBER;
      vr_qtrejeit NUMBER;
      vr_vlrtotal NUMBER;
+     vr_fltxterr BOOLEAN;
      vr_dstxterr VARCHAR2(32767);
+     vr_cltxterr CLOB;
      vr_hasfound      BOOLEAN;
    
    FUNCTION fn_mes(pr_data IN DATE) RETURN VARCHAR2 IS
@@ -240,6 +242,10 @@ BEGIN
          vr_idxnumbe := vr_tbarqlst.next(vr_idxnumbe);
        END LOOP;
 
+       -- Iniciar CLOB de erros
+       dbms_lob.createtemporary(vr_cltxterr, TRUE, dbms_lob.CALL);
+       dbms_lob.open(vr_cltxterr,dbms_lob.lob_readwrite);                  
+       
        -- Para cada arquivo encontrado
        vr_idxtexto := vr_tbarquiv.first;
        WHILE vr_idxtexto IS NOT NULL LOOP
@@ -273,7 +279,10 @@ BEGIN
            vr_qtproces := 0;
            vr_qtrejeit := 0;
            vr_vlrtotal := 0;
+           
+           vr_fltxterr := FALSE;
            vr_dstxterr := null;
+           vr_cltxterr := ' ';
 
            -- Efetuar leitura do conteudo do arquivo --
            gene0001.pc_abre_arquivo(pr_nmdireto => vr_dir_sicredi_teds
@@ -675,9 +684,47 @@ BEGIN
                WHEN vr_exc_saida THEN
                  -- Incrementar quantidade de erros
                  vr_qtrejeit := vr_qtrejeit + 1;
+                 -- Se ainda não iniciamos o texto de erro
+                 IF NOT vr_fltxterr THEN
+                   -- Atualizar o controle
+                   vr_fltxterr := TRUE;
+                   -- Iniciar o CLOB com a montagem da tabela
+                   gene0002.pc_escreve_xml(pr_xml => vr_cltxterr
+                                          ,pr_texto_completo => vr_dstxterr
+                                          ,pr_texto_novo => '<table>' ||
+                                                            '<thead align="center" style="background-color: #DCDCDC;">' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Tipo Trans.</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Dt.Arquivo</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Sq.Geração</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="120px">' ||
+                                                                '<b>Identificador</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Conta</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>CPF/CNPJ</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="200px">' ||
+                                                                '<b>Nome</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="250px">' ||
+                                                                '<b>Cod.Devolução</b>' ||
+                                                              '</td>' ||
+                                                            '</thead>' ||
+                                                            '<tbody align="center" style="background-color: #F0F0F0;">');
+                 END IF;
+                 
                  -- Adicionar informações do registro com erro para o e-mail posterior
-                 vr_dstxterr := vr_dstxterr
-                             || '<tr>' ||
+                 gene0002.pc_escreve_xml(pr_xml => vr_cltxterr
+                                        ,pr_texto_completo => vr_dstxterr
+                                        ,pr_texto_novo => '<tr>' ||
                                   '<td>' ||
                                     vr_nmevehead ||
                                   '</td>' ||
@@ -702,7 +749,7 @@ BEGIN
                                   '<td>' ||
                                     vr_cdmotivo ||
                                   '</td>' ||
-                                '</tr>';
+                                                          '</tr>');
 
                  -- Efetuar geração do LOG da TED com erro
                  sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
@@ -774,49 +821,33 @@ BEGIN
            END;
 
            -- Preparar e enviar email ao Financeiro listando erros na integração do arquivo
-           IF vr_dstxterr IS NOT NULL THEN
+           IF vr_fltxterr THEN
+             -- Finalizar o clob e gerar arquivo
+             gene0002.pc_escreve_xml(pr_xml => vr_cltxterr
+                                    ,pr_texto_completo => vr_dstxterr
+                                    ,pr_texto_novo => '</tbody></table>'
+                                    ,pr_fecha_xml => TRUE);
+             
+             -- Transformar o CLOB em arquivo para anexar ao email
+             gene0002.pc_clob_para_arquivo(pr_clob     => vr_cltxterr
+                                          ,pr_caminho  => vr_dir_sicredi_teds
+                                          ,pr_arquivo  => 'err_'||vr_idxtexto||'.html'
+                                          ,pr_des_erro => vr_dscritic);
+             IF vr_dscritic IS NOT NULL THEN
+               RAISE vr_exc_saida;
+             END IF;
+             
              -- Terminar a montagem do email
              vr_dsassunt := 'Devolução de TEDs - Sicredi ';
-             vr_dscorpoe := 'Olá, solicitamos a devolução das TEDs indicadas na listagem abaixo: '
-                         || '<br><br>'
-                         || '<table>' ||
-                              '<thead align="center" style="background-color: #DCDCDC;">' ||
-                                '<td width="100px">' ||
-                                  '<b>Tipo Trans.</b>' ||
-                                '</td>' ||
-                                '<td width="100px">' ||
-                                  '<b>Dt.Arquivo</b>' ||
-                                '</td>' ||
-                                '<td width="100px">' ||
-                                  '<b>Sq.Geração</b>' ||
-                                '</td>' ||
-                                '<td width="120px">' ||
-                                  '<b>Identificador</b>' ||
-                                '</td>' ||
-                                '<td width="100px">' ||
-                                  '<b>Conta</b>' ||
-                                '</td>' ||
-                                '<td width="100px">' ||
-                                  '<b>CPF/CNPJ</b>' ||
-                                '</td>' ||
-                                '<td width="200px">' ||
-                                  '<b>Nome</b>' ||
-                                '</td>' ||
-                                '<td width="250px">' ||
-                                  '<b>Cod.Devolução</b>' ||
-                                '</td>' ||
-                              '</thead>' ||
-                              '<tbody align="center" style="background-color: #F0F0F0;">';
-             -- Finalizar listagem
-             vr_dstxterr := vr_dstxterr || '</tbody></table>';
+             vr_dscorpoe := 'Olá, solicitamos a devolução das TEDs indicadas na listagem em anexo.';                         
              -- Gerar email ao Financeiro
              gene0003.pc_solicita_email(pr_cdcooper       => pr_cdcooper
                                       ,pr_cdprogra        => 'PC_'||vr_cdprogra
                                       ,pr_des_destino     => vr_dsremete
                                       ,pr_des_assunto     => vr_dsassunt
                                       ,pr_des_corpo       => vr_dscorpoe || vr_dstxterr
-                                      ,pr_des_anexo       => NULL
-                                      ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                      ,pr_des_anexo       => vr_dir_sicredi_teds||'/'||'err_'||vr_idxtexto||'.html'
+                                      ,pr_flg_remove_anex => 'S' --> Remover os anexos passados
                                       ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
                                       ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                       ,pr_des_erro        => vr_dscritic);
@@ -925,6 +956,7 @@ BEGIN
          END;
          vr_idxtexto := vr_tbarquiv.next(vr_idxtexto);
        END LOOP;
+     
      ELSE
        -- Gerar email ao Financeiro
        gene0003.pc_solicita_email(pr_cdcooper       => pr_cdcooper
