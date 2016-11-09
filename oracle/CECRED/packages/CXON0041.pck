@@ -116,7 +116,7 @@
                         ,pr_dtapurac IN crapdat.dtmvtolt%TYPE -- Data da Apuracao
                         ,pr_nrcpfcgc IN craplft.nrcpfcgc%TYPE -- CPF/CNPJ
                         ,pr_cdtribut IN craplft.cdtribut%TYPE -- Codigo do Tributo
-                        ,pr_cdrefere IN craplft.cdtribut%TYPE -- Codigo de Referencia
+                        ,pr_cdrefere IN craplft.nrrefere%TYPE -- Codigo de Referencia
                         ,pr_dtlimite IN crapdat.dtmvtolt%TYPE -- Data de Limite
                         ,pr_vlrecbru IN craplft.vlrecbru%TYPE -- Valor da receita bruta acumulada.
                         ,pr_vlpercen IN craplft.vlpercen%TYPE -- Percentual da guia.
@@ -1087,7 +1087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                         ,pr_dtapurac IN crapdat.dtmvtolt%TYPE -- Data da Apuracao
                         ,pr_nrcpfcgc IN craplft.nrcpfcgc%TYPE -- CPF/CNPJ
                         ,pr_cdtribut IN craplft.cdtribut%TYPE -- Codigo do Tributo
-                        ,pr_cdrefere IN craplft.cdtribut%TYPE -- Codigo de Referencia
+                        ,pr_cdrefere IN craplft.nrrefere%TYPE -- Codigo de Referencia
                         ,pr_dtlimite IN crapdat.dtmvtolt%TYPE -- Data de Limite
                         ,pr_vlrecbru IN craplft.vlrecbru%TYPE -- Valor da receita bruta acumulada.
                         ,pr_vlpercen IN craplft.vlpercen%TYPE -- Percentual da guia.
@@ -1141,6 +1141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Variaveis Locais
+	  vr_cdrefere craplft.nrrefere%TYPE;
       vr_vlrtotal NUMBER(20,5) := 0;
       vr_cdseqfat NUMBER       := 0;
       vr_nrdolote craplot.nrdolote%TYPE := 0;
@@ -1253,6 +1254,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
           vr_cdempres := rw_crapscn.cdempres;
         END IF;
       END IF;
+	  
+	  IF pr_cdrefere = '0' THEN
+	     vr_cdrefere := '';
+      ELSE
+         vr_cdrefere := pr_cdrefere;  
+	  END IF;
 
      INSERT INTO craplft(cdcooper
 		                ,nrdconta
@@ -1284,7 +1291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                   ,pr_dtapurac
                   ,pr_nrcpfcgc
                   ,LPAD(pr_cdtribut,4,'0')
-                  ,pr_cdrefere
+                  ,vr_cdrefere
                   ,pr_dtlimite
                   ,pr_vlrecbru
                   ,pr_vlpercen 

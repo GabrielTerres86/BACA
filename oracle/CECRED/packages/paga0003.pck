@@ -1470,11 +1470,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         
         -- Obtém as datas limite de agendamento
         -- Data Mínima: Primeiro dia do mês anterior
-        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtolt,'MM'),-1);
-        -- Data Máxima: Data Mínima + Número de dias de prazo para agendamento (crapage.qtddaglf)
-        vr_dtmaxage := LAST_DAY(vr_dtminage + vr_qtddaglf);
+        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtocd,'MM'),-1);
+        -- Data Máxima: Data Mínima + Número de dias de prazo para agendamento (crapage.qtddaglf)        
+		vr_dtmaxage := LAST_DAY(TRUNC(rw_crapdat.dtmvtocd,'MM') + vr_qtddaglf);        
         
-        --[TODO] Conversar com o David sobre a mensagem, pois o limite funciona até o dia 1º do mês, e a mensagem faz parecer que considera o mês inteiro
         IF (pr_dtapurac NOT BETWEEN vr_dtminage AND vr_dtmaxage) THEN
           vr_dscritic := 'A data de apuração do pagamento não pode ser inferior a #dtminage# ou superior a #dtmaxage#.';
 		  vr_dscritic := REPLACE(vr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));
