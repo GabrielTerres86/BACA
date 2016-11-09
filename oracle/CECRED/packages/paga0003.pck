@@ -1126,8 +1126,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     END IF;
   
 		
-		
-	/* Verifica se foi digitado manualmente ou via leitora de cod. barras */
+	--Se a captura for através do código de barras da guia
+    IF pr_tpcaptur = 1 THEN	
+	  /* Verifica se foi digitado manualmente ou via leitora de cod. barras */
 	  IF trim(pr_cdbarras) IS NULL AND nvl(pr_lindigi1,0) <> 0 AND nvl(pr_lindigi2,0) <> 0 THEN
 	    --Montar Codigo Barras
 	    pr_cdbarras:= SUBSTR(gene0002.fn_mask(pr_lindigi1,'999999999999'),1,11)||
@@ -1181,7 +1182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	      END CASE;
 	    END LOOP;
 	  END IF;
-			
+	END IF;		
     --Se for Agendamento
     IF pr_idagenda = 2 THEN
     
@@ -2377,13 +2378,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
    Programa: PAGA0003
    Autor   : Lucas Lunelli
-   Data    : 19/09/2016                        Ultima atualizacao: 
+   Data    : 19/09/2016                        Ultima atualizacao: 08/11/2016
   
    Dados referentes ao programa: 
   
    Objetivo  : Package com as procedures necessárias para pagamento de guias DARF e DAS
   
-   Alteracoes: 
+   Alteracoes: 08/11/2016 - Alteração na procedure interna de LOG (Jean Michel).
 ..............................................................................*/  
 
 	/* Procedimento do internetbank operação 188 - Operar pagamento DARF/DAS */
@@ -2494,71 +2495,152 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                           ,pr_nmdatela => 'INTERNETBANK'
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
-													
+			
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+			 												  pr_nmdcampo => 'Tipo da Guia',
+			 												  pr_dsdadant => ' ',
+			 												  pr_dsdadatu => CASE pr_tpdaguia WHEN 1 THEN 'DARF'
+																							 ELSE 'DAS' END);
+										
 			GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
 																pr_nmdcampo => 'Origem',
-																pr_dsdadant => NULL,
+																pr_dsdadant => ' ',
 																pr_dsdadatu => CASE pr_flmobile
 																							 WHEN 1 THEN 'MOBILE'
 																							 ELSE 'INTERNETBANK' 
 																								END);
-      -- se é log de sucesso
-      IF pr_flgtrans = 1 THEN
-        IF pr_nrcpfope > 0  THEN
-          GENE0001.pc_gera_log_item
-                          (pr_nrdrowid => vr_nrdrowid
-                          ,pr_nmdcampo => 'Operador' 
-                          ,pr_dsdadant => ' '
-                          ,pr_dsdadatu => gene0002.fn_mask_cpf_cnpj(pr_nrcpfope,1)); -- formatar CPF
-        END IF;
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'Guia com Codigo de Barras',
+                                pr_dsdadant => ' ',
+                                pr_dsdadatu => CASE pr_tpcaptur
+                                               WHEN 1 THEN 'SIM'
+                                               ELSE 'NAO' END);
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'Nome/Telefone',
+                                pr_dsdadant => ' ',
+                                pr_dsdadatu => pr_dsnomfon);
+
+      -- Com codigo de barras
+      IF pr_tpcaptur = 1 THEN
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Codigo de Barras',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => pr_cdbarras);
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Linha Digitavel',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => vr_dslindig);
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => (CASE 
+                                                   WHEN pr_idagenda = 1 AND pr_nrcpfope = 0 THEN
+                                                     'Valor Pago'
+                                                   ELSE 'Valor a Pagar'
+                                                 END)
+                                 ,pr_dsdadant => ' '
+                                 ,pr_dsdadatu => TRIM(TO_CHAR(pr_vlrtotal,'9G999G990D00')));
+
+      ELSE -- Sem codigo de barras
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Periodo da Apuracao',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TO_CHAR(pr_dtapurac,'DD/MM/RRRR'));
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'CPF/CNPJ',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TO_CHAR(pr_nrcpfcgc));
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Codigo da Receita',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TO_CHAR(pr_cdtribut));
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Numero de Referencia',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TO_CHAR(pr_nrrefere));
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Data do Vencimento',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TO_CHAR(pr_dtvencto,'DD/MM/RRRR'));
+          
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Valor Principal',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TRIM(TO_CHAR(pr_vlrprinc,'9G999G990D00')));
+          
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Valor da Multa',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TRIM(TO_CHAR(pr_vlrmulta,'9G999G990D00')));
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Valor dos Juros',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TRIM(TO_CHAR(pr_vlrjuros,'9G999G990D00')));
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Valor de Receita Bruta',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TRIM(TO_CHAR(pr_vlrecbru,'9G999G990D00')));
+
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Percentual',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => TRIM(TO_CHAR(pr_vlpercen,'9G999G990D00')));
+      END IF;
 				
+      -- se não é agendamento                
+      IF pr_idagenda = 1 AND pr_nrcpfope = 0 THEN
         GENE0001.pc_gera_log_item
-                        (pr_nrdrowid => vr_nrdrowid
-                        ,pr_nmdcampo => 'Representacao Numerica' 
-                        ,pr_dsdadant => ' '
-                        ,pr_dsdadatu => pr_cdbarras); 
-                        
-        GENE0001.pc_gera_log_item
-                        (pr_nrdrowid => vr_nrdrowid
-                        ,pr_nmdcampo => (CASE 
-                                           WHEN pr_idagenda = 1 AND pr_nrcpfope = 0 THEN
-                                             'Valor Pago'
-                                           ELSE 'Valor a Pagar'
-                                         END)
-                        ,pr_dsdadant => ' '
-                        ,pr_dsdadatu => to_char(pr_vlrtotal,'9G999G990D00'));                 
-        
-        -- se não é agendamento                
-        IF pr_idagenda = 1 AND pr_nrcpfope = 0 THEN
-          GENE0001.pc_gera_log_item
-                        (pr_nrdrowid => vr_nrdrowid
-                        ,pr_nmdcampo => 'Protocolo' 
-                        ,pr_dsdadant => ' '
-                        ,pr_dsdadatu => vr_dsprotoc);
-        ELSE
-          GENE0001.pc_gera_log_item
-                        (pr_nrdrowid => vr_nrdrowid
-                        ,pr_nmdcampo => 'Data do Agendamento' 
-                        ,pr_dsdadant => ' '
-                        ,pr_dsdadatu => to_char(nvl(vr_dtmvtopg,pr_dtmvtopg),'DD/MM/RRRR')); 
+                      (pr_nrdrowid => vr_nrdrowid
+                      ,pr_nmdcampo => 'Data do Pagamento' 
+                      ,pr_dsdadant => ' '
+                      ,pr_dsdadatu => to_char(nvl(vr_dtmvtopg,pr_dtmvtopg),'DD/MM/RRRR'));
+
+        IF pr_flgtrans = 1 THEN   
+          GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                   ,pr_nmdcampo => 'Protocolo' 
+                                   ,pr_dsdadant => ' '
+                                   ,pr_dsdadatu => vr_dsprotoc);
         END IF;
+                           
+      ELSE
+        GENE0001.pc_gera_log_item
+                      (pr_nrdrowid => vr_nrdrowid
+                      ,pr_nmdcampo => 'Data do Agendamento' 
+                      ,pr_dsdadant => ' '
+                      ,pr_dsdadatu => to_char(nvl(vr_dtmvtopg,pr_dtmvtopg),'DD/MM/RRRR')); 
+      END IF;
         
-        --Se conta exigir Assinatura Multipla
-        IF vr_idastcjt = 1 THEN
-           gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
-                                     pr_nmdcampo => 'Nome do Representante/Procurador', 
-                                     pr_dsdadant => '', 
-                                     pr_dsdadatu => vr_nmprimtl);
-                                        
-           gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
-                                     pr_nmdcampo => 'CPF do Representante/Procurador', 
-                                     pr_dsdadant => '', 
-                                     pr_dsdadatu => TO_CHAR(vr_nrcpfcgc));
-        END IF;                                
+      IF pr_nrcpfope > 0  THEN
+        GENE0001.pc_gera_log_item
+                        (pr_nrdrowid => vr_nrdrowid
+                        ,pr_nmdcampo => 'Operador' 
+                        ,pr_dsdadant => ' '
+                        ,pr_dsdadatu => gene0002.fn_mask_cpf_cnpj(pr_nrcpfope,1)); -- formatar CPF
+      END IF;
+
+      --Se conta exigir Assinatura Multipla
+      IF vr_idastcjt = 1 THEN
+         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                   pr_nmdcampo => 'Nome do Representante/Procurador', 
+                                   pr_dsdadant => '', 
+                                   pr_dsdadatu => vr_nmprimtl);
+                                          
+         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                   pr_nmdcampo => 'CPF do Representante/Procurador', 
+                                   pr_dsdadant => '', 
+                                   pr_dsdadatu => TO_CHAR(vr_nrcpfcgc));
       END IF;
                           
-    END pc_proc_geracao_log;
-		
+    END pc_proc_geracao_log;		
 		
   BEGIN
 		-- obtem data
@@ -2970,8 +3052,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 														 ,pr_texto_novo     => '</raiz>' 
 														 ,pr_fecha_xml      => TRUE);
 			
+      --Gravar mensagem na VERLOG
+			vr_dscritic := vr_dsmsgope;
 		  pc_proc_geracao_log(pr_flgtrans => 1 /* TRUE */);
-      	  pr_dsretorn := 'OK';
+      pr_dsretorn := 'OK';
 						
 		ELSE --validação
 		
@@ -3268,14 +3352,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			CLOSE cr_crapcon; 
 									
 			-- Verificar registro de convenio sicredi
-		  OPEN cr_crapscn (pr_cdempcon  => rw_crapcon.cdempcon
+			OPEN cr_crapscn (pr_cdempcon  => rw_crapcon.cdempcon
 										  ,pr_cdsegmto  => rw_crapcon.cdsegmto);
 			FETCH cr_crapscn INTO rw_crapscn;
 			
 			IF cr_crapscn%NOTFOUND THEN				
 				CLOSE cr_crapscn; 
 			  vr_dscritic := 'Convenio sicredi nao encontrado.';
-        RAISE vr_exc_erro;
+				RAISE vr_exc_erro;
 			END IF;
 														
 			vr_dsnomcnv := rw_crapcon.nmextcon;											
