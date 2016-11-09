@@ -147,10 +147,11 @@ IF  VALID-HANDLE(h-b1wgen0016)  THEN
                                                              ELSE STRING(tt-dados-agendamento.dtperiod,"99/99/9999"))    + "</dtperiod>"
                    xml_operacao38.dtvendrf = "<dtvendrf>" + STRING(tt-dados-agendamento.dtvendrf,"99/99/9999")           + "</dtvendrf>"
                    xml_operacao38.nrcpfcgc = "<nrcpfcgc>" + STRING(tt-dados-agendamento.nrcpfcgc)                        + "</nrcpfcgc>"
-                   xml_operacao38.dscabfim = "</AGENDAMENTO>".
+                   xml_operacao38.dscabfim = "</AGENDAMENTO>".                   
                    
-                   RUN proc_geracao_log (INPUT TRUE). 
         END.
+		
+		RUN proc_geracao_log (INPUT TRUE). 
              
         RETURN "OK".
     END.
@@ -158,6 +159,8 @@ IF  VALID-HANDLE(h-b1wgen0016)  THEN
 /*................................ PROCEDURES ................................*/
 PROCEDURE proc_geracao_log:
     DEF INPUT PARAM par_flgtrans AS LOGICAL                         NO-UNDO.
+	
+	ASSIGN aux_dstransa = "Consulta agendamentos de pagamentos e transferencias".
     
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
         SET h-b1wgen0014.
