@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 31/05/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 24/08/2016
     
     Dados referente ao programa:
     
@@ -119,6 +119,16 @@
 
                  31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
                  
+                 25/07/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
+                              posicoes, devemos incluir um hifen para completar 12 posicoes 
+                              ex: 40151016407- (Lucas Ranghetti #453337)
+
+                 17/08/2016 - Incluir tratamento para os retornos de criticas:
+                              04 - Outras restriçoes
+                              05 - Valor debito excede limite aprovado
+                              PRJ320 - Oferta Debaut (Odirlei-AMcom)
+                              
+                 24/08/2016 - Incluir tratamento para autorizações suspensas (Lucas Ranghetti #499496)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -252,7 +262,7 @@ DEF VAR aux_emprelau AS CHAR                                          NO-UNDO.
 
 DEF VAR aux_nrseqatr AS INTE                                          NO-UNDO. 
 DEF VAR aux_vlfatatr AS DECI                                          NO-UNDO.
-DEF VAR aux_cdrefere AS CHAR                                          NO-UNDO.
+DEF VAR aux_cdrefere AS CHAR FORMAT "x(25)"                           NO-UNDO.
 DEF VAR aux_cdempres AS CHAR                                          NO-UNDO.
 DEF VAR aux_nmarqdeb AS CHAR                                          NO-UNDO.
 DEF VAR aux_nmarq674 AS CHAR                                          NO-UNDO.
@@ -685,7 +695,9 @@ FOR EACH crapcop NO-LOCK.
                           (crapatr.dtiniatr = glb_dtmvtolt     OR
                            crapatr.dtfimatr = glb_dtmvtolt     OR
                            crapatr.dtinisus = glb_dtmvtolt     OR
-                           crapatr.dtfimsus = glb_dtmvtolt)
+                           /* final de semana e feriados */
+                          (crapatr.dtfimsus > glb_dtmvtoan     AND
+                           crapatr.dtfimsus <= glb_dtmvtolt))
                            NO-LOCK:
         
         IF  crapatr.dtfimatr = glb_dtmvtolt  OR
@@ -708,9 +720,9 @@ FOR EACH crapcop NO-LOCK.
         ELSE
             IF  crapatr.dtfimsus = glb_dtmvtolt THEN
                 /* Quando estiver cancelando a suspensao da autorizacao */
-                ASSIGN aux_dtmvtolt_atr = STRING(YEAR(crapatr.dtfimsus),"9999") +
-                                          STRING(MONTH(crapatr.dtfimsus),"99")  +
-                                          STRING(DAY(crapatr.dtfimsus),"99").
+                ASSIGN aux_dtmvtolt_atr = STRING(YEAR(glb_dtmvtolt),"9999") +
+                                          STRING(MONTH(glb_dtmvtolt),"99")  +
+                                          STRING(DAY(glb_dtmvtolt),"99").
             ELSE 
                 /* Quando estiver autorizando o debito */
             ASSIGN aux_dtmvtolt_atr = STRING(YEAR(crapatr.dtiniatr),"9999") +
@@ -735,6 +747,20 @@ FOR EACH crapcop NO-LOCK.
 
         ASSIGN aux_flgvazio = FALSE.
 
+        /* Se for o convenio 045 - 14 BRT CELULAR - FEBRABAN, devemos completar com um hifen
+           para completar 12 posicoes ex:(40151016407-) chamado 453337 */
+        IF  crapatr.cdempres = "045" THEN
+            DO:
+                IF  LENGTH(STRING(crapatr.cdrefere)) = 11 THEN
+                    aux_cdrefere = STRING(crapatr.cdrefere) + "-" + FILL(" ",13).
+                ELSE 
+                    RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
+                                                 INPUT 25,
+                                                 INPUT crapscn.tppreenc,
+                                                 INPUT crapatr.cdrefere,
+                                                OUTPUT aux_cdrefere).
+            END.
+        ELSE 
         /* retornar o valor formatado corretamente */
         RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
                                      INPUT 25,
@@ -956,6 +982,20 @@ FOR EACH crapcop NO-LOCK.
 
                     END.
                
+                /* Se for o convenio 045 - 14 BRT CELULAR - FEBRABAN, devemos completar com um hifen
+                   para completar 12 posicoes ex:(40151016407-) chamado 453337 */
+                IF  crapscn.cdempres = "045" THEN
+                    DO:
+                        IF  LENGTH(STRING(craplcm.nrdocmto)) = 11 THEN
+                            aux_cdrefere = STRING(craplcm.nrdocmto) + "-" + FILL(" ",13).
+                        ELSE 
+                            RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
+                                                         INPUT 25,
+                                                         INPUT crapscn.tppreenc,
+                                                         INPUT craplcm.nrdocmto,
+                                                        OUTPUT aux_cdrefere).
+                    END.
+                ELSE 
                 RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
                                              INPUT 25,
                                              INPUT crapscn.tppreenc,
@@ -1131,6 +1171,12 @@ FOR EACH crapcop NO-LOCK.
 
                 IF  SUBSTR(aux_dslinreg,68,2) = "99" THEN
                     ASSIGN tt-rel664.dscritic = "99 - Cancelado conforme solic.".
+                    
+                IF  SUBSTR(aux_dslinreg,68,2) = "04" THEN
+                    ASSIGN tt-rel664.dscritic = "04 - Outras restricoes".
+                    
+                IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
+                    ASSIGN tt-rel664.dscritic = "05 - Valor debito excede limite aprovado".    
             END.
         ELSE
             DO:
@@ -1179,6 +1225,12 @@ FOR EACH crapcop NO-LOCK.
 
                 IF  SUBSTR(aux_dslinreg,68,2) = "99" THEN
                     ASSIGN tt-rel674-lancamentos.dscritic = "99 - Cancelado conforme solicitacao".
+
+                IF  SUBSTR(aux_dslinreg,68,2) = "04" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "04 - Outras restricoes".
+                    
+                IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
 
                 ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(SUBSTR(aux_dslinreg,2,25)) NO-ERROR.
             END.
@@ -2273,7 +2325,8 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                       "COD.BARRAS ". 
         
             IF  craplft.cdbarras <> "" OR 
-                craplft.nrrefere  = "" THEN
+                craplft.nrrefere  = "" OR
+				craplft.nrrefere  = ?  THEN
                 ASSIGN aux_nrrefere = FILL(" ", 17).
             ELSE
                 DO:
