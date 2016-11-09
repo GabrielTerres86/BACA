@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --
 --    Programa: SSPB0002
 --    Autor   : Douglas Quisinski
---    Data    : Julho/2015                      Ultima Atualizacao: 22/04/2016
+--    Data    : Julho/2015                      Ultima Atualizacao: 08/08/2016
 --
 --    Dados referentes ao programa:
 --
@@ -53,6 +53,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --    Alteracoes: 22/04/2016 - Ajustado o nome do diretorio de upload do arquivo e 
 --                             a query de busca na gnmvspb (Douglas - Melhoria 085)
 --    
+--                08/08/2016 - Ajustado a busca do valor de conciliação da linha do arquivo
+--                             para que seja tratado o valor com ou sem a separação de 
+--                             milhares e decimais na procedure pc_proc_arq_jdspb_ayllos 
+--                            (Douglas - Chamado 501071)
+--
 ---------------------------------------------------------------------------------------------------------------
   -- Tipo de registro para conter as informações das linhas do arquivo
   TYPE typ_recdados IS RECORD (nrdlinha INTEGER
@@ -100,7 +105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 04/08/2015                        Ultima atualizacao:
+    Data    : 04/08/2015                        Ultima atualizacao: 08/08/2016
 
     Dados referentes ao programa:
 
@@ -138,7 +143,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
         - Devolução da Transferência
         - Nr. Op
           
-    Alteracoes:
+    Alteracoes: 08/08/2016 - Ajustado a busca do valor de conciliação da linha do arquivo
+                             para que seja tratado o valor com ou sem a separação de 
+                             milhares e decimais (Douglas - Chamado 501071)
     ............................................................................. */
     DECLARE
       -- Exceção
@@ -450,8 +457,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             vr_nrdconta_deb := TO_NUMBER(NVL(TRIM(vr_arr_concil(20)),0));
             vr_cdagenci_deb := TO_NUMBER(NVL(TRIM(vr_arr_concil(21)),0));
             vr_tpconta_deb  := TRIM(vr_arr_concil(22));
+            
+            -- Conversão do valor que deve ser conciliado
+            BEGIN
+              -- Buscar o valor da linha com a formatação de milhares e decimais
+              vr_vlconcil  := TO_NUMBER(TRIM(vr_arr_concil(23)),'FM9G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.');
+            EXCEPTION
+              WHEN OTHERS THEN
+                BEGIN 
+                  -- Se ocorrer erro, busca o valor da linha sem a formatação de milhares e decimais
+                  vr_vlconcil  := TO_NUMBER(TRIM(vr_arr_concil(23)),'FM9G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=.,');
+                EXCEPTION 
+                  WHEN OTHERS THEN
+                    BEGIN 
+                      -- Se ocorrer erro, busca o valor da linha sem a formatação de milhares e decimais
+                      vr_vlconcil  := TO_NUMBER(TRIM(vr_arr_concil(23)));
+                    EXCEPTION 
+                      WHEN OTHERS THEN
+                        -- Caso ocorra erro novamente, exibimos o erro com o valor e a linha com problema
+                        vr_dscritic := GENE0007.fn_convert_db_web('Erro na formatação do valor: ' || vr_arr_concil(23) ||
+                                                                  ' na linha ' || vr_nrdlinha);
+                        RAISE vr_exc_erro;
+                    END;
+                END;
+            END;
+              
             -- Dados da Transação
-            vr_vlconcil  := TO_NUMBER(TRIM(vr_arr_concil(23)),'FM9G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.');
             vr_vlconsul  := ABS(vr_vlconcil);
             vr_dssitmen  := TRIM(vr_arr_concil(26));
             vr_nrcontro  := TRIM(vr_arr_concil(27));
@@ -1405,13 +1436,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
         vr_tbayllos.DELETE;
       
         IF SQLCODE < 0 THEN
-          vr_dscritic:= dbms_utility.format_error_backtrace || ' - ' ||
-                        dbms_utility.format_error_stack;
+          vr_dscritic:= vr_dscritic || ' ' ||
+                        replace (dbms_utility.format_error_backtrace || ' - ' ||
+                                 dbms_utility.format_error_stack,'"', NULL);
         END IF;
         
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := 'Erro geral (SSPB0002.pc_proc_arq_jdspb_ayllos): ' || 
-                       vr_dscritic;
+                       REPLACE(REPLACE(vr_dscritic,chr(10),NULL),chr(13), NULL);
+
     END;
   END pc_proc_arq_jdspb_ayllos;
       
