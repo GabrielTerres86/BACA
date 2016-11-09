@@ -1743,6 +1743,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 													                            ||   '<vllanmto>'||to_char(vr_tab_extrato_cotas(vr_contador).vllanmto,'fm999g999g9990d00') ||'</vllanmto>'
                                                       ||   '<vlsldtot>'||to_char(vr_tab_extrato_cotas(vr_contador).vlsldtot,'fm999g999g9990d00') ||'</vlsldtot>'
                                                       ||   '<dsextrat>'||vr_tab_extrato_cotas(vr_contador).dsextrat ||'</dsextrat>'
+                                                      ||   '<incancel>'||vr_tab_extrato_cotas(vr_contador).incancel ||'</incancel>'
+                                                      ||   '<lctrowid>'||vr_tab_extrato_cotas(vr_contador).lctrowid ||'</lctrowid>'                                                                                                            
                                                       || '</registro>');
         END LOOP;
          
