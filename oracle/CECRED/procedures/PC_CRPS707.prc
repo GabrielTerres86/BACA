@@ -63,7 +63,7 @@ BEGIN
          FROM crapass
         WHERE nrcpfcgc = pr_nrcpfcgc;
     rw_crapass cr_crapass%ROWTYPE; 
-   
+    
     -- Busca do Cooperado pelo CPF
     CURSOR cr_crapass2(pr_nrdconta crapass.nrdconta%TYPE
                       ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
@@ -480,7 +480,11 @@ BEGIN
 
                -- Busca do CPF da TED
                BEGIN
+                 IF substr(vr_dslinharq,1,2) = '05' THEN
                  vr_nrcpfcgc := substr(vr_dslinharq,209,14);
+                 ELSE
+                   vr_nrcpfcgc := substr(vr_dslinharq,274,14);
+                 END IF;
                EXCEPTION
                  WHEN OTHERS THEN
                    vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
@@ -553,7 +557,7 @@ BEGIN
                  RAISE vr_exc_saida;
                  
                END IF;
-
+               
                CLOSE cr_crapass2;
                
                -- Se não achou nenhuma conta ativa
@@ -946,7 +950,7 @@ BEGIN
            IF vr_typ_saida = 'ERR' THEN
              RAISE vr_exc_saida;
            END IF;
-
+             
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                       pr_ind_tipo_log => 2, --> erro tratado

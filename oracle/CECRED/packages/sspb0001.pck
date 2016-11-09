@@ -105,6 +105,12 @@
               cdagenci craplmt.cdagenci%type,
               nrdcaixa craplmt.nrdcaixa%type,
               cdoperad craplmt.cdoperad%type,
+              dttransa craplmt.dttransa%TYPE,
+              nrsequen PLS_INTEGER,
+              cdisprem PLS_INTEGER,
+              cdispdst PLS_INTEGER,
+              cdtiptra PLS_INTEGER,
+              dstiptra VARCHAR2(100), 
               nmevento craplmt.nmevento%TYPE,
               nrctrlif craplmt.nrctrlif%TYPE);
 
@@ -190,13 +196,11 @@
                                      ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
                                      ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                      ,pr_clob_logspb         OUT CLOB
-                                     ,pr_clob_logspb_detalhe OUT CLOB
-                                     ,pr_clob_logspb_totais  OUT CLOB
                                      ,pr_cdcritic            OUT NUMBER
                                      ,pr_dscritic            OUT VARCHAR2
                                     );
 
-    /******************************************************************************/
+  /******************************************************************************/
   /**                       Gera log de envio TED                              **/
   /******************************************************************************/
   PROCEDURE pc_grava_log_ted
@@ -228,7 +232,7 @@
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
                         ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
-
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2);    --> Descricao do erro
@@ -1097,6 +1101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                              ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
                              ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
                              ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                             ,pr_nrispbif  IN crapban.nrispbif%TYPE -- ISPB da Cecred
                              ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
                              ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
                              ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
@@ -1155,6 +1160,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              idorigem,
              nrctrlif,
              nmevento,
+             dttransa,
+             nrispbif,
              progress_recid
         FROM craplmt
        WHERE craplmt.cdcooper = pr_cdcooper
@@ -1199,11 +1206,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         pr_tab_logspb_totais(pr_idsitmsg).qtsitlog := 1;
         pr_tab_logspb_totais(pr_idsitmsg).vlsitlog := rw_craplmt.vldocmto;
       END IF;
-
+      
+      /* controles da paginação */
+      IF (vr_qtregist < pr_nriniseq) OR (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+        -- Pular o registro
+        CONTINUE;
+      END IF;
+      
       IF  vr_nrregist > 0 THEN
         vr_idx := lpad(rw_craplmt.hrtransa,5,'0')||lpad(rw_craplmt.progress_recid,25,'0');
-
-         pr_tab_logspb_detalhe(vr_idx).nrseqlog := rw_craplmt.nrsequen;
 
          IF pr_idsitmsg IN (1,2,5) THEN -- ENVIADA-OK OU ENVIADA-NOK OU REJEITADA-OK
            pr_tab_logspb_detalhe(vr_idx).cdbanrem := rw_craplmt.cdbanctl;
@@ -1216,6 +1227,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).nrctadst := rw_craplmt.nrctadif;
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmtitdif;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfdif;
+           pr_tab_logspb_detalhe(vr_idx).cdisprem := pr_nrispbif;
+           pr_tab_logspb_detalhe(vr_idx).cdispdst := rw_craplmt.nrispbif;
 
          ELSIF pr_idsitmsg IN (3,4) THEN -- RECEBIDA-OK OU RECEBIDA-NOK
            pr_tab_logspb_detalhe(vr_idx).cdbanrem := rw_craplmt.cdbandif;
@@ -1228,8 +1241,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).nrctadst := rw_craplmt.nrdconta;
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmcopcta;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfcop;
+           pr_tab_logspb_detalhe(vr_idx).cdisprem := rw_craplmt.nrispbif;
+           pr_tab_logspb_detalhe(vr_idx).cdispdst := pr_nrispbif;
 
          END IF;         
+         
+         pr_tab_logspb_detalhe(vr_idx).nrsequen := rw_craplmt.nrsequen;
+         pr_tab_logspb_detalhe(vr_idx).nrseqlog := rw_craplmt.nrsequen;
+         
+         pr_tab_logspb_detalhe(vr_idx).dttransa := rw_craplmt.dttransa;
          
          pr_tab_logspb_detalhe(vr_idx).nmevento := rw_craplmt.nmevento;
          pr_tab_logspb_detalhe(vr_idx).nrctrlif := rw_craplmt.nrctrlif;
@@ -1253,7 +1273,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                                      WHEN 4 THEN 'TAA'
                                                      ELSE NULL
                                                    END);
-
+         -- Somente para 'RECEBIDA OK'
+         IF pr_idsitmsg = 3 THEN 
+           IF rw_craplmt.nmevento IN('STR0037R2','PAG0137R2') THEN
+             pr_tab_logspb_detalhe(vr_idx).cdtiptra := 3;  
+             pr_tab_logspb_detalhe(vr_idx).dstiptra := 'TEC';           
+           ELSE 
+             pr_tab_logspb_detalhe(vr_idx).cdtiptra := 4;
+             pr_tab_logspb_detalhe(vr_idx).dstiptra := 'TED';           
+           END IF;
+        END IF;
       END IF;
 
       vr_nrregist := vr_nrregist - 1;
@@ -1688,12 +1717,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
-
+   
+    /* BUSCA O ISPB DA CECRED PARA ALIMENTAR A TELA DE DETALHES*/
+    CURSOR cr_crapban IS
+      SELECT nrispbif
+        FROM crapban
+       WHERE cdbccxlt = 85;
+    rw_crapban cr_crapban%ROWTYPE;   
+  
   BEGIN
-    /*********************************************************************
-     * pr_numedlog => 1 - ENVIADAS / 2 - RECEBIDAS / 3 - DEMAIS MSG'S   *
-     * pr_cdsitlog => "P" - MSG'S PROCESSADAS / "D" - MSG'S DEVOLVIDAS  *
-     *                "R" - MSG'S REJEITADAS                            *
+    /**********************************************************************
+     * pr_numedlog => 1-ENVIADAS / 2-RECEBIDAS / 3-DEMAIS MSG'S / 4-TODOS *
+     * pr_cdsitlog => "P" - MSG'S PROCESSADAS / "D" - MSG'S DEVOLVIDAS    *
+     *                "R" - MSG'S REJEITADAS / "T" - TODOS                * 
     /*********************************************************************/
 
     -- Verifica se a cooperativa esta cadastrada
@@ -1724,6 +1760,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     -- Limpar temptable de total
     pr_tab_logspb_totais.delete;
+    -- Iniciar todas as opções
+    FOR vr_idx IN 1..5 LOOP 
+      pr_tab_logspb_totais(vr_idx).qtsitlog := 0;
+      pr_tab_logspb_totais(vr_idx).vlsitlog := 0;
+    END LOOP;
+    pr_tab_logspb_totais('R').qtsitlog := 0;
+    pr_tab_logspb_totais('R').vlsitlog := 0;
 
     -- Inicializar variaveis
     IF NVL(pr_nriniseq,0) = 0  THEN
@@ -1737,11 +1780,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     ELSE
       vr_nrregist := pr_nrregist;
     END IF;
+    
+    -- Abrir cursor da CRAPBAN
+    OPEN cr_crapban;
+    FETCH cr_crapban
+     INTO rw_crapban;
+    CLOSE cr_crapban;
 
     -- BUSCAR LOGS
-    IF pr_numedlog = 0    OR
-      (pr_numedlog = 1    AND   /** ENVIADAS    **/
-       pr_cdsitlog = 'P') THEN  /** PROCESSADAS **/
+
+    IF pr_numedlog = 0 OR
+      -- Enviadas ou Todas          E  Processadas ou Todas 
+      (pr_numedlog IN(1,4) AND pr_cdsitlog IN('P','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
@@ -1755,6 +1805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
                                 ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic-- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1762,8 +1813,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     IF pr_numedlog = 0    OR
-       (pr_numedlog = 1    AND  /** ENVIADAS   **/
-        pr_cdsitlog = 'D') THEN /** DEVOLVIDAS **/
+        -- Enviadas ou Todas          E  Devolvidas ou Todas 
+       (pr_numedlog IN(1,4) AND pr_cdsitlog IN ('D','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
@@ -1777,6 +1828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
                                 ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1785,8 +1837,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     IF pr_numedlog = 0     OR
-       (pr_numedlog = 1     AND  /** ENVIADAS   **/
-        pr_cdsitlog = 'R')  THEN /** ENVIADAS REJEITADAS **/
+       -- Enviadas ou Todas          E  Retornadas ou Todas 
+       (pr_numedlog IN(1,4) AND pr_cdsitlog IN('R','T')) THEN
+       
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
                                 ,pr_nrsequen  => pr_nrsequen -- Numero da sequencia
@@ -1799,6 +1852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
                                 ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1807,8 +1861,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     IF  pr_numedlog = 0     OR
-        (pr_numedlog  = 2   AND  /** RECEBIDAS   **/
-         pr_cdsitlog = 'P') THEN /** PROCESSADAS **/
+         -- Recebidas ou Todas          E  Processadas ou Todas 
+        (pr_numedlog  IN(2,4)  AND pr_cdsitlog IN('P','T'))  THEN 
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
@@ -1822,15 +1876,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
                                 ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
                                 );
     END IF;
 
-    IF pr_numedlog = 0      OR
-       (pr_numedlog = 2     AND    /** RECEBIDAS   **/
-        pr_cdsitlog = 'D')  THEN  /** RECEBIDAS DEVOLVIDAS  **/
+    IF pr_numedlog = 0   OR
+         -- Recebidas ou Todas          E  Devolvidas ou Todas 
+       (pr_numedlog IN(2,4) AND pr_cdsitlog IN('D','T')) THEN
 
       SSPB0001.pc_busca_log_SPB (pr_cdcooper  => pr_cdcooper -- Codigo cooperativa
                                 ,pr_nrdconta  => pr_nrdconta -- Numero da Conta
@@ -1844,6 +1899,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_inestcri  => pr_inestcri -- Indicador Estado Crise
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
                                 ,pr_vlrdated  => pr_vlrdated -- Valor da TED
+                                ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -1970,7 +2026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
 
     END IF;
-
+    
     pr_dscritic := 'OK';
 
   EXCEPTION
@@ -2008,8 +2064,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                      ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
                                      ,pr_vlrdated  IN NUMBER            -- Valor da TED
                                      ,pr_clob_logspb         OUT CLOB
-                                     ,pr_clob_logspb_detalhe OUT CLOB
-                                     ,pr_clob_logspb_totais  OUT CLOB
                                      ,pr_cdcritic            OUT NUMBER
                                      ,pr_dscritic            OUT VARCHAR2
                                     ) IS
@@ -2041,6 +2095,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     -- Auxiliar texto para gravacao no CLOB
     vr_dstextaux VARCHAR2(32767);
     vr_dsregistr VARCHAR2(32767);
+    vr_dstagqtde VARCHAR2(1000);
+    vr_dstagvalo VARCHAR2(1000);
   BEGIN
     pc_obtem_log_cecred ( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
                          ,pr_cdagenci  => pr_cdagenci   -- Cod. Agencia
@@ -2073,15 +2129,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;        
       END IF;    
     ELSE
-        -- Criar documento XML
+      -- Criar documento XML
         dbms_lob.createtemporary(pr_clob_logspb, TRUE);
         dbms_lob.open(pr_clob_logspb, dbms_lob.lob_readwrite);
-
+        
         -- Insere o cabeçalho do XML
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><root>');
-
+                               
         
         
       -- Efetuaremos leitura das pltables e converteremos as mesmas para XML
@@ -2121,7 +2177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
       
       IF vr_tab_logspb_detalhe.count > 0 THEN
-
+         
 
         -- Insere o cabeçalho do XML
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
@@ -2153,6 +2209,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '  <cdagenci>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdagenci,0)||'</cdagenci>'||  
                          '  <nrdcaixa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrdcaixa,0)||'</nrdcaixa>'||  
                          '  <cdoperad>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdoperad,' ')||'</cdoperad>'||                                                                                                                                                                                                          
+                         '  <dttransa>' || to_char(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dttransa,'DD/MM/RRRR') ||'</dttransa>'||  
+                         '  <nrsequen>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrsequen,0)||'</nrsequen>'||
+                         '  <cdisprem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdisprem,0)||'</cdisprem>'||
+                         '  <cdispdst>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdispdst,0)||'</cdispdst>'||
+                         '  <cdtiptra>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdtiptra,0)||'</cdtiptra>'||
+                         '  <dstiptra>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dstiptra,' ')||'</dstiptra>'||
+                         '  <nmevento>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nmevento,' ')||'</nmevento>'||
+                         '  <nrctrlif>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrctrlif,' ')||'</nrctrlif>'||
                          '</linhas>';
            -- Escrever no XML
           gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
@@ -2184,11 +2248,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
         --Percorrer todos as regionais
         WHILE vr_idx_logspb_totais IS NOT NULL LOOP
+          -- Nome das tags de acordo com o registro de total
+          IF vr_idx_logspb_totais = '1' THEN 
+            vr_dstagqtde := 'qtdenvok';
+            vr_dstagvalo := 'vlrenvok';
+          ELSIF vr_idx_logspb_totais = '2' THEN 
+            vr_dstagqtde := 'qtenvnok';
+            vr_dstagvalo := 'vlenvnok';
+          ELSIF vr_idx_logspb_totais = '3' THEN 
+            vr_dstagqtde := 'qtdrecok';
+            vr_dstagvalo := 'vlrrecok';  
+          ELSIF vr_idx_logspb_totais = '4' THEN 
+            vr_dstagqtde := 'qtrecnok';
+            vr_dstagvalo := 'vlrecnok';  
+          ELSIF vr_idx_logspb_totais = '5' THEN 
+            vr_dstagqtde := 'qtdrejok';
+            vr_dstagvalo := 'vlrrejok';
+          ELSE 
+            vr_dstagqtde := 'qtrejeit';
+            vr_dstagvalo := NULL;
+          END IF;
+          
           vr_dsregistr:= '<linhas>'||
-                         '  <qtsitlog>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).qtsitlog,'fm999g999g9990'),'0')||'</qtsitlog>'||
-                         '  <vlsitlog>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).vlsitlog,'fm999g999g9990d00'),'0')||'</vlsitlog>'||
-                         '</linhas>';
-           -- Escrever no XML
+                         '  <'||vr_dstagqtde||'>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).qtsitlog,'fm999g999g9990'),'0')||'</'||vr_dstagqtde||'>';
+          -- Se houver tag de valor
+          IF vr_dstagvalo IS NOT NULL THEN 
+            vr_dsregistr := vr_dsregistr || 
+                         '  <'||vr_dstagvalo||'>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).vlsitlog,'fm999g999g9990d00'),'0')||'</'||vr_dstagvalo||'>';
+          END IF;       
+          -- encerrar tag
+          vr_dsregistr := vr_dsregistr || '</linhas>';
+                  
+          -- Escrever no XML
           gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                  ,pr_texto_completo => vr_dstextaux
                                  ,pr_texto_novo     => vr_dsregistr
@@ -2246,7 +2337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
                         ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
-
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro
