@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Deborah/Edson
-    Data    : Novembro/91.                      Ultima atualizacao: 12/09/2016
+    Data    : Novembro/91.                      Ultima atualizacao: 26/09/2016
 
     Dados referentes ao programa:
 
@@ -180,6 +180,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                             para considerar os lotes 10301, 6902 
                             (Adriano - SD 428923).
                             
+               26/09/2016 - Ajuste para incluir lotes da M211 (Jonata - RKAM)
 
               26/07/2016 - Ajuste para implementar sequencial (segundos) ao gerar relatorio crrl011
                            que esta apresentando critica ao gerar mais de um relatorio com cdagenci 
@@ -346,6 +347,121 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
               ,NULL
               ,100
               ,6902 
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+     UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8482
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8483
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8484
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8485
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,0
+              ,TRUNC(SYSDATE)
+              ,0
+              ,'0'
+              ,0
+              ,0
+              ,0
+              ,'0'
+              ,1
+              ,1
+        FROM DUAL
+      UNION
+        SELECT pr_dtmvtolt
+              ,NULL
+              ,100
+              ,8486
               ,0
               ,0
               ,0

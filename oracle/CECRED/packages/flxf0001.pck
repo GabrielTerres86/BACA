@@ -190,7 +190,6 @@ CREATE OR REPLACE PACKAGE CECRED.flxf0001 AS
            RETURN BOOLEAN;
 END FLXF0001;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
@@ -4415,13 +4414,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 25/11/2013
+    --  Data     : novembro/2013.                   Ultima atualizacao: 28/09/2016
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Gravar movimento financeiro referente aos TEDs recebidos
     --
     --   Atualizacao: 25/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
+    --
+    --                28/09/2016 - Passar novos parämetros na chamada a sspb0001 (Jonata-RKAM)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -5717,4 +5718,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
 END FLXF0001;
 /
-
