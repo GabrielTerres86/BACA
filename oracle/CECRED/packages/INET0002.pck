@@ -5754,9 +5754,9 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                              WHEN rw_tbgen_trans_pend.idsituacao_transacao = 6 THEN 'Reprovada'
                         END;
          vr_dtaltera := TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR');
-         vr_dtreptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 6 THEN rw_tbgen_trans_pend.dtalteracao_situacao END;
-         vr_dtexctra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN rw_tbgen_trans_pend.dtalteracao_situacao END;
-         vr_dtexptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 4 THEN rw_tbgen_trans_pend.dtalteracao_situacao END;
+         vr_dtreptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 6 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
+         vr_dtexctra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 3 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
+         vr_dtexptra := CASE WHEN rw_tbgen_trans_pend.idsituacao_transacao = 4 THEN TO_CHAR(rw_tbgen_trans_pend.dtalteracao_situacao,'DD/MM/RRRR') END;
          vr_dscritra := rw_tbgen_trans_pend.dscritica;
          vr_dtvalida := TO_CHAR(rw_tbgen_trans_pend.dtcritica,'DD/MM/RRRR');
          vr_labnmage := CASE WHEN rw_tbgen_trans_pend.nrcpf_operador > 0 THEN 'Operador' ELSE 'Representante' END;
