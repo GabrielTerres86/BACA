@@ -96,6 +96,7 @@ BEGIN
      vr_exc_fimprg  EXCEPTION;
 
      -- Diretorio e arquivos para processamento
+     vr_datatual         DATE;
      vr_dir_sicredi_teds VARCHAR2(200);
      vr_dir_backup_teds  VARCHAR2(200);
      vr_listaarq         VARCHAR2(4000); -- Lista de arquivos
@@ -147,6 +148,21 @@ BEGIN
      vr_dstxterr VARCHAR2(4000);
      vr_hasfound      BOOLEAN;
 
+   FUNCTION fn_mes(pr_data IN DATE) RETURN VARCHAR2 IS
+   BEGIN
+     IF to_number(to_char(pr_data,'mm')) < 10 THEN
+       RETURN to_number(to_char(pr_data,'mm'));
+     ELSE
+       IF to_char(pr_data,'mm') = 10 THEN
+         RETURN 'O';
+       ELSIF to_char(pr_data,'mm') = 11 THEN
+         RETURN 'N';
+       ELSE
+         RETURN 'D';
+       END IF;
+     END IF;
+   END;
+   
    ---------------------------------------
    -- Inicio Bloco Principal pc_crps707
    ---------------------------------------
@@ -193,9 +209,12 @@ BEGIN
      -- Busca remetente de email
      vr_dsremete := gene0001.fn_param_sistema('CRED',pr_cdcooper,'EMAIL_SICREDI_TEDS');
 
+     -- Data para processamento
+     vr_datatual := trunc(SYSDATE);
+
      -- Efetuar leitura dos arquivos do diretorio
      gene0001.pc_lista_arquivos(pr_path     => vr_dir_sicredi_teds
-                               ,pr_pesq     => 're1714%.ddm'
+                               ,pr_pesq     => 're1714%.'||to_char(vr_datatual,'dd')||fn_mes(vr_datatual)
                                ,pr_listarq  => vr_listaarq
                                ,pr_des_erro => vr_dscritic);
      -- Se houver erro
