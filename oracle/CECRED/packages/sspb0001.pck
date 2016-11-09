@@ -63,6 +63,9 @@
                              
                 12/08/2015 - Inclusao da procedure pc_trfsal_opcao_x (Jean Michel).             
 
+				19/08/2016 - Incluido rotinas convertidas para o oracle: pc_proc_pag0101
+							 e pc_proc_opera_str. PRJ-312. (Reinert)
+
                 19/09/2016 - Removida a validacao de horario cadastrado na TAB085
                              para a geracao de TED dos convenios. SD 519980.
                              (Carlos Rafael Tanholi)
@@ -77,7 +80,7 @@
   TYPE typ_reg_logspb IS
       RECORD (nrseqlog PLS_INTEGER,
               dslinlog VARCHAR2(4000));
-   TYPE typ_tab_logspb IS
+  TYPE typ_tab_logspb IS
     TABLE OF typ_reg_logspb
     INDEX BY PLS_INTEGER;
 
@@ -289,7 +292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           ,crapcop.cdagebcb
           ,crapcop.dssigaut
           ,crapcop.cdagesic
-					,crapcop.vlmaxpag
+		  ,crapcop.vlmaxpag
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
@@ -722,17 +725,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 19/09/2016
+    --  Data     : Julho/2013.                   Ultima atualizacao: --/--/----
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Enviar mensagem STR0026 para a cabine SPB
-    --
-    --   Alteracoes: 	19/09/2016 - Removida a validacao de horario cadastrado na TAB085
-		--					                   para a geracao de TED dos convenios. SD 519980.
-		--					                   (Carlos Rafael Tanholi)
-    --
   BEGIN
     DECLARE
       --Variaveis Locais
@@ -870,9 +868,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapban;
-      
       /*-- Operando com mensagens STR --*/
-      /*IF rw_crapcop.flgopstr = 1 THEN
+      IF rw_crapcop.flgopstr = 1 THEN
         --Verificar horario inicio e fim operacao
         IF rw_crapcop.iniopstr <= GENE0002.fn_busca_time AND
            rw_crapcop.fimopstr >= GENE0002.fn_busca_time THEN
@@ -894,8 +891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                              ,pr_tab_erro => vr_tab_erro);
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;*/
-      
+      END IF;
       /* Alimenta variaveis default */
 
       --Se for pessoa fisica
@@ -1136,8 +1132,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmcopcta;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfcop;
 
-         END IF;         
-         
+         END IF;
+
          pr_tab_logspb_detalhe(vr_idx).hrtransa := rw_craplmt.hrtransa;
          pr_tab_logspb_detalhe(vr_idx).vltransa := rw_craplmt.vldocmto;
          pr_tab_logspb_detalhe(vr_idx).dsmotivo := rw_craplmt.dsmotivo;
@@ -1896,7 +1892,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
-                        
+
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro
@@ -2480,7 +2476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Comunicação com SPB
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 19/09/2016
+      Data     : Junho/2015.                   Ultima atualizacao: 09/06/2015
 
       Dados referentes ao programa:
 
@@ -2488,10 +2484,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Objetivo  : Procedure para enviar TED/TEC  - SPB
 
       Alteração : 09/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
-      
-                  19/09/2016 - Removida a validacao de horario cadastrado na TAB085
-                               para a geracao de TED dos convenios. SD 519980.
-                               (Carlos Rafael Tanholi)      
+
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -2809,12 +2802,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     -- Operando com mensagens STR
-    /*IF rw_crapcop.flgopstr = 1  THEN
+    IF rw_crapcop.flgopstr = 1  THEN
       IF rw_crapcop.iniopstr <= gene0002.fn_busca_time AND
          rw_crapcop.fimopstr >= gene0002.fn_busca_time THEN
         vr_flgutstr := TRUE;
       END IF;
-    END IF;*/
+    END IF;
 
     -- Operando com mensagens PAG
     IF rw_crapcop.flgoppag = 1  THEN
@@ -2831,7 +2824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 			END IF;
     END IF;
 		
-    IF vr_flgutpag = FALSE THEN
+    IF vr_flgutstr = FALSE AND vr_flgutpag = FALSE THEN
       vr_cdcritic := 0;
       vr_dscritic := CASE WHEN vr_flpagmax THEN 
 			                         'Limite máximo por operação: R$ ' || to_char(rw_crapcop.vlmaxpag, '99g999g990d00')
@@ -3137,20 +3130,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       ELSE 
 				IF vr_flgutstr THEN /* Se STR Disponivel */
         vr_nmmsgenv := 'STR0008';
-				ELSE
-					vr_dscritic := 0;
-					vr_dscritic := 'Operação indisponível para o banco favorecido.';
-					
-					--Gerar erro
-					GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-															 ,pr_cdagenci => pr_cdagenci
-															 ,pr_nrdcaixa => pr_nrdcaixa
-															 ,pr_nrsequen => 1
-															 ,pr_cdcritic => vr_cdcritic
-															 ,pr_dscritic => vr_dscritic
-															 ,pr_tab_erro => vr_tab_erro);
-					--Levantar Excecao
-					RAISE vr_exc_erro;					
       END IF;
       END IF;
 
@@ -4564,337 +4543,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END;
   END pc_estado_crise;
   
-	PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2 -- Código do programa
-                           ,pr_nmarqxml IN  VARCHAR2 -- Nome do arquivo xml
-                           ,pr_nmarqlog IN  VARCHAR2 -- Nome do arquivo de log
-													 ,pr_clobxml  IN  CLOB     -- CLOB com os dados das IF
-													 ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
-    BEGIN																						 
-    ------------------------------------------------------------------------------
-    --
-    --  Programa : pc_proc_pag0101             Antigo: b1wgen0046.p/proc_pag0101
-    --  Sistema  : Cred
-    --  Sigla    : SSPB0001
-    --  Autor    : Lucas Reinert
-    --  Data     : Agosto/2016.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Procedure para integrar mensagens PAG0101
-		--
-    ------------------------------------------------------------------------------	
-		DECLARE	
-		  vr_dsdemail VARCHAR2(1000);
-			vr_dscritic VARCHAR2(4000);
-			vr_exc_erro EXCEPTION;
-			vr_lista_ispb VARCHAR2(4000);
-		  vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
-																														 ,pr_dstext => pr_nmarqlog
-																														 ,pr_delimitador => '/');
-																
-			-- Verificar se banco está ativo no ispb
-      CURSOR cr_crapban (pr_nrispbif IN crapban.nrispbif%TYPE) IS
-			  SELECT 1
-				  FROM crapban ban
-				 WHERE ban.nrispbif = pr_nrispbif
-				   AND ban.flgdispb = 1;
-			rw_crapban cr_crapban%ROWTYPE;
-																														 
-			-- Verificar se banco está ativo no ispb
-      CURSOR cr_crapban_bb (pr_nrispbif IN crapban.nrispbif%TYPE) IS
-			  SELECT 1
-				  FROM crapban ban
-				 WHERE ban.nrispbif = pr_nrispbif
-				   AND ban.cdbccxlt = 1
-				   AND ban.flgdispb = 1;
-			rw_crapban_bb cr_crapban_bb%ROWTYPE;
-
-			-- Cursor para destrinchar o xml
-		  CURSOR cr_situacao_if IS
-				SELECT extractvalue(column_value, '/dados/nrispbif') nrispbif
-							,extractvalue(column_value, '/dados/cdsitope') cdsitope
-					FROM TABLE(xmlsequence(xmltype(pr_clobxml).extract('/root/dados'))) t; 
-
-		BEGIN					
-		  -- Percorre IFs
-      FOR rw_situacao_if IN cr_situacao_if LOOP
-				-- Se for uma das duas situações
-				IF rw_situacao_if.cdsitope IN(4,5) THEN
-					-- Quando for BB precisamos filtrar por Código do banco e número do ISPB
-					IF rw_situacao_if.nrispbif = 0 THEN			
-						-- Verifica se situação atuel é operante
-						IF rw_situacao_if.cdsitope = 4 THEN
-							-- Verificar se é operante no ispb
-							OPEN cr_crapban_bb(pr_nrispbif => rw_situacao_if.nrispbif);
-							FETCH cr_crapban_bb INTO rw_crapban_bb;
-							-- Se não encontrou banco 
-							IF cr_crapban_bb%FOUND THEN
-								-- Banco do Brasil				
-								UPDATE crapban ban
-									 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-											,ban.flgoppag = 1
-								 WHERE ban.nrispbif = rw_situacao_if.nrispbif
-									 AND ban.cdbccxlt = 1;						 
-	 						END IF;
-							-- Fecha cursor
-							CLOSE cr_crapban_bb;
-						-- Se for inoperante
-						ELSIF rw_situacao_if.cdsitope = 5 THEN							 
-							-- Banco do Brasil
-							UPDATE crapban ban
-								 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-										,ban.flgoppag = 0
-							 WHERE ban.nrispbif = rw_situacao_if.nrispbif
-								 AND ban.cdbccxlt = 1;						 
-						END IF;
-				  ELSE
-					  -- Verifica se situação atuel é operante
-						IF rw_situacao_if.cdsitope = 4 THEN
-              -- Verificar se é operante no ispb
-							OPEN cr_crapban(pr_nrispbif => rw_situacao_if.nrispbif);
-							FETCH cr_crapban INTO rw_crapban;
-							-- Se não encontrou banco 
-							IF cr_crapban%FOUND THEN
-								UPDATE crapban ban
-									 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-											,ban.flgoppag = 1
-								 WHERE ban.nrispbif = rw_situacao_if.nrispbif;						 
-						  END IF;
-							-- Fecha cursor
-							CLOSE cr_crapban;
-            -- Se for inoperante
-						ELSIF rw_situacao_if.cdsitope = 5 THEN							 
-							UPDATE crapban ban
-								 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-										,ban.flgoppag = 0
-							 WHERE ban.nrispbif = rw_situacao_if.nrispbif;
-						END IF;
-				  END IF;					
-					-- Se não atualizou nenhum registro
-/*					IF SQL%ROWCOUNT = 0 THEN
-						vr_lista_ispb := vr_lista_ispb || 'ISPB: ' || 
-						                 to_char(rw_situacao_if.nrispbif, '00000000') || '<br/>';
-					END IF;*/
-				END IF;				 
-			END LOOP;
-			
-/*		BEGIN
-			IF trim(vr_lista_ispb) IS NOT NULL THEN
-				vr_dsdemail := 'Não foi possível atualizar a situação operacional da IF na camara' ||
-											' PAG: Instituição Financeira não encontrada ou não operante no STR.<br/><br/>' ||
-											vr_lista_ispb;
-															
-				-- Envia email para o spb
-				gene0003.pc_solicita_email(pr_cdcooper        => 3
-																	,pr_cdprogra        => pr_cdprogra
-																	,pr_des_destino     => 'spb@cecred.coop.br'
-																	,pr_des_assunto     => 'PAG0101 - Erro na atualização da situação operacional da IF'
-																	,pr_des_corpo       => vr_dsdemail
-																	,pr_des_anexo       => ''
-																	,pr_flg_log_batch   => 'N' --> Incluir inf. no log
-																	,pr_des_erro        => vr_dscritic);
-				--Se ocorreu erro
-				IF trim(vr_dscritic) IS NOT NULL THEN
-					--Levantar Excecao
-					RAISE vr_exc_erro;
-				END IF;
-			END IF;
-		EXCEPTION
-			WHEN vr_exc_erro THEN
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
-																	 pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
-																											pr_cdprogra || ' - PAG0101            --> ' ||
-																											'Arquivo: ' || pr_nmarqxml || 
-																											'. Codigo Erro: Erro ao enviar email ' || vr_dscritic);
-		END;				 	
-	*/		
-		-- Execução OK
-		pr_des_erro := 'OK';
-		-- Efetuar commit
-		COMMIT;
-		EXCEPTION
-			WHEN OTHERS THEN
-				-- Houve erro, retornar NOK
-				pr_des_erro := 'NOK';
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
-																	 pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
-																											pr_cdprogra || ' - PAG0101            --> ' ||
-																											'Arquivo: ' || pr_nmarqxml || 
-																											'. Codigo Erro: Atualizacao abortada -> ' || SQLERRM);
-
-				ROLLBACK;
-	  END;
-	END pc_proc_pag0101;
-  
-	PROCEDURE pc_proc_opera_str(pr_cdprogra IN VARCHAR2 -- Código do programa
-														 ,pr_nmarqxml IN VARCHAR2 -- Nome do arquivo xml
-                             ,pr_nmarqlog IN VARCHAR2 -- Nome do arquivo de log
-														 ,pr_cdmensag IN VARCHAR2 -- Código da mensagem
-														 ,pr_nrispbif IN INTEGER  -- Número do ISPB
-														 ,pr_cddbanco IN INTEGER  -- Código do banco
-														 ,pr_nmdbanco IN VARCHAR2 -- Nome do banco
-														 ,pr_dtinispb IN VARCHAR2 -- Data início ISPB
-														 ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
-    BEGIN																						 
-    ------------------------------------------------------------------------------
-    --
-    --  Programa : pc_proc_opera_str             Antigo: b1wgen0046.p/proc_opera_str
-    --  Sistema  : Cred
-    --  Sigla    : SSPB0001
-    --  Autor    : Lucas Reinert
-    --  Data     : Agosto/2016.                   Ultima atualizacao: --/--/----
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Procedure para integrar mensagens STR0018 e STR0019
-		--
-    ------------------------------------------------------------------------------	
-		DECLARE	
-		
-		  vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
-																														 ,pr_dstext => pr_nmarqlog
-																														 ,pr_delimitador => '/');		
-		  vr_dsdemail VARCHAR2(1000);
-			vr_dscritic VARCHAR2(4000);
-			vr_exc_erro EXCEPTION;
-		
-		  -- Busca o banco pelo código e número ispb
-		  CURSOR cr_crapban IS
-				SELECT CASE WHEN pr_cddbanco > 0 THEN 
-								 (SELECT ROWID
-										FROM crapban ban
-									 WHERE ban.cdbccxlt = pr_cddbanco AND
-												 ban.nrispbif = pr_nrispbif)
-							ELSE 
-								 (SELECT ROWID
-									  FROM crapban ban
-								   WHERE ban.nrispbif = pr_nrispbif) END AS rowid_ban
-					FROM dual;
-			rw_crapban cr_crapban%ROWTYPE;
-		
-    BEGIN
-			-- Tratar mensagem STR0019 - Inclusão IF STR
-		  IF (pr_cdmensag = 'STR0019') THEN
-				 -- Busca banco pelo código do banco e número ispb
-				 OPEN cr_crapban;
-				 FETCH cr_crapban 
-					INTO rw_crapban;
-				 
-				 -- Se encontrou banco
-				 IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
-					  -- Fecha cursor
-						CLOSE cr_crapban;
-						
-						-- Atualiza IF
-						UPDATE crapban ban
-						   SET ban.dtaltstr = CASE WHEN ban.flgdispb <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltstr END
-							    ,ban.flgdispb = 1
-							    ,ban.nmresbcc = pr_nmdbanco
-									,ban.nmextbcc = pr_nmdbanco
-									,ban.dtinispb = to_date(pr_dtinispb, 'DD/MM/RRRR')
-						 WHERE ban.rowid = rw_crapban.rowid_ban;
-					ELSE
-						 -- Cria nova IF
-						 INSERT INTO crapban 
-										(cdoperad
-										,dtmvtolt
-										,cdbccxlt
-										,nmresbcc
-										,nmextbcc
-										,nrispbif
-										,flgdispb
-										,dtinispb
-										,dtaltstr)
-							VALUES('1'
-										,trunc(SYSDATE)
-										,pr_cddbanco
-										,pr_nmdbanco
-										,pr_nmdbanco
-										,pr_nrispbif
-										,1
-										,to_date(pr_dtinispb, 'DD/MM/RRRR')
-										,trunc(SYSDATE));
-					END IF;
-			ELSE -- Tratar mensagem STR0018 - Exclusão IF STR
-				 -- Busca banco pelo código do banco e número ispb
-				 OPEN cr_crapban;
-				 FETCH cr_crapban 
-				 INTO rw_crapban;
-				 
-				 -- Se encontrou banco
-				IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
-					-- Fecha cursor
-					CLOSE cr_crapban;
-					-- Atualiza IF
-					UPDATE crapban ban
-						 SET ban.dtaltstr = CASE WHEN ban.flgdispb <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltstr END
-								,ban.flgdispb = 0
-					 WHERE ban.rowid = rw_crapban.rowid_ban;							
-				ELSE
-					vr_dsdemail := 'Năo foi possível excluir registro de participante no STR: ' ||
-												 'Instituiçăo Financeira năo encontrada: ISPB: ' ||
-												 to_char(pr_nrispbif, '00000000');
-													
-					-- Envia email para o spb
-					gene0003.pc_solicita_email(pr_cdcooper        => 3
-																		,pr_cdprogra        => pr_cdprogra
-																		,pr_des_destino     => 'spb@cecred.coop.br'
-																		,pr_des_assunto     => 'STR0018 - Erro na exclusăo de participante no STR'
-																		,pr_des_corpo       => vr_dsdemail
-																		,pr_des_anexo       => ''
-																		,pr_flg_log_batch   => 'N' --> Incluir inf. no log
-																		,pr_des_erro        => vr_dscritic);
-					--Se ocorreu erro
-					IF trim(vr_dscritic) IS NOT NULL THEN
-						--Levantar Excecao
-						RAISE vr_exc_erro;
-					END IF;
-					-- Retorno NOK
-          pr_des_erro := 'NOK';
-					RETURN;
-				END IF;
-			END IF;
-			
-			-- Retorno OK
-			pr_des_erro := 'OK';
-			-- Efetua commit
-			COMMIT;
-			
-		EXCEPTION
-			WHEN vr_exc_erro THEN
-				-- Houve erro, retornar NOK
-				pr_des_erro := 'NOK';
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
-																	 pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
-																											pr_cdprogra || ' - ' || pr_cdmensag ||'            --> ' ||
-																											'Arquivo: ' || pr_nmarqxml || 
-																											'. Codigo Erro: Erro ao enviar email ' || vr_dscritic);
-			WHEN OTHERS THEN
-				-- Houve erro, retornar NOK
-				pr_des_erro := 'NOK';
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
-																	 pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
-																											pr_cdprogra || ' - ' || pr_cdmensag || '            --> ' ||
-																											'Arquivo: ' || pr_nmarqxml || 
-																											'. Codigo Erro: Atualizacao abortada -> ' || SQLERRM);
-
-				ROLLBACK;
-	  END;
-	END pc_proc_opera_str;
-	
 END sspb0001;
 /
