@@ -210,7 +210,7 @@ $(document).ready(function () {
 			
 		}
 	});
-	
+
 	$("#cdifconv", "#frmLogSPB").bind("change", function (e) {
 	    if ($(this).val() == "1") {	       
 	        $("#numedlog option", "#frmLogSPB").each(function () {
@@ -253,7 +253,7 @@ $(document).ready(function () {
 	$("#inestcri","#frmLogSPB").css({'width':'120px'});	
 	$("#vlrdated","#frmLogSPB").css({'width':'90px'});
 	$("#cdifconv","#frmLogSPB").css({'width':'120px'});
-	
+
 	controlaFoco();
 	
 	$("#dtmvtlog","#frmLogSPB").setMask("DATE","","","");
@@ -382,6 +382,13 @@ function controlaFoco() {
 	});
 	
 	$('#vlrdated','#frmLogSPB').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {	
+				$('#cdifconv','#frmLogSPB').focus();
+				return false;
+			}	
+	});
+	
+	$('#cdifconv','#frmLogSPB').unbind('keypress').bind('keypress', function(e) {
 			if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {	
 				obtemLog();
 				return false;
@@ -561,7 +568,7 @@ function imprimeLog(nmarqpdf, sidlogin){
 	$('#frmImpressao').append('<input type="hidden" id="numedlog" name="numedlog" value="'+numedlog+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="cdsitlog" name="cdsitlog" value="'+cdsitlog+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="nmarqpdf" name="nmarqpdf" value="'+nmarqpdf+'" />');
-	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');	
+	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="cdifconv" name="cdifconv" value="'+cdifconv+'" />');
 	
 	var action = UrlSite + "telas/logspb/impressao_log_spb.php";	
@@ -650,7 +657,7 @@ function Csv() {
 	var inestcri = $("#inestcri","#frmLogSPB").val();
 	var vlrdated = $("#vlrdated","#frmLogSPB").val();
 	var vlrdated = $("#cdifconv","#frmLogSPB").val();
-	
+
 	$('#frmImpressao').append('<input type="hidden" id="cddopcao" name="cddopcao" value="'+cddopcao+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="flgidlog" name="flgidlog" value="'+flgidlog+'" />');
@@ -662,7 +669,7 @@ function Csv() {
 	$('#frmImpressao').append('<input type="hidden" id="inestcri" name="inestcri" value="'+inestcri+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="vlrdated" name="vlrdated" value="'+vlrdated+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="cdifconv" name="cdifconv" value="'+cdifconv+'" />');
-	
+
 	var action = UrlSite + "telas/logspb/impressao_log_csv.php";
 	
 	carregaImpressaoAyllos("frmImpressao",action);
@@ -681,7 +688,7 @@ function Pdf(){
 	var inestcri = $("#inestcri","#frmLogSPB").val();
 	var vlrdated = $("#vlrdated","#frmLogSPB").val();
 	var vlrdated = $("#cdifconv", "#frmLogSPB").val();
-	
+
 	$('#frmImpressao').append('<input type="hidden" id="cddopcao" name="cddopcao" value="'+cddopcao+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+sidlogin+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="flgidlog" name="flgidlog" value="'+flgidlog+'" />');
@@ -693,7 +700,7 @@ function Pdf(){
 	$('#frmImpressao').append('<input type="hidden" id="inestcri" name="inestcri" value="'+inestcri+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="vlrdated" name="vlrdated" value="'+vlrdated+'" />');
 	$('#frmImpressao').append('<input type="hidden" id="cdifconv" name="cdifconv" value="'+cdifconv+'" />');
-	
+
 	var action = UrlSite + "telas/logspb/impressao_log_pdf.php";
 	
 	carregaImpressaoAyllos("frmImpressao",action);

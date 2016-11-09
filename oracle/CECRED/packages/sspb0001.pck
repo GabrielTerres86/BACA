@@ -80,7 +80,7 @@
   TYPE typ_reg_logspb IS
       RECORD (nrseqlog PLS_INTEGER,
               dslinlog VARCHAR2(4000));
-  TYPE typ_tab_logspb IS
+   TYPE typ_tab_logspb IS
     TABLE OF typ_reg_logspb
     INDEX BY PLS_INTEGER;
 
@@ -104,11 +104,13 @@
               dsorigem Varchar2(15),
               cdagenci craplmt.cdagenci%type,
               nrdcaixa craplmt.nrdcaixa%type,
-              cdoperad craplmt.cdoperad%type);
+              cdoperad craplmt.cdoperad%type,
+              nmevento craplmt.nmevento%TYPE,
+              nrctrlif craplmt.nrctrlif%TYPE);
 
   TYPE typ_tab_logspb_detalhe IS
     TABLE OF typ_reg_logspb_detalhe
-    INDEX BY varchar2(20); --hrtransa(10)+ nrseqlog(10).
+    INDEX BY varchar2(30); --hrtransa(5)+ progress_recid(25).
 
   /* Type de registros para armazenar os totais por situação de log do SPB*/
   TYPE typ_reg_logspb_totais IS
@@ -225,7 +227,8 @@
                         ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
-
+                        ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2);    --> Descricao do erro
@@ -1128,7 +1131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_qtregist NUMBER := 0;
     vr_qtsitlog NUMBER := 0;
     vr_vlsitlog NUMBER := 0;
-    vr_idx      VARCHAR2(20);
+    vr_idx      VARCHAR2(30);
 
     --Ler Log de mensagens para transações ao SPB
     CURSOR cr_craplmt IS
@@ -1149,7 +1152,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              cdagenci,
              nrdcaixa,
              cdoperad,
-             idorigem
+             idorigem,
+             nrctrlif,
+             nmevento,
+             progress_recid
         FROM craplmt
        WHERE craplmt.cdcooper = pr_cdcooper
          AND ((craplmt.nrdconta = pr_nrdconta AND pr_nrdconta <> 0) OR
@@ -1195,7 +1201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       END IF;
 
       IF  vr_nrregist > 0 THEN
-        vr_idx := lpad(rw_craplmt.hrtransa,10,'0')||lpad(rw_craplmt.nrsequen,10,'0');
+        vr_idx := lpad(rw_craplmt.hrtransa,5,'0')||lpad(rw_craplmt.progress_recid,25,'0');
 
          pr_tab_logspb_detalhe(vr_idx).nrseqlog := rw_craplmt.nrsequen;
 
@@ -1223,8 +1229,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).dsnomdst := rw_craplmt.nmcopcta;
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfcop;
 
-         END IF;
-
+         END IF;         
+         
+         pr_tab_logspb_detalhe(vr_idx).nmevento := rw_craplmt.nmevento;
+         pr_tab_logspb_detalhe(vr_idx).nrctrlif := rw_craplmt.nrctrlif;
          pr_tab_logspb_detalhe(vr_idx).hrtransa := rw_craplmt.hrtransa;
          pr_tab_logspb_detalhe(vr_idx).vltransa := rw_craplmt.vldocmto;
          pr_tab_logspb_detalhe(vr_idx).dsmotivo := rw_craplmt.dsmotivo;
@@ -1292,7 +1300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     vr_dslinlog VARCHAR2(4000);
     vr_nrseqlog INTEGER;
-    vr_idx      VARCHAR2(20);
+    vr_idx      VARCHAR2(30);
 
   BEGIN
 
@@ -1300,7 +1308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_nrseqlog := pr_tab_logspb_detalhe.count + 1;
 
     IF pr_idsitmsg IN (1) THEN --Enviada OK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,162,3));
@@ -1325,7 +1333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
    ELSIF pr_idsitmsg IN (3) THEN  --Recebida OK
 
-      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,115,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,162,3));
@@ -1343,7 +1351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_tab_logspb_detalhe(vr_idx).vltransa := to_number(SUBSTR(vr_dslinlog,132,14));
 
     ELSIF pr_idsitmsg IN (2,5) THEN   -- Enviada NOK, Rejeitada OK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,267,3));
@@ -1361,7 +1369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       pr_tab_logspb_detalhe(vr_idx).vltransa := to_number(SUBSTR(vr_dslinlog,237,14));
 
     ELSIF pr_idsitmsg IN (4) THEN   -- Recebida NOK
-      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,10,'0');
+      vr_idx := lpad(SUBSTR(vr_dslinlog,220,8),10,'0')||lpad(vr_nrseqlog,20,'0');
 
       pr_tab_logspb_detalhe(vr_idx).nrseqlog := vr_nrseqlog;
       pr_tab_logspb_detalhe(vr_idx).cdbanrem := to_number(SUBSTR(vr_dslinlog,267,3));
@@ -2026,7 +2034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_tab_logspb         SSPB0001.typ_tab_logspb;   
     vr_idx_logspb         INTEGER;       
     vr_tab_logspb_detalhe SSPB0001.typ_tab_logspb_detalhe;
-    vr_idx_logspb_detalhe varchar2(20);
+    vr_idx_logspb_detalhe varchar2(30);
     vr_tab_logspb_totais  SSPB0001.typ_tab_logspb_totais;  
     vr_idx_logspb_totais  VARCHAR2(1);
     vr_tab_erro           GENE0001.typ_tab_erro;
@@ -2067,15 +2075,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     ELSE
       -- Efetuaremos leitura das pltables e converteremos as mesmas para XML
       IF vr_tab_logspb.count > 0 THEN
-        -- Criar documento XML
+      -- Criar documento XML
         dbms_lob.createtemporary(pr_clob_logspb, TRUE);
         dbms_lob.open(pr_clob_logspb, dbms_lob.lob_readwrite);
-
+        
         -- Insere o cabeçalho do XML
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
-
+                               
         --Buscar Primeiro registro
         vr_idx_logspb := vr_tab_logspb.FIRST;
 
@@ -2108,7 +2116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         -- Criar documento XML
         dbms_lob.createtemporary(pr_clob_logspb_detalhe, TRUE);
         dbms_lob.open(pr_clob_logspb_detalhe, dbms_lob.lob_readwrite);
-
+         
         -- Insere o cabeçalho do XML
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
                                ,pr_texto_completo => vr_dstextaux
@@ -2131,7 +2139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '  <nrctarem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).nrctarem,' ')||'</nrctarem>'||
                          '  <dsnomrem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsnomrem,' ')||'</dsnomrem>'||
                          '  <dscpfrem>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dscpfrem,0)||'</dscpfrem>'||                                                                                                                                                                                                                                 
-                         '  <hrtransa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).hrtransa,' ')||'</hrtransa>'||  
+                         '  <hrtransa>' || to_char(to_date(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).hrtransa,'sssss'),'hh24:mi:ss') ||'</hrtransa>'||  
                          '  <vltransa>' || nvl(to_char(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).vltransa,'fm999g999g9990d00'),'0')||'</vltransa>'||  
                          '  <dsmotivo>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dsmotivo,' ')||'</dsmotivo>'||  
                          '  <dstransa>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).dstransa,' ')||'</dstransa>'||  
@@ -2162,7 +2170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         -- Criar documento XML
         dbms_lob.createtemporary(pr_clob_logspb_totais, TRUE);
         dbms_lob.open(pr_clob_logspb_totais, dbms_lob.lob_readwrite);
-
+        
         -- Insere o cabeçalho do XML
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
                                ,pr_texto_completo => vr_dstextaux
@@ -2234,7 +2242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_cdoperad IN VARCHAR2 --> Codigo do operador.
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
-
+                        ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
+                        
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro
@@ -2322,7 +2331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 ,craplmt.nrdcaixa
                 ,craplmt.cdoperad
                 ,craplmt.nrispbif
-                ,craplmt.inestcri)
+                ,craplmt.inestcri
+                ,craplmt.cdifconv)
         VALUES ( nvl(pr_cdcooper,0)     --> craplmt.cdcooper
                 ,pr_dttransa            --> craplmt.dttransa
                 ,nvl(pr_hrtransa,0)     --> craplmt.hrtransa
@@ -2350,7 +2360,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                 ,nvl(pr_nrdcaixa,0)     --> craplmt.nrdcaixa
                 ,nvl(pr_cdoperad,' ')   --> craplmt.cdoperad
                 ,nvl(pr_nrispbif,0)     --> craplmt.nrispbif
-                ,nvl(pr_inestcri,0) );  --> craplmt.inestcri
+                ,nvl(pr_inestcri,0)     --> craplmt.inestcri
+                ,nvl(pr_cdifconv,0));   --> craplmt.cdifconv
 
     EXCEPTION
       WHEN OTHERS THEN
@@ -2826,7 +2837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Objetivo  : Procedure para enviar TED/TEC  - SPB
 
       Alteração : 09/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
-
+      
                   19/09/2016 - Removida a validacao de horario cadastrado na TAB085
                                para a geracao de TED dos convenios. SD 519980.
                                (Carlos Rafael Tanholi)      
