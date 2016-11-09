@@ -33,7 +33,9 @@ CREATE OR REPLACE PACKAGE cecred.SSPC0001 AS
   --                           automatizada somente pela opção "Somente consultas" 
   --                           até mesmo nas cooperativas que não usam a esteira.
   --                           (Oscar)
-  -- 						               
+  --              13/09/2016 - Quando a data vier vazia, nao gerar erro (Andrino-RKAM)
+  --
+  --
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -3096,7 +3098,7 @@ PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML
     ELSIF vr_tab_xml.count = 1 THEN -- Se encontrou, retornar o texto
       IF pr_indcampo = 'D' THEN -- Se o tipo de dado for Data, transformar para data
         -- Se for tudo zeros, desconsiderar
-        IF vr_tab_xml(0).tag IN ('00000000','0')  THEN
+        IF vr_tab_xml(0).tag IN ('00000000','0','')  THEN
           pr_retorno := NULL;
         ELSE
           pr_retorno := to_date(vr_tab_xml(0).tag,'yyyymmdd');
