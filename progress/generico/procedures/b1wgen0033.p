@@ -16,6 +16,7 @@
   | buscar_plano_seguro                    | SEGU0001.pc_buscar_plano_seguro                  |
   | calcular_data_debito                   | SEGU0001.pc_calcular_data_debito                 |
   | buscar_motivo_can                      | SEGU0001.pc_buscar_motivo_can                    |
+  | cria-tabela-depara                     | SEGU0001.pc_cria_tabela_depara                   |
   +----------------------------------------+--------------------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -5959,12 +5960,6 @@ PROCEDURE busca_seguros:
                  crapseg.cdcooper = par_cdcooper:
     
             IF (crapseg.nrdconta <> par_nrdconta AND par_nrdconta <> 0) THEN NEXT.
-            
-            IF   (crapseg.cdsitseg = 2 AND
-                 crapseg.dtcancel < (par_dtmvtolt - 365)) OR
-                 (crapseg.cdsitseg = 4 AND
-                 crapseg.dtfimvig < (par_dtmvtolt - 365)) THEN
-                 NEXT.
               
             CREATE tt-seguros.
             ASSIGN tt-seguros.cdcooper      = crapseg.cdcooper
