@@ -47,9 +47,9 @@ create or replace package cecred.SICR0002 is
 							  
 					       02/08/2016 - Corrigi a forma de tratamento dos lancamentos da craplau filtrados, para
 							                considerar aqueles com data de pagamento nos finais de semana.
-                              SD 497612 (Carlos Rafael Tanholi)
-
-                 27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)
+                              SD 497612 (Carlos Rafael Tanholi) 
+                             
+                 27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)			        
   ......................................................................................................... */
 
   -- Efetuar consulta dos debitos
@@ -71,9 +71,7 @@ create or replace package cecred.SICR0002 is
 
 END SICR0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
-
-  /*..............................................................................
+CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
 
   /*..............................................................................
 
@@ -81,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 11/10/2016
+     Data    : Junho/2014                       Ultima atualizacao: 27/10/2016
 
      Dados referentes ao programa:
 
@@ -136,65 +134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
                               
                  11/10/2016 - Incluir valor do lancamento como parametro na verificacao da 
                               craplau (Lucas Ranghetti #537385)
-  ......................................................................................................... */
-
-     Programa: SICR0002
-     Sistema : Conta-Corrente - Cooperativa de Credito
-     Sigla   : CRED
-     Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 20/09/2016
-
-     Dados referentes ao programa:
-
-     Frequencia: Diario.
-     Objetivo  : Procedimentos para os débitos automáticos dos convênios do Sicredi que não tiveram saldo no
-                 processo noturno.
-
-     Alteracoes: 12/02/2015 - Tratamento na procedure pc_consulta_convenios_wt para listar a partir de agora
-                              tambem os convenios nossos (CECRED) que nao foram debitados no processo
-                              noturno por insuficiencia de fundos. 
-                              (Chamado 229249 - PRJ Melhoria) - (Fabricio)
                               
-                 27/03/2015 - Ajustado para na gravacao do campo craplcm.cdpesqbb 
-                              (procedure pc_cria_lancamentos_deb), gravar as informacoes
-                              da mesma forma que quando gravado pelo pc_crps123.prc e/ou
-                              pelo pc_crps509.prc (pos-liberacao). (Fabricio)
-                              
-                 30/03/2015 - Alterado na leitura da craplau para buscar as datas de
-                              pagamentos tambem menores que a data atual, isto
-                              para os casos de pagamentos com data no final de
-                              semana. (Ajustes pos-liberacao # PRJ Melhoria) - 
-                              (Fabricio)
-                              
-                 31/08/2015 - Incluir Hora da transação na inclusão da tabela craplcm 
-                              (Lucas Ranghetti #324864)
-                  
-                 18/11/2015 - Alterado para que ao criar lancamentos seja atualizado
-                              a dtultdeb da tabela crapatr conforme solicitado no 
-                              chamado 322424 (Kelvin).
-
-                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-                 
-                 04/07/2016 - Incluir critica "Lancamento ja efetivado pela DEBNET/DEBSIC." para lancamentos
-                              ja efetuados na procedure pc_cria_lancamentos_deb (Lucas Ranghetti #474938)
-                              
-                 08/07/2016 - Alteracao na pc_consulta_convenios_wt para buscar apenas
-                              débitos de convênios que não foram efetivados no dia.
-                              SD 483180. (Carlos Rafael Tanholi)   
-							  
-					       02/08/2016 - Corrigi a forma de tratamento dos lancamentos da craplau filtrados, para
-							                considerar aqueles com data de pagamento nos finais de semana.
-                              SD 497612 (Carlos Rafael Tanholi) 	
-                              
-                 08/08/2016 - Ajuste pc_consulta_convenios_wt para grava na wt a data do agendamento do pagamento
-                              para a correta busca do lançamento ao criar o lançamento de debito. (Odirlei - AMcom)
-                              
-                 06/09/2016 - Incluir tratamento para lock do lote na procedure 
-                              pc_cria_lancamentos_deb (Lucas Ranghetti #518312)
-                              
-                 20/09/2016 - Alterar leitura da craplot para usar o rw_crapdat.dtmvtolt na procedure 
-                              pc_cria_lancamentos_deb (Lucas Ranghetti/Fabricio #524588)
-
                  27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)
   ......................................................................................................... */
 
@@ -264,7 +204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
           )    OR
 		      (lau.insitlau  = 3     AND
           lau.cdcritic  = 967)
-          )
+          )			
     AND   ',' || pr_lshistor || ',' LIKE ('%,' || lau.cdhistor || ',%'); -- Retorna historicos passados na listagem
     rw_craplau cr_craplau%ROWTYPE;
 
@@ -353,27 +293,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
   /* Efetua consulta para listar todos os débitos automáticos dos convênios do Sicredi que não tiveram saldo no
    processo noturno anterior para realizar o lançamento do débito.
    Utiliza gravacao em tabelas para serem chamadas diretamente atraves de rotinas progress */
-  PROCEDURE pc_consulta_convenios_wt(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
-                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data do movimento
-                                    ,pr_cdcritic OUT PLS_INTEGER           --> Codigo de Erro
-                                    ,pr_dscritic OUT VARCHAR2) IS
-    --> Descricao de Erro
+  PROCEDURE pc_consulta_convenios_wt(pr_cdcooper    IN crapcop.cdcooper%TYPE,     --> Cooperativa
+                                     pr_dtmvtolt    IN crapdat.dtmvtolt%TYPE,     --> Data do movimento
+                                     pr_cdcritic   OUT PLS_INTEGER,     --> Codigo de Erro
+                                     pr_dscritic   OUT VARCHAR2) IS               --> Descricao de Erro
       vr_lshistor VARCHAR2(1000);
     
-    PROCEDURE pc_retorna_lista_historicos(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                         ,pr_lshistor OUT VARCHAR2) IS
+    PROCEDURE pc_retorna_lista_historicos (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                           pr_lshistor OUT VARCHAR2) IS
                                            
-      CURSOR cr_craphis(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-        SELECT craphis.cdhistor
-          FROM craphis
-              ,gnconve
-         WHERE craphis.cdhistor = gnconve.cdhisdeb
-           AND craphis.cdcooper = pr_cdcooper
-           AND craphis.inautori = 1 /*Debito Automatico*/
-           AND gnconve.flgativo = 1;
+      CURSOR cr_craphis (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+        SELECT craphis.cdhistor FROM craphis, gnconve WHERE
+        craphis.cdhistor = gnconve.cdhisdeb AND
+        craphis.cdcooper = pr_cdcooper      AND
+        craphis.inautori = 1                AND /*Debito Automatico*/
+        gnconve.flgativo = 1;
     BEGIN
       pr_lshistor := '1019';
-      FOR vr_craphis IN cr_craphis(pr_cdcooper) LOOP
+      FOR vr_craphis IN cr_craphis (pr_cdcooper) LOOP
         pr_lshistor := pr_lshistor || ',' || to_char(vr_craphis.cdhistor);
       END LOOP;
     END pc_retorna_lista_historicos;
@@ -385,12 +322,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
     EXCEPTION
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro ao excluir wt_convenios_debitos: ' || SQLERRM;
+        pr_dscritic := 'Erro ao excluir wt_convenios_debitos: '||SQLERRM;
         RETURN;
     END;
     
-    pc_retorna_lista_historicos (pr_cdcooper,
-                                 vr_lshistor);
+    pc_retorna_lista_historicos (pr_cdcooper, vr_lshistor);
 
     -- Data anterior util
     vr_dtmovini := gene0005.fn_valida_dia_util(pr_cdcooper,
@@ -404,9 +340,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
     -- Faz a busca dos registros na craplau
     FOR rw_craplau IN cr_craplau(pr_cdcooper => pr_cdcooper,
                                  pr_dtmovini => vr_dtmovini,
-                                 pr_dtmvtopg => pr_dtmvtolt,
+                                 pr_dtmvtopg => pr_dtmvtolt, 
                                  pr_lshistor => vr_lshistor) LOOP
-                                 
+
       IF rw_craplau.cdhistor = 1019 THEN
         SELECT crapscn.dsnomcnv INTO vr_nmempres 
           FROM crapscn
@@ -414,10 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
         
         vr_cdempres := rw_craplau.cdempres;
       ELSE
-        SELECT gnconve.nmempres
-              ,TO_CHAR(gnconve.cdconven)
-          INTO vr_nmempres
-              ,vr_cdempres
+        SELECT gnconve.nmempres, TO_CHAR(gnconve.cdconven) INTO vr_nmempres, vr_cdempres
           FROM gnconve
         WHERE gnconve.cdhisdeb = rw_craplau.cdhistor;
       END IF;
@@ -425,34 +358,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
       -- criar registro na tabela wt_convenios que sera usada no progress
       BEGIN 
         INSERT INTO wt_convenios_debitos
-          (cdcooper
-          ,cdagenci
-          ,nrdconta
-          ,dtmvtolt
-          ,cdhistor
-          ,vllanmto
-          ,nrdocmto
-          ,cdempres
-          ,nmempres
-          ,insitlau
-          ,cdcritic)
+          (cdcooper,
+           cdagenci,
+           nrdconta,
+           dtmvtolt,
+           cdhistor,
+           vllanmto,
+           nrdocmto,
+           cdempres,
+           nmempres,
+					 insitlau,
+					 cdcritic)
          VALUES
-          (rw_craplau.cdcooper
-          ,rw_craplau.cdagenci
-          ,rw_craplau.nrdconta
-          ,rw_craplau.dtmvtopg
-          ,rw_craplau.cdhistor
-          ,rw_craplau.vllanaut
-          ,rw_craplau.nrdocmto
-          ,vr_cdempres
-          ,vr_nmempres
-          ,rw_craplau.insitlau
-          ,rw_craplau.cdcritic);
+           (rw_craplau.cdcooper,
+            rw_craplau.cdagenci,
+            rw_craplau.nrdconta,
+            rw_craplau.dtmvtopg,
+            rw_craplau.cdhistor,
+            rw_craplau.vllanaut,
+            rw_craplau.nrdocmto,
+            vr_cdempres,
+            vr_nmempres,
+						rw_craplau.insitlau,
+						rw_craplau.cdcritic);
       EXCEPTION
         -- se ocorreu erro gera critica
         WHEN OTHERS THEN          
           pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao inserir na tabela wt_convenios_debitos: ' || SQLERRM;
+          pr_dscritic := 'Erro ao inserir na tabela wt_convenios_debitos: '||SQLERRM;            
           RETURN;
       END;  
             
@@ -469,8 +402,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
                                     pr_vllanaut IN craplau.vllanaut%TYPE,     --> Valor lancamento
                                     pr_nrdocmto IN VARCHAR2,                  --> Documento
                                     pr_cdcritic OUT PLS_INTEGER,              --> Codigo de Erro
-                                    pr_dscritic OUT VARCHAR2) IS              --> Descricao de Erro                                    
-                                    
+                                    pr_dscritic OUT VARCHAR2) IS              --> Descricao de Erro  
+  /*---------------------------------------------------------------------------------------------------------------
+   Programa : pc_cria_lancamentos_deb
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : 
+   Data    :                        Ultima atualizacao: 11/10/2016
+  
    Dados referentes ao programa:
   
    Frequencia: Sempre que chamado
@@ -531,11 +470,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
     vr_nrdrecid  ROWID;
     
   BEGIN                           
-                                      
+               
     --Verificar se o lancamento automatico existe
     OPEN cr_craplau_2 (pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => pr_nrdconta,
-                    pr_dtmvtolt => pr_dtmvtolt,
+                       pr_dtmvtolt => pr_dtmvtolt,
                        pr_cdhistor => pr_cdhistor,
                        pr_nrdocmto => pr_nrdocmto,
                        pr_vllanaut => pr_vllanaut);
@@ -565,7 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
     END IF;
-
+                
     -- Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 5 seg.
     FOR i IN 1..50 LOOP
       BEGIN
@@ -573,7 +512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
         OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
                          pr_dtmvtolt  => rw_crapdat.dtmvtolt,
                          pr_cdagenci  => pr_cdagenci);
-    FETCH cr_craplot INTO rw_craplot;
+        FETCH cr_craplot INTO rw_craplot;
         vr_dscritic := NULL;
         EXIT;
       EXCEPTION
@@ -776,7 +715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
           vr_dscritic := 'Problema ao atualizar registro na tabela CRAPLOT: ' || SQLERRM;
           RAISE vr_exc_erro;
       END;
-
+      
       BEGIN
         -- ATUALIZA REGISTROS DE LANCAMENTOS AUTOMATICOS CONFORME PARAMETROS
         UPDATE craplau
@@ -928,9 +867,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SICR0002 AS
       ROLLBACK;
       -- Retorna o erro não tratado
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro nao tratado em SICR0002.pc_cria_lancamentos_debitos --> '||SQLERRM;
+      pr_dscritic := 'Erro nao tratado em sicr0002.pc_cria_lancamentos_debitos --> '||SQLERRM;
 
   END pc_cria_lancamentos_deb;
 
-END SICR0002;
+END sicr0002;
 /
