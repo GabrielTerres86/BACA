@@ -241,7 +241,7 @@ BEGIN
          vr_tbarquiv(vr_tbarqlst(vr_idxnumbe)) := vr_tbarqlst(vr_idxnumbe);
          vr_idxnumbe := vr_tbarqlst.next(vr_idxnumbe);
        END LOOP;
-
+       
        -- Iniciar CLOB de erros
        dbms_lob.createtemporary(vr_cltxterr, TRUE, dbms_lob.CALL);
        dbms_lob.open(vr_cltxterr,dbms_lob.lob_readwrite);                  
@@ -616,7 +616,8 @@ BEGIN
                                      ,cdhistor
                                      ,vllanmto
                                      ,nrseqdig
-                                     ,cdcooper)
+                                     ,cdcooper
+                                     ,hrtransa)
                               VALUES(rw_crapdat.dtmvtolt
                                     ,1
                                     ,100
@@ -628,7 +629,8 @@ BEGIN
                                     ,1787
                                     ,vr_vloperac
                                     ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                                    ,vr_cdcooper);
+                                    ,vr_cdcooper
+                                    ,to_char(SYSDATE,'sssss'));
                EXCEPTION
                  WHEN OTHERS THEN
                    vr_cdmotivo := 'Erro ao criar Trasnferencia em C/C: '||SQLERRM;
@@ -725,30 +727,30 @@ BEGIN
                  gene0002.pc_escreve_xml(pr_xml => vr_cltxterr
                                         ,pr_texto_completo => vr_dstxterr
                                         ,pr_texto_novo => '<tr>' ||
-                                  '<td>' ||
-                                    vr_nmevehead ||
-                                  '</td>' ||
-                                  '<td>' ||
-                                    to_char(vr_dtarquiv,'DD/MM/RRRR') ||
-                                  '</td>' ||
-                                  '<td>' ||
-                                    vr_nrseqhead ||
-                                  '</td>' ||
-                                  '<td>' ||
-                                    substr(vr_dslinharq,1,2) ||
-                                  '</td>' ||
-                                  '<td>' ||
-                                     vr_nrdconta ||
-                                  '</td>' ||
-                                  '<td>' ||
-                                     vr_nrcpfcgc ||
-                                  '</td>' ||
-                                  '<td>' ||
-                                    vr_nmprimtl ||
-                                  '</td>' ||
-                                  '<td>' ||
-                                    vr_cdmotivo ||
-                                  '</td>' ||
+                                                            '<td>' ||
+                                                              vr_nmevehead ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              to_char(vr_dtarquiv,'DD/MM/RRRR') ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              vr_nrseqhead ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              substr(vr_dslinharq,1,2) ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                               vr_nrdconta ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                               vr_nrcpfcgc ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              vr_nmprimtl ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              vr_cdmotivo ||
+                                                            '</td>' ||
                                                           '</tr>');
 
                  -- Efetuar geração do LOG da TED com erro

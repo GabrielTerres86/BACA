@@ -253,7 +253,8 @@ BEGIN
                                ,cdhistor
                                ,vllanmto
                                ,nrseqdig
-                               ,cdcooper)
+                               ,cdcooper
+                               ,hrtransa)
                         VALUES(rw_crapdat.dtmvtolt
                               ,1
                               ,100
@@ -265,7 +266,8 @@ BEGIN
                               ,1810
                               ,rw_lcm.qtlanmto*vr_vltedtec
                               ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                              ,pr_cdcooper);
+                              ,pr_cdcooper
+                              ,to_char(SYSDATE,'sssss'));
          EXCEPTION
            WHEN OTHERS THEN
              vr_dscritic := 'Erro ao criar repasse: '||SQLERRM;
@@ -359,7 +361,8 @@ BEGIN
                                ,cdhistor
                                ,vllanmto
                                ,nrseqdig
-                               ,cdcooper)
+                               ,cdcooper
+                               ,hrtransa)
                         VALUES(rw_crapdat.dtmvtolt
                               ,1
                               ,100
@@ -371,7 +374,8 @@ BEGIN
                               ,1811
                               ,vr_qtlanmto*vr_vltedtec
                               ,rw_craplot.nrseqdig -- atualizado da LOTE acima
-                              ,pr_cdcooper);
+                              ,pr_cdcooper
+                              ,to_char(SYSDATE,'sssss'));
          EXCEPTION
            WHEN OTHERS THEN
              vr_dscritic := 'Erro ao criar repasse no destino: '||SQLERRM;
