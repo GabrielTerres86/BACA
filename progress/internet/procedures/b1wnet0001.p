@@ -245,13 +245,19 @@
                             somente quando o flag serasa for falso na procedure gera-dados.
                             Chamado 490114 - Heitor (RKAM)
 
-			   15/08/2016 - Removido validacao de convenio na consulta da tela
-							manutencao (gera-dados), conforme solicitado no chamado 
-							497079. (Kelvin)
+			         15/08/2016 - Removido validacao de convenio na consulta da tela
+							              manutencao (gera-dados), conforme solicitado no chamado 
+							              497079. (Kelvin)
 
-			   13/10/2016 - Ajuste na aux_flprotes para buscar apenas o convênio
-							do tipo INTERNET crapcco.dsorgarq = 'INTERNET'
-							(Andrey Formigari - Mouts - SD: 533201)
+			         13/10/2016 - Ajuste na aux_flprotes para buscar apenas o convênio
+							              do tipo INTERNET crapcco.dsorgarq = 'INTERNET'
+							             (Andrey Formigari - Mouts - SD: 533201)
+               
+               09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
+                            nao fixara em convenio INTERNET, mas utilizara uma logica
+                            semelhante ao que acontece para SERASA, assumindo valor
+                            TRUE se algum dos convenios possuir a opcao de protesto
+                            habilitada. Heitor (Mouts) - Chamado 554656
 
 .............................................................................*/
 
@@ -2266,21 +2272,22 @@ PROCEDURE gera-dados:
                            OUTPUT aux_intipemi).
 
     ASSIGN aux_flserasa = FALSE
-	       aux_flprotes = FALSE.
+	         aux_flprotes = FALSE.
 
     FOR EACH  crapceb WHERE crapceb.cdcooper = par_cdcooper     AND 
-                             crapceb.nrdconta = par_nrdconta     AND
+                            crapceb.nrdconta = par_nrdconta     AND
                             crapceb.insitceb = 1 /* Somente ativos */ NO-LOCK
 	   ,FIRST  crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
 	                         crapcco.nrconven = crapceb.nrconven AND
-                             crapcco.cddbanco = 85               AND /*Cecred*/
-							 crapcco.dsorgarq = 'INTERNET' 		 AND /*ORIGEM INTERNET*/
-	                         crapcco.flginter = TRUE NO-LOCK:
+                           crapcco.cddbanco = 85               AND /*Cecred*/
+							             crapcco.flginter = TRUE NO-LOCK:
+
+    IF aux_flprotes = FALSE THEN
+       aux_flprotes = crapceb.flprotes.
 
 		IF aux_flserasa = FALSE THEN
         ASSIGN aux_nrconven = crapcco.nrconven
-               aux_flprotes = crapceb.flprotes
-			   aux_flserasa = crapceb.flserasa.
+               aux_flserasa = crapceb.flserasa.
 
     END.
 
