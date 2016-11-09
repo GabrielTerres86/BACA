@@ -19867,8 +19867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao atualizar registro na tabela CRAPLAU: ' || sqlerrm;
             RAISE vr_exc_erro;
-          END;
-          END IF;
+          END;          
           
 		  -- Se for a primeira tentativa apenas grava critica
           ELSIF vr_qtdexec < 3 THEN
