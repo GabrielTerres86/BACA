@@ -196,7 +196,7 @@
                                      ,pr_dscritic            OUT VARCHAR2
                                     );
 
-  /******************************************************************************/
+    /******************************************************************************/
   /**                       Gera log de envio TED                              **/
   /******************************************************************************/
   PROCEDURE pc_grava_log_ted
@@ -228,7 +228,7 @@
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
                         ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
-                        
+
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2);    --> Descricao do erro
@@ -2073,17 +2073,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;        
       END IF;    
     ELSE
-      -- Efetuaremos leitura das pltables e converteremos as mesmas para XML
-      IF vr_tab_logspb.count > 0 THEN
-      -- Criar documento XML
+        -- Criar documento XML
         dbms_lob.createtemporary(pr_clob_logspb, TRUE);
         dbms_lob.open(pr_clob_logspb, dbms_lob.lob_readwrite);
-        
+
         -- Insere o cabeçalho do XML
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
-                               
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><root>');
+
+        
+        
+      -- Efetuaremos leitura das pltables e converteremos as mesmas para XML
+      IF vr_tab_logspb.count > 0 THEN
+        
+
+        -- Insere o cabeçalho do XML
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
+                               ,pr_texto_completo => vr_dstextaux
+                               ,pr_texto_novo     => '<linhas_logspb>');
+
         --Buscar Primeiro registro
         vr_idx_logspb := vr_tab_logspb.FIRST;
 
@@ -2108,19 +2117,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         -- Encerrar a tag raiz
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '</root>'
-                               ,pr_fecha_xml      => TRUE);
+                               ,pr_texto_novo     => '</linhas_logspb>');
       END IF;
       
       IF vr_tab_logspb_detalhe.count > 0 THEN
-        -- Criar documento XML
-        dbms_lob.createtemporary(pr_clob_logspb_detalhe, TRUE);
-        dbms_lob.open(pr_clob_logspb_detalhe, dbms_lob.lob_readwrite);
-         
+
+
         -- Insere o cabeçalho do XML
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+                               ,pr_texto_novo     => '<linhas_logspb_detalhe>');
 
         --Buscar Primeiro registro
         vr_idx_logspb_detalhe := vr_tab_logspb_detalhe.FIRST;
@@ -2149,7 +2155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '  <cdoperad>' || nvl(vr_tab_logspb_detalhe(vr_idx_logspb_detalhe).cdoperad,' ')||'</cdoperad>'||                                                                                                                                                                                                          
                          '</linhas>';
            -- Escrever no XML
-          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                  ,pr_texto_completo => vr_dstextaux
                                  ,pr_texto_novo     => vr_dsregistr
                                  ,pr_fecha_xml      => FALSE);
@@ -2160,21 +2166,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         END LOOP;
 
         -- Encerrar a tag raiz
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_detalhe
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '</root>'
-                               ,pr_fecha_xml      => TRUE);
+                               ,pr_texto_novo     => '</linhas_logspb_detalhe>');
       END IF;
       
       IF vr_tab_logspb_totais.count > 0 THEN
-        -- Criar documento XML
-        dbms_lob.createtemporary(pr_clob_logspb_totais, TRUE);
-        dbms_lob.open(pr_clob_logspb_totais, dbms_lob.lob_readwrite);
         
+
         -- Insere o cabeçalho do XML
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+                               ,pr_texto_novo     => '<linhas_logspb_totais>');
 
         --Buscar Primeiro registro
         vr_idx_logspb_totais := vr_tab_logspb_totais.FIRST;
@@ -2186,7 +2189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                          '  <vlsitlog>' || nvl(to_char(vr_tab_logspb_totais(vr_idx_logspb_totais).vlsitlog,'fm999g999g9990d00'),'0')||'</vlsitlog>'||
                          '</linhas>';
            -- Escrever no XML
-          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                  ,pr_texto_completo => vr_dstextaux
                                  ,pr_texto_novo     => vr_dsregistr
                                  ,pr_fecha_xml      => FALSE);
@@ -2197,9 +2200,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         END LOOP;
 
         -- Encerrar a tag raiz
-        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb_totais
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_logspb
                                ,pr_texto_completo => vr_dstextaux
-                               ,pr_texto_novo     => '</root>'
+                               ,pr_texto_novo     => '</linhas_logspb_totais></root>'
                                ,pr_fecha_xml      => TRUE);
       END IF;
       
@@ -2243,7 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,pr_nrispbif IN INTEGER  --> Numero de inscrição SPB
                         ,pr_inestcri IN INTEGER DEFAULT 0 --> Estado crise
                         ,pr_cdifconv IN INTEGER DEFAULT 0 -->IF convenio 0 - CECRED / 1 - SICREDI
-                        
+
                         --------- SAIDA --------
                         ,pr_cdcritic  OUT INTEGER       --> Codigo do erro
                         ,pr_dscritic  OUT VARCHAR2) IS  --> Descricao do erro

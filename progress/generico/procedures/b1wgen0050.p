@@ -136,8 +136,8 @@
                              alterar o campo do cpf do remetente para buscar do campo 
                              correto (Lucas Ranghetti #440959)
                            - Remover chamado em duplicidade das opcoes "ENVIADOS -> TODOS" 
-                             e "RECEBIDOS -> TODOS" na procedure obtem-log-cecred (Lucas Ranghetti #445186)                             
-                
+                             e "RECEBIDOS -> TODOS" na procedure obtem-log-cecred (Lucas Ranghetti #445186)  
+
                 27/09/2016 - M211 - Adicionado parametros par_cdifconv nas procs 
                             obtem-log-spb, impressao-log-pdf e impressao-log-csv.
                             Tambem chamada a rotina convertida da obtem-log-cecred
@@ -649,15 +649,21 @@ PROCEDURE obtem-log-cecred:
     DEF VAR xDoc          AS HANDLE   NO-UNDO.   
     DEF VAR xRoot         AS HANDLE   NO-UNDO.  
     DEF VAR xRoot2        AS HANDLE   NO-UNDO.  
+	DEF VAR xRoot3        AS HANDLE   NO-UNDO.   
     DEF VAR xField        AS HANDLE   NO-UNDO. 
+	DEF VAR xField2       AS HANDLE   NO-UNDO.  
+	DEF VAR xField3       AS HANDLE   NO-UNDO. 
     DEF VAR xText         AS HANDLE   NO-UNDO. 
+	DEF VAR hTextTag      AS HANDLE   NO-UNDO. 
     DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO. 
     DEF VAR aux_cont      AS INTEGER  NO-UNDO. 
+	DEF VAR aux_cont2     AS INTEGER  NO-UNDO. 
+	DEF VAR aux_cont3     AS INTEGER  NO-UNDO. 
     DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO. 
     DEF VAR xml_logspb         AS LONGCHAR NO-UNDO. 
     DEF VAR xml_logspb_detalhe AS LONGCHAR NO-UNDO. 
     DEF VAR xml_logspb_totais  AS LONGCHAR NO-UNDO. 
-
+    
      /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
     CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
@@ -677,7 +683,17 @@ PROCEDURE obtem-log-cecred:
     /*********************************************************************************/
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-    
+                 
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+	CREATE X-NODEREF  xRoot3.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+	CREATE X-NODEREF  xField2.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+	CREATE X-NODEREF  hTextTag. /* Vai conter o texto que existe dentro da tag xField */ 
+	
     /* Efetuar a chamada a rotina Oracle */ 
     RUN STORED-PROCEDURE pc_obtem_log_cecred_car
        aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,
@@ -685,8 +701,10 @@ PROCEDURE obtem-log-cecred:
                                            INPUT par_nrdcaixa,
                                            INPUT par_cdoperad,
                                            INPUT par_nmdatela,
-                                           INPUT par_cdorigem,                                                            INPUT par_dtmvtini,
-                                           INPUT par_dtmvtfim,                                                              INPUT STRING(par_numedlog),
+                                           INPUT par_cdorigem,                                                            
+										   INPUT par_dtmvtini,
+                                           INPUT par_dtmvtfim,                                                             
+										   INPUT STRING(par_numedlog),
                                            INPUT par_cdsitlog,
                                            INPUT STRING(par_nrdconta),
                                            INPUT par_nrsequen,
@@ -700,24 +718,23 @@ PROCEDURE obtem-log-cecred:
                                            OUTPUT ?,  /* pr_clob_logspb_totais */
                                            OUTPUT 0, /* cdcritic */
                                            OUTPUT ""). /* dscritic */
-
+    
+	
     /* Fechar o procedimento para buscarmos o resultado */ 
     CLOSE STORED-PROC pc_obtem_log_cecred_car
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
     /*************************************************************/
     /* Buscar o XML na tabela de retorno da procedure Progress */ 
-    ASSIGN xml_logspb         = pc_obtem_log_cecred_car.pr_clob_logspb
-           xml_logspb_detalhe = pc_obtem_log_cecred_car.pr_clob_logspb_detalhe
-           xml_logspb_totais  = pc_obtem_log_cecred_car.pr_clob_logspb_totais.     
-
+    ASSIGN xml_logspb_totais = pc_obtem_log_cecred_car.pr_clob_logspb         .
+    
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
            aux_cdcritic = pc_obtem_log_cecred_car.pr_cdcritic 
                           WHEN pc_obtem_log_cecred_car.pr_cdcritic <> ?
            aux_dscritic = pc_obtem_log_cecred_car.pr_dscritic 
                           WHEN pc_obtem_log_cecred_car.pr_dscritic <> ?.
-
+    
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }     
     
     IF  aux_cdcritic <> 0   OR
@@ -728,111 +745,20 @@ PROCEDURE obtem-log-cecred:
                    tt-erro.dscritic = aux_dscritic.     
             RETURN "NOK".
             
-        END.
-
-    /* Processar registros da pr_clob_logspb */
-
-    /* Efetuar a leitura do XML*/ 
-    SET-SIZE(ponteiro_xml) = LENGTH(xml_logspb) + 1. 
-    PUT-STRING(ponteiro_xml,1) = xml_logspb.    
-
-    IF  ponteiro_xml <> ? THEN
-        DO: 
-           xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
-           xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-
-           DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+        END.       
     
-               xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
+	EMPTY TEMP-TABLE tt-logspb.
+	EMPTY TEMP-TABLE tt-logspb-detalhe.
+    EMPTY TEMP-TABLE tt-logspb-totais.
     
-               IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN 
-                   NEXT.            
-                          
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb.
-            
-               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-            
-                   xRoot2:GET-CHILD(xField,aux_cont). 
-        
-                   IF xField:SUBTYPE <> "ELEMENT" THEN 
-                       NEXT. 
-    
-                   xField:GET-CHILD(xText,1).                    
-                          
-                 ASSIGN tt-logspb.nrseqlog = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqlog"         
-                        tt-logspb.dslinlog = xText:NODE-VALUE WHEN xField:NAME = "dslinlog".
-               END.              
-                          
-        END.
-        
-           SET-SIZE(ponteiro_xml) = 0.    
-        END.
-        
-    /* Processar registros da pr_clob_logspb_detalhe */
-        
-    /* Efetuar a leitura do XML*/ 
-    SET-SIZE(ponteiro_xml) = LENGTH(xml_logspb_detalhe) + 1. 
-    PUT-STRING(ponteiro_xml,1) = xml_logspb_detalhe.    
-
-    IF  ponteiro_xml <> ? THEN
-        DO:
-           xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
-           xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-            
-           DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
-    
-               xRoot:GET-CHILD(xRoot2,aux_cont_raiz) NO-ERROR. 
-
-               IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN 
-                   NEXT.            
-                              
-               IF xRoot2:NUM-CHILDREN > 0 THEN
-                  CREATE tt-logspb-detalhe.
-                              
-               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-             
-                   xRoot2:GET-CHILD(xField,aux_cont). 
-    
-                   IF xField:SUBTYPE <> "ELEMENT" THEN 
-                       NEXT. 
-    
-                   xField:GET-CHILD(xText,1).                    
-                            
-                 ASSIGN tt-logspb-detalhe.nrseqlog = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrseqlog"         
-                        tt-logspb-detalhe.cdbandst = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbandst"
-                        tt-logspb-detalhe.cdagedst = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagedst"
-                        tt-logspb-detalhe.nrctadst =     xText:NODE-VALUE  WHEN xField:NAME = "nrctadst"
-                        tt-logspb-detalhe.dsnomdst =     xText:NODE-VALUE  WHEN xField:NAME = "dsnomdst"
-                        tt-logspb-detalhe.dscpfdst = INT(xText:NODE-VALUE) WHEN xField:NAME = "dscpfdst"
-                        tt-logspb-detalhe.cdbanrem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdbanrem"
-                        tt-logspb-detalhe.cdagerem = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagerem"
-                        tt-logspb-detalhe.nrctarem =     xText:NODE-VALUE  WHEN xField:NAME = "nrctarem"
-                        tt-logspb-detalhe.dsnomrem =     xText:NODE-VALUE  WHEN xField:NAME = "dsnomrem"
-                        tt-logspb-detalhe.dscpfrem = INT(xText:NODE-VALUE) WHEN xField:NAME = "dscpfrem"
-                        tt-logspb-detalhe.hrtransa =     xText:NODE-VALUE  WHEN xField:NAME = "hrtransa"
-                        tt-logspb-detalhe.vltransa = DEC(xText:NODE-VALUE) WHEN xField:NAME = "vltransa"
-                        tt-logspb-detalhe.dsmotivo =     xText:NODE-VALUE  WHEN xField:NAME = "dsmotivo"
-                        tt-logspb-detalhe.dstransa =     xText:NODE-VALUE  WHEN xField:NAME = "dstransa"
-                        tt-logspb-detalhe.dsorigem =     xText:NODE-VALUE  WHEN xField:NAME = "dsorigem"
-                        tt-logspb-detalhe.cdagenci = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdagenci"
-                        tt-logspb-detalhe.nrdcaixa = INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdcaixa"
-                        tt-logspb-detalhe.cdoperad =     xText:NODE-VALUE  WHEN xField:NAME = "cdoperad".
-               END.              
-                            
-                        END.
-           
-           SET-SIZE(ponteiro_xml) = 0.    
-                END.
-    
-    /* Processar registros da pr_clob_logspb_totais */
+    /********** BUSCAR LANCAMENTOS **********/
     
     /* Efetuar a leitura do XML*/ 
     SET-SIZE(ponteiro_xml) = LENGTH(xml_logspb_totais) + 1. 
     PUT-STRING(ponteiro_xml,1) = xml_logspb_totais.    
     
     IF  ponteiro_xml <> ? THEN
-                DO:
+        DO: 
            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE) NO-ERROR. 
            xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
             
@@ -843,27 +769,171 @@ PROCEDURE obtem-log-cecred:
                IF  xRoot2:SUBTYPE <> "ELEMENT"   THEN 
                    NEXT.            
 
+               IF xRoot2:name = "linhas_logspb" THEN
+			      DO:
+				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
+
+					   xRoot2:GET-CHILD(xField,aux_cont). 
+
+					   IF xField:SUBTYPE <> "ELEMENT" THEN 
+						  NEXT. 
+
                IF xRoot2:NUM-CHILDREN > 0 THEN
                   CREATE tt-logspb.
-                
-               DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
-                
-                   xRoot2:GET-CHILD(xField,aux_cont). 
-    
-                   IF xField:SUBTYPE <> "ELEMENT" THEN 
+                  
+						DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
+						
+   						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
+						
+						   IF xField2:SUBTYPE <> "ELEMENT" THEN 
+							   NEXT. 
+
+						   DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
+
+							   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
+
+							   /* Se nao vier conteudo na TAG */ 
+							   IF ERROR-STATUS:ERROR             OR  
+								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
                        NEXT. 
-                
-                   xField:GET-CHILD(xText,1).                    
-                
-                 ASSIGN tt-logspb-totais.qtdenvok = INT(xText:NODE-VALUE) WHEN xField:NAME = "qtsitlog"         
-                        tt-logspb-totais.vlrenvok = DEC(xText:NODE-VALUE) WHEN xField:NAME = "vlsitlog".
-                END.
+
+							   ASSIGN tt-logspb-detalhe.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"         
+									  tt-logspb-detalhe.cdbandst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbandst"
+										tt-logspb-detalhe.cdagedst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagedst"
+										tt-logspb-detalhe.nrctadst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctadst"
+										tt-logspb-detalhe.dsnomdst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomdst"
+										tt-logspb-detalhe.dscpfdst = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfdst"
+										tt-logspb-detalhe.cdbanrem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbanrem"
+										tt-logspb-detalhe.cdagerem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagerem"
+										tt-logspb-detalhe.nrctarem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctarem"
+										tt-logspb-detalhe.dsnomrem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomrem"
+										tt-logspb-detalhe.dscpfrem = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfrem"
+										tt-logspb-detalhe.hrtransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "hrtransa"
+										tt-logspb-detalhe.vltransa = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vltransa"
+										tt-logspb-detalhe.dsmotivo =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsmotivo"
+										tt-logspb-detalhe.dstransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dstransa"
+										tt-logspb-detalhe.dsorigem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsorigem"
+										tt-logspb-detalhe.cdagenci = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagenci"
+										tt-logspb-detalhe.nrdcaixa = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrdcaixa"
+										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad".
+                        
+               END.              
              
+           END.    
+           
+        END.      
+    
+				  END. 
+			   ELSE
+			   IF xRoot2:name = "linhas_logspb_detalhe" THEN
+        DO: 
+				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
+               
+					   xRoot2:GET-CHILD(xField,aux_cont). 
+
+					   IF xField:SUBTYPE <> "ELEMENT" THEN 
+                   NEXT.            
+
+               IF xRoot2:NUM-CHILDREN > 0 THEN
+                  CREATE tt-logspb-detalhe.
+                  
+						DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
+						
+   						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
+						
+						   IF xField2:SUBTYPE <> "ELEMENT" THEN 
+							   NEXT. 
+
+						   DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
+
+							   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
+							   
+							   /* Se nao vier conteudo na TAG */ 
+							   IF ERROR-STATUS:ERROR             OR  
+								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                       NEXT. 
+
+							   ASSIGN tt-logspb-detalhe.nrseqlog = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrseqlog"         
+									  tt-logspb-detalhe.cdbandst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbandst"
+										tt-logspb-detalhe.cdagedst = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagedst"
+										tt-logspb-detalhe.nrctadst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctadst"
+										tt-logspb-detalhe.dsnomdst =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomdst"
+										tt-logspb-detalhe.dscpfdst = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfdst"
+										tt-logspb-detalhe.cdbanrem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdbanrem"
+										tt-logspb-detalhe.cdagerem = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagerem"
+										tt-logspb-detalhe.nrctarem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "nrctarem"
+										tt-logspb-detalhe.dsnomrem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsnomrem"
+										tt-logspb-detalhe.dscpfrem = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "dscpfrem"
+										tt-logspb-detalhe.hrtransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "hrtransa"
+										tt-logspb-detalhe.vltransa = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vltransa"
+										tt-logspb-detalhe.dsmotivo =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsmotivo"
+										tt-logspb-detalhe.dstransa =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dstransa"
+										tt-logspb-detalhe.dsorigem =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "dsorigem"
+										tt-logspb-detalhe.cdagenci = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "cdagenci"
+										tt-logspb-detalhe.nrdcaixa = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "nrdcaixa"
+										tt-logspb-detalhe.cdoperad =     hTextTag:NODE-VALUE  WHEN xField2:NAME = "cdoperad".
+                        
+               END.              
+             
+           END.    
+           
         END.
-        
+    
+				  END. 
+			   ELSE
+			   IF xRoot2:name = "linhas_logspb_totais" THEN
+        DO: 
+				     DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
+               
+					   xRoot2:GET-CHILD(xField,aux_cont). 
+
+					   IF xField:SUBTYPE <> "ELEMENT" THEN 
+                   NEXT.            
+
+               IF xRoot2:NUM-CHILDREN > 0 THEN
+                  CREATE tt-logspb.
+                  
+					   DO aux_cont2 = 1 TO xField:NUM-CHILDREN: 
+						
+   						   xField:GET-CHILD(xField2,aux_cont2) no-error. 
+						
+						   IF xField2:SUBTYPE <> "ELEMENT" THEN 
+							   NEXT. 
+
+						   DO aux_cont3 = 1 TO xField2:NUM-CHILDREN: 
+
+							   xField2:GET-CHILD(hTextTag,1) NO-ERROR.
+
+							   /* Se nao vier conteudo na TAG */ 
+							   IF ERROR-STATUS:ERROR             OR  
+								  ERROR-STATUS:NUM-MESSAGES > 0  THEN
+                       NEXT. 
+
+							   ASSIGN tt-logspb-totais.qtdenvok = INT(hTextTag:NODE-VALUE) WHEN xField2:NAME = "qtsitlog"         
+									  tt-logspb-totais.vlrenvok = DEC(hTextTag:NODE-VALUE) WHEN xField2:NAME = "vlsitlog".
+				 
+							 END. 
+							 
+						 END. 
+						 
+				     END. 
+                        
+               END.              
+             
+           END.    
+           
            SET-SIZE(ponteiro_xml) = 0.    
         END.
-                   
+    
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+	DELETE OBJECT xRoot3. 
+    DELETE OBJECT xField. 
+	DELETE OBJECT xField2. 
+    DELETE OBJECT xText.
+	DELETE OBJECT hTextTag.
+    
     /* Chegou ao fim com sucesso */
     RETURN "OK".
 
@@ -2196,7 +2266,7 @@ PROCEDURE obtem-log-sistema-cecred:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtiniper AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtfimper AS DATE                           NO-UNDO.
-	
+        
     DEF OUTPUT PARAM TABLE FOR tt-logspb-detalhe.
     
     DEF BUFFER crabcop FOR crapcop.
@@ -2204,16 +2274,16 @@ PROCEDURE obtem-log-sistema-cecred:
 
     EMPTY TEMP-TABLE tt-logspb-detalhe.
 
-	FOR EACH craplcm WHERE craplcm.cdcooper =  par_cdcooper AND
+        FOR EACH craplcm WHERE craplcm.cdcooper =  par_cdcooper AND
                            craplcm.nrdconta =  par_nrdconta AND
                            craplcm.dtmvtolt >= par_dtiniper AND
                            craplcm.dtmvtolt <= par_dtfimper AND
                           (craplcm.cdhistor = 539   OR
                            craplcm.cdhistor = 1011  OR
                            craplcm.cdhistor = 1015) NO-LOCK:
-	
+        
         IF  CAN-DO("539,1015", STRING(craplcm.cdhistor)) THEN
-        	DO:
+                DO:
                 /* Dados do remetente */
                 FOR FIRST crapcop WHERE 
                           crapcop.cdcooper = craplcm.cdcooper NO-LOCK. END.
@@ -2242,10 +2312,10 @@ PROCEDURE obtem-log-sistema-cecred:
              
                 IF  NOT AVAIL crabass  THEN
                     NEXT.
-        	END.
-    	ELSE
-        	DO:
-        	    /* Dados do remetente */
+                END.
+            ELSE
+                DO:
+                    /* Dados do remetente */
                 FOR FIRST crapcop WHERE 
                           crapcop.cdagectl = INTE(SUBSTR(craplcm.cdpesqbb,10,4)) 
                           NO-LOCK. END.
@@ -2273,26 +2343,26 @@ PROCEDURE obtem-log-sistema-cecred:
 
                 IF  NOT AVAIL crabass  THEN
                     NEXT.
-        	END.
-	
-	    CREATE tt-logspb-detalhe.
-		ASSIGN tt-logspb-detalhe.cdbanrem = crapcop.cdbcoctl
-			   tt-logspb-detalhe.cdagerem = crapcop.cdagectl
-			   tt-logspb-detalhe.nrctarem = STRING(crapass.nrdconta)
-			   tt-logspb-detalhe.dsnomrem = crapass.nmprimtl
-			   tt-logspb-detalhe.dscpfrem = crapass.nrcpfcgc
-			   tt-logspb-detalhe.cdbandst = crabcop.cdbcoctl
-			   tt-logspb-detalhe.cdagedst = crabcop.cdagectl
-			   tt-logspb-detalhe.nrctadst = STRING(crabass.nrdconta)
-			   tt-logspb-detalhe.dsnomdst = crabass.nmprimtl
-			   tt-logspb-detalhe.dscpfdst = crabass.nrcpfcgc
-			   tt-logspb-detalhe.dttransa = craplcm.dtmvtolt
-			   tt-logspb-detalhe.hrtransa = STRING(craplcm.hrtransa, "HH:MM:SS")
-			   tt-logspb-detalhe.vltransa = craplcm.vllanmto
-			   tt-logspb-detalhe.cdtiptra = 1
-			   tt-logspb-detalhe.dstiptra = "TRANSFERENCIA".
-	
-	END. /* Fim do FOR EACH craplcm */
+                END.
+        
+            CREATE tt-logspb-detalhe.
+                ASSIGN tt-logspb-detalhe.cdbanrem = crapcop.cdbcoctl
+                           tt-logspb-detalhe.cdagerem = crapcop.cdagectl
+                           tt-logspb-detalhe.nrctarem = STRING(crapass.nrdconta)
+                           tt-logspb-detalhe.dsnomrem = crapass.nmprimtl
+                           tt-logspb-detalhe.dscpfrem = crapass.nrcpfcgc
+                           tt-logspb-detalhe.cdbandst = crabcop.cdbcoctl
+                           tt-logspb-detalhe.cdagedst = crabcop.cdagectl
+                           tt-logspb-detalhe.nrctadst = STRING(crabass.nrdconta)
+                           tt-logspb-detalhe.dsnomdst = crabass.nmprimtl
+                           tt-logspb-detalhe.dscpfdst = crabass.nrcpfcgc
+                           tt-logspb-detalhe.dttransa = craplcm.dtmvtolt
+                           tt-logspb-detalhe.hrtransa = STRING(craplcm.hrtransa, "HH:MM:SS")
+                           tt-logspb-detalhe.vltransa = craplcm.vllanmto
+                           tt-logspb-detalhe.cdtiptra = 1
+                           tt-logspb-detalhe.dstiptra = "TRANSFERENCIA".
+        
+        END. /* Fim do FOR EACH craplcm */
 
 END PROCEDURE.
 

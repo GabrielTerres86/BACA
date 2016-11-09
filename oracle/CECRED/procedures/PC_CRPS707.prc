@@ -64,6 +64,26 @@ BEGIN
         WHERE nrcpfcgc = pr_nrcpfcgc;
     rw_crapass cr_crapass%ROWTYPE; 
    
+    -- Busca do Cooperado pelo CPF
+    CURSOR cr_crapass2(pr_nrdconta crapass.nrdconta%TYPE
+                      ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
+       SELECT cdcooper
+             ,nrdconta
+             ,dtdemiss
+             ,nmprimtl
+         FROM crapass
+        WHERE nrdconta = pr_nrdconta
+          AND nrcpfcgc = pr_nrcpfcgc;
+    rw_crapass2 cr_crapass2%ROWTYPE; 
+   
+    -- Busca do Cooperado pelo CPF
+     CURSOR cr_crapttl(pr_nrcpfcgc NUMBER) IS
+       SELECT cdcooper
+             ,nrdconta             
+         FROM crapttl
+        WHERE nrcpfcgc = pr_nrcpfcgc;
+    rw_crapttl cr_crapttl%ROWTYPE; 
+   
     -- Buscar Lote
     CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
@@ -106,6 +126,8 @@ BEGIN
      vr_dsassunt VARCHAR2(100);
      vr_dscorpoe VARCHAR2(1000);
      vr_flgencer BOOLEAN := FALSE;
+     vr_typ_saida VARCHAR2(100);
+     vr_des_saida VARCHAR2(1000);
 
      -- PL/Tables para armazenar os nomes de arquivos a serem processados
      vr_tbarqlst  gene0002.typ_split;
@@ -466,10 +488,21 @@ BEGIN
                END;
 
                -- Verificar a existencia do CPF na Cooperativa
-               OPEN cr_crapass(pr_nrcpfcgc => vr_nrcpfcgc);
-               LOOP
-                 FETCH cr_crapass INTO rw_crapass;
-                 EXIT WHEN cr_crapass%NOTFOUND;   
+               OPEN cr_crapttl(pr_nrcpfcgc => vr_nrcpfcgc);
+               
+               FETCH cr_crapttl INTO rw_crapttl;
+               
+               IF cr_crapttl%FOUND THEN
+                 
+                 -- Encontrou pelo menos 1 com CPF
+                 vr_flgexis_cpf := true;
+                 
+               END IF;
+               
+               CLOSE cr_crapttl;
+               
+               FOR rw_crapass IN cr_crapass(pr_nrcpfcgc => vr_nrcpfcgc) LOOP
+                 
                  -- Encontrou pelo menos 1 com CPF
                  vr_flgexis_cpf := true;
                  -- Se a conta for igual a conta do arquivo
@@ -491,26 +524,42 @@ BEGIN
                    END IF;
                  END IF;
                END LOOP;
-               CLOSE cr_crapass;
 
                -- Se chegou neste ponto e não encontrou pelo CPF
                IF not vr_flgexis_cpf THEN
                  -- Gerar critica
-                 vr_cdmotivo := '3';
+                 vr_cdmotivo := '3 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ.';
                  RAISE vr_exc_saida;
                END IF;
 
                -- Se chegou neste ponto e não encontrou pelo CPF + Conta
                IF not vr_flgexis_cta THEN
                  -- Gerar critica
-                 vr_cdmotivo := '2';
+                 vr_cdmotivo := '2 - Agencia ou Conta Destinataria do Credito Invalida.';
                  RAISE vr_exc_saida;
                END IF;
 
+               -- Verificar a existencia do CPF/Conta na Cooperativa
+               OPEN cr_crapass2(pr_nrdconta => vr_nrdconta
+                               ,pr_nrcpfcgc => vr_nrcpfcgc);
+               
+               FETCH cr_crapass2 INTO rw_crapass2;
+               
+               IF cr_crapass2%NOTFOUND THEN
+                 
+                 CLOSE cr_crapass2;
+                 
+                 vr_cdmotivo := '1 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ.';
+                 RAISE vr_exc_saida;
+                 
+               END IF;
+
+               CLOSE cr_crapass2;
+               
                -- Se não achou nenhuma conta ativa
                IF vr_cdcooper = 0 THEN
                  -- Gerar critica
-                 vr_cdmotivo := '1';
+                 vr_cdmotivo := '1 - Conta Destinataria  do Credito Encerrada.';
                  RAISE vr_exc_saida;
                END IF;
 
@@ -664,6 +713,7 @@ BEGIN
                                         ,pr_nrdcaixa => 0
                                         ,pr_cdoperad => '1'
                                         ,pr_nrispbif => vr_nrispbif
+                                        ,pr_cdifconv => 1
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
                IF vr_dscritic IS NOT NULL THEN
@@ -780,6 +830,7 @@ BEGIN
                                           ,pr_nrdcaixa => 0
                                           ,pr_cdoperad => '1'
                                           ,pr_nrispbif => vr_nrispbif
+                                          ,pr_cdifconv => 1
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
                  --> Gerar log
@@ -873,11 +924,28 @@ BEGIN
            -- Primeiro garantimos que o diretorio exista
            IF NOT gene0001.fn_exis_diretorio(vr_dir_backup_teds) THEN
              -- Efetuar a criação do mesmo
-             gene0001.pc_osCommand_Shell('mkdir -p '||vr_dir_backup_teds);
+             gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir -p '||vr_dir_backup_teds
+                                        ,pr_typ_saida   => vr_typ_saida
+                                        ,pr_des_saida   => vr_des_saida);
+
+             --Se ocorreu erro dar RAISE
+             IF vr_typ_saida = 'ERR' THEN
+               vr_dscritic := 'Nao foi possivel criar diretorios para mover os arquivos processados.';
+               RAISE vr_exc_saida;
+             END IF;           
+            
            END IF;
 
-           -- Enfim, efetuar a cópia do arquivo lst e xls
-           gene0001.pc_osCommand_Shell('mv '||vr_dir_sicredi_teds||'/'||rtrim(vr_idxtexto,gene0001.fn_extensao_arquivo(vr_idxtexto))||'* '||vr_dir_backup_teds);
+           --Move o arquivo XML fisico de envio
+           GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                                 ,pr_des_comando => 'mv '||vr_dir_sicredi_teds||'/'||rtrim(vr_idxtexto,gene0001.fn_extensao_arquivo(vr_idxtexto))||'* '||vr_dir_backup_teds || ' 2> /dev/null'
+                                 ,pr_typ_saida   => vr_typ_saida
+                                 ,pr_des_saida   => vr_dscritic);
+                                 
+           --Se ocorreu erro dar RAISE
+           IF vr_typ_saida = 'ERR' THEN
+             RAISE vr_exc_saida;
+           END IF;
 
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
