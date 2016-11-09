@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: logspb.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Novembro/2009                Última Alteração: 09/11/2015 ***//
+	//*** Data : Novembro/2009                Última Alteração: 07/11/2015 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar tela LOGSPB                                  ***//
 	//***                                                                  ***//
@@ -29,9 +29,14 @@
 	//***																   ***//
 	//***			  09/11/2015 - Adicionado campo "Crise" no formulario  ***//
 	//***						   (Jorge/Andrino) 						   ***//
-  
-  //***       14/09/2016 - Adicionado campo Sicredi                 **//
-//***                          (Evandro - RKAM) 			           ***//
+	//***																   ***//	
+    //***             14/09/2016 - Adicionado campo Sicredi                ***//
+    //***                          (Evandro - RKAM) 			           ***//
+	//***																   ***//	
+    //***             07/11/2016 - Ajustes para corrigir problemas encontrados ***//
+    //***                          durante a homologação da área		   ***//
+	//***                          (Adriano - M211)				           ***//
+	//***														           ***//
 	/************************************************************************/
 	
 	session_start();
@@ -69,7 +74,7 @@
 <script type="text/javascript" src="../../scripts/funcoes.js"></script>
 <script type="text/javascript" src="../../scripts/mascara.js"></script>
 <script type="text/javascript" src="../../scripts/menu.js"></script>
-<script type="text/javascript" src="logspb.js"></script>
+<script type="text/javascript" src="logspb.js?keyrand=<?php echo mt_rand(); ?>"></script>	
 </head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -138,8 +143,9 @@
 																						  <div id="divLog">
 																						  <label for="flgidlog" class="txtNormalBold">Log:</label>
 																							  <select name="flgidlog" id="flgidlog" class="campo">
-																								  <option value="yes">Bancoob</option>
-																								  <option value="no" selected>Cecred</option>
+																								  <option value="1">Bancoob</option>
+																								  <option value="2" selected>Cecred</option>
+																								  <option value="3">Sicredi</option>
 																							  </select>
 																						  </div>
 
@@ -200,13 +206,7 @@
 																							  <label for="vlrdated" class="txtNormalBold">Valor:</label>
 																							  <input name="vlrdated" type="text" class="campo" id="vlrdated" value="0,00">
                                                  
-                                                <label for="cdifconv" class="txtNormalBold">Sicredi:</label>
-                                                <select name="cdifconv" id="cdifconv" class="campo">
-                                                   <option selected="" value="0">N&atilde;o</option>
-                                                   <option value="1">Sim</option>
-                                                </select>
-
-                                                  
+                                                                                                  
 																						  </div>
                                             </fieldset>
                                                 <div class="Botoes">

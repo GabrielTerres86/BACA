@@ -270,7 +270,7 @@ PROCEDURE obtem-log-spb:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_flgidlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_flgidlog AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_dtmvtlog AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_numedlog AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitlog AS CHAR                           NO-UNDO.
@@ -280,7 +280,6 @@ PROCEDURE obtem-log-spb:
     DEF  INPUT PARAM par_idacesso AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inestcri AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdifconv AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlrdated AS DECIMAL                        NO-UNDO.
 
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
@@ -293,10 +292,10 @@ PROCEDURE obtem-log-spb:
     DEF VARIABLE     aux_flgimprl AS LOGI                           NO-UNDO.
 
     /**********************************************************************/
-    /** par_flgidlog => TRUE - BANCOOB / FALSE - CECRED                  **/
+    /** par_flgidlog => 1 - BANCOOB / 2 - CECRED  / 3 - SICREDI          **/
     /**********************************************************************/    
     
-    IF  par_flgidlog  THEN
+    IF  par_flgidlog = 1 THEN
         RUN obtem-log-bancoob (INPUT par_cdcooper,
                                INPUT par_cdagenci,
                                INPUT par_nrdcaixa,
@@ -307,7 +306,7 @@ PROCEDURE obtem-log-spb:
                                INPUT par_numedlog,
                               OUTPUT TABLE tt-logspb,
                               OUTPUT TABLE tt-erro).    
-    ELSE
+    ELSE 
         RUN obtem-log-cecred (INPUT par_cdcooper,
                               INPUT par_cdagenci,
                               INPUT par_nrdcaixa,
@@ -323,7 +322,10 @@ PROCEDURE obtem-log-spb:
                               INPUT par_nriniseq,
                               INPUT par_nrregist,
                               INPUT par_inestcri,
-                              INPUT par_cdifconv,
+                              INPUT (IF par_flgidlog = 2 THEN
+										0 /*Somente ted CECRED*/
+									 ELSE
+									    1 /*Somente ted SICREDI*/),
                               INPUT par_vlrdated,
                              OUTPUT TABLE tt-logspb,
                              OUTPUT TABLE tt-logspb-detalhe,
@@ -335,7 +337,7 @@ PROCEDURE obtem-log-spb:
 
     ASSIGN aux_flgimprl = FALSE.
     
-    IF (par_flgidlog OR (NOT par_flgidlog AND par_numedlog = 3)) AND 
+    IF (par_flgidlog = 1  OR ( (par_flgidlog = 2 OR par_flgidlog = 3 ) AND par_numedlog = 3)) AND 
         CAN-FIND(FIRST tt-logspb) THEN
     DO: 
         RUN imprime-log (INPUT par_cdcooper,
@@ -2371,7 +2373,7 @@ PROCEDURE impressao-log-pdf:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_flgidlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_flgidlog AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_dtmvtlog AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_numedlog AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitlog AS CHAR                           NO-UNDO.
@@ -2379,8 +2381,7 @@ PROCEDURE impressao-log-pdf:
     DEF  INPUT PARAM par_vlrdated AS DECIMAL                        NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inestcri AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdifconv AS INTE                           NO-UNDO.    
-
+    
     DEF OUTPUT PARAM par_nmarqpdf AS CHAR                           NO-UNDO.    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -2437,7 +2438,10 @@ PROCEDURE impressao-log-pdf:
                           INPUT 1,
                           INPUT 9999,
                           INPUT par_inestcri,
-                          INPUT par_cdifconv,
+                          INPUT (IF par_flgidlog = 2 THEN
+									0 /*Somente ted CECRED*/
+								 ELSE
+								    1 /*Somente ted SICREDI*/),
                           INPUT par_vlrdated,
                          OUTPUT TABLE tt-logspb,
                          OUTPUT TABLE tt-logspb-detalhe,
@@ -2518,7 +2522,7 @@ PROCEDURE impressao-log-csv:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_flgidlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_flgidlog AS INT                            NO-UNDO.
     DEF  INPUT PARAM par_dtmvtlog AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_numedlog AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitlog AS CHAR                           NO-UNDO.
@@ -2526,8 +2530,7 @@ PROCEDURE impressao-log-csv:
     DEF  INPUT PARAM par_vlrdated AS DECIMAL                        NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inestcri AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdifconv AS INTE                           NO-UNDO.    
-
+    
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -2566,7 +2569,10 @@ PROCEDURE impressao-log-csv:
                           INPUT 1,
                           INPUT 9999,
                           INPUT par_inestcri,
-                          INPUT par_cdifconv,
+                          INPUT (IF par_flgidlog = 2 THEN
+									0 /*Somente ted CECRED*/
+								 ELSE
+								    1 /*Somente ted SICREDI*/),
                           INPUT par_vlrdated,
                          OUTPUT TABLE tt-logspb,
                          OUTPUT TABLE tt-logspb-detalhe,

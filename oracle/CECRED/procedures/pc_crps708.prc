@@ -10,14 +10,16 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jonata - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao:
+   Data    : Setembro/2016                        Ultima atualizacao: 01/11/2016
 
    Dados referentes ao programa:
 
    Frequencia: Diario.
    Objetivo  : Efetuar a contabilização do repasse dos recursos de TED entre as cooperativas
 
-   Alteracoes:
+   Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
+							              durante a homologação da área de negócio
+							              (Adriano - M211).
    ............................................................................. */
    DECLARE
 
@@ -46,7 +48,7 @@ BEGIN
          FROM craplcm lcm
              ,crapcop cop 
         WHERE cop.cdcooper = lcm.cdcooper
-          AND cop.cdcooper <> 3
+          AND NOT cop.cdcooper IN (3,16)
           AND cop.flgativo = 1
           AND lcm.cdhistor = 1787
           AND lcm.nrdolote = 8482
@@ -165,8 +167,8 @@ BEGIN
        vr_date := rw_crapdat.dtmvtolt;
        -- Buscar o acumulado das taxas
        WHILE NOT vr_achou LOOP
-         IF to_char(vr_date,'D') <> 4 OR
-           (to_char(vr_date,'W') = to_char(rw_crapdat.dtmvtolt,'W'))THEN
+         IF to_char(vr_date,'D') <> 4 /*OR
+           (to_char(vr_date,'W') = to_char(rw_crapdat.dtmvtolt,'W'))*/ THEN
            vr_date := vr_date - 1;
             
            continue;

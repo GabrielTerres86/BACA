@@ -10,14 +10,16 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao:
+   Data    : Setembro/2016                        Ultima atualizacao: 01/11/2016
 
    Dados referentes ao programa:
 
    Frequencia: Diario.
    Objetivo  : Realizar o repasse dos recursos de TED entre as cooperativas
 
-   Alteracoes:
+   Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
+							              durante a homologação da área de negócio
+							              (Adriano - M211).
    ............................................................................. */
    DECLARE
 
@@ -39,7 +41,7 @@ BEGIN
          FROM craplcm lcm
              ,crapcop cop 
         WHERE cop.cdcooper = lcm.cdcooper
-          AND cop.cdcooper <> 3
+          AND NOT cop.cdcooper IN (3,16)
           AND cop.flgativo = 1
           AND lcm.cdhistor = 1787
           AND lcm.nrdolote = 8482

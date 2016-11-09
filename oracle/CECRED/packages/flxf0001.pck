@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   --
   --  Programa: FLXF0001                        Antiga: sistema/generico/procedures/b1wgen0131.p
   --  Autor   : Odirlei-AMcom Capoia (DB1)
-  --  Data    : Dezembro/2011                     Ultima Atualizacao: 08/10/2013
+  --  Data    : Dezembro/2011                     Ultima Atualizacao: 07/11/2016
   --
   --  Dados referentes ao programa:
   --
@@ -204,6 +204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   --
   --  Alteracoes: 30/09/2013 - Conversao Progress para oracle (Odirlei-AMcom).
   --
+  --			  07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para gravar movimentação de fluxo financeiro
@@ -4414,7 +4415,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 28/09/2016
+    --  Data     : novembro/2013.                   Ultima atualizacao: 07/11/2016
     --
     --  Dados referentes ao programa:
     --
@@ -4423,6 +4424,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --   Atualizacao: 25/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
     --
     --                28/09/2016 - Passar novos parämetros na chamada a sspb0001 (Jonata-RKAM)
+	--
+	--				  07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -4454,6 +4457,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                  ,pr_nrsequen  => 0             -- Sequencia
                                  ,pr_nriniseq  => 1             -- numero inicial da sequencia
                                  ,pr_nrregist  => 99999         -- numero de registros
+                                 ,pr_cdifconv  => 3             -- IF Da TED - Todas
                                  ,pr_vlrdated  => 0             -- Valor da ted
                                  ,pr_dscritic  => pr_dscritic
                                  ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
@@ -4497,6 +4501,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     END LOOP;--Fim loop bancos
 
+    vr_vlrtedsr := 0;
+
+    /** Procedimento para obter log do SPB da Cecred - SICREDI*/
+    SSPB0001.pc_obtem_log_cecred( pr_cdcooper  => pr_cdcooper   -- Codigo Cooperativa
+                                 ,pr_cdagenci  => pr_cdagenci   -- Cod. Agencia
+                                 ,pr_nrdcaixa  => 0             -- Numero Caixa
+                                 ,pr_cdoperad  => pr_cdoperad   -- Operador
+                                 ,pr_nmdatela  => pr_nmdatela   -- Nome da tela
+                                 ,pr_cdorigem  => 0 /* TODOS */ -- Identificador Origem
+                                 ,pr_dtmvtini  => pr_dtmvtolt   -- Data de movimento de log
+                                 ,pr_dtmvtfim  => pr_dtmvtolt   -- Data de movimento de log
+                                 ,pr_numedlog  =>  2  /* RECEBIDAS */   -- Indicador de log a carregar
+                                 ,pr_cdsitlog  => 'P' /* Processadas */ -- Codigo de situação de log
+                                 ,pr_nrdconta  => 0             -- Numero da Conta
+                                 ,pr_nrsequen  => 0             -- Sequencia
+                                 ,pr_nriniseq  => 1             -- numero inicial da sequencia
+                                 ,pr_nrregist  => 99999         -- numero de registros
+                                 ,pr_cdifconv  => 1             -- IF Da TED - Somente SICREDI
+                                 ,pr_vlrdated  => 0             -- Valor da ted
+                                 ,pr_dscritic  => pr_dscritic
+                                 ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
+                                 ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe --> TempTable para armazenar o valor
+                                 ,pr_tab_logspb_totais  => vr_tab_logspb_totais  --> Variavel para armazenar os totais por situação de log
+                                 ,pr_tab_erro           => vr_tab_erro           --> Tabela contendo os erros
+                                );
+
+    -- Convertido conforme o progress ignorando o retorno da package SSPB0001,
+    -- conforme passado por Diego Vincentini, será revisado todo a BO, caso necessario retornar o erro o codigo ja esta pronto
+    /*IF pr_dscritic <> 'OK' THEN
+      pr_dscritic := pr_tab_erro(1).dscritic;
+    END IF; */
+    vr_tab_erro.DELETE;
+
+    --Verificar se existe valores totais de recebido
+    IF vr_tab_logspb_totais.EXISTS('3') THEN /* RECEBIDAS-OK */
+      vr_vlrtedsr := vr_tab_logspb_totais('3').vlsitlog ;
+    ELSE
+      vr_vlrtedsr := 0;
+    END IF;
+
+    vr_tab_cdbccxlt := gene0002.fn_quebra_string('01,85,756,100',',');
+
+    FOR idx IN vr_tab_cdbccxlt.first..vr_tab_cdbccxlt.last LOOP
+      FLXF0001.pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                                    ,pr_cdoperad => pr_cdoperad   -- Codigo do operador
+                                    ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                                    ,pr_tpdmovto => 1             -- Tipo de movimento
+                                    ,pr_cdbccxlt => vr_tab_cdbccxlt(idx) -- Codigo do banco/caixa.
+                                    ,pr_tpdcampo => 3 /*VLTOTTED*/       -- Tipo de campo
+                                    ,pr_vldcampo => (case vr_tab_cdbccxlt(idx)
+                                                     when '85' then vr_vlrtedsr
+                                                     else 0
+                                                     end)         -- Valor do campo
+                                    ,pr_dscritic => pr_dscritic);
+
+      IF pr_dscritic <> 'OK' THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+    END LOOP;--Fim loop bancos
+    
     pr_dscritic := 'OK';
 
   EXCEPTION
@@ -4525,13 +4590,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 21/11/2013
+    --  Data     : novembro/2013.                   Ultima atualizacao: 07/11/2016
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Gravar movimento financeiro dos TEDs e TECs
     --
     --   Atualizacao: 21/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
+	--
+	--				  07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -4573,6 +4640,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
        WHERE cdcooper  = pr_cdcooper
          AND dtmvtolt  = pr_dtmvtolt
          AND cdhistor  = 887; /*** Desprezar TEC'S  e TED'S rejeitadas pela cabine da JD ***/
+
+    --Buscar Lancamentos em depositos a vista
+    CURSOR cr_craplcm_sicredi (pr_dtmvtolt DATE) IS
+      SELECT nvl(sum(vllanmto),0) vllanmto
+        FROM craplcm
+       WHERE cdcooper  <> 16
+         AND dtmvtolt  = pr_dtmvtolt
+         AND cdhistor  = 1787; /*** TED - SICREDI ***/
 
   BEGIN
 
@@ -4625,6 +4700,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       END IF;
 
     END LOOP;--Fim loop bancos
+    
+    /*Para teds SICREDI somente a cooperativa Alto Vale tera
+   	  movimentacao de saida.*/
+    IF pr_cdcooper = 16 THEN
+      
+      vr_vlrtednr := 0;
+      
+      /*** Busca TEDs SICREDI ***/
+      FOR rw_craplcm_sicredi IN cr_craplcm_sicredi(pr_dtmvtolt => pr_dtmvtolt) LOOP
+
+        vr_vlrtednr := vr_vlrtednr + rw_craplcm_sicredi.vllanmto;
+
+      END LOOP;
+      
+      FOR idx IN vr_tab_cdbccxlt.first..vr_tab_cdbccxlt.last LOOP
+        FLXF0001.pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
+                                      ,pr_cdoperad => pr_cdoperad   -- Codigo do operador
+                                      ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
+                                      ,pr_tpdmovto => 2             -- Tipo de movimento
+                                      ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
+                                      ,pr_tpdcampo => 3/*VLTOTTED*/ -- Tipo de campo
+                                      ,pr_vldcampo => (case vr_tab_cdbccxlt(idx)
+                                                       when '100' then vr_vlrtednr
+                                                       else 0
+                                                       end)         -- Valor do campo
+                                      ,pr_dscritic => pr_dscritic);
+
+        IF pr_dscritic <> 'OK' THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+      END LOOP;--Fim loop bancos      
+      
+    END IF;
 
     pr_dscritic := 'OK';
 

@@ -91,7 +91,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0131.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 27/09/2016
+    Data    : Dezembro/2011                     Ultima atualizacao: 07/11/2016
 
     Objetivo  : Tranformacao BO tela PREVIS
 
@@ -137,7 +137,8 @@
                              
                 27/09/2016 - M211 - Envio do parado cdifconv na chamada da 
                             obtem-log-cecred pela pi_sr_ted_f (Jonata-RKAM)        
-                        
+
+				07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)                        
                         
 ............................................................................*/
 
@@ -2076,6 +2077,46 @@ PROCEDURE pi_tedtec_nr_f:
 
     END.
 
+	/*Para teds SICREDI somente a cooperativa Alto Vale tera
+	  movimentacao de saida.*/
+	IF par_cdcoopex = 16 THEN
+	DO:
+		ASSIGN aux_contador = 0
+               aux_vlrtednr = 0.
+
+		/*** Busca TEDs SICREDI ***/
+		Lancamentos:
+		FOR EACH craplcm WHERE craplcm.cdcooper <> 16		   AND
+							   craplcm.dtmvtolt = par_dtmvtolt AND
+							   craplcm.cdhistor = 1787   
+							   NO-LOCK:
+                        
+			ASSIGN aux_vlrtednr = aux_vlrtednr     + 
+								  craplcm.vllanmto.
+        
+
+		END. /* Fim Lancamentos */
+
+		DO aux_contador = 1 TO NUM-ENTRIES(aux_cdbccxlt,","):
+          
+		   RUN grava-movimentacao 
+						  (INPUT par_cdcoopex,
+						   INPUT par_cdoperad,
+						   INPUT par_dtmvtolt,
+						   INPUT 2,
+						   INPUT INT(ENTRY(aux_contador,aux_cdbccxlt)),
+						   INPUT 3,
+						   INPUT (IF ENTRY(aux_contador,aux_cdbccxlt) = "100" THEN
+									 aux_vlrtednr
+								  ELSE
+									 0)).
+       
+		   IF RETURN-VALUE <> "OK" THEN
+			  RETURN "NOK".
+
+		END.
+
+	END.
 
     RETURN "OK".
 
@@ -2543,6 +2584,10 @@ PROCEDURE pi_sr_ted_f:
     ASSIGN aux_vlrtedsr = 0
            aux_contador = 0.
 
+	EMPTY TEMP-TABLE tt-logspb.
+	EMPTY TEMP-TABLE tt-logspb-detalhe.
+	EMPTY TEMP-TABLE tt-logspb-totais.
+
     IF NOT VALID-HANDLE(h-b1wgen0050) THEN
        RUN sistema/generico/procedures/b1wgen0050.p 
            PERSISTENT SET h-b1wgen0050.
@@ -2550,7 +2595,7 @@ PROCEDURE pi_sr_ted_f:
     RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT FALSE).
 
-    RUN obtem-log-cecred IN h-b1wgen0050 (INPUT par_cdcoopex,
+	RUN obtem-log-cecred IN h-b1wgen0050 (INPUT par_cdcoopex,
                                           INPUT par_cdagenci,
                                           INPUT 0,
                                           INPUT par_cdoperad,
@@ -2565,7 +2610,67 @@ PROCEDURE pi_sr_ted_f:
                                           INPUT 1,
                                           INPUT 99999,
                                           INPUT 0, /* inestcri, 0 Nao, 1 Sim */                                          
-                                          INPUT 3,  /* IF da TED - Todas */
+                                          INPUT 0,  /* IF da TED - Somente CECRED */
+										  INPUT 0, /* par_vlrdated */
+                                          OUTPUT TABLE tt-logspb,
+                                          OUTPUT TABLE tt-logspb-detalhe,
+                                          OUTPUT TABLE tt-logspb-totais,
+                                          OUTPUT TABLE tt-erro).
+
+	EMPTY TEMP-TABLE tt-erro.
+
+    FIND FIRST tt-logspb-totais NO-LOCK NO-ERROR.
+
+    IF AVAIL tt-logspb-totais THEN
+       ASSIGN aux_vlrtedsr = tt-logspb-totais.vlrrecok.
+    ELSE
+       ASSIGN aux_vlrtedsr = 0.
+
+	RUN atualiza_tabela_erros (INPUT par_cdcooper,
+                               INPUT TRUE).
+
+    DO aux_contador = 1 TO NUM-ENTRIES(aux_cdbccxlt,","):
+        
+       RUN grava-movimentacao 
+                      (INPUT par_cdcoopex,
+                       INPUT par_cdoperad,
+                       INPUT par_dtmvtolt,
+                       INPUT 1,
+                       INPUT INT(ENTRY(aux_contador,aux_cdbccxlt)),
+                       INPUT 3,
+                       INPUT (IF ENTRY(aux_contador,aux_cdbccxlt) = "85" THEN
+                                 aux_vlrtedsr
+                              ELSE
+                                 0)).
+       
+       IF RETURN-VALUE <> "OK" THEN
+          RETURN "NOK".
+
+    END.
+
+	EMPTY TEMP-TABLE tt-logspb.
+	EMPTY TEMP-TABLE tt-logspb-detalhe.
+	EMPTY TEMP-TABLE tt-logspb-totais.
+
+	ASSIGN aux_vlrtedsr = 0
+           aux_contador = 0.
+
+	RUN obtem-log-cecred IN h-b1wgen0050 (INPUT par_cdcoopex,
+                                          INPUT par_cdagenci,
+                                          INPUT 0,
+                                          INPUT par_cdoperad,
+                                          INPUT par_nmdatela,
+                                          INPUT 0,   /* TODOS */
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_dtmvtolt,
+                                          INPUT 2,   /* RECEBIDAS */
+                                          INPUT "P", /* Processadas */
+                                          INPUT 0,
+                                          INPUT 0,
+                                          INPUT 1,
+                                          INPUT 99999,
+                                          INPUT 0, /* inestcri, 0 Nao, 1 Sim */                                          
+                                          INPUT 1,  /* IF da TED - Somente SICREDI */
 										  INPUT 0, /* par_vlrdated */
                                           OUTPUT TABLE tt-logspb,
                                           OUTPUT TABLE tt-logspb-detalhe,
@@ -2581,12 +2686,11 @@ PROCEDURE pi_sr_ted_f:
     ELSE
        ASSIGN aux_vlrtedsr = 0.
 
-
+	
     IF VALID-HANDLE(h-b1wgen0050) THEN
        DELETE OBJECT h-b1wgen0050.
     
-
-    RUN atualiza_tabela_erros (INPUT par_cdcooper,
+	RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT TRUE).
 
 
@@ -2599,7 +2703,7 @@ PROCEDURE pi_sr_ted_f:
                        INPUT 1,
                        INPUT INT(ENTRY(aux_contador,aux_cdbccxlt)),
                        INPUT 3,
-                       INPUT (IF ENTRY(aux_contador,aux_cdbccxlt) = "85" THEN
+                       INPUT (IF ENTRY(aux_contador,aux_cdbccxlt) = "100" THEN
                                  aux_vlrtedsr
                               ELSE
                                  0)).

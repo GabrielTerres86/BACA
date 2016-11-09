@@ -3,21 +3,26 @@
 	//************************************************************************//
 	//*** Fonte: impressao_log_spb.php                                     ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Novembro/2009                Última Alteração: 06/07/2011 ***//
+	//*** Data : Novembro/2009                Última Alteração: 07/11/2016 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Gerar impressão do log de transações SPB             ***//
 	//***                                                                  ***//	 
 	//*** Alterações: 01/09/2011 - Retirar condição de validação p/ campo  ***//
 	//***                          cdsitlog (David).                       ***//
-	//***																                                   ***//
+	//***																   ***//
 	//***             29/05/2012 - Chamado a funcao visualizaPDF para      ***//
-	//***						   mostrar o arquivo. (Fabricio)                       ***//
-	//***																                                   ***//
+	//***						   mostrar o arquivo. (Fabricio)           ***//
+	//***																   ***//
 	//***             06/07/2012 - Adicionado confirmacao para impressao   ***//
-	//***						   Retirado var post imprimir (Jorge)                  ***//
-  //***                                                                  ***//
-  //***             14/09/2016 -  Adicionado novo paramentro "$cdifconv".***//
-  //***               (Evandro - RKAM)                                   ***//
+	//***						   Retirado var post imprimir (Jorge)      ***//
+    //***                                                                  ***//
+    //***             14/09/2016 -  Adicionado novo paramentro "$cdifconv".***//
+    //***               (Evandro - RKAM)                                   ***//
+    //***														           ***//
+	//***             07/11/2016 - Ajustes para corrigir problemas encontrados ***//
+    //***                          durante a homologação da área		   ***//
+	//***                          (Adriano - M211)				           ***//
+	//***														           ***//
 	//************************************************************************//
 	
 	session_cache_limiter("private");
@@ -49,10 +54,9 @@
 	$dtmvtlog = $_POST["dtmvtlog"];
 	$numedlog = $_POST["numedlog"];
 	$cdsitlog = $_POST["cdsitlog"];
-  $cdifconv = $_POST["$cdifconv"];
-  
+	  
 	// Verifica se flag de identificação do log é válida
-	if ($flgidlog <> "yes" && $flgidlog <> "no") {
+	if ($flgidlog != "1" && $flgidlog != "2" && $flgidlog != "3") {
 		exibeErro('Log inválido.');
 	
 	}
@@ -90,8 +94,7 @@
 	$xmlGetLog .= "    <numedlog>".$numedlog."</numedlog>";
 	$xmlGetLog .= "    <cdsitlog>".$cdsitlog."</cdsitlog>";
 	$xmlGetLog .= "    <dsiduser>".$dsiduser."</dsiduser>";
-  $xmlGetLog .= "    <cdifconv>".$cdifconv."</cdifconv>";
-	$xmlGetLog .= "  </Dados>";
+    $xmlGetLog .= "  </Dados>";
 	$xmlGetLog .= "</Root>";
 	
 	// Executa script para envio do XML

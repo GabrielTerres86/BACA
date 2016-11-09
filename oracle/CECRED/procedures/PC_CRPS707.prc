@@ -11,29 +11,31 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao:
+   Data    : Setembro/2016                        Ultima atualizacao: 01/11/2016
 
    Dados referentes ao programa:
 
    Frequencia: Diario.
    Objetivo  : Realizado a efetivação de agendamentos de TEDs Sicredi
 
-   Alteracoes:
+   Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
+							              durante a homologação da área de negócio
+							             (Adriano - M211).
    ............................................................................. */
 
    DECLARE
 
      -- Selecionar os dados da Cooperativa
      CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
-       SELECT cop.cdcooper
-             ,cop.nmrescop
-             ,cop.nrtelura
-             ,cop.cdbcoctl
-             ,cop.cdagectl
-             ,cop.dsdircop
-             ,cop.nrctactl
+     SELECT cop.cdcooper
+           ,cop.nmrescop
+           ,cop.nrtelura
+           ,cop.cdbcoctl
+           ,cop.cdagectl
+           ,cop.dsdircop
+           ,cop.nrctactl
        FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+      WHERE cop.cdcooper = pr_cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
 
      --Registro do tipo calendario
@@ -41,137 +43,159 @@ BEGIN
 
      -- Verificar se o arquivo já não foi processado (existe na tabela)
      CURSOR cr_nmarquiv(pr_nmarquiv VARCHAR2) IS
-       SELECT 1
-         FROM tbted_control_arq arq
-        WHERE lower(arq.nmarquiv) = lower(pr_nmarquiv);
+     SELECT 1
+       FROM tbted_control_arq arq
+      WHERE lower(arq.nmarquiv) = lower(pr_nmarquiv);
      vr_flgexis NUMBER;
 
      -- Verificar ultima sequencia processada
      CURSOR cr_sqarquiv(pr_dtrefere DATE
                        ,pr_nrseqarq NUMBER) IS
-       SELECT 1
-         FROM tbted_control_arq arq
-        WHERE arq.dtrefere = pr_dtrefere
-          AND arq.nrseqarq = pr_nrseqarq;
+     SELECT 1
+       FROM tbted_control_arq arq
+      WHERE arq.dtrefere = pr_dtrefere
+        AND arq.nrseqarq = pr_nrseqarq;
 
      -- Busca do Cooperado pelo CPF
      CURSOR cr_crapass(pr_nrcpfcgc NUMBER) IS
-       SELECT cdcooper
-             ,nrdconta
-             ,dtdemiss
-             ,nmprimtl
-         FROM crapass
-        WHERE nrcpfcgc = pr_nrcpfcgc;
+     SELECT cdcooper
+           ,nrdconta
+           ,dtdemiss
+           ,nmprimtl
+       FROM crapass
+      WHERE nrcpfcgc = pr_nrcpfcgc;
     rw_crapass cr_crapass%ROWTYPE; 
     
     -- Busca do Cooperado pelo CPF
     CURSOR cr_crapass2(pr_nrdconta crapass.nrdconta%TYPE
                       ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
-       SELECT cdcooper
-             ,nrdconta
-             ,dtdemiss
-             ,nmprimtl
-         FROM crapass
-        WHERE nrdconta = pr_nrdconta
-          AND nrcpfcgc = pr_nrcpfcgc;
+    SELECT cdcooper
+          ,nrdconta
+          ,dtdemiss
+          ,nmprimtl
+      FROM crapass
+     WHERE nrdconta = pr_nrdconta
+       AND nrcpfcgc = pr_nrcpfcgc;
     rw_crapass2 cr_crapass2%ROWTYPE; 
+    
+    -- Busca do Cooperado por cooperativa e conta
+    CURSOR cr_crapass3(pr_cdcooper crapass.cdcooper%TYPE
+                      ,pr_nrdconta crapass.nrdconta%TYPE) IS
+    SELECT cdcooper
+          ,nrdconta
+          ,dtdemiss
+          ,nmprimtl
+      FROM crapass
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta;
+    rw_crapass3 cr_crapass3%ROWTYPE; 
    
-    -- Busca do Cooperado pelo CPF
-     CURSOR cr_crapttl(pr_nrcpfcgc NUMBER) IS
-       SELECT cdcooper
-             ,nrdconta             
-         FROM crapttl
-        WHERE nrcpfcgc = pr_nrcpfcgc;
+    -- Busca do Cooperado pelo CPF e que não seja primeiro titular
+    CURSOR cr_crapttl(pr_nrcpfcgc NUMBER) IS
+    SELECT ttl.cdcooper
+          ,ttl.nrdconta 
+      FROM crapttl ttl
+     WHERE ttl.nrcpfcgc = pr_nrcpfcgc
+       AND ttl.idseqttl > 1;
     rw_crapttl cr_crapttl%ROWTYPE; 
-   
+
+    -- Busca do Cooperado pelo CPF e que não seja primeiro titular
+    CURSOR cr_crapttl2(pr_nrcpfcgc crapttl.nrcpfcgc%TYPE
+                      ,pr_nrdconta crapttl.nrdconta%TYPE) IS
+    SELECT ttl.cdcooper
+          ,ttl.nrdconta 
+      FROM crapttl ttl
+     WHERE ttl.nrcpfcgc = pr_nrcpfcgc
+       AND ttl.nrdconta = pr_nrdconta;
+    rw_crapttl2 cr_crapttl2%ROWTYPE; 
+       
     -- Buscar Lote
     CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                       ,pr_nrdolote IN craptab.dstextab%TYPE) IS
-      SELECT nrseqdig,
-             qtinfoln,
-             qtcompln,
-             vlinfodb,
-             vlcompdb,
-             ROWID
-         FROM craplot
-        WHERE craplot.cdcooper = pr_cdcooper
-          AND craplot.dtmvtolt = pr_dtmvtolt
-          AND craplot.cdagenci = 1
-          AND craplot.cdbccxlt = 100
-          AND craplot.nrdolote = pr_nrdolote;
+    SELECT nrseqdig,
+           qtinfoln,
+           qtcompln,
+           vlinfodb,
+           vlcompdb,
+           ROWID
+       FROM craplot
+      WHERE craplot.cdcooper = pr_cdcooper
+        AND craplot.dtmvtolt = pr_dtmvtolt
+        AND craplot.cdagenci = 1
+        AND craplot.cdbccxlt = 100
+        AND craplot.nrdolote = pr_nrdolote;
     rw_craplot cr_craplot%ROWTYPE;
 
+    --Variaveis Locais
+    vr_cdcritic INTEGER;
+    vr_cdprogra VARCHAR2(10);
+    vr_dscritic VARCHAR2(4000);
+    vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
+     
+    --Variaveis de Excecao
+    vr_exc_saida  EXCEPTION;
+    vr_exc_email  EXCEPTION;
+    vr_exc_fimprg EXCEPTION;
 
-     --Variaveis Locais
-     vr_cdcritic     INTEGER;
-     vr_cdprogra     VARCHAR2(10);
-     vr_dscritic     VARCHAR2(4000);
-     vr_nmarqlog     VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
-      
+    -- Diretorio e arquivos para processamento
+    vr_datatual         DATE;
+    vr_dir_sicredi_teds VARCHAR2(200);
+    vr_listaarq         VARCHAR2(4000); -- Lista de arquivos
 
-     --Variaveis de Excecao
-     vr_exc_saida   EXCEPTION;
-     vr_exc_email   EXCEPTION;
-     vr_exc_fimprg  EXCEPTION;
+    -- Variaveis para email
+    vr_dsremete VARCHAR2(1000);
+    vr_dsassunt VARCHAR2(100);
+    vr_dscorpoe VARCHAR2(1000);
+    vr_flgencer BOOLEAN := FALSE;
+    vr_typ_saida VARCHAR2(100);
+    vr_des_saida VARCHAR2(1000);
 
-     -- Diretorio e arquivos para processamento
-     vr_datatual         DATE;
-     vr_dir_sicredi_teds VARCHAR2(200);
-     vr_dir_backup_teds  VARCHAR2(200);
-     vr_listaarq         VARCHAR2(4000); -- Lista de arquivos
+    -- PL/Tables para armazenar os nomes de arquivos a serem processados
+    vr_tbarqlst  gene0002.typ_split;
+    vr_idxnumbe integer;
+    
+    -- Outra estrutura para armazena-los em ordem alfabetica
+    TYPE vr_tab_arquivos IS
+      TABLE OF VARCHAR2(100)
+        INDEX BY VARCHAR2(100);
+    vr_tbarquiv vr_tab_arquivos;
+    vr_idxtexto VARCHAR2(100);
 
-     -- Variaveis para email
-     vr_dsremete VARCHAR2(1000);
-     vr_dsassunt VARCHAR2(100);
-     vr_dscorpoe VARCHAR2(1000);
-     vr_flgencer BOOLEAN := FALSE;
-     vr_typ_saida VARCHAR2(100);
-     vr_des_saida VARCHAR2(1000);
+    -- Variaveis para leitura do arquivo
+    vr_arqhandle   utl_file.file_type;
+    vr_dslinharq   VARCHAR2(600);
 
-     -- PL/Tables para armazenar os nomes de arquivos a serem processados
-     vr_tbarqlst  gene0002.typ_split;
-     vr_idxnumbe integer;
-     -- Outra estrutura para armazena-los em ordem alfabetica
-     TYPE vr_tab_arquivos IS
-       TABLE OF VARCHAR2(100)
-         INDEX BY VARCHAR2(100);
-     vr_tbarquiv vr_tab_arquivos;
-     vr_idxtexto VARCHAR2(100);
+    -- Header
+    vr_nmevehead   VARCHAR2(3);
+    vr_nrseqhead   NUMBER(5);
+    vr_nrctrlif    NUMBER;
+    vr_dtarquiv    DATE;
 
-     -- Variaveis para leitura do arquivo
-     vr_arqhandle   utl_file.file_type;
-     vr_dslinharq   VARCHAR2(600);
+    -- Linha a LInha
+    vr_nrcpfcgc    NUMBER;
+    vr_nrdconta    NUMBER;
+    vr_nmprimtl    VARCHAR2(60);
+    vr_flgexis_cpf BOOLEAN;
+    vr_flgexis_cta BOOLEAN;
+    vr_segundo_ttl BOOLEAN;
+    vr_cdcooper    NUMBER;
+    vr_cdmotivo    varchar2(100);
+    vr_nrispbif    NUMBER;
+    vr_vloperac    NUMBER(12,2);
+    vr_cdbandif    NUMBER;
+    vr_cdagedif    NUMBER;
+    vr_nrctadif    NUMBER;
+    vr_nrcpfdif    NUMBER;
 
-     -- Header
-     vr_nmevehead   VARCHAR2(3);
-     vr_nrseqhead   NUMBER(5);
-     vr_nrctrlif    NUMBER;
-     vr_dtarquiv    DATE;
-
-     -- Linha a LInha
-     vr_nrcpfcgc    NUMBER;
-     vr_nrdconta    NUMBER;
-     vr_nmprimtl    VARCHAR2(60);
-     vr_flgexis_cpf BOOLEAN;
-     vr_flgexis_cta BOOLEAN;
-     vr_cdcooper    NUMBER;
-     vr_cdmotivo    varchar2(100);
-     vr_nrispbif    NUMBER;
-     vr_vloperac    NUMBER(12,2);
-     vr_cdbandif    NUMBER;
-     vr_cdagedif    NUMBER;
-     vr_nrctadif    NUMBER;
-     vr_nrcpfdif    NUMBER;
-
-     -- Variaveis para controle das operacoes do arquivo
-     vr_qtproces NUMBER;
-     vr_qtrejeit NUMBER;
-     vr_vlrtotal NUMBER;
-     vr_fltxterr BOOLEAN;
-     vr_dstxterr VARCHAR2(32767);
-     vr_cltxterr CLOB;
-     vr_hasfound      BOOLEAN;
+    -- Variaveis para controle das operacoes do arquivo
+    vr_qtproces NUMBER;
+    vr_qtrejeit NUMBER;
+    vr_vlrtotal NUMBER;
+    vr_fltxterr BOOLEAN;
+    vr_dstxterr VARCHAR2(32767);
+    vr_cltxterr CLOB;
+    vr_hasfound BOOLEAN;
    
    FUNCTION fn_mes(pr_data IN DATE) RETURN VARCHAR2 IS
    BEGIN
@@ -188,6 +212,84 @@ BEGIN
      END IF;
    END;
    
+   /* Funcao para mover o arquivo processado */
+   FUNCTION fn_move_arquivo(pr_nmarquiv IN VARCHAR
+                           ,pr_dtarquiv IN DATE
+                           ,pr_dir_sicredi_teds IN VARCHAR
+                           ,pr_arqcomerro IN BOOLEAN
+                           ,pr_dscritic OUT VARCHAR) RETURN BOOLEAN IS
+   BEGIN  
+     DECLARE 
+         vr_dir_backup_teds  VARCHAR2(200);
+     BEGIN
+       -- Devemos mover o arquivo conforme estrutura:
+       -- Estrutura base: /usr/connect/sicredi/ted
+       -- Sub-diretório: /RRRR
+       -- Sub-diretório: /MM.RRRR
+       -- Sub-diretório: /DD.MM.RRRR
+
+       IF NOT pr_dtarquiv IS NULL THEN
+         -- Montar caminho completo do diretório:
+         vr_dir_backup_teds := pr_dir_sicredi_teds||'/'||to_char(pr_dtarquiv,'RRRR')
+                            ||'/'||to_char(pr_dtarquiv,'MM')||'.'||to_char(pr_dtarquiv,'RRRR')
+                            ||'/'||to_char(pr_dtarquiv,'DD')||'.'||to_char(pr_dtarquiv,'MM')||'.'||to_char(pr_dtarquiv,'RRRR');
+
+       ELSE
+         -- Montar caminho completo do diretório:
+         vr_dir_backup_teds := pr_dir_sicredi_teds||'/'||to_char(SYSDATE,'RRRR')
+                            ||'/'||to_char(SYSDATE,'MM')||'.'||to_char(SYSDATE,'RRRR')
+                            ||'/'||to_char(SYSDATE,'DD')||'.'||to_char(SYSDATE,'MM')||'.'||to_char(SYSDATE,'RRRR');
+       END IF;
+       
+       -- Primeiro garantimos que o diretorio exista
+       IF NOT gene0001.fn_exis_diretorio(vr_dir_backup_teds) THEN
+         -- Efetuar a criação do mesmo
+         gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir -p '||vr_dir_backup_teds
+                                    ,pr_typ_saida   => vr_typ_saida
+                                    ,pr_des_saida   => vr_des_saida);
+
+         --Se ocorreu erro dar RAISE
+         IF vr_typ_saida = 'ERR' THEN
+           vr_dscritic := 'Nao foi possivel criar diretorios para mover os arquivos processados.';
+           RETURN FALSE;
+         END IF;           
+              
+       END IF;
+
+       IF pr_arqcomerro THEN
+         
+         --Move o arquivo XML fisico de envio
+         GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                               ,pr_des_comando => 'mv '||pr_dir_sicredi_teds||'/'||pr_nmarquiv||' '||vr_dir_backup_teds ||'/ERRO_'||pr_nmarquiv|| ' 2> /dev/null'
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_dscritic);
+         
+         --Se ocorreu erro dar RAISE
+         IF vr_typ_saida = 'ERR' THEN
+           RETURN FALSE;
+         END IF;                              
+       
+       ELSE
+            
+         --Move o arquivo XML fisico de envio
+         GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                               ,pr_des_comando => 'mv '||pr_dir_sicredi_teds||'/'||rtrim(pr_nmarquiv,gene0001.fn_extensao_arquivo(pr_nmarquiv))||'* '||vr_dir_backup_teds || ' 2> /dev/null'
+                               ,pr_typ_saida   => vr_typ_saida
+                               ,pr_des_saida   => vr_dscritic);                      
+                               
+         --Se ocorreu erro dar RAISE
+         IF vr_typ_saida = 'ERR' THEN
+           RETURN FALSE;
+         END IF;
+                               
+       END IF;     
+             
+       RETURN TRUE;
+       
+     END;
+     
+   END fn_move_arquivo;
+  
    ---------------------------------------
    -- Inicio Bloco Principal pc_crps707
    ---------------------------------------
@@ -209,16 +311,20 @@ BEGIN
 
      --Se retornou critica aborta programa
      IF vr_cdcritic <> 0 THEN
+       
        --Descricao do erro recebe mensagam da critica
        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       
        -- Envio centralizado de log de erro
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
+                                                     
        --Sair do programa
        RAISE vr_exc_saida;
+       
      END IF;
      
      --> Gerar log
@@ -244,21 +350,27 @@ BEGIN
                                ,pr_des_erro => vr_dscritic);
      -- Se houver erro
      IF vr_dscritic IS NOT NULL THEN
+       
        -- Envio centralizado de log de erro
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
+                                                     
        RAISE vr_exc_saida;
+       
      END IF;
 
      -- Se possuir arquivos para serem processados
      IF vr_listaarq IS NOT NULL THEN
+       
        -- Carregar a lista de arquivos txt na pl/table
        vr_tbarqlst := gene0002.fn_quebra_string(pr_string => vr_listaarq);
+       
        -- Recriar a pltable ordenado por varchar2 para garantir o sequenciamento dos arquivos
        vr_idxnumbe := vr_tbarqlst.first;
+       
        WHILE vr_idxnumbe IS NOT NULL LOOP
          vr_tbarquiv(vr_tbarqlst(vr_idxnumbe)) := vr_tbarqlst(vr_idxnumbe);
          vr_idxnumbe := vr_tbarqlst.next(vr_idxnumbe);
@@ -270,6 +382,7 @@ BEGIN
        
        -- Para cada arquivo encontrado
        vr_idxtexto := vr_tbarquiv.first;
+       
        WHILE vr_idxtexto IS NOT NULL LOOP
          -- Criar bloco para tratamento arquivo por arquivo
          BEGIN
@@ -282,19 +395,23 @@ BEGIN
 
            -- Verificar se o arquivo já não foi processado (existe na tabela mesmo nome)
            vr_flgexis := 0;
+           
            OPEN cr_nmarquiv(pr_nmarquiv => vr_idxtexto);
-           FETCH cr_nmarquiv
-            INTO vr_flgexis;
+           
+           FETCH cr_nmarquiv INTO vr_flgexis;
+           
            CLOSE cr_nmarquiv;
+           
            -- Se o arquivo já foi processado
            IF vr_flgexis = 1 THEN
+             
              -- Gerar email ao Financeiro
              vr_dsassunt := 'TEDs SICREDI - ARQUIVO JA PROCESSADO';
              vr_dscorpoe := 'Arquivo '||vr_idxtexto||' já foi integrado anteriormente, favor verificar.';
-             -- Mover o arquivo
-             gene0001.pc_OScommand_Shell('mv '||vr_dir_sicredi_teds||'/'||vr_idxtexto||' '||vr_dir_sicredi_teds||'/ERRO_'||vr_idxtexto);
+             
              -- Direcionar para a saida com envio de email
              RAISE vr_exc_email;
+             
            END IF;
 
            -- Zerar variaveis para controle das operacoes do arquivo
@@ -319,21 +436,28 @@ BEGIN
 
            -- Garantir tipo do registro
            IF substr(vr_dslinharq,1,2) <> 'HH' THEN
+             
              vr_dsassunt := 'TEDs SICREDI - ARQUIVO SEM REGISTRO HEADER';
              vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema. Nao ha Header (HH).';
+             
              -- Direcionar para a saida com envio de email e encerramento
              vr_flgencer := TRUE;
              RAISE vr_exc_email;
+             
            END IF;
 
            -- Verificar tipo da mensagem
            vr_nmevehead := substr(vr_dslinharq,3,3);
+           
            IF vr_nmevehead NOT IN('STR','PAG') THEN
+            
              vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM TIPO DE MENSAGEM INVALIDO';
              vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema. Tipo de Mensagem Inválida (STR ou PAG).';
+             
              -- Direcionar para a saida com envio de email e encerramento
              vr_flgencer := TRUE;
              RAISE vr_exc_email;
+             
            END IF;
 
            -- Verificar data do arquivo
@@ -343,10 +467,24 @@ BEGIN
              WHEN OTHERS THEN
                vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM DATA INVALIDA';
                vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema Header - Data --> '||substr(vr_dslinharq,6,6);
+               
                -- Direcionar para a saida com envio de email e encerramento
                vr_flgencer := TRUE;
                RAISE vr_exc_email;
+               
            END;
+           
+           -- Verificar se a data presente no header corresponde a data informada no nome do arquivo
+           IF vr_datatual <> vr_dtarquiv THEN           
+             
+             vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM DATA INVALIDA';
+             vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema Header - Data --> '||substr(vr_dslinharq,6,6);
+             
+             -- Direcionar para a saida com envio de email e encerramento
+             vr_flgencer := TRUE;
+             RAISE vr_exc_email;
+             
+           END IF;
 
            -- Verificar sequencia do header
            BEGIN
@@ -355,23 +493,40 @@ BEGIN
              WHEN OTHERS THEN
                vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM SEQUENCIA INVALIDA';
                vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema Header - Sequencia --> '||substr(vr_dslinharq,12,2);
+               
                -- Direcionar para a saida com envio de email e encerramento
                vr_flgencer := TRUE;
                RAISE vr_exc_email;
+               
            END;
+           
+           --Verifica se o sequencial no header corresponde ao informado no nome do arquivo
+           IF substr(vr_idxtexto,7,2) <> vr_nrseqhead THEN
+             
+             vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM SEQUENCIA INVALIDA';
+             vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema Header - Sequencia --> '||substr(vr_dslinharq,12,2);
+             -- Direcionar para a saida com envio de email e encerramento
+             vr_flgencer := TRUE;
+             RAISE vr_exc_email; 
+                         
+           END IF;
 
            -- Somente validar se o arquivo atual não é o primeiro
            IF vr_nrseqhead <> 1 THEN           
              -- Sequencia do arquivo deve ser imediamente posterior a ultima processada para a data
              vr_flgexis := 0;
+             
              OPEN cr_sqarquiv(vr_dtarquiv,vr_nrseqhead-1);
-             FETCH cr_sqarquiv
-              INTO vr_flgexis;
+             
+             FETCH cr_sqarquiv INTO vr_flgexis;
+             
              CLOSE cr_sqarquiv;
 
              IF vr_flgexis = 0 THEN
+               
                vr_dsassunt := 'TEDs SICREDI - ARQUIVO COM SEQUENCIA INVALIDA';
                vr_dscorpoe := 'Arquivo '||vr_idxtexto||' com problema Header - Sequencia recebida --> '||vr_nrseqhead||', Sequencia esperada --> '||(vr_nrseqhead-1);
+               
                -- Gerar email ao Financeiro
                gene0003.pc_solicita_email(pr_cdcooper       => pr_cdcooper
                                         ,pr_cdprogra        => 'PC_'||vr_cdprogra
@@ -392,6 +547,7 @@ BEGIN
                -- Limpeza de variaveis registro a registro
                vr_flgexis_cpf := false;
                vr_flgexis_cta := false;
+               vr_segundo_ttl := FALSE;
                vr_cdcooper    := 0;
                vr_nrdconta    := 0;
                vr_nmprimtl    := ' ';
@@ -409,6 +565,7 @@ BEGIN
                -- Efetuar leitura das linhas do arquivo
                gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_arqhandle
                                            ,pr_des_text => vr_dslinharq);
+                                           
                -- Garantir tipo do registro
                IF substr(vr_dslinharq,1,2) NOT IN('05','06','TT') THEN
                  -- Tipo invalido
@@ -464,7 +621,6 @@ BEGIN
                  vr_nmprimtl := substr(vr_dslinharq,288,50);
                END IF;  
 
-
                -- Busca da conta a creditar
                BEGIN
                  IF substr(vr_dslinharq,1,2) = '05' THEN
@@ -490,29 +646,63 @@ BEGIN
                    vr_cdmotivo := 'CPF invalido = ' || substr(vr_dslinharq,209,14);
                    RAISE vr_exc_saida;
                END;
-
-               -- Verificar a existencia do CPF na Cooperativa
-               OPEN cr_crapttl(pr_nrcpfcgc => vr_nrcpfcgc);
                
-               FETCH cr_crapttl INTO rw_crapttl;
-               
-               IF cr_crapttl%FOUND THEN
+               -- Verificar a existencia do CPF na Cooperativa               
+               FOR rw_crapttl IN cr_crapttl(pr_nrcpfcgc => vr_nrcpfcgc) LOOP
                  
                  -- Encontrou pelo menos 1 com CPF
                  vr_flgexis_cpf := true;
                  
-               END IF;
-               
-               CLOSE cr_crapttl;
+                 -- Indica que é segundo titular
+                 vr_segundo_ttl := TRUE;
+                 
+                 -- Se a conta for igual a conta do arquivo
+                 IF rw_crapttl.nrdconta = vr_nrdconta THEN
+                   
+                   -- Apenas alimenta a flag de encontro
+                   vr_flgexis_cta := true;
+                   
+                   -- Busca a conta do primeiro titular
+                   OPEN cr_crapass3(pr_cdcooper => rw_crapttl.cdcooper 
+                                   ,pr_nrdconta => vr_nrdconta);
+                   
+                   FETCH cr_crapass3 INTO rw_crapass3;
+                   
+                   IF cr_crapass3%FOUND THEN
+                     
+                     -- Se a conta estiver ativa
+                     IF rw_crapass3.dtdemiss IS NULL THEN
+                       -- Se já tinhamos encontrado
+                       IF vr_cdcooper > 0 THEN
+                         -- Geraremos critica pois não pode haver mais de uma conta ativa em outras singulares
+                         vr_cdmotivo := 'Conta Duplicada';
+                         RAISE vr_exc_saida;
+                       ELSE
+                         -- Armazena a Cooperativa da conta e nome do associado
+                         vr_cdcooper := rw_crapass3.cdcooper;
+                         vr_nmprimtl := rw_crapass3.nmprimtl;
+                       END IF;
+                     END IF;
+                     
+                   END IF;
+                   
+                   CLOSE cr_crapass3;                   
+                   
+                 END IF;
+                 
+               END LOOP;
                
                FOR rw_crapass IN cr_crapass(pr_nrcpfcgc => vr_nrcpfcgc) LOOP
                  
                  -- Encontrou pelo menos 1 com CPF
                  vr_flgexis_cpf := true;
+                 
                  -- Se a conta for igual a conta do arquivo
                  IF rw_crapass.nrdconta = vr_nrdconta THEN
+                   
                    -- Apenas alimenta a flag de encontro
                    vr_flgexis_cta := true;
+                   
                    -- Se a conta estiver ativa
                    IF rw_crapass.dtdemiss IS NULL THEN
                      -- Se já tinhamos encontrado
@@ -525,8 +715,11 @@ BEGIN
                        vr_cdcooper := rw_crapass.cdcooper;
                        vr_nmprimtl := rw_crapass.nmprimtl;
                      END IF;
+                     
                    END IF;
+                   
                  END IF;
+                 
                END LOOP;
 
                -- Se chegou neste ponto e não encontrou pelo CPF
@@ -543,23 +736,47 @@ BEGIN
                  RAISE vr_exc_saida;
                END IF;
 
-               -- Verificar a existencia do CPF/Conta na Cooperativa
-               OPEN cr_crapass2(pr_nrdconta => vr_nrdconta
-                               ,pr_nrcpfcgc => vr_nrcpfcgc);
-               
-               FETCH cr_crapass2 INTO rw_crapass2;
-               
-               IF cr_crapass2%NOTFOUND THEN
+               -- Se for segundo titular
+               IF vr_segundo_ttl THEN
+                 
+                 -- Verificar a existencia do CPF/Conta na Cooperativa
+                 OPEN cr_crapttl2(pr_nrdconta => vr_nrdconta
+                                 ,pr_nrcpfcgc => vr_nrcpfcgc);
+                 
+                 FETCH cr_crapttl2 INTO rw_crapttl2;
+                 
+                 IF cr_crapttl2%NOTFOUND THEN
+                   
+                   CLOSE cr_crapttl2;
+                   
+                   vr_cdmotivo := '1 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ.';
+                   RAISE vr_exc_saida;
+                   
+                 END IF;
+                 
+                 CLOSE cr_crapttl2;
+                 
+               ELSE  
+                 
+                 -- Verificar a existencia do CPF/Conta na Cooperativa
+                 OPEN cr_crapass2(pr_nrdconta => vr_nrdconta
+                                 ,pr_nrcpfcgc => vr_nrcpfcgc);
+                 
+                 FETCH cr_crapass2 INTO rw_crapass2;
+                 
+                 IF cr_crapass2%NOTFOUND THEN
+                   
+                   CLOSE cr_crapass2;
+                   
+                   vr_cdmotivo := '1 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ.';
+                   RAISE vr_exc_saida;
+                   
+                 END IF;
                  
                  CLOSE cr_crapass2;
-                 
-                 vr_cdmotivo := '1 - Ausencia ou Divergencia na Indicacao do CPF/CNPJ.';
-                 RAISE vr_exc_saida;
-                 
+
                END IF;
-               
-               CLOSE cr_crapass2;
-               
+                              
                -- Se não achou nenhuma conta ativa
                IF vr_cdcooper = 0 THEN
                  -- Gerar critica
@@ -574,12 +791,14 @@ BEGIN
                    vr_cdbandif := substr(vr_dslinharq,56,3);
                    vr_cdagedif := 0;
                    vr_nrctadif := 0;
+                   vr_nrcpfdif := substr(vr_dslinharq,339,14);
                  ELSE
                    vr_cdbandif := substr(vr_dslinharq,42,3);
                    vr_cdagedif := substr(vr_dslinharq,45,4);
                    vr_nrctadif := substr(vr_dslinharq,51,13);
+                   vr_nrcpfdif := substr(vr_dslinharq,209,14);
                  END IF;
-                 vr_nrcpfdif := substr(vr_dslinharq,339,14);
+                 
                EXCEPTION
                  WHEN OTHERS THEN
                    vr_cdmotivo := 'Erro na leitura do Bco, Age, Cta e CPF origem.';
@@ -588,20 +807,28 @@ BEGIN
 
                -- Busca informacoes da Cooperativa encontrada
                OPEN cr_crapcop(pr_cdcooper => vr_cdcooper);
+               
                FETCH cr_crapcop INTO rw_crapcop;
+               
                CLOSE cr_crapcop;
 
                -- Verifica se a data esta cadastrada
                OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+               
+               
                FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+               
                CLOSE BTCH0001.cr_crapdat;
 
                -- Busca Lote
                OPEN cr_craplot(pr_cdcooper => vr_cdcooper
                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                               ,pr_nrdolote => 8482);
+               
                FETCH cr_craplot INTO rw_craplot;
+               
                vr_hasfound := cr_craplot%FOUND;
+               
                CLOSE cr_craplot;
 
                -- Se não existir
@@ -635,6 +862,7 @@ BEGIN
                      vr_cdmotivo := 'Erro ao gravar LOTE:'||sqlerrm;
                      RAISE vr_exc_saida;
                  END;
+                 
                ELSE -- Se Existir
                  BEGIN
                    -- Atualiza Lote
@@ -655,7 +883,9 @@ BEGIN
                      vr_cdmotivo := 'Erro ao atualizar LOTE:' || sqlerrm;
                      RAISE vr_exc_saida;
                  END;
+                 
                END IF;
+               
                -- Cria o lancamento em C/C
                BEGIN
                  INSERT INTO craplcm (dtmvtolt
@@ -720,6 +950,43 @@ BEGIN
                                         ,pr_cdifconv => 1
                                         ,pr_cdcritic => vr_cdcritic
                                         ,pr_dscritic => vr_dscritic);
+                                        
+               IF vr_dscritic IS NOT NULL THEN
+                 vr_cdmotivo := 'Erro na gravacao de LOG TED: '||vr_dscritic;
+                 RAISE vr_exc_saida;
+               END IF;
+                              
+               -- Efetuar geração do LOG da TED com sucesso
+               sspb0001.pc_grava_log_ted(pr_cdcooper => 16 --Viacredi Altovale
+                                        ,pr_dttransa => TRUNC(SYSDATE)
+                                        ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
+                                        ,pr_idorigem => 1
+                                        ,pr_cdprogra => 'CRPS707'
+                                        ,pr_idsitmsg => 1 /*enviada com sucesso*/
+                                        ,pr_nmarqmsg => vr_idxtexto
+                                        ,pr_nmevento => vr_nmevehead
+                                        ,pr_nrctrlif => vr_nrctrlif
+                                        ,pr_vldocmto => vr_vloperac
+                                        ,pr_cdbanctl => rw_crapcop.cdbcoctl
+                                        ,pr_cdagectl => rw_crapcop.cdagectl
+                                        ,pr_nrdconta => vr_nrdconta
+                                        ,pr_nmcopcta => vr_nmprimtl
+                                        ,pr_nrcpfcop => vr_nrcpfcgc
+                                        ,pr_cdbandif => vr_cdbandif
+                                        ,pr_cdagedif => vr_cdagedif
+                                        ,pr_nrctadif => vr_nrctadif
+                                        ,pr_nmtitdif => SUBSTR(vr_dslinharq,353,50)
+                                        ,pr_nrcpfdif => vr_nrcpfdif
+                                        ,pr_cdidenti => ''
+                                        ,pr_dsmotivo => ''
+                                        ,pr_cdagenci => 0
+                                        ,pr_nrdcaixa => 0
+                                        ,pr_cdoperad => '1'
+                                        ,pr_nrispbif => vr_nrispbif
+                                        ,pr_cdifconv => 1
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+                                        
                IF vr_dscritic IS NOT NULL THEN
                  vr_cdmotivo := 'Erro na gravacao de LOG TED: '||vr_dscritic;
                  RAISE vr_exc_saida;
@@ -736,14 +1003,19 @@ BEGIN
                -- Chegou ao final, então incrementamos a quantidade de registros processados
                vr_qtproces := vr_qtproces + 1;
                vr_vlrtotal := vr_vlrtotal + vr_vloperac;
+               
              EXCEPTION
                WHEN vr_exc_saida THEN
+                 
                  -- Incrementar quantidade de erros
                  vr_qtrejeit := vr_qtrejeit + 1;
+                 
                  -- Se ainda não iniciamos o texto de erro
                  IF NOT vr_fltxterr THEN
+                   
                    -- Atualizar o controle
                    vr_fltxterr := TRUE;
+                   
                    -- Iniciar o CLOB com a montagem da tabela
                    gene0002.pc_escreve_xml(pr_xml => vr_cltxterr
                                           ,pr_texto_completo => vr_dstxterr
@@ -775,6 +1047,7 @@ BEGIN
                                                               '</td>' ||
                                                             '</thead>' ||
                                                             '<tbody align="center" style="background-color: #F0F0F0;">');
+                 
                  END IF;
                  
                  -- Adicionar informações do registro com erro para o e-mail posterior
@@ -808,7 +1081,7 @@ BEGIN
                                                           '</tr>');
 
                  -- Efetuar geração do LOG da TED com erro
-                 sspb0001.pc_grava_log_ted(pr_cdcooper => vr_cdcooper
+                 sspb0001.pc_grava_log_ted(pr_cdcooper => pr_cdcooper
                                           ,pr_dttransa => TRUNC(SYSDATE)
                                           ,pr_hrtransa => TO_CHAR(SYSDATE,'SSSSS')
                                           ,pr_idorigem => 1
@@ -829,7 +1102,7 @@ BEGIN
                                           ,pr_nmtitdif => SUBSTR(vr_dslinharq,353,50)
                                           ,pr_nrcpfdif => vr_nrcpfdif
                                           ,pr_cdidenti => ''
-                                          ,pr_dsmotivo => ''
+                                          ,pr_dsmotivo => vr_cdmotivo
                                           ,pr_cdagenci => 0
                                           ,pr_nrdcaixa => 0
                                           ,pr_cdoperad => '1'
@@ -837,12 +1110,27 @@ BEGIN
                                           ,pr_cdifconv => 1
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
+                                          
                  --> Gerar log
                  btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                             pr_ind_tipo_log => 2, --> erro tratado
                                             pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                                ' - '|| vr_cdprogra ||' --> TED para conta '||vr_nrdconta||' com erro --> '||vr_cdmotivo,
-                                            pr_nmarqlog     => vr_nmarqlog);                                
+                                            pr_nmarqlog     => vr_nmarqlog);
+                                            
+                 IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
+                                       ,pr_dtarquiv => vr_dtarquiv
+                                       ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
+                                       ,pr_arqcomerro => TRUE
+                                       ,pr_dscritic => vr_dscritic) THEN
+                                       
+                   IF trim(vr_dscritic) IS NULL THEN
+                     vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
+                   END IF;
+                   
+                   RAISE vr_exc_saida;
+                   
+                 END IF;                                                                                          
                                           
                WHEN no_data_found THEN
                  -- Finalizou a leitura
@@ -851,6 +1139,7 @@ BEGIN
                  vr_dscritic := 'Erro nao tratado na leitura do arquivo --> '||sqlerrm;
                  RAISE vr_exc_saida;
              END;
+             
            END LOOP;
            
            -- Ao final do processamento, efetuar gravação na tabela do arquivo e das operações efetuadas
@@ -879,6 +1168,7 @@ BEGIN
 
            -- Preparar e enviar email ao Financeiro listando erros na integração do arquivo
            IF vr_fltxterr THEN
+             
              -- Finalizar o clob e gerar arquivo
              gene0002.pc_escreve_xml(pr_xml => vr_cltxterr
                                     ,pr_texto_completo => vr_dstxterr
@@ -896,7 +1186,8 @@ BEGIN
              
              -- Terminar a montagem do email
              vr_dsassunt := 'Devolução de TEDs - Sicredi ';
-             vr_dscorpoe := 'Olá, solicitamos a devolução das TEDs indicadas na listagem em anexo.';                         
+             vr_dscorpoe := 'Olá, solicitamos a devolução das TEDs indicadas na listagem em anexo.'; 
+                                     
              -- Gerar email ao Financeiro
              gene0003.pc_solicita_email(pr_cdcooper       => pr_cdcooper
                                       ,pr_cdprogra        => 'PC_'||vr_cdprogra
@@ -913,44 +1204,21 @@ BEGIN
              END IF;
 
            END IF;
-
-           -- Ao final do processamento do arquivo, devemos movê-lo conforme estrutura:
-           -- Estrutura base: /usr/connect/sicredi/ted
-           -- Sub-diretório: /RRRR
-           -- Sub-diretório: /MM.RRRR
-           -- Sub-diretório: /DD.MM.RRRR
-
-           -- Montar caminho completo do diretório:
-           vr_dir_backup_teds := vr_dir_sicredi_teds||'/'||to_char(vr_dtarquiv,'RRRR')
-                              ||'/'||to_char(vr_dtarquiv,'MM')||'.'||to_char(vr_dtarquiv,'RRRR')
-                              ||'/'||to_char(vr_dtarquiv,'DD')||'.'||to_char(vr_dtarquiv,'MM')||'.'||to_char(vr_dtarquiv,'RRRR');
-
-           -- Primeiro garantimos que o diretorio exista
-           IF NOT gene0001.fn_exis_diretorio(vr_dir_backup_teds) THEN
-             -- Efetuar a criação do mesmo
-             gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir -p '||vr_dir_backup_teds
-                                        ,pr_typ_saida   => vr_typ_saida
-                                        ,pr_des_saida   => vr_des_saida);
-
-             --Se ocorreu erro dar RAISE
-             IF vr_typ_saida = 'ERR' THEN
-               vr_dscritic := 'Nao foi possivel criar diretorios para mover os arquivos processados.';
-               RAISE vr_exc_saida;
-             END IF;           
-            
-           END IF;
-
-           --Move o arquivo XML fisico de envio
-           GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                                 ,pr_des_comando => 'mv '||vr_dir_sicredi_teds||'/'||rtrim(vr_idxtexto,gene0001.fn_extensao_arquivo(vr_idxtexto))||'* '||vr_dir_backup_teds || ' 2> /dev/null'
-                                 ,pr_typ_saida   => vr_typ_saida
-                                 ,pr_des_saida   => vr_dscritic);
-                                 
-           --Se ocorreu erro dar RAISE
-           IF vr_typ_saida = 'ERR' THEN
-             RAISE vr_exc_saida;
-           END IF;
              
+           IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
+                                 ,pr_dtarquiv => vr_dtarquiv
+                                 ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
+                                 ,pr_arqcomerro => FALSE
+                                 ,pr_dscritic => vr_dscritic) THEN
+                                         
+             IF trim(vr_dscritic) IS NULL THEN
+               vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
+             END IF;
+                     
+             RAISE vr_exc_saida;
+                     
+           END IF;       
+                   
            --> Gerar log
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                       pr_ind_tipo_log => 2, --> erro tratado
@@ -960,10 +1228,13 @@ BEGIN
 
            -- Efetuar gravação das alterações no banco a cada arquivo
            COMMIT;
+           
          EXCEPTION
            WHEN no_data_found THEN
+             
              -- Arquivo vazio
              ROLLBACK;
+             
              -- Gerar alerta no LOG
              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                         pr_ind_tipo_log => 2, --> erro tratado
@@ -971,11 +1242,15 @@ BEGIN
                                                            ' - '|| vr_cdprogra ||' --> Erro ao processar arquivo ['
                                                            ||vr_idxtexto||'] --> Arquivo vazio!',
                                         pr_nmarqlog     => vr_nmarqlog);
+                                        
              -- Erro critico, saida do processo
              EXIT;
+             
            WHEN vr_exc_email THEN
+             
              -- Desfazer alterações
              ROLLBACK;
+             
              -- Gerar email ao Financeiro
              gene0003.pc_solicita_email(pr_cdcooper       => pr_cdcooper
                                       ,pr_cdprogra        => 'PC_'||vr_cdprogra
@@ -987,25 +1262,46 @@ BEGIN
                                       ,pr_flg_remete_coop => 'N' --> Se o envio sera do e-mail da Cooperativa
                                       ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                       ,pr_des_erro        => vr_dscritic);
+                                      
              IF vr_dscritic IS NOT NULL THEN
                RAISE vr_exc_saida;
              END IF;
+             
              -- Gerar alerta no LOG
              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                         pr_ind_tipo_log => 2, --> erro tratado
                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                            ' - '|| vr_cdprogra ||' --> Erro ao processar arquivo ['
                                                            ||vr_idxtexto||'] --> '||vr_dscorpoe,
-                                        pr_nmarqlog     => vr_nmarqlog);
+                                        pr_nmarqlog     => vr_nmarqlog);                                        
+                                        
+             IF NOT fn_move_arquivo(pr_nmarquiv => vr_idxtexto
+                                   ,pr_dtarquiv => vr_dtarquiv
+                                   ,pr_dir_sicredi_teds => vr_dir_sicredi_teds
+                                   ,pr_arqcomerro => TRUE
+                                   ,pr_dscritic => vr_dscritic) THEN
+                                           
+               IF trim(vr_dscritic) IS NULL THEN
+                 vr_dscritic := 'Nao foi possivel mover o arquivo processado.';
+               END IF;
+                       
+               RAISE vr_exc_saida;
+                       
+             END IF;                                                                                   
+                                        
              -- Gravar para envio do e-mail
              COMMIT;
+             
              -- Se foi solicitado encerramento
              IF vr_flgencer THEN
                EXIT;
              END IF;
+             
            WHEN vr_exc_saida THEN
+             
              -- Desgravar alterações pendentes
              ROLLBACK;
+             
              -- Gerar alerta no LOG
              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                         pr_ind_tipo_log => 2, --> erro tratado
@@ -1013,11 +1309,15 @@ BEGIN
                                                            ' - '|| vr_cdprogra ||' --> Erro ao processar arquivo ['
                                                            ||vr_idxtexto||'] --> ' || vr_dscritic                                                               ,
                                         pr_nmarqlog     => vr_nmarqlog);
+                                        
              -- Erro critico, saida do processo
              EXIT;
+             
            WHEN OTHERS THEN
+             
              -- Desgravar alterações pendentes
              ROLLBACK;
+             
              -- Gerar alerta no LOG
              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                         pr_ind_tipo_log => 2, --> erro tratado
@@ -1025,10 +1325,14 @@ BEGIN
                                                            ' - '|| vr_cdprogra ||' --> Erro ao processar arquivo ['
                                                            ||vr_idxtexto||'] --> ' || SQLERRM                                                        ,
                                         pr_nmarqlog     => vr_nmarqlog);
+                                        
              -- Erro critico, saida do processo
              EXIT;
+             
          END;
+         
          vr_idxtexto := vr_tbarquiv.next(vr_idxtexto);
+         
        END LOOP;
      
      ELSE
@@ -1043,6 +1347,7 @@ BEGIN
                                 ,pr_flg_remete_coop => 'N' --> Se o envio ser¿ do e-mail da Cooperativa
                                 ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
                                 ,pr_des_erro        => vr_dscritic);
+                                
        --> Gerar log
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                   pr_ind_tipo_log => 2, --> erro tratado
@@ -1067,8 +1372,10 @@ BEGIN
 
      --Salvar informacoes no banco de dados
      COMMIT;
+     
    EXCEPTION
      WHEN vr_exc_fimprg THEN
+       
        -- Se foi retornado apenas codigo
        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
          -- Buscar a descrição
@@ -1077,12 +1384,14 @@ BEGIN
 
        -- Se foi gerada critica para envio ao log
        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+         
          -- Envio centralizado de log de erro
          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                    ,pr_ind_tipo_log => 2 -- Erro tratato
                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                     || vr_cdprogra || ' --> '
                                                     || vr_dscritic );
+                                                    
        END IF;
 
        --Limpar variaveis retorno
@@ -1099,6 +1408,7 @@ BEGIN
        COMMIT;
 
      WHEN vr_exc_saida THEN
+       
        -- Se foi retornado apenas código
        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
          -- Buscar a descrição
