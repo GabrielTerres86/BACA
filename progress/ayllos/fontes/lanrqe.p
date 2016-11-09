@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete/Planner
-   Data    : Agosto/2000.                    Ultima atualizacao: 15/04/2013
+   Data    : Agosto/2000.                    Ultima atualizacao: 09/11/2016
 
    Dados referentes ao programa:
 
@@ -75,7 +75,11 @@
                                aux_lsconta4;
                              - Incluido a declaracao da variavel aux_dsoperac
                               (Adriano).         
-                            
+
+               09/11/2016 - #551764 A partir do dia 16/11 a area de suprimentos
+                            nao produzira mais cheques avulsos. Opcao 5, formulario
+                            avulso, foi retirada (Carlos)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -150,15 +154,15 @@ FORM glb_cddopcao AT  5 LABEL "Opcao" AUTO-RETURN
      SKIP(1)
      tel_nrdctabb AT  12 NO-LABEL AUTO-RETURN
                          HELP "Informe o numero da conta do associado."
-     
+
      tel_tprequis AT  30 NO-LABEL AUTO-RETURN
-         HELP "2-Folhas TB / 3-Form.Continuo / 5-Form.Avulso / 8-Bloquetos BB"
+         HELP "2-Folhas TB / 3-Form.Continuo / 8-Bloquetos BB"
                 VALIDATE(tel_tprequis = 2 OR tel_tprequis = 3 OR
-                         tel_tprequis = 5 OR tel_tprequis = 8 OR
-                         tel_tprequis = 0,"014 - Opcao Errada")
-                         
+                         tel_tprequis = 8 OR tel_tprequis = 0,
+                         "014 - Opcao Errada")
+
      tel_qtreqtal AT  43 NO-LABEL AUTO-RETURN
-         HELP "Qtd.Max:TB=20/Cont=100-400/Avulso=20(PF),200(PJ)/Bloquet.BB=500"
+         HELP "Qtd.Max:TB=20/Cont=100-400/Bloquet.BB=500"
 
      tel_nrseqdig AT  52 NO-LABEL
      
