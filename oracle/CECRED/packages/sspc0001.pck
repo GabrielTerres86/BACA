@@ -35,7 +35,7 @@ CREATE OR REPLACE PACKAGE cecred.SSPC0001 AS
   --                           (Oscar)
   --              13/09/2016 - Quando a data vier vazia, nao gerar erro (Andrino-RKAM)
   --
-  --              09/11/2016 - Inclusao de coop, conta e contrato em mensagem de erro (Heitor - Mouts)
+  --
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -5365,7 +5365,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       
       -- Se nao encontrar o emprestimo, retorna com erro
       IF cr_crawepr%NOTFOUND THEN
-        vr_dscritic := 'Emprestimo inexistente. Favor verificar! Coop: '||pr_cdcooper||' Cta: '||pr_nrdconta||' Ctr: '||pr_nrdocmto;
+        vr_dscritic := 'Emprestimo inexistente. Favor verificar!';
         CLOSE cr_crawepr;
         RAISE vr_exc_saida;
       END IF;
