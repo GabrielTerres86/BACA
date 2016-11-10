@@ -333,7 +333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       -- Variaveis locais
       vr_vlrcalcu NUMBER(20,5) := 0;
       vr_cddigito NUMBER(20,5) := 0;
-      vr_vlorpeso NUMBER(20,5) := 0;
+      vr_vlorpeso NUMBER(20,5) := 2;
       vr_cdrefere NUMBER(20,5) := 0;
     BEGIN
       -- Inicializar variaveis retorno
@@ -357,8 +357,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         CLOSE btch0001.cr_crapdat;
       END IF;
 
-      -- Opçăo A
-      FOR vr_vlrconta IN REVERSE 1..LENGTH(pr_cdrefere) LOOP
+      -- Opçao A
+      FOR vr_vlrconta IN REVERSE 1..(LENGTH(pr_cdrefere) - 1) LOOP
         vr_vlrcalcu := vr_vlrcalcu + (TO_NUMBER(SUBSTR(TO_CHAR(pr_cdrefere),vr_vlrconta,1)) * vr_vlorpeso);
         vr_vlorpeso := vr_vlorpeso + 1;
 
@@ -401,9 +401,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
     vr_vlrcalcu := 0;
     vr_vlorpeso := 2;
     vr_cdrefere := SUBSTR(TO_CHAR(pr_cdrefere),1,LENGTH(TO_CHAR(pr_cdrefere)) - 2);
-    vr_cdrefere := vr_cdrefere + vr_cddigito;
+    vr_cdrefere := vr_cdrefere || vr_cddigito;
 
-    FOR vr_vlrconta IN REVERSE 1..LENGTH(pr_cdrefere) LOOP
+    FOR vr_vlrconta IN REVERSE 1..LENGTH(vr_cdrefere) LOOP
       vr_vlrcalcu := vr_vlrcalcu + (TO_NUMBER(SUBSTR(TO_CHAR(vr_cdrefere),vr_vlrconta,1)) * vr_vlorpeso);
       vr_vlorpeso := vr_vlorpeso + 1;
     END LOOP;

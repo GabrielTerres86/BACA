@@ -1068,14 +1068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                             ) = pr_cdseqfat;
     rw_craplau_pend2 cr_craplau_pend%ROWTYPE;
     cr_craplau_pend2_found BOOLEAN := FALSE;
-    
-    -- Obtem o número de dias de prazo para agendamento
-    CURSOR cr_qtddaglf IS
-    SELECT age.qtddaglf
-      FROM crapage age
-     WHERE age.cdcooper = pr_cdcooper
-       AND age.cdagenci = 90;
-    
+                
     --Variaveis Locais
     vr_cdempcon  crapcon.cdempcon%TYPE; -- Código do convênio
     vr_cdsegmto  crapcon.cdsegmto%TYPE; -- Código do segmento
@@ -1087,10 +1080,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_dtmvtopg  DATE;
     vr_datdodia  DATE;
 	vr_dttolera  DATE;
-    vr_foco      VARCHAR2(3);
-    vr_qtddaglf  crapage.qtddaglf%TYPE;
-    vr_dtminage  DATE;
-    vr_dtmaxage  DATE;
+    vr_foco      VARCHAR2(3);    
+    vr_dtminage  DATE;    
 	vr_lindigit  NUMBER;
     vr_nrdigito  INTEGER;
 	vr_flgretor  BOOLEAN;
@@ -1460,25 +1451,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         IF cr_craplau_pend2_found THEN
           vr_dscritic:= 'O pagamento desta guia já está agendando.';
           RAISE vr_exc_erro;
-        END IF;
+        END IF;        
         
-        -- Obtem o número de dias de prazo para agendamento
-        OPEN cr_qtddaglf;
-        FETCH cr_qtddaglf
-        INTO vr_qtddaglf;
-        CLOSE cr_qtddaglf;
+        -- Obtém a data de apuração mínima para agendamento        
+        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtocd,'MM'),-1);        
         
-        -- Obtém as datas limite de agendamento
-        -- Data Mínima: Primeiro dia do mês anterior
-        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtocd,'MM'),-1);
-        -- Data Máxima: Data Mínima + Número de dias de prazo para agendamento (crapage.qtddaglf)        
-		vr_dtmaxage := LAST_DAY(TRUNC(rw_crapdat.dtmvtocd,'MM') + vr_qtddaglf);        
-        
-        IF (pr_dtapurac NOT BETWEEN vr_dtminage AND vr_dtmaxage) THEN
-          vr_dscritic := 'A data de apuração do pagamento não pode ser inferior a #dtminage# ou superior a #dtmaxage#.';
-		  vr_dscritic := REPLACE(vr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));
-          vr_dscritic := REPLACE(vr_dscritic, '#dtmaxage#', TO_CHAR(vr_dtmaxage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));
-					
+        IF pr_dtapurac < vr_dtminage THEN
+          vr_dscritic := 'DARF com data de apuração inferior a #dtminage# não pode ser agendada.';
+		  vr_dscritic := REPLACE(vr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));					
           RAISE vr_exc_erro;
         END IF;        
         

@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 22/06/2016
+   Data    : Novembro/98                     Ultima atualizacao: 13/10/2016
 
    Dados referentes ao programa:
 
@@ -513,6 +513,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
+														
+			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+			                na leitura do cursor cr_crapepr. (Reinert)   
+
+               13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
+			                (Daniel)
                             
 ............................................................................ */
   -- Buscar os dados da cooperativa
@@ -618,10 +624,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select dstextab
       from craptab
      where craptab.cdcooper = pr_cdcooper
-       and craptab.nmsistem = 'CRED'
-       and craptab.tptabela = pr_tptabela
+       and UPPER(craptab.nmsistem) = 'CRED'
+       and UPPER(craptab.tptabela) = pr_tptabela
        and craptab.cdempres = pr_cdempres
-       and craptab.cdacesso = pr_nrdctabb
+       and UPPER(craptab.cdacesso) = pr_nrdctabb
        and craptab.tpregist = pr_cdbccxlt;
   rw_craptab    cr_craptab%rowtype;
   -- Rejeitados na integração
@@ -683,8 +689,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select dstextab
       from craptab
      where craptab.cdcooper = pr_cdcooper
-       and craptab.tptabela = pr_tptabela
-       and craptab.cdacesso = pr_nrdctabb;
+       and UPPER(craptab.tptabela) = pr_tptabela
+       and UPPER(craptab.cdacesso) = pr_nrdctabb;
   -- Tarifa dos históricos
   cursor cr_crabthi (pr_cdcooper in crapthi.cdcooper%type,
                      pr_cdhistor in crapthi.cdhistor%type,
@@ -1545,7 +1551,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            crapscn.dsnomcnv,
            craprej.nraplica,
            craprej.vlsdapli,
-           craprej.cdhistor
+           craprej.cdhistor,
+		   craprej.nrdocmto
       from crapscn,
            craprej
      where craprej.cdcooper = pr_cdcooper
@@ -1761,16 +1768,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           ,craplem lem
           ,craplcr lcr
           ,craphis his
+					,crapfin fin
      WHERE epr.cdcooper = lem.cdcooper
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND epr.cdcooper = lcr.cdcooper
        AND epr.cdlcremp = lcr.cdlcremp
+			 AND fin.cdcooper = epr.cdcooper
+ 			 AND fin.cdfinemp = epr.cdfinemp
        AND lem.cdcooper = pr_cdcooper
        AND ','|| GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => pr_cdcooper, pr_cdacesso => 'HISTOR_SEM_CRED_CC') ||',' LIKE ('%,' || lem.cdhistor || ',%') --> Produtos atuais
        AND lcr.cdlcremp != 100      --> LInha 100 eh tratava separadamente
        AND lem.dtmvtolt = pr_dtmvtolt
-       AND lcr.flgcrcta = 0
+       AND (lcr.flgcrcta = 0
+			  OR (lcr.flgcrcta = 1 AND fin.tpfinali = 2)) --> Operações de portabilidade
        AND his.cdcooper = epr.cdcooper
        AND his.cdhistor = lcr.cdhistor
      ORDER BY epr.nrdconta,epr.nrctremp;
@@ -6766,7 +6777,8 @@ BEGIN
                                cdpesqbb,
                                nrseqdig,
                                vllanmto,
-                               dtrefere)
+                               dtrefere,
+                               nrdocmto)
           VALUES (pr_cdcooper,
                   rw_craplft.cdagenci,
                   rw_craplft.cdhistor,
@@ -6774,7 +6786,8 @@ BEGIN
                   vr_cdprogra,
                   vr_qtlanmto_fat,
                   vr_qtlanmto_fat * rw_crapstn.vltrfuni,
-                  rw_crapscn.cdempres);
+                  rw_crapscn.cdempres,
+                  rw_craplft.cdagenci_fatura);
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic := 0;
@@ -6898,7 +6911,7 @@ BEGIN
                    trim(rw_crapscn2.dsnomcnv)||' (tarifa)"';
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
     --
-    vr_linhadet := to_char(vr_tab_agencia2(rw_craprej3.cdagenci).vr_cdccuage,'fm000')||','||trim(to_char(rw_craprej3.vllanmto, '999999990.00'));
+    vr_linhadet := to_char(rw_craprej3.nrdocmto,'fm000')||','||trim(to_char(rw_craprej3.vllanmto, '999999990.00'));
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   end loop;
   -- Despesa Sicredi
