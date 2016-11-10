@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 25/08/2015
+   Data    : Outubro/94.                     Ultima atualizacao: 16/08/2016
 
    Dados referentes ao programa:
 
@@ -94,6 +94,17 @@
                25/08/2015 - Inclusao do parametro pr_cdpesqbb na procedure
                             tari0001.pc_cria_lan_auto_tarifa, projeto de 
                             Tarifas-218(Jean Michel) 
+
+	           16/08/2016 - Ajuste para alterar o campo indevarq para 2 também
+							quando forem cheques VLB, pois o crps264 precisa
+							identificar estes cheques para envia-los a ABBC
+							no primeiro horário da manhã
+							(Adriano - SD 501761).
+
+			   18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
+			                caso o aviso de debito ja existir, evitando acionamento
+							desnecessario visto que essa critica nao abortado a
+							execucao do processo. (Daniel)	
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -215,14 +226,8 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
          crapdev.cdalinea = 37 AND 
          crapdev.cdhistor = 47 THEN
          DO:
-             /*  Interior e VLB Truncado Somente para Cheques 085*/
-             IF   crapcop.flgdsirc  = NO           AND
-                  crapdev.vllanmto >= aux_vlbtrunc THEN
-                  crapdev.indevarq = 1.    /* Nao envia na 1a Exec. da Devolu */
-             ELSE
-                  crapdev.indevarq = 2.    /* Envia na Devolucao Condicional */
-
-             ASSIGN crapdev.insitdev = 1.
+             ASSIGN crapdev.indevarq = 2 
+			        crapdev.insitdev = 1.
 
              NEXT.
          END.
@@ -476,16 +481,9 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                                     END.
                            END.
                                 
-                      /*  Interior e VLB Truncado Somente para Cheques 085*/
-                      IF   crapcop.flgdsirc  = NO           AND
-                           crapdev.vllanmto >= aux_vlbtrunc THEN
-                           crapdev.indevarq = 1.   
-                                    /* Nao envia na 1a Exec. da Devolu */
-                      ELSE
-                           crapdev.indevarq = 2.
-                                   /* Envia na Devolucao Condicional */
+                      ASSIGN crapdev.indevarq = 2 
+						     craplcm.dsidenti = STRING(crapdev.indevarq,"9").
                   
-                      ASSIGN craplcm.dsidenti = STRING(crapdev.indevarq,"9").
                   END.         
          END.
     ELSE
@@ -525,7 +523,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                  DO:
                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
                                       " - " + glb_cdprogra + "' --> '" + 
-                                      "'ERRO: Registro de aviso de debito " +
+                                      "'CRITICA: Registro de aviso de debito " +
                                       "ja existe - Conta: " +
                                       STRING(crapass.nrdconta) +
                                       " Cheque: " + STRING(crapdev.nrcheque) +
