@@ -185,14 +185,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --  Sistema  : Rotina acessada pela tela CADCOP
   --  Sigla    : XXXX
   --  Autor    : Andrei - RKAM
-  --  Data     : Agosto/2016.                   Ultima atualizacao: 
+  --  Data     : Agosto/2016.                   Ultima atualizacao: 10/11/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas utilizadas para a tela CADCOP
   --
-  -- Alteracoes: 
+  -- Alteracoes: 10/11/2016 - Ajuste para retirar o uso dos campos na tabela crapmun pois não serão 
+  --                          liberados em produção
+  --                          (Adriano)
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -4227,17 +4229,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,m.cdestado
           ,m.dscidade
           ,m.progress_recid
-          ,m.idcidade
-          ,m.cdcidbge
-          ,m.cdcidcor
-          ,m.cdcidsfn
-          ,m.cdufibge
-          ,m.dscidesp
      FROM tbgen_cid_atuacao_coop a
          ,crapmun m
     WHERE a.cdcooper = pr_cdcooper
       AND m.cdcidade = a.cdcidade
-     ORDER BY m.dscidesp;    
+     ORDER BY m.dscidade;    
     rw_municipios cr_municipios%ROWTYPE;
     
     --Variáveis locais
