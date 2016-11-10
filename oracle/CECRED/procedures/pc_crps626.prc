@@ -28,11 +28,9 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)
 
               05/08/2014 - Alteraçao da Nomeclatura para PA (Vanessa).
+              
+              09/11/2016 - conversão para Oracle.
 ............................................................................. */
--- Definição do tipo da PL Table para a tabela CRAPFER
-    TYPE typ_reg_crapfer IS
-      RECORD(registro PLS_INTEGER);
-    TYPE typ_tab_crapfer IS TABLE OF typ_reg_crapfer INDEX BY VARCHAR2(11);
 
 -- Type para armazenar nome dos arquivos para processamento
     TYPE typ_tab_nmarqtel IS
@@ -53,7 +51,6 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
     vr_input_file    UTL_FILE.file_type;
     vr_setlinha      varchar2(500);
     vr_cdempres      number;
-    ie               number;
     vr_nrdocmto      number;
     vr_nrseqarq      number;
     vr_cdbanchq      number;
@@ -64,7 +61,6 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
     vr_flocotic      boolean;
     vr_cdocotic      number;
     vr_cdpesqbb      varchar2(500);
-    tot_qtregrej     number;
     vr_cdrelato      number;
     vr_tot_qtregrej  number;
     vr_nmarqimp      varchar2(100);
@@ -96,11 +92,11 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
           CRAPCST.nrdolote from crapcst
      WHERE
       crapcst.cdcooper = pr_cdcooper  AND
-      crapcst.cdcmpchq = vr_cdcmpchq  AND /* Nro compe */
-      crapcst.cdbanchq = vr_cdbanchq  AND /* Nro do Bco*/
-      crapcst.cdagechq = vr_cdagechq  AND /* Age dest  */
-      crapcst.nrctachq = vr_nrctachq  AND /* Nr ctachq */
-      crapcst.nrcheque = vr_nrdocmto;     /* Nro chq   */
+      crapcst.cdcmpchq = vr_cdcmpchq  AND -- Nro compe 
+      crapcst.cdbanchq = vr_cdbanchq  AND -- Nro do Bco
+      crapcst.cdagechq = vr_cdagechq  AND -- Age dest  
+      crapcst.nrctachq = vr_nrctachq  AND -- Nr ctachq 
+      crapcst.nrcheque = vr_nrdocmto;     -- Nro chq   
 
    RW_CRAPCST CR_CRAPCST%ROWTYPE;
 
@@ -120,43 +116,54 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
           from crapcdb
      WHERE
       crapcdb.cdcooper = pr_cdcooper AND
-      crapcdb.cdcmpchq = vr_cdcmpchq AND /* Nro compe  */
-      crapcdb.cdbanchq = vr_cdbanchq AND /* Nro do Bco */
-      crapcdb.cdagechq = vr_cdagechq AND /* Agen dest  */
-      crapcdb.nrctachq = vr_nrctachq AND /* Nro ctachq */
-      crapcdb.nrcheque = vr_nrdocmto;     /* Nro chq    */
+      crapcdb.cdcmpchq = vr_cdcmpchq AND -- Nro compe  
+      crapcdb.cdbanchq = vr_cdbanchq AND -- Nro do Bco 
+      crapcdb.cdagechq = vr_cdagechq AND -- Agen dest  
+      crapcdb.nrctachq = vr_nrctachq AND -- Nro ctachq 
+      crapcdb.nrcheque = vr_nrdocmto;    -- Nro chq    
 
     RW_crapcdb CR_crapcdb%ROWTYPE;
-    -- Cursor genérico de calendário
+    cursor  cr_craprej(pr_cdcooper craprej.Cdcooper%type,
+                      vr_dtlimite craprej.dtdaviso%type)is
+    select craprej.rowid,  
+                cdcritic,
+                cdpesqbb,
+                nrdctitg,
+                nrdocmto,
+                vllanmto,
+                dtdaviso,
+                dtmvtolt,
+                nrdconta,
+                dshistor from craprej
+                          where
+                            craprej.cdcooper = pr_cdcooper AND
+                            craprej.dtdaviso > vr_dtlimite;
+                            
+   -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
     -- Variáveis para armazenar as informações em XML
-    vr_des_xml         CLOB;
+    vr_des_xml          CLOB;
     -- Variável para armazenar os dados do XML antes de incluir no CLOB
-    vr_texto_completo  VARCHAR2(32600);
-    -- diretorio de geracao do relatorio
-    vr_nom_direto  VARCHAR2(100);
+    vr_texto_completo   VARCHAR2(32600);
     --Arquivo a ser importado
-    vr_nmarquiv VARCHAR2(500);
+    vr_nmarquiv         VARCHAR2(500);
 
      --------------------------- VARIAVEIS DO CORPO DO PROGRAMA----------------
-     aux_dtmvtolt       DATE;
      vr_dtauxili        VARCHAR(10);
      vr_refer           varchar(10);
-     aux_mes            VARCHAR2(2);
+     vr_aux_mes         VARCHAR2(2);
      vr_flgrejei        BOOLEAN;
      vr_nmarqret        VARCHAR2(100);
+     vr_listadir        varchar2(4000);     
      vr_qtcompln        NUMBER(8,2);
      vr_vlcompdb        NUMBER(8,2);
      vr_tab_nmarqtel    typ_tab_nmarqtel;
      vr_dtlimite        Date;
-
-     vr_tab_crapfer typ_tab_crapfer;              --> PL Table de valores da tabela CRAPFER
-
-     vr_contador number;
-     vr_caminho_integra     VARCHAR2(1000);
-     vr_comando             VARCHAR2(1000);
-     vr_typ_saida           VARCHAR2(1000);
+     vr_contador        number;
+     vr_caminho_integra VARCHAR2(1000);
+     vr_comando         VARCHAR2(1000);
+     vr_typ_saida       VARCHAR2(1000);
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
          --Procedure que escreve linha no arquivo CLOB
@@ -167,44 +174,10 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
       END;
 
 
-    /*FUNCTION fn_calc_prox_dia_util(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                  ,pr_data     IN DATE                  --> Data para cálculo do próximo dia útil
-                                  ,pr_datautl  IN DATE) RETURN DATE IS  --> Data para comparação da situação atual
-     BEGIN
-      DECLARE
-         tmp_dtrefere   DATE := pr_data + 1;       --> Ultimo dia util antes de ontem
-
-       BEGIN
-         LOOP
-          -- Verifica se a data selecionada é segunda-feira ou domingo
-          IF to_char(tmp_dtrefere, 'D') = 7 OR to_char(tmp_dtrefere, 'D') = 1 THEN
-            tmp_dtrefere := tmp_dtrefere + 1;
-            continue;
-          END IF;
-
-          -- Verifica se a data existe na tabela de feriados
-          IF vr_tab_crapfer.exists(to_char(tmp_dtrefere, 'DDMMRRRR') || lpad(pr_cdcooper, 3, '0')) THEN
-            tmp_dtrefere := tmp_dtrefere + 1;
-            continue;
-          END IF;
-
-          -- Compara datas de atuação
-          IF tmp_dtrefere = pr_datautl THEN
-            tmp_dtrefere := tmp_dtrefere + 1;
-          END IF;
-
-          -- Condição de saída do LOOP
-          EXIT;
-        END LOOP;
-
-        RETURN tmp_dtrefere;
-      END;
-    END fn_calc_prox_dia_util;
-*/
+    
 
 
    begin
-   ie := 0;
     --------------- VALIDACOES INICIAIS -----------------
     -- Incluir nome do módulo logado
     GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
@@ -240,7 +213,6 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
-   -- rw_crapdat.dtmvtopr := '04/20/2016';
 
     -- Validações iniciais do programa
     BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
@@ -265,19 +237,19 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
       IF  EXTRACT(MONTH FROM rw_crapdat.dtmvtolt) > 9 THEN
          CASE
            EXTRACT(MONTH FROM rw_crapdat.dtmvtolt)
-            WHEN 10 THEN aux_mes := 'O';
-            WHEN 11 THEN aux_mes := 'N';
-            WHEN 12 THEN aux_mes := 'D';
+            WHEN 10 THEN vr_aux_mes := 'O';
+            WHEN 11 THEN vr_aux_mes := 'N';
+            WHEN 12 THEN vr_aux_mes := 'D';
          END CASE;
       ELSE
-         aux_mes := TO_CHAR(EXTRACT(MONTH FROM rw_crapdat.dtmvtolt));
+         vr_aux_mes := TO_CHAR(EXTRACT(MONTH FROM rw_crapdat.dtmvtolt));
       END IF;
 
-      /* Nome do arq de origem*/
+      -- Nome do arq de origem
       vr_nmarquiv :=trim( '1' || lpad(rw_crapcop.cdagectl,4,'0') ||
-                      aux_mes || lpad(EXTRACT (DAY FROM rw_crapdat.dtmvtolt),2,'0') || '.CND');
+                      vr_aux_mes || lpad(EXTRACT (DAY FROM rw_crapdat.dtmvtolt),2,'0') || '.CND');
       vr_contador := 0;
-      vr_nmarqret:= '39999%.RET'; /* Sua REMESSA e erros enviados */
+      vr_nmarqret:= '39999%.RET'; -- Sua REMESSA e erros enviados 
 
        -- Buscar o diretorio padrao da cooperativa conectada
        vr_caminho_integra:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
@@ -301,25 +273,29 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                                                         || vr_cdprogra || ' --> '
                                                         || 'Erro pc_OScommand_Shell: '||vr_dscritic);
         END IF;
-        /* Listar o nome do arquivo caso exista*/
-        vr_comando:= 'ls '||vr_caminho_integra||'/'||vr_nmarquiv ||' 2> /dev/null';
-
-        gene0001.pc_OScommand_Shell(pr_des_comando =>  vr_comando
-                                   ,pr_typ_saida   => vr_typ_saida
-                                   ,pr_des_saida   => vr_dscritic);
-
-        if  nvl(vr_typ_saida,' ') <> 'ERR' then
-
+        IF (pr_flgresta IS NOT NULL) THEN 
+          -- Listar o nome do arquivo caso exista
+          vr_comando:= 'ls '||vr_caminho_integra||'/'||vr_nmarquiv ||' 2> /dev/null';
+        END IF; 
+        --Listar arquivos no diretorio
+         gene0001.pc_lista_arquivos (pr_path     => vr_caminho_integra
+                                    ,pr_pesq     => vr_nmarqret
+                                    ,pr_listarq  => vr_listadir
+                                    ,pr_des_erro => vr_dscritic);
+      
+      
+      IF vr_dscritic IS NULL THEN
+      
            vr_comando:= 'quoter '||vr_caminho_integra||'/'||vr_nmarquiv || ' > '||vr_caminho_integra||'/'||vr_nmarquiv ||'.q 2> /dev/null';
            gene0001.pc_OScommand_Shell(pr_des_comando =>  vr_comando
                                    ,pr_typ_saida   => vr_typ_saida
                                    ,pr_des_saida   => vr_dscritic);
-          /* Gravando a qtd de arquivos processados */
+          -- Gravando a qtd de arquivos processados 
           vr_contador               := vr_contador + 1;
           vr_tab_nmarqtel(vr_contador) := vr_nmarquiv;
-
-        end if;
-         /* Se nao houver arquivos processados */
+      
+      END IF;
+         -- Se nao houver arquivos processados 
          IF vr_contador = 0 THEN
           -- Montar mensagem de critica
            vr_cdcritic:= 182;
@@ -334,33 +310,10 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
            --Levantar Excecao pois nao tem arquivo para processar
            RAISE vr_exc_final;
          END IF;
-         /*  Fim da verificacao se deve executar  */
-       begin
-          delete craprej WHERE craprej.cdcooper = pr_cdcooper;
-        exception
-          when NO_DATA_FOUND then
-            vr_dscritic := 'Limpeza da Tabela Craprej - Não funcionou ';
-            -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '||vr_dscritic
-                                                       || ' - Arquivo: integra/'||vr_nmarqret );
-         WHEN OTHERS THEN
-        vr_dscritic := 'Limpeza da Tabela Craprej  -'|| SQLERRM;
-            -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '||vr_dscritic
-                                                       || ' - Arquivo: integra/'||vr_nmarqret );
-
-
-
-       end;
-      /* Variavel de contador trouxe arquivos */
+         --  Fim da verificacao se deve executar  
+         delete craprej WHERE craprej.cdcooper = pr_cdcooper;
+        
+      -- Variavel de contador trouxe arquivos 
      FOR I IN 1..vr_contador LOOP
 
        vr_flgrejei := false;
@@ -391,11 +344,11 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_arquivo => vr_nmarquiv);
 
        --Popular o vetor de arquivos
-       IF SUBSTR(vr_setlinha,1,10) <> '0000000000'  THEN /* Const = 0 */
+       IF SUBSTR(vr_setlinha,1,10) <> '0000000000'  THEN -- Const = 0 
          vr_cdcritic := 468;
-       ELSIF SUBSTR(vr_setlinha,48,6) <> 'TIC616' THEN  /* Const = 'TIC616' */
+       ELSIF SUBSTR(vr_setlinha,48,6) <> 'TIC616' THEN  -- Const = 'TIC616' 
          vr_cdcritic := 173;
-       ELSIF to_number(SUBSTR(vr_setlinha,61,3)) <> rw_crapcop.cdbcoctl THEN /* Nr cd bco */
+       ELSIF to_number(SUBSTR(vr_setlinha,61,3)) <> rw_crapcop.cdbcoctl THEN -- Nr cd bco 
          vr_cdcritic := 057;
        ELSIF SUBSTR(vr_setlinha,66,8) <> vr_dtauxili THEN
          vr_cdcritic := 013;
@@ -437,7 +390,7 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
               vr_nrctachq := to_number(SUBSTR(vr_setlinha,12,12));
               vr_cdocorre := to_number(SUBSTR(vr_setlinha,139,2));
               vr_cdpesqbb := vr_setlinha;
-              /* Ocorrencia */
+              -- Ocorrencia 
               IF  vr_cdocorre not in (01,02,03,04,05,08,09)  THEN
 
                  OPEN CR_CRAPCST(pr_cdcooper,
@@ -475,9 +428,9 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                           rw_crapcst.dtlibera,
                           rw_crapcst.dtmvtolt,
                           LPAD(vr_nrctachq,10,'0'),
-                          vr_nrdocmto, /* Nro Docmto */
+                          vr_nrdocmto, -- Nro Docmto 
                           rw_crapcst.vlcheque,
-                          vr_nrseqarq, /*  seq  arq  */
+                          vr_nrseqarq, --  seq  arq  
                           vr_cdpesqbb,
                           to_char(RW_CRAPCST.cdagenci,'fm000') || ' ' ||to_char(RW_CRAPCST.cdbccxlt,'fm000') || ' ' ||
                           to_char(RW_CRAPCST.nrdolote,'fm0000') ,
@@ -522,9 +475,9 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                                 rw_crapcdb.dtlibera,
                                 rw_crapcdb.dtmvtolt,
                                 LPAD(vr_nrctachq,10,'0'),
-                                vr_nrdocmto /* Nro Docmto */,
+                                vr_nrdocmto, -- Nro Docmto 
                                 rw_crapcdb.vlcheque,
-                                vr_nrseqarq, /* seq arq */
+                                vr_nrseqarq, -- seq arq 
                                 vr_cdpesqbb,
                                 to_char(RW_crapcdb.cdagenci,'fm000') || ' ' ||to_char(RW_crapcdb.cdbccxlt,'fm000') || ' ' ||
                                 to_char(RW_crapcdb.nrdolote,'fm0000'),
@@ -535,25 +488,12 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                  END IF;
               end if;
            end if;
-        IE := iE + 1;
+       
       END LOOP;
      end if;
      END IF;
 
-    -- Comando para remover arquivos no diretorio integracao
-       vr_comando:= 'mv '||vr_caminho_integra||'/'||vr_nmarquiv ||' salvar';
-       gene0001.pc_OScommand_Shell(pr_des_comando =>  vr_comando
-                                   ,pr_typ_saida   => vr_typ_saida
-                                   ,pr_des_saida   => vr_dscritic);
-       IF NVL(vr_typ_saida,' ') = 'ERR' THEN
-          -- Incluir erro no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2  -- Erro tratado
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || 'Erro pc_OScommand_Shell: '||vr_dscritic);
-        END IF;
-
+    
 
 
        vr_comando:= 'rm '||vr_caminho_integra||'/'||vr_nmarquiv ||'.q 2> /dev/null';
@@ -570,11 +510,11 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
                                                         || 'Erro pc_OScommand_Shell: '||vr_dscritic);
        END IF;
 
-           tot_qtregrej := 0;
+           vr_tot_qtregrej := 0;
            vr_cdcritic := 0;
            vr_cdrelato := 626;
 
-        /** Geração Relatorio crrl626 **/
+        -- Geração Relatorio crrl626 
         -- Inicializar o CLOB
         vr_des_xml := NULL;
         dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -587,15 +527,13 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
         vr_nmarqimp := 'rl/crrl626' ||trim(to_char(i,'99')) ||  '.lst';
         vr_cdempres := 11;
 
-        /* Considerar somente a data de liberacao superior a D+2, pelo motivo
-        da compensacao da ABBC */
+        -- Considerar somente a data de liberacao superior a D+2, pelo motivo da compensacao da ABBC 
         vr_dtlimite := gene0005.fn_valida_dia_util(pr_cdcooper =>  pr_cdcooper,
                                                    pr_dtmvtolt => rw_crapdat.dtmvtopr + 1,
                                                    pr_tipo => 'P'); 
-        for rw_craprej in (select craprej.rowid,  craprej.* from craprej
-                            where
-                            craprej.cdcooper = pr_cdcooper AND
-                            craprej.dtdaviso > vr_dtlimite) loop
+        for rw_craprej in cr_craprej(pr_cdcooper,
+                                     vr_dtlimite)loop
+                            
 
              vr_flgrejei := TRUE;
              --Codigo da critica
@@ -678,18 +616,24 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
     dbms_lob.freetemporary(vr_des_xml);
 
     -- limpar rejeitados
-    BEGIN
-      DELETE craprej
-       WHERE craprej.cdcooper = pr_cdcooper;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel deletar craprej: '||SQLERRM;
-        RAISE vr_exc_saida;
-    END;
-
+      DELETE craprej WHERE craprej.cdcooper = pr_cdcooper;
+   
  end loop;
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+    -- Comando para remover arquivos no diretorio integracao
+       vr_comando:= 'mv '||vr_caminho_integra||'/'||vr_nmarquiv ||' salvar';
+       gene0001.pc_OScommand_Shell(pr_des_comando =>  vr_comando
+                                   ,pr_typ_saida   => vr_typ_saida
+                                   ,pr_des_saida   => vr_dscritic);
+       IF NVL(vr_typ_saida,' ') = 'ERR' THEN
+          -- Incluir erro no log
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2  -- Erro tratado
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                        || vr_cdprogra || ' --> '
+                                                        || 'Erro pc_OScommand_Shell: '||vr_dscritic);
+        END IF;
 
     -- Processo OK, devemos chamar a fimprg
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
@@ -740,3 +684,4 @@ create or replace procedure cecred.pc_crps626 (pr_cdcooper IN crapcop.cdcooper%T
 
 end;
 /
+
