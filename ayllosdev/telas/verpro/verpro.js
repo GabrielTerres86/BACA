@@ -512,6 +512,10 @@ function formataVerpro() {
 	rVlrmulta = $('label[for="vlrmulta"]', '#' + frmDados);
 	rVlrjuros = $('label[for="vlrjuros"]', '#' + frmDados);
 	rVltotfat = $('label[for="vltotfat"]', '#' + frmDados);
+	rDsidepag = $('label[for="vltotfat"]', '#' + frmDados);
+	rDtmvtdrf = $('label[for="vltotfat"]', '#' + frmDados);
+	rHrautdrf = $('label[for="vltotfat"]', '#' + frmDados);
+	rNrdocmto_das = $('label[for="nrdocmto_das"]', '#' + frmDados);
 	
     //labels protocolo de resgate de aplicação
     rDtresgat = $('label[for="dtresgat"]', '#' + frmDados);
@@ -579,6 +583,10 @@ function formataVerpro() {
 	rVlrmulta.addClass('rotulo').css({'width': '130px'});	
 	rVlrjuros.addClass('rotulo').css({'width': '130px'});	
 	rVltotfat.addClass('rotulo').css({'width': '130px'});	
+	rDsidepag.addClass('rotulo').css({'width': '130px'});	
+	rDtmvtdrf.addClass('rotulo').css({'width': '130px'});	
+	rHrautdrf.addClass('rotulo').css({'width': '130px'});	
+	rNrdocmto_das.addClass('rotulo').css({'width': '130px'});	
 
     rDtresgat.addClass('rotulo').css({'width': '130px'});
     rHrresgat.addClass('rotulo').css({'width': '130px'});
@@ -644,6 +652,10 @@ function formataVerpro() {
 	cVlrmulta = $('#vlrmulta', '#' + frmDados);
 	cVlrjuros = $('#vlrjuros', '#' + frmDados);
 	cVltotfat = $('#vltotfat', '#' + frmDados);
+	cDsidepag = $('#dsidepag', '#' + frmDados);
+	cDtmvtdrf = $('#dtmvtdrf', '#' + frmDados);
+	cHrautdrf = $('#hrautdrf', '#' + frmDados);
+	cNrdocmto_das = $('#nrdocmto_das', '#' + frmDados);
 
     //Campos protoclo aplicação
     cDtresgat = $('#dtresgat', '#' + frmDados);
@@ -708,6 +720,10 @@ function formataVerpro() {
 	cVlrmulta.css({'width': '400px'});
 	cVlrjuros.css({'width': '400px'});
 	cVltotfat.css({'width': '400px'});
+	cDsidepag.css({'width': '400px'});
+	cDtmvtdrf.css({'width': '400px'});
+	cHrautdrf.css({'width': '400px'});
+	cNrdocmto_das.css({'width': '400px'});
 
     cDtresgat.css({'width': '400px'});
     cHrresgat.css({'width': '400px'});
@@ -828,6 +844,10 @@ function formataVerpro() {
 	rVlrmulta.css({'display': 'none'});
 	rVlrjuros.css({'display': 'none'});
 	rVltotfat.css({'display': 'none'});
+	rDsidepag.css({'display': 'none'});
+	rDtmvtdrf.css({'display': 'none'});
+	rHrautdrf.css({'display': 'none'});
+	rNrdocmto_das.css({'display': 'none'});
 
 	cDsagtare.css({'display': 'none'});
 	cDsagenci.css({'display': 'none'});
@@ -844,8 +864,11 @@ function formataVerpro() {
 	cVlprinci.css({'display': 'none'});
 	cVlrmulta.css({'display': 'none'});
 	cVlrjuros.css({'display': 'none'});
-	cVltotfat.css({'display': 'none'});
-	
+	cVltotfat.css({'display': 'none'});	
+	cDsidepag.css({'display': 'none'});
+	cDtmvtdrf.css({'display': 'none'});
+	cHrautdrf.css({'display': 'none'});
+	cNrdocmto_das.css({'display': 'none'});
 
     cDtresgat.css({'display': 'none'});
     cHrresgat.css({'display': 'none'});
@@ -853,7 +876,6 @@ function formataVerpro() {
     cVldoirrf.css({'display': 'none'});
     cVlaliqir.css({'display': 'none'});
     cVlliquid.css({'display': 'none'});
-
 
     rDsageban.html('Agencia Favorecido:');
 
@@ -1129,6 +1151,18 @@ function formataVerpro() {
 		rNmsolici.css({'display': 'none'});
 		cNmsolici.css({'display': 'none'});
 		
+		rDttransa.css({'display': 'none'});
+		cDttransa.css({'display': 'none'});
+		
+		rVldocmto.css({'display': 'none'});
+        cVldocmto.css({'display': 'none'});
+		
+		rDtmvtolt.css({'display': 'none'});
+		cDtmvtolt.css({'display': 'none'});
+       
+		rHrautenx.css({'display': 'none'});
+		cHrautenx.css({'display': 'none'});
+		
 		// Exibir 	   		
 		if (tpcaptur == 1) {
 			
@@ -1137,6 +1171,14 @@ function formataVerpro() {
 		
 			rLndigita.css({'display': 'block'});
 			cLndigita.css({'display': 'block'});
+			
+			rDtvencto_drf.css({'display': 'block'});
+			cDtvencto_drf.css({'display': 'block'});	
+			
+			if (cdtippro == 17 || cdtippro == 19) { //DAS 
+				rNrdocmto_das.css({'display': 'block'});
+				cNrdocmto_das.css({'display': 'block'});			
+			}
 			
 		} else if (tpcaptur == 2) {
 			
@@ -1188,10 +1230,10 @@ function formataVerpro() {
 			rVlrjuros.css({'display': 'block'});
 			cVlrjuros.css({'display': 'block'});
 			
-			rVltotfat.css({'display': 'block'});
-			cVltotfat.css({'display': 'block'});
-			
 		}
+		
+		rVltotfat.css({'display': 'block'});
+		cVltotfat.css({'display': 'block'});
 		
 		rNmsolici_drf.css({'display': 'block'});
 		cNmsolici_drf.css({'display': 'block'});
@@ -1203,19 +1245,25 @@ function formataVerpro() {
 		cDsagenci.css({'display': 'block'});
 		
 		rTpdocmto.css({'display': 'block'});
-		cTpdocmto.css({'display': 'block'});
+		cTpdocmto.css({'display': 'block'});		
 		
-		rDsnomfon.css({'display': 'block'});
-	    cDsnomfon.css({'display': 'block'});
-	   
-		rDtmvtolt.css({'display': 'block'});
-		cDtmvtolt.css({'display': 'block'});
-       
-		rHrautenx.css({'display': 'block'});
-		cHrautenx.css({'display': 'block'});
-       
-		rVldocmto.css({'display': 'block'});
-		cVldocmto.css({'display': 'block'});
+		//Opcional: Nome/Telefone
+		if (cDsnomfon.val().trim() != "") {
+			rDsnomfon.css({'display': 'block'});
+			cDsnomfon.css({'display': 'block'});
+		}
+	   	   
+		//Opcional: Descrição do Pagamento
+		if (cDsidepag.val().trim() != "") {
+			rDsidepag.css({'display': 'block'});
+			cDsidepag.css({'display': 'block'});
+		}
+		
+		rHrautdrf.css({'display': 'block'});
+	    cHrautdrf.css({'display': 'block'});
+		
+		rDtmvtdrf.css({'display': 'block'});
+	    cDtmvtdrf.css({'display': 'block'});
        
 		rNrdocmto.css({'display': 'block'});
 		cNrdocmto.css({'display': 'block'});

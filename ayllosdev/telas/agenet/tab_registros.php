@@ -42,7 +42,7 @@
 				</thead>
 				<tbody>
 					<? foreach( $registros as $result ) {    ?>
-						<tr>	
+						<tr onClick="selecionaAgendamentos(this);" >	
 							<td><span><? echo getByTagName($result->tags,'cdagenci'); ?></span> <? echo getByTagName($result->tags,'cdagenci'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'nrdconta'); ?></span> <? echo getByTagName($result->tags,'nrdconta'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'dtmvtopg'); ?></span> <? echo getByTagName($result->tags,'dtmvtopg'); ?> </td>
@@ -58,7 +58,7 @@
 							<input type="hidden" id="dtmvtolt" name="dtmvtolt" value="<? echo getByTagName($result->tags,'dtmvtolt'); ?>" />
 							<input type="hidden" id="nrdocmto" name="nrdocmto" value="<? echo getByTagName($result->tags,'nrdocmto'); ?>" />
 							<input type="hidden" id="insitlau" name="insitlau" value="<? echo getByTagName($result->tags,'insitlau'); ?>" />
-							<input type="hidden" id="vllanaut" name="vllanaut" value="<? echo getByTagName($result->tags,'vllanaut'); ?>" />
+							<input type="hidden" id="vllanaut" name="vllanaut" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vllanaut')),2,",","."); ?>" />
 							<input type="hidden" id="tpcaptura" name="tpcaptura" value="<? echo getByTagName($result->tags,'tpcaptura'); ?>" />
 							<input type="hidden" id="dstpcaptura" name="dstpcaptura" value="<? echo getByTagName($result->tags,'dstpcaptura'); ?>" />
 							<input type="hidden" id="dslinha_digitavel" name="dslinha_digitavel" value="<? echo getByTagName($result->tags,'dslinha_digitavel'); ?>" />

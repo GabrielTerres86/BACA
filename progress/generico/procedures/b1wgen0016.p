@@ -809,7 +809,16 @@ PROCEDURE verifica_convenio:
              RETURN "NOK".
          END.
 
-
+    /* Verificaçao para pagamento de GPS */
+    IF  par_idorigem = 3  THEN
+        DO:
+            IF INT(SUBSTR(par_cdbarras,16,4)) = 270  AND
+               INT(SUBSTR(par_cdbarras,2,1) ) = 5    THEN
+               DO:
+                  par_dscritic = "GPS deve ser paga na opçao 'Transaçoes - GPS' do menu de serviços.".
+                  RETURN "NOK".
+               END.
+        END.
 
     IF  par_indvalid <> 3 THEN /* Débito Automático */
         DO:

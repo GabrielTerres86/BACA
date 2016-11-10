@@ -9820,6 +9820,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         vr_cdoperad:= '996';
       END IF;
 
+	  --Verificação para pagamento de GPS
+	  IF pr_idorigem = 3  THEN
+	  	  IF SUBSTR(pr_cdbarras,16,4) = '0270' AND
+			 SUBSTR(pr_cdbarras,2,1)  = '5'    THEN
+			 vr_cdcritic := 0;
+			 vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
+			 RAISE vr_exc_erro;
+		  END IF;
+	  END IF;
+
       /* Retornar valores fatura */
       CXON0014.pc_retorna_valores_fatura (pr_cdcooper      => rw_crapcop.cdcooper  --Codigo Cooperativa
                                          ,pr_nrdconta      => pr_nrdconta     --Numero da Conta

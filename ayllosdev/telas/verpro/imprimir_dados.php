@@ -44,6 +44,7 @@
 	
 	// Recebe as variaveis
 	$nrdconta 	  = $_POST['nrdconta'];
+	$nrdconta 	  = $_POST['nrdconta'];
 	$nmprimtl 	  = $_POST['nmprimtl'];
 	$cdtippro 	  = $_POST['cdtippro'];
 	$nrdocmto 	  = $_POST['nrdocmto'];
@@ -75,7 +76,7 @@
 	$dspacote     = $_POST['dspacote'];
 	$dtdiadeb     = $_POST['dtdiadeb'];
 	$dtinivig     = $_POST['dtinivig'];
-	//DARF	
+	//DARF/DAS
 	$tpcaptur	  = $_POST['tpcaptur'];
 	$dsagtare	  = $_POST['dsagtare'];
 	$dsagenci	  = $_POST['dsagenci'];
@@ -93,6 +94,11 @@
 	$vlrmulta     = $_POST['vlrmulta'];
 	$vlrjuros     = $_POST['vlrjuros'];
 	$vltotfat     = $_POST['vltotfat'];
+	$nrdocmto_das = $_POST['nrdocmto_das'];
+	$dsidepag	  = $_POST['dsidepag'];
+	$dtmvtdrf	  = $_POST['dtmvtdrf'];
+	$hrautdrf	  = $_POST['hrautdrf'];
+	$dtvencto_drf = $_POST['dtvencto_drf'];
 	
 	$dsiduser 	= session_id();	
 
@@ -182,6 +188,11 @@
 	$xml .= '		<vlrmulta>'.$vlrmulta.'</vlrmulta>';
 	$xml .= '		<vlrjuros>'.$vlrjuros.'</vlrjuros>';
 	$xml .= '		<vltotfat>'.$vltotfat.'</vltotfat>';
+	$xml .= '		<nrdocdas>'.$nrdocmto_das.'</nrdocdas>';
+	$xml .= '		<dsidepag>'.$dsidepag.'</dsidepag>';
+	$xml .= '		<dtmvtdrf>'.$dtmvtdrf.'</dtmvtdrf>';
+	$xml .= '		<hrautdrf>'.$hrautdrf.'</hrautdrf>';
+	$xml .= '		<dtvencto_drf>'.$dtvencto_drf.'</dtvencto_drf>';
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 	

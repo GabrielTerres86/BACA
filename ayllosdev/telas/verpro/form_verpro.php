@@ -69,43 +69,54 @@ $dsispbif = trim($aux_dslinha2[4]);
 $nrcpffav = trim($aux_dslinha2[1]);
 $arrayBanco = explode("-", $dsdbanco);
 
-/* 	echo "<br> banco " . $arrayBanco[0] . '<br />' . 
-  $dslinha1 . '<br />' .
-  $dslinha2 . '<br />' .
-  $dslinha3; */
+/*
+16:"PAGAMENTO DARF";
+17:"PAGAMENTO DAS";
+18:"AGENDAMENTO DARF";
+19:"AGENDAMENTO DAS";
+*/
 
-  
 if ($cdtippro >= 16 && $cdtippro <= 19) {
 	
 	$tpcaptur = trim(substr($aux_dslinha3[0], strpos($aux_dslinha3[0], ":") + 1));
 
-		$nmsolici = trim(substr($aux_dslinha3[1], strpos($aux_dslinha3[1], ":") + 1));
-		$dsagtare = trim(substr($aux_dslinha3[2], strpos($aux_dslinha3[2], ":") + 1));
-		$dsagenci = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[3], ":") + 1));
-		$tpdocmto = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
-		$dsnomfon = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
+	$nmsolici = trim(substr($aux_dslinha3[1], strpos($aux_dslinha3[1], ":") + 1));
+	$dsagtare = trim(substr($aux_dslinha3[2], strpos($aux_dslinha3[2], ":") + 1));
+	$dsagenci = trim(substr($aux_dslinha3[3], strpos($aux_dslinha3[3], ":") + 1));
+	$tpdocmto = trim(substr($aux_dslinha3[4], strpos($aux_dslinha3[4], ":") + 1));
+	$dsnomfon = trim(substr($aux_dslinha3[5], strpos($aux_dslinha3[5], ":") + 1));
 		
-		if ($tpcaptur == 1){			
-			$cdbarras = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
-			$dslindig = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));			
-		} elseif ($tpcaptur == 2){
-			$dtapurac = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
-			$nrcpfcgc = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
-			$cdtribut = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
-			
-			if ($cdtribut == '6106'){
-				$vlrecbru = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
-				$vlpercen = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
-			} else {
-				$nrrefere = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
-				$dtvencto = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));			
-			}
-			
-			$vlprinci = trim(substr($aux_dslinha3[11], strpos($aux_dslinha3[11], ":") + 1));
-			$vlrmulta = trim(substr($aux_dslinha3[12], strpos($aux_dslinha3[12], ":") + 1));
-			$vlrjuros = trim(substr($aux_dslinha3[13], strpos($aux_dslinha3[13], ":") + 1));
-		    $vltotfat = trim(substr($aux_dslinha3[14], strpos($aux_dslinha3[14], ":") + 1));
+	if ($tpcaptur == 1){			
+		$cdbarras = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
+		$dslindig = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));			
+		$dtvencto = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
+		
+		if ($cdtippro == 17 || $cdtippro == 19) { //DAS
+			$nrdocmto_das = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
+			$dsidepag = trim(substr($aux_dslinha3[11], strpos($aux_dslinha3[11], ":") + 1));
+		} else {
+			$dsidepag = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
 		}
+		
+	} elseif ($tpcaptur == 2){
+		$dtapurac = trim(substr($aux_dslinha3[6], strpos($aux_dslinha3[6], ":") + 1));
+		$nrcpfcgc = trim(substr($aux_dslinha3[7], strpos($aux_dslinha3[7], ":") + 1));
+		$cdtribut = trim(substr($aux_dslinha3[8], strpos($aux_dslinha3[8], ":") + 1));
+		
+		if ($cdtribut == '6106'){
+			$vlrecbru = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
+			$vlpercen = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
+		} else {
+			$nrrefere = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
+			$dtvencto = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
+		}
+		
+		$vlprinci = trim(substr($aux_dslinha3[11], strpos($aux_dslinha3[11], ":") + 1));
+		$vlrmulta = trim(substr($aux_dslinha3[12], strpos($aux_dslinha3[12], ":") + 1));
+		$vlrjuros = trim(substr($aux_dslinha3[13], strpos($aux_dslinha3[13], ":") + 1));
+		$vltotfat = trim(substr($aux_dslinha3[14], strpos($aux_dslinha3[14], ":") + 1));
+		$dsidepag = trim(substr($aux_dslinha3[15], strpos($aux_dslinha3[15], ":") + 1));
+	}
 }
 
 ?>
@@ -261,6 +272,16 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 														<input name="cdbarras" id="cdbarras" type="text" value="<? echo $cdbarras; ?>" />
 														<label for="dslindig"><? echo utf8ToHtml('Linha Digitável:') ?></label>
 														<input name="dslindig" id="dslindig" type="text" value="<? echo $dslindig; ?>" />
+														<label for="dtvencto_drf"><? echo utf8ToHtml('Data de Vencimento:') ?></label>
+														<input name="dtvencto_drf" id="dtvencto_drf" type="text" value="<? echo $dtvencto; ?>" />
+														
+														<?php if ($cdtippro == 17 || $cdtippro == 19) { //DAS ?>
+															<label for="nrdocmto_das"><? echo utf8ToHtml('Nr. Docmto. (DAS):') ?></label>
+															<input name="nrdocmto_das" id="nrdocmto_das" type="text" value="<? echo $nrdocmto_das; ?>" />
+														<?php } ?>
+														
+														<label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>
+														<input name="vltotfat" id="vltotfat" type="text" value="<? echo formataMoeda($vldocmto); ?>" />
 													<?php } elseif ($tpcaptur == 2) { //MANUAL ?> 
 														<label for="dtapurac"><? echo utf8ToHtml('Período de Apuração:') ?></label>
 														<input name="dtapurac" id="dtapurac" type="text" value="<? echo $dtapurac; ?>" />
@@ -271,9 +292,9 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 														
 															<?php if ($cdtribut == '6106') {  ?> 
 																<label for="vlrecbru"><? echo utf8ToHtml('Valor da Receita Bruta:') ?></label>
-																<input name="vlrecbru" id="vlrecbru" type="text" value="<? echo $vlrecbru; ?>" />
+																<input name="vlrecbru" id="vlrecbru" type="text" value="<? echo formataMoeda($vlrecbru); ?>" />
 																<label for="vlpercen"><? echo utf8ToHtml('Percentual:') ?></label>
-																<input name="vlpercen" id="vlpercen" type="text" value="<? echo $vlpercen; ?>" />
+																<input name="vlpercen" id="vlpercen" type="text" value="<? echo formataMoeda($vlpercen); ?>" />
 															<?php } else { ?>
 																<label for="nrrefere"><? echo utf8ToHtml('Número de Referência:') ?></label>
 																<input name="nrrefere" id="nrrefere" type="text" value="<? echo $nrrefere; ?>" />
@@ -282,14 +303,23 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 															<?php } ?>
 															
 														<label for="vlprinci"><? echo utf8ToHtml('Valor Principal:') ?></label>
-														<input name="vlprinci" id="vlprinci" type="text" value="<? echo $vlprinci; ?>" />
+														<input name="vlprinci" id="vlprinci" type="text" value="<? echo formataMoeda($vlprinci); ?>" />
 														<label for="vlrmulta"><? echo utf8ToHtml('Valor Multa:') ?></label>
-														<input name="vlrmulta" id="vlrmulta" type="text" value="<? echo $vlrmulta; ?>" />
+														<input name="vlrmulta" id="vlrmulta" type="text" value="<? echo formataMoeda($vlrmulta); ?>" />
 														<label for="vlrjuros"><? echo utf8ToHtml('Valor Juros:') ?></label>
-														<input name="vlrjuros" id="vlrjuros" type="text" value="<? echo $vlrjuros; ?>" />
+														<input name="vlrjuros" id="vlrjuros" type="text" value="<? echo formataMoeda($vlrjuros); ?>" />
 														<label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>
-														<input name="vltotfat" id="vltotfat" type="text" value="<? echo $vltotfat; ?>" />
+														<input name="vltotfat" id="vltotfat" type="text" value="<? echo formataMoeda($vltotfat); ?>" />
 													<?php } ?>
+													
+													<label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>
+													<input name="dsidepag" id="dsidepag" type="text" value="<? echo $dsidepag ?>" />
+													
+													<label for="dtmvtdrf"><? echo utf8ToHtml('Data Pagamento:') ?></label>
+													<input name="dtmvtdrf" id="dtmvtdrf" type="text" value="<? echo $dtmvtolt ?>" />
+													
+													<label for="hrautdrf"><? echo utf8ToHtml('Hora Pagamento:') ?></label>
+													<input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrautenx ?>" />
 													
 												<?php } ?>
 
