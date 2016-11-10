@@ -6690,7 +6690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                             ,pr_cdcidade     IN crapmun.cdcidbge%TYPE --> Codigo da cidade CETIP/IBGE/CORREIOS/SFN
                             ,pr_dscidade     IN crapmun.dscidade%TYPE --> Nome da cidade
                             ,pr_cdestado     IN crapmun.cdestado%TYPE --> Codigo da UF
-                            ,pr_infiltro     IN PLS_INTEGER --> 1-CETIP / 2-IBGE / 3-CORREIOS / 4-SFN
+                            ,pr_infiltro     IN PLS_INTEGER --> 1-CETIP / 2-IBGE / 3-CORREIOS
                             ,pr_intipnom     IN PLS_INTEGER --> 1-SEM ACENTUACAO / 2-COM ACENTUACAO
                             ,pr_tab_crapmun OUT typ_tab_crapmun --> PLTABLE com os dados
                             ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
@@ -6727,7 +6727,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  WHEN 1 THEN crapmun.cdcidade -- CETIP
                  WHEN 2 THEN crapmun.cdcidbge -- IBGE
                  WHEN 3 THEN crapmun.cdcidcor -- CORREIOS
-                 WHEN 4 THEN crapmun.cdcidsfn -- SFN
                END cdcidade
               ,CASE pr_intipnom
                  WHEN 1 THEN crapmun.dscidade -- SEM ACENTUACAO
@@ -6751,10 +6750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                  crapmun.cdcidbge = DECODE(NVL(pr_cdcidade,0), 0, crapmun.cdcidbge, pr_cdcidade)) OR
 
                 (crapmun.cdcidcor IS NOT NULL AND 3 = pr_infiltro AND -- CORREIOS
-                 crapmun.cdcidcor = DECODE(NVL(pr_cdcidade,0), 0, crapmun.cdcidcor, pr_cdcidade)) OR
-
-                (crapmun.cdcidsfn IS NOT NULL AND 4 = pr_infiltro AND -- SFN
-                 crapmun.cdcidsfn = DECODE(NVL(pr_cdcidade,0), 0, crapmun.cdcidsfn, pr_cdcidade)))
+                 crapmun.cdcidcor = DECODE(NVL(pr_cdcidade,0), 0, crapmun.cdcidcor, pr_cdcidade)))
 
       ORDER BY crapmun.dscidade;
 
