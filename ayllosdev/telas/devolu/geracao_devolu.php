@@ -6,8 +6,8 @@
  * OBJETIVO     : Requisição da tela DEVOLU
  * --------------
  * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
- * 
  * --------------
+ *			      09/11/2016 - Remover validação de permissao nas telas secundares (Lucas Ranghetti #544579)
  */
 ?>
 
@@ -43,10 +43,6 @@
 	$dadosDc  = (isset($_POST['dadosDc']))   ? $_POST['dadosDc']   : '' ;
 
 	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\');';
-
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"D")) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
 
 	// Monta o xml dinâmico de acordo com a operação 
 	$xml = '';

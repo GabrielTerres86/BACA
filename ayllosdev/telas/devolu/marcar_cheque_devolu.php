@@ -5,8 +5,7 @@
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Requisição da tela DEVOLU
  * --------------
- * ALTERAÇÕES   :
- * 
+ * ALTERAÇÕES   : 09/11/2016 - Remover validação de permissao nas telas secundares (Lucas Ranghetti #544579) 
  * --------------
  */
 ?>
@@ -39,11 +38,7 @@
     $vllanmto = (isset($_POST['vllanmto'])) ? $_POST['vllanmto'] : 0  ;
     $flag = (isset($_POST['flag'])) ? $_POST['flag'] : 0  ;
 		
-	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\');';
-	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"D")) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
+	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\');';	
 
 	// Monta o xml dinâmico de acordo com a operação 
 	$xml = '';
