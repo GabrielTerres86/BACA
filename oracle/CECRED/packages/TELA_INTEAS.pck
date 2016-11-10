@@ -118,14 +118,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       Sistema  : Rotinas referentes tela de integração com sistema Easy-Way
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Abril/2016.                   Ultima atualizacao: 12/04/2016
+      Data     : Abril/2016.                   Ultima atualizacao: 20/10/2016
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas referentes tela de integração com sistema Easy-Way
 
-      Alteracoes:
+      Alteracoes: 20/10/2016 - Ajuste nas rotinas para garantir posicionamento 
+                               dos arquivos(inclusao nvl). (Odirlei-AMcom)
       
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
@@ -181,14 +182,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Odirlei Busana(Amcom)
-    Data     : Abril/2016.                   Ultima atualizacao: 13/04/2016
+    Data     : Abril/2016.                   Ultima atualizacao: 10/11/2016
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento responsavel em gerar o arquivo de Cadastro de Cooperados para a Easyway
     
-    Alteração : 
+    Alteração : Alterado para remover os acentos das linhas de exportação desse arquivo,
+	            por solicitação do Mathera (10/11/2016).
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -315,9 +317,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     rw_crapjur cr_crapjur%ROWTYPE;
     
     --> Buscar menor data de admissao do cpf/cnpj
+	/*  Como existem casos que a data de admissao esta maior que a data de demissao,
+      no sistema da Easyway foi adicionado um regra para alterar a data de admissao
+      para o primeiro dia util do mes. Entao como foi trocado o sistema para a
+      geracao da e-financeira, vamos implementar a mesma regra aqui para
+      nao gerarmos informacao divergente.  */
     CURSOR cr_crapass_admiss (pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
-      SELECT to_char(MIN(dtadmiss),'RRRRMMDD') dtadmiss
-        FROM crapass W
+      SELECT to_char(MIN(
+                gene0005.fn_valida_dia_util(pr_cdcooper => ass.cdcooper
+                                           ,pr_dtmvtolt => trunc(nvl(nvl(ass.dtadmiss,ass.dtmvtolt),pr_dtfimger),'MM'))
+             ),'RRRRMMDD') dtadmiss
+        FROM crapass ass
        WHERE nrcpfcgc = pr_nrcpfcgc;
     rw_crapass_admiss cr_crapass_admiss%ROWTYPE;
     
@@ -508,38 +518,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       --> Montar linha conforme layout easyway
       vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)                 ||     --> CPF/CNPJ Cooperado
-                    rpad(pr_nmprimtl,60,' ')                      ||     --> Nome do Contribuinte
-                    rpad(rw_crapenc.endereco,80,' ')              ||     --> Logradouro
-                    rpad(rw_crapenc.nrendere, 8,' ')              ||     --> Número
-                    rpad(rw_crapenc.complend,40,' ')              ||     --> Complemento
-                    rpad(rw_crapenc.nrcepend, 8,' ')              ||     --> CEP
-                    rpad(rw_crapenc.nmbairro,20,' ')              ||     --> Bairro
-                    rpad(rw_crapenc.nmcidade,30,' ')              ||     --> Descrição Cidade
-                    rpad(rw_crapenc.cdufende, 2,' ')              ||     --> UF
+                    rpad(nvl(pr_nmprimtl,' '),60,' ')             ||     --> Nome do Contribuinte
+                    rpad(nvl(rw_crapenc.endereco,' '),80,' ')     ||     --> Logradouro
+                    rpad(nvl(rw_crapenc.nrendere,0), 8,' ')       ||     --> Número
+                    rpad(nvl(rw_crapenc.complend,' '),40,' ')     ||     --> Complemento
+                    rpad(nvl(rw_crapenc.nrcepend,0), 8,' ')       ||     --> CEP
+                    rpad(nvl(rw_crapenc.nmbairro,' '),20,' ')     ||     --> Bairro
+                    rpad(nvl(rw_crapenc.nmcidade,' '),30,' ')     ||     --> Descrição Cidade
+                    rpad(nvl(rw_crapenc.cdufende,' '), 2,' ')     ||     --> UF
                     rpad(nvl(rw_craptfc.nrtelefo,' '),15,' ')     ||     --> Telefone   
-                    lpad(nvl(pr_dtnasctl,' '),8,' ')      ||     --> Data de Nascimento
-                    rpad(nvl(pr_nrinsmun,' '),20,' ')     ||     --> Inscrição Municipal
-                    lpad(nvl(pr_dtadmiss,' '),8,' ')||           --> Data da Inclusão no sistema de origem
-                    lpad(nvl(pr_dtaltera,' '),8,' ')      ||     --> Data última alteração sistema de origem                    
+                    lpad(nvl(pr_dtnasctl,' '),8,' ')              ||     --> Data de Nascimento
+                    rpad(nvl(pr_nrinsmun,' '),20,' ')             ||     --> Inscrição Municipal
+                    lpad(nvl(pr_dtadmiss,' '),8,' ')              ||     --> Data da Inclusão no sistema de origem
+                    lpad(nvl(pr_dtaltera,' '),8,' ')              ||     --> Data última alteração sistema de origem                    
                     'N'   ||               --> Estrangeiro (sem cpf/cnpj) (N - Não é estrangeiro; C - Estrangeiro com CPF;S - Estrangeiro sem CPF)
                     rpad(' ', 3,' ')                              ||     --> Código do País
                     rpad(' ',20,' ')                              ||     --> Numero de Identificação Fiscal (se estrangeiro)
                     rpad(' ', 3,' ')                              ||     --> Natureza da Relação
                     rpad(' ',40,' ')                              ||     --> Descrição do Estado (se estrangeiro)
                     rpad(nvl(rw_crapcem.dsdemail,' '),60,' ')     ||     --> Email
-                    pr_dspessoa                           ||             --> PF/PJ(F - PF; J – PJ)
-                    rpad(nvl(pr_nrinsest,' '),20,' ')     ||             --> Inscrição Estadual
+                    pr_dspessoa                                   ||     --> PF/PJ(F - PF; J – PJ)
+                    rpad(nvl(pr_nrinsest,' '),20,' ')             ||     --> Inscrição Estadual
                     vr_idsitcnt                                   ||     --> Status do Contribuinte
-                    rpad(rw_crapenc.tp_lograd,10,' ')             ||     --> Tipo de Logradouro
-                    nvl(pr_isento_inscr_estadual,' ')     ||             --> Isento de Inscrição Estadual
+                    rpad(nvl(rw_crapenc.tp_lograd,' '),10,' ')    ||     --> Tipo de Logradouro
+                    nvl(pr_isento_inscr_estadual,' ')             ||     --> Isento de Inscrição Estadual
                     lpad(' ',19,' ')                              ||     --> GIIN (Global Intermediary Identification Number)
                     lpad(' ',25,' ')                              ||     --> Numero do Passaporte
                     lpad(' ', 1,' ')                              ||     --> Tipo da Instituição Financeira (FATCA)
                     lpad(' ',10,' ')                              ||     --> Tipo de declarado
                     chr(13)||chr(10);                                    --> quebrar linha
          
-      pc_escreve_clob(vr_dslinha);
-      
+      pc_escreve_clob(gene0007.fn_caract_acento(vr_dslinha,1,'#$&%¹²³ªº°*!?<>/\|',
+                                                             '                   '));
+
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
@@ -689,14 +700,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       --> Montar linha conforme layout easyway
       vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)         ||     --> CPF/CNPJ Cooperado
-                    rpad(pr_nmprimtl,60,' ')              ||     --> Nome do Contribuinte
-                    rpad(pr_endereco,80,' ')              ||     --> Logradouro
-                    rpad(pr_nrendere, 8,' ')              ||     --> Número
-                    rpad(pr_complend,40,' ')              ||     --> Complemento
-                    rpad(pr_nrcepend, 8,' ')              ||     --> CEP
-                    rpad(pr_nmbairro,20,' ')              ||     --> Bairro
-                    rpad(pr_nmcidade,30,' ')              ||     --> Descrição Cidade
-                    rpad(pr_cdufende, 2,' ')              ||     --> UF
+                    rpad(nvl(pr_nmprimtl,' '),60,' ')     ||     --> Nome do Contribuinte
+                    rpad(nvl(pr_endereco,' '),80,' ')     ||     --> Logradouro
+                    rpad(nvl(pr_nrendere,' '), 8,' ')     ||     --> Número
+                    rpad(nvl(pr_complend,' '),40,' ')     ||     --> Complemento
+                    rpad(nvl(pr_nrcepend,' '), 8,' ')     ||     --> CEP
+                    rpad(nvl(pr_nmbairro,' '),20,' ')     ||     --> Bairro
+                    rpad(nvl(pr_nmcidade,' '),30,' ')     ||     --> Descrição Cidade
+                    rpad(nvl(pr_cdufende,' '), 2,' ')     ||     --> UF
                     rpad(' ',15,' ')                      ||     --> Telefone   
                     lpad(nvl(pr_dtnasctl,' '),8,' ')      ||     --> Data de Nascimento
                     rpad(' ',20,' ')                      ||     --> Inscrição Municipal
@@ -711,16 +722,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     pr_dspessoa                           ||     --> PF/PJ(F - PF; J – PJ)
                     rpad(' ',20,' ')                      ||     --> Inscrição Estadual
                     'A'                                   ||     --> Status do Contribuinte
-                    rpad(pr_tplograd,10,' ')              ||     --> Tipo de Logradouro
+                    rpad(nvl(pr_tplograd,' '),10,' ')     ||     --> Tipo de Logradouro
                     ' '                                   ||     --> Isento de Inscrição Estadual
                     lpad(' ',19,' ')                      ||     --> GIIN (Global Intermediary Identification Number)
                     lpad(' ',25,' ')                      ||     --> Numero do Passaporte
                     lpad(' ', 1,' ')                      ||     --> Tipo da Instituição Financeira (FATCA)
                     lpad(' ',10,' ')                      ||     --> Tipo de declarado
                     chr(13)||chr(10);                            --> quebrar linha
-         
-      pc_escreve_clob(vr_dslinha);
     
+      pc_escreve_clob(gene0007.fn_caract_acento(vr_dslinha,1,'#$&%¹²³ªº°*!?<>/\|',
+                                                             '                   '));
     
     EXCEPTION
       WHEN vr_prox_reg THEN
@@ -1186,21 +1197,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     lpad(to_char(pr_dtultmes,'RRRRMMDD')  ||
                          lpad(pr_nrdconta||vr_tpdconta,10,'0'),18,' ') ||     -- Numero documento
                     to_char(pr_dtultmes,'RRRRMMDD')       ||     -- Data da Operação
-                    lpad(pr_tpoperac,40,' ')              ||     -- Código da operação (101-Conta corrente e 199-Aplicação)
+                    lpad(nvl(pr_tpoperac,0),40,' ')     ||     -- Código da operação (101-Conta corrente e 199-Aplicação)
                     lpad(trunc(pr_vloperac*100),'17','0') ||     -- Valor da operação 
-                    pr_indebcre                           ||     -- Sinal da Operação 
+                    nvl(pr_indebcre,' ')                  ||     -- Sinal da Operação 
                     to_char(pr_dtinclus,'YYYYMMDD')       ||     -- Data Inclusão
                     'N'                                   ||     -- Tipo Movimento (N/E) - Sempre N-Normal
                     lpad(' ',6,' ')                       ||     -- Código do dependente 
                     lpad(nvl(to_char(pr_dtdemiss,'RRRRMMDD'),' '),8,' ') ||     -- Data de encerramento da conta
                     lpad(pr_nrdconta||vr_tpdconta,50,' ') ||     -- Numero da conta
-                    lpad(pr_cdagenci,10,' ')              ||     -- Número da agência da conta
+                    lpad(nvl(pr_cdagenci,0),10,' ')       ||     -- Número da agência da conta
                     chr(13)||chr(10);                            -- quebrar linha
        
       pc_escreve_clob(vr_dslinha);
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
+        pr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
     END;    
     
     
@@ -1497,11 +1508,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)         ||     -- CPF/CNPJ Cooperado
                     lpad(' ',4,' ')                       ||     -- Código de rendimento
-                    lpad(pr_tpoperac,8,' ')               ||     -- Código da operação (101-Conta corrente e 199-Aplicação)
+                    lpad(nvl(pr_tpoperac,0),8,' ')        ||     -- Código da operação (101-Conta corrente e 199-Aplicação)
                     to_char(pr_dtultmes,'MM/RRRR')        ||     -- Data da Operação
                     lpad(trunc(pr_vlsldmes*100),'17',' ') ||     -- Valor do saldo mensal
                     lpad(' ',10,' ')                      ||     -- Código dependente da Aplic. Financeira
-                    lpad(pr_cdagenci, 8,' ')              ||     -- Agência da conta
+                    lpad(nvl(pr_cdagenci,0), 8,' ')       ||     -- Agência da conta
                     lpad(pr_nrdconta||vr_tpdconta,12,' ') ||     -- Numero da conta
                     lpad(nvl(to_char(pr_dtdemiss,'RRRRMMDD'),' '),8,' ') ||     -- Data de encerramento da conta
                     lpad(' ',14,' ')                      ||     -- Código do Intermediario
@@ -1510,7 +1521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       pc_escreve_clob(vr_dslinha);
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
+        pr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
     END pc_escreve_linha_layout;    
     
     
@@ -1814,20 +1825,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       vr_dslinha := lpad(pr_cdcooper, 5,' ')              ||     -- Código da empresa
                     fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)         ||     -- CPF/CNPJ titular
-                    lpad(pr_tiporegi,1,' ')               ||     -- Tipo C-Conta Corrente; P-Poupança; O-Outros
-                    lpad(pr_cdagenci,10,' ')              ||     -- Agência da conta
+                    lpad(nvl(pr_tiporegi,0),1,' ')        ||     -- Tipo C-Conta Corrente; P-Poupança; O-Outros
+                    lpad(nvl(pr_cdagenci,0),10,' ')       ||     -- Agência da conta
                     lpad(pr_nrdconta||vr_tpdconta,40,' ') ||     -- Numero da conta
-                    pr_prititul                           ||     -- Primeiro Titular
+                    nvl(pr_prititul,' ')                  ||     -- Primeiro Titular
                     lpad(nvl(to_char(pr_inivigen,'RRRRMMDD'),' '),8,' ') ||     -- Início Vigência
                     lpad(nvl(to_char(pr_fimvigen,'RRRRMMDD'),' '),8,' ') ||     -- Final Vigência
-                    lpad(pr_tpoperac,10,' ')              ||     -- Codigo da operação (101-Conta corrente e 199-Aplicação)
+                    lpad(nvl(pr_tpoperac,0),10,' ')       ||     -- Codigo da operação (101-Conta corrente e 199-Aplicação)
                     'S'                                   ||     -- Gera evento dos demais titulares,  sempre “S”
                     chr(13)||chr(10);                            -- quebrar linha
        
       pc_escreve_clob(vr_dslinha);
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
+        pr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
     END pc_escreve_linha_layout;    
     
     
@@ -2190,13 +2201,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       vr_dslinha := lpad(pr_cdcooper, 5,' ')              ||     -- Código da empresa
                     fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)         ||     -- CPF/CNPJ titular
-                    lpad(pr_tiporegi,1,' ')               ||     -- Tipo C-Conta Corrente; P-Poupança; O-Outros                    
-                    lpad(pr_cdagenci,10,' ')              ||     -- Agência da conta
+                    lpad(nvl(pr_tiporegi,' '),1,' ')      ||     -- Tipo C-Conta Corrente; P-Poupança; O-Outros                    
+                    lpad(nvl(pr_cdagenci,0),10,' ')       ||     -- Agência da conta
                     lpad(pr_nrdconta||vr_tpdconta,40,' ') ||     -- Numero da conta
                     lpad(nvl(to_char(pr_inivigen,'RRRRMMDD'),' '),8,' ') ||     -- Início Vigência
                     lpad(nvl(to_char(pr_inivigen,'RRRRMMDD'),' '),8,' ') ||     -- Início Vigência
                     lpad(nvl(to_char(pr_fimvigen,'RRRRMMDD'),' '),8,' ') ||     -- Final Vigência
-                    pr_tiprelac                           ||     -- Tipo de Relação Declarado
+                    nvl(pr_tiprelac,' ')                  ||     -- Tipo de Relação Declarado
                     fn_nrcpfcgc_easy(pr_nrcpfcgc_ter,
                                      pr_inpessoa_ter)     ||     -- CPF/CNPJ do Procurador, Representante Legal, Intermediário ou Beneficiário Final
                     'S'                                   ||     -- Gera Evento para Terceiro -S-Sim; N-Não (Gerar todos como “S”)
@@ -2206,7 +2217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       pc_escreve_clob(vr_dslinha);
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
+        pr_dscritic := 'Erro ao montar linha para a conta '||pr_nrdconta||': '|| SQLERRM;
     END pc_escreve_linha_layout;    
     
     
