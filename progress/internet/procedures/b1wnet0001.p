@@ -255,6 +255,12 @@
 
 			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 
+               09/11/2016 - Ajuste na correcao realizada pelo Andrey no dia 13/10,
+                            nao fixara em convenio INTERNET, mas utilizara uma logica
+                            semelhante ao que acontece para SERASA, assumindo valor
+                            TRUE se algum dos convenios possuir a opcao de protesto
+                            habilitada. Heitor (Mouts) - Chamado 554656
+
 .............................................................................*/
 
 
@@ -2306,12 +2312,13 @@ PROCEDURE gera-dados:
 	   ,FIRST  crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
 	                         crapcco.nrconven = crapceb.nrconven AND
                              crapcco.cddbanco = 85               AND /*Cecred*/
-							 crapcco.dsorgarq = 'INTERNET' 		 AND /*ORIGEM INTERNET*/
 	                         crapcco.flginter = TRUE NO-LOCK:
+
+    IF aux_flprotes = FALSE THEN
+       aux_flprotes = crapceb.flprotes.
 
 		IF aux_flserasa = FALSE THEN
         ASSIGN aux_nrconven = crapcco.nrconven
-               aux_flprotes = crapceb.flprotes
 			   aux_flserasa = crapceb.flserasa.
 
     END.
