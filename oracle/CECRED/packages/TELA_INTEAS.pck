@@ -189,7 +189,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Frequencia: Sempre que for chamado
     Objetivo  : Procedimento responsavel em gerar o arquivo de Cadastro de Cooperados para a Easyway
     
-    Alteração : 
+    Alteração : Alterado para remover os acentos das linhas de exportação desse arquivo,
+	            por solicitação do Mathera (10/11/2016).
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -316,9 +317,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     rw_crapjur cr_crapjur%ROWTYPE;
     
     --> Buscar menor data de admissao do cpf/cnpj
+	/*  Como existem casos que a data de admissao esta maior que a data de demissao,
+      no sistema da Easyway foi adicionado um regra para alterar a data de admissao
+      para o primeiro dia util do mes. Entao como foi trocado o sistema para a
+      geracao da e-financeira, vamos implementar a mesma regra aqui para
+      nao gerarmos informacao divergente.  */
     CURSOR cr_crapass_admiss (pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
-      SELECT to_char(MIN(dtadmiss),'RRRRMMDD') dtadmiss
-        FROM crapass W
+      SELECT to_char(MIN(
+                gene0005.fn_valida_dia_util(pr_cdcooper => ass.cdcooper
+                                           ,pr_dtmvtolt => trunc(nvl(nvl(ass.dtadmiss,ass.dtmvtolt),pr_dtfimger),'MM'))
+             ),'RRRRMMDD') dtadmiss
+        FROM crapass ass
        WHERE nrcpfcgc = pr_nrcpfcgc;
     rw_crapass_admiss cr_crapass_admiss%ROWTYPE;
     
@@ -512,7 +521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     rpad(nvl(pr_nmprimtl,' '),60,' ')             ||     --> Nome do Contribuinte
                     rpad(nvl(rw_crapenc.endereco,' '),80,' ')     ||     --> Logradouro
                     rpad(nvl(rw_crapenc.nrendere,0), 8,' ')       ||     --> Número
-                    rpad(gene0007.fn_caract_acento(rw_crapenc.complend),40,' ') ||     --> Complemento
+                    rpad(nvl(rw_crapenc.complend,' '),40,' ')     ||     --> Complemento
                     rpad(nvl(rw_crapenc.nrcepend,0), 8,' ')       ||     --> CEP
                     rpad(nvl(rw_crapenc.nmbairro,' '),20,' ')     ||     --> Bairro
                     rpad(nvl(rw_crapenc.nmcidade,' '),30,' ')     ||     --> Descrição Cidade
@@ -539,8 +548,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     lpad(' ',10,' ')                              ||     --> Tipo de declarado
                     chr(13)||chr(10);                                    --> quebrar linha
          
-      pc_escreve_clob(vr_dslinha);
-      
+      pc_escreve_clob(gene0007.fn_caract_acento(vr_dslinha,1,'#$&%¹²³ªº°*!?<>/\|',
+                                                             '                   '));
+
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_dscritic := vr_dscritic;
@@ -720,8 +730,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     lpad(' ',10,' ')                      ||     --> Tipo de declarado
                     chr(13)||chr(10);                            --> quebrar linha
           
-      pc_escreve_clob(vr_dslinha);
-    
+      pc_escreve_clob(gene0007.fn_caract_acento(vr_dslinha,1,'#$&%¹²³ªº°*!?<>/\|',
+                                                             '                   '));
     
     EXCEPTION
       WHEN vr_prox_reg THEN
