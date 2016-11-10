@@ -299,6 +299,9 @@
 
 	            25/10/2016 - Inserido LICENCAS SOCIO AMBIENTAIS no digidoc 
 				             Melhoria 310 (Tiago/Thiago).
+
+			    11/11/2016 - Alterado titulo relatorio de Lic. Soc.Ambiental
+				             para Lic. Soc.Ambientais M310(Tiago/Thiago).
 .............................................................................*/
 
 
@@ -1242,7 +1245,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
          tt-contr_ndigi_cadastro.tpdocctc  FORMAT "x(14)"      COLUMN-LABEL "  Cta. CNPJ   "
          tt-contr_ndigi_cadastro.tpdocidp  FORMAT "x(15)"      COLUMN-LABEL "Doc. Ident - PJ"
          tt-contr_ndigi_cadastro.tpdocdfi  FORMAT "x(14)"      COLUMN-LABEL " Demons. Finan"
-		 tt-contr_ndigi_cadastro.tpdoclic  FORMAT "x(18)"      COLUMN-LABEL "Lic. Soc.Ambiental"
+		 tt-contr_ndigi_cadastro.tpdoclic  FORMAT "x(18)"      COLUMN-LABEL "Lic. Soc.Ambientais"
          tt-contr_ndigi_cadastro.idseqttl  FORMAT "99"         COLUMN-LABEL "   Titular   "
          tt-contr_ndigi_cadastro.dtmvtolt  FORMAT "99/99/9999" COLUMN-LABEL "    Data    "
          WITH DOWN WIDTH 234 CENTERED FRAME f_contr_2.
