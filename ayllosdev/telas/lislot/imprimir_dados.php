@@ -6,7 +6,9 @@
  * OBJETIVO     : Realiza as impressões da tela LISLOT.	
  * --------------
  * ALTERAÇÕES   : 09/05/2016 - Ajustado os parametros para enviar e receber pelo metodo GET
-							   para ajustar problema de permissão solicitado no chamado 447548. (Kelvin)
+ *							   para ajustar problema de permissão solicitado no chamado 447548. (Kelvin)
+ *
+ *				  11/11/2016 - Ajustes referente ao chamado 492589. (Kelvin)
  * -------------- 
  */
 ?>
@@ -31,17 +33,17 @@
 	
 	// Recebe as variaveis
 	$dsiduser 	= session_id();	
-	$cddopcao	= isset($_POST['cddopcao']) ? $_POST['cddopcao'] : $_GET['cddopcao'];
-	$tpdopcao	= isset($_POST['tpdopcao']) ? $_POST['tpdopcao'] : $_GET['tpdopcao'];
-	$nrdconta   = isset($_POST['nrdconta']) ? str_ireplace($c, '',$_POST['nrdconta']) : str_ireplace($c, '',$_GET['nrdconta']);	
-	$dtinicio   = isset($_POST['dtinicio']) ? $_POST['dtinicio'] : $_GET['dtinicio'];$_POST['dtinicio'];
-	$dttermin   = isset($_POST['dttermin']) ? $_POST['dttermin'] : $_GET['dttermin'];$_POST['dttermin'];
-	$cdagenci	= isset($_POST['cdagenci']) ? $_POST['cdagenci'] : $_GET['cdagenci'];$_POST['cdagenci']; 
-	$nrdocmto	= isset($_POST['nrdocmto']) ? $_POST['nrdocmto'] : $_GET['nrdocmto'];$_POST['nrdocmto']; 
-	$vldocmto	= isset($_POST['vldocmto']) ? $_POST['vldocmto'] : $_GET['vldocmto'];$_POST['vldocmto']; 
-	$nmdopcao	= isset($_POST['nmdopcao']) ? $_POST['nmdopcao'] : $_GET['nmdopcao'];$_POST['nmdopcao']; 
-	$cdhistor	= isset($_POST['cdhistor']) ? $_POST['cdhistor'] : $_GET['cdhistor'];$_POST['cdhistor'];
-	$dsiduser 	= isset($_POST['dsiduser']) ? $_POST['dsiduser'] : $_GET['dsiduser'];$_POST['dsiduser'];
+	$cddopcao	= isset($_POST['cddopcao']) ? $_POST['cddopcao'] : '';
+	$tpdopcao	= isset($_POST['tpdopcao']) ? $_POST['tpdopcao'] : 0;
+	$nrdconta   = isset($_POST['nrdconta']) ? str_ireplace($c, '',$_POST['nrdconta']) : 0;	
+	$dtinicio   = isset($_POST['dtinicio']) ? $_POST['dtinicio'] : '';
+	$dttermin   = isset($_POST['dttermin']) ? $_POST['dttermin'] : '';
+	$cdagenci	= isset($_POST['cdagenci']) ? $_POST['cdagenci'] : 0; 
+	$nrdocmto	= isset($_POST['nrdocmto']) ? $_POST['nrdocmto'] : ''; 
+	$vldocmto	= isset($_POST['vldocmto']) ? $_POST['vldocmto'] : 0; 
+	$nmdopcao	= isset($_POST['nmdopcao']) ? $_POST['nmdopcao'] : ''; 
+	$cdhistor	= isset($_POST['cdhistor']) ? $_POST['cdhistor'] : 0;
+	$dsiduser 	= isset($_POST['dsiduser']) ? $_POST['dsiduser'] : '';
 	
 		
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
