@@ -300,6 +300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       -- Incluir nome do modulo logado
       GENE0001.pc_informa_acesso(pr_module => 'pc_consulta_fluxo_caixa'
                                 ,pr_action => NULL);
+
       -- Extrai os dados vindos do XML
       GENE0004.pc_extrai_dados(pr_xml => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -314,6 +315,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       -- Data de referencia
       vr_dtrefini := TO_DATE(pr_dtrefini,'DD/MM/RRRR');
       vr_dtreffim := TO_DATE(pr_dtreffim,'DD/MM/RRRR');
+
+      -- Se NAO for dia util
+      IF vr_dtrefini <> GENE0005.fn_valida_dia_util
+                                (pr_cdcooper => vr_cdcooper
+                                ,pr_dtmvtolt => vr_dtrefini) THEN
+        vr_cdcritic := 13;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Se NAO for dia util
+      IF vr_dtreffim <> GENE0005.fn_valida_dia_util
+                                (pr_cdcooper => vr_cdcooper
+                                ,pr_dtmvtolt => vr_dtreffim) THEN
+        vr_cdcritic := 13;
+        RAISE vr_exc_saida;
+      END IF;
 
       -- Tipo de movimento
       IF pr_tpdmovto = 'E' THEN -- Entrada
@@ -1551,9 +1568,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
 
     EXCEPTION
       WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Erro>' || vr_dscritic || '</Erro></Root>');
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
 
       WHEN OTHERS THEN
@@ -1608,7 +1633,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
               ,crapcop cop
          WHERE cop.cdcooper <> 3
            AND cop.cdcooper = ffc.cdcooper
-           AND ffc.dtmvtolt = pr_dtmvtolt;
+           AND ffc.dtmvtolt = pr_dtmvtolt
+      ORDER BY cop.cdcooper;
 
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1617,13 +1643,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
 
+      -- Variaveis de log
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
       -- Variaveis
       vr_contador INTEGER := 0;
+      vr_dtrefere DATE;
 
     BEGIN
       -- Incluir nome do modulo logado
       GENE0001.pc_informa_acesso(pr_module => 'pc_consulta_movimentacao'
                                 ,pr_action => NULL);
+
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+
+      vr_dtrefere := TO_DATE(pr_dtrefere,'DD/MM/RRRR');
+
+      -- Se NAO for dia util
+      IF vr_dtrefere <> GENE0005.fn_valida_dia_util
+                                (pr_cdcooper => vr_cdcooper
+                                ,pr_dtmvtolt => vr_dtrefere) THEN
+        vr_cdcritic := 13;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Se data de referencia for maior que data atual
+      IF vr_dtrefere > rw_crapdat.dtmvtolt THEN
+        vr_cdcritic := 13;
+        RAISE vr_exc_saida;
+      END IF;
 
       -- Criar cabecalho do XML
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -1636,7 +1704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
                             ,pr_des_erro => vr_dscritic);
 
       -- Listagem de movimentos
-      FOR rw_movimento IN cr_movimento(pr_dtmvtolt => TO_DATE(pr_dtrefere,'DD/MM/RRRR')) LOOP
+      FOR rw_movimento IN cr_movimento(pr_dtmvtolt => vr_dtrefere) LOOP
 
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
@@ -1670,7 +1738,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
                               ,pr_tag_pai  => 'mvto'
                               ,pr_posicao  => vr_contador
                               ,pr_tag_nova => 'dsmovime'
-                              ,pr_tag_cont => rw_movimento.dsmovime
+                              ,pr_tag_cont => (CASE WHEN rw_movimento.vlmovime = '0,00' THEN '-' ELSE rw_movimento.dsmovime END)
                               ,pr_des_erro => vr_dscritic);
 
         vr_contador := vr_contador + 1;
@@ -1680,7 +1748,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       WHEN vr_exc_saida THEN
         IF vr_cdcritic <> 0 THEN
           pr_cdcritic := vr_cdcritic;
-          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         ELSE
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
@@ -1871,148 +1939,145 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       IF vr_dtrefere <> GENE0005.fn_valida_dia_util
                                 (pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => vr_dtrefere) THEN
-        vr_vlcbdonr := 0;
-        vr_vlcbdosr := 0;
-        vr_vlpreliq := 0;
-        vr_vlcmpnot := 0;
-        vr_vlcmpdiu := 0;
-      ELSE
-        vr_dtliquid := GENE0005.fn_valida_dia_util
-                               (pr_cdcooper => pr_cdcooper
-                               ,pr_dtmvtolt => vr_dtrefere - 1
-                               ,pr_tipo     => 'A');
-        vr_dtliqui2 := GENE0005.fn_valida_dia_util
-                               (pr_cdcooper => pr_cdcooper
-                               ,pr_dtmvtolt => vr_dtliquid - 1
-                               ,pr_tipo     => 'A');
-
-        -- Busca as informacoes da cooperativa
-        FOR rw_crapcop IN cr_crapcop(pr_cdcooper => pr_cdcooper) LOOP
-
-          -- Buscaremos os parametros da CRAPTAB valores boleto
-          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
-                                                   ,pr_nmsistem => 'CRED'
-                                                   ,pr_tptabela => 'GENERI'
-                                                   ,pr_cdempres => 0
-                                                   ,pr_cdacesso => 'VALORESVLB'
-                                                   ,pr_tpregist => 0);
-          -- Se encontrar
-          IF vr_dstextab IS NOT NULL THEN
-            vr_valorvlb := GENE0002.fn_busca_entrada(1,vr_dstextab,';');
-          ELSE
-            vr_valorvlb := 5000; 
-          END IF;
-
-          -- Buscaremos os parâmetros da CRAPTAB valores cheques
-          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
-                                                   ,pr_nmsistem => 'CRED'
-                                                   ,pr_tptabela => 'USUARI'
-                                                   ,pr_cdempres => 11
-                                                   ,pr_cdacesso => 'MAIORESCHQ'
-                                                   ,pr_tpregist => 1);
-          -- Se encontrar
-          IF vr_dstextab IS NOT NULL THEN
-            vr_valorchq := SUBSTR(vr_dstextab,1,15);
-          ELSE
-            vr_valorchq := 300; 
-          END IF;
-
-          -- COMPE NOTURNA - DEVOLU
-          FOR rw_craplcm IN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtmvtolt => vr_dtliquid) LOOP
-            IF rw_craplcm.cdbanchq = 85  AND
-               rw_craplcm.dsidenti = '1' THEN -- Noturna
-               vr_vlchqnot := vr_vlchqnot + rw_craplcm.vllanmto;
-            END IF;
-          END LOOP;
-
-          -- COMPE DIURNA - DEVOLU
-          FOR rw_craplcm IN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtmvtolt => vr_dtrefere) LOOP
-            IF rw_craplcm.cdbanchq = 85  AND
-               rw_craplcm.dsidenti = '2' THEN -- Diurna
-               vr_vlchqdia := vr_vlchqdia + rw_craplcm.vllanmto;
-            END IF;
-          END LOOP;
-
-          -- Busca agencia
-          OPEN cr_crapage(pr_cdcooper => rw_crapcop.cdcooper);
-          FETCH cr_crapage INTO rw_crapage;
-          -- Alimenta a booleana se achou ou nao
-          vr_blnfound := cr_crapage%FOUND;
-          -- Fecha cursor
-          CLOSE cr_crapage;
-          -- Se encontrou
-          IF vr_blnfound THEN
-
-            -- COMPE 16 (D - 1)
-            FOR rw_crapchd IN cr_crapchd(pr_cdcooper => rw_crapcop.cdcooper
-                                        ,pr_dtmvtolt => vr_dtliquid) LOOP
-              -- Se for DIFERENTE => NACIONAL (DESCONSIDERA)
-              IF rw_crapage.cdcomchq <> rw_crapchd.cdcmpchq THEN
-                CONTINUE;
-              END IF;
-              
-              IF rw_crapchd.vlcheque >= vr_valorchq THEN
-                vr_vlchqnot := vr_vlchqnot + rw_crapchd.vlcheque;
-              ELSE
-                vr_vlchqdia := vr_vlchqdia + rw_crapchd.vlcheque;
-              END IF;
-            END LOOP;
-
-            -- COMPE NACIONAL (D - 2)
-            FOR rw_crapchd IN cr_crapchd(pr_cdcooper => rw_crapcop.cdcooper
-                                        ,pr_dtmvtolt => vr_dtliqui2) LOOP
-              -- Se for IGUAL => COMPE16 (DESCONSIDERA)
-              IF rw_crapage.cdcomchq = rw_crapchd.cdcmpchq THEN
-                CONTINUE;
-              END IF;
-              
-              IF rw_crapchd.vlcheque >= vr_valorchq THEN
-                vr_vlchqnot := vr_vlchqnot + rw_crapchd.vlcheque;
-              ELSE
-                vr_vlchqdia := vr_vlchqdia + rw_crapchd.vlcheque;
-              END IF;
-            END LOOP;
-
-          END IF;
-
-          -- Busca tranferencia de valores
-          FOR rw_craptvl IN cr_craptvl(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtmvtolt => vr_dtliquid) LOOP
-            IF rw_craptvl.vldocrcb >= vr_valorvlb THEN
-              vr_vlcobbil := vr_vlcobbil + rw_craptvl.vldocrcb;
-            ELSE
-              vr_vlcobmlt := vr_vlcobmlt + rw_craptvl.vldocrcb;
-            END IF;
-          END LOOP;
-
-          -- Busca titulos acolhidos
-          FOR rw_craptit IN cr_craptit(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtdpagto => vr_dtliquid) LOOP
-            IF rw_craptit.vldpagto >= vr_valorvlb THEN
-              vr_vlcobbil := vr_vlcobbil + rw_craptit.vldpagto;
-            ELSE
-              vr_vlcobmlt := vr_vlcobmlt + rw_craptit.vldpagto;
-            END IF;
-          END LOOP;
-
-          -- Busca informacoes da movimentacao
-          OPEN cr_crapffm(pr_cdcooper => rw_crapcop.cdcooper
-                         ,pr_dtmvtolt => vr_dtliquid);
-          FETCH cr_crapffm INTO rw_crapffm;
-          CLOSE cr_crapffm;
-          -- Soma dos DOC e Titulos
-          vr_vldoctit := vr_vldoctit + NVL(rw_crapffm.vldoctit,0);
-
-        END LOOP; -- cr_crapcop
-
-        vr_vlcbdonr := vr_vlcobbil + vr_vlcobmlt;
-        vr_vlcbdosr := vr_vldoctit;
-        vr_vlpreliq := vr_vldoctit - vr_vlcbdonr;
-        vr_vlcmpnot := vr_vlchqnot;
-        vr_vlcmpdiu := vr_vlchqdia;
+        vr_cdcritic := 13;
+        RAISE vr_exc_saida;
       END IF;
+
+      vr_dtliquid := GENE0005.fn_valida_dia_util
+                             (pr_cdcooper => pr_cdcooper
+                             ,pr_dtmvtolt => vr_dtrefere - 1
+                             ,pr_tipo     => 'A');
+      vr_dtliqui2 := GENE0005.fn_valida_dia_util
+                             (pr_cdcooper => pr_cdcooper
+                             ,pr_dtmvtolt => vr_dtliquid - 1
+                             ,pr_tipo     => 'A');
+
+      -- Busca as informacoes da cooperativa
+      FOR rw_crapcop IN cr_crapcop(pr_cdcooper => pr_cdcooper) LOOP
+
+        -- Buscaremos os parametros da CRAPTAB valores boleto
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'GENERI'
+                                                 ,pr_cdempres => 0
+                                                 ,pr_cdacesso => 'VALORESVLB'
+                                                 ,pr_tpregist => 0);
+        -- Se encontrar
+        IF vr_dstextab IS NOT NULL THEN
+          vr_valorvlb := GENE0002.fn_busca_entrada(1,vr_dstextab,';');
+        ELSE
+          vr_valorvlb := 5000; 
+        END IF;
+
+        -- Buscaremos os parâmetros da CRAPTAB valores cheques
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'USUARI'
+                                                 ,pr_cdempres => 11
+                                                 ,pr_cdacesso => 'MAIORESCHQ'
+                                                 ,pr_tpregist => 1);
+        -- Se encontrar
+        IF vr_dstextab IS NOT NULL THEN
+          vr_valorchq := SUBSTR(vr_dstextab,1,15);
+        ELSE
+          vr_valorchq := 300; 
+        END IF;
+
+        -- COMPE NOTURNA - DEVOLU
+        FOR rw_craplcm IN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
+                                    ,pr_dtmvtolt => vr_dtliquid) LOOP
+          IF rw_craplcm.cdbanchq = 85  AND
+             rw_craplcm.dsidenti = '1' THEN -- Noturna
+             vr_vlchqnot := vr_vlchqnot + rw_craplcm.vllanmto;
+          END IF;
+        END LOOP;
+
+        -- COMPE DIURNA - DEVOLU
+        FOR rw_craplcm IN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
+                                    ,pr_dtmvtolt => vr_dtrefere) LOOP
+          IF rw_craplcm.cdbanchq = 85  AND
+             rw_craplcm.dsidenti = '2' THEN -- Diurna
+             vr_vlchqdia := vr_vlchqdia + rw_craplcm.vllanmto;
+          END IF;
+        END LOOP;
+
+        -- Busca agencia
+        OPEN cr_crapage(pr_cdcooper => rw_crapcop.cdcooper);
+        FETCH cr_crapage INTO rw_crapage;
+        -- Alimenta a booleana se achou ou nao
+        vr_blnfound := cr_crapage%FOUND;
+        -- Fecha cursor
+        CLOSE cr_crapage;
+        -- Se encontrou
+        IF vr_blnfound THEN
+
+          -- COMPE 16 (D - 1)
+          FOR rw_crapchd IN cr_crapchd(pr_cdcooper => rw_crapcop.cdcooper
+                                      ,pr_dtmvtolt => vr_dtliquid) LOOP
+            -- Se for DIFERENTE => NACIONAL (DESCONSIDERA)
+            IF rw_crapage.cdcomchq <> rw_crapchd.cdcmpchq THEN
+              CONTINUE;
+            END IF;
+              
+            IF rw_crapchd.vlcheque >= vr_valorchq THEN
+              vr_vlchqnot := vr_vlchqnot + rw_crapchd.vlcheque;
+            ELSE
+              vr_vlchqdia := vr_vlchqdia + rw_crapchd.vlcheque;
+            END IF;
+          END LOOP;
+
+          -- COMPE NACIONAL (D - 2)
+          FOR rw_crapchd IN cr_crapchd(pr_cdcooper => rw_crapcop.cdcooper
+                                      ,pr_dtmvtolt => vr_dtliqui2) LOOP
+            -- Se for IGUAL => COMPE16 (DESCONSIDERA)
+            IF rw_crapage.cdcomchq = rw_crapchd.cdcmpchq THEN
+              CONTINUE;
+            END IF;
+              
+            IF rw_crapchd.vlcheque >= vr_valorchq THEN
+              vr_vlchqnot := vr_vlchqnot + rw_crapchd.vlcheque;
+            ELSE
+              vr_vlchqdia := vr_vlchqdia + rw_crapchd.vlcheque;
+            END IF;
+          END LOOP;
+
+        END IF;
+
+        -- Busca tranferencia de valores
+        FOR rw_craptvl IN cr_craptvl(pr_cdcooper => rw_crapcop.cdcooper
+                                    ,pr_dtmvtolt => vr_dtliquid) LOOP
+          IF rw_craptvl.vldocrcb >= vr_valorvlb THEN
+            vr_vlcobbil := vr_vlcobbil + rw_craptvl.vldocrcb;
+          ELSE
+            vr_vlcobmlt := vr_vlcobmlt + rw_craptvl.vldocrcb;
+          END IF;
+        END LOOP;
+
+        -- Busca titulos acolhidos
+        FOR rw_craptit IN cr_craptit(pr_cdcooper => rw_crapcop.cdcooper
+                                    ,pr_dtdpagto => vr_dtliquid) LOOP
+          IF rw_craptit.vldpagto >= vr_valorvlb THEN
+            vr_vlcobbil := vr_vlcobbil + rw_craptit.vldpagto;
+          ELSE
+            vr_vlcobmlt := vr_vlcobmlt + rw_craptit.vldpagto;
+          END IF;
+        END LOOP;
+
+        -- Busca informacoes da movimentacao
+        OPEN cr_crapffm(pr_cdcooper => rw_crapcop.cdcooper
+                       ,pr_dtmvtolt => vr_dtliquid);
+        FETCH cr_crapffm INTO rw_crapffm;
+        CLOSE cr_crapffm;
+        -- Soma dos DOC e Titulos
+        vr_vldoctit := vr_vldoctit + NVL(rw_crapffm.vldoctit,0);
+
+      END LOOP; -- cr_crapcop
+
+      vr_vlcbdonr := vr_vlcobbil + vr_vlcobmlt;
+      vr_vlcbdosr := vr_vldoctit;
+      vr_vlpreliq := vr_vldoctit - vr_vlcbdonr;
+      vr_vlcmpnot := vr_vlchqnot;
+      vr_vlcmpdiu := vr_vlchqdia;
 
       -- Criar cabecalho do XML
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -2063,7 +2128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       WHEN vr_exc_saida THEN
         IF vr_cdcritic <> 0 THEN
           pr_cdcritic := vr_cdcritic;
-          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         ELSE
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
@@ -2181,6 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       -- Incluir nome do modulo logado
       GENE0001.pc_informa_acesso(pr_module => 'pc_consulta_fluxo_dia'
                                 ,pr_action => NULL);
+
       -- Extrai os dados vindos do XML
       GENE0004.pc_extrai_dados(pr_xml => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -2198,6 +2264,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       CLOSE BTCH0001.cr_crapdat;
 
       vr_dtrefere := TO_DATE(pr_dtrefere,'DD/MM/RRRR');
+
+      -- Se NAO for dia util
+      IF vr_dtrefere <> GENE0005.fn_valida_dia_util
+                                (pr_cdcooper => pr_cdcooper
+                                ,pr_dtmvtolt => vr_dtrefere) THEN
+        vr_cdcritic := 13;
+        RAISE vr_exc_saida;
+      END IF;
 
       -- Se data de referencia for maior que data atual
       IF vr_dtrefere > rw_crapdat.dtmvtolt THEN
@@ -2423,7 +2497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       WHEN vr_exc_saida THEN
         IF vr_cdcritic <> 0 THEN
           pr_cdcritic := vr_cdcritic;
-          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         ELSE
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;

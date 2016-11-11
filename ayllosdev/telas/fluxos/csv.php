@@ -39,7 +39,11 @@
         if ($msgErro == '') {
             $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
         }
-        exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+        echo "<script>
+              alert('" . $msgErro . "');
+              window.close();
+              </script>";
+        exit;
     }
 
     $registros = $xmlObject->roottag->tags[0]->tags[0]->tags;
