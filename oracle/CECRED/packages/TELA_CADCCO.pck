@@ -1478,14 +1478,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Altera cadastro de parametro de cobranca.
     
-    Alterações : 
+    Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
+                              de erro, para que seja exibido o erro correto no Ayllos WEB
+                              (Douglas - Chamado 550711)
     -------------------------------------------------------------------------------------------------------------*/ 
   
     --Busca os parametros de cobranca
@@ -2163,7 +2165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                    
       -- Erro
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
+      pr_dscritic:= replace(replace(vr_dscritic,'"',''),'''','');
       pr_nmdcampo := vr_nmdcampo;
               
       -- Existe para satisfazer exigência da interface. 
@@ -2176,7 +2178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_alteracao --> '|| SQLERRM;
+      pr_dscritic:= replace(replace('Erro na pc_alteracao --> '|| SQLERRM,'"',''),'''','');
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2204,14 +2206,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Exclui cadastro de parametro de cobranca.
     
-    Alterações : 
+    Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
+                              de erro, para que seja exibido o erro correto no Ayllos WEB
+                              (Douglas - Chamado 550711)
     -------------------------------------------------------------------------------------------------------------*/ 
     
     --Busca os parametros de cobranca
@@ -2380,7 +2384,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       
       -- Erro
       pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
+      pr_dscritic:= replace(replace(vr_dscritic,'"',''),'''','');
+
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2394,7 +2399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
            
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_exclusao --> '|| SQLERRM;
+      pr_dscritic:= replace(replace('Erro na pc_exclusao --> '|| SQLERRM,'"',''),'''','');
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2451,14 +2456,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Inclui cadastro de parametro de cobranca.
     
-    Alterações : 
+    Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
+                              de erro, para que seja exibido o erro correto no Ayllos WEB
+                              (Douglas - Chamado 550711)
     -------------------------------------------------------------------------------------------------------------*/ 
         
     --Cursor para encontrar a cooperativa
@@ -2617,17 +2624,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                          ,crapcco.cdcooper
                          ,crapcco.flgregis
                          ,crapcco.flginter
-	 											 ,crapcco.flprotes
-												 ,crapcco.flserasa
-												 ,crapcco.qtdfloat
-												 ,crapcco.qtfltate
-												 ,crapcco.qtdecini
-												 ,crapcco.qtdecate
-												 ,crapcco.fldctman
-												 ,crapcco.perdctmx
-												 ,crapcco.flgapvco
-												 ,crapcco.flrecipr
-												 ,crapcco.idprmrec)
+                         ,crapcco.flprotes
+                         ,crapcco.flserasa
+                         ,crapcco.qtdfloat
+                         ,crapcco.qtfltate
+                         ,crapcco.qtdecini
+                         ,crapcco.qtdecate
+                         ,crapcco.fldctman
+                         ,crapcco.perdctmx
+                         ,crapcco.flgapvco
+                         ,crapcco.flrecipr
+                         ,crapcco.idprmrec)
                   VALUES(pr_nrconven
                         ,pr_cddbanco
                         ,vr_nmresbcc
@@ -2651,7 +2658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,vr_cdcooper
                         ,pr_flgregis
                         ,decode(pr_dsorgarq,'INTERNET',1,'PROTESTO',1,'IMPRESSO PELO SOFTWARE',1,0) 
-												,pr_flprotes
+                        ,pr_flprotes
                         ,pr_flserasa
                         ,pr_qtdfloat
                         ,pr_qtfltate
@@ -2661,7 +2668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_perdctmx
                         ,pr_flgapvco
                         ,pr_flrecipr
-												,pr_idprmrec);
+                        ,NVL(TRIM(pr_idprmrec),0));
                           
     EXCEPTION
       WHEN OTHERS THEN  
@@ -2952,7 +2959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       
       -- Erro
       pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
+      pr_dscritic:= replace(replace(vr_dscritic,'"',''),'''','');
       pr_nmdcampo:= vr_nmdcampo;
         
       -- Existe para satisfazer exigência da interface. 
@@ -2967,7 +2974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
            
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_inclusao --> '|| SQLERRM;
+      pr_dscritic:= replace(replace('Erro na pc_inclusao --> '|| SQLERRM,'"',''),'''','');
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||

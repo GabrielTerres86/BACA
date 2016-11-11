@@ -18,16 +18,18 @@ create or replace package cecred.PCAP0001 is
 
                 18/12/2013 - Ajustes ref. as alterações citadas acima. (Edison-AMcom)
 
-        03/03/2016 - Ajustes ref. as alterações de layout do procapcred
-                     (Guilherme F. Gielow - Chamado 400291)
+                03/03/2016 - Ajustes ref. as alterações de layout do procapcred
+                             (Guilherme F. Gielow - Chamado 400291)
 
         03/05/2016 - Ajustada geracao do arquivo, na posicao 258 do arquivo tipo
-                     5 deve ser enviada o indicador S ao inves de um espaco em branco
-               (Heitor - RKAM)
+                             5 deve ser enviada o indicador S ao inves de um espaco em branco
+                             (Heitor - RKAM)
 
                 15/07/2016 - Ajustada geracao do arquivo, na posicao 551 do registro tipo
                              5 deve ser enviado "08000" (80%), conforme circular vigente do BRDE
                              Chamado 485355 (Heitor - RKAM)
+
+				21/10/2016 - M172 - Ajustes em campos de tipo telefone (Ricardo Linhares).
 
   ............................................................................ */
 
@@ -1011,7 +1013,7 @@ create or replace package body cecred.PCAP0001 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : PCAP
   --  Autor    : Jorge I. Hamaguchi
-  --  Data     : Maio/2013                             Ultima alteracao: 18/11/2014
+  --  Data     : Maio/2013                             Ultima alteracao: 13/10/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1021,7 +1023,9 @@ create or replace package body cecred.PCAP0001 is
   --  Alterações: 18/11/2014 - Conversão Progress --> Oracle PLSQL (Odirlei - AMcom)
   --
   --              26/02/2016 - Ajustes no layout do arquivo ao BRDE. (Jorge/Gielow) - SD 400291
-  --
+  --              
+  --              13/10/2016 - M172 - Ajustes devido ao novo digito em celular.
+                               (Ricardo Linhares)
   ---------------------------------------------------------------------------------------------------------------*/
     --------------> TempTable <---------------
     vr_tab_avalistas typ_tab_avalistas;
@@ -1217,9 +1221,8 @@ create or replace package body cecred.PCAP0001 is
        WHERE craptfc.cdcooper = pr_cdcooper
          AND craptfc.nrdconta = pr_nrdconta
          AND craptfc.idseqttl = pr_idseqttl
-       -- ordernar por tipo de telefone para pegar na ordem
-       -- 1-Resid, 2-Cel, 3-Comer e 4-Contato
-       ORDER BY craptfc.tptelefo,craptfc.cdseqtfc;
+         AND craptfc.tptelefo <> 2
+   ORDER BY craptfc.tptelefo, craptfc.cdseqtfc;
     rw_craptfc cr_craptfc%rowtype;
 
 
@@ -1416,7 +1419,7 @@ create or replace package body cecred.PCAP0001 is
         vr_inpessoa := 1;
         vr_ctrcapit := ' ';
         vr_cdetnia  := '9';
-        
+
         -- Buscar inf. do titular
         OPEN cr_crapttl(pr_cdcooper => pr_cdcooper,
                         pr_nrdconta => rw_crapipc.nrdconta);
@@ -1480,9 +1483,11 @@ create or replace package body cecred.PCAP0001 is
           --quando encontrar
           IF cr_craptfc%FOUND THEN
             CLOSE cr_craptfc;
-            vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
-            vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
-          ELSE
+            IF(LENGTH(rw_craptfc.nrtelefo) < 9) THEN
+               vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
+               vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
+             END IF;
+		  ELSE
             CLOSE cr_craptfc;
           END IF;
 
@@ -1665,8 +1670,10 @@ create or replace package body cecred.PCAP0001 is
           --quando encontrar
           IF cr_craptfc%FOUND THEN
             CLOSE cr_craptfc;
-            vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
-            vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
+			IF(LENGTH(rw_craptfc.nrtelefo) < 9) THEN
+			  vr_tab_brde(vr_idxbrde).nrdddtfc := rw_craptfc.nrdddtfc;
+              vr_tab_brde(vr_idxbrde).nrtelefo := rw_craptfc.nrtelefo;
+			END IF;
           ELSE
             CLOSE cr_craptfc;
           END IF;
@@ -1835,7 +1842,7 @@ create or replace package body cecred.PCAP0001 is
                       TO_CHAR(rw_crapipc.cdgenben,'fm000')                  || --Gênero do beneficiário
                       TO_CHAR(rw_crapipc.cdporben,'fm00')                   || --Porte do beneficiário
                       TO_CHAR(rw_crapipc.cdsetben,'fm0000000')              || --Setor de atividade do beneficiário
-                      LPAD(' ',3,' ')                                       || --Código do banco do beneficiário 
+                      LPAD(' ',3,' ')                                       || --Código do banco do beneficiário
                       LPAD(' ',6,' ')                                       || --Código da agência bancária do beneficiário
                       LPAD(' ',15,' ')                                      || --Código da conta corrente do beneficiário
                       LPAD(' ',8,' ')                                       || --Data de vencimento da CND-FGTS

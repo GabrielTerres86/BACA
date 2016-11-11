@@ -1,7 +1,7 @@
 /*.............................................................................
     Programa: sistema/generico/procedures/b1wgen0185.p
     Autor   : Jéssica Laverde Gracino (DB1)
-    Data    : 24/02/2014                     Ultima atualizacao: 03/11/2015
+    Data    : 24/02/2014                     Ultima atualizacao: 11/10/2016
 
     Objetivo  : Tranformacao BO tela MOVTOS.
 
@@ -36,6 +36,10 @@
                             
                03/11/2015 - Ajustes referente Projeto de Assinatura Multipla.
                           (Daniel)          
+
+			   11/10/2016 - M172 - Ajuste do formato do número de celular devido
+							ao acrescimo de mais um digito.
+							(Ricardo Linhares)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -3301,7 +3305,7 @@ PROCEDURE carrega_dados_c:
     DEF VAR aux_dssitcrd AS CHAR                                     NO-UNDO.
     DEF VAR aux_vllimcrd LIKE craptlc.vllimcrd                       NO-UNDO. 
     DEF VAR aux_nrreside AS CHAR FORMAT "(xx)xxxx-xxxx"              NO-UNDO.
-    DEF VAR aux_nrcelula AS CHAR FORMAT "(xx)xxxx-xxxx"              NO-UNDO.
+    DEF VAR aux_nrcelula AS CHAR FORMAT "(xx)xxxxx-xxxx"             NO-UNDO.
     DEF VAR aux_cartaobb AS LOGI INIT YES                            NO-UNDO.
     DEF VAR aux_nrcpftit AS CHAR                                     NO-UNDO. 
     DEF VAR aux_nmrescop LIKE crapcop.nmrescop                       NO-UNDO.
@@ -3887,7 +3891,7 @@ PROCEDURE carrega_dados_cartoes_bb_debito:
    DEF VAR aux_dssitcrd AS CHAR                                      NO-UNDO.
    DEF VAR aux_vllimcrd LIKE craptlc.vllimcrd                        NO-UNDO.
    DEF VAR aux_nrreside AS CHAR FORMAT "(xx)xxxx-xxxx"               NO-UNDO. 
-   DEF VAR aux_nrcelula AS CHAR FORMAT "(xx)xxxx-xxxx"               NO-UNDO. 
+   DEF VAR aux_nrcelula AS CHAR FORMAT "(xx)xxxxx-xxxx"              NO-UNDO. 
    DEF VAR aux_returnvl AS CHAR                                      NO-UNDO.
    DEF VAR aux_nrdrowid AS ROWID                                     NO-UNDO.
    DEF VAR aux_nmarquiv AS CHAR                                      NO-UNDO.

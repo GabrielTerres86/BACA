@@ -282,9 +282,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
 
-					26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+			          		26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
                                  da data de vencimento e quantidade de dias atraso.
                                  SD488220 (Odirlei-AMcom)
+                                 
+                    03/11/2016 - Alterada a função de classificação do porte de pessoa física, para que sejam considerados
+                                 como "sem redimento", rendas mensais de até 0.01 (inclusive) e não mais rendas com valor 
+                                 zero apenas. Esta alteração corrige o problema relatado no chamado SD 549969, onde contas
+                                 cadastradas com rendimento igual a 0.01 estavam sendo enviadas com código de porte igual
+                                 a 2 - ATÉ 1 SALÁRIO MÍNIMO. (Renato Darosci - Supero)
+                                 
 .............................................................................................................................*/
 
     DECLARE
@@ -3080,9 +3087,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       -- Classifica o porte do PF
       FUNCTION fn_classifi_porte_pf(pr_vlrrendi IN NUMBER) RETURN pls_integer IS
       BEGIN  
-        IF pr_vlrrendi = 0 THEN
+        
+        --> 03/11/2016 - Renato Darosci - Alterado para considerar faixa "sem rendimento" até 0.01 - SD 549969
+      
+        IF pr_vlrrendi <= 0.01 THEN
           RETURN 1;
-        ELSIF pr_vlrrendi > 0 AND pr_vlrrendi <= vr_vlsalmin THEN
+        ELSIF pr_vlrrendi > 0.01 AND pr_vlrrendi <= vr_vlsalmin THEN
           RETURN 2;
         ELSIF pr_vlrrendi > vr_vlsalmin AND pr_vlrrendi <= (vr_vlsalmin * 2) THEN
           RETURN 3;

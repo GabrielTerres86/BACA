@@ -441,6 +441,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 							 na rotina pc_trata_detalhe_cnab400. Estava gerando erro nas instrucoes
 							 enviadas pelos cooperados.
 							 Heitor (Mouts) - Chamado 545476
+
+				04/11/2016 - Removidas validacoes de CEP quanto a UF, se a UF que vier no arquivo for
+				             diferente da UF da base de enderecos, nao vai rejeitar.
+							 Heitor (Mouts) - Chamado 523346
                                            
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1725,11 +1729,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         CLOSE cr_crapdne;
       END IF;
       
-      IF pr_tab_linhas('CDUFSACA').texto <> rw_crapdne.cduflogr THEN
+      /*
+	  IF pr_tab_linhas('CDUFSACA').texto <> rw_crapdne.cduflogr THEN
         --  CEP incompativel com a Unidade da Federacao
         pr_cdmotivo := '51';
         RAISE vr_exc_motivo;
       END IF;
+	  */
     END IF;
     
   EXCEPTION
@@ -5294,11 +5300,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
 
     -- 16.3Q Valida UF do Sacado
+	/*
     IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
       --  CEP incompativel com a Unidade da Federacao
       vr_rej_cdmotivo := '51';
       RAISE vr_exc_reje;
     END IF;
+	*/
 
     -- 17.3Q Valida Tipo de Inscricao Avalista
     pr_rec_cobranca.cdtpinav := nvl(pr_tab_linhas('CDTPINAV').numero,0);
@@ -7896,13 +7904,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
   
     -- 46.7 UF do Sacado
-    IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
+    /*
+	IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
       
       --  CEP Incompativel com a Unidade da Federacao
       vr_rej_cdmotivo := '51';
       RAISE vr_exc_reje;
       
     END IF;
+	*/
   
     -- 47.7 Mensagem ou Sacador/Avalista 
     IF pr_tab_linhas('INDMENSA').texto = 'A' THEN
