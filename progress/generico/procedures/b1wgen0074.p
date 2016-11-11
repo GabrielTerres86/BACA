@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/04/2016
+    Data    : Maio/2010                   Ultima atualizacao: 11/11/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -182,6 +182,14 @@
                 21/03/2016 - Inclusao campos consulta boa vista.
                              PRJ207 - Esteira (Odirlei/AMcom)    
 
+
+	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
+				             estiver em execucao (Andrino - Chamado 495821)
+                     
+                11/11/2016 - #511290 Correcao de como o sistema verifica se eh
+                             abertura de conta ou mudanca do tipo da mesma, 
+                             para solicitar talao de cheque para o cooperado 
+                             (Carlos)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -2043,6 +2051,25 @@ PROCEDURE Grava_Dados:
 
         { sistema/generico/includes/b1wgenllog.i }
 
+        /*Se o processo do BI ainda estiver rodando, nao pode-se alterar o PA */
+        IF aux_cdageant <> crapass.cdagenci THEN 
+          DO:
+          FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+          IF AVAIL crapdat THEN
+             IF crapdat.inprocbi = 2 THEN 
+                DO:
+                  ASSIGN aux_dscritic = "Processo do BI ainda em execucao. Alteracao de PA nao permitida!".
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1,          /** Sequencia **/
+                                  INPUT 0,
+                                  INPUT-OUTPUT aux_dscritic).
+                            
+                  UNDO Grava, LEAVE Grava.
+                END.
+          END.
+
         /*Se a troca de PA ocorrer com sucesso entao, se for pessoa fisica, 
           sera enviado uma solicitacao ao SICREDI de alteracao do orgao 
           pagador de todos os beneficios do cpf em questao. Caso ocorra algum
@@ -2596,8 +2623,10 @@ PROCEDURE Grava_Dados_Altera:
           IF crabass.dtabtcct = ? THEN
             ASSIGN crabass.dtabtcct = par_dtmvtolt.
 
-        IF par_cdtipcta <> crabass.cdtipcta   THEN
-           DO:  
+        /* Se estiver alterando o tipo de conta ou estiver cadastrando ... */
+        IF par_cdtipcta <> crabass.cdtipcta   OR
+           crabass.dtinsori = par_dtmvtolt    THEN
+           DO:
                 /* Removido a criação da doc conforme solicitado no chamado 372880*/
                 /*ContadorDoc7: DO aux_contador = 1 TO 10:
                 
