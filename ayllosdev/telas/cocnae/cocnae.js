@@ -608,7 +608,7 @@ function realizaOperacao() {
 	var cdcnae = $('#cdcnae','#frmCadastro').val().replace(/\W/g,'');	
 	var tpcnae = $('input[name="tpcnae"]:checked','#frmCadastro').val();	
 	var dsmotivo = removeCaracteresInvalidos( $('#dsmotivo','#frmCadastro').val() );	
-	var dslicenca = removeCaracteresInvalidos $('#dslicenca', '#frmCadastro').val() );
+	var dslicenca = removeCaracteresInvalidos( $('#dslicenca', '#frmCadastro').val() );
 	var dtmvtolt = $('#dtmvtolt','#frmCadastro').val();		
 	
 	// Executa script de bloqueio através de ajax
