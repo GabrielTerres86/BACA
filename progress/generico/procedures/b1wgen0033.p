@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 07/06/2016
+    Data    : Agosto/2008                     Ultima Atualizacao: 09/11/2016
            
     Dados referentes ao programa:
                 
@@ -214,6 +214,8 @@
 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
+				09/11/2016 - Corrigido Problemas na impressao da proposta, nao limitar mais os 
+				             resultados a 1 ano SD553284 (Tiago/Thiago).
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -5819,12 +5821,17 @@ PROCEDURE busca_seguros:
                  crapseg.cdcooper = par_cdcooper AND 
                  crapseg.nrdconta = par_nrdconta:
             
+			/* Problemas na impressao da proposta,
+			   nao limitar mais os resultados a 1 ano SD553284 Tiago/Thiago
+
             IF   (crapseg.cdsitseg = 2 AND
                  crapseg.dtcancel < (par_dtmvtolt - 365)) OR
                  (crapseg.cdsitseg = 4 AND
                  crapseg.dtfimvig < (par_dtmvtolt - 365)) THEN
                  NEXT.
               
+              */
+
             CREATE tt-seguros.
             ASSIGN tt-seguros.cdcooper      = crapseg.cdcooper
                    tt-seguros.cdagenci      = crapseg.cdagenci
@@ -6432,7 +6439,7 @@ PROCEDURE cria_seguro:
 	  a solicitacao vier de alguma tela*/
 	IF  TRIM(par_nmdatela) <> "" THEN 
 		DO: 
-    RUN cria-tabela-depara(OUTPUT TABLE tt-pldepara).
+			RUN cria-tabela-depara(OUTPUT TABLE tt-pldepara).
 		END.
     
     EMPTY TEMP-TABLE tt-erro.
