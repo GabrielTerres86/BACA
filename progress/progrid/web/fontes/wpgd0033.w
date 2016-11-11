@@ -8,12 +8,16 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             08/03/2016 - Alterado para que os eventos do tipo EAD 
                          e EAD Assemblear nÃ£o sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
-                         
+
             24/06/2016 - Inclusao de tratamento para exibir CNPJ/CPF
                          e possibilitar gerar o relatorio em branco.
                          PRJ229 - Melhorias OQS (Odirlei-AMcom)             
 
-...............................................................................*/
+			09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -877,6 +881,9 @@ RUN RodaJavaScript("var mpac=new Array();mpac=["  + vetorpac + "]").
 /* gera lista de eventos */
 RUN CriaListaEventos. 
 
+RUN insere_log_progrid("WPGD0033.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.cdcooper) + "|" + STRING(ab_unmap.cdagenci) + "|" +
+					  STRING(ab_unmap.aux_dtanoage)).
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 

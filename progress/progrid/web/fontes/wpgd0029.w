@@ -37,16 +37,20 @@
                  16/12/2015 - Ajustado nas sugestoes da tela de avaliacoes conforme
                               solicitado no chamado 371145. (Kelvin)   
 
-                 08/03/2016 - Alterado para que os eventos do tipo EAD 
+                  08/03/2016 - Alterado para que os eventos do tipo EAD 
                               e EAD Assemblear nao sejam apresentados.
-                              Projeto 229 - Melhorias OQS (Lombardi)  
-                               
+                               Projeto 229 - Melhorias OQS (Lombardi)          
+  ...............................................................................*/
+
                  21/06/2016 - Ajustes para a RF 05 (Jean Michel).    
                  
                  19/08/2016 - Melhorias OQS - RF07 (Odirlei - AMcom).
                  
-  ...............................................................................*/
-{ includes/var_progrid.i }
+				 09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
   &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
   &ANALYZE-RESUME
@@ -60,7 +64,7 @@
          FIELD aux_cdagenci AS CHARACTER 
          FIELD aux_cdcooper AS CHARACTER 
          FIELD aux_cdcopope AS CHARACTER
-         FIELD aux_cdoperad     AS CHARACTER
+         FIELD aux_cdoperad AS CHARACTER
          FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
          FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U 
@@ -125,7 +129,7 @@
        FIELD qtsugeve AS CHARACTER
        FIELD dssugeve AS CHARACTER
        FIELD nrordgru AS CHARACTER.
-       
+
   &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
   /*------------------------------------------------------------------------
     File: 
@@ -684,7 +688,7 @@
           aux_sugestao = "".
       
           ASSIGN aux_tprelgru = "".
-                 
+                   
          IF crapgap.tprelgru = 1 THEN    
            ASSIGN aux_tprelgru = 'COOPERADO'.
          ELSE IF crapgap.tprelgru = 2 THEN
@@ -752,7 +756,7 @@
                     ELSE
                         aux_sugestao = aux_sugestao + SUBSTRING(crapsdp.dssugeve,aux_contador,1).
                  END.  
-                 
+
                  ASSIGN aux_tprelgru = "".
                  
                  IF crapgap.tprelgru = 1 THEN    
@@ -761,7 +765,7 @@
                    ASSIGN aux_tprelgru = 'COOPERATIVA'.
                  ELSE IF crapgap.tprelgru = 3 THEN
                    ASSIGN aux_tprelgru = 'FORNECEDOR'.
-            
+                       
                  CREATE tt-avaliacoes.
                  ASSIGN tt-avaliacoes.cdagenci = STRING(craprap.cdagenci)
                         tt-avaliacoes.cdcooper = STRING(craprap.cdcooper)
@@ -793,63 +797,13 @@
                         tt-avaliacoes.nrordgru = STRING(crapgap.nrordgru).
              END.
           END.
+             END.
+          END.
       END.
-      
-      RUN RodaJavaScript("var mava = new Array();").
-      
-      FOR EACH tt-avaliacoes NO-LOCK 
-          BY tt-avaliacoes.nrordgru
-            BY tt-avaliacoes.nrseqeve
-              BY tt-avaliacoes.tpiteava
-                BY tt-avaliacoes.cdagenci
-                  BY tt-avaliacoes.cdgruava
-                    BY tt-avaliacoes.cditeava:
-      
-        ASSIGN aux_contador = aux_contador + 1.
-        
-        IF vetorava <> "" THEN
-          ASSIGN  vetorava = vetorava + ",".
-          
-        ASSIGN vetorava = vetorava + "~{cdagenci:'" +  tt-avaliacoes.cdagenci
-                                   + "',cdcooper:'" +  tt-avaliacoes.cdcooper
-                                   + "',cdevento:'" +  tt-avaliacoes.cdevento
-                                   + "',nrseqeve:'" +  tt-avaliacoes.nrseqeve
-                                   + "',nrseqeve:'" +  tt-avaliacoes.nrseqeve
-                                   + "',tprelgru:'" +  tt-avaliacoes.tprelgru
-                                   + "',iditeava:'" +  tt-avaliacoes.iditeava
-                                   + "',tpiteava:'" +  tt-avaliacoes.tpiteava
-                                   + "',cditeava:'" +  tt-avaliacoes.cditeava
-                                   + "',dsiteava:'" +  tt-avaliacoes.dsiteava
-                                   + "',cdgruava:'" +  tt-avaliacoes.cdgruava
-                                   + "',dsgruava:'" +  tt-avaliacoes.dsgruava
-                                   + "',dsobserv:'" +  tt-avaliacoes.dsobserv
-                                   + "',qtavabom:'" +  tt-avaliacoes.qtavabom
-                                   + "',peavabom:'" +  tt-avaliacoes.peavabom
-                                   + "',qtavains:'" +  tt-avaliacoes.qtavains
-                                   + "',peavains:'" +  tt-avaliacoes.peavains
-                                   + "',qtavaoti:'" +  tt-avaliacoes.qtavaoti
-                                   + "',peavaoti:'" +  tt-avaliacoes.peavaoti
-                                   + "',qtavareg:'" +  tt-avaliacoes.qtavareg
-                                   + "',peavareg:'" +  tt-avaliacoes.peavareg
-                                   + "',qtavares:'" +  tt-avaliacoes.qtavares
-                                   + "',qtpartic:'" +  tt-avaliacoes.qtpartic
-                                   + "',qtavanre:'" +  tt-avaliacoes.qtavanre
-                                   + "',peavanre:'" +  tt-avaliacoes.peavanre
-                                   + "',nrseqdig:'" +  tt-avaliacoes.nrseqdig
-                                   + "',qtsugeve:'" +  tt-avaliacoes.qtsugeve
-                                   + "',dssugeve:'" +  tt-avaliacoes.dssugeve + "'~}".
-        
-        IF aux_contador = 50 THEN             
-          DO:
-            RUN RodaJavaScript("mava.push(" + vetorava + ");").
-            ASSIGN aux_contador = 0
-                   vetorava     = "".
-          END.        
-      END.
-    
+
     IF vetorava <> "" THEN
       RUN RodaJavaScript("mava.push(" + vetorava + ");").
-      
+
   END PROCEDURE.
 
   /* _UIB-CODE-BLOCK-END */
@@ -879,7 +833,7 @@
       
       ASSIGN vetorevento = ""
              aux_contador = 0.
-             
+      
       RUN RodaJavaScript("var mevento=new Array();"). 
       
       FOR EACH crapeap WHERE crapeap.idevento = INT(ab_unmap.aux_idevento)    AND
@@ -939,7 +893,7 @@
               IF crapidp.idstains = 2 THEN
                   aux_nrconfir = aux_nrconfir + 1.
           END.
-          
+      
           /* Listar emails de contato do fornecedor do evento */
           ASSIGN aux_dsdemail_fornec = "".
           FOR EACH crapcdp
@@ -979,7 +933,7 @@
       
           IF vetorevento <> "" AND vetorevento <> ? THEN
             ASSIGN vetorevento = vetorevento + ",".
-                        
+                  
           vetorevento = vetorevento + "~{cdagenci:'" +  STRING(crapeap.cdagenci)
                                     + "',cdcooper:'" +  STRING(crapeap.cdcooper)
                                     + "',cdevento:'" +  STRING(crapeap.cdevento)
@@ -996,15 +950,15 @@
           
           IF aux_contador = 50 THEN
             DO:
-              RUN RodaJavaScript("mevento.push("  + vetorevento + ");").    
+          RUN RodaJavaScript("mevento.push("  + vetorevento + ");").    
               ASSIGN vetorevento = ""
                      aux_contador = 0.
             END.
-        
+
         ASSIGN aux_contador = aux_contador + 1.
 
       END.
-    
+
     IF vetorevento <> "" THEN
       RUN RodaJavaScript("mevento.push("  + vetorevento + ");").  
       
@@ -1085,7 +1039,7 @@
 
   /* _UIB-CODE-BLOCK-END */
   &ANALYZE-RESUME
-  
+
   /* Encerrar avaliaçoes do evento  */
   &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE EncerrarAvaliacao w-html 
   PROCEDURE EncerrarAvaliacao :
@@ -1147,7 +1101,7 @@
     RUN htmAssociate
       ("aux_cdagenci":U,"ab_unmap.aux_cdagenci":U,ab_unmap.aux_cdagenci:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
-      ("aux_cdcooper":U,"ab_unmap.aux_cdcooper":U,ab_unmap.aux_cdcooper:HANDLE IN FRAME {&FRAME-NAME}).    
+      ("aux_cdcooper":U,"ab_unmap.aux_cdcooper":U,ab_unmap.aux_cdcooper:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
       ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
@@ -1257,30 +1211,30 @@
                                              NO-LOCK NO-ERROR.
       
                     IF AVAILABLE craprap THEN
-                      DO:
-                          EMPTY TEMP-TABLE cratrap.
-        
-                          CREATE cratrap.
-                          ASSIGN cratrap.dsobserv = craprap.dsobserv
-                                 cratrap.cdagenci = craprap.cdagenci
-                                 cratrap.nrseqeve = craprap.nrseqeve
-                                 cratrap.cdcooper = craprap.cdcooper
-                                 cratrap.cdevento = craprap.cdevento
-                                 cratrap.cdgruava = craprap.cdgruava
-                                 cratrap.cditeava = craprap.cditeava
-                                 cratrap.dtanoage = craprap.dtanoage
-                                 cratrap.idevento = craprap.idevento
+                    DO:
+                        EMPTY TEMP-TABLE cratrap.
+      
+                        CREATE cratrap.
+                        ASSIGN cratrap.dsobserv = craprap.dsobserv
+                               cratrap.cdagenci = craprap.cdagenci
+                               cratrap.nrseqeve = craprap.nrseqeve
+                               cratrap.cdcooper = craprap.cdcooper
+                               cratrap.cdevento = craprap.cdevento
+                               cratrap.cdgruava = craprap.cdgruava
+                               cratrap.cditeava = craprap.cditeava
+                               cratrap.dtanoage = craprap.dtanoage
+                               cratrap.idevento = craprap.idevento
                                  cratrap.qtavares = INT(ENTRY(i, ab_unmap.aux_lsavares)) /*INPUT craprap.qtavares                  */
-                                 cratrap.qtavabom = INT(ENTRY(i, ab_unmap.aux_lsavabom))
-                                 cratrap.qtavains = INT(ENTRY(i, ab_unmap.aux_lsavains))
-                                 cratrap.qtavaoti = INT(ENTRY(i, ab_unmap.aux_lsavaoti))
-                                 cratrap.qtavareg = INT(ENTRY(i, ab_unmap.aux_lsavareg)).
-        
-                          RUN altera-registro IN h-b1wpgd0029(INPUT TABLE cratrap, OUTPUT aux_msgderro).
-        
-                          msg-erro = msg-erro + aux_msgderro.
-        
-                      END. /* IF AVAIL craprap */
+                               cratrap.qtavabom = INT(ENTRY(i, ab_unmap.aux_lsavabom))
+                               cratrap.qtavains = INT(ENTRY(i, ab_unmap.aux_lsavains))
+                               cratrap.qtavaoti = INT(ENTRY(i, ab_unmap.aux_lsavaoti))
+                               cratrap.qtavareg = INT(ENTRY(i, ab_unmap.aux_lsavareg)).
+      
+                        RUN altera-registro IN h-b1wpgd0029(INPUT TABLE cratrap, OUTPUT aux_msgderro).
+      
+                        msg-erro = msg-erro + aux_msgderro.
+      
+                    END. /* IF AVAIL craprap */
       
                 END. /* DO i = 1 TO NUM-ENTRIES(ab_unmap.aux_lsiteava) */
       
@@ -1400,7 +1354,7 @@
                      cratrap.qtavains = crabrap.qtavains
                      cratrap.qtavaoti = crabrap.qtavaoti
                      cratrap.qtavareg = crabrap.qtavareg.
-                  
+
               RUN exclui-registro IN h-b1wpgd0029(INPUT TABLE cratrap, OUTPUT msg-erro).
           
           END.
@@ -1602,7 +1556,7 @@
          ab_unmap.aux_cdcopope    = GET-VALUE("aux_cdcopope")
          ab_unmap.aux_cdoperad    = GET-VALUE("aux_cdoperad")
          ab_unmap.aux_idevento    = GET-VALUE("aux_idevento")
-         ab_unmap.aux_dsendurl    = AppURL      
+         ab_unmap.aux_dsendurl    = AppURL                        
          ab_unmap.aux_dsurlphp    = aux_srvprogrid
          ab_unmap.aux_idcokses    = v-identificacao
          ab_unmap.aux_lspermis    = FlagPermissoes                
@@ -1630,7 +1584,7 @@
          ab_unmap.aux_cdevento    = GET-VALUE("aux_cdevento")
          ab_unmap.dsdemail_fornec = GET-VALUE("dsdemail_fornec")
          .
-      
+         
   RUN outputHeader.
 
   {includes/wpgd0098.i}
@@ -1676,99 +1630,104 @@
               ab_unmap.aux_dtanoage = STRING(gnpapgd.dtanonov).
      END.
 
+  RUN insere_log_progrid("WPGD0029.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdcopope) + "|" +
+					  STRING(ab_unmap.aux_cdoperad) + "|" + STRING(ab_unmap.aux_dtanoage) + "|" + 
+					  STRING(ab_unmap.nrseqeve)).
+
   /* método POST */
   IF REQUEST_METHOD = "POST":U THEN 
      DO:
       
         RUN inputFields.
         CASE opcao:
-          WHEN "sa" THEN /* salvar */
-            DO:              
-              ASSIGN aux_cont = NUM-ENTRIES(ab_unmap.arrQtsugeve,"#").
-                         
-              DO aux_regi = 1 TO aux_cont:
+             WHEN "sa" THEN /* salvar */
+                  DO:
+                              ASSIGN aux_cont = NUM-ENTRIES(ab_unmap.arrQtsugeve,"#").
+                             
+                              DO aux_regi = 1 TO aux_cont:
 
                 ASSIGN aux_info = ENTRY(aux_regi,ab_unmap.arrQtsugeve,"#").
                        
-                IF INT(ENTRY(2,aux_info,",")) = 0 AND 
-                   INT(ENTRY(3,aux_info,",")) = 0 THEN
+                                IF INT(ENTRY(2,aux_info,",")) = 0 AND 
+                                   INT(ENTRY(3,aux_info,",")) = 0 THEN
                   DO:
-                    NEXT.
+                                   NEXT.
                   END.
                                 
-                FIND FIRST crapadp WHERE crapadp.idevento = 1 
-                                     AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
-                                     AND crapadp.cdagenci = INT(ab_unmap.cdagenci)
-                                     AND crapadp.nrseqdig = INT(ab_unmap.nrseqeve) NO-LOCK NO-ERROR NO-WAIT.
+                                FIND FIRST crapadp WHERE crapadp.idevento = 1 
+                                                     AND crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                                                     AND crapadp.cdagenci = INT(ab_unmap.cdagenci)
+                                                     AND crapadp.nrseqdig = INT(ab_unmap.nrseqeve) NO-LOCK NO-ERROR NO-WAIT.
                                 
-                IF INT(ENTRY(3,aux_info,",")) > 0 THEN
-                  DO: 
-                    FIND LAST crapsdp WHERE crapsdp.idevento = 1
-                                        AND crapsdp.cdcooper = INT(ab_unmap.aux_cdcooper)
-                                        AND crapsdp.cdagenci = INT(ab_unmap.cdagenci)
+                                IF INT(ENTRY(3,aux_info,",")) > 0 THEN
+                                  DO: 
+                                    FIND LAST crapsdp WHERE crapsdp.idevento = 1
+                                                        AND crapsdp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                                                        AND crapsdp.cdagenci = INT(ab_unmap.cdagenci)
                                         AND crapsdp.nrseqdig = INT(ENTRY(3,aux_info,",")) NO-LOCK NO-ERROR NO-WAIT.
                     
-                    IF AVAILABLE crapsdp THEN
-                      DO:
-                        ASSIGN aux_qtsugeve = crapsdp.qtsugeve.
-                        IF INT(ENTRY(2,aux_info,",")) = aux_qtsugeve  THEN
-                          DO:
-                            NEXT.
-                          END.
-                        FIND CURRENT crapsdp EXCLUSIVE-LOCK.
-                      END.
-                  END.
-                ELSE IF INT(ENTRY(2,aux_info,",")) > 0 THEN   
-                  DO:   
-                    CREATE crapsdp.
-                    ASSIGN crapsdp.idevento = 1
-                           crapsdp.cdcooper = INT(ab_unmap.aux_cdcooper)  /* Cooperativa da tela */
-                           crapsdp.cdagenci = INT(ab_unmap.cdagenci)      /* Codigo do PA */
+                                    IF AVAILABLE crapsdp THEN
+                                    DO:
+                                      ASSIGN aux_qtsugeve = crapsdp.qtsugeve.
+                                      IF INT(ENTRY(2,aux_info,",")) = aux_qtsugeve  THEN
+                                        DO:
+                                          NEXT.
+                                        END.
+                                      FIND CURRENT crapsdp EXCLUSIVE-LOCK.
+                                    END.
+                                  END.
+                                ELSE IF INT(ENTRY(2,aux_info,",")) > 0 THEN   
+                                  DO:   
+                                      CREATE crapsdp.
+                                      ASSIGN crapsdp.idevento = 1
+                                             crapsdp.cdcooper = INT(ab_unmap.aux_cdcooper)  /* Cooperativa da tela */
+                                             crapsdp.cdagenci = INT(ab_unmap.cdagenci)      /* Codigo do PA */
                            crapsdp.nrseqdig = NEXT-VALUE(nrseqsdp).
-                  END.                                   
+                                  END.                                   
                                 
-                IF INT(ENTRY(2,aux_info,",")) > 0 THEN
-                  DO:
-                    ASSIGN crapsdp.idevento = 1
-                           crapsdp.cdcooper = INT(ab_unmap.aux_cdcooper)  /* Cooperativa da tela */
-                           crapsdp.cdagenci = INT(ab_unmap.cdagenci)      /* Codigo do PA */
-                           crapsdp.nrseqtem = INT(ENTRY(1,aux_info,","))  
-                           crapsdp.dtmvtolt = TODAY
-                           crapsdp.flgsugca = NO 
+                                IF INT(ENTRY(2,aux_info,",")) > 0 THEN
+                                  DO:
+                                      ASSIGN crapsdp.idevento = 1
+                                             crapsdp.cdcooper = INT(ab_unmap.aux_cdcooper)  /* Cooperativa da tela */
+                                             crapsdp.cdagenci = INT(ab_unmap.cdagenci)      /* Codigo do PA */
+                                             crapsdp.nrseqtem = INT(ENTRY(1,aux_info,","))  
+                                             crapsdp.dtmvtolt = TODAY
+                                             crapsdp.flgsugca = NO 
                            crapsdp.cdorisug = 8                           /* Avaliaçao Evento - Tema */
-                           crapsdp.dtanoage = ?                           /* Ano da Agenda */
-                           crapsdp.nrmsgint = INT(ab_unmap.nrseqeve)      /* Campo nrmsgint da tela */
-                           crapsdp.qtsugeve = INT(ENTRY(2,aux_info,","))  /* Quantidade de Sugestoes */                                      
-                           crapsdp.cdevento = crapadp.cdevento
-                           crapsdp.cdoperad = gnapses.cdoperad
-                           crapsdp.dssugeve = "Sugestao criada por tema a partir da avaliacao do evento".
-                  END.
-                ELSE
-                  DO:
-                    DELETE crapsdp.
-                  END.                              
-              END.
-                                
-            RUN local-assign-record ("inclusao"). 
-            
-            IF msg-erro <> "" THEN
+                                             crapsdp.dtanoage = ?                           /* Ano da Agenda */
+                                             crapsdp.nrmsgint = INT(ab_unmap.nrseqeve)      /* Campo nrmsgint da tela */
+                                             crapsdp.qtsugeve = INT(ENTRY(2,aux_info,","))  /* Quantidade de Sugestoes */                                      
+                                             crapsdp.cdevento = crapadp.cdevento
+                                             crapsdp.cdoperad = gnapses.cdoperad
+                                             crapsdp.dssugeve = "Sugestao criada por tema a partir da avaliacao do evento".
+                                  END.
+                                ELSE
+                                  DO:
+                                    DELETE crapsdp.
+                                  END.
+                              END.
+                    
+                            RUN local-assign-record ("inclusao"). 
+                    
+                            IF msg-erro <> "" THEN
               ASSIGN msg-erro-aux = 3. /* erros da validaçao de dados */
-            ELSE 
-              DO:
-                ASSIGN msg-erro-aux = 10
-                       ab_unmap.aux_stdopcao = "al".
-              END.
-                
-            END.              
-          WHEN "in" THEN /* inclusao */
-            DO:
+                            ELSE 
+                              DO:
+                                ASSIGN msg-erro-aux = 10
+                                       ab_unmap.aux_stdopcao = "al".
+                              END.                    
+                        
+                          END.
+             WHEN "in" THEN /* inclusao */
+                  DO:
                   
-                    IF ab_unmap.aux_stdopcao <> "i" THEN
-                       DO:
-                          CLEAR FRAME {&FRAME-NAME}.
-                          ASSIGN ab_unmap.aux_stdopcao = "i".
-                       END.
-                END. /* fim inclusao */
+                      IF ab_unmap.aux_stdopcao <> "i" THEN
+                         DO:
+                            CLEAR FRAME {&FRAME-NAME}.
+                            ASSIGN ab_unmap.aux_stdopcao = "i".
+                         END.
+                  END. /* fim inclusao */
 
              WHEN "ex" THEN /* exclusao */
                   DO:
@@ -1890,7 +1849,7 @@
              WHEN "rea" THEN /* reabrir avaliaçao */
              DO:
                  RUN ReabrirAvaliacao.
-                 
+      
                  IF   msg-erro = ""   THEN
                       msg-erro-aux = 10.
              END.
@@ -1899,11 +1858,11 @@
         IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
            RUN displayFields.
 
-        RUN CriaListaPac.        
-        RUN CriaListaEvento.        
-        RUN CriaListaAva.        
+        RUN CriaListaPac.
+        RUN CriaListaEvento.
+        RUN CriaListaAva.
         RUN CriaListaTema.
-           
+   
         RUN enableFields.
         RUN outputFields.
 
@@ -1941,7 +1900,7 @@
         END CASE.     
 
         RUN RodaJavaScript('top.frames[0].ZeraOp()').   
-        
+
         /* Apos encerrar é necessario enviar email da avaliaçao para o facilitador */
         IF opcao = "enc" AND dsdemail_fornec <> "" THEN
         DO:

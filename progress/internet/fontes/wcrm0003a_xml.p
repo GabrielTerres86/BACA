@@ -4,7 +4,7 @@
    Sistema : CRM 
    Sigla   : CRM
    Autor   : David
-   Data    : Dezembro/2006                   Ultima Atualizacao: 06/09/2013
+   Data    : Dezembro/2006                   Ultima Atualizacao: 28/10/2016
 
    Dados referentes ao programa:
 
@@ -26,7 +26,13 @@
                
                06/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
+														
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+				 			para gravar log de acesso. (Jean Michel)							
+														
 ............................................................................. */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 CREATE WIDGET-POOL.
 
@@ -59,7 +65,6 @@ FUNCTION criaCampo RETURNS LOGICAL
 
 END FUNCTION.
 
-
 /* Include para usar os comandos para WEB */
 {src/web2/wrap-cgi.i}
 
@@ -70,6 +75,8 @@ ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper"))
        par_nrdconta = INT(GET-VALUE("aux_nrdconta"))
        par_tpevento = INT(GET-VALUE("aux_tpevento")).
 
+RUN insere_log_progrid("WPGD0003a_xml.p",STRING(par_cdcooper) + "|" + STRING(par_nrdconta) + "|" + STRING(par_tpevento)).
+			 
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
 CREATE X-NODEREF  xField.

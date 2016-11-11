@@ -6,12 +6,16 @@ Alterações: 24/01/2008 - Incluído campo crapldp.dsrefloc (Diego).
 
             10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			
-            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-                   busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
-                   
+			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+
             24/06/2016 - Inclusão da janela na tela de Agenda Anual RF05 - Vanessa	
 
+			09/11/2016 - inclusao de LOG. (Jean Michel)
+
 ......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
 
@@ -591,7 +595,7 @@ IF VALID-HANDLE(h-b1wpgd0013) THEN
                     cratldp.nrtelefo = INPUT crapldp.nrtelefo
                     cratldp.qtmaxpes = INPUT crapldp.qtmaxpes
                     cratldp.vldialoc = INPUT crapldp.vldialoc
-                    cratldp.dsrefloc = INPUT crapldp.dsrefloc
+					cratldp.dsrefloc = INPUT crapldp.dsrefloc
                     .
                  
                 RUN altera-registro IN h-b1wpgd0013(INPUT TABLE cratldp, OUTPUT msg-erro).
@@ -850,17 +854,21 @@ IF INT(ab_unmap.aux_idevento) = 1 THEN
 ELSE
    RUN CriaListaPacAssemb.
 
+RUN insere_log_progrid("WPGD0013.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdcopope) + "|" +
+					  STRING(ab_unmap.aux_cdoperad)).
+
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:
       RUN inputFields.
       CASE opcao:
            WHEN "sa" THEN /* salvar */
-                DO:  
+                DO:
                     IF ab_unmap.aux_stdopcao = "i" THEN /* inclusao */
-                        DO: 
+                        DO:
                            
-                            RUN local-assign-record ("inclusao").
+                            RUN local-assign-record ("inclusao"). 
                             
                             IF msg-erro <> "" THEN
                                ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
@@ -869,24 +877,24 @@ IF REQUEST_METHOD = "POST":U THEN
                                ASSIGN 
                                    msg-erro-aux = 10
                                    ab_unmap.aux_stdopcao = "al".
-                                FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
+                               FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
 
-                                 IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
-                                    IF LOCKED {&SECOND-ENABLED-TABLE} THEN
-                                       DO:
-                                           ASSIGN msg-erro-aux = 1. /* registro em uso por outro usuário */  
-                                           FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                                       END.
-                                    ELSE
-                                       DO: 
-                                           ASSIGN msg-erro-aux = 2. /* registro não existe */
-                                           RUN PosicionaNoSeguinte.
-                                       END.
+                               IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
+                                  IF LOCKED {&SECOND-ENABLED-TABLE} THEN
+                                     DO:
+                                         ASSIGN msg-erro-aux = 1. /* registro em uso por outro usuário */  
+                                         FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
+                                     END.
+                                  ELSE
+                                     DO: 
+                                         ASSIGN msg-erro-aux = 2. /* registro não existe */
+                                         RUN PosicionaNoSeguinte.
+                                     END.
 
                             END.
                         END.  /* fim inclusao */
                     ELSE     /* alteração */ 
-                        DO:   
+                        DO: 
                             FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
 
                             IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
@@ -1035,12 +1043,12 @@ IF REQUEST_METHOD = "POST":U THEN
 
            WHEN 2 THEN
             RUN RodaJavaScript('alert("Registro foi excluído. Solicitação não pode ser executada"); ').
-               
+      
            WHEN 3 THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
                            v-descricaoerro = msg-erro.
-                    
+
                     RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').
                 END.
 
@@ -1129,7 +1137,7 @@ ELSE /* Método GET */
                     RUN enableFields.
                     RUN outputFields.
                     IF aux_origem <> "agenda" THEN
-                      RUN RodaJavaScript('top.frcod.FechaZoom()').
+                    RUN RodaJavaScript('top.frcod.FechaZoom()').
                     
                     RUN RodaJavaScript('CarregaPrincipal()').
                     

@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 28/10/2016
+   Data    : Novembro/98                     Ultima atualizacao: 09/11/2016
 
    Dados referentes ao programa:
 
@@ -499,7 +499,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                23/02/2016 - Inclusao de consulta via GENE0001.fn_param_sistema para
                             historicos sem credito em conta corrente para o relatorio
                             crrl708(Jean Michel).
-                                           
+
                22/03/2016 - Incluido bloco para Contabilizacao Despesa Sicredi
                             para GPS (Guilherme/SUPERO)
 
@@ -510,21 +510,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             Sicredi e não de pagamentos efetuados
                             Não considerar GPS agendados / Despesas apenas quando SICREDI
                             (Guilherme/SUPERO)
-                            
+
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
 
-							 23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
-							              na leitura do cursor cr_crapepr. (Reinert)
-                            
+               23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+                            na leitura do cursor cr_crapepr. (Reinert)
+
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
 			                (Daniel)
-                            
+
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
 			                (Daniel)
 
                28/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
 
+			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
+							SD 549917 (Carlos Rafael Tanholi)
 ............................................................................ */
 
   -- Constantes para geração de arquivos contábeis                                                                          
@@ -866,11 +868,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      where craptdb.cdcooper = pr_cdcooper
        and craptdb.nrdconta = pr_nrdconta
        and craptdb.nrborder = pr_nrborder
-       and craptdb.insittit <> 1 -- Resgatado
+       --and craptdb.insittit <> 1 -- Resgatado
        and crapcob.cdcooper = craptdb.cdcooper
        and crapcob.nrdconta = craptdb.nrdconta
        and crapcob.nrcnvcob = craptdb.nrcnvcob
-       and crapcob.nrdocmto = craptdb.nrdocmto;
+       and crapcob.nrdocmto = craptdb.nrdocmto
+       and crapcob.nrdctabb = craptdb.nrdctabb
+	   and crapcob.cdbandoc = craptdb.cdbandoc;
+
   -- Títulos em desconto
   cursor cr_craptdb2 (pr_cdcooper in craptdb.cdcooper%type,
                       pr_dt_ini in craptdb.dtdpagto%type,
@@ -896,6 +901,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        and craptdb.dtdpagto > pr_dt_ini
        and craptdb.dtdpagto <= pr_dt_fim
        and craptdb.insittit = 2; -- Processados
+
   -- Verificar se o título é da migração
   cursor cr_crapcco (pr_cdcooper in crapcco.cdcooper%type,
                      pr_nrcnvcob in crapcco.nrconven%type) is
@@ -928,8 +934,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   -- Títulos em desconto
   cursor cr_craptdb4 (pr_cdcooper in craptdb.cdcooper%TYPE
                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) is
-    select /*+ index (craptdb craptdb##craptdb2)*/
-           craptdb.cdcooper,
+    select craptdb.cdcooper,
            craptdb.cdbandoc,
            craptdb.nrdctabb,
            craptdb.nrcnvcob,
@@ -1049,6 +1054,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND crapcco.flgregis = 1
        AND crapcco.dsorgarq NOT IN ('MIGRACAO','INCORPORACAO')
        AND crapret.cdcooper = crapcco.cdcooper
+       AND crapret.nrcnvcob = crapcco.nrconven
        and crapret.dtocorre = pr_dtmvtolt
        and crapret.cdhistbb in (936, 937, 938, 939, 940, 965, 966, 973)
        -- Não existam associados
@@ -1780,14 +1786,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           ,craplem lem
           ,craplcr lcr
           ,craphis his
-					,crapfin fin
+          ,crapfin fin
      WHERE epr.cdcooper = lem.cdcooper
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND epr.cdcooper = lcr.cdcooper
        AND epr.cdlcremp = lcr.cdlcremp
-			 AND fin.cdcooper = epr.cdcooper
- 			 AND fin.cdfinemp = epr.cdfinemp
+       AND fin.cdcooper = epr.cdcooper
+       AND fin.cdfinemp = epr.cdfinemp
        AND lem.cdcooper = pr_cdcooper
        AND ','|| GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => pr_cdcooper, pr_cdacesso => 'HISTOR_SEM_CRED_CC') ||',' LIKE ('%,' || lem.cdhistor || ',%') --> Produtos atuais
        AND lcr.cdlcremp != 100      --> LInha 100 eh tratava separadamente
