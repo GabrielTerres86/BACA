@@ -1090,7 +1090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 14/09/2016
+    Data    : Fevereiro/2016                 Ultima atualizacao: 03/11/2016
 
     Dados referentes ao programa:
 
@@ -1106,6 +1106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                 14/09/2016 - Adicionado validacao de convenio ativo 
                              (Douglas - Chamado 502770)
                              
+                03/11/2016 - Ajustado as validacoes de situacao do convenio na conta do 
+                             cooperado quando alterar os dados (Douglas - Chamado 547082)
     ..............................................................................*/
     DECLARE
 
@@ -1399,12 +1401,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         RAISE vr_exc_saida;
       END IF;
 
-      -- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
-      IF rw_crapcco.flgativo = 0 AND pr_insitceb = 1 THEN
-        vr_cdcritic := 949;
-        RAISE vr_exc_saida;
-      END IF;
-
       -- Se for CECRED
       IF rw_crapcco.cddbanco = 85 THEN
         -- Caso NAO foi informado quem ira Emitir e Expedir
@@ -1547,6 +1543,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       CLOSE cr_crapceb;
       -- Se NAO encontrou
       IF NOT vr_blnfound THEN
+        
+        -- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
+        IF rw_crapcco.flgativo = 0 AND pr_insitceb = 1 THEN
+          vr_cdcritic := 949;
+          RAISE vr_exc_saida;
+        END IF;
+      
         BEGIN
           INSERT INTO crapceb
                      (cdcooper
@@ -1572,6 +1575,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
             vr_dscritic := 'Erro ao inserir o registro na CRAPCEB: ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
+      END IF;
+
+      -- Verificar se o convenio esta sendo atualizado 
+      IF NOT vr_blnewreg THEN
+        -- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
+        IF rw_crapcco.flgativo = 0 AND  -- Convenio Inativo
+           rw_crapceb.insitceb = 2 AND  -- Convenio na conta do cooperado Inativo
+           pr_insitceb <> 2        THEN -- Alterando a situacao do convenio para qualquer outra situacao
+          vr_cdcritic := 949;
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       /**** - Tratamento CIP ****/
