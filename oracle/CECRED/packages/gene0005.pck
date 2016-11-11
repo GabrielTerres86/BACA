@@ -179,6 +179,14 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
                              ,pr_des_erro  OUT VARCHAR2                    --> Status erro
                              ,pr_dscritic  OUT VARCHAR2);
 
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2); --> Retorno de erro
+
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -2433,6 +2441,90 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         pr_dscritic := 'Problemas ao buscar Tabela de Motivos '||pr_cdproduto||'. Erro na GENE0005.pc_busca_motivos: '||sqlerrm;
     END;
   END pc_busca_motivos;
+
+  PROCEDURE pc_gera_inconsistencia(pr_cdcooper IN tbgen_inconsist.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_iddgrupo IN tbgen_inconsist.idinconsist_grp%TYPE --> Codigo do Grupo
+                                  ,pr_tpincons IN tbgen_inconsist.tpinconsist%TYPE --> Tipo (1-Aviso, 2-Erro)
+                                  ,pr_dsregist IN tbgen_inconsist.dsregistro_referencia%TYPE --> Desc. do registro de referencia
+                                  ,pr_dsincons IN tbgen_inconsist.dsinconsist%TYPE --> Descricao da inconsistencia
+                                  ,pr_des_erro OUT VARCHAR2 --> Status erro
+                                  ,pr_dscritic OUT VARCHAR2) IS --> Retorno de erro
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : pc_gera_inconsistencia
+    --   Sistema : Conta-Corrente - Cooperativa de Credito
+    --   Sigla   : CRED
+    --   Autor   : Jaison Fernando
+    --   Data    : Novembro/2016                      Ultima atualizacao:           
+    --
+    --   Dados referentes ao programa:
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedimento para cadastrar as inconsistencias.
+    --
+    --   Alteracoes:                                                                     
+    -- .............................................................................
+    DECLARE
+
+		  -- Cursor da data
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_dscritic crapcri.dscritic%TYPE;
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+
+      -- Variaveis Gerais
+      vr_idincons tbgen_inconsist_grp.idinconsist_grp%TYPE;
+
+    BEGIN
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+
+      -- Busca o proximo ID
+      vr_idincons := fn_sequence(pr_nmtabela => 'tbgen_inconsist'
+                                ,pr_nmdcampo => 'idinconsist'
+                                ,pr_dsdchave => '0');
+
+      BEGIN
+        INSERT INTO tbgen_inconsist
+                   (idinconsist
+                   ,cdcooper
+                   ,idinconsist_grp
+                   ,tpinconsist
+                   ,dhinconsist
+                   ,dtmvtolt
+                   ,dsregistro_referencia
+                   ,tbgen_inconsist.dsinconsist)
+             VALUES(vr_idincons
+                   ,pr_cdcooper
+                   ,pr_iddgrupo
+                   ,pr_tpincons
+                   ,SYSDATE
+                   ,rw_crapdat.dtmvtolt
+                   ,pr_dsregist
+                   ,pr_dsincons);
+      EXCEPTION
+        WHEN OTHERS THEN
+        vr_dscritic := 'Problema ao incluir inconsistencia: ' || SQLERRM;
+        RAISE vr_exc_saida;
+      END;
+
+			pr_des_erro := 'OK';
+
+    EXCEPTION
+			WHEN vr_exc_saida THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        pr_des_erro := 'NOK';
+        pr_dscritic := 'Erro na GENE0005.pc_gera_inconsistencia: ' || SQLERRM;
+    END;
+
+  END pc_gera_inconsistencia;
 
 END GENE0005;
 /
