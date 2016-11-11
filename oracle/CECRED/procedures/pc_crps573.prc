@@ -258,7 +258,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     
                     20/04/2016 - Ajuste para dividir o arquivo em partes. (James)
                     
-					10/05/2016 - Ajuste no numero do contrato para enviar a modalidade que vai na tag modalidade. (James)                    
+                    10/05/2016 - Ajuste no numero do contrato para enviar a modalidade que vai na tag modalidade. (James)
                     
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
 
@@ -275,19 +275,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     10/05/2016 - Ajuste no numero do contrato para enviar a modalidade que vai na tag modalidade. (James)
                     
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
-
+                    
                     24/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.(Carlos Rafael Tanholi).
-
+                    
                     20/07/2016 - Resolucao dos chamados 491068, 488220 e 486570. (James)
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
 
-				          	26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+			        26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
                                  da data de vencimento e quantidade de dias atraso.
                                  SD488220 (Odirlei-AMcom)
-                                 
-                    24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+
+					24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
                                  ( Renato Darosci - Supero )
+                                 
+                    03/11/2016 - Alterada a função de classificação do porte de pessoa física, para que sejam considerados
+                                 como "sem redimento", rendas mensais de até 0.01 (inclusive) e não mais rendas com valor 
+                                 zero apenas. Esta alteração corrige o problema relatado no chamado SD 549969, onde contas
+                                 cadastradas com rendimento igual a 0.01 estavam sendo enviadas com código de porte igual
+                                 a 2 - ATÉ 1 SALÁRIO MÍNIMO. (Renato Darosci - Supero)
                                  
 .............................................................................................................................*/
 
@@ -636,7 +642,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
-             AND crapbpr.tpctrpro = pr_tpctrpro
+             AND crapbpr.tpctrpro = pr_tpctrpro             
              AND crapbpr.flgalien = 1;
 
 
@@ -1173,8 +1179,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 vr_dsorgrec_out := '0202';
               END IF;
             END IF;
-          ELSE --se for BNDES - SD 426476
-            vr_dsorgrec_out := '0203';
+		      ELSE --se for BNDES - SD 426476
+               vr_dsorgrec_out := '0203'; 			
           END IF;
         END IF;        
         -- Retornar
@@ -2431,11 +2437,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
                    -- Condicao para verificar se o bem estah baixado ou cancelado
                    IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
-                  -- Informação do Empréstimo
-                  gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                         ,pr_texto_completo => vr_xml_3040_temp
-                                         ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                            || rw_crapbpr.dschassi || '" />' || chr(10));
+                     -- Informação do Empréstimo
+                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                            ,pr_texto_completo => vr_xml_3040_temp
+                                            ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
+                                                               || rw_crapbpr.dschassi || '" />' || chr(10));
                    ELSE
                      
                      /*********************************************************************************
@@ -3091,9 +3097,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       -- Classifica o porte do PF
       FUNCTION fn_classifi_porte_pf(pr_vlrrendi IN NUMBER) RETURN pls_integer IS
       BEGIN  
-        IF pr_vlrrendi = 0 THEN
+        
+        --> 03/11/2016 - Renato Darosci - Alterado para considerar faixa "sem rendimento" até 0.01 - SD 549969
+      
+        IF pr_vlrrendi <= 0.01 THEN
           RETURN 1;
-        ELSIF pr_vlrrendi > 0 AND pr_vlrrendi <= vr_vlsalmin THEN
+        ELSIF pr_vlrrendi > 0.01 AND pr_vlrrendi <= vr_vlsalmin THEN
           RETURN 2;
         ELSIF pr_vlrrendi > vr_vlsalmin AND pr_vlrrendi <= (vr_vlsalmin * 2) THEN
           RETURN 3;
