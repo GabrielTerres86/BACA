@@ -4139,7 +4139,7 @@ BEGIN
          pc_limpa_tabela;
 
          -- Efetuar commit
-        -- COMMIT;
+        COMMIT;
       WHEN vr_exc_saida THEN
          -- Se foi retornado apenas código
          IF vr_cdcritic > 0 AND vr_des_erro IS NULL THEN
