@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 10/05/2016
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 11/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -30,6 +30,9 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --
   --              10/05/2016 - Ajuste decorrente a conversao da tela GRAVAM
   --                           (Andrei - RKAM).
+  --  
+  --              11/10/2016 - M172 - Ajuste no formato do telefone para novo digito 9. 
+  --                           (Ricardo Linhares) 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -275,7 +278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 22/09/2016
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 11/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -312,6 +315,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --              22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
   --                           pois em alguns casos ele foi gravado em minusculo e outros em maisculo
   --                           (Adriano - SD 527336)
+  --
+  --              11/10/2016 - M172 - Ajuste no formato do telefone para novo digito 9. 
+  --                           (Ricardo Linhares)  
+  
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -1607,7 +1614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                 ,pr_nrdconta => rw_bpr.nrdconta) LOOP
           -- Formatar a informação
           vr_nrdddass := to_char(nvl(rw_tfc.nrdddtfc,0),'fm000');
-          vr_nrtelass := to_char(nvl(rw_tfc.nrtelefo,0),'fm00000000');
+          vr_nrtelass := to_char(nvl(rw_tfc.nrtelefo,0),'fm900000000');
           -- Sair quando encontrar
           EXIT WHEN (vr_nrdddass <> ' ' AND vr_nrtelass <> ' ');
         END LOOP;
@@ -1617,7 +1624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         END IF;
         
         IF TRIM(vr_nrtelass) IS NULL THEN
-          vr_nrtelass := to_char(0,'fm00000000');
+          vr_nrtelass := to_char(0,'fm900000000');
         END IF;
           
         -- Montagem da chave para a tabela por Cooper(5)+TpArquivo(1)+Sequencia(14)

@@ -4,26 +4,25 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
             05/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
                         
-            09/12/2009 - Alterado para receber aux_dtanoage por parametro da URL (Diego).
-                        
-            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-                         busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+			09/12/2009 - Alterado para receber aux_dtanoage por parametro da URL (Diego).
+			
+			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
 			22/10/2012 - Ajustes para a nova estrutura gnappob(Gabriel).
-
+						 
 			29/06/2015 - Incluido os campos de Dados do Fornecedor e Dados do Evento (Jean Michel).
-      
-            28/03/2016 - Ajustado para carregar dados existentes do evento EAD,
-                        mesmo nao existindo proposta para o evento PRJ243.2 (Odirlei-AMcom)  
+
+			28/03/2016 - Ajustado para carregar dados existentes do evento EAD,
+                         mesmo nao existindo proposta para o evento PRJ243.2 (Odirlei-AMcom)  
 
 			19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanholi).
-			
-
-      	     
-            
-            31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05 (Vanessa)
+      
+	        31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05 (Vanessa)
 
 	        24/06/2016 - Reformulação da tela conforme RF05  - Vanessa
+
+			28/09/2016 - Ajuste no formato do telefone com 9 digitos (Diego).
 ...............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -226,7 +225,7 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-     ab_unmap.aux_dsobjeti AT ROW 1 COL 1 NO-LABEL
+	 ab_unmap.aux_dsobjeti AT ROW 1 COL 1 NO-LABEL
           VIEW-AS EDITOR NO-WORD-WRAP
           SIZE 20 BY 4
      gnappdp.qtcarhor AT ROW 1 COL 1 NO-LABEL
@@ -257,8 +256,8 @@ DEFINE FRAME Web-Frame
 
 &ANALYZE-RESUME
 
- 
-          
+
+
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE outputHeader w-html 
 PROCEDURE outputHeader :
@@ -354,7 +353,7 @@ FIND FIRST crapadp WHERE
     crapadp.nrseqdig = INT(ab_unmap.aux_nrseqeve) NO-LOCK NO-ERROR.
 
 IF AVAIL crapadp THEN
-DO:
+	DO:
         
         IF  crapadp.dtinieve = ? then
              ASSIGN ab_unmap.aux_dtinieve = "".
@@ -364,7 +363,7 @@ DO:
             ASSIGN ab_unmap.aux_dtfineve = "".
         ELSE
             ASSIGN ab_unmap.aux_dtfineve = STRING(crapadp.dtfineve, "99/99/9999").
-END.
+	END.
 
 IF AVAIL crapedp THEN
 DO: 
@@ -389,31 +388,31 @@ END.
 
 /* Dados do Fornecedor */
 FIND FIRST crapcdp WHERE crapcdp.idevento = gnappdp.idevento
-                     AND crapcdp.cdcooper = INT(ab_unmap.aux_cdcooper)
-                     AND crapcdp.cdevento = INT(ab_unmap.aux_cdevento)
-                     AND crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci)
-                     AND crapcdp.dtanoage = INT(ab_unmap.aux_dtanoage) NO-LOCK NO-ERROR.
+  					 AND crapcdp.cdcooper = INT(ab_unmap.aux_cdcooper)
+					 AND crapcdp.cdevento = INT(ab_unmap.aux_cdevento)
+					 AND crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci)
+					 AND crapcdp.dtanoage = INT(ab_unmap.aux_dtanoage) NO-LOCK NO-ERROR.
 
 IF AVAIL crapcdp THEN
 	DO:	
 		FIND gnapfdp WHERE gnapfdp.idevento = 1
-					         AND gnapfdp.nrcpfcgc = crapcdp.nrcpfcgc NO-LOCK NO-ERROR.
+					   AND gnapfdp.nrcpfcgc = crapcdp.nrcpfcgc NO-LOCK NO-ERROR.
 
 		ab_unmap.dsfornec = "Nome: " 	 	+ STRING(gnapfdp.nmfornec) + " <br> " + 
                         "DDD/Fone: (" 	+ STRING(gnapfdp.cddddfor) + ") " + STRING(gnapfdp.nrfonfor) + " <br> " + 
-                        "DDD/Celular: (" + STRING(gnapfdp.cddddfax) + ") "  + STRING(gnapfdp.nrfaxfor).
+							"DDD/Celular: (" + STRING(gnapfdp.cddddfax) + ") "  + STRING(gnapfdp.nrfaxfor).
 	END.
 /* Fim Dados do Fornecedor */
 
 /* Dados do Evento */
 FIND FIRST gnappdp WHERE gnappdp.idevento = 1
 					 AND gnappdp.cdcooper = 0
-				   AND gnappdp.nrcpfcgc = crapcdp.nrcpfcgc
+				     AND gnappdp.nrcpfcgc = crapcdp.nrcpfcgc
 					 AND gnappdp.nrpropos = crapcdp.nrpropos NO-LOCK NO-ERROR.
 
 IF AVAIL gnappdp THEN
 	DO:
-     
+  
     ASSIGN	ab_unmap.txaObservacoes 	   = STRING(gnappdp.dsobserv)
             ab_unmap.txaPreRequisito 	   = STRING(gnappdp.dsprereq)
             aux_dsconteu                 = TRIM(STRING(REPLACE(gnappdp.dsconteu,"\n","<br>")))            
@@ -478,10 +477,10 @@ FOR EACH gnfacep WHERE
                 gnapfep.nrtelefo[aux_contador] <> 0   THEN
                 DO:
                     IF   aux_temfones   THEN
-                         ab_unmap.nmfacili = ab_unmap.nmfacili + " / (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"9999,9999").
+                         ab_unmap.nmfacili = ab_unmap.nmfacili + " / (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999").
                     ELSE 
                          DO:
-                             ab_unmap.nmfacili = ab_unmap.nmfacili + " - DDD/Fone(s): (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"9999,9999").
+                             ab_unmap.nmfacili = ab_unmap.nmfacili + " - DDD/Fone(s): (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999").
                              aux_temfones = YES.
                          END.
                 END.
@@ -543,20 +542,20 @@ FOR EACH crappap NO-LOCK BY crappap.dspubalv:
    ASSIGN vetordados = REPLACE(aux_dados,'\n','<br>').
    RUN RodaJavaScript("var mdadoseve=new Array(" + vetordados + ");"). 
 END PROCEDURE.
-                    
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-                    
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE process-web-request w-html 
 PROCEDURE process-web-request :
 
 v-identificacao = get-cookie("cookie-usuario-em-uso").
-                                              
+
 /* Usado FOR EACH para poder utilizar o CONTAINS e WORD-INDEX, alterado para MATCHES */
 FOR EACH gnapses WHERE gnapses.idsessao MATCHES "*" + v-identificacao + "*" NO-LOCK:
     LEAVE.
-                                          END.   
-                                          
+END.   
+  
 ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        FlagPermissoes        = GET-VALUE("aux_lspermis")
        msg-erro-aux          = 0
@@ -575,7 +574,7 @@ RUN outputHeader.
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
-                DO:
+   DO: 
       RUN inputFields.
 
       IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
@@ -621,7 +620,7 @@ IF REQUEST_METHOD = "POST":U THEN
 
    END. /* Fim do método POST */
 ELSE /* Método GET */ 
-   DO:
+   DO:       
       RUN PermissaoDeAcesso(INPUT ProgramaEmUso, OUTPUT IdentificacaoDaSessao, OUTPUT ab_unmap.aux_lspermis).
       
       CASE ab_unmap.aux_lspermis:
