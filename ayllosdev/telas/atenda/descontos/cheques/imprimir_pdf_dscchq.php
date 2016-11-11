@@ -978,10 +978,9 @@
 			// Se possui liberacao/analise de coordenador
             if ($dadosCabecalho["DSOPECOO"] != "") {
                 $this->SetFont("Courier","B",8);
-                $this->Cell(7.8,0.4,"RESTRIÇÃO(ÕES) APROVADA(AS): ",0,0,"L",0,"");
+                $this->Cell(7.8,0.4,"RESTRIÇÃO(ÕES) APROVADA(AS)",0,0,"L",0,"");
 
-                $this->SetFont("Courier","",8);
-                $this->Cell(0.6,0.4,$dadosCabecalho["DSOPECOO"],0,1,"L",0,"");
+                $this->Ln();
 
                 foreach ($arrRestricaoCoordenador as $arrValor) {
                     $this->SetFont("Courier","",7);
