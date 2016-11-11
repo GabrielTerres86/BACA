@@ -386,6 +386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     SELECT cop.dsdircop
       FROM crapcop cop
      WHERE cop.cdcooper = pr_cdcooper;
+  vr_dsdircop crapcop.dsdircop%TYPE;
 
   /* Tratamento de erro */
   vr_des_erro VARCHAR2(32000);
@@ -735,16 +736,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --                 o mesmo para formular o caminho completo, do contrário enviamos
     --                 o caminho somente até a raiz da cooperativa
     --
-    --   Alteracoes: 11/11/2016 - Ajustado para garantir não ficar lixo na variavel 
-    --                            vr_dsdircop. (Odirlei-AMcom)
+    --   Alteracoes: 99/99/9999 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     -- .............................................................................
     DECLARE
       -- Diretório base
       vr_nmdireto_base VARCHAR2(200);
       -- Diretório temp
       vr_nmsubdir VARCHAR2(200);
-      vr_dsdircop crapcop.dsdircop%TYPE;
-      
     BEGIN
       -- Preencher Diretório base conforme tipo diretório passado
       IF upper(pr_tpdireto) = 'C' THEN
@@ -758,9 +756,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       ELSE
         vr_nmdireto_base := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_TMP');
       END IF;
-      
-      vr_dsdircop := NULL;
-      
       -- Buscar nome do diretório no cadastro da cooperativa
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop

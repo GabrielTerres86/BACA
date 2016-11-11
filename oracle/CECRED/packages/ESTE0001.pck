@@ -767,8 +767,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_json_valor     json_value;
     vr_nmdireto       VARCHAR2(4000);
     vr_nmarquiv       VARCHAR2(4000);
-    vr_nomarqui       VARCHAR2(4000);
-    vr_dsdircop       VARCHAR2(4000);
     
     vr_exec_erro EXCEPTION;
     vr_dscritic  VARCHAR2(4000);
@@ -778,38 +776,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Chamar rotina de separação do caminho do nome
     gene0001.pc_separa_arquivo_path(pr_caminho => pr_nmarquiv
                                    ,pr_direto  => vr_nmdireto
-                                   ,pr_arquivo => vr_nomarqui);  
-  
-    -- Verificar qual a base de execução
-    IF gene0001.fn_database_name =
-       gene0001.fn_param_sistema('CRED', 0, 'DB_NAME_PRODUC') THEN
-      --> Produção
-      vr_nmarquiv := pr_nmarquiv;
-    ELSE
-      --> Caso nao for produção, é necessario corrigir endereço do arquivo,
-      --> devido a diferença entre endereco progress e oracle
-      vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C',
-                                           pr_cdcooper => 0);
-      IF vr_nmdireto NOT LIKE '%' || vr_dsdircop || '%' THEN
-      
-        vr_nmdireto := replace(vr_nmdireto, '/usr/coop/', vr_dsdircop);
-        vr_nmarquiv := vr_nmdireto || '/' || vr_nomarqui;
-      ELSE
-        vr_nmarquiv := pr_nmarquiv;
-      END IF;
-    END IF;
+                                   ,pr_arquivo => vr_nmarquiv);  
   
     --> Verificar se existe arquivo
-    IF gene0001.fn_exis_arquivo(pr_caminho => vr_nmdireto || '/' ||
-                                              vr_nomarqui /*vr_nmarquiv*/) =
-       FALSE THEN
-      vr_dscritic := 'Arquivo ' || vr_nmdireto || '/' || vr_nomarqui /*vr_nmarquiv*/
-                     || ' não encontrado.';
+    IF gene0001.fn_exis_arquivo(pr_caminho => pr_nmarquiv) = FALSE THEN
+      vr_dscritic := 'Arquivo '||pr_nmarquiv||' não encontrado.';
       RAISE vr_exec_erro;
     END IF;
     
     /* Carrega o arquivo binário a para memória em uma variavel BLOB */
-    vr_arquivo := gene0002.fn_arq_para_blob(vr_nmdireto, vr_nomarqui);
+    vr_arquivo := gene0002.fn_arq_para_blob(vr_nmdireto, vr_nmarquiv);
     /* Codifica o arquivo binário da memória em Base64 */
     vr_json_valor := json_ext.encode(vr_arquivo);
     pr_json_value_arq := vr_json_valor;
