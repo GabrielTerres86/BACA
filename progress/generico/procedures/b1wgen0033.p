@@ -5829,7 +5829,7 @@ PROCEDURE busca_seguros:
                  (crapseg.cdsitseg = 4 AND
                  crapseg.dtfimvig < (par_dtmvtolt - 365)) THEN
                  NEXT.
-              
+
               */
 
             CREATE tt-seguros.
@@ -5961,12 +5961,6 @@ PROCEDURE busca_seguros:
     
             IF (crapseg.nrdconta <> par_nrdconta AND par_nrdconta <> 0) THEN NEXT.
             
-            IF   (crapseg.cdsitseg = 2 AND
-                 crapseg.dtcancel < (par_dtmvtolt - 365)) OR
-                 (crapseg.cdsitseg = 4 AND
-                 crapseg.dtfimvig < (par_dtmvtolt - 365)) THEN
-                 NEXT.
-              
             CREATE tt-seguros.
             ASSIGN tt-seguros.cdcooper      = crapseg.cdcooper
                    tt-seguros.cdagenci      = crapseg.cdagenci
