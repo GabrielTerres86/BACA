@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --  Sistema  : Rotinas auxiliares para busca de informacões do negocio
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 10/06/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 11/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -214,6 +214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          crapass em campos de indice que possuem UPPER
   --                          (Adriano - SD 463762).
   --
+  --             11/11/2016 - Criacao da procedure pc_gera_inconsistencia para
+  --                          cadastrar as inconsistencias. (Jaison/Andrino)
   --
   ---------------------------------------------------------------------------------------------------------------
 
