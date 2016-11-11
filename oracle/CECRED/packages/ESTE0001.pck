@@ -953,7 +953,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 08/03/2016
+      Data     : Março/2016.                   Ultima atualizacao: 12/09/2016
     
       Dados referentes ao programa:
     
@@ -961,7 +961,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Objetivo  : Rotina responsavel por realizar as leituras no sistema cecred a fim
                   de montar o objeto json contendo a proposta de emprestimo
     
-      Alteração : 
+      Alteração : 08/08/2016 Enviar sempre o PA de envio nas propostas de inclusão/alteração. (Oscar)
+                  19/08/2016 Enviar 0 no parecer quando não existir parecer. (Oscar)
+
+                  12/09/2016 Enviar o saldo do pre-aprovado se estiver liberado na conta
+                  para ter pre-aprovado. (Oscar)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -1032,7 +1036,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     CURSOR cr_crapass_cpfcgc(pr_cdcooper crapass.cdcooper%TYPE,
                              pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
       SELECT cdcooper,
-             nrdconta
+             nrdconta,
+             flgcrdpa               
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrcpfcgc = pr_nrcpfcgc -- CPF/CGC passado
@@ -1159,7 +1164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     --> Criar objeto json para agencia da proposta
     vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
-    vr_obj_agencia.put('PACodigo',nvl(nullif(rw_crawepr.cdagenci,0),rw_crapass.cdagenci));    
+    vr_obj_agencia.put('PACodigo', pr_cdagenci);    
     vr_obj_proposta.put('PA' ,vr_obj_agencia);    
     vr_obj_agencia := json();
     
@@ -1259,14 +1264,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Vazio se for CDC
     IF rw_crawepr.inlcrcdc = 0 THEN
-      IF trim(rw_crawepr.instatus) IS NULL THEN
-        vr_dscritic := 'Parecer da analise de credito não encontrada';
-        RAISE vr_exc_erro;
-      END IF;
       /*1-pre-aprovado, 2-analise manual, 3-nao conceder */
-      vr_obj_proposta.put('parecerPreAnalise'     ,rw_crawepr.instatus );
+      vr_obj_proposta.put('parecerPreAnalise', NVL(rw_crawepr.instatus, 0));
     ELSE
-      vr_obj_proposta.put('parecerPreAnalise'     ,'');
+      vr_obj_proposta.put('parecerPreAnalise', 0);
     END IF; 
     
     
@@ -1324,14 +1325,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           vr_vlprapne := nvl(rw_crawepr_pend.vlemprst, 0) + vr_vlprapne; 
           
           --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
+          IF rw_crapass_cpfcgc.flgcrdpa = 1 THEN
           rw_crapcpa := NULL;
           OPEN cr_crapcpa (pr_cdcooper => rw_crapass_cpfcgc.cdcooper,
                            pr_nrdconta => rw_crapass_cpfcgc.nrdconta);
           FETCH cr_crapcpa INTO rw_crapcpa;
           CLOSE cr_crapcpa;                  
-
           vr_vllimdis := nvl(rw_crapcpa.vllimdis, 0) + vr_vllimdis;
-          
+	        END IF;
       END LOOP;
       
       
@@ -2064,13 +2065,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 09/03/2016
+      Data     : Março/2016.                   Ultima atualizacao: 20/09/2016
     
       Dados referentes ao programa:
     
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por gerar a efetivacao da proposta para a esteira
-      Alteração : 
+      Alteração : 20/09/2016 - Atualizar a data de envio da efetivação da proposta 
+                  no Oracle, no Progress estava gerando erro (Oscar).
+                  
+                  22/09/2016 - Enviar a data em que a proposta foi efetivada ao invés
+                  da data do dia.
         
     ..........................................................................*/ 
     
@@ -2099,7 +2104,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                        pr_nrdconta crawepr.nrdconta%TYPE,
                        pr_nrctremp crawepr.nrctremp%TYPE)IS
       SELECT wepr.nrctremp,
-             wepr.dtmvtolt,
              wepr.vlemprst,
              wepr.qtpreemp,
              wepr.dtvencto,
@@ -2115,7 +2119,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
              epr.cdagenci cdagenci_efet,             
              decode(wepr.tpemprst,1,'PP','TR') tpproduto,
              -- Indica que am linha de credito eh CDC ou C DC
-             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc
+             DECODE(instr(replace(UPPER(lcr.dslcremp),'C DC','CDC'),'CDC'),0,0,1) inlcrcdc,
+             epr.dtmvtolt
         FROM crawepr wepr,
              craplcr lcr,
              crapope ope,
@@ -2131,7 +2136,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
          AND wepr.nrdconta = pr_nrdconta
          AND wepr.nrctremp = pr_nrctremp
          ; 
-    rw_crawepr cr_crawepr%ROWTYPE;    
+    rw_crawepr cr_crawepr%ROWTYPE;   
+    
+    
+   CURSOR cr_craplem (pr_cdcooper craplem.cdcooper%TYPE,
+                      pr_nrdconta craplem.nrdconta%TYPE,
+                      pr_nrctremp craplem.nrctremp%TYPE,
+                      pr_dtmvtolt craplem.dtmvtolt%TYPE)IS  
+                        
+    SELECT dthrtran
+      FROM craplem
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctremp = pr_nrctremp
+       AND dtmvtolt = pr_dtmvtolt
+       AND cdhistor IN (99, 1032, 1036, 1059) /* Efetivação */
+       AND rownum = 1;
+       
+    rw_craplem cr_craplem%ROWTYPE;  
     
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -2176,7 +2198,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
       RAISE vr_exc_erro;
     END IF;
-    CLOSE cr_crawepr;    
+    CLOSE cr_crawepr;
+    
+    --> Buscar dados da proposta de emprestimo
+    OPEN cr_craplem(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta,
+                    pr_nrctremp => pr_nrctremp,
+                    pr_dtmvtolt => rw_crawepr.dtmvtolt);
+    FETCH cr_craplem INTO rw_craplem;
+    
+    -- Caso nao encontrar abortar proceso
+    IF cr_craplem%NOTFOUND THEN
+      CLOSE cr_craplem;
+      vr_cdcritic := 0; 
+      vr_dscritic := 'Proposta nao foi efetivada.';
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_craplem;
+    
+        
     
     --> Criar objeto json para agencia da proposta
     /***************** VERIFICAR *********************/
@@ -2216,7 +2256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_obj_agencia.put('PACodigo'                , rw_crawepr.cdagenci_efet);    
     vr_obj_efetivar.put('operadorEfetivacaoPA'   , vr_obj_agencia);    
     vr_obj_agencia := json();   
-    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(SYSDATE)) ; 
+    vr_obj_efetivar.put('dataHora'               ,fn_DataTempo_ibra(COALESCE(rw_craplem.dthrtran, SYSDATE))) ; 
     vr_obj_efetivar.put('contratoNumero'         , pr_nrctremp);
     vr_obj_efetivar.put('valor'                  , rw_crawepr.vlemprst);
     vr_obj_efetivar.put('parcelaQuantidade'      , rw_crawepr.qtpreemp);
@@ -2265,6 +2305,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;    
+    
+     --> Atualizar proposta
+    BEGIN
+      UPDATE crawepr epr 
+         SET epr.dtenefes = trunc(SYSDATE)
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp;      
+    EXCEPTION    
+      WHEN OTHERS THEN
+        vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da efetivacao para a esteira: '||SQLERRM;
+        RAISE vr_exc_erro;
+    END;
+    
+    COMMIT;         
     
   EXCEPTION
     WHEN vr_exc_erro THEN
