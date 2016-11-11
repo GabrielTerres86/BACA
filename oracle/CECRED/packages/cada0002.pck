@@ -161,8 +161,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
                                    ,pr_des_erro OUT VARCHAR2              --> Indicador se retornou com erro (OK ou NOK)
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica
                                    ,pr_dscritic OUT crapcri.dscritic%TYPE);--> Descricao da critica
-                                    
 
+                                                                          
                                                                           
   -- Rotina para validacao de inclusao para conta de transferencia
   PROCEDURE pc_val_inclui_conta_transf(pr_cdcooper IN crapcop.cdcooper%TYPE               
@@ -201,7 +201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 23/06/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 30/08/2016
   --
   -- Dados referentes ao programa:
   --
@@ -222,13 +222,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --
   --             11/02/2016 - Conversao da rotina b1wgen0015.valida-inclusao-conta-transferencia,
   --                           (Jean Michel).
-
   --
   --             05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
   --                          (Adriano).
   --
-  --		         10/05/2016 - Ajustes devido ao projeto M118 para cadastrar o favorecido de forma automatica
-  --					               (Adriano - M117).
+  --		     10/05/2016 - Ajustes devido ao projeto M118 para cadastrar o favorecido de forma automatica
+  --					     (Adriano - M117).
   --
   --             19/05/2016 - Ajsute na inclusão do registro crapcti para tratar quando o número do ISPB vier nulo 
   --                          e incluir a verificação de senha para contas com assinatura conjunta
@@ -237,6 +236,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --             23/06/2016 - Correcao no indice sobre a tabela crapope da pc_mudsen para comparar os campo
   --                          cdoperad com o comando UPPER. (Carlos Rafael Tanholi).
   --
+  --             20/07/2016 - #475267 Inclusão da exception DUP_VAL_ON_INDEX na rotina pc_inclui_conta_transf
+  --                          para criticar contas já cadastradas. (Carlos)
+  --
+  --             30/08/2016 - Criar rotina para impressão de resgate de aplicação 
+  --                          pc_impressao_resg_aplica (Lucas Ranghetti #490678)
   ---------------------------------------------------------------------------------------------------------------------------
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -280,7 +284,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,nrcpffav   VARCHAR2(100)
                             ,dsfinali   VARCHAR2(100)
                             ,dstransf   VARCHAR2(100)
-                            ,dsispbif   VARCHAR2(100));
+                            ,dsispbif   VARCHAR2(100)
+														,dspacote   VARCHAR2(100)
+														,dtdiadeb   NUMBER
+														,dtinivig   DATE);
     
   
   -- REGISTROS
@@ -1197,6 +1204,242 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_impressao_aplica;
   
+  -- Imprimir comprovante de Resgate de Aplicação
+  PROCEDURE pc_impressao_resg_aplica(pr_xmldata  IN typ_xmldata
+                                    ,pr_cdcooper IN NUMBER
+                                    ,pr_nmrescop IN VARCHAR2) IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_impressao_resg_aplica 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : Lucas Ranghetti
+    --  Data     : Agosto/2016.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de 
+    --               resgate de aplicações
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+    
+    -- Cursores
+    -- Buscar dados do protocolo
+    CURSOR cr_crappro IS
+      SELECT crappro.dsinform##1
+           , crappro.dsinform##2
+           , crappro.dsinform##3
+        FROM crappro
+       WHERE crappro.cdcooper        = pr_cdcooper
+         AND UPPER(crappro.dsprotoc) = pr_xmldata.dsprotoc;
+    
+    -- Variáveis
+    vr_dsinform1    crappro.dsinform##1%TYPE;
+    vr_dsinform2    crappro.dsinform##2%TYPE;
+    vr_dsinform3    crappro.dsinform##3%TYPE;
+    
+    rw_tbdinfo1     GENE0002.typ_split;
+    rw_tbdinfo2     GENE0002.typ_split;
+    rw_tbdinfo3     GENE0002.typ_split;
+
+    vr_nmsolici     VARCHAR2(100);
+    vr_dstaxctr     VARCHAR2(100);
+    
+    vr_nraplica     NUMBER;
+    vr_nrdlinha     NUMBER := 0;  
+    
+    vr_dtaplica     DATE;
+    
+    vr_vlrbruto   NUMBER(25,2);    
+    vr_aliquota   VARCHAR2(100);
+    
+  BEGIN
+
+    -- IMPRIMIR O CABEÇALHO
+    pc_escreve_xml('--------------------------------------------------------------------------------',1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante de Resgate de Aplicacao                    ',2); 
+    pc_escreve_xml('            Emissao: '||to_char(SYSDATE,'DD/MM/YYYY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',3); 
+    pc_escreve_xml('           Conta/DV: '||TRIM(GENE0002.fn_mask_conta(pr_xmldata.nrdconta))||' - '||pr_xmldata.nmprimtl,4);
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,5);
+    
+    -- IMPRIMIR O CONTEÚDO
+    
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 6;
+
+    -- Se tem Preposto
+    IF TRIM(pr_xmldata.nmprepos) IS NOT NULL THEN
+      pc_escreve_xml('           Preposto: '||pr_xmldata.nmprepos,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    -- Se tem Operador
+    IF TRIM(pr_xmldata.nmoperad) IS NOT NULL THEN
+      pc_escreve_xml('           Operador: '||pr_xmldata.nmoperad,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+    
+    -- Buscar informações do protocolo
+    OPEN  cr_crappro;
+    FETCH cr_crappro INTO vr_dsinform1
+                        , vr_dsinform2
+                        , vr_dsinform3;
+    -- Se não encontrar dados
+    IF cr_crappro%NOTFOUND THEN
+      -- Limpar as variáveis
+      vr_dsinform1 := NULL;
+      vr_dsinform2 := NULL;
+      vr_dsinform3 := NULL;
+    END IF;
+    
+    -- Fecha o cursor
+    CLOSE cr_crappro;
+    
+    -- Faz o split dos dados e colocar em registros
+    rw_tbdinfo1 := GENE0002.fn_quebra_string(pr_string => vr_dsinform1,pr_delimit => '#');
+    rw_tbdinfo2 := GENE0002.fn_quebra_string(pr_string => vr_dsinform2,pr_delimit => '#');
+    rw_tbdinfo3 := GENE0002.fn_quebra_string(pr_string => vr_dsinform3,pr_delimit => '#');
+    
+    -- Se retornou valores na informação 2
+    IF rw_tbdinfo2.COUNT() > 0 THEN
+      -- Nome
+      vr_nmsolici := TRIM(rw_tbdinfo2(1));
+    END IF;
+    
+    -- Se retornou valores na informação 3
+    IF rw_tbdinfo3.COUNT() > 0 THEN
+      -- Data da aplicação
+      vr_dtaplica := to_date(TRIM(SUBSTR(rw_tbdinfo3(1),INSTR(rw_tbdinfo3(1),':')+1)),'dd/mm/yyyy');
+      -- número da aplicação
+      vr_nraplica := to_number(TRIM(SUBSTR(rw_tbdinfo3(2),INSTR(rw_tbdinfo3(2),':')+1)));
+      -- Taxa contratada
+      vr_dstaxctr := TRIM(SUBSTR(rw_tbdinfo3(3),INSTR(rw_tbdinfo3(3),':')+1));     
+      -- Aliquota
+      vr_aliquota := TRIM(SUBSTR(rw_tbdinfo3(4),INSTR(rw_tbdinfo3(4),':')+1));  
+      -- Valor Bruto
+      vr_vlrbruto := TO_NUMBER(TRIM(SUBSTR(rw_tbdinfo3(5),INSTR(rw_tbdinfo3(5),':') + 1)),'FM9G999G999G999G990D00', 'NLS_NUMERIC_CHARACTERS=,.');
+    END IF;
+    
+    -- Imprimir o solicitante
+    pc_escreve_xml('          Solicitante: '||vr_nmsolici  ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprimir a data da aplicação
+    pc_escreve_xml('      Data do Resgate: '||to_char(vr_dtaplica,'dd/mm/yyyy') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Imprimir a hora da aplicação
+    pc_escreve_xml('      Hora do Resgate: '||to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'HH24:MI:SS') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprimir o número da aplicação    
+	  pc_escreve_xml('  Numero da Aplicacao: '||vr_nraplica ,vr_nrdlinha);				
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime o valor Bruto
+    pc_escreve_xml('          Valor Bruto: '||to_char(vr_vlrbruto,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Taxa contratada
+    pc_escreve_xml('                 IRRF: '||vr_dstaxctr,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Aliquota IRRF
+    pc_escreve_xml('        Aliquota IRRF: '||vr_aliquota,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Imprime o valor Liquido
+    pc_escreve_xml('        Valor Liquido: '||to_char(pr_xmldata.valor,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+  
+    -- Imprimir o protocolo
+    pc_escreve_xml('            Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a sequencia de autenticação
+    pc_escreve_xml('    Seq. Autenticacao: '||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+      
+    pc_escreve_xml('--------------------------------------------------------------------------------',20);
+    
+  END pc_impressao_resg_aplica;
+  
+  -- Imprimir protocolo pacote de tarifa
+  PROCEDURE pc_impressao_pac_tar(pr_xmldata  IN typ_xmldata
+                                ,pr_nmrescop IN VARCHAR2) IS
+    -- ..........................................................................
+    --
+    --  Programa : pc_impressao_pac_tar
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : Lucas Reinert
+    --  Data     : Maio/2016.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    -- 	
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão do protocolo de
+		--               pacote de tarifas
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+          
+    -- Variáveis
+    vr_nrdlinha     NUMBER := 0;  
+		                
+  BEGIN
+
+    -- IMPRIMIR OS DADOS DE PACOTE DE TARIFAS
+    pc_escreve_xml('--------------------------------------------------------------------------------'        ,1);
+    pc_escreve_xml('    '||RPAD(pr_nmrescop,14,' ')||' - Servicos Cooperativos - '||
+		               'Emissao: '||to_char(SYSDATE,'DD/MM/YYYY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml('          Conta/DV: '||to_char(pr_xmldata.nrdconta,'FM999G999G990','NLS_NUMERIC_CHARACTERS=,.')||' - '||pr_xmldata.nmprimtl          ,4);	
+    pc_escreve_xml('--------------------------------------------------------------------------------'        ,5);
+		
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 6;
+
+    -- Se tem Preposto
+    IF TRIM(pr_xmldata.nmprepos) IS NOT NULL THEN
+      pc_escreve_xml('           Preposto: '||pr_xmldata.nmprepos,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    -- Imprime a data de transação
+    pc_escreve_xml('     Data Transacao: '||to_char(pr_xmldata.dttransa,'dd/mm/yy'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a hora da transação
+    pc_escreve_xml('               Hora: '||to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'hh24:mi:ss'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a descrição do pacote
+    pc_escreve_xml('            Servico: '||pr_xmldata.dspacote,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    pc_escreve_xml('              Valor: '||to_char(pr_xmldata.valor,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+    -- Imprime dia do débito
+    pc_escreve_xml('      Dia do debito: '||pr_xmldata.dtdiadeb,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a data de início da vigência
+    pc_escreve_xml('      Data Vigencia: '||to_char(pr_xmldata.dtinivig,'dd/mm/yy'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime o protocolo
+    pc_escreve_xml('          Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+		-- Imprime linha de rodapé
+    pc_escreve_xml('--------------------------------------------------------------------------------'        ,vr_nrdlinha);
+
+  END pc_impressao_pac_tar;
   
   -- TELA: VERPRO - Verificação de Protocolos
   PROCEDURE pc_verpro(pr_cdcooper IN NUMBER                --> Código da cooperativa
@@ -1459,7 +1702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           ELSE
             CLOSE cr_crappla;
           END IF;
-        ELSIF vr_cratpro(vr_ind).cdtippro <> 9 THEN
+        ELSIF vr_cratpro(vr_ind).cdtippro <> 9 AND vr_cratpro(vr_ind).cdtippro <> 14 THEN
 
           -- Assume valores para as variáveis
           vr_dsinfor2 := TRIM(gene0002.fn_busca_entrada(2, vr_cratpro(vr_ind).dsinform##2, '#'));
@@ -1911,6 +2154,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.dsfinali := fn_extract('/Root/Dados/dsfinali/text()');
     rw_xmldata.dstransf := fn_extract('/Root/Dados/dstransf/text()');
     rw_xmldata.dsispbif := fn_extract('/Root/Dados/dsispbif/text()');
+		rw_xmldata.dspacote := fn_extract('/Root/Dados/dspacote/text()');
+		rw_xmldata.dtdiadeb := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/dtdiadeb/text()'));		
+		rw_xmldata.dtinivig := to_date(fn_extract('/Root/Dados/dtinivig/text()'),'dd/mm/yyyy');		
     
     -- Inicializar o CLOB do XML
     vr_dsxmlrel := null;
@@ -2005,6 +2251,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       pc_impressao_aplica(pr_xmldata  => rw_xmldata
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_nmrescop => rw_crapcop.nmrescop);  
+    ELSIF rw_xmldata.cdtippro = 12 THEN
+      
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_RESG_APLICA';
+    
+      -- Imprimir comprovante de Resgate de Aplicação
+      pc_impressao_resg_aplica(pr_xmldata  => rw_xmldata
+                              ,pr_cdcooper => pr_cdcooper
+                              ,pr_nmrescop => rw_crapcop.nmrescop);  
+
+    ELSIF rw_xmldata.cdtippro = 14 THEN
+      
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_PAC_TAR';
+    
+      -- Imprimir comprovante de Aplicação
+      pc_impressao_pac_tar(pr_xmldata  => rw_xmldata
+                          ,pr_nmrescop => rw_crapcop.nmrescop);  
       
     END IF;
     
@@ -2117,7 +2381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                    ,pr_des_erro OUT VARCHAR2              --> Indicador se retornou com erro (OK ou NOK)
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da critica
                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da critica
-                                    
+
 
     /* .............................................................................
 
@@ -2201,7 +2465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
          AND crapsnh.tpdsenha = 1
          AND crapsnh.cdsitsnh = pr_cdsitsnh;         
     rw_crapsnh cr_crapsnh%ROWTYPE;
-       
+         
     -- Verificar cadasto de senhas
     CURSOR cr_crapavt (pr_cdcooper crapavt.cdcooper%TYPE,
                        pr_nrdconta crapavt.nrdconta%TYPE,
@@ -2226,7 +2490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         FROM crapttl ttl
        WHERE ttl.cdcooper = pr_cdcooper
          AND ttl.nrdconta = pr_nrdconta;
-           
+    
     -- Buscar associado
     CURSOR cr_crapopi ( pr_cdcooper crapopi.cdcooper%TYPE,
                         pr_nrdconta crapopi.nrdconta%TYPE,
@@ -2289,8 +2553,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     vr_inpessoa := pr_inpessoa;
     vr_nrcpfcgc := pr_nrcpfcgc;
     vr_intipcta := pr_intipcta;
-
-	-- Criar savepoint
+    
+    -- Criar savepoint
     SAVEPOINT TRANS_INCLUI;
     BEGIN
       IF pr_intipdif = 1 THEN /** Conta do Sistema **/
@@ -2348,40 +2612,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                        ,pr_idseqttl => NULL                      
                        ,pr_cdsitsnh => 1);
                        
-        FETCH cr_crapsnh INTO rw_crapsnh;
+      FETCH cr_crapsnh INTO rw_crapsnh;
 
-        IF cr_crapsnh%NOTFOUND THEN
-          CLOSE cr_crapsnh;
-          vr_dscritic := 'Senha para conta on-line nao cadastrada';
-          RAISE vr_exec_inclui; 
+      IF cr_crapsnh%NOTFOUND THEN
+        CLOSE cr_crapsnh;
+        vr_dscritic := 'Senha para conta on-line nao cadastrada';
+        RAISE vr_exec_inclui;
 
-        ELSE                               
+          ELSE
           CLOSE cr_crapsnh;          
           vr_crapsnhFound:=TRUE;
         END IF;
-      ELSE
-
-        -- Verificar cadastro de senha
-        OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
-                         pr_nrdconta => pr_nrdconta,
+        ELSE
+      
+      -- Verificar cadastro de senha
+      OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta,
                          pr_idseqttl => pr_idseqttl,
                          pr_cdsitsnh => 1); 
-                           
-        FETCH cr_crapsnh INTO rw_crapsnh;
           
-        IF cr_crapsnh%NOTFOUND THEN
-            
-          CLOSE cr_crapsnh;
-            
-          vr_dscritic := 'Senha para conta on-line nao cadastrada';
-          RAISE vr_exec_inclui;
+      FETCH cr_crapsnh INTO rw_crapsnh;
+        
+      IF cr_crapsnh%NOTFOUND THEN
+                                      
+        CLOSE cr_crapsnh;
+          
+        vr_dscritic := 'Senha para conta on-line nao cadastrada';
+        RAISE vr_exec_inclui;
         ELSE
-          CLOSE cr_crapsnh;
+      CLOSE cr_crapsnh;
           vr_crapsnhFound:=TRUE;
-        END IF;  
-          
       END IF;
-      
+        
+      END IF;
+
       IF pr_nrcpfope > 0 THEN
         -- Buscar dados do operador juridico 
         OPEN cr_crapopi (pr_cdcooper => pr_cdcooper,
@@ -2390,7 +2654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                          
         FETCH cr_crapopi INTO rw_crapopi;
         
-        IF cr_crapopi%NOTFOUND THEN  
+        IF cr_crapopi%NOTFOUND THEN
           
           vr_dscritic := 'Registro de operador nao encontrado.';
           CLOSE cr_crapopi;
@@ -2488,12 +2752,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                     ,vr_nrseqcad               --> crapcti.nrseqcad
                     ,NVL(pr_cdispbif,0));             --> crapcti.dsprotoc
         EXCEPTION 
+          WHEN DUP_VAL_ON_INDEX THEN
+            vr_dscritic := 'Conta destino já cadastrada.';
+            RAISE vr_exec_inclui;
           WHEN OTHERS THEN
             vr_dscritic := 'Não foi possivel inserir registro de tranferencia: '||SQLERRM;
             RAISE vr_exec_inclui; 
         END;
-            
-      END IF;   
+          
+          END IF;
           
       IF vr_crapsnhFound THEN
         -- Verificar limites do cooperado
@@ -2523,7 +2790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       IF vr_cdcritic = 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := 'Nao foi possivel efetuar o cadastro.';
       END IF;          
-	  
+                
       pr_dscritic := vr_dscritic;          
                 
       --Se for para gerar log
@@ -2587,7 +2854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     WHEN OTHERS THEN
     
       vr_dscritic := 'Nao foi possivel efetuar o cadastro: '||SQLERRM;      
-        
+                
       pr_dscritic := vr_dscritic;
                                    
       --Se for para gerar log
@@ -2606,7 +2873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_rowid_craplgm);
       END IF;
-   
+      
   END pc_inclui_conta_transf;
   
   -- Rotina para validacao de inclusao para conta de transferencia
