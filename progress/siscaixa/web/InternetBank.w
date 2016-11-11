@@ -1100,7 +1100,7 @@ DEF VAR aux_titulo5  AS DECI				 						   NO-UNDO.
 DEF VAR aux_codigo_barras AS CHAR      								   NO-UNDO.
 
 /*  Operacao 176/177 */
-DEF VAR aux_vintegra AS DECIMAL
+DEF VAR aux_vintegra AS DECIMAL										   NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
