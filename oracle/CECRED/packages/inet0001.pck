@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
 
     Programa: inet001                         Antiga: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 27/05/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 25/10/2016
 
     Dados referentes ao programa:
 
@@ -221,6 +221,8 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                          -> Retirado variáveis não utilizadas;
                          -> Ajustado tamanhdo do index e tamanho do campo nmitutla na pltable
                          (Adriano - M117).
+         
+			25/10/2016 - Novo ajuste na validacao do horario, solicitado pelo financeiro (Diego). 
          
 ..............................................................................*/
 
@@ -603,7 +605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 21/09/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 25/10/2016
   --
   -- Dados referentes ao programa:
   --
@@ -616,7 +618,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                          Adicionado verificacao de horario para Debito Automatico Facil
   --                          (Jorge/David) Proj. 131 - Assinatura Multipla.
   --
-  --			 21/09/2016 - Ajuste na validacao do horario para envio de TED (Diego).	          
+  --			 21/09/2016 - Ajuste na validacao do horario para envio de TED (Diego).	  
+  --             
+  --             25/10/2016 - Novo ajuste na validacao do horario, solicitado pelo financeiro (Diego).         
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -905,41 +909,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             --Determinar a hora atual
             vr_hratual:= GENE0002.fn_busca_time;          
             
+            /*****
+            Por solicitacao do financeiro, iremos apenas verificar se a cooperativa esta operante
+            no STR/PAG, sem a necessidade de verificar o horario de operacao. Devera prevalecer o 
+            horario da STR, e somente quando este nao estiver ATIVO mostrara horario da PAG.
+            Por regra, o STR sempre terá um período maior    
+            *****/
+            
             --Operando com mensagens STR
             IF rw_crapcop.flgopstr = 1 THEN -- TRUE
+               vr_hrinipag := rw_crapcop.iniopstr;
+               vr_hrfimpag := rw_crapcop.fimopstr; 
+         
+               /**
               IF rw_crapcop.iniopstr <= vr_hratual AND rw_crapcop.fimopstr >= vr_hratual THEN
-                 vr_flgutstr := TRUE;
-              END IF;
+                  vr_flgutstr := TRUE; -- Esta dentro do horario cadastrado para STR
             END IF;          
-            
+               **/
+            ELSE
             -- Operando com mensagens PAG  
             IF rw_crapcop.flgoppag = 1 THEN -- TRUE
+                    vr_hrinipag := rw_crapcop.inioppag;
+                    vr_hrfimpag := rw_crapcop.fimoppag;
+         
+                  /**
               IF rw_crapcop.inioppag <= vr_hratual AND rw_crapcop.fimoppag >= vr_hratual THEN
-                 vr_flgutpag := TRUE;  
+                     vr_flgutpag := TRUE; -- Esta dentro do horario cadastrado para PAG 
               END IF;
+                  **/
             END IF;    
-              
-			 --Se opera com PAG e está dentro do horario permitido
-            IF vr_flgutpag THEN -- TRUE
-              vr_hrinipag := rw_crapcop.inioppag;
-              vr_hrfimpag := rw_crapcop.fimoppag;
-              
-            ELSE
-                -- Se opera com STR
-                 IF   rw_crapcop.flgopstr = 1 THEN -- TRUE
-                      -- independente de estar ou não dentro do horário 
-                      -- permitido, mostra hora do STR. Por regra, o STR 
-                      -- sempre terá um período maior
-              vr_hrinipag := rw_crapcop.iniopstr;
-              vr_hrfimpag := rw_crapcop.fimopstr;            
-                 ELSE
-                     -- Só opera com PAG e está fora do horário
-                      vr_hrinipag := rw_crapcop.inioppag;
-                      vr_hrfimpag := rw_crapcop.fimoppag;
-                 END IF;
-
             END IF;            
-              
           END IF;
 
           --Se for feriado ou final semana
