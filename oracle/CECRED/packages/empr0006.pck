@@ -3090,6 +3090,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         CLOSE cr_crapass;
       END IF;
 
+      -- Verifica se existem contratos em acordo
+      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_flgativo => vr_flgativo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      IF vr_flgativo = 1 THEN
+        vr_dscritic := 'Aprovacao nao permitida, emprestimo em acordo.';
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Consulta situacao da portabilidade (JDCTC)
       pc_consulta_situacao(pr_cdcooper => vr_cdcooper                --Codigo da cooperativa
                           ,pr_idservic => 2                          --CREDORA
@@ -3175,23 +3192,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
       IF vr_cdmodsub NOT IN ('0202', '0203', '0401', '0402', '0403') THEN
          vr_dscritic := 'Operacao nao permitida para a modalidade: ' || vr_cdmodsub;
          RAISE vr_exc_saida;
-      END IF;
-
-      -- Verifica se existem contratos em acordo
-      RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => vr_cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctremp => pr_nrctremp
-                                       ,pr_flgativo => vr_flgativo
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
-
-      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-
-      IF vr_flgativo = 1 THEN
-        vr_dscritic := 'Aprovacao nao permitida, emprestimo em acordo.';
-        RAISE vr_exc_saida;
       END IF;
 
       -- Gerar cabeçalho do envelope SOAP
