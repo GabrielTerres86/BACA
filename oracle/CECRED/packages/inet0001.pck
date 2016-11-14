@@ -2831,11 +2831,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END IF;        
 
         /** Verifica se data de debito e uma data futura **/
-        IF  pr_dtmvtopg <= Trunc(vr_datdodia)  THEN
-          --Montar mensagem erro
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
-          --Levantar Excecao
+        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
+          IF pr_tpoperac = 10 THEN --DARF/DAS            
+            --Montar mensagem erro
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'A data mínima para agendamento deve ser '||To_Char(rw_crapdat.dtmvtopr,'DD/MM/YYYY')||'.';
+          ELSE
+            --Montar mensagem erro
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';            
+          END IF;
+          --Levantar Excecao          
           RAISE vr_exc_erro;
         END IF;
         /** Agendamento normal **/
