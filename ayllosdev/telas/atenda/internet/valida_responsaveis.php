@@ -67,10 +67,17 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));',false);
 	}else{
-		if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 0){
+		/*if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 0){
 			echo 'showConfirmacao("Confirma atualiza&ccedil;&atilde;o dos respons&aacute;veis pela assinatura conjunta?","Confirma&ccedil;&atilde;o - Ayllos","salvarRepresentantes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}else{
 			echo 'showConfirmacao("Essa conta possui transações pendentes de aprovação.<br><br>Se o poder de assinatura conjunta for modificado essas transações<br>não poderão ser aprovadas e ficarão pendentes até o prazo de expiração.<br><br>Confirma a alteração no poder de assinatura conjunta?","Confirma&ccedil;&atilde;o - Ayllos","salvarRepresentantes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+		}*/
+		if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 0){
+			echo 'showConfirmacao("H&aacute; transa&ccedil;&otilde;es pendentes de aprova&ccedil;&atilde;o. Deseja alterar os respons&aacute;veis pela assinatura?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+		}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 1){
+			echo 'showConfirmacao("Deseja alterar os respons&aacute;veis pela assinatura?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+		}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 2){
+			echo 'showConfirmacao("Revise as senhas de acesso a Conta Online para os novos respons&aacute;veis. Deseja alterar as permiss&otilde;es de assinatura?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}
 	}
 

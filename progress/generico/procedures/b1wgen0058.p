@@ -5427,8 +5427,15 @@ PROCEDURE valida_responsaveis:
 					RETURN "NOK".
 				END.
 		END.
-		
-    RETURN "OK".
+	
+	IF aux_flgretir AND par_flgpende = 1 THEN
+    par_flgpende = 0.
+  ELSE IF aux_flgretir AND par_flgpende = 0 THEN
+    par_flgpende = 1.
+  ELSE IF NOT aux_flgretir OR par_flgpende = 0 THEN
+    par_flgpende = 2.
+    
+  RETURN "OK".
 
 END PROCEDURE.
 
