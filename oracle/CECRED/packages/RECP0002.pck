@@ -1696,7 +1696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     FETCH cr_tbacordo INTO rw_tbacordo;
     IF cr_tbacordo%NOTFOUND THEN
       CLOSE cr_tbacordo;
-      vr_cdcritic := 484; -- Acordo não encontrado
+      vr_dscritic := 'Acordo nao encontrado.';
       RAISE vr_exc_erro; 
     END IF;
     CLOSE cr_tbacordo;
@@ -1718,7 +1718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     IF btch0001.cr_crapdat%NOTFOUND THEN      
       CLOSE btch0001.cr_crapdat;
       -- Montar mensagem de critica
-      vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';              
+      vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';
       RAISE vr_exc_erro;
     ELSE
       CLOSE btch0001.cr_crapdat;
