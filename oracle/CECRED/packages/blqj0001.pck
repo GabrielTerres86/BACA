@@ -18,40 +18,49 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
   TYPE typ_reg_cooperado IS RECORD (cdcooper    crapass.cdcooper%TYPE
                                    ,nrdconta    crapass.nrdconta%TYPE
                                    ,nrcpfcgc    crapass.nrcpfcgc%TYPE
+                                   ,idseqttl    crapttl.idseqttl%TYPE
                                    ,vlsldcap    NUMBER
                                    ,vlsldapl    NUMBER
                                    ,vlstotal    NUMBER
-                                   ,vlsldppr    NUMBER);
+                                   ,vlsldppr    NUMBER
+                                   ,dtadmiss    crapass.dtadmiss%TYPE
+                                   ,dsendere    crapenc.dsendere%TYPE
+                                   ,nrendere    crapenc.nrendere%TYPE
+                                   ,nmbairro    crapenc.nmbairro%TYPE
+                                   ,nmcidade    crapenc.nmcidade%TYPE
+                                   ,nrcepend    crapenc.nrcepend%TYPE);
                                   
   -- Tabela de memória para gravar os dados do cooperado
   TYPE typ_tab_cooperado IS TABLE OF typ_reg_cooperado INDEX BY BINARY_INTEGER;
   
   
   -- Chamar a busca-contas-cooperado por mensageria
-  PROCEDURE pc_busca_contas_cooperado_web(pr_cdcooper  IN crapcop.cdcooper%TYPE     
-                                         ,pr_cdagenci  IN VARCHAR2                  
-                                         ,pr_nrdcaixa  IN VARCHAR2                  
-                                         ,pr_cdoperad  IN VARCHAR2                  
-                                         ,pr_nmdatela  IN VARCHAR2                  
-                                         ,pr_idorigem  IN NUMBER                    
-                                         ,pr_inproces  IN NUMBER                    
-                                         ,pr_cooperad  IN NUMBER                    
-                                         ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
-                                         ,pr_cdcritic OUT PLS_INTEGER             --> Código da crítica
-                                         ,pr_dscritic OUT VARCHAR2                --> Descrição da crítica
-                                         ,pr_retxml    IN OUT NOCOPY XMLType      --> Arquivo de retorno do XML
-                                         ,pr_nmdcampo OUT VARCHAR2                --> Nome do campo com erro
-                                         ,pr_des_erro OUT VARCHAR2);              --> Erros do processo 
+  PROCEDURE pc_busca_contas_cooperado_web(pr_cdcooper   IN crapcop.cdcooper%TYPE     
+                                         ,pr_cdagenci   IN VARCHAR2                  
+                                         ,pr_nrdcaixa   IN VARCHAR2                  
+                                         ,pr_cdoperad   IN VARCHAR2                  
+                                         ,pr_nmdatela   IN VARCHAR2                  
+                                         ,pr_idorigem   IN NUMBER                    
+                                         ,pr_inproces   IN NUMBER                    
+                                         ,pr_cooperad   IN NUMBER         
+                                         ,pr_tpcooperad IN NUMBER   DEFAULT 0
+                                         ,pr_xmllog     IN VARCHAR2                --> XML com informações de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER             --> Código da crítica
+                                         ,pr_dscritic  OUT VARCHAR2                --> Descrição da crítica
+                                         ,pr_retxml     IN OUT NOCOPY XMLType      --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2                --> Nome do campo com erro
+                                         ,pr_des_erro  OUT VARCHAR2);              --> Erros do processo 
   
   -- Buscar contas cooperado
-  PROCEDURE pc_busca_contas_cooperado(pr_cdcooper IN crapcop.cdcooper%TYPE 
-                                     ,pr_cdagenci IN VARCHAR2
-                                     ,pr_nrdcaixa IN VARCHAR2               
-                                     ,pr_cdoperad IN VARCHAR2
-                                     ,pr_nmdatela IN VARCHAR2
-                                     ,pr_idorigem IN NUMBER    
-                                     ,pr_inproces IN NUMBER    
-                                     ,pr_cooperad IN NUMBER
+  PROCEDURE pc_busca_contas_cooperado(pr_cdcooper   IN crapcop.cdcooper%TYPE 
+                                     ,pr_cdagenci   IN VARCHAR2
+                                     ,pr_nrdcaixa   IN VARCHAR2               
+                                     ,pr_cdoperad   IN VARCHAR2
+                                     ,pr_nmdatela   IN VARCHAR2
+                                     ,pr_idorigem   IN NUMBER    
+                                     ,pr_inproces   IN NUMBER 
+                                     ,pr_cooperad   IN NUMBER          
+                                     ,pr_tpcooperad IN NUMBER  DEFAULT 0
                                      ,pr_nmprimtl      OUT VARCHAR2            
                                      ,pr_tab_cooperado OUT BLQJ0001.typ_tab_cooperado
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);
@@ -96,33 +105,35 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                   ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);  --> Retorno de erro                          
   
   -- Chamar a efetua-desbloqueio-jud por mensageria
-  PROCEDURE pc_efetua_desbloqueio_jud_web(pr_cdcooper  IN NUMBER
-                                         ,pr_dtmvtolt  IN VARCHAR2
-                                         ,pr_cdoperad  IN VARCHAR2
-                                         ,pr_nroficio  IN VARCHAR2
-                                         ,pr_nrctacon  IN VARCHAR2
-                                         ,pr_nrofides  IN VARCHAR2
-                                         ,pr_dtenvdes  IN VARCHAR2
-                                         ,pr_dsinfdes  IN VARCHAR2
-                                         ,pr_fldestrf  IN NUMBER  
-                                         ,pr_xmllog    IN VARCHAR2             --> XML com informações de LOG
-                                         ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                         ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                         ,pr_retxml    IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
-                                         ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                         ,pr_des_erro OUT VARCHAR2);           --> Erros do processo 
+  PROCEDURE pc_efetua_desbloqueio_jud_web(pr_cdcooper   IN NUMBER
+                                         ,pr_dtmvtolt   IN VARCHAR2
+                                         ,pr_cdoperad   IN VARCHAR2
+                                         ,pr_nroficio   IN VARCHAR2
+                                         ,pr_nrctacon   IN VARCHAR2
+                                         ,pr_nrofides   IN VARCHAR2
+                                         ,pr_dtenvdes   IN VARCHAR2
+                                         ,pr_dsinfdes   IN VARCHAR2
+                                         ,pr_fldestrf   IN NUMBER   
+                                         ,pr_tpcooperad IN NUMBER   DEFAULT 0
+                                         ,pr_xmllog     IN VARCHAR2             --> XML com informações de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                         ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                         ,pr_retxml     IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                         ,pr_des_erro  OUT VARCHAR2);           --> Erros do processo 
   
   -- Efetuar os desbloqueios judiciais
-  PROCEDURE pc_efetua_desbloqueio_jud(pr_cdcooper IN NUMBER
-                                     ,pr_dtmvtolt IN DATE
-                                     ,pr_cdoperad IN VARCHAR2
-                                     ,pr_nroficio IN VARCHAR2
-                                     ,pr_nrctacon IN VARCHAR2
-                                     ,pr_nrofides IN VARCHAR2
-                                     ,pr_dtenvdes IN DATE
-                                     ,pr_dsinfdes IN VARCHAR2
-                                     ,pr_fldestrf IN BOOLEAN          
-                                     ,pr_tab_erro IN OUT GENE0001.typ_tab_erro);
+  PROCEDURE pc_efetua_desbloqueio_jud(pr_cdcooper   IN NUMBER
+                                     ,pr_dtmvtolt   IN DATE
+                                     ,pr_cdoperad   IN VARCHAR2
+                                     ,pr_nroficio   IN VARCHAR2
+                                     ,pr_nrctacon   IN VARCHAR2
+                                     ,pr_nrofides   IN VARCHAR2
+                                     ,pr_dtenvdes   IN DATE
+                                     ,pr_dsinfdes   IN VARCHAR2
+                                     ,pr_fldestrf   IN BOOLEAN   
+                                     ,pr_tpcooperad IN NUMBER     DEFAULT 0
+                                     ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);
   
 END BLQJ0001;
 /
@@ -139,6 +150,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     Objetivo  : BO referente a tela BLQJUD
                  
     Alteracoes: 26/10/2016 - Conversão PROGRESS para ORACLE (Renato Darosci).
+    
+                11/11/2016 - Inclusão do parametro PR_TPCOOPERAD, que será utilizado 
+                             para indicar o tipo de identificação passada no parametro
+                             PR_COOPERAD, onde:
+                             [0] - Campo PR_COOPERAD virá com CPF/CNPJ ou conta
+                             [1] - Campo PR_COOPERAD virá uma conta especifica
+                             [2] - Campo PR_COOPERAD virá com um CPF/CNPJ
+                             [3] - Campo PR_COOPERAD virá com a raiz de um CNPJ
 
   .............................................................................*/
   
@@ -164,11 +183,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   
     
   -- Buscar os dados de documentos do cooperado por documento e conta
-  PROCEDURE pc_busca_nrcpfcgc_cooperado(pr_cdcooper  IN crapass.cdcooper%TYPE
-                                       ,pr_nrctadoc  IN NUMBER
-                                       ,pr_nrcpfcgc OUT crapass.nrcpfcgc%TYPE
-                                       ,pr_nmprimtl OUT crapass.nmprimtl%TYPE
-                                       ,pr_dscritic OUT VARCHAR2) IS
+  PROCEDURE pc_busca_nrcpfcgc_cooperado(pr_cdcooper   IN crapass.cdcooper%TYPE
+                                       ,pr_nrctadoc   IN NUMBER
+                                       ,pr_tpcooperad IN NUMBER
+                                       ,pr_nrcpfcgc  OUT crapass.nrcpfcgc%TYPE
+                                       ,pr_nmprimtl  OUT crapass.nmprimtl%TYPE
+                                       ,pr_dscritic  OUT VARCHAR2) IS
   
     -- CURSORES 
     -- Buscar o cooperado pelo número de documento
@@ -186,39 +206,89 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrctadoc;
+    
+    -- Buscar o cooperado pela base do CNPJ
+    CURSOR cr_cnpjbase IS
+      SELECT ass.nrcpfcgc
+           , ass.nmprimtl
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrcpfcgc BETWEEN to_number(pr_nrctadoc||'000000') AND to_number(pr_nrctadoc||'999999');
         
     -- VARIÁVEIS
     vr_nrcpfcgc    crapass.nrcpfcgc%TYPE;
     vr_nmprimtl    crapass.nmprimtl%TYPE;
     
   BEGIN
-  
-    -- FAZ A BUSCA POR CPF/CNPJ
-    OPEN  cr_nrcpfcgc;
-    FETCH cr_nrcpfcgc INTO vr_nrcpfcgc
-                         , vr_nmprimtl;
-                         
-    -- Se não encontrar o registro
-    IF cr_nrcpfcgc%NOTFOUND THEN
+    
+    -- se o tipo do cooperado for para pesquisa padrão ou indicando o CPF/CNPJ
+    IF pr_tpcooperad IN (0,2) THEN
+      -- FAZ A BUSCA POR CPF/CNPJ
+      OPEN  cr_nrcpfcgc;
+      FETCH cr_nrcpfcgc INTO vr_nrcpfcgc
+                           , vr_nmprimtl;
+                           
+      -- Se não encontrar o registro e o tipo de pesquisa for padrão
+      IF cr_nrcpfcgc%NOTFOUND AND 
+         pr_tpcooperad = 0    THEN
+        
+        -- FAZ A BUSCA POR CONTA
+        OPEN  cr_nrdconta;
+        FETCH cr_nrdconta INTO vr_nrcpfcgc
+                             , vr_nmprimtl;
+                             
+        -- Se não encontrar registro
+        IF cr_nrdconta%NOTFOUND THEN
+          -- Retorna a informação de cooperado não encontrado
+          vr_nmprimtl :=  'COOPERADO NAO ENCONTRADO';
+        END IF;
+        
+        -- Fechar o cursor
+        CLOSE cr_nrdconta;
       
+      ELSE
+        -- Retorna a informação de cooperado não encontrado
+        vr_nmprimtl := 'COOPERADO NAO ENCONTRADO';
+        vr_nrcpfcgc := NULL;
+      END IF;
+                 
+      -- Fechar o cursor
+      CLOSE cr_nrcpfcgc;
+    
+    -- Se a busca for por conta
+    ELSIF pr_tpcooperad = 1 THEN
       -- FAZ A BUSCA POR CONTA
       OPEN  cr_nrdconta;
       FETCH cr_nrdconta INTO vr_nrcpfcgc
                            , vr_nmprimtl;
-                           
+                             
       -- Se não encontrar registro
       IF cr_nrdconta%NOTFOUND THEN
         -- Retorna a informação de cooperado não encontrado
         vr_nmprimtl :=  'COOPERADO NAO ENCONTRADO';
       END IF;
-      
+        
       -- Fechar o cursor
       CLOSE cr_nrdconta;
+    
+    -- Se a busca for pelo  => CNPJ BASE <=
+    ELSIF pr_tpcooperad = 3 THEN 
       
+      -- FAZ A BUSCA PELO CNPJ BASE
+      OPEN  cr_cnpjbase;
+      FETCH cr_cnpjbase INTO vr_nrcpfcgc
+                           , vr_nmprimtl;
+                             
+      -- Se não encontrar registro
+      IF cr_cnpjbase%NOTFOUND THEN
+        -- Retorna a informação de cooperado não encontrado
+        vr_nmprimtl :=  'COOPERADO NAO ENCONTRADO';
+      END IF;
+        
+      -- Fechar o cursor
+      CLOSE cr_cnpjbase;
+    
     END IF;
-               
-    -- Fechar o cursor
-    CLOSE cr_nrcpfcgc;
     
     -- Retornar os valores encontrados
     pr_nrcpfcgc := vr_nrcpfcgc;
@@ -240,20 +310,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   END pc_busca_nrcpfcgc_cooperado;
   
   -- Chamar a busca-contas-cooperado por mensageria
-  PROCEDURE pc_busca_contas_cooperado_web(pr_cdcooper  IN crapcop.cdcooper%TYPE   
-                                         ,pr_cdagenci  IN VARCHAR2                
-                                         ,pr_nrdcaixa  IN VARCHAR2                
-                                         ,pr_cdoperad  IN VARCHAR2                  
-                                         ,pr_nmdatela  IN VARCHAR2                
-                                         ,pr_idorigem  IN NUMBER                  
-                                         ,pr_inproces  IN NUMBER                  
-                                         ,pr_cooperad  IN NUMBER                  
-                                         ,pr_xmllog    IN VARCHAR2                --> XML com informações de LOG
-                                         ,pr_cdcritic OUT PLS_INTEGER             --> Código da crítica
-                                         ,pr_dscritic OUT VARCHAR2                --> Descrição da crítica
-                                         ,pr_retxml    IN OUT NOCOPY XMLType      --> Arquivo de retorno do XML
-                                         ,pr_nmdcampo OUT VARCHAR2                --> Nome do campo com erro
-                                         ,pr_des_erro OUT VARCHAR2) IS            --> Erros do processo 
+  PROCEDURE pc_busca_contas_cooperado_web(pr_cdcooper   IN crapcop.cdcooper%TYPE   
+                                         ,pr_cdagenci   IN VARCHAR2                
+                                         ,pr_nrdcaixa   IN VARCHAR2                
+                                         ,pr_cdoperad   IN VARCHAR2                  
+                                         ,pr_nmdatela   IN VARCHAR2                
+                                         ,pr_idorigem   IN NUMBER                  
+                                         ,pr_inproces   IN NUMBER                  
+                                         ,pr_cooperad   IN NUMBER       
+                                         ,pr_tpcooperad IN NUMBER     DEFAULT 0        
+                                         ,pr_xmllog     IN VARCHAR2                --> XML com informações de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER             --> Código da crítica
+                                         ,pr_dscritic  OUT VARCHAR2                --> Descrição da crítica
+                                         ,pr_retxml     IN OUT NOCOPY XMLType      --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2                --> Nome do campo com erro
+                                         ,pr_des_erro  OUT VARCHAR2) IS            --> Erros do processo 
                                    
     -- VARIÁVEIS
     vr_tab_cooperado BLQJ0001.typ_tab_cooperado;
@@ -284,17 +355,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     gene0001.pc_informa_acesso(pr_module => 'BLQJ0001');
     
     -- Chamar a procedure
-    BLQJ0001.pc_busca_contas_cooperado(pr_cdcooper => pr_cdcooper
-                                      ,pr_cdagenci => pr_cdagenci
-                                      ,pr_nrdcaixa => pr_nrdcaixa
-                                      ,pr_cdoperad => pr_cdoperad
-                                      ,pr_nmdatela => pr_nmdatela
-                                      ,pr_idorigem => pr_idorigem
-                                      ,pr_inproces => pr_inproces
-                                      ,pr_cooperad => pr_cooperad
-                                      ,pr_nmprimtl => vr_nmprimtl
+    BLQJ0001.pc_busca_contas_cooperado(pr_cdcooper   => pr_cdcooper
+                                      ,pr_cdagenci   => pr_cdagenci
+                                      ,pr_nrdcaixa   => pr_nrdcaixa
+                                      ,pr_cdoperad   => pr_cdoperad
+                                      ,pr_nmdatela   => pr_nmdatela
+                                      ,pr_idorigem   => pr_idorigem
+                                      ,pr_inproces   => pr_inproces
+                                      ,pr_cooperad   => pr_cooperad
+                                      ,pr_tpcooperad => NVL(pr_tpcooperad,0)
+                                      ,pr_nmprimtl   => vr_nmprimtl
                                       ,pr_tab_cooperado => vr_tab_cooperado
-                                      ,pr_tab_erro => vr_tab_erro);
+                                      ,pr_tab_erro   => vr_tab_erro);
    
     -- Se houve o retorno de erro
     IF vr_tab_erro.count() > 0 THEN
@@ -325,6 +397,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                           '<vlsldcap>' || vr_tab_cooperado(vr_idx).vlsldcap ||'</vlsldcap>' ||
                           '<vlstotal>' || vr_tab_cooperado(vr_idx).vlstotal ||'</vlstotal>' ||
                           '<vlsldppr>' || vr_tab_cooperado(vr_idx).vlsldppr ||'</vlsldppr>' ||
+                          '<dtadmiss>' || to_char(vr_tab_cooperado(vr_idx).dtadmiss, 'dd/mm/yyyy') ||'</dtadmiss>' ||
+                          '<dsendere>' || vr_tab_cooperado(vr_idx).dsendere ||'</dsendere>' ||
+                          '<nrendere>' || vr_tab_cooperado(vr_idx).nrendere ||'</nrendere>' ||
+                          '<nmbairro>' || vr_tab_cooperado(vr_idx).nmbairro ||'</nmbairro>' ||
+                          '<nmcidade>' || vr_tab_cooperado(vr_idx).nmcidade ||'</nmcidade>' ||
+                          '<nrcepend>' || vr_tab_cooperado(vr_idx).nrcepend ||'</nrcepend>' ||
                        '</cooperado>'); 
           
       END LOOP;
@@ -368,14 +446,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   
   
   -- Buscar contas cooperado
-  PROCEDURE pc_busca_contas_cooperado(pr_cdcooper IN crapcop.cdcooper%TYPE 
-                                     ,pr_cdagenci IN VARCHAR2
-                                     ,pr_nrdcaixa IN VARCHAR2               
-                                     ,pr_cdoperad IN VARCHAR2
-                                     ,pr_nmdatela IN VARCHAR2
-                                     ,pr_idorigem IN NUMBER    
-                                     ,pr_inproces IN NUMBER    
-                                     ,pr_cooperad IN NUMBER
+  PROCEDURE pc_busca_contas_cooperado(pr_cdcooper    IN crapcop.cdcooper%TYPE 
+                                     ,pr_cdagenci    IN VARCHAR2
+                                     ,pr_nrdcaixa    IN VARCHAR2               
+                                     ,pr_cdoperad    IN VARCHAR2
+                                     ,pr_nmdatela    IN VARCHAR2
+                                     ,pr_idorigem    IN NUMBER    
+                                     ,pr_inproces    IN NUMBER    
+                                     ,pr_cooperad    IN NUMBER
+                                     ,pr_tpcooperad  IN NUMBER   DEFAULT 0
                                      ,pr_nmprimtl      OUT VARCHAR2            
                                      ,pr_tab_cooperado OUT BLQJ0001.typ_tab_cooperado
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
@@ -388,6 +467,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       SELECT ass.cdcooper
            , ass.nrdconta
            , ass.nrcpfcgc
+           , 1   idseqttl
+           , ass.inpessoa
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper 
          AND ass.nrcpfcgc = pr_nrcpfcgc
@@ -395,6 +476,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       SELECT ttl.cdcooper
            , ttl.nrdconta
            , ttl.nrcpfcgc
+           , ttl.idseqttl
+           , ttl.inpessoa
         FROM crapttl  ttl
        WHERE ttl.cdcooper = pr_cdcooper 
          AND ttl.nrcpfcgc = pr_nrcpfcgc;
@@ -406,6 +489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , ass.nrdconta
            , ass.inpessoa
            , ass.nrdctitg
+           , ass.dtadmiss
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -448,15 +532,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
          AND lcr.cdcooper = epr.cdcooper
          AND lcr.dsoperac IN ('EMPRESTIMO','FINANCIAMENTO');
     
+    -- Buscar os dados de endereço do cooperado
+    CURSOR cr_crapenc(pr_cdcooper  IN crapenc.cdcooper%TYPE
+                     ,pr_nrdconta  IN crapenc.nrdconta%TYPE
+                     ,pr_inpessoa  IN crapass.inpessoa%TYPE
+                     ,pr_idseqttl  IN crapttl.idseqttl%TYPE) IS 
+      SELECT dsendere 
+           , nrendere
+           , nmbairro
+           , nmcidade
+           , nrcepend
+        FROM crapenc t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.nrdconta = pr_nrdconta
+         AND ((t.tpendass = 10 AND pr_inpessoa = 1) OR
+              (t.tpendass IN (10,9) AND pr_inpessoa = 2))
+         AND t.idseqttl = pr_idseqttl
+       ORDER BY t.tpendass DESC;
+    rw_crapenc  cr_crapenc%ROWTYPE;
+    
     -- VARIÁVEIS
-    --vr_dsorigem       VARCHAR2(20);
-    --vr_dstransa       VARCHAR2(200);
     vr_cdcritic       NUMBER;
     vr_dscritic       VARCHAR2(2000);
     vr_nrindice       NUMBER;
     vr_vlsldapl       NUMBER;
     vr_vlsldpou       NUMBER;
-    vr_clobxmlc       CLOB;
     
     vr_nrcpfcgc       crapass.nrcpfcgc%TYPE;
     vr_nmprimtl       crapass.nmprimtl%TYPE;
@@ -489,16 +589,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   
   BEGIN
     
-    -- Inicialização de variáveis
-    --vr_dsorigem := 'AYLLOS'; 
-    --vr_dstransa := 'Consultar dados para Bloqueio Judicial.';
-    
     -- Buscar dados do cooperado por documento ou conta
-    pc_busca_nrcpfcgc_cooperado(pr_cdcooper => pr_cdcooper
-                               ,pr_nrctadoc => pr_cooperad
-                               ,pr_nrcpfcgc => vr_nrcpfcgc
-                               ,pr_nmprimtl => vr_nmprimtl
-                               ,pr_dscritic => vr_dscritic);
+    pc_busca_nrcpfcgc_cooperado(pr_cdcooper   => pr_cdcooper
+                               ,pr_nrctadoc   => pr_cooperad
+                               ,pr_tpcooperad => pr_tpcooperad
+                               ,pr_nrcpfcgc   => vr_nrcpfcgc
+                               ,pr_nmprimtl   => vr_nmprimtl
+                               ,pr_dscritic   => vr_dscritic);
                               
     -- Se houver retorno de erro
     IF vr_dscritic IS NOT NULL THEN
@@ -544,15 +641,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
       pr_tab_cooperado(vr_nrindice).nrdconta := rw_crapass_ttl.nrdconta;
       pr_tab_cooperado(vr_nrindice).nrcpfcgc := rw_crapass_ttl.nrcpfcgc;
       
-       -- Gerar registro de erro      
-      GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                           ,pr_cdagenci => 1
-                           ,pr_nrdcaixa => 1
-                           ,pr_nrsequen => 1
-                           ,pr_cdcritic => vr_cdcritic
-                           ,pr_dscritic => vr_dscritic
-                           ,pr_tab_erro => pr_tab_erro);
+      -- Buscar endereço do cooperado
+      OPEN  cr_crapenc(rw_crapass_ttl.cdcooper    -- pr_cdcooper
+                      ,rw_crapass_ttl.nrdconta    -- pr_nrdconta
+                      ,rw_crapass_ttl.inpessoa    -- pr_inpessoa
+                      ,rw_crapass_ttl.idseqttl ); -- pr_idseqttl
       
+      FETCH cr_crapenc INTO rw_crapenc;
+      
+      -- Se encontrar registro
+      IF cr_crapenc%FOUND THEN
+        -- Popular os dados do endereço
+        pr_tab_cooperado(vr_nrindice).dsendere := rw_crapenc.dsendere;
+        pr_tab_cooperado(vr_nrindice).nrendere := rw_crapenc.nrendere;
+        pr_tab_cooperado(vr_nrindice).nmbairro := rw_crapenc.nmbairro;
+        pr_tab_cooperado(vr_nrindice).nmcidade := rw_crapenc.nmcidade;
+        pr_tab_cooperado(vr_nrindice).nrcepend := rw_crapenc.nrcepend;
+      END IF;
+      
+      CLOSE cr_crapenc;
+            
     END LOOP;
       
     -- Se inseriu dados na tabela de memória de cooperados
@@ -593,6 +701,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -- Fechar o cursor 
         CLOSE cr_crapass;
       
+        -- Atualiza a data de admissao
+        pr_tab_cooperado(vr_ind_cooperado).dtadmiss := rw_crapass.dtadmiss;
+     
         -- Se for pessoa física
         IF rw_crapass.inpessoa = 1 THEN
           -- Deve buscar os dados da CRAPTTL
@@ -669,27 +780,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           END IF;
           RAISE vr_exp_erro;      
         END IF;
-      
+        
+        -- Limpar toda a tabela de memória
+        vr_tbsaldo_rdca.DELETE();
+        
         -- Busca a listagem de aplicacoes 
-        APLI0005.pc_lista_aplicacoes_car(pr_cdcooper => pr_cdcooper         -- Código da Cooperativa 
-                                        ,pr_cdoperad => pr_cdoperad         -- Código do Operador
-                                        ,pr_nmdatela => pr_nmdatela         -- Nome da Tela
-                                        ,pr_idorigem => 1                   -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA )
-                                        ,pr_nrdcaixa => 1                   -- Numero do Caixa
-                                        ,pr_nrdconta => rw_crapass.nrdconta -- Número da Conta
-                                        ,pr_idseqttl => 1                   -- Titular da Conta 
-                                        ,pr_cdagenci => 1                   -- Codigo da Agencia
-                                        ,pr_cdprogra => pr_nmdatela         -- Codigo do Programa
-                                        ,pr_nraplica => 0                   -- Número da Aplicaçao 
-                                        ,pr_cdprodut => 0                   -- Código do Produto
-                                        ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt -- Data de Movimento
-                                        ,pr_idconsul => 6                   -- Identificador de Consulta
-                                        ,pr_idgerlog => 1                   -- Identificador de Log (0 – Nao / 1 – Sim)
-                                        ,pr_clobxmlc => vr_clobxmlc         -- XML com informaçoes 
-                                        ,pr_cdcritic => vr_cdcritic         -- Código da crítica 
-                                        ,pr_dscritic => vr_dscritic);       -- Descriçao da crítica 
-     
-        -- Verifica se ocorreram erros
+        APLI0005.pc_lista_aplicacoes(pr_cdcooper   => pr_cdcooper         -- Código da Cooperativa 
+                                    ,pr_cdoperad   => pr_cdoperad         -- Código do Operador
+                                    ,pr_nmdatela   => pr_nmdatela         -- Nome da Tela
+                                    ,pr_idorigem   => 1                   -- Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA )
+                                    ,pr_nrdcaixa   => 1                   -- Numero do Caixa
+                                    ,pr_nrdconta   => rw_crapass.nrdconta -- Número da Conta
+                                    ,pr_idseqttl   => 1                   -- Titular da Conta 
+                                    ,pr_cdagenci   => 1                   -- Codigo da Agencia
+                                    ,pr_cdprogra   => pr_nmdatela         -- Codigo do Programa
+                                    ,pr_nraplica   => 0                   -- Número da Aplicaçao 
+                                    ,pr_cdprodut   => 0                   -- Código do Produto
+                                    ,pr_dtmvtolt   => BTCH0001.rw_crapdat.dtmvtolt -- Data de Movimento
+                                    ,pr_idconsul   => 6                   -- Identificador de Consulta
+                                    ,pr_idgerlog   => 1                   -- Identificador de Log (0 – Nao / 1 – Sim)
+                                    ,pr_cdcritic   => vr_cdcritic         -- Código da crítica 
+                                    ,pr_dscritic   => vr_dscritic         -- Descriçao da crítica 
+                                    ,pr_saldo_rdca => vr_tbsaldo_rdca );
+        
+      -- Verifica se ocorreram erros
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           -- Gerar registro de erro      
           GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
@@ -702,69 +816,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           
           RAISE vr_exp_erro;    
           
-        END IF;
-        
-        -- Limpar toda a tabela de memória
-        vr_tbsaldo_rdca.DELETE();
-        
-        -- Verifica se o Clob foi retornado com valor
-        IF vr_clobxmlc = empty_clob() THEN        
-          /*********** BLOCO PARA TRATAR O XML ***********/
-          DECLARE
-            -- Variáveis para tratamento do XML
-            vr_node_list       xmldom.DOMNodeList;
-            vr_parser          xmlparser.Parser;
-            vr_doc             xmldom.DOMDocument;
-            vr_lenght          NUMBER;
-            vr_node_name       VARCHAR2(100);
-            vr_item_node       xmldom.DOMNode;
-            
-            vr_insdrdca        NUMBER;
-            
-          BEGIN
-            -- Faz o parse do XMLTYPE para o XMLDOM e libera o parser ao fim
-            vr_parser := xmlparser.newParser;
-            xmlparser.parseClob(vr_parser, vr_clobxmlc);
-            
-            -- Limpar memória alocado ao CLOB, já que o mesmo já foi enviado ao XMLType
-            DBMS_LOB.close(vr_clobxmlc);
-            DBMS_LOB.freetemporary(vr_clobxmlc);
-            
-            -- Capturar o parser XML
-            vr_doc := xmlparser.getDocument(vr_parser);
-            xmlparser.freeParser(vr_parser);
-
-            -- Faz o get de toda a lista de elementos
-            vr_node_list := xmldom.getElementsByTagName(vr_doc, '*');
-            vr_lenght := xmldom.getLength(vr_node_list);
-            
-            -- Percorrer todos os Nodos do XML
-            FOR i IN 0..vr_lenght-1 LOOP
-              -- Pega o item
-              vr_item_node := xmldom.item(vr_node_list, i);
-
-              -- Captura o nome do nodo
-              vr_node_name := xmldom.getNodeName(vr_item_node);
-
-              -- Verifica qual nodo esta sendo lido
-              IF LOWER(vr_node_name) = 'aplicacao' THEN
-                -- Para nodo APLICACAO, deve atualizar o indice
-                vr_insdrdca := vr_tbsaldo_rdca.COUNT() + 1;
-              ELSIF LOWER(vr_node_name) = 'sldresga' THEN
-                -- Atualizar o valor na tabela de memória
-                vr_tbsaldo_rdca(vr_insdrdca).sldresga := TO_NUMBER(xmldom.getNodeValue(vr_item_node));
-              ELSIF LOWER(vr_node_name) = 'dssitapl' THEN
-                -- Atualizar o valor na tabela de memória
-                vr_tbsaldo_rdca(vr_insdrdca).dssitapl := xmldom.getNodeValue(vr_item_node);
-              END IF;
-
-            END LOOP;
-            
-            -- Eliminar documento DOM
-            xmldom.freeDocument(vr_doc);
-            
-          END;
-          /******** FIM - BLOCO PARA TRATAR O XML ********/
         END IF;
         
         -- Percorrer cada um dos registro encontrados e retornados
@@ -1496,11 +1547,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
          vr_flgbloqu           THEN
       
         -- Busca CPF/CNPJ do cooperado 
-        pc_busca_nrcpfcgc_cooperado(pr_cdcooper => pr_cdcooper
-                                   ,pr_nrctadoc => vr_tbcontas(1)
-                                   ,pr_nrcpfcgc => vr_nrcpfcgc
-                                   ,pr_nmprimtl => vr_nmprimtl
-                                   ,pr_dscritic => vr_dscritic);
+        pc_busca_nrcpfcgc_cooperado(pr_cdcooper   => pr_cdcooper
+                                   ,pr_nrctadoc   => vr_tbcontas(1)
+                                   ,pr_nrcpfcgc   => vr_nrcpfcgc
+                                   ,pr_tpcooperad => 0
+                                   ,pr_nmprimtl   => vr_nmprimtl
+                                   ,pr_dscritic   => vr_dscritic);
         
         -- Se houve alguma critica na execução da rotina
         IF vr_dscritic IS NOT NULL THEN
@@ -1674,21 +1726,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   END pc_inclui_bloqueio_jud;
   
   -- Chamar a efetua-desbloqueio-jud por mensageria
-  PROCEDURE pc_efetua_desbloqueio_jud_web(pr_cdcooper  IN NUMBER
-                                         ,pr_dtmvtolt  IN VARCHAR2
-                                         ,pr_cdoperad  IN VARCHAR2
-                                         ,pr_nroficio  IN VARCHAR2
-                                         ,pr_nrctacon  IN VARCHAR2
-                                         ,pr_nrofides  IN VARCHAR2
-                                         ,pr_dtenvdes  IN VARCHAR2
-                                         ,pr_dsinfdes  IN VARCHAR2
-                                         ,pr_fldestrf  IN NUMBER  
-                                         ,pr_xmllog    IN VARCHAR2             --> XML com informações de LOG
-                                         ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                         ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                         ,pr_retxml    IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
-                                         ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                         ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo 
+  PROCEDURE pc_efetua_desbloqueio_jud_web(pr_cdcooper   IN NUMBER
+                                         ,pr_dtmvtolt   IN VARCHAR2
+                                         ,pr_cdoperad   IN VARCHAR2
+                                         ,pr_nroficio   IN VARCHAR2
+                                         ,pr_nrctacon   IN VARCHAR2
+                                         ,pr_nrofides   IN VARCHAR2
+                                         ,pr_dtenvdes   IN VARCHAR2
+                                         ,pr_dsinfdes   IN VARCHAR2
+                                         ,pr_fldestrf   IN NUMBER  
+                                         ,pr_tpcooperad IN NUMBER   DEFAULT 0
+                                         ,pr_xmllog     IN VARCHAR2             --> XML com informações de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER          --> Código da crítica
+                                         ,pr_dscritic  OUT VARCHAR2             --> Descrição da crítica
+                                         ,pr_retxml     IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2             --> Nome do campo com erro
+                                         ,pr_des_erro  OUT VARCHAR2) IS         --> Erros do processo 
   
     -- VARIÁVEIS
     vr_tab_erro      GENE0001.typ_tab_erro;
@@ -1715,16 +1768,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     END IF;
     
     -- Chamar a procedure
-    BLQJ0001.pc_efetua_desbloqueio_jud(pr_cdcooper => pr_cdcooper
-                                      ,pr_dtmvtolt => vr_dtmvtolt
-                                      ,pr_cdoperad => pr_cdoperad
-                                      ,pr_nroficio => pr_nroficio
-                                      ,pr_nrctacon => pr_nrctacon
-                                      ,pr_nrofides => pr_nrofides
-                                      ,pr_dtenvdes => vr_dtenvdes
-                                      ,pr_dsinfdes => pr_dsinfdes
-                                      ,pr_fldestrf => vr_fldestrf       
-                                      ,pr_tab_erro => vr_tab_erro);
+    BLQJ0001.pc_efetua_desbloqueio_jud(pr_cdcooper   => pr_cdcooper
+                                      ,pr_dtmvtolt   => vr_dtmvtolt
+                                      ,pr_cdoperad   => pr_cdoperad
+                                      ,pr_nroficio   => pr_nroficio
+                                      ,pr_nrctacon   => pr_nrctacon
+                                      ,pr_nrofides   => pr_nrofides
+                                      ,pr_dtenvdes   => vr_dtenvdes
+                                      ,pr_dsinfdes   => pr_dsinfdes
+                                      ,pr_fldestrf   => vr_fldestrf       
+                                      ,pr_tpcooperad => NVL(pr_tpcooperad,0)
+                                      ,pr_tab_erro   => vr_tab_erro);
    
     -- Se houve o retorno de erro
     IF vr_tab_erro.count() > 0 THEN
@@ -1767,16 +1821,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   
   
   -- Efetuar os desbloqueios judiciais
-  PROCEDURE pc_efetua_desbloqueio_jud(pr_cdcooper IN NUMBER
-                                     ,pr_dtmvtolt IN DATE
-                                     ,pr_cdoperad IN VARCHAR2
-                                     ,pr_nroficio IN VARCHAR2
-                                     ,pr_nrctacon IN VARCHAR2
-                                     ,pr_nrofides IN VARCHAR2
-                                     ,pr_dtenvdes IN DATE
-                                     ,pr_dsinfdes IN VARCHAR2
-                                     ,pr_fldestrf IN BOOLEAN          
-                                     ,pr_tab_erro IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
+  PROCEDURE pc_efetua_desbloqueio_jud(pr_cdcooper   IN NUMBER
+                                     ,pr_dtmvtolt   IN DATE
+                                     ,pr_cdoperad   IN VARCHAR2
+                                     ,pr_nroficio   IN VARCHAR2
+                                     ,pr_nrctacon   IN VARCHAR2
+                                     ,pr_nrofides   IN VARCHAR2
+                                     ,pr_dtenvdes   IN DATE
+                                     ,pr_dsinfdes   IN VARCHAR2
+                                     ,pr_fldestrf   IN BOOLEAN 
+                                     ,pr_tpcooperad IN NUMBER     DEFAULT 0
+                                     ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
     
     -- CURSORES
     
@@ -1808,7 +1863,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
          AND ass.nrdconta = blj.nrdconta
          AND blj.cdcooper = pr_cdcooper
          AND blj.nroficio = pr_nroficio  
-         AND blj.nrcpfcgc = pr_nrcpfcgc
+         AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
+           OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
+         AND blj.dtblqfim IS NULL
       ORDER BY blj.cdcooper
              , blj.nroficio
              , blj.nrcpfcgc
@@ -1842,11 +1899,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
   BEGIN
     
     -- Busca CPF/CNPJ do cooperado 
-    pc_busca_nrcpfcgc_cooperado(pr_cdcooper => pr_cdcooper
-                               ,pr_nrctadoc => pr_nrctacon
-                               ,pr_nrcpfcgc => vr_nrcpfcgc
-                               ,pr_nmprimtl => vr_nmprimtl
-                               ,pr_dscritic => vr_dscritic);
+    pc_busca_nrcpfcgc_cooperado(pr_cdcooper   => pr_cdcooper
+                               ,pr_nrctadoc   => pr_nrctacon
+                               ,pr_tpcooperad => pr_tpcooperad 
+                               ,pr_nrcpfcgc   => vr_nrcpfcgc
+                               ,pr_nmprimtl   => vr_nmprimtl
+                               ,pr_dscritic   => vr_dscritic);
         
     -- Se houve alguma critica na execução da rotina
     IF vr_dscritic IS NOT NULL THEN
