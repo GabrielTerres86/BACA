@@ -1341,7 +1341,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                   
                 IF aux_flgativo = 1 THEN
                   DO:
-                    ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(par_nrctremp) + " para liquidar, pois o mesmo esta em acordo.".
+                    ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(par_nrctremp) + " para liquidar, contrato esta em acordo.".
                     LEAVE Valida.
                   END.  
              END.
@@ -3472,8 +3472,7 @@ PROCEDURE valida-dados-gerais:
                             
               IF aux_flgativo = 1 THEN
                 DO:
-				ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))) + " para liquidar, pois o mesmo esta em acordo.".	
-                ASSIGN aux_dscritic = "Lancamento nao permitido, contrato para liquidar esta em acordo".
+				ASSIGN aux_dscritic = "Nao e possivel marcar o contrato " + STRING(INPUT INTEGER(ENTRY(aux_contador,par_dsctrliq))) + " para liquidar, contrato esta em acordo.".	
                 LEAVE.
                 END.
               END.
