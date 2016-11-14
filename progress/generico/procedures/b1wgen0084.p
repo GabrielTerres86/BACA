@@ -4889,7 +4889,7 @@ PROCEDURE desfaz_transferencia_prejuizo.
 			IF aux_flgativo = 1 THEN
 			DO:
 				ASSIGN aux_cdcritic = 0
-						aux_dscritic = "Desfazimento de prejuizo nao permitido, emprestimo em acordo.".
+					   aux_dscritic = "Nao e possivel desfazer prejuizo, emprestimo em acordo.".
 
 				RUN gera_erro (INPUT par_cdcooper,
 								INPUT par_cdagenci,
