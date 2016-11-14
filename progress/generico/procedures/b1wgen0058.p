@@ -5264,7 +5264,8 @@ PROCEDURE valida_responsaveis:
   DEF VAR aux_dscpftel AS CHAR INIT "" NO-UNDO.
 
   DEF VAR aux_flgretir AS LOGI INIT FALSE NO-UNDO.
-
+  DEF VAR aux_flgreadi as LOGI INIT FALSE NO-UNDO.
+  
   ASSIGN par_flgpende = 0
 		 aux_dscpftel = REPLACE(par_dscpfcgc,"#",",").
     
@@ -5272,56 +5273,59 @@ PROCEDURE valida_responsaveis:
   FOR EACH crappod WHERE crappod.cdcooper = par_cdcooper
                      AND crappod.nrdconta = par_nrdconta
                      AND crappod.cddpoder = 10
-					 AND crappod.flgconju = TRUE NO-LOCK:
+                     AND crappod.flgconju = TRUE NO-LOCK:
 
     IF TRIM(aux_dscpfcgc) <> ? AND TRIM(aux_dscpfcgc) <> "" THEN
-		ASSIGN aux_dscpfcgc = aux_dscpfcgc + ",".
+		  ASSIGN aux_dscpfcgc = aux_dscpfcgc + ",".
 
     ASSIGN aux_dscpfcgc = aux_dscpfcgc + STRING(crappod.nrcpfpro).
 
   END.
   
   IF par_nmdatela = "ATENDA" THEN
-	DO:
-	  /* Verifica se esta excluindo representantes */
-	  RepresentantesAdicionar: DO aux_contador = 1 TO NUM-ENTRIES(aux_dscpfcgc,','):
-		IF NOT CAN-DO(aux_dscpftel,STRING(ENTRY(aux_contador,aux_dscpfcgc,','))) THEN
-		  ASSIGN aux_flgretir = TRUE.		
-	  END.
-	END.
+    DO:
+      /* Verifica se esta excluindo representantes */
+      RepresentantesExcluir: DO aux_contador = 1 TO NUM-ENTRIES(aux_dscpfcgc,','):
+      IF NOT CAN-DO(aux_dscpftel,STRING(ENTRY(aux_contador,aux_dscpfcgc,','))) THEN
+        ASSIGN aux_flgretir = TRUE.		
+      END.
+      
+      RepresentantesAdicionar: DO aux_contador = 1 TO NUM-ENTRIES(aux_dscpftel,','):
+      IF NOT CAN-DO(aux_dscpfcgc,STRING(ENTRY(aux_contador,aux_dscpftel,','))) THEN
+        ASSIGN aux_flgreadi = TRUE.		
+      END.
+    END.
+  ELSE IF par_nmdatela = "CONTAS" THEN
+    DO:
+      /* Verifica se esta incluindo/excluindo representantes */
+      FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
+                                           AND crappod.nrdconta = par_nrdconta
+                                           AND crappod.nrcpfpro = DEC(par_dscpfcgc)
+                                           AND crappod.cddpoder = 10  NO-LOCK. END.	
 
+      IF AVAILABLE crappod THEN
+        DO:
+          IF (LOGICAL(par_flgconju) <> crappod.flgconju) AND LOGICAL(par_flgconju) THEN
+            DO:
+              ASSIGN aux_flgreadi = TRUE.
+            END.
+          ELSE IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
+            DO:
+              ASSIGN aux_flgretir = TRUE.
+            END.
+        END.
+    END.
+     
 	Contador: DO aux_contador = 1 TO NUM-ENTRIES(par_dscpfcgc,'#'):
 
 	FOR FIRST tbgen_trans_pend FIELDS(cdcooper) WHERE tbgen_trans_pend.cdcooper             = par_cdcooper 
-												  AND tbgen_trans_pend.nrdconta			    = par_nrdconta
-												  AND (tbgen_trans_pend.idsituacao_transacao = 1 OR 
-													   tbgen_trans_pend.idsituacao_transacao = 5) NO-LOCK. END.	
+                                                AND tbgen_trans_pend.nrdconta			         = par_nrdconta
+                                                AND (tbgen_trans_pend.idsituacao_transacao = 1 OR 
+                                                   tbgen_trans_pend.idsituacao_transacao   = 5) NO-LOCK. END.	
    
 	IF AVAILABLE tbgen_trans_pend THEN
 		DO:		
-			IF par_nmdatela = "CONTAS" AND NOT LOGICAL(par_flgconju) THEN
-				DO:		
-					
-					FOR FIRST crappod FIELDS(flgconju) WHERE crappod.cdcooper = par_cdcooper
-															AND crappod.nrdconta = par_nrdconta
-															AND crappod.nrcpfpro = DEC(ENTRY(aux_contador,par_dscpfcgc,'#'))
-															AND crappod.cddpoder = 10  NO-LOCK. END.	
-
-					IF AVAILABLE crappod THEN
-						DO:
-						IF LOGICAL(par_flgconju) <> crappod.flgconju THEN
-							DO:
-								ASSIGN par_flgpende = 1.
-							END.
-						END.
-				END.
-			ELSE IF par_nmdatela = "ATENDA" THEN
-				DO:
-					IF aux_flgretir THEN
-						DO:
-							ASSIGN par_flgpende = 1.
-						END.
-				END.
+			ASSIGN par_flgpende = 1.
 		END.
 
 	FOR FIRST crapavt FIELDS(cdcooper nrdconta) WHERE crapavt.cdcooper = par_cdcooper
@@ -5429,16 +5433,24 @@ PROCEDURE valida_responsaveis:
 		END.
 	
 	IF aux_flgretir AND par_flgpende = 1 THEN
-    par_flgpende = 0.
+	DO:
+		ASSIGN par_flgpende = 0.
+		/*Há transaçoes pendentes de aprovaçao. Deseja alterar os responsáveis pela assinatura?*/
+	END.
   ELSE IF aux_flgretir AND par_flgpende = 0 THEN
-    par_flgpende = 1.
-  ELSE IF NOT aux_flgretir OR par_flgpende = 0 THEN
-    par_flgpende = 2.
+    DO:
+		ASSIGN par_flgpende = 1.
+		/* Deseja alterar os responsáveis pela assinatura? */
+	END.
+  ELSE IF aux_flgreadi THEN
+    DO:
+		ASSIGN par_flgpende = 2.
+		/* Revise as senhas de acesso a Conta Online para os novos responsáveis. Deseja alterar as permissoes de assinatura? */
+	END.
     
   RETURN "OK".
 
 END PROCEDURE.
-
 
 PROCEDURE grava_resp_ass_conjunta:
     DEF  INPUT PARAM par_cdcooper AS INTE NO-UNDO.
