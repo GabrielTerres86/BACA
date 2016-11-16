@@ -8198,7 +8198,7 @@ create or replace package body cecred.PAGA0002 is
       AND  lau.cdagenci = pr_cdagenci
       AND  lau.cdbccxlt = pr_cdbccxlt
       AND  lau.nrdolote = pr_nrdolote
-      AND  (pr_dtageini IS NOT NULL
+      AND  (pr_dtageini IS NULL
        OR   (pr_dtageini IS NOT NULL
       AND    lau.dtmvtopg >= pr_dtageini)) 
       AND   (pr_dtagefim IS NULL
