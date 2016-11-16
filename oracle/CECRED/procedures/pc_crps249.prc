@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 13/10/2016
+   Data    : Novembro/98                     Ultima atualizacao: 16/11/2016
 
    Dados referentes ao programa:
 
@@ -520,6 +520,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
 			                (Daniel)
                             
+               16/11/2016 - Ajustar cursor cr_craplcm6 para efetuar a busca correta das 
+                            Despesas Sicredi (Lucas Ranghetti #508130)
+                     
 ............................................................................ */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
@@ -1529,7 +1532,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
       WHERE craplcm.cdcooper = craplau.cdcooper
         AND craplcm.nrdconta = craplau.nrdconta
         AND craplcm.cdhistor = craplau.cdhistor
-        AND craplau.cdempres = crapscn.cdempres
+        AND craplau.dtdebito = craplcm.dtmvtolt
+        AND craplau.cdempres = UPPER(crapscn.cdempres)
         AND crapass.nrdconta = craplcm.nrdconta
         AND craplcm.nrdconta = crapass.nrdconta
         AND craplcm.cdcooper = crapass.cdcooper
