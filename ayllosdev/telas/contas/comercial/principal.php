@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
@@ -11,9 +11,9 @@
  *                03/12/2015 - Gravar valores dos rendimentos corretamente nas variaveis (Gabriel-RKAM).
  *			      12/01/2016 - Ajuste para pegar corretamento os valores vldrendi, tpdrendi (Adriano - CECRED).
  *                07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
+ *				  13/07/2016 - Correcao de acesso ao indice MSGALERT do array XML. SD 479874. (Carlos R.)	
  */
-?> 
-<?
+
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -129,7 +129,7 @@
 
 
 	$comercial = $xmlObjeto->roottag->tags[0]->tags[0]->tags;	
-	$msgAlert  = trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']);	
+	$msgAlert  = ( isset($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) ) ? trim($xmlObjeto->roottag->tags[0]->attributes['MSGALERT']) : '';
 	$cdnvlcgo  = getByTagName($comercial,'cdnvlcgo');
 	$cdturnos  = getByTagName($comercial,'cdturnos');	
 	$nrdrowid  = getByTagName($comercial,'nrdrowid');
