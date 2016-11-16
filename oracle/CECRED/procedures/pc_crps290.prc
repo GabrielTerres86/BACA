@@ -127,45 +127,57 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
     vr_tab_contas_cheque typ_tab_contas_cheque;
     vr_index number;
     vr_idx   number;
+    vr_valor number;
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
     -- Variável para armazenar os dados do XML antes de incluir no CLOB
-    vr_texto_completo  VARCHAR2(32600);
-    -- diretorio de geracao do relatorio
-    vr_nom_direto      VARCHAR2(100);
-    --Arquivo a ser importado
-    vr_nmarquiv        VARCHAR2(1000);
-    vr_nmarqimp        varchar2(1000);
-    vr_rel_dspesqbb    VARCHAR2(1000);
-    vr_cdempres        number;
-    rel_dshistor       VARCHAR2(1000);
+
+    vr_rel_dshistor       VARCHAR2(1000);
     vr_caminho_integra VARCHAR2(1000);
-    
+
     ------------------------------- CURSORES ---------------------------------
-   
- /*cursor final relatório */
+
+ --cursor final relatório 
    cursor cr_craplotrl(pr_cdcooper craplot.cdcooper%type,
                        pr_dtmvtopr craplot.dtmvtolt%type)is
-    select * from craplot 
+    select  rowid,
+            qtcompln,
+            vlcompdb,
+            vlcompcr,
+            nrdolote,
+            cdagenci,
+            cdbccxlt,
+            dtmvtolt,
+            tplotmov,
+            dtmvtopg,
+            vlinfodb,
+            vlinfocr,
+            qtinfoln from craplot
             WHERE craplot.cdcooper = pr_cdcooper   AND
                   craplot.dtmvtolt = pr_dtmvtopr   AND
                  (craplot.nrdolote = 4500           OR
                   craplot.nrdolote = 4600);
-  /*cursor corpo relatório*/                
+  --cursor corpo relatório
     cursor cr_corpo_rel(pr_cdcooper craprej.cdcooper%type,
                         pr_dtmvtopr craprej.dtmvtolt%type,
                         pr_cdagenci craprej.cdagenci%type,
                         pr_cdbccxlt craprej.cdbccxlt%type,
-                        pr_nrdolote craprej.nrdolote%type)is                   
-    select * from  craprej 
+                        pr_nrdolote craprej.nrdolote%type)is
+    select  rowid,
+            cdcritic,
+            tpintegr,
+            nraplica,
+            cdpesqbb,
+            vllanmto
+       from  craprej
              WHERE craprej.cdcooper = pr_cdcooper  AND
                    craprej.dtmvtolt = pr_dtmvtopr  AND
                    craprej.cdagenci = pr_cdagenci  AND
                    craprej.cdbccxlt = pr_cdbccxlt  AND
                    craprej.nrdolote = pr_nrdolote  AND
-                   craprej.cdcritic is not null    AND                   
+                   craprej.cdcritic is not null    AND
                   (craprej.tpintegr = 19                 OR
-                   craprej.tpintegr = 20); 
+                   craprej.tpintegr = 20);
 
 
     -- Busca dos dados da cooperativa
@@ -182,15 +194,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
     CURSOR cr_crablot(pr_cdcooper craplot.cdcooper%TYPE,
                       pr_dtmvtolt craplot.dtmvtolt%TYPE,
                       pr_dtmvtopr craplot.dtmvtopg%TYPE)IS
-      SELECT craplot.rowid, craplot.*
+      SELECT craplot.rowid, 
+                     cdagenci,
+                     cdbccxlt,
+                     nrdolote,
+                     tplotmov,
+                     dtmvtolt,
+                     nrseqdig,
+                     qtinfoln,
+                     qtcompln,
+                     vlinfodb,
+                     vlcompdb
         FROM craplot
        WHERE craplot.cdcooper = pr_cdcooper
-         AND craplot.dtmvtopg > pr_dtmvtolt
+         AND craplot.dtmvtopg >= pr_dtmvtolt
          AND craPlot.dtmvtopg <= pr_dtmvtopr
-         and craplot.nrdolote = 4502
-         AND craplot.tplotmov in (19,20)
-         and craplot.cdagenci = 20;
-         
+         AND craplot.tplotmov in (19,20);
+
     --
     CURSOR cr_craplau(pr_cdcooper craplot.cdcooper%TYPE,
                       pr_dtmvtolt craplau.dtmvtolt%TYPE,
@@ -198,17 +218,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                       pr_cdbccxlt craplau.cdbccxlt%type,
                       pr_nrdolote craplau.nrdolote%type) is
 
-    select craplau.rowid, craplau.* from craplau
+    select 	rowid,
+            vllanaut,
+            cdcritic,
+            cdhistor,
+            nrdconta,
+            nrdctabb,
+            nrdctitg,
+            nrseqdig,
+            nrdocmto,
+            cdseqtel,
+            dtdebito,
+            insitlau,
+            dtmvtolt,
+            cdagenci,
+            cdbccxlt,
+            nrdolote from craplau
            WHERE craplau.cdcooper  = pr_cdcooper       AND
-     /*            craplau.nrdconta in (878693
-,2788438
-,6027415
-,898716
-,2672103
-,3859584
-,2258013
-,3793613
-) and*/
                  craplau.dtmvtolt  = pr_dtmvtolt       AND
                  craplau.cdagenci  = pr_cdagenci       AND
                  craplau.cdbccxlt  = pr_cdbccxlt       AND
@@ -225,7 +251,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
     cursor cr_crapass(pr_cdcooper craplot.cdcooper%TYPE,
                       pr_nrconta  crapass.nrdconta%type) is
 
-     select * from  crapass
+     select crapass.cdcooper from  crapass
         WHERE crapass.cdcooper = pr_cdcooper   AND
               crapass.nrdconta = pr_nrconta;
      rw_crapass cr_crapass%ROWTYPE;
@@ -233,52 +259,46 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
     cursor cr_craplot1(pr_cdcooper craplot.cdcooper%TYPE,
                       pr_dtmvtopr craplot.dtmvtolt%type,
                       pr_nrdolote craplot.nrdolote%type ) is
-     select craplot.rowid, craplot.* from  craplot
+     select rowid,
+            dtmvtolt,
+            cdagenci,
+            cdbccxlt,
+            nrdolote,
+            tplotmov from  craplot
        WHERE craplot.cdcooper =  pr_cdcooper   AND
              craplot.dtmvtolt =  pr_dtmvtopr   AND
              craplot.cdagenci = 1              AND
              craplot.cdbccxlt = 100            AND
              craplot.nrdolote = pr_nrdolote;
 
-    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
-    vr_tab_erro   gene0001.typ_tab_erro;
-
+    
     ------------------------------- VARIAVEIS -------------------------------
     vr_nrdocmt2   craplcm.nrdocmto%TYPE;
-    vr_inpessoa   crapass.inpessoa%TYPE;
-    vr_cdhistor   INTEGER;
-    vr_cdhisest   INTEGER;
-    vr_vltarifa   NUMBER;
-    vr_dtdivulg   DATE;
-    vr_dtvigenc   DATE;
-    vr_cdfvlcop   INTEGER;
-    vr_rowid_craplat ROWID;
-    --vr_dtmvtolt   date;
+    
     vr_cdagenci   NUMBER;
     vr_cdbccxlt   NUMBER;
     vr_nrdolote   NUMBER;
     vr_tplotmov   NUMBER;
-    vr_dtmvtopr   VARCHAR2(10);
     vr_dtmvtolt   VARCHAR2(10);
     vr_nrcustod   NUMBER;
-    ----------------variaveis do relatório 
-    rel_qtdifeln number(8,2);
-    rel_vldifedb number(8,2);
-    rel_vldifecr number(8,2);
-    rel_dsintegr varchar2(1000);
-    pr_regexist  boolean;       
+    ----------------variaveis do relatório
+    vr_rel_qtdifeln number(8,2);
+    vr_rel_vldifedb number(8,2);
+    vr_rel_vldifecr number(8,2);
+    vr_rel_dsintegr varchar2(1000);
+    pr_regexist  boolean;
 
 
 --------------------------- SUBROTINAS INTERNAS --------------------------
   --Procedure que escreve linha no arquivo CLOB
-	    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
+      PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
       BEGIN
         --Escrever no arquivo CLOB
         dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
       END;
 
-      PROCEDURE pc_processamento_tco is 
-        
+      PROCEDURE pc_processamento_tco is
+
         vr_contareg number;
         vr_nrlotetc number;
         vr_nrlottco number;
@@ -286,53 +306,27 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
         vr_nrdocmto number;
         vr_cdcritic number;
         vr_validatab number;
-        
+
         cursor cr_craplcm(pr_nrdctabb craplcm.nrdctabb%TYPE,
                           pr_nrdocmt2 craplcm.nrdocmto%type) is
-             select 
-             craplcm.dtmvtolt        cr_dtmvtolt       
-            ,craplcm.cdagenci        cr_cdagenci       
-            ,craplcm.cdbccxlt        cr_cdbccxlt       
-            ,craplcm.nrdolote        cr_nrdolote       
-            ,craplcm.nrdconta        cr_nrdconta       
-            ,craplcm.nrdocmto        cr_nrdocmto       
-            ,craplcm.cdhistor        cr_cdhistor       
-            ,craplcm.nrseqdig        cr_nrseqdig       
-            ,craplcm.vllanmto        cr_vllanmto       
-            ,craplcm.nrdctabb        cr_nrdctabb       
-            ,craplcm.cdpesqbb        cr_cdpesqbb       
-            ,craplcm.vldoipmf        cr_vldoipmf       
-            ,craplcm.nrautdoc        cr_nrautdoc       
-            ,craplcm.nrsequni        cr_nrsequni       
-            ,craplcm.cdbanchq        cr_cdbanchq       
-            ,craplcm.cdcmpchq        cr_cdcmpchq       
-            ,craplcm.cdagechq        cr_cdagechq       
-            ,craplcm.nrctachq        cr_nrctachq       
-            ,craplcm.nrlotchq        cr_nrlotchq       
-            ,craplcm.sqlotchq        cr_sqlotchq       
-            ,craplcm.dtrefere        cr_dtrefere       
-            ,craplcm.hrtransa        cr_hrtransa       
-            ,craplcm.cdoperad        cr_cdoperad       
-            ,craplcm.dsidenti        cr_dsidenti       
-            ,craplcm.cdcooper        cr_cdcooper       
-            ,craplcm.nrdctitg        cr_nrdctitg       
-            ,craplcm.dscedent        cr_dscedent       
-            ,craplcm.cdcoptfn        cr_cdcoptfn       
-            ,craplcm.cdagetfn        cr_cdagetfn       
-            ,craplcm.nrterfin        cr_nrterfin       
-            ,craplcm.nrparepr        cr_nrparepr       
-            ,craplcm.progress_recid  cr_progress_recid 
-            ,craplcm.nrseqava        cr_nrseqava       
-            ,craplcm.nraplica        cr_nraplica       
-            ,craplcm.cdorigem        cr_cdorigem       
-            ,craplot.* 				 from craplcm,
-                                    craplot
+             select
+             craplot.nrseqdig     
+            ,craplot.nrdolote
+            ,craplot.dtmvtolt
+            ,craplot.cdagenci
+            ,craplot.cdbccxlt
+            ,craplot.vlcompdb 
+            ,craplot.vlinfodb
+            ,craplot.qtcompln
+            ,craplot.qtinfoln
+         from craplcm,
+              craplot
             WHERE craplcm.cdcooper = craplot.cdcooper   AND
                   craplcm.dtmvtolt = craplot.dtmvtolt   AND
                   craplcm.cdagenci = craplot.cdagenci   AND
                   craplcm.cdbccxlt = craplot.cdbccxlt   AND
                   craplcm.nrdolote = craplot.nrdolote   AND
-                  craplcm.nrdctabb = pr_nrdctabb        AND                                      
+                  craplcm.nrdctabb = pr_nrdctabb        AND
                   craplcm.nrdocmto = pr_nrdocmt2;
         rw_craplcm cr_craplcm%rowtype;
        begin
@@ -342,7 +336,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
             EXIT WHEN vr_idx IS NULL;
                vr_contareg := vr_contareg + 1;
                vr_nrlotetc := 4500;
-               
+
                IF vr_contareg = 1 THEN
                 begin
                   insert into craplot
@@ -361,31 +355,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                                1);
                   vr_nrlotetc := vr_nrlotetc + 1;
                   exception
-                     when others then 
+                     when others then
                        update craplot
                           set craplot.cdagenci = 1
                               ,craplot.cdbccxlt = 100
-                      where craplot.cdcooper = vr_tab_contas_cheque(vr_idx).cdcooper 
+                      where craplot.cdcooper = vr_tab_contas_cheque(vr_idx).cdcooper
                         and craplot.dtmvtolt = rw_crapdat.dtmvtopr
                         AND craplot.nrdolote = vr_nrlotetc;
                  end;
-                 vr_nrlottco := vr_nrlotetc;     
+                 vr_nrlottco := vr_nrlotetc;
                else
                  select count(*)
-                   into 
+                   into
                    vr_validatab
-                   from craplot 
+                   from craplot
                    WHERE craplot.cdcooper = vr_tab_contas_cheque(vr_idx).cdcooper   AND
                          craplot.dtmvtolt = rw_crapdat.dtmvtopr AND
                          craplot.cdagenci = 1                   AND
                          craplot.cdbccxlt = 100                 AND
                          craplot.nrdolote = vr_nrlottco;
-                  if vr_validatab = 0 then 
+                  if vr_validatab = 0 then
                      vr_cdcritic := 60;
-                  end if;        
-               end if;  
+                  end if;
+               end if;
                vr_nrdocmt2 := vr_tab_contas_cheque(vr_idx).nrdocmto;
-               
+
                OPEN cr_craplcm(vr_tab_contas_cheque(vr_index).nrdctabb ,
                                vr_nrdocmt2 );
                FETCH cr_craplcm
@@ -394,10 +388,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                   pr_cdcritic := 680;
                   vr_nrcustod := 0;
                   CLOSE cr_craplcm;
-               else   
+               else
                  vr_nrdocmt2 := (vr_nrdocmt2 + 1000000);
                end if;
-               --vr_idx := vr_tab_contas_cheque.next(vr_idx);
                begin
                  insert into craplcm
                  (craplcm.dtmvtolt,
@@ -436,30 +429,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                   vr_tab_contas_cheque(vr_index).cdagechq,
                   vr_tab_contas_cheque(vr_index).nrctachq,
                   'LANCAMENTO DE CONTA MIGRADA');
-                exception 
-                 when others then 
-                   dbms_output.put_line('erro: craplcm '||sqlerrm);   
-               
-               end;   
-       
-       
-               begin 
+                exception
+                 when others then
+                 vr_dscritic := 'Problema ao inserir dados craplcm '||sqlerrm;
+
+               end;
+
+
+               begin
                 update craplot
                    set craplot.qtinfoln = rw_craplcm.qtinfoln + 1,
                        craplot.qtcompln = rw_craplcm.qtcompln + 1,
                        craplot.vlinfodb = rw_craplcm.vlinfodb + vr_tab_contas_cheque(vr_index).vllanmto,
                        craplot.vlcompdb = rw_craplcm.vlcompdb + vr_tab_contas_cheque(vr_index).vllanmto,
                        craplot.nrseqdig = rw_craplcm.nrseqdig + 1;
-               exception 
-                when others then 
-                   dbms_output.put_line('Erro update craplot '||sqlerrm);     
-               end;   
-              dbms_output.put_line('teste de processamento');    
-                  
+               exception
+                when others then
+                  vr_dscritic := 'Problema ao alterar dados craplot '||sqlerrm;
+               end;
+
             END LOOP;
-            
-      
-      end pc_processamento_tco;   
+
+
+      end pc_processamento_tco;
       PROCEDURE pc_trata_custodia(vr_cdcooper in number, pr_craplau cr_craplau%ROWTYPE,
                                    pr_craplot cr_crablot%rowtype) is
 
@@ -475,8 +467,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                             pr_nrctachq crapcst.nrctachq%type,
                             pr_nrcheque crapcst.nrcheque%type) is
 
-              select crapcst.rowid,
-                     crapcst.* from crapcst
+              select  rowid,
+                      nrdconta,
+                      cdbanchq,
+                      cdagechq,
+                      nrctachq,
+                      nrcheque from crapcst
                        where crapcst.cdcooper = pr_cdcooper
                          and crapcst.dtmvtolt = pr_dtmvtolt
                          and crapcst.cdagenci = PR_cdagenci
@@ -489,14 +485,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                          and crapcst.nrcheque = pr_nrcheque;
 
           rw_crapcst cr_crapcst%ROWTYPE;
-        /*Cadastro de folhas de cheques emitidos para o cooperado.*/
+        --Cadastro de folhas de cheques emitidos para o cooperado.
         cursor cr_crapfdc(pr_cdcooper crapfdc.cdcooper%type,
                            pr_cdbanchq crapfdc.cdbanchq%type,
                            pr_cdagechq crapfdc.cdagechq%type,
                            pr_nrctachq crapfdc.nrctachq%type,
                            pr_nrcheque crapfdc.nrcheque%type) is
 
-          select crapfdc.rowid, crapfdc.* from crapfdc
+          select crapfdc.rowid,
+                 dtemschq,
+                 tpcheque,
+                 dtretchq,
+                 incheque,
+                 vlcheque,
+                 cdbanchq,
+                 cdagechq,
+                 nrctachq from crapfdc
             WHERE crapfdc.cdcooper = pr_cdcooper       AND
                   crapfdc.cdbanchq = pr_cdbanchq       AND
                   crapfdc.cdagechq = pr_cdagechq       AND
@@ -505,19 +509,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
 
          rw_crapfdc cr_crapfdc%ROWTYPE;
 
-         cursor cr_crapfdc1(pr_cdcooper crapfdc.cdcooper%type,
-                            pr_cdbanchq crapfdc.cdbanchq%type,
-                            pr_cdagechq crapfdc.cdagechq%type,
-                            pr_nrctachq crapfdc.nrctachq%type,
-                            pr_nrcheque crapfdc.nrcheque%type)is
-           select crapfdc.rowid,  crapfdc.* from crapfdc
-            WHERE crapfdc.cdcooper = pr_cdcooper       AND
-                  crapfdc.cdbanchq = pr_cdbanchq       AND
-                  crapfdc.cdagechq = pr_cdagechq       AND
-                  crapfdc.nrctachq = pr_nrctachq       AND
-                  crapfdc.nrcheque = pr_nrcheque;
-
-         rw_crapfdc1 cr_crapfdc1%ROWTYPE;
 
 
          cursor cr_craplcm(pr_cdcooper craplcm.cdcooper%type,
@@ -535,7 +526,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                        craplcm.nrdolote = pr_nrdolote AND
                        craplcm.nrdctabb = pr_nrdctabb AND
                        craplcm.nrdocmto = pr_nrdocmto;
-         
+
           rw_craplcm cr_craplcm%rowtype;
           vr_nrconta crapcot.nrdconta%type;
           vr_contamigrada number;
@@ -549,16 +540,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
           pr_cdagechq  NUMBER;
           pr_nrctachq  NUMBER;
           pr_nrcheque  NUMBER;
-          prl_dtmvtolt date;
-          prl_cdagenci NUMBER;
-          prl_cdbccxlt NUMBER;
-          prl_nrdolote NUMBER;
-          prl_tplotmov NUMBER;
           pr_flgentra  boolean;
-          vr_dscritic varchar2(1000);
           vr_cooper number;
 
-       /* armazena a cooperativa anterior no caso de verificar a tco */
+       -- armazena a cooperativa anterior no caso de verificar a tco 
        begin
 
        IF   vr_cdcooper = 1 THEN
@@ -573,7 +558,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
         begin
              pr_dtmvtolt := to_date(SUBSTR(pr_craplau.cdseqtel,1,10),'dd/mm/rrrr');
         exception
-          	when others then
+            when others then
              pr_dtmvtolt := to_date(SUBSTR(pr_craplau.cdseqtel,1,10),'dd/mm/rrrr');
 
         end;
@@ -585,12 +570,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
         pr_cdagechq := TO_NUMBER(SUBSTR(pr_craplau.cdseqtel,35,4));
         pr_nrctachq := TO_NUMBER(SUBSTR(pr_craplau.cdseqtel,40,8));
         pr_nrcheque := TO_NUMBER(SUBSTR(pr_craplau.cdseqtel,49,6));
-        /*          VARIAVEL SECUNDÁRIA           */
-        prl_dtmvtolt := pr_craplot.dtmvtolt;
-        prl_cdagenci := pr_craplot.cdagenci;
-        prl_cdbccxlt := pr_craplot.cdbccxlt;
-        prl_nrdolote := pr_craplot.nrdolote;
-        prl_tplotmov := pr_craplot.tplotmov;
+        --          VARIAVEL SECUNDÁRIA           
+        
        OPEN cr_crapcst(pr_cdcooper ,
                        pr_dtmvtolt ,
                        pr_cdagenci ,
@@ -616,8 +597,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                   where craplau.rowid = pr_craplau.rowid;
           exception
             when others then
-             dbms_output.put_line('erro: '||sqlerrm);
-
+              vr_dscritic := 'Problema ao alterar dados craplau '||sqlerrm;
           end;
            begin
                           insert into craprej
@@ -660,30 +640,31 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                             );
              exception
                when others then
-                 DBMS_OUTPUT.put_line('Erro: '||sqlerrm);
+                 vr_dscritic := 'Problema ao inserir dados craprej '||sqlerrm;
+
              end;
         else
           vr_nrcustod := rw_crapcst.nrdconta;
-     
+
            begin
              select crapcri.dscritic
-                    into 
+                    into
                      vr_dscritic
-                     from crapcri 
+                     from crapcri
               where crapcri.cdcritic = pr_craplau.cdcritic;
-             exception 
-               when others then 
+             exception
+               when others then
                  vr_dscritic := null;
            end;
         end if;
-       --- fim do while 
+       --- fim do while
         pr_cdcritic := 0;
         pr_flgentra := TRUE;
-    
+
     IF   pr_craplau.cdhistor NOT IN (21,26)   THEN
            pr_cdcritic := 245;
     ELSE
-      /* Verifica antes se eh conta migrada */
+      -- Verifica antes se eh conta migrada 
           begin
              select craptco.nrcarant,
                     craptco.nrdconta
@@ -699,14 +680,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                  vr_contamigrada := null;
                  vr_nrconta      := 0;
           end;
-        
-        if (vr_contamigrada is not null)  then 
+
+        if (vr_contamigrada is not null)  then
           vr_cooper := pr_cdcopant;
-        else 
-          vr_cooper := pr_cdcooper; 
+        else
+          vr_cooper := pr_cdcooper;
         end if;
-        /*fim validação*/ 
-        
+        --fim validação
+
          OPEN cr_crapfdc(vr_cooper,
                          rw_crapcst.cdbanchq,
                          rw_crapcst.cdagechq,
@@ -717,7 +698,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
          IF cr_crapfdc%NOTFOUND THEN
            close cr_crapfdc;
          else
-           
+
            IF (rw_crapfdc.dtemschq is null)   THEN
                pr_cdcritic := 108;
            ELSE
@@ -732,11 +713,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                      ELSIF (rw_crapfdc.incheque = 8)   THEN
                             pr_cdcritic := 320;
                         ELSE
-                          IF (rw_crapfdc.tpcheque = 3) AND /* cheque salario */
+                          IF (rw_crapfdc.tpcheque = 3) AND -- cheque salario 
                              (rw_crapfdc.incheque = 1) THEN
                               pr_cdcritic := 96;
                           ELSE
-                            IF (rw_crapfdc.tpcheque = 3) AND /* cheque salario */
+                            IF (rw_crapfdc.tpcheque = 3) AND -- cheque salario 
                                (rw_crapfdc.vlcheque <> pr_craplau.vllanaut) THEN
                                 pr_cdcritic := 269;
                             END IF;
@@ -777,14 +758,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                 end if;
              end if;
            end if;
-        else 
+        else
           pr_cdcritic := 92;
           close cr_craplcm;
         end if;
        end;
      end if;
      IF pr_cdcritic > 0 THEN
-          /* rejeitados */
+          -- rejeitados 
              begin
                insert into craprej
                           (craprej.dtmvtolt,
@@ -826,7 +807,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                            );
              exception
                when others then
-                 DBMS_OUTPUT.put_line('Erro: '||sqlerrm);
+                 vr_dscritic := 'Problema ao inserir dados craprej '||sqlerrm;
              end;
              IF pr_cdcritic in (257,287) THEN
                 pr_flgentra := TRUE;
@@ -834,10 +815,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                 pr_flgentra := FALSE;
              end if;
      end if;
-      /*ULTIMA VALIDAÇÃO*/
+      --ULTIMA VALIDAÇÃO
 
       IF pr_flgentra THEN
-         /* Verifica se eh conta migrada */
+         -- Verifica se eh conta migrada 
          IF (vr_contamigrada <> 0 ) THEN
              IF pr_cdcooper = 1 AND
                 rw_crapcst.nrdconta = 85448 THEN
@@ -849,15 +830,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                    where craplau.rowid = pr_craplau.rowid;
                    exception
                      when others then
-                       DBMS_OUTPUT.put_line('Erro craplau '||sqlerrm);
+                      vr_dscritic := 'Problema ao alterar dados craplau '||sqlerrm;                       
                    end;
                    begin
                      update crapcst
                         set crapcst.insitchq = 4
                      where crapcst.rowid = rw_crapcst.rowid;
                      exception
-                       when others then
-                         dbms_output.put_line('Erro crapcst '||sqlerrm);
+                      when others then
+                        vr_dscritic := 'Problema ao alterar dados crapcst '||sqlerrm;                       
+
                    end;
              ELSE
                -- Buscar qual a quantidade atual de registros no vetor para posicionar na próxima
@@ -879,7 +861,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                  where craplau.rowid = pr_craplau.rowid;
                  exception
                    when others then
-                     dbms_output.put_line('Erro :'|| sqlerrm);
+                   vr_dscritic := 'Problema ao alterar dados craplau '||sqlerrm;                                           
                end;
                begin
                  update crapcst
@@ -887,7 +869,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                  where crapcst.rowid = rw_crapcst.rowid;
                  exception
                    when others then
-                     dbms_output.put_line('Erro :'|| sqlerrm);
+                    vr_dscritic := 'Problema ao alterar dados crapcst '||sqlerrm;                                                                
+
                end;
                IF pr_craplau.cdhistor = 26 THEN
                   begin
@@ -898,7 +881,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                     where crapfdc.rowid = rw_crapfdc.rowid;
                     exception
                       when others then
-                        dbms_output.put_line('Erro :'|| sqlerrm);
+                       vr_dscritic := 'Problema ao alterar dados crapfdc '||sqlerrm;
                   end;
                ELSE
                  IF pr_craplau.cdhistor = 21 THEN
@@ -910,7 +893,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                       where crapfdc.rowid = rw_crapfdc.rowid;
                       exception
                         when others then
-                          dbms_output.put_line('Erro :'|| sqlerrm);
+                          vr_dscritic := 'Problema ao alterar dados crapfdc '||sqlerrm;
                     end;
                  end if;
                end if;
@@ -934,18 +917,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                              craplcm.cdbanchq ,
                              craplcm.cdagechq ,
                              craplcm.nrctachq ,
-                             craplcm.cdpesqbb /*,
-                             ------------------
-                             craplot.qtinfoln ,
-                             craplot.qtcompln ,
-                             craplot.vlinfodb ,
-                             craplot.vlcompdb ,
-                             craplot.nrseqdig ,
-                             ------------------
-                             craplau.dtdebito ,
-                             craplau.insitlau ,
-                             ------------------
-                             crapcst.insitchq */)
+                             craplcm.cdpesqbb )
                              values
                              ( pr_craplot.dtmvtolt
                               ,pr_craplot.dtmvtolt
@@ -967,18 +939,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                                TO_CHAR(pr_craplau.cdagenci,'999')       ||'-' ||
                                TO_CHAR(pr_craplau.cdbccxlt,'999')       ||'-' ||
                                TO_CHAR(pr_craplau.nrdolote,'999999')    ||'-' ||
-                               to_char(pr_craplau.nrseqdig,'99999')
-                              /*,pr_craplot.qtinfoln + 1
-                              ,pr_craplot.qtcompln + 1
-                              ,pr_craplot.vlinfodb + pr_craplau.vllanaut
-                              ,pr_craplot.vlcompdb + pr_craplau.vllanaut
-                              ,rw_craplcm.nrseqdig
-                              ,pr_craplot.dtmvtolt
-                              ,2
-                              ,4*/);
+                               to_char(pr_craplau.nrseqdig,'99999'));
                      exception
                         when others then
-                          BEGIN 
+                          BEGIN
                            update craplcm
                               set craplcm.vllanmto = pr_craplau.vllanaut
                               where CDCOOPER = pr_cdcooper
@@ -987,8 +951,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                                 and CDBCCXLT = pr_craplau.cdbccxlt
                                 and NRDOLOTE = pr_craplot.nrdolote
                                 and NRSEQDIG = pr_craplot.nrseqdig + 1;
-                              
-                          END;                   /*  CHQ. OK - prg. 287~   */
+
+                          END;                   --  CHQ. OK - prg. 287~  
               end;
               begin
                     update  craplot
@@ -1001,8 +965,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
 
                     exception
                       when others then
-                        dbms_output.put_line('Erro '|| sqlerrm );
-
+                       vr_dscritic := 'Problema ao alterar dados craplot '||sqlerrm;                        
                   end;
 
                     begin
@@ -1012,8 +975,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
 
                       exception
                         when others then
-                          dbms_output.put_line('Erro '|| sqlerrm );
-
+                       vr_dscritic := 'Problema ao alterar dados crapcst '||sqlerrm;
                     end;
                       IF   pr_craplau.cdhistor = 26   THEN
                          begin
@@ -1024,7 +986,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                              where crapfdc.rowid = rw_crapfdc.rowid;
                           exception
                             when others then
-                              dbms_output.put_line('Erro '|| sqlerrm);
+                            vr_dscritic := 'Problema ao alterar dados crapfdc '||sqlerrm;                              
                          end;
                       ELSE
                         IF   pr_craplau.cdhistor = 21 THEN
@@ -1036,7 +998,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                                  where crapfdc.rowid = rw_crapfdc.rowid;
                               exception
                                 when others then
-                                  dbms_output.put_line('Erro '|| sqlerrm);
+                                  vr_dscritic := 'Problema ao alterar dados crapfdc '||sqlerrm;
                              end;
                         END if;
                       end if;
@@ -1051,33 +1013,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                 where craplau.rowid = pr_craplau.rowid;
           exception
             when others then
-              dbms_output.put_line('Erro.: '||Sqlerrm);
+              vr_dscritic := 'Problema ao inserir dados craplau '||sqlerrm;
         end;
       end if;
-              --  crapcst.insitchq = 3. /*  Processado com erro  */
+  
 
-   /* Limpar critica */
-   --ASSIGN glb_cdcritic = 0.
-
-     -- END;
-
+  
 
       end pc_trata_custodia;
       PROCEDURE pc_trata_titulo(vr_cdcooper in number, pr_craplau cr_craplau%ROWTYPE,
                                    pr_craplot cr_crablot%rowtype) is
-      /* variaveis */
+      -- variaveis 
        pr_dtmvtolt date;
        pr_cdagenci number;
        pr_cdbccxlt number;
        pr_nrdolote number;
        pr_dscodbar number;
-       /*----------------*/
-       pr1_dtmvtolt date;
-       pr1_cdagenci number;
-       pr1_cdbccxlt number;
-       pr1_nrdolote number;
-       pr1_tplotmov number;
 
+       
 
 
        CURSOR CR_CRAPLOT01 (PR_CDCOOPER CRAPLOT.CDCOOPER%TYPE,
@@ -1120,9 +1073,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
         pr_cdbccxlt := TO_NUMBER(SUBSTR(pr_craplau.cdseqtel,16,3));
         pr_nrdolote := TO_NUMBER(SUBSTR(pr_craplau.cdseqtel,20,6));
         pr_dscodbar := TO_NUMBER(SUBSTR(pr_craplau.cdseqtel,27,44));
-    
 
-        OPEN CR_CRAPLOT01(pr_cdcooper,
+
+        OPEN CR_CRAPLOT01(vr_cdcooper,
                           rw_crapdat.dtmvtopr);
         FETCH CR_CRAPLOT01
         INTO RW_CRAPLOT;
@@ -1145,17 +1098,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                      ,pr_cdcooper);
                exception
                  when others then
-                   dbms_output.put_line('Erro:'||sqlerrm);
+                   vr_dscritic := 'Problema ao inserir dados craplot '||sqlerrm;
              end;
           CLOSE CR_CRAPLOT01;
         END IF;
-           pr1_dtmvtolt :=  rw_craplot.dtmvtolt;
-           pr1_cdagenci := rw_craplot.cdagenci;
-           pr1_cdbccxlt := rw_craplot.cdbccxlt;
-           pr1_nrdolote := rw_craplot.nrdolote;
-           pr1_tplotmov := rw_craplot.tplotmov;
+           
 
-        
         OPEN CR_CRAPTIT(pr_cdcooper,
                         pr_dtmvtolt,
                         pr_cdagenci,
@@ -1174,7 +1122,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
              WHERE craplau.ROWID = pr_craplau.ROWID;
            EXCEPTION
               WHEN OTHERS THEN
-                dbms_output.put_line('Erro '||sqlerrm );
+                vr_dscritic := 'Problema ao alterar dados craplau '||sqlerrm;
+
            END;
 
             begin
@@ -1218,7 +1167,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                             );
             exception
               when others then
-                DBMS_OUTPUT.put_line('Erro: '||sqlerrm);
+                vr_dscritic := 'Problema ao inserir dados craprej '||sqlerrm;
             end;
            CLOSE CR_CRAPTIT;
         END IF;
@@ -1282,7 +1231,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
 
           exception
             when others then
-              dbms_output.put_line('Erro '|| sqlerrm );
+              vr_dscritic := 'Problema ao alterar dados craplot '||sqlerrm;
         end;
 
         begin
@@ -1292,7 +1241,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
             where craplau.rowid = pr_craplau.rowid;
           exception
             when others then
-              dbms_output.put_line('Erro '|| sqlerrm );
+              vr_dscritic := 'Problema ao alterar dados craplau '||sqlerrm;
         end;
 
         begin
@@ -1301,7 +1250,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
             where craptit.rowid = RW_CRAPTIT.Rowid;
           exception
             when others then
-              dbms_output.put_line('Erro '|| sqlerrm );
+              vr_dscritic := 'Problema ao inserir dados craptit '||sqlerrm;
         end;
 
       end pc_trata_titulo;
@@ -1344,8 +1293,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
       CLOSE btch0001.cr_crapdat;
     END IF;
     vr_dtmvtolt := TO_CHAR(to_date(rw_crapdat.dtmvtolt,'mm/dd/rrrr'),'DD/MM/RRRR');
-    vr_dtmvtopr := TO_CHAR(to_date(rw_crapdat.dtmvtopr,'mm/dd/rrrr'),'DD/MM/RRRR');
-    
+
     -- Validações iniciais do programa
     BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                              ,pr_flgbatch => 1
@@ -1392,13 +1340,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                     vr_nrdolote := 4500;
                ELSE
                     vr_nrdolote := 4600;
-                    
+
                end if;
                for rw_craplot in cr_craplot1(pr_cdcooper => pr_cdcooper,
                                             pr_dtmvtopr => rw_crapdat.dtmvtopr,
                                             pr_nrdolote => vr_nrdolote) loop
-                                            
-                      
+
+
 
 
                     begin
@@ -1433,7 +1381,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                           where rowid = rw_craplau.rowid;
                         exception
                           when others then
-                            dbms_output.put_line('Erro:'||sqlerrm);
+                            vr_dscritic := 'Problema ao alterar dados craplau '||sqlerrm;
                         end;
                         VR_nrcustod := 0;
                         vr_dtmvtolt := rw_craplot.dtmvtolt;
@@ -1482,11 +1430,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                             );
                     exception
                       when others then
-                       dbms_output.put_line('Erro - '|| sqlerrm);
+                       vr_dscritic := 'Problema ao inserir dados craprej '||sqlerrm; 
                     end;
               end loop; -- rw_craplot
 
-        
+
         IF  rw_crablot.tplotmov = 19   THEN
              pc_trata_custodia(pr_cdcooper,rw_craplau, rw_crablot);
         ELSIF rw_crablot.tplotmov = 20   THEN
@@ -1495,141 +1443,145 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
 
 
       END LOOP;
-    END LOOP;    /*Fim loop crablot*/
+    END LOOP;    --Fim loop crablot
     vr_idx := 0;
     FOR vr_idx IN 1 .. vr_tab_contas_cheque.COUNT LOOP
       pc_processamento_tco;
-      dbms_output.put_line('index :'||vr_idx );
     END LOOP;
-    /** Geração Relatorio crrl626 **/
+        -- Geração Relatorio crrl626 
         -- Inicializar o CLOB
+         select count(*) into vr_valor from craplot
+            WHERE craplot.cdcooper = pr_cdcooper   AND
+                  craplot.dtmvtolt = rw_crapdat.dtmvtopr   AND
+                 (craplot.nrdolote = 4500           OR
+                  craplot.nrdolote = 4600);
+    
+    if vr_valor >= 1 then
+                      
         vr_des_xml := NULL;
         dbms_lob.createtemporary(vr_des_xml, TRUE);
         dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
 
         -- Inicilizar as informações do XML
-        vr_texto_completo := NULL;
         pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl238>');
 
-        vr_nmarqimp := 'rl/crrl238.lst';
-        vr_cdempres := 11;
-        
-    /*Cabeçalho Relatório */
-    FOR r_relat IN cr_craplotrl(pr_cdcooper,
+       
+     --Cabeçalho Relatório 
+     FOR rw_relat IN cr_craplotrl(pr_cdcooper,
                                 rw_crapdat.dtmvtopr) LOOP
-           
-           rel_qtdifeln := r_relat.qtcompln ;
-           rel_vldifedb := r_relat.vlcompdb ;
-           rel_vldifecr := r_relat.vlcompcr ;
-             IF r_relat.nrdolote = 4500 THEN 
-               rel_dsintegr := 'CHEQUES EM CUSTODIA ' || upper(rw_crapcop.nmrescop);
-             ELSE 
-               rel_dsintegr := 'TITULOS COMPENSAVEIS';
-             end if;  
+
+           vr_rel_qtdifeln := rw_relat.qtcompln ;
+           vr_rel_vldifedb := rw_relat.vlcompdb ;
+           vr_rel_vldifecr := rw_relat.vlcompcr ;
+             IF rw_relat.nrdolote = 4500 THEN
+               vr_rel_dsintegr := 'CHEQUES EM CUSTODIA ' || upper(rw_crapcop.nmrescop);
+             ELSE
+               vr_rel_dsintegr := 'TITULOS COMPENSAVEIS';
+             end if;
              pr_regexist := TRUE;
-                                             
-       FOR r_corpo_rel in cr_corpo_rel(pr_cdcooper,
+
+       FOR rw_corpo_rel in cr_corpo_rel(pr_cdcooper,
                                        rw_crapdat.dtmvtopr,
-                                       r_relat.cdagenci,
-                                       r_relat.cdbccxlt,
-                                       r_relat.nrdolote)loop
-                                       
-                vr_cdcritic :=  r_corpo_rel.cdcritic;
+                                       rw_relat.cdagenci,
+                                       rw_relat.cdbccxlt,
+                                       rw_relat.nrdolote)loop
+
+                vr_cdcritic :=  rw_corpo_rel.cdcritic;
                    begin
                        select crapcri.dscritic
-                              into 
+                              into
                                vr_dscritic
-                               from crapcri 
+                               from crapcri
                         where crapcri.cdcritic = vr_cdcritic;
-                      exception 
-                         when others then 
-                          vr_dscritic := null; 
-                     end;	
+                      exception
+                         when others then
+                          vr_dscritic := null;
+                     end;
 
-                
-                 IF r_corpo_rel.cdcritic  in (257,287) THEN
+
+                 IF rw_corpo_rel.cdcritic  in (257,287) THEN
                     vr_dscritic := '* ' || vr_dscritic;
                  end if;
-             
-             IF r_corpo_rel.tpintegr = 19   THEN
-                rel_dshistor := TO_CHAR(gene0002.fn_mask(r_corpo_rel.nraplica,'zzz.zzz.9')) || 
-                                ' ==> ' || TRIM(r_corpo_rel.cdpesqbb) || '    ' ||
-                                to_char(r_corpo_rel.vllanmto,'fm999G999G999G999G990d00') ||
+
+             IF rw_corpo_rel.tpintegr = 19   THEN
+                vr_rel_dshistor := TO_CHAR(gene0002.fn_mask(rw_corpo_rel.nraplica,'zzz.zzz.9')) ||
+                                ' ==> ' || TRIM(rw_corpo_rel.cdpesqbb) || '    ' ||
+                                to_char(rw_corpo_rel.vllanmto,'fm999G999G999G999G990d00') ||
                                 ' --> ' || vr_dscritic;
-             ELSIF r_corpo_rel.tpintegr = 20   THEN
-                   rel_dshistor := TRIM(r_corpo_rel.cdpesqbb) || '    ' ||
-                                to_char(r_corpo_rel.vllanmto,'fm999G999G999G999G990d00') ||
+             ELSIF rw_corpo_rel.tpintegr = 20   THEN
+                   vr_rel_dshistor := TRIM(rw_corpo_rel.cdpesqbb) || '    ' ||
+                                to_char(rw_corpo_rel.vllanmto,'fm999G999G999G999G990d00') ||
                                 ' --> ' || vr_dscritic;
-             ELSE               
-                   rel_dshistor := TRIM(r_corpo_rel.cdpesqbb) || '    ' ||
-                                to_char(r_corpo_rel.vllanmto,'fm999G999G999G999G990d00') ||
+             ELSE
+                   vr_rel_dshistor := TRIM(rw_corpo_rel.cdpesqbb) || '    ' ||
+                                to_char(rw_corpo_rel.vllanmto,'fm999G999G999G999G990d00') ||
                                 ' --> ' || vr_dscritic;
              END IF;
-                          
+
           pc_escreve_xml('<rejeitados>
-                          <reldspesqbb>'|| rel_dsintegr                            ||'</reldspesqbb>
-                          <dtmvtolt>'   || to_char(r_relat.dtmvtolt,'DD/MM/RRRR')  ||'</dtmvtolt>
-                          <cdagenci>'   || r_relat.cdagenci                        ||'</cdagenci>
-                          <cdbccxlt>'   || r_relat.cdbccxlt                        ||'</cdbccxlt>
-                          <nrdolote>'   || r_relat.nrdolote                        ||'</nrdolote>
-                          <tplotmov>'   || r_relat.tplotmov                        ||'</tplotmov>
-                          <dtmvtopg>'   || to_char(r_relat.dtmvtopg,'DD/MM/RRRR')  ||'</dtmvtopg>
+                          <reldspesqbb>'|| vr_rel_dsintegr                          ||'</reldspesqbb>
+                          <dtmvtolt>'   || to_char(rw_relat.dtmvtolt,'DD/MM/RRRR')  ||'</dtmvtolt>
+                          <cdagenci>'   || rw_relat.cdagenci                        ||'</cdagenci>
+                          <cdbccxlt>'   || rw_relat.cdbccxlt                        ||'</cdbccxlt>
+                          <nrdolote>'   || rw_relat.nrdolote                        ||'</nrdolote>
+                          <tplotmov>'   || rw_relat.tplotmov                        ||'</tplotmov>
+                          <dtmvtopg>'   || to_char(rw_relat.dtmvtopg,'DD/MM/RRRR')  ||'</dtmvtopg>
                           <resgate>RESGATAR OS SEGUINTES CHEQUES/TITULOS</resgate>
-                          <corte>------------------------------------------------------------------------------------------------------------------------------------</corte>                          
-                          <cdpesqbb>'   || r_corpo_rel.cdpesqbb                    ||'</cdpesqbb>
-                          <dshistor>'   || rel_dshistor                            ||'</dshistor>
-                          <rel_qtdifeln>'|| rel_qtdifeln                            ||'</rel_qtdifeln>
-                          <rel_vldifedb>'|| to_char(rel_vldifedb,'fm999G999G999G999G990d00')||'</rel_vldifedb>
-                          <rel_vldifecr>'|| to_char(rel_vldifecr,'fm999G999G999G999G990d00') ||'</rel_vldifecr>
-                          <vlinfodb>'|| to_char(r_relat.vlinfodb,'fm999G999G999G999G990d00') ||'</vlinfodb>
-                          <vlinfocr>'|| to_char(r_relat.vlinfocr,'fm999G999G999G999G990d00') ||'</vlinfocr>
-                          <qtinfoln>'|| r_relat.qtinfoln                                     ||'</qtinfoln>                          
-                          <tqtd>'    || (rel_qtdifeln - r_relat.qtinfoln)                  ||'</tqtd> 
-                          <tdb>'    ||  to_char((rel_vldifedb - r_relat.vlinfodb),'fm999G999G999G999G990d00') ||'</tdb> 
-                          <tcr>'    ||  to_char((rel_vldifecr - r_relat.vlinfocr),'fm999G999G999G999G990d00') ||'</tcr> 
+                          <corte>------------------------------------------------------------------------------------------------------------------------------------</corte>
+                          <cdpesqbb>'   || rw_corpo_rel.cdpesqbb                    ||'</cdpesqbb>
+                          <dshistor>'   || vr_rel_dshistor                         ||'</dshistor>
+                          <rel_qtdifeln>'|| vr_rel_qtdifeln                        ||'</rel_qtdifeln>
+                          <rel_vldifedb>'|| to_char(vr_rel_vldifedb,'fm999G999G999G999G990d00')||'</rel_vldifedb>
+                          <rel_vldifecr>'|| to_char(vr_rel_vldifecr,'fm999G999G999G999G990d00') ||'</rel_vldifecr>
+                          <vlinfodb>'|| to_char(rw_relat.vlinfodb,'fm999G999G999G999G990d00') ||'</vlinfodb>
+                          <vlinfocr>'|| to_char(rw_relat.vlinfocr,'fm999G999G999G999G990d00') ||'</vlinfocr>
+                          <qtinfoln>'|| rw_relat.qtinfoln                                     ||'</qtinfoln>
+                          <tqtd>'    || (vr_rel_qtdifeln - rw_relat.qtinfoln)                  ||'</tqtd>
+                          <tdb>'    ||  to_char((vr_rel_vldifedb - rw_relat.vlinfodb),'fm999G999G999G999G990d00') ||'</tdb>
+                          <tcr>'    ||  to_char((vr_rel_vldifecr - rw_relat.vlinfocr),'fm999G999G999G999G990d00') ||'</tcr>
                       </rejeitados>');
-                             
-                                        
+
+
        end loop;
-       if (rel_dshistor is null) then  
+       if (vr_rel_dshistor is null) then
          pc_escreve_xml('<rejeitados>
-                          <reldspesqbb>'|| rel_dsintegr                            ||'</reldspesqbb>
-                          <dtmvtolt>'   || to_char(r_relat.dtmvtolt,'DD/MM/RRRR')  ||'</dtmvtolt>
-                          <cdagenci>'   || r_relat.cdagenci                        ||'</cdagenci>
-                          <cdbccxlt>'   || r_relat.cdbccxlt                        ||'</cdbccxlt>
-                          <nrdolote>'   || r_relat.nrdolote                        ||'</nrdolote>
-                          <tplotmov>'   || r_relat.tplotmov                        ||'</tplotmov>
-                          <dtmvtopg>'   || to_char(r_relat.dtmvtopg,'DD/MM/RRRR')  ||'</dtmvtopg>
+                          <reldspesqbb>'|| vr_rel_dsintegr                            ||'</reldspesqbb>
+                          <dtmvtolt>'   || to_char(rw_relat.dtmvtolt,'DD/MM/RRRR')  ||'</dtmvtolt>
+                          <cdagenci>'   || rw_relat.cdagenci                        ||'</cdagenci>
+                          <cdbccxlt>'   || rw_relat.cdbccxlt                        ||'</cdbccxlt>
+                          <nrdolote>'   || rw_relat.nrdolote                        ||'</nrdolote>
+                          <tplotmov>'   || rw_relat.tplotmov                        ||'</tplotmov>
+                          <dtmvtopg>'   || to_char(rw_relat.dtmvtopg,'DD/MM/RRRR')  ||'</dtmvtopg>
                           <resgate></resgate>
-                          <corte></corte>                          
+                          <corte></corte>
                           <cdpesqbb>''</cdpesqbb>
-                          <dshistor>'   || rel_dshistor                            ||'</dshistor>
-                          <rel_qtdifeln>'|| rel_qtdifeln                            ||'</rel_qtdifeln>
-                          <rel_vldifedb>'|| to_char(rel_vldifedb,'fm999G999G999G999G990d00')||'</rel_vldifedb>
-                          <rel_vldifecr>'|| to_char(rel_vldifecr,'fm999G999G999G999G990d00') ||'</rel_vldifecr>
-                          <vlinfodb>'|| to_char(r_relat.vlinfodb,'fm999G999G999G999G990d00') ||'</vlinfodb>
-                          <vlinfocr>'|| to_char(r_relat.vlinfocr,'fm999G999G999G999G990d00') ||'</vlinfocr>
-                          <qtinfoln>'|| r_relat.qtinfoln                                     ||'</qtinfoln>                          
-                          <tqtd>'    || (rel_qtdifeln - r_relat.qtinfoln)                  ||'</tqtd> 
-                          <tdb>'    ||  to_char((rel_vldifedb - r_relat.vlinfodb),'fm999G999G999G999G990d00') ||'</tdb> 
-                          <tcr>'    ||  to_char((rel_vldifecr - r_relat.vlinfocr),'fm999G999G999G999G990d00') ||'</tcr> 
+                          <dshistor>'   || vr_rel_dshistor                          ||'</dshistor>
+                          <rel_qtdifeln>'|| vr_rel_qtdifeln                            ||'</rel_qtdifeln>
+                          <rel_vldifedb>'|| to_char(vr_rel_vldifedb,'fm999G999G999G999G990d00')||'</rel_vldifedb>
+                          <rel_vldifecr>'|| to_char(vr_rel_vldifecr,'fm999G999G999G999G990d00') ||'</rel_vldifecr>
+                          <vlinfodb>'|| to_char(rw_relat.vlinfodb,'fm999G999G999G999G990d00') ||'</vlinfodb>
+                          <vlinfocr>'|| to_char(rw_relat.vlinfocr,'fm999G999G999G999G990d00') ||'</vlinfocr>
+                          <qtinfoln>'|| rw_relat.qtinfoln                                     ||'</qtinfoln>
+                          <tqtd>'    || (vr_rel_qtdifeln - rw_relat.qtinfoln)                  ||'</tqtd>
+                          <tdb>'    ||  to_char((vr_rel_vldifedb - rw_relat.vlinfodb),'fm999G999G999G999G990d00') ||'</tdb>
+                          <tcr>'    ||  to_char((vr_rel_vldifecr - rw_relat.vlinfocr),'fm999G999G999G999G990d00') ||'</tcr>
                       </rejeitados>');
-       end if;   
-     
+       end if;
+
     END LOOP;
-            
+
      pc_escreve_xml('</crrl238>');
      ----------------- gerar relatório -----------------
            -- Busca do diretório base da cooperativa para PDF
            vr_caminho_integra := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                                       ,pr_cdcooper => pr_cdcooper
-                                	                    ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+                                                      ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
 
          -- Efetuar solicitação de geração de relatório --
 
             gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
                                       ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
-                 	                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
+                                       ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento atual
                                       ,pr_dsxml     => vr_des_xml          --> Arquivo XML de dados
                                       ,pr_dsxmlnode => '/crrl238/rejeitados'    --> Nó base do XML para leitura dos dados
                                       ,pr_dsjasper  => 'crrl238.jasper'    --> Arquivo de layout do iReport
@@ -1643,7 +1595,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps290 (pr_cdcooper  IN crapcop.cdcooper%
                                       ,pr_flg_gerar => 'S'                 --> gerar PDF
                                        ,pr_des_erro  => vr_dscritic);       --> Saída com erro
 
-
+    end if;
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
     -- Processo OK, devemos chamar a fimprg
