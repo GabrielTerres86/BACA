@@ -40,13 +40,12 @@
                   08/03/2016 - Alterado para que os eventos do tipo EAD 
                               e EAD Assemblear nao sejam apresentados.
                                Projeto 229 - Melhorias OQS (Lombardi)          
-  ...............................................................................*/
-
+  
                  21/06/2016 - Ajustes para a RF 05 (Jean Michel).    
                  
                  19/08/2016 - Melhorias OQS - RF07 (Odirlei - AMcom).
                  
-				 09/11/2016 - inclusao de LOG. (Jean Michel)
+	        			 09/11/2016 - inclusao de LOG. (Jean Michel)
 
 ......................................................................... */
 
@@ -797,8 +796,58 @@
                         tt-avaliacoes.nrordgru = STRING(crapgap.nrordgru).
              END.
           END.
-             END.
-          END.
+      END.
+      
+      RUN RodaJavaScript("var mava = new Array();").
+      
+      FOR EACH tt-avaliacoes NO-LOCK 
+          BY tt-avaliacoes.nrordgru
+            BY tt-avaliacoes.nrseqeve
+              BY tt-avaliacoes.tpiteava
+                BY tt-avaliacoes.cdagenci
+                  BY tt-avaliacoes.cdgruava
+                    BY tt-avaliacoes.cditeava:
+      
+        ASSIGN aux_contador = aux_contador + 1.
+        
+        IF vetorava <> "" THEN
+          ASSIGN  vetorava = vetorava + ",".
+          
+        ASSIGN vetorava = vetorava + "~{cdagenci:'" +  tt-avaliacoes.cdagenci
+                                   + "',cdcooper:'" +  tt-avaliacoes.cdcooper
+                                   + "',cdevento:'" +  tt-avaliacoes.cdevento
+                                   + "',nrseqeve:'" +  tt-avaliacoes.nrseqeve
+                                   + "',nrseqeve:'" +  tt-avaliacoes.nrseqeve
+                                   + "',tprelgru:'" +  tt-avaliacoes.tprelgru
+                                   + "',iditeava:'" +  tt-avaliacoes.iditeava
+                                   + "',tpiteava:'" +  tt-avaliacoes.tpiteava
+                                   + "',cditeava:'" +  tt-avaliacoes.cditeava
+                                   + "',dsiteava:'" +  tt-avaliacoes.dsiteava
+                                   + "',cdgruava:'" +  tt-avaliacoes.cdgruava
+                                   + "',dsgruava:'" +  tt-avaliacoes.dsgruava
+                                   + "',dsobserv:'" +  tt-avaliacoes.dsobserv
+                                   + "',qtavabom:'" +  tt-avaliacoes.qtavabom
+                                   + "',peavabom:'" +  tt-avaliacoes.peavabom
+                                   + "',qtavains:'" +  tt-avaliacoes.qtavains
+                                   + "',peavains:'" +  tt-avaliacoes.peavains
+                                   + "',qtavaoti:'" +  tt-avaliacoes.qtavaoti
+                                   + "',peavaoti:'" +  tt-avaliacoes.peavaoti
+                                   + "',qtavareg:'" +  tt-avaliacoes.qtavareg
+                                   + "',peavareg:'" +  tt-avaliacoes.peavareg
+                                   + "',qtavares:'" +  tt-avaliacoes.qtavares
+                                   + "',qtpartic:'" +  tt-avaliacoes.qtpartic
+                                   + "',qtavanre:'" +  tt-avaliacoes.qtavanre
+                                   + "',peavanre:'" +  tt-avaliacoes.peavanre
+                                   + "',nrseqdig:'" +  tt-avaliacoes.nrseqdig
+                                   + "',qtsugeve:'" +  tt-avaliacoes.qtsugeve
+                                   + "',dssugeve:'" +  tt-avaliacoes.dssugeve + "'~}".
+        
+        IF aux_contador = 50 THEN             
+          DO:
+            RUN RodaJavaScript("mava.push(" + vetorava + ");").
+            ASSIGN aux_contador = 0
+                   vetorava     = "".
+          END.        
       END.
 
     IF vetorava <> "" THEN
