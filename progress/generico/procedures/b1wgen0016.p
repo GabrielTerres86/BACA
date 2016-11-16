@@ -4277,7 +4277,7 @@ PROCEDURE obtem-agendamentos:
             ASSIGN tt-dados-agendamento.nrdocmto =  INT(xText:NODE-VALUE) WHEN xField:NAME = "nrdocmto".
             ASSIGN tt-dados-agendamento.incancel =  INT(xText:NODE-VALUE) WHEN xField:NAME = "incancel".
             ASSIGN tt-dados-agendamento.cdreceit =  INT(xText:NODE-VALUE) WHEN xField:NAME = "cdreceit".
-            ASSIGN tt-dados-agendamento.nrrefere =  INT(xText:NODE-VALUE) WHEN xField:NAME = "nrrefere".
+            ASSIGN tt-dados-agendamento.nrrefere =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "nrrefere".
             ASSIGN tt-dados-agendamento.cdageban =      xText:NODE-VALUE  WHEN xField:NAME = "cdageban".
             ASSIGN tt-dados-agendamento.cdtiptra =  INT(xText:NODE-VALUE) WHEN xField:NAME = "cdtiptra".
             ASSIGN tt-dados-agendamento.dstiptra =      xText:NODE-VALUE  WHEN xField:NAME = "dstiptra".        
