@@ -67,7 +67,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                             ,pr_idorigem IN INTEGER	-- Canal de origem da operação
                             ,pr_tpdaguia IN INTEGER -- Tipo da guia (1 – DARF / 2 – DAS)
                             ,pr_tpcaptur IN INTEGER	-- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
-                            ,pr_cdseqfat IN NUMBER  -- Código sequencial da guia
+                            ,pr_cdseqfat IN VARCHAR2 -- Código sequencial da guia
                             ,pr_nrdigfat IN NUMBER  -- Dígito do faturamento
                             ,pr_lindigi1 IN NUMBER	-- Primeiro campo da linha digitável da guia
                             ,pr_lindigi2 IN NUMBER  -- Segundo campo da linha digitável da guia
@@ -391,27 +391,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
   rw_crapavt cr_crapavt2%ROWTYPE;
   
-  -- Busca as informações dos lançamentos de fatura
+  -- Cursor para protocolos e lançamentos de DARF/DAS
   CURSOR cr_craplft(pr_cdcooper IN crappro.cdcooper%type
                    ,pr_cdagenci IN crapaut.cdagenci%type
                    ,pr_nrdconta IN crappro.nrdconta%type
-                   ,pr_dtmvtolt IN crappro.dtmvtolt%type
-                   ,pr_cdtippro IN crappro.cdtippro%type) IS
+                   ,pr_dtmvtolt IN crappro.dtmvtolt%TYPE) IS
     SELECT pro.cdcooper
           ,pro.dtmvtolt
           ,pro.dscedent
           ,pro.dsprotoc
+		  ,pro.dsinform##1
           ,pro.dsinform##2
+		  ,pro.dsinform##3					
           ,pro.flgagend
           ,lft.vllanmto
           ,lft.cdbarras
+		  ,TO_CHAR(lft.cdseqfat) cdseqfat
+		  ,lft.dsnomfon
     FROM crappro pro
         ,crapaut aut
         ,craplft lft
    WHERE pro.cdcooper = pr_cdcooper
      AND pro.nrdconta = pr_nrdconta
      AND pro.dtmvtolt = pr_dtmvtolt
-     AND pro.cdtippro = pr_cdtippro
+     AND pro.cdtippro IN (16, 17, 18, 19)
      
      AND aut.cdcooper = pro.cdcooper
      AND aut.dtmvtolt = pro.dtmvtolt
@@ -477,7 +480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   vr_conteudo VARCHAR2(4000);
   vr_des_assunto VARCHAR2(100);
   vr_email_dest  VARCHAR2(100);
-  vr_agendame VARCHAR2(100);
+  vr_tpcaptur INTEGER;
   
   vr_exc_erro EXCEPTION;
   
@@ -503,38 +506,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --Zerar valor pagamentos
         vr_vlpagtos:= 0;
         vr_dspagtos:= NULL;
-        --Selecionar todas as faturas
+
+        -- Cursor para protocolos e lançamentos de DARF/DAS
         FOR rw_craplft IN cr_craplft (pr_cdcooper => pr_cdcooper
                                      ,pr_cdagenci => pr_cdagenci
                                      ,pr_nrdconta => pr_nrdconta
-                                     ,pr_dtmvtolt => pr_dtmvtocd
-                                     ,pr_cdtippro => 2) /* 2 - pagamento */ LOOP
-          --Verificar se precisa ignorar registro.
-          --#Banco indica que é título e Estornado não é necessário
-          IF InStr(rw_craplft.dsinform##2,'#Banco:') > 0 OR
-             InStr(Upper(rw_craplft.dsprotoc),'ESTORNADO') > 0 THEN
-            CONTINUE;
-          END IF;
-          
+                                     ,pr_dtmvtolt => pr_dtmvtocd) LOOP
           --Acumular pagamentos
           vr_vlpagtos:= NVL(vr_vlpagtos,0) + rw_craplft.vllanmto;
           vr_qtpagtos:= NVL(vr_qtpagtos,0) + 1;
-
-          IF rw_craplft.flgagend = 1 THEN
-             vr_agendame := ' Agendamento';
-          ELSE
-             vr_agendame := '';
-          END IF;
-
-          --Concatenar Descricao Pagamentos
-          IF nvl(length(vr_dspagtos),0) < 2400 THEN
-            vr_dspagtos:= vr_dspagtos||'Convenio: '||rw_craplft.dscedent||
-                          '<BR>Valor do Pagamento: R$ '||
-                          to_char(rw_craplft.vllanmto,'fm999G999G999G999D00')||
-                          ' - Cod.Barras: '|| rw_craplft.cdbarras ||
-                          vr_agendame ||'<BR><BR>';
-          END IF;
-          
+		  vr_tpcaptur := TO_NUMBER(TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(1, rw_craplft.dsinform##3, '#')), ':')));
+			
+		  IF vr_tpcaptur = 1 THEN  -- CDBARRA/LINDG
+		  	--Concatenar Descricao Pagamentos
+			IF nvl(length(vr_dspagtos),0) < 2400 THEN
+				vr_dspagtos:= vr_dspagtos ||
+				rw_craplft.dsinform##1 ||' - '|| TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(5, rw_craplft.dsinform##3, '#')), ':')) || '<BR>' ||
+				'Identificacao: ' || TO_CHAR(nvl(rw_craplft.dsnomfon,' ')) || ' ' || rw_craplft.dscedent || '<BR>' ||
+				'Valor do Pagamento: R$ '|| to_char(rw_craplft.vllanmto,'fm999G999G999G999D00')||
+				' - Cod.Barras: '|| rw_craplft.cdbarras ||
+				'<BR><BR>';
+			END IF;
+		  ELSE -- DARF Manual
+			--Concatenar Descricao Pagamentos
+			IF nvl(length(vr_dspagtos),0) < 2400 THEN
+				vr_dspagtos:= vr_dspagtos ||
+				rw_craplft.dsinform##1 ||' - '|| TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(5, rw_craplft.dsinform##3, '#')), ':')) || '<BR>' ||
+				'Identificacao: ' || TO_CHAR(nvl(rw_craplft.dsnomfon,' ')) || ' ' || rw_craplft.dscedent || '<BR>' ||
+				'Valor do Pagamento: R$ '|| to_char(rw_craplft.vllanmto,'fm999G999G999G999D00')  || 														
+				' - Cod.Seq: '|| rw_craplft.cdseqfat ||
+				'<BR><BR>';
+			END IF;
+		  END IF;
         END LOOP; --rw_craplft
 
         /** Verifica se o valor do pagto eh menor que o parametrizado
@@ -544,7 +547,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           --Flag email
           vr_flgemail:= FALSE;
         END IF;
-
 
       END IF; --vr_flgemail
 
@@ -602,7 +604,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
         END;
 
-
         --Verificar se os ultimos IPs sao iguais
         IF GENE0002.fn_existe_valor(pr_base     => vr_nrdipant
                                    ,pr_busca    => vr_nrdipatu
@@ -613,11 +614,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END IF; --vr_flgemail
 
       /** Enviar email para monitoracao se passou pelos filtros **/
-
       IF vr_flgemail THEN
+				
         vr_conteudo:= 'PA: '||rw_crapass.cdagenci||' - '||rw_crapass.nmresage;
         --Adicionar numero da conta na mensagem
         vr_conteudo:= vr_conteudo|| '<BR><BR>'||'Conta: '|| pr_nrdconta|| '<BR>';
+				
         --Se for pessoa fisica
         IF rw_crapass.inpessoa = 1 THEN
           /** Lista todos os titulares **/
@@ -676,7 +678,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
 
         --Determinar Assunto
-        vr_des_assunto:= 'PAGTO CONVENIOS '||rw_crapcop.nmrescop ||' '||
+        vr_des_assunto:= 'PAGTO DARF/DAS '||rw_crapcop.nmrescop ||' '||
                          GENE0002.fn_mask_conta(pr_nrdconta)|| ' R$ '||
                          TRIM(to_char(pr_vlfatura,'fm999g999g999g999d99'));
 
@@ -716,7 +718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHEN OTHERS THEN
       ROLLBACK;
       IF pr_dscritic IS NULL THEN
-        pr_dscritic := 'Erro ao gerar monitoracao de pagamento.';
+        pr_dscritic := 'Erro ao gerar monitoracao de pagamento DARF/DAS.';
       END IF;
   END;
   
@@ -725,6 +727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                         --,pr_idseqttl IN crapttl.idseqttl%TYPE  -- Sequencial de titularidade
                                         ,pr_nmextttl IN crapttl.nmextttl%TYPE  -- Nome do Titular
                                         ,pr_nrcpfope IN NUMBER                 -- CPF do operador PJ
+                                        ,pr_nrcpfpre IN NUMBER                 -- Número pré operação
+                                        ,pr_nmprepos IN VARCHAR2               -- Nome Preposto
                                         --,pr_tpdaguia IN INTEGER                -- Tipo da guia (1 – DARF / 2 – DAS)
                                         ,pr_tpcaptur IN INTEGER                -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
                                         ,pr_cdtippro IN crappro.cdtippro%TYPE  -- Código do tipo do comprovante
@@ -879,8 +883,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_dscedent => pr_dsidepag
                                   ,pr_flgagend => pr_flgagend
                                   ,pr_nrcpfope => pr_nrcpfope
-                                  ,pr_nrcpfpre => 0
-                                  ,pr_nmprepos => ''
+                                  ,pr_nrcpfpre => pr_nrcpfpre
+                                  ,pr_nmprepos => pr_nmprepos
                                   ,pr_dsprotoc => pr_dsprotoc
                                   ,pr_dscritic => pr_dscritic
                                   ,pr_des_erro => vr_dsretorn);
@@ -1157,6 +1161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	      ELSE
 	        /** Verificacao pelo modulo 11 **/
 	        CXON0014.pc_verifica_digito (pr_nrcalcul => vr_lindigit  --Numero a ser calculado
+					                    ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
 	                                    ,pr_nrdigito => vr_nrdigito); --Digito verificador
 	      END IF;
 	
@@ -1482,7 +1487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                             ,pr_idorigem IN INTEGER	-- Canal de origem da operação
                             ,pr_tpdaguia IN INTEGER -- Tipo da guia (1 – DARF / 2 – DAS)
                             ,pr_tpcaptur IN INTEGER	-- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
-                            ,pr_cdseqfat IN NUMBER  -- Código sequencial da guia
+                            ,pr_cdseqfat IN VARCHAR2 -- Código sequencial da guia
                             ,pr_nrdigfat IN NUMBER  -- Dígito do faturamento
                             ,pr_lindigi1 IN NUMBER	-- Primeiro campo da linha digitável da guia
                             ,pr_lindigi2 IN NUMBER	-- Segundo campo da linha digitável da guia
@@ -1920,6 +1925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                          ,pr_nrdconta => pr_nrdconta -- Número da conta
                                          ,pr_nmextttl => rw_crapass.nmextttl -- Nome do Titular
                                          ,pr_nrcpfope => pr_nrcpfope -- CPF do operador PJ
+										 ,pr_nrcpfpre => rw_crapass.nrcpfpre -- Número pré operação
+                                         ,pr_nmprepos => rw_crapass.nmprepos -- Nome Preposto
                                          ,pr_tpcaptur => pr_tpcaptur -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
                                          ,pr_cdtippro => vr_cdtippro -- Código do tipo do comprovante
                                          ,pr_dtmvtolt => rw_crapaut.dtmvtolt -- Data de movimento da autenticação
@@ -2892,9 +2899,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_idseqttl => pr_idseqttl,
 																	 pr_nrcpfope => pr_nrcpfope,
 																	 pr_idorigem => pr_idorigem,
-                                   pr_tpdaguia => pr_tpdaguia,
+                                   									 pr_tpdaguia => pr_tpdaguia,
 																	 pr_tpcaptur => pr_tpcaptur,
-																	 pr_cdseqfat => TO_NUMBER(vr_cdseqfat),
+																	 pr_cdseqfat => vr_cdseqfat,
 																	 pr_nrdigfat => vr_nrdigfat,
 																	 pr_lindigi1 => vr_lindigi1,
 																	 pr_lindigi2 => vr_lindigi2,
@@ -3633,6 +3640,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																					 ,pr_nrdconta => rw_crapass.nrdconta -- Número da conta
 																					 ,pr_nmextttl => rw_crapass.nmextttl -- Nome do Titular
 																					 ,pr_nrcpfope => pr_nrcpfope         -- CPF do operador PJ
+																					 ,pr_nrcpfpre => vr_nrcpfpre         -- Número pré operação
+                                           											 ,pr_nmprepos => nvl(vr_nmprepos,' ')-- Nome Preposto
 																					 ,pr_tpcaptur => pr_tpcaptur         -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
 																					 ,pr_cdtippro => vr_cdtippro         -- Código do tipo do comprovante
 																					 ,pr_dtmvtolt => rw_craplau.dtmvtolt -- Data de movimento da autenticação

@@ -6753,6 +6753,7 @@ PROCEDURE aprova_trans_pend:
 
     DEF VAR aux_nmconban AS CHAR                                    NO-UNDO.
     DEF VAR aux_cdseqfat AS DECI                                    NO-UNDO.
+    DEF VAR aux_cdseqdrf AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfrep AS DECI                                    NO-UNDO.
     DEF VAR aux_vlrdocum AS DECI                                    NO-UNDO.
     DEF VAR aux_nrdigfat AS INTE                                    NO-UNDO.
@@ -11934,7 +11935,7 @@ PROCEDURE aprova_trans_pend:
                                           WHEN pc_verifica_darf_das.pr_dscritic <> ?
                            aux_dscritic = pc_verifica_darf_das.pr_dscritic 
                                           WHEN pc_verifica_darf_das.pr_dscritic <> ?
-                           aux_cdseqfat = DEC(pc_verifica_darf_das.pr_cdseqfat)
+                           aux_cdseqdrf = pc_verifica_darf_das.pr_cdseqfat
                            aux_vldocmto = pc_verifica_darf_das.pr_vldocmto
                            aux_nrdigfat = pc_verifica_darf_das.pr_nrdigfat.
                     
@@ -11997,7 +11998,7 @@ PROCEDURE aprova_trans_pend:
                                                                   INPUT par_idorigem,                                   /* Canal de origem da operaçao */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tppagamento,     /* Tipo da guia (1 – DARF / 2 – DAS) */
                                                                   INPUT tt-tbpagto_darf_das_trans_pend.tpcaptura,       /* Tipo de captura da guia (1 – Código Barras / 2 – Manual) */
-                                                                  INPUT aux_cdseqfat,
+                                                                  INPUT aux_cdseqdrf,
                                                                   INPUT aux_nrdigfat,
                                                                   INPUT aux_lindigi1,                                   /* Primeiro campo da linha digitável da guia */
                                                                   INPUT aux_lindigi2,                                   /* Segundo campo da linha digitável da guia */

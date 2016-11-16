@@ -7011,6 +7011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         ELSE
           /*** Verificacao pelo modulo 11 ***/
           CXON0014.pc_verifica_digito (pr_nrcalcul => vr_cdcalcul  --Numero a ser calculado
+					                  ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                       ,pr_nrdigito => vr_nrdigito); --Digito verificador        
         END IF;
         
@@ -9754,6 +9755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           ELSE
             /** Verificacao pelo modulo 11 **/
             CXON0014.pc_verifica_digito (pr_nrcalcul => vr_lindigit  --Numero a ser calculado
+						                ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                         ,pr_nrdigito => vr_nrdigito); --Digito verificador
           END IF;
 
@@ -10674,7 +10676,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   FETCH cr_crapttl INTO rw_crapttl;
 
                   IF cr_crapttl%FOUND THEN
-                    IF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
+					IF  rw_craplau.cdtiptra = 10 THEN --DARF/DAS
+						vr_dsdmensg := 'Atenção, ' || rw_crapttl.nmextttl || '! <br><br><br>' ||
+                                     'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                                     '<b>Pagamento de DARF/DAS</b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
+                                     to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                                     '</b> por insuficiência de saldo.';
+                    ELSIF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
                       vr_dsdmensg := 'Atenção, ' || rw_crapttl.nmextttl || '! <br><br><br>' ||
                                      'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
                                      '<b>Pagamento de Guia Previdência Social</b> de <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
@@ -10716,7 +10724,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   CLOSE cr_crapttl;
               ELSE
                   IF rw_crapass.idastcjt = 0 THEN
-                      IF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
+					  IF  rw_craplau.cdtiptra = 10 THEN --DARF/DAS
+							vr_dsdmensg := 'Atenção, ' || rw_crapass.nmprimtl || '! <br><br><br>' ||
+                                       'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                                       '<b>Pagamento de DARF/DAS</b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
+                                       to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                                       '</b> por insuficiência de saldo.';
+                      ELSIF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
                         vr_dsdmensg := 'Atenção, ' || rw_crapass.nmprimtl || '! <br><br><br>' ||
                                        'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
                                        '<b>Pagamento de Guia Previdência Social</b> de <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
@@ -10755,8 +10769,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                 END IF;
                   ELSE
                       FOR rw_crapsnh3 IN cr_crapsnh3(pr_cdcooper => pr_cdcooper
-											                              ,pr_nrdconta => rw_craplau.nrdconta) LOOP
-                          IF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
+					                                ,pr_nrdconta => rw_craplau.nrdconta) LOOP
+						  IF  rw_craplau.cdtiptra = 10 THEN --DARF/DAS
+						    vr_dsdmensg := 'Atenção, ' || rw_crapass.nmprimtl || '! <br><br><br>' ||
+                                           'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                                           '<b>Pagamento de DARF/DAS</b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
+                                           to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                                           '</b> por insuficiência de saldo.';
+                          ELSIF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
                             vr_dsdmensg := 'Atenção, ' || rw_crapass.nmprimtl || '! <br><br><br>' ||
                                            'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
                                            '<b>Pagamento de Guia Previdência Social</b> de <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||

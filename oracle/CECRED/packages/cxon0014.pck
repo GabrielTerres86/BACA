@@ -349,6 +349,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
 
   /* Calcular Digito verificador Modulo 11 */
   PROCEDURE pc_verifica_digito (pr_nrcalcul IN VARCHAR2       --Numero a ser calculado
+		                       ,pr_poslimit IN INTEGER        --Utilizado para validação de dígito adicional de DAS
                                ,pr_nrdigito OUT INTEGER);   --Digito verificador
 
   /* Procedure para validar o codigo de barras */
@@ -6283,6 +6284,7 @@ END pc_gera_titulos_iptu_prog;
 
   /* Calcular Digito verificador Modulo 11 */
   PROCEDURE pc_verifica_digito (pr_nrcalcul IN VARCHAR2       --Numero a ser calculado
+		                       ,pr_poslimit IN INTEGER        --Utilizado para validação de dígito adicional de DAS
                                ,pr_nrdigito OUT INTEGER) IS --Digito verificador
 ---------------------------------------------------------------------------------------------------------------
   --
@@ -6314,7 +6316,16 @@ END pc_gera_titulos_iptu_prog;
         vr_peso:= vr_peso + 1;
         --Se Passou 9
         IF vr_peso > 9 THEN
-          vr_peso:= 2;
+				
+			-- Para validação de dígito adicional de DAS
+			IF pr_poslimit <> 0 THEN
+				 IF pr_poslimit <> 38 THEN
+					 vr_peso:= 2;
+				 END IF;					
+			ELSE 
+				 vr_peso:= 2;
+			END IF;
+					
         END IF;
       END LOOP;
       --Resto
@@ -6784,6 +6795,11 @@ END pc_gera_titulos_iptu_prog;
       vr_tpmeiarr  VARCHAR2(1);
       vr_nrdcaixa  INTEGER;
       vr_dstextab  craptab.dstextab%TYPE;
+	  vr_numerdas  VARCHAR2(100);
+	  vr_dvnrodas  INTEGER;
+	  vr_poslimit  INTEGER;
+	  vr_dvadicio  INTEGER;
+	  vr_digito    INTEGER;
       --Variaveis erro
       vr_cod_erro  INTEGER;
       vr_des_erro  VARCHAR2(400);
@@ -7015,6 +7031,81 @@ END pc_gera_titulos_iptu_prog;
           END IF;
         END IF;
       END IF;
+			
+	  -- Se nao for Agendamento nem Pagto de Agendamento
+      IF pr_idagenda <> 2 AND NOT pr_flgpgag THEN
+			-- DAS - SIMPLES NACIONAL
+			IF rw_crapscn.cdempres = 'K0' THEN
+					
+				vr_numerdas := SUBSTR(pr_codigo_barras, 25, 16);
+      			vr_dvnrodas := TO_NUMBER(SUBSTR(pr_codigo_barras, 41, 1));
+				
+				CXON0014.pc_verifica_digito (pr_nrcalcul => vr_numerdas  --Numero a ser calculado
+				                            ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
+                                  			,pr_nrdigito => vr_digito);  --Digito verificador
+				IF vr_digito <> vr_dvnrodas THEN						
+					vr_cod_erro:= 8;
+        			vr_des_erro:= '';
+					--Criar erro
+					CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+										 ,pr_cdagenci => pr_cod_agencia
+										 ,pr_nrdcaixa => vr_nrdcaixa
+										 ,pr_cod_erro => vr_cod_erro
+										 ,pr_dsc_erro => vr_des_erro
+										 ,pr_flg_erro => TRUE
+										 ,pr_cdcritic => vr_cdcritic
+										 ,pr_dscritic => vr_dscritic);
+					IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+						--Levantar Excecao
+						RAISE vr_exc_erro;
+					ELSE
+						vr_cdcritic:= vr_cod_erro;
+						vr_dscritic:= vr_des_erro;
+						--Levantar Excecao
+						RAISE vr_exc_erro;
+					END IF;
+				END IF;
+				
+				FOR idx IN 42..44 LOOP
+					
+					vr_poslimit := idx;
+					
+				  	vr_dvnrodas := TO_NUMBER(SUBSTR(pr_codigo_barras, vr_poslimit, 1));
+					vr_poslimit := (vr_poslimit - 5);
+				  	vr_numerdas := (SUBSTR(pr_codigo_barras, 1, 3) || 
+					                SUBSTR(pr_codigo_barras, 5, vr_poslimit));
+					
+					CXON0014.pc_verifica_digito (pr_nrcalcul => vr_numerdas  --Numero a ser calculado
+					                            ,pr_poslimit => vr_poslimit  --Utilizado para validação de dígito adicional de DAS
+                                    			,pr_nrdigito => vr_digito);  --Digito verificador
+					IF vr_digito <> vr_dvnrodas THEN													
+						vr_cod_erro:= 8;
+						vr_des_erro:= '';
+						--Criar erro
+						CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+											 ,pr_cdagenci => pr_cod_agencia
+											 ,pr_nrdcaixa => vr_nrdcaixa
+											 ,pr_cod_erro => vr_cod_erro
+											 ,pr_dsc_erro => vr_des_erro
+											 ,pr_flg_erro => TRUE
+											 ,pr_cdcritic => vr_cdcritic
+											 ,pr_dscritic => vr_dscritic);
+						IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+							--Levantar Excecao
+							RAISE vr_exc_erro;
+						ELSE
+							vr_cdcritic:= vr_cod_erro;
+							vr_dscritic:= vr_des_erro;
+							--Levantar Excecao
+							RAISE vr_exc_erro;
+						END IF;
+					END IF;
+					
+				END LOOP;
+				
+			END IF;
+	  END IF;
+			
       -- Verifica se a data esta cadastrada
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -7486,6 +7577,7 @@ END pc_gera_titulos_iptu_prog;
            ELSE
              /*** Verificacao pelo modulo 11 ***/
              CXON0014.pc_verifica_digito (pr_nrcalcul => vr_lindigit  --Numero a ser calculado
+						                 ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_digito); --Digito verificador
            END IF;
            --Verificar se os numeros batem
