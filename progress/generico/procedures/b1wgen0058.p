@@ -5442,6 +5442,11 @@ PROCEDURE valida_responsaveis:
 		ASSIGN par_flgpende = 1.
 		/* Deseja alterar os responsáveis pela assinatura? */
 	END.
+  ELSE IF NOT aux_flgretir AND NOT aux_flgreadi THEN
+    DO:
+		ASSIGN par_flgpende = 1.
+		/* Deseja alterar os responsáveis pela assinatura? */
+	END.
   ELSE IF aux_flgreadi THEN
     DO:
 		ASSIGN par_flgpende = 2.
