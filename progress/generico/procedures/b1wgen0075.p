@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 12/04/2016
+    Data    : Maio/2010                   Ultima atualizacao: 31/08/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -70,6 +70,12 @@
 
                 12/04/2016 - Incluir crapdoc.cdoperad na procedure Grava_Dados e
                              Grava_Dados_Ppe (Lucas Ranghetti #410302)
+                             
+                31/08/2016 - Ajustar gravacao na crapdoc do documento 37 para 
+                             gerar pendencia apenas para o primeiro titular
+                             e tambem duplicar dados de pessoa politicamente
+                             exposta para todos as contas do cooperado incluido
+                             contas onde ele eh primeiro titular (Lucas Ranghetti #491441)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1089,6 +1095,23 @@ PROCEDURE Grava_Dados:
                  
         IF tt-comercial-ant.inpolexp <> par_inpolexp THEN
         DO:
+            IF par_idseqttl = 1 THEN        
+            DO: 
+                /*******************************************************************
+                 ************ se entrou aqui entao nao veio pelo Replica ***********
+                 *******************************************************************/                
+                
+                /* Replicar informacoes de pessoa politicamente exposta para todas 
+                   contas onde o cooperado eh primeiro titular */
+                FOR EACH bcrapttl WHERE bcrapttl.nrcpfcgc = crapttl.nrcpfcgc
+                                    AND bcrapttl.idseqttl = 1
+                                    AND bcrapttl.nrdconta <> crapttl.nrdconta
+                                    EXCLUSIVE-LOCK:
+                                   
+                    ASSIGN bcrapttl.inpolexp = par_inpolexp.
+                                   
+                END.
+
             FOR FIRST crapdoc WHERE 
                       crapdoc.cdcooper = par_cdcooper AND
                       crapdoc.nrdconta = par_nrdconta AND
@@ -1108,6 +1131,7 @@ PROCEDURE Grava_Dados:
                        crapdoc.idseqttl = par_idseqttl
                        crapdoc.cdoperad = par_cdoperad.
                 VALIDATE crapdoc.
+                END.
             END.
         END.   
 
