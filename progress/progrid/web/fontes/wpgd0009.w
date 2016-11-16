@@ -89,6 +89,8 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
 
 			 09/11/2016 - inclusao de LOG. (Jean Michel)
 
+			 16/11/2016 - Ajustes de atulizacao de registros crapidp, SD 558224 (Jean Michel)
+
 ......................................................................... */
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -1409,6 +1411,7 @@ PROCEDURE EncerraMatricula :
            FOR EACH crapidp WHERE crapidp.cdcooper = INT(ab_unmap.aux_cdcooper)  AND
                                   crapidp.idevento = INT(ab_unmap.aux_idevento)  AND
                                   crapidp.cdevento = crapadp.cdevento            AND
+								  crapidp.nrseqeve = crapadp.nrseqdig            AND
                                   crapidp.dtanoage = INT(ab_unmap.aux_dtanoage)  AND
                                   crapidp.cdageins = INT(ab_unmap.cdageins)      NO-LOCK:
            
