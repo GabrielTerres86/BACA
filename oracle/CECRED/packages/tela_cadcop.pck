@@ -1201,7 +1201,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
           ,crapcop.permaxde
           ,crapcop.qtmaxmes
           ,crapcop.flrecpct 
-          ,crapcop.flgargps         
+          ,crapcop.flgargps  
+    		  ,crapcop.qtdiaenl       
       FROM crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;    
     rw_crapcop cr_crapcop%ROWTYPE;   
@@ -3431,9 +3432,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     
     pc_gera_log(pr_cdcooper => vr_cdcooper -- Código da cooperativa
                 ,pr_cdoperad => vr_cdoperad -- Operador
-                ,pr_dsdcampo => 'Dias Env.TAA'  --Descrição do campo
-                ,pr_vlrcampo => rw_crapcop.flgcrmag --Valor antigo
-                ,pr_vlcampo2 => (CASE WHEN pr_flgcrmag = 0 THEN 'Nao' ELSE 'Sim' END) --Valor atual 
+                ,pr_dsdcampo => 'Qtd. de dias para verificacao de depositos TAA'  --Descrição do campo
+                ,pr_vlrcampo => rw_crapcop.qtdiaenl --Valor antigo
+                ,pr_vlcampo2 => pr_qtdiaenl --Valor atual 
                 ,pr_des_erro => vr_des_erro); --Erro
 
     IF vr_des_erro <> 'OK' THEN
