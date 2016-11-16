@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2016-08-04T16:02:44 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="aditiv_declaracao" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="aditiv"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/raiz/termo]]>
+	</queryString>
+	<field name="cdaditiv" class="java.lang.String">
+		<fieldDescription><![CDATA[cdaditiv]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc]]></fieldDescription>
+	</field>
+	<field name="nrcpfcgc_adit" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfcgc_adit]]></fieldDescription>
+	</field>
+	<field name="nmdgaran" class="java.lang.String">
+		<fieldDescription><![CDATA[nmdgaran]]></fieldDescription>
+	</field>
+	<field name="nrcpfgar" class="java.lang.String">
+		<fieldDescription><![CDATA[nrcpfgar]]></fieldDescription>
+	</field>
+	<field name="totpromi" class="java.lang.String">
+		<fieldDescription><![CDATA[totpromi]]></fieldDescription>
+	</field>
+	<field name="nrctremp" class="java.lang.String">
+		<fieldDescription><![CDATA[nrctremp]]></fieldDescription>
+	</field>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nmcidade" class="java.lang.String">
+		<fieldDescription><![CDATA[nmcidade]]></fieldDescription>
+	</field>
+	<field name="dscpfcgc" class="java.lang.String">
+		<fieldDescription><![CDATA[dscpfcgc]]></fieldDescription>
+	</field>
+	<field name="nmprimtl" class="java.lang.String">
+		<fieldDescription><![CDATA[nmprimtl]]></fieldDescription>
+	</field>
+	<field name="nmrescop" class="java.lang.String">
+		<fieldDescription><![CDATA[nmrescop]]></fieldDescription>
+	</field>
+	<field name="dsqrcode" class="java.lang.String">
+		<fieldDescription><![CDATA[dsqrcode]]></fieldDescription>
+	</field>
+	<field name="totpromi_ext" class="java.lang.String">
+		<fieldDescription><![CDATA[totpromi_ext]]></fieldDescription>
+	</field>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="44">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<componentElement>
+				<reportElement x="380" y="0" width="89" height="44" uuid="a1119eb6-0adf-490a-9260-a9dc86c86eb6">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<jr:QRCode xmlns:jr="http://jasperreports.sourceforge.net/jasperreports/components" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports/components http://jasperreports.sourceforge.net/xsd/components.xsd">
+					<jr:codeExpression><![CDATA[$F{dsqrcode}]]></jr:codeExpression>
+				</jr:QRCode>
+			</componentElement>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="22">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<staticText>
+				<reportElement x="0" y="0" width="480" height="11" uuid="3a849f7e-73ed-4022-bb6d-8dc99d1259de">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="8" isBold="true" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[TERMO DE SUB-ROGAÇÃO]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="88">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="20" y="0" width="449" height="55" uuid="c5cac0f4-16cb-4813-9e02-a9449b47c816">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Declaramos para os devidos fins de direito, que recebemos de " + $F{nmdgaran} +
+" inscrito no CPF sob o n. " + $F{nrcpfgar}   + ", o valor de R\$ "  + $F{totpromi}  + 
+"( " + $F{totpromi_ext} +  "), relativo a quitação parcial  (saldo devedor) da Cédula de Credito Bancário/Contrato de Credito " +
+"Simplificado  n. " + $F{nrctremp} + ", emitida em  " + $F{dtmvtolt} + " pelo  Cooperado(a) " +
+", inscrito no CPF sob o n. " + $F{dscpfcgc} + " titular da conta " + $F{nrdconta} + ", na qual aquele constava como Devedor Solidário"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement positionType="Float" x="20" y="66" width="449" height="22" uuid="d14bc3e8-f4bd-4b17-bbed-ad859a6caf39">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Diante do pagamento, transferimos por endosso a " + $F{nmdgaran} + " a(s) nota(s) promissória(s) descritas abaixo:"]]></textFieldExpression>
+			</textField>
+		</band>
+		<band height="22">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<subreport>
+				<reportElement x="20" y="11" width="460" height="11" uuid="cba7368c-b5a3-4a02-9ec7-2bb4d15d98ed">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//promissorias/promis")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl724_aditiv_declar_promis.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="132">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="20" y="0" width="449" height="55" uuid="687a4081-f7e6-4a35-abf9-db3f84e7f0fb">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Dessa forma, sub-rogamos e transferimos expressamente, nos termos do artigo 346 e seguintes combinado com o artigo 286 e seguintes, todos do Código Civil Brasileiro (lei 10.406, de 10 de janeiro de 2002) a " + $F{nmdgaran} + ", todos os direitos, ações, privilégios e garantias que possuímos na Cédula de Credito Bancário/Contrato de Credito Simplificado antes descrita e caracterizada, em relação ao valor especificado, contra o Emitente/Cooperado(a) " + $F{nmprimtl} + "."]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="20" y="77" width="376" height="11" uuid="ba076db9-e5a2-41b4-906a-4a319f9113a0">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmcidade}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="20" y="109" width="148" height="1" uuid="3f9c7bb3-0c3f-4bc1-b3a7-4e4663e5619f">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+			</line>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="20" y="110" width="376" height="11" uuid="9f246f29-72db-435d-8cf9-c45a6b5f425d">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Justified">
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmrescop}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport>
