@@ -9830,6 +9830,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 			 vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
 			 RAISE vr_exc_erro;
 		  END IF;
+		IF rw_crapcon.cdsegmto IN (5) THEN
+			IF rw_crapcon.cdempcon IN (64,153,385) THEN -- DARF
+				vr_cdcritic := 0;
+				vr_dscritic := 'DARF deve ser paga na opção ''Transações - DARF'' do menu de serviços.';
+				RAISE vr_exc_erro;
+			ELSIF rw_crapcon.cdempcon IN (328) THEN -- DAS
+				vr_cdcritic := 0;
+				vr_dscritic := 'DAS deve ser paga na opção ''Transações - DAS'' do menu de serviços.';
+				RAISE vr_exc_erro;
+			END IF;
+		END IF;
 	  END IF;
 
       /* Retornar valores fatura */
@@ -9900,20 +9911,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         END IF;
         --Retornar nome convenio
         pr_nmextcon:= rw_crapcon.nmextcon;
-      END IF;
-
-      IF rw_crapcon.cdsegmto IN (5) THEN
-
-        IF rw_crapcon.cdempcon IN (64,153,385) THEN -- DARF
-          vr_cdcritic := 0;
-          vr_dscritic := 'DARF deve ser paga na opção ''Transações - DARF'' do menu de serviços.';
-          RAISE vr_exc_erro;
-        ELSIF rw_crapcon.cdempcon IN (328) THEN -- DAS
-          vr_cdcritic := 0;
-          vr_dscritic := 'DAS deve ser paga na opção ''Transações - DAS'' do menu de serviços.';
-          RAISE vr_exc_erro;
-        END IF;
-
       END IF;
 
       -- Verifica se a data esta cadastrada
@@ -10266,6 +10263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
             ,lau.cdtrapen
             ,darf_das.tpcaptura
 			,darf_das.tppagamento
+			,DECODE(darf_das.tppagamento,1,'DARF',2,'DAS') dsdarfdas
             ,darf_das.dtapuracao
             ,darf_das.nrcpfcgc
             ,darf_das.cdtributo
@@ -10389,6 +10387,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       END IF;
       --Fechar Cursor
       CLOSE cr_craplau;
+
+	  --Verificar se a cooperativa existe
+	  OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
+	  FETCH cr_crapcop INTO rw_crapcop;
+	  IF cr_crapcop%NOTFOUND THEN				
+	  	vr_cdcritic:= 0;
+	    vr_dscritic:= 'Registro de cooperativa nao encontrado.';
+	    --Fechar Cursor
+	    CLOSE cr_crapcop;
+	    --Levantar Excecao
+	    RAISE vr_exc_erro;
+	  END IF;
+	  --Fechar Cursor
+	  CLOSE cr_crapcop;
 
       -- Verifica se a data esta cadastrada
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -10679,7 +10691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 					IF  rw_craplau.cdtiptra = 10 THEN --DARF/DAS
 						vr_dsdmensg := 'Atenção, ' || rw_crapttl.nmextttl || '! <br><br><br>' ||
                                      'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                                     '<b>Pagamento de DARF/DAS</b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
+                                     '<b>Pagamento de ' || rw_craplau.dsdarfdas || ' </b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
                                      to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
                                      '</b> por insuficiência de saldo.';
                     ELSIF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
@@ -10727,7 +10739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 					  IF  rw_craplau.cdtiptra = 10 THEN --DARF/DAS
 							vr_dsdmensg := 'Atenção, ' || rw_crapass.nmprimtl || '! <br><br><br>' ||
                                        'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                                       '<b>Pagamento de DARF/DAS</b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
+                                       '<b>Pagamento de ' || rw_craplau.dsdarfdas || ' </b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
                                        to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
                                        '</b> por insuficiência de saldo.';
                       ELSIF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS
@@ -10773,7 +10785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 						  IF  rw_craplau.cdtiptra = 10 THEN --DARF/DAS
 						    vr_dsdmensg := 'Atenção, ' || rw_crapass.nmprimtl || '! <br><br><br>' ||
                                            'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                                           '<b>Pagamento de DARF/DAS</b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
+                                           '<b>Pagamento de ' || rw_craplau.dsdarfdas || ' </b> com identificação <b>' || rw_craplau.dscedent  || '</b> agendado para <b>' ||
                                            to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
                                            '</b> por insuficiência de saldo.';
                           ELSIF NVL(rw_craplau.nrseqagp,0) > 0 THEN -- GPS INSS

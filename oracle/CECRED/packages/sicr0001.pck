@@ -58,8 +58,8 @@ create or replace package cecred.SICR0001 is
           ,dttransa DATE         --  FORMAT "99/99/9999"
           ,hrtransa VARCHAR2(8)  --  FORMAT "x(8)"
           ,nrdocmto NUMBER       --  FORMAT "zzz,zz9"
-          ,dslindig VARCHAR2(55) --  FORMAT "x(55)"
-          ,cdseqfat NUMBER
+          ,dslindig VARCHAR2(65) --  FORMAT "x(65)"
+          ,cdseqfat VARCHAR2(100)
           ,dscritic VARCHAR2(100)  --  FORMAT "x(40)"
           ,nrdrecid ROWID
           ,fldebito NUMBER(1)
@@ -368,6 +368,8 @@ create or replace package body cecred.SICR0001 is
       -- Cursor de lançamentos agendados de DARF/DAS
       CURSOR cr_agen_darf(pr_idlancto tbpagto_agend_darf_das.idlancto%TYPE) IS
       SELECT darf_das.tppagamento
+			,darf_das.dsnome_fone
+			,darf_das.cdtributo
             ,darf_das.tpcaptura
             ,darf_das.dsidentif_pagto
             ,darf_das.dslinha_digitavel
@@ -406,7 +408,7 @@ create or replace package body cecred.SICR0001 is
       vr_fltipdoc VARCHAR2(10);
       vr_dstransa craplau.dscedent%TYPE;
       vr_dslindig craplau.dslindig%TYPE;
-      vr_cdseqfat NUMBER;
+      vr_cdseqfat VARCHAR2(100);
       vr_chave    VARCHAR2(100);
       
       vr_dtmovini  craplau.dtmvtopg%TYPE;
@@ -429,7 +431,8 @@ create or replace package body cecred.SICR0001 is
                                      pr_dtmvtopg => pr_dtmvtopg,
                                      pr_dtmovini => vr_dtmovini) LOOP
 
-		    vr_fltipdoc := '';
+		vr_fltipdoc := '';
+        vr_dslindig := rw_craplau.dslindig; -- Linha digitável
 
         -- se é pagamento
         IF  rw_craplau.cdtiptra = 2  THEN /** Pagamento **/
@@ -448,7 +451,6 @@ create or replace package body cecred.SICR0001 is
           END IF;
           
           vr_dstransa := rw_craplau.dscedent; -- Cedente
-          vr_dslindig := rw_craplau.dslindig; -- Linha digitável
         
         ELSIF rw_craplau.cdtiptra = 10 THEN
         
@@ -474,7 +476,16 @@ create or replace package body cecred.SICR0001 is
             vr_dslindig := rw_agen_darf.dslinha_digitavel; -- Linha digitável
             
           ELSIF (rw_agen_darf.tpcaptura = 2) THEN -- Captura por digitação dos campos
-            vr_cdseqfat := rw_agen_darf.cdseqfat; -- Obtém o sequencial do faturamento
+            vr_cdseqfat := TO_CHAR(rw_agen_darf.cdseqfat); -- Obtém o sequencial do faturamento
+						
+			IF (nvl(rw_agen_darf.dsnome_fone, ' ') <> ' ') THEN 							
+			  vr_dslindig := rw_agen_darf.dsnome_fone;
+			ELSE
+				vr_dslindig := 'DARF SEM CODIGO DE BARRAS/' || TO_CHAR(rw_agen_darf.cdtributo);
+			END IF;
+			
+			vr_dslindig := vr_dslindig || '/' || vr_cdseqfat;
+			vr_dslindig := substr(vr_dslindig, 1, 65);						
           END IF;
         
         END IF;
@@ -527,7 +538,7 @@ create or replace package body cecred.SICR0001 is
         pr_tab_agendamentos(vr_chave).dttransa := rw_craplau.dttransa;
         pr_tab_agendamentos(vr_chave).hrtransa := rw_craplau.hrtransa;
         pr_tab_agendamentos(vr_chave).nrdocmto := rw_craplau.nrdocmto;
-        pr_tab_agendamentos(vr_chave).dslindig := rw_craplau.dslindig;
+        pr_tab_agendamentos(vr_chave).dslindig := vr_dslindig;
         pr_tab_agendamentos(vr_chave).cdseqfat := vr_cdseqfat;
         pr_tab_agendamentos(vr_chave).dscritic := '';
         pr_tab_agendamentos(vr_chave).nrdrecid := rw_craplau.rowid;
