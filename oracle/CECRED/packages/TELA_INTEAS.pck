@@ -127,6 +127,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
 
       Alteracoes: 20/10/2016 - Ajuste nas rotinas para garantir posicionamento 
                                dos arquivos(inclusao nvl). (Odirlei-AMcom)
+                  
+                  14/11/2016 - No arquivo Cadastro foi separada a geracao dos
+                               procuradores e responsaveis de menores. Isso porque
+                               devemos priorizar a exportacao dos dados das contas, 
+                               que, provavelmente, estao mais completas que os dados
+                               dos procuradores e responsaveis.
+                               
+                               Ajustado tambem geracao dos titulares. Quando nao for
+                               o primeiro titular, tentaremos buscar uma conta na qual
+                               aquela pessoa eh o primeiro titular. Isso para garantir
+                               que os dados estejam atualizados e estar de acordo com o 
+                               funcionamento do Ayllos Web.
       
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
@@ -143,6 +155,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     END IF;
   
   END fn_nrcpfcgc_easy;
+  
+  /* Qualquer alteração aqui, por favor, avalir se continua removendo caracteres 
+     estranhos como por exemplo: ""
+     Em algumas alterações, deixou de remover este caracter.
+     Obs.: Nao utilizar esta funcao sobre a linha completa do arquivo txt,
+           pois remove tambem a quebra de linha.
+  */
+  FUNCTION fn_remove_caract_espec(pr_string IN VARCHAR2) RETURN VARCHAR2 IS
+  BEGIN
+    RETURN REGEXP_REPLACE( gene0007.fn_caract_acento(pr_string,1,'#$&%¹²³ªº°*!?<>/\|',
+                                                                 '                  ')
+                          ,'[^A-Z0-9Ç@:._ +,();=-]+',' ');
+  END fn_remove_caract_espec;
   
   --> Gerar log da easyway
   PROCEDURE pc_gera_log_easyway (pr_nmarqlog IN VARCHAR2,
@@ -205,7 +230,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,ass.nrdconta
             ,ass.cdcooper
             ,ass.cdsitdct
+            ,ass.dtadmiss
             ,decode(ass.inpessoa,1,'F','J') dspessoa
+            ,to_char(nvl(
+             (select max(alt.dtaltera)
+                from crapalt alt
+               where alt.cdcooper = ass.cdcooper
+                 and alt.nrdconta = ass.nrdconta),ass.dtadmiss),'RRRRMMDD') dtaltera
         FROM crapass ass
        WHERE ass.cdcooper = decode(pr_cdcooper, 0, ass.cdcooper, pr_cdcooper) 
          AND ass.nrdconta = decode(pr_nrdconta, 0, ass.nrdconta, pr_nrdconta)
@@ -216,8 +247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     
     --> Buscar informacoes dos cooperados com o cadastro mais atualizado
     CURSOR cr_crapass (pr_nrcpfcgc crapass.nrcpfcgc%TYPE)IS
-      SELECT /*+index_desc (alt CRAPALT##CRAPALT1) */ --> buscar o resgistro mais atual
-             alt.cdcooper
+      SELECT alt.cdcooper
             ,alt.nrdconta
             ,to_char(alt.dtaltera,'RRRRMMDD') dtaltera
             ,ass.inpessoa
@@ -227,8 +257,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,crapass ass
        WHERE ass.nrcpfcgc = pr_nrcpfcgc
          AND alt.cdcooper = ass.cdcooper
-         AND alt.nrdconta = ass.nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;
+         AND alt.nrdconta = ass.nrdconta
+    ORDER BY alt.dtaltera DESC;
+    rw_crapass     cr_crapass%ROWTYPE;
+    rw_crapass_ttl cr_crapass%ROWTYPE;
     
     --> Buscar titulares
     CURSOR cr_crapttl ( pr_cdcooper  crapttl.cdcooper%TYPE,
@@ -240,6 +272,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,nvl(ttl.nrcpfcgc, ass.nrcpfcgc) nrcpfcgc
             ,decode(nvl(ttl.inpessoa, ass.inpessoa), 1, 'F', 'J') dspessoa
             ,NVL(ttl.idseqttl, 1) idseqttl
+            ,ass.cdcooper
+            ,ass.nrdconta
         FROM crapttl ttl
             ,crapass ass
        WHERE ass.cdcooper = pr_cdcooper
@@ -518,15 +552,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       --> Montar linha conforme layout easyway
       vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)                 ||     --> CPF/CNPJ Cooperado
-                    rpad(nvl(pr_nmprimtl,' '),60,' ')             ||     --> Nome do Contribuinte
-                    rpad(nvl(rw_crapenc.endereco,' '),80,' ')     ||     --> Logradouro
-                    rpad(nvl(rw_crapenc.nrendere,0), 8,' ')       ||     --> Número
-                    rpad(nvl(rw_crapenc.complend,' '),40,' ')     ||     --> Complemento
-                    rpad(nvl(rw_crapenc.nrcepend,0), 8,' ')       ||     --> CEP
-                    rpad(nvl(rw_crapenc.nmbairro,' '),20,' ')     ||     --> Bairro
-                    rpad(nvl(rw_crapenc.nmcidade,' '),30,' ')     ||     --> Descrição Cidade
-                    rpad(nvl(rw_crapenc.cdufende,' '), 2,' ')     ||     --> UF
-                    rpad(nvl(rw_craptfc.nrtelefo,' '),15,' ')     ||     --> Telefone   
+                    rpad(fn_remove_caract_espec(nvl(pr_nmprimtl,' ')),60,' ')             ||     --> Nome do Contribuinte
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.endereco,' ')),80,' ')     ||     --> Logradouro
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.nrendere,0)), 8,' ')       ||     --> Número
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.complend,' ')),40,' ')     ||     --> Complemento
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.nrcepend,0)), 8,' ')       ||     --> CEP
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.nmbairro,' ')),20,' ')     ||     --> Bairro
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.nmcidade,' ')),30,' ')     ||     --> Descrição Cidade
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.cdufende,' ')), 2,' ')     ||     --> UF
+                    rpad(fn_remove_caract_espec(nvl(rw_craptfc.nrtelefo,' ')),15,' ')     ||     --> Telefone   
                     lpad(nvl(pr_dtnasctl,' '),8,' ')              ||     --> Data de Nascimento
                     rpad(nvl(pr_nrinsmun,' '),20,' ')             ||     --> Inscrição Municipal
                     lpad(nvl(pr_dtadmiss,' '),8,' ')              ||     --> Data da Inclusão no sistema de origem
@@ -540,7 +574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     pr_dspessoa                                   ||     --> PF/PJ(F - PF; J – PJ)
                     rpad(nvl(pr_nrinsest,' '),20,' ')             ||     --> Inscrição Estadual
                     vr_idsitcnt                                   ||     --> Status do Contribuinte
-                    rpad(nvl(rw_crapenc.tp_lograd,' '),10,' ')    ||     --> Tipo de Logradouro
+                    rpad(fn_remove_caract_espec(nvl(rw_crapenc.tp_lograd,' ')),10,' ')    ||     --> Tipo de Logradouro
                     nvl(pr_isento_inscr_estadual,' ')             ||     --> Isento de Inscrição Estadual
                     lpad(' ',19,' ')                              ||     --> GIIN (Global Intermediary Identification Number)
                     lpad(' ',25,' ')                              ||     --> Numero do Passaporte
@@ -548,8 +582,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     lpad(' ',10,' ')                              ||     --> Tipo de declarado
                     chr(13)||chr(10);                                    --> quebrar linha
          
-      pc_escreve_clob(gene0007.fn_caract_acento(vr_dslinha,1,'#$&%¹²³ªº°*!?<>/\|',
-                                                             '                   '));
+      pc_escreve_clob(vr_dslinha);
+      
+      /* Geração de Log */
+      IF (nvl(rw_crapenc.endereco,' ') = ' ') then
+         pr_dscritic := nvl(pr_dscritic,' ') || 'Sem logradouro cadastrado.';
+      END IF;
+      IF (nvl(pr_dtadmiss,' ') = ' ') then
+         pr_dscritic := pr_dscritic || ' - Sem data de admissao.';
+      END IF;
 
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -628,13 +669,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
           --> Incluir como ja processado
           vr_tab_nrcpfcnpj(vr_idxctrl) := rw_crapttl.nrcpfcgc; 
         END IF;
+
+        /* Quando não for o primeiro titular, pode ser que essa pessoa possua a sua própria conta
+            individual. Dessa forma devemos busca-la para termos os dados mais atualizados.
+           Obs.: O Ayllos realiza a busca através do CPF também, ver CADA0001.pc_busca_conta.  */
+        IF (rw_crapttl.idseqttl > 1 AND
+            rw_crapttl.inpessoa = 1 /* Fisica */) THEN
+          rw_crapass_ttl := NULL;
+          --> Buscar informacoes dos cooperados com o cadastro mais atualizado
+          OPEN cr_crapass (pr_nrcpfcgc => rw_crapttl.nrcpfcgc);
+          FETCH cr_crapass INTO rw_crapass_ttl;
+          IF cr_crapass%FOUND THEN         
+            -- Se encontrar vamos utilizar esses dados
+            rw_crapttl.nrdconta := rw_crapass_ttl.nrdconta;
+            rw_crapttl.cdcooper := rw_crapass_ttl.cdcooper;
+            rw_crapttl.nrcpfcgc := rw_crapass_ttl.nrcpfcgc;
+            rw_crapttl.inpessoa := rw_crapass_ttl.inpessoa;
+            rw_crapttl.idseqttl := 1;
+          END IF;
+          CLOSE cr_crapass;
+        END IF;
         
         ----------->>>>> MONTAR LINHA ARQ <<<<<------------
-        pc_escreve_linha_layout(pr_cdcooper  => pr_cdcooper,
+        pc_escreve_linha_layout(pr_cdcooper  => rw_crapttl.cdcooper,
                                 pr_nrcpfcgc  => rw_crapttl.nrcpfcgc, 
                                 pr_inpessoa  => rw_crapttl.inpessoa,
                                 pr_dspessoa  => rw_crapttl.dspessoa,
-                                pr_nrdconta  => pr_nrdconta,
+                                pr_nrdconta  => rw_crapttl.nrdconta,
                                 pr_nmprimtl  => rw_crapttl.nmprimtl,
                                 pr_idseqttl  => rw_crapttl.idseqttl,
                                 pr_dtnasctl  => rw_crapttl.dtnasctl,
@@ -648,6 +709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         
         -- Verificar se retornou critica
         IF vr_dscritic IS NOT NULL THEN
+          vr_dscritic := 'Cooper: '|| rw_crapttl.cdcooper || ' Conta: '|| rw_crapttl.nrdconta ||' Titular: '|| rw_crapttl.idseqttl || ' Critica: '|| vr_dscritic;
           pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
           vr_dscritic := NULL;
           continue;
@@ -700,14 +762,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       --> Montar linha conforme layout easyway
       vr_dslinha := fn_nrcpfcgc_easy(pr_nrcpfcgc,
                                      pr_inpessoa)         ||     --> CPF/CNPJ Cooperado
-                    rpad(nvl(pr_nmprimtl,' '),60,' ')     ||     --> Nome do Contribuinte
-                    rpad(nvl(pr_endereco,' '),80,' ')     ||     --> Logradouro
-                    rpad(nvl(pr_nrendere,' '), 8,' ')     ||     --> Número
-                    rpad(nvl(pr_complend,' '),40,' ')     ||     --> Complemento
-                    rpad(nvl(pr_nrcepend,' '), 8,' ')     ||     --> CEP
-                    rpad(nvl(pr_nmbairro,' '),20,' ')     ||     --> Bairro
-                    rpad(nvl(pr_nmcidade,' '),30,' ')     ||     --> Descrição Cidade
-                    rpad(nvl(pr_cdufende,' '), 2,' ')     ||     --> UF
+                    rpad(fn_remove_caract_espec(nvl(pr_nmprimtl,' ')),60,' ')     ||     --> Nome do Contribuinte
+                    rpad(fn_remove_caract_espec(nvl(pr_endereco,' ')),80,' ')     ||     --> Logradouro
+                    rpad(fn_remove_caract_espec(nvl(pr_nrendere,' ')), 8,' ')     ||     --> Número
+                    rpad(fn_remove_caract_espec(nvl(pr_complend,' ')),40,' ')     ||     --> Complemento
+                    rpad(fn_remove_caract_espec(nvl(pr_nrcepend,' ')), 8,' ')     ||     --> CEP
+                    rpad(fn_remove_caract_espec(nvl(pr_nmbairro,' ')),20,' ')     ||     --> Bairro
+                    rpad(fn_remove_caract_espec(nvl(pr_nmcidade,' ')),30,' ')     ||     --> Descrição Cidade
+                    rpad(fn_remove_caract_espec(nvl(pr_cdufende,' ')), 2,' ')     ||     --> UF
                     rpad(' ',15,' ')                      ||     --> Telefone   
                     lpad(nvl(pr_dtnasctl,' '),8,' ')      ||     --> Data de Nascimento
                     rpad(' ',20,' ')                      ||     --> Inscrição Municipal
@@ -722,7 +784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     pr_dspessoa                           ||     --> PF/PJ(F - PF; J – PJ)
                     rpad(' ',20,' ')                      ||     --> Inscrição Estadual
                     'A'                                   ||     --> Status do Contribuinte
-                    rpad(nvl(pr_tplograd,' '),10,' ')     ||     --> Tipo de Logradouro
+                    rpad(fn_remove_caract_espec(nvl(pr_tplograd,' ')),10,' ')     ||     --> Tipo de Logradouro
                     ' '                                   ||     --> Isento de Inscrição Estadual
                     lpad(' ',19,' ')                      ||     --> GIIN (Global Intermediary Identification Number)
                     lpad(' ',25,' ')                      ||     --> Numero do Passaporte
@@ -730,8 +792,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     lpad(' ',10,' ')                      ||     --> Tipo de declarado
                     chr(13)||chr(10);                            --> quebrar linha
           
-      pc_escreve_clob(gene0007.fn_caract_acento(vr_dslinha,1,'#$&%¹²³ªº°*!?<>/\|',
-                                                             '                   '));
+      pc_escreve_clob(vr_dslinha);
+      
+      /* Geração de Log */
+      IF (nvl(pr_endereco,' ') = ' ') then
+         pr_dscritic := nvl(pr_dscritic,' ') || 'Sem logradouro cadastrado.';
+      END IF;
+      IF (nvl(pr_dtmvtolt,' ') = ' ') then
+         pr_dscritic := pr_dscritic || ' - Sem data de admissao.';
+      END IF;
     
     EXCEPTION
       WHEN vr_prox_reg THEN
@@ -772,7 +841,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       -- e posteriormente executa todos os selects com a conta original a fim de enviar as pessoas ainda não enviadas
       vr_flpriass := TRUE;
       LOOP
-
         IF vr_flpriass THEN
           rw_crapass := NULL;
           --> Buscar informacoes dos cooperados com o cadastro mais atualizado
@@ -785,7 +853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             rw_crapass.cdcooper := rw_crapass_nrcpfcgc.cdcooper;
             rw_crapass.nrcpfcgc := rw_crapass_nrcpfcgc.nrcpfcgc;
             rw_crapass.inpessoa := rw_crapass_nrcpfcgc.inpessoa;
-            rw_crapass.cdsitdct := rw_crapass_nrcpfcgc.cdsitdct;  
+            rw_crapass.cdsitdct := rw_crapass_nrcpfcgc.cdsitdct;              
           ELSE
             CLOSE cr_crapass;
           END IF;
@@ -800,7 +868,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
           rw_crapass.nrcpfcgc := rw_crapass_nrcpfcgc.nrcpfcgc;
           rw_crapass.inpessoa := rw_crapass_nrcpfcgc.inpessoa;
           rw_crapass.cdsitdct := rw_crapass_nrcpfcgc.cdsitdct; 
-          rw_crapass.dtaltera := rw_crapass.dtaltera;
+          rw_crapass.dtaltera := rw_crapass.dtaltera;          
         END IF;
         
         --> Rotina para montar layout de cadastro do associado a partir da conta
@@ -817,22 +885,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         IF vr_dscritic IS NOT NULL THEN
           pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
           continue;
-        END IF;     
+        END IF;
         
+        -- Sair do loop qnd processar a mesma conta entre os dois cursores
+        IF rw_crapass_nrcpfcgc.nrdconta = rw_crapass.nrdconta THEN
+          EXIT;
+        END IF;
+        
+      END LOOP;    
+    END LOOP; -- Fim  Loop cr_crapass_nrcpfcgc
+    
+
+    --> Buscar os Procuradores e Responsáveis dos cooperados enviados para a Easyway
+    FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
+                                                   pr_dtiniger => pr_dtiniger,
+                                                   pr_dtfimger => pr_dtfimger) LOOP
+
         --->>> TERCEIROS DOS ASSOCIADOS (PROCURADORES E SOCIOS) <<<---
-        IF rw_crapass.inpessoa = 1 THEN
+        IF rw_crapass_nrcpfcgc.inpessoa = 1 THEN
           -- Buscar procuradoes e responsaveis legais da conta
-          FOR rw_crapcrl IN  cr_crapcrl (pr_cdcooper => rw_crapass.cdcooper,
-                                         pr_nrdconta => rw_crapass.nrdconta) LOOP
+          FOR rw_crapcrl IN  cr_crapcrl (pr_cdcooper => rw_crapass_nrcpfcgc.cdcooper,
+                                         pr_nrdconta => rw_crapass_nrcpfcgc.nrdconta) LOOP
               
             IF rw_crapcrl.nrdctato > 0 THEN
               --> Rotina para montar layout de cadastro do associado a partir da conta
-              pc_trata_conta( pr_cdcooper  => rw_crapass.cdcooper,
+              pc_trata_conta( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
                               pr_nrdconta  => rw_crapcrl.nrdctato,
                               pr_inpessoa  => rw_crapcrl.inpessoa,
                               pr_nrcpfcgc  => rw_crapcrl.nrcpfcgc,
                               pr_idseqttl  => 1, --> apenas o primeiro titular
-                              pr_dtaltera  => rw_crapass.dtaltera,
+                              pr_dtaltera  => rw_crapass_nrcpfcgc.dtaltera,
                               pr_cdsitdct  => rw_crapcrl.cdsitdct,
                               pr_dscritic  => vr_dscritic);
               -- Verificar se retornou critica
@@ -842,12 +924,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
               END IF; 
             -- Outros que nao possuem conta na cooperativa
             ELSE
+              /* Se não tiver data 'cadastro' do responsavel de menor, carrega a data de admissao da conta */
+              IF (rw_crapcrl.dtmvtolt IS NULL) THEN
+                rw_crapcrl.dtmvtolt := to_char(rw_crapass_nrcpfcgc.dtadmiss,'RRRRMMDD');
+              END IF;
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
-              pc_trata_outro( pr_cdcooper  => rw_crapass.cdcooper,
+              pc_trata_outro( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
                               pr_nrcpfcgc  => rw_crapcrl.nrcpfcgc,  
                               pr_inpessoa  => rw_crapcrl.inpessoa,  
                               pr_dspessoa  => rw_crapcrl.dspessoa,  
-                              pr_nrdconta  => rw_crapass.nrdconta,  
+                              pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapcrl.nmdavali,    
                               pr_dtnasctl  => rw_crapcrl.dtnascto,  
                               pr_endereco  => rw_crapcrl.dsendres##1 ,  
@@ -863,7 +949,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_dscritic  => vr_dscritic);
               -- Verificar se retornou critica
               IF vr_dscritic IS NOT NULL THEN
+                vr_dscritic := 'Procurador/Responsavel - Cooper: '|| rw_crapass_nrcpfcgc.cdcooper || ' Conta: '|| rw_crapass_nrcpfcgc.nrdconta ||' CPF: '|| rw_crapcrl.nrcpfcgc || ' Critica: '|| vr_dscritic;
                 pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
+                vr_dscritic := null;
                 continue;
               END IF;
             END IF;
@@ -871,17 +959,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
           END LOOP;
         ELSE
           -- Buscar procuradoes e responsaveis legais da conta
-          FOR rw_crapavt IN  cr_crapavt (pr_cdcooper => rw_crapass.cdcooper,
-                                         pr_nrdconta => rw_crapass.nrdconta) LOOP
+          FOR rw_crapavt IN  cr_crapavt (pr_cdcooper => rw_crapass_nrcpfcgc.cdcooper,
+                                         pr_nrdconta => rw_crapass_nrcpfcgc.nrdconta) LOOP
             
             IF rw_crapavt.nrdctato > 0 THEN
               --> Rotina para montar layout de cadastro do associado a partir da conta
-              pc_trata_conta( pr_cdcooper  => rw_crapass.cdcooper,
+              pc_trata_conta( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
                               pr_nrdconta  => rw_crapavt.nrdctato,
                               pr_inpessoa  => rw_crapavt.inpessoa,
                               pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,
                               pr_idseqttl  => 1, --> apenas o primeiro titular
-                              pr_dtaltera  => rw_crapass.dtaltera,
+                              pr_dtaltera  => rw_crapass_nrcpfcgc.dtaltera,
                               pr_cdsitdct  => rw_crapavt.cdsitdct,
                               pr_dscritic  => vr_dscritic);
               -- Verificar se retornou critica
@@ -892,12 +980,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
               
             -- Outros que nao possuem conta na cooperativa
             ELSE
+              /* Se não tiver data 'cadastro' do procurador, carrega a data de admissao da conta */
+              IF (rw_crapavt.dtmvtolt IS NULL) THEN
+                rw_crapavt.dtmvtolt := to_char(rw_crapass_nrcpfcgc.dtadmiss,'RRRRMMDD');
+              END IF;
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
-              pc_trata_outro( pr_cdcooper  => rw_crapass.cdcooper,
+              pc_trata_outro( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
                               pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,  
                               pr_inpessoa  => rw_crapavt.inpessoa,  
                               pr_dspessoa  => rw_crapavt.dspessoa,  
-                              pr_nrdconta  => rw_crapass.nrdconta,  
+                              pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapavt.nmdavali,    
                               pr_dtnasctl  => rw_crapavt.dtnascto,  
                               pr_endereco  => rw_crapavt.dsendres##1 ,  
@@ -913,21 +1005,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_dscritic  => vr_dscritic);
               -- Verificar se retornou critica
               IF vr_dscritic IS NOT NULL THEN
+                vr_dscritic := 'Procurador - Cooper: '|| rw_crapass_nrcpfcgc.cdcooper || ' Conta: '|| rw_crapass_nrcpfcgc.nrdconta ||' CPF: '|| rw_crapavt.nrcpfcgc || ' Critica: '|| vr_dscritic;
                 pc_gera_log_easyway(pr_nmarqlog, vr_dscritic);
+                vr_dscritic := null;
                 continue;
               END IF;
             END IF; 
               
-          END LOOP;                               
+          END LOOP;
         END IF;
-        
-        -- Sair do loop qnd processar a mesma conta entre os dois cursores
-        IF rw_crapass_nrcpfcgc.nrdconta = rw_crapass.nrdconta THEN
-          EXIT;
-        END IF;
-        
-      END LOOP;    
-    END LOOP; -- Fim  Loop cr_crapass_nrcpfcgc
+    END LOOP;
     
     IF vr_texto_completo IS NOT NULL THEN
       pc_escreve_clob('',TRUE);
