@@ -65,6 +65,7 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
              26/01/2016 - Incluido filtro por conta do inscrito. (Lombardi #392513)
 
              02/02/2016 - Ajustes para Prj. 229. (Jean Michel)
+             
              08/03/2016 - Alterado para que os eventos do tipo EAD 
                           e EAD Assemblear nao sejam apresentados.
                           Projeto 229 - Melhorias OQS (Lombardi)  		
@@ -85,7 +86,9 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
                           
              01/07/2016 - Ajustes Projeto 229 - Melhorias OQS RF6.(Odirlei-AMcom)
              
-             24/08/2016 - Correção para permitir salvar somente um inscrito(Jean Michel)             
+             24/08/2016 - Correção para permitir salvar somente um inscrito(Jean Michel)  
+             
+             16/11/2016 - Ajustes de atulizacao de registros crapidp, SD 558224 (Jean Michel)
                            
 ................................................................................... */
 
@@ -1405,6 +1408,7 @@ PROCEDURE EncerraMatricula :
            FOR EACH crapidp WHERE crapidp.cdcooper = INT(ab_unmap.aux_cdcooper)  AND
                                   crapidp.idevento = INT(ab_unmap.aux_idevento)  AND
                                   crapidp.cdevento = crapadp.cdevento            AND
+                                  crapidp.nrseqeve = crapadp.nrseqdig            AND
                                   crapidp.dtanoage = INT(ab_unmap.aux_dtanoage)  AND
                                   crapidp.cdageins = INT(ab_unmap.cdageins)      NO-LOCK:
            
