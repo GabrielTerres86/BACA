@@ -615,7 +615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
     GENE0001.pc_gera_log_item (pr_nrdrowid => vr_nrdrowid
                               ,pr_nmdcampo => 'Documento'
                               ,pr_dsdadant => ' '
-                              ,pr_dsdadatu => vr_nrseqdig);
+                              ,pr_dsdadatu => vr_cdpesqbb);
 
     GENE0001.pc_gera_log_item (pr_nrdrowid => vr_nrdrowid
                               ,pr_nmdcampo => 'Valor'
