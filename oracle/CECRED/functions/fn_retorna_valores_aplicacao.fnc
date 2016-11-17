@@ -27,7 +27,8 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   --              pr_tpaplica: Tipo de Aplicacao
   --              pr_tpaplrdc: Tipo do Produto
   --
-  -- Alteracoes:
+  -- Alteracoes: 17/11/2016 -  Correção do campo pr_tpproapl (1 - NOVO / 2 - ANTIGO ) era ((2 - NOVO / 1 - ANTIGO )
+  --                           foi criado invertido, sendo assim não trazia as informações SD555414- Vanessa Klein
   --
   -- .............................................................................
 
@@ -246,8 +247,8 @@ BEGIN
     vr_nrdconta := pr_nrctagar;
   END IF;
 
-  -- Verifica tipo de aplicacao (1 - ANTIGO / 2 - NOVO)
-  IF pr_tpproapl = 1 THEN -- Consulta de antigas aplicacoes
+  -- Verifica tipo de aplicacao (1 - NOVO / 2 - ANTIGO )
+  IF pr_tpproapl = 2 THEN -- Consulta de antigas aplicacoes
     
     -- Consulta aplicacao antiga
     OPEN cr_craprda(pr_cdcooper => pr_cdcooper
@@ -462,7 +463,7 @@ BEGIN
 
       END IF;
 
-  ELSIF pr_tpproapl = 2 THEN -- Consulta de novas aplicacoes
+  ELSIF pr_tpproapl = 1 THEN -- Consulta de novas aplicacoes
 
     -- Consulta aplicacao nova
     OPEN cr_craprac(pr_cdcooper => pr_cdcooper
@@ -542,4 +543,3 @@ BEGIN
 
 end fn_retorna_valores_aplicacao;
 /
-
