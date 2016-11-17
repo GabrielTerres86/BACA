@@ -5252,7 +5252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
           IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
             
             --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
-            IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91) THEN
+            IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
               continue;
             END IF;  
             
