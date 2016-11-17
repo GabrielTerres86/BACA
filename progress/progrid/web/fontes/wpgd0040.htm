@@ -1,0 +1,192 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta name="wsoptions" content="no-output">
+<title>Check List</title>
+<base target="mainFrame">
+<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+</head>
+<body style="margin-left: 3px; ">
+<form action="#." method="POST" name="form">
+    <input name="idevento"     type="hidden" value="">
+    <input name="aux_idevento" type="hidden" value="">
+    <input name="cdeixtem"     type="hidden" value="">
+    <input name="cdcooper"     type="hidden" value="">
+    <input name="cdagenci"     type="hidden" value="">		
+    <input name="aux_cddopcao" type="hidden" id="aux_cddopcao"  value="">
+    <input name="aux_lspermis" type="hidden" id="aux_lspermis"  value="">
+    <input name="aux_nrdrowid" type="hidden" id="aux_nrdrowid"  value="">    
+    <input name="aux_dsretorn" type="hidden" id="aux_dsretorn"  value="">    
+    <input name="aux_stdopcao" type="hidden" id="aux_stdopcao"  value="">    
+    <input name="aux_dsendurl" type="hidden" id="aux_dsendurl"  value="">    
+  
+    
+<!-- Início do modelo geral -->
+<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;"><img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom"></div>
+   <table width="575" height="360" border="0" align="left" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+      <tr>
+         <td height="20" colspan="5">
+	    <table width="100%"  border="0" cellspacing="0" cellpadding="0">
+               <tr>
+                  <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                  <td width="56"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
+                  <td width="406" height="20" align="left" class="linkGuia">Agenda Mensal</td>
+                  <td width="91" height="20" align="right" class="linkGuia">wpgd0040</td>	  
+                  <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
+          </tr>
+            </table>
+         </td>
+      </tr>
+      <tr valign="top" bgcolor="#FFFFFF">
+         <td colspan="5">
+            <table width="100%" height="100%" border="0" align="left" cellpadding="0" cellspacing="0" bgcolor="#999999">
+               <tr>
+                  <td valign="top" bgcolor="#FFFFFF">
+                     <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                           <td align="center" valign="middle">
+                             <!-- Interrupção do modelo geral, início dos dados específicos da tela -->
+                              <table border="0" align="center" cellspacing="1" cellpadding="1">
+                                 <tr>
+                                    <td align="right" class="NomeCampo">Agenda:</td>
+                                    <td><input type="text" name="aux_dtanoage" size="8" onChange="verifica_coop();"></td>
+                                 </tr>
+                                 <tr>
+                                    <td align="right" class="NomeCampo">Cooperativa:</td>
+                                    <td><select name="aux_cdcooper" class="Campo" onChange="document.form.cdcooper.value = document.form.aux_cdcooper.value; document.form.aux_dtanoage.value = '';document.form.submit();"></select></td>
+                                 </tr>
+                                 <tr>
+                                    <td align="right" class="NomeCampo">Mês:</td>
+                                    <td><select name="aux_nrmeseve" class="Campo";></select></td> 
+                                 </tr>
+                                 <tr>
+                                    <td align="right" class="NomeCampo">Tipo de Evento:</td>
+                                    <td><select name="aux_tpevento" class="Campo";></select></td> 
+                                 </tr>
+                              </table>
+                             <!-- Fim dos dados específicos da tela, reinício do modelo geral -->
+                           </td>
+                        </tr>
+                        <tr>
+                           <td height="15" align="center" valign="bottom">
+                              <table width="100%" border="0" cellpadding="1" cellspacing="1" align="center">
+                                 <tr>
+                                    <td align="center"><img style="cursor: hand;" src="/cecred/images/botoes/btn_visualizar_impressao.gif" alt="Imprimir ficha de check list para o evento" onClick="imprimir()"></td>
+                                 </tr>
+                              </table>
+                           </td>
+                        </tr>
+                     </table>
+                  </td>
+               </tr>
+           </table>
+         </td>
+      </tr>
+   </table>
+<!-- Fim do modelo geral -->
+</form>
+</body>
+</html>
+
+<SCRIPT LANGUAGE="JAVASCRIPT">
+   NomeDoProgramaPrincipal  = '/wpgd0040.w';
+   NomeDoProgramaDeListagem = '/wpgd0040ls.w';
+   NomeDoProgramaDeAjuda    = '/wpgd0040aj.w';
+   
+   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+   document.form.action = NomeDoProgramaPrincipal;
+   var aux_vazio = false;
+   
+   /* Indicar mês inicial como mês atual */
+   var dataAtual = new Date();
+   var mes = dataAtual.getMonth() + 1;  
+   document.form.aux_nrmeseve.value = mes;
+   
+   
+
+function Habilita()
+{
+ 
+}
+function HabilitaSalvar()
+{
+  
+}
+function ValidaDados(form)
+    { 
+        var msg="";
+
+        if (msg == "")
+                return true
+            else
+                {
+                    top.frcod.MostraResultado('1',msg);
+                    return false
+                }
+    }
+
+function LimparCampos()
+    {
+    }
+
+function ExaminaCampo(Campo)
+    {
+    }
+ 
+function CarregaPrincipal()
+    {  
+    }    
+
+function imprimir()
+   {
+      msg      = "";
+      nrseqeve = "";
+
+      if (document.form.aux_dtanoage.value=="") 
+         msg = "-> Selecione o ano a agenda.\n";
+      if (document.form.aux_cdcooper.value=="") 
+         msg = msg + "-> Selecione uma cooperativa.\n";     
+		   // verifica se a agenda foi liberada      
+      if (msg!="") 
+             alert(msg)
+         else
+             { 	
+			  linha = "wpgd0040a" + 
+                       "?parametro1=" + document.form.aux_idevento.value +  
+                       "&parametro2=" + document.form.aux_cdcooper.value + 
+                       "&parametro3=" + document.form.aux_dtanoage.value + 
+                       "&parametro4=" + document.form.aux_nrmeseve.value +
+                       "&parametro5=" + document.form.aux_tpevento.value ;
+               imp = window.open(linha,"imp","toolbar=no,location=no,diretories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,top=10,left=10,width=640,height=400");
+             }
+   } // imprimir()
+
+function PosicionaCooper()
+{
+   // posiciona a cooperativa
+   if (document.form.cdcooper.value != '')
+       document.form.aux_cdcooper.value = document.form.cdcooper.value;
+   else
+       document.form.aux_cdcooper.value = '';
+}
+
+function verifica_coop(){
+   
+   if (document.form.aux_cdcooper.value == ''){
+       alert('A Cooperativa deve ser escolhida!');
+	   return false;
+   }
+   
+   document.form.submit();
+}   
+// valida os parâmetros da agenda
+
+if(document.form.aux_dtanoage.value == ''){
+   alert('Parâmetro da Agenda Não Encontrado!!!');
+   document.form.aux_cdcooper.value = '';
+}
+else{   
+   PosicionaCooper();
+}
+ 
+</SCRIPT>
