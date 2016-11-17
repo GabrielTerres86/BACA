@@ -166,7 +166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
   BEGIN
     RETURN REGEXP_REPLACE( gene0007.fn_caract_acento(pr_string,1,'#$&%¹²³ªº°*!?<>/\|',
                                                                  '                  ')
-                          ,'[^A-Z0-9Ç@:._ +,();=-]+',' ');
+                          ,'[^a-zA-Z0-9Ç@:._ +,();=-]+',' ');
   END fn_remove_caract_espec;
   
   --> Gerar log da easyway
@@ -215,7 +215,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Objetivo  : Procedimento responsavel em gerar o arquivo de Cadastro de Cooperados para a Easyway
     
     Alteração : Alterado para remover os acentos das linhas de exportação desse arquivo,
-	            por solicitação do Mathera (10/11/2016).
+	              por solicitação do Mathera (10/11/2016).
+                
+                Alterado para quando os segundo e demais titulares nao tiverem endereco preenchido,
+                buscar do primeiro titular. 
+                Alterado para quando os procuradores e representantes de menores nao tiverem endereco
+                preenchido, buscar da conta principal (17/11/2016).
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -306,6 +311,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                 WHEN 1 THEN 10
                                 ELSE 9
                               END)
+          AND (
+                enc.idseqttl = 1 or   /* Ou é o primeiro titular, Ou o endereco esta preenchido */
+               (enc.idseqttl > 1 and trim(enc.dsendere) is not null and trim(nmcidade) is not null)
+              )
         ORDER BY enc.idseqttl DESC; --Retornar o endereço do titular passado por param
                                     -- caso nao existir retorna do principal
     rw_crapenc cr_crapenc%ROWTYPE;
@@ -377,7 +386,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,to_char(avt.dtnascto,'RRRRMMDD') dtnascto
             ,TRIM(substr(avt.dsendres##1,
                          instr(TRIM(avt.dsendres##1), ' '),
-                         length(avt.dsendres##1))) AS dsendres##1 
+                         length(avt.dsendres##1))) AS dsendres
             ,avt.nrendere
             ,avt.complend
             ,avt.nrcepend
@@ -438,7 +447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,to_char(avt.dtnascto,'RRRRMMDD') dtnascto 
             ,TRIM(substr(avt.dsendres##1,
                          instr(TRIM(avt.dsendres##1), ' '),
-                         length(avt.dsendres##1))) AS dsendres##1
+                         length(avt.dsendres##1))) AS dsendres
             ,avt.nrendere
             ,avt.complend
             ,avt.nrcepend
@@ -570,7 +579,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                     rpad(' ',20,' ')                              ||     --> Numero de Identificação Fiscal (se estrangeiro)
                     rpad(' ', 3,' ')                              ||     --> Natureza da Relação
                     rpad(' ',40,' ')                              ||     --> Descrição do Estado (se estrangeiro)
-                    rpad(nvl(rw_crapcem.dsdemail,' '),60,' ')     ||     --> Email
+                    rpad(fn_remove_caract_espec(nvl(rw_crapcem.dsdemail,' ')),60,' ')     ||     --> Email
                     pr_dspessoa                                   ||     --> PF/PJ(F - PF; J – PJ)
                     rpad(nvl(pr_nrinsest,' '),20,' ')             ||     --> Inscrição Estadual
                     vr_idsitcnt                                   ||     --> Status do Contribuinte
@@ -928,6 +937,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
               IF (rw_crapcrl.dtmvtolt IS NULL) THEN
                 rw_crapcrl.dtmvtolt := to_char(rw_crapass_nrcpfcgc.dtadmiss,'RRRRMMDD');
               END IF;
+              
+              /* Se não tiver endereco, vamos buscar da conta principal */
+              IF (trim(rw_crapcrl.dsendres) IS NULL AND
+                  trim(rw_crapcrl.nmcidade) IS NULL) THEN
+                OPEN cr_crapenc ( pr_cdcooper => rw_crapass_nrcpfcgc.cdcooper,
+                                  pr_nrdconta => rw_crapass_nrcpfcgc.nrdconta,
+                                  pr_idseqttl => 1,
+                                  pr_inpessoa => rw_crapass_nrcpfcgc.inpessoa);
+                FETCH cr_crapenc INTO rw_crapenc;
+                IF cr_crapenc%NOTFOUND THEN
+                  CLOSE cr_crapenc;
+                  vr_dscritic := 'Não foi possivel gerar o endereço da conta principal para o procurador/representante da conta. '||
+                                 ' Procurador: CPF/CNPJ ' ||rw_crapcrl.nrcpfcgc||
+                                 ' cooper '||rw_crapass_nrcpfcgc.cdcooper||
+                                 ' conta ' ||rw_crapass_nrcpfcgc.nrdconta||
+                                 ', endereço não encontrado';
+                  RAISE vr_exc_erro;
+                END IF;
+                rw_crapcrl.dsendres := rw_crapenc.endereco;
+                rw_crapcrl.nrendere := rw_crapenc.nrendere;
+                rw_crapcrl.complend := rw_crapenc.complend;
+                rw_crapcrl.nrcepend := rw_crapenc.nrcepend;
+                rw_crapcrl.nmbairro := rw_crapenc.nmbairro;
+                rw_crapcrl.nmcidade := rw_crapenc.nmcidade;
+                rw_crapcrl.cdufresd := rw_crapenc.cdufende;
+                rw_crapcrl.tplograd := rw_crapenc.tp_lograd;
+                CLOSE cr_crapenc;
+              END IF;
+              
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
               pc_trata_outro( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
                               pr_nrcpfcgc  => rw_crapcrl.nrcpfcgc,  
@@ -936,12 +974,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapcrl.nmdavali,    
                               pr_dtnasctl  => rw_crapcrl.dtnascto,  
-                              pr_endereco  => rw_crapcrl.dsendres##1 ,  
+                              pr_endereco  => rw_crapcrl.dsendres,  
                               pr_nrendere  => rw_crapcrl.nrendere,  
                               pr_complend  => rw_crapcrl.complend,  
                               pr_nrcepend  => rw_crapcrl.nrcepend,  
                               pr_nmbairro  => rw_crapcrl.nmbairro,  
-                              pr_nmcidade  => rw_crapcrl.nmcidade,  
+                              pr_nmcidade  => rw_crapcrl.nmcidade,
                               pr_cdufende  => rw_crapcrl.cdufresd,    
                               pr_tplograd  => rw_crapcrl.tplograd,  
                               pr_dtmvtolt  => rw_crapcrl.dtmvtolt,  
@@ -984,15 +1022,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
               IF (rw_crapavt.dtmvtolt IS NULL) THEN
                 rw_crapavt.dtmvtolt := to_char(rw_crapass_nrcpfcgc.dtadmiss,'RRRRMMDD');
               END IF;
+              
+              /* Se não tiver endereco, vamos buscar da conta principal */
+              IF (trim(rw_crapavt.dsendres) IS NULL AND
+                  trim(rw_crapavt.nmcidade) IS NULL) THEN
+                OPEN cr_crapenc ( pr_cdcooper => rw_crapass_nrcpfcgc.cdcooper,
+                                  pr_nrdconta => rw_crapass_nrcpfcgc.nrdconta,
+                                  pr_idseqttl => 1,
+                                  pr_inpessoa => rw_crapass_nrcpfcgc.inpessoa);
+                FETCH cr_crapenc INTO rw_crapenc;
+                IF cr_crapenc%NOTFOUND THEN
+                  CLOSE cr_crapenc;
+                  vr_dscritic := 'Não foi possivel gerar o endereço da conta principal para o procurador da conta. '||
+                                 ' Procurador: CPF/CNPJ ' ||rw_crapavt.nrcpfcgc||
+                                 ' cooper '||rw_crapass_nrcpfcgc.cdcooper||
+                                 ' conta ' ||rw_crapass_nrcpfcgc.nrdconta||
+                                 ', endereço não encontrado';
+                  RAISE vr_exc_erro;
+                END IF;
+                rw_crapavt.dsendres := rw_crapenc.endereco;
+                rw_crapavt.nrendere := rw_crapenc.nrendere;
+                rw_crapavt.complend := rw_crapenc.complend;
+                rw_crapavt.nrcepend := rw_crapenc.nrcepend;
+                rw_crapavt.nmbairro := rw_crapenc.nmbairro;
+                rw_crapavt.nmcidade := rw_crapenc.nmcidade;
+                rw_crapavt.cdufresd := rw_crapenc.cdufende;
+                rw_crapavt.tplograd := rw_crapenc.tp_lograd;
+                CLOSE cr_crapenc;
+              END IF;
+              
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
               pc_trata_outro( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
-                              pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,  
+                              pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,
                               pr_inpessoa  => rw_crapavt.inpessoa,  
                               pr_dspessoa  => rw_crapavt.dspessoa,  
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
                               pr_nmprimtl  => rw_crapavt.nmdavali,    
                               pr_dtnasctl  => rw_crapavt.dtnascto,  
-                              pr_endereco  => rw_crapavt.dsendres##1 ,  
+                              pr_endereco  => rw_crapavt.dsendres,
                               pr_nrendere  => rw_crapavt.nrendere,  
                               pr_complend  => rw_crapavt.complend,  
                               pr_nrcepend  => rw_crapavt.nrcepend,  
