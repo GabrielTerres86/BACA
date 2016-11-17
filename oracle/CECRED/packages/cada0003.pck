@@ -466,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 03/11/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 16/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -508,6 +508,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          assinatura multiplas, onde por acidente foi comentado no cursor
   --                          uma regra que não incluia as assinaturas multiplas, conforme 
   --                          solicitado no chamado 548898. (Kelvin)                              
+  --
+  --             16/11/2016 - Inclusao do UPPER(dscnae) na pesquisa por texto. (Jaison/Anderson)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -539,7 +542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM tbgen_cnae
          WHERE cdcnae = decode(nvl(pr_cdcnae,0),0,cdcnae, pr_cdcnae)
            AND (trim(pr_dscnae) IS NULL
-            OR  dscnae LIKE '%'||pr_dscnae||'%')
+            OR  UPPER(dscnae) LIKE '%'||UPPER(pr_dscnae)||'%')
            AND flserasa = decode(nvl(pr_flserasa,2),2,flserasa, pr_flserasa)
          ORDER BY cdcnae;
 

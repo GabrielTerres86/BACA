@@ -26,6 +26,10 @@ CREATE OR REPLACE VIEW CECRED.VWSOA_COOPERADO_CDC AS
      join crapass ass
        on ass.cdcooper = cdc.cdcooper
       and ass.nrdconta = cdc.nrdconta
+     join crapcdr cdr
+       on cdr.cdcooper = ass.cdcooper
+      and cdr.nrdconta = ass.nrdconta
+      and cdr.flgconve = 1 /* Esta configurado como conveniado CDC */
 left join crapmun mun
        on mun.idcidade = cdc.idcidade
 left join tbsite_cooperado_cdc mtz

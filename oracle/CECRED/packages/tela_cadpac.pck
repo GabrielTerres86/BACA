@@ -2814,6 +2814,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,pr_cdagenci
                      ,TRUNC(SYSDATE));
 
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Problema ao incluir PA: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+
+        BEGIN
           -- Inclui o Horario Pagamento INSS
           INSERT INTO craptab
                      (cdcooper
@@ -2830,7 +2837,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,'HRPGTOINSS' -- cdacesso
                      ,pr_cdagenci  -- tpregist
                      ,'58500');    -- dstextab
+        EXCEPTION
+          WHEN DUP_VAL_ON_INDEX THEN
+            -- Se ja existir atualiza
+            BEGIN
+              UPDATE craptab
+                 SET dstextab        = '58500'
+               WHERE cdcooper        = vr_cdcooper
+                 AND UPPER(nmsistem) = 'CRED'
+                 AND UPPER(tptabela) = 'GENERI'
+                 AND cdempres        = 0
+                 AND UPPER(cdacesso) = 'HRPGTOINSS'
+                 AND tpregist        = pr_cdagenci;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar PA: ' || SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          WHEN OTHERS THEN
+            vr_dscritic := 'Problema ao incluir PA: ' || SQLERRM;
+            RAISE vr_exc_saida;
+        END;
 
+        BEGIN
           -- Inclui Truncagem - COMPE por imagem
           INSERT INTO craptab
                      (cdcooper
@@ -2847,8 +2876,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                      ,'EXETRUNCAGEM' -- cdacesso
                      ,pr_cdagenci    -- tpregist
                      ,'NAO');        -- dstextab
-
         EXCEPTION
+          WHEN DUP_VAL_ON_INDEX THEN
+            -- Se ja existir atualiza
+            BEGIN
+              UPDATE craptab
+                 SET dstextab        = 'NAO'
+               WHERE cdcooper        = vr_cdcooper
+                 AND UPPER(nmsistem) = 'CRED'
+                 AND UPPER(tptabela) = 'GENERI'
+                 AND cdempres        = 0
+                 AND UPPER(cdacesso) = 'EXETRUNCAGEM'
+                 AND tpregist        = pr_cdagenci;
+        EXCEPTION
+          WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar PA: ' || SQLERRM;
+                RAISE vr_exc_saida;
+            END;
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao incluir PA: ' || SQLERRM;
             RAISE vr_exc_saida;
