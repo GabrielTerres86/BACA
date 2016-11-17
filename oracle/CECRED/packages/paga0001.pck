@@ -9823,19 +9823,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       END IF;
 
 	  --Verificação para pagamento de GPS
-	  IF pr_idorigem = 3  THEN
-	  	  IF SUBSTR(pr_cdbarras,16,4) = '0270' AND
-			 SUBSTR(pr_cdbarras,2,1)  = '5'    THEN
-			 vr_cdcritic := 0;
-			 vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
-			 RAISE vr_exc_erro;
-		  END IF;
-		IF rw_crapcon.cdsegmto IN (5) THEN
-			IF rw_crapcon.cdempcon IN (64,153,385) THEN -- DARF
+	  IF pr_idorigem = 3  THEN	  	
+		IF SUBSTR(pr_cdbarras,2,1) = '5' THEN
+		    IF SUBSTR(pr_cdbarras,16,4) = '0270' THEN
+				vr_cdcritic := 0;
+				vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
+				RAISE vr_exc_erro;
+			ELSIF SUBSTR(pr_cdbarras,16,4) IN ('0064','0153','0154','0385') THEN -- DARF
 				vr_cdcritic := 0;
 				vr_dscritic := 'DARF deve ser paga na opção ''Transações - DARF'' do menu de serviços.';
 				RAISE vr_exc_erro;
-			ELSIF rw_crapcon.cdempcon IN (328) THEN -- DAS
+			ELSIF SUBSTR(pr_cdbarras,16,4) IN ('0328') THEN -- DAS
 				vr_cdcritic := 0;
 				vr_dscritic := 'DAS deve ser paga na opção ''Transações - DAS'' do menu de serviços.';
 				RAISE vr_exc_erro;
