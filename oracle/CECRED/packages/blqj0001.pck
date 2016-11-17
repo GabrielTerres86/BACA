@@ -28,7 +28,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                    ,nrendere    crapenc.nrendere%TYPE
                                    ,nmbairro    crapenc.nmbairro%TYPE
                                    ,nmcidade    crapenc.nmcidade%TYPE
-                                   ,nrcepend    crapenc.nrcepend%TYPE);
+                                   ,nrcepend    crapenc.nrcepend%TYPE
+                                   ,cdufende    crapenc.cdufende%TYPE);
                                   
   -- Tabela de memória para gravar os dados do cooperado
   TYPE typ_tab_cooperado IS TABLE OF typ_reg_cooperado INDEX BY BINARY_INTEGER;
@@ -403,6 +404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                           '<nmbairro>' || vr_tab_cooperado(vr_idx).nmbairro ||'</nmbairro>' ||
                           '<nmcidade>' || vr_tab_cooperado(vr_idx).nmcidade ||'</nmcidade>' ||
                           '<nrcepend>' || vr_tab_cooperado(vr_idx).nrcepend ||'</nrcepend>' ||
+                          '<cdufende>' || vr_tab_cooperado(vr_idx).cdufende ||'</cdufende>' ||
                        '</cooperado>'); 
           
       END LOOP;
@@ -542,6 +544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , nmbairro
            , nmcidade
            , nrcepend
+           , cdufende
         FROM crapenc t
        WHERE t.cdcooper = pr_cdcooper
          AND t.nrdconta = pr_nrdconta
@@ -657,6 +660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         pr_tab_cooperado(vr_nrindice).nmbairro := rw_crapenc.nmbairro;
         pr_tab_cooperado(vr_nrindice).nmcidade := rw_crapenc.nmcidade;
         pr_tab_cooperado(vr_nrindice).nrcepend := rw_crapenc.nrcepend;
+        pr_tab_cooperado(vr_nrindice).cdufende := rw_crapenc.cdufende;
       END IF;
       
       CLOSE cr_crapenc;
