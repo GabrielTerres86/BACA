@@ -468,8 +468,8 @@ RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                
                IF  xField:NAME = "vllautom"  THEN
 par_tximpres = par_tximpres +
-               "    TOTAL DE DÉBITOS:              " + STRING(DECIMAL(aux_vllautom),"zzzzz,zz9.99-")   + 
-               "    TOTAL DE CRÉDITOS - DÉBITOS:   " + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-"). 
+               "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_vllautom),"zzzzz,zz9.99-")   + 
+               "    TOTAL DE CREDITOS - DEBITOS:   " + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-"). 
                        
         
  
