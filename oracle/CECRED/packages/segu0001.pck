@@ -6483,6 +6483,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+	
+	-- Gerar hora Fim no log
+    gera_log(pr_cdcooper => 3 --pr_cdcooper
+            ,pr_cdprogra => vr_cdprogra
+            ,pr_indierro => 1
+            ,pr_cdcritic => 0
+            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                    ' - TERMINO DO PROCESSAMENTO.');
 
     -- se for a ultima execução do dia,
     -- move arquivo de log de execução pra pasta /micros/cecred/segauto
@@ -6510,15 +6518,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                               pr_dscritic => vr_dscritic);
       END IF;
     END IF;
-
-
-    -- Gerar hora Fim no log
-    gera_log(pr_cdcooper => 3 --pr_cdcooper
-            ,pr_cdprogra => vr_cdprogra
-            ,pr_indierro => 1
-            ,pr_cdcritic => 0
-            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
-                                    ' - TERMINO DO PROCESSAMENTO.');
 
     --> Log de final de execução
     pc_controla_log_batch(pr_dstiplog => 'F');
