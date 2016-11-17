@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para calculos e envios de extratos
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 17/11/2015
+    Data     : Dezembro/2012.                   Ultima atualizacao: 03/10/2016
 
     Alteracoes: 27/08/2014 - Incluida chamada da procedure pc_busca_saldo_aplicacoes,
                              na procedure pc_ver_saldos (Jean Michel).
@@ -26,6 +26,12 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                              
                20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                             desta package.(Carlos Rafael Tanholi).                              
+                            
+               29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
+                            atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)    
+							
+			   03/10/2016 - Correcao no tratamento de retorno de campos data da pc_obtem_saldo_car
+							com formato invalido. (Carlos Rafael Tanholi - SD 531031)
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -239,6 +245,16 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                           ,pr_tab_sald  OUT EXTR0001.typ_tab_saldos
                           ,pr_tab_erro  OUT GENE0001.typ_tab_erro);
 
+  /* Meio de utilizacao da pc_onbtem_saldo no PROGRESS */
+  PROCEDURE pc_obtem_saldo_car(pr_cdcooper IN crapcop.cdcooper%TYPE
+                              ,pr_cdagenci IN crapass.cdagenci%TYPE
+                              ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE
+                              ,pr_cdoperad IN craplgm.cdoperad%TYPE
+                              ,pr_nrdconta IN crapass.nrdconta%TYPE
+                              ,pr_dtrefere IN crapdat.dtmvtolt%TYPE
+                              ,pr_des_reto OUT VARCHAR2 --> OK ou NOK
+                              ,pr_clob_ret OUT CLOB);   --> Tabela Extrato da Conta                          
+
   -- Chamar funçao para montagem do número do documento para extrato
   FUNCTION fn_format_nrdocmto_extr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
                                   ,pr_cdhistor IN craphis.cdhistor%TYPE --> Código do histórico
@@ -414,7 +430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 21/06/2016
+    Data     : Dezembro/2012.                   Ultima atualizacao: 17/11/2016
 
    Dados referentes ao programa:
 
@@ -699,6 +715,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
               09/08/2016 - #483189 Retirada do cursor cr_max_sda pois o mesmo não é mais utilizado;
                            Mudança do default do parâmetro pr_tipo_busca para 'A' nas rotinas 
                            pc_obtem_saldo_dia (Carlos)
+
+               29/08/2016 - Criacao da procedure pc_obtem_saldo_car para uso da pc_obtem_saldo
+                            atraves de rotinas PROGRESS. (Carlos Rafael Tanholi - SD 513352)
+			    
+               17/11/2016 - Correcao do cursor cr_crapepr removendo o comando NVL com intuito de
+               							ganho em performance. SD 516113 (Carlos Rafael Tanholi)			  
+
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -788,8 +811,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
   /* Cursor com informações dos empréstimos */
   CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
-                   ,pr_inliquid IN crapepr.inliquid%TYPE
-                   ,pr_inprejuz IN crapepr.inprejuz%TYPE
                    ,pr_nrdconta IN crapepr.nrdconta%TYPE
                    ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
     SELECT epr.dtmvtolt
@@ -811,10 +832,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           ,epr.qtmesdec
       FROM crapepr epr
      WHERE epr.cdcooper = pr_cdcooper
-       AND epr.inliquid = NVL(pr_inliquid,epr.inliquid)
-       AND epr.inprejuz = NVL(pr_inprejuz,epr.inprejuz)
-       AND epr.nrdconta = nvl(pr_nrdconta,epr.nrdconta)
-       AND epr.nrctremp = nvl(pr_nrctremp,epr.nrctremp);
+       AND epr.nrdconta = pr_nrdconta
+       AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
 
   -- Gurdar o Progress Recid da tabela de saldo
@@ -2325,6 +2344,196 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     END;
   END pc_obtem_saldo;
 
+  /* Utiliza a pc_obtem_saldo atraves do PROGRESS */
+  PROCEDURE pc_obtem_saldo_car(pr_cdcooper IN crapcop.cdcooper%TYPE
+                              ,pr_cdagenci IN crapass.cdagenci%TYPE
+                              ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE
+                              ,pr_cdoperad IN craplgm.cdoperad%TYPE
+                              ,pr_nrdconta IN crapass.nrdconta%TYPE
+                              ,pr_dtrefere IN crapdat.dtmvtolt%TYPE
+                              ,pr_des_reto OUT VARCHAR2 --> OK ou NOK
+                              ,pr_clob_ret OUT CLOB) AS --> Tabela Extrato da Conta
+  BEGIN
+    --    Programa: pc_obtem_saldo_car
+    --    Sistema : Conta-Corrente - Cooperativa de Credito
+    --    Sigla   : CRED
+    --    Autor   : Carlos Rafael Tanholi
+    --    Data    : Agosto/2016                         Ultima atualizacao: 
+    --
+    --    Dados referetes ao programa:
+    --    Frequencia: Sempre que chamado pelos programas de extrato da conta
+    ---------------------------------------------------------------------------
+
+    DECLARE
+      vr_cdcritic crapcri.cdcritic%TYPE;    
+      -- Descrição da critica
+      vr_dscritic VARCHAR2(4000);
+      -- Sequencia do vetor de saldos
+      vr_ind BINARY_INTEGER;
+
+      -- Saida da rotina de extrato
+      vr_des_reto VARCHAR2(3);      
+      -- PLTABLE
+      vr_tab_sald EXTR0001.typ_tab_saldos;
+      vr_tab_erro GENE0001.typ_tab_erro;
+      
+      -- CURSOR GENÉRICO DE CALENDÁRIO
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
+
+      --Variaveis de Indice
+      vr_index VARCHAR(12);
+      --Variaveis Arquivo Dados
+      vr_dstexto VARCHAR2(32767);
+      vr_string  VARCHAR2(32767);
+
+    BEGIN
+      
+      -- datas da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        CLOSE btch0001.cr_crapdat;
+        -- monta msg de critica
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+
+        -- Chamar rotina de gravação de erro
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => vr_tab_erro);
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE btch0001.cr_crapdat;
+      END IF;    
+    
+      EXTR0001.pc_obtem_saldo(pr_cdcooper   => pr_cdcooper
+                             ,pr_rw_crapdat => rw_crapdat
+                             ,pr_cdagenci   => pr_cdagenci
+                             ,pr_nrdcaixa   => pr_nrdcaixa
+                             ,pr_cdoperad   => pr_cdoperad
+                             ,pr_nrdconta   => pr_nrdconta
+                             ,pr_dtrefere   => pr_dtrefere
+                             ,pr_des_reto   => vr_des_reto
+                             ,pr_tab_sald   => vr_tab_sald
+                             ,pr_tab_erro   => vr_tab_erro);
+                             
+      -- Se houve retorno não Ok
+      IF vr_des_reto = 'NOK' THEN
+        -- Tenta buscar o erro no vetor de erro
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_des_erro := vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+        ELSE
+          vr_des_erro := 'Retorno "NOK" na extr0001.pc_obtem_saldo e sem informação na pr_vet_erro, Conta: '||pr_nrdconta;
+
+        END IF;
+
+        -- Abandona o processo
+        RAISE vr_exc_erro;
+      ELSE  
+        --Montar CLOB
+        IF vr_tab_sald.COUNT > 0 THEN
+          
+          -- Criar documento XML
+          dbms_lob.createtemporary(pr_clob_ret, TRUE); 
+          dbms_lob.open(pr_clob_ret, dbms_lob.lob_readwrite);
+          
+          -- Insere o cabeçalho do XML 
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret 
+                                 ,pr_texto_completo => vr_dstexto 
+                                 ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+           
+          --Buscar Primeiro beneficiario
+          vr_index:= vr_tab_sald.FIRST;
+          
+          --Percorrer todos os beneficiarios
+          WHILE vr_index IS NOT NULL LOOP
+            vr_string:= '<extrato>'||
+                          '<nrdconta>'||NVL(TO_CHAR(vr_tab_sald(vr_index).nrdconta),' ')||'</nrdconta>'|| 
+                          '<dtmvtolt>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtmvtolt,'DD/MM/YYYY'), ' ')||'</dtmvtolt>'||
+                          '<vlsddisp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsddisp),' ')||'</vlsddisp>'||
+                          '<vlsdchsl>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdchsl),' ')||'</vlsdchsl>'||
+                          '<vlsdbloq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdbloq),' ')||'</vlsdbloq>'||
+                          '<vlsdblpr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdblpr),' ')||'</vlsdblpr>'||
+                          '<vlsdblfp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdblfp),' ')||'</vlsdblfp>'||
+                          '<vlsdindi>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdindi),' ')||'</vlsdindi>'||
+                          '<vllimcre>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimcre),' ')||'</vllimcre>'||
+                          '<cdcooper>'||NVL(TO_CHAR(vr_tab_sald(vr_index).cdcooper),' ')||'</cdcooper>'||
+                          '<vlsdeved>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdeved),' ')||'</vlsdeved>'||
+                          '<vldeschq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vldeschq),' ')||'</vldeschq>'||
+                          '<vllimutl>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimutl),' ')||'</vllimutl>'||
+                          '<vladdutl>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vladdutl),' ')||'</vladdutl>'||
+                          '<vlsdrdca>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdrdca),' ')||'</vlsdrdca>'||
+                          '<vlsdrdpp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdrdpp),' ')||'</vlsdrdpp>'||
+                          '<vllimdsc>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimdsc),' ')||'</vllimdsc>'||
+                          '<vlprepla>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlprepla),' ')||'</vlprepla>'||
+                          '<vlprerpp>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlprerpp),' ')||'</vlprerpp>'||
+                          '<vlcrdsal>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlcrdsal),' ')||'</vlcrdsal>'||
+                          '<qtchqliq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).qtchqliq),' ')||'</qtchqliq>'||
+                          '<qtchqass>'||NVL(TO_CHAR(vr_tab_sald(vr_index).qtchqass),' ')||'</qtchqass>'||
+                          '<dtdsdclq>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtdsdclq),' ')||'</dtdsdclq>'||
+                          '<vltotpar>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vltotpar),' ')||'</vltotpar>'||
+                          '<vlopcdia>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlopcdia),' ')||'</vlopcdia>'||
+                          '<vlavaliz>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlavaliz),' ')||'</vlavaliz>'||
+                          '<vlavlatr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlavlatr),' ')||'</vlavlatr>'||
+                          '<qtdevolu>'||NVL(TO_CHAR(vr_tab_sald(vr_index).qtdevolu),' ')||'</qtdevolu>'||
+                          '<vltotren>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vltotren),' ')||'</vltotren>'||
+                          '<vldestit>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vldestit),' ')||'</vldestit>'||
+                          '<vllimtit>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vllimtit),' ')||'</vllimtit>'||
+                          '<vlsdempr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdempr),' ')||'</vlsdempr>'||
+                          '<vlsdfina>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdfina),' ')||'</vlsdfina>'||
+                          '<vlsrdc30>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdc30),' ')||'</vlsrdc30>'||
+                          '<vlsrdc60>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdc60),' ')||'</vlsrdc60>'||
+                          '<vlsrdcpr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdcpr),' ')||'</vlsrdcpr>'||
+                          '<vlsrdcpo>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsrdcpo),' ')||'</vlsrdcpo>'||
+                          '<vlsdcota>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsdcota),' ')||'</vlsdcota>'||
+                          '<vlblqtaa>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlblqtaa),' ')||'</vlblqtaa>'||
+                          '<vlstotal>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlstotal),' ')||'</vlstotal>'||
+                          '<vlsaqmax>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlsaqmax),' ')||'</vlsaqmax>'||
+                          '<vlacerto>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlacerto),' ')||'</vlacerto>'||
+                          '<dslimcre>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dslimcre),' ')||'</dslimcre>'||
+                          '<vlipmfpg>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlipmfpg),' ')||'</vlipmfpg>'||
+                          '<dtultlcr>'||NVL(TO_CHAR(vr_tab_sald(vr_index).dtultlcr,'DD/MM/YYYY'), ' ')||'</dtultlcr>'||
+                          '<vlblqjud>'||NVL(TO_CHAR(vr_tab_sald(vr_index).vlblqjud),' ')||'</vlblqjud>'||
+                        '</extrato>';
+
+            -- Escrever no XML
+            gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret 
+                                   ,pr_texto_completo => vr_dstexto 
+                                   ,pr_texto_novo     => vr_string
+                                   ,pr_fecha_xml      => FALSE);   
+                                                      
+            --Proximo Registro
+            vr_index:= vr_tab_sald.NEXT(vr_index);
+            
+          END LOOP;  
+          
+          -- Encerrar a tag raiz 
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret 
+                                 ,pr_texto_completo => vr_dstexto 
+                                 ,pr_texto_novo     => '</root>' 
+                                 ,pr_fecha_xml      => TRUE);      
+        END IF;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_des_reto := 'NOK';
+
+    END;
+
+  END pc_obtem_saldo_car;    
+
+
+
   -- Chamar funçao para montagem do número do documento para extrato
   FUNCTION fn_format_nrdocmto_extr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa
                                   ,pr_cdhistor IN craphis.cdhistor%TYPE --> Código do histórico
@@ -2919,8 +3128,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Buscar destalhes do empréstimo
         rw_crapepr := NULL;
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
-                       ,pr_inliquid => NULL
-                       ,pr_inprejuz => NULL
                        ,pr_nrdconta => rw_craplcm.nrdconta
                        ,pr_nrctremp => TRIM(REPLACE(rw_craplcm.cdpesqbb,'.','')));
         FETCH cr_crapepr
