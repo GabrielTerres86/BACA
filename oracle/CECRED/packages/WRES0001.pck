@@ -32,7 +32,7 @@ CREATE OR REPLACE PACKAGE CECRED.WRES0001 AS
   TYPE typ_http_request IS RECORD(endereco  VARCHAR2(1000) -- Diretório do Servidor. Ex: http://mobilebankhml.cecred.coop.br/apí
                                  ,rota      VARCHAR2(255) -- Rota completa da Api. Ex: conta/cooperativas
                                  ,verbo     VARCHAR2(10) -- Método da requisição HTTP, Ex: GET
-                                 ,timeout   NUMBER DEFAULT 1000 -- Tempo máximo para espera de uma resposta da requisição HTTP
+                                 ,timeout   NUMBER DEFAULT 30 -- Tempo máximo para espera de uma resposta da requisição HTTP
                                  ,cabecalho   typ_tab_http_cabecalho -- Lista de propriedades do header da requisição HTTP
                                  ,parametros  typ_tab_http_parametros -- Lista de parâmetros GET (na URL) da requisição HTTP
                                  ,conteudo     CLOB -- Content da requisição HTTP
@@ -131,6 +131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
       
       -- Abre a chamada HTTP
       BEGIN
+        utl_http.set_transfer_timeout(pr_requisicao.timeout);
         vr_req := utl_http.begin_request(vr_endereco, pr_requisicao.verbo, utl_http.http_version_1_1);
       EXCEPTION
         WHEN OTHERS THEN
@@ -156,30 +157,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
       -- Pega o retnorno da chamada
       vr_res := utl_http.get_response(vr_req);
     
-      -- se for uma resposta de sucesso 2xx
-      IF (vr_res.status_code IN
-         (utl_http.http_ok
-          ,utl_http.http_created
-          ,utl_http.http_accepted
-          ,utl_http.http_non_authoritative_info
-          ,utl_http.http_no_content
-          ,utl_http.http_reset_content
-          ,utl_http.http_partial_content)) THEN
-      
-        -- Busca os cabeçalhos de retorno
-        FOR i IN 1 .. utl_http.get_header_count(vr_res) LOOP
-          utl_http.get_header(vr_res, i, vr_chave, vr_valor);
+      -- Busca os cabeçalhos de retorno
+      FOR i IN 1 .. utl_http.get_header_count(vr_res) LOOP
+        utl_http.get_header(vr_res, i, vr_chave, vr_valor);
+        IF(vr_chave != 'X-SourceFiles') THEN
           pr_resposta.cabecalho(i).chave := vr_chave;
           pr_resposta.cabecalho(i).valor := vr_valor;
-        END LOOP;
-      END IF;
-      
+        END IF;
+      END LOOP;
+
       -- Obtém status da resposta
       pr_resposta.status_code := vr_res.status_code;
       pr_resposta.status_message := vr_res.reason_phrase;
     
       -- Copia o conteúdo da resposta para dentro de um CLOB
-      IF(vr_res.status_code <> utl_http.http_no_content AND LENGTH(vr_resposta_texto) > 0) THEN
+      IF(vr_res.status_code <> utl_http.http_no_content) THEN
         vr_resposta := NULL;
         dbms_lob.createtemporary(vr_resposta, FALSE);
         BEGIN

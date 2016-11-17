@@ -20,13 +20,12 @@ CREATE OR REPLACE PACKAGE CECRED.AYMA0001 AS
   TYPE typ_http_response_aymaru IS RECORD(status_code    NUMBER -- Código do status da resposta do servidor
                                          ,status_message VARCHAR2(4000) -- Mensagem da resposta do servidor
                                          ,conteudo       json -- Content da resposta do servidor
-                                         ,cabecalho WRES0001.typ_tab_http_cabecalho
-                                         );                             
+                                         ,cabecalho WRES0001.typ_tab_http_cabecalho);                             
 
   -- Procedure para consumir Aymaru
   PROCEDURE pc_consumir_ws_rest_aymaru(pr_rota       IN VARCHAR2                          -- rota do serviço no aymaru
                                       ,pr_verbo      IN VARCHAR2                          -- verbo do serviço (GET, POST, PUT)
-                                      ,pr_servico     IN VARCHAR2                         -- versão do serviço no Aymaru
+                                      ,pr_servico    IN VARCHAR2                         -- versão do serviço no Aymaru
                                       ,pr_parametros IN WRES0001.typ_tab_http_parametros  -- Parâmetros do GET
                                       ,pr_conteudo   IN JSON                              -- Conteúdo para POST
                                       ,pr_resposta   OUT typ_http_response_aymaru         --  Resposta do Aymaru
