@@ -10064,7 +10064,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
     Frequencia: Sempre que Chamado
     Objetivo  : Rotina para buscar a quantidade de pagamentos pendentes
 
-    Alteracoes:
+    Alteracoes: 18/11/2016 - SD542975 - Ajuste no teste para considerar 
+	                                    pendente ou não - Marcos-Supero
     ............................................................................. */
 
      -- Busca a quantidade de pagamentos pendentes
@@ -10074,7 +10075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           FROM crappfp pfp
          WHERE pfp.cdcooper = pr_cdcooper
            AND pfp.cdempres = pr_cdempres
-           AND pfp.idsitapr IN (2,4,5); -- 2-Em estouro / 4-Aprv.Estouro / 5-Aprovado
+           AND pfp.idsitapr IN (2,4,5) -- 2-Em estouro / 4-Aprv.Estouro / 5-Aprovado
+		   AND pfp.flsitcre = 0;
 
   BEGIN
 
