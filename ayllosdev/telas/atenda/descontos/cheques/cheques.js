@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de cheques
  * --------------
- * ALTERAÇÕES   : 21/11/2012
+ * ALTERAÇÕES   : 20/06/2016
  * --------------
  * 000: [14/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [21/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -21,6 +21,7 @@
  *										  no chamado 315453.
  *
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
+ * 009: [20/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  *
  */
  
@@ -50,6 +51,7 @@ var aux_inconfi2 = ""; /*Variável usada para controlar validações que serão 
 var aux_inconfi3 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 var aux_inconfi4 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 var aux_inconfi5 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
+var aux_inconfi6 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 
 
 
@@ -252,17 +254,23 @@ function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
 
 // OPÇÃO LIBERAR
 // Liberar/Analisar border&ocirc; de desconto de cheques
-function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,idconfi5,indentra,indrestr){
+function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,idconfi5,idconfi6,indentra,indrestr){
 
-	var nrcpfcgc = $("#nrcpfcgc","#frmCabAtenda").val().replace(".","").replace(".","").replace("-","").replace("/","");
+    var nrcpfcgc = $("#nrcpfcgc","#frmCabAtenda").val().replace(".","").replace(".","").replace("-","").replace("/","");
+    var mensagem = '';
+    var cdopcoan = 0;
+    var cdopcolb = 0;
 	
 	// Mostra mensagem de aguardo
 	if (opcao == "N"){
-		var mensagem = "analisando";
+		mensagem = "analisando";
+        cdopcoan = glb_codigoOperadorLiberacao;
+	}else{
+		mensagem = "liberando";
+        cdopcolb = glb_codigoOperadorLiberacao;
 	}
-	else{
-		var mensagem = "liberando";
-	}
+
+	glb_codigoOperadorLiberacao = 0;
 
 	showMsgAguardo("Aguarde, "+mensagem+" o border&ocirc; ...");
 
@@ -279,9 +287,12 @@ function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
 			inconfi3: idconfi3,
 			inconfi4: idconfi4,
 			inconfi5: idconfi5,
+			inconfi6: idconfi6,
 			indentra: indentra,
 			indrestr: indrestr,
 			nrcpfcgc: nrcpfcgc,
+            cdopcoan: cdopcoan,
+            cdopcolb: cdopcolb,
 			redirect: "script_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -1077,4 +1088,37 @@ function removeAcentos(str){
 
 function removeCaracteresInvalidos(str){
 	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\!\@\$\%\*\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");				 
+}
+
+function mostraListagemRestricoes(opcao,idconfir,idconfi2,idconfi3,idconfi4,idconfi5,idconfi6,indentra,indrestr) {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando listagem ...");
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/descontos/cheques/cheques_restricoes.php",
+		dataType: "html",
+		data: {
+			cddopcao: opcao,
+			inconfir: idconfir,
+			inconfi2: idconfi2,
+			inconfi3: idconfi3,
+			inconfi4: idconfi4,
+			inconfi5: idconfi5,
+			inconfi6: idconfi6,
+			indentra: indentra,
+			indrestr: indrestr,
+			nrdconta: nrdconta,
+			nrborder: nrbordero,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divOpcoesDaOpcao2").html(response);
+		}				
+	});		
 }
