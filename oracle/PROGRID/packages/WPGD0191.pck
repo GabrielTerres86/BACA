@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --  Sistema  : PROGRID
   --  Sigla    : WPGD
   --  Autor    : Jonathan Cristiano da Silva - RKAM
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 07/06/2016
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 17/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -49,6 +49,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --              07/06/2016 - Ajustado pc_recebe_cursos_aprovados para ignorar eventos para os ministrantes
   --                           pois os mesmos não sao cadastrados no progrid, apenas na plataforma.
   --                           SD.461943 (Odirlei-AMcom)
+  --
+  --              17/11/2016 - Incluido upper na leitura da tbead_inscricao_participante.nmlogin_particip
+  --                           para garantir a busca e utilizar o index correto da tabela. SD558339 (Odirlei-AMcom)
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------
  -- Rotina para buscar o conteudo do campo com base no xml enviado
  PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML de retorno da operadora
@@ -216,7 +221,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
          dsemail_particip,
          dtadmiss
     FROM tbead_inscricao_participante
-   WHERE nmlogin_particip = pr_nomlogin;
+   WHERE upper(nmlogin_particip) = upper(pr_nomlogin);
   rw_tbeadip cr_tbeadip%ROWTYPE;
   
 
@@ -313,7 +318,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       
       -- Variavel com o caminho do arquivo xml
       vr_arquivo_xml := '/salvar/WPGD0191_'||to_char(sysdate,'yyyymmdd')||'.xml';
-    
+
       -- Buscar script para conexão Curl
       vr_script_curl := gene0001.fn_param_sistema('CRED',0,'EAD_CURSOS_CURL');
       
@@ -529,7 +534,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTANOAGE', 'N', vr_dtanoage, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DSCURSOS', 'S', vr_dscursos, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NUMHORAS', 'S', vr_numhoras, vr_dscritic);
-
+        
         --> Verificar se deve ignorar o evento
         IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
           vr_contador_coop := vr_contador_coop + 1;
@@ -741,7 +746,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTMESEVT', 'N', vr_dtmesevt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTINIEVT', 'N', vr_dtinievt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'N', vr_dtfimevt, vr_dscritic);
-
+        
         --> Verificar se deve ignorar o evento
         IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
           vr_contador_turma := vr_contador_turma + 1;
@@ -897,7 +902,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'N', vr_dtfimevt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NOMLOGIN', 'S', vr_nomlogin, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTCONINS', 'S', vr_dtconins, vr_dscritic);
-
+        
         --> Verificar se deve ignorar o evento
         IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
           vr_contador_login := vr_contador_login + 1;
@@ -1009,7 +1014,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                          ||vr_contador_login||':'
                          ||'\r\nLogin: '||vr_nomlogin;
             
-          RAISE vr_exc_saida;          
+          RAISE vr_exc_saida;
         END IF;
           
         -- Fecha o cursor

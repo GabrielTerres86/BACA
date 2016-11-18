@@ -20,6 +20,10 @@
 			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
 							para gravar log de acesso. (Jean Michel)
 														
+               16/11/2016 - Alterado para usar a agenda do ano corrente, e nao a 
+                            a do ano da agenda progrid, pois as agendas sao liberadas
+                            antes do ano acabar, assim nao exibe os eventos ainda
+                            disponiveis. SD558201 (Odirlei-AMcom)
 ..............................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -95,8 +99,6 @@ DEFINE TEMP-TABLE tt-crapedp NO-UNDO
 
 EMPTY TEMP-TABLE tt-crapedp.
 
-ASSIGN aux_dtanoage = par_dtanoage.
-IF aux_dtanoage = 0 THEN
   ASSIGN aux_dtanoage = YEAR(TODAY).
 
 ListaEad:
@@ -141,7 +143,7 @@ END.
 FOR EACH tt-crapedp NO-LOCK
     BY tt-idevento
     BY tt-cdevento:
-
+    
     tt-dsconteu = REPLACE(tt-dsconteu,'•','<br>&bull;&nbsp;').
 
     /* Cria o nó PROGRAMACAO */
