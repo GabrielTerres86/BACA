@@ -1917,6 +1917,10 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   BEGIN
     CECRED.GENE0001.pc_informa_acesso(pr_module => pr_module
                                      ,pr_action => pr_action);
+
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ''.,''';
+
   END pc_informa_acesso_progrid;
 
 END PRGD0001;
