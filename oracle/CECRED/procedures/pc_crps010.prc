@@ -4114,7 +4114,7 @@ BEGIN
                                ,pr_stprogra => pr_stprogra);
 
       -- Salvar informacoes no banco de dados
---      COMMIT;
+   COMMIT;
 
    EXCEPTION
       WHEN vr_exc_fimprg THEN
