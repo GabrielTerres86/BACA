@@ -423,7 +423,7 @@ FORM  aux_nmrescop       LABEL "Coopera."     FORMAT "x(20)"
               " > /usr/sistemas/arquivos_contabeis/ayllos/"
                             + SUBSTRING(STRING(YEAR(tt-arq-radar.dtmvtolt),"9999"),3,2)
                             + STRING(MONTH(tt-arq-radar.dtmvtolt),"99")
-                            + STRING(DAY(tt-arq-radar.dtmvtolt),"99") + "_" + STRING(glb_cdcooper,"99") + "_REPCNVFIL.txt 2>/dev/null").
+                            + STRING(DAY(tt-arq-radar.dtmvtolt),"99") + "_" + STRING(tt-arq-radar.cdcooper,"99") + "_REPCNVFIL.txt 2>/dev/null").
                         
          END.
      END.
