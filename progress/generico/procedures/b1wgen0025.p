@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 05/04/2016
+    Data    : Novembro/2007                  Ultima Atualizacao: 18/11/2016
     
     Dados referentes ao programa:
 
@@ -328,6 +328,14 @@
                            (Lucas Lunelli - [PROJ290])
                 05/04/2016 - Incluidos novos parametros na procedure
                              pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).           
+                             
+                25/07/2016 - #480602 tratada a verifica_saque para fazer a verificação do 
+                             limite da pc_obtem_saldo_dia_prog e removida a chamada da 
+                             procedure obtem-valor-limite (Carlos)
+                             
+                18/11/2016 - #559508 correção na verificação da existência do cartão
+                             magnético de operador. Quando for um cartão de operador,
+                             não consultar transferência de conta (Carlos)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -1952,56 +1960,56 @@ PROCEDURE verifica_transferencia:
         DO:
             /* Se nao exige assinatura conjunta */
             IF  aux_idastcjt = 0 THEN
-                DO:
-                    /* SALDOS */
-                    TRANS_SALDO:
-                    DO TRANSACTION ON ERROR UNDO, LEAVE:
-                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+            DO:
+				/* SALDOS */
+				TRANS_SALDO:
+				DO TRANSACTION ON ERROR UNDO, LEAVE:
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        
+					/* Utilizar o tipo de busca A, para carregar do dia anterior
+					  (U=Nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1) */ 
+					RUN STORED-PROCEDURE pc_obtem_saldo_dia_prog
+						aux_handproc = PROC-HANDLE NO-ERROR
+												(INPUT par_cdcooper,
+												 INPUT 1,     /* cdagenci */
+												 INPUT 999,   /* nrdcaixa */
+												 INPUT "996", /* cdoperad */
+												 INPUT par_nrdconta,
+												 INPUT par_dtmvtocd,
+												 INPUT "A", /* Tipo Busca */
+												 OUTPUT 0,
+												 OUTPUT "").
                 
-                        /* Utilizar o tipo de busca A, para carregar do dia anterior
-                          (U=Nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1) */ 
-                        RUN STORED-PROCEDURE pc_obtem_saldo_dia_prog
-                            aux_handproc = PROC-HANDLE NO-ERROR
-                                                    (INPUT par_cdcooper,
-                                                     INPUT 1,     /* cdagenci */
-                                                     INPUT 999,   /* nrdcaixa */
-                                                     INPUT "996", /* cdoperad */
-                                                     INPUT par_nrdconta,
-                                                     INPUT par_dtmvtocd,
-                                                     INPUT "A", /* Tipo Busca */
-                                                     OUTPUT 0,
-                                                     OUTPUT "").
-                        
-                        CLOSE STORED-PROC pc_obtem_saldo_dia_prog
-                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                        
-                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                        
-                        ASSIGN aux_cdcritic = 0
-                               aux_dscritic = ""
-                               aux_cdcritic = pc_obtem_saldo_dia_prog.pr_cdcritic 
-                                                  WHEN pc_obtem_saldo_dia_prog.pr_cdcritic <> ?
-                               aux_dscritic = pc_obtem_saldo_dia_prog.pr_dscritic
-                                                  WHEN pc_obtem_saldo_dia_prog.pr_dscritic <> ?. 
+					CLOSE STORED-PROC pc_obtem_saldo_dia_prog
+						  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
                 
-                        IF aux_cdcritic <> 0  OR 
-                           aux_dscritic <> "" THEN
-                           DO: 
-                               IF  aux_dscritic = "" THEN
-                                   ASSIGN aux_dscritic =  "Nao foi possivel carregar os saldos.".
-                                
-                               ASSIGN par_dscritic = aux_dscritic.
-                               RETURN "NOK".
-                           END.
-                    
-                        FIND FIRST wt_saldos NO-LOCK NO-ERROR.
-                        IF NOT AVAILABLE wt_saldos THEN
-                        DO:
-                            ASSIGN par_dscritic = "Saldo nao encontrado.".
-                            RETURN "NOK".
-                        END.
-                    END. 
-                END.
+					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+					ASSIGN aux_cdcritic = 0
+						   aux_dscritic = ""
+						   aux_cdcritic = pc_obtem_saldo_dia_prog.pr_cdcritic 
+											  WHEN pc_obtem_saldo_dia_prog.pr_cdcritic <> ?
+						   aux_dscritic = pc_obtem_saldo_dia_prog.pr_dscritic
+											  WHEN pc_obtem_saldo_dia_prog.pr_dscritic <> ?. 
+        
+					IF aux_cdcritic <> 0  OR 
+					   aux_dscritic <> "" THEN
+					   DO: 
+						   IF  aux_dscritic = "" THEN
+							   ASSIGN aux_dscritic =  "Nao foi possivel carregar os saldos.".
+                        
+						   ASSIGN par_dscritic = aux_dscritic.
+						   RETURN "NOK".
+					   END.
+            
+					FIND FIRST wt_saldos NO-LOCK NO-ERROR.
+					IF NOT AVAILABLE wt_saldos THEN
+					DO:
+						ASSIGN par_dscritic = "Saldo nao encontrado.".
+						RETURN "NOK".
+					END.
+				END. 
+            END.
 
             /* LIMITE */
             RUN sistema/generico/procedures/b1wgen0019.p PERSISTENT SET h-b1wgen0019.
@@ -2283,46 +2291,13 @@ PROCEDURE verifica_saque:
 
 
     /* LIMITE */
-    RUN sistema/generico/procedures/b1wgen0019.p PERSISTENT SET h-b1wgen0019.
-
-    RUN obtem-valor-limite IN h-b1wgen0019 (INPUT par_cdcooper,
-                                            INPUT 1,            /* PAC */
-                                            INPUT 999,          /* Caixa */
-                                            INPUT "996",        /* Operador */
-                                            INPUT "TAA",       /* Tela */
-                                            INPUT 4,            /* Origem - TAA */
-                                            INPUT par_nrdconta,
-                                            INPUT 1,            /* Titular */
-                                            INPUT TRUE,         /* Log */
-                                           OUTPUT TABLE tt-limite-credito,
-                                           OUTPUT TABLE tt-erro).
-
-    DELETE PROCEDURE h-b1wgen0019.
-
-
-    FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-    IF  AVAILABLE tt-erro  THEN
-        DO:
-            par_dscritic = tt-erro.dscritic.
-            RETURN "NOK".
-        END.
-
-
-    FIND FIRST tt-limite-credito NO-LOCK NO-ERROR.
-
-    IF  NOT AVAILABLE tt-limite-credito  THEN
-        DO:
-            par_dscritic = "Limite nao encontrado.".
-            RETURN "NOK".
-        END.
 
     ASSIGN par_vlsddisp = wt_saldos.vlsddisp
-           par_vllimcre = tt-limite-credito.vllimcre.
+           par_vllimcre = wt_saldos.vllimcre.
 
     /* verifica se possui saldo suficiente */
     IF  par_vldsaque > (wt_saldos.vlsddisp +
-                        tt-limite-credito.vllimcre)  THEN
+                        wt_saldos.vllimcre)  THEN
         DO:
             par_dscritic = "Saldo insuficiente".
             RETURN "NOK".
@@ -4971,44 +4946,46 @@ PROCEDURE verifica_cartao_magnetico:
                     RETURN "NOK".
                 END.
 
-            /* Verifica se a conta foi migrada para outra cooperativa */
-            FIND craptco WHERE craptco.cdcopant = crapcop.cdcooper  AND
-                               craptco.nrctaant = par_nrdconta      AND
-                               craptco.tpctatrf = 1 /* C/C */       AND
-                               craptco.flgativo = YES
-                               NO-LOCK NO-ERROR.
+            IF  aux_tptitcar <> 9 THEN
+            DO:
+              /* Verifica se a conta foi migrada para outra cooperativa */
+              FIND craptco WHERE craptco.cdcopant = crapcop.cdcooper  AND
+                                 craptco.nrctaant = par_nrdconta      AND
+                                 craptco.tpctatrf = 1 /* C/C */       AND
+                                 craptco.flgativo = YES
+                                 NO-LOCK NO-ERROR.
 
-            IF  AVAILABLE craptco  THEN
-                DO: 
-                    /* Busca a nova cooperativa */
-                    FIND crapcop WHERE crapcop.cdcooper = craptco.cdcooper
-                                       NO-LOCK NO-ERROR.
+              IF  AVAILABLE craptco  THEN
+                  DO: 
+                      /* Busca a nova cooperativa */
+                      FIND crapcop WHERE crapcop.cdcooper = craptco.cdcooper
+                                         NO-LOCK NO-ERROR.
 
-                    IF  NOT AVAIL crapcop  THEN
-                        DO:
-                            ASSIGN par_dscritic = "Cooperativa Inválida.".
-                            RETURN "NOK".
-                        END.
+                      IF  NOT AVAIL crapcop  THEN
+                          DO:
+                              ASSIGN par_dscritic = "Cooperativa Inválida.".
+                              RETURN "NOK".
+                          END.
 
-                    /* Altera a conta para o novo numero */
-                    par_nrdconta = craptco.nrdconta.
+                      /* Altera a conta para o novo numero */
+                      par_nrdconta = craptco.nrdconta.
 
 
-                    /* Se tem de/para de cartao, pega o novo sequencial do cartao */
-                    IF  craptco.nrcarant <> ""  AND
-                        craptco.nrcartao <> ""  THEN
-                        DO:
-                            DO  aux_qtcartao = 1 TO NUM-ENTRIES(craptco.nrcarant,";"):
-                                
-                                IF  aux_nrseqcar = INT(ENTRY(aux_qtcartao,craptco.nrcarant,";"))  THEN
-                                    DO:
-                                        aux_nrseqcar = INT(ENTRY(aux_qtcartao,craptco.nrcartao,";")).
-                                        LEAVE.
-                                    END.
-                            END.
-                        END.
-                END.
-
+                      /* Se tem de/para de cartao, pega o novo sequencial do cartao */
+                      IF  craptco.nrcarant <> ""  AND
+                          craptco.nrcartao <> ""  THEN
+                          DO:
+                              DO  aux_qtcartao = 1 TO NUM-ENTRIES(craptco.nrcarant,";"):
+                                  
+                                  IF  aux_nrseqcar = INT(ENTRY(aux_qtcartao,craptco.nrcarant,";"))  THEN
+                                      DO:
+                                          aux_nrseqcar = INT(ENTRY(aux_qtcartao,craptco.nrcartao,";")).
+                                          LEAVE.
+                                      END.
+                              END.
+                          END.
+                  END.
+            END.
 
             /* verifica se o sistema das 2 cooperativas em questao,
                estao com as mesmas datas de movimento para o TAA */
@@ -6275,5 +6252,4 @@ END PROCEDURE.
 
 
 /* .......................................................................... */
-
 
