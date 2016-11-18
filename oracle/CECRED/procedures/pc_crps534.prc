@@ -109,7 +109,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                31/08/2016 - Adicionar validação para o campo de CPF recebido no arquivo ser
                             diferente do CPF do titular da conta (Douglas - Chamado 476269)
 
-			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
+         10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).                            
                             
   ............................................................................ */
@@ -299,7 +299,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
    vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
    vc_cdtodascooperativas INTEGER := 0;        
-   vr_dscomand       VARCHAR2(1000);       
   
   --------------------------- ROTINAS INTERNAS ----------------------------
   
@@ -2584,7 +2583,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         vr_inpessoa    NUMBER;
         vr_dspathcop   VARCHAR2(80);
         vr_nmrelato    VARCHAR2(80);
-        vr_nmarquiv_cri VARCHAR2(4000);
         -- Informações envio de e-mail
         vr_dsmailcop   crapprm.dstexprm%TYPE;
         vr_dsassmail   VARCHAR2(100);
@@ -2829,9 +2827,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Se possuir conteudo de critica no CLOB
         IF LENGTH(vr_clobcri) > 0 THEN
-          -- Arquivo de saida
-          vr_nmarquiv_cri := TO_CHAR(vr_dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
-
           -- Busca o diretório para contabilidade
           vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
           vr_dircon := vr_dircon || vc_dircon;
@@ -2842,30 +2837,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                              ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
                                              ,pr_dtmvtolt  => vr_dtmvtolt              --> Data do movimento atual
                                              ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                             ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_nmarquiv_cri    --> Arquivo final com o path
+                                             ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_arqcon    --> Arquivo final com o path
                                              ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                              ,pr_flg_gerar => 'N'                      --> Apenas submeter
+                                             ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
+                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos                                             
                                              ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                              ,pr_des_erro  => vr_des_erro);            --> Saída com erro
-                                             
-                                             
-	                   -- Executa comando UNIX para converter arq para Dos
-                 vr_dscomand := 'ux2dos '||vr_dsdireto || '/contab/' || vr_nmarquiv_cri||' > '||
-                                            vr_dircon||'/'||vr_arqcon||' 2>/dev/null';                                           
-                                                
-                  -- Executar o comando no unix
-                  GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                                       ,pr_des_comando => vr_dscomand
-                                       ,pr_typ_saida   => vr_typ_saida
-                                       ,pr_des_saida   => vr_des_erro);
-
-                  IF vr_typ_saida = 'ERR' THEN
-                    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                              ,pr_ind_tipo_log => 2 -- Erro tratato
-                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                               || vr_cdprogra || ' --> ERRO AO COPIAR ARQUIVO ' || vr_nmarquiv || ': '
-                                                               || vr_des_erro );
-                   END IF;                                            
+                                     
                                              
         END IF;
 
@@ -2879,7 +2858,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_nmarquiv_cri || ': '
+                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_arqcon || ': '
                                                      || vr_des_erro );
         END IF;
 

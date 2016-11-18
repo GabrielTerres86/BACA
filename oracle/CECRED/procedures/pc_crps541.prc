@@ -225,7 +225,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS541(
   vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
   vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
   vc_cdtodascooperativas INTEGER := 0;  
-  vr_dscomand       VARCHAR2(1000);  
 
 BEGIN
 
@@ -990,23 +989,21 @@ BEGIN
           RAISE vr_exc_saida;
         END IF;
 
-        -- Arquivo de saida
-        vr_nmarquiv := TO_CHAR(vr_dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
-        
        -- Busca o diretório para contabilidade
         vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
         vr_dircon := vr_dircon || vc_dircon;
         vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD') ||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
-
 
         -- Chama a geracao do TXT
         GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
                                            ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
                                            ,pr_dtmvtolt  => vr_dtmvtolt              --> Data do movimento atual
                                            ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                           ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_nmarquiv    --> Arquivo final com o path
+                                           ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_arqcon    --> Arquivo final com o path
                                            ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
+                                           ,pr_dspathcop => vr_dircon
+                                           ,pr_fldoscop  => 'S'                                           
                                            ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                            ,pr_des_erro  => vr_des_erro);            --> Saída com erro
                                            
@@ -1020,30 +1017,9 @@ BEGIN
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_nmarquiv || ': '
+                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_arqcon || ': '
                                                      || vr_des_erro );
         END IF;
-
-           -- Executa comando UNIX para converter arq para Dos
-         vr_dscomand := 'ux2dos '||vr_nom_direto || '/contab/' || vr_nmarquiv||' > '||
-                                    vr_dircon||'/'||vr_arqcon||' 2>/dev/null';                                           
-                                    
-          -- Executar o comando no unix
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => vr_dscomand
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_des_erro);
-
-          IF vr_typ_saida = 'ERR' THEN
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> ERRO AO COPIAR ARQUIVO ' || vr_nmarquiv || ': '
-                                                       || vr_des_erro );
-
-          END IF;                                    
-
-
         
       END;
 
