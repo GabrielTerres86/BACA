@@ -657,8 +657,8 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
                                    tt-rel634.qttotfat = tot_qtfatint
                                    tt-rel634.vltotfat = tot_vlfatint
                                    tt-rel634.vltrfuni = (crapstn.vltrfuni * tot_qtfatint)
-                                   tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tot_qtfatint * crapthi.vltarifa)
-                                   tt-rel634.vltrfsic = (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
+                                   tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tot_qtfatint * aux_vltarfat)
+                                   tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
                                    tt-rel634.dsdianor = crapscn.dsdianor
                                    tt-rel634.nrrenorm = crapscn.nrrenorm
                                    tt-rel634.dsmeiarr = "INTERNET".
@@ -666,9 +666,10 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
                     ELSE    /* Incrementa os valores anteriores */
                         ASSIGN tt-rel634.qttotfat = tt-rel634.qttotfat + tot_qtfatint
                                tt-rel634.vltotfat = tt-rel634.vltotfat + tot_vlfatint
-                               tt-rel634.vltrfuni = tt-rel634.vltrfuni + (crapstn.vltrfuni * tot_qtfatint)
-                               tt-rel634.vlrecliq = tt-rel634.vlrecliq + (tt-rel634.vltrfuni - (tot_qtfatint * crapthi.vltarifa))
-                               tt-rel634.vltrfsic = tt-rel634.vltrfsic + (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
+                               tt-rel634.vltrfuni = (crapstn.vltrfuni * tt-rel634.qttotfat) 
+                               /* Recalcula e sobrescreve valores derivados de tarifas */
+                               tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tt-rel634.qttotfat * aux_vltarfat)
+                               tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
                 END.
 
             /* TAA */
@@ -684,7 +685,6 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
 
                     IF  NOT AVAIL tt-rel634  THEN
                         DO:
-
                             CREATE tt-rel634.
                             ASSIGN tt-rel634.nmconven = crapscn.dsnomcnv
                                    tt-rel634.cdempres = crapscn.cdempres
@@ -693,7 +693,7 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
                                    tt-rel634.vltotfat = tot_vlfattaa
                                    tt-rel634.vltrfuni = (crapstn.vltrfuni * tot_qtfattaa)
                                    tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tot_qtfattaa * crapthi.vltarifa)
-                                   tt-rel634.vltrfsic = (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
+                                   tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
                                    tt-rel634.dsdianor = crapscn.dsdianor
                                    tt-rel634.nrrenorm = crapscn.nrrenorm
                                    tt-rel634.dsmeiarr = "TAA".
@@ -701,9 +701,10 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
                     ELSE  /* Incrementa os valores anteriores */
                         ASSIGN tt-rel634.qttotfat = tt-rel634.qttotfat + tot_qtfattaa
                                tt-rel634.vltotfat = tt-rel634.vltotfat + tot_vlfattaa
-                               tt-rel634.vltrfuni = tt-rel634.vltrfuni + (crapstn.vltrfuni * tot_qtfattaa)
-                               tt-rel634.vlrecliq = tt-rel634.vlrecliq + (tt-rel634.vltrfuni - (tot_qtfattaa * crapthi.vltarifa))
-                               tt-rel634.vltrfsic = tt-rel634.vltrfsic + (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
+                               tt-rel634.vltrfuni = (crapstn.vltrfuni * tt-rel634.qttotfat) 
+                               /* Recalcula e sobrescreve valores derivados de tarifas */
+                               tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tt-rel634.qttotfat * crapthi.vltarifa)
+                               tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
                 END.
 
             /* CAIXA */
@@ -728,7 +729,7 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
                                    tt-rel634.vltotfat = tot_vlfatcxa
                                    tt-rel634.vltrfuni = (crapstn.vltrfuni * tot_qtfatcxa)
                                    tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tot_qtfatcxa * aux_vltarfat)
-                                   tt-rel634.vltrfsic = (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
+                                   tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
                                    tt-rel634.dsdianor = crapscn.dsdianor
                                    tt-rel634.nrrenorm = crapscn.nrrenorm
                                    tt-rel634.dsmeiarr = "CAIXA".
@@ -737,17 +738,16 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
                    ELSE /* Incrementa os valores anteriores */
                         ASSIGN tt-rel634.qttotfat = tt-rel634.qttotfat + tot_qtfatcxa
                                tt-rel634.vltotfat = tt-rel634.vltotfat + tot_vlfatcxa
-                               tt-rel634.vltrfuni = tt-rel634.vltrfuni + (crapstn.vltrfuni * tot_qtfatcxa)
-                               tt-rel634.vlrecliq = tt-rel634.vlrecliq + ( (crapstn.vltrfuni * tot_qtfatcxa) -
-                                                                          (tot_qtfatcxa * aux_vltarfat))
-                               tt-rel634.vltrfsic = tt-rel634.vltrfsic + (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
+                               tt-rel634.vltrfuni = (crapstn.vltrfuni * tt-rel634.qttotfat)
+                               /* Recalcula e sobrescreve valores derivados de tarifas */
+                               tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tt-rel634.qttotfat * aux_vltarfat)
+                               tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
 
                 END.
 
         END.
 
 END. /* FOR EACH craplft */
-
 
 /* Para debito aumatico SICREDI */
 FOR EACH craplcm FIELD(cdcooper cdhistor nrdocmto nrdconta cdagenci
@@ -811,7 +811,7 @@ FOR EACH craplcm FIELD(cdcooper cdhistor nrdocmto nrdconta cdagenci
                            tt-rel634.vltotfat = tot_vlfatdeb
                            tt-rel634.vltrfuni = (crapstn.vltrfuni * tot_qtfatdeb)
                            tt-rel634.vlrecliq = tt-rel634.vltrfuni - (tot_qtfatdeb * aux_vltarifa)
-                           tt-rel634.vltrfsic = (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
+                           tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
                            tt-rel634.dsdianor = crapscn.dsdianor
                            tt-rel634.nrrenorm = crapscn.nrrenorm
                            tt-rel634.dsmeiarr = "DEB.AUTOM.".
@@ -821,11 +821,10 @@ FOR EACH craplcm FIELD(cdcooper cdhistor nrdocmto nrdconta cdagenci
                        tt-rel634.vltotfat = tt-rel634.vltotfat + tot_vlfatdeb
                        tt-rel634.vltrfuni = tt-rel634.vltrfuni + (tot_qtfatdeb * crapstn.vltrfuni)
                        tt-rel634.vlrecliq = tt-rel634.vlrecliq + ((tot_qtfatdeb * crapstn.vltrfuni) - (tot_qtfatdeb * aux_vltarifa))
-                       tt-rel634.vltrfsic = tt-rel634.vltrfsic + (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
+                       tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
         END.
 
 END.
-
 
 IF glb_cdcooper <> 3 THEN DO:
 
@@ -928,7 +927,7 @@ IF glb_cdcooper <> 3 THEN DO:
                    tt-rel634.vltotfat = craplgp.vlrtotal
                    tt-rel634.vltrfuni = aux_vltargps
                    tt-rel634.vlrecliq = tt-rel634.vltrfuni - b2crapthi.vltarifa
-                   tt-rel634.vltrfsic = (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
+                   tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
                    tt-rel634.dsdianor = ""
                    tt-rel634.nrrenorm = 0
                    tt-rel634.dsmeiarr = aux_dsmeiarr.
@@ -938,7 +937,7 @@ IF glb_cdcooper <> 3 THEN DO:
                    tt-rel634.vltotfat = tt-rel634.vltotfat + craplgp.vlrtotal
                    tt-rel634.vltrfuni = tt-rel634.vltrfuni + aux_vltargps
                    tt-rel634.vlrecliq = tt-rel634.vlrecliq + (aux_vltargps - b2crapthi.vltarifa)
-                   tt-rel634.vltrfsic = tt-rel634.vltrfsic + (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
+                   tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
         END.
 
     END. /* Fim do FOR - CRAPLGP */
@@ -1047,7 +1046,7 @@ ELSE DO:
                    tt-rel634.vltotfat = craplgp.vlrtotal
                    tt-rel634.vltrfuni = aux_vltargps
                    tt-rel634.vlrecliq = tt-rel634.vltrfuni - b2crapthi.vltarifa
-                   tt-rel634.vltrfsic = (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
+                   tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq)
                    tt-rel634.dsdianor = ""
                    tt-rel634.nrrenorm = 0
                    tt-rel634.dsmeiarr = aux_dsmeiarr.
@@ -1057,7 +1056,7 @@ ELSE DO:
                    tt-rel634.vltotfat = tt-rel634.vltotfat + craplgp.vlrtotal
                    tt-rel634.vltrfuni = tt-rel634.vltrfuni + aux_vltargps
                    tt-rel634.vlrecliq = tt-rel634.vlrecliq + (aux_vltargps - b2crapthi.vltarifa)
-                   tt-rel634.vltrfsic = tt-rel634.vltrfsic + (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
+                   tt-rel634.vltrfsic = IF tt-rel634.vlrecliq < 0 THEN  tt-rel634.vltrfuni ELSE (tt-rel634.vltrfuni - tt-rel634.vlrecliq).
         END.
     END. /* Fim do FOR - CRAPLGP */
 
@@ -1227,7 +1226,6 @@ IF  MONTH(glb_dtmvtolt) <> MONTH(glb_dtmvtopr) THEN
         /* Gera o rel636 apenas na cecred */
         IF  glb_cdcooper = 3 THEN
             RUN gera-rel-mensal-cecred.
-
     END.
 
 RUN fontes/fimprg.p.
@@ -1304,7 +1302,6 @@ PROCEDURE executa-rel-mensais:
                        tot_qtfatcxa = 0
                        tot_vlfatcxa = 0.
 
-
             /** Divisao PF/PJ - Verificar Tipo Pessoa */
             FIND FIRST crapass
                  WHERE crapass.cdcooper = craplft.cdcooper
@@ -1317,7 +1314,6 @@ PROCEDURE executa-rel-mensais:
                     ASSIGN aux_inpessoa = 2.
             ELSE
                 aux_inpessoa = 1. /* Se por acaso nao encontrar ASS ... */
-
 
             IF  craplft.tpfatura <> 2  OR
                 craplft.cdempcon <> 0  THEN
@@ -1411,8 +1407,8 @@ PROCEDURE executa-rel-mensais:
                                            tt-rel635.qtfatura = tot_qtfatint
                                            tt-rel635.vltotfat = tot_vlfatint
                                            tt-rel635.vltottar = (crapstn.vltrfuni * tot_qtfatint)
-                                           tt-rel635.vlrecliq = tt-rel635.vltottar - (tot_qtfatint * crapthi.vltarifa)
-                                           tt-rel635.vltrfsic = (tt-rel635.vltottar - tt-rel635.vlrecliq)
+                                           tt-rel635.vlrecliq = tt-rel635.vltottar - (tot_qtfatint * aux_vltarfat)
+                                           tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq)
                                            tt-rel635.dsdianor = crapscn.dsdianor
                                            tt-rel635.nrrenorm = crapscn.nrrenorm
                                            tt-rel635.inpessoa = aux_inpessoa.
@@ -1426,19 +1422,21 @@ PROCEDURE executa-rel-mensais:
                                                tt-rel635.vlrliqpj = tt-rel635.vlrecliq.
                                 END.
                             ELSE DO: /* Incrementa os valores de dias anteriores */
+                            
                                 ASSIGN tt-rel635.qtfatura = tt-rel635.qtfatura + tot_qtfatint
                                        tt-rel635.vltotfat = tt-rel635.vltotfat + tot_vlfatint
-                                       tt-rel635.vltottar = tt-rel635.vltottar + (crapstn.vltrfuni * tot_qtfatint)
-                                       tt-rel635.vlrecliq = tt-rel635.vlrecliq + ((crapstn.vltrfuni * tot_qtfatint) - (tot_qtfatint * crapthi.vltarifa))
-                                       tt-rel635.vltrfsic = tt-rel635.vltrfsic + (tt-rel635.vltottar - tt-rel635.vlrecliq).
+                                       tt-rel635.vltottar = (crapstn.vltrfuni * tt-rel635.qtfatura)
+                                       /* Recalcula e sobrescreve valores derivados de tarifas */
+                                       tt-rel635.vlrecliq = tt-rel635.vltottar - (tt-rel635.qtfatura * aux_vltarfat)
+                                       tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq).
 
                                 /* Divisao PF/PJ */
                                 IF  aux_inpessoa = 1 THEN
                                     ASSIGN tt-rel635.vlrtrfpf = tt-rel635.vlrtrfpf + (crapstn.vltrfuni * tot_qtfatint)
-                                           tt-rel635.vlrliqpf = tt-rel635.vlrliqpf + ((crapstn.vltrfuni * tot_qtfatint) - (tot_qtfatint * crapthi.vltarifa)).
+                                           tt-rel635.vlrliqpf = tt-rel635.vlrliqpf + ((crapstn.vltrfuni * tot_qtfatint) - (tot_qtfatint * aux_vltarfat)).
                                 ELSE
                                     ASSIGN tt-rel635.vlrtrfpj = tt-rel635.vlrtrfpj + (crapstn.vltrfuni * tot_qtfatint)
-                                           tt-rel635.vlrliqpj = tt-rel635.vlrliqpj + ((crapstn.vltrfuni * tot_qtfatint) - (tot_qtfatint * crapthi.vltarifa)).
+                                           tt-rel635.vlrliqpj = tt-rel635.vlrliqpj + ((crapstn.vltrfuni * tot_qtfatint) - (tot_qtfatint * aux_vltarfat)).
                             END.
 
                             IF  aux_inpessoa = 1 THEN
@@ -1475,7 +1473,7 @@ PROCEDURE executa-rel-mensais:
                                            tt-rel635.vltotfat = tot_vlfattaa
                                            tt-rel635.vltottar = (crapstn.vltrfuni * tot_qtfattaa)
                                            tt-rel635.vlrecliq = tt-rel635.vltottar - (tot_qtfattaa * crapthi.vltarifa)
-                                           tt-rel635.vltrfsic = (tt-rel635.vltottar - tt-rel635.vlrecliq)
+                                           tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq)
                                            tt-rel635.dsdianor = crapscn.dsdianor
                                            tt-rel635.nrrenorm = crapscn.nrrenorm
                                            tt-rel635.inpessoa = aux_inpessoa.
@@ -1491,9 +1489,10 @@ PROCEDURE executa-rel-mensais:
                             ELSE DO: /* Incrementa os valores de dias anteriores */
                                 ASSIGN tt-rel635.qtfatura = tt-rel635.qtfatura + tot_qtfattaa
                                        tt-rel635.vltotfat = tt-rel635.vltotfat + tot_vlfattaa
-                                       tt-rel635.vltottar = tt-rel635.vltottar + (crapstn.vltrfuni * tot_qtfattaa)
-                                       tt-rel635.vlrecliq = tt-rel635.vlrecliq + ((crapstn.vltrfuni * tot_qtfattaa) - (tot_qtfattaa * crapthi.vltarifa))
-                                       tt-rel635.vltrfsic = tt-rel635.vltrfsic + (tt-rel635.vltottar - tt-rel635.vlrecliq).
+                                       tt-rel635.vltottar = (crapstn.vltrfuni * tt-rel635.qtfatura)
+                                       /* Recalcula e sobrescreve valores derivados de tarifas */
+                                       tt-rel635.vlrecliq = tt-rel635.vltottar - (tt-rel635.qtfatura * crapthi.vltarifa)
+                                       tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq).                                       
 
                                 /* Divisao PF/PJ */
                                 IF  aux_inpessoa = 1 THEN
@@ -1512,7 +1511,6 @@ PROCEDURE executa-rel-mensais:
                                 ASSIGN ger_vltrpapj[craplft.cdagenci] = 
                                                 ger_vltrpapj[craplft.cdagenci] + 
                                                 (crapstn.vltrfuni * tot_qtfattaa).
-
                     END.
 
                     /* CAIXA */
@@ -1539,7 +1537,7 @@ PROCEDURE executa-rel-mensais:
                                            tt-rel635.vltotfat = tot_vlfatcxa
                                            tt-rel635.vltottar = (crapstn.vltrfuni * tot_qtfatcxa)
                                            tt-rel635.vlrecliq = tt-rel635.vltottar - (tot_qtfatcxa * aux_vltarfat)
-                                           tt-rel635.vltrfsic = (tt-rel635.vltottar - tt-rel635.vlrecliq)
+                                           tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq)
                                            tt-rel635.dsdianor = crapscn.dsdianor
                                            tt-rel635.nrrenorm = crapscn.nrrenorm
                                            tt-rel635.inpessoa = aux_inpessoa.
@@ -1555,9 +1553,10 @@ PROCEDURE executa-rel-mensais:
                             ELSE DO: /* Incrementa os valores de dias anteriores */
                                 ASSIGN tt-rel635.qtfatura = tt-rel635.qtfatura + tot_qtfatcxa
                                        tt-rel635.vltotfat = tt-rel635.vltotfat + tot_vlfatcxa
-                                       tt-rel635.vltottar = tt-rel635.vltottar + (crapstn.vltrfuni * tot_qtfatcxa)
-                                       tt-rel635.vlrecliq = tt-rel635.vlrecliq + ((crapstn.vltrfuni * tot_qtfatcxa) - (tot_qtfatcxa * aux_vltarfat))
-                                       tt-rel635.vltrfsic = tt-rel635.vltrfsic + (tt-rel635.vltottar - tt-rel635.vlrecliq).
+                                       tt-rel635.vltottar = (crapstn.vltrfuni * tt-rel635.qtfatura)
+                                       /* Recalcula e sobrescreve valores derivados de tarifas */
+                                       tt-rel635.vlrecliq = tt-rel635.vltottar - (tt-rel635.qtfatura * aux_vltarfat)
+                                       tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq).   
 
                                 /* Divisao PF/PJ */
                                 IF  aux_inpessoa = 1 THEN
@@ -1658,7 +1657,7 @@ PROCEDURE executa-rel-mensais:
                                tt-rel635.vltotfat = tot_vlfatdeb
                                tt-rel635.vltottar = (crapstn.vltrfuni * tot_qtfatdeb)
                                tt-rel635.vlrecliq = tt-rel635.vltottar - (tot_qtfatdeb * aux_vltarifa)
-                               tt-rel635.vltrfsic = (tt-rel635.vltottar - tt-rel635.vlrecliq)
+                               tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq)
                                tt-rel635.dsdianor = crapscn.dsdianor
                                tt-rel635.nrrenorm = crapscn.nrrenorm
                                tt-rel635.inpessoa = aux_inpessoa.
@@ -1677,7 +1676,7 @@ PROCEDURE executa-rel-mensais:
                            tt-rel635.vltotfat = tt-rel635.vltotfat + tot_vlfatdeb
                            tt-rel635.vltottar = tt-rel635.vltottar + (crapstn.vltrfuni * tot_qtfatdeb)
                            tt-rel635.vlrecliq = tt-rel635.vlrecliq + ((crapstn.vltrfuni * tot_qtfatdeb) - (tot_qtfatdeb * aux_vltarifa))
-                           tt-rel635.vltrfsic = tt-rel635.vltrfsic + (tt-rel635.vltottar - tt-rel635.vlrecliq).
+                           tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq).
 
                     /* Divisao PF/PJ */
                     IF  aux_inpessoa = 1 THEN
@@ -1799,7 +1798,7 @@ PROCEDURE executa-rel-mensais:
                        tt-rel635.vltotfat = craplgp.vlrtotal
                        tt-rel635.vltottar = aux_vltargps
                        tt-rel635.vlrecliq = tt-rel635.vltottar - b2crapthi.vltarifa
-                       tt-rel635.vltrfsic = (tt-rel635.vltottar - tt-rel635.vlrecliq)
+                       tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq)
                        tt-rel635.dsdianor = ""
                        tt-rel635.nrrenorm = 0
                        tt-rel635.inpessoa = craplgp.inpesgps.
@@ -1821,7 +1820,7 @@ PROCEDURE executa-rel-mensais:
                        tt-rel635.vltotfat = tt-rel635.vltotfat + craplgp.vlrtotal
                        tt-rel635.vltottar = tt-rel635.vltottar + aux_vltargps
                        tt-rel635.vlrecliq = tt-rel635.vlrecliq + (aux_vltargps - b2crapthi.vltarifa)
-                       tt-rel635.vltrfsic = tt-rel635.vltrfsic + (tt-rel635.vltottar - tt-rel635.vlrecliq).
+                       tt-rel635.vltrfsic = IF tt-rel635.vlrecliq < 0 THEN  tt-rel635.vltottar ELSE (tt-rel635.vltottar - tt-rel635.vlrecliq).
 
                 /* Divisao PF/PJ */
                 IF  craplgp.inpesgps = 1 THEN
@@ -2485,17 +2484,18 @@ PROCEDURE gera-rel-mensal-cecred:
                                                tt-rel636.qtfatura = tot_qtfatint
                                                tt-rel636.vltotfat = tot_vlfatint
                                                tt-rel636.vltottar = (crapstn.vltrfuni * tot_qtfatint)
-                                               tt-rel636.vlrecliq = tt-rel636.vltottar - (tot_qtfatint * crapthi.vltarifa)
-                                               tt-rel636.vltrfsic = (tt-rel636.vltottar - tt-rel636.vlrecliq)
+                                               tt-rel636.vlrecliq = tt-rel636.vltottar - (tot_qtfatint * aux_vltarfat)
+                                               tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq)
                                                tt-rel636.dsdianor = crapscn.dsdianor
                                                tt-rel636.nrrenorm = crapscn.nrrenorm.
                                     END.
                                 ELSE /* Incrementa os valores de dias anteriores */
                                     ASSIGN tt-rel636.qtfatura = tt-rel636.qtfatura + tot_qtfatint
                                            tt-rel636.vltotfat = tt-rel636.vltotfat + tot_vlfatint
-                                           tt-rel636.vltottar = tt-rel636.vltottar + (crapstn.vltrfuni * tot_qtfatint)
-                                           tt-rel636.vlrecliq = tt-rel636.vlrecliq + ((crapstn.vltrfuni * tot_qtfatint) - (tot_qtfatint * crapthi.vltarifa))
-                                           tt-rel636.vltrfsic = tt-rel636.vltrfsic + (tt-rel636.vltottar - tt-rel636.vlrecliq).
+                                           tt-rel636.vltottar = (crapstn.vltrfuni * tt-rel636.qtfatura)
+                                           /* Recalcula e sobrescreve valores derivados de tarifas */
+                                           tt-rel636.vlrecliq = tt-rel636.vltottar - (tt-rel636.qtfatura * aux_vltarfat)
+                                           tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq).
                             END.
 
                         /* TAA */
@@ -2524,16 +2524,17 @@ PROCEDURE gera-rel-mensal-cecred:
                                                tt-rel636.vltotfat = tot_vlfattaa
                                                tt-rel636.vltottar = (crapstn.vltrfuni * tot_qtfattaa)
                                                tt-rel636.vlrecliq = tt-rel636.vltottar - (tot_qtfattaa * crapthi.vltarifa)
-                                               tt-rel636.vltrfsic = (tt-rel636.vltottar - tt-rel636.vlrecliq)
+                                               tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq)
                                                tt-rel636.dsdianor = crapscn.dsdianor
                                                tt-rel636.nrrenorm = crapscn.nrrenorm.
                                     END.
                                 ELSE /* Incrementa os valores de dias anteriores */
                                     ASSIGN tt-rel636.qtfatura = tt-rel636.qtfatura + tot_qtfattaa
                                            tt-rel636.vltotfat = tt-rel636.vltotfat + tot_vlfattaa
-                                           tt-rel636.vltottar = tt-rel636.vltottar + (crapstn.vltrfuni * tot_qtfattaa)
-                                           tt-rel636.vlrecliq = tt-rel636.vlrecliq + ((crapstn.vltrfuni * tot_qtfattaa) - (tot_qtfattaa * crapthi.vltarifa))
-                                           tt-rel636.vltrfsic = tt-rel636.vltrfsic + (tt-rel636.vltottar - tt-rel636.vlrecliq).
+                                           tt-rel636.vltottar = (crapstn.vltrfuni * tt-rel636.qtfatura)
+                                           /* Recalcula e sobrescreve valores derivados de tarifas */
+                                           tt-rel636.vlrecliq = tt-rel636.vltottar - (tt-rel636.qtfatura * crapthi.vltarifa)
+                                           tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq).
                             END.
 
                         /* CAIXA */
@@ -2562,16 +2563,16 @@ PROCEDURE gera-rel-mensal-cecred:
                                                tt-rel636.vltotfat = tot_vlfatcxa
                                                tt-rel636.vltottar = (crapstn.vltrfuni * tot_qtfatcxa)
                                                tt-rel636.vlrecliq = tt-rel636.vltottar - (tot_qtfatcxa * aux_vltarfat)
-                                               tt-rel636.vltrfsic = (tt-rel636.vltottar - tt-rel636.vlrecliq)
+                                               tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq)
                                                tt-rel636.dsdianor = crapscn.dsdianor
                                                tt-rel636.nrrenorm = crapscn.nrrenorm.
                                     END.
                                 ELSE /* Incrementa os valores de dias anteriores */
                                     ASSIGN tt-rel636.qtfatura = tt-rel636.qtfatura + tot_qtfatcxa
                                            tt-rel636.vltotfat = tt-rel636.vltotfat + tot_vlfatcxa
-                                           tt-rel636.vltottar = tt-rel636.vltottar + (crapstn.vltrfuni * tot_qtfatcxa)
-                                           tt-rel636.vlrecliq = tt-rel636.vlrecliq + ((crapstn.vltrfuni * tot_qtfatcxa) - (tot_qtfatcxa * aux_vltarfat))
-                                           tt-rel636.vltrfsic = tt-rel636.vltrfsic + (tt-rel636.vltottar - tt-rel636.vlrecliq).
+                                           tt-rel636.vltottar = (crapstn.vltrfuni * tt-rel636.qtfatura)
+                                           tt-rel636.vlrecliq = tt-rel636.vltottar - (tt-rel636.qtfatura * aux_vltarfat)
+                                           tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq).
                             END.
                     END.
             END. /* fim do for each craplft */
@@ -2639,7 +2640,7 @@ PROCEDURE gera-rel-mensal-cecred:
                                        tt-rel636.vltotfat = tot_vlfatdeb
                                        tt-rel636.vltottar = (crapstn.vltrfuni * tot_qtfatdeb)
                                        tt-rel636.vlrecliq = tt-rel636.vltottar - (tot_qtfatdeb * aux_vltarifa)
-                                       tt-rel636.vltrfsic = (tt-rel636.vltottar - tt-rel636.vlrecliq)
+                                       tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq)
                                        tt-rel636.dsdianor = crapscn.dsdianor
                                        tt-rel636.nrrenorm = crapscn.nrrenorm
                                        tt-rel636.dsmeiarr = "DEB. AUTOMATICO".
@@ -2649,7 +2650,7 @@ PROCEDURE gera-rel-mensal-cecred:
                                    tt-rel636.vltotfat = tt-rel636.vltotfat + tot_vlfatdeb
                                    tt-rel636.vltottar = tt-rel636.vltottar + (crapstn.vltrfuni * tot_qtfatdeb)
                                    tt-rel636.vlrecliq = tt-rel636.vlrecliq + ((tot_qtfatdeb * crapstn.vltrfuni) - (tot_qtfatdeb * aux_vltarifa))
-                                   tt-rel636.vltrfsic = tt-rel636.vltrfsic + (tt-rel636.vltottar - tt-rel636.vlrecliq).
+                                   tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq).
                     END.
             END.
 
@@ -2751,7 +2752,7 @@ PROCEDURE gera-rel-mensal-cecred:
                            tt-rel636.vltotfat = craplgp.vlrtotal
                            tt-rel636.vltottar = aux_vltargps
                            tt-rel636.vlrecliq = tt-rel636.vltottar - b2crapthi.vltarifa
-                           tt-rel636.vltrfsic = (tt-rel636.vltottar - tt-rel636.vlrecliq)
+                           tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq)
                            tt-rel636.dsdianor = ""
                            tt-rel636.nrrenorm = 0
                            tt-rel636.dsmeiarr = aux_dsmeiarr.
@@ -2761,7 +2762,7 @@ PROCEDURE gera-rel-mensal-cecred:
                            tt-rel636.vltotfat = tt-rel636.vltotfat + craplgp.vlrtotal
                            tt-rel636.vltottar = tt-rel636.vltottar + aux_vltargps
                            tt-rel636.vlrecliq = tt-rel636.vlrecliq + (aux_vltargps - b2crapthi.vltarifa)
-                           tt-rel636.vltrfsic = tt-rel636.vltrfsic + (tt-rel636.vltottar - tt-rel636.vlrecliq).
+                           tt-rel636.vltrfsic = IF tt-rel636.vlrecliq < 0 THEN  tt-rel636.vltottar ELSE (tt-rel636.vltottar - tt-rel636.vlrecliq).
 
             END. /* Fim do FOR - CRAPLGP */
 
