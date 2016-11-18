@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de Títulos
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 18/11/2016
  * --------------
  * 000: [08/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [22/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -23,6 +23,7 @@
  *
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
  * 009: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
+ * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -266,7 +267,10 @@ function liberaAnalisaBorderoDscTit(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
         cdopcolb = glb_codigoOperadorLiberacao;
 	}
 
-	glb_codigoOperadorLiberacao = 0;
+    // Reinicializa somente quando pede a senha
+    if (idconfi6 == 51) {
+        glb_codigoOperadorLiberacao = 0;
+    }
 
 	showMsgAguardo("Aguarde, "+mensagem+" o border&ocirc; ...");
 
