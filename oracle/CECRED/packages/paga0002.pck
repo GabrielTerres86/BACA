@@ -2104,7 +2104,41 @@ create or replace package body cecred.PAGA0002 is
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       pr_xml_dsmsgerr := '<dsmsgsuc>'|| vr_dscritic ||'</dsmsgsuc>'||
                          '<idastcjt>'|| vr_idastcjt ||'</idastcjt>';
-    END IF;  
+    END IF;
+    
+    -- Se for Validação de TED/Transferência, cria um registro na CRAPMVI com os valores zerados
+    -- Isto foi implementado pois o Cecred Mobile executa as transferências em lote em threads assíncronas
+    -- e, as  vezes, duas threads tentavam criar o registro ao mesmo tempo em conflito, ocorrendo erro de UK
+    IF pr_flgexecu = 0 /* Validação */  THEN
+      BEGIN
+        INSERT INTO crapmvi
+            (cdcooper
+            ,nrdconta
+            ,dtmvtolt
+            ,cdoperad
+            ,dttransa
+            ,hrtransa
+            ,vlmovweb
+            ,idseqttl
+            ,vlmovtrf
+            ,vlmovpgo
+            ,vlmovted)
+          VALUES
+            (pr_cdcooper
+            ,pr_nrdconta
+            ,pr_dtmvtolt
+            ,'996'
+            ,TRUNC(SYSDATE)
+            ,gene0002.fn_busca_time
+            ,0
+            ,pr_idseqttl
+            ,0
+            ,0
+            ,0);
+      EXCEPTION
+        WHEN OTHERS THEN NULL;
+      END;
+    END IF;
     
     pc_proc_geracao_log(pr_flgtrans => 1 /*TRUE*/);
     pr_dsretorn := 'OK';
@@ -2513,7 +2547,39 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_texto_completo => vr_xml_temp 
                            ,pr_texto_novo     => '</raiz>' 
                            ,pr_fecha_xml      => TRUE);      
-                           
+    
+    -- Cria um registro na CRAPMVI com os valores zerados
+    -- Isto foi implementado pois o Cecred Mobile executa os pagamentos em lote em threads assíncronas
+    -- e, as  vezes, duas threads tentavam criar o registro ao mesmo tempo em conflito, ocorrendo erro de UK
+    BEGIN
+      INSERT INTO crapmvi
+          (cdcooper
+          ,nrdconta
+          ,dtmvtolt
+          ,cdoperad
+          ,dttransa
+          ,hrtransa
+          ,vlmovweb
+          ,idseqttl
+          ,vlmovtrf
+          ,vlmovpgo
+          ,vlmovted)
+        VALUES
+          (pr_cdcooper
+          ,pr_nrdconta
+          ,pr_dtmvtolt
+          ,'996'
+          ,TRUNC(SYSDATE)
+          ,gene0002.fn_busca_time
+          ,0
+          ,pr_idseqttl
+          ,0
+          ,0
+          ,0);
+    EXCEPTION
+      WHEN OTHERS THEN NULL;
+    END;
+    
     pr_dsretorn := 'OK';
     
   EXCEPTION
