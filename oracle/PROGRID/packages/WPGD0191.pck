@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --  Sistema  : PROGRID
   --  Sigla    : WPGD
   --  Autor    : Jonathan Cristiano da Silva - RKAM
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 05/05/2016
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 07/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -46,6 +46,9 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --              05/05/2016 - Ajustado rotina pc_recebe_cursos_aprovados para utilizar a sequence conforme as telas de cadastro
   --                           wpgd0019 e wpgd0009 (Odirlei-AMcom)
   --
+  --              07/06/2016 - Ajustado pc_recebe_cursos_aprovados para ignorar eventos para os ministrantes
+  --                           pois os mesmos não sao cadastrados no progrid, apenas na plataforma.
+  --                           SD.461943 (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
  -- Rotina para buscar o conteudo do campo com base no xml enviado
  PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML de retorno da operadora
@@ -300,6 +303,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       vr_cdeixtem PLS_INTEGER;
       vr_nrseqtem PLS_INTEGER;
       vr_nrseqdig NUMBER := 0;
+      vr_lsigneve VARCHAR2(4000) := NULL;
+      
     BEGIN
       
       -- Variavel com o caminho do arquivo xml
@@ -308,7 +313,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
       
       -- Variavel com o caminho do arquivo xml
       vr_arquivo_xml := '/salvar/WPGD0191_'||to_char(sysdate,'yyyymmdd')||'.xml';
-    
+
       -- Buscar script para conexão Curl
       vr_script_curl := gene0001.fn_param_sistema('CRED',0,'EAD_CURSOS_CURL');
       
@@ -387,6 +392,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DSCURSOS', 'S', vr_dscursos, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NUMHORAS', 'S', vr_numhoras, vr_dscritic);
           
+        --> Verificar se evento deve ser ignorado
+        IF upper(vr_nmevento) LIKE '%CERTIFICAÇÃO MINISTRANTES PROGRID%' THEN          
+          --> Incluir na listagem de eventos para ser ignorado
+          vr_lsigneve := vr_lsigneve ||','||vr_cdevento||',';
+          vr_contador_raiz := vr_contador_raiz + 1; 
+          continue;        
+        END IF;
+        
         -- Busca Eixo Tematico para PROGRID
         IF vr_idevento = 1 THEN
             
@@ -516,7 +529,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTANOAGE', 'N', vr_dtanoage, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DSCURSOS', 'S', vr_dscursos, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NUMHORAS', 'S', vr_numhoras, vr_dscritic);
-
+        
+        --> Verificar se deve ignorar o evento
+        IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
+          vr_contador_coop := vr_contador_coop + 1;
+          continue;
+        END IF;
+        
         -- Busca Eixo Tematico para PROGRID
         IF vr_idevento = 1 THEN
             
@@ -647,6 +666,12 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'CDAGENCI', 'N', vr_cdagenci, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTANOAGE', 'N', vr_dtanoage, vr_dscritic);
 
+        --> Verificar se deve ignorar o evento
+        IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
+          vr_contador_pa := vr_contador_pa + 1;
+          continue;
+        END IF;
+        
         -- Busca as informações da CRAPEAP
         OPEN cr_crapeap(pr_idevento => vr_idevento,
                         pr_cdevento => vr_cdevento,
@@ -716,7 +741,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTMESEVT', 'N', vr_dtmesevt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTINIEVT', 'N', vr_dtinievt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'N', vr_dtfimevt, vr_dscritic);
-
+        
+        --> Verificar se deve ignorar o evento
+        IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
+          vr_contador_turma := vr_contador_turma + 1;
+          continue;
+        END IF;
+        
         -- Busca as informações da CRAPADP
         OPEN  cr_crapadp(pr_idevento => vr_idevento,
                          pr_cdevento => vr_cdevento,
@@ -866,7 +897,13 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTFIMEVT', 'N', vr_dtfimevt, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'NOMLOGIN', 'S', vr_nomlogin, vr_dscritic);
         pc_busca_conteudo_campo(vr_xml, vr_nmtagaux||'DTCONINS', 'S', vr_dtconins, vr_dscritic);
-
+        
+        --> Verificar se deve ignorar o evento
+        IF instr(vr_lsigneve,','||vr_cdevento||',') > 0 THEN
+          vr_contador_login := vr_contador_login + 1;
+          continue;
+        END IF;
+        
         -- Busca as informações da TBEAD_INSCRICAO_PARTICIPANTE
         OPEN  cr_tbeadip(pr_nomlogin => vr_nomlogin);                 
         FETCH cr_tbeadip INTO rw_tbeadip;
@@ -972,7 +1009,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
                          ||vr_contador_login||':'
                          ||'\r\nLogin: '||vr_nomlogin;
             
-          RAISE vr_exc_saida;          
+          RAISE vr_exc_saida;
         END IF;
           
         -- Fecha o cursor
