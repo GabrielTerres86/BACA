@@ -479,7 +479,7 @@
 
 			   24/08/2016 - Ajuste para passar corretamente o nome da tabela a se verificar o lock 
 						   (Adriano - SD 511318 ).
-							
+			
 			   21/10/2016 - Incluir o historico 384	na listagem dos historicos para verificacao do 
 			                saldo disponivel (Renato Darosci - SD542195).
 
@@ -589,7 +589,8 @@ PROCEDURE p_atualiza_avs:
                             " Banco/Caixa: " + STRING(tel_cdbccxlt,"999")        + 
                             " >> log/landpv.log").
 
-                     ASSIGN glb_cdcritic = 0.
+                     ASSIGN glb_cdcritic = 0
+					        glb_dscritic = "".
                      NEXT.
                   END.
            END.
@@ -641,6 +642,7 @@ PROCEDURE p_atualiza_avs:
                                END.
                                      
                                glb_cdcritic = 0. 
+							   glb_dscritic = "". 
 
                                IF   KEYFUNCTION(LASTKEY) = "END-ERROR" OR
                                     aux_confirma <> "S"              THEN
@@ -793,7 +795,8 @@ PROCEDURE p_atualiza_avs:
 
                     END.
                                      
-                    ASSIGN glb_cdcritic = 0. 
+                    ASSIGN glb_cdcritic = 0
+					       glb_dscritic = "". 
 
                     IF   KEYFUNCTION(LASTKEY) = "END-ERROR"   THEN
                          RETURN "NOK".
@@ -852,7 +855,8 @@ PROCEDURE p_atualiza_avs:
                                 
                      END.        
 
-                     ASSIGN glb_cdcritic = 0. 
+                     ASSIGN glb_cdcritic = 0
+					        glb_dscritic = "". 
 
                      IF   KEYFUNCTION(LASTKEY) = "END-ERROR"   OR
                           aux_confirma <> "S" THEN
@@ -1127,6 +1131,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                            BELL.
                            MESSAGE glb_dscritic.
                            glb_cdcritic = 0.
+						   glb_dscritic = "".
                        END.
                   
                   UPDATE SKIP(1)
@@ -1176,7 +1181,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
              aux_vlsdblpr = 0             aux_vlsdblfp = 0
              aux_nrtrfcta = 0             glb_cdcritic = 0
              tel_vlcompel = 0             tel_dsdocmc7 = ""
-             tel_nrautdoc = 0             aux_flchcoop = NO.
+             tel_nrautdoc = 0             aux_flchcoop = NO
+			 glb_dscritic = "".
       
       IF   tel_cdhistor <> ant_cdhistor OR
            tel_nrdctabb <> ant_nrdctabb OR
@@ -1268,6 +1274,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                        " Deseja continuar?"
                                        UPDATE aux_confirma.
                                glb_cdcritic = 0. 
+							   glb_dscritic = "".
                                LEAVE.
                             END.
 
@@ -1293,6 +1300,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                   MESSAGE "Cheque DEVOLVIDO e da COOPERATIVA?" 
                           UPDATE aux_flchcoop.
                   glb_cdcritic = 0. 
+				  glb_dscritic = "".
                   LEAVE.
                END.
   
@@ -1924,6 +1932,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  BELL.
                                  MESSAGE glb_dscritic.
                                  glb_cdcritic = 0.
+								 glb_dscritic = "".
                                  UNDO INICIO, NEXT INICIO.
                              END.
                     END.
@@ -2054,6 +2063,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
                aux_nrdconta = aux_nrtrfcta.
                glb_cdcritic = 0.
+			   glb_dscritic = "".
            END.
 
       ASSIGN tel_nrautdoc = 0.
@@ -2162,7 +2172,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                   RUN fontes/critic.p.
                   BELL.
                   MESSAGE glb_dscritic.
-                  ASSIGN glb_cdcritic = 0.
+                  ASSIGN glb_cdcritic = 0
+				         glb_dscritic = "".
               END.    
           
          UPDATE tel_vlcompel WITH FRAME f_compel
@@ -2186,6 +2197,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                      BELL.
                      MESSAGE glb_dscritic.
                      ASSIGN glb_cdcritic = 0
+							glb_dscritic = ""
                             tel_dsdocmc7 = "".
                  END.
       
@@ -2497,7 +2509,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
            DO:
                ASSIGN aux_vlttcomp = 0
                       aux_vlrdifer = 0 
-                      glb_cdcritic = 0.
+                      glb_cdcritic = 0
+					  glb_dscritic = "".
                
                HIDE MESSAGE NO-PAUSE.
                
@@ -2558,7 +2571,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
         DO: /*   F4 OU FIM   */
             /** Magui abandonar se existe cheques **/
             ASSIGN aux_canclchq = "N"
-                   glb_cdcritic = 0.
+                   glb_cdcritic = 0
+				   glb_dscritic = "".
             FIND FIRST w-compel NO-LOCK NO-ERROR.
             
             IF   AVAILABLE w-compel   THEN 
@@ -2590,7 +2604,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
             RETURN.  /* Volta pedir a opcao para o operador */
         END.    
-
+        
         /* Historicos de pagamento de emprestimo */
         IF CAN-DO("275,394,428,384",STRING(tel_cdhistor)) THEN
           DO:
@@ -2675,6 +2689,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                    END.
          ELSE
               ASSIGN glb_cdcritic = 0
+					 glb_dscritic = ""
                      aux_flgerros = FALSE.
          
          LEAVE.
@@ -2874,6 +2889,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                         
                                       IF aux_devchqtic THEN
                                           ASSIGN glb_cdcritic = 0
+												 glb_dscritic = ""
                                                  aux_cdalinea = 35
                                                  aux_indevchq = 1.
 
@@ -2933,7 +2949,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                                 UNDO INICIO, NEXT INICIO.
                                             END.
                                        ELSE
-                                          ASSIGN glb_cdcritic = 0.
+                                          ASSIGN glb_cdcritic = 0
+										         glb_dscritic = "".
 
                                        IF  crapfdc.incheque = 1   THEN
                                            aux_indevchq = 1.
@@ -3145,6 +3162,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                       
                                       IF aux_devchqtic THEN
                                           ASSIGN glb_cdcritic = 0
+												 glb_dscritic = ""
                                                  aux_cdalinea = 35
                                                  aux_indevchq = 1.
 
@@ -3204,7 +3222,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                                   UNDO INICIO, NEXT INICIO.
                                               END.
                                          ELSE
-                                            ASSIGN glb_cdcritic = 0.
+                                            ASSIGN glb_cdcritic = 0
+												   glb_dscritic = "".
 
                                          IF   crapfdc.incheque = 1 THEN
                                               aux_indevchq = 3.
@@ -3382,6 +3401,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                       
                                       IF aux_devchqtic THEN
                                           ASSIGN glb_cdcritic = 0
+											     glb_dscritic = ""
                                                  aux_cdalinea = 35
                                                  aux_indevchq = 1.
 
@@ -3474,7 +3494,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                                   UNDO INICIO, NEXT INICIO.
                                               END.
                                          ELSE
-                                              glb_cdcritic = 0.
+                                              ASSIGN glb_cdcritic = 0
+											         glb_dscritic = "".
                                      END.
                                  END.
                             ELSE
@@ -3707,7 +3728,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                  UNDO INICIO, NEXT INICIO.
                              END.
                         ELSE
-                             glb_cdcritic = 0.
+                             ASSIGN glb_cdcritic = 0
+									glb_dscritic = "".
 
                         FIND crapsld WHERE crapsld.cdcooper = glb_cdcooper AND
                                            crapsld.nrdconta = aux_nrdconta
@@ -4244,14 +4266,16 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                        ELSE
                             DO:
                                 glb_cdcritic = 0.
+								glb_dscritic = "".
                                 LEAVE.
                             END.
 
-                  ASSIGN glb_cdcritic = 0. /*0*/
+                  ASSIGN glb_cdcritic = 0 /*0*/
+				         glb_dscritic = "".
                   LEAVE.
 
                END. /* End DO...TO */
-
+               
                IF glb_cdcritic > 0 THEN
                   UNDO, NEXT INICIO.
 
@@ -4265,6 +4289,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                            NO-LOCK NO-ERROR.
 
                         glb_cdcritic = 0.
+						glb_dscritic = "".
                         NEXT-PROMPT tel_cdhistor WITH FRAME f_landpv.
                         UNDO, NEXT INICIO.
 
@@ -4424,7 +4449,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                     LEAVE.
                                  END.
                            ELSE
-                               ASSIGN glb_cdcritic = 0.
+                               ASSIGN glb_cdcritic = 0
+							          glb_dscritic = "".
 
                            LEAVE.
                            
@@ -4525,6 +4551,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                 TRIM(STRING(aux_sldesblo,"zzz,zz9.99")).*/
                                 MESSAGE glb_dscritic.
                                 glb_cdcritic = 0.
+								glb_dscritic = "".
                                 PAUSE(3) NO-MESSAGE. 
                                 NEXT-PROMPT tel_vllanmto 
                                        WITH FRAME f_landpv.
@@ -4559,7 +4586,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                        DO:                               
                                            glb_cdcritic = 77.
                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT.
+                                           NEXT.                                                             
                                        END.                              
                                    ELSE                                  
                                    DO:                                   
@@ -4567,7 +4594,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                       LEAVE.                             
                                    END.                                  
                              ELSE                                        
-                                 ASSIGN glb_cdcritic = 0.                
+                                 ASSIGN glb_cdcritic = 0
+								        glb_dscritic = "".
 
                              LEAVE.                                      
 
@@ -4677,7 +4705,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                              WITH FRAME f_landpv.
                                  UNDO, NEXT INICIO.
                              END.        
-
+        
                         /* Se for debito e pagamento seja menor que data atual */
                         IF aux_indebcre = "D"                   AND
                            tt-dados-epr.dtdpagto < tel_dtmvtolt THEN
@@ -4718,18 +4746,18 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                                         WHEN pc_efetiva_pag_atraso_tr.pr_cdcritic <> ?
                                       aux_dscritic = pc_efetiva_pag_atraso_tr.pr_dscritic
                                                         WHEN pc_efetiva_pag_atraso_tr.pr_dscritic <> ?.
-            
+
                                IF   aux_cdcritic <> 0   OR
                                     aux_dscritic <> ""  THEN
-                             DO:
+                                    DO:
                                         ASSIGN glb_dscritic = aux_dscritic.
 
-                                 NEXT-PROMPT tel_cdhistor 
-                                             WITH FRAME f_landpv.
-                                 UNDO, NEXT INICIO.
-                             END.
+                                        NEXT-PROMPT tel_cdhistor 
+                                                    WITH FRAME f_landpv.
+                                        UNDO, NEXT INICIO.
+                                    END.
                            END.
-
+                          
                         ASSIGN his_vlsdeved = tt-dados-epr.vlsdeved.
 
                         IF  (tel_cdhistor = 275 OR tel_cdhistor = 394) AND
@@ -4765,6 +4793,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                   END.
 
                             glb_cdcritic = 0.
+							glb_dscritic = "".
                             LEAVE.
 
                         END. /* END DO  aux_contador = 1 TO 10: */
@@ -5295,10 +5324,11 @@ PROCEDURE gera_lancamentos_craplci_credito:
                           crablot.nrdolote = 10006  
                           crablot.tplotmov = 29.
                 END.
-                ASSIGN glb_cdcritic = 0.
+                ASSIGN glb_cdcritic = 0
+				       glb_dscritic = "".
        LEAVE.
    END.  /*  Fim do DO...TO  */
-
+   
    IF glb_cdcritic <> 0 THEN
       RETURN.
 
@@ -5382,10 +5412,11 @@ PROCEDURE gera_lancamentos_craplci_debito:
                           crablot.nrdolote = 10006  
                           crablot.tplotmov = 29.
                 END.
-                   ASSIGN glb_cdcritic = 0.
+       ASSIGN glb_cdcritic = 0
+	          glb_dscritic = "".
        LEAVE.
    END.  /*  Fim do DO...TO  */
-
+   
    IF glb_cdcritic <> 0 THEN
       RETURN.
 
