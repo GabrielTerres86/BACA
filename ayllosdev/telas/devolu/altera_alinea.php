@@ -32,10 +32,6 @@
 	$nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
 	$cdalinea = (isset($_POST['cdalinea'])) ? $_POST['cdalinea'] : 0;
 	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-	
 	// Monta o xml dinâmico de acordo com a operação
 	$xml = '';
 	$xml .= '<Root>';
