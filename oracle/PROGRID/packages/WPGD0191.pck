@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --  Sistema  : PROGRID
   --  Sigla    : WPGD
   --  Autor    : Jonathan Cristiano da Silva - RKAM
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 07/06/2016
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 17/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -49,6 +49,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
   --              07/06/2016 - Ajustado pc_recebe_cursos_aprovados para ignorar eventos para os ministrantes
   --                           pois os mesmos não sao cadastrados no progrid, apenas na plataforma.
   --                           SD.461943 (Odirlei-AMcom)
+  --
+  --              17/11/2016 - Incluido upper na leitura da tbead_inscricao_participante.nmlogin_particip
+  --                           para garantir a busca e utilizar o index correto da tabela. SD558339 (Odirlei-AMcom)
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------
  -- Rotina para buscar o conteudo do campo com base no xml enviado
  PROCEDURE pc_busca_conteudo_campo(pr_retxml    IN OUT NOCOPY XMLType,    --> XML de retorno da operadora
@@ -216,7 +221,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0191 IS
          dsemail_particip,
          dtadmiss
     FROM tbead_inscricao_participante
-   WHERE nmlogin_particip = pr_nomlogin;
+   WHERE upper(nmlogin_particip) = upper(pr_nomlogin);
   rw_tbeadip cr_tbeadip%ROWTYPE;
   
 
