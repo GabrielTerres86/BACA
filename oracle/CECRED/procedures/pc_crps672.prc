@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 01/11/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 11/11/2016
 
        Dados referentes ao programa:
 
@@ -95,6 +95,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
 
 				   01/11/2016 - Ajustes quando ocorre integracao de cartao via Upgrade/Downgrade.
                                 (Chamado 532712) - (Fabricio)
+                                
+                   11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
+                                para que os cartões solicitados como reposição também tenham a mesma
+                                flag de primeiro cartão (Douglas - Chamado 499054 / 541033)
     ............................................................................ */
 
     DECLARE
@@ -314,6 +318,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                   pr_nrdconta IN crawcrd.nrdconta%TYPE,
                                   pr_cdadmcrd IN crawcrd.cdadmcrd%TYPE) IS
       SELECT pcr.flgprcrd
+            ,pcr.nrcpftit
         FROM crawcrd pcr
        WHERE pcr.cdcooper = pr_cdcooper AND
              pcr.nrdconta = pr_nrdconta AND
@@ -1985,7 +1990,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                            pr_cdadmcrd => rw_crapacb.cdadmcrd);
                   FETCH cr_crawcrd_flgprcrd INTO rw_crawcrd_flgprcrd;
                   IF cr_crawcrd_flgprcrd%FOUND THEN
-                     vr_flgprcrd := 0; -- Não é o primeiro
+                    -- Verificar se o CPF do titular do primeiro cartão é o mesmo que esta sendo validado
+                    IF rw_crawcrd_flgprcrd.nrcpftit = TO_NUMBER(substr(vr_des_text,95,15)) THEN
+                      vr_flgprcrd := 1; -- É o primeiro cartão Bancoob
+                    ELSE
+                      vr_flgprcrd := 0; -- Não é o primeiro
+                    END IF;
                   ELSE
                      vr_flgprcrd := 1; -- É o primeiro cartão Bancoob
                   END IF;

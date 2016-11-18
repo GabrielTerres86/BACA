@@ -31,6 +31,9 @@ BEGIN
 				             pois estava causando problemas no layout do arquivo.
 							 Heitor (Mouts) - Chamado 534526
 
+				17/11/2016 - Melhorar mensagem de erro retornada no e-mail referente ao UPLOAD de 
+                             arquivos para a PG. Heitor (Mouts) - Chamado 546884
+
   .......................................................................... */
 
   DECLARE
@@ -1103,7 +1106,7 @@ BEGIN
                                       ,pr_cdprogra        => vr_cdprogra
                                       ,pr_des_destino     => vr_des_destino
                                       ,pr_des_assunto     => 'Erro ao transmitir Arquivo PG '
-                                      ,pr_des_corpo       => 'Erro ao transmitir Arquivo PG - ' || rw_crapcop.nmrescop
+                                      ,pr_des_corpo       => 'Erro ao transmitir Arquivo PG - ' || rw_crapcop.nmrescop || chr(13) || vr_erro_envio
                                       ,pr_des_anexo       => NULL
                                       ,pr_des_erro        => vr_dscritic);
 

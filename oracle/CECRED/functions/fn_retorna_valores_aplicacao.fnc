@@ -5,7 +5,7 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
                                                                ,pr_nraplica IN crapadi.nraplica%TYPE
                                                                ,pr_tpproapl IN crapadi.tpproapl%TYPE) RETURN VARCHAR2 IS
 
-  /**************************************************************************************************************************/
+  /**********FUNCTION UTLIZADA NO BI, ANTES DE MEXER FALAR COM JULIANA, GUILHERME, GIOVANI OU VANESSA******************************************/
 
   -- Programa: fn_retorna_valores_aplicacao
   -- Sistema : Conta-Corrente - Cooperativa de Credito
@@ -16,7 +16,7 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   -- Dados referentes ao programa:
 
   -- Frequencia : A view para calculo de saldo de aplicacao que retorna informacoes para o BI utiliza esta function
-  -- Objetivo   : Retornar os registros de saldo de aplicacoes vinculadas a aditivos de empr?stimos.
+  -- Objetivo   : Retornar os registros de saldo de aplicacoes vinculadas a aditivos de empréstimos.
   --
   -- Par?metros : pr_cdcooper: Codigo da Cooperativa
   --              pr_nrdconta: Numero da Conta
@@ -27,7 +27,8 @@ create or replace function cecred.fn_retorna_valores_aplicacao (pr_cdcooper IN c
   --              pr_tpaplica: Tipo de Aplicacao
   --              pr_tpaplrdc: Tipo do Produto
   --
-  -- Alteracoes:
+  -- Alteracoes: 17/11/2016 -  Correção do campo pr_tpproapl (1 - NOVO / 2 - ANTIGO ) era ((2 - NOVO / 1 - ANTIGO )
+  --                           foi criado invertido, sendo assim não trazia as informações SD555414- Vanessa Klein
   --
   -- .............................................................................
 
@@ -246,8 +247,8 @@ BEGIN
     vr_nrdconta := pr_nrctagar;
   END IF;
 
-  -- Verifica tipo de aplicacao (1 - ANTIGO / 2 - NOVO)
-  IF pr_tpproapl = 1 THEN -- Consulta de antigas aplicacoes
+  -- Verifica tipo de aplicacao (1 - NOVO / 2 - ANTIGO )
+  IF pr_tpproapl = 2 THEN -- Consulta de antigas aplicacoes
     
     -- Consulta aplicacao antiga
     OPEN cr_craprda(pr_cdcooper => pr_cdcooper
@@ -462,7 +463,7 @@ BEGIN
 
       END IF;
 
-  ELSIF pr_tpproapl = 2 THEN -- Consulta de novas aplicacoes
+  ELSIF pr_tpproapl = 1 THEN -- Consulta de novas aplicacoes
 
     -- Consulta aplicacao nova
     OPEN cr_craprac(pr_cdcooper => pr_cdcooper
@@ -541,5 +542,5 @@ BEGIN
   RETURN vr_dscprodu || '|' || (NVL(ROUND(vr_vlsldapl,2),'0') || '|' || NVL(ROUND(vr_vlsdrdca,2),'0') || '|' || NVL(ROUND(vr_vlsldrgt,2),'0')) || '|' || TO_CHAR(vr_dtmvtolt) || '|' || TO_CHAR(vr_dtvencto);
 
 end fn_retorna_valores_aplicacao;
-/
+
 
