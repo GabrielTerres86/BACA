@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 15/02/2016
+   Data    : Outubro/91.                         Ultima atualizacao: 17/11/2016
 
    Dados referentes ao programa:
 
@@ -56,6 +56,9 @@
                15/02/2016 - Inclusao do parametro conta na chamada da
                             carrega_dados_tarifa_cobranca. (Jaison/Marcos)
 
+			   17/11/2016 - Ajuste para retirar condicao que trata o formato
+						    a ser utilizado para apresentar o valor do lancamento
+							(Adriano - SD 548762).
                
 ............................................................................. */
 
@@ -316,11 +319,6 @@ DO WHILE TRUE:
        ELSE
             tel_dshistor = craphis.dshistor.
 
-       IF   craplau.tpdvalor = 1   THEN
-            tel_vllanaut = STRING(craplau.vllanaut,"zzz,zz9.99").
-       ELSE
-            tel_vllanaut = STRING(craplau.vllanaut,"z,zz9.9999").
-
        IF   CAN-DO("21,26,521,526",STRING(craplau.cdhistor))   THEN
             tel_nrdocmto = STRING(craplau.nrdocmto,"zzzzz,zz9,9").
        ELSE
@@ -331,6 +329,7 @@ DO WHILE TRUE:
                                   15,11).
 
        ASSIGN tel_dtmvtopg = STRING(craplau.dtmvtopg,"99/99/99")
+			  tel_vllanaut = STRING(craplau.vllanaut,"zzz,zz9.99")
               tel_nrconven = 0
               tel_dtmvtolt = craplau.dtmvtolt
               tel_cdagenci = craplau.cdagenci
