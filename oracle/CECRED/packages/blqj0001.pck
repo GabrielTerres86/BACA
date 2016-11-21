@@ -248,7 +248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -- Fechar o cursor
         CLOSE cr_nrdconta;
       
-      ELSE
+      ELSIF cr_nrcpfcgc%NOTFOUND THEN
         -- Retorna a informação de cooperado não encontrado
         vr_nmprimtl := 'COOPERADO NAO ENCONTRADO';
         vr_nrcpfcgc := NULL;
