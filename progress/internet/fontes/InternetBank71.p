@@ -5,7 +5,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jorge
-   Data    : Outubro/2011                        Ultima atualizacao: 14/11/2013
+   Data    : Outubro/2011                        Ultima atualizacao: 17/11/2016
 
    Dados referentes ao programa:
 
@@ -14,6 +14,9 @@
    
    Alteracoes: 14/11/2013 - Retornar qtd de msg nao lidas quando a opcao for
                             leitura das mensagens (David).
+
+               17/11/2016 - M172 Atualizacao Telefone - Gerar log item na
+                            leitura das mensagens (Guilherme/SUPERO)
                             
 ..............................................................................*/
     
@@ -48,6 +51,9 @@ DEF VAR aux_retrerro AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsassunt AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsasnlid AS CHAR                                           NO-UNDO.
 
+DEF VAR aux_dtdmensg LIKE crapmsg.dtdmensg                             NO-UNDO.
+DEF VAR aux_dsdassun LIKE crapmsg.dsdassun                             NO-UNDO.
+
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
 ASSIGN aux_dstransa = "Acesso ao servico de mensagens. " + 
@@ -69,7 +75,7 @@ IF  par_iddopcao = 0 THEN
     DO:
         ASSIGN aux_dstransa = "Quantidade Mensagens".
         RUN quantidade-mensagens IN h-b1wgen0116 (INPUT par_cdcooper, 
-    	                                          INPUT par_nrdconta,
+                                                      INPUT par_nrdconta,
                                                   INPUT par_idseqttl,
                                                   INPUT par_iddmensg,
                                                   INPUT par_nrregist, 
@@ -82,7 +88,7 @@ ELSE IF par_iddopcao = 1 THEN
     DO:
         ASSIGN aux_dstransa = "Listar Mensagens".
         RUN listar-mensagens IN h-b1wgen0116 (INPUT par_cdcooper, 
-	                                          INPUT par_nrdconta,
+                                                  INPUT par_nrdconta,
                                               INPUT par_idseqttl,
                                               INPUT par_iddmensg,
                                               INPUT par_nrregist, 
@@ -95,6 +101,9 @@ ELSE IF par_iddopcao = 1 THEN
 ELSE IF par_iddopcao = 2 THEN
     DO:
         ASSIGN aux_dstransa = "Ler Mensagem".
+        ASSIGN aux_dsdassun = ""
+               aux_dtdmensg = ?.
+
         RUN ler-mensagem  IN h-b1wgen0116 (INPUT par_cdcooper, 
                                            INPUT par_nrdconta,
                                            INPUT par_idseqttl,
@@ -103,11 +112,16 @@ ELSE IF par_iddopcao = 2 THEN
                                           OUTPUT aux_dsasnlid,
                                           OUTPUT TABLE tt-mensagens,
                                           OUTPUT TABLE tt-erro).
+        FIND FIRST tt-mensagens
+             WHERE tt-mensagens.nrdmensg = par_nrdmensg
+           NO-LOCK NO-ERROR.
+        ASSIGN aux_dsdassun = tt-mensagens.dsdassun
+               aux_dtdmensg = tt-mensagens.dtdmensg.
     END.
 ELSE IF par_iddopcao = 3 THEN
     DO:
         ASSIGN aux_dstransa = "Excluir Mensagem".
-	    RUN excluir-mensagem in h-b1wgen0116 (INPUT par_cdcooper, 
+            RUN excluir-mensagem in h-b1wgen0116 (INPUT par_cdcooper, 
                                               INPUT par_nrdconta,
                                               INPUT par_nrdmensg,
                                              OUTPUT aux_retrerro).
@@ -205,24 +219,40 @@ PROCEDURE proc_geracao_log:
     
     RUN sistema/generico/procedures/b1wgen0014.p PERSISTENT 
         SET h-b1wgen0014.
-        
-    IF  VALID-HANDLE(h-b1wgen0014)  THEN
-        DO:
-            RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
-                                          INPUT "996",
-                                          INPUT aux_dscritic,
-                                          INPUT "INTERNET",
-                                          INPUT aux_dstransa,
-                                          INPUT TODAY,
-                                          INPUT par_flgtrans,
-                                          INPUT TIME,
-                                          INPUT par_idseqttl,
-                                          INPUT "INTERNETBANK",
-                                          INPUT par_nrdconta,
-                                          OUTPUT aux_nrdrowid).
-                                                            
-            DELETE PROCEDURE h-b1wgen0014.
+
+    IF  VALID-HANDLE(h-b1wgen0014)  THEN DO:
+        RUN gera_log IN h-b1wgen0014 (INPUT par_cdcooper,
+                                      INPUT "996",
+                                      INPUT aux_dscritic,
+                                      INPUT "INTERNET",
+                                      INPUT aux_dstransa,
+                                      INPUT TODAY,
+                                      INPUT par_flgtrans,
+                                      INPUT TIME,
+                                      INPUT par_idseqttl,
+                                      INPUT "INTERNETBANK",
+                                      INPUT par_nrdconta,
+                                     OUTPUT aux_nrdrowid).
+
+        /** Se for Leitura de Msg, gera log do item */
+        IF  par_iddopcao = 2 THEN DO:
+
+            RUN gera_log_item IN h-b1wgen0014
+                          (INPUT aux_nrdrowid,
+                           INPUT "Assunto",
+                           INPUT "",
+                           INPUT aux_dsdassun).
+
+            RUN gera_log_item IN h-b1wgen0014
+                          (INPUT aux_nrdrowid,
+                           INPUT "Data Mensagem",
+                           INPUT "",
+                           INPUT aux_dtdmensg).
+
         END.
+
+        DELETE PROCEDURE h-b1wgen0014.
+    END.
     
 END PROCEDURE.
 

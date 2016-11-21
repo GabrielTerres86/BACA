@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 01/12/2015
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -21,7 +21,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   --                            fn_situacao_senha. (Jorge/David)
   --
   --               12/04/2016 - Incluido rotina PC_GERA_LOG_OPE_CARTAO (Andrino - Projeto 290
-  --                            Caixa OnLine) 
+  --                            Caixa OnLine)
+  --
+  --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -478,6 +481,29 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                      pr_tpcartao OUT tbcrd_log_operacao.tpcartao%TYPE, -- Tipo de cartao
                                      pr_dscritic OUT varchar2); -- Descricao do erro quando houver
 
+  PROCEDURE pc_atualiz_data_manut_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                      ,pr_cdcritic OUT INTEGER
+                                      ,pr_dscritic OUT VARCHAR2);
+
+  PROCEDURE pc_verifica_atualiz_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                    ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                                    ,pr_cdcritic OUT INTEGER
+                                    ,pr_dscritic OUT VARCHAR2
+                                    ,pr_atualiza OUT VARCHAR2              --> OK ou NOK
+                                    ,pr_dsnrfone OUT VARCHAR2              --> Nr Telefone Atual
+                                    ,pr_qtmeatel OUT INTEGER               --> Qtde Meses Atualizacao Telefone
+                                    );
+
+  PROCEDURE pc_ib_verif_atualiz_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                    ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                                    ,pr_inpessoa IN crapttl.inpessoa%TYPE  --> Indicador PF/PJ
+                                    ,pr_cdcritic OUT INTEGER
+                                    ,pr_dscritic OUT VARCHAR2
+                                    );
+
 
 END CADA0004;
 /
@@ -488,7 +514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/07/2016
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 14/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -519,7 +545,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                            desta package.(Carlos Rafael Tanholi).    
   --
   --               14/07/2016 - Correcao na procedure pc_envia_email_alerta sobre o cursor da 
-  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).             
+  --                            craptab que estava com a logica errada. (Carlos Rafael Tanholi).
+  --
+  --               14/11/2016 - M172 - Atualização Telefone no Auto Atendimento (Guilherme/SUPERO)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -8237,6 +8266,591 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     WHEN OTHERS THEN
       pr_dscritic := 'Não foi possivel buscar dados pc_busca_qtd_entrega_talao: '||SQLERRM;
   END pc_busca_qtd_entrega_talao;
+
+  PROCEDURE pc_atualiz_data_manut_fone
+                        ( pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                         ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                         ,pr_cdcritic OUT INTEGER
+                         ,pr_dscritic OUT VARCHAR2) IS
+  /* ..........................................................................
+    --
+    --  Programa : pc_atualiz_data_manut_fone
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Guilherme/SUPERO
+    --  Data     : Novembro/2016.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Atualizar a Data de Atualização de Telefone da Conta/Cooperado
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    ---------------> CURSORES <----------------
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    CURSOR cr_crapass (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE) IS 
+      SELECT ass.inpessoa
+        FROM crapass ass
+       WHERE ass.cdcooper = p_cdcooper
+         AND ass.nrdconta = p_nrdconta;
+
+    --------------> Variaveis <----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    vr_exc_erro EXCEPTION;
+    vr_inpessoa INTEGER;
+    
+  BEGIN
   
+    OPEN cr_crapass(p_cdcooper => pr_cdcooper
+                   ,p_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO vr_inpessoa;
+    -- Se não encontrar
+    IF cr_crapass%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_crapass;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Associado não encontrado!';
+      RAISE vr_exc_erro;      
+    END IF;
+    -- Fechar o cursor
+    CLOSE cr_crapass;
+
+    -- Leitura do calendário da cooperativa, para alguns procedimentos que precisam
+    -- receber como parametro
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic := 'Sistema sem data de movimento.';
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+    
+    
+    IF  vr_inpessoa = 1 THEN
+      -- PESSOA FISICA
+      BEGIN
+        UPDATE crapttl ttl
+           SET ttl.dtatutel = rw_crapdat.dtmvtocd
+         WHERE ttl.cdcooper = pr_cdcooper
+           AND ttl.nrdconta = pr_nrdconta;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro na atualização do telefone[TTL]: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;    
+    ELSE
+      -- PESSOA JURIDICA
+      BEGIN
+         UPDATE crapjur jur
+            SET jur.dtatutel = rw_crapdat.dtmvtocd
+           WHERE jur.cdcooper = pr_cdcooper
+            AND jur.nrdconta = pr_nrdconta;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro na atualização do telefone[JUR]: ' || SQLERRM;
+          RAISE vr_exc_erro;
+      END;  
+    END IF;
+
+    COMMIT;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      ROLLBACK;
+            
+    WHEN OTHERS THEN
+      pr_dscritic := 'Não foi possivel atualizar dados pc_atualiz_data_manut_fone: '||SQLERRM;
+  END pc_atualiz_data_manut_fone;  
+ 
+
+  PROCEDURE pc_verifica_atualiz_fone
+                        ( pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                         ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                         ,pr_cdcritic OUT INTEGER
+                         ,pr_dscritic OUT VARCHAR2
+                         ,pr_atualiza OUT VARCHAR2
+                         ,pr_dsnrfone OUT VARCHAR2
+                         ,pr_qtmeatel OUT INTEGER) IS          --> OK ou NOK                         
+  /* ..........................................................................
+    --
+    --  Programa : pc_verifica_atualiz_fone
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Guilherme/SUPERO
+    --  Data     : Novembro/2016.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Verifica se a conta necessita atualizar telefone
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    ---------------> CURSORES <----------------
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    CURSOR cr_crapcop (p_cdcooper crapass.cdcooper%TYPE) IS 
+      SELECT NVL(cop.qtmeatel,0) qtmeatel
+        FROM crapcop cop
+       WHERE cop.cdcooper = p_cdcooper;
+
+    CURSOR cr_ttl_jur (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_idseqttl crapttl.idseqttl%TYPE,
+                       p_dtmvtolt crapdat.dtmvtolt%TYPE
+                       ) IS 
+      SELECT 1            INPESSOA
+            ,ttl.nrdconta
+            ,ttl.dtatutel
+            ,NVL( TRUNC((p_dtmvtolt - ttl.dtatutel)/ 30),999) DIF_DATA
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = p_cdcooper
+         AND ttl.nrdconta = p_nrdconta
+         AND ttl.idseqttl = p_idseqttl
+      UNION ALL
+      SELECT 2            INPESSOA
+            ,jur.nrdconta
+            ,jur.dtatutel
+            ,NVL( TRUNC((p_dtmvtolt - jur.dtatutel)/ 30),999) DIF_DATA
+        FROM crapjur jur
+       WHERE jur.cdcooper = p_cdcooper
+         AND jur.nrdconta = p_nrdconta;
+    rw_ttl_jur cr_ttl_jur%ROWTYPE;
+
+    -- BUSCAR DATA DA REVISAO CADASTRAL
+    CURSOR cr_crapalt (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
+     SELECT alt.dsaltera
+           ,alt.dtaltera
+           ,nvl(trunc ( (p_dtmvtolt - alt.dtaltera)  / 30),999) DIF_DATA
+       FROM crapalt alt
+      WHERE alt.cdcooper = p_cdcooper
+        AND alt.nrdconta = p_nrdconta
+      ORDER BY alt.dtaltera DESC;
+
+    -- BUSCAR DATA DE ADMISSAO ASSOCIADO
+    CURSOR cr_crapass (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
+     SELECT nvl(trunc ( (p_dtmvtolt - ass.dtadmiss)  / 30),999) DIF_DATA
+       FROM crapass ass
+      WHERE ass.cdcooper = p_cdcooper
+        AND ass.nrdconta = p_nrdconta;
+
+    -- BUSCAR O TELEFONE CADASTRADO
+    CURSOR cr_craptfc (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_idseqttl crapttl.idseqttl%TYPE,
+                       p_inpessoa crapass.inpessoa%TYPE ) IS
+     SELECT p_inpessoa    inpessoa
+           ,tfc.cdseqtfc
+           ,'(' || gene0002.fn_mask(tfc.nrdddtfc,'99') || ') ' || DECODE(LENGTH(tfc.nrtelefo),8,'XXXX','XXXXX')  || '-' || SUBSTR(tfc.nrtelefo,-4) nr_fone_format
+           ,DECODE(p_inpessoa,1,DECODE(tfc.tptelefo,2,1,1,2,3,3,4,4) ,(DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) )) nrordreq
+       FROM craptfc tfc
+      WHERE tfc.cdcooper = p_cdcooper
+        AND tfc.nrdconta = p_nrdconta
+        AND tfc.idseqttl = p_idseqttl
+        AND tfc.idsittfc = 1 -- ATIVO
+        --AND ((p_inpessoa = 1 AND tfc.tptelefo IN (1,2,4))
+        --  OR (p_inpessoa = 2 AND tfc.tptelefo IN (1,2,3,4)))
+       ORDER BY nrordreq -- DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) 
+               ,tfc.cdseqtfc DESC;
+    rw_craptfc cr_craptfc%ROWTYPE;               
+
+
+    --------------> Variaveis <----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+
+    vr_qtmeatel INTEGER:=0;
+    vr_qtdifdat INTEGER; -- diferenca em meses da data
+    vr_dtatutel DATE;
+    vr_inpessoa INTEGER;
+    
+    vr_exc_erro EXCEPTION;
+    vr_exc_sair EXCEPTION;
+
+  BEGIN
+  
+    -- VERIFICAR PARAMETRO DA COOPERATIVA
+    OPEN cr_crapcop(p_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO vr_qtmeatel;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_crapcop;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Cooperativa não encontrada!';
+      RAISE vr_exc_erro;
+    END IF;
+    -- Fechar o cursor
+    CLOSE cr_crapcop;
+    
+    pr_qtmeatel := vr_qtmeatel;
+    
+    
+    -- SE COOP NAO CONFIGURADA, NAO PRECISA ATUALIZAR, RETORNA FALSO
+    IF vr_qtmeatel = 0 THEN
+      pr_atualiza := 'NAO';  -- NAO PRECISA ATUALIZAR TELEFONE
+      pr_dsnrfone := '';
+      -- APENAS SAI
+      RAISE vr_exc_sair;       
+    END IF;
+
+
+    -- Leitura do calendário da cooperativa, para alguns procedimentos que precisam
+    -- receber como parametro
+    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH btch0001.cr_crapdat INTO rw_crapdat;
+    -- Se não encontrar
+    IF btch0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor pois efetuaremos raise
+      CLOSE btch0001.cr_crapdat;
+      -- Montar mensagem de critica
+      vr_dscritic := 'Sistema sem data de movimento.';
+      RAISE vr_exc_erro;
+    ELSE
+      -- Apenas fechar o cursor
+      CLOSE btch0001.cr_crapdat;
+    END IF;
+
+    
+    -- SE vr_qtmeatel É DIFERENTE DE ZERO, VERIFICA DATA ATUALIZACAO DA CONTA  
+    -- VERIFICAR TIPO PESSOA E DATA ATUALIZACAO
+    OPEN cr_ttl_jur(p_cdcooper => pr_cdcooper
+                   ,p_nrdconta => pr_nrdconta
+                   ,p_idseqttl => pr_idseqttl
+                   ,p_dtmvtolt => rw_crapdat.dtmvtocd);
+    FETCH cr_ttl_jur INTO rw_ttl_jur;
+    -- Se não encontrar
+    IF cr_ttl_jur%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_ttl_jur;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Associado não encontrado!';
+      RAISE vr_exc_erro;      
+    END IF;
+    -- Fechar o cursor
+    CLOSE cr_ttl_jur;
+
+
+    vr_dtatutel := rw_ttl_jur.dtatutel;
+    vr_inpessoa := rw_ttl_jur.inpessoa;
+    vr_qtdifdat := rw_ttl_jur.dif_data; -- Diferenca em meses da data do dia com a data da atualizacao
+
+    -- SE A DATA É NULA, RETORNA 999, DEVE VERIFICAR ULTIMA REVISAO CADASTRAL
+    IF vr_qtdifdat = 999 THEN
+       FOR rw_crapalt IN cr_crapalt(p_cdcooper => pr_cdcooper
+                                   ,p_nrdconta => pr_nrdconta
+                                   ,p_dtmvtolt => rw_crapdat.dtmvtocd) LOOP
+
+         IF (instr(lower(rw_crapalt.dsaltera), 'revisao cadastral') > 0) THEN
+           -- SE ENCONTROU REVISAO, ARMAZENA DIFERENCA E SAI DO LOOP
+           vr_qtdifdat := rw_crapalt.dif_data; -- Diferenca em meses da data do dia com a data da revisao
+           EXIT; -- SAI DO LOOP/FOR
+         END IF;
+       END LOOP;
+
+
+       /** SE A DATA CONTINUOU 999(NULA), BUSCA DTADMISS DO ASSOCIADO */
+       IF vr_qtdifdat = 999 THEN
+          OPEN cr_crapass(p_cdcooper => pr_cdcooper
+                         ,p_nrdconta => pr_nrdconta
+                         ,p_dtmvtolt => rw_crapdat.dtmvtocd);
+          FETCH cr_crapass INTO vr_qtdifdat;
+          -- Fechar o cursor
+          CLOSE cr_crapass;
+       END IF;       
+       
+    END IF;
+       
+
+    -- SE DIF DE MESES FOR SUPERIOR AO PARAMETRO DA COOP,
+    -- SOLICITA ALTERACAO TELEFONE    
+    IF vr_qtdifdat > vr_qtmeatel THEN
+      
+      -- BUSCA TELEFONE ATUAL DA CONTA
+      OPEN cr_craptfc(p_cdcooper => pr_cdcooper
+                     ,p_nrdconta => pr_nrdconta
+                     ,p_idseqttl => pr_idseqttl
+                     ,p_inpessoa => vr_inpessoa);
+      FETCH cr_craptfc INTO rw_craptfc;
+      -- Se não encontrar
+      IF cr_craptfc%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_craptfc;
+
+        pr_atualiza := 'SIM';
+        pr_dsnrfone := ''; -- SEM TELEFONE CADASTRADO
+        RAISE vr_exc_sair;
+      END IF;
+      -- Fechar o cursor
+      CLOSE cr_craptfc;
+
+      -- PRECISA ATUALIZAR TELEFONE
+      pr_atualiza := 'SIM';
+      pr_dsnrfone := rw_craptfc.nr_fone_format;
+
+    ELSE
+      -- NAO PRECISA ATUALIZAR TELEFONE
+      pr_atualiza := 'NAO';
+      pr_dsnrfone := '';
+    END IF;
+
+    pr_cdcritic := 0;
+    pr_dscritic := '';    
+
+  EXCEPTION
+    WHEN vr_exc_sair THEN
+      -- Sair da procedure - Nao precisa atualizar
+      pr_cdcritic := 0;
+      pr_dscritic := '';
+    
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      pr_atualiza := 'NAO';  -- NAO PRECISA ATUALIZAR TELEFONE
+      pr_dsnrfone := '';
+            
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
+      pr_atualiza := 'NAO';
+      pr_dsnrfone := '';
+
+  END pc_verifica_atualiz_fone;
+
+
+  PROCEDURE pc_ib_verif_atualiz_fone(pr_cdcooper IN crapttl.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_nrdconta IN crapttl.nrdconta%TYPE  --> Numero da Conta
+                                    ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Sequencia do Titular
+                                    ,pr_inpessoa IN crapttl.inpessoa%TYPE  --> Indicador PF/PJ
+                                    ,pr_cdcritic OUT INTEGER
+                                    ,pr_dscritic OUT VARCHAR2) IS
+  /* ..........................................................................
+    --
+    --  Programa : pc_ib_verif_atualiz_fone
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Guilherme/SUPERO
+    --  Data     : Novembro/2016.                   Ultima atualizacao:
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --               EXCLUSIVO PARA CHAMADA INTERNET BANKING
+    --
+    --   Objetivo  : Efetua o processo de Verificar Atualização Telefone, Atualizar Data Telefone,
+    --               Criar mensagem para o Cooperado no IB.
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+
+    ---------------> CURSORES <----------------
+		-- Busca cooperativa
+		CURSOR cr_crapcop(p_cdcooperc IN crapcop.cdcooper%TYPE)IS
+		  SELECT cop.nmrescop
+			  FROM crapcop cop
+			 WHERE cop.cdcooper = p_cdcooperc;
+		rw_crapcop cr_crapcop%ROWTYPE;
+
+
+
+    -- BUSCAR O TELEFONE CADASTRADO
+    CURSOR cr_craptfc (p_cdcooper crapass.cdcooper%TYPE,
+                       p_nrdconta crapass.nrdconta%TYPE,
+                       p_idseqttl crapttl.idseqttl%TYPE,
+                       p_inpessoa crapttl.inpessoa%TYPE) IS
+      SELECT *
+        FROM (
+               SELECT tfc.cdseqtfc
+                     ,'(' || gene0002.fn_mask(tfc.nrdddtfc,'99') || ') ' || DECODE(LENGTH(tfc.nrtelefo),8,'XXXX','XXXXX')  || '-' || SUBSTR(tfc.nrtelefo,-4) nr_fone_format
+                     ,DECODE(tfc.tptelefo,1,'RESIDENCIAL',2,'CELULAR',3,'COMERCIAL',4,'CONTATO') dstelefo
+                     ,DECODE(p_inpessoa,1,DECODE(tfc.tptelefo,2,1,1,2,3,3,4,4) ,(DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) )) nrordreq
+                     ,ROW_NUMBER() OVER (PARTITION BY tfc.tptelefo
+                                             ORDER BY DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) 
+                                                     ,tfc.cdseqtfc DESC) nrseqreg
+                 FROM craptfc tfc
+                WHERE tfc.cdcooper = p_cdcooper
+                  AND tfc.nrdconta = p_nrdconta
+                  AND tfc.idseqttl = p_idseqttl
+                  AND tfc.idsittfc = 1 -- ATIVO
+                 ORDER BY nrordreq --DECODE(tfc.tptelefo,3,1,2,2,1,3,4,4) 
+                         ,tfc.cdseqtfc DESC
+              ) tmp
+         WHERE tmp.nrseqreg = 1; -- PEGAR APENAS O 1º TELEFONE DE CADA TIPO
+    rw_craptfc cr_craptfc%ROWTYPE;    
+    
+    --------------> Variaveis <----------------
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    vr_inpessoa INTEGER;
+    vr_atualiza VARCHAR2(4);
+    vr_dsnrfone VARCHAR(18);
+    vr_qtmeatel INTEGER;
+    vr_dsmensag VARCHAR2(1000);
+    vr_lstfones VARCHAR2(200):='';
+    
+    vr_exc_erro EXCEPTION;
+
+  BEGIN
+
+		-- Verifica cooperativa
+		OPEN cr_crapcop(pr_cdcooper);
+		FETCH cr_crapcop INTO rw_crapcop;
+		
+		IF cr_crapcop%NOTFOUND THEN
+			-- Gera crítica
+			vr_cdcritic := 794;
+			-- Fecha cursor
+			CLOSE cr_crapcop;
+			-- Levanta exceção
+			RAISE vr_exc_erro;
+		END IF;
+		-- Fecha cursor
+		CLOSE cr_crapcop;
+
+
+    -- VERIFICAR SE A CONTA PRECISA ATUALIZAR O TELEFONE
+    CADA0004.pc_verifica_atualiz_fone(pr_cdcooper => pr_cdcooper
+                                    , pr_nrdconta => pr_nrdconta
+                                    , pr_idseqttl => pr_idseqttl
+                                    , pr_cdcritic => vr_cdcritic
+                                    , pr_dscritic => vr_dscritic
+                                    , pr_atualiza => vr_atualiza
+                                    , pr_dsnrfone => vr_dsnrfone
+                                    , pr_qtmeatel => vr_qtmeatel);
+    -- SE DEU ERRO...
+    IF vr_cdcritic <> 0
+    OR vr_dscritic IS NOT NULL THEN
+
+      -- APENAS SAI
+      RAISE vr_exc_erro;
+
+    ELSE -- NAO DEU ERRO.
+                                    
+      IF vr_atualiza = 'SIM' THEN
+         -- SE PRECISA ATUALIZAR TELEFONE, ATUALIZA A DATA DE MANUTENÇÃO DO TELEFONE
+         CADA0004.pc_atualiz_data_manut_fone(pr_cdcooper => pr_cdcooper
+                                           , pr_nrdconta => pr_nrdconta
+                                           , pr_cdcritic => vr_cdcritic
+                                           , pr_dscritic => vr_dscritic);
+         -- SE DEU ERRO...
+         IF vr_cdcritic <> 0
+         OR vr_dscritic IS NOT NULL THEN
+           -- APENAS SAI
+           RAISE vr_exc_erro;
+
+         ELSE -- NAO DEU ERRO.
+           
+           -- MONTAR A LISTA DE TELEFONES DO COOPERADO
+           FOR rw_craptfc IN cr_craptfc(p_cdcooper => pr_cdcooper
+                                       ,p_nrdconta => pr_nrdconta
+                                       ,p_idseqttl => pr_idseqttl
+                                       ,p_inpessoa => pr_inpessoa) LOOP
+             vr_lstfones := vr_lstfones || '</br>' || 
+                            rw_craptfc.dstelefo || ': ' ||rw_craptfc.nr_fone_format;
+           END LOOP;
+           
+           -- CRIAR MENSAGEM NA CAIXA DO COOPERADO NO IB
+           IF vr_lstfones IS NULL THEN
+             vr_dsmensag := 'Cooperado,' ||
+                            '</br></br>' ||
+                            'Identificamos que você NÃO possui telefones cadastrados em nossa '      ||
+                            'base de contatos.'                                                      ||
+                            '</br></br>' ||
+                            'Estes telefones poderão ser utilizados para informar você sobre algum ' ||
+                            'evento importante da sua cooperativa ou de sua conta.'                  ||
+                            '</br></br>' ||
+                            '<a style=''color: blue; font-weight: bold; text-decoration: underline;'''||
+                            ' href=''meu_cadastro.php''>Clique aqui</a> '                            ||
+                            'e informe seus telefones para contato.'                                 ||
+                            '</br></br>' ||
+                            'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
+                            'contato com seu Posto de Atendimento ou através do SAC da cooperativa, '||
+                            'pelo 0800 647 2200 ou e-mail sac@cecred.coop.br.';
+           ELSE
+             vr_dsmensag := 'Cooperado,' ||
+                            '</br></br>' ||
+                            'Identificamos que você possui telefones cadastrados em nossa base de '  ||
+                            'contatos, porém os números não são atualizados há mais de '             || 
+                            to_char(vr_qtmeatel) || ' meses.'                                        ||
+                            '</br></br>' ||
+                            'Telefones cadastrados:'                                                 ||
+                            vr_lstfones                                                              ||
+                            '</br></br>' ||
+                            'Caso os números estejam desatualizados, '                               ||
+                            '<a style=''color: blue; font-weight: bold; text-decoration: underline;'''||
+                            ' href=''meu_cadastro.php''>clique aqui</a> '                            ||
+                            'e adicione seus novos contatos ou procure o Posto de Atendimento '      ||
+                            'para atualizar seu cadastro.'                                           ||
+                            '</br>' ||
+                            'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
+                            'contato pelo SAC 0800 647 2200 ou através do e-mail '                   ||
+                            'sac@cecred.coop.br, todos os dias (incluindo domingos e feriados), '    ||
+                            'das 6h às 22h.';
+           END IF;
+
+           -- CRIAR A MENSAGEM NA CONTA DO COOPERADO
+           gene0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_idseqttl => 1 -- SEMPRE PRO PRIMEIRO TITULAR
+                                     ,pr_cdprogra => 'CADA0004'
+                                     ,pr_inpriori => 0
+                                     ,pr_dsdmensg => vr_dsmensag
+                                     ,pr_dsdassun => 'Atualização de Telefone'
+                                     ,pr_dsdremet => rw_crapcop.nmrescop
+                                     ,pr_dsdplchv => 'Atualização de Telefone'
+                                     ,pr_cdoperad => 996
+                                     ,pr_cdcadmsg => 0
+                                     ,pr_dscritic => vr_dscritic);
+
+           IF vr_dscritic IS NOT NULL THEN
+             RAISE vr_exc_erro;
+           END IF;
+           
+           COMMIT; -- COMMITAR A MENSAGEM NA BASE
+           pr_dscritic := vr_dsmensag;
+
+         END IF;
+
+      END IF;
+
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+            
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Não foi possivel consultar dados telefone: '||SQLERRM;
+                                    
+  END pc_ib_verif_atualiz_fone;
+
 END CADA0004;
 /
