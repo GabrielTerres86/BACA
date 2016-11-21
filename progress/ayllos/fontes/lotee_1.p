@@ -245,6 +245,7 @@ DEF VAR h-b1wgen0014          AS HANDLE                                   NO-UND
 DEF VAR h-b1wgen0043          AS HANDLE                                   NO-UNDO.
 DEF VAR h-b1wgen9998          AS HANDLE                                   NO-UNDO.
 
+DEF VAR aux_flgativo          AS INTEGER                                  NO-UNDO.
 
 /*   Leitura da tabela de parametros para indentificar o Nro. da conta do
      tipo de registro 2   */
