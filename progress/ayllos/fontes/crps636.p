@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 24/08/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 21/11/2016
     
     Dados referente ao programa:
     
@@ -129,6 +129,8 @@
                               PRJ320 - Oferta Debaut (Odirlei-AMcom)
                               
                  24/08/2016 - Incluir tratamento para autorizações suspensas (Lucas Ranghetti #499496)
+                 
+                 21/11/2016 - Efetuar replace de '-' por nada no nrdocmto da crapndb (Lucas Ranghetti #560620)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1231,8 +1233,8 @@ FOR EACH crapcop NO-LOCK.
                     
                 IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
                     ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
-
-                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(SUBSTR(aux_dslinreg,2,25)) NO-ERROR.
+ 
+                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(REPLACE(SUBSTR(aux_dslinreg,2,25),"-","")) NO-ERROR.
             END.
 
         PUT STREAM str_2 aux_dslinreg FORMAT "x(160)" SKIP.
