@@ -24,6 +24,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                    ,vlstotal    NUMBER
                                    ,vlsldppr    NUMBER
                                    ,dtadmiss    crapass.dtadmiss%TYPE
+                                   ,dtdemiss    crapass.dtdemiss%TYPE
                                    ,dsendere    crapenc.dsendere%TYPE
                                    ,nrendere    crapenc.nrendere%TYPE
                                    ,nmbairro    crapenc.nmbairro%TYPE
@@ -399,6 +400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                           '<vlstotal>' || vr_tab_cooperado(vr_idx).vlstotal ||'</vlstotal>' ||
                           '<vlsldppr>' || vr_tab_cooperado(vr_idx).vlsldppr ||'</vlsldppr>' ||
                           '<dtadmiss>' || to_char(vr_tab_cooperado(vr_idx).dtadmiss, 'dd/mm/yyyy') ||'</dtadmiss>' ||
+                          '<dtdemiss>' || to_char(vr_tab_cooperado(vr_idx).dtdemiss, 'dd/mm/yyyy') ||'</dtdemiss>' ||
                           '<dsendere>' || vr_tab_cooperado(vr_idx).dsendere ||'</dsendere>' ||
                           '<nrendere>' || vr_tab_cooperado(vr_idx).nrendere ||'</nrendere>' ||
                           '<nmbairro>' || vr_tab_cooperado(vr_idx).nmbairro ||'</nmbairro>' ||
@@ -492,6 +494,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , ass.inpessoa
            , ass.nrdctitg
            , ass.dtadmiss
+           , ass.dtdemiss
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -708,6 +711,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -- Atualiza a data de admissao
         pr_tab_cooperado(vr_ind_cooperado).dtadmiss := rw_crapass.dtadmiss;
      
+        -- Atualiza a data de demissao
+        pr_tab_cooperado(vr_ind_cooperado).dtdemiss := rw_crapass.dtdemiss;
+
         -- Se for pessoa física
         IF rw_crapass.inpessoa = 1 THEN
           -- Deve buscar os dados da CRAPTTL
