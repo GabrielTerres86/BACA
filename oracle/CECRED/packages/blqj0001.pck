@@ -475,7 +475,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , ass.inpessoa
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper 
-         AND ass.nrcpfcgc = pr_nrcpfcgc
+         -- quando o tipo do registro for 1, pesquisa diretamente pela conta
+         AND ((ass.nrcpfcgc = pr_nrcpfcgc AND NVL(pr_tpcooperad,0) <> 1) OR
+              (ass.nrdconta = pr_cooperad AND NVL(pr_tpcooperad,0) = 1))
       UNION    -- Cláusula UNION é excludente de repetições
       SELECT ttl.cdcooper
            , ttl.nrdconta
@@ -484,7 +486,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
            , ttl.inpessoa
         FROM crapttl  ttl
        WHERE ttl.cdcooper = pr_cdcooper 
-         AND ttl.nrcpfcgc = pr_nrcpfcgc;
+         AND ttl.nrcpfcgc = pr_nrcpfcgc 
+         AND NVL(pr_tpcooperad,0) <> 1;
     
     -- Buscar dados específicos da conta
     CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
