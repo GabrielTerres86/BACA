@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
 
     Programa: CONV0001 (Antigo b1wgen0045.p)
     Autor   : Guilherme - Precise
-    Data    : Outubro/2009                       Ultima Atualizacao: 30/05/2016
+    Data    : Outubro/2009                       Ultima Atualizacao: 14/09/2016
 
     Dados referentes ao programa:
 
@@ -70,7 +70,10 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
                             relatorio crrl709 - Repasses Convenio DPVAT 
                             Sicredi. (Jaison/Marcos-Supero)
 
-               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])														
+               30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])		
+               
+               14/09/2016 - Incluir nova procedure pc_pula_seq_gt0001, irá criar registro de
+                            controle na gncontr caso seja alterado o sequencial (Lucas Ranghetti #484556)
 
 ..............................................................................*/
 
@@ -334,6 +337,17 @@ CREATE OR REPLACE PACKAGE CECRED.CONV0001 AS
 										,pr_cdsegmto IN  tbconv_motivo_excl_autori.cdsegmto%TYPE  
 										,pr_cdcritic OUT INTEGER               -- Código do erro
 										,pr_dscritic OUT VARCHAR2);            -- Descricao do erro                                   																	 
+
+  -- Criar registro de controle na gncotnr e pular o sequencial na gnconve                  
+  PROCEDURE pc_pula_seq_gt0001 (pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooeprativa
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                               ,pr_cdconven IN gnconve.cdconven%TYPE --> Codigo do convenio
+                               ,pr_tpdcontr IN gncontr.tpdcontr%TYPE --> Tipo de Controle
+                               ,pr_nrseqant IN gncontr.nrsequen%TYPE --> Seq. Anterior
+                               ,pr_nrsequen IN gncontr.nrsequen%TYPE --> Seq. Alterada
+                               ,pr_nmarqint IN gnconve.nmarqint%TYPE --> Nome do arquivo
+                               ,pr_cdcritic OUT NUMBER               --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2);           --> Descrição da critica
 END CONV0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
@@ -344,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Procedimentos para Convenios
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Outubro/2013.                   Ultima atualizacao: 21/06/2016
+  --  Data     : Outubro/2013.                   Ultima atualizacao: 14/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -408,6 +422,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --
   --             30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
   --
+  --             27/07/2016 - Adicionar historico 900 do Samae Rio Negrinho para 6 posicoes 
+  --                          na procedure pc_gerandb (Lucas Ranghetti #486565)
+  --
+  --             14/09/2016 - Incluir nova procedure pc_pula_seq_gt0001, irá criar registro de
+  --                          controle na gncontr caso seja alterado o sequencial (Lucas Ranghetti #484556)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -1555,7 +1574,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odair
-  --  Data     : Agosto/98.                  Ultima atualizacao: 15/02/2016
+  --  Data     : Agosto/98.                  Ultima atualizacao: 27/07/2016
   --
   -- Dados referentes ao programa:
   --
@@ -1641,6 +1660,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
   --                          na crapndb com 11 posicoes (Lucas Ranghetti #417302 )
   --
   --             21/06/2016 - Adicionar historico 690 do Samae Sao Bento para 10 posicoes (Lucas Ranghetti #467618)  
+  --
+  --             27/07/2016 - Adicionar historico 900 do Samae Rio Negrinho para 6 posicoes (Lucas Ranghetti #486565)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1789,10 +1810,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
           vr_nrdconta := gene0002.fn_mask(pr_nrdconta, '99999999999999');
         ELSIF pr_cdhistor = 453 THEN -- VIVO/TELEFONICA
           vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'99999999999') || RPAD(' ',14,' ');
+        ELSIF pr_cdhistor = 900 THEN -- Samae Rio Negrinho
+          vr_dstexarq := vr_dstexarq || gene0002.fn_mask(pr_cdrefere,'999999') || RPAD(' ',19,' ');
         ELSIF vr_flgsicre = 0 THEN -- RECEBIMENTO SAMAE BLUMENAU AUTOMATICO
           vr_dstexarq := vr_dstexarq || pr_cdrefere || RPAD(' ',25 - LENGTH(pr_cdrefere),' ');
         END IF;
-        NULL;
+
         -- VERIFICACAO DE CRITICA
         IF vr_cdcritic IN (453,447) THEN -- AUTORIZACAO NAO ENCONTRADA / AUTORIZACAO CANCELADA
           vr_auxcdcri := '30'; -- SEM CONTRATO DE DÉBITO
@@ -3174,6 +3197,134 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONV0001 AS
          pr_dscritic:= 'Erro na rotina CONV0001.pc_grava_motv_excl_debaut. ' || sqlerrm;
     END;
   END pc_grava_motv_excl_debaut;
+
+  -- Criar registro de controle na gncotnr e pular o sequencial na gnconve                  
+  PROCEDURE pc_pula_seq_gt0001 (pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooeprativa
+                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                               ,pr_cdconven IN gnconve.cdconven%TYPE --> Codigo do convenio
+                               ,pr_tpdcontr IN gncontr.tpdcontr%TYPE --> Tipo de Controle
+                               ,pr_nrseqant IN gncontr.nrsequen%TYPE --> Seq. Anterior
+                               ,pr_nrsequen IN gncontr.nrsequen%TYPE --> Seq. Alterada
+                               ,pr_nmarqint IN gnconve.nmarqint%TYPE --> Nome do arquivo
+                               ,pr_cdcritic OUT NUMBER               --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da critica
+
+  /*-------------------------------------------------------------------------------------------------
+  
+    Programa : pc_pula_seq_gt0001
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Lucas Ranghetti
+    Data     : 13/09/2016               Ultima atualizacao: 
+  
+   Dados referentes ao programa:
+  
+   Frequencia: -----
+   Objetivo  : Criar registro de controle na gncotnr e pular o sequencial na gnconve
+   Alteracoes:
+	
+  --------------------------------------------------------------------------------------------------*/
+  BEGIN
+    DECLARE
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(4000);
+
+      vr_exc_erro EXCEPTION;      
+      
+      vr_nrseqint NUMBER;
+      
+      -- Verificar se registro de controle ja está criado
+      CURSOR cr_gncontr(pr_cdcooper crapcop.cdcooper%TYPE
+                       ,pr_cdconven gnconve.cdconven%TYPE
+                       ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
+                       ,pr_nrsequen gncontr.nrsequen%TYPE
+                       ,pr_tpdcontr gncontr.tpdcontr%TYPE) IS
+          SELECT 1
+            FROM gncontr ntr
+           WHERE ntr.cdcooper = pr_cdcooper
+             AND ntr.cdconven = pr_cdconven
+             AND ntr.dtmvtolt = pr_dtmvtolt
+             AND ntr.tpdcontr = pr_tpdcontr
+             AND ntr.nrsequen = pr_nrsequen;
+        rw_gncontr cr_gncontr%ROWTYPE;
+        
+      -- Busca dos dados dos convenios 
+      CURSOR cr_gncvcop IS
+        SELECT cop.cdcooper
+              ,cop.cdconven
+          FROM gncvcop cop
+         WHERE cop.cdconven = pr_cdconven;
+      
+    BEGIN
+      -- o ultimo sequencial, não deve criar na tabela de controle(gncontr)
+      vr_nrseqint := pr_nrsequen - 1;
+      
+      -- Loop dos sequenciais que precisaremos criar na gncontr
+      FOR sequencial IN pr_nrseqant..vr_nrseqint LOOP        
+        
+        FOR rw_gncvcop IN cr_gncvcop LOOP
+        
+          -- Acessa os dados sobre os controles de execucoes
+          OPEN cr_gncontr(rw_gncvcop.cdcooper,
+                          rw_gncvcop.cdconven, 
+                          pr_dtmvtolt, 
+                          sequencial,
+                          pr_tpdcontr);
+          FETCH cr_gncontr INTO rw_gncontr;
+          -- Se nao encontrar dados efetua a insercao
+          IF cr_gncontr%NOTFOUND THEN
+            -- Insere no controle de execucoes
+            BEGIN
+              INSERT INTO gncontr
+                (cdcooper,
+                 tpdcontr,
+                 cdconven,
+                 dtmvtolt,
+                 nrsequen,
+                 flgmigra,
+                 qtdoctos,
+                 vldoctos,
+                 dtcredit,
+                 nmarquiv,
+                 vltarifa,
+                 vlapagar)
+               VALUES
+                (rw_gncvcop.cdcooper,
+                 pr_tpdcontr,
+                 rw_gncvcop.cdconven,
+                 pr_dtmvtolt,
+                 sequencial,
+                 0,
+                 0,
+                 0,
+                 pr_dtmvtolt,
+                 pr_nmarqint,
+                 0,
+                 0);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir gncontr: ' ||SQLERRM;
+                RAISE vr_exc_erro;
+            END;
+          END IF;
+          -- Caso o cursor esteja aberto
+          IF cr_gncontr%ISOPEN THEN
+            CLOSE cr_gncontr;
+          END IF;
+          
+        END LOOP;
+      END LOOP;
+      
+      COMMIT;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+         pr_cdcritic:= vr_cdcritic;
+         pr_dscritic:= vr_dscritic;
+       WHEN OTHERS THEN
+         pr_cdcritic:= 0;
+         pr_dscritic:= 'Erro na rotina CONV0001.pc_pula_seq_gt0001. ' || sqlerrm;
+    END;
+  END pc_pula_seq_gt0001;
 
 END CONV0001;
 /
