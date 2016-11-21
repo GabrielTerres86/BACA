@@ -448,6 +448,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                         ,pr_dtmvtolt IN crapmvi.dtmvtolt%TYPE
                                         ,pr_cdoperad IN crapmvi.cdoperad%TYPE
                                         ,pr_inpessoa IN crapass.inpessoa%TYPE
+                                        ,pr_tpoperac IN NUMBER --1 - Transferência, 2 - Pagamento, 4 - TED
                                         ,pr_vllanmto IN crapmvi.vlmovweb%TYPE
                                         ,pr_dscritic OUT VARCHAR2);
   
@@ -1937,6 +1938,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                         ,pr_dtmvtolt IN crapmvi.dtmvtolt%TYPE
                                         ,pr_cdoperad IN crapmvi.cdoperad%TYPE
                                         ,pr_inpessoa IN crapass.inpessoa%TYPE
+                                        ,pr_tpoperac IN NUMBER --1 - Transferência, 2 - Pagamento, 4 - TED
                                         ,pr_vllanmto IN crapmvi.vlmovweb%TYPE
                                         ,pr_dscritic OUT VARCHAR2) IS
   
@@ -1944,9 +1946,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     PRAGMA AUTONOMOUS_TRANSACTION;
     -- criar rowtype controle
     rw_crapmvi_ctl cr_crapmvi%ROWTYPE;
-  
+    
+    -- Valores de movimento
+    vr_vlmovweb crapmvi.vlmovweb%TYPE := 0;
+    vr_vlmovtrf crapmvi.vlmovtrf%TYPE := 0;
+    vr_vlmovpgo crapmvi.vlmovpgo%TYPE := 0;
+    vr_vlmovted crapmvi.vlmovted%TYPE := 0;
+    
   BEGIN
-  
+    
+    IF pr_inpessoa = 1 THEN -- Se for pessoa Física - Une em uma variável
+      vr_vlmovweb := pr_vllanmto;
+    ELSE -- Se for pessoa Jurídica separa em Transferência, Pagamento e TED
+      vr_vlmovtrf := CASE pr_tpoperac WHEN 1 THEN pr_vllanmto ELSE 0 END; -- Transferência
+      vr_vlmovpgo := CASE pr_tpoperac WHEN 2 THEN pr_vllanmto ELSE 0 END; -- Pagamento
+      vr_vlmovted := CASE pr_tpoperac WHEN 4 THEN pr_vllanmto ELSE 0 END; -- TED
+    END IF;
+    
     /* Tratamento para buscar registro de movimento se o mesmo estiver em lock, tenta por 10 seg. */
     FOR i IN 1 .. 100 LOOP
       BEGIN
@@ -1995,7 +2011,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         ,crapmvi.idseqttl
         ,crapmvi.nrdconta
         ,crapmvi.vlmovweb
-        ,crapmvi.vlmovtrf)
+        ,crapmvi.vlmovtrf
+        ,crapmvi.vlmovpgo
+        ,crapmvi.vlmovted
+        )
       VALUES
         (pr_cdcooper
         ,pr_cdoperad
@@ -2004,34 +2023,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         ,GENE0002.fn_busca_time
         ,pr_idseqttl
         ,pr_nrdconta
-        ,DECODE(pr_inpessoa,1,nvl(pr_vllanmto,0),0)
-        ,DECODE(pr_inpessoa,1,0,nvl(pr_vllanmto,0))
+        ,vr_vlmovweb
+        ,vr_vlmovtrf -- Transferência
+        ,vr_vlmovpgo -- Pagamento
+        ,vr_vlmovted -- TED
         );
-
-      /* RETURNING crapmvi.cdcooper
-               ,crapmvi.cdoperad
-               ,crapmvi.dtmvtolt
-               ,crapmvi.dttransa
-               ,crapmvi.hrtransa
-               ,crapmvi.idseqttl
-               ,crapmvi.nrdconta
-               ,crapmvi.vlmovweb
-               ,crapmvi.vlmovtrf
-           INTO rw_crapmvi_ctl.cdcooper
-               ,rw_crapmvi_ctl.cdoperad
-               ,rw_crapmvi_ctl.dtmvtolt
-               ,rw_crapmvi_ctl.dttransa
-               ,rw_crapmvi_ctl.hrtransa
-               ,rw_crapmvi_ctl.idseqttl
-               ,rw_crapmvi_ctl.nrdconta
-               ,rw_crapmvi_ctl.vlmovweb
-               ,rw_crapmvi_ctl.vlmovtrf;*/
 
     ELSE
       -- ou atualizar os valores
       UPDATE crapmvi
-         SET crapmvi.vlmovweb = NVL(crapmvi.vlmovweb,0) + DECODE(pr_inpessoa,1,nvl(pr_vllanmto,0),0)
-            ,crapmvi.vlmovtrf = NVL(crapmvi.vlmovtrf,0) + DECODE(pr_inpessoa,1,0,nvl(pr_vllanmto,0))
+         SET crapmvi.vlmovweb = crapmvi.vlmovweb + vr_vlmovweb -- Movimentação geral (apenas PF)
+            ,crapmvi.vlmovtrf = crapmvi.vlmovtrf + vr_vlmovtrf -- Transferência (apenas PJ)
+            ,crapmvi.vlmovpgo = crapmvi.vlmovpgo + vr_vlmovpgo -- Pagamento (apenas PJ)
+            ,crapmvi.vlmovted = crapmvi.vlmovted + vr_vlmovted -- TED (apenas PJ)
        WHERE crapmvi.rowid = rw_crapmvi_ctl.rowid;
 
     END IF;
@@ -3225,6 +3229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                ,pr_dtmvtolt => pr_dtmvtolt
                                                ,pr_cdoperad => pr_cdoperad
                                                ,pr_inpessoa => rw_crapass.inpessoa
+                                               ,pr_tpoperac => 1 -- Transferência
                                                ,pr_vllanmto => pr_vllanmto
                                                ,pr_dscritic => vr_dscritic);
                                                
@@ -3257,6 +3262,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                  ,pr_dtmvtolt => pr_dtmvtolt
                                                  ,pr_cdoperad => pr_cdoperad
                                                  ,pr_inpessoa => rw_crapass.inpessoa
+                                                 ,pr_tpoperac => 1 -- Transferência
                                                  ,pr_vllanmto => pr_vllanmto
                                                  ,pr_dscritic => vr_dscritic);
 
@@ -4600,6 +4606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                ,pr_dtmvtolt => pr_dtmvtocd
                                                ,pr_cdoperad => pr_cdoperad
                                                ,pr_inpessoa => rw_crapass.inpessoa
+                                               ,pr_tpoperac => 1 -- Transferência
                                                ,pr_vllanmto => pr_vllanmto
                                                ,pr_dscritic => vr_dscritic);
           
@@ -4632,6 +4639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                  ,pr_dtmvtolt => pr_dtmvtolt
                                                  ,pr_cdoperad => pr_cdoperad
                                                  ,pr_inpessoa => rw_crapass.inpessoa
+                                                 ,pr_tpoperac => 1 -- Transferência
                                                  ,pr_vllanmto => pr_vllanmto
                                                  ,pr_dscritic => vr_dscritic);
                                       
@@ -7307,6 +7315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                  ,pr_dtmvtolt => rw_crapaut.dtmvtolt
                                                  ,pr_cdoperad => rw_crapaut.cdopecxa
                                                  ,pr_inpessoa => rw_crapass.inpessoa
+                                                 ,pr_tpoperac => 2 -- Pagamento
                                                  ,pr_vllanmto => pr_vlfatura
                                                  ,pr_dscritic => vr_dscritic);
 
@@ -7339,6 +7348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                    ,pr_dtmvtolt => rw_crapaut.dtmvtolt
                                                    ,pr_cdoperad => rw_crapaut.cdopecxa
                                                    ,pr_inpessoa => rw_crapass.inpessoa
+                                                   ,pr_tpoperac => 2 -- Pagamento
                                                    ,pr_vllanmto => pr_vlfatura
                                                    ,pr_dscritic => vr_dscritic);
 
@@ -8852,6 +8862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                ,pr_dtmvtolt => rw_crapaut.dtmvtolt
                                                ,pr_cdoperad => rw_crapaut.cdopecxa
                                                ,pr_inpessoa => rw_crapass_prot.inpessoa
+                                               ,pr_tpoperac => 2 -- Pagamento
                                                ,pr_vllanmto => pr_vllanmto
                                                ,pr_dscritic => vr_dscritic);
                        
@@ -8884,6 +8895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                                  ,pr_dtmvtolt => rw_crapaut.dtmvtolt
                                                  ,pr_cdoperad => rw_crapaut.cdopecxa
                                                  ,pr_inpessoa => rw_crapass_prot.inpessoa
+                                                 ,pr_tpoperac => 2 -- Pagamento
                                                  ,pr_vllanmto => pr_vllanmto
                                                  ,pr_dscritic => vr_dscritic);
             
