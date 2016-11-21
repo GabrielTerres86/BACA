@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Sidnei (Precise)
-   Data    : Outubro/2007                       Ultima alteracao: 10/10/2013
+   Data    : Outubro/2007                       Ultima alteracao: 21/11/2016
    
    Dados referentes ao programa:
 
@@ -45,6 +45,8 @@
                               (Anderson/AMCOM).
                               
                  10/10/2013 - Inserir coluna EMPRESA no arquivo (Ze).
+
+				 21/11/2016 - Tratar nulo ao criar arquivo na opcao T. (SD 557084 Kelvin)
 ............................................................................ */
 
 { includes/var_online.i }
@@ -640,6 +642,7 @@ PROCEDURE gera_arquivo:
   DEF VAR aux_flgtrans AS CHAR                                      NO-UNDO.
   DEF VAR aux_cdempres AS INTE                                      NO-UNDO.
   DEF VAR aux_dsempres AS CHAR                                      NO-UNDO.
+  DEF VAR aux_dscritic AS CHAR                                      NO-UNDO.
 
   ASSIGN tel_nmdireto =  "/micros/" + LOWER(crapcop.dsdircop) + "/".
 
@@ -716,10 +719,10 @@ PROCEDURE gera_arquivo:
                                        NO-LOCK NO-ERROR.
                
                IF   AVAILABLE crapemp THEN
-                    aux_dsempres = STRING(aux_cdempres,"999") + "-" +
+                    aux_dsempres = STRING(aux_cdempres,"9999") + "-" +
                                    STRING(crapemp.nmresemp,"X(20)").
                ELSE
-                    aux_dsempres = STRING(aux_cdempres,"999") + "-" +
+                    aux_dsempres = STRING(aux_cdempres,"9999") + "-" +
                                    "NAO CADASTRADO".
            END.
       ELSE 
@@ -729,7 +732,12 @@ PROCEDURE gera_arquivo:
            ASSIGN aux_flgtrans = "SIM".
       ELSE
            ASSIGN aux_flgtrans = "NAO".
-    
+      
+	  IF   craplgm.dscritic = ? THEN
+           ASSIGN aux_dscritic = " ".
+      ELSE 
+           ASSIGN aux_dscritic = craplgm.dscritic.
+	   
       PUT STREAM str_1 UNFORMATTED STRING(craplgm.nrdconta)             + ";" +
                                    STRING(craplgm.idseqttl)             + ";" +
                                           aux_nmprimtl                  + ";" +
@@ -741,7 +749,7 @@ PROCEDURE gera_arquivo:
                                           craplgm.dsorigem              + ";" +
                                           craplgm.nmdatela              + ";" +
                                    STRING(aux_flgtrans)                 + ";" +
-                                          craplgm.dscritic              + ";" +
+                                          aux_dscritic                  + ";" +
                                           aux_dsempres
                                           SKIP.
   END.
