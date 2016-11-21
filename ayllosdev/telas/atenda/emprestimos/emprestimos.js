@@ -111,7 +111,7 @@
 
 var qtmesblq = 0;
 var bloquear_pre_aprovado = false;
-
+ 
 var nrctremp = '';
 var operacao = '';
 var cddopcao = '';
@@ -4335,7 +4335,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["idseqbem"] = ' + idseqbem + ';');
     eval('arrayAlienacao' + i + '["idalibem"] = "";');
     eval('arrayAlienacao' + i + '["lsbemfin"] = "";');
-    eval('arrayAlienacao' + i + '["cdcoplib"] = ' + glb_codigoOperadorLiberacao + ';');
+    eval('arrayAlienacao' + i + '["cdcoplib"] = "' + glb_codigoOperadorLiberacao + '";');
 
     eval('arrayAlienacoes[' + i + '] = arrayAlienacao' + i + ';');
 
@@ -7311,7 +7311,7 @@ function buscaLiquidacoes(operacao) {
                 dsctrliq: dsctrliq,
                 operacao: operacao,
                 cdlcremp: cdlcremp,
-                inpessoa: inpessoa,
+				inpessoa: inpessoa,
                 redirect: 'script_ajax'
             },
             error: function(objAjax, responseError, objExcept) {
@@ -7586,21 +7586,21 @@ function fechaLiquidacoes(operacao) {
     }
 
     dsctrliq = dsctrliq.slice(0, -1);
-
+	
 	if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')
 		showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' mes(es)?',
-						'Confirma&ccedil;&atilde;o - Ayllos',
-						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");',
-						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");',
-						'sim.gif',
+						'Confirma&ccedil;&atilde;o - Ayllos', 
+						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
+						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
+						'sim.gif', 
 						'nao.gif');
-    else
-        fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
-    return false;
+	else
+		fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
+	return false;
 }
 
 function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
-
+	
 	$('#dsctrliq', '#' + nomeForm).val(dsctrliq);
 
 	if ($('#dsctrliq', '#' + nomeForm).val() != '') {
