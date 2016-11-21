@@ -23,6 +23,8 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   
                   29/12/2015 - Inserção da chamada 10 (nagios) para a procedure
                                inicializa_dispositivo (Lunelli - SD 359409)
+
+                  04/11/2016 - M172 - Atualizacao Telefone (Guilherme/SUPERO)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -58,6 +60,11 @@ DEFINE VARIABLE aux_contador        AS INTEGER      NO-UNDO.
 DEFINE VARIABLE aux_flgblpre        AS LOGICAL              NO-UNDO.
 DEFINE VARIABLE aux_flgretur        AS CHAR    INIT "NOK"   NO-UNDO.
 
+/* Nr do Telefone retornado da Procedure de Validacao Telefone **/
+DEFINE VARIABLE aux_telefone        AS CHAR                 NO-UNDO.
+DEFINE VARIABLE aux_atualiza        AS LOGICAL              NO-UNDO.
+DEFINE VARIABLE aux_continua        AS LOGICAL              NO-UNDO.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -74,7 +81,7 @@ DEFINE VARIABLE aux_flgretur        AS CHAR    INIT "NOK"   NO-UNDO.
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS IMAGE-31 IMAGE-34 IMAGE-35 IMAGE-37 IMAGE-38 ~
-IMAGE-40 IMAGE-41 Btn_A Btn_E Btn_B Btn_D Btn_H 
+IMAGE-40 IMAGE-41 IMAGE-42 Btn_A Btn_E Btn_B Btn_C Btn_D Btn_H 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -101,6 +108,11 @@ DEFINE BUTTON Btn_A
 
 DEFINE BUTTON Btn_B 
      LABEL "PAGAMENTO/TRANSFERÊNCIA" 
+     SIZE 61 BY 3.33
+     FONT 14.
+
+DEFINE BUTTON Btn_C 
+     LABEL "ATUALIZAÇÃO DE TELEFONE" 
      SIZE 61 BY 3.33
      FONT 14.
 
@@ -152,6 +164,10 @@ DEFINE IMAGE IMAGE-41
      FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
+DEFINE IMAGE IMAGE-42
+     FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
+     SIZE 5 BY 3.05.
+
 DEFINE RECTANGLE RECT-100
      EDGE-PIXELS 2 GRAPHIC-EDGE    
      SIZE 123 BY .24
@@ -175,6 +191,7 @@ DEFINE FRAME f_cartao_opcoes
      Btn_E AT ROW 9.1 COL 94.4 WIDGET-ID 68
      Btn_B AT ROW 14.1 COL 6 WIDGET-ID 94
      Btn_F AT ROW 14.1 COL 94.4 WIDGET-ID 156
+     Btn_C AT ROW 19.14 COL 6 WIDGET-ID 164
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 66
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 74
      IMAGE-31 AT ROW 1.48 COL 49.6 WIDGET-ID 112
@@ -187,6 +204,7 @@ DEFINE FRAME f_cartao_opcoes
      IMAGE-38 AT ROW 9.24 COL 156 WIDGET-ID 150
      IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 154
      IMAGE-41 AT ROW 14.24 COL 156 WIDGET-ID 158
+     IMAGE-42 AT ROW 19.29 COL 1 WIDGET-ID 162
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -325,6 +343,37 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_A w_cartao_opcoes
 ON CHOOSE OF Btn_A IN FRAME f_cartao_opcoes /* SAQUE */
 DO:
+
+    /** VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
+    RUN procedures/verifica_autorizacao.p (OUTPUT aux_flgderro).
+
+    IF  NOT aux_flgderro  THEN DO:
+
+        RUN procedures/verifica_atualizacao_telefone.p
+                       (OUTPUT aux_atualiza,
+                        OUTPUT aux_telefone,
+                        OUTPUT aux_flgderro).
+
+        IF  NOT aux_flgderro       /* NAO TEM ERRO */
+        AND aux_atualiza  THEN DO: /* DEVE ATUALIZAR */
+
+            /** "FONE" é igual a NULO - NAO TEM TELEFONE **/
+            RUN cartao_atualiza_telefone_pre.w (INPUT (aux_telefone <> "FONE")
+                                               ,INPUT  aux_telefone
+                                               ,OUTPUT aux_continua).
+
+            IF  NOT aux_continua THEN DO:
+                /* puxa o frame principal pra frente */
+/*                 h_principal:MOVE-TO-TOP().  */
+                RETURN "NOK".
+            END.
+        END.
+
+    END.
+
+    /** FIM - VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
+
+
     RUN cartao_saque.w.
 END.
 
@@ -346,6 +395,36 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_B w_cartao_opcoes
 ON CHOOSE OF Btn_B IN FRAME f_cartao_opcoes /* PAGAMENTO/TRANSFERÊNCIA */
 DO:
+
+    /** VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
+    RUN procedures/verifica_autorizacao.p (OUTPUT aux_flgderro).
+
+    IF  NOT aux_flgderro  THEN DO:
+
+        RUN procedures/verifica_atualizacao_telefone.p
+                       (OUTPUT aux_atualiza,
+                        OUTPUT aux_telefone,
+                        OUTPUT aux_flgderro).
+
+        IF  NOT aux_flgderro       /* NAO TEM ERRO */
+        AND aux_atualiza  THEN DO: /* DEVE ATUALIZAR */
+
+            /** "FONE" é igual a NULO - NAO TEM TELEFONE **/
+            RUN cartao_atualiza_telefone_pre.w (INPUT (aux_telefone <> "FONE")
+                                               ,INPUT  aux_telefone
+                                               ,OUTPUT aux_continua).
+
+            IF  NOT aux_continua THEN DO:
+                /* puxa o frame principal pra frente */
+/*                 h_principal:MOVE-TO-TOP().  */
+                RETURN "NOK".
+            END.
+        END.
+
+    END.
+    /** FIM - VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
+
+
     /* verifica o status */
     RUN procedures/inicializa_dispositivo.p ( INPUT 6,
                                              OUTPUT aux_flgderro).
@@ -381,6 +460,29 @@ END.
 &ANALYZE-RESUME
 
 
+&Scoped-define SELF-NAME Btn_C
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_C w_cartao_opcoes
+ON ANY-KEY OF Btn_C IN FRAME f_cartao_opcoes /* ATUALIZAÇÃO DE TELEFONE */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_C w_cartao_opcoes
+ON CHOOSE OF Btn_C IN FRAME f_cartao_opcoes /* ATUALIZAÇÃO DE TELEFONE */
+DO:
+
+    RUN cartao_atualiza_telefone.w (OUTPUT aux_continua).
+    
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
 &Scoped-define SELF-NAME Btn_D
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_opcoes
 ON ANY-KEY OF Btn_D IN FRAME f_cartao_opcoes /* ALTERAÇÃO DE SENHA */
@@ -395,7 +497,36 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_opcoes
 ON CHOOSE OF Btn_D IN FRAME f_cartao_opcoes /* ALTERAÇÃO DE SENHA */
 DO:
-    
+    /** VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
+    RUN procedures/verifica_autorizacao.p (OUTPUT aux_flgderro).
+
+    IF  NOT aux_flgderro  THEN DO:
+
+        RUN procedures/verifica_atualizacao_telefone.p
+                       (OUTPUT aux_atualiza,
+                        OUTPUT aux_telefone,
+                        OUTPUT aux_flgderro).
+
+        IF  NOT aux_flgderro       /* NAO TEM ERRO */
+        AND aux_atualiza  THEN DO: /* DEVE ATUALIZAR */
+
+            /** "FONE" é igual a NULO - NAO TEM TELEFONE **/
+            RUN cartao_atualiza_telefone_pre.w (INPUT (aux_telefone <> "FONE")
+                                               ,INPUT  aux_telefone
+                                               ,OUTPUT aux_continua).
+
+            IF  NOT aux_continua THEN DO:
+                /* puxa o frame principal pra frente */
+/*                 h_principal:MOVE-TO-TOP().  */
+                RETURN "NOK".
+            END.
+        END.
+
+    END.
+    /** FIM - VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
+
+
+
     /* para quem nao tem letras, pede cpf */
     IF  NOT glb_idsenlet  THEN
         RUN cartao_alterar_senha_cpf.w.
@@ -721,8 +852,8 @@ PROCEDURE enable_UI :
                Settings" section of the widget Property Sheets.
 ------------------------------------------------------------------------------*/
   RUN control_load.
-  ENABLE IMAGE-31 IMAGE-34 IMAGE-35 IMAGE-37 IMAGE-38 IMAGE-40 IMAGE-41 Btn_A 
-         Btn_E Btn_B Btn_D Btn_H 
+  ENABLE IMAGE-31 IMAGE-34 IMAGE-35 IMAGE-37 IMAGE-38 IMAGE-40 IMAGE-41 
+         IMAGE-42 Btn_A Btn_E Btn_B Btn_C Btn_D Btn_H 
       WITH FRAME f_cartao_opcoes.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_opcoes}
   VIEW w_cartao_opcoes.
@@ -752,6 +883,10 @@ ASSIGN chtemporizador:t_cartao_opcoes:INTERVAL = 0
     IF  KEY-FUNCTION(LASTKEY) = "B"               AND
         Btn_B:SENSITIVE IN FRAME f_cartao_opcoes  THEN
         APPLY "CHOOSE" TO Btn_B.
+    ELSE
+    IF  KEY-FUNCTION(LASTKEY) = "C"               AND
+        Btn_C:SENSITIVE IN FRAME f_cartao_opcoes  THEN
+        APPLY "CHOOSE" TO Btn_C.
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "D"               AND
         Btn_D:SENSITIVE IN FRAME f_cartao_opcoes  THEN
