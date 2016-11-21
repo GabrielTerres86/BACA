@@ -12,7 +12,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Objetivo  : Envio de negativacoes para a Serasa
   --
-  --  Alteracoes: 20/06/2016 - Enviar todos os dados na primeira linha de cada registro. Antes o 
+  --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+  --						   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+  --						   (Andrei - RKAM). 
+  --
+  --              20/06/2016 - Enviar todos os dados na primeira linha de cada registro. Antes o 
   --                           numero da conta ia somente na segunda linha
   --
   --              04/07/2016 - Nao enviar para o Serasa automaticamente se ja foi enviado uma vez
@@ -211,7 +215,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
        CURSOR cr_crapjur(pr_cdcooper crapcop.cdcooper%TYPE,
                          pr_nrdconta crapjur.nrdconta%TYPE) IS 
          SELECT ass.nrcpfcgc, --> Documento do Credor 
-                gene0007.fn_caract_acento(pr_texto => jur.nmtalttl) nmtalttl, --> Razão Social do Credor   
+                gene0007.fn_caract_acento(pr_texto => jur.nmextttl) nmextttl, --> Razão Social do Credor   
                 gene0007.fn_caract_acento(pr_texto => jur.nmfansia) nmfansia, --> Nome Fantasia do Credor
                 gene0007.fn_caract_acento(pr_texto => enc.dsendere) dsendere, --> Endereço do Credor
                 gene0007.fn_caract_acento(pr_texto => enc.nmbairro) nmbairro, --> Bairro do Credor
@@ -264,6 +268,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
 
        -- Variaveis Locais da pc_crps330
        vr_dsdireto    VARCHAR2(300); -- Diretorio onde sera gerado o arquivo
+       vr_nmarquiv    VARCHAR2(50); -- Nome do arquivo
        vr_dsserasa    VARCHAR2(10);
        vr_dstpinsc    VARCHAR2(10);
        vr_nrtpinsc    VARCHAR2(10);
@@ -326,9 +331,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                AND inserasa = 0 -- Nao enviado ao Serasa ainda
                AND dtvencto + qtdianeg < rw_crapdat.dtmvtolt
                AND NOT EXISTS (SELECT 1                -- Se existir esta tabela eh que ja foi enviado uma vez
-                                 FROM tbcrd_log_operacao b -- Neste caso nao deve enviar novamente
+                                 FROM tbcobran_his_neg_serasa b -- Neste caso nao deve enviar novamente
                                 WHERE b.cdcooper = a.cdcooper
-                                  AND b.nrdconta = a.nrdconta);
+                                  AND b.nrdconta = a.nrdconta
+                                  AND b.cdbandoc = a.cdbandoc
+                                  AND b.nrdctabb = a.nrdctabb
+                                  AND b.nrcnvcob = a.nrcnvcob
+                                  AND b.nrdocmto = a.nrdocmto);
           EXCEPTION
             WHEN OTHERS THEN 
               vr_dscritic := 'Erro ao atualizar CRAPCOB (inserasa): '||SQLERRM;
@@ -506,7 +515,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                                          'J'                              || --> Tipo de Pessoa do Credor
                                                          '1'                              || --> Tipo do primeiro documento do Credor
                                                          LPad(rw_crapjur.nrcpfcgc,15,'0') || --> Documento do Credor 
-                                                         RPad(rw_crapjur.nmtalttl,70,' ') || --> Razão Social do Credor    
+                                                         RPad(rw_crapjur.nmextttl,70,' ') || --> Razão Social do Credor    
                                                          RPad(rw_crapjur.nmfansia,25,' ') || --> Nome Fantasia do Credor     
                                                          RPad(rw_crapjur.dsendere,45,' ') || --> Endereço do Credor
                                                          RPad(rw_crapjur.nmbairro,20,' ') || --> Bairro do Credor
@@ -589,7 +598,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                                                          'J'                              || --> Tipo de pessoa do cedente; Física (F) ou Jurídica( J )
                                                          '1'                              || --> Tipo do primeiro docto. do cedente: 1-CNPJ ou 2-CPF
                                                          LPad(rw_crapjur.nrcpfcgc,15,'0') || --> Documento do cedente 
-                                                         RPad(rw_crapjur.nmtalttl,40,' ') || --> Nome do cedente do título.
+                                                         RPad(rw_crapjur.nmextttl,40,' ') || --> Nome do cedente do título.
                                                          rpad(lpad(rw_crapcop.cdagectl,4,'0')||'-'||vr_nrdigage||' '||
                                                               gene0002.fn_mask_conta(rw_crapcob.nrdconta),
                                                               25,' ')                     || --> Código e Digito da Agência + Código e Digito do cedente
@@ -670,15 +679,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
           -- Se possui algum boleto para enviar
           -- Vai enviar arquivo somente se possuir dados
           IF vr_dsserasa IS NOT NULL THEN
+            -- Cria o nome do arquivo
+            vr_nmarquiv := 'NDM.ND'||rw_crapcop.cdcliser ||'.CVDEV.D'||
+                             to_char(SYSDATE,'YYMMDD')||'.H'||to_char(SYSDATE,'HH24MISS');
             -- Converte o CLOB para arquivo
             gene0002.pc_clob_para_arquivo(pr_clob => vr_clob
                                          ,pr_caminho => vr_dsdireto
-                                         ,pr_arquivo => 'NDM.ND'||rw_crapcop.cdcliser ||'.CVDEV.D'||
-                                                        to_char(SYSDATE,'YYMMDD')||'.H'||to_char(SYSDATE,'HH24MISS')
+                                         ,pr_arquivo => 'temporario.txt'
                                          ,pr_des_erro => vr_dscritic);
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
+                       
+            -- Converte o arquivo para o formato ANSI
+            gene0001.pc_OScommand_Shell(pr_des_comando => 'iconv -f utf-8 -t ISO8859-1 '||vr_dsdireto||'/temporario.txt'||
+                                                            ' > '||vr_dsdireto||'/'||vr_nmarquiv);
+
+            -- Exclui o arquivo temporario
+            gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdireto||'/temporario.txt');
           ELSE
             -- Decrementa a sequence do arquivo
             vr_nrseqarq := fn_sequence(pr_nmtabela => 'CRAPCOB', pr_nmdcampo => 'NRSEQARQ',pr_dsdchave => rw_crapcop.cdcooper, pr_flgdecre => 'S');            
@@ -709,7 +727,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
             END IF;
             
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_2.rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_2.rowid --ROWID da cobranca
                                                ,pr_cdocorre => 93 -- Negativacao Serasa
                                                ,pr_cdmotivo => 'S3' -- Negativado na Serasa
                                                ,pr_vltarifa => 0
@@ -758,7 +776,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
               IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                 --Levantar Excecao
                 RAISE vr_exc_saida;
-              END IF;
+            END IF;
             END IF;
             
           END LOOP;
