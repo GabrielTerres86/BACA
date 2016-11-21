@@ -4,9 +4,9 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 05/08/2016
+   Data    : 13/04/2011                        Ultima atualizacao: 06/09/2016
 
-   Dados referentes ao programa:
+   Dados referentes ao programa: 
 
    Objetivo  : BO para Retorno Instruções bancárias - Cob. Registrada 
 
@@ -138,7 +138,7 @@ create or replace package cecred.PAGA0002 is
                            
               08/01/2016 - Adicionado proc. pc_convenios_aceitos, convertido da BO16.
                            Proj. 131 Assinatura Multipla (Jorge/David).            
-                                                         
+                                                     
               24/03/2016 - Adicionados parâmetros para geraçao de LOG
                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
                                                      
@@ -157,6 +157,9 @@ create or replace package cecred.PAGA0002 is
                      05/08/2016 - Incluido tratamento para verificacao de transacoes duplicadas na procedure
                            pc_cadastrar_agendamento, SD 494025 (Jean Michel).           
                                                                    
+			 06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
+                          (Adriano - SD509480).    
+							                                                         
 ..............................................................................*/
   -- Antigo tt-agenda-recorrente
   TYPE typ_rec_agenda_recorrente IS RECORD
@@ -283,7 +286,7 @@ create or replace package cecred.PAGA0002 is
                                
                                ,pr_xml_dsmsgerr OUT VARCHAR2            --> Retorno XML de critica
                                ,pr_xml_msgofatr OUT VARCHAR2            --> Retorno XML com mensagem para fatura
-                               ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio
+                               ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio							                
                                ,pr_xml_cdsegmto OUT VARCHAR2            --> Retorno XML com segmto convenio
                                ,pr_dsretorn     OUT VARCHAR2);          --> Retorno de critica (OK ou NOK)
   
@@ -460,14 +463,14 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_nrcpfope IN craplau.nrcpfope%TYPE  --> Numero do cpf do operador juridico
                                       ,pr_idtitdda IN VARCHAR2               --> Contem o identificador do titulo dda. 
                                       ,pr_cdtrapen IN INTEGER                --> Codigo da transacao Pendente
-                                      ,pr_flmobile IN INTEGER                --> Indicador Mobile
-                                      ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
-                                      ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			
+									                    ,pr_flmobile IN INTEGER                --> Indicador Mobile
+									                    ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
+									                    ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			
                                       ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
                                       ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
                                       ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade  
                                       /* parametros de saida */                               
-                                      ,pr_dstransa OUT VARCHAR2              --> descrição de transação
+                                      ,pr_dstransa OUT VARCHAR2              --> descrição de transação									  
                                       ,pr_msgofatr OUT VARCHAR2
                                       ,pr_cdempcon OUT NUMBER
 									                    ,pr_cdsegmto OUT VARCHAR2
@@ -547,7 +550,7 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_nrterfin IN craplau.nrterfin%TYPE  --> Numero do terminal financeiro. 
                                       ,pr_flmobile IN INTEGER                --> Indicador Mobile
                                       ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
-                                      ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			                                      
+                                      ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			
                                       ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
                                       ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
                                       ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade                                      
@@ -595,6 +598,9 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                              ,pr_inpessoa IN crapcti.inpessoa%TYPE   --> Tipo de pessoa da conta
                              ,pr_intipcta IN crapcti.intipcta%TYPE   --> Tipo da conta
                              ,pr_idagenda IN INTEGER);               --> Tipo de agendamento
+
+  /* Auditoria das informações de Auto Atendimento para retorno de sobras posterior */	
+  PROCEDURE pc_auditoria_auto_atend(pr_dtmvtoan IN crapdat.dtmvtoan%TYPE DEFAULT NULL) ;
                              
 end PAGA0002;
 /
@@ -753,7 +759,7 @@ create or replace package body cecred.PAGA0002 is
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : David
-      Data    : Abril/2007.                       Ultima atualizacao: 03/06/2016
+      Data    : Abril/2007.                       Ultima atualizacao: 06/09/2016
    
       Dados referentes ao programa:
        
@@ -814,7 +820,7 @@ create or replace package body cecred.PAGA0002 is
                             
                   28/07/2015 - Adição de parâmetro flmobile para indicar que a origem
                                da chamada é do mobile (Dionathan)
-    			   
+             
                   05/08/2015 - Adicionar parametro idtitdda na chamada da procedure
                                cria_transacao_operador da b1wgen0016. 
                                (Douglas - Chamado 291387)
@@ -827,7 +833,7 @@ create or replace package body cecred.PAGA0002 is
                    
                   09/12/2015 - Adicionado chamda da proc. pc_verifica_rep_assinatura, retornando informacoes
                               quanto a conta exigir Assinatura Conjunta entre outras informacoes.
-                              (Jorge/David) Proj. 131 Assinatura Multipla                                         
+                              (Jorge/David) Proj. 131 Assinatura Multipla        
                          
                   22/02/2016 - Tratamento para gravação de favorecido outras IFs na ted (Marcos-Supero)   
                        Passagem dos novos campos na solicitacao da TED          (Marcos-Supero)  
@@ -842,6 +848,9 @@ create or replace package body cecred.PAGA0002 is
                   03/06/2016 - Ajuste para chamar a rotina de monitoramento somente quando
                                operação de TED
                                (Adriano).             
+
+				  06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
+                               (Adriano - SD509480).             
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
    
@@ -1129,7 +1138,7 @@ create or replace package body cecred.PAGA0002 is
     -- incluir favorecido
     PROCEDURE pc_grava_favorito(pr_dscritic OUT VARCHAR2) IS
     BEGIN
-    
+      
       IF pr_tpoperac = 4  THEN /** TED **/
 
         vr_nmtitula := pr_nmtitula;
@@ -1220,69 +1229,69 @@ create or replace package body cecred.PAGA0002 is
 
       ELSE
 
-      /* Validar a conta de destino da transferencia */
-      INET0001.pc_valida_conta_destino ( pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                                        ,pr_cdagenci => 90          --Agencia do Associado
-                                        ,pr_nrdcaixa => 900         --Numero caixa
-                                        ,pr_cdoperad => '996'       --Codigo Operador
-                                        ,pr_nrdconta => pr_nrdconta --Numero da conta
-                                        ,pr_idseqttl => pr_idseqttl --Identificador Sequencial titulo
-                                        ,pr_cdagectl => pr_cdageban --Codigo Agencia
-                                        ,pr_nrctatrf => pr_nrctatrf --Numero Conta Transferencia
-                                        ,pr_dtmvtolt => pr_dtmvtolt --Data Movimento
-                                        ,pr_cdtiptra => pr_cdtiptra --Tipo de Transferencia
-                                        ,pr_flgctafa => vr_flgctafa --Indicador conta cadastrada
-                                        ,pr_nmtitula => vr_nmtitula --Nome titular
-                                        ,pr_nmtitul2 => vr_nmtitul2 --Nome segundo titular
-                                        ,pr_cddbanco => vr_cddbanco --Codigo banco
-                                        ,pr_dscritic => vr_des_erro --Retorno OK/NOK
-                                        ,pr_tab_erro => vr_tab_erro); --Tabela de retorno de erro
-      
-      IF vr_des_erro <> 'OK' THEN
-        IF vr_tab_erro.exists(vr_tab_erro.first) THEN
-          pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-        ELSE
-          pr_dscritic := 'Erro na validacao da conta destino.';
+        /* Validar a conta de destino da transferencia */
+        INET0001.pc_valida_conta_destino ( pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+                                          ,pr_cdagenci => 90          --Agencia do Associado
+                                          ,pr_nrdcaixa => 900         --Numero caixa
+                                          ,pr_cdoperad => '996'       --Codigo Operador
+                                          ,pr_nrdconta => pr_nrdconta --Numero da conta
+                                          ,pr_idseqttl => pr_idseqttl --Identificador Sequencial titulo
+                                          ,pr_cdagectl => pr_cdageban --Codigo Agencia
+                                          ,pr_nrctatrf => pr_nrctatrf --Numero Conta Transferencia
+                                          ,pr_dtmvtolt => pr_dtmvtolt --Data Movimento
+                                          ,pr_cdtiptra => pr_cdtiptra --Tipo de Transferencia
+                                          ,pr_flgctafa => vr_flgctafa --Indicador conta cadastrada
+                                          ,pr_nmtitula => vr_nmtitula --Nome titular
+                                          ,pr_nmtitul2 => vr_nmtitul2 --Nome segundo titular
+                                          ,pr_cddbanco => vr_cddbanco --Codigo banco
+                                          ,pr_dscritic => vr_des_erro --Retorno OK/NOK
+                                          ,pr_tab_erro => vr_tab_erro); --Tabela de retorno de erro
+        
+        IF vr_des_erro <> 'OK' THEN
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+            pr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+          ELSE
+            pr_dscritic := 'Erro na validacao da conta destino.';
+          END IF;
+          -- se retornou critica deve abortar processo                                                            
+          RETURN;
         END IF;
-        -- se retornou critica deve abortar processo                                                            
-        RETURN;
-      END IF;
-     
-      IF  NOT vr_flgctafa  THEN 
-        CADA0002.pc_inclui_conta_transf 
-                         (pr_cdcooper => pr_cdcooper    --> Codigo da cooperativa
-                         ,pr_cdagenci => 90             --> Codigo da agencia   
-                         ,pr_nrdcaixa => 900            --> Numero do caixa
-                         ,pr_cdoperad => '996'          --> Cod. do operador
-                         ,pr_nmdatela => 'INTERNETBANK' --> Nome da tela
-                         ,pr_idorigem => 3              --> Identificador de origem
-                         ,pr_nrdconta => pr_nrdconta    --> Numero da conta 
-                         ,pr_idseqttl => pr_idseqttl    --> Seq. do titular
-                         ,pr_dtmvtolt => pr_dtmvtolt    --> Data do movimento
-                         ,pr_nrcpfope => 0              --> CPF operador juridico 
-                         ,pr_flgerlog => 1 /*TRUE*/     --> flg geracao log 
-                         ,pr_cddbanco => pr_cddbanco    --> Codigo do banco destino
-                         ,pr_cdageban => pr_cdageban    --> Agencia destino
-                         ,pr_nrctatrf => pr_nrctatrf    --> Nr. conta transf
-                         ,pr_nmtitula => NULL           --> Nome titular
-                         ,pr_nrcpfcgc => 0              --> CPF titulat
-                         ,pr_inpessoa => 0              --> Tipo pessoa
-                         ,pr_intipcta => 1              --> Tipo de conta
-                         ,pr_intipdif => 1              --> tipo de inst. financeira da conta
-                         ,pr_rowidcti => NULL           --> Recid da cta transf
-                         ,pr_cdispbif => pr_cdispbif    --> Oito primeiras posicoes do cnpj. 
-                         -- OUT 
-                         ,pr_msgaviso => vr_msgaviso    --> Mensagem de aviso
-                         ,pr_des_erro => vr_des_erro    --> Indicador se retornou com erro (OK ou NOK)
+       
+        IF  NOT vr_flgctafa  THEN 
+          CADA0002.pc_inclui_conta_transf 
+                           (pr_cdcooper => pr_cdcooper    --> Codigo da cooperativa
+                           ,pr_cdagenci => 90             --> Codigo da agencia   
+                           ,pr_nrdcaixa => 900            --> Numero do caixa
+                           ,pr_cdoperad => '996'          --> Cod. do operador
+                           ,pr_nmdatela => 'INTERNETBANK' --> Nome da tela
+                           ,pr_idorigem => 3              --> Identificador de origem
+                           ,pr_nrdconta => pr_nrdconta    --> Numero da conta 
+                           ,pr_idseqttl => pr_idseqttl    --> Seq. do titular
+                           ,pr_dtmvtolt => pr_dtmvtolt    --> Data do movimento
+                           ,pr_nrcpfope => 0              --> CPF operador juridico 
+                           ,pr_flgerlog => 1 /*TRUE*/     --> flg geracao log 
+                           ,pr_cddbanco => pr_cddbanco    --> Codigo do banco destino
+                           ,pr_cdageban => pr_cdageban    --> Agencia destino
+                           ,pr_nrctatrf => pr_nrctatrf    --> Nr. conta transf
+                           ,pr_nmtitula => NULL           --> Nome titular
+                           ,pr_nrcpfcgc => 0              --> CPF titulat
+                           ,pr_inpessoa => 0              --> Tipo pessoa
+                           ,pr_intipcta => 1              --> Tipo de conta
+                           ,pr_intipdif => 1              --> tipo de inst. financeira da conta
+                           ,pr_rowidcti => NULL           --> Recid da cta transf
+                           ,pr_cdispbif => pr_cdispbif    --> Oito primeiras posicoes do cnpj. 
+                           -- OUT 
+                           ,pr_msgaviso => vr_msgaviso    --> Mensagem de aviso
+                           ,pr_des_erro => vr_des_erro    --> Indicador se retornou com erro (OK ou NOK)
                            ,pr_cdcritic => vr_cdcritic    --> Codigo da critica
                            ,pr_dscritic => pr_dscritic);  --> Descricao da critica
-      
-        IF vr_des_erro <> 'OK' THEN
+        
+          IF vr_des_erro <> 'OK' THEN
             IF TRIM(pr_dscritic) IS NULL  THEN              
-            pr_dscritic := 'Erro na inclusao da conta favorita.';
+              pr_dscritic := 'Erro na inclusao da conta favorita.';
+            END IF;
           END IF;
-        END IF;
-      END IF;  
+        END IF;  
       END IF;
     END pc_grava_favorito;
     
@@ -1292,12 +1301,12 @@ create or replace package body cecred.PAGA0002 is
            DECODE(pr_idagenda,1,NULL,'Agendamento para ')||
            DECODE(pr_tpoperac,4,'Transferencia de TED','Transferencia de Valores')
     INTO vr_dstransa
-    FROM dual;
+    FROM dual;    
     
     vr_cdcritic := 0;
     vr_dscritic := NULL;
     vr_dtmvtopg := pr_dtmvtopg;
-    
+
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_idseqttl => pr_idseqttl
@@ -1370,7 +1379,7 @@ create or replace package body cecred.PAGA0002 is
       
     ELSE
       vr_vllanmto := pr_vllanmto;
-      
+
       -- Procedure para validar limites para transacoes (Transf./Pag./Cob.) 
       INET0001.pc_verifica_operacao 
                            (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
@@ -1413,11 +1422,11 @@ create or replace package body cecred.PAGA0002 is
       RAISE vr_exc_erro;
     END IF;
 
-      -- Se nao retornou erro, validar dados TED
+    -- Se nao retornou erro, validar dados TED
     IF pr_tpoperac = 4 AND /** TED **/
        pr_flgexecu = 0 THEN         
 
-        CXON0020.pc_verifica_dados_ted 
+          CXON0020.pc_verifica_dados_ted 
                           (pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
                           ,pr_cdagenci => 90           --> Codigo Agencia
                           ,pr_nrdcaixa => 900          --> Numero do caixa
@@ -1443,7 +1452,7 @@ create or replace package body cecred.PAGA0002 is
          
     IF nvl(vr_cdcritic,0) <> 0 OR
        TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro; 
+      RAISE vr_exc_erro;
     END IF;
     
     END IF;
@@ -1461,7 +1470,7 @@ create or replace package body cecred.PAGA0002 is
 
     /** Indica se deve efetuar somente a validacao dos dados **/
     IF pr_flgexecu = 0 /* false */  THEN
-      
+    
       -- Verificar se a data é um dia util, caso não ser, retorna o proximo dia
       vr_dtmvtopg := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper, 
                                                  pr_dtmvtolt  => vr_dtmvtopg, 
@@ -1475,7 +1484,7 @@ create or replace package body cecred.PAGA0002 is
         IF TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF; 
-      END IF;  
+      END IF;      
       
       -- Solução temporária para item 1. do chamado 356737
       -- Se a data retornada no XML é maior que a data do dispostivo, a operação é convertida para agendamento
@@ -1513,7 +1522,7 @@ create or replace package body cecred.PAGA0002 is
                                                          '<dsmsginf>'||vr_dscritic ||'</dsmsginf>'||
                                                          '<lsdatagd>'||vr_lsdatagd ||'</lsdatagd>'||
                                                          '<vltarifa>'|| to_char(vr_vltarifa,'fm999G999G990D00') ||'</vltarifa>'||
-                                                       '</DADOS_TRANSF>'|| vr_dslinxml); 
+                                                       '</DADOS_TRANSF>'|| vr_dslinxml);                                                       
       END IF;
       
       -- sair do programa com OK
@@ -1535,7 +1544,7 @@ create or replace package body cecred.PAGA0002 is
       
       -- TED
       IF pr_cdtiptra = 4 THEN
-         --Cria transacao pendente de TED              
+         --Cria transacao pendente de TED
 
          INET0002.pc_cria_trans_pend_ted( pr_cdagenci => 90             --> Codigo do PA
                                          ,pr_nrdcaixa => 900            --> Numero do Caixa
@@ -1932,7 +1941,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_dshistor => pr_dshistor  --> Descricao da finalidade
                                 
                                 /* parametros de saida */                               
-                                ,pr_dstransa => vr_dstrans1  --> Descrição de transação
+                                ,pr_dstransa => vr_dstrans1  --> Descrição de transação                
 								                ,pr_msgofatr => vr_msgofatr
                                 ,pr_cdempcon => vr_cdempcon
 								                ,pr_cdsegmto => vr_cdsegmto
@@ -1945,7 +1954,7 @@ create or replace package body cecred.PAGA0002 is
                                                    pr_dtmvtolt  => pr_dtmvtopg, 
                                                    pr_tipo      => 'P', 
                                                    pr_feriado   => TRUE);
-                                                     
+               
         vr_dscritic := (CASE 
                          WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
                          WHEN pr_cdtiptra = 4      THEN 'TED agendada'
@@ -1955,7 +1964,7 @@ create or replace package body cecred.PAGA0002 is
                         ' com sucesso para o dia '|| to_char(vr_dtmvtopg,'DD/MM/RRRR') ||                         
                         ', mediante saldo disponivel em conta corrente ate as '        || 
                        (CASE
-                         WHEN pr_cdtiptra = 4      THEN '7h30min'
+                         WHEN pr_cdtiptra = 4      THEN '8h40min' --Este horario DEVE ser o mesmo horario de execucao do pc_crps705
                          ELSE vr_tab_limite(vr_tab_limite.first).hrfimpag
                         END) || 
                         '.';
@@ -1995,7 +2004,7 @@ create or replace package body cecred.PAGA0002 is
 
         vr_cdhisdeb := 555;
 
-      ELSE
+      ELSE  
         --Executar rotina verifica-historico-transferencia
         PAGA0001.pc_verifica_historico_transf 
                                      (pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
@@ -2039,7 +2048,7 @@ create or replace package body cecred.PAGA0002 is
                                         ,pr_nrterfin => 0            --> Numero do terminal financeiro. 
                                         ,pr_flmobile => pr_flmobile  --> Indicador Mobile
                                         ,pr_idtipcar => 0            --> Indicador Tipo Cartão Utilizado
-                                        ,pr_nrcartao => 0            --> Numero Cartao                                        
+                                        ,pr_nrcartao => 0            --> Numero Cartao
                                         ,pr_cdfinali => pr_cdfinali  --> Codigo de finalidade
                                         ,pr_dstransf => pr_dstransf  --> Descricao da transferencia
                                         ,pr_dshistor => pr_dshistor  --> Descricao da finalidade
@@ -2050,7 +2059,7 @@ create or replace package body cecred.PAGA0002 is
       
       -- Se não localizar critica
       IF TRIM(vr_dscritic) IS NULL THEN
-                                                     
+
         vr_dscritic := (CASE 
                          WHEN pr_cdtiptra IN (1,5) THEN 'Transferencia agendada'
                          WHEN pr_cdtiptra = 4 THEN 'TED agendada'
@@ -2095,7 +2104,7 @@ create or replace package body cecred.PAGA0002 is
     
   EXCEPTION
     WHEN vr_exc_erro THEN
-      ROLLBACK;
+      ROLLBACK;     
       
       -- se possui codigo, porém não possui descrição     
       IF nvl(vr_cdcritic,0) > 0 AND 
@@ -2111,7 +2120,7 @@ create or replace package body cecred.PAGA0002 is
       
       -- definir retorno
       pr_xml_dsmsgerr := '<dsmsgerr>'|| vr_dscritic ||'</dsmsgerr>';
-      pr_dsretorn := 'NOK';
+      pr_dsretorn := 'NOK';      
       
       pc_proc_geracao_log(pr_flgtrans => 0 /*false*/);
                           
@@ -2127,7 +2136,7 @@ create or replace package body cecred.PAGA0002 is
       pr_dsretorn := 'NOK';
       
       -- Gerar log ao cooperado (b1wgen0014 - gera_log);
-      pc_proc_geracao_log(pr_flgtrans => 0 /*false*/);  
+      pc_proc_geracao_log(pr_flgtrans => 0 /*false*/); 
        
   END pc_InternetBank22;
   
@@ -2599,10 +2608,10 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_vlapagar IN  NUMBER                  --> Valor a pagar
                                ,pr_versaldo IN  INTEGER                 --> Indicador de ver saldo
                                ,pr_flmobile IN  INTEGER                 --> Indicador se origem é do Mobile
-                               ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                               ,pr_tpcptdoc IN craptit.tpcptdoc%TYPE DEFAULT 1 --> Tipo de captura do documento (1=Leitora, 2=Linha digitavel).                               
                                ,pr_xml_dsmsgerr OUT VARCHAR2            --> Retorno XML de critica
                                ,pr_xml_msgofatr OUT VARCHAR2            --> Retorno XML com mensagem para fatura
-                               ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio
+                               ,pr_xml_cdempcon OUT VARCHAR2            --> Retorno XML com cod empresa convenio                                                            
                                ,pr_xml_cdsegmto OUT VARCHAR2            --> Retorno XML com segmto convenio															 
                                ,pr_dsretorn     OUT VARCHAR2) IS        --> Retorno de critica (OK ou NOK)
 
@@ -2753,7 +2762,7 @@ create or replace package body cecred.PAGA0002 is
     vr_cdbcoctl  NUMBER := 0;
     vr_cdagectl  NUMBER := 0;
     vr_msgofatr  VARCHAR2(500);
-    vr_cdempcon  NUMBER;
+    vr_cdempcon  NUMBER;    
 	  vr_cdsegmto  VARCHAR2(500);
     vr_dsprotoc  crappro.dsprotoc%TYPE;
     vr_idastcjt  crapass.idastcjt%TYPE;
@@ -3437,7 +3446,7 @@ create or replace package body cecred.PAGA0002 is
                                   ,pr_dshistor => ' '          --> Descricao da finalidade
                                   
                                   /* parametros de saida */                               
-                                  ,pr_dstransa => vr_dstrans1  --> Descrição de transação
+                                  ,pr_dstransa => vr_dstrans1  --> Descrição de transação                                  
 								                  ,pr_msgofatr => vr_msgofatr
                                   ,pr_cdempcon => vr_cdempcon
 								                  ,pr_cdsegmto => vr_cdsegmto
@@ -3471,7 +3480,7 @@ create or replace package body cecred.PAGA0002 is
     END IF;
     
     pr_xml_msgofatr := '<msgofatr>'|| vr_msgofatr ||'</msgofatr>';
-    pr_xml_cdempcon := '<cdempcon>'|| to_char(vr_cdempcon,'fm0000')||'</cdempcon>';
+    pr_xml_cdempcon := '<cdempcon>'|| to_char(vr_cdempcon,'fm0000')||'</cdempcon>';     
     pr_xml_cdsegmto := '<cdsegmto>'|| to_char(vr_cdsegmto)||'</cdsegmto>';		
     
     pc_proc_geracao_log(pr_flgtrans => 1 /* TRUE*/);
@@ -3515,7 +3524,7 @@ create or replace package body cecred.PAGA0002 is
                                ,pr_nrnosnum IN VARCHAR2                 -- Nosso Numero
                                ,pr_cdbcocob IN INTEGER                  -- Codigo banco cobrança
                                ,pr_cdagecob IN INTEGER                  -- Codigo Agencia cobranca
-	                             ,pr_cdocorre IN INTEGER                  -- Codigo Ocorrencia
+                               ,pr_cdocorre IN INTEGER                  -- Codigo Ocorrencia
                                ,pr_dsmotivo IN VARCHAR2                 -- Descricao Motivo
                                ,pr_crapdat  IN BTCH0001.cr_crapdat%rowtype -- Data movimento
                                ,pr_cdoperad IN VARCHAR2                 -- Codigo Operador    
@@ -5661,12 +5670,12 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_cdtrapen IN INTEGER                --> Codigo da transacao Pendente
                                       ,pr_flmobile IN INTEGER                --> Indicador Mobile
                                       ,pr_idtipcar IN INTEGER                --> Indicador Tipo Cartão Utilizado
-                                      ,pr_nrcartao IN NUMBER                 --> Numero Cartao
+                                      ,pr_nrcartao IN NUMBER                 --> Numero Cartao																			
                                       ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
                                       ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
                                       ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade
                                       /* parametros de saida */                               
-                                      ,pr_dstransa OUT VARCHAR2              --> descrição de transação
+                                      ,pr_dstransa OUT VARCHAR2              --> descrição de transação                                      
 									                    ,pr_msgofatr OUT VARCHAR2
                                       ,pr_cdempcon OUT NUMBER
 									                    ,pr_cdsegmto OUT VARCHAR2
@@ -5711,7 +5720,7 @@ create or replace package body cecred.PAGA0002 is
     rw_crapass cr_crapass%ROWTYPE;     
     rw_crabass cr_crapass%ROWTYPE;    
     
-		--> Verificar qual cooperativa de destino
+    --> Verificar qual cooperativa de destino
     CURSOR cr_crapcop2 (pr_cdcooper  crapcop.cdcooper%TYPE) IS
       SELECT crapcop.cdcooper,
 			       crapcop.flgofatr
@@ -5891,11 +5900,11 @@ create or replace package body cecred.PAGA0002 is
     vr_hrtransa_inter craplcm.hrtransa%TYPE;
     vr_hrtransa_intra craplau.hrtransa%TYPE; 
 
-	  ---------------> VARIAVEIS <-----------------
+    ---------------> VARIAVEIS <-----------------
     vr_dscritic VARCHAR2(4000);
     --Tabela de memoria de erros
     vr_tab_erro GENE0001.typ_tab_erro;
-
+      
     vr_idlancto craplau.idlancto%type;
       
     --Variaveis de Excecao
@@ -5916,7 +5925,7 @@ create or replace package body cecred.PAGA0002 is
     
     -- Definir descrição da transação
     IF pr_cdtiptra IN (1,5) THEN
-       pr_dstransa := 'Agendamento para Transferencia';       
+       pr_dstransa := 'Agendamento para Transferencia';
     ELSIF pr_cdtiptra = 2 THEN
       IF pr_idtpdpag = 1 THEN
         pr_dstransa := 'Agendamento para Pagamento de Convenio (fatura)';
@@ -5940,9 +5949,9 @@ create or replace package body cecred.PAGA0002 is
     ELSE
       vr_dscritic_aux := vr_dscritic_aux||'o credito de salario.';
     END IF;
-        
+    
     vr_dscritic_aux := vr_dscritic_aux || ': ';
-
+    
     -- Buscar dados do associado
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta);
@@ -5951,7 +5960,7 @@ create or replace package body cecred.PAGA0002 is
     IF cr_crapass%NOTFOUND THEN
       CLOSE cr_crapass;
       vr_dscritic := 'Associado nao cadastrado.';      
-      RAISE vr_exc_erro;      
+      RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapass;
     END IF;
@@ -6218,7 +6227,7 @@ create or replace package body cecred.PAGA0002 is
         END IF;
         
       END IF;
-      
+        
       IF pr_cdtiptra IN (1,3) THEN -- Transferencia Intracooperativa / Salario
         OPEN cr_craplau_intra(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => pr_nrdconta
@@ -6239,7 +6248,7 @@ create or replace package body cecred.PAGA0002 is
               vr_dscritic := 'Ja existe transferencia de mesmo valor e favorecido. Consulte seus agendamentos ou tente novamente em 10 min.';
               --Levantar Excecao
               RAISE vr_exc_erro;
-            END IF;
+      END IF;
           END IF;
         --Fechar Cursor
         CLOSE cr_craplau_intra;
@@ -6265,7 +6274,7 @@ create or replace package body cecred.PAGA0002 is
               vr_dscritic := 'Ja existe transferencia de mesmo valor e favorecido. Consulte seus agendamentos ou tente novamente em 10 min.';
               --Levantar Excecao
               RAISE vr_exc_erro;
-                    
+      
             END IF;
           END IF;	
 
@@ -6301,7 +6310,7 @@ create or replace package body cecred.PAGA0002 is
         CLOSE cr_craplau_ted;
       END IF;
 
-	    BEGIN
+      BEGIN
         INSERT INTO craplau
                     (craplau.cdcooper
                     ,craplau.nrdconta
@@ -6375,7 +6384,7 @@ create or replace package body cecred.PAGA0002 is
                      ,pr_nrcartao)              -- craplau.nrcartao
                      returning idlancto
                         into vr_idlancto;
-
+										 
         -- Se for TED, criar informações do agendamento
         IF pr_cdtiptra = 4 THEN 
           INSERT INTO tbted_det_agendamento
@@ -6555,7 +6564,7 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_texto_completo => vr_xml_temp 
                            ,pr_texto_novo     => '</raiz>' 
                            ,pr_fecha_xml      => TRUE);                             
-
+    
     vr_xml_temp := NULL;
 
     EXCEPTION
@@ -6647,7 +6656,7 @@ create or replace package body cecred.PAGA0002 is
     
   BEGIN
     pr_tab_agenda_recorrente.delete;
-    
+       
     IF upper(pr_dsorigem) <> 'TAA' THEN
       
       vr_vllanmto := 0;
@@ -6763,8 +6772,8 @@ create or replace package body cecred.PAGA0002 is
       END IF;
       
       IF pr_dsorigem <> 'TAA' THEN
-        vr_vllanmto := pr_vllanmto;
-        
+        vr_vllanmto := pr_vllanmto;  
+
         /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
         INET0001.pc_verifica_operacao 
                              (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
@@ -6874,7 +6883,7 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_cdfinali IN INTEGER                --> Codigo de finalidade
                                       ,pr_dstransf IN VARCHAR2               --> Descricao da transferencia
                                       ,pr_dshistor IN VARCHAR2               --> Descricao da finalidade
-                                      /* parametros de saida */
+                                      /* parametros de saida */                               
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_cdcritic OUT VARCHAR2              --> Codigo da critica
                                       ,pr_dscritic OUT VARCHAR2) IS          --> Descricao critica
@@ -7052,7 +7061,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_dshistor => pr_dshistor  --> Descricao da finalidade                               
                                 
                                 /* parametros de saida */                               
-                                ,pr_dstransa => pr_dstransa  --> Descrição de transação
+                                ,pr_dstransa => pr_dstransa  --> Descrição de transação                                
 								                ,pr_msgofatr => vr_msgofatr
                                 ,pr_cdempcon => vr_cdempcon
 								                ,pr_cdsegmto => vr_cdsegmto
@@ -8109,5 +8118,249 @@ create or replace package body cecred.PAGA0002 is
                                  pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));  
   
   END pc_monitora_ted; 
+  
+  /* Auditoria das informações de Auto Atendimento para retorno de sobras posterior */	
+  PROCEDURE pc_auditoria_auto_atend(pr_dtmvtoan IN crapdat.dtmvtoan%TYPE DEFAULT NULL) IS
+	BEGIN
+  	/* ..........................................................................
+
+       Procedure : pc_auditoria_auto_atend 
+       Sistema : Conta-Corrente - Cooperativa de Credito
+       Sigla   : CRED
+       Autor   : Marcos Martini
+       Data    : Julho/2016                      Ultima atualizacao: 28/08/2016 
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado
+    	 
+       Objetivo  : Procedure para efetuar auditoria das informações de auto
+                   atendimento para calculo e retorno de Sobras posterior
+    							 
+       Alterações:  28/08/2016 - M360 - Ajustes no continue para verificação do dia util
+	                             (Marcos-Supero)
+       
+	............................................................................. */
+    DECLARE		
+      -- Códigos de operação
+      vr_cdoperac_taa    NUMBER;
+      vr_cdoperac_deb    NUMBER;
+      vr_cdoperac_mobibk NUMBER;
+      -- Tratamento de erros
+      vr_dscritic VARCHAR2(1000);
+      vr_excsaida EXCEPTION;
+      -- Retorno das Cooperativas para processamento
+      CURSOR cr_coop IS
+        SELECT cdcooper
+          FROM crapcop
+         WHERE cdcooper <> 3 
+           AND flgativo = 1;
+      rw_coop cr_coop%ROWTYPE;     
+      -- Calendário
+      rw_data btch0001.cr_crapdat%ROWTYPE;
+      vr_dtmvtoan crapdat.dtmvtoan%TYPE;
+      -- Busca de apuração
+      CURSOR cr_apuracao(pr_cdcooper crapcop.cdcooper%TYPE
+                        ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+        SELECT 1
+          FROM tbcc_operacoes_diarias
+         WHERE cdcooper = pr_cdcooper
+           AND dtoperacao = pr_dtmvtolt
+           AND cdoperacao in(vr_cdoperac_taa,vr_cdoperac_deb,vr_cdoperac_mobibk);
+      vr_existe NUMBER;
+      -- Pagamentos Mobile, iBank e TAA
+      CURSOR cr_pagtos(pr_cdcooper crapcop.cdcooper%TYPE
+                      ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+        SELECT lcm.nrdconta
+              ,lcm.cdhistor
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+         WHERE lcm.cdcooper = pr_cdcooper /* Cooperativa do Laço */
+           AND lcm.cdagenci IN(90,91)
+           AND lcm.dtmvtolt = pr_dtmvtolt /* Dia anterior*/
+           AND lcm.cdhistor in(508,856) /* Históricos de Pagto IBank e Mobile */
+         -- Desconsiderar Estornos
+         AND NOT EXISTS(SELECT 1
+                            FROM craplcm lcm_est
+                           WHERE lcm_est.cdcooper = lcm.cdcooper
+                             AND lcm_est.dtmvtolt = lcm.dtmvtolt
+                             AND lcm_est.nrdconta = lcm.nrdconta
+                             AND lcm_est.cdagenci = lcm.cdagenci
+                             AND lcm_est.cdbccxlt = lcm.cdbccxlt
+                             AND lcm_est.nrdolote = lcm.nrdolote
+                             AND lcm_est.vllanmto = lcm.vllanmto
+                             AND lcm_est.nrdctabb = lcm.nrdctabb
+                             AND lcm_est.cdhistor = DECODE(lcm.cdhistor,508,570,857)
+                           )
+         GROUP BY lcm.nrdconta
+                 ,lcm.cdhistor;         
+      -- Pagamentos via DEBAUT
+      CURSOR cr_debaut(pr_cdcooper crapcop.cdcooper%TYPE
+                      ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+        SELECT lcm.nrdconta
+              ,COUNT(1) qtdregis
+          FROM craplcm lcm
+              ,crapatr atr
+         WHERE lcm.cdcooper = pr_cdcooper /* Cooperativa do Laço */
+           AND lcm.cdagenci = 1           /* Debitos Automáticos geram cdagenci = 1 */
+           AND lcm.dtmvtolt = pr_dtmvtolt /* Dia anterior*/
+           AND lcm.cdcooper = atr.cdcooper
+           AND lcm.nrdconta = atr.nrdconta
+           AND lcm.cdhistor = atr.cdhistor
+         GROUP BY lcm.nrdconta;      
+    BEGIN
+      -- A rotina só pode ser executada em dias uteis 
+      IF gene0005.fn_valida_dia_util(3,trunc(SYSDATE)) <> trunc(SYSDATE) OR to_char(SYSDATE,'d') IN(1,7) THEN
+        RETURN;
+      END IF;
+      -- Passada a validação das datas, iremos buscar os códigos de operação para PAgamento TAA, Mobile e iBank
+      vr_cdoperac_taa    := gene0001.fn_param_sistema('CRED',0,'CDOPERAC_PAGTO_TAA');
+      vr_cdoperac_deb    := gene0001.fn_param_sistema('CRED',0,'CDOPERAC_PAGTO_DEBAUT');
+      vr_cdoperac_mobibk := gene0001.fn_param_sistema('CRED',0,'CDOPERAC_PAGTO_MOBIBK');
+      -- Buscar todas as cooperativas ativas
+      FOR rw_coop IN cr_coop LOOP
+        -- Criar bloco para que a execução de uma coop não atrapalhe a outra
+        BEGIN
+          -- Se não for passado a data
+          IF pr_dtmvtoan IS NULL THEN 
+            -- Estamos na execução via JOB, então buscar o calendário da mesma
+            rw_data := NULL;
+            OPEN btch0001.cr_crapdat(rw_coop.cdcooper);
+            FETCH btch0001.cr_crapdat
+             INTO rw_data;
+            CLOSE btch0001.cr_crapdat;
+            -- Na execução via JOB sonente continuar se estivermos em dia util e fora do processo
+            IF trunc(SYSDATE) != rw_data.dtmvtolt THEN
+              -- Pular para a próxima cooperativa pois é feriado na mesma
+              continue;
+            END IF;
+            -- Utilizar a data do calendário
+            vr_dtmvtoan := rw_data.dtmvtoan;            
+          ELSE
+            -- Utilizar a data do parâmetro
+            vr_dtmvtoan := pr_dtmvtoan;
+          END IF; 
+          -- Também devemos garantir que não tenha havido apuração no dia
+          OPEN cr_apuracao(rw_coop.cdcooper,vr_dtmvtoan);
+          FETCH cr_apuracao
+           INTO vr_existe;
+          -- Se encontrou
+          IF cr_apuracao%FOUND THEN
+            CLOSE cr_apuracao;
+            -- Ir para a próxima COOP pois esta já rodou
+            continue;
+          ELSE
+            CLOSE cr_apuracao;
+          END IF;  
+          -- PAssadas as validações, então buscar os pagamentos via iBank e Mobile
+          FOR rw_pgto IN cr_pagtos(rw_coop.cdcooper,vr_dtmvtoan) LOOP
+            -- Para cada registro, devemos inserir registros de apuração:
+            BEGIN
+              INSERT
+                INTO tbcc_operacoes_diarias(
+                     cdcooper
+                    ,nrdconta
+                    ,cdoperacao
+                    ,dtoperacao
+                    ,nrsequen
+                    ,flgisencao_tarifa)
+              VALUES(rw_coop.cdcooper /* Laço da Cooperativa */
+                    ,rw_pgto.nrdconta /* Loop acima */
+                    ,DECODE(rw_pgto.cdhistor,508,vr_cdoperac_mobibk,vr_cdoperac_taa) /* Tipo conforme histórico */ 
+                    ,vr_dtmvtoan      /* Dia anterior */
+                    ,rw_pgto.qtdregis /* Loop acima */
+                    ,0);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir registro de lancamento de TAA e Mobile. Erro: ' || SQLERRM;
+                RAISE vr_excsaida;
+            END;
+          END LOOP;
+          -- Por fim, iremos buscar os pagamentos via Débito Automático:  
+          FOR rw_debaut IN cr_debaut(rw_coop.cdcooper,vr_dtmvtoan) LOOP
+            -- Para cada registro, devemos inserir registros de apuração:
+            BEGIN
+              INSERT
+                INTO tbcc_operacoes_diarias(
+                     cdcooper
+                    ,nrdconta
+                    ,cdoperacao
+                    ,dtoperacao
+                    ,nrsequen
+                    ,flgisencao_tarifa)
+              VALUES(rw_coop.cdcooper /* Laço da Cooperativa */
+                    ,rw_debaut.nrdconta /* Loop acima */
+                    ,vr_cdoperac_deb /* Tipo conforme histórico */ 
+                    ,vr_dtmvtoan      /* Dia anterior */
+                    ,rw_debaut.qtdregis /* Loop acima */
+                    ,0);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir registro de lancamento de DebAut. Erro: ' || SQLERRM;
+                RAISE vr_excsaida;
+            END;
+          END LOOP;
+        EXCEPTION
+          WHEN vr_excsaida THEN 
+            -- Desfazer alterações pendentes
+            ROLLBACK;
+            -- Efetuar montagem de e-mail
+            gene0003.pc_solicita_email(pr_cdcooper    => nvl(rw_coop.cdcooper,3)
+                                      ,pr_cdprogra    => 'SOBR0001.AUDIT'
+                                      ,pr_des_destino => gene0001.fn_param_sistema('CRED',nvl(rw_coop.cdcooper,3), 'ERRO_EMAIL_JOB')
+                                      ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||NVL(rw_coop.cdcooper,3)
+                                      ,pr_des_corpo   => 'Olá, <br><br>'
+                                                      || 'Foram encontrados problemas durante o processo de apuração '
+                                                      || 'do Auto Atendimento dos Cooperados. <br> '
+                                                      || 'Erro encontrado:<br>'||SQLERRM
+                                      ,pr_des_anexo   => ''
+                                      ,pr_flg_enviar  => 'N'
+                                      ,pr_des_erro    => vr_dscritic);
+            -- Gravar a solictação do e-mail para envio posterior
+            COMMIT;
+          WHEN OTHERS THEN 
+            -- Desfazer alterações pendentes
+            ROLLBACK;
+            -- Efetuar montagem de e-mail
+            gene0003.pc_solicita_email(pr_cdcooper    => nvl(rw_coop.cdcooper,3)
+                                      ,pr_cdprogra    => 'SOBR0001.AUDIT'
+                                      ,pr_des_destino => gene0001.fn_param_sistema('CRED',nvl(rw_coop.cdcooper,3), 'ERRO_EMAIL_JOB')
+                                      ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||NVL(rw_coop.cdcooper,3)
+                                      ,pr_des_corpo   => 'Olá, <br><br>'
+                                                      || 'Foram encontrados problemas durante o processo de apuração '
+                                                      || 'do Auto Atendimento dos Cooperados. <br> '
+                                                      || 'Erro encontrado:<br>'||SQLERRM
+                                      ,pr_des_anexo   => ''
+                                      ,pr_flg_enviar  => 'N'
+                                      ,pr_des_erro    => vr_dscritic);
+            -- Gravar a solictação do e-mail para envio posterior
+            COMMIT;
+        END;
+        -- Após processar todos os registros da COop, commitamos
+        COMMIT;
+      END LOOP;
+    EXCEPTION  
+      WHEN OTHERS THEN
+        -- Desfazer alterações pendentes
+        ROLLBACK;
+        -- Efetuar montagem de e-mail
+        gene0003.pc_solicita_email(pr_cdcooper    => nvl(rw_coop.cdcooper,3)
+                                  ,pr_cdprogra    => 'RCIP0001'
+                                  ,pr_des_destino => gene0001.fn_param_sistema('CRED',nvl(rw_coop.cdcooper,3), 'ERRO_EMAIL_JOB')
+                                  ,pr_des_assunto => 'Apuração Auto Atendimento – Coop '||NVL(rw_coop.cdcooper,3)
+                                  ,pr_des_corpo   => 'Olá, <br><br>'
+                                                  || 'Foram encontrados problemas durante o processo de apuração '
+                                                  || 'do Auto Atendimento dos Cooperados. <br> '
+                                                  || 'Erro encontrado:<br>'||SQLERRM
+                                  ,pr_des_anexo   => ''
+                                  ,pr_flg_enviar  => 'N'
+                                  ,pr_des_erro    => vr_dscritic);
+        -- Gravar a solictação do e-mail para envio posterior
+        COMMIT;
+    END;
+    
+    
+  END pc_auditoria_auto_atend;    
+  
 END PAGA0002;
 /
