@@ -1,0 +1,342 @@
+CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS013" (pr_cdcooper in craptab.cdcooper%type
+                      ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
+                      ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
+                      ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
+                      ,pr_cdcritic out crapcri.cdcritic%type
+                      ,pr_dscritic out varchar2) as
+/* ..........................................................................
+
+   Programa: PC_CRPS013 (Antigo Fontes/crps013.p)
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Deborah/Edson                       Ultima atualizacao: 17/02/2014
+   Data    : Fevereiro/92.
+
+   Dados referentes ao programa:
+
+   Frequencia: Diario (Batch - Background).
+   Objetivo  : Atende a solicitacao 009.
+               Emite relatorio com os maiores depositos em conta-corrente.
+
+   Alteracao : Listar apenas as pessoas que tenham inpessoa <> 3 (Odair).
+
+               01/12/95 - Acerto no numero do vias (Deborah).
+
+               22/04/98 - Tratar milenio e V8 (Odair)
+
+               25/08/1999 - Tratar circular 2852 (Deborah).
+
+               10/02/2000 - Gerar pedido de impressao (Deborah).
+
+               04/09/2000 - Fechar o stream de saida (Deborah).
+
+               19/11/2004 - Gerar tambem relatorio com TODOS os depositos
+                            (rl/crrl017_99.lst) (Evandro).
+
+               14/02/2006 - Unificacao dos bancos - SQLWorks - Eder
+
+               07/11/2006 - Inclusao da coluna PAC nos relatorio (Elton).
+
+               06/01/2010 - Relatorio não irá mais listar os 100 maiores, e sim
+                            os cooperados cujo valor do deposito seja maior que
+                            o parametrizado na TAB007 (Fernando).
+
+               30/11/2010 - 001 / Alterado Format "x(40)" para Format "x(50)" (Danielle/Kbase)
+
+               07/08/2013 - Conversão Progress >> Oracle PL/SQL (Daniel - Supero).
+
+               14/10/2013 - Ajustes na rotina para prever a nova forma de retorno
+                            das criticas e chamadas a fimprg.p (Douglas Pagel).
+
+               17/02/2014 - Alterado coluna do form f_label de "CPF/CGC" para
+                            "CPF/CNPJ".
+                          - Alterado nome do arquivo totalizador de depositos
+                            de 99 para 999. (Gabriel)
+............................................................................. */
+  -- Data do movimento
+  cursor cr_crapdat(pr_cdcooper in craptab.cdcooper%type) is
+    select dat.dtmvtolt
+      from crapdat dat
+     where dat.cdcooper = pr_cdcooper;
+  -- Solicitações de emissão do relatório
+  cursor cr_crapsol (pr_cdcooper in crapsol.cdcooper%type,
+                     pr_dtmvtolt in crapsol.dtrefere%type) is
+    select crapsol.nrseqsol,
+           crapsol.nrdevias,
+           rowid row_id
+      from crapsol
+     where crapsol.cdcooper = pr_cdcooper
+       and crapsol.dtrefere = pr_dtmvtolt
+       and crapsol.nrsolici = 9
+       and crapsol.insitsol = 1;
+  rw_crapsol     cr_crapsol%rowtype;
+  -- Buscar o valor separador dos maiores cotistas
+  cursor cr_craptab is
+    select to_number(substr(craptab.dstextab,1,15)) dstextab
+      from craptab
+     where craptab.cdcooper = pr_cdcooper
+       and upper(craptab.nmsistem) = 'CRED'
+       and craptab.cdempres = 11
+       and upper(craptab.tptabela) = 'USUARI'
+       and upper(craptab.cdacesso) = 'MAIORESDEP'
+       and craptab.tpregist = 1;
+  rw_craptab   cr_craptab%rowtype;
+  -- Lista dos depósitos
+  cursor cr_crapsld(pr_cdcooper in crapsld.cdcooper%type) is
+    select crapsld.nrdconta,
+           crapass.nrcpfcgc,
+           crapass.nrmatric,
+           nvl(crapass.nmprimtl, 'NAO CADASTRADO') nmprimtl,
+           crapass.cdagenci,
+           crapass.inpessoa,
+           (crapsld.vlsddisp +
+            crapsld.vlsdbloq +
+            crapsld.vlsdblpr +
+            crapsld.vlsdblfp +
+            crapsld.vlsdchsl) vlsaldo
+      from crapass,
+           crapsld
+     where crapsld.cdcooper = pr_cdcooper
+       and (crapsld.vlsddisp +
+            crapsld.vlsdbloq +
+            crapsld.vlsdblpr +
+            crapsld.vlsdblfp +
+            crapsld.vlsdchsl) > 0
+       and crapass.nrdconta (+) = crapsld.nrdconta
+       and crapass.cdcooper (+) = crapsld.cdcooper
+       and crapass.inpessoa <> 3
+     order by 7 desc,
+              1;
+  --
+  -- Código do programa
+  vr_cdprogra      crapprg.cdprogra%type;
+  -- Data do movimento
+  vr_dtmvtolt      crapdat.dtmvtolt%type;
+  -- Tratamento de erros
+  vr_exc_saida  EXCEPTION;
+  vr_exc_fimprg EXCEPTION;
+  vr_cdcritic   PLS_INTEGER;
+  vr_dscritic   VARCHAR2(4000);
+  -- Variáveis para armazenar as informações em XML
+  vr_des_xml       clob;
+  vr_des_xml2      clob;
+  -- Variável para o caminho e nome do arquivo base
+  vr_nom_diretorio varchar2(200);
+  vr_nom_arquivo   varchar2(200);
+  -- Valor que define o limite para separar os maiores cotistas dos demais
+  vr_vlsdmadp      crapsld.vlsddisp%type;
+  -- Variável auxiliar para definir se irá escrever a informação nos dois arquivos
+  vr_escreve_arquivo_2  boolean;
+  -- Variável auxiliar para armazenar o CPF/CNPJ formatado para a saída no relatório
+  vr_nrcpfcgc      varchar2(20);
+  -- Subrotina para escrever texto na variável CLOB do XML
+  procedure pc_escreve_xml(pr_des_dados in varchar2,
+                           pr_escreve_arquivo_2 in boolean) is
+  begin
+    dbms_lob.writeappend(vr_des_xml, length(pr_des_dados), pr_des_dados);
+    if pr_escreve_arquivo_2 then
+      dbms_lob.writeappend(vr_des_xml2, length(pr_des_dados), pr_des_dados);
+    end if;
+  end;
+  --
+begin
+  -- Nome do programa
+  vr_cdprogra := 'CRPS013';
+  -- Validações iniciais do programa
+  BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
+                           ,pr_flgbatch => 1
+                           ,pr_cdprogra => vr_cdprogra
+                           ,pr_infimsol => pr_infimsol
+                           ,pr_cdcritic => vr_cdcritic);
+
+  -- Se a variavel de erro é <> 0
+  IF vr_cdcritic <> 0 THEN
+    -- Envio centralizado de log de erro
+    RAISE vr_exc_saida;
+  END IF;
+  -- Incluir nome do módulo logado
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS013',
+                             pr_action => vr_cdprogra);
+  -- Buscar a data do movimento
+  open cr_crapdat(pr_cdcooper);
+    fetch cr_crapdat into vr_dtmvtolt;
+  close cr_crapdat;
+  -- Verifica se houve alguma solicitação para o relatório
+  open cr_crapsol (pr_cdcooper,
+                   vr_dtmvtolt);
+    fetch cr_crapsol into rw_crapsol;
+    if cr_crapsol%notfound then
+      vr_cdcritic := 157;
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' - SOL009';
+      raise vr_exc_saida;
+    end if;
+  close cr_crapsol;
+  -- Buscar o valor separador dos maiores depósitos
+  open cr_craptab;
+    fetch cr_craptab into rw_craptab;
+    if cr_craptab%notfound then
+      vr_vlsdmadp := 10000;
+    else
+      vr_vlsdmadp := rw_craptab.dstextab;
+    end if;
+  close cr_craptab;
+  -- Inicializar os CLOBs para armazenar os arquivos XML
+  -- Serão gerados 2 arquivos. Um com todos os depósitos (crrl017_99) e outro com os maiores cotistas (crrl017).
+  -- O parâmetro boolean da pc_escreve_xml define se irá escrever nos dois arquivos (true) ou somente no primeiro (false).
+  vr_des_xml := null;
+  dbms_lob.createtemporary(vr_des_xml, true);
+  dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+  --
+  vr_des_xml2 := null;
+  dbms_lob.createtemporary(vr_des_xml2, true);
+  dbms_lob.open(vr_des_xml2, dbms_lob.lob_readwrite);
+  -- Inicilizar as informações do XML
+  pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crps013>', true);
+  -- Leitura dos cotistas para inclusão no arquivo XML
+  for rw_crapsld in cr_crapsld (pr_cdcooper) loop
+    -- Verifica se o associado existe. Caso não exista, aborta a execução.
+    if rw_crapsld.nmprimtl = 'NAO CADASTRADO' then
+      vr_cdcritic := 9;
+      raise vr_exc_saida;
+    end if;
+    -- Se o valor do cotista for maior que o limite, escreve nos dois arquivos.
+    vr_escreve_arquivo_2 := (rw_crapsld.vlsaldo >= vr_vlsdmadp);
+    -- Formata o campo do CPF/CNPJ de acordo com o tipo de pessoa
+    vr_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapsld.nrcpfcgc,
+                                             rw_crapsld.inpessoa);
+    --
+    pc_escreve_xml('<cotista>'||
+                     '<agencia>'||rw_crapsld.cdagenci||'</agencia>'||
+                     '<ordem>'||to_char(cr_crapsld%rowcount, 'fm999G999')||'</ordem>'||
+                     '<nrdconta>'||to_char(rw_crapsld.nrdconta, 'fm9999G999G9')||'</nrdconta>'||
+                     '<nrmatric>'||to_char(rw_crapsld.nrmatric, 'fm999G990')||'</nrmatric>'||
+                     '<nmprimtl>'||substr(rw_crapsld.nmprimtl, 1, 50)||'</nmprimtl>'||
+                     '<vlsaldo>'||to_char(rw_crapsld.vlsaldo, 'fm99999G999G990D00')||'</vlsaldo>'||
+                     '<nrcpfcgc>'||vr_nrcpfcgc||'</nrcpfcgc>'||
+                   '</cotista>',
+                   vr_escreve_arquivo_2);
+  end loop;
+  -- Fecha a tag principal para encerrar o XML
+  pc_escreve_xml('</crps013>', true);
+  -- Busca do diretório base da cooperativa
+  vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
+                                            pr_cdcooper => pr_cdcooper,
+                                            pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+  -- Executa os relatórios de acordo com as solicitações
+  for rw_crapsol in cr_crapsol (pr_cdcooper,
+                                vr_dtmvtolt) loop
+    -- Nome base do arquivo é crrl028_
+    vr_nom_arquivo := 'crrl017_'||to_char(rw_crapsol.nrseqsol, 'fm09');
+    -- Chamada do iReport para gerar o arquivo de saída
+    gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                                pr_cdprogra  => vr_cdprogra,         --> Programa chamador
+                                pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
+                                pr_dsxml     => vr_des_xml2,          --> Arquivo XML de dados (CLOB)
+                                pr_dsxmlnode => '/crps013/cotista',    --> Nó base do XML para leitura dos dados
+                                pr_dsjasper  => 'crrl017.jasper',    --> Arquivo de layout do iReport
+                                pr_dsparams  => null,                --> Enviar como parâmetro apenas a agência
+                                pr_dsarqsaid => vr_nom_diretorio||'/'||vr_nom_arquivo||'.lst', --> Arquivo final
+                                pr_flg_gerar => 'N',
+                                pr_qtcoluna  => 132,
+                                pr_sqcabrel  => 1,
+                                pr_flg_impri => 'S',    --> Chamar a impressão (Imprim.p)
+                                pr_nmformul  => '',     --> Nome do formulário para impressão
+                                pr_nrcopias  => 2,      --> Número de cópias para impressão
+                                pr_des_erro  => vr_dscritic);       --> Saída com erro
+    -- Verifica se ocorreu erro na geração do arquivo ou na solicitação do relatório
+    if vr_dscritic is not null then
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                                 pr_ind_tipo_log => 2, -- Erro tratado
+                                 pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '|| vr_dscritic,
+                                 pr_nmarqlog => vr_cdprogra);
+    end if;
+    -- Marca a solicitação como executada
+    begin
+      update crapsol
+         set crapsol.insitsol = 2
+       where crapsol.rowid = rw_crapsol.row_id;
+    exception
+      when others then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao marcar a solicitação '||rw_crapsol.row_id||' como executada: '||sqlerrm;
+        raise vr_exc_saida;
+    end;
+  end loop;
+  -- Executa o relatório de auditoria
+  vr_nom_arquivo := 'crrl017_999';
+  -- Chamada do iReport para gerar o arquivo de saída
+  gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,         --> Cooperativa conectada
+                              pr_cdprogra  => vr_cdprogra,         --> Programa chamador
+                              pr_dtmvtolt  => vr_dtmvtolt,         --> Data do movimento atual
+                              pr_dsxml     => vr_des_xml,          --> Arquivo XML de dados (CLOB)
+                              pr_dsxmlnode => '/crps013/cotista',    --> Nó base do XML para leitura dos dados
+                              pr_dsjasper  => 'crrl017.jasper',    --> Arquivo de layout do iReport
+                              pr_dsparams  => null,                --> Enviar como parâmetro apenas a agência
+                              pr_dsarqsaid => vr_nom_diretorio||'/'||vr_nom_arquivo||'.lst', --> Arquivo final
+                              pr_flg_gerar => 'N',
+                              pr_qtcoluna  => 132,
+                              pr_sqcabrel  => 2,
+                              pr_des_erro  => vr_dscritic);       --> Saída com erro
+
+  -- Verifica se ocorreu erro na geração do arquivo ou na solicitação do relatório
+  if vr_dscritic is not null then
+    btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
+                               pr_ind_tipo_log => 2, -- Erro tratado
+                               pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' --> '|| vr_dscritic,
+                               pr_nmarqlog => vr_cdprogra);
+  end if;
+  -- Liberando a memória alocada para os CLOBs
+  dbms_lob.close(vr_des_xml);
+  dbms_lob.freetemporary(vr_des_xml);
+  dbms_lob.close(vr_des_xml2);
+  dbms_lob.freetemporary(vr_des_xml2);
+  -- Testar se houve erro
+  if vr_dscritic is not null then
+    -- Gerar exceção
+    vr_cdcritic := 0;
+    raise vr_exc_saida;
+  end if;
+  --
+  commit;
+EXCEPTION
+  WHEN vr_exc_fimprg THEN
+    -- Se foi retornado apenas código
+    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+    END IF;
+    IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      -- Envio centralizado de log de erro
+      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                 || vr_cdprogra || ' --> '
+                                                 || vr_dscritic );
+    END IF;
+    -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
+    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                             ,pr_cdprogra => vr_cdprogra
+                             ,pr_infimsol => pr_infimsol
+                             ,pr_stprogra => pr_stprogra);
+    -- Efetuar commit
+    COMMIT;
+  WHEN vr_exc_saida THEN
+    -- Se foi retornado apenas código
+    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+      -- Buscar a descrição
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+    END IF;
+    -- Devolvemos código e critica encontradas
+    pr_cdcritic := NVL(vr_cdcritic,0);
+    pr_dscritic := vr_dscritic;
+    -- Efetuar rollback
+    ROLLBACK;
+  WHEN OTHERS THEN
+    -- Efetuar retorno do erro não tratado
+    pr_cdcritic := 0;
+    pr_dscritic := sqlerrm;
+    -- Efetuar rollback
+    ROLLBACK;
+END;
+/
+
