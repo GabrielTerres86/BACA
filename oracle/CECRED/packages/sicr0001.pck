@@ -219,7 +219,7 @@ create or replace package body cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 28/10/2016
+     Data    : Abril/2013                       Ultima atualizacao: 21/11/2016
 
      Dados referentes ao programa:
 
@@ -293,6 +293,11 @@ create or replace package body cecred.SICR0001 is
 
                  28/10/2016 - SD509982 - Atualiza critica LAU - pc_efetua_debito_automatico
                               para DEBCON (Guilherme/SUPERO)
+                              
+                 21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
+                              posicoes, devemos incluir um hifen para completar 12 posicoes 
+                              ex: 40151016407- na procedure pc_gera_crapndb 
+                              (Lucas Ranghetti #560620/453337)
   ..............................................................................*/
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
@@ -2158,7 +2163,7 @@ create or replace package body cecred.SICR0001 is
                             ,pr_nrctacns  IN crapass.nrctacns%TYPE        --> Conta consórcio
                             ,pr_vllanaut  IN craplau.vllanaut%TYPE        --> Valor do lancemento
                             ,pr_cdagenci  IN crapass.cdagenci%TYPE        --> Agencia do cooperado PA
-              ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
+                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                             ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
   ---------------------------------------------------------------------------------------------------------------
@@ -2166,15 +2171,16 @@ create or replace package body cecred.SICR0001 is
   --   Sistema : Conta-Corrente - Cooperativa de Credito
   --   Sigla   : CRED
   --   Autor   : Lucas Ranghetti
-  --   Data    : Maio/2014                       Ultima atualizacao: 00/00/0000
+  --   Data    : Maio/2014                       Ultima atualizacao: 21/11/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Sempre que chamado
   -- Objetivo  : Gerar informações na crapndb
   --
-  --  Alterações:
-  --
+  --  Alterações: 21/11/2016 - Se for o convenio 045, 14 BRT CELULAR - FEBRABAN e referencia conter 11 
+  --                           posicoes, devemos incluir um hifen para completar 12 posicoes 
+  --                           ex: 40151016407- (Lucas Ranghetti #560620/453337)
   --
   --------------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -2267,6 +2273,12 @@ create or replace package body cecred.SICR0001 is
         -- completar com 25 espaços se resultado for inferior a 25 poscoes
         vr_resultado := RPAD(vr_resultado,25,' ');
       END IF;
+
+      /* Se for o convenio 045 - 14 BRT CELULAR - FEBRABAN e tiver 11 posicoes, devemos 
+         adicionar um hifen para completar 12 posicoes ex:(40151016407-) chamado 453337 */
+      IF pr_cdempres = '045' AND LENGTH(pr_nrdocmto) = 11 THEN
+        vr_resultado := RPAD(pr_nrdocmto,12,'-') || RPAD(' ',13,' ');
+      END IF; 
 
       vr_cdagenci :=  SUBSTR(gene0002.fn_mask(pr_cdagenci,'999'),2,2);
 
@@ -3111,3 +3123,4 @@ create or replace package body cecred.SICR0001 is
   END pc_sumario_debsic;
 
 END SICR0001;
+/
