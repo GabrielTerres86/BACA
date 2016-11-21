@@ -680,7 +680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --Determinar Assunto
         vr_des_assunto:= 'PAGTO DARF/DAS '||rw_crapcop.nmrescop ||' '||
                          GENE0002.fn_mask_conta(pr_nrdconta)|| ' R$ '||
-                         TRIM(to_char(pr_vlfatura,'fm999g999g999g999d99'));
+                         TRIM(to_char(pr_vlfatura,'fm999G999G999G999D00'));
 
         --Buscar destinatario email
         vr_email_dest:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'INTERNETBANK_PAGTO');
