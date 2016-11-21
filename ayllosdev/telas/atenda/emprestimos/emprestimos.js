@@ -3813,7 +3813,7 @@ function attArray(novaOp, cdcooper) {
         arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc', '#frmAlienacao').val(); // GRAVAMES */
-		arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
+        arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;        
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
 
         atual = contIntervis - 1;
@@ -3839,7 +3839,7 @@ function attArray(novaOp, cdcooper) {
         arrayIntervs[atual]['nrendere'] = $('#nrendere', '#frmIntevAnuente').val();
         arrayIntervs[atual]['complend'] = $('#complend', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcxapst'] = $('#nrcxapst', '#frmIntevAnuente').val();
-
+        
     } else if (in_array(operacao, ['A_PROT_CRED', 'I_PROT_CRED'])) {
         arrayProtCred['nrperger'] = $('#nrperger', '#frmOrgProtCred').val();
         arrayProtCred['dsperger'] = $('#dsperger', '#frmOrgProtCred').val();
@@ -4315,7 +4315,7 @@ function insereAlienacao(operacao, opContinua) {
     }
 
     i = arrayAlienacoes.length;
-
+    
     eval('var arrayAlienacao' + i + ' = new Object();');
     eval('arrayAlienacao' + i + '["dscatbem"] = $("#dscatbem","#frmAlienacao").val();');
     eval('arrayAlienacao' + i + '["dstipbem"] = $("#dstipbem","#frmAlienacao").val();');
@@ -4335,7 +4335,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["idseqbem"] = ' + idseqbem + ';');
     eval('arrayAlienacao' + i + '["idalibem"] = "";');
     eval('arrayAlienacao' + i + '["lsbemfin"] = "";');
-    eval('arrayAlienacao' + i + '["cdcoplib"] = ' + glb_codigoOperadorLiberacao + ';');
+    eval('arrayAlienacao' + i + '["cdcoplib"] = "' + glb_codigoOperadorLiberacao + '";');
 
     eval('arrayAlienacoes[' + i + '] = arrayAlienacao' + i + ';');
 
