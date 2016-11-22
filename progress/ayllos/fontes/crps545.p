@@ -3,7 +3,7 @@
    Programa: fontes/crps545.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009.                     Ultima atualizacao: 23/05/2016
+   Data    : Dezembro/2009.                     Ultima atualizacao: 17/11/2016
                                                                           
    Dados referentes ao programa:
 
@@ -78,6 +78,11 @@
                23/05/2016 - Ajustado tratamento para validacao das contas
                             migradas VIACREDI >> VIACREDI ALTO VALE
                             (Douglas - Chamado 406267)
+
+               17/11/2016 - Na mensagem STR0010R2 originada pelo sistema MATERA
+                            foi colocado para nao criar registro na tabela 
+                            gnmvspb. (Jaison/Diego - SD: 556800)
+
 ............................................................................. */
 
 { includes/var_batch.i } 
@@ -278,8 +283,14 @@ FOR EACH crawarq NO-LOCK:
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111R2" OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0010"   OR
                     TRIM(SUBSTR(aux_setlinha,71,11)) = "PAG0111"   THEN
-                    /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
-                    ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
+                    DO:
+                        /* Se veio do MATERA ignora e vai para o proximo */
+                        IF  SUBSTRING(aux_setlinha,21,6) = "MATERA"  THEN
+                            NEXT.
+
+                        /* Codigo da Agencia(debito ou credito) nas mensagens de devolucao */
+                        ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,21,4)).
+                    END.
                 ELSE
                 IF  TRIM(SUBSTR(aux_setlinha,71,11)) = "STR0026R2" THEN
                     DO:
