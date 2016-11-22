@@ -315,10 +315,10 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 													<label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>
 													<input name="dsidepag" id="dsidepag" type="text" value="<? echo $dsidepag ?>" />
 													
-													<label for="dtmvtdrf"><? echo utf8ToHtml('Data Pagamento:') ?></label>
+													<label for="dtmvtdrf"><? echo utf8ToHtml('Data da Transação:') ?></label>
 													<input name="dtmvtdrf" id="dtmvtdrf" type="text" value="<? echo $dtmvtolt ?>" />
 													
-													<label for="hrautdrf"><? echo utf8ToHtml('Hora Pagamento:') ?></label>
+													<label for="hrautdrf"><? echo utf8ToHtml('Hora da Transação:') ?></label>
 													<input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrautenx ?>" />
 													
 												<?php } ?>
