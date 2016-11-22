@@ -1131,7 +1131,7 @@ PROCEDURE gera_lancamento:
                        RELEASE craplot.
                        
                        /* Desconto */
-                       FOR LAST crapcdb FIELDS(nrdconta nrcheque cdbanchq  cdagechq nrctachq) 
+                       FOR LAST crapcdb FIELDS(cdcooper nrdconta nrcheque cdbanchq  cdagechq nrctachq) 
                                          WHERE crapcdb.cdcooper = aux_cdcooper
                                            AND crapcdb.cdcmpchq = crapfdc.cdcmpchq
                                            AND crapcdb.cdbanchq = crapfdc.cdbanchq
@@ -1259,14 +1259,14 @@ PROCEDURE gera_lancamento:
                        ELSE /* nao encontrou crapcdb */
                            DO:
                               /* Custodia */
-                              FOR LAST crapcst FIELDS(nrdconta nrcheque cdbanchq  cdagechq nrctachq) 
+                              FOR LAST crapcst FIELDS(cdcooper nrdconta nrcheque cdbanchq cdagechq nrctachq) 
                                                 WHERE crapcst.cdcooper = aux_cdcooper
                                                   AND crapcst.cdcmpchq = crapfdc.cdcmpchq
                                                   AND crapcst.cdbanchq = crapfdc.cdbanchq
                                                   AND crapcst.cdagechq = crapfdc.cdagechq
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
-                                                  AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                                  AND CAN-DO("0,2",STRING(crapcst.insitchq))
                                                   NO-LOCK:
                               END.
                         
