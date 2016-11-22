@@ -1962,7 +1962,7 @@ function controlaLayout( nomeForm ){
 		var tabela      = $('table', divRegistro );
 		var linha       = $('table > tbody > tr', divRegistro );
 		
-		divRegistro.css({'height':'200px','width':'100%'});
+		divRegistro.css({'height':'170px','width':'100%'});
 		
 		var ordemInicial = new Array();
 		ordemInicial = [[2,0]];
