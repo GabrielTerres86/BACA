@@ -1506,17 +1506,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 		vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
 	END IF;
   
-	-- Se tem Data Pagamento
-	IF TRIM(pr_xmldata.dtmvtdrf) IS NOT NULL THEN
-		pc_escreve_xml('     Data Pagamento: '||to_char(pr_xmldata.dtmvtdrf,'dd/mm/yy') ,vr_nrdlinha);
-	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
-	END IF;
+  IF pr_xmldata.cdtippro IN(18,19) THEN -- Se for agendamento
+    -- Se tem Data Pagamento
+    IF TRIM(pr_xmldata.dtmvtdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Data Transação: '||to_char(pr_xmldata.dtmvtdrf,'dd/mm/yy') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
 
-	-- Se tem Hora Pagamento
-	IF TRIM(pr_xmldata.hrautdrf) IS NOT NULL THEN
-		pc_escreve_xml('     Hora Pagamento: '|| pr_xmldata.hrautdrf ,vr_nrdlinha);
-	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha      		
-	END IF;
+    
+    -- Se tem Hora Pagamento
+    IF TRIM(pr_xmldata.hrautdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Hora Transação: '|| pr_xmldata.hrautdrf ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha      		
+    END IF;
+  ELSE
+    -- Se tem Data Pagamento
+    IF TRIM(pr_xmldata.dtmvtdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Data Pagamento: '||to_char(pr_xmldata.dtmvtdrf,'dd/mm/yy') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    
+    -- Se tem Hora Pagamento
+    IF TRIM(pr_xmldata.hrautdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Hora Pagamento: '|| pr_xmldata.hrautdrf ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha      		
+    END IF;
+  END IF;
 		            
     -- Imprimir documento e sequencia de autenticação
     pc_escreve_xml('      Nr. Documento: '||pr_xmldata.nrdocmto,vr_nrdlinha);

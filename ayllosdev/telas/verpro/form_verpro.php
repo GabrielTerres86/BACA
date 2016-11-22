@@ -1,4 +1,4 @@
-<?
+<?php
 /* !
  * FONTE        : form_verpro.php
  * CRIAÇÃO      : Rogérius Militão - DB1 Informatica
@@ -63,7 +63,7 @@ $aux_dslinha1 = split('#', $dslinha1);
 $aux_dslinha2 = split('#', $dslinha2);
 $aux_dslinha3 = split('#', $dslinha3);
 
-#echo "ISPB ".$dsispbif = trim($aux_dslinha2[4]);	
+/*echo "ISPB ".$dsispbif = trim($aux_dslinha2[4]);	*/
 $dsispbif = trim($aux_dslinha2[4]);
 
 $nrcpffav = trim($aux_dslinha2[1]);
@@ -314,14 +314,22 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 													
 													<label for="dsidepag"><? echo utf8ToHtml('Descrição do Pagto.:') ?></label>
 													<input name="dsidepag" id="dsidepag" type="text" value="<? echo $dsidepag ?>" />
+													<?php if ($cdtippro == 18 || $cdtippro == 19){ ?>		
+														<label for="dtmvtdrf"><? echo utf8ToHtml('Data Transação:') ?></label>
+														<input name="dtmvtdrf" id="dtmvtdrf" type="text" value="<? echo $dtmvtolt ?>" />
 													
-													<label for="dtmvtdrf"><? echo utf8ToHtml('Data da Transação:') ?></label>
-													<input name="dtmvtdrf" id="dtmvtdrf" type="text" value="<? echo $dtmvtolt ?>" />
+														<label for="hrautdrf"><? echo utf8ToHtml('Hora Transação:') ?></label>
+														<input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrautenx ?>" />
+													<?php }else{ ?>
+														<label for="dtmvtdrf"><? echo utf8ToHtml('Data Pagamento:') ?></label>
+														<input name="dtmvtdrf" id="dtmvtdrf" type="text" value="<? echo $dtmvtolt ?>" />
 													
-													<label for="hrautdrf"><? echo utf8ToHtml('Hora da Transação:') ?></label>
-													<input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrautenx ?>" />
+														<label for="hrautdrf"><? echo utf8ToHtml('Hora Pagamento:') ?></label>
+														<input name="hrautdrf" id="hrautdrf" type="text" value="<? echo $hrautenx ?>" />
 													
-												<?php } ?>
+													<?php } 
+														}
+													?>
 
                                                 <label for="dstransf"><? echo utf8ToHtml('Cod.Identificador:') ?></label>
                                                 <input name="dstransf" id="dstransf" type="text" value="<? echo $dstransf ?>" />
@@ -336,7 +344,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                                                 <input name="hrautenx" id="hrautenx" type="text" value="<? echo $hrautenx ?>" />
 
 												<!-- Pacote de tarfas -->
-												<?if ($cdtippro == 14){?>
+												<?php if ($cdtippro == 14){?>
 												
 													<label for="dspacote"><? echo utf8ToHtml('Pacote:') ?></label>													
 													<input name="dspacote" id="dspacote" type="text" value="<? echo trim(substr($aux_dslinha2[0], strpos($aux_dslinha2[0], "#"))) ?>" />													
@@ -350,7 +358,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                                                 <input name="vldocmto" id="vldocmto" type="text" value="<? echo formataMoeda($vldocmto) ?>" />
 
 												<!-- Pacote de tarfas -->
-												<?if ($cdtippro == 14){?>
+												<?php if ($cdtippro == 14){?>
 													
 													<label for="dtdiadeb"><? echo utf8ToHtml('Dia do débito:') ?></label>
 													<input name="dtdiadeb" id="dtdiadeb" type="text" value="<? echo trim(substr($aux_dslinha2[2], strpos($aux_dslinha2[2], "#"))) ?>" />
