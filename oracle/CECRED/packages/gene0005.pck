@@ -1347,38 +1347,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     --                            - Alterado para tratar o ultimo dia util do ano ao invez do ultimo dia do ano
     --                              devido a compe financeira utlizar o ultimo dia util do ano para o fechamento anual
     --                              SD 240181 (Odirlei-AMcom)
-    --
-    --                 19/10/2016 - Alterado a busca de feriados de acordo com a situação do processo 
-    --                                batch  -> carrega toda a tabela de feriados
-    --                                online -> verifica apenas se a data "à buscar" é um feriado
-    --                              (Rodrigo)
     -- .............................................................................
     DECLARE
       -- Data auxiliar
       vr_dtmvtolt  crapdat.dtmvtolt%TYPE;
       vr_excultdia INTEGER;
       vr_dtultano  crapdat.dtmvtolt%TYPE;
-      vr_dtbuscar  crapdat.dtmvtolt%TYPE;
       
       -- Buscar informacoes dos feriados
-      CURSOR cr_crapfer IS
+      CURSOR cr_crapfer (pr_excultdia IN INTEGER) IS
         SELECT fer.dtferiad
           FROM crapfer fer
          WHERE fer.cdcooper = pr_cdcooper;
-         
-      -- Verificar se a data a buscar é um feriado
-      CURSOR cr_crapfer_unico (pr_dtbuscar IN crapfer.dtferiad%TYPE) IS
-        SELECT fer.dtferiad
-          FROM crapfer fer
-         WHERE fer.cdcooper = pr_cdcooper
-           AND fer.dtferiad = pr_dtbuscar;
-      rw_crapfer cr_crapfer%ROWTYPE;
-
       -- Indica pra tabela de feriados
       vr_index BINARY_INTEGER;
-      
-      -- Cursor generico de calendario
-      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     BEGIN
       -- Iniciar com a data passada removendo as horas
       vr_dtmvtolt := TRUNC(pr_dtmvtolt);
@@ -1390,49 +1372,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         vr_excultdia:= 0;
       END IF;
       
-      -- Leitura do calendário da cooperativa
-      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-      FETCH btch0001.cr_crapdat
-      INTO  rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
-      
-      IF rw_crapdat.inproces > 1 THEN
       -- Se a tabela de feriados estiver vazia
       IF vr_tab_feriado.COUNT = 0 THEN
         -- Alimentar vetor com os feriados
         vr_tab_feriado.DELETE;        
 
-          FOR rw_crapfer IN cr_crapfer LOOP
+        FOR rw_crapfer IN cr_crapfer (pr_excultdia => vr_excultdia)  LOOP
           --Montar o indice para o vetor
           vr_index := To_Number(To_Char(rw_crapfer.dtferiad,'YYYYMMDD'));
           --Atribuir o valor selecionado ao vetor
           vr_tab_feriado(vr_index):= rw_crapfer.dtferiad;
         END LOOP;
       END IF;
-      ELSE
-        -- Decrementa um dia da data para proceder o loop
-        vr_dtbuscar := vr_dtmvtolt;
-        
-        LOOP          
-          OPEN  cr_crapfer_unico(pr_dtbuscar => vr_dtbuscar);
-          FETCH cr_crapfer_unico 
-          INTO  rw_crapfer;
-          
-          IF cr_crapfer_unico%FOUND THEN          
-          --Montar o indice para o vetor
-          vr_index := To_Number(To_Char(rw_crapfer.dtferiad,'YYYYMMDD'));
-          --Atribuir o valor selecionado ao vetor
-          vr_tab_feriado(vr_index):= rw_crapfer.dtferiad;
-          ELSE
-            CLOSE cr_crapfer_unico;
-            EXIT;
-          END IF;
-          
-          CLOSE cr_crapfer_unico;
-          vr_dtbuscar := vr_dtbuscar+1;
-        END LOOP;
-      END IF;
-        
       -- Testes para garantir que seja util
       LOOP
         -- Montar a data em numero para busca no vetor de feriados
@@ -2393,7 +2344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     END;
 
   END fn_valida_nome;   
-  
+
   /* Retorna a data por extenso em portugues */
   FUNCTION fn_data_extenso (pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) --> Data do movimento
                    RETURN VARCHAR2 IS
