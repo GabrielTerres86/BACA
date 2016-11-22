@@ -5,14 +5,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS331
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 20/06/2016
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 21/11/2016
   --
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Envio de negativacoes para a Serasa
   --
-  --  Alteracoes: 20/06/2016 - Receber o numero da conta ja na primeira linha do arquivo.
+  --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+  --						   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+  --						  (Andrei - RKAM).
   --
+  --		      20/06/2016 - Receber o numero da conta ja na primeira linha do arquivo.
+  --
+  --          21/11/2016 - #557129 Incluida a função trim em algumas atribuições para corrigir a conversão para
+  --                       o tipo number (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Atualiza a situacao do boleto
@@ -91,7 +97,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           EXIT WHEN TRIM(substr(pr_dsretser,(vr_ind*3)+1)) IS NULL;
           
           -- Busca o codigo de erro, contendo 3 posicoes
-          vr_erros(vr_ind+1) := substr(pr_dsretser,(vr_ind*3)+1,3);
+          vr_erros(vr_ind+1) := trim(substr(pr_dsretser,(vr_ind*3)+1,3));
                     
           -- Conforme e-mail passado pela Marajoana (Serasa-17/03/2016), nos casos de remessa informacional
           -- vira apenas um erro
@@ -101,7 +107,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
             
           -- Vai para o proximo registro
           vr_ind := vr_ind + 1;
-
+          EXIT;
         END LOOP;
       END IF;
       
@@ -262,7 +268,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           -- Se possuir motivo de erro, gera a ocorrencia
           IF rw_erro.cdmotivo IS NOT NULL THEN
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                                ,pr_cdocorre => rw_erro.cdocorre
                                                ,pr_cdmotivo => rw_erro.cdmotivo
                                                ,pr_vltarifa => 0
@@ -318,7 +324,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           -- Se for excecao, gera tarifa especifica
           IF pr_ufexceca = 'S' THEN
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                                ,pr_cdocorre => 93 -- Negativacao Serasa
                                                ,pr_cdmotivo => 'S4' -- Enviado a Serasa com sucesso (AR)
                                                ,pr_vltarifa => 0
@@ -354,7 +360,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
             
           ELSE -- Se for normal
             --Prepara retorno cooperado
-            PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+            COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                                ,pr_cdocorre => 93 -- Negativacao Serasa
                                                ,pr_cdmotivo => 'S2' -- Enviado a Serasa com sucesso
                                                ,pr_vltarifa => 0
@@ -390,7 +396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
           END IF;
         ELSIF pr_intipret = 2 THEN -- Se for exclusao
           --Prepara retorno cooperado
-          PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
+          COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => pr_rowid --ROWID da cobranca
                                              ,pr_cdocorre => 94 -- Cancelamento Negativacao Serasa
                                              ,pr_cdmotivo => 'S2' -- Cancelado negativacao na Serasa
                                              ,pr_vltarifa => 0
@@ -625,7 +631,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                  ELSIF vr_intipreg = 1 THEN
                    
                    -- Busca o numero do convenio
-                   vr_nrcnvcob := substr(vr_dsdlinha,773,10);
+                   vr_nrcnvcob := trim(substr(vr_dsdlinha,773,10));
 
                    -- Busca o numero da conta
                    -- Este campo sera rebido somente apos o dia 10/06. Antes disso era recebido 
@@ -633,10 +639,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                    vr_nrdconta := nvl(trim(substr(vr_dsdlinha,783,10)),0);
 
                    -- Busca o numero do documento
-                   vr_nrdocmto := substr(vr_dsdlinha,704,10);
+                   vr_nrdocmto := trim(substr(vr_dsdlinha,704,10));
                    
                    -- Busca a UF do devedor
-                   vr_ufsacado := substr(vr_dsdlinha,473,2);
+                   vr_ufsacado := trim(substr(vr_dsdlinha,473,2));
 
                    -- Verificar se a UF deve possuir AR
                    IF instr(vr_uf_excecao,vr_ufsacado) <> 0 THEN
@@ -719,9 +725,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                    
                  END IF;
                  
-               EXCEPTION
+               EXCEPTION                 
                  WHEN no_data_found THEN
                    -- Acabou a leitura, então finaliza o loop
+                   EXIT;
+                 WHEN OTHERS THEN
+                   btch0001.pc_log_internal_exception(3);
                    EXIT;
                END;
 
@@ -770,6 +779,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
          -- Efetuar rollback
          ROLLBACK;
        WHEN OTHERS THEN
+
+         btch0001.pc_log_internal_exception(3);
+
          -- Efetuar retorno do erro não tratado
          pr_cdcritic := 0;
          pr_dscritic := SQLERRM;
