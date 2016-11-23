@@ -47,7 +47,7 @@
                 29/05/2015 - Padronizacao das consultas automatizadas
                              (GAbriel-RKAM). 
 				
-                19/08/2015 - Passagem do parametro cdmodali para a procedure 
+				19/08/2015 - Passagem do parametro cdmodali para a procedure 
 						                 valida-dados-gerais da BO2. (Projeto Portabilidade
 							               (Carlos Rafael Tanholi)
                              
@@ -70,15 +70,15 @@
                              (Carlos Rafael Tanholi - PRJ261 – Pré-Aprovado fase II)
                              
                 28/01/2016 - Criada verifica_mostra_banner_taa (Lucas Luenlli  - PRJ261 – Pré-Aprovado fase II)
-                
+
                 16/03/2016 - Adição do campo vllimctr na tt-dados-cpa (Dionathan)
 				
-                05/05/2016 - Ajustar FORMAT da variável aux_nrcpfcgc na procedure
-                             imprime_previa_demonstrativo (David).
+				05/05/2016 - Ajustar FORMAT da variável aux_nrcpfcgc na procedure
+				             imprime_previa_demonstrativo (David).
                 
-                11/03/2016 - Inclusao do parametro par_cdpactra na chamada da rotina
-                             grava-proposta-completa.
-                             PRJ 207 - Esteira de credito (Odirlei-AMcom)
+				11/03/2016 - Inclusao do parametro par_cdpactra na chamada da rotina
+				             grava-proposta-completa.
+							 PRJ 207 - Esteira de credito (Odirlei-AMcom)
                 
                 14/07/2016 - Ajuste nas procedures calcula_parcelas_emprestimo, calcula_taxa_emprestimo,
                              imprime_previa_demonstrativo, grava_dados para buscar a linha de crédito do
@@ -638,7 +638,7 @@ PROCEDURE grava_dados:
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_nivrisco AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
-    
+
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
 
@@ -792,25 +792,25 @@ PROCEDURE grava_dados:
                RETURN "NOK".
            END.
        
-        /* Dados de parametrizacao do credito pre-aprovado */
+       /* Dados de parametrizacao do credito pre-aprovado */
         FOR crappre FIELDS(cdfinemp)
-                    WHERE crappre.cdcooper = par_cdcooper            AND
-                          crappre.inpessoa = tt-dados-assoc.inpessoa
-                          NO-LOCK: END.
+                   WHERE crappre.cdcooper = par_cdcooper            AND
+                         crappre.inpessoa = tt-dados-assoc.inpessoa
+                         NO-LOCK: END.
 
-        IF NOT AVAIL crappre THEN
-           DO:
-               ASSIGN aux_cdcritic = 0
-                      aux_dscritic = "Parametros pre-aprovado nao cadastrado".
-            
-               RUN gera_erro (INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT par_nrdcaixa,
-                              INPUT 1,
-                              INPUT aux_cdcritic,
-                              INPUT-OUTPUT aux_dscritic).
-               RETURN "NOK".
-           END.
+       IF NOT AVAIL crappre THEN
+          DO:
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Parametros pre-aprovado nao cadastrado".
+           
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
+              RETURN "NOK".
+          END.
 
        /* Rendimento */
        FIND FIRST tt-rendimento NO-LOCK NO-ERROR.
@@ -1728,9 +1728,9 @@ PROCEDURE calcula_parcelas_emprestimo:
         END.
 
     FOR crapcpa FIELDS(vlcalpar cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
-                                           crapcpa.nrdconta = par_nrdconta AND
-                                           crapcpa.iddcarga = aux_idcarga
-                                           NO-LOCK: END.
+                                       crapcpa.nrdconta = par_nrdconta AND
+                                       crapcpa.iddcarga = aux_idcarga
+                                       NO-LOCK: END.
     IF NOT AVAIL crapcpa THEN
        DO:
            ASSIGN aux_cdcritic = 0
@@ -1866,7 +1866,7 @@ PROCEDURE calcula_taxa_emprestimo:
     DEF VAR aux_idcarga  AS inte                                    NO-UNDO.
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0153 AS HANDLE                                  NO-UNDO.
-    
+
     IF NOT VALID-HANDLE(h-b1wgen0002) THEN
        RUN sistema/generico/procedures/b1wgen0002.p 
            PERSISTENT SET h-b1wgen0002.
@@ -1906,7 +1906,7 @@ PROCEDURE calcula_taxa_emprestimo:
        DO:
            ASSIGN aux_cdcritic = 0
                   aux_dscritic = "Associado nao cadastrado no pre-aprovado".
-        
+
            RUN gera_erro (INPUT par_cdcooper,
                           INPUT par_cdagenci,
                           INPUT par_nrdcaixa,
@@ -2176,7 +2176,7 @@ PROCEDURE imprime_previa_demonstrativo:
                LEAVE Imprime.
 
            END. /* END IF NOT AVAIL crapass */
-        
+
         
         /* Busca a carga ativa */
         RUN busca_carga_ativa(INPUT par_cdcooper,
@@ -2200,12 +2200,12 @@ PROCEDURE imprime_previa_demonstrativo:
         FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
                                            crapcpa.nrdconta = par_nrdconta AND
                                            crapcpa.iddcarga = aux_idcarga
-                                           NO-LOCK: END.
+                          NO-LOCK: END.
         IF NOT AVAIL crapcpa THEN
            DO:
                ASSIGN aux_cdcritic = 0
                       aux_dscritic = "Associado nao cadastrado no pre-aprovado".
-            
+    
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
                               INPUT par_nrdcaixa,
@@ -2214,7 +2214,7 @@ PROCEDURE imprime_previa_demonstrativo:
                               INPUT-OUTPUT aux_dscritic).
                RETURN "NOK".
            END.
-        
+
         FOR craplcr FIELDS(txmensal perjurmo flgcobmu)
                     WHERE craplcr.cdcooper = par_cdcooper     AND
                           craplcr.cdlcremp = crapcpa.cdlcremp
@@ -2717,7 +2717,7 @@ PROCEDURE verifica_mostra_banner_taa:
     DEF VAR aux_ponteiro AS INTE                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
-    
+
     ASSIGN par_flgdobnr = TRUE
            aux_dtmvtolt = STRING(DAY(par_dtmvtolt), "99")      + "/" +
                           STRING(MONTH(par_dtmvtolt), "99")    + "/" +
@@ -2771,16 +2771,8 @@ PROCEDURE verifica_mostra_banner_taa:
     /*  Caso nao possua carga ativa */
     IF  aux_idcarga = 0 THEN
         DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Nenhuma carga ativa.".
-            
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-            RETURN "NOK".
+            ASSIGN par_flgdobnr = FALSE.
+			RETURN "OK".
         END.
 
     FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
@@ -2789,16 +2781,8 @@ PROCEDURE verifica_mostra_banner_taa:
                                        NO-LOCK: END.
     IF NOT AVAIL crapcpa THEN
        DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Associado nao cadastrado no pre-aprovado".
-        
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
+           ASSIGN par_flgdobnr = FALSE.
+		   RETURN "OK".
        END.
    
     /* Dados de parametrizacao do credito pre-aprovado */
@@ -2809,18 +2793,10 @@ PROCEDURE verifica_mostra_banner_taa:
 
     IF NOT AVAIL crappre THEN
        DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Parametros pre-aprovado nao cadastrado".
-        
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
+           ASSIGN par_flgdobnr = FALSE.
+		   RETURN "OK".
        END.
-   
+
    /* Verifica se já contratou pré-aprovado esse mês */
    FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper        AND
                           crapepr.nrdconta = par_nrdconta        AND
