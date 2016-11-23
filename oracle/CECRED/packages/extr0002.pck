@@ -19061,9 +19061,9 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
       -- Variaveis de XML
       vr_xml_temp VARCHAR2(32767);
       vr_xml_temp_totais VARCHAR2(32767);
-      vr_soma_deb number(8,2);
-      vr_soma_cre number(8,2);
-      vr_soma_tot number(8,2);
+      vr_soma_deb number(15,2);
+      vr_soma_cre number(15,2);
+      vr_soma_tot number(15,2);
       BEGIN
 
         CASE pr_flgerlog
@@ -19176,9 +19176,9 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc_totais
                                  ,pr_texto_completo => vr_xml_temp_totais
                                  ,pr_texto_novo     => '<totais>'
-                                                      ||   '<vllautom>'||nvl(trim(to_char(vr_soma_tot,'999g999g9990d00')),'0')||'</vllautom>'
-                                                      ||   '<vllaudeb>'||nvl(trim(to_char(vr_soma_deb,'999g999g9990d00')),'0')||'</vllaudeb>'
-                                                      ||   '<vllaucre>'||nvl(trim(to_char(vr_soma_cre,'999g999g9990d00')),'0')||'</vllaucre>'
+                                                      ||   '<vllautom>'||nvl(trim(to_char(vr_soma_tot,'999g999g990d00')),'0')||'</vllautom>'
+                                                      ||   '<vllaudeb>'||nvl(trim(to_char(vr_soma_deb,'999g999g990d00')),'0')||'</vllaudeb>'
+                                                      ||   '<vllaucre>'||nvl(trim(to_char(vr_soma_cre,'999g999g990d00')),'0')||'</vllaucre>'
                                                     || '</totais>');
         END LOOP;
 
