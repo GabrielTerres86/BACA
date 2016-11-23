@@ -68,6 +68,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
    Objetivo  : Fornecer funcionalidades para acessar um serviço HTTP
                 
   ---------------------------------------------------------------------------*/
+  
+  PROCEDURE pc_cabecalho_to_clob(pr_cabecalho IN typ_tab_http_cabecalho
+                                ,pr_clob       OUT CLOB) IS
+  BEGIN
+    DECLARE
+      vr_index_cabecalho PLS_INTEGER; -- index dos headers
+      vr_linha_clob VARCHAR2(1300);   -- vr_chave + vr_valor
+     BEGIN    
+      dbms_lob.createtemporary(pr_clob, FALSE);
+      vr_index_cabecalho := pr_cabecalho.first;
+      WHILE vr_index_cabecalho IS NOT NULL LOOP
+        vr_linha_clob := pr_cabecalho(vr_index_cabecalho).chave || ':' || pr_cabecalho(vr_index_cabecalho).valor || '; ';
+        dbms_lob.writeappend(pr_clob, LENGTH(vr_linha_clob), vr_linha_clob);
+        vr_index_cabecalho := pr_cabecalho.next(vr_index_cabecalho);
+      END LOOP;
+    END;
+  END;
+  
+  PROCEDURE pc_log_rest(pr_requisicao   IN typ_http_request
+                       ,pr_dtrequisicao IN DATE
+                       ,pr_resposta     IN typ_http_response
+                       ,pr_dtresposta   IN DATE
+                       ,pr_cdcritic     IN crapcri.cdcritic%TYPE) IS
+  BEGIN
+   DECLARE
+     vr_clob_cabecalho_requisicao CLOB;
+     vr_clob_cabecalho_resposta   CLOB; 
+   BEGIN
+     
+     -- Cria um CLOB do cabeçalho da Requisição
+     pc_cabecalho_to_clob(pr_cabecalho => pr_requisicao.cabecalho
+                         ,pr_clob      => vr_clob_cabecalho_requisicao);
+                         
+     -- Cria um CLOB do cabeçalho da Resposta
+     pc_cabecalho_to_clob(pr_cabecalho => pr_resposta.cabecalho
+                         ,pr_clob      => vr_clob_cabecalho_resposta);                         
+   
+     INSERT INTO TBGEN_REQ_WEBSERVICE(dhrequis
+                                     ,dhresposta
+                                     ,dsservico
+                                     ,dsverbo_http
+                                     ,dscabecalho_requis
+                                     ,dsconteudo_requis
+                                     ,dscabecalho_resposta
+                                     ,dsconteudo_resposta
+                                     ,nrtimeout_requis
+                                     ,cdhttp_resposta
+                                     ,cdcritic)
+                VALUES (pr_dtrequisicao
+                       ,pr_dtresposta
+                       ,pr_requisicao.endereco
+                       ,pr_requisicao.verbo
+                       ,vr_clob_cabecalho_requisicao
+                       ,pr_requisicao.conteudo
+                       ,vr_clob_cabecalho_resposta
+                       ,pr_resposta.conteudo
+                       ,pr_requisicao.timeout
+                       ,pr_resposta.status_code
+                       ,pr_cdcritic);
+                       
+      END;                       
+
+  END;
 
   PROCEDURE pc_consumir_rest(pr_requisicao IN typ_http_request
                             ,pr_resposta   OUT typ_http_response
@@ -102,9 +165,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
       vr_resposta_texto  VARCHAR2(32000); --> Texto de resposta da requisição
       vr_exc_saida       EXCEPTION;
       vr_chave           VARCHAR2(256); -- chave para cabecalhos HTTP de resposta
-      vr_valor           VARCHAR2(1024); -- valor para cabecalhos HTTP de reposta   
+      vr_valor           VARCHAR2(1024); -- valor para cabecalhos HTTP de reposta  
+      vr_dtrequisicao    DATE;
+      vr_dtresposta      DATE; 
     
     BEGIN
+      
+      BEGIN
     
       vr_endereco := pr_requisicao.endereco || pr_requisicao.rota;
     
@@ -129,6 +196,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
       
       END IF;
       
+      vr_dtrequisicao := SYSDATE;
+      
       -- Abre a chamada HTTP
       BEGIN
         utl_http.set_transfer_timeout(pr_requisicao.timeout);
@@ -146,7 +215,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
         utl_http.set_header(vr_req, pr_requisicao.cabecalho(vr_index_cabecalho).chave, pr_requisicao.cabecalho(vr_index_cabecalho).valor);
         vr_index_cabecalho := pr_requisicao.cabecalho.next(vr_index_cabecalho);
       END LOOP;
-        utl_http.set_header(vr_req ,'User-Agent', 'Ayllos/PLSQL');
+
+      utl_http.set_header(vr_req ,'User-Agent', 'Ayllos/PLSQL');
 
       -- Envia o conteúdo no Content se for um POST
       IF (pr_requisicao.verbo = WRES0001.post) THEN
@@ -156,6 +226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
 
       -- Pega o retnorno da chamada
       vr_res := utl_http.get_response(vr_req);
+      vr_dtresposta := SYSDATE;
     
       -- Busca os cabeçalhos de retorno
       FOR i IN 1 .. utl_http.get_header_count(vr_res) LOOP
@@ -188,8 +259,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
         ELSE
           utl_http.end_response(vr_res);
         END IF;
-        pr_resposta.conteudo := vr_resposta;
-    
+
+      pr_resposta.conteudo := vr_resposta;
+
     EXCEPTION
       WHEN vr_exc_saida THEN
         IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
@@ -199,6 +271,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
         pr_cdcritic := 0;
         pr_dscritic := SQLERRM;
     END;
+    
+    -- log da requisição
+    pc_log_rest(pr_requisicao   => pr_requisicao
+               ,pr_dtrequisicao => vr_dtrequisicao
+               ,pr_resposta     => pr_resposta
+               ,pr_dtresposta   => vr_dtresposta
+               ,pr_cdcritic     => pr_cdcritic);        
+
+   END;
+
   
   END pc_consumir_rest;
 
