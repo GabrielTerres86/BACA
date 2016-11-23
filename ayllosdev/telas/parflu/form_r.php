@@ -59,22 +59,22 @@
             <td>&nbsp;</td>
             <td>
                 <select id="tpfluxo_e" name="tpfluxo_e">
-                <option value="P" <?php echo ($arrRemessa[$remessa]['TPFLUXO_ENTRADA'] == 'P' ? 'selected' : ''); ?>>Projetado</option>
-                <option value="R" <?php echo ($arrRemessa[$remessa]['TPFLUXO_ENTRADA'] == 'R' ? 'selected' : ''); ?>>Realizado</option>
+                <option value="1" <?php echo ($arrRemessa[$remessa]['TPFLUXO_ENTRADA'] == 1 ? 'selected' : ''); ?>>Realizado</option>
+                <option value="3" <?php echo ($arrRemessa[$remessa]['TPFLUXO_ENTRADA'] == 3 ? 'selected' : ''); ?>>Projetado</option>
                 </select>
             </td>
             <td>&nbsp;</td>
             <td>
                 <select id="tpfluxo_s" name="tpfluxo_s">
-                <option value="P" <?php echo ($arrRemessa[$remessa]['TPFLUXO_SAIDA'] == 'P' ? 'selected' : ''); ?>>Projetado</option>
-                <option value="R" <?php echo ($arrRemessa[$remessa]['TPFLUXO_SAIDA'] == 'R' ? 'selected' : ''); ?>>Realizado</option>
+                <option value="2" <?php echo ($arrRemessa[$remessa]['TPFLUXO_SAIDA'] == 2 ? 'selected' : ''); ?>>Realizado</option>
+                <option value="4" <?php echo ($arrRemessa[$remessa]['TPFLUXO_SAIDA'] == 4 ? 'selected' : ''); ?>>Projetado</option>
                 </select>
             </td>
             <td>&nbsp;</td>
             <td>
                 <select id="flremdina" name="flremdina">
-                <option value="1" <?php echo ($arrRemessa[$remessa]['FLREMESSA_DINAMICA'] == '1' ? 'selected' : ''); ?>>Sim</option>
-                <option value="0" <?php echo ($arrRemessa[$remessa]['FLREMESSA_DINAMICA'] == '0' ? 'selected' : ''); ?>>Não</option>
+                <option value="1" <?php echo ($arrRemessa[$remessa]['FLREMESSA_DINAMICA'] == 1 ? 'selected' : ''); ?>>Sim</option>
+                <option value="0" <?php echo ($arrRemessa[$remessa]['FLREMESSA_DINAMICA'] == 0 ? 'selected' : ''); ?>>Não</option>
                 </select>
             </td>
         </tr>
