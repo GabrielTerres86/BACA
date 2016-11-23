@@ -2713,6 +2713,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_nrdcaixa      VARCHAR2(100);
       vr_idorigem      VARCHAR2(100);
       
+      --Variaveis auxiliares
+      vr_qtmesblq crappre.qtmesblq%TYPE;
+      
       -- Variaveis de Erro
       vr_dscritic  VARCHAR2(1000);
       vr_exc_saida EXCEPTION;
@@ -2724,7 +2727,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           FROM crappre
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa;
-      rw_crappre cr_crappre%ROWTYPE;
       
     BEGIN
       
@@ -2738,17 +2740,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
       
+      -- Inicializa variavel
+      vr_qtmesblq := 0;
+      
       -- Busca período de bloqueio de limite por refinanceamento
       OPEN cr_crappre(vr_cdcooper, pr_inpessoa);
-      FETCH cr_crappre INTO rw_crappre;
-      IF cr_crappre%FOUND THEN
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Dados>' || rw_crappre.qtmesblq || '</Dados></Root>');
-      ELSE
-        vr_dscritic := 'Parametros pre-aprovado nao cadastrados.';
-        RAISE vr_exc_saida;
-      END IF;
+      FETCH cr_crappre INTO vr_qtmesblq;
       CLOSE cr_crappre;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Dados>' || vr_qtmesblq || '</Dados></Root>');
       
     EXCEPTION
       WHEN vr_exc_saida THEN
