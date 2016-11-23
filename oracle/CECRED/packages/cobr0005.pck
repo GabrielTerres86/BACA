@@ -5,14 +5,16 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 13/03/2016 
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas referente a consulta e geracao de titulos de cobrança
   --
-  --  Alteracoes: 
+  --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+	--             					 	   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+	--            					 	  (Andrei - RKAM).
   ---------------------------------------------------------------------------------------------------------------
   
   -- Definição de PL Table para armazenar os nomes das TAG´s do XML para iteração
@@ -248,14 +250,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Rafael Cechet
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 22/11/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas referente a consulta e geracao de titulos de cobrança
   --
-  --  Alteracoes: 
+  --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+	--			      		       	   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+	--       			    		 	    (Andrei - RKAM).
+  --
+  --              22/11/2016 - #554528 Melhoria do dscritic (inclusão dos parâmetros e seus valores) na 
+  --                           exception vr_exc_semresultado (pc_buscar_titulo_cobranca) para o caso de a 
+  --                           mesma voltar a ocorrer (Carlos)
   ---------------------------------------------------------------------------------------------------------------
     
   PROCEDURE pc_gera_pedido_remessa( pr_rowidcob IN ROWID
@@ -541,14 +549,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lombardi
-     Data    : Agosto/2015                     Ultima atualizacao: --/--/----
+     Data    : Agosto/2015                     Ultima atualizacao: 13/03/2016
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamado
      Objetivo  : Gera título de cobrança
 
-     Alteracoes: ----
+     Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
+						 	  para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
+						 	 (Andrei - RKAM).
 
   ............................................................................ */      
 
@@ -854,7 +864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           CLOSE cr_cop;
             
           /* Preparar Lote de Retorno Cooperado */
-          PAGA0001.pc_prep_retorno_cooper_90 (pr_idregcob => rw_cob.rowid --ROWID da cobranca
+          COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_cob.rowid --ROWID da cobranca
                                              ,pr_cdocorre => 02  /* Baixa */   --Codigo Ocorrencia
                                              ,pr_cdmotivo => '' /* Decurso Prazo */  --Codigo Motivo
                                              ,pr_vltarifa => 0
@@ -1666,7 +1676,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       
       WHEN vr_exc_semresultado THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Boletos nao encontrados.';
+        pr_dscritic := 'pr_cdcooper: ' || to_char(pr_cdcooper) || 
+        ' pr_nrdconta: ' || to_char(pr_nrdconta) || 
+        ' pr_nrctremp: ' || to_char(pr_nrctremp) || 
+        ' pr_nrcnvcob: ' || to_char(pr_nrcnvcob) || 
+        ' pr_nrdocmto: ' || to_char(pr_nrdocmto) || 
+        ' Boletos nao encontrados.';
       
       WHEN vr_exc_saida THEN
         -- Se possui código de crítica e não foi informado a descrição
