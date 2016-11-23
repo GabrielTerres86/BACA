@@ -807,12 +807,12 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
       END IF;
     
       vr_sql := vr_sql || rw_craprdr.nmproced || '(';
-    
+
       pc_informa_acesso_progrid(pr_module => vr_nmdatela || '|' || vr_cdcooper || '|' ||
                                              vr_cdoperad || '|' || vr_nmdeacao || '|'
                                             ||vr_idsistem || '|' || vr_cddopcao
                                ,pr_action => rw_craprdr.nmpackag || '.' || rw_craprdr.nmproced);
-
+                               
       -- Verifica se existem parâmetros adicionais criados
       IF rw_craprdr.lstparam IS NOT NULL THEN
         -- Quebra a string de parametros
@@ -1917,6 +1917,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.PRGD0001 IS
   BEGIN
     CECRED.GENE0001.pc_informa_acesso(pr_module => pr_module
                                      ,pr_action => pr_action);
+
+
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
+    EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_NUMERIC_CHARACTERS = ''.,''';                                 
+
   END pc_informa_acesso_progrid;
 
 END PRGD0001;
