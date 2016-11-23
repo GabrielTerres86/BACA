@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                caso o processo batch da cooperativa esteja rodando o job é reagendado para 
                a proxima hora. Para a ultima execução do dia o job principal cria os jobs 
                por cooperativa porém os mesmos são criados para rodar no horario 
-               conforme definido na craphce(HRCOMP).
+               conforme definido na craphec(HRCOMP).
                
                - Em caso de configurar na CRAPHEC para executar mesmo processo diversas vezes durante o dia
                  é necessario que o craphec.cdprogra tenha o mesmo nome, com ele é identificado o processo
@@ -67,6 +67,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
     -- Variáveis de controle de calendário
     rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;    
     
+    CURSOR cr_craphec_pri IS 
+      SELECT hec.cdcooper,       
+             hec.cdprogra
+        FROM craphec hec, 
+             crapcop cop
+       WHERE hec.dsprogra IN  ('DEBNET VESPERTINA','DEBSIC VESPERTINA'
+                              ,'DEBNET NOTURNA','DEBSIC NOTURNA', 'AGENDAMENTO APLICACAO/RESGATE')
+         AND hec.cdcooper = cop.cdcooper
+         AND cop.flgativo = 1   
+       GROUP BY hec.cdcooper,
+                hec.cdprogra
+       ORDER BY hec.cdcooper; 
+    
     --> Buscar hora de execucao para criação de job para cada coop
     CURSOR cr_craphec IS
       SELECT hec.cdcooper,
@@ -77,7 +90,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
              to_date(hec.hriniexe,'SSSSS') dtiniexe 
         FROM craphec hec, 
              crapcop cop
-       WHERE hec.dsprogra IN  ('DEBNET','DEBSIC', 'AGENDAMENTO APLICACAO/RESGATE')
+       WHERE hec.dsprogra IN  ('DEBNET VESPERTINA','DEBSIC VESPERTINA'
+                              ,'DEBNET NOTURNA','DEBSIC NOTURNA', 'AGENDAMENTO APLICACAO/RESGATE')
          AND hec.cdcooper = cop.cdcooper
          AND cop.flgativo = 1
        ORDER BY hec.cdcooper,
@@ -226,7 +240,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
       
       ------>>>>>> PRIMEIRA EXECUCAO DO DIA <<<<<<---------
       --> Buscar registros de definicao de horarios de execucao dos procedimentos
-      FOR rw_craphec IN cr_craphec LOOP
+      FOR rw_craphec IN cr_craphec_pri LOOP
         
         -- Verificação do calendário
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_craphec.cdcooper);
@@ -250,9 +264,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
           vr_dtmvtolt := rw_crapdat.dtmvtolt;
         END IF;        
         
-        --teste tiago
-        --vr_dtdiahoje := rw_crapdat.dtmvtopr;
-                
         --> Verificar se a data do sistema eh o dia de hoje
         IF vr_dtdiahoje <> vr_dtmvtolt THEN
           --> O JOB esta confirgurado para rodar de Segunda a Sexta
@@ -337,16 +348,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
           vr_dtmvtolt := rw_crapdat.dtmvtolt;
         END IF;  
         
-        /*teste tiago*/
-        --vr_dtmvtolt := SYSDATE;
-        
-        vr_jobname := rw_craphec.cdprogra||'_'||rw_craphec.cdcooper||'_'||'DIA'||'$'; 
+        /*M349 Tratamento para mais de uma execucao diaria dos programas
+          DEBSIC e DEBNET que terao um processo vespertino e um noturno alem
+          do primeiro que roda logo apos o termino do processo da cooperativa*/
+        IF rw_craphec.cdprogra <> 'CRPS688' THEN
+           IF rw_craphec.dsprogra LIKE '%VESPERTINA%' THEN
+              vr_jobname := rw_craphec.cdprogra||'_'||rw_craphec.cdcooper||'_'||'DIA'||'$'; 
+           ELSE
+              vr_jobname := rw_craphec.cdprogra||'_'||rw_craphec.cdcooper||'_'||'NOT'||'$'; 
+           END IF;   
+        ELSE   
+           vr_jobname := rw_craphec.cdprogra||'_'||rw_craphec.cdcooper||'_'||'DIA'||'$'; 
+        END IF;
                                              
         vr_dsplsql := 'begin cecred.PC_JOB_AGENDEB(pr_cdcooper => '||rw_craphec.cdcooper ||
                                                   ', pr_cdprogra => '''||rw_craphec.cdprogra ||''''||
                                                   ', pr_dsjobnam => '''||vr_jobname||'''); end;';                                                                                                            
             
-          --> Montar data da proxima execução conforme hce
+          --> Montar data da proxima execução conforme hec
         vr_dtprxexc := TO_TIMESTAMP_tz(to_char(vr_dtmvtolt ,'DD/MM/RRRR')||' '||
                          to_char(rw_craphec.dtiniexe,'HH24:MI')||':'||to_char(rw_craphec.cdcooper,'fm00')
                           ,'DD/MM/RRRR HH24:MI:SS');                    
@@ -364,7 +383,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
             -- se ja foi criado o job, ir para o proximo registro
             IF vr_dtprxexc = rw_job.next_run_date THEN
               continue;
-            --> Caso exista o job e na hce estiver desativado, deve dropar o job  
+            --> Caso exista o job e na hec estiver desativado, deve dropar o job  
             ELSIF rw_craphec.flgativo = 0 THEN
               dbms_scheduler.drop_job(job_name => rw_job.job_name);
               gene0001.pc_gera_log_job(pr_cdcooper => pr_cdcooper
@@ -619,7 +638,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
              EXCEPTION
                WHEN OTHERS THEN
                   vr_dscritic := 'Job '||pr_dsjobnam||' nao foi executado pois ocorreu erro '||
-                                 'ao atualizar crapche: '||SQLERRM;
+                                 'ao atualizar craphec: '||SQLERRM;
                   RAISE vr_exc_email;
              END;
           
