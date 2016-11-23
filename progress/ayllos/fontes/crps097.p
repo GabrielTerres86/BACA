@@ -100,6 +100,11 @@
 							identificar estes cheques para envia-los a ABBC
 							no primeiro horário da manhã
 							(Adriano - SD 501761).
+
+			   18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
+			                caso o aviso de debito ja existir, evitando acionamento
+							desnecessario visto que essa critica nao abortado a
+							execucao do processo. (Daniel)	
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -475,10 +480,10 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                                             gncpchq.cdalinea = 21.
                                     END.
                            END.
-                       
+                                
                       ASSIGN crapdev.indevarq = 2 
 						     craplcm.dsidenti = STRING(crapdev.indevarq,"9").
-
+                  
                   END.         
          END.
     ELSE
@@ -518,7 +523,7 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                  DO:
                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
                                       " - " + glb_cdprogra + "' --> '" + 
-                                      "'ERRO: Registro de aviso de debito " +
+                                      "'CRITICA: Registro de aviso de debito " +
                                       "ja existe - Conta: " +
                                       STRING(crapass.nrdconta) +
                                       " Cheque: " + STRING(crapdev.nrcheque) +
