@@ -2084,14 +2084,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         CLOSE cr_crapage;
       END IF;
 
-      vr_dsextmail := 'pdf';
       vr_dsmailcop := REPLACE(rw_craprel.dsdemail, ',', ';');
       vr_dscormail := 'SEGUE ARQUIVO EM ANEXO.';
       vr_dsassmail := 'crrl580 - Conta/dv: ' ||
                       TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) || ' - PA ' ||
                       rw_crapage.cdagenci || ' ' || rw_crapage.nmresage;
     ELSE
-      vr_dsextmail := NULL;
+      
       vr_dsmailcop := NULL;
       vr_dscormail := NULL;
       vr_dsassmail := NULL;
@@ -2115,7 +2114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                , pr_nmformul  => ' '
                                , pr_nrcopias  => 1
                                , pr_nrvergrl  => 1
-                               , pr_dsextmail => vr_dsextmail
+                               , pr_dsextmail => NULL
                                , pr_dsmailcop => vr_dsmailcop
                                , pr_dsassmail => vr_dsassmail
                                , pr_dscormail => vr_dscormail

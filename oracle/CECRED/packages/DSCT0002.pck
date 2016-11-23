@@ -4743,14 +4743,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         CLOSE cr_crapage;
       END IF;
 
-      vr_dsextmail := 'pdf';
       vr_dsmailcop := REPLACE(rw_craprel.dsdemail, ',', ';');
       vr_dscormail := 'SEGUE ARQUIVO EM ANEXO.';
       vr_dsassmail := 'crrl' || vr_cdrelato || ' - Conta/dv: ' ||
                       TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) || ' - PA ' ||
                       rw_crapage.cdagenci || ' ' || rw_crapage.nmresage;
     ELSE
-      vr_dsextmail := NULL;
       vr_dsmailcop := NULL;
       vr_dscormail := NULL;
       vr_dsassmail := NULL;
@@ -4773,7 +4771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                , pr_nmformul  => ' '
                                , pr_nrcopias  => 1
                                , pr_nrvergrl  => 1
-                               , pr_dsextmail => vr_dsextmail
+                               , pr_dsextmail => NULL
                                , pr_dsmailcop => vr_dsmailcop
                                , pr_dsassmail => vr_dsassmail
                                , pr_dscormail => vr_dscormail
@@ -5242,7 +5240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           '<vltitulo>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vltitulo,'fm999G999G999G990D00')   ||'</vltitulo>'|| 
                           '<vlliquid>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vlliquid,'fm999G999G999G990D00')   ||'</vlliquid>'|| 
                           '<qtdprazo>'||   vr_rel_qtdprazo                              ||'</qtdprazo>'|| 
-                          '<nmsacado>'||   substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32)   ||'</nmsacado>'|| 
+                          '<nmsacado>'||   gene0007.fn_caract_controle(substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32))   ||'</nmsacado>'|| 
                           '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>'|| 
                           '<restricoes>');
         
@@ -5258,7 +5256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
             
             vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
             
-            pc_escreve_xml('<restricao><texto>'|| vr_tab_bordero_restri(idx2).dsrestri ||'</texto></restricao>');
+            pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
             -- Se foi aprovado pelo coordenador
             IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
               
@@ -5325,7 +5323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');
         vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
         WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| vr_idxrestr ||'</texto></restricao>');
+          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto></restricao>');
           vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
         END LOOP;
         pc_escreve_xml(  '</restricoes_coord>');
@@ -5337,7 +5335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_idxsac := vr_tab_sacado_nao_pagou.first;
         WHILE vr_idxsac IS NOT NULL LOOP        
           pc_escreve_xml('<sacado>
-                             <nmsacado>'|| vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado ||'</nmsacado>
+                             <nmsacado>'|| gene0007.fn_caract_controle(vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado) ||'</nmsacado>
                              <qtdtitul>'|| vr_tab_sacado_nao_pagou(vr_idxsac).qtdtitul ||'</qtdtitul>
                              <vlrtitul>'|| to_char(vr_tab_sacado_nao_pagou(vr_idxsac).vlrtitul,'fm999G999G999G990D00') ||'</vlrtitul>
                           </sacado>');  

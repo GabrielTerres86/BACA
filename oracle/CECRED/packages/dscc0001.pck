@@ -1140,6 +1140,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --   Objetivo  : Procedure para gerar impressoes do bordero
     --
     --   Alteração : 06/09/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
+    --
+    --               23/11/2016 - Tratamento na montagem do XML para alterar caracteres
+    --                            nao permitidos no XML(ex. &). (Odirlei-AMcom) 
     -- .........................................................................*/
 
     ----------->>> CURSORES  <<<--------
@@ -1356,7 +1359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                          '<dstitulo>'|| vr_dstitulo ||'</dstitulo>'||
                          '<dsqrcode>'|| vr_qrcode ||'</dsqrcode>'||
                          '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) ||'</nrdconta>'||
-                         '<nmprimtl>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmprimtl ||'</nmprimtl>'||
+                         '<nmprimtl>'|| gene0007.fn_caract_controle(vr_tab_dados_itens_bordero(vr_idxborde).nmprimtl) ||'</nmprimtl>'||
                          '<cdagenci>'|| vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'</cdagenci>'||
                          '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder)) ||'</nrborder>'||
                          '<nrctrlim>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrctrlim)) ||'</nrctrlim>'||
@@ -1391,7 +1394,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  '<vlcheque>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlcheque,'fm999G999G999G990D00') ||'</vlcheque>'||
                                  '<vlliquid>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlliquid,'fm999G999G999G990D00') ||'</vlliquid>'||
                                  '<qtdiaprz>'|| vr_qtdiaprz ||'</qtdiaprz>'||
-                                 '<nmcheque>'|| SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23) ||'</nmcheque>'||
+                                 '<nmcheque>'|| gene0007.fn_caract_controle(SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23)) ||'</nmcheque>'||
                                  '<dscpfcgc>'|| vr_tab_chq_bordero(idx).dscpfcgc ||'</dscpfcgc>'||
                                  '<restricoes>');
 
@@ -1403,7 +1406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
               -- Seta o total
               vr_qtrestri := NVL(vr_qtrestri, 0) + 1;
 
-              pc_escreve_xml(          '<restricao><texto>'|| vr_tab_bordero_restri(idx2).dsrestri ||'</texto></restricao>');
+              pc_escreve_xml(          '<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
               -- Se foi aprovado pelo coordenador
               IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
                 -- Se NAO existir na PLTABLE
@@ -1438,7 +1441,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| TRIM(vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo) ||'">');
         vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
         WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| vr_idxrestr ||'</texto></restricao>');
+          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto></restricao>');
           vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
         END LOOP;
         pc_escreve_xml(  '</restricoes_coord>');
@@ -1449,7 +1452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       IF vr_tab_bordero_restri.COUNT > 0 THEN
         FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
           IF vr_tab_bordero_restri(idx2).nrcheque = 888888 THEN
-            pc_escreve_xml(          '<restricao><texto>'|| vr_tab_bordero_restri(idx2).dsrestri ||'</texto></restricao>');
+            pc_escreve_xml(          '<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
           END IF;
         END LOOP;
       END IF;
