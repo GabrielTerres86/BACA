@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 13/10/2016
+   Data    : Novembro/98                     Ultima atualizacao: 09/11/2016
 
    Dados referentes ao programa:
 
@@ -513,14 +513,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
-														
-			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
-			                na leitura do cursor cr_crapepr. (Reinert)   
+
+               23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
+                            na leitura do cursor cr_crapepr. (Reinert)
 
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
 			                (Daniel)
-                            
+
+               28/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
+
+			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
+							SD 549917 (Carlos Rafael Tanholi)
+
 ............................................................................ */
+
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
     select cdbcoctl,
@@ -623,12 +629,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                      pr_cdbccxlt in craptab.tpregist%type) is
     select dstextab
       from craptab
-     where craptab.cdcooper = pr_cdcooper
+     where craptab.cdcooper        = pr_cdcooper
        and UPPER(craptab.nmsistem) = 'CRED'
        and UPPER(craptab.tptabela) = pr_tptabela
-       and craptab.cdempres = pr_cdempres
+       and craptab.cdempres        = pr_cdempres
        and UPPER(craptab.cdacesso) = pr_nrdctabb
-       and craptab.tpregist = pr_cdbccxlt;
+       and craptab.tpregist        = pr_cdbccxlt;
   rw_craptab    cr_craptab%rowtype;
   -- Rejeitados na integração
   cursor cr_craprej2 (pr_cdcooper in craptab.cdcooper%type,
@@ -688,7 +694,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                       pr_nrdctabb in craptab.cdacesso%type) is
     select dstextab
       from craptab
-     where craptab.cdcooper = pr_cdcooper
+     where craptab.cdcooper        = pr_cdcooper
        and UPPER(craptab.tptabela) = pr_tptabela
        and UPPER(craptab.cdacesso) = pr_nrdctabb;
   -- Tarifa dos históricos
@@ -855,11 +861,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
      where craptdb.cdcooper = pr_cdcooper
        and craptdb.nrdconta = pr_nrdconta
        and craptdb.nrborder = pr_nrborder
-       and craptdb.insittit <> 1 -- Resgatado
+       --and craptdb.insittit <> 1 -- Resgatado
        and crapcob.cdcooper = craptdb.cdcooper
        and crapcob.nrdconta = craptdb.nrdconta
        and crapcob.nrcnvcob = craptdb.nrcnvcob
-       and crapcob.nrdocmto = craptdb.nrdocmto;
+       and crapcob.nrdocmto = craptdb.nrdocmto
+       and crapcob.nrdctabb = craptdb.nrdctabb
+	   and crapcob.cdbandoc = craptdb.cdbandoc;
+
   -- Títulos em desconto
   cursor cr_craptdb2 (pr_cdcooper in craptdb.cdcooper%type,
                       pr_dt_ini in craptdb.dtdpagto%type,
@@ -885,6 +894,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        and craptdb.dtdpagto > pr_dt_ini
        and craptdb.dtdpagto <= pr_dt_fim
        and craptdb.insittit = 2; -- Processados
+
   -- Verificar se o título é da migração
   cursor cr_crapcco (pr_cdcooper in crapcco.cdcooper%type,
                      pr_nrcnvcob in crapcco.nrconven%type) is
@@ -917,8 +927,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   -- Títulos em desconto
   cursor cr_craptdb4 (pr_cdcooper in craptdb.cdcooper%TYPE
                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) is
-    select /*+ index (craptdb craptdb##craptdb2)*/
-           craptdb.cdcooper,
+    select craptdb.cdcooper,
            craptdb.cdbandoc,
            craptdb.nrdctabb,
            craptdb.nrcnvcob,
@@ -1038,6 +1047,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
        AND crapcco.flgregis = 1
        AND crapcco.dsorgarq NOT IN ('MIGRACAO','INCORPORACAO')
        AND crapret.cdcooper = crapcco.cdcooper
+       AND crapret.nrcnvcob = crapcco.nrconven
        and crapret.dtocorre = pr_dtmvtolt
        and crapret.cdhistbb in (936, 937, 938, 939, 940, 965, 966, 973)
        -- Não existam associados
@@ -1177,6 +1187,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                AND lgp.cdbccxlt = 100 -- GPS NOVO
                AND lgp.flgpagto = 1   -- PAGO
                AND lgp.idsicred <> 0
+               AND lgp.flgativo = 1
             ) vlr
      group by vlr.cdagenci
      order by vlr.cdagenci;
@@ -1195,6 +1206,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
              WHERE lgp.cdcooper = pr_cdcooper
                AND lgp.dtmvtolt = pr_dtmvtolt
                AND lgp.idsicred <> 0
+               AND lgp.flgativo = 1
                and lgp.cdcooper = ass.cdcooper (+)
                and lgp.nrctapag = ass.nrdconta (+)) tmp
      group by tmp.cdagenci
@@ -1886,8 +1898,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   vr_nom_diretorio       varchar2(200);
   vr_dsdircop            varchar2(200);
   -- Nome do arquivo que será gerado
+
+  vr_nmarqnov            VARCHAR2(50); -- nome do arquivo por cooperativa
   vr_nmarqdat            varchar2(50);
   vr_nmarqdat_ope_cred   varchar2(50);
+  vr_nmarqdat_ope_cred_nov   varchar2(50); --nome arquivo ope_cred por cooperativa
+  
   -- Arquivo texto
   vr_arquivo_txt         utl_file.file_type;
   -- Variáveis para processamento do cursor cr_craprej
@@ -10358,6 +10374,7 @@ BEGIN
 
   --  Fim da contabilizacao mensal ............................................
   gene0001.pc_fecha_arquivo(vr_arquivo_txt);
+
   -- Busca o diretório final para copiar o relatório
   vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'M',
                                        pr_cdcooper => pr_cdcooper,
