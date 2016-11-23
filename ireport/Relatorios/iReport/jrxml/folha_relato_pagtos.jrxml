@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="442" pageHeight="620" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" isFloatColumnFooter="true" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="3.2210200000000015"/>
-	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="0"/>
+	<property name="ireport.x" value="178"/>
+	<property name="ireport.y" value="368"/>
 	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
 		<defaultValueExpression><![CDATA["C:\\Users\\t0030312\\Desktop\\Ayllos\\branches\\PRJ+STT\\relatorios\\"]]></defaultValueExpression>
 	</parameter>
@@ -54,7 +54,7 @@
 	<field name="tppagto" class="java.lang.String">
 		<fieldDescription><![CDATA[ancestor::pagto/@tppagto]]></fieldDescription>
 	</field>
-	<field name="vllctpag" class="java.lang.Float">
+	<field name="vllctpag" class="java.lang.Double">
 		<fieldDescription><![CDATA[ancestor::pagto/@vllctpag]]></fieldDescription>
 	</field>
 	<field name="vttarifa" class="java.lang.Float">
@@ -72,7 +72,7 @@
 	<field name="dsorigem" class="java.lang.String">
 		<fieldDescription><![CDATA[dsorigem]]></fieldDescription>
 	</field>
-	<field name="vllancto" class="java.lang.Float">
+	<field name="vllancto" class="java.lang.Double">
 		<fieldDescription><![CDATA[vllancto]]></fieldDescription>
 	</field>
 	<field name="dsobslct" class="java.lang.String">
@@ -100,21 +100,21 @@
 		<variableExpression><![CDATA[$F{idsitlct} == "C" ?  new Integer(1) : new Integer(0)]]></variableExpression>
 		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
 	</variable>
-	<variable name="vr_val_estorno" class="java.lang.Float" resetType="Group" resetGroup="gr_nrdocmto" calculation="Sum">
+	<variable name="vr_val_estorno" class="java.lang.Double" resetType="Group" resetGroup="gr_nrdocmto" calculation="Sum">
 		<variableExpression><![CDATA[$F{idsitlct} == "D" ?  $F{vllancto} : new Double(0)]]></variableExpression>
-		<initialValueExpression><![CDATA[new Float(0)]]></initialValueExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
 	</variable>
 	<variable name="vr_qtd_efetiva_total" class="java.lang.Integer" incrementType="Group" incrementGroup="gr_nrdocmto" calculation="Sum">
 		<variableExpression><![CDATA[$V{vr_qtd_efetiva}]]></variableExpression>
 		<initialValueExpression><![CDATA[new Integer(0)]]></initialValueExpression>
 	</variable>
-	<variable name="vr_val_estorno_total" class="java.lang.Float" incrementType="Group" incrementGroup="gr_nrdocmto" calculation="Sum">
+	<variable name="vr_val_estorno_total" class="java.lang.Double" incrementType="Group" incrementGroup="gr_nrdocmto" calculation="Sum">
 		<variableExpression><![CDATA[$V{vr_val_estorno}]]></variableExpression>
-		<initialValueExpression><![CDATA[new Float(0)]]></initialValueExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
 	</variable>
-	<variable name="vr_vllctpag_total" class="java.lang.Float" incrementType="Group" incrementGroup="gr_nrdocmto" calculation="Sum">
+	<variable name="vr_vllctpag_total" class="java.lang.Double" incrementType="Group" incrementGroup="gr_nrdocmto" calculation="Sum">
 		<variableExpression><![CDATA[$F{vllctpag}]]></variableExpression>
-		<initialValueExpression><![CDATA[new Float(0)]]></initialValueExpression>
+		<initialValueExpression><![CDATA[new Double(0)]]></initialValueExpression>
 	</variable>
 	<group name="gr_nrdconta_individual" isReprintHeaderOnEachPage="true">
 		<groupExpression><![CDATA[($F{tpemissa}=="INDIVIDUAL") ? ($F{nrdconta2}) : (new Integer(0))]]></groupExpression>
