@@ -225,8 +225,9 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                        crapdev.nrdconta >= glb_nrctares EXCLUSIVE-LOCK
                        TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
 
-    IF   crapdev.nrdconta = 0  AND 
-         crapdev.cdalinea = 37 AND 
+    IF   crapdev.nrdconta = 0   AND 
+        (crapdev.cdalinea = 37  OR 
+         crapdev.cdalinea = 35) AND 
          crapdev.cdhistor = 47 THEN
          DO:
              ASSIGN crapdev.indevarq = 2 
