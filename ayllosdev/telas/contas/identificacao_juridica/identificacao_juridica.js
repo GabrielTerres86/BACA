@@ -15,6 +15,7 @@
  * 006: [23/07/2015] Gabriel (RKAM)            : Reformulacao Cadastral.
  * 007: [03/12/2015] Jaison/Andrino  (CECRED)  : Adicao do campo flserasa na pesquisa generica de BUSCA_CNAE.
  * 008: [14/09/2016] Kelvin (CECRED) 		   : Ajuste feito para resolver o problema relatado no chamado 506554.
+ * 009: [25/10/2016] Tiago (CECRED)            : Tratamentos da melhoria 310.
  */
 
 var contWin = 0;  // Variável para contagem do número de janelas abertas para impressão de termos
@@ -41,7 +42,7 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		$('#imgAbaDir' + i).attr('src',UrlImagens + 'background/mnu_nld.gif');
 		$('#imgAbaCen' + i).css('background-color','#C6C8CA');
 	}
-	
+
 	/*inpessoa 3 não tem idseqttl, então para não passar null
 	  na requisição, passamos 0 para não gerar problemas.*/
 	if (inpessoa == 3)
@@ -151,7 +152,8 @@ function manterRotina(operacao) {
 	qtfoltal = trim($('#qtfoltal','#frmDadosIdentJuridica').val());
 	dtcadass = trim($('#dtcadass','#frmDadosIdentJuridica').val());
 	cdcnae   = trim($('#cdcnae','#frmDadosIdentJuridica').val());
-	nrlicamb = $('#nrlicamb','#frmDadosIdentJuridica').val();
+	nrlicamb = $('#nrlicamb', '#frmDadosIdentJuridica').val();
+	dtvallic = $('#dtvallic', '#frmDadosIdentJuridica').val();
 
 	// Executa script de confirmação através de ajax
 	$.ajax({		
@@ -162,7 +164,7 @@ function manterRotina(operacao) {
 			cdsitcpf: cdsitcpf, cdnatjur: cdnatjur, qtfilial: qtfilial, qtfuncio: qtfuncio,
 			dtiniatv: dtiniatv, cdseteco: cdseteco, cdrmativ: cdrmativ, dsendweb: dsendweb,
 			nmtalttl: nmtalttl, qtfoltal: qtfoltal,	dtcadass: dtcadass, cdcnae  : cdcnae,
-			operacao: operacao,	flgcadas: flgcadas, nrlicamb: nrlicamb,
+			operacao: operacao,	flgcadas: flgcadas, nrlicamb: nrlicamb, dtvallic : dtvallic,
 			redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -197,7 +199,7 @@ function controlaLayout(operacao) {
 	var camposGrupo1	= $('#nmprimtl, #inpessoa, #nrcpfcgc','#frmDadosIdentJuridica');	
 	
 	// Nome Fantasia / Consulta / Situação / Natureza Jurídica / Qt. Filiais / Qt. Funcionários / Início Atividade / Setor Econômico / Ramo Atividade / Site / Nome Talão / Qt. Folhas Talão
-	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb','#frmDadosIdentJuridica');
+	var camposGrupo2	= $('#nmfatasi, #dtcnscpf, #cdsitcpf, #cdnatjur, #qtfilial, #qtfuncio, #dtiniatv, #cdseteco, #cdrmativ, #dsendweb, #nmtalttl, #qtfoltal,#cdcnae,#nrlicamb, #dtvallic','#frmDadosIdentJuridica');
 	var selectsGrupo2	= $('select[name="cdsitcpf"], select[name="cdseteco"]','#frmDadosIdentJuridica');	
 	var codigo			= $('#cdnatjur, #cdseteco, #cdrmativ','#frmDadosIdentJuridica');
 
@@ -219,7 +221,8 @@ function controlaLayout(operacao) {
 	$('#cdcnae','#frmDadosIdentJuridica').css({'width':'60px'}).attr('maxlength','7');
 	$('#dscnae','#frmDadosIdentJuridica').css({'width':'344px'});
 	$('label[for="qtfuncio"]','#frmDadosIdentJuridica').css({'width':'104px'});
-	$('#nrlicamb','#frmDadosIdentJuridica').css({'width':'424px'});
+	$('#nrlicamb', '#frmDadosIdentJuridica').css({ 'width': '180px' });
+	$('#dtvallic', '#frmDadosIdentJuridica').css({ 'width': '90px' });
 
 	// Pular para o proximo campo quando pressionado ENTER
 	controlaFocoEnter('frmDadosIdentJuridica');

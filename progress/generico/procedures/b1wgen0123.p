@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0123.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Novembro/2011                     Ultima atualizacao: 05/08/2015
+    Data    : Novembro/2011                     Ultima atualizacao: 27/07/2016
 
     Objetivo  : Tranformacao BO tela CASH
 
@@ -64,6 +64,8 @@
                             passando cdcooper, pois no ayllos web nao fica setado
                             a variavel EMPRESA, utilizado em BuscaArquivoTAA.sh.
                             (Jorge/Elton) - SD 300929
+
+               27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
 
 ............................................................................*/
 
@@ -431,6 +433,25 @@ PROCEDURE Busca_Dados:
                                                craptfn.vlsaqnot,"zzz,zz9.99")).
                     
                 END. /* par_cddopcao = A */
+            WHEN "S" THEN
+                DO:
+                    FOR FIRST craptfn WHERE 
+                              craptfn.cdcooper = par_cdcooper AND
+                              craptfn.nrterfin = par_nrterfin NO-LOCK: END.
+
+                    IF  NOT AVAIL craptfn THEN
+                        DO:
+                            ASSIGN aux_dscritic = "Terminal financeiro nao " +
+                                                  "cadastrado!".
+                            LEAVE Busca.
+                        END.
+
+                    CREATE tt-terminal.
+                    ASSIGN tt-terminal.nmterfin = craptfn.nmterfin
+                           tt-terminal.dsterfin = " - " + craptfn.nmterfin
+                           tt-terminal.cdagenci = craptfn.cdagenci.
+                    
+                END. /* par_cddopcao = S */
             WHEN "B" THEN
                 DO:
                     /* Liberacao apenas para TI, SUPORTE e operador do SUPORTE TECNICO */

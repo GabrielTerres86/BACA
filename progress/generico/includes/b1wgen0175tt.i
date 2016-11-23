@@ -4,13 +4,14 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Andre Santos - Supero
-    Data    : Setembro/2013                        Ultima atualizacao: /  /
+    Data    : Setembro/2013                        Ultima atualizacao: 19/08/2016
 
     Dados referentes ao programa:
 
     Objetivo  : Arquivo com variáveis ultizadas na BO b1wgen0175.p
                
-    Alteracoes: 
+    Alteracoes: 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
+                             de cheques (Lucas Ranghetti #484923)
                             
 ..............................................................................*/
 
@@ -23,7 +24,21 @@ DEF TEMP-TABLE tt-devolu NO-UNDO
     FIELD cdalinea LIKE crapdev.cdalinea
     FIELD insitdev LIKE crapdev.insitdev
     FIELD dssituac AS CHAR
-    FIELD nmoperad LIKE crapope.nmoperad.
+    FIELD nmoperad LIKE crapope.nmoperad
+    FIELD vlaplica AS DECIMAL
+    FIELD vlsldprp AS DECIMAL
+    FIELD dsaplica AS CHAR 
+    FIELD dtliquid AS DATE
+    FIELD nrctachq AS DEC.
+
+DEF TEMP-TABLE tt-telefones NO-UNDO    
+    FIELD idseqttl LIKE craptfc.idseqttl
+    FIELD nrdddtfc LIKE craptfc.nrdddtfc
+    FIELD nrtelefo LIKE craptfc.nrtelefo.
+    
+DEF TEMP-TABLE tt-emails NO-UNDO    
+    FIELD idseqttl LIKE crapcem.idseqttl
+    FIELD dsdemail LIKE crapcem.dsdemail.    
 
 DEF TEMP-TABLE tt-lancto NO-UNDO
     FIELD cdcooper AS INT
@@ -40,7 +55,23 @@ DEF TEMP-TABLE tt-lancto NO-UNDO
     FIELD nmoperad AS CHAR FORMAT              "x(18)"
     FIELD cddsitua AS INTE FORMAT                "zz9"
     FIELD flag     AS LOGI
-    FIELD nrdrecid AS RECID.
+    FIELD nrdrecid AS RECID
+    FIELD vlaplica AS DECIMAL
+    FIELD vlsldprp AS DECIMAL
+    FIELD dsaplica AS CHAR
+    FIELD dstabela AS CHAR.
+    
+DEF TEMP-TABLE tt-desmarcar NO-UNDO    
+    FIELD nrcheque AS DEC
+    FIELD cdbanchq AS INT
+    FIELD cdagechq AS INT
+    FIELD nrdconta AS DEC
+    FIELD cdalinea AS INT
+    FIELD vllanmto AS DEC
+    FIELD nrctachq AS DEC
+    FIELD nrdctitg AS DEC
+    FIELD nrdrecid AS RECID
+    FIELD flag     AS LOG.
  
 DEF TEMP-TABLE tt-relchdv NO-UNDO
     FIELD nrdconta LIKE crapass.nrdconta     

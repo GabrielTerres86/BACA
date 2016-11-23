@@ -1,11 +1,10 @@
-
 /*.............................................................................
 
    Programa: fontes/debcon.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Ranghetti
-   Data    : Junho/2014                        Ultima atualizacao: 31/05/2016
+   Data    : Junho/2014                        Ultima atualizacao: 25/10/2016
 
    Dados referentes ao programa:
 
@@ -24,11 +23,14 @@
                             nossos (CECRED) nao debitados no processo noturno.
                             (Chamado 229249 # PRJ Melhoria) - (Fabricio)
    
-               31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+               31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi
+                            (Lucas Lunelli - [PROJ320])
 
                18/08/2016 - Remocao temporaria da coluna "Pendencia" ate que
                             todas as criticas tenham sido mapeadas.
-   
+
+               25/10/2016 - SD509982 - Ajuste coluna Pendencia e Criticas
+                            (Guilherme/SUPERO)
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -54,7 +56,7 @@ DEF TEMP-TABLE w_convenios
     FIELD nrdocmto AS CHAR  FORMAT "x(20)"
     FIELD cdempres LIKE crapscn.cdempres
     FIELD nmempres AS CHAR FORMAT "x(21)"
-    FIELD nmpendem AS CHAR FORMAT "x(12)".
+    FIELD nmpendem AS CHAR FORMAT "x(18)".
 
 DEF QUERY q_convenios FOR w_convenios.
 
@@ -63,8 +65,7 @@ DEF BROWSE b_convenios QUERY q_convenios
             w_convenios.nrdconta COLUMN-LABEL "Conta/dv"
             w_convenios.nrdocmto COLUMN-LABEL "Fatura"
             w_convenios.nmempres COLUMN-LABEL "Convenio"
-            /* Temporariamente removida
-              w_convenios.nmpendem COLUMN-LABEL "Pendencia" */
+            w_convenios.nmpendem COLUMN-LABEL "Pendencia"
             w_convenios.vllanaut COLUMN-LABEL "Valor"            
             WITH NO-BOX 10 DOWN WIDTH 78 SCROLLBAR-VERTICAL.
 
@@ -78,7 +79,7 @@ FORM tel_nrdconta AT 03 LABEL "Conta/dv" AUTO-RETURN
      WITH NO-LABEL SIDE-LABELS COLUMN 2 ROW 6 OVERLAY NO-BOX FRAME f_opcao.
 
 FORM b_convenios HELP "Use <ENTER> para selecionar ou <END>/<F4> para sair."
-     WITH ROW 7 OVERLAY WIDTH 105 TITLE COLOR NORMAL " AGENDAMENTOS " 
+     WITH ROW 7 OVERLAY WIDTH 105 TITLE COLOR NORMAL " AGENDAMENTOS "
      FRAME f_b_convenios.
 
 VIEW FRAME f_moldura.
@@ -269,12 +270,16 @@ PROCEDURE consulta_convenios:
                w_convenios.nmempres = wt_convenios.nmempres
                w_convenios.vllanaut = wt_convenios.vllanmto
                w_convenios.dtmvtolt = wt_convenios.dtmvtolt.
-               
-        IF  INTE(wt_convenios_debitos.cdcritic) = 967 THEN
+
+        CASE INTE(wt_convenios_debitos.cdcritic):
+          WHEN 967 THEN /*967 - Valor do debito excede valor limite aprovado.*/
             ASSIGN w_convenios.nmpendem = "LIMITE EXCEDIDO".
-        ELSE 
+          WHEN 717 THEN /*717 - Nao ha saldo suficiente para a operacao.*/
             ASSIGN w_convenios.nmpendem = "SALDO INSUFICIENTE".
-            
+          WHEN 964 THEN /*964 - Lancamento bloqueado.*/
+            ASSIGN w_convenios.nmpendem = "LANCTO.BLOQUEADO".
+        END CASE.
+
     END. 
 END.
 

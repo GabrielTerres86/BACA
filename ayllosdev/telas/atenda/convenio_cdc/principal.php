@@ -1,4 +1,4 @@
-<? 
+<?php
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : Andre Santos (SUPERO)
@@ -7,57 +7,66 @@
  * --------------
  * ALTERAÇÕES   : 24/08/2015 - Projeto Reformulacao cadastral		   
  *						  	  (Tiago Castro - RKAM)			 
+ *
+ *                11/08/2016 - Inclusao de campos para apresentacao no site da cooperativa.
+ *                             (Jaison/Anderson)
+ *
  * --------------
  */	
-?>
-<?	
+
 	session_start();
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
 	require_once("../../../includes/controla_secao.php");
-	isPostMethod();
 	require_once("../../../class/xmlfile.php");
-			
+	isPostMethod();	
 		
-	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
-	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : 0  ;
-	
-	
-	// Monta o xml de requisição
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "	<Cabecalho>";
-	$xml .= "		<Bo>b1wgen0194.p</Bo>";					
-	$xml .= "		<Proc>pc-busca-convenios</Proc>";
-	$xml .= "	</Cabecalho>";
-	$xml .= "	<Dados>";
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
-	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
-	$xml .= '		<cddopcao>C</cddopcao>';
-	$xml .= "	</Dados>";
-	$xml .= "</Root>";
+	$operacao        = (isset($_POST['operacao']))        ? $_POST['operacao']        : '' ;
+	$nrdconta        = (isset($_POST['nrdconta']))        ? $_POST['nrdconta']        : 0  ;
+    $inpessoa        = (isset($_POST['inpessoa']))        ? $_POST['inpessoa']        : 0  ;
+    $idmatriz        = (isset($_POST['idmatriz']))        ? $_POST['idmatriz']        : 0  ;
+    $idcooperado_cdc = (isset($_POST['idcooperado_cdc'])) ? $_POST['idcooperado_cdc'] : 0  ;
 
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjRegistro = getObjectXML($xmlResult);
-	
-    if (strtoupper($xmlObjRegistro->roottag->tags[0]->name) == 'ERRO') {
-        exibirErro('error',$xmlObjRegistro->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);',false);
+    $xml  = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
+    $xml .= "   <idmatriz>".$idmatriz."</idmatriz>";
+    $xml .= "   <idcooperado_cdc>".$idcooperado_cdc."</idcooperado_cdc>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "TELA_ATENDA_CVNCDC", "CVNCDC_BUSCA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObject = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+        $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
     }
-	
-	$flgativo = $xmlObjRegistro->roottag->tags[0]->attributes['FLGATIVO'];
-	$dtcnvcdc = $xmlObjRegistro->roottag->tags[0]->attributes['DTCNVCDC'];
+
+    $registro           = $xmlObject->roottag->tags[0];
+	$flgconve           = getByTagName($registro->tags,'FLGCONVE');
+	$dtinicon           = getByTagName($registro->tags,'DTINICON');
+    $idcooperado_cdc    = getByTagName($registro->tags,'IDCOOPERADO_CDC');
+    $nmfantasia         = getByTagName($registro->tags,'NMFANTASIA');
+    $cdcnae             = getByTagName($registro->tags,'CDCNAE');
+    $dslogradouro       = getByTagName($registro->tags,'DSLOGRADOURO');
+    $dscomplemento      = getByTagName($registro->tags,'DSCOMPLEMENTO');
+    $nrendereco         = getByTagName($registro->tags,'NRENDERECO');
+    $nmbairro           = getByTagName($registro->tags,'NMBAIRRO');
+    $nrcep              = getByTagName($registro->tags,'NRCEP');
+    $cdufende           = getByTagName($registro->tags,'CDUFENDE');
+    $idcidade           = getByTagName($registro->tags,'IDCIDADE');
+    $dscidade           = getByTagName($registro->tags,'DSCIDADE');
+    $cdestado           = getByTagName($registro->tags,'CDESTADO');
+    $dstelefone         = getByTagName($registro->tags,'DSTELEFONE');
+    $dsemail            = getByTagName($registro->tags,'DSEMAIL');
+    $dslink_google_maps = getByTagName($registro->tags,'DSLINK_GOOGLE_MAPS');
 
 	include('form_convenio_cdc.php');
 ?>
-<script >
-	controlaLayout();
+<script>
+    var idmatriz = '<?php echo $idmatriz; ?>';
+    var operacao = '<?php echo $operacao; ?>';
+	controlaLayout(operacao);
 </script>

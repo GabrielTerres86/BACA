@@ -1,4 +1,4 @@
-<?
+<?php
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : Gabriel Capoia (DB1)
@@ -33,9 +33,10 @@
  * 023: [15/10/2015] Alteracao no retorno da execucao do RECALCULAR_EMPRESTIMO. (Jaison/Oscar)
  * 024: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
  * 025: [23/03/2016] PRJ Esteira de Credito. (Daniel/Oscar)
+ * 026: [14/07/2016] Correcao na forma de recuperacao dos dados do array $_POST. SD 479874 (Carlos Rafael Tanholi).
+ * 026: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel)
  */
-?>
-<?
+
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');
@@ -67,7 +68,7 @@
 	$inconfir = $_POST["inconfir"] == '' ? 1 : $_POST["inconfir"];
 
 	$nrctremp = (isset($_POST['nrctremp'])) ? $_POST['nrctremp'] : 0;
-	$tplcremp 		= $_POST['tplcremp'];
+	$tplcremp = ( isset($_POST['tplcremp']) ) ? $_POST['tplcremp'] : '';
 
 	// Verifica se existem informações do formulário da proposta para visualização das parcelas
 	$tpemprst = (isset($_POST['tpemprst'])) ? $_POST['tpemprst'] : 0;
@@ -139,7 +140,7 @@
 			$lscatbem = getByTagName($gerais,'lscatbem');
 			$lscathip = getByTagName($gerais,'lscathip');
 
-			$msgDsdidade = trim($xmlObjeto->roottag->tags[1]->attributes['DSDIDADE']);
+			$msgDsdidade = ( isset($xmlObjeto->roottag->tags[1]->attributes['DSDIDADE']) ) ? trim($xmlObjeto->roottag->tags[1]->attributes['DSDIDADE']) : '';
 
 			?><script type="text/javascript">
 
@@ -148,7 +149,7 @@
 				lscatbem = '<? echo $lscatbem; ?>';
 				lscathip = '<? echo $lscathip; ?>';
 
-			</script><?
+			</script><?php
 
 		}else if (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))){
 
@@ -165,15 +166,15 @@
 			$avalistas	  = $xmlObjeto->roottag->tags[12]->tags;
 			$regBensAval  = $xmlObjeto->roottag->tags[13]->tags;
 			$qtMensagens = count($xmlObjeto->roottag->tags[14]->tags);	
-			$mensagem  	  = $xmlObjeto->roottag->tags[14]->tags[$qtMensagens - 1]->tags[1]->cdata;
-			$inconfir	  = $xmlObjeto->roottag->tags[14]->tags[$qtMensagens - 1]->tags[0]->cdata;
+			$mensagem  	  = ( isset($xmlObjeto->roottag->tags[14]->tags[$qtMensagens - 1]->tags[1]->cdata) ) ? $xmlObjeto->roottag->tags[14]->tags[$qtMensagens - 1]->tags[1]->cdata : '';
+			$inconfir	  = ( isset($xmlObjeto->roottag->tags[14]->tags[$qtMensagens - 1]->tags[0]->cdata) ) ? $xmlObjeto->roottag->tags[14]->tags[$qtMensagens - 1]->tags[0]->cdata : 0;
 			
 			if ($inconfir == 2) { ?>
 				<script type="text/javascript">
 				hideMsgAguardo();
 				showConfirmacao("<? echo $mensagem ?>","Confirma&ccedil;&atilde;o - Ayllos","confirmaInclusaoMenor(<? echo "'".$cddopcao."','".$operacao."',".$inconfir ?>);","controlaOperacao('');metodoBlock();","sim.gif","nao.gif");
 				</script>
-				<? exit();
+				<?php exit();
 			}
 
 			$inpessoa 	  = getByTagName($rendimento,'inpessoa');
@@ -413,6 +414,7 @@
 				arrayAlienacao<? echo $i; ?>['vlmerbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'vlmerbem'); ?>';
 				arrayAlienacao<? echo $i; ?>['idalibem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idalibem'); ?>';
                 arrayAlienacao<? echo $i; ?>['idseqbem'] = '<? echo getByTagName($alienacoes[$i]->tags,'idseqbem'); ?>';
+				arrayAlienacao<? echo $i; ?>['cdcoplib'] = '<? echo getByTagName($alienacoes[$i]->tags,'cdcoplib'); ?>';
 
 				arrayAlienacoes[<? echo $i; ?>] = arrayAlienacao<? echo $i; ?>;
 
@@ -849,7 +851,7 @@
 ?>
 <script type="text/javascript">
 
-	var msgDsdidade = "<? echo $msgDsdidade; ?>";
+	var msgDsdidade = "<?php echo $msgDsdidade; ?>";
 	var flgImp      = "<? echo $flgImp; ?>";
 
 	dtmvtolt = "<? echo $glbvars["dtmvtolt"]; ?>";

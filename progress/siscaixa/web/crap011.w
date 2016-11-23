@@ -2,7 +2,7 @@
 
 Programa: siscaixa/web/crap011.w
 Sistema : CAIXA ON-LINE                                       
-                                             Ultima atualizacao: 12/12/2013
+                                             Ultima atualizacao: 10/10/2016
    
 Dados referentes ao programa:
 
@@ -19,6 +19,8 @@ Alteracoes: 30/04/2009 -  Excluida as variaveis "v_complem4" e "v_complem5"
                          Dataserver Oracle 
                          Inclusao do VALIDATE ( André Euzébio / SUPERO)              
 
+			10/10/2016 - Qdo for historico 707 nao deixar abrir tela de 
+			             autenticacao e emitir mensagem (Tiago/Elton SD498973)
 ..............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -709,6 +711,9 @@ PROCEDURE process-web-request :
                       END.
 
                       IF  l-houve-erro = NO THEN DO:   
+
+   					    IF v_hist <> '707' THEN DO:
+ 
                            IF  v_digita = 0  /* OR 
                                v_hist = '746'  */ THEN DO:
                               
@@ -731,6 +736,36 @@ PROCEDURE process-web-request :
 "yes","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true")
                                    </script>'.
                            END.      
+						 END.
+                         ELSE DO:
+
+
+                          ASSIGN vh_foco = "18".            
+                          ASSIGN v_cod = ""
+                                 v_senha = "".
+
+                          FOR EACH craperr WHERE 
+                              craperr.cdcooper = crapcop.cdcooper  AND
+                              craperr.cdagenci = INTE(v_pac)       AND
+                              craperr.nrdcaixa = INTE(v_caixa)
+                              EXCLUSIVE-LOCK:
+                              DELETE craperr.
+                          END.
+
+                          
+                          CREATE craperr.
+                          ASSIGN craperr.cdcooper   = crapcop.cdcooper
+                                 craperr.cdagenci   = INTE(v_pac)
+                                 craperr.nrdcaixa   = INTE(v_caixa)
+                                 craperr.nrsequen   = 99999
+                                 craperr.cdcritic   = 0
+                                 craperr.dscritic   = 'Operação realizada com sucesso no caixa. Finalizar o pagamento e retirar o comprovante através do Gerenciador Financeiro.'
+                                 craperr.erro       = FALSE.
+                          VALIDATE craperr.
+                          
+                          {include/i-erro.i}
+
+						 END.
                             
                               ASSIGN v_hist = ""  
                                      v_deschist = ""  

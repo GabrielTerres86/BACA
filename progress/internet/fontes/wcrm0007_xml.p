@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Anderson Fossa
-   Data    : 17/03/2016                  Ultima Atualizacao: 24/06/2016
+   Data    : 17/03/2016                  Ultima Atualizacao: 28/10/2016
 
    Dados referentes ao programa:
 
@@ -16,7 +16,17 @@
                             
                23/09/2016 - Ajuste para exibir corretamente o caracter de de marcador
                             SD525341(Odirlei-AMcom)
+														
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)
+														
+               16/11/2016 - Alterado para usar a agenda do ano corrente, e nao a 
+                            a do ano da agenda progrid, pois as agendas sao liberadas
+                            antes do ano acabar, assim nao exibe os eventos ainda
+                            disponiveis. SD558201 (Odirlei-AMcom)
 ..............................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 CREATE WIDGET-POOL.
 
@@ -64,6 +74,7 @@ ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper"))
        par_dtanoage = INT(GET-VALUE("aux_dtanoage"))
        par_nmevento = STRING(GET-VALUE("aux_nmevento")).
 
+RUN insere_log_progrid("WPGD0007_xml.p",STRING(par_cdcooper) + "|" + STRING(par_cdevento) + "|" + STRING(par_idevento) + "|" + STRING(par_dtanoage) + "|" + STRING(par_nmevento)).
 
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
@@ -88,8 +99,6 @@ DEFINE TEMP-TABLE tt-crapedp NO-UNDO
 
 EMPTY TEMP-TABLE tt-crapedp.
 
-ASSIGN aux_dtanoage = par_dtanoage.
-IF aux_dtanoage = 0 THEN
   ASSIGN aux_dtanoage = YEAR(TODAY).
 
 ListaEad:

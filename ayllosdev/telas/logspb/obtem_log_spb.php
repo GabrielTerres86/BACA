@@ -3,7 +3,7 @@
 	//**************************************************************************//
 	//*** Fonte: obtem_log_spb.php                                           ***//
 	//*** Autor: David                                                       ***//
-	//*** Data : Novembro/2009                Última Alteração: 09/11/2015   ***//
+	//*** Data : Novembro/2009                Última Alteração: 07/11/2016   ***//
 	//***                                                                    ***//
 	//*** Objetivo  : Obter log das transações SPB                           ***//
 	//***                                                                    ***//	 
@@ -39,6 +39,14 @@
 	//***																	 ***//
 	//***		      09/11/2015 - Adicionado campo "Crise" inestcri.		 ***//
 	//***						   (Jorge/Andrino)							 ***//
+	//***																	 ***//
+	//***		      07/10/2016 - Efetuado o envio do parametro cdifconv.   ***//
+	//***						   (Adriano)							     ***//
+	//***														             ***//
+	//***             07/11/2016 - Ajustes para corrigir problemas encontrados ***//
+    //***                          durante a homologação da área		     ***//
+	//***                          (Adriano - M211)				             ***//
+	//***														             ***//
 	//**************************************************************************//
 	
 	session_start();
@@ -79,8 +87,9 @@
 	$vlrtotal = 0;
 	
 	// Verifica se flag de identificação do log é válida
-	if ($flgidlog <> "yes" && $flgidlog <> "no") {
+	if ($flgidlog <> "1" && $flgidlog <> "2" && $flgidlog <> "3") {
 		exibeErro("Log inv&aacute;lido.");
+	
 	}
 
 	// Verifica se data do log é válida

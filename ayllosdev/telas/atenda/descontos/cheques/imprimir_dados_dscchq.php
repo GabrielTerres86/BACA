@@ -3,7 +3,7 @@
 	/************************************************************************  
 	  Fonte: imprimir_dados_dscchq.php                                             
 	  Autor: Guilherme                                                         
-	  Data : Março/2009                   Última Alteração: 12/07/2012
+	  Data : Março/2009                   Última Alteração: 12/09/2016
 																			
 	  Objetivo  : Carregar dados para impress&otilde;es de desconto de cheques       
 																				 
@@ -16,6 +16,9 @@
 							   Condicao para Navegador Chrome (Jorge).
 							   
 				  23/07/2014 - Ajustes para imprimir o contrato do cet (Lucas R./Gielow - Projeto Cet)
+
+				  12/09/2016 - Alteracao para chamar a rotina do Oracle na
+							   geracao da impressao. (Jaison/Daniel)
 	************************************************************************/ 
 
 	session_cache_limiter("private");
@@ -91,6 +94,41 @@
 		?><script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
 	}	
+
+    if ($idimpres == 1 || // COMPLETA
+        $idimpres == 2 || // CONTRATO
+        $idimpres == 4 || // NOTA PROMISSORIA
+        $idimpres == 7) { // BORDERO DE CHEQUES
+        $xml  = "<Root>";
+        $xml .= "  <Dados>";
+        $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "    <idseqttl>1</idseqttl>";
+        $xml .= "    <idimpres>".$idimpres."</idimpres>";
+        $xml .= "    <tpctrlim>2</tpctrlim>"; // 2-Cheque
+        $xml .= "    <nrctrlim>".$nrctrlim."</nrctrlim>";
+        $xml .= "    <nrborder>".$nrborder."</nrborder>";
+        $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
+        $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
+        $xml .= "    <flgerlog>0</flgerlog>";
+        $xml .= "  </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "ATENDA", "DESC_IMPRESSAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+			exit();
+		}
+
+        // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+        $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
+
+        // Chama função para mostrar PDF do impresso gerado no browser
+        visualizaPDF($nmarqpdf);
+
+    } else {
 
 	if ($idimpres <= 4 || $idimpres == 9) { 
 	    $nmproced = "gera-impressao-limite"; 
@@ -296,5 +334,5 @@
 		// Gera saída do PDF para o Browser
 		$pdf->Output("impressao_desconto_cheques.pdf",$tipo);	
 	}	
-
+    }
 ?>

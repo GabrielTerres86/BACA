@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 28/09/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 03/11/2016
     
     Dados referentes ao programa:
 
@@ -356,22 +356,22 @@
 
 			   16/05/2016 - Ajuste para retirar comentários e códigos desnecessários.
 					       (Adriano - M117).
+                            
                18/05/2016 - Projeto 117 - Verificacao de assinatura conjunta em 
                             acesso-cadastro-favorecidos (Carlos)
                             
                07/06/2016 - Inclusão de campos de controle de vendas ( Rafael Maciel [RKAM] )
 							
 			   09/06/2016 - Ajuste para corrigir rotinas que estejam ficando inteiramente como
-							um transacao
-							(Adriano).			
+                            um transacao (Adriano).			
 
                17/06/2016 - Inclusão de campos de controle de vendas ( Rafael Maciel [RKAM] )
 
 			   30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 			   25/07/2016 - Ajuste na rotina executa-envio-ted para corrigir nomenclatura 
-			                das tags do xml
-							(Adriano).
+                            das tags do xml(Adriano).
+                            
                30/08/2016 - Inclusao dos campos de último acesso via Mobile na procedure 
                             obtem-dados-titulares - PRJ286.5 - Cecred Mobile (Dionathan)
 
@@ -387,6 +387,8 @@
 			   25/10/2016 - Novo ajuste na validacao do horario de envio da TED, solicitado 
 			                pelo financeiro (Diego).
 
+               03/11/2016 - Correçao de leitura "FIRST crabsnh" da procedure liberar-senha-internet,
+                            Prj. Assinatura Conjunta (Jean Michel).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -689,19 +691,19 @@ PROCEDURE horario_operacao:
 					        aux_hrfimpag = crapcop.fimopstr.
                      
 					 /**
-                     IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
+					 IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
                         ASSIGN aux_flgutstr = TRUE.
 				     **/
 			    ELSE
 				     DO:
-                 /*-- Operando com mensagens PAG --*/
+                         /*-- Operando com mensagens PAG --*/
                          IF   crapcop.flgoppag  THEN 
 						      ASSIGN aux_hrinipag = crapcop.inioppag
 							         aux_hrfimpag = crapcop.fimoppag.
 
 				              /**
-                     IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
-                        ASSIGN aux_flgutpag = TRUE.
+                              IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
+                                 ASSIGN aux_flgutpag = TRUE.
 				              **/
 				     END.
 			  END.
@@ -856,7 +858,6 @@ PROCEDURE horario_operacao:
             ELSE
                 ASSIGN tt-limite.iddiauti = 1.  /* Dia util */
         END.
-
          
     RETURN "OK".
 
@@ -5249,6 +5250,7 @@ PROCEDURE obtem-dados-titulares:
 
     DEF VAR h-b1wgen0058 AS HANDLE NO-UNDO.
 
+	DEF VAR aux_qtminast AS INTEGER NO-UNDO.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter dados dos titulares".
@@ -5358,6 +5360,7 @@ PROCEDURE obtem-dados-titulares:
                                              INPUT ?,
                                             OUTPUT TABLE tt-crapavt,
                                             OUTPUT TABLE tt-bens,
+											OUTPUT aux_qtminast,
                                             OUTPUT TABLE tt-erro) NO-ERROR.
                 
                 /* Representantes Legais */
@@ -6870,11 +6873,15 @@ PROCEDURE liberar-senha-internet:
                                         crappod.flgconju = TRUE         AND
                                         crappod.nrcpfpro <> crapsnh.nrcpfcgc
                                         NO-LOCK,
-                    FIRST crabsnh WHERE crabsnh.cdcooper = par_cdcooper AND
-                                        crabsnh.nrdconta = par_nrdconta AND
-                                        crabsnh.tpdsenha = 1            AND
-                                        crabsnh.nrcpfcgc = crappod.nrcpfpro 
-                                        NO-LOCK:
+                    FIRST crabsnh WHERE crabsnh.cdcooper = par_cdcooper     AND
+                                        crabsnh.nrdconta = par_nrdconta     AND
+                                        crabsnh.tpdsenha = 1                AND
+                                        crabsnh.nrcpfcgc = crappod.nrcpfpro AND
+                                        (crabsnh.vllimweb > 0 OR
+                                         crabsnh.vllimtrf > 0 OR
+                                         crabsnh.vllimpgo > 0 OR
+                                         crabsnh.vllimted > 0 OR
+                                         crabsnh.vllimvrb > 0) NO-LOCK:
                 
                     RUN replica-limite-internet (INPUT par_cdcooper,
                                                  INPUT par_cdoperad,
@@ -10683,6 +10690,8 @@ PROCEDURE gera-termo-responsabilidade:
                                          "DE  SETEMBRO DE","DE  OUTUBRO  DE",
                                          "DE  NOVEMBRO DE","DE  DEZEMBRO DE"]
                                                                      NO-UNDO.
+																	   
+    DEF VAR aux_qtminast AS INTE NO-UNDO.
 
     FORM  
         /* Titulo em negrito inicio */
@@ -11268,6 +11277,7 @@ PROCEDURE gera-termo-responsabilidade:
                                                      INPUT ?,
                                                     OUTPUT TABLE tt-crapavt,
                                                     OUTPUT TABLE tt-bens,
+													OUTPUT aux_qtminast,
                                                     OUTPUT TABLE tt-erro) NO-ERROR.
                 
                     IF  RETURN-VALUE <> "OK"   THEN

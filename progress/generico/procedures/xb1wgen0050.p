@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0050.p
     Autor   : David
-    Data    : Novembro/2009                   Ultima atualizacao: 09/11/2015
+    Data    : Novembro/2009                   Ultima atualizacao: 27/09/2016
 
    Dados referentes ao programa:
 
@@ -19,6 +19,11 @@
                             
                09/11/2015 - Adicionado campo "Crise" inestcri em proc. 
                             obtem-log-spb (Jorge/Andrino)
+                            
+               27/09/2016 - M211 - Adicionado parametros par_cdifconv nas procs 
+                            obtem-log-spb, impressao-log-pdf e impressao-log-csv
+                            (Jonata-RKAM)
+                            
 ..............................................................................*/
 
 
@@ -42,7 +47,7 @@ DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
 
-DEF VAR aux_flgidlog AS LOGI                                           NO-UNDO.
+DEF VAR aux_flgidlog AS INT                                            NO-UNDO.
 
 DEF VAR aux_dtmvtlog AS DATE                                           NO-UNDO.
 
@@ -74,7 +79,7 @@ PROCEDURE valores_entrada:
             WHEN "idseqttl" THEN aux_idseqttl = INTE(tt-param.valorCampo).
             WHEN "numedlog" THEN aux_numedlog = INTE(tt-param.valorCampo).
             WHEN "dtmvtlog" THEN aux_dtmvtlog = DATE(tt-param.valorCampo).
-            WHEN "flgidlog" THEN aux_flgidlog = LOGICAL(tt-param.valorCampo).
+            WHEN "flgidlog" THEN aux_flgidlog = INTE(tt-param.valorCampo).
             WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
             WHEN "cdsitlog" THEN aux_cdsitlog = tt-param.valorCampo.

@@ -70,6 +70,9 @@
 
                 12/04/2016 - Incluir crapdoc.cdoperad na procedure Grava_Dados e
                              Grava_Dados_Ppe (Lucas Ranghetti #410302)
+
+                04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
+                             (Jaison/Anderson)
                              
                 31/08/2016 - Ajustar gravacao na crapdoc do documento 37 para 
                              gerar pendencia apenas para o primeiro titular
@@ -2176,7 +2179,7 @@ PROCEDURE Busca_Dados_PPE:
                 END.
 
                 /* Busca dados da agencia */
-                FOR FIRST crapage FIELDS(cdcidade)
+                FOR FIRST crapage FIELDS(idcidade)
                                   WHERE crapage.cdcooper = par_cdcooper     AND
                                         crapage.cdagenci = crapass.cdagenci 
                                         NO-LOCK:
@@ -2184,7 +2187,7 @@ PROCEDURE Busca_Dados_PPE:
         
                 IF AVAIL crapage THEN
                 DO:
-                    FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                    FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                         NO-LOCK NO-ERROR.
                 
                     ASSIGN tt-ppe.cidade = IF AVAIL crapmun 
@@ -2241,7 +2244,7 @@ PROCEDURE Busca_Dados_PPE:
                 END.
 
                 /* Busca dados da agencia */
-                FOR FIRST crapage FIELDS(cdcidade)
+                FOR FIRST crapage FIELDS(idcidade)
                                   WHERE crapage.cdcooper = par_cdcooper     AND
                                         crapage.cdagenci = crapass.cdagenci 
                                         NO-LOCK:
@@ -2249,7 +2252,7 @@ PROCEDURE Busca_Dados_PPE:
         
                 IF AVAIL crapage THEN
                 DO:
-                    FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                    FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                         NO-LOCK NO-ERROR.
                 
                     ASSIGN tt-ppe.cidade = IF AVAIL crapmun 
@@ -2287,7 +2290,7 @@ PROCEDURE Busca_Dados_PPE:
             END.
 
             /* Busca dados da agencia */
-            FOR FIRST crapage FIELDS(cdcidade)
+            FOR FIRST crapage FIELDS(idcidade)
                               WHERE crapage.cdcooper = par_cdcooper     AND
                                     crapage.cdagenci = crapass.cdagenci 
                                     NO-LOCK:
@@ -2295,7 +2298,7 @@ PROCEDURE Busca_Dados_PPE:
     
             IF AVAIL crapage THEN
             DO:
-                FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                     NO-LOCK NO-ERROR.
             
                 ASSIGN tt-ppe.cidade = IF AVAIL crapmun 

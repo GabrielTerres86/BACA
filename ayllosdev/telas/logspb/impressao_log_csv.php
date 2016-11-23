@@ -3,23 +3,31 @@
 	//************************************************************************//
 	//*** Fonte: impressao_log_csv.php                                     ***//
 	//*** Autor: Lucas Ranghetti                                           ***//
-	//*** Data : Agosto/2015                  Última Alteração: 11/11/2015 ***//
+	//*** Data : Agosto/2015                  Ãšltima AlteraÃ§Ã£o: 07/11/2016 ***//
 	//***                                                                  ***//
-	//*** Objetivo  : Gerar impressão do log em formato csv                ***//
+	//*** Objetivo  : Gerar impressÃ£o do log em formato csv                ***//
 	//***                                                                  ***//	 
-	//*** Alterações: 09/11/2015 - Adicionado campo "Crise" inestcri.	   ***//
+	//*** AlteraÃ§Ãµes: 09/11/2015 - Adicionado campo "Crise" inestcri.	   ***//
 	//***						   (Jorge/Andrino)						   ***//
+  //***                                                                  ***//
+  //***             14/09/2016 -  Adicionado novo paramentro "$cdifconv".***//
+    //***                          (Evandro - RKAM)                        ***//
+	//***														           ***//
+	//***             07/11/2016 - Ajustes para corrigir problemas encontrados ***//
+    //***                          durante a homologaÃ§Ã£o da Ã¡rea		   ***//
+	//***                          (Adriano - M211)				           ***//
+	//***														           ***//
 	//************************************************************************//
 	
 	session_cache_limiter("private");
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");		
 	require_once("../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -37,7 +45,7 @@
 
 	$dsiduser = session_id();	
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlGetLog  = "";
 	$xmlGetLog .= "<Root>";
 	$xmlGetLog .= "  <Cabecalho>";
@@ -67,20 +75,20 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjLog = getObjectXML($xmlResult);
 
-	// Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+	// ObtÃ©m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 	$nmarqcsv = $xmlObjLog->roottag->tags[0]->attributes["NMARQCSV"];
 	
 	//echo strtoupper($xmlObjLog->roottag->tags[0]->name);
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjLog->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjLog->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		exibeErro($msg);
 	}
 
-	// Chama função para fazer download do arquivo
+	// Chama funÃ§Ã£o para fazer download do arquivo
 	visualizaArquivo($nmarqcsv,'csv');
 		
-	// Função para exibir erros na tela através de javascript
+	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
 	function exibeErro($msgErro) {
 		echo '<script>alert("'.$msgErro.'");</script>';
 		exit();

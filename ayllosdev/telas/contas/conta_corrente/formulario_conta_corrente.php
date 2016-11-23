@@ -30,9 +30,17 @@
 *				 02/11/2015 - Melhoria 126 - Encarteiramento de cooperados (Heitor - RKAM)
 *
 *                07/01/2016 - Remover campo de Libera Credito Pre Aprovado (Anderson).
+*
+*                19/07/2016 - Correcao do erro no campo conta consorcio. SD 479874. (Carlos R.)
+*
+*
+*			     15/07/2016 - Incluir flg de devolução automatica - Melhoria 69(Lucas Ranghetti #484923)
 */	
-?>
 
+//recupera tag com a conta consorcio
+$vr_nrctacns = getByTagName($registro,'nrctacns');
+
+?>
 <form name="frmContaCorrente" id="frmContaCorrente" class="formulario">
 	<fieldset>
 		<legend>Principal</legend>
@@ -42,7 +50,7 @@
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="dsagepac" id="dsagepac" type="text" value="<? echo getByTagName($registro,'dsagepac') ?>" />
 		
-		<label for="cdsitdct"><? echo utf8ToHtml('Situação:') ?></label>
+		<label for="cdsitdct">Situa&ccedil;&atilde;o</label>
 		<select id="cdsitdct" name="cdsitdct">
 			<option value=""> - </option>
 			<option value="1" <? if (getByTagName($registro,'cdsitdct') == '1' ){ echo ' selected'; } ?>><? echo utf8ToHtml('1 - Normal')               ?></option>
@@ -60,7 +68,7 @@
 			<option value="" selected> - </option>
 		</select>
 		
-		<label for="cdbcochq"><? echo utf8ToHtml('Banco Emissão do Cheque:') ?></label>
+		<label for="cdbcochq">Banco Emiss&atilde;o do Cheque</label>
 		<input name="cdbcochq" id="cdbcochq" type="text" value="<? echo getByTagName($registro,'cdbcochq') ?>" />
 		<br />
 		
@@ -77,7 +85,7 @@
 		<br />
 		
 		<label for="nrctacns"> Conta Consorcio: </label>
-		<input name="nrctacns" id="nrctacns" type="text" value="<? echo formataContaDVsimples(getByTagName($registro,'nrctacns')) ?>" />		
+		<input name="nrctacns" id="nrctacns" type="text" value="<?php echo ( $vr_nrctacns > 0 ) ? formataContaDVsimples($vr_nrctacns) : ''; ?>" />		
 		<label for="dscadpos"> Cadastro Positvo: </label>
 		<input name="dscadpos" id="dscadpos" type="text" value="<? echo getByTagName($registro,'dscadpos') ?>" />
 		
@@ -133,6 +141,13 @@
             <label for="indsermaOp1" class="radio">Sim</label>		
 		<input name="indserma" id="indsermaOp2" type="radio" class="radio" value="no" <?php if (getByTagName($registro,'indserma') == 'no') { echo ' checked'; } ?> />
 		<label for="indsermaOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>
+		
+		<label for="flgdevolu_autom"><? echo utf8ToHtml('Dev. Aut. Cheques:') ?></label>
+            <input name="flgdevolu_autom" id="flgdevolu_automOp1" type="radio" class="radio" value="1" <? if ($flgdevolu_autom == 1) { echo ' checked'; } ?> />
+            <label for="flgdevolu_automOp1" class="radio">Sim</label>		
+		<input name="flgdevolu_autom" id="flgdevolu_automOp2" type="radio" class="radio" value="0" <?php if ($flgdevolu_autom == 0) { echo ' checked'; } ?> />
+		<label for="flgdevolu_automOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>
+		
 		<br />
 		<?php if(getByTagName($registro,'inpessoa') > 1){ ?>
 			<label class="rotulo" for="idastcjt"><?php echo utf8ToHtml('Exige Assinatura Conjunta em Autoatendimento:') ?></label>

@@ -598,9 +598,16 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                              ,pr_inpessoa IN crapcti.inpessoa%TYPE   --> Tipo de pessoa da conta
                              ,pr_intipcta IN crapcti.intipcta%TYPE   --> Tipo da conta
                              ,pr_idagenda IN INTEGER);               --> Tipo de agendamento
-
+                             
   /* Auditoria das informações de Auto Atendimento para retorno de sobras posterior */	
-  PROCEDURE pc_auditoria_auto_atend(pr_dtmvtoan IN crapdat.dtmvtoan%TYPE DEFAULT NULL) ;
+  PROCEDURE pc_auditoria_auto_atend(pr_dtmvtoan IN crapdat.dtmvtoan%TYPE DEFAULT NULL);
+  
+  /* Procedimento para sumarizar os agendamentos da debnet */
+  PROCEDURE pc_sumario_debnet(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa inicial
+                             ,pr_cdcopfin IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa final
+                             ,pr_clobxmlc OUT CLOB                  --> XML com informações dos agendamentos
+                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Codigo da critica
+                             ,pr_dscritic OUT crapcri.dscritic%TYPE);    --> Descricao critica                                      
                              
 end PAGA0002;
 /
@@ -1524,6 +1531,38 @@ create or replace package body cecred.PAGA0002 is
                                                          '<vltarifa>'|| to_char(vr_vltarifa,'fm999G999G990D00') ||'</vltarifa>'||
                                                        '</DADOS_TRANSF>'|| vr_dslinxml);                                                       
       END IF;
+    
+      -- Se for Validação de TED/Transferência, cria um registro na CRAPMVI com os valores zerados
+      -- Isto foi implementado pois o Cecred Mobile executa as transferências em lote em threads assíncronas
+      -- e, as  vezes, duas threads tentavam criar o registro ao mesmo tempo em conflito, ocorrendo erro de UK
+      BEGIN
+        INSERT INTO crapmvi
+            (cdcooper
+            ,nrdconta
+            ,dtmvtolt
+            ,cdoperad
+            ,dttransa
+            ,hrtransa
+            ,vlmovweb
+            ,idseqttl
+            ,vlmovtrf
+            ,vlmovpgo
+            ,vlmovted)
+          VALUES
+            (pr_cdcooper
+            ,pr_nrdconta
+            ,pr_dtmvtolt
+            ,'996'
+            ,TRUNC(SYSDATE)
+            ,gene0002.fn_busca_time
+            ,0
+            ,pr_idseqttl
+            ,0
+            ,0
+            ,0);
+      EXCEPTION
+        WHEN OTHERS THEN NULL;
+      END;
       
       -- sair do programa com OK
       pr_dsretorn := 'OK';
@@ -2097,7 +2136,7 @@ create or replace package body cecred.PAGA0002 is
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       pr_xml_dsmsgerr := '<dsmsgsuc>'|| vr_dscritic ||'</dsmsgsuc>'||
                          '<idastcjt>'|| vr_idastcjt ||'</idastcjt>';
-    END IF;  
+    END IF;
     
     pc_proc_geracao_log(pr_flgtrans => 1 /*TRUE*/);
     pr_dsretorn := 'OK';
@@ -2506,7 +2545,39 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_texto_completo => vr_xml_temp 
                            ,pr_texto_novo     => '</raiz>' 
                            ,pr_fecha_xml      => TRUE);      
-                           
+    
+    -- Cria um registro na CRAPMVI com os valores zerados
+    -- Isto foi implementado pois o Cecred Mobile executa os pagamentos em lote em threads assíncronas
+    -- e, as  vezes, duas threads tentavam criar o registro ao mesmo tempo em conflito, ocorrendo erro de UK
+    BEGIN
+      INSERT INTO crapmvi
+          (cdcooper
+          ,nrdconta
+          ,dtmvtolt
+          ,cdoperad
+          ,dttransa
+          ,hrtransa
+          ,vlmovweb
+          ,idseqttl
+          ,vlmovtrf
+          ,vlmovpgo
+          ,vlmovted)
+        VALUES
+          (pr_cdcooper
+          ,pr_nrdconta
+          ,pr_dtmvtolt
+          ,'996'
+          ,TRUNC(SYSDATE)
+          ,gene0002.fn_busca_time
+          ,0
+          ,pr_idseqttl
+          ,0
+          ,0
+          ,0);
+    EXCEPTION
+      WHEN OTHERS THEN NULL;
+    END;
+    
     pr_dsretorn := 'OK';
     
   EXCEPTION
@@ -6277,6 +6348,88 @@ create or replace package body cecred.PAGA0002 is
       
             END IF;
           END IF;	
+        
+        --Fechar Cursor
+        CLOSE cr_craplau_inter;
+
+      ELSIF pr_cdtiptra IN (4) THEN -- Transferencia TED
+
+        /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
+        OPEN cr_craplau_ted(pr_cdcooper => pr_cdcooper
+                           ,pr_dtmvtolt => pr_dtmvtolt
+                           ,pr_cdageope => pr_cdagenci
+                           ,pr_nrdolote => rw_craplot.nrdolote
+                           ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_cdbanfav => pr_cddbanco
+                           ,pr_cdagefav => pr_cdageban
+                           ,pr_nrctafav => pr_nrctadst
+                           ,pr_vldocmto => pr_vllanaut
+                           ,pr_dtmvtopg => vr_dtmvtopg);
+
+        --Posicionar no proximo registro
+        FETCH cr_craplau_ted INTO vr_hrtransa_ted;
+        
+        -- se ja existe um lançamento com os mesmos dados em menos de 10 minutos (600 seg) apresentar alerta
+        IF cr_craplau_ted%FOUND AND 
+          (to_char(SYSDATE,'SSSSS') - NVL(vr_hrtransa_ted,0)) <= 600 THEN
+          vr_dscritic := NULL;
+		      vr_dscritic_aux := NULL;
+          vr_dscritic := 'Ja existe TED de mesmo valor e favorecido. Consulte seus agendamentos ou tente novamente em 10 min.';
+          RAISE vr_exc_erro;
+      END IF;
+        CLOSE cr_craplau_ted;
+      END IF;
+      
+      IF pr_cdtiptra IN (1,3) THEN -- Transferencia Intracooperativa / Salario
+        OPEN cr_craplau_intra(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dtmvtolt => pr_dtmvtolt
+                             ,pr_cdhisdeb => pr_cdhistor
+                             ,pr_vllanmto => pr_vllanaut
+                             ,pr_nrctatrf => pr_nrctadst
+                             ,pr_dtmvtopg => vr_dtmvtopg);
+
+        --Posicionar no proximo registro
+        FETCH cr_craplau_intra INTO vr_hrtransa_intra;
+          --Se encontrar
+          IF cr_craplau_intra%FOUND THEN
+            --Compara os segundos do último lançamento para não haver duplicidade
+            IF (((SYSDATE-TRUNC(SYSDATE))*(24*60*60)) - vr_hrtransa_intra) <= 600 THEN
+              vr_dscritic := NULL;
+			        vr_dscritic_aux := NULL;
+              vr_dscritic := 'Ja existe transferencia de mesmo valor e favorecido. Consulte seus agendamentos ou tente novamente em 10 min.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+      END IF;
+          END IF;
+        --Fechar Cursor
+        CLOSE cr_craplau_intra;
+
+      ELSIF pr_cdtiptra IN (5) THEN -- Transferencia Intercooperativa     
+
+        OPEN cr_craplau_inter(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_dtmvtolt => pr_dtmvtolt
+                             ,pr_vllanmto => pr_vllanaut
+                             ,pr_cdagectl => pr_cdageban
+                             ,pr_nrctadst => pr_nrctadst
+                             ,pr_dtmvtopg => vr_dtmvtopg);
+
+        --Posicionar no proximo registro
+        FETCH cr_craplau_inter INTO vr_hrtransa_inter;
+          --Se encontrar
+          IF cr_craplau_inter%FOUND THEN
+            --Compara os segundos do último lançamento para não haver duplicidade
+            IF (((SYSDATE-TRUNC(SYSDATE))*(24*60*60)) - vr_hrtransa_inter) <= 600 THEN
+              vr_dscritic := NULL; 
+			        vr_dscritic_aux := NULL;   
+              vr_dscritic := 'Ja existe transferencia de mesmo valor e favorecido. Consulte seus agendamentos ou tente novamente em 10 min.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+      
+            END IF;
+          END IF;	
 
         --Fechar Cursor
         CLOSE cr_craplau_inter;
@@ -6957,7 +7110,7 @@ create or replace package body cecred.PAGA0002 is
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
     
-    vr_dtmvtopg DATE;
+    vr_dtmvtopg  DATE;   
 	  vr_msgofatr  VARCHAR2(500);
 	  vr_cdempcon  NUMBER;
 	  vr_cdsegmto  VARCHAR2(500);
@@ -8361,6 +8514,181 @@ create or replace package body cecred.PAGA0002 is
     
     
   END pc_auditoria_auto_atend;    
+  
+ /* Procedimento para sumarizar os agendamentos da debnet */
+  PROCEDURE pc_sumario_debnet(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa inicial
+                             ,pr_cdcopfin IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa final
+                             ,pr_clobxmlc OUT CLOB                  --> XML com informações dos agendamentos
+                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Codigo da critica
+                             ,pr_dscritic OUT crapcri.dscritic%TYPE) IS  --> Descricao critica                                      
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_sumario_debnet    
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Tiago Machado Flor
+    --  Data     : Outubro/2016.                   Ultima atualizacao: 00/00/0000
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure utilizada sumarizar os agendamentos DEBNET
+    --
+    --  Alteração : 
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <----------------- 
+    
+    /* Verifica o Lancamento de credito salario */    
+    CURSOR cr_craplau(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_insitlau craplau.insitlau%TYPE
+                     ,pr_dtmvtopg crapdat.dtmvtolt%TYPE) IS
+      SELECT * 
+        FROM craplau lau
+       WHERE lau.cdcooper = pr_cdcooper
+         AND lau.dtmvtopg = pr_dtmvtopg                
+         AND lau.insitlau = pr_insitlau
+         AND UPPER(lau.dsorigem) IN (UPPER('INTERNET'),UPPER('TAA'),UPPER('DEBAUT'))
+         AND lau.tpdvalor = DECODE(lau.dsorigem, 'DEBAUT', 0, lau.tpdvalor)
+         AND lau.cdtiptra <> 4;                      
+             
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
+
+    CURSOR cr_crapcop1(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.cdcooper
+        FROM crapcop cop
+       WHERE cop.cdcooper = DECODE(pr_cdcooper, 3, cop.cdcooper, pr_cdcooper)
+         AND cop.cdcooper <> 3;
+    rw_crapcop1 cr_crapcop1%ROWTYPE;    
+    
+    
+    --Tipo de Dados para cursor data
+    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+    
+    ---------------> VARIAVEIS <-----------------
+    vr_qtefetivados DECIMAL(6);
+    vr_qtnaoefetiva DECIMAL(6);
+    vr_qtdpendentes DECIMAL(6);
+    vr_qtdtotallanc DECIMAL(11);
+  	vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_insitlau craplau.insitlau%TYPE;
+    
+    --Variaveis de erro    
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);    
+    --Variaveis de Excecao
+    vr_exc_erro EXCEPTION;
+    vr_tab_erro gene0001.typ_tab_erro;
+
+    vr_index    VARCHAR2(300);
+
+    -- Variaveis de XML
+    vr_xml_temp VARCHAR2(32767);
+    
+  BEGIN
+
+      --Inicializar variaveis
+      vr_qtefetivados := 0;
+      vr_qtnaoefetiva := 0; 
+      vr_qtdpendentes := 0; 
+      vr_qtdtotallanc := 0;
+
+      IF pr_cdcooper = 0 THEN
+         vr_cdcooper := 3;
+      ELSE
+         vr_cdcooper := pr_cdcooper;   
+      END IF;      
+
+      OPEN cr_crapcop(pr_cdcooper => vr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      
+      IF cr_crapcop%NOTFOUND THEN
+         CLOSE cr_crapcop;         
+         RAISE vr_exc_erro;
+      END IF;
+      
+      CLOSE cr_crapcop;
+      
+       -- Verifica se a data esta cadastrada
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE BTCH0001.cr_crapdat;
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Apenas fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+
+
+      FOR rw_crapcop1 IN cr_crapcop1(pr_cdcooper => vr_cdcooper)  LOOP
+
+          FOR vr_insitlau IN 1..4 LOOP
+            
+              --SOMAR OS LANCAMENTOS PARA ESCREVER DEPOIS NO XML
+              FOR rw_craplau IN cr_craplau(pr_cdcooper => rw_crapcop1.cdcooper
+                                          ,pr_insitlau => vr_insitlau
+                                          ,pr_dtmvtopg => rw_crapdat.dtmvtolt) LOOP
+
+                CASE rw_craplau.insitlau
+
+                   WHEN 1 THEN vr_qtdpendentes := vr_qtdpendentes + 1; 
+                   WHEN 2 THEN vr_qtefetivados := vr_qtefetivados + 1;
+                   ELSE vr_qtnaoefetiva := vr_qtnaoefetiva + 1; 
+
+                END CASE;
+                                          
+              END LOOP;
+
+          END LOOP;
+          
+      END LOOP;
+
+      vr_qtdtotallanc := vr_qtefetivados + vr_qtnaoefetiva + vr_qtdpendentes;
+      
+      --FIM SOMAR OS LANCAMENTOS PARA ESCREVER DEPOIS NO XML                         
+      
+      -- Criar documento XML
+      dbms_lob.createtemporary(pr_clobxmlc, TRUE);
+      dbms_lob.open(pr_clobxmlc, dbms_lob.lob_readwrite);
+
+      -- Insere o cabeçalho do XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc,
+                              pr_texto_completo => vr_xml_temp,
+                              pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>');
+  
+      
+      --DEPOIS DE SOMAR OS AGENDAMENTOS NO CURSOR
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc,
+                              pr_texto_completo => vr_xml_temp,
+                              pr_texto_novo     => '<qtefetivados>' || NVL(vr_qtefetivados,0) || '</qtefetivados>'||
+                                                   '<qtnaoefetiva>' || NVL(vr_qtnaoefetiva,0) || '</qtnaoefetiva>'||
+                                                   '<qtdpendentes>' || NVL(vr_qtdpendentes,0) || '</qtdpendentes>'||
+                                                   '<qtdtotallanc>' || NVL(vr_qtdtotallanc,0) || '</qtdtotallanc>');
+
+      -- Encerrar a tag raiz
+      gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc,
+                              pr_texto_completo => vr_xml_temp,
+                              pr_texto_novo     => '</raiz>',
+                              pr_fecha_xml      => TRUE);
+                                                     
+  EXCEPTION
+     WHEN vr_exc_erro THEN      
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+     WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          pr_dscritic := 'Erro ao buscar convenios aceitos: '||SQLERRM;  
+  END pc_sumario_debnet;
+  
   
 END PAGA0002;
 /

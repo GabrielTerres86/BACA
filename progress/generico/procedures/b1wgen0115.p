@@ -1,8 +1,32 @@
+/******************************************************************************
+             ATENCAO!    CONVERSAO PROGRESS - ORACLE
+            ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
+            
+  +-------------------------------------+--------------------------------------+
+  | Rotina Progress                     | Rotina Oracle PLSQL                  |
+  +-------------------------------------+--------------------------------------+
+  | b1wgen0115.p                        | TELA_ADITIV                          |
+  | Gera_Impressao_nova                 | TELA_ADITIV.pc_gera_impressao_aditiv |--> Liberacao prevista para 11/2016
+  | Trata_Assinatura                    | TELA_ADITIV.pc_Trata_Assinatura      |
+  | Trata_Dados_Assinatura              | TELA_ADITIV.pc_Trata_Dados_Assinatura|
+  | Busca_Dados                         | TELA_ADITIV.pc_busca_dados_aditiv    |  
+  +-------------------------------------+--------------------------------------+
+
+  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
+  SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
+
+  PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
+  PESSOAS:
+   - GUILHERME STRUBE    (CECRED)
+   - MARCOS MARTINI      (SUPERO)
+
+*******************************************************************************/
+
 /*.............................................................................
 
     Programa: sistema/generico/procedures/b1wgen0115.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Setembro/2011                     Ultima atualizacao: 01/12/2015
+    Data    : Setembro/2011                     Ultima atualizacao: 03/08/2016
 
     Objetivo  : Tranformacao BO tela ADITIV
 
@@ -121,6 +145,9 @@
                01/12/2015 - Incluir busca do pa de trabalho na procedure 
                             Grava_dados na gravacao dos aditivos 
                             (Lucas Ranghetti #366888 )
+                            
+               03/08/2016 - Alterar rotina Gera_Impressao para chamar versao convertida 
+                            oracle. PRJ314 - Indexacao centralizada (Odirlei-AMcom)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -4319,7 +4346,6 @@ PROCEDURE Gera_Impressao:
         EMPTY TEMP-TABLE tt-erro.
 
         FOR FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK:
-
         END.
 
         IF  NOT AVAILABLE crapcop   THEN
@@ -4328,6 +4354,58 @@ PROCEDURE Gera_Impressao:
                        aux_dscritic = "".
                 LEAVE Imprime.
             END.
+            
+        /* Proposta de emprestimo */
+        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                           crawepr.nrdconta = par_nrdconta   AND
+                           crawepr.nrctremp = par_nrctremp
+                           NO-LOCK NO-ERROR.
+                           
+        IF  crawepr.dtmvtolt >= 10/22/2014    THEN
+          DO:
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_gera_impressao_aditiv 
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper  /* pr_cdcooper --> Codigo da cooperativa */           
+                                 ,INPUT par_cdagenci  /* pr_cdagenci --> Codigo da agencia */
+                                 ,INPUT par_nrdcaixa  /* pr_nrdcaixa --> Numero do caixa  */
+                                 ,INPUT par_idorigem  /* pr_idorigem --> Origem  */
+                                 ,INPUT par_nmdatela  /* pr_nmdatela --> Nome da tela */
+                                 ,INPUT par_nmdatela  /* pr_cdprogra --> Codigo do programa */
+                                 ,INPUT par_cdoperad  /* pr_cdoperad --> Codigo do operador */
+                                 ,INPUT par_dsiduser  /* pr_dsiduser --> id do usuario */
+                                 ,INPUT par_cdaditiv  /* pr_cdaditiv --> Codigo do aditivo */
+                                 ,INPUT par_nraditiv  /* pr_nraditiv --> Numero do aditivo */
+                                 ,INPUT par_nrctremp  /* pr_nrctremp --> Numero do contrato */
+                                 ,INPUT par_nrdconta  /* pr_nrdconta --> Numero da conta */
+                                 ,INPUT par_dtmvtolt  /* pr_dtmvtolt --> Data de movimento */
+                                 ,INPUT par_dtmvtopr  /* pr_dtmvtopr --> Data do prox. movimento */
+                                 ,INPUT par_inproces  /* pr_inproces --> Indicador de processo */
+                                 
+                                 ,OUTPUT  "" /* pr_nmarqpdf --> Retornar quantidad de registros */
+                                 ,OUTPUT  0  /* pr_cdcritic --> Código da crítica */
+                                 ,OUTPUT  "" /*  pr_dscritic --> Descriçao da crítica */
+                                 ).
+
+            CLOSE STORED-PROC pc_gera_impressao_aditiv 
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_nmarqpdf = ""
+                   aux_nmarqpdf = pc_gera_impressao_aditiv.pr_nmarqpdf 
+                                  WHEN pc_gera_impressao_aditiv.pr_nmarqpdf <> ?
+                   aux_cdcritic = pc_gera_impressao_aditiv.pr_cdcritic 
+                                  WHEN pc_gera_impressao_aditiv.pr_cdcritic <> ?
+                   aux_dscritic = pc_gera_impressao_aditiv.pr_dscritic 
+                                  WHEN pc_gera_impressao_aditiv.pr_dscritic <> ?.                    
+          END.
+        
+        ELSE 
+        DO: 
 
         ASSIGN aux_nmendter = "/usr/coop/" + crapcop.dsdircop + "/rl/" +
                               par_dsiduser.
@@ -4369,11 +4447,7 @@ PROCEDURE Gera_Impressao:
         IF  RETURN-VALUE <> "OK" THEN
             LEAVE Imprime.
 
-        /* Proposta de emprestimo */
-        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
-                           crawepr.nrdconta = par_nrdconta   AND
-                           crawepr.nrctremp = par_nrctremp
-                           NO-LOCK NO-ERROR.
+          
 
         IF   crawepr.dtmvtolt >= 10/22/2014    THEN
              RUN gera_impressao_nova (INPUT par_cdcooper,
@@ -4428,6 +4502,7 @@ PROCEDURE Gera_Impressao:
                 IF  RETURN-VALUE <> "OK" THEN
                     RETURN "NOK".
             END.
+        END. /* Fim IF crawepr THEN*/      
     END.
 
     IF  VALID-HANDLE(h-b1wgen9999)  THEN

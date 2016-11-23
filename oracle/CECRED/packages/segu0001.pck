@@ -55,6 +55,9 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
                 20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em procedures
                              desta package.(Carlos Rafael Tanholi).
 
+                03/08/2016 - Retirados os campos 'flgcrdpa'	e cdoplcpa da tabela
+                             temporaria de associados. Projeto 299/3 - Pre Aprovado (Lombardi).
+
                 26/10/2016 - PRJ 187.2 - Ajuste nas datas na importação (Guilherme/SUPERO)
 ..............................................................................*/
 
@@ -265,8 +268,6 @@ CREATE OR REPLACE PACKAGE CECRED.SEGU0001 AS
     ,progress_recid  crapass.progress_recid%type
     ,nrempcrd  crapass.nrempcrd%type
     ,inserasa  crapass.inserasa%type
-    ,flgcrdpa  crapass.flgcrdpa%type
-    ,cdoplcpa  crapass.cdoplcpa%type
     ,incadpos  crapass.incadpos%type
     ,flgrenli  crapass.flgrenli%type
     ,nrfonres VARCHAR2(100));
@@ -1436,8 +1437,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
         pr_tab_associado(vr_index).progress_recid:= rw_crapass.progress_recid;
         pr_tab_associado(vr_index).nrempcrd:= rw_crapass.nrempcrd;
         pr_tab_associado(vr_index).inserasa:= rw_crapass.inserasa;
-        pr_tab_associado(vr_index).flgcrdpa:= rw_crapass.flgcrdpa;
-        pr_tab_associado(vr_index).cdoplcpa:= rw_crapass.cdoplcpa;
         pr_tab_associado(vr_index).incadpos:= rw_crapass.incadpos;
         pr_tab_associado(vr_index).flgrenli:= rw_crapass.flgrenli;
         --pr_tab_associado(vr_index).cdempres:= rw_crapass.cdempres;
@@ -6484,6 +6483,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+	
+	-- Gerar hora Fim no log
+    gera_log(pr_cdcooper => 3 --pr_cdcooper
+            ,pr_cdprogra => vr_cdprogra
+            ,pr_indierro => 1
+            ,pr_cdcritic => 0
+            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
+                                    ' - TERMINO DO PROCESSAMENTO.');
 
     -- se for a ultima execução do dia,
     -- move arquivo de log de execução pra pasta /micros/cecred/segauto
@@ -6511,15 +6518,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                               pr_dscritic => vr_dscritic);
       END IF;
     END IF;
-
-
-    -- Gerar hora Fim no log
-    gera_log(pr_cdcooper => 3 --pr_cdcooper
-            ,pr_cdprogra => vr_cdprogra
-            ,pr_indierro => 1
-            ,pr_cdcritic => 0
-            ,pr_dscritic => to_char(SYSDATE,'DD/MM/YYYY HH24:MI:SS') ||
-                                    ' - TERMINO DO PROCESSAMENTO.');
 
     --> Log de final de execução
     pc_controla_log_batch(pr_dstiplog => 'F');

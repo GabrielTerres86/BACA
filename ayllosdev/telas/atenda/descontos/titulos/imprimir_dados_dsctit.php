@@ -3,7 +3,7 @@
 	/************************************************************************  
 	  Fonte: imprimir_dados_dsctit.php                                             
 	  Autor: Guilherme                                                         
-	  Data : Março/2009                      Última Alteração: 20/08/2012          
+	  Data : Março/2009                      Última Alteração: 12/09/2016
 	                                                                           
 	  Objetivo  : Carregar dados para impressões de desconto de titulos       
 	
@@ -18,6 +18,9 @@
 				  20/08/2012 - Unificação de impressões na BO30i, chamada da
 							   procedure 'carrega-impressao-dsctit' (Lucas).
 							   
+				  12/09/2016 - Alteracao para chamar a rotina do Oracle na
+							   geracao da impressao. (Jaison/Daniel)
+
 	************************************************************************/ 
 
 	session_cache_limiter("private");
@@ -94,6 +97,41 @@
 		exit();
 	}	
 	
+    if ($idimpres == 1 || // COMPLETA
+        $idimpres == 2 || // CONTRATO
+        $idimpres == 4 || // NOTA PROMISSORIA
+        $idimpres == 7) { // BORDERO DE CHEQUES
+        $xml  = "<Root>";
+        $xml .= "  <Dados>";
+        $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "    <idseqttl>1</idseqttl>";
+        $xml .= "    <idimpres>".$idimpres."</idimpres>";
+        $xml .= "    <tpctrlim>3</tpctrlim>"; // 3-Titulo
+        $xml .= "    <nrctrlim>".$nrctrlim."</nrctrlim>";
+        $xml .= "    <nrborder>".$nrborder."</nrborder>";
+        $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
+        $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
+        $xml .= "    <flgerlog>0</flgerlog>";
+        $xml .= "  </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "ATENDA", "DESC_IMPRESSAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+			exit();
+		}
+
+        // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+        $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
+
+        // Chama função para mostrar PDF do impresso gerado no browser
+        visualizaPDF($nmarqpdf);
+
+    } else {
+	
 	$nmproced = "carrega-impressao-dsctit";	
 	$dsiduser = session_id();	
 	
@@ -143,5 +181,5 @@
 		
 	// Chama função para mostrar PDF do impresso gerado no browser
 	visualizaPDF($nmarqpdf);
-	
+    }
 ?>

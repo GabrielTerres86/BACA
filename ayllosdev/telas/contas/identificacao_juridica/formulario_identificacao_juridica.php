@@ -15,6 +15,7 @@
  * 006: [09/08/2013] Jean Michel		  : Inclusão de botão Dossiê
  * 007: [23/10/2013] Jean Michek          : Alteração do link do botão Dossiê
  * 008: [23/07/2015] Gabriel        (RKAM): Reformulacao Cadastral 
+ * 009: [25/10/2016] Tiago                : Inclusao da data de validade da licensa (M310).
  */
 ?>
 
@@ -85,6 +86,9 @@
 
 	<label for="nrlicamb" class="rotulo rotulo-90">Nr da Licença:</label>
 	<input name="nrlicamb" id="nrlicamb" type="text" class="pesquisa" maxlength="15" value="<? echo getByTagName($identificacao,'nrlicamb') ?>" />
+	<label for="dtvallic" style="width:155px;">Data de validade da Licença:</label>
+	<input name="dtvallic" id="dtvallic" type="text" class="data" maxlength="10" value="<? echo getByTagName($identificacao,'dtvallic') ?>" />
+
 	<br />
 
 	<label for="nmtalttl" class="rotulo rotulo-90">Nome Tal&atilde;o:</label>

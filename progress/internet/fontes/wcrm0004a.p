@@ -1,9 +1,12 @@
 /*
  * Programa wpgd004a.p - Exibe certificado do evento do Progrid no Internet Bank, Prj. 229 (Jean Michel)
  * 
- * Alterações:  
+ * Alterações:  28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							 para gravar log de acesso. (Jean Michel)
 */
 
+	{ sistema/generico/includes/var_log_progrid.i }
+	
   CREATE WIDGET-POOL.
 
   DEF VAR aux_idevento AS INTEGER.
@@ -131,7 +134,9 @@ END FUNCTION. /* montaTela RETURNS LOGICAL () */
          aux_nrseqeve = INTEGER(GET-VALUE("aux_nrseqeve"))
          aux_idseqttl = INTEGER(GET-VALUE("aux_idseqttl"))
          aux_tpevento = INTEGER(GET-VALUE("aux_tpevento")).
-    
+  
+  RUN insere_log_progrid("WPGD0004a.p",STRING(aux_idevento) + "|" + STRING(aux_cdcooper) + "|" + STRING(aux_nrdconta) + "|" + STRING(aux_dtanoage)).
+	
   FOR FIRST crapass FIELDS(cdagenci) WHERE crapass.cdcooper = aux_cdcooper
                                        AND crapass.nrdconta = aux_nrdconta NO-LOCK. END.
   

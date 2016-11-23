@@ -13,6 +13,9 @@ Alterações: 23/11/2009 - Aumento do campo referente Verba Total (Diego).
 			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
 						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)
+
 ......................................................................... */
 
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
@@ -420,7 +423,8 @@ PROCEDURE CriaListaPAC :
          DO:
              /* Todos os PACS ativos menos 90-INTERNET e 91-TAA */
              FOR EACH crapage where crapage.cdcooper = tmp_cdcooper AND
-                                    crapage.insitage = 1            NO-LOCK:
+                                   (crapage.insitage = 1  OR        /* Ativo */
+                                    crapage.insitage = 3) NO-LOCK:  /* Temporariamente Indisponivel */
 
                  IF   crapage.cdagenci <> 90   AND
                       crapage.cdagenci <> 91   THEN
@@ -460,7 +464,8 @@ PROCEDURE CriaListaPAC :
 
    /* Monta as informações relativas a cada PAC */
    FOR EACH crapage WHERE crapage.cdcooper = tmp_cdcooper  AND
-                          crapage.insitage = 1             NO-LOCK:
+                         (crapage.insitage = 1  OR        /* Ativo */
+                          crapage.insitage = 3) NO-LOCK:  /* Temporariamente Indisponivel */
 
        /* Despreza PAC 90-INTERNET e 91-TAA */
        IF   crapage.cdagenci = 90   OR

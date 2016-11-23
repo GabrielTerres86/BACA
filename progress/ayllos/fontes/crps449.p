@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Ze Eduardo/Mirtes/Julio
-   Data    : Maio/2005.                         Ultima atualizacao: 23/06/2016
+   Data    : Maio/2005.                         Ultima atualizacao: 14/10/2016
 
    Dados referentes ao programa:
 
@@ -86,6 +86,9 @@
 			                6 - WebService (Marcos)                          
 
                15/06/2016 - Adicnioar ux2dos para a Van E-sales (Lucas Ranghetti #469980)
+               
+               14/10/2016 - Adicionar ordecacao para o registro "B" tpdcontr = 3, listar 
+                            primeiro os cancelados (Lucas Ranghetti #506030)
 ............................................................................. */
 
 { includes/var_batch.i {1} }
@@ -160,7 +163,7 @@ DEF  STREAM str_2.  /* Para arquivo auxiliar */
 
 ASSIGN glb_cdprogra = "crps449"
        glb_cdempres = 11.
-	   
+
 RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
@@ -206,6 +209,7 @@ ASSIGN aux_dtmvtolt = STRING(YEAR(glb_dtmvtolt),"9999") +
        aux_anomovto = STRING(YEAR(aux_dtproxim),"9999") + ".".
 
 
+
 ASSIGN aux_dtanteri = glb_dtmvtolt - 5. 
 
 DO aux_contatip = 1 TO 3:
@@ -215,6 +219,9 @@ DO aux_contatip = 1 TO 3:
             aux_exisdare = FALSE
             aux_exisgnre = FALSE. 
 
+    IF  aux_contatip = 1 OR 
+        aux_contatip = 2 THEN
+        DO:        
     FOR EACH gncvuni WHERE NOT gncvuni.flgproce
                        AND gncvuni.tpdcontr = aux_contatip
                      BREAK BY gncvuni.cdconven 
@@ -285,11 +292,88 @@ DO aux_contatip = 1 TO 3:
         CASE gncvuni.tpdcontr:
             WHEN 1 THEN RUN efetua_geracao_arquivos.             /* Caixa */
             WHEN 2 THEN RUN efetua_geracao_arquivos_debitos.     /* Deb.Autom. */
+                END CASE.
+            
+            END. /* FOR EACH gncvuni */
+        END.
+    ELSE
+        DO:
+            /* Listar primeiro os cancelamentos para o registro "B" tpdcontr = 3 
+               Posicao (150,1)  1 - cancelamento / 2 - Inclusao */
+            FOR EACH gncvuni WHERE NOT gncvuni.flgproce
+                               AND gncvuni.tpdcontr = aux_contatip
+                             BREAK BY gncvuni.cdconven 
+                                   BY SUBSTRING(gncvuni.dsmovtos,150,1)
+                                   BY gncvuni.cdcooper:
+                
+                ASSIGN aux_verifpac = INT(SUBSTR(gncvuni.dsmovtos, 4, 2)).
+                
+                IF   FIRST-OF(gncvuni.cdconven) THEN
+                     DO:
+                         FIND gnconve WHERE gnconve.cdconven = gncvuni.cdconven
+                                            NO-LOCK NO-ERROR.
+                
+                         IF   AVAILABLE gnconve   THEN
+                              DO:
+                                  ASSIGN aux_nmempres = TRIM(gnconve.nmempres)
+                                         aux_nrbranco = 10 - 
+                                                       ROUND(LENGTH(aux_nmempres) / 2,0)
+                                         aux_nmempres = FILL(" ", aux_nrbranco) + 
+                                                        aux_nmempres                   
+                                         aux_flgfirst = TRUE
+                                         aux_nrseqdig = 0
+                                         tot_vlfatura = 0.
+                   
+                                  glb_dscritic = "Executando Convenio - " + 
+                                                 STRING(aux_nmempres).
+                    
+                                  UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") 
+                                                     + " - " + STRING(TIME,"HH:MM:SS")   
+                                                     + " - " + glb_cdprogra + "' --> '"  
+                                                     + glb_dscritic + " >> log/proc_message.log").
+                              END. /* IF AVAILABLE gnconve */
+            
+                         ASSIGN aux_flaglast = FALSE.
+
+                         /** Verifica se existem guias da SEFAZ **/
+                         IF   gncvuni.cdconven = 59 THEN     /** DARE **/
+                              DO:
+                                 ASSIGN aux_exisdare = TRUE.
+                              END.
+                         ELSE 
+                         IF   gncvuni.cdconven = 60 THEN    /** GNRE **/
+                              DO:
+                                  ASSIGN aux_exisgnre = TRUE.
+                              END.                       
+                     
+                     END. /* IF FIRST-OF... */
+            
+                IF   FIRST-OF(gncvuni.cdcooper)   THEN
+                     DO:
+                         FIND crapcop WHERE crapcop.cdcooper = gncvuni.cdcooper
+                                            NO-LOCK NO-ERROR.
+                
+                         IF   NOT AVAILABLE crapcop   THEN
+                              DO:
+                                  glb_cdcritic = 651.
+                                  RUN fontes/critic.p.
+                                  UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999")
+                                                     + " - " + STRING(TIME,"HH:MM:SS") 
+                                                     + " - " + glb_cdprogra + "' --> '" 
+                                                     + glb_dscritic + " >> log/proc_message.log").
+                                  UNDO, RETURN.                   
+                              END. /* IF AVAILABLE crapcop */
+                     END.
+                     
+                IF   LAST-OF(gncvuni.cdconven)   THEN     
+                     ASSIGN aux_flaglast = TRUE.
+                     
+                CASE gncvuni.tpdcontr:                    
             WHEN 3 THEN RUN efetua_geracao_arquivos_autorizacao. /* Autoriz. Debito */
         END CASE.
     
     END. /* FOR EACH gncvuni */
-
+        END.
     
     IF  aux_contatip = 1        AND
         aux_exisdare = FALSE    THEN
@@ -303,8 +387,6 @@ DO aux_contatip = 1 TO 3:
             RUN gera_arquivo_sem_movimento (INPUT 60).
         END.
     
-    
-
 END. /* FIM do DO aux_contatip = 1 ... */
 
 RUN fontes/fimprg.p.
@@ -316,11 +398,11 @@ PROCEDURE efetua_geracao_arquivos:
    IF   aux_flgfirst THEN
         DO:
             RUN nomeia_arquivos.
-
+                
             OUTPUT STREAM str_2 TO VALUE(aux_nmarqped). 
-			
+
             ASSIGN aux_nmempcov = gnconve.nmempres.
-      
+
             PUT STREAM str_2  "A2"   aux_nrconven FORMAT "99999999"
                               "            "
                               aux_nmempcov  FORMAT "x(20)" 
@@ -347,7 +429,7 @@ PROCEDURE efetua_geracao_arquivos:
           rel_vllanmto = DECI(SUBSTR(gncvuni.dsmovtos, 82, 12)) / 100
           tot_vlfatura = tot_vlfatura + rel_vllanmto
           tot_vltarifa = tot_vltarifa + aux_vltarifa.
-               
+
    PUT STREAM str_2 SUBSTR(gncvuni.dsmovtos, 1, 100) FORMAT "x(100)"  
                     aux_nrseqdig FORMAT "99999999"         
                     SUBSTR(gncvuni.dsmovtos, 109, 42) FORMAT "x(42)" SKIP.
@@ -496,7 +578,7 @@ PROCEDURE atualiza_controle:
        END.
    ELSE
        UNIX SILENT VALUE("mv " + aux_nmarqped + " salvar 2> /dev/null").
-   
+  
    IF  gnconve.tpdenvio = 6 THEN  /* WebServices */
        DO:
           
@@ -748,11 +830,11 @@ PROCEDURE efetua_geracao_arquivos_debitos:
    IF   aux_flgfirst THEN
         DO:
             RUN nomeia_arquivos.
-
+                
             OUTPUT STREAM str_2 TO VALUE(aux_nmarqped). 
-			
+
             ASSIGN aux_nmempcov = gnconve.nmempres.
-            
+
             PUT STREAM str_2 "A2"  
                        aux_nrconven  FORMAT "99999999999999999999"
                        aux_nmempcov  FORMAT "x(20)" 
@@ -808,11 +890,11 @@ PROCEDURE efetua_geracao_arquivos_autorizacao:
    IF   aux_flgfirst THEN
         DO:
             RUN nomeia_arquivos.
-            
+                
             OUTPUT STREAM str_2 TO VALUE(aux_nmarqped). 
-			
+
             ASSIGN aux_nmempcov = gnconve.nmempres.
-            
+
             PUT STREAM str_2 "A2"  
                        aux_nrconven  FORMAT "99999999999999999999"
                        aux_nmempcov  FORMAT "x(20)" 

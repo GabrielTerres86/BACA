@@ -10,6 +10,8 @@
  *                             escolher o programa "DEVOLUCAO DOC" - Melhoria 316.
  * 							   Também remover trechos do código não utilizados.
  *                             (Lucas Ranghetti #525623)
+ * 
+ *                11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
  */
 
 // Definição de algumas variáveis globais 
@@ -82,25 +84,27 @@ function controlaFoco() {
     });
 
 	$('#cdcoopex','#frmDet').unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			LiberaCampos();
-			return false;
-		}
+			if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+				/*Sempre antes de prosseguir na tela verifica acesso a opcao por departamento*/
+             	acessoOpcao();		
+				return false;
+			}
 	});
 	
 	$('#btnOK','#frmCab').unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			LiberaCampos();
-			$('#cdcoopex','#frmDet').focus();
-			return false;
-		}	
+			if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+				/*Sempre antes de prosseguir na tela verifica acesso a opcao por departamento*/
+             	acessoOpcao();		
+				$('#cdcoopex','#frmDet').focus();
+				return false;
+			}	
 	});
 	
 	$('#cdcoopex','#frmDet').unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 13 || e.keyCode == 9 ) {	
-			btnContinuar(); 
-			return false;
-		}	
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+					btnContinuar(); 
+					return false;
+				}		
 	});
 	
 }
@@ -182,6 +186,36 @@ function btnContinuar() {
 	}
 	
 	return false;		
+}
+
+function acessoOpcao(){
+	
+	showMsgAguardo("Aguarde, liberando aplicacao...");
+	
+	cddopcao = $("#cddopcao").val();
+	
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/hrcomp/acesso_opcao.php", 
+		data: {
+			cddopcao: cddopcao,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				hideMsgAguardo();
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});					
+
 }
 
 function realizaOperacao() {
@@ -276,7 +310,7 @@ function carregaDetalhamento(){
 							formataProcessos();
 							
 							var cddopcao = $('#cddopcao','#frmCab').val();
-
+							
 							hideMsgAguardo();
 							return false;
 						} catch(error) {
@@ -423,7 +457,7 @@ function mostraDetalhamentoHrcomp() {
 			hideMsgAguardo();
 			exibeRotina($('#divRotina'));
 			formataDetalhaHrcomp();
-			bloqueiaFundo($('#divRotina'));									
+			bloqueiaFundo($('#divRotina'));						
 		}				
 	});
 	

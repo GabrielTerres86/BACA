@@ -6,6 +6,8 @@
  * --------------
  * ALTERAÇÕES   : 
  * 000: [25/06/2012] Jorge Hamaguchi  (CECRED): Alterado funcao Gera_Impressao(), adequado para submeter para impressao
+ * 001: [19/10/2016] Kelvin			  (CECRED): Permitir incluir acentuacao, porem removendo caracteres que afetam o xml,
+												conforme solicitado no chamado 517202. (Kelvin)
  * --------------
  */
 
@@ -135,7 +137,7 @@ function manterRotina() {
 
 	if ( operacao != 'EV' && operacao != 'VE' ){
 		
-		dsobserv = $('#dsobserv','#frmAnota').val();
+		dsobserv = removeCaracteresInvalidos($('#dsobserv','#frmAnota').val());
 		flgprior = $('input[name="flgprior"]:checked','#frmAnota').val();
 				
 	}
@@ -266,7 +268,7 @@ function controlaLayout() {
 		var rFlgPri = $('label[for="flgprior"]','#frmAnota');						
 		
 		cTexto.css({'width':'510px','height':'136px','float':'left','margin':'3px 0px 3px 13px','padding-right':'1px'});
-		cTexto.setMask("STRING","900",charPermitido(),"");
+		
 		rFlgPri.addClass('rotulo').css('width','86px');
 		cTexto.habilitaCampo();
 		

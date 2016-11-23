@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps461 (pr_cdcooper  IN crapcop.cdcooper%
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Diego
-     Data    : Janeiro/2006.                     Ultima atualizacao: 27/03/2015
+     Data    : Janeiro/2006.                     Ultima atualizacao: 02/08/2016
           
      Dados referentes ao programa:
 
@@ -48,6 +48,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps461 (pr_cdcooper  IN crapcop.cdcooper%
                               a escrita será PA (André Euzébio - Supero).
                               
                  27/03/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)             
+
+                 02/08/2016 - Inclusao insitage 3 como ativo. (Jaison/Anderson)
 
   ............................................................................ */
 
@@ -291,6 +293,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps461 (pr_cdcooper  IN crapcop.cdcooper%
           vr_tab_dados(vr_idxdados).insitage :=( CASE vr_tab_crapage(rw_crapger.cdagenci).insitage 
                                                  WHEN 0 THEN ' Implantacao'
                                                  WHEN 1 THEN ' Ativo'
+                                                 WHEN 3 THEN ' Ativo'
                                                  ELSE ' Inativo'
                                                  END);
         END IF;
@@ -318,6 +321,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps461 (pr_cdcooper  IN crapcop.cdcooper%
           vr_tab_dados(vr_idxdados).insitage :=( CASE vr_tab_crapage(rw_gninfpl.cdagenci).insitage 
                                                  WHEN 0 THEN ' Implantacao'
                                                  WHEN 1 THEN ' Ativo'
+                                                 WHEN 3 THEN ' Ativo'
                                                  ELSE ' Inativo'
                                                  END);
         END IF;
@@ -353,6 +357,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps461 (pr_cdcooper  IN crapcop.cdcooper%
           vr_tab_dados(vr_idxdados).insitage :=( CASE vr_tab_crapage(rw_gnsldcx.cdagenci).insitage 
                                                  WHEN 0 THEN ' Implantacao'
                                                  WHEN 1 THEN ' Ativo'
+                                                 WHEN 3 THEN ' Ativo'
                                                  ELSE ' Inativo'
                                                  END);
         END IF;
@@ -385,6 +390,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps461 (pr_cdcooper  IN crapcop.cdcooper%
           vr_tab_dados(vr_idxdados).insitage :=( CASE vr_tab_crapage(rw_crapacc.cdagenci).insitage 
                                                  WHEN 0 THEN ' Implantacao'
                                                  WHEN 1 THEN ' Ativo'
+                                                 WHEN 3 THEN ' Ativo'
                                                  ELSE ' Inativo'
                                                  END);
         END IF;
@@ -416,6 +422,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps461 (pr_cdcooper  IN crapcop.cdcooper%
           vr_tab_dados(vr_idxdados).insitage :=( CASE vr_tab_crapage(rw_gnlcred.cdagenci).insitage 
                                                  WHEN 0 THEN ' Implantacao'
                                                  WHEN 1 THEN ' Ativo'
+                                                 WHEN 3 THEN ' Ativo'
                                                  ELSE ' Inativo'
                                                  END);
         END IF;

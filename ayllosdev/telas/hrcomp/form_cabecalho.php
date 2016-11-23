@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 24/02/2014
  * OBJETIVO     : Cabecalho para a tela HRCOMP
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
  * --------------
  */
 	
@@ -27,7 +27,7 @@
 					<option value="C"> C - Consultar  </option> 
 					<option value="A"> A - Alterar  </option>
 				</select>
-				<a href="#" class="botao" id="btnOK" name="btnOK" onClick="LiberaCampos(); return false;" style = "text-align:right;">OK</a>
+				<a href="#" class="botao" id="btnOK" name="btnOK" onClick="acessoOpcao(); return false;" style = "text-align:right;">OK</a>
 			</td>
 		</tr>
 	</table>

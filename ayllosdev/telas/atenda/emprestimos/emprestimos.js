@@ -99,13 +99,19 @@
  * 079: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 080: [05/04/2016] Incluido tratamento na efetuar_consultas para para verificar se deve validar permitir consulta caso ja esteja na esteira
  *                   PRJ207 Esteira de Credito. (Odirlei-AMcom) 
- * 081: [03/08/2016] Auste para utilizar a rotina convertida para encontrar as finalidades de empréstimos (Andrei - RKAM).
- * 081: [18/08/2016] Alteração da função controlaFoco - (Evandro - RKAM)
+ * 081: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
+ * 082: [03/08/2016] Auste para utilizar a rotina convertida para encontrar as finalidades de empréstimos (Andrei - RKAM).
+ * 083: [18/08/2016] Alteração da função controlaFoco - (Evandro - RKAM)
+ * 084: [19/10/2016] Incluido registro de log sobre liberacao de alienacao de bens 10x maior que o valor do emprestimo, SD-507761 (Jean Michel).
+ * 085: [03/11/2016] Correcao de contagem de dias para as propostas de emprestimos, chamado 535609. (Gil Furtado - MOUTS).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
  */
 
+var qtmesblq = 0;
+var bloquear_pre_aprovado = false;
+ 
 var nrctremp = '';
 var operacao = '';
 var cddopcao = '';
@@ -1568,6 +1574,7 @@ function manterRotina(operacao) {
             vlpreant: vlpreant, nrctrant: nrctrant, operacao: operacao,
             tpemprst: tpemprst, nrcpfcgc: nrcpfcgc, dsjusren: dsjusren,
             dtlibera: dtlibera, inconcje: inconcje, flgconsu: flgconsu,
+            blqpreap: (bloquear_pre_aprovado ? 1 : 0),
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1,
             inpesso2: inpesso2, dtnasct2: dtnasct2, cddopcao: cddopcao,
@@ -3806,7 +3813,7 @@ function attArray(novaOp, cdcooper) {
         arrayAlienacoes[atual]['vlmerbem'] = $('#vlmerbem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['idalibem'] = $('#idalibem', '#frmAlienacao').val();
         arrayAlienacoes[atual]['uflicenc'] = $('#uflicenc', '#frmAlienacao').val(); // GRAVAMES */
-
+		arrayAlienacoes[atual]['cdcoplib'] = glb_codigoOperadorLiberacao;
     } else if (in_array(operacao, ['AI_INTEV_ANU', 'A_INTEV_ANU', 'IA_INTEV_ANU', 'I_INTEV_ANU'])) {
 
         atual = contIntervis - 1;
@@ -3894,7 +3901,7 @@ function attArray(novaOp, cdcooper) {
     }
 
     controlaOperacao(novaOp);
-
+    glb_codigoOperadorLiberacao = '';
     return false;
 }
 
@@ -4328,6 +4335,7 @@ function insereAlienacao(operacao, opContinua) {
     eval('arrayAlienacao' + i + '["idseqbem"] = ' + idseqbem + ';');
     eval('arrayAlienacao' + i + '["idalibem"] = "";');
     eval('arrayAlienacao' + i + '["lsbemfin"] = "";');
+    eval('arrayAlienacao' + i + '["cdcoplib"] = "' + glb_codigoOperadorLiberacao + '";');
 
     eval('arrayAlienacoes[' + i + '] = arrayAlienacao' + i + ';');
 
@@ -4337,6 +4345,7 @@ function insereAlienacao(operacao, opContinua) {
     arrayAlienacoes[i]["lsbemfin"] = '( ' + contAlienacao + ' Bem )';
 
     controlaOperacao(operacao);
+    glb_codigoOperadorLiberacao = '';
     return false;
 
 }
@@ -5554,8 +5563,8 @@ function montaString() {
                 normalizaNumero(arrayAlienacoes[i]['nrcpfbem']) + ';' +
                 arrayAlienacoes[i]['uflicenc'] /* GRAVAMES*/ + ';' +
                 arrayAlienacoes[i]['dstipbem'] + ';' +
-                arrayAlienacoes[i]['idseqbem'] /* GRAVAMES*/
-                ;
+                arrayAlienacoes[i]['idseqbem'] + ';' + /* GRAVAMES*/
+                arrayAlienacoes[i]['cdcoplib']; /* OPERADOR DE LIBERACAO */
     }
 
     //Interneiente anuente
@@ -7282,7 +7291,7 @@ function confirmaConsultas(flmudfai, cddopcao) {
 //***************************************************
 
 function buscaLiquidacoes(operacao) {
-
+	
     var dsctrliq = $('#dsctrliq', '#' + nomeForm).val();
     //variavel que contem o valor de "Emprestimos" na tela atenda    
     var vltotemp = parseFloat($('#valueRot1').html().replace(/[.R$ ]*/g, '').replace(',', '.'));
@@ -7302,6 +7311,7 @@ function buscaLiquidacoes(operacao) {
                 dsctrliq: dsctrliq,
                 operacao: operacao,
                 cdlcremp: cdlcremp,
+				inpessoa: inpessoa,
                 redirect: 'script_ajax'
             },
             error: function(objAjax, responseError, objExcept) {
@@ -7566,7 +7576,7 @@ function selecionaLiquidacao() {
 }
 
 function fechaLiquidacoes(operacao) {
-
+	
     var dsctrliq = '';
 
     for (var i in arrayLiquidacoes) {
@@ -7576,22 +7586,36 @@ function fechaLiquidacoes(operacao) {
     }
 
     dsctrliq = dsctrliq.slice(0, -1);
+	
+	if (dsctrliq != '' && qtmesblq != 0 && operacao[0] == 'I')
+		showConfirmacao('Deseja bloquear a oferta de cr&eacute;dito pr&eacute;-aprovado na conta durante o per&iacute;odo de ' + qtmesblq + ' mes(es)?',
+						'Confirma&ccedil;&atilde;o - Ayllos', 
+						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = true;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
+						'bloqueiaFundo( $(\'#divRotina\') );bloquear_pre_aprovado = false;fechaLiquidacoesAposConfirmacao("'+dsctrliq+'", "'+operacao+'");', 
+						'sim.gif', 
+						'nao.gif');
+	else
+		fechaLiquidacoesAposConfirmacao(dsctrliq, operacao);
+	return false;
+}
 
-    $('#dsctrliq', '#' + nomeForm).val(dsctrliq);
+function fechaLiquidacoesAposConfirmacao(dsctrliq, operacao){
+	
+	$('#dsctrliq', '#' + nomeForm).val(dsctrliq);
 
-    if ($('#dsctrliq', '#' + nomeForm).val() != '') {
-        qualificaOperacao();
-    } else {
-        $('#idquapro', '#' + nomeForm).val(1);
-        $('#dsquapro', '#' + nomeForm).val('Operacao normal');
-    }
+	if ($('#dsctrliq', '#' + nomeForm).val() != '') {
+		qualificaOperacao();
+	} else {
+		$('#idquapro', '#' + nomeForm).val(1);
+		$('#dsquapro', '#' + nomeForm).val('Operacao normal');
+	}
 
-    limpaDivGenerica();
-    fechaRotina($('#divUsoGenerico'), $('#divRotina'));
-    showMsgAguardo('Aguarde, carregando...');
+	limpaDivGenerica();
+	fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+	showMsgAguardo('Aguarde, carregando...');
 
-    validaLiquidacoes(true, operacao);
-
+	validaLiquidacoes(true, operacao);
+	
     return false;
 }
 
@@ -7671,7 +7695,7 @@ function controlaFoco(operacao) {
         $(this).bind('keyup', function (e) {
             if (e.keyCode == 16) {
                 pressedShift = false;//Quando tecla shift for solta passa valor false 
-            }
+    }
         })
 
         $(this).bind('keydown', function (e) {
@@ -9028,8 +9052,15 @@ function atualizaCampoData()
 
         //pega a data de pagamento
         var dataPag = $('#dtdpagto', '#frmNovaProp').val();
-        //quantidade de meses * 30 - 30 pois a primeia parcela sera na data de liberacao
-        var qtdDias = ($('#qtpreemp', '#frmNovaProp').val() * 30.5) - 30;
+        //correcao da contagem de datas erradas, apos o dia 22; 
+        var vr_dt = dataPag.split('/');
+        if (vr_dt[0] > 22) {
+            var ndias = 45;
+        } else {
+            var ndias = 30;
+        }
+        //quantidade de meses * 30 - 30 ou 45 pois a primeia parcela sera na data de liberacao
+        var qtdDias = ($('#qtpreemp', '#frmNovaProp').val() * 30.5) - ndias;
         //retorno da consulta
         var retorno = SomarData(dataPag, qtdDias);
         //atualiza data ultimo pagamento
@@ -9138,5 +9169,5 @@ function validaDadosAlterarSomenteValorProposta(){
 			}
 		}
 	});	
-	return false;
+    return false;
 }

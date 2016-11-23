@@ -7,6 +7,8 @@
  * --------------
  * ALTERAÇÕES   : 14/09/2012 - Implementação do novo layout, botões, select (David Kruger).
  *
+ *                27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
+ *
  * --------------
  */
 
@@ -27,6 +29,7 @@
 	<option value="L" <?php echo $cddopcao == 'L' ? 'selected' : '' ?> >L - Recolhimento de envelopes e numerarios</option>
 	<option value="M" <?php echo $cddopcao == 'M' ? 'selected' : '' ?> >M - Monitorar terminais</option>
 	<option value="R" <?php echo $cddopcao == 'R' ? 'selected' : '' ?> >R - Relatorios de movimentacao</option>
+	<option value="S" <?php echo $cddopcao == 'S' ? 'selected' : '' ?> >S - Dados Cadastrais</option>
 	</select> 
     <a href="#" class="botao" id="btnOK" name="btnOK">OK</a>	
 

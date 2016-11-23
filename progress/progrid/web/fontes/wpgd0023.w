@@ -15,6 +15,10 @@ Alterações: 30/01/2008 - Verificar pré-inscritos no evento antes de efetuar a ex
 						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
                          
             06/06/2016 - Ajuste para não exibir os eventos EAD (TPEVENTO= 11) (Vanessa)
+
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)
+
 ...............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -514,7 +518,9 @@ PROCEDURE CriaListaEvento :
         
             IF AVAIL crapage THEN
             DO:
-                IF  crapage.insitage <> 1 THEN NEXT.
+                IF  crapage.insitage <> 1  AND   /* Ativo */
+                    crapage.insitage <> 3  THEN  /* Temporariamente Indisponivel */
+                    NEXT.
                 ELSE
                     ASSIGN aux_nmresage = crapage.nmresage.
             END.

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro/Diego
-   Data    : Novembro/2006                      Ultima atualizacao: 01/08/2016
+   Data    : Novembro/2006                      Ultima atualizacao: 06/10/2016
    
    Dados referentes ao programa:
 
@@ -184,7 +184,6 @@
                27/01/2016 - Inclusao do campo crapcop.flsaqpre, frame f_coop15 
                             (Lombardi - #393807)
                
-               
                24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
                06/04/2016 - Inclusao dos horarios de atendimento do SAC e
                             OUVIDORIA (melhoria 212 Tiago/Elton).
@@ -192,9 +191,12 @@
 			   26/04/2016 - Ajustes para melhoria 212 (Tiago/Elton).
 
 			   27/04/2016 - Ajustes para melhoria 212 (Tiago/Elton).
-              
+
                01/08/2016 - Adicionado novo campo de arrecadacao GPS
                             conforme solicitado no chamado 460485. (Kelvin)
+
+               06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                           (Guilherme/SUPERO)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -933,7 +935,7 @@ FORM SKIP
         VALIDATE(INTEGER(tel_mmfimouv) <= 59,"Minutos incorretos (00 min ate 59 min).")
 
      WITH DOWN ROW 7 WIDTH 78 SIDE-LABELS OVERLAY CENTERED FRAME f_coop15.
-     
+
 
 DEF QUERY q_cidades FOR w-crapmun.
 
@@ -2477,9 +2479,10 @@ DO WHILE TRUE:
                          (aux_cdcrdarr      = 0   AND
                           crapcop.cdcrdarr <> 0)        THEN
                           DO:
-                             FIND FIRST craplgp WHERE
-                                        craplgp.cdcooper = glb_cdcooper   AND
-                                        craplgp.dtmvtolt = glb_dtmvtolt
+                             FIND FIRST craplgp
+                                  WHERE craplgp.cdcooper = glb_cdcooper
+                                    AND craplgp.dtmvtolt = glb_dtmvtolt
+                                    AND craplgp.flgativo = TRUE
                                         NO-LOCK NO-ERROR.
 
                              IF   AVAILABLE craplgp   THEN
@@ -2993,7 +2996,7 @@ DO WHILE TRUE:
                                                            WITH FRAME f_coop15												    
                                                     EDITING:
                                                     DO:
-                                                      READKEY.
+                                                        READKEY.
                                                       HIDE MESSAGE NO-PAUSE.
                                                       
                                                       IF (FRAME-FIELD = "permaxde") THEN
@@ -3002,8 +3005,8 @@ DO WHILE TRUE:
                                                               APPLY LASTKEY.                                                            
                                                         END.
                                                       ELSE
-                                                          APPLY LASTKEY.
-                                                      
+                                                        APPLY LASTKEY.
+
                                                         IF  GO-PENDING  THEN
                                                             DO:               
                                                                 ASSIGN INPUT tel_flsaqpre 
@@ -3023,13 +3026,13 @@ DO WHILE TRUE:
                                                                 END.
                                                     
                                                                 IF ((tel_hriniouv * 3600) + (tel_mminiouv * 60)) >= ((tel_hrfimouv * 3600) + (tel_mmfimouv * 60)) THEN
-                                                                DO:
+                                                    DO:
                                                                     ASSIGN aux_nmdcampo = "tel_hriniouv".
 
-                                                                END.
-                                                      
+                                                    END.
+
                                                                 IF  aux_nmdcampo <> "" THEN
-                                                        DO:
+                                                    DO:
                                                                     MESSAGE "Horario inicial maior que o final.".
 
                                                                     {sistema/generico/includes/foco_campo.i
@@ -3039,10 +3042,10 @@ DO WHILE TRUE:
                                                                 END.
 
 
-                                                        END.
-                                                      
+                                                            END.                                    
+
                                                     END.
-                                                    
+
 
                                                     ASSIGN crapcop.flsaqpre = tel_flsaqpre
 													       crapcop.flrecpct = tel_flrecpct
@@ -3052,7 +3055,7 @@ DO WHILE TRUE:
                                                            crapcop.hrfimouv = ((tel_hrfimouv * 3600) + (tel_mmfimouv * 60)).
                                                     
 												END.
-                                                    
+												    
                                                 IF KEYFUNCTION(LASTKEY) = "RETURN" OR
                                                    KEYFUNCTION(LASTKEY) = "GO" THEN
                                                     RUN Confirma.
@@ -3299,7 +3302,7 @@ PROCEDURE Gera_log.
   RUN log ("Tarifa Tributo Federal",STRING(crapcop.vltardrf, "zzz,zzz,zz9.99"),
                                     STRING(w-crapcop.vltardrf, "zzz,zzz,zz9.99")).
 
-  RUN log ("Horario inicio pagamento GPS",STRING(crapcop.hrinigps, "HH:MM"),
+RUN log ("Horario inicio pagamento GPS",STRING(crapcop.hrinigps, "HH:MM"),
                                           STRING(w-crapcop.hrinigps, "HH:MM")).
 
   RUN log ("Horario fim pagamento GPS",STRING(crapcop.hrfimgps, "HH:MM"),
@@ -3310,7 +3313,7 @@ PROCEDURE Gera_log.
 
   RUN log ("Saque presencial",STRING(crapcop.flsaqpre, "Isentar/Nao isentar"),
                                               STRING(w-crapcop.flsaqpre, "Isentar/Nao isentar")).
-                                              
+
   RUN log ("Percentual máximo de desconto manual",STRING(crapcop.permaxde, "zz9.99"),
                                               STRING(w-crapcop.permaxde, "zz9.99")).
                                               

@@ -21,8 +21,15 @@ Alterações: 19/11/2009 - Alterado tamanho da variavel aux_ttevento para
             01/12/2015 - Alterações do Projeto 229 (Vanessa).
             
             25/02/2016 - Melhorias para EAD - Prj. 229 (Jean Michel).
-            
-...............................................................................*/
+
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)
+
+	        09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -611,7 +618,8 @@ PROCEDURE CriaListaPac :
 
     /* Verificar se já possui custos de kits e brindes lançados */
     FOR EACH crapage WHERE crapage.cdcooper = INT(ab_unmap.aux_cdcooper)   AND
-                           crapage.insitage = 1 /* Ativo */                NO-LOCK 
+                          (crapage.insitage = 1  OR      /* Ativo */
+                           crapage.insitage = 3) NO-LOCK /* Temporariamente Indisponivel */
                            BY crapage.nmresage:
     
         /* Segurança de PAs */
@@ -1338,6 +1346,10 @@ IF AVAILABLE gnpapgd THEN
    ASSIGN ab_unmap.aux_dtanoage = STRING(gnpapgd.dtanonov).
 ELSE
    ASSIGN ab_unmap.aux_dtanoage = "".
+
+RUN insere_log_progrid("WPGD0018.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdcopope) + "|" +
+					  STRING(ab_unmap.aux_cdoperad) + "|" + STRING(ab_unmap.aux_cdevento)).
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 

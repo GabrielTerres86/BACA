@@ -1165,7 +1165,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
 
        Objetivo  : Procedure para efetivar o lancamento pendente via JOB.
 
-       Alteracoes: 
+       Alteracoes: 21/10/2016 - Incluir reset da variável de controle de log, pois
+                                estava gerando o log de início apenas para a primeira
+                                cooperativa executada ( Renato Darosci - Supero )
 
     ............................................................................. */
     DECLARE
@@ -1247,7 +1249,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
 
       -- Listagem de cooperativas
       FOR rw_crapcop IN cr_crapcop LOOP
-
+        
+        -- Deve resetar a variável para cada cooperativa
+        vr_flgerlog := FALSE;
+      
         -- Log de inicio de execucao
         pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper
                              ,pr_dstiplog => 'I');
@@ -1270,11 +1275,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0009 IS
 
         -- Final de semana e Feriado nao pode ocorrer o debito
         IF TRUNC(SYSDATE) <> rw_crapdat.dtmvtolt and rw_crapdat.inproces = 1 THEN
+          -- Log de final de execucao, antes de passar a proxima cooperativa
+          pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper
+                               ,pr_dstiplog => 'F');  
+        
           CONTINUE;
         END IF;
 
         -- Condicao para verificar se o processo estah rodando
         IF NVL(rw_crapdat.inproces,0) <> 1 THEN
+          -- Log de final de execucao, antes de passar a proxima cooperativa
+          pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper
+                               ,pr_dstiplog => 'F');                               
           CONTINUE;
         END IF;
 

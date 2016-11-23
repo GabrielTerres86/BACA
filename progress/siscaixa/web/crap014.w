@@ -21,7 +21,7 @@
 
 Programa: siscaixa/web/crap014.w
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao: 05/05/2016
+Sigla   : CRED                               Ultima atualizacao: 03/10/2016
    
 Dados referentes ao programa:
 
@@ -108,6 +108,8 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
            05/05/2016 - Na procedure processa-fatura, alterado UNDO pelo 
                         Return "NOK" pois estava limpando a critica retornada 
                         tambem (Lucas Ranghetti #436077)
+
+		   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 ..............................................................................*/
 
 /* comentado pq dentro da include  {dbo/bo-erro1.i} tbem tem o var_oracle
@@ -577,7 +579,22 @@ END PROCEDURE.
 PROCEDURE process-web-request:
 
   /* usar no lugar de c-fnc-javascript*/
-  DEF VAR aux_funcaojs  AS  CHARACTER                           NO-UNDO. 
+  DEF VAR aux_funcaojs  AS  CHAR                           NO-UNDO. 
+  DEF VAR aux_vltitulo  AS  DECI                           NO-UNDO. 
+  DEF VAR aux_vlrjuros  AS  DECI                           NO-UNDO. 
+  DEF VAR aux_vlrmulta  AS  DECI                           NO-UNDO. 
+  DEF VAR aux_fltitven  AS  INTE                           NO-UNDO. 
+  DEF VAR aux_des_erro  AS  CHAR                           NO-UNDO. 
+  DEF VAR aux_dscritic  AS  CHAR                           NO-UNDO. 
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
   RUN outputHeader.
 
@@ -678,10 +695,43 @@ PROCEDURE process-web-request:
                                 v_nome  = TRIM(tt-crapcbl.dsdonome).
                      END.
 
+                 IF get-value("v_codbarras") <> "" AND 
+                    v_tipdocto <> "2" THEN
+                    DO:
+                                
+                       RUN retorna-vlr-tit-vencto(INPUT INT(glb_cdcooper),     
+                                                  INPUT IF TRIM(v_conta) = "" THEN 0 ELSE INT(v_conta),    
+                                                  INPUT 1,     
+                                                  INPUT INT(glb_cdagenci),     
+                                                  INPUT INT(glb_cdbccxlt),     
+                                                  INPUT DEC(SUBSTR(v_codbarras,1,10)),     
+                                                  INPUT DEC(SUBSTR(v_codbarras,11,11)),      
+                                                  INPUT DEC(SUBSTR(v_codbarras,22,11)),      
+                                                  INPUT DEC(SUBSTR(v_codbarras,33,1)),      
+                                                  INPUT DEC(SUBSTR(v_codbarras,34,14)),      
+                                                  INPUT v_codbarras,
+                                                 OUTPUT aux_vltitulo,    
+                                                 OUTPUT aux_vlrjuros,    
+                                                 OUTPUT aux_vlrmulta,    
+                                                 OUTPUT aux_fltitven,    
+                                                 OUTPUT aux_des_erro,    
+                                                 OUTPUT aux_dscritic).   
+                  
+                       IF  aux_des_erro <> "OK" THEN
+                           DO:
+                             
+                           END.
+                       ELSE
+                          DO:
+                             ASSIGN v_valor = TRIM(STRING(aux_vltitulo,'zzz,zzz,zz9.99')).
+                          END.
+                           
+                    END.
+                 
                  /*se o cod barras estiver preenchido verifica o campo 
                    de valor e volta o foco para ele caso haja algum problema
                    ou o campo nao estiver preenchido*/
-                 IF get-value("v_codbarras") <> "" AND 
+                 /*IF get-value("v_codbarras") <> "" AND 
                     v_tipdocto <> "2" THEN
                     DO:       
                         RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
@@ -699,7 +749,7 @@ PROCEDURE process-web-request:
 
                               
                            END.         
-                    END.
+                    END.*/
                 
                /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
                IF  INT(v_tpproces) = 1 THEN
@@ -941,6 +991,10 @@ PROCEDURE processa-titulo:
 
     FIND FIRST ab_unmap.
 
+    DEF VAR aux_fltitven             AS INTE                           NO-UNDO.                                                   
+    DEF VAR aux_des_erro             AS CHAR                           NO-UNDO.
+    
+    
     /*inicializa variaveis*/
     ASSIGN de_tit1     = 0
            de_tit2     = 0
@@ -968,8 +1022,12 @@ PROCEDURE processa-titulo:
                      INPUT par_cdagenci,
                      INPUT par_cdbccxlt).
 
+    
+    IF par_vltitulo > 0 THEN
+       DO:
     DO TRANSACTION ON ERROR UNDO:
 
+            DO:
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         RUN STORED-PROCEDURE pc_retorna_vlr_titulo_iptu
@@ -1051,6 +1109,9 @@ PROCEDURE processa-titulo:
                flg_confvalor = (aux_vldifere = 1)
                flg_cobregis  = (aux_cobregis = 1).
     
+            
+            END.
+              
     END. /* fim transaction */
 
     /** Verifica se foi criada critica para titulo vencido **/
@@ -1138,6 +1199,9 @@ PROCEDURE processa-titulo:
         END.
     
     RETURN "OK".
+       
+       END.
+    
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1537,7 +1601,6 @@ PROCEDURE processo-manual:
            IF  par_tipdocto = 1 THEN  /*TITULO*/
                DO:
       
-
                    ASSIGN aux_ptitulo1 = DEC( SUBSTR(par_dscodbar,1,10) )
                           aux_ptitulo2 = DEC( SUBSTR(par_dscodbar,11,11) )
                           aux_ptitulo3 = DEC( SUBSTR(par_dscodbar,22,11) )
@@ -1631,6 +1694,94 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE gera-erro w-html 
 
+/*Procedure para retornar o valor da fatura com multa e juros atualizados*/
+PROCEDURE retorna-vlr-tit-vencto:
+    DEF INPUT PARAM par_cdcooper       AS INTE                       NO-UNDO.
+    DEF INPUT PARAM par_nrdconta       AS INTE                       NO-UNDO.
+    DEF INPUT PARAM par_idseqttl       AS INTE                       NO-UNDO.
+    DEF INPUT PARAM par_cdagenci       AS INTE                       NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa       AS INTE										   NO-UNDO.
+    DEF INPUT PARAM par_titulo1        AS DECI										   NO-UNDO.
+    DEF INPUT PARAM par_titulo2        AS DECI										   NO-UNDO.
+    DEF INPUT PARAM par_titulo3        AS DECI								       NO-UNDO.
+    DEF INPUT PARAM par_titulo4        AS DECI								 		   NO-UNDO.
+    DEF INPUT PARAM par_titulo5        AS DECI				 						   NO-UNDO.
+    DEF INPUT PARAM par_codigo_barras  AS CHAR      								 NO-UNDO.
+    DEF OUTPUT PARAM par_vlfatura      AS DECI                       NO-UNDO.
+    DEF OUTPUT PARAM par_vlrjuros      AS DECI                       NO-UNDO.
+    DEF OUTPUT PARAM par_vlrmulta      AS DECI                       NO-UNDO.
+    DEF OUTPUT PARAM par_fltitven      AS INTE                       NO-UNDO.    
+    DEF OUTPUT PARAM par_des_erro      AS CHAR                       NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic      AS CHAR                       NO-UNDO.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
+    RUN STORED-PROCEDURE pc_retorna_vlr_tit_vencto
+      aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT par_idseqttl,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT par_titulo1,
+                          INPUT par_titulo2,
+                          INPUT par_titulo3,
+                          INPUT par_titulo4,
+                          INPUT par_titulo5,
+                          INPUT par_codigo_barras,
+                          OUTPUT 0,
+                          OUTPUT 0,
+                          OUTPUT 0,
+                          OUTPUT 0,
+                          OUTPUT "",
+                          OUTPUT "").
+                          
+                         
+    CLOSE STORED-PROC pc_retorna_vlr_tit_vencto aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+        ASSIGN par_des_erro = ""
+               par_dscritic = ""
+               par_vlfatura = 0
+               par_vlrjuros = 0
+               par_vlrmulta = 0
+               par_fltitven = 0
+               par_vlfatura = pc_retorna_vlr_tit_vencto.pr_vlfatura
+                              WHEN pc_retorna_vlr_tit_vencto.pr_vlfatura <> ?        
+               par_vlrjuros = pc_retorna_vlr_tit_vencto.pr_vlrjuros
+                              WHEN pc_retorna_vlr_tit_vencto.pr_vlrjuros <> ?
+               par_vlrmulta = pc_retorna_vlr_tit_vencto.pr_vlrmulta
+                              WHEN pc_retorna_vlr_tit_vencto.pr_vlrmulta <> ?
+               par_fltitven = pc_retorna_vlr_tit_vencto.pr_fltitven
+                              WHEN pc_retorna_vlr_tit_vencto.pr_fltitven <> ?
+               par_des_erro = pc_retorna_vlr_tit_vencto.pr_des_erro
+                              WHEN pc_retorna_vlr_tit_vencto.pr_des_erro <> ?
+               par_dscritic = pc_retorna_vlr_tit_vencto.pr_dscritic
+                              WHEN pc_retorna_vlr_tit_vencto.pr_dscritic <> ?.       
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    /*IF  aux_des_erro <> "OK" OR
+        aux_dscritic <> ""   THEN DO: 
+
+        IF  aux_dscritic = "" THEN DO:   
+            ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca do valor do titulo".
+        END.
+
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+                           "</dsmsgerr>".  
+        
+        RETURN "NOK".
+        
+    END.*/
+
+    /*CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = aux_dsxmlout.*/
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
 

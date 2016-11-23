@@ -8,6 +8,8 @@ Alterações: 12/06/2012 - Alterado busca na tabela gncoper para crapcop. Incluído
             16/03/2015 - #265366 Inclusão da cláusula crapage.flgdopgd = true para LISTAR
                          somente os PAs ativos para o PROGRID (Carlos)
 
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel. (Jaison/Anderson)
+
 -->
 <script language="SpeedScript">
 
@@ -222,7 +224,7 @@ function ajax_onResponse() {
 }
 </script>
 <script language="JavaScript">
-function pesquisar(){
+    function pesquisar(){
 
 	// monta a URL do programa que gera o XML   
 	var url = "wcrm0002_xml.p?aux_cdcooper=" + `aux_cdcooper` + "&aux_cdevento=" + document.form.aux_nmevento.value + "&aux_cdagenci=" + document.form.aux_nmresage.value + "&aux_nrmeseve=" + document.form.aux_dtmeseve.value + "&aux_dtanoage=" + `aux_dtanoage`;		 
@@ -269,7 +271,8 @@ function pesquisar(){
 			<select name="aux_nmresage" class="formulario" id="aux_nmresage">
 				<script language="SpeedScript">
 				FOR EACH crapage WHERE crapage.cdcooper = aux_cdcooper AND 
-									   crapage.insitage = 1   AND
+									  (crapage.insitage = 1  OR   /* Ativo */
+                                       crapage.insitage = 3) AND  /* Temporariamente Indisponivel */
 									   crapage.flgdopgd = true
 									   NO-LOCK 
 									   BREAK BY crapage.nmresage:
@@ -323,8 +326,8 @@ function pesquisar(){
 		</td>
 	</tr>
 </table>
-<script language="javascript" type="text/javascript"> 
-
+<script language="javascript" type="text/javascript">
+ 
 document.form.aux_nmevento.value = `aux_cdevento`;
 document.form.aux_nmresage.value = `aux_cdagenci`;	 
 document.form.aux_dtmeseve.value = `aux_nrmeseve`;   

@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_bordero_carregadados.php                          
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 27/06/2016
+	 Data : Novembro/2008                Última Alteração: 10/10/2016
 	                                                                  
 	 Objetivo  : Mostrar os dados do bordero para fazer a liberação   
 	             ou análise				        				   
@@ -39,6 +39,8 @@
 
                  27/06/2016 - Inicializacao da aux_inconfi6. (Jaison/James)
 
+				 10/10/2016 - Remover verificacao de digitalizaco para o botao de 
+							  consultar imagem (Lucas Ranghetti #510032)
 	************************************************************************/
 	
 	session_start();
@@ -181,9 +183,9 @@
 	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="carregaBorderosTitulos(); voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - BORDER&Ocirc;S');return false; " />
 	<?php if ($cddopcao == "C") { ?>
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/visualizar_titulos.gif" onClick="carregaTitulosBorderoDscTit();return false;" />
-		<?php if($bordero[13]->cdata == "yes"){ ?>
+		
 			<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $bordero[14]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&bordero=<?php echo formataNumericos('z.zzz.zz9',$bordero[0]->cdata,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>		
-		<?php } ?>
+		
 	<?php } ?>
 </div>
 

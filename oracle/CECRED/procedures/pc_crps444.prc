@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 23/06/2016
+     Data    : Marco/2005.                     Ultima atualizacao: 12/07/2016
 
      Dados referentes ao programa:
 
@@ -324,12 +324,17 @@ BEGIN
 
 
 				 31/03/2016 - Ajuste para nao deixar alinea zerada na validaÁ„o de historicos
-							 (Adriano - SD 426308).
+				              (Adriano - SD 426308).
 				           
                  15/06/2016 - Ajustes para realizar debito de devolucao de cheque(0114 BB)
-				              na hora (Tiago/Elton SD 464916).
+				                      na hora (Tiago/Elton SD 464916).
                  23/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
                               (Carlos Rafael Tanholi).
+
+                 12/07/2016 - Ajustes para realizar debito de devolucao de cheque
+				              apenas (0114 BB) na hora (Tiago/Thiago SD 480694).
+
+				01/11/2016 - inclus„o do historico 0144TRANSF PERIODIC (Tiago sd 505237)
      ............................................................................. */
 
   DECLARE
@@ -1271,7 +1276,7 @@ BEGIN
 
          IF vr_nrdctabb = vr_rel_nrdctabb    AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA') THEN
+            vr_dshistor not in ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
            NULL;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN  /* Deposito */
            IF INSTR(vr_dshstblq,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito Bloqueado */
@@ -1366,10 +1371,8 @@ BEGIN
              WHEN '0144' THEN vr_cdhistor := 471;
              ELSE vr_cdhistor := 661;
            END CASE;
-         ELSIF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Devolucoes */  
-           IF SUBSTR(vr_dshistor,01,04) = '0114' THEN
+         ELSIF SUBSTR(vr_dshistor,01,04) = '0114' THEN /* Devolucoes recebidas */              
               vr_cdhistor := 351;
-           END IF;
          END IF;
 
          IF gene0002.fn_existe_valor(vr_dshstdeb,SUBSTR(vr_dshistor,01,04),',') = 'S' OR
@@ -1562,7 +1565,7 @@ BEGIN
      pr_cdcritic:= NULL;
      pr_dscritic:= NULL;
 
-     --Atribuir o nome do programa que est√° executando
+     --Atribuir o nome do programa que esta executando
      vr_cdprogra:= 'CRPS444';
 
      -- Incluir nome do modulo logado
@@ -1572,9 +1575,9 @@ BEGIN
      -- Verifica se a cooperativa esta cadastrada
      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
      FETCH cr_crapcop INTO rw_crapcop;
-     -- Se n√£o encontrar
+     -- Se n„o encontrar
      IF cr_crapcop%NOTFOUND THEN
-       -- Fechar o cursor pois haver√° raise
+       -- Fechar o cursor pois havera raise
        CLOSE cr_crapcop;
        -- Montar mensagem de critica
        vr_cdcritic:= 651;
@@ -2135,7 +2138,7 @@ BEGIN
      /*  Este Utilizado Somente para o Relatorio (Nao Cria Lanctos) */
 
      --Historico devolucao
-     vr_dshstdev:= '0114,0603,0686,0705,0718';
+     vr_dshstdev:= '0603,0686,0705,0718';
      vr_regexist:= FALSE;
      vr_flgfinal:= FALSE;
      vr_cdcritic:= 0;
@@ -2459,7 +2462,8 @@ BEGIN
                IF SUBSTR(vr_setlinha,123,1) <> '*' AND
                   vr_dshistor NOT IN ('0144TRANSF AGENDADA',
                                       '0144TRANSFERENCIA',
-                                      '0729TRANSFERENCIA') THEN
+                                      '0729TRANSFERENCIA',
+                                      '0144TRANSF PERIODIC') THEN
                    CONTINUE;
                END IF;
              END IF;
@@ -2520,7 +2524,8 @@ BEGIN
              IF vr_dshistor <> '0144TRF SEM CPMF'    AND
                vr_dshistor <> '0144TRANSF AGENDADA' AND
                vr_dshistor <> '0144TRANSFERENCIA'   AND
-               vr_dshistor <> '0729TRANSFERENCIA'   THEN
+               vr_dshistor <> '0729TRANSFERENCIA'   AND
+               vr_dshistor <> '0144TRANSF PERIODIC' THEN
 
                 /* B.Brasil modificou historico TEC SALARIO*/
                IF vr_dshistor = '0729TRANSF.CTA.CENT' AND SUBSTR(vr_nrdctabb, 1, length(vr_nrdocmto)) = vr_nrdocmto THEN
@@ -2591,7 +2596,7 @@ BEGIN
          /*   Outros Historicos Lancados na conta Centralizadora  */
          IF vr_nrdctabb = vr_rel_nrdctabb AND
             INSTR(vr_dshsttrf,SUBSTR(vr_dshistor,01,04)) = 0 AND
-            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA') THEN
+            vr_dshistor NOT IN ('0144TRANSF AGENDADA','0144TRANSFERENCIA','0729TRANSFERENCIA','0144TRANSF PERIODIC') THEN
            vr_cdcritic:= 245;
          ELSIF INSTR(vr_dshstdep,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Deposito */
            vr_flgdepos:= TRUE;
@@ -2617,7 +2622,7 @@ BEGIN
            vr_flgestor:= FALSE;
            vr_flgdebit:= TRUE;
            vr_flgdevol:= FALSE;
-         ELSIF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 THEN /* Devolucoes */  
+         ELSIF SUBSTR(vr_dshistor,01,04) = '0114' THEN /* Devolucoes recebidas 0114*/  
            vr_flgdepos:= FALSE;
            vr_flgchequ:= FALSE;
            vr_flgestor:= FALSE;
@@ -3269,12 +3274,10 @@ BEGIN
              vr_nrdocmto:= vr_nrdocmt2;
            END IF;
 
-           /* Devolucoes */
-           IF vr_cdcritic = 0 AND vr_flgdevol THEN             
-             IF SUBSTR(vr_dshistor,01,04) = '0114' THEN
-                vr_cdhistor:= 351;
-                vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
-             END IF;
+           /* Devolucoes recebidas 0114*/
+           IF vr_cdcritic = 0 AND vr_flgdevol THEN                          
+             vr_cdhistor:= 351;
+             vr_cdpesqbb:= ' '; /*Limpo o cdpesqbb para que qdo for este historico ele nao apareca no extrato*/
 
              vr_nrdocmt2:= vr_nrdocmto;
              WHILE TRUE LOOP
@@ -4620,7 +4623,8 @@ BEGIN
                                               ,pr_tpintegr => vr_contaarq) LOOP
            /*   Utilizado para a Somatoria dos Valores de Devolucao  */
            vr_dshistor:= TRIM(SUBSTR(rw_craprej_tot.dshistor,1,15));
-           IF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 THEN
+           IF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 OR 
+              SUBSTR(vr_dshistor,01,04) = '0114' THEN
              --Se existir crawtot
              IF vr_tab_crawtot.EXISTS(vr_dshistor) THEN
                vr_tab_crawtot(vr_dshistor).qtlancto:= vr_tab_crawtot(vr_dshistor).qtlancto + 1;

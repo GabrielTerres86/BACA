@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 08/01/2016
+    Data    : Marco/2010                   Ultima atualizacao: 04/08/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSAO FICHA CADASTRAL
 
@@ -56,6 +56,9 @@
                              Eliminado o campo nmdsecao (Tiago Castro - RKAM).
                              
                 08/01/2016 - #350828 Criacao da tela PEP (Carlos)
+
+                04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
+                             (Jaison/Anderson)
 
 .............................................................................*/
 
@@ -156,7 +159,7 @@ PROCEDURE Busca_Impressao:
             END.
 
         /* Busca dados da agencia */
-        FOR FIRST crapage FIELDS(cdagenci nmresage cdcidade)
+        FOR FIRST crapage FIELDS(cdagenci nmresage idcidade)
                           WHERE crapage.cdcooper = par_cdcooper     AND
                                 crapage.cdagenci = crapass.cdagenci 
                                 NO-LOCK:
@@ -167,7 +170,7 @@ PROCEDURE Busca_Impressao:
         /* f_identi */
         IF AVAIL crapage THEN
         DO:
-            FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade NO-LOCK NO-ERROR.
+            FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade NO-LOCK NO-ERROR.
         
             ASSIGN tt-fcad.dscidade = IF AVAIL crapmun 
                                       THEN crapmun.dscidade

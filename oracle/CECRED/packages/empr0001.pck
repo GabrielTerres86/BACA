@@ -2246,7 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_qtdiamor NUMBER; --> Qtde de dias entre a data atual e a calculada
       vr_txdiaria NUMBER(18, 10); --> Taxa para calculo de mora
       vr_dstextab craptab.dstextab%TYPE;
-    
+
     BEGIN
       -- Criar um bloco para faciliar o tratamento de erro
       BEGIN
@@ -8886,6 +8886,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)             
                    
                    17/03/2016 - Limpar campos de saldo ai liquidar crappep SD366229 (Odirlei-AMcom)
+
+                   31/10/2016 - Validação dentro para identificar
+                                parcelas ja liquidadas (AJFink - SD#545719)
+
     ............................................................................. */
   
     DECLARE
@@ -8986,7 +8990,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-      
+
+        --SD#545719 inicio
+        IF rw_crappep.inliquid = 1 THEN
+          -- Atribui críticas
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada.';
+          -- Gera exceção
+          RAISE vr_exc_saida;
+        END IF;
+        --SD#545719 fim
+
         --Buscar registro emprestimo
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper --> Cooperativa
                        ,pr_nrdconta => pr_nrdconta --> Numero da Conta
@@ -9894,7 +9908,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)             
     
                    17/03/2016 - Limpar campos de saldo ai liquidar crappep SD366229 (Odirlei-AMcom)
-    
+
+                   31/10/2016 - Validação dentro para identificar
+                                parcelas ja liquidadas (AJFink - SD#545719)
+
     ............................................................................. */
   
     DECLARE
@@ -9992,6 +10009,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crappep;                
         END IF;  
+
+        --SD#545719 inicio
+        IF rw_crappep.inliquid = 1 THEN
+          -- Atribui críticas
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada..';
+          -- Gera exceção
+          RAISE vr_exc_saida;
+        END IF;
+        --SD#545719 fim
 
         /* Cursor de Emprestimos */
         OPEN cr_crapepr(pr_cdcooper => rw_crappep.cdcooper
@@ -10629,6 +10656,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 "pc_valida_pagamento_normal_parcela". (James)
 
                    16/10/2015 - Zerar o campo vlsdvsji quando liquidar a parcela PP (Oscar)                          
+
+                   31/10/2016 - Validação dentro para identificar
+                                parcelas ja liquidadas (AJFink - SD#545719)
+
     ............................................................................. */
   
     DECLARE
@@ -10717,7 +10748,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_crappep;
-      
+
+        --SD#545719 inicio
+        IF rw_crappep.inliquid = 1 THEN
+          -- Atribui críticas
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada...';
+          -- Gera exceção
+          RAISE vr_exc_saida;
+        END IF;
+        --SD#545719 fim
+
         --Buscar registro emprestimo
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper --> Cooperativa
                        ,pr_nrdconta => pr_nrdconta --> Numero da Conta
@@ -13423,7 +13464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              vr_cdcritic := 0;
              vr_dscritic := 'Parcela ja liquidada';
              -- Gera exceção
-             RAISE vr_exc_erro;					 
+             RAISE vr_exc_erro;
            END IF;
   				 
            -- Parcela em dia

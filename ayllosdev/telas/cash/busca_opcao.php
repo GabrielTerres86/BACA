@@ -6,7 +6,8 @@
  * OBJETIVO     : Rotina para busca
  *ALTERAÇÃO     : 27/05/2014 - Incluido a informação de espécie de deposito e
                   relatório do mesmo. (Andre Santos - SUPERO)
- 
+
+                  27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
  */
 ?>
  
@@ -179,6 +180,67 @@
 		
 	} else if ( $operacao == 'diretorio' ) {
 		include('form_diretorio.php');
+
+	} else if ( $operacao == 'opcaoS' ) {
+
+        $xml  = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrterfin>".$nrterfin."</nrterfin>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "TELA_CASH", "CASH_DADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+            $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+        }
+
+        $registro     = $xmlObject->roottag->tags[0];
+        $flganexo_pa  = getByTagName($registro->tags,'FLGANEXO_PA');
+        $flganexo_pa  = $flganexo_pa == '' ? 1 : $flganexo_pa;
+        $nmterminal   = getByTagName($registro->tags,'NMTERMINAL');
+        $dshorario    = getByTagName($registro->tags,'DSHORARIO');
+        $taa_dsendcop = getByTagName($registro->tags,'DSLOGRADOURO');
+        $taa_dscomple = getByTagName($registro->tags,'DSCOMPLEMENTO');
+        $taa_nrendere = getByTagName($registro->tags,'NRENDERE');
+        $taa_nmbairro = getByTagName($registro->tags,'NMBAIRRO');
+        $taa_nrcepend = getByTagName($registro->tags,'NRCEPEND');
+        $taa_idcidade = getByTagName($registro->tags,'IDCIDADE');
+        $taa_dscidade = getByTagName($registro->tags,'DSCIDADE');
+        $taa_cdestado = getByTagName($registro->tags,'CDESTADO');
+        $taa_nrlatitu = getByTagName($registro->tags,'NRLATITU');
+        $taa_nrlongit = getByTagName($registro->tags,'NRLONGIT');
+        
+        $xml  = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <cdagenci>".$cdagenci."</cdagenci>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "TELA_CASH", "CASH_DADOS_PAC", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO"){
+            $msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial()', false);
+        }
+
+        $pa_registro = $xmlObject->roottag->tags[0];
+        $pa_nmresage = getByTagName($pa_registro->tags,'NMRESAGE');
+        $pa_dsendcop = getByTagName($pa_registro->tags,'DSENDCOP');
+        $pa_nrendere = getByTagName($pa_registro->tags,'NRENDERE');
+        $pa_nmbairro = getByTagName($pa_registro->tags,'NMBAIRRO');
+        $pa_dscomple = getByTagName($pa_registro->tags,'DSCOMPLE');
+        $pa_nrcepend = getByTagName($pa_registro->tags,'NRCEPEND');
+        $pa_cdufdcop = getByTagName($pa_registro->tags,'CDUFDCOP');
+        $pa_idcidade = getByTagName($pa_registro->tags,'IDCIDADE');
+        $pa_dscidade = getByTagName($pa_registro->tags,'NMCIDADE');
+        $pa_nrlatitu = getByTagName($pa_registro->tags,'NRLATITU');
+        $pa_nrlongit = getByTagName($pa_registro->tags,'NRLONGIT');
+
+        include('form_opcaoS.php');	
 	}
 
 ?>

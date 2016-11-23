@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0021.p
    Autor   : Murilo/David
-   Data    : Setembro/2007                     Ultima atualizacao: 25/02/2014
+   Data    : Setembro/2007                     Ultima atualizacao: 27/09/2016
 
    Dados referentes ao programa:
 
@@ -17,6 +17,10 @@
                             
                25/02/2014 - Criado procedures valida-dados-alteracao-plano e
                             altera-plano. (Fabricio)
+
+               27/09/2016 - Ajustado rotina de Estorno para que utilize
+                            a rotina de cancelamento de integralização.
+                            M169 (Ricardo Linhares).
 
 ............................................................................ */
 
@@ -113,6 +117,8 @@ PROCEDURE valores_entrada:
                         tt-lancamentos.nrdocmto = DECI(tt-param-i.valorCampo).
                     WHEN "vllanmto" THEN
                         tt-lancamentos.vllanmto = DECI(tt-param-i.valorCampo).
+                    WHEN "lctrowid" THEN 
+                        tt-lancamentos.lctrowid = INTE(tt-param-i.valorCampo).
                 END CASE.
             END.
         END CASE.
@@ -589,9 +595,10 @@ PROCEDURE integraliza_cotas:
                                   INPUT aux_nmdatela,
                                   INPUT aux_idorigem,
                                   INPUT aux_nrdconta,
+                                  INPUT aux_idseqttl,
                                   INPUT aux_dtmvtolt,
                                   INPUT aux_vintegra,
-                           INPUT-OUTPUT aux_flgsaldo,
+                                  INPUT aux_flgsaldo,
                                  OUTPUT TABLE tt-erro).
 
     IF RETURN-VALUE = "NOK" THEN

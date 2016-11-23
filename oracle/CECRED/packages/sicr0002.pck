@@ -5,7 +5,7 @@ create or replace package cecred.SICR0002 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 02/08/2016
+     Data    : Junho/2014                       Ultima atualizacao: 27/10/2016
 
      Dados referentes ao programa:
 
@@ -47,7 +47,9 @@ create or replace package cecred.SICR0002 is
 							  
 					       02/08/2016 - Corrigi a forma de tratamento dos lancamentos da craplau filtrados, para
 							                considerar aqueles com data de pagamento nos finais de semana.
-                              SD 497612 (Carlos Rafael Tanholi) 			        
+                              SD 497612 (Carlos Rafael Tanholi) 
+                             
+                 27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)			        
   ......................................................................................................... */
 
   -- Efetuar consulta dos debitos
@@ -77,7 +79,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Ranghetti
-     Data    : Junho/2014                       Ultima atualizacao: 11/10/2016
+     Data    : Junho/2014                       Ultima atualizacao: 27/10/2016
 
      Dados referentes ao programa:
 
@@ -132,6 +134,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
                               
                  11/10/2016 - Incluir valor do lancamento como parametro na verificacao da 
                               craplau (Lucas Ranghetti #537385)
+                              
+                 27/10/2016 - SD509982 - Ajuste leitura registros DEBCON (Guilherme/SUPERO)
   ......................................................................................................... */
 
   -- VARIAVEIS A UTILIZAR
@@ -195,9 +199,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
     FROM  craplau lau
     WHERE lau.cdcooper  = pr_cdcooper
     AND   lau.dtmvtopg BETWEEN pr_dtmovini AND pr_dtmvtopg
-		AND  (lau.insitlau  = 1     OR
-		     (lau.insitlau  = 3     AND
-				  lau.cdcritic  = 967))				
+		AND  ((lau.insitlau  = 1  AND
+           lau.cdcritic  IN (717,964,967)
+          )    OR
+		      (lau.insitlau  = 3     AND
+          lau.cdcritic  = 967)
+          )			
     AND   ',' || pr_lshistor || ',' LIKE ('%,' || lau.cdhistor || ',%'); -- Retorna historicos passados na listagem
     rw_craplau cr_craplau%ROWTYPE;
 
@@ -319,8 +326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sicr0002 AS
         RETURN;
     END;
     
-    pc_retorna_lista_historicos (pr_cdcooper,
-                                 vr_lshistor);
+    pc_retorna_lista_historicos (pr_cdcooper, vr_lshistor);
 
     -- Data anterior util
     vr_dtmovini := gene0005.fn_valida_dia_util(pr_cdcooper,

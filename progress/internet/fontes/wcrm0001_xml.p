@@ -4,7 +4,7 @@
    Sistema : CRM 
    Sigla   : CRM
    Autor   : Rosangela
-   Data    : Maio/2006                   Ultima Atualizacao: 24/11/2011
+   Data    : Maio/2006                   Ultima Atualizacao: 28/10/2016
    
    Dados referentes ao programa:
    Frequencia: esporadica(internet)
@@ -14,7 +14,12 @@
    
                24/11/2011 - Ajuste na data da agenda (David).
  
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)
+														
 ..............................................................................*/
+ 
+{ sistema/generico/includes/var_log_progrid.i }
  
 CREATE WIDGET-POOL.
  
@@ -49,6 +54,8 @@ END FUNCTION.
 OUTPUT-CONTENT-TYPE ("text/xml":U).
 
 ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper")).
+
+RUN insere_log_progrid("WPGD0001_xml.p",STRING(par_cdcooper)).
 
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.

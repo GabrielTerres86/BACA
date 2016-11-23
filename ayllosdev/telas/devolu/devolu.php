@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Mostrar tela DEVOLU
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
  *					   
  * --------------
  */
@@ -81,7 +81,7 @@
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table width="600" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
 																		<!-- INCLUDE DA TELA DE PESQUISA -->
@@ -92,11 +92,15 @@
 																		
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
+																				
 																			<div id="divBotoes" style='text-align:center; margin-bottom: 10px; display:none;' >
 																				<input type="hidden" id="cdsitbot" name="cdsitbot" value="0">
                                                                                 <a href="#" class="botao" id="btVoltar" name="btnVoltar" onClick="btnVoltar();return false;" style="float:none;">Voltar</a>
-																		    </div>
-																		</div>                                                                       
+																				
+																			</div>
+																			<div id="divImagem"></div>
+																		</div>
+																		
 																		<form id="frmImpressao" name="frmImpressao" >
 																			<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 																			<input name="nroficon" id="nroficon" type="hidden" value="" />

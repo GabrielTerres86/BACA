@@ -21,7 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                             Chamado 421994 (Guilherme/SUPERO)
 
                03/05/2016 - Alterada pc_gps_agmto_novo para passar TRUE no "pr_flgagend" na chamada da
-              pc_gera_protocolo_md5 (Guilherme/SUPERO)
+							pc_gera_protocolo_md5 (Guilherme/SUPERO)
 
                17/05/2016 - SD451205 - (pc_gps_validar_sicredi) Definir dtdebito da LAU quando cancelar Agendamento GPS
                               (pc_gps_validar_sicredi-INET0001) Passar a Data Débito ao invés de Data Vencimento na validação de limites
@@ -30,9 +30,9 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 
                27/05/2016 - SD456783 - Corrigida a linha digitável da LAU quando vindo por Leitora de Cod Barras
                             Retirada validação de Data Agendamento quando apenas validação (Guilherme/SUPERO)
-
+  
                22/06/2016 - Alterada a pasta de gravacao do arquivo XML de salvar/ para salvar/gps/
-              Correcao do parametro passado para a pc_verifica_operacao informando que
+							Correcao do parametro passado para a pc_verifica_operacao informando que
                             trata-se de um agendamento ou pagamento (Guilherme/SUPERO)
 
                23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
@@ -301,7 +301,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-END inss0002;
+END INSS0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
@@ -512,7 +512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          AND lgp.mmaacomp  = TO_NUMBER(p_mmaacomp)
          AND lgp.vlrtotal  = p_vlrtotal
          AND lgp.cddpagto  = p_cddpagto
-         AND lgp.flgpagto  = 1; --TRUE
+         AND lgp.flgpagto  = 1 --TRUE
+         AND lgp.flgativo  = 1;
 
     -- Cursor CRAPLGP para identificar Agendamento
     CURSOR cr_lgp_agp(p_cdcooper IN craplgp.cdcooper%TYPE
@@ -767,7 +768,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                ,inpesgps
                ,dtvencto
                ,dstiparr
-               ,nrseqagp)
+               ,nrseqagp
+               ,flgativo)
         VALUES (pr_cdcooper
                ,pr_craplot.dtmvtolt
                ,pr_craplot.cdagenci
@@ -796,6 +798,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                ,pr_dtvencto
                ,pr_dstiparr
                ,pr_nrseqagp
+               ,1 -- flgativo
                )
              RETURNING ROWID
              INTO pr_craplgp_rowid;
@@ -822,7 +825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       --Monta mensagem de critica
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na inss0002.pc_atualiza_pagamento --> ' ||
+      pr_dscritic := 'Erro na INSS0002.pc_atualiza_pagamento --> ' ||
                      SQLERRM;
 
   END pc_atualiza_pagamento;
@@ -991,7 +994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     IF pr_indpagto = 'A' THEN
       vr_dtdenvio := to_char(pr_dtvencto,'YYYY-MM-DD') || 'T00:00:00';
     ELSE
-      vr_dtdenvio := to_char(pr_dtmvtolt,'YYYY-MM-DD') || 'T00:00:00';
+    vr_dtdenvio := to_char(pr_dtmvtolt,'YYYY-MM-DD') || 'T00:00:00';
     END IF;
 
 
@@ -1044,15 +1047,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
         END IF;
         -- Fechar o cursor
         CLOSE cr_gps;
-
+        
         vr_dtdebito := rw_gps.dtdebito;
 
       ELSE -- Pagamento ou apenas Validação
         IF pr_indpagto = 'A' THEN
           vr_dtdebito := pr_dtvencto;
-        ELSE -- apenas VALIDACAO
-          vr_dtdebito := pr_dtmvtolt;
-        END IF;
+        ELSE -- apenas VALIDACAO 
+        vr_dtdebito := pr_dtmvtolt;
+      END IF;
       END IF;
 
       IF pr_indpagto = 'A' THEN
@@ -1356,7 +1359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       --Monta mensagem de critica
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro na inss0002.pc_gps_validar_sicredi --> ' || SQLERRM;
+      pr_dscritic := 'Erro na INSS0002.pc_gps_validar_sicredi --> ' || SQLERRM;
 
   END pc_gps_validar_sicredi;
 
@@ -1762,7 +1765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
       -- Completa literal com o Identificador
       pr_dslitera := pr_dslitera || pr_cdidenti;
-      
+
 
       -- Nr Sequencial para enviar no XML do SICREDI apenas
       vr_busca    :=  TRIM(pr_cdcooper)    || ';' ||
@@ -2180,6 +2183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        WHERE lgp.cdcooper = gps.cdcooper
          AND lgp.nrctapag = gps.nrdconta
          AND lgp.nrseqagp = gps.nrseqagp
+         AND lgp.flgativo = 1 -- Guia Ativa
          AND gps.nrdconta = pr_nrdconta
          AND gps.cdcooper = pr_cdcooper
          AND gps.insituacao = 0 -- ATIVA
@@ -2669,7 +2673,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND craplgp.cdidenti2 = p_cdidenti
            AND craplgp.mmaacomp  = to_number(p_dtcompet)
            AND craplgp.vlrtotal  = p_vlrtotal
-           AND craplgp.cddpagto  = p_cddpagto;
+           AND craplgp.cddpagto  = p_cddpagto
+           AND craplgp.flgativo  = 1;
      rw_craplgp cr_craplgp%ROWTYPE;
 
      -- Buscar os dados do lote
@@ -2741,12 +2746,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
      vr_cdcritic   NUMBER;
      vr_des_reto   VARCHAR2(500);
 
-     FUNCTION fn_centraliza(pr_frase IN VARCHAR2, pr_tamlinha IN PLS_INTEGER) RETURN VARCHAR2 IS
+     FUNCTION fn_centraliza(pr_frase IN VARCHAR2, pr_tamlinha IN PLS_INTEGER) RETURN VARCHAR2 IS 
        vr_contastr PLS_INTEGER;
   BEGIN
        vr_contastr := TRUNC( (pr_tamlinha - LENGTH(TRIM(pr_frase))) / 2 ,0);
        RETURN LPAD(NVL(' ',' '),vr_contastr,' ')||TRIM(pr_frase);
-     END fn_centraliza;
+     END fn_centraliza;          
 
   BEGIN
      vr_cdbarras := NVL(pr_cdbarras,' ');
@@ -3261,6 +3266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,tpleitur
                          ,dstiparr
                          ,nrseqagp
+                         ,flgativo
                          )
                   VALUES (pr_cdcooper             -- cdcooper
                          ,rw_crapdat.dtmvtocd     -- dtmvtolt
@@ -3291,6 +3297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                          ,pr_idleitur             -- idleitur
                          ,vr_dstiparr             -- dstiparr
                          ,vr_nrseqagp             -- nrseqagp
+                         ,1                       -- flgativo
                          );
 
     EXCEPTION
@@ -3548,7 +3555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
          ||to_char(to_date(rw_crapcop.hrinisac,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hrinisac,'SSSSS'),'MI'),'00')||' as '
          ||to_char(to_date(rw_crapcop.hrfimsac,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hrfimsac,'SSSSS'),'MI'),'00') ,48);
        vr_tab_literal(39):= fn_centraliza('OUVIDORIA - '||rw_crapcop.nrtelouv,48);
-       vr_tab_literal(40):= fn_centraliza('Atendimento nos dias uteis das '
+       vr_tab_literal(40):= fn_centraliza('Atendimento nos dias uteis das '         
          ||to_char(to_date(rw_crapcop.hriniouv,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hriniouv,'SSSSS'),'MI'),'00')||' as '
          ||to_char(to_date(rw_crapcop.hrfimouv,'SSSSS'),'HH24"H"')||nullif(to_char(to_date(rw_crapcop.hrfimouv,'SSSSS'),'MI'),'00') ,48);
        vr_tab_literal(41):= ' ';
@@ -3559,7 +3566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
        vr_tab_literal(46):= ' ';
        vr_tab_literal(47):= ' ';
        vr_tab_literal(48):= ' ';
-       vr_tab_literal(49):= ' ';
+       vr_tab_literal(49):= ' ';       
        vr_tab_literal(50):= ' ';
        vr_tab_literal(51):= ' ';
        vr_tab_literal(52):= ' ';
@@ -4394,7 +4401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
   EXCEPTION
       WHEN OTHERS THEN
         --Monta mensagem de critica
-        pr_dscritic := 'Erro na inss0002.pc_gps_cooperativa --> '|| SQLERRM;
+        pr_dscritic := 'Erro na INSS0002.pc_gps_cooperativa --> '|| SQLERRM;
   END pc_gps_cooperativa;
 
   /*---------------------------------------------------------------------------------------------------------------
@@ -4624,7 +4631,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
             OR  p_cdagenci = 0)
            AND (lgp.nrdcaixa = p_nrdcaixa
             OR p_nrdcaixa = 0)
-           AND lgp.flgpagto  = 1;
+           AND lgp.flgpagto  = 1
+           AND lgp.flgativo  = 1;
      rw_craplgp cr_craplgp%ROWTYPE;
 
 
@@ -4819,6 +4827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
            AND (lgp.cdidenti2 = p_cdidenti OR
                    p_cdidenti = 0)
            AND lgp.flgpagto  = 1
+           AND lgp.flgativo  = 1
            AND ope.cdcooper  = lgp.cdcooper
            AND UPPER(ope.cdoperad)  = UPPER(lgp.cdopecxa)
            ORDER BY lgp.cdagenci
@@ -5439,7 +5448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
     vr_cdcompet := TRIM(TO_CHAR(gene0002.fn_mask(rw_craplgp.mmaacomp,'999999'))); -- Fica 092015
 
     -- Chamar a rotina para validação do pagamento
-    inss0002.pc_gps_pagamento(pr_cdcooper => pr_cdcooper             -- pr_cdcooper
+    INSS0002.pc_gps_pagamento(pr_cdcooper => pr_cdcooper             -- pr_cdcooper
                              ,pr_nrdconta => pr_nrdconta             -- pr_nrdconta
                              ,pr_cdagenci => 90  --fixo, para aparecer LISGPS rw_craplgp.cdagenci     -- pr_cdagenci
                              ,pr_nrdcaixa => 900 --fixo, rw_craplgp.nrdcaixa     -- pr_nrdcaixa
@@ -5935,6 +5944,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
                                      '<Root><Erro>Rotina com erros</Erro></Root>');
   END pc_gps_arquivo_download;
 
-
-END inss0002;
+END INSS0002;
 /

@@ -147,6 +147,10 @@
                
                06/09/2016 - Removido a busca do preposto pelo proprio CPF do titular (Pessoa Jurídica)
 							              (Andrey - RKAM)
+
+               09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						    aux_qtminast referente a quantidade minima de assinatura
+						    conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
                
 			   17/10/2016 - Ajuste feito para que possa visualizar as opcoes de transacoes para
 							contas com inpessoa = 3 ao criar um novo operador. (SD 538293 - Kelvin)
@@ -362,6 +366,7 @@ PROCEDURE carrega-titulares.
     DEF VAR aux_inbloque AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_incadsen AS INTE INIT 0                             NO-UNDO.
     DEF VAR aux_qtdiaace AS INTE                                    NO-UNDO.
+    DEF VAR aux_qtminast AS INTE									NO-UNDO.
     
     DEF VAR h-b1wgen0058 AS HANDLE                                  NO-UNDO.
 
@@ -605,6 +610,7 @@ PROCEDURE carrega-titulares.
                                                  INPUT ?,     /* par_nrdrowid */
                                                 OUTPUT TABLE tt-crapavt,
                                                 OUTPUT TABLE tt-bens,
+												OUTPUT aux_qtminast,
                                                 OUTPUT TABLE tt-erro) NO-ERROR.
 
                 DELETE PROCEDURE h-b1wgen0058.

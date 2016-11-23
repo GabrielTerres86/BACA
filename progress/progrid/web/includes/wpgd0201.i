@@ -6,6 +6,10 @@ Objetivo: Criar um vetor de PACs, código do PAC e nome abreviado do PAC,
           
   Alterações: 01/07/2016 - Ajuste não trazer a opção 'Selecione o PA'  quando 
                            não for super usuário (Vanessa).
+
+              02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                           (Jaison/Anderson)
+
   ............................................................................ */
 
 /* "201" para nao conflitar com outros fontes */
@@ -22,24 +26,26 @@ IF   AVAILABLE gnapses   THEN
          IF   gnapses.nvoperad = 0   OR
               gnapses.nvoperad = 3   THEN
               FOR EACH crapage WHERE crapage.cdcooper = par_cdcooper97   AND
-                                     crapage.insitage = 1 /* Ativo */    NO-LOCK
+                                    (crapage.insitage = 1  OR       /* Ativo */
+                                     crapage.insitage = 3) NO-LOCK  /* Temporariamente Indisponivel */
                                      BY crapage.nmresage:
 
                   /* Despreza PAC 90-INTERNET e PAC 91-TAA */
                   IF   crapage.cdagenci = 90   OR
                        crapage.cdagenci = 91   THEN
                        NEXT.
-                   
+     
                   aux_cdagenci = aux_cdagenci + "," + crapage.nmresage + "," + TRIM(STRING(crapage.cdagenci)).
                   
               END. /* for each */
          ELSE
-              DO: 
+              DO:
                   aux_cdagenci = "--Selecione PA--,0".
                   
                   FIND crapage WHERE crapage.cdcooper = par_cdcooper97     AND
                                      crapage.cdagenci = gnapses.cdagenci   AND
-                                     crapage.insitage = 1 /* Ativo */                    
+                                    (crapage.insitage = 1  OR  /* Ativo */
+                                     crapage.insitage = 3)     /* Temporariamente Indisponivel */
                                      NO-LOCK NO-ERROR.
                   IF   AVAILABLE crapage   THEN
                        aux_cdagenci = aux_cdagenci + "," + crapage.nmresage + "," + TRIM(STRING(crapage.cdagenci)).

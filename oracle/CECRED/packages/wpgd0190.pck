@@ -56,7 +56,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
   --  Sistema  : CECRED
   --  Sigla    : WPGD
   --  Autor    : Jonathan Cristiano da Silva - RKAM
-  --  Data     : Setembro/2015.                   Ultima atualizacao: 12/05/2016
+  --  Data     : Setembro/2015.                   Ultima atualizacao: 18/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -65,6 +65,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
   --
   -- Alteracoes: 12/05/2016 - Ajustado para buscar o CPF do participante da crapsnh, quando for pessoa
   --                          juridica e possuir idseqttl(socios/procudadores)(Odirlei-AMcom) 
+  --
+  --             18/11/2016 - Ajustado rotinas incluindo upper na leitura do campo nmlogin_particip
+  --                          para não influenciar a forma que o cooperado informa o login ao reativar a conta.
+  --                          SD558339 (Odirlei-AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
   -- Rotina geral de insert, update, select e delete da tela WPGD0190 na tabela tbead_limite_inscricoes
@@ -244,7 +248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
       WHEN OTHERS THEN
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em crappri: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em pc_tbead_limite_inscricoes: ' || SQLERRM;
 
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -369,6 +373,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
       
     BEGIN
       
+      --> Garantir que dados foram informados
+      IF pr_cddopcao IN ('I','A','E') THEN
+      
+        IF pr_cddopcao <> 'E' THEN 
+          IF TRIM(pr_dsemlptp) IS NULL THEN
+            vr_dscritic := 'E-mail deve ser informado.';
+            RAISE vr_exc_saida;
+          END IF;
+          
+          
+          IF TRIM(pr_nmextptp) IS NULL THEN
+            vr_dscritic := 'Nome do participante deve ser informado.';
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;
+        
+        IF TRIM(pr_nmlogptp) IS NULL THEN
+          vr_dscritic := 'Login deve ser informado.';
+          RAISE vr_exc_saida;
+        END IF;
+        
+      END IF;
+      
       -- Verifica o tipo de acao que sera executada
       CASE pr_cddopcao
         
@@ -379,8 +406,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
               FROM tbead_inscricao_participante
              WHERE cdcooper         = pr_cdcooper AND 
                    nrdconta         = pr_nrdconta AND 
-                   dsemail_particip = pr_dsemlptp AND 
-                   nmlogin_particip = pr_nmlogptp;
+                   upper(dsemail_particip) = upper(pr_dsemlptp) AND 
+                   upper(nmlogin_particip) = upper(pr_nmlogptp);
           EXCEPTION
             WHEN NO_DATA_FOUND THEN
                  VR_EXISTE:=0;
@@ -391,7 +418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
             SELECT idcadast_ead
               INTO VR_EXISTE_LOGIN
               FROM tbead_inscricao_participante
-             WHERE nmlogin_particip = pr_nmlogptp;
+             WHERE upper(nmlogin_particip) = upper(pr_nmlogptp);
           EXCEPTION
             WHEN NO_DATA_FOUND THEN
                  VR_EXISTE_LOGIN:=0;
@@ -428,8 +455,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
                      dtdemiss         = ''
                WHERE cdcooper         = pr_cdcooper AND
                      nrdconta         = pr_nrdconta AND
-                     dsemail_particip = pr_dsemlptp AND
-                     nmlogin_particip = pr_nmlogptp;
+                     upper(dsemail_particip) = upper(pr_dsemlptp) AND
+                     upper(nmlogin_particip) = upper(pr_nmlogptp);
                      
               -- Buscar script para conexão curl
               vr_script_curl := gene0001.fn_param_sistema('CRED',0,'EAD_PARAM_CURL');
@@ -750,7 +777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
           vr_retxml := XMLType.createXML('<Root><DSMSGERR>' || pr_dscritic || '</DSMSGERR></Root>');
         WHEN OTHERS THEN
           ROLLBACK;
-          pr_dscritic := 'Erro geral em crappri: ' || SQLERRM;
+          pr_dscritic := 'Erro geral em pc_tbead_inscricao_cooperado: ' || SQLERRM;
           -- Carregar XML padrão para variável de retorno não utilizada.
           -- Existe para satisfazer exigência da interface.
           vr_retxml := XMLType.createXML('<Root><DSMSGERR>' || pr_dscritic || '</DSMSGERR></Root>');
@@ -849,7 +876,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WPGD0190 IS
           
             UPDATE tbead_inscricao_participante 
                SET dtdemiss = SYSDATE
-             WHERE nmlogin_particip = rw_ead.nmlogin_particip;
+             WHERE upper(nmlogin_particip) = upper(rw_ead.nmlogin_particip);
           
           END IF;    
         

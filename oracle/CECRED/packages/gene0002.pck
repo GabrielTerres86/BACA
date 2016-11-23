@@ -137,6 +137,12 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
                        ,pr_nmsaida  OUT VARCHAR2                 --> Path do arquivo gerado
                        ,pr_des_erro OUT VARCHAR2);               --> Saída com erro
 
+  --> Procedimento para juntar varios PDFs
+  PROCEDURE pc_Juntar_Pdf( pr_dsdirarq  IN VARCHAR2           --> Diretorio de onde se encontram os arquivos PDFs
+                         ,pr_lsarqpdf  IN VARCHAR2           --> Lista dos nomes dos arquivos PDFs
+                         ,pr_nmpdfsai  IN VARCHAR2           --> Diretorio + nome do arquivo PDF de saida
+                         ,pr_dscritic OUT VARCHAR2);        --> Critica caso ocorra
+                         
   /* Procedimento para tratamento de arquivos ZIP*/
   PROCEDURE pc_zipcecred(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                         ,pr_tpfuncao  IN VARCHAR2 DEFAULT 'A'      --> Tipo de função (A-Add;E-Extract;V-View)
@@ -219,6 +225,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
                               ,pr_flsemqueb IN VARCHAR2 DEFAULT 'N'     --> Flag S/N para não gerar quebra no relatório
                               ,pr_flappend  IN VARCHAR2 DEFAULT 'N'     --> Indica que a solicitação irá incrementar o arquivo
                               ,pr_parser    IN VARCHAR2 DEFAULT 'D'     --> Seleciona o tipo do parser. "D" para VTD e "R" para Jasper padrão
+                              ,pr_nrvergrl  IN crapslr.nrvergrl%TYPE DEFAULT 0 --> Numero da versão da função de geração de relatorio
                               ,pr_des_erro  OUT VARCHAR2);              --> Saída com erro
 
   /* Rotina para solicitar geração de arquivo lst a partir de um XML de dados */
@@ -311,6 +318,11 @@ CREATE OR REPLACE PACKAGE CECRED.gene0002 AS
   FUNCTION fn_centraliza_texto (pr_dstexto  IN VARCHAR2       --> Texto de Entrada
                                ,pr_dscarac  IN VARCHAR2       --> Caracter para preencher 
                                ,pr_tamanho  IN INTEGER) RETURN VARCHAR2; --> Tamanho da String
+
+  -- Função para retornar o valor em extenso
+  FUNCTION fn_valor_extenso (pr_idtipval  IN VARCHAR2      --> Tipo de valor (M-Monetario, P-Porcentagem, I-Inteiro)
+                            ,pr_valor     IN VARCHAR2   )  --> Valor a ser convertido para extenso
+                            RETURN VARCHAR2;                               
 END gene0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
@@ -1768,6 +1780,78 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     END;
   END pc_cria_PDF;
 
+  --> Procedimento para juntar varios PDFs
+  PROCEDURE pc_Juntar_Pdf( pr_dsdirarq  IN VARCHAR2           --> Diretorio de onde se encontram os arquivos PDFs
+                         ,pr_lsarqpdf  IN VARCHAR2           --> Lista dos nomes dos arquivos PDFs separados por ;
+                         ,pr_nmpdfsai  IN VARCHAR2           --> Diretorio + nome do arquivo PDF de saida
+                         ,pr_dscritic OUT VARCHAR2) IS       --> Critica caso ocorra
+    /*..............................................................................
+
+       Programa: pc_Juntar_Pdf
+       Autor   : Odirlei Busana (AMcom)
+       Data    : Setembro/2016                      Ultima atualizacao: 19/09/2016
+
+       Dados referentes ao programa:
+
+       Objetivo  : Procedimento para juntar/contatenar 2 ou mais arquivos PDFs separados por ;
+
+       Alteracoes: 
+    ..............................................................................*/
+    
+    vr_exc_erro   EXCEPTION;
+    vr_dscritic   VARCHAR2(1000);
+    
+    vr_dsscript   VARCHAR2(1000); 
+    vr_dscomand   VARCHAR2(1000); 
+    vr_typsaida   VARCHAR2(100);
+    
+  BEGIN
+   
+    IF pr_dsdirarq IS NULL THEN
+      vr_dscritic := 'Diretorio dos arquivos PDFs não informado.';
+      RAISE vr_exc_erro;    
+    END IF; 
+    
+    IF pr_lsarqpdf IS NULL THEN
+      vr_dscritic := 'Lista de arquivos PDFs não informada.';
+      RAISE vr_exc_erro;    
+    END IF; 
+    
+    IF pr_nmpdfsai IS NULL THEN
+      vr_dscritic := 'Saida do PDF não informada.';
+      RAISE vr_exc_erro;    
+    END IF;
+    
+    --> Buscar script de merge
+    vr_dsscript :=  gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
+                                               pr_cdcooper => 0, 
+                                               pr_cdacesso => 'SCRIPT_MERGEPDF');
+                                              
+                                              
+    vr_dscomand := vr_dsscript||'  "'||pr_dsdirarq ||'" "'||
+                   pr_lsarqpdf||'" "'||pr_nmpdfsai||'"';
+
+  
+    gene0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+
+    -- Se retornou erro
+    IF vr_typsaida = 'ERR' OR instr(vr_dscritic,'NOK') > 0 THEN
+      vr_dscritic := substr(vr_dscritic,instr(vr_dscritic,'NOK') + 4);
+      vr_dscritic := 'Erro ao efetuar Merge dos PDFs: '||substr(vr_dscritic,1,60);
+      RAISE vr_exc_erro;
+    END IF;                                          
+  
+  
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro ao efetuar Merge dos PDFs: '||SQLERRM;
+  END pc_Juntar_Pdf;
+  
   /* Procedimento para tratamento de arquivos ZIP*/
   PROCEDURE pc_zipcecred(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Cooperativa conectada
                         ,pr_tpfuncao  IN VARCHAR2 DEFAULT 'A'      --> Tipo de função (A-Add;E-Extract;V-View)
@@ -2332,7 +2416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 10/04/2015
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 02/08/2016
     --
     --  Dados referentes ao programa:
     --
@@ -2354,6 +2438,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --              10/04/2015 - Alterado a chamada do comando "cat" para concatenação dos relatórios
     --                           para passar a usar o script concatena_relatorios.sh
     --                           (Adriano).
+    --
+    --              02/08/2016 - Ajuste na rotina de geração para utilizar a versão da rotina java de geração do 
+    --                           relatorio conforme a informada pelo programa gerador.
+    --                           PRJ314 - INDEXAÇÃO CENTRALIZADA (Odirlei-AMcom)
+    --
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2373,6 +2462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               ,slr.flsemque
               ,slr.cdparser
               ,slr.flappend
+              ,slr.nrvergrl
           FROM crapslr slr
          WHERE slr.nrseqsol = pr_nrseqsol;
       rw_crapslr cr_crapslr%ROWTYPE;
@@ -2422,6 +2512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
       --Variável para descrição de comando
       vr_comando   VARCHAR2(32767);
+
+      vr_scriptrl  VARCHAR2(100);
 
     BEGIN
       -- Busca das informaçoes do relatório solicitado
@@ -2554,8 +2646,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         ELSE
           vr_flsemqueb := 0;
         END IF;
+        
+        --> nome do parametro do script do relatorio
+        vr_scriptrl := 'SCRIPT_IREPORT';
+        IF rw_crapslr.nrvergrl > 0 THEN
+          vr_scriptrl := vr_scriptrl||'_V'||rw_crapslr.nrvergrl;
+        END IF;
+        
         -- Monta comando para execução via Shell (Java), caso os parâmetros do sistemas sejam nulos retorna o path padrão
-        vr_des_comando := nvl(gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'SCRIPT_IREPORT'), 'java -Xms512m -Xmx4000m -jar /usr/coop/ireport/_GeraRelatorio.jar')
+        vr_des_comando := nvl(gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,vr_scriptrl), 'java -Xms512m -Xmx4000m -jar /usr/coop/ireport/_GeraRelatorio.jar')
                        || ' "'  ||  vr_nom_direto||'/'||vr_nom_arqxml || '" "' || rw_crapslr.dsxmlnod || '" "'
                        || nvl(gene0001.fn_param_sistema('CRED',rw_crapslr.cdcooper,'ROOT_IREPORT'), '/usr/coop/ireport/') || rw_crapslr.dsjasper
                        || '" "' || vr_dsparams || '" "' || vr_nom_arqsai || '" '
@@ -3254,6 +3353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                               ,pr_flsemqueb IN VARCHAR2 DEFAULT 'N'     --> Flag S/N para não gerar quebra no relatório
                               ,pr_flappend  IN VARCHAR2 DEFAULT 'N'     --> Indica que a solicitação irá incrementar o arquivo
                               ,pr_parser    IN VARCHAR2 DEFAULT 'D'     --> Seleciona o tipo do parser. "D" para VTD e "R" para Jasper padrão
+                              ,pr_nrvergrl  IN crapslr.nrvergrl%TYPE DEFAULT 0 --> Numero da versão da função de geração de relatorio
                               ,pr_des_erro  OUT VARCHAR2) IS            --> Saída com erro
   BEGIN
     /* ..........................................................................
@@ -3298,6 +3398,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --               22/09/2015 - Adicionar validação para quando o relatorio for solicitado durante o processo
     --                            batch, o erro seja escrito no proc_batch, caso contrario no proc_message
     --                            (Douglas - Chamado 306525)
+    --
+    --               02/08/2016 - Inclusao do paramtro pr_nrvergrl, para permitir informar em qual versao da rotina
+    --                            java de geração de relatorio deve ser gerado.
+    --                            PRJ314 - INDEXAÇÃO CENTRALIZADA (Odirlei-AMcom)
     -- ............................................................................. */
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -3500,7 +3604,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                            ,flremarq
                            ,cdparser
                            ,flgbatch
-                           ,flappend)
+                           ,flappend
+                           ,nrvergrl)
                      VALUES(SYSDATE
                            ,pr_cdcooper
                            ,pr_cdprogra
@@ -3535,7 +3640,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                            ,pr_flgremarq
                            ,pr_parser
                            ,vr_flgbatch
-                           ,pr_flappend)
+                           ,pr_flappend
+                           ,pr_nrvergrl)
                   RETURNING nrseqsol INTO vr_nrseqsol;
       EXCEPTION
         WHEN OTHERS THEN
@@ -4127,7 +4233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-      BEGIN
+    BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -4136,7 +4242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                                  ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
       END pc_controla_log_batch;     
-      
+
     BEGIN
 
       -- Somente trabalhar com os arquivos de controle na base de produção
@@ -4245,7 +4351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           END IF;
         END IF;
       END LOOP;
-      
+
       -- Chamar rotina que verifica possíveis erros nos relatórios e avisa os responsáveis
       pc_aviso_erros_procrel;
 
@@ -5431,6 +5537,258 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         return(pr_dstexto);
     END;
   END fn_centraliza_texto;
+
+  -- Função para retornar o valor em extenso
+  FUNCTION fn_valor_extenso (pr_idtipval  IN VARCHAR2   --> Tipo de valor (M-Monetario, P-Porcentagem, I-Inteiro)
+                            ,pr_valor     IN VARCHAR2   )  --> Valor a ser convertido para extenso
+                            RETURN VARCHAR2 IS
+  /*............................................................................
+
+   Programa: fn_valor_extenso (Semelhante a b1wgen9999.valor-extenso)
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Odirlei Busana - AMcom
+   Data    : Fevereiro/2015                          Ultima atualizacao: 29/07/2016
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que chamado por outros programas.
+   Objetivo  : Retornar o valor em extenso
+
+
+   Alteracoes: 
+
+  .............................................................................*/
+    valor_string VARCHAR2(256);
+    valor_conv   VARCHAR2(25);    
+    tres_digitos VARCHAR2(3);
+    texto_string VARCHAR2(256);
+    vr_dsintplu  VARCHAR2(256);
+    vr_dsintsin  VARCHAR2(256);
+    vr_dsdecplu  VARCHAR2(256);
+    vr_dsdecsin  VARCHAR2(256);
+    vr_numero    NUMBER;
+    
+  BEGIN
+  
+    valor_conv := to_char(trunc((abs(pr_valor) * 100), 0), '0999999999999999999');
+    valor_conv := substr(valor_conv, 1, 18) || '0' || substr(valor_conv, 19, 2);
+    IF to_number(valor_conv) = 0 THEN
+      RETURN('Zero ');
+    END IF;
+    
+    IF pr_idtipval = 'M' THEN
+      vr_dsintplu := 'Reais ';  
+      vr_dsintsin := 'Real ';
+      vr_dsdecplu := 'centavos';  
+      vr_dsdecsin := 'centavo';
+    ELSIF pr_idtipval = 'P' THEN
+      vr_dsintplu := 'Inteiros ';  
+      vr_dsintsin := 'Inteiro ';
+      vr_dsdecplu := 'por cento';  
+      vr_dsdecsin := 'por cento';
+    ELSIF pr_idtipval = 'I' THEN
+      IF pr_valor < 1 THEN    
+        RETURN 'VALOR COM DECIMAIS, NAO COMPATIVEL COM NUMEROS INTEIROS';
+      END IF;  
+    END IF;
+    
+    FOR ind IN 1 .. 7 LOOP
+      tres_digitos := substr(valor_conv, (((ind - 1) * 3) + 1), 3);
+      texto_string := '';
+      
+      --> Garantir que para qnd informado apenas uma dezena
+      --> seja apresentado corretamente
+      IF pr_idtipval = 'P' AND 
+         ind = 7 AND
+         substr(tres_digitos,3,1) = 0 THEN
+        tres_digitos := to_char(tres_digitos/10,'fm000');
+      END IF; 
+      
+      -- Extenso para Centena
+      IF substr(tres_digitos, 1, 1) = '2' THEN
+        texto_string := texto_string || 'Duzentos ';
+      ELSIF substr(tres_digitos, 1, 1) = '3' THEN
+        texto_string := texto_string || 'Trezentos ';
+      ELSIF substr(tres_digitos, 1, 1) = '4' THEN
+        texto_string := texto_string || 'Quatrocentos ';
+      ELSIF substr(tres_digitos, 1, 1) = '5' THEN
+        texto_string := texto_string || 'Quinhentos ';
+      ELSIF substr(tres_digitos, 1, 1) = '6' THEN
+        texto_string := texto_string || 'Seiscentos ';
+      ELSIF substr(tres_digitos, 1, 1) = '7' THEN
+        texto_string := texto_string || 'Setecentos ';
+      ELSIF substr(tres_digitos, 1, 1) = '8' THEN
+        texto_string := texto_string || 'Oitocentos ';
+      ELSIF substr(tres_digitos, 1, 1) = '9' THEN
+        texto_string := texto_string || 'Novecentos ';
+      END IF;
+      IF substr(tres_digitos, 1, 1) = '1' THEN
+        IF substr(tres_digitos, 2, 2) = '00' THEN
+          texto_string := texto_string || 'Cem ';
+        ELSE
+          texto_string := texto_string || 'Cento ';
+        END IF;
+      END IF;
+      -- Extenso para Dezena
+      IF substr(tres_digitos, 2, 1) <> '0' AND
+         texto_string IS NOT NULL THEN
+        texto_string := texto_string || 'e ';
+      END IF;
+      IF substr(tres_digitos, 2, 1) = '2' THEN
+        texto_string := texto_string || 'Vinte ';
+      ELSIF substr(tres_digitos, 2, 1) = '3' THEN
+        texto_string := texto_string || 'Trinta ';
+      ELSIF substr(tres_digitos, 2, 1) = '4' THEN
+        texto_string := texto_string || 'Quarenta ';
+      ELSIF substr(tres_digitos, 2, 1) = '5' THEN
+        texto_string := texto_string || 'Cinquenta ';
+      ELSIF substr(tres_digitos, 2, 1) = '6' THEN
+        texto_string := texto_string || 'Sessenta ';
+      ELSIF substr(tres_digitos, 2, 1) = '7' THEN
+        texto_string := texto_string || 'Setenta ';
+      ELSIF substr(tres_digitos, 2, 1) = '8' THEN
+        texto_string := texto_string || 'Oitenta ';
+      ELSIF substr(tres_digitos, 2, 1) = '9' THEN
+        texto_string := texto_string || 'Noventa ';
+      END IF;
+      IF substr(tres_digitos, 2, 1) = '1' THEN
+        IF substr(tres_digitos, 3, 1) <> '0' THEN
+          IF substr(tres_digitos, 3, 1) = '1' THEN
+            texto_string := texto_string || 'Onze ';
+          ELSIF substr(tres_digitos, 3, 1) = '2' THEN
+            texto_string := texto_string || 'Doze ';
+          ELSIF substr(tres_digitos, 3, 1) = '3' THEN
+            texto_string := texto_string || 'Treze ';
+          ELSIF substr(tres_digitos, 3, 1) = '4' THEN
+            texto_string := texto_string || 'Catorze ';
+          ELSIF substr(tres_digitos, 3, 1) = '5' THEN
+            texto_string := texto_string || 'Quinze ';
+          ELSIF substr(tres_digitos, 3, 1) = '6' THEN
+            texto_string := texto_string || 'Dezesseis ';
+          ELSIF substr(tres_digitos, 3, 1) = '7' THEN
+            texto_string := texto_string || 'Dezessete ';
+          ELSIF substr(tres_digitos, 3, 1) = '8' THEN
+            texto_string := texto_string || 'Dezoito ';
+          ELSIF substr(tres_digitos, 3, 1) = '9' THEN
+            texto_string := texto_string || 'Dezenove ';
+          END IF;
+        ELSE
+          texto_string := texto_string || 'Dez ';
+        END IF;
+      ELSE
+        -- Extenso para Unidade
+        IF substr(tres_digitos, 3, 1) <> '0' AND
+           texto_string IS NOT NULL THEN
+          texto_string := texto_string || 'e ';
+        END IF;
+        IF substr(tres_digitos, 3, 1) = '1' THEN
+          texto_string := texto_string || 'Um ';
+        ELSIF substr(tres_digitos, 3, 1) = '2' THEN
+          texto_string := texto_string || 'Dois ';
+        ELSIF substr(tres_digitos, 3, 1) = '3' THEN
+          texto_string := texto_string || 'Tres ';
+        ELSIF substr(tres_digitos, 3, 1) = '4' THEN
+          texto_string := texto_string || 'Quatro ';
+        ELSIF substr(tres_digitos, 3, 1) = '5' THEN
+          texto_string := texto_string || 'Cinco ';
+        ELSIF substr(tres_digitos, 3, 1) = '6' THEN
+          texto_string := texto_string || 'Seis ';
+        ELSIF substr(tres_digitos, 3, 1) = '7' THEN
+          texto_string := texto_string || 'Sete ';
+        ELSIF substr(tres_digitos, 3, 1) = '8' THEN
+          texto_string := texto_string || 'Oito ';
+        ELSIF substr(tres_digitos, 3, 1) = '9' THEN
+          texto_string := texto_string || 'Nove ';
+        END IF;
+      END IF;
+      IF to_number(tres_digitos) > 0 THEN
+        IF to_number(tres_digitos) = 1 THEN
+          IF ind = 1 THEN
+            texto_string := texto_string || 'Quatrilhão ';
+          ELSIF ind = 2 THEN
+            texto_string := texto_string || 'Trilhão ';
+          ELSIF ind = 3 THEN
+            texto_string := texto_string || 'Bilhão ';
+          ELSIF ind = 4 THEN
+            texto_string := texto_string || 'Milhão ';
+          ELSIF ind = 5 THEN
+            texto_string := texto_string || 'Mil ';
+          END IF;
+        ELSE
+          IF ind = 1 THEN
+            texto_string := texto_string || 'Quatrilhões ';
+          ELSIF ind = 2 THEN
+            texto_string := texto_string || 'Trilhões ';
+          ELSIF ind = 3 THEN
+            texto_string := texto_string || 'Bilhões ';
+          ELSIF ind = 4 THEN
+            texto_string := texto_string || 'Milhões ';
+          ELSIF ind = 5 THEN
+            texto_string := texto_string || 'Mil ';
+          END IF;
+        END IF;
+      END IF;
+      valor_string := valor_string || texto_string;
+      -- Escrita da Moeda Corrente
+      IF ind = 5 THEN
+        IF to_number(substr(valor_conv, 16, 3)) > 0 AND
+           valor_string IS NOT NULL THEN
+          valor_string := rtrim(valor_string) || ', ';
+        END IF;
+      ELSE
+        IF ind < 5 AND
+           valor_string IS NOT NULL THEN
+          valor_string := rtrim(valor_string) || ', ';
+        END IF;
+      END IF;
+      IF ind = 6 THEN
+        IF to_number(substr(valor_conv, 1, 18)) > 1 THEN
+          IF pr_idtipval = 'P' AND 
+             to_number(substr(valor_conv, 20, 2)) = 0 THEN
+            valor_string := valor_string || vr_dsdecsin;
+          ELSE
+            valor_string := valor_string || vr_dsintplu;
+          END IF;
+        ELSIF to_number(substr(valor_conv, 1, 18)) = 1 THEN
+          valor_string := valor_string || vr_dsintsin;
+        END IF;
+
+        IF to_number(substr(valor_conv, 20, 2)) > 0 AND
+           length(valor_string) > 0 THEN
+          valor_string := valor_string || 'e ';
+        END IF;
+      END IF;
+      -- Escrita para Centavos
+      IF ind = 7 THEN
+        --> Porcentagem deve incrementar texto
+        IF pr_idtipval = 'P' THEN
+          vr_numero := substr(valor_conv, 20, 2);
+          
+          IF vr_numero = 10 THEN
+            valor_string := valor_string || 'Decimo '||vr_dsdecsin;
+          ELSIF substr(vr_numero,2,1) = 0 THEN     
+            valor_string := valor_string || 'Decimos '||vr_dsdecsin;
+          ELSIF vr_numero = 01 THEN     
+            valor_string := valor_string || 'Centesimo  '||vr_dsdecsin; 
+          ELSIF vr_numero > 1 THEN     
+            valor_string := valor_string || 'Centesimos '||vr_dsdecsin;   
+          END IF;
+        
+        ELSE
+          IF to_number(substr(valor_conv, 20, 2)) > 1 THEN
+            valor_string := valor_string || vr_dsdecplu;
+          ELSIF to_number(substr(valor_conv, 20, 2)) = 1 THEN
+            valor_string := valor_string || vr_dsdecsin;
+          END IF;
+        END IF;
+      END IF;
+    END LOOP;
+    RETURN(rtrim(valor_string));
+  EXCEPTION
+    WHEN OTHERS THEN
+      RETURN('*** VALOR INVALIDO ***');
+  END;
 
 END gene0002;
 /

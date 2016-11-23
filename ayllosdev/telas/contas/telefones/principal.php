@@ -6,8 +6,10 @@
  * OBJETIVO     : Mostrar opcao Principal da rotina de TELEFONES da tela de CONTAS
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1). 
- *							  04/08/2015 - Reformulacao Cadastral (Gabriel-RKAM).
- *						      14/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
+ *                04/08/2015 - Reformulacao Cadastral (Gabriel-RKAM).
+ *				  14/07/2016 - Correcao da forma de recuperacao da dados do XML.SD 479874. Carlos R.
+ *				  18/10/2016 - Correcao no retorno do XML de dados para remover caract. especiais de dados 
+ *							   existentes na base inviabilizando o erro. (Carlos Rafael Tanholi - SD 540832)
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -43,11 +45,11 @@
 	$flgExcluir   = (in_array('E', $glbvars['opcoesTela']));
 	$flgIncluir   = (in_array('I', $glbvars['opcoesTela']));	
 	
-	$nrdconta  = ( isset($_POST['nrdconta']) )  ? $_POST['nrdconta'] : 0;
-	$idseqttl	= ( isset($_POST['idseqttl']) )    ? $_POST['idseqttl'] : 0;
+	$nrdconta = ( isset($_POST['nrdconta']) ) ? $_POST['nrdconta'] : 0;
+	$idseqttl = ( isset($_POST['idseqttl']) ) ? $_POST['idseqttl'] : 0;
 	$inpessoa = ( isset($_POST['inpessoa']) ) ? $_POST['inpessoa'] : 0;
-	$operacao = (isset($_POST['operacao']) )  ? $_POST['operacao'] : '';
-	$nrdrowid  = (isset($_POST['nrdrowid']) )    ? $_POST['nrdrowid'] : '';
+	$operacao = ( isset($_POST['operacao']) ) ? $_POST['operacao'] : '';
+	$nrdrowid = ( isset($_POST['nrdrowid']) ) ? $_POST['nrdrowid'] : '';
 			
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);	
@@ -76,7 +78,7 @@
 	$xml .= '</Root>';
 	
 	$xmlResult = getDataXML($xml);
-	$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));	
 	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){ 
 		if( $cddopcao == 'I' ){

@@ -26,7 +26,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 29/04/2016
+   Data    : Marco/2001                      Ultima atualizacao: 10/10/2016
 
    Dados referentes ao programa:
 
@@ -149,6 +149,10 @@
 
                28/04/2016 - Acerto string autenticação GPS/1414
                             (Guilherme/SUPERO)
+
+               10/10/2016 - Tratamento para nao chamar mais a autentica.htm 
+                            quando for historico 707 nas rotinas AA e AT 
+							procedure obtem-reautenticacao (Tiago/Elton SD498973)
 ............................................................................ */
 
   
@@ -1228,6 +1232,24 @@ PROCEDURE obtem-reautenticacao:
                            INPUT YES).
             RETURN "NOK".
         END.
+
+    /* Tratamento para nao chamar mais a autentica.htm 
+       quando for historico 707 nas rotinas AA e AT */
+    IF  crapaut.cdhistor = 707 THEN
+        DO:
+            ASSIGN p-literal   = ""
+                   i-cod-erro  = 0
+                   c-desc-erro = "Comprovante do pagamento disponível apenas no Gerenciador Financeiro.".
+    
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+
 
     ASSIGN p-ctrmovto = 0.
     

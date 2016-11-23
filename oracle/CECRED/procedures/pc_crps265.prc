@@ -16,7 +16,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps265(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Edson
-     Data    : Maio/99.                            Ultima atualizacao: 24/09/2014
+     Data    : Maio/99.                            Ultima atualizacao: 02/08/2016
 
      Dados referentes ao programa:
 
@@ -145,6 +145,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps265(pr_cdcooper IN crapcop.cdcooper%TY
 
 			     24/09/2014 - Ajustar montagem do XML para tratar caracteres especiais, conforme
 						      problema relatado no SoftDesk 204230. (Renato - Supero)
+
+                 02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                              (Jaison/Anderson)
+
   ............................................................................. */
 
   -- Calendário
@@ -352,7 +356,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps265(pr_cdcooper IN crapcop.cdcooper%TY
        and (crapbcx.vldsdfin <> 0 or crapbcx.dtmvtolt >= (pr_dtmvtolt -    10))
        and crapage.cdcooper = crapbcx.cdcooper
        and crapage.cdagenci = crapbcx.cdagenci
-       and crapage.insitage = 1
+       and crapage.insitage in (1,3) -- 1-Ativo ou 3-Temporariamente Indisponivel
        and crapope.cdcooper(+) = crapbcx.cdcooper
        -- Alterado SD 163013
        and upper(crapope.cdoperad(+)) = upper(crapbcx.cdopecxa)

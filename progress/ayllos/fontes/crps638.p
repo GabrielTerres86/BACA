@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 19/05/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 06/10/2016
 
     Dados referente ao programa:
 
@@ -87,6 +87,9 @@
                 
                 19/05/2016 - Adicionado negativo no format do f_totais_rel635 
                              (Lucas Ranghetti #447067)
+
+                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                             (Guilherme/SUPERO)
 ..............................................................................*/
 
 DEF STREAM str_1.  /* Rel.634 - CONCILIACAO CONV. SICREDI DIARIO         */
@@ -453,7 +456,7 @@ RUN fontes/iniprg.p.
 
 IF  glb_cdcritic > 0   THEN
     QUIT.
-       
+      
 FIND crapcop WHERE crapcop.cdcooper = glb_cdcooper NO-LOCK NO-ERROR.
 
 IF  NOT AVAILABLE crapcop   THEN
@@ -842,9 +845,11 @@ IF glb_cdcooper <> 3 THEN DO:
         ASSIGN aux_vlrtrfib = 0.
 
     /* Para todos os lancamentos ja pagos */
-    FOR EACH craplgp WHERE craplgp.cdcooper = glb_cdcooper
+    FOR EACH craplgp
+       WHERE craplgp.cdcooper = glb_cdcooper
                        AND craplgp.dtmvtolt = glb_dtmvtolt 
                        AND craplgp.idsicred <> 0
+         AND craplgp.flgativo = YES
                        BREAK BY craplgp.cdcooper
                              BY craplgp.cdagenci
                              BY craplgp.tpdpagto:
@@ -909,9 +914,11 @@ ELSE DO:
     /* GUIA DA PREVIDENVIA SOCIAL - SICREDI - TODAS COOP'S */
 
     /* Tarifa a ser paga ao SICREDI */
-    FOR EACH craplgp WHERE craplgp.cdcooper <> 3
+    FOR EACH craplgp
+       WHERE craplgp.cdcooper <> 3
                        AND craplgp.dtmvtolt = glb_dtmvtolt
                        AND craplgp.idsicred <> 0
+         AND craplgp.flgativo = YES
                        BREAK BY craplgp.cdcooper
                              BY craplgp.cdagenci
                              BY craplgp.tpdpagto:
@@ -1682,9 +1689,11 @@ PROCEDURE executa-rel-mensais:
             ASSIGN aux_vlrtrfib = 0.
         
         /* Para todos os lancamentos ja pagos */
-        FOR EACH craplgp WHERE craplgp.cdcooper = glb_cdcooper
+        FOR EACH craplgp
+           WHERE craplgp.cdcooper = glb_cdcooper
                            AND craplgp.dtmvtolt = aux_dtvencto
                            AND craplgp.idsicred <> 0
+             AND craplgp.flgativo = YES
                            BREAK BY craplgp.cdcooper
                                  BY craplgp.cdagenci
                                  BY craplgp.tpdpagto:
@@ -2575,9 +2584,11 @@ PROCEDURE gera-rel-mensal-cecred:
                 ASSIGN aux_vlrtrfib = 0.
 
             /* Para todos os lancamentos ja pagos */
-            FOR EACH craplgp WHERE craplgp.cdcooper = crapcop.cdcooper
+            FOR EACH craplgp
+               WHERE craplgp.cdcooper = crapcop.cdcooper
                                AND craplgp.dtmvtolt = aux_dtvencto
                                AND craplgp.idsicred <> 0
+                 AND craplgp.flgativo = YES
                                BREAK BY craplgp.cdcooper
                                      BY craplgp.cdagenci
                                      BY craplgp.tpdpagto:

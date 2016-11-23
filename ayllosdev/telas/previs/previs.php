@@ -3,10 +3,12 @@
  * FONTE        : previs.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
  * DATA CRIAÇÃO : 27/12/2011
- * OBJETIVO     : Mostrar tela PREVIS											ÚLTIMA ALTERAÇÃO: 28/09/2012
+ * OBJETIVO     : Mostrar tela PREVIS											ÚLTIMA ALTERAÇÃO: 07/11/2016
  * --------------
  * ALTERAÇÕES   : 20/05/2012 - Incluido a variável cdcoplog para armazenar o código da cooperativa logada (Adriano).
  *				  28/09/2012 - Alterado o width de 760 para 765 da table que está dentro da linha "tdConteudoTela" (Adriano)
+			      21/03/2016 - Ajuste layout, valores negativos (Adriano)
+				  07/11/2016 - Ajuste para apresentar os botões de voltar e prosseguir corretamente (Adriano - M211)
  * --------------
  */
 ?>
@@ -86,14 +88,14 @@ var cdcoplog = '<?php echo $glbvars['cdcooper'] ?>';
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
 		<meta http-equiv="Pragma" content="no-cache">
 		<title><? echo $TituloSistema; ?></title>
-		<link href="../../css/estilo.css" rel="stylesheet" type="text/css">
+		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
 		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
 		<script type="text/javascript" src="../../scripts/funcoes.js"></script>
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="previs.js"></script>
+		<script type="text/javascript" src="previs.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -153,17 +155,17 @@ var cdcoplog = '<?php echo $glbvars['cdcooper'] ?>';
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
 																			
-																			<div id="divMsgAjuda">
-																				<span></span>
-
-																				<div id="divBotoes" >
-																					<input type="image" id="btVoltar" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onclick="btnVoltar(); return false;" />
-																				</div>
-
-																			</div>																			
+																			<div id="divInformacoes">																			 
+																			 
+																			</div>
 																			
-																		</div>
-																		
+																			<div id="divBotoes" style="margin-top:5px; margin-bottom :10px; display:none; text-align: center;">
+																				<a href="#" class="botao" id="btVoltar" onClick="btnVoltar(); return false;">Voltar</a>																				
+																			    <a href="#" class="botao" id="btProsseguir" onClick="btnContinuar(); return false;">Prosseguir<a/>
+	
+																			</div>
+																			
+																		</div>																	
 																		
 																	</td>
 																</tr>

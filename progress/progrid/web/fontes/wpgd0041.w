@@ -2,21 +2,24 @@
 
 Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 
-			      05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						             busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
             
             08/03/2016 - Alterado para que os eventos do tipo EAD 
                          e EAD Assemblear não sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
-                         
+
             21/06/2016 - Inclusao de Tipos de Relatorios, Prj. 229 RF 05
                          (Jean Michel).
-												 
-						09/09/2016 - Incluida a opcao de geração de todos relatórios
-												 quando o tipo for "TABULADA", Prj. 229. (Jean Michel).
-                         
-...............................................................................*/
 
+			09/09/2016 - Incluida a opcao de geração de todos relatórios
+						 quando o tipo for "TABULADA", Prj. 229. (Jean Michel).
+
+			09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -571,10 +574,13 @@ RUN CriaListaEventos.
 
 /* Tipos de avaliação */
 ASSIGN ab_unmap.aux_tpdavali:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Em Branco,1,Tabulada,2".
-
+   
 /* Tipos de Relatórios */
 ASSIGN ab_unmap.aux_tprelato:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = ",0,Todos,4,Cooperado,1,Cooperativa,2,Fornecedor,3".
-   
+
+RUN insere_log_progrid("WPGD0041.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.cdcooper) + "|" + STRING(ab_unmap.cdagenci) + "|" + STRING(ab_unmap.aux_dtanoage)).
+					     
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:

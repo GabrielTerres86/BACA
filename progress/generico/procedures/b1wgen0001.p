@@ -22,6 +22,8 @@
   | b1wgen0001.fgetdssitdct	           | CADA0004.fn_dssitdct               |
   | b1wgen0001.completa-cabecalho      | CADA0004.pc_completa_cab_atenda    |
   | b1wgen0001.carrega_dep_vista       | CADA0004.pc_carrega_dep_vista      |
+  | b1wgen0001.pc_obtem_medias         | EXTR0001.obtem-medias              |
+  | b1wgen0001.pc_carrega_medias       | EXTR0001.carrega_medias            |
   +------------------------------------+------------------------------------+
   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -1561,7 +1563,7 @@ PROCEDURE gera-tarifa-extrato:
                           ASSIGN aux_cdbattar = "EXTMETAAPF".
                       ELSE
                           ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                  END.
+        END.
               ELSE
                   DO:
 					  ASSIGN aux_tipotari = 6. 
@@ -2705,9 +2707,9 @@ PROCEDURE obtem-saldo:
     EMPTY TEMP-TABLE tt-saldos.
     EMPTY TEMP-TABLE tt-erro.
       
-      
+        
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+   
     RUN STORED-PROCEDURE pc_obtem_saldo_car 
         aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper, /* Cooperativa */
@@ -2718,27 +2720,27 @@ PROCEDURE obtem-saldo:
                           INPUT par_dtrefere, /* Dt. Referencia */
                          OUTPUT "", /* (OK|NOK) */
                          OUTPUT ?). /* Tabela Extrato da Conta */
-
+            
     CLOSE STORED-PROC pc_obtem_saldo_car 
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
+
     ASSIGN aux_dscritic = pc_obtem_saldo_car.pr_des_reto
                           WHEN pc_obtem_saldo_car.pr_des_reto <> ?.
-        
+
     IF  aux_dscritic <> ""  THEN
         DO:
         CREATE tt-erro.
         ASSIGN tt-erro.dscritic = aux_dscritic.
-
+            
             RETURN "NOK".
-        END.   
+        END.
     ELSE
         DO:
-      
+
       CREATE tt-saldos.
-      
+   
       EMPTY TEMP-TABLE tt-saldos.
 
       /*Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
@@ -2759,14 +2761,14 @@ PROCEDURE obtem-saldo:
       CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
 
       IF ponteiro_xml <> ? THEN
-          DO:
+        DO: 
               xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
               xDoc:GET-DOCUMENT-ELEMENT(xRoot).
-
+            
               DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
 
                   xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
-
+        
                   IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
                       NEXT. 
 
@@ -2781,7 +2783,7 @@ PROCEDURE obtem-saldo:
                           NEXT. 
 
                       xField:GET-CHILD(xText,1).
-
+        
                       ASSIGN tt-saldos.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "nrdconta".
                       ASSIGN tt-saldos.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt".
                       ASSIGN tt-saldos.vlsddisp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsddisp".
@@ -2828,15 +2830,15 @@ PROCEDURE obtem-saldo:
                       ASSIGN tt-saldos.vlipmfpg = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlipmfpg".
                       ASSIGN tt-saldos.dtultlcr = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtultlcr".
                       ASSIGN tt-saldos.vlblqjud = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqjud".
-
+        
         END.
 
-              END.
-
+        END.   
+            
               SET-SIZE(ponteiro_xml) = 0. 
 
-          END.
-
+        END.
+        
       /*Elimina os objetos criados*/
       DELETE OBJECT xDoc. 
       DELETE OBJECT xRoot. 

@@ -11,6 +11,8 @@
  *							   Softdesk 148330 (Lucas R.)
  *
  *                14/10/2015 - Reformulacao cadastral (Gabriel-RKAM)
+ *
+ *				  07/11/2016 - Adicionar keyrand (Lucas Ranghetti)
  */
 ?>
 

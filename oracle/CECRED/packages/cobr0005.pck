@@ -132,7 +132,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
           ,vltdscti NUMBER
           ,nrctrlim craptdb.nrctrlim%TYPE
           ,nrctrlim_ativo craptdb.nrctrlim%TYPE
-          ,dsdemail crapsab.dsdemail%TYPE
+          ,dsdemail VARCHAR2(5000)
           ,flgemail NUMBER
           ,inemiten crapcob.inemiten%TYPE
           ,dsemiten VARCHAR2(1000)
@@ -992,14 +992,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: --/--/----
+     Data    : Agosto/2015                     Ultima atualizacao: 05/10/2016
 
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamado
      Objetivo  : Buscar de forma generica titulos de cobrança
 
-     Alteracoes: ----
+     Alteracoes: 05/10/2016 -  Ajustes referente a melhoria M271 (Kelvin).
 
   ............................................................................ */      
 
@@ -1008,6 +1008,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
+      vr_des_erro VARCHAR2(1000);
+      -- Email do Pagador 
+      vr_dsdemail VARCHAR2(5000);
 			
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -1130,7 +1133,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                ,sab.nrendsac
                ,sab.complend
                ,sab.cdsitsac
-               ,sab.dsdemail
                ,sab.flgemail
                ,sab.nrcelsac
                ,ceb.nrcnvceb
@@ -1547,7 +1549,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
 --          ,vltdscti NUMBER
 --          ,nrctrlim craptdb.nrctrlim;
 --          ,nrctrlim_ativo craptdb.nrctrlim;
-          pr_tab_cob(vr_ind_cob).dsdemail := rw_crapcob.dsdemail;
+          COBR0009.pc_busca_emails_pagador(pr_cdcooper  => rw_crapcob.cdcooper
+                                          ,pr_nrdconta  => rw_crapcob.nrdconta
+                                          ,pr_nrinssac  => rw_crapcob.nrinssac
+                                          ,pr_dsdemail  => vr_dsdemail
+                                          ,pr_des_erro  => vr_des_erro
+                                          ,pr_dscritic  => vr_dscritic);
+
+          pr_tab_cob(vr_ind_cob).dsdemail := vr_dsdemail;
           pr_tab_cob(vr_ind_cob).flgemail := rw_crapcob.flgemail;
           pr_tab_cob(vr_ind_cob).inemiten := rw_crapcob.inemiten;
           pr_tab_cob(vr_ind_cob).dsemiten := rw_crapcob.dsemiten;

@@ -65,14 +65,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0107 IS
   --  Sistema  : Rotinas para tela de Cadastro de Quantidade de Material p/ Divulgação
   --  Sigla    : WPGD
   --  Autor    : Jean Michel
-  --  Data     : Outubro/2015.                   Ultima atualizacao: --/--/----
+  --  Data     : Outubro/2015.                   Ultima atualizacao: 02/08/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Rotinas para tela de Cadastro de Quantidade de Material p/ Divulgação.
   --
-  -- Alteracoes:   
+  -- Alteracoes: 02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel. (Jaison/Anderson)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -138,7 +138,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0107 IS
            AND cop.cdcooper = age.cdcooper
            AND qmd.cdagenci = age.cdagenci
            AND age.flgdopgd = 1
-           AND age.insitage = 1
+           AND age.insitage IN (1,3) -- 1-Ativo ou 3-Temporariamente Indisponivel
            AND (qmd.cdcooper = rdp.cdcooper
             AND qmd.nrseqdig = rdp.nrseqdig
             AND rdp.idevento = pr_idevento)
@@ -170,7 +170,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0107 IS
           AND (age.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
           AND age.cdagenci NOT IN(90,91)
           AND age.flgdopgd = 1
-          AND age.insitage = 1
+          AND age.insitage IN (1,3) -- 1-Ativo ou 3-Temporariamente Indisponivel
       ORDER BY age.cdcooper, age.nmresage;
    
       -- Variável de críticas

@@ -5,7 +5,9 @@
  * DATA CRIAÇÃO : 21/03/2016
  * OBJETIVO     : Rotina para impressão de relatorio.
  * --------------
- * ALTERAÇÕES   :  								    			
+ * ALTERAÇÕES   :  	03/11/2016 - Alterado o parametro insitapr, pois estava com 
+ *								 o nome errado e assim o valor da pesquisa não 
+ *								 era repassado para a rotina ( Renato Darosci - Supero)
  * -------------- 
  */
 ?> 
@@ -28,7 +30,7 @@ $dtinicio = (isset($_POST['dtinicio'])) ? $_POST['dtinicio'] : '';
 $dtafinal = (isset($_POST['dtafinal'])) ? $_POST['dtafinal'] : '';
 $insitest = (isset($_POST['insitest'])) ? $_POST['insitest'] : '';
 $insitefe = (isset($_POST['insitefe'])) ? $_POST['insitefe'] : '';
-$insitapv = (isset($_POST['insitapv'])) ? $_POST['insitapv'] : '';
+$insitapr = (isset($_POST['insitapr'])) ? $_POST['insitapr'] : '';		
 
 
 $nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1;
@@ -49,8 +51,7 @@ $xml .= "   <dtinicio>" . $dtinicio . "</dtinicio>";
 $xml .= "   <dtafinal>" . $dtafinal . "</dtafinal>";
 $xml .= "   <insitest>" . $insitest . "</insitest>";
 $xml .= "   <insitefe>" . $insitefe . "</insitefe>";
-$xml .= "   <insitapv>" . $insitapv . "</insitapv>";
-
+$xml .= "   <insitapr>" . $insitapr . "</insitapr>";
 $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
 $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
 

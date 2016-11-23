@@ -93,6 +93,8 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                   ,pr_qtdiavig  IN craplrt.qtdiavig%TYPE -- Dias de vigencia
                                   ,pr_vlemprst  IN crapepr.vlemprst%TYPE -- Valor emprestado
                                   ,pr_txmensal  IN craplrt.txmensal%TYPE -- Taxa mensal
+                                  ,pr_flretxml  IN INTEGER DEFAULT 0     -- Indicador se deve apenas retornar o XML da impressao
+                                  ,pr_des_xml  OUT CLOB                  -- XML
                                   ,pr_nmarqimp OUT VARCHAR2              -- Nome do arquivo
                                   ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
@@ -161,7 +163,6 @@ PROCEDURE pc_juros_cet(pr_nro_parcelas   IN NUMBER
                                       
 END CCET0001;
 /
-
 create or replace package body cecred.CCET0001 is
 
   ---------------------------------------------------------------------------------------------------------------
@@ -1263,6 +1264,8 @@ create or replace package body cecred.CCET0001 is
                                   ,pr_qtdiavig  IN craplrt.qtdiavig%TYPE -- Dias de vigencia                                      
                                   ,pr_vlemprst  IN crapepr.vlemprst%TYPE -- Valor emprestado
                                   ,pr_txmensal  IN craplrt.txmensal%TYPE -- Taxa mensal                                                               
+                                  ,pr_flretxml  IN INTEGER DEFAULT 0     -- Indicador se deve apenas retornar o XML da impressao
+                                  ,pr_des_xml  OUT CLOB                  -- XML
                                   ,pr_nmarqimp OUT VARCHAR2              -- Nome do arquivo
                                   ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
@@ -1273,7 +1276,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 05/05/2015
+  Data    : Julho/2014                        Ultima atualizacao: 13/09/2016
 
   Dados referentes ao programa:
 
@@ -1285,6 +1288,10 @@ create or replace package body cecred.CCET0001 is
               
               05/05/2015 - Alterado o campo flg_impri da procedure pc_solicita_relato de 'S' para 'N'
                            para não gerar o arquivo pdf no diretório audit_pdf (Lucas Ranghetti #281494)
+              
+              13/09/2016 - Incluido parametros para permitir retornar o XML de geração do relatorio
+                           para ser adicionado em outros relatorios. 
+                           PRJ314-Indexação centralizada (Odirlei-AMcom)             
   ............................................................................. */
     DECLARE
     
@@ -1544,7 +1551,12 @@ create or replace package body cecred.CCET0001 is
       -------------------------------------------
       -- Iniciando a geração do XML
       -------------------------------------------
-      pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><cet>');
+      --> Verificar se é apenas para gerar o XML
+      IF pr_flretxml <> 1 THEN
+        pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>');
+      END IF;
+      
+      pc_escreve_xml('<cet>');
       
       -- informacoes para impressao
       pc_escreve_xml('<cdcooper>' || pr_cdcooper || '</cdcooper>' ||
@@ -1564,7 +1576,7 @@ create or replace package body cecred.CCET0001 is
                      '<txjurseg>' || to_char(nvl(vr_txjurseg,0),'fm990D00') || '</txjurseg>' ||
                      '<vlemprst>' || to_char(nvl(vr_vlemprst,0),'fm999G999G990D00') || '</vlemprst>' ||
                      '<txjuremp>' || to_char(nvl(vr_txjuremp,0),'fm990D00') || '</txjuremp>' ||
-                     '<txanocet>' || to_char(nvl(vr_txanocet,0),'fm9990D00') || '</txanocet>' ||
+                     '<txanocet>' || to_char(nvl(vr_txanocet,0),'fm990D00') || '</txanocet>' ||
                      '<txmescet>' || to_char(nvl(vr_txmescet,0),'fm990D00') || '</txmescet>' ||
                      '<txjurlim>' || to_char(nvl(vr_txjurlim,0),'fm990D00') || '</txjurlim>' ||
                      '<vljurrem>' || to_char(nvl(vr_vljurrem,0),'fm999G990D00') || '</vljurrem>' ||
@@ -1575,37 +1587,42 @@ create or replace package body cecred.CCET0001 is
       -- Finalizar o arquivo xml                     
       pc_escreve_xml('</cet>');                         
 
-      
-      -- buscar time da operacao
-      vr_nmarqimp := gene0002.fn_busca_time;
-      pr_nmarqimp := vr_nmarqimp;
+      --> Verificar se é apenas para gerar o XML
+      IF pr_flretxml = 0 THEN
+        -- buscar time da operacao
+        vr_nmarqimp := gene0002.fn_busca_time;
+        pr_nmarqimp := vr_nmarqimp;
            
-      -- Busca do diretório base da cooperativa e a subpasta de relatórios
-      vr_path_arquivo := gene0001.fn_diretorio( pr_tpdireto => 'C' -- /usr/coop
-                                               ,pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsubdir => '/rl'); --> Gerado no diretorio /rl        
+        -- Busca do diretório base da cooperativa e a subpasta de relatórios
+        vr_path_arquivo := gene0001.fn_diretorio( pr_tpdireto => 'C' -- /usr/coop
+                                                 ,pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsubdir => '/rl'); --> Gerado no diretorio /rl        
                                              
-      -- Gerando o relatório nas pastas /rl                                              
-      gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
-                                 ,pr_cdprogra  => 'atenda'
-                                 ,pr_dtmvtolt  => pr_dtmvtolt
-                                 ,pr_dsxml     => vr_des_xml
-                                 ,pr_dsxmlnode => '/cet'
-                                 ,pr_dsjasper  => 'cet_limites.jasper'
-                                 ,pr_dsparams  => NULL
-                                 ,pr_dsarqsaid => vr_path_arquivo || '/' || vr_nmarqimp || '.ex'
-                                 ,pr_flg_gerar => 'S'
-                                 ,pr_cdrelato  => '663'
-                                 ,pr_qtcoluna  => 80
-                                 ,pr_sqcabrel  => 1
-                                 ,pr_flg_impri => 'N'
-                                 ,pr_nmformul  => '80col'
-                                 ,pr_nrcopias  => 1
-                                 ,pr_des_erro  => vr_dscritic);
+        -- Gerando o relatório nas pastas /rl                                              
+        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper
+                                   ,pr_cdprogra  => 'atenda'
+                                   ,pr_dtmvtolt  => pr_dtmvtolt
+                                   ,pr_dsxml     => vr_des_xml
+                                   ,pr_dsxmlnode => '/cet'
+                                   ,pr_dsjasper  => 'cet_limites.jasper'
+                                   ,pr_dsparams  => NULL
+                                   ,pr_dsarqsaid => vr_path_arquivo || '/' || vr_nmarqimp || '.ex'
+                                   ,pr_flg_gerar => 'S'
+                                   ,pr_cdrelato  => '663'
+                                   ,pr_qtcoluna  => 80
+                                   ,pr_sqcabrel  => 1
+                                   ,pr_flg_impri => 'N'
+                                   ,pr_nmformul  => '80col'
+                                   ,pr_nrcopias  => 1
+                                   ,pr_nrvergrl  => 1
+                                   ,pr_des_erro  => vr_dscritic);
 
-      -- VERIFICA SE OCORREU UMA CRITICA
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;        
+        -- VERIFICA SE OCORREU UMA CRITICA
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;        
+        END IF;
+      ELSE
+        pr_des_xml := vr_des_xml;
       END IF;
       
       -- Liberando a memória alocada pro CLOB
@@ -1652,7 +1669,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 05/05/2014
+  Data    : Julho/2014                        Ultima atualizacao: 07/11/2016
 
   Dados referentes ao programa:
 
@@ -1666,6 +1683,15 @@ create or replace package body cecred.CCET0001 is
               
               12/11/2015 - Criada validacao do tipo de contrato de emprestimo para Portabilidade, neste caso
                            nao calculando taxa de IOF (Carlos Rafael Tanholi - Projeto Portabilidade).             
+                  
+              13/09/2016 - Alterado para gerar o relatorio com a nova versão do Gera relatorio.
+                           PRJ314 - Indexação Centralizada (Odirlei-AMcom)         
+
+              07/11/2016 - Alterado cursor cr_craplat_bem para buscar somatória das tarifas.
+                           Buscava apenas o primeiro e quanto o empréstimo possui mais de 1 bem
+                           alienado não fechava o valor da tarifa cobrada na conta e impressa no CET.
+                           (SD#551769 - AJFink)
+
   ............................................................................. */
     DECLARE
     
@@ -1756,7 +1782,7 @@ create or replace package body cecred.CCET0001 is
                          ,pr_nrdconta IN crapass.nrdconta%TYPE
                          ,pr_nrctremp IN crapepr.nrctremp%TYPE
                          ,pr_cdhistor IN craplat.cdhistor%TYPE) IS
-      SELECT lat.vltarifa
+      SELECT nvl(sum(lat.vltarifa),0) vltarifa --SD#551769
         FROM craplat lat
         WHERE lat.cdcooper = pr_cdcooper
           AND lat.nrdconta = pr_nrdconta
@@ -2041,6 +2067,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_flg_impri => 'N'
                                    ,pr_nmformul  => '80col'
                                    ,pr_nrcopias  => 1
+                                   ,pr_nrvergrl  => 1
                                    ,pr_des_erro  => vr_dscritic);                                
 
         -- VERIFICA SE OCORREU UMA CRITICA
@@ -2283,14 +2310,18 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas R.
-  Data    : Setembro/2014                        Ultima atualizacao: 00/00/0000
+  Data    : Setembro/2014                        Ultima atualizacao: 07/11/2016
 
   Dados referentes ao programa:
 
   Frequencia: Diaria - Sempre que for chamada
   Objetivo  : Rotina para calcular o Custo Efetivo Total(CET) dos Emprestimos.
 
-  Alteracoes:                  
+  Alteracoes: 07/11/2016 - Alterado cursor cr_craplat_bem para buscar somatória das tarifas.
+                           Buscava apenas o primeiro e quanto o empréstimo possui mais de 1 bem
+                           alienado não fechava o valor da tarifa cobrada na conta e impressa no CET.
+                           (SD#551769 - AJFink)
+
   ............................................................................. */
     DECLARE
       vr_vlrdocet NUMBER;                -- Valor do CET
@@ -2350,13 +2381,13 @@ create or replace package body cecred.CCET0001 is
                          ,pr_nrdconta IN crapass.nrdconta%TYPE
                          ,pr_nrctremp IN crapepr.nrctremp%TYPE
                          ,pr_cdhistor IN craplat.cdhistor%TYPE) IS
-      SELECT lat.vltarifa
+      SELECT nvl(sum(lat.vltarifa),0) vltarifa --SD#551769
         FROM craplat lat
         WHERE lat.cdcooper = pr_cdcooper
           AND lat.nrdconta = pr_nrdconta
           AND lat.nrdocmto = pr_nrctremp
           AND lat.cdhistor = pr_cdhistor
-          AND lat.nrdocmto <> 0;
+          AND nvl(lat.nrdocmto,0) <> 0;
       rw_craplat_bem cr_craplat_bem%ROWTYPE; 
          
       /* cursor para saber o tipo da finalidade */
@@ -2536,4 +2567,3 @@ create or replace package body cecred.CCET0001 is
                          
 end CCET0001;
 /
-

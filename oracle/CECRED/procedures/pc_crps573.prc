@@ -277,14 +277,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
                     
                     24/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.(Carlos Rafael Tanholi).
-
+                    
                     20/07/2016 - Resolucao dos chamados 491068, 488220 e 486570. (James)
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
 
-			          		26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+			        26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
                                  da data de vencimento e quantidade de dias atraso.
                                  SD488220 (Odirlei-AMcom)
+
+					24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+                                 ( Renato Darosci - Supero )
                                  
                     03/11/2016 - Alterada a função de classificação do porte de pessoa física, para que sejam considerados
                                  como "sem redimento", rendas mensais de até 0.01 (inclusive) e não mais rendas com valor 
@@ -639,7 +642,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
-             AND crapbpr.tpctrpro = pr_tpctrpro
+             AND crapbpr.tpctrpro = pr_tpctrpro             
              AND crapbpr.flgalien = 1;
 
 
@@ -2434,16 +2437,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdmodali = '04' AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).cdsubmod = '01' THEN
                    -- Condicao para verificar se o bem estah baixado ou cancelado
                    IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
-                  -- Informação do Empréstimo
-                  gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                         ,pr_texto_completo => vr_xml_3040_temp
-                                         ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                            || rw_crapbpr.dschassi || '" />' || chr(10));
+                     -- Informação do Empréstimo
+                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                            ,pr_texto_completo => vr_xml_3040_temp
+                                            ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
+                                                               || rw_crapbpr.dschassi || '" />' || chr(10));
                    ELSE
+                     
+                     /*********************************************************************************
+                     ** Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+                     ** Renato Darosci - Supero
+                     ** 24/10/2016
+                     *********************************************************************************/
+                   
                    	 -- Informação do Empréstimo
                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                             ,pr_texto_completo => vr_xml_3040_temp
-                                            ,pr_texto_novo     => '            <Inf Tp="0401" Ident="1" />' || chr(10));
+                                            ,pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10));
                    END IF;
                 END IF;
               END IF;  

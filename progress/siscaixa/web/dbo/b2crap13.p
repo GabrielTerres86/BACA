@@ -57,7 +57,10 @@
                             (Guilherme/SUPERO)
                             
                 27/06/2016 - P290 -> Incluido identificador de CARTAO ou BOLETO para operações de saque, TED, DOC e transferência.
-                             (Gil/Rkam)
+                             (Gil/Rkam)           
+
+                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                             (Guilherme/SUPERO)
 
                 17/10/2016 - #495989 Correção do erro "tentativa de gravar 
                              no fluxo fechado str_1" (Carlos)
@@ -1043,15 +1046,15 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
 
                                         IF p-nome-arquivo <> " " THEN
                                         DO:
-                                          DISPLAY STREAM str_1
-                                              aux_deschist aux_vlrtthis 
-                                              WITH FRAME f_his_boletim.
-                                              DOWN STREAM str_1 WITH FRAME f_his_boletim.
-
-                                          IF  w-histor.qtlanmto-recibo > 0   AND
-                                              LINE-COUNTER(str_1) = 80 THEN
-                                              PAGE STREAM str_1.
-                                        END.    
+                                        DISPLAY STREAM str_1
+                                            aux_deschist aux_vlrtthis 
+                                            WITH FRAME f_his_boletim.
+                                            DOWN STREAM str_1 WITH FRAME f_his_boletim.
+                                             
+                                        IF  w-histor.qtlanmto-recibo > 0   AND
+                                            LINE-COUNTER(str_1) = 80 THEN
+                                            PAGE STREAM str_1.
+                                    END.
                                     END.
                                 IF w-histor.qtlanmto-cartao > 0 THEN
                                     DO:
@@ -1065,16 +1068,16 @@ PROCEDURE disponibiliza-dados-boletim-caixa:
 
                                         IF p-nome-arquivo <> " " THEN
                                         DO:
-                                          DISPLAY STREAM str_1
-                                              aux_deschist aux_vlrtthis 
-                                              WITH FRAME f_his_boletim.
-                                              DOWN STREAM str_1 WITH FRAME f_his_boletim.
-
-                                          IF  w-histor.qtlanmto-cartao > 0   AND
-                                                  LINE-COUNTER(str_1) = 80 THEN
-                                                  PAGE STREAM str_1.
-                                        END.
+                                        DISPLAY STREAM str_1
+                                            aux_deschist aux_vlrtthis 
+                                            WITH FRAME f_his_boletim.
+                                            DOWN STREAM str_1 WITH FRAME f_his_boletim.
+                                             
+                                        IF  w-histor.qtlanmto-cartao > 0   AND
+                                                LINE-COUNTER(str_1) = 80 THEN
+                                                PAGE STREAM str_1.
                                     END.
+                            END.
                             END.
                             ELSE
                             DO:
@@ -1815,7 +1818,8 @@ PROCEDURE gera_craplgp_gps:
                                craplgp.cdbccxlt = craplot.cdbccxlt  AND
                                craplgp.nrdolote = craplot.nrdolote  AND
                                craplgp.idsicred <> 0                AND
-                               craplgp.nrseqagp = 0            NO-LOCK:
+                               craplgp.nrseqagp = 0
+                           AND craplgp.flgativo = YES               NO-LOCK:
                      /** Nao pegar GPS agendada */
             ASSIGN aux_vlrttctb = aux_vlrttctb + craplgp.vlrtotal
                                   aux_qtrttctb = aux_qtrttctb + 1.

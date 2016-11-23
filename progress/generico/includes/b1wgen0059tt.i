@@ -82,7 +82,9 @@
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-craplcr (Oscar).                
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-crapfin (Oscar).                
                              Correçao nas TEMP-TABLES colocar NO-UNDO, tt-relacionamento2 (Oscar).                
-                                              
+                             
+                17/08/2016 - Incluido campo txmensal na table tt-craplcr (Lombardi)
+                             
 ............................................................................*/
 
 &IF DEFINED(VAR-AMB) <> 0 &THEN
@@ -276,6 +278,7 @@ DEF TEMP-TABLE tt-craplcr NO-UNDO
     FIELD flgstlcr AS LOGI
     FIELD tpctrato AS INTE
     FIELD txbaspre LIKE craplcr.txbaspre
+    FIELD txmensal LIKE craplcr.txmensal
     FIELD nrfimpre LIKE craplcr.nrfimpre
     FIELD tpgarant LIKE craplcr.tpctrato
     FIELD dsgarant AS CHAR.

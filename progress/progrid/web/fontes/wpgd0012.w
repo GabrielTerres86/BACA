@@ -15,16 +15,20 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       
       30/12/2015 - Inclusão de novos campos na aba Fornecedor.
                    Projeto 229 - Melhorias OQS (Lombardi).
-                   
+
       13/06/2016 - Ajustes para garantir que exiba a informacao do banco 
                    ja selecionada quando apresentar critica.
                    Projeto 229 - Melhorias OQS (Odirlei - AMcom).
                    
       13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)  
-      
+
       17/10/2016 - Ajustes para consulta de propostas. (Jean Michel)
+
+	  09/11/2016 - inclusao de LOG. (Jean Michel)
 ...............................................................................*/
-{ includes/var_progrid.i }
+
+{ sistema/generico/includes/var_log_progrid.i }
+
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
 /* Connected Databases 
@@ -62,7 +66,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_dsurlphp AS CHARACTER FORMAT "X(256)":U
        FIELD aux_ctlinati AS CHARACTER FORMAT "X(256)":U
        FIELD aux_ctljusti AS CHARACTER FORMAT "X(256)":U.
-  
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
 
@@ -403,7 +407,7 @@ DEFINE FRAME Web-Frame
      gnapfdp.dsjusain AT ROW 1 COL 1 NO-LABEL
           VIEW-AS EDITOR NO-WORD-WRAP
           SIZE 20 BY 4
-          
+
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
@@ -713,26 +717,26 @@ PROCEDURE CriaListaPropostas :
   Parameters:  <none>
   Notes:       
 ------------------------------------------------------------------------------*/
-  DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
 
   DEF VAR aux_contador AS INTEGER NO-UNDO INIT 0.
   
   RUN RodaJavaScript("var mproposta=new Array();").
   
-  FOR EACH gnappdp WHERE gnappdp.cdcooper = 0                AND
-                         gnappdp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
-                         BY gnappdp.dtmvtolt DESC
-                         BY gnappdp.nrpropos DESC:
+    FOR EACH gnappdp WHERE gnappdp.cdcooper = 0                AND
+                           gnappdp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
+                           BY gnappdp.dtmvtolt DESC
+                           BY gnappdp.nrpropos DESC:
 
-    FIND FIRST crapedp WHERE
-        crapedp.cdcooper = 0 AND
-        crapedp.dtanoage = 0 AND
-        crapedp.cdevento = gnappdp.cdevento NO-LOCK NO-ERROR.
+      FIND FIRST crapedp WHERE
+          crapedp.cdcooper = 0 AND
+          crapedp.dtanoage = 0 AND
+          crapedp.cdevento = gnappdp.cdevento NO-LOCK NO-ERROR.
 
-    IF AVAIL crapedp THEN
-        aux_nmevento = crapedp.nmevento.
-    ELSE
-        aux_nmevento = "Sem vínculo.".
+      IF AVAIL crapedp THEN
+          aux_nmevento = crapedp.nmevento.
+      ELSE
+          aux_nmevento = "Sem vínculo.".
 
     ASSIGN aux_contador = aux_contador + 1.
     
@@ -740,18 +744,18 @@ PROCEDURE CriaListaPropostas :
       ASSIGN vetorproposta = vetorproposta + ",".
         
     ASSIGN vetorproposta = vetorproposta + "~{" + "nrpropos:"    + "'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
-                           + "',dtmvtolt:"  + "'" + string(gnappdp.dtmvtolt,"99/99/9999")
-                           + "',dtvalpro:"  + "'" + string(gnappdp.dtvalpro,"99/99/9999") 
-                           + "',nmevento:"  + "'" + REPLACE(string(aux_nmevento),"'","`")
-                           + "',idprofor:"  + "'" + string(rowid(gnappdp))   + "'~}".
-                           
+                             + "',dtmvtolt:"  + "'" + string(gnappdp.dtmvtolt,"99/99/9999")
+                             + "',dtvalpro:"  + "'" + string(gnappdp.dtvalpro,"99/99/9999") 
+                             + "',nmevento:"  + "'" + REPLACE(string(aux_nmevento),"'","`")
+                             + "',idprofor:"  + "'" + string(rowid(gnappdp))   + "'~}".
+                             
     IF aux_contador = 30 THEN
       DO:
         ASSIGN aux_contador = 0.
         RUN RodaJavaScript("mproposta=["  + vetorproposta + "]").
       END.
 
-  END. /* for each */
+   END. /* for each */
   
   RUN RodaJavaScript("mproposta=["  + vetorproposta + "]").
 
@@ -1201,7 +1205,7 @@ IF VALID-HANDLE(h-b1wpgd0012) THEN
                 
             END.    
       END. /* DO WITH FRAME {&FRAME-NAME} */
-      
+   
       /* Definir se o fornecedor esta ativo conforme regra abaixo */       
       IF TODAY > INPUT gnapfdp.dtfimvig OR
          TODAY > INPUT gnapfdp.dtforina THEN       
@@ -1233,7 +1237,7 @@ IF VALID-HANDLE(h-b1wpgd0012) THEN
    DO:
       CREATE gnatfdp.
       BUFFER-COPY gnapfdp TO gnatfdp.
-      
+          
       ASSIGN gnatfdp.cdoperad = gnapses.cdoperad
              gnatfdp.cdcopope = INT(ab_unmap.aux_cdcopope).
           
@@ -1478,10 +1482,13 @@ IF LOCKED gnapses THEN
     opcao = ""
     msg-erro-aux = 10.
 
+RUN insere_log_progrid("WPGD0012.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.aux_nrcpfcgc) + "|" + STRING(ab_unmap.aux_cdcopope)).	
+
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:
-
+   
       RUN inputFields.
       
       CASE opcao:
@@ -1787,7 +1794,7 @@ IF REQUEST_METHOD = "POST":U THEN
 
       RUN enableFields.
       RUN outputFields.
-      
+
       /* Tratamento para garantir que mantenha as informaçoes ja selecionadas
          caso apresente critica, pois nao executa o displayFields */
       IF ab_unmap.aux_cddbanco <> "" THEN

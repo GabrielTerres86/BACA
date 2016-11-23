@@ -389,7 +389,7 @@ DEF VAR aux_nrinsava LIKE crapcob.nrinsava                       NO-UNDO.
 DEF VAR aux_nmdavali LIKE crapcob.nmdavali                       NO-UNDO.
 
 /* E-mail do pagador */
-DEF VAR aux_dsdemail LIKE crapsab.dsdemail                       NO-UNDO.
+DEF VAR aux_dsdemail AS CHAR				                     NO-UNDO.
 DEF VAR aux_nrcelsac LIKE crapsab.nrcelsac                       NO-UNDO.
 
 DEF VAR aux_dsdinstr LIKE crapcob.dsdinstr                       NO-UNDO.
@@ -551,7 +551,7 @@ PROCEDURE prep-retorno-cooperado:
     DEF VAR aux_cdfvlcop AS INTE                                    NO-UNDO.
 
     DEF VAR aux_busca    AS CHAR                                    NO-UNDO.
-	
+    
     DEF BUFFER bcrapcco FOR crapcco.
     DEF BUFFER bcrapcob FOR crapcob.
 
@@ -565,10 +565,10 @@ PROCEDURE prep-retorno-cooperado:
               aux_cdhistor = 0.
     ELSE 
        DO:
-          
+	      
 		  IF NOT VALID-HANDLE(h-b1wgen0089) THEN		  
-		      RUN sistema/generico/procedures/b1wgen0089.p 
-                    PERSISTENT SET h-b1wgen0089.
+	      RUN sistema/generico/procedures/b1wgen0089.p 
+                PERSISTENT SET h-b1wgen0089.
           
 		  IF NOT VALID-HANDLE(h-b1wgen0089) THEN RETURN "NOK".
 

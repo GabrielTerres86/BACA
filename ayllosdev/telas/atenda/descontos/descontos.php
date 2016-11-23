@@ -13,9 +13,7 @@
  * 004: [23/01/2014] Carlos (CECRED) : Retirada a include de titulos/msg_grupo_economico.php
  * 005: [25/07/2016] Evandro - RKAM : Adicionado classe (SetWindow) - necessaria para navegação com teclado.
  */	
-?>
-h
-<?
+
 	session_start();
 	require_once('../../../includes/config.php');
 	require_once('../../../includes/funcoes.php');

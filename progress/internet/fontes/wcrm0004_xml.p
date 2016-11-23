@@ -3,7 +3,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Junho/2006                   Ultima Atualizacao: 26/08/2016
+   Data    : Junho/2006                   Ultima Atualizacao: 28/10/2016
    Dados referentes ao programa:
    Frequencia: Diario (internet)
    Objetivo  : Gerar arquivo XML para a tela wcrm0004 - historico do cooperado
@@ -17,10 +17,15 @@
                             
                06/10/2015 - Alterar forma do for each crapidp para utilizar o 
                             indice e listar os eventos corretamente (Lucas Ranghetti #328446)
-														
-							 26/08/2016 - Alteração para impressão do certificado, Prj. 229 (Jean Michel).							
+ 
+			   26/08/2016 - Alteração para impressão do certificado, Prj. 229 (Jean Michel).							
+			   	
+			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
+							para gravar log de acesso. (Jean Michel)	
 														
 ..............................................................................................*/
+
+{ sistema/generico/includes/var_log_progrid.i }
  
 create widget-pool.
  
@@ -69,6 +74,8 @@ ASSIGN par_cdcooper = INT(GET-VALUE("aux_cdcooper"))
        par_dtinihis = DATE(GET-VALUE("aux_dtinihis"))
        par_dtfimhis = DATE(GET-VALUE("aux_dtfimhis")).
        
+RUN insere_log_progrid("WPGD0004_xml.p",STRING(par_cdcooper) + "|" + STRING(par_nrdconta) + "|" + STRING(par_idseqttl)).
+			 
 CREATE X-DOCUMENT xDoc.
 CREATE X-NODEREF  xRoot.
 CREATE X-NODEREF  xRoot2.
@@ -112,18 +119,18 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
                         BREAK BY crapidp.nminseve
                               BY crapadp.dtinieve DESC
                               BY crapidp.nrseqeve:
-    
-    /* Dados do evento */
+                              
+            /* Dados do evento */
     FIND crapedp WHERE crapedp.idevento = crapidp.idevento
                    AND crapedp.cdcooper = crapidp.cdcooper
                    AND crapedp.dtanoage = crapidp.dtanoage
                    AND crapedp.cdevento = crapidp.cdevento NO-LOCK NO-ERROR.
-           
+                               
     IF FIRST-OF(crapidp.nrseqeve) THEN
         DO:                               
             /* Se percentual de faltas passar do percentual mínimo exigido, nao pode considerar */
             IF ((crapidp.qtfaleve * 100) / crapadp.qtdiaeve) > (100 - crapedp.prfreque)   THEN
-              NEXT.
+                 NEXT.
             
             /* Datas de inicio e fim do evento */
             IF   crapadp.dtinieve <> ?   THEN
@@ -182,7 +189,7 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
                     criaCampo("CDEVENTO",STRING(crapidp.cdevento)).
                     criaCampo("CDAGENCI",STRING(crapidp.cdagenci)).
                     criaCampo("NRSEQEVE",STRING(crapidp.nrseqeve)).
-										
+                      
                     aux_flgexist = TRUE.
 
                    NEXT.
@@ -217,7 +224,7 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
             criaCampo("CDEVENTO",STRING(crapidp.cdevento)).
             criaCampo("CDAGENCI",STRING(crapidp.cdagenci)).
             criaCampo("NRSEQEVE",STRING(crapidp.nrseqeve)).
-                    
+            
             aux_flgexist = TRUE.
         END.
 END.

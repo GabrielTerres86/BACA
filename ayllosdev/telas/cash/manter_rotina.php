@@ -8,6 +8,8 @@
  * ALTERAÇÕES   : 24/07/2013 - Ajustado para permitir imprimir o relatório de cartões magnéticos "busca_dados_cartoes_magneticos". (James)
  *
  *				  18/11/2013 - Adcionado operacao 'bloquearSaq' referente ao bloqueio de saque. (Jorge)
+ *
+ *                27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
  * -------------- 
  */
 ?> 
@@ -54,14 +56,27 @@
 	$tiprelat		= (isset($_POST['tiprelat']))   ? $_POST['tiprelat']   : '' ; 
 	$nmarqimp		= ((isset($_POST['nmarqimp'])) && ($_POST['nmarqimp'] != "")) ? $_POST['nmarqimp'] : session_id();	
 
+	$nmterminal     = (isset($_POST['nmterminal']))    ? $_POST['nmterminal']    : '' ;
+	$flganexo_pa    = (isset($_POST['flganexo_pa']))   ? $_POST['flganexo_pa']   : '' ;
+	$dslogradouro   = (isset($_POST['dslogradouro']))  ? $_POST['dslogradouro']  : '' ;
+	$dscomplemento  = (isset($_POST['dscomplemento'])) ? $_POST['dscomplemento'] : '' ;
+	$nrendere       = (isset($_POST['nrendere']))      ? $_POST['nrendere']      : '' ;
+	$nmbairro       = (isset($_POST['nmbairro']))      ? $_POST['nmbairro']      : '' ;
+	$nrcep          = (isset($_POST['nrcep']))         ? $_POST['nrcep']         : '' ;
+	$idcidade       = (isset($_POST['idcidade']))      ? $_POST['idcidade']      : '' ;
+	$nrlatitude     = (isset($_POST['nrlatitude']))    ? $_POST['nrlatitude']    : '' ;
+	$nrlongitude    = (isset($_POST['nrlongitude']))   ? $_POST['nrlongitude']   : '' ;
+	$dshorario      = (isset($_POST['dshorario']))     ? $_POST['dshorario']     : '' ;
+
 	switch( $operacao ) {
-		case 'bloquear'	   : $procedure = 'Opcao_Transacao';  $cddoptrs = 'B'; break;
-		case 'bloquearSaq' : $procedure = 'Opcao_Transacao';  $cddoptrs = 'S'; break;
-		case 'BD'		   : $procedure = 'Busca_Dados';  					   break;
-		case 'BDCM'		   : $procedure = 'busca_dados_cartoes_magneticos';    break;
-		case 'VP'		   : $procedure = 'Valida_Pac';   				       break;
-		case 'VD'		   : $procedure = 'Valida_Dados';   				   break;
-		case 'GD'		   : $procedure = 'Grava_Dados';   					   break;
+		case 'bloquear'	       : $procedure = 'Opcao_Transacao';  $cddoptrs = 'B'; break;
+		case 'bloquearSaq'     : $procedure = 'Opcao_Transacao';  $cddoptrs = 'S'; break;
+		case 'BD'		       : $procedure = 'Busca_Dados';  					   break;
+		case 'BDCM'		       : $procedure = 'busca_dados_cartoes_magneticos';    break;
+		case 'VP'		       : $procedure = 'Valida_Pac';   				       break;
+		case 'VD'		       : $procedure = 'Valida_Dados';   				   break;
+		case 'GD'		       : $procedure = 'Grava_Dados';   					   break;
+        case 'CASH_DADOS_SITE' : $procedure = $operacao;                           break;
 	}
 	
 	if ( $cddopcao == 'I' or $cddopcao == 'A' or $cddopcao == 'B' ) {
@@ -73,72 +88,105 @@
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
-	
-	// Monta o xml dinâmico de acordo com a operação 
-	$xml  = '';
-	$xml .= '<Root>';
-	$xml .= '	<Cabecalho>';
-	$xml .= '		<Bo>b1wgen0123.p</Bo>';
-	$xml .= '		<Proc>'.$procedure.'</Proc>';
-	$xml .= '	</Cabecalho>';
-	$xml .= '	<Dados>';
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<nmoperad>'.$glbvars['nmoperad'].'</nmoperad>';
-	$xml .= '		<cdprogra>'.$glbvars['cdprogra'].'</cdprogra>';	
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';
-	$xml .= '		<dtmvtoan>'.$glbvars['dtmvtoan'].'</dtmvtoan>';
-	$xml .= '		<dsiduser>'.$dsiduser.'</dsiduser>';
-	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
-	$xml .= '		<cddoptrs>'.$cddoptrs.'</cddoptrs>';
-	$xml .= '		<nrterfin>'.$nrterfin.'</nrterfin>';
-	$xml .= '		<cdagencx>'.$cdagencx.'</cdagencx>';
-	$xml .= '		<dsfabtfn>'.$dsfabtfn.'</dsfabtfn>';
-	$xml .= '		<dsmodelo>'.$dsmodelo.'</dsmodelo>';
-	$xml .= '		<dsdserie>'.$dsdserie.'</dsdserie>';
-	$xml .= '		<nmnarede>'.$nmnarede.'</nmnarede>';
-	$xml .= '		<nrdendip>'.$nrdendip.'</nrdendip>';
-	$xml .= '		<cdsitfin>'.$cdsitfin.'</cdsitfin>';
-	$xml .= '		<qtcasset>'.$qtcasset.'</qtcasset>';
-	$xml .= '		<flsistaa>'.$flsistaa.'</flsistaa>';
-	$xml .= '		<dsterfin>'.$dsterfin.'</dsterfin>';
-	$xml .= '		<tprecolh>'.$tprecolh.'</tprecolh>';
-	$xml .= '		<qttotalp>'.$qttotalp.'</qttotalp>';
-	$xml .= '		<dtlimite>'.$dtlimite.'</dtlimite>';
-	$xml .= '		<cddoptel>'.$cddoptel.'</cddoptel>';
-	$xml .= '		<cdagetfn>'.$cdagetfn.'</cdagetfn>';
-	$xml .= '		<lgagetfn>'.$lgagetfn.'</lgagetfn>';
-	$xml .= '		<dtmvtini>'.$dtmvtini.'</dtmvtini>';
-	$xml .= '		<dtmvtfim>'.$dtmvtfim.'</dtmvtfim>';
-	$xml .= '		<tiprelat>'.$tiprelat.'</tiprelat>';
-	$xml .= '		<nmarqimp>'.$nmarqimp.'</nmarqimp>';
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
 
-	$xmlResult = getDataXML($xml);
-	$xmlObjeto = getObjectXML($xmlResult);
+    if ( $cddopcao == 'S' ) {
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
-	// Controle de Erros
-	//----------------------------------------------------------------------------------------------------------------------------------
-	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
-		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
-		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmCab');"; }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
-	}
+        // Monta o xml de requisicao
+        $xml  = "";
+        $xml .= "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrterfin>".$nrterfin."</nrterfin>";
+        $xml .= "   <nmterminal>".utf8_decode($nmterminal)."</nmterminal>";
+        $xml .= "   <flganexo_pa>".$flganexo_pa."</flganexo_pa>";
+        $xml .= "   <dslogradouro>".utf8_decode($dslogradouro)."</dslogradouro>";
+        $xml .= "   <dscomplemento>".utf8_decode($dscomplemento)."</dscomplemento>";
+        $xml .= "   <nrendere>".$nrendere."</nrendere>";
+        $xml .= "   <nmbairro>".utf8_decode($nmbairro)."</nmbairro>";
+        $xml .= "   <nrcep>".$nrcep."</nrcep>";
+        $xml .= "   <idcidade>".$idcidade."</idcidade>";
+        $xml .= "   <nrlatitude>".$nrlatitude."</nrlatitude>";
+        $xml .= "   <nrlongitude>".$nrlongitude."</nrlongitude>";
+        $xml .= "   <dshorario><![CDATA[".utf8_decode($dshorario)."]]></dshorario>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml, "TELA_CASH", $procedure, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObjeto = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO"){
+            $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$retornoAposErro,false);
+        }
 	
-	$cdsitfin = $xmlObjeto->roottag->tags[0]->attributes['CDSITFIN'];
-	$nmarqimp = $xmlObjeto->roottag->tags[0]->attributes['NMARQIMP'];
-	$nmarqpdf = $xmlObjeto->roottag->tags[0]->attributes['NMARQPDF'];
-	$nmdireto = $xmlObjeto->roottag->tags[0]->attributes['NMDIRETO'];
-	$flgblsaq = $xmlObjeto->roottag->tags[0]->attributes['FLGBLSAQ'];
+    } else {
+
+        // Monta o xml dinâmico de acordo com a operação 
+        $xml  = '';
+        $xml .= '<Root>';
+        $xml .= '	<Cabecalho>';
+        $xml .= '		<Bo>b1wgen0123.p</Bo>';
+        $xml .= '		<Proc>'.$procedure.'</Proc>';
+        $xml .= '	</Cabecalho>';
+        $xml .= '	<Dados>';
+        $xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+        $xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
+        $xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
+        $xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+        $xml .= '		<nmoperad>'.$glbvars['nmoperad'].'</nmoperad>';
+        $xml .= '		<cdprogra>'.$glbvars['cdprogra'].'</cdprogra>';	
+        $xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
+        $xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+        $xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
+        $xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
+        $xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';
+        $xml .= '		<dtmvtoan>'.$glbvars['dtmvtoan'].'</dtmvtoan>';
+        $xml .= '		<dsiduser>'.$dsiduser.'</dsiduser>';
+        $xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
+        $xml .= '		<cddoptrs>'.$cddoptrs.'</cddoptrs>';
+        $xml .= '		<nrterfin>'.$nrterfin.'</nrterfin>';
+        $xml .= '		<cdagencx>'.$cdagencx.'</cdagencx>';
+        $xml .= '		<dsfabtfn>'.$dsfabtfn.'</dsfabtfn>';
+        $xml .= '		<dsmodelo>'.$dsmodelo.'</dsmodelo>';
+        $xml .= '		<dsdserie>'.$dsdserie.'</dsdserie>';
+        $xml .= '		<nmnarede>'.$nmnarede.'</nmnarede>';
+        $xml .= '		<nrdendip>'.$nrdendip.'</nrdendip>';
+        $xml .= '		<cdsitfin>'.$cdsitfin.'</cdsitfin>';
+        $xml .= '		<qtcasset>'.$qtcasset.'</qtcasset>';
+        $xml .= '		<flsistaa>'.$flsistaa.'</flsistaa>';
+        $xml .= '		<dsterfin>'.$dsterfin.'</dsterfin>';
+        $xml .= '		<tprecolh>'.$tprecolh.'</tprecolh>';
+        $xml .= '		<qttotalp>'.$qttotalp.'</qttotalp>';
+        $xml .= '		<dtlimite>'.$dtlimite.'</dtlimite>';
+        $xml .= '		<cddoptel>'.$cddoptel.'</cddoptel>';
+        $xml .= '		<cdagetfn>'.$cdagetfn.'</cdagetfn>';
+        $xml .= '		<lgagetfn>'.$lgagetfn.'</lgagetfn>';
+        $xml .= '		<dtmvtini>'.$dtmvtini.'</dtmvtini>';
+        $xml .= '		<dtmvtfim>'.$dtmvtfim.'</dtmvtfim>';
+        $xml .= '		<tiprelat>'.$tiprelat.'</tiprelat>';
+        $xml .= '		<nmarqimp>'.$nmarqimp.'</nmarqimp>';
+        $xml .= '	</Dados>';
+        $xml .= '</Root>';
+
+        $xmlResult = getDataXML($xml);
+        $xmlObjeto = getObjectXML($xmlResult);
+
+        //----------------------------------------------------------------------------------------------------------------------------------	
+        // Controle de Erros
+        //----------------------------------------------------------------------------------------------------------------------------------
+        if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+            $msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            $nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
+            if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmCab');"; }
+            exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+        }
+        
+        $cdsitfin = $xmlObjeto->roottag->tags[0]->attributes['CDSITFIN'];
+        $nmarqimp = $xmlObjeto->roottag->tags[0]->attributes['NMARQIMP'];
+        $nmarqpdf = $xmlObjeto->roottag->tags[0]->attributes['NMARQPDF'];
+        $nmdireto = $xmlObjeto->roottag->tags[0]->attributes['NMDIRETO'];
+        $flgblsaq = $xmlObjeto->roottag->tags[0]->attributes['FLGBLSAQ'];
+
+    }
 	
 	if ( $operacao == 'bloquear' ) {
 		echo "$('#cdsitfin', '#frmCash').val('".$cdsitfin."');";
@@ -182,5 +230,8 @@
 	} else if (( $cddopcao == 'R' ) && (($operacao == 'BD') || ($operacao == 'BDCM'))){		
 		echo "nmarqpdf='".$nmarqpdf."';";	
 		echo "controlaLayout('".$operacao."');";
+	
+	} else if ( $cddopcao == 'S' and $operacao == 'CASH_DADOS_SITE' ) {
+		echo "controlaLayout('CASH_DADOS_SITE');";
 	}
 ?>

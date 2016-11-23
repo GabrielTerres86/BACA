@@ -4,11 +4,15 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
 			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
 						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
-      
-      09/08/2016 - Incluir filtro por tipo de evento
-                   PRJ229 - Melhorias OQS  (Odirlei-AMcom)
 
-...............................................................................*/
+            09/08/2016 - Incluir filtro por tipo de evento
+                         PRJ229 - Melhorias OQS  (Odirlei-AMcom)
+
+		    09/11/2016 - inclusao de LOG. (Jean Michel)
+
+......................................................................... */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -681,6 +685,10 @@ IF INT(ab_unmap.aux_idevento) = 1 THEN
    RUN CriaListaPac.
 ELSE
    RUN CriaListaPacAssemb.
+
+RUN insere_log_progrid("WPGD0040.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
+					  STRING(ab_unmap.cdcooper) + "|" + STRING(ab_unmap.cdagenci) + "|" +
+					  STRING(ab_unmap.aux_dtanoage)).
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 

@@ -1,3 +1,24 @@
+/******************************************************************************
+                 ATENCAO!    CONVERSAO PROGRESS - ORACLE
+            ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
+  +---------------------------------+-----------------------------------------+
+  | Rotina Progress                 | Rotina Oracle PLSQL                     |
+  +---------------------------------+-----------------------------------------+
+  | procedures/b1wgen0030i.p        | DSCT0002                                |
+  |   gera-impressao-limite         | DSCT0002.pc_gera_impressao_limite       |
+  |   gera-impressao-bordero        | DSCT0002.pc_gera_impressao_bordero      |
+  +---------------------------------+-----------------------------------------+
+
+  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
+  SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
+
+  PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
+  PESSOAS:
+   - GUILHERME STRUBE    (CECRED)
+   - MARCOS MARTINI      (SUPERO)
+
+*******************************************************************************/
+
 /*.............................................................................
 
     Programa: b1wgen0030i.p
@@ -54,6 +75,9 @@
 
                 27/06/2016 - Listagem das restricoes aprovadas pelo coordenador.
                              Busca do operador que aprovou. (Jaison/James)
+                
+				15/09/2016 - Inclusao dos parametros default na rotina oracle
+				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
 
 ..............................................................................*/
 
@@ -270,12 +294,7 @@ FORM SKIP(3)
 FORM tt-proposta_bordero.nmextcop FORMAT "x(50)"
      SKIP(1)
      "\033\016PROPOSTA DE DESCONTO DE TITULOS\024"
-    "PARA USO DA DIGITALIZACAO" AT 65
-     SKIP(1)
-     rel_numconta                 FORMAT "zzzz,zzz,9" AT 65
-     tt-proposta_bordero.nrborder FORMAT "z,zzz,zz9"  AT 78
-     aux_tpdocged                 FORMAT "zz9"        AT 90
-     SKIP(1)
+     SKIP(3)     
      "\033\105\DADOS DO ASSOCIADO\033\106"
      SKIP(1)
      "Conta/dv:\033\016" tt-proposta_bordero.nrdconta FORMAT "zzzz,zzz,9" "\024"
@@ -442,7 +461,7 @@ FORM SKIP(1)
      WITH NO-BOX WIDTH 132 FRAME f_cab_naopagos.
      
 FORM SKIP(1)
-     "RESTRICAO(OES) APROVADA(AS) PELO COORDENADOR: " aux_dsopecoo FORMAT "x(35)"
+     "RESTRICAO(OES) APROVADA(AS)"
      WITH NO-BOX NO-LABELS WIDTH 132 FRAME f_descricao_coordenador.
 
 FORM SKIP
@@ -764,7 +783,8 @@ IF  par_idimpres = 5 OR   /* COMPLETA */
                 /* Nao imprimir restriçoes referentes a 
                         titulos protestados ou em cartório */
                 IF  tt-dsctit_bordero_restricoes.nrseqdig = 90 OR
-                    tt-dsctit_bordero_restricoes.nrseqdig = 91 THEN
+                    tt-dsctit_bordero_restricoes.nrseqdig = 91 OR 
+                    tt-dsctit_bordero_restricoes.nrseqdig = 11 THEN
                     NEXT.
             
                 DISPLAY STREAM str_1 tt-dsctit_bordero_restricoes.dsrestri
@@ -2804,6 +2824,8 @@ PROCEDURE imprime_cet:
                           INPUT p-qtdiavig, /* Dias de vigencia */                                     
                           INPUT p-vlemprst, /* Valor emprestado */
                           INPUT p-txmensal, /* Taxa mensal/crapldc.txmensal */
+						  INPUT 0,          /* 0 - false pr_flretxml*/
+                         OUTPUT "",
                          OUTPUT "", 
                          OUTPUT 0,
                          OUTPUT "").                                  

@@ -5,8 +5,8 @@
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Formulário tela DEVOLU
  * --------------
- * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
- *					   
+ * ALTERAÇÕES   :  01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *                 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
  * --------------
  */
 	require_once('../../includes/config.php');
@@ -20,7 +20,10 @@
 	<table width ="100%">
 		<tr>		
 			<td> 
-				<label for="nrdconta">Conta/dv:</label>
+			    <label for="cdagenci"><? echo utf8ToHtml('PA:') ?></label>
+                <input name="cdagenci" id="cdagenci" type="text" value="<? echo $cdagenci ?>" />
+
+				<label for="nrdconta"><? echo utf8ToHtml('Conta/dv:') ?></label>
                 <input name="nrdconta" id="nrdconta" type="text" value="<? echo $nrdconta ?>" />
                 <input name="nmprimtl" id="nmprimtl" type="text" value="<? echo $nmprimtl ?>" />    
 			</td>

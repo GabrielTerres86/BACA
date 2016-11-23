@@ -24,8 +24,9 @@
  * 014: [28/05/2015] Padronizacao das consultas automatizadas (Jonata-RKAM).
  * 015: [11/09/2015] Desenvolvimento do Projeto 215 - Estorno. (James)
  * 016: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
- * 017: [01/03/2016] Adicionado cdpactra na chamada da rotina grava-proposta-completa PRJ Esteira de Credito. (Odirlei-AMcom/Oscar) 
- * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
+ * 017: [01/03/2016] Adicionado cdpactra na chamada da rotina grava-proposta-completa PRJ Esteira de Credito. (Odirlei-AMcom/Oscar)
+ * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom)
+ * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
  */
 ?>
 
@@ -146,7 +147,8 @@
 	$dsjusren = (isset($_POST['dsjusren'])) ? $_POST['dsjusren'] : '' ;
 	$dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '' ;
 	$flgconsu = (isset($_POST['flgconsu'])) ? $_POST['flgconsu'] : '' ;
-	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '';
+	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '' ;
+	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;
@@ -534,6 +536,20 @@
 			die();
 		}
 		
+	}
+		
+	if ($procedure == 'grava-proposta-completa' && $blqpreap == true){
+		
+		// Montar o xml para requisicao
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+			
+		$xmlResult = mensageria($xml, "CADPRE" , 'BLOQ_PRE_APRV_REF', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");	
+		$xmlObj    = getObjectXML($xmlResult);
 	}
 	
 	echo 'exibirMensagens("'.$stringArrayMsg.'","bloqueiaFundo($(\"#divConfirm\"))");bloqueiaFundo($("#divError"));';

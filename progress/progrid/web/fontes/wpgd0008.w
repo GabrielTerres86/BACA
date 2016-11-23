@@ -32,10 +32,13 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             09/06/2016 - Ajustado para exibir na lista de recursos apenas os 
                          recursos que possuem tipo definido(gnaprdp.cdtiprec <> 0).
                          PRJ229 - Melhorias OQS (Odirlei-AMcom)
-						
+
             27/06/2018 - Ajustes para RF05/RF06, inclusao de novas abas, 
-                         PRJ229 - Melhorias OQS (Jean Michel).			
-                         
+                         PRJ229 - Melhorias OQS (Jean Michel).
+			
+            02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                         (Jaison/Anderson)
+
 ...............................................................................*/
 
 { includes/var_progrid.i }
@@ -400,7 +403,7 @@ DEFINE FRAME Web-Frame
      ab_unmap.cdagenci AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
-          SIZE 20 BY 1 
+          SIZE 20 BY 1     
      ab_unmap.aux_dsurlphp AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -879,7 +882,8 @@ PROCEDURE CriaListaPac :
                DO:
                   aux_cdagenci = ",-2".
                   FOR EACH crapage WHERE crapage.cdcooper = aux_cdcooper   AND
-                                         crapage.insitage = 1 /* Ativo */  AND
+                                        (crapage.insitage = 1  OR   /* Ativo */
+                                         crapage.insitage = 3) AND  /* Temporariamente Indisponivel */
                                          crapage.flgdopgd = TRUE /* Habilitado no Progrid*/ NO-LOCK
                                          BY crapage.nmresage:
 
@@ -900,7 +904,8 @@ PROCEDURE CriaListaPac :
                       FIND crapage WHERE crapage.cdcooper = aux_cdcooper     AND
                                          crapage.cdagenci = gnapses.cdagenci AND
                                          crapage.flgdopgd = TRUE /* Habilitado no Progrid*/ AND
-                                         crapage.insitage = 1 /* Ativo */                    
+                                        (crapage.insitage = 1 OR  /* Ativo */
+                                         crapage.insitage = 3)    /* Temporariamente Indisponivel */
                                          NO-LOCK NO-ERROR.
                       IF   AVAILABLE crapage   THEN                                   
                            ASSIGN aux_cdagenci = crapage.nmresage + "," + TRIM(STRING(crapage.cdagenci)).
@@ -1031,7 +1036,7 @@ PROCEDURE htmOffsets :
   Notes:       
 ------------------------------------------------------------------------------*/
   RUN readOffsets ("{&WEB-FILE}":U).
-  
+
   RUN htmAssociate
     ("aux_cddopcao":U,"ab_unmap.aux_cddopcao":U,ab_unmap.aux_cddopcao:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
