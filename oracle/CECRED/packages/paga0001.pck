@@ -16801,7 +16801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                       gene0002.fn_mask(rw_craprtc.vltitulo * 100,'999999999999999')|| /* 17.3T */
                       gene0002.fn_mask(rw_craprtc.cdbcorec,'999')||             /* 18.3T */
                       gene0002.fn_mask(vr_cdagerec,'999999')||          /* 19.3T + 20.3T */
-                      substr(rpad(nvl(vr_dsusoemp,' '),25,' '),1,25)||           /* 21.3T */
+                      substr(rpad(nvl(TRIM(vr_dsusoemp),' '),25,' '),1,25)||           /* 21.3T */
                       '9'||                                              /* 22.3T */
                       gene0002.fn_mask(vr_cdtpinsc,'99')||              /* 23.3T */
                       gene0002.fn_mask(vr_nrinssac,'999999999999999')|| /* 24.3T SAB */
