@@ -5245,30 +5245,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           '<restricoes>');
         
         -- Percorre as restricoes
-        FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
-          -- Sea for restricao do cheque em questao
-          IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
-            
-            --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
-            IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
-              continue;
-            END IF;  
-            
-            vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
-            
-            pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
-            -- Se foi aprovado pelo coordenador
-            IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+        IF vr_tab_bordero_restri.COUNT > 0 THEN
+          FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
+            -- Sea for restricao do cheque em questao
+            IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
               
-              IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
-                vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-              END IF;              
+              --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
+              IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
+                continue;
+              END IF;  
+            
+              vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
               
+              pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
+              -- Se foi aprovado pelo coordenador
+              IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+              
+                IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
+                  vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
+                END IF;              
+              
+              END IF;
             END IF;
-          END IF;
-        END LOOP;
-        
-       pc_escreve_xml('</restricoes></titulo>');
+          END LOOP;
+        END IF;
+        pc_escreve_xml('</restricoes></titulo>');
         
       
         vr_idxord := vr_tab_tit_bordero_ord.next(vr_idxord);
