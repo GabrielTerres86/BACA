@@ -1162,7 +1162,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                    pr_nrdconta => pr_nrdconta,
                                    pr_nrctremp => pr_nrctrlim) LOOP
     
-      vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapavt.nmdavali;
+      vr_idxavais := vr_tab_avais_ctr.count() + 1; 
+	  vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapavt.nmdavali;
       vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcjg, 
                                                                                     pr_inpessoa => 1 );                       
       vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapavt.tpdocava ||': '|| rw_crapavt.nrdocava;  
