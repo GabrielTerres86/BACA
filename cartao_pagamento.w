@@ -29,6 +29,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                                                incompleta e pagamento de fatura com valor zerado (Tiago/Fabricio).
 
                                   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+
+		          23/11/2016 - Ajustar validação do valor para carregar corretamente na tela
+				               (Douglas - Melhoria 271)
 ............................................................................... */
 
 /*----------------------------------------------------------------------*/
@@ -1340,7 +1343,7 @@ PROCEDURE extrai_valor_codbar :
             END.
          
          /*Se o valor veio do oracle, passa normal*/
-         IF aux_vlfatura <> 0 OR 
+         IF aux_vlfatura <> 0  AND
             aux_vlfatura <> ?  THEN
             ASSIGN ed_vldpagto:SCREEN-VALUE = STRING(aux_valor).   
          ELSE
