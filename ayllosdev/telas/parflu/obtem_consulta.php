@@ -110,6 +110,8 @@
             $xmlResult = mensageria($xml, "TELA_PARFLU", "PARFLU_LISTA_HISTOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             $xmlObject = getObjectXML($xmlResult);
             $reghistor = $xmlObject->roottag->tags[0]->tags;
+            
+            $arrBancos = array(1 => '01 - Banco do Brasil', 85 => '85 - Cecred', 756 => '756 - Bancoob', 748 => '748 - Sicredi');
         }
 
         include('form_r.php');

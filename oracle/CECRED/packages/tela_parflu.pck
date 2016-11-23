@@ -68,6 +68,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARFLU IS
 
   PROCEDURE pc_grava_dados_histor(pr_cdremessa IN tbfin_remessa_fluxo_caixa.cdremessa%TYPE --> Codigo da remessa
                                  ,pr_nmremessa IN tbfin_remessa_fluxo_caixa.nmremessa%TYPE --> Nome da Remessa
+                                 ,pr_tpfluxo_e IN tbfin_remessa_fluxo_caixa.tpfluxo_entrada%TYPE --> Tipo do Fluxo na Entrada (Projetado / Realizado)
+                                 ,pr_tpfluxo_s IN tbfin_remessa_fluxo_caixa.tpfluxo_saida%TYPE --> Tipo do Fluxo na Saida (Projetado / Realizado)
+                                 ,pr_flremdina IN tbfin_remessa_fluxo_caixa.flremessa_dinamica%TYPE --> Remessa dinamica (0-Nao / 1-Sim)
                                  ,pr_strrehifl IN VARCHAR2 --> Contem os percentuais e prazos
                                  ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER --> Codigo da critica
@@ -355,8 +358,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
       CURSOR cr_remessas IS
         SELECT cdremessa
               ,nmremessa
+              ,tpfluxo_entrada
+              ,tpfluxo_saida
+              ,flremessa_dinamica
           FROM tbfin_remessa_fluxo_caixa
-         WHERE flremessa_dinamica = 1
       ORDER BY cdremessa;
 
       -- Variavel de criticas
@@ -399,6 +404,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
                               ,pr_posicao  => vr_contador
                               ,pr_tag_nova => 'nmremessa'
                               ,pr_tag_cont => rw_remessas.nmremessa
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'remessa'
+                              ,pr_posicao  => vr_contador
+                              ,pr_tag_nova => 'tpfluxo_entrada'
+                              ,pr_tag_cont => rw_remessas.tpfluxo_entrada
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'remessa'
+                              ,pr_posicao  => vr_contador
+                              ,pr_tag_nova => 'tpfluxo_saida'
+                              ,pr_tag_cont => rw_remessas.tpfluxo_saida
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'remessa'
+                              ,pr_posicao  => vr_contador
+                              ,pr_tag_nova => 'flremessa_dinamica'
+                              ,pr_tag_cont => rw_remessas.flremessa_dinamica
                               ,pr_des_erro => vr_dscritic);
 
         vr_contador := vr_contador + 1;
@@ -608,6 +634,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
               ,ch.dshistor
               ,DECODE(ch.indebcre,'D','Débito','Crédito') tphistor
               ,DECODE(th.tpfluxo,'E','Entrada','Saída') tpfluxo
+              ,th.cdbccxlt
           FROM tbfin_histor_fluxo_caixa th
               ,craphis ch
          WHERE ch.cdhistor  = th.cdhistor
@@ -671,6 +698,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
                               ,pr_posicao  => vr_contador
                               ,pr_tag_nova => 'tpfluxo'
                               ,pr_tag_cont => rw_historico.tpfluxo
+                              ,pr_des_erro => vr_dscritic);
+
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'histor'
+                              ,pr_posicao  => vr_contador
+                              ,pr_tag_nova => 'cdbccxlt'
+                              ,pr_tag_cont => rw_historico.cdbccxlt
                               ,pr_des_erro => vr_dscritic);
 
         vr_contador := vr_contador + 1;
@@ -1055,6 +1089,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
 
   PROCEDURE pc_grava_dados_histor(pr_cdremessa IN tbfin_remessa_fluxo_caixa.cdremessa%TYPE --> Codigo da remessa
                                  ,pr_nmremessa IN tbfin_remessa_fluxo_caixa.nmremessa%TYPE --> Nome da Remessa
+                                 ,pr_tpfluxo_e IN tbfin_remessa_fluxo_caixa.tpfluxo_entrada%TYPE --> Tipo do Fluxo na Entrada (Projetado / Realizado)
+                                 ,pr_tpfluxo_s IN tbfin_remessa_fluxo_caixa.tpfluxo_saida%TYPE --> Tipo do Fluxo na Saida (Projetado / Realizado)
+                                 ,pr_flremdina IN tbfin_remessa_fluxo_caixa.flremessa_dinamica%TYPE --> Remessa dinamica (0-Nao / 1-Sim)
                                  ,pr_strrehifl IN VARCHAR2 --> Contem os percentuais e prazos
                                  ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                  ,pr_cdcritic  OUT PLS_INTEGER --> Codigo da critica
@@ -1150,7 +1187,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
 
       BEGIN
         UPDATE tbfin_remessa_fluxo_caixa
-           SET nmremessa = pr_nmremessa
+           SET nmremessa          = pr_nmremessa
+              ,tpfluxo_entrada    = pr_tpfluxo_e
+              ,tpfluxo_saida      = pr_tpfluxo_s
+              ,flremessa_dinamica = pr_flremdina
          WHERE cdremessa = pr_cdremessa;
       EXCEPTION
         WHEN OTHERS THEN
@@ -1171,11 +1211,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
                      (cdremessa
                      ,cdhistor
                      ,tpfluxo
+                     ,cdbccxlt
                      ,cdoperador
                      ,dtalteracao)
                VALUES(pr_cdremessa
                      ,GENE0002.fn_busca_entrada(2,vr_dsrehifl(vr_ind),'_')
                      ,GENE0002.fn_busca_entrada(3,vr_dsrehifl(vr_ind),'_')
+                     ,GENE0002.fn_busca_entrada(4,vr_dsrehifl(vr_ind),'_')
                      ,vr_cdoperad
                      ,SYSDATE);
         END LOOP;
@@ -1365,14 +1407,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARFLU IS
     Alteracoes: -----
     ..............................................................................*/
     DECLARE
-
-      -- Selecionar cooperativa
-      CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-        SELECT cdcooper
-          FROM crapcop
-         WHERE cdcooper <> 3
-           AND flgativo = 1
-           AND cdcooper = DECODE(pr_cdcooper, 0, cdcooper, pr_cdcooper);
 
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;

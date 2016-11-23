@@ -30,6 +30,9 @@
 
     $cdremessa = (isset($_POST['cdremessa'])) ? $_POST['cdremessa'] : 0 ;
     $nmremessa = (isset($_POST['nmremessa'])) ? $_POST['nmremessa'] : '' ;
+    $tpfluxo_e = (isset($_POST['tpfluxo_e'])) ? $_POST['tpfluxo_e'] : '' ;
+    $tpfluxo_s = (isset($_POST['tpfluxo_s'])) ? $_POST['tpfluxo_s'] : '' ;
+    $flremdina = (isset($_POST['flremdina'])) ? $_POST['flremdina'] : '' ;
     $strReHiFl = (isset($_POST['strReHiFl'])) ? $_POST['strReHiFl'] : '' ;
 
     $cdcooper  = (isset($_POST['cdcooper'])) ? $_POST['cdcooper']   : 0 ;
@@ -56,6 +59,10 @@
         }
         $nmdeacao = 'PARFLU_GRAVA_SYSPHERA';
     } else if ($cddopcao == 'R') {
+        // Verifica se pode salvar os dados
+        if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'S',false)) <> '') {
+            exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+        }
         $nmdeacao = 'PARFLU_GRAVA_HISTOR';
     } else if ($cddopcao == 'H') {
         $nmdeacao = 'PARFLU_GRAVA_HORARIO';
@@ -74,6 +81,9 @@
 	// OPCAO R
 	$xmlCarregaDados .= "   <cdremessa>".$cdremessa."</cdremessa>";
 	$xmlCarregaDados .= "   <nmremessa>".$nmremessa."</nmremessa>";
+    $xmlCarregaDados .= "   <tpfluxo_e>".$tpfluxo_e."</tpfluxo_e>";
+    $xmlCarregaDados .= "   <tpfluxo_s>".$tpfluxo_s."</tpfluxo_s>";
+    $xmlCarregaDados .= "   <flremdina>".$flremdina."</flremdina>";
 	$xmlCarregaDados .= "   <strrehifl>".$strReHiFl."</strrehifl>";
 	// OPCAO H
 	$xmlCarregaDados .= "   <cdcooper>".$cdcooper."</cdcooper>";

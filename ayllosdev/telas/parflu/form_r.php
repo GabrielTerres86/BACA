@@ -21,10 +21,18 @@
             <?php
                 $arrRemessa = array();
                 foreach ($regremess as $reg) {
-                    $cdremessa = getByTagName($reg->tags,'CDREMESSA');
-                    $nmremessa = getByTagName($reg->tags,'NMREMESSA');
-                    $arrRemessa[$cdremessa] = $nmremessa;
-                    echo '<option value="'.$cdremessa.'">'.$cdremessa.' - '.$nmremessa.'</option> ';
+                    $cdremessa          = getByTagName($reg->tags,'CDREMESSA');
+                    $nmremessa          = getByTagName($reg->tags,'NMREMESSA');
+                    $tpfluxo_entrada    = getByTagName($reg->tags,'TPFLUXO_ENTRADA');
+                    $tpfluxo_saida      = getByTagName($reg->tags,'TPFLUXO_SAIDA');
+                    $flremessa_dinamica = getByTagName($reg->tags,'FLREMESSA_DINAMICA');
+
+                    $arrRemessa[$cdremessa]['NMREMESSA']          = $nmremessa;
+                    $arrRemessa[$cdremessa]['TPFLUXO_ENTRADA']    = $tpfluxo_entrada;
+                    $arrRemessa[$cdremessa]['TPFLUXO_SAIDA']      = $tpfluxo_saida;
+                    $arrRemessa[$cdremessa]['FLREMESSA_DINAMICA'] = $flremessa_dinamica;
+
+                    echo '<option value="'.$cdremessa.'">'.$cdremessa.' - '.$nmremessa.'</option>';
                 }
             ?>
         </select>
@@ -33,33 +41,77 @@
 	</div>
 
     <div id="divRemessa2" style="margin-top:20px; display:none; text-align: center;" >
-        <label for="remessa">Remessa:</label>
-        <input type="text" name="cdremessa" id="cdremessa" value="<?php echo $remessa; ?>" />
-        <input type="text" name="nmremessa" id="nmremessa" value="<?php echo $arrRemessa[$remessa]?>" />
+        <table cellpadding="10" cellspacing="5">
+        <tr style="font-weight:bold; color:#333;font-size:12px;">
+            <td>Remessa</td>
+            <td>&nbsp;</td>
+            <td>Fluxo do Dia<br />na Entrada</td>
+            <td>&nbsp;</td>
+            <td>Fluxo do Dia<br />na Saída</td>
+            <td>&nbsp;</td>
+            <td>Remessa<br />Dinâmica</td>
+        </tr>
+        <tr>
+            <td>
+                <input type="text" name="cdremessa" id="cdremessa" value="<?php echo $remessa; ?>" />
+                <input type="text" name="nmremessa" id="nmremessa" value="<?php echo $arrRemessa[$remessa]['NMREMESSA']; ?>" />
+            </td>
+            <td>&nbsp;</td>
+            <td>
+                <select id="tpfluxo_e" name="tpfluxo_e">
+                <option value="P" <?php echo ($arrRemessa[$remessa]['TPFLUXO_ENTRADA'] == 'P' ? 'selected' : ''); ?>>Projetado</option>
+                <option value="R" <?php echo ($arrRemessa[$remessa]['TPFLUXO_ENTRADA'] == 'R' ? 'selected' : ''); ?>>Realizado</option>
+                </select>
+            </td>
+            <td>&nbsp;</td>
+            <td>
+                <select id="tpfluxo_s" name="tpfluxo_s">
+                <option value="P" <?php echo ($arrRemessa[$remessa]['TPFLUXO_SAIDA'] == 'P' ? 'selected' : ''); ?>>Projetado</option>
+                <option value="R" <?php echo ($arrRemessa[$remessa]['TPFLUXO_SAIDA'] == 'R' ? 'selected' : ''); ?>>Realizado</option>
+                </select>
+            </td>
+            <td>&nbsp;</td>
+            <td>
+                <select id="flremdina" name="flremdina">
+                <option value="1" <?php echo ($arrRemessa[$remessa]['FLREMESSA_DINAMICA'] == '1' ? 'selected' : ''); ?>>Sim</option>
+                <option value="0" <?php echo ($arrRemessa[$remessa]['FLREMESSA_DINAMICA'] == '0' ? 'selected' : ''); ?>>Não</option>
+                </select>
+            </td>
+        </tr>
+        </table>
 
-        <br style="clear:both" />
         <br style="clear:both" />
 
         <fieldset id="fsetFormularioInc" name="fsetFormularioInc" style="padding:0px; margin:0px;">
         <legend> Incluir hist&oacute;rico </legend>
-            <table width="500" style="margin: 5px 0px 10px 10px;">
+            <table width="630" style="margin: 5px 0px 10px 10px;">
             <tr>
+                <td>Institui&ccedil;&atilde;o Financeira</td>
+                <td>Movimento</td>
                 <td>C&oacute;digo</td>
                 <td>Descri&ccedil;&atilde;o</td>
                 <td>Tipo</td>
-                <td>Movimento</td>
                 <td>&nbsp;</td>
             </tr>
             <tr>
-                <td><input type="text" name="cdhistor" id="cdhistor" /> <a style="padding: 3px 0 0 3px;" href="#" onClick="mostraPesquisaHistor();return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a></td>
-                <td><input type="text" name="dshistor" id="dshistor" /></td>
-                <td><input type="text" name="tphistor" id="tphistor" /></td>
+                <td>
+                    <select id="cdbccxlt" name="cdbccxlt">
+                    <?php
+                        foreach ($arrBancos as $cdbanco => $nmbanco) {
+                            echo '<option value="'.$cdbanco.'">'.$nmbanco.'</option>';
+                        }
+                    ?>
+                    </select>
+                </td>
                 <td>
                     <select id="tpfluxo" name="tpfluxo">
                     <option value="E">Entrada</option>
                     <option value="S">Saída</option>
                     </select>
                 </td>
+                <td><input type="text" name="cdhistor" id="cdhistor" /> <a style="padding: 3px 0 0 3px;" href="#" onClick="mostraPesquisaHistor();return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a></td>
+                <td><input type="text" name="dshistor" id="dshistor" /></td>
+                <td><input type="text" name="tphistor" id="tphistor" /></td>
                 <td><a href="#" class="botao" id="btAdicionar"  onClick="validaInclusao();return false;" style="text-align: right; float: none;">Adicionar</a></td>
             </tr>
             </table>
@@ -71,11 +123,12 @@
                 <table>
                     <thead>
                         <tr>
-                            <th width="100">C&oacute;digo</th>
+                            <th width="120">Inst. Financeira</th>
+                            <th width="80">Movimento</th>
+                            <th width="50">C&oacute;digo</th>
                             <th>Descri&ccedil;&atilde;o</th>
-                            <th width="90">Tipo</th>
-                            <th width="90">Movimento</th>
-                            <th width="90">Remover</th>
+                            <th width="50">Tipo</th>
+                            <th width="60">Remover</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyHistor">
@@ -84,15 +137,18 @@
                             $cdhistor = getByTagName($reg->tags,'CDHISTOR');
                             $dshistor = getByTagName($reg->tags,'DSHISTOR');
                             $tphistor = getByTagName($reg->tags,'TPHISTOR');
+                            $cdbanco  = getByTagName($reg->tags,'CDBCCXLT');
+                            $dsbanco  = $arrBancos[$cdbanco];
                             $tpfluxo  = getByTagName($reg->tags,'TPFLUXO');
-                            $lnhistor = $remessa.'_'.$cdhistor.'_'.substr($tpfluxo, 0, 1);
+                            $lnhistor = $remessa.'_'.$cdhistor.'_'.substr($tpfluxo, 0, 1).'_'.$cdbanco;
                             echo '
                             <tr id="'.$lnhistor.'">
-                                <td width="100">'.$cdhistor.'</td>
+                                <td width="120"><span>'.$cdbanco.$tpfluxo.'</span>'.$dsbanco.'</td>
+                                <td width="80">'.$tpfluxo.'</td>
+                                <td width="50">'.$cdhistor.'</td>
                                 <td>'.$dshistor.'</td>
-                                <td width="90">'.$tphistor.'</td>
-                                <td width="90">'.$tpfluxo.'</td>
-                                <td width="90"><img onclick="confirmaExclusao(\''.$lnhistor.'\');" style="cursor:hand;" src="../../imagens/geral/panel-error_16x16.gif" width="13" height="13" /></td>
+                                <td width="50">'.$tphistor.'</td>
+                                <td width="60"><img onclick="confirmaExclusao(\''.$lnhistor.'\');" style="cursor:hand;" src="../../imagens/geral/panel-error_16x16.gif" width="13" height="13" /></td>
                             </tr>';
                         }
                     ?>

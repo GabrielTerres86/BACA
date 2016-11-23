@@ -314,20 +314,24 @@ function formataFormulario() {
         } else {
             var cCdremessa = $('#cdremessa', '#frmParflu');
             var cNmremessa = $('#nmremessa', '#frmParflu');
+            var cTpfluxo_e = $('#tpfluxo_e', '#frmParflu');
+            var cTpfluxo_s = $('#tpfluxo_s', '#frmParflu');
+            var cFlremdina = $('#flremdina', '#frmParflu');
+            var cCdbccxlt  = $('#cdbccxlt',  '#frmParflu');
             var cCdhistor  = $('#cdhistor',  '#frmParflu');
             var cDshistor  = $('#dshistor',  '#frmParflu');
             var cTphistor  = $('#tphistor',  '#frmParflu');
             var cTpfluxo   = $('#tpfluxo',   '#frmParflu');
 
             cCdremessa.css({'width':'50px','text-align':'center'}).desabilitaCampo();
-            cNmremessa.css({'width':'350px'}).attr('maxlength','100');
+            cNmremessa.css({'width':'320px'}).attr('maxlength','100');
             cCdhistor.css({'width':'50px','text-align':'center'}).setMask('INTEGER', 'zzzzz', '', '');
             cDshistor.css({'width':'150px'}).desabilitaCampo();
             cTphistor.css({'width':'60px'}).desabilitaCampo();
 
             $("#divRemessa2", "#frmParflu").show();
             $('#nmremessa', '#frmParflu').focus();
-            trocaBotao('Salvar','alterarDadosR()','btnVoltar()');
+            trocaBotao('Salvar','alterarDadosR()','btnVoltarOpcaoR()');
 
             cCdhistor.bind('keydown', function (e) {
                 var keyValue = getKeyValue(e);
@@ -342,12 +346,33 @@ function formataFormulario() {
 
             cNmremessa.keypress(function(e) {
                 if (e.keyCode == 13 || e.keyCode == 09) {
-                    cCdhistor.focus();
+                    cTpfluxo_e.focus();
                     return false;
                 }
             });
 
-            cCdhistor.keypress(function(e) {
+            cTpfluxo_e.keypress(function(e) {
+                if (e.keyCode == 13 || e.keyCode == 09) {
+                    cTpfluxo_s.focus();
+                    return false;
+                }
+            });
+
+            cTpfluxo_s.keypress(function(e) {
+                if (e.keyCode == 13 || e.keyCode == 09) {
+                    cFlremdina.focus();
+                    return false;
+                }
+            });
+
+            cFlremdina.keypress(function(e) {
+                if (e.keyCode == 13 || e.keyCode == 09) {
+                    cCdbccxlt.focus();
+                    return false;
+                }
+            });
+
+            cCdbccxlt.keypress(function(e) {
                 if (e.keyCode == 13 || e.keyCode == 09) {
                     cTpfluxo.focus();
                     return false;
@@ -355,6 +380,13 @@ function formataFormulario() {
             });
 
             cTpfluxo.keypress(function(e) {
+                if (e.keyCode == 13 || e.keyCode == 09) {
+                    cCdhistor.focus();
+                    return false;
+                }
+            });
+
+            cCdhistor.keypress(function(e) {
                 if (e.keyCode == 13 || e.keyCode == 09) {
                     $("#btAdicionar", "#frmParflu").focus();
                     return false;
@@ -457,6 +489,13 @@ function formataFormulario() {
 // Botao Voltar
 function btnVoltar() {
     estadoInicial();
+    return false;
+}
+
+function btnVoltarOpcaoR() {
+    estadoInicial();
+    $('#cddopcao', '#frmCab').val('R');
+    controlaOperacao(1,30);
     return false;
 }
 
@@ -593,9 +632,18 @@ function grava_dados() {
         var perc_5040 = converteMoedaFloat($('#perc_5040', '#frmParflu').val());
         var perc_5400 = converteMoedaFloat($('#perc_5400', '#frmParflu').val());
         var perc_5401 = converteMoedaFloat($('#perc_5401', '#frmParflu').val());
+        var vltotperc = perc_90   + perc_180  + perc_270  + perc_360  + perc_720
+                      + perc_1080 + perc_1440 + perc_1800 + perc_2160 + perc_2520
+                      + perc_2880 + perc_3240 + perc_3600 + perc_3960 + perc_4320
+                      + perc_4680 + perc_5040 + perc_5400 + perc_5401;
 
         if (nmconta == '') {
             showError("error", "Informe o nome.", "Alerta - Ayllos", "$('#nmconta','#frmParflu').focus();");
+            return false;
+        }
+
+        if (vltotperc > 100) {
+            showError("error", "Percentual distribuído nos períodos não pode ultrapassar 100%!");
             return false;
         }
 
@@ -616,6 +664,9 @@ function grava_dados() {
 
         var cdremessa = normalizaNumero($('#cdremessa', '#frmParflu').val());
         var nmremessa = $('#nmremessa', '#frmParflu').val();
+        var tpfluxo_e = $('#tpfluxo_e', '#frmParflu').val();
+        var tpfluxo_s = $('#tpfluxo_s', '#frmParflu').val();
+        var flremdina = $('#flremdina', '#frmParflu').val();
         var strReHiFl  = '';
 
         if (nmremessa == '') {
@@ -703,6 +754,9 @@ function grava_dados() {
             // OPCAO R
             cdremessa : cdremessa,
             nmremessa : nmremessa,
+            tpfluxo_e : tpfluxo_e,
+            tpfluxo_s : tpfluxo_s,
+            flremdina : flremdina,
             strReHiFl : strReHiFl,
             // OPCAO H
             cdcooper  : cdcooper,
@@ -748,10 +802,11 @@ function formataGridHistor() {
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'left';
+    arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'center';
 
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
     return false;	
@@ -843,13 +898,14 @@ function adicionaLinha() {
     var tphistor  = $('#tphistor', '#frmParflu').val();
     var tpfluxo   = $('#tpfluxo', '#frmParflu').val();
     var dsfluxo   = $("#tpfluxo option:selected").text();
-    var cdRehifl  = cdremessa + '_' + cdhistor + '_' + tpfluxo;
+    var cdbanco   = $('#cdbccxlt', '#frmParflu').val();
+    var dsbanco   = $("#cdbccxlt option:selected").text();
+    var cdRehifl  = cdremessa + '_' + cdhistor + '_' + tpfluxo + '_' + cdbanco;
     var linHistor = '';
     var blnAchou  = false;
 
     $('#tbodyHistor tr').each(function(){
-        if ($(this).attr('id') == cdRehifl &&
-            $(this).is(':visible') == false) {
+        if ($(this).attr('id') == cdRehifl) {
             blnAchou = true;
             return false;
         }
@@ -859,11 +915,12 @@ function adicionaLinha() {
         $('#' + cdRehifl).show();
     } else {
         linHistor += '<tr id="' + cdRehifl + '">';
-        linHistor += '    <td width="100">' + cdhistor + '</td>';
+        linHistor += '    <td width="120">' + dsbanco + '</td>';
+        linHistor += '    <td width="80">' + dsfluxo  + '</td>';
+        linHistor += '    <td width="50">' + cdhistor + '</td>';
         linHistor += '    <td>' + dshistor + '</td>';
-        linHistor += '    <td width="90">' + tphistor + '</td>';
-        linHistor += '    <td width="90">' + dsfluxo  + '</td>';
-        linHistor += '    <td width="90"><img onclick="confirmaExclusao(\'' + cdRehifl + '\');" style="cursor:hand;" src="../../imagens/geral/panel-error_16x16.gif" width="13" height="13" /></td>';
+        linHistor += '    <td width="50">' + tphistor + '</td>';
+        linHistor += '    <td width="60"><img onclick="confirmaExclusao(\'' + cdRehifl + '\');" style="cursor:hand;" src="../../imagens/geral/panel-error_16x16.gif" width="13" height="13" /></td>';
         linHistor += '</tr>';
     }
 
