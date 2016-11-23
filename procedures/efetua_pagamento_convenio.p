@@ -15,6 +15,7 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   30/12/2015 - Adicionado parametro aux_idastcjt na chamada da 
                                procedure obtem_saldo_limite.p
+                  23/11/2016 - inclusao de parametro obtem_saldo_limite.p                 
 ............................................................................... */
 
 DEFINE  INPUT PARAM par_cdbarra1    AS CHAR             NO-UNDO.     
@@ -43,7 +44,8 @@ DEFINE VARIABLE     aux_idastcjt    AS INT              NO-UNDO.
 
 /* para o saldo */
 DEFINE VARIABLE     tmp_vlsddisp    AS DECIMAL          NO-UNDO.    
-DEFINE VARIABLE     tmp_vllautom    AS DECIMAL          NO-UNDO.    
+DEFINE VARIABLE     tmp_vllautom    AS DECIMAL          NO-UNDO.
+DEFINE VARIABLE     tmp_vllaucre    AS DECIMAL          NO-UNDO.    
 DEFINE VARIABLE     tmp_vlsdbloq    AS DECIMAL          NO-UNDO.    
 DEFINE VARIABLE     tmp_vlblqtaa    AS DECIMAL          NO-UNDO.    
 DEFINE VARIABLE     tmp_vlsdblpr    AS DECIMAL          NO-UNDO.    
@@ -64,6 +66,7 @@ IF  NOT par_flagenda THEN
         RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                              OUTPUT tmp_vlsddisp,
                                              OUTPUT tmp_vllautom,
+                                             OUTPUT tmp_vllaucre,
                                              OUTPUT tmp_vlsdbloq,
                                              OUTPUT tmp_vlblqtaa,
                                              OUTPUT tmp_vlsdblpr,

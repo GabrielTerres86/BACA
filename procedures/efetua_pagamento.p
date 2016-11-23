@@ -19,6 +19,7 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 
                   24/12/2015 - Adicionado tratamento para contas com assinatura 
                                conjunta. (Reinert)
+                  23/11/2016 - inclusao de campo obtem_saldo_limite.p             
 
 ............................................................................... */
 
@@ -56,6 +57,7 @@ DEFINE VARIABLE     aux_idastcjt    AS INT              NO-UNDO.
 /* para o saldo */
 DEFINE VARIABLE     tmp_vlsddisp    AS DECIMAL          NO-UNDO.    
 DEFINE VARIABLE     tmp_vllautom    AS DECIMAL          NO-UNDO.    
+DEFINE VARIABLE     tmp_vllaucre    AS DECIMAL          NO-UNDO.    
 DEFINE VARIABLE     tmp_vlsdbloq    AS DECIMAL          NO-UNDO.    
 DEFINE VARIABLE     tmp_vlblqtaa    AS DECIMAL          NO-UNDO.    
 DEFINE VARIABLE     tmp_vlsdblpr    AS DECIMAL          NO-UNDO.    
@@ -81,6 +83,7 @@ IF  NOT par_flagenda THEN
         RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                              OUTPUT tmp_vlsddisp,
                                              OUTPUT tmp_vllautom,
+                                             OUTPUT tmp_vllaucre,
                                              OUTPUT tmp_vlsdbloq,
                                              OUTPUT tmp_vlblqtaa,
                                              OUTPUT tmp_vlsdblpr,
