@@ -10,7 +10,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jonata - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 01/11/2016
+   Data    : Setembro/2016                        Ultima atualizacao: 24/11/2016
 
    Dados referentes ao programa:
 
@@ -20,20 +20,25 @@ BEGIN
    Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
 							              durante a homologação da área de negócio
 							              (Adriano - M211).
+                            
+               24/11/2016 - Ajuste para alimentar correta o lote utilizado no 
+							              lançamento de créditos na conta do cooperado
+							              (Adriano - SD 563707).            
+                            
    ............................................................................. */
    DECLARE
 
      -- Selecionar os dados da Cooperativa
      CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
-       SELECT cop.nrctactl
+     SELECT cop.nrctactl
        FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+      WHERE cop.cdcooper = pr_cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
      
      -- Busca do valor de tarifa
      CURSOR cr_tarifa IS
-       SELECT vltedtec
-         FROM gncdtrf;
+     SELECT vltedtec
+       FROM gncdtrf;
      vr_vltedtec gncdtrf.vltedtec%TYPE;    
 
      --Registro do tipo calendario
@@ -42,53 +47,51 @@ BEGIN
      -- Busca dos lancamentos de TED Sicredi do dia
      CURSOR cr_craplcm(pr_ini DATE
                       ,pr_fim DATE) IS
-       SELECT cop.cdcooper
-             ,cop.nrctactl
-             ,COUNT(1) qtlanmto
-         FROM craplcm lcm
-             ,crapcop cop 
-        WHERE cop.cdcooper = lcm.cdcooper
-          AND NOT cop.cdcooper IN (3,16)
-          AND cop.flgativo = 1
-          AND lcm.cdhistor = 1787
-          AND lcm.nrdolote = 8482
-          AND lcm.cdagenci = 1
-          AND lcm.cdbccxlt = 100
-          AND lcm.dtmvtolt BETWEEN pr_ini AND pr_fim
+     SELECT cop.cdcooper
+           ,cop.nrctactl
+           ,COUNT(1) qtlanmto
+       FROM craplcm lcm
+           ,crapcop cop 
+      WHERE cop.cdcooper = lcm.cdcooper
+        AND NOT cop.cdcooper IN (3,16)
+        AND cop.flgativo = 1
+        AND lcm.cdhistor = 1787
+        AND lcm.nrdolote = 8482
+        AND lcm.cdagenci = 1
+        AND lcm.cdbccxlt = 100
+        AND lcm.dtmvtolt BETWEEN pr_ini AND pr_fim
         GROUP BY cop.cdcooper
                 ,cop.nrctactl;
-    -- Quantidade acumulado total 
-    vr_qtlanmto NUMBER;
+     -- Quantidade acumulado total 
+     vr_qtlanmto NUMBER;
    
-    -- Buscar Lote
-    CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
-                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                      ,pr_nrdolote IN craptab.dstextab%TYPE) IS
-      SELECT nrseqdig,
-             qtinfoln,
-             qtcompln,
-             vlinfodb,
-             vlcompdb,
-             ROWID
-         FROM craplot
-        WHERE craplot.cdcooper = pr_cdcooper
-          AND craplot.dtmvtolt = pr_dtmvtolt
-          AND craplot.cdagenci = 1
-          AND craplot.cdbccxlt = 100
-          AND craplot.nrdolote = pr_nrdolote;
-    rw_craplot cr_craplot%ROWTYPE;
-    vr_hasfound BOOLEAN := FALSE;
+     -- Buscar Lote
+     CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                       ,pr_nrdolote IN craptab.dstextab%TYPE) IS
+     SELECT nrseqdig,
+            qtinfoln,
+            qtcompln,
+            vlinfodb,
+            vlcompdb,
+            ROWID
+       FROM craplot
+      WHERE craplot.cdcooper = pr_cdcooper
+        AND craplot.dtmvtolt = pr_dtmvtolt
+        AND craplot.cdagenci = 1
+        AND craplot.cdbccxlt = 100
+        AND craplot.nrdolote = pr_nrdolote;
+     rw_craplot cr_craplot%ROWTYPE;
+     vr_hasfound BOOLEAN := FALSE;
 
      --Variaveis Locais
-     vr_cdcritic     INTEGER;
-     vr_cdprogra     VARCHAR2(10);
-     vr_dscritic     VARCHAR2(4000);
-     vr_nmarqlog     VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
+     vr_cdcritic INTEGER;
+     vr_cdprogra VARCHAR2(10);
+     vr_dscritic VARCHAR2(4000);
+     vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
       
-
      --Variaveis de Excecao
-     vr_exc_saida   EXCEPTION;
-     vr_exc_email   EXCEPTION;
+     vr_exc_saida   EXCEPTION;     
      vr_exc_fimprg  EXCEPTION;
      
      -- Busca das datas para processar
@@ -118,20 +121,25 @@ BEGIN
 
      --Se retornou critica aborta programa
      IF vr_cdcritic <> 0 THEN
+       
        --Descricao do erro recebe mensagam da critica
        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       
        -- Envio centralizado de log de erro
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
+                                                     
        --Sair do programa
        RAISE vr_exc_saida;
+       
      END IF;
 
      -- Verificação do calendário
      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+     
      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
  
      IF BTCH0001.cr_crapdat%NOTFOUND THEN     
@@ -140,7 +148,7 @@ BEGIN
       -- Montar mensagem de critica
       vr_cdcritic:= 1;
       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      RAISE vr_exc_email;
+      RAISE vr_exc_saida;
         
      ELSE
        -- Apenas fechar o cursor
@@ -156,19 +164,22 @@ BEGIN
      
      -- Busca do valor de tarifa
      OPEN cr_tarifa;
-     FETCH cr_tarifa
-      INTO vr_vltedtec;
+     
+     FETCH cr_tarifa INTO vr_vltedtec;
+     
      CLOSE cr_tarifa; 
+     
      vr_qtlanmto := 0;
      
      -- Somente se achou tarifa
      IF nvl(vr_vltedtec,0) > 0 THEN
+       
        -- Busca datas para processamento
        vr_date := rw_crapdat.dtmvtolt;
-       -- Buscar o acumulado das taxas
+       
+       -- Buscar período inicial e final para efetuar o acumulado das taxas
        WHILE NOT vr_achou LOOP
-         IF to_char(vr_date,'D') <> 4 /*OR
-           (to_char(vr_date,'W') = to_char(rw_crapdat.dtmvtolt,'W'))*/ THEN
+         IF to_char(vr_date,'D') <> 4 THEN
            vr_date := vr_date - 1;
             
            continue;
@@ -181,12 +192,16 @@ BEGIN
          
        -- Buscaremos todos os lançamentos de TEDs efetuadas no período para cada Cooperativa
        FOR rw_lcm IN cr_craplcm(vr_inicio,vr_final) LOOP
+         
          -- Busca Lote
          OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                         ,pr_nrdolote => 8485);
+                        
          FETCH cr_craplot INTO rw_craplot;
+         
          vr_hasfound := cr_craplot%FOUND;
+         
          CLOSE cr_craplot;
 
          -- Se não existir
@@ -200,6 +215,7 @@ BEGIN
                                  ,nrdolote
                                  ,tplotmov
                                  ,qtcompln
+                                 ,qtinfoln
                                  ,vlinfocr
                                  ,vlcompcr
                                  ,nrseqdig)
@@ -208,6 +224,7 @@ BEGIN
                                  ,1           -- cdagenci
                                  ,100         -- cdbccxlt
                                  ,8485
+                                 ,1
                                  ,1
                                  ,1
                                  ,rw_lcm.qtlanmto*vr_vltedtec
@@ -224,10 +241,11 @@ BEGIN
            BEGIN
              -- Atualiza Lote
              UPDATE craplot
-                SET qtcompln = qtcompln + 1
-                  , vlinfocr = vlinfocr + (rw_lcm.qtlanmto*vr_vltedtec)
-                  , vlcompcr = vlcompcr + (rw_lcm.qtlanmto*vr_vltedtec)
-                  , nrseqdig = nrseqdig + 1
+                SET qtcompln = nvl(craplot.qtcompln,0) + 1
+                  , qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                  , vlinfocr = nvl(craplot.vlinfocr,0) + (rw_lcm.qtlanmto*vr_vltedtec)
+                  , vlcompcr = nvl(craplot.vlcompcr,0) + (rw_lcm.qtlanmto*vr_vltedtec)
+                  , nrseqdig = nvl(craplot.nrseqdig,0) + 1
               WHERE craplot.cdcooper = pr_cdcooper
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                 AND craplot.cdagenci = 1
@@ -287,8 +305,11 @@ BEGIN
          OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                         ,pr_nrdolote => 8486);
+                        
          FETCH cr_craplot INTO rw_craplot;
+         
          vr_hasfound := cr_craplot%FOUND;
+         
          CLOSE cr_craplot;
 
          -- Se não existir
@@ -302,6 +323,7 @@ BEGIN
                                  ,nrdolote
                                  ,tplotmov
                                  ,qtcompln
+                                 ,qtinfoln
                                  ,vlinfocr
                                  ,vlcompcr
                                  ,nrseqdig)
@@ -310,6 +332,7 @@ BEGIN
                                  ,1           -- cdagenci
                                  ,100         -- cdbccxlt
                                  ,8486
+                                 ,1
                                  ,1
                                  ,1
                                  ,vr_qtlanmto*vr_vltedtec
@@ -326,10 +349,11 @@ BEGIN
            BEGIN
              -- Atualiza Lote
              UPDATE craplot
-                SET qtcompln = qtcompln + 1
-                  , vlinfocr = vlinfocr + (vr_qtlanmto*vr_vltedtec)
-                  , vlcompcr = vlcompcr + (vr_qtlanmto*vr_vltedtec)
-                  , nrseqdig = nrseqdig + 1
+                SET qtcompln = nvl(craplot.qtcompln,0) + 1
+                  , qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                  , vlinfocr = nvl(craplot.vlinfocr,0) + (vr_qtlanmto*vr_vltedtec)
+                  , vlcompcr = nvl(craplot.vlcompcr,0) + (vr_qtlanmto*vr_vltedtec)
+                  , nrseqdig = nvl(craplot.nrseqdig,0) + 1                  
               WHERE craplot.cdcooper = pr_cdcooper
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                 AND craplot.cdagenci = 1
@@ -346,8 +370,9 @@ BEGIN
            
          -- Buscar conta da AV na Central
          OPEN cr_crapcop (pr_cdcooper => 16);
-         FETCH cr_crapcop
-          INTO rw_crapcop;
+         
+         FETCH cr_crapcop INTO rw_crapcop;
+         
          CLOSE cr_crapcop;
            
          -- Cria o lancamento em C/C
@@ -401,6 +426,7 @@ BEGIN
 
      --Salvar informacoes no banco de dados
      COMMIT;
+     
    EXCEPTION
      WHEN vr_exc_fimprg THEN
        -- Se foi retornado apenas codigo

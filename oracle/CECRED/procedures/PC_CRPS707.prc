@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 01/11/2016
+   Data    : Setembro/2016                        Ultima atualizacao: 24/11/2016
 
    Dados referentes ao programa:
 
@@ -21,21 +21,26 @@ BEGIN
    Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
 							              durante a homologação da área de negócio
 							             (Adriano - M211).
+
+	             24/11/2016 - Ajuste para alimentar correta o lote utilizado no 
+							              lançamento de créditos na conta do cooperado
+							              (Adriano - SD 563707).
+
    ............................................................................. */
 
    DECLARE
 
      -- Selecionar os dados da Cooperativa
      CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
-       SELECT cop.cdcooper
-             ,cop.nmrescop
-             ,cop.nrtelura
-             ,cop.cdbcoctl
-             ,cop.cdagectl
-             ,cop.dsdircop
-             ,cop.nrctactl
-       FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+     SELECT cop.cdcooper
+           ,cop.nmrescop
+           ,cop.nrtelura
+           ,cop.cdbcoctl
+           ,cop.cdagectl
+           ,cop.dsdircop
+           ,cop.nrctactl
+     FROM crapcop cop
+     WHERE cop.cdcooper = pr_cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
 
      --Registro do tipo calendario
@@ -43,100 +48,100 @@ BEGIN
 
      -- Verificar se o arquivo já não foi processado (existe na tabela)
      CURSOR cr_nmarquiv(pr_nmarquiv VARCHAR2) IS
-       SELECT 1
-         FROM tbted_control_arq arq
-        WHERE lower(arq.nmarquiv) = lower(pr_nmarquiv);
+     SELECT 1
+       FROM tbted_control_arq arq
+      WHERE lower(arq.nmarquiv) = lower(pr_nmarquiv);
      vr_flgexis NUMBER;
 
      -- Verificar ultima sequencia processada
      CURSOR cr_sqarquiv(pr_dtrefere DATE
                        ,pr_nrseqarq NUMBER) IS
-       SELECT 1
-         FROM tbted_control_arq arq
-        WHERE arq.dtrefere = pr_dtrefere
-          AND arq.nrseqarq = pr_nrseqarq;
+     SELECT 1
+       FROM tbted_control_arq arq
+      WHERE arq.dtrefere = pr_dtrefere
+        AND arq.nrseqarq = pr_nrseqarq;
 
      -- Busca do Cooperado pelo CPF
      CURSOR cr_crapass(pr_nrcpfcgc NUMBER) IS
-       SELECT cdcooper
-             ,nrdconta
-             ,dtdemiss
-             ,nmprimtl
-         FROM crapass
-        WHERE nrcpfcgc = pr_nrcpfcgc;
-    rw_crapass cr_crapass%ROWTYPE; 
+     SELECT cdcooper
+           ,nrdconta
+           ,dtdemiss
+           ,nmprimtl
+       FROM crapass
+      WHERE nrcpfcgc = pr_nrcpfcgc;
+     rw_crapass cr_crapass%ROWTYPE; 
     
-    -- Busca do Cooperado pelo CPF
-    CURSOR cr_crapass2(pr_nrdconta crapass.nrdconta%TYPE
-                      ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
-       SELECT cdcooper
-             ,nrdconta
-             ,dtdemiss
-             ,nmprimtl
-         FROM crapass
-        WHERE nrdconta = pr_nrdconta
-          AND nrcpfcgc = pr_nrcpfcgc;
-    rw_crapass2 cr_crapass2%ROWTYPE; 
+     -- Busca do Cooperado pelo CPF
+     CURSOR cr_crapass2(pr_nrdconta crapass.nrdconta%TYPE
+                       ,pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
+     SELECT cdcooper
+           ,nrdconta
+           ,dtdemiss
+           ,nmprimtl
+       FROM crapass
+      WHERE nrdconta = pr_nrdconta
+        AND nrcpfcgc = pr_nrcpfcgc;
+     rw_crapass2 cr_crapass2%ROWTYPE; 
    
-    -- Busca do Cooperado por cooperativa e conta
-    CURSOR cr_crapass3(pr_cdcooper crapass.cdcooper%TYPE
-                      ,pr_nrdconta crapass.nrdconta%TYPE) IS
-       SELECT cdcooper
-             ,nrdconta             
-          ,dtdemiss
-          ,nmprimtl
-      FROM crapass
+     -- Busca do Cooperado por cooperativa e conta
+     CURSOR cr_crapass3(pr_cdcooper crapass.cdcooper%TYPE
+                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
+     SELECT cdcooper
+           ,nrdconta             
+           ,dtdemiss
+           ,nmprimtl
+     FROM crapass
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta;
-    rw_crapass3 cr_crapass3%ROWTYPE; 
+     rw_crapass3 cr_crapass3%ROWTYPE; 
    
-    -- Busca do Cooperado pelo CPF e que não seja primeiro titular
-    CURSOR cr_crapttl(pr_nrcpfcgc NUMBER) IS
-    SELECT ttl.cdcooper
-          ,ttl.nrdconta 
-      FROM crapttl ttl
-     WHERE ttl.nrcpfcgc = pr_nrcpfcgc
-       AND ttl.idseqttl > 1;
-    rw_crapttl cr_crapttl%ROWTYPE; 
-   
-    -- Busca do Cooperado pelo CPF e que não seja primeiro titular
-    CURSOR cr_crapttl2(pr_nrcpfcgc crapttl.nrcpfcgc%TYPE
-                      ,pr_nrdconta crapttl.nrdconta%TYPE) IS
-    SELECT ttl.cdcooper
-          ,ttl.nrdconta 
-      FROM crapttl ttl
-     WHERE ttl.nrcpfcgc = pr_nrcpfcgc
-       AND ttl.nrdconta = pr_nrdconta;
-    rw_crapttl2 cr_crapttl2%ROWTYPE; 
-       
-    -- Buscar Lote
-    CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
-                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                      ,pr_nrdolote IN craptab.dstextab%TYPE) IS
-      SELECT nrseqdig,
-             qtinfoln,
-             qtcompln,
-             vlinfodb,
-             vlcompdb,
-             ROWID
-         FROM craplot
-        WHERE craplot.cdcooper = pr_cdcooper
-          AND craplot.dtmvtolt = pr_dtmvtolt
-          AND craplot.cdagenci = 1
-          AND craplot.cdbccxlt = 100
-          AND craplot.nrdolote = pr_nrdolote;
-    rw_craplot cr_craplot%ROWTYPE;
+     -- Busca do Cooperado pelo CPF e que não seja primeiro titular
+     CURSOR cr_crapttl(pr_nrcpfcgc NUMBER) IS
+     SELECT ttl.cdcooper
+           ,ttl.nrdconta 
+       FROM crapttl ttl
+      WHERE ttl.nrcpfcgc = pr_nrcpfcgc
+        AND ttl.idseqttl > 1;
+     rw_crapttl cr_crapttl%ROWTYPE; 
+     
+     -- Busca do Cooperado pelo CPF e que não seja primeiro titular
+     CURSOR cr_crapttl2(pr_nrcpfcgc crapttl.nrcpfcgc%TYPE
+                       ,pr_nrdconta crapttl.nrdconta%TYPE) IS
+     SELECT ttl.cdcooper
+           ,ttl.nrdconta 
+       FROM crapttl ttl
+      WHERE ttl.nrcpfcgc = pr_nrcpfcgc
+        AND ttl.nrdconta = pr_nrdconta;
+     rw_crapttl2 cr_crapttl2%ROWTYPE; 
+        
+     -- Buscar Lote
+     CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                       ,pr_nrdolote IN craptab.dstextab%TYPE) IS
+     SELECT nrseqdig,
+            qtinfoln,
+            qtcompln,
+            vlinfodb,
+            vlcompdb,
+            ROWID
+        FROM craplot
+       WHERE craplot.cdcooper = pr_cdcooper
+         AND craplot.dtmvtolt = pr_dtmvtolt
+         AND craplot.cdagenci = 1
+         AND craplot.cdbccxlt = 100
+         AND craplot.nrdolote = pr_nrdolote;
+     rw_craplot cr_craplot%ROWTYPE;
 
      --Variaveis Locais
-    vr_cdcritic INTEGER;
-    vr_cdprogra VARCHAR2(10);
-    vr_dscritic VARCHAR2(4000);
-    vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
+     vr_cdcritic INTEGER;
+     vr_cdprogra VARCHAR2(10);
+     vr_dscritic VARCHAR2(4000);
+     vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
       
      --Variaveis de Excecao
-    vr_exc_saida  EXCEPTION;
-    vr_exc_email  EXCEPTION;
-    vr_exc_fimprg EXCEPTION;
+     vr_exc_saida  EXCEPTION;
+     vr_exc_email  EXCEPTION;
+     vr_exc_fimprg EXCEPTION;
 
      -- Diretorio e arquivos para processamento
      vr_datatual         DATE;
@@ -178,7 +183,7 @@ BEGIN
      vr_nmprimtl    VARCHAR2(60);
      vr_flgexis_cpf BOOLEAN;
      vr_flgexis_cta BOOLEAN;
-    vr_segundo_ttl BOOLEAN;
+     vr_segundo_ttl BOOLEAN;
      vr_cdcooper    NUMBER;
      vr_cdmotivo    varchar2(100);
      vr_nrispbif    NUMBER;
@@ -195,7 +200,7 @@ BEGIN
      vr_fltxterr BOOLEAN;
      vr_dstxterr VARCHAR2(32767);
      vr_cltxterr CLOB;
-    vr_hasfound BOOLEAN;
+     vr_hasfound BOOLEAN;
    
    FUNCTION fn_mes(pr_data IN DATE) RETURN VARCHAR2 IS
    BEGIN
@@ -842,6 +847,7 @@ BEGIN
                                        ,nrdolote
                                        ,tplotmov
                                        ,qtcompln
+                                       ,qtinfoln
                                        ,vlinfocr
                                        ,vlcompcr
                                        ,nrseqdig)
@@ -852,7 +858,8 @@ BEGIN
                                        ,8482
                                        ,1
                                        ,1
-                                       ,vr_vloperac
+                                       ,1
+	                                     ,vr_vloperac
                                        ,vr_vloperac
                                        ,1)
                               RETURNING nrseqdig
@@ -865,12 +872,13 @@ BEGIN
                  
                ELSE -- Se Existir
                  BEGIN
-                   -- Atualiza Lote
+				           -- Atualiza Lote
                    UPDATE craplot
-                      SET qtcompln = qtcompln + 1
-                        , vlinfocr = vlinfocr + vr_vloperac
-                        , vlcompcr = vlcompcr + vr_vloperac
-                        , nrseqdig = nrseqdig + 1
+                      SET qtcompln = nvl(craplot.qtcompln,0) + 1
+                        , qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                        , vlinfocr = nvl(craplot.vlinfocr,0) + vr_vloperac
+                        , vlcompcr = nvl(craplot.vlcompcr,0) + vr_vloperac
+                        , nrseqdig = nvl(craplot.nrseqdig,0) + 1
                     WHERE craplot.cdcooper = vr_cdcooper
                       AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                       AND craplot.cdagenci = 1
