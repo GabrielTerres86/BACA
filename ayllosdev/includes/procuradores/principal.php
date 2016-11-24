@@ -15,6 +15,9 @@
  *                19/02/2015 - Incluir tratamento para representante com cartão, conforme SD 251759 ( Renato - Supero )
  *
  *                04/08/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *					
+ *				  23/11/2016 - Ajuste realizado para remover os caracteres invalidos no momento
+ *							   da exclusao do procurador. (SD 557425 Kelvin)	
  */
 ?> 
 <?
@@ -77,7 +80,7 @@
 	$xml .= '</Root>';	
 
 	$xmlResult = getDataXML($xml);
-	$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));	
 	$registros = $xmlObjeto->roottag->tags[0]->tags;	
 			
 	// Se ocorrer um erro, mostra crítica
@@ -119,7 +122,7 @@
 		$xmlBens .= '</Root>';	
 		
 		$xmlResultBens 	= getDataXML($xmlBens);		
-		$xmlObjetoBens 	= getObjectXML($xmlResultBens);		
+		$xmlObjetoBens 	= getObjectXML(removeCaracteresInvalidos($xmlResultBens));		
 		$regBens 		= $xmlObjetoBens->roottag->tags[0]->tags;		
 		
 		// Se ocorrer um erro, mostra crítica
@@ -167,7 +170,7 @@
 	$xmlPerSocio .= '</Root>';	
 
 	$xmlResult = getDataXML($xmlPerSocio);
-	$xmlObjeto = getObjectXML($xmlResult);	
+	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));	
 
 	$dscritic = "";	
 
