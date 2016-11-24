@@ -1452,6 +1452,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 3 - Cancelamento de Cartao
                 4 - Inclusao de Adicional
                 7 - Reativacao de Contas
+                10 - Desbloqueio (exclusivo p/ tratamento de reposicao)
                 12 - Alteracao de Estado
                 13 - Alteracao de Estado Conta
                 25 - Reativar Cartao do Adicional                
@@ -1613,23 +1614,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 /* Tratamento especifico para casos de operacao 10 (desbloqueio), porem, onde a
                    informacao que vem no arquivo informa que o cartao esta sendo REPOSTO (deve cancelar).
                    Fabricio - chamado 559710 */
-                IF vr_tipooper = 10 AND TO_NUMBER(substr(vr_des_text,114,2)) = 10 THEN /*reposicao*/
-                  -- Atualiza os dados da situacao do cartao
-                  atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
-                                           pr_nrdconta => vr_nrdconta,
-                                           pr_nrcrcard => TO_NUMBER(substr(vr_des_text,38,19)),                                           
-                                           pr_insitcrd => TO_NUMBER(substr(vr_des_text,114,2)),                                    
-                                           pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                           pr_des_erro => vr_des_erro,
-                                           pr_cdcritic => vr_cdcritic,
-                                           pr_dscritic => vr_dscritic);
-                                           
-                  -- Verifica se ocorreu erro                          
-                  IF vr_des_erro <> 'OK' THEN
-                    pc_log_message;
-                    vr_des_erro := '';
+                IF vr_tipooper = 10 THEN
+                  IF TO_NUMBER(substr(vr_des_text,114,2)) = 10 THEN /*reposicao*/
+                    -- Atualiza os dados da situacao do cartao
+                    atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
+                                             pr_nrdconta => vr_nrdconta,
+                                             pr_nrcrcard => TO_NUMBER(substr(vr_des_text,38,19)),                                           
+                                             pr_insitcrd => TO_NUMBER(substr(vr_des_text,114,2)),                                    
+                                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                             pr_des_erro => vr_des_erro,
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);
+                                             
+                    -- Verifica se ocorreu erro                          
+                    IF vr_des_erro <> 'OK' THEN
+                      pc_log_message;
+                      vr_des_erro := '';
+                    END IF;
                   END IF;
 
+                  -- tipo de operacao 10 (desbloqueio) nao deve fazer mais nada alem disto (Fabricio).
                   CONTINUE;
                 END IF;
                 
