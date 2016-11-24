@@ -101,10 +101,10 @@
 							no primeiro horário da manhã
 							(Adriano - SD 501761).
 
-			   18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
-			                caso o aviso de debito ja existir, evitando acionamento
-							desnecessario visto que essa critica nao abortado a
-							execucao do processo. (Daniel)	
+			         18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
+			                      caso o aviso de debito ja existir, evitando acionamento
+                            desnecessario visto que essa critica nao abortado a
+                            execucao do processo. (Daniel)	
                             
                23/11/2016 - Para as devolucoes por falta de saldo (11 e 12) nao vamos efetuar o 
                             lancamento atraves deste programa (Lucas Ranghetti/Elton - Melhoria 69) 
@@ -225,8 +225,9 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                        crapdev.nrdconta >= glb_nrctares EXCLUSIVE-LOCK
                        TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
 
-    IF   crapdev.nrdconta = 0  AND 
-         crapdev.cdalinea = 37 AND 
+    IF   crapdev.nrdconta = 0   AND 
+        (crapdev.cdalinea = 37  OR 
+         crapdev.cdalinea = 35) AND 
          crapdev.cdhistor = 47 THEN
          DO:
              ASSIGN crapdev.indevarq = 2 
