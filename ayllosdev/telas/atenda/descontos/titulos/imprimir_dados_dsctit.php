@@ -3,11 +3,11 @@
 	/************************************************************************  
 	  Fonte: imprimir_dados_dsctit.php                                             
 	  Autor: Guilherme                                                         
-	  Data : MarÁo/2009                      ⁄ltima AlteraÁ„o: 12/09/2016
+	  Data : Mar√ßo/2009                      √öltima Altera√ß√£o: 23/11/2016
 	                                                                           
-	  Objetivo  : Carregar dados para impressıes de desconto de titulos       
+	  Objetivo  : Carregar dados para impress√µes de desconto de titulos       
 	
-	  AlteraÁıes: 11/06/2010 - Adaptar para novo RATING (David).    
+	  Altera√ß√µes: 11/06/2010 - Adaptar para novo RATING (David).    
 
                   22/09/2010 - Ajuste para enviar impressoes via email para 
 				               o PAC Sede (David).
@@ -15,42 +15,47 @@
 				  12/07/2012 - Alterado parametro de $pdf->Output,     
 							   Condicao para Navegador Chrome (Jorge).
 							   
-				  20/08/2012 - UnificaÁ„o de impressıes na BO30i, chamada da
+				  20/08/2012 - Unifica√ß√£o de impress√µes na BO30i, chamada da
 							   procedure 'carrega-impressao-dsctit' (Lucas).
 							   
 				  12/09/2016 - Alteracao para chamar a rotina do Oracle na
 							   geracao da impressao. (Jaison/Daniel)
+          
+          23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
+                       PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
 
 	************************************************************************/ 
 
 	session_cache_limiter("private");
 	session_start();
 	
-	// Includes para controle da session, vari·veis globais de controle, e biblioteca de funÁıes	
+	// Includes para controle da session, vari√°veis globais de controle, e biblioteca de fun√ß√µes	
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");		
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÈtodo POST
+	// Verifica se tela foi chamada pelo m√©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	// Verifica permiss„o
+	// Verifica permiss√£o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
-		?><script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
+		?>
+          <script language="javascript">alert('<?php echo $msgError; ?>');</script><?php
 		exit();
 	}	
 
-	// Verifica se par‚metros necess·rios foram informados
+	// Verifica se par√¢metros necess√°rios foram informados
 	if (!isset($_POST["nrdconta"]) || 
 		!isset($_POST["nrctrlim"]) || 
 		!isset($_POST["nrborder"]) ||
 		!isset($_POST["limorbor"]) ||
 		!isset($_POST["idimpres"]) ||
 		!isset($_POST["flgemail"])) {
-		?><script language="javascript">alert('Par&acirc;metros incorretos.');</script><?php
+		?><script language="javascript">alert('Par&acirc;metros incorretos.');</script>
+  <?php
 		exit();
 	}	
 
@@ -60,38 +65,40 @@
 	$idimpres = $_POST["idimpres"];
 	$limorbor = $_POST["limorbor"];
 	$flgemail = $_POST["flgemail"];
+  $dsiduser = session_id();	
 
-	// Verifica se o n˙mero da conta È um inteiro v·lido
+	// Verifica se o n√∫mero da conta √© um inteiro v√°lido
 	if (!validaInteiro($nrdconta)) {
-		?><script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
+		?>
+  <script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
 		exit();
 	}
 	
-	// Verifica se n˙mero do contrato È um inteiro v·lido
+	// Verifica se n√∫mero do contrato √© um inteiro v√°lido
 	if (!validaInteiro($nrctrlim)) {
 		?><script language="javascript">alert('Contrato inv&aacute;lido.');</script><?php
 		exit();
 	}
 	
-	// Verifica se n˙mero do bordero È um inteiro v·lido
+	// Verifica se n√∫mero do bordero √© um inteiro v√°lido
 	if ((!validaInteiro($nrborder)) && ($nrborder != "")) {
 		?><script language="javascript">alert('Bordero inv&aacute;lido.');</script><?php
 		exit();
 	}	
 	
-	// Verifica se identificador de impress„o È um inteiro v·lido
+	// Verifica se identificador de impress√£o √© um inteiro v√°lido
 	if (!validaInteiro($idimpres)) {
 		?><script language="javascript">alert('Identificador de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
 	}		
 	
-	// Verifica se flag para envio de email È v·lida
+	// Verifica se flag para envio de email √© v√°lida
 	if ($flgemail <> "yes" && $flgemail <> "no") {
 		?><script language="javascript">alert('Identificador de envio de e-mail inv&aacute;lido.');</script><?php
 		exit();
 	}
 	
-	// Verifica se identificador de impress„o È um inteiro v·lido
+	// Verifica se identificador de impress√£o √© um inteiro v√°lido
 	if (!validaInteiro($limorbor)) {
 		?><script language="javascript">alert('Identificador de tipo de impress&atilde;o inv&aacute;lido.');</script><?php
 		exit();
@@ -124,18 +131,17 @@
 			exit();
 		}
 
-        // ObtÈm nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+        // Obt√©m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
         $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
 
-        // Chama funÁ„o para mostrar PDF do impresso gerado no browser
+        // Chama fun√ß√£o para mostrar PDF do impresso gerado no browser
         visualizaPDF($nmarqpdf);
 
     } else {
 	
 	$nmproced = "carrega-impressao-dsctit";	
-	$dsiduser = session_id();	
 	
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xmlDadosImpres  = "";
 	$xmlDadosImpres .= "<Root>";
 	$xmlDadosImpres .= "	<Cabecalho>";
@@ -169,17 +175,17 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDadosImpres = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjDadosImpres->roottag->tags[0]->name) == "ERRO") {
 		$msg = $xmlObjDadosImpres->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
 		exit();
 	} 
 	
-	// ObtÈm nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+	// Obt√©m nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
 	$nmarqpdf = $xmlObjDadosImpres->roottag->tags[0]->attributes["NMARQPDF"];
 		
-	// Chama funÁ„o para mostrar PDF do impresso gerado no browser
+	// Chama fun√ß√£o para mostrar PDF do impresso gerado no browser
 	visualizaPDF($nmarqpdf);
     }
 ?>

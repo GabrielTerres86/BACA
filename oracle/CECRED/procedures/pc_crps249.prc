@@ -499,7 +499,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                23/02/2016 - Inclusao de consulta via GENE0001.fn_param_sistema para
                             historicos sem credito em conta corrente para o relatorio
                             crrl708(Jean Michel).
-
+                                           
                22/03/2016 - Incluido bloco para Contabilizacao Despesa Sicredi
                             para GPS (Guilherme/SUPERO)
 
@@ -510,7 +510,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             Sicredi e não de pagamentos efetuados
                             Não considerar GPS agendados / Despesas apenas quando SICREDI
                             (Guilherme/SUPERO)
-
+                            
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
 
@@ -520,19 +520,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
 			                (Daniel)
 
-               13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
-			                (Daniel)
-
                28/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP (Guilherme/SUPERO)
 
 			   09/11/2016 - Correcao para ganho em performance em cursores deste CRPS. 
 							SD 549917 (Carlos Rafael Tanholi)
-............................................................................ */
 
-  -- Constantes para geração de arquivos contábeis                                                                          
-  vc_dsdircont CONSTANT VARCHAR(30) := 'arquivos_contabeis/ayllos'; 
-  vc_cdacesso CONSTANT VARCHAR(24)  := 'ROOT_SISTEMAS';
-  vc_cdtodascooperativas INTEGER    := 0; 
+............................................................................ */
 
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
@@ -1786,14 +1779,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
           ,craplem lem
           ,craplcr lcr
           ,craphis his
-          ,crapfin fin
+					,crapfin fin
      WHERE epr.cdcooper = lem.cdcooper
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND epr.cdcooper = lcr.cdcooper
        AND epr.cdlcremp = lcr.cdlcremp
-       AND fin.cdcooper = epr.cdcooper
-       AND fin.cdfinemp = epr.cdfinemp
+			 AND fin.cdcooper = epr.cdcooper
+ 			 AND fin.cdfinemp = epr.cdfinemp
        AND lem.cdcooper = pr_cdcooper
        AND ','|| GENE0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => pr_cdcooper, pr_cdacesso => 'HISTOR_SEM_CRED_CC') ||',' LIKE ('%,' || lem.cdhistor || ',%') --> Produtos atuais
        AND lcr.cdlcremp != 100      --> LInha 100 eh tratava separadamente
@@ -10351,13 +10344,12 @@ BEGIN
     END IF;
     
     -- Busca o diretório final para copiar o relatório
-    vr_dsdircop := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);                                                
-    vr_dsdircop := vr_dsdircop || vc_dsdircont;
-                                        
-    vr_nmarqdat_ope_cred_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_OPCRED.txt';
+    vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_nmsubdir => 'contab');
 
     -- Copia o arquivo gerado para o diretório final convertendo para DOS
-    gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||' > '||vr_dsdircop||'/'||vr_nmarqdat_ope_cred_nov||' 2>/dev/null',
+    gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||' > '||vr_dsdircop||'/'||vr_nmarqdat_ope_cred||' 2>/dev/null',
                                 pr_typ_saida   => vr_typ_said,
                                 pr_des_saida   => vr_dscritic);
     -- Testar erro
@@ -10384,13 +10376,13 @@ BEGIN
   gene0001.pc_fecha_arquivo(vr_arquivo_txt);
 
   -- Busca o diretório final para copiar o relatório
-  vr_dsdircop := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);        
-  vr_dsdircop := vr_dsdircop || vc_dsdircont;
-                                                                                
-  vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'.txt';                        
-                                                        
+  vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'M',
+                                       pr_cdcooper => pr_cdcooper,
+                                       pr_nmsubdir => gene0001.fn_param_sistema('CRED',
+                                                                                pr_cdcooper,
+                                                                                'DIR_FINAL_REL_CTB'));
   -- Copia o arquivo gerado para o diretório final convertendo para DOS
-  gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
+  gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqdat||' 2>/dev/null',
                               pr_typ_saida   => vr_typ_said,
                               pr_des_saida   => vr_dscritic);
   -- Testar erro

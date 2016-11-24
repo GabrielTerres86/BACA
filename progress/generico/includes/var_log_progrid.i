@@ -19,17 +19,19 @@
 { sistema/generico/includes/var_oracle.i }
 
 PROCEDURE insere_log_progrid:
-	DEF INPUT PARAM nmprogra AS CHAR NO-UNDO.
-  DEF INPUT PARAM nmparame AS CHAR NO-UNDO.
+	DEF INPUT PARAM par_nmprogra AS CHAR NO-UNDO.
+  DEF INPUT PARAM par_nmparame AS CHAR NO-UNDO.
 
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+  { sistema/ayllos/includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
-RUN STORED-PROCEDURE pc_informa_acesso_progrid
-		aux_handpro2 = PROC-HANDLE NO-ERROR (nmprogra,nmparame).
+  RUN STORED-PROCEDURE pc_informa_acesso_progrid
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_nmprogra
+                         ,INPUT par_nmparame).
 
-CLOSE STORED-PROCEDURE pc_informa_acesso_progrid
-			WHERE PROC-HANDLE = aux_handpro2.
+  CLOSE STORED-PROC pc_informa_acesso_progrid
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
 
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
+  { sistema/ayllos/includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+    
 END PROCEDURE.
