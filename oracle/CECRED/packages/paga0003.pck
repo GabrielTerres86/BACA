@@ -789,6 +789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_dsinfor2 crappro.dsinform##2%TYPE;
     vr_dsinfor3 crappro.dsinform##3%TYPE;
     vr_dsretorn VARCHAR2(500) := '';
+	vr_nrrefere VARCHAR2(500) := '';
     vr_exc_erro EXCEPTION;
   
   BEGIN
@@ -809,6 +810,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
     -- Nome do Titular
     vr_dsinfor2 := pr_nmextttl;
+    
+	IF pr_nrrefere <> '0' THEN
+		vr_nrrefere := pr_nrrefere;
+	END IF;
     
     -- Busca as informações do banco/agencia arrecadador (Sicredi - Matriz)
     OPEN cr_arrec(pr_cddbanco => 748
@@ -851,7 +856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         vr_dsinfor3 := vr_dsinfor3 || '#Valor da Receita Bruta: ' || TO_CHAR(pr_vlrecbru,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
         vr_dsinfor3 := vr_dsinfor3 || '#Percentual: '             || TO_CHAR(pr_vlpercen,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
       ELSE
-        vr_dsinfor3 := vr_dsinfor3 || '#Número de Referência: '   || pr_nrrefere;
+        vr_dsinfor3 := vr_dsinfor3 || '#Número de Referência: '   || vr_nrrefere;
         vr_dsinfor3 := vr_dsinfor3 || '#Data de Vencimento: '     || TO_CHAR(pr_dtvencto,'DD/MM/YYYY');
       END IF;
       
