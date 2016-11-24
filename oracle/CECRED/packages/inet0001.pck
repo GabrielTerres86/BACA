@@ -2834,8 +2834,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
           IF pr_tpoperac = 10 THEN --DARF/DAS            
             --Montar mensagem erro
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'A data mínima para agendamento deve ser '||To_Char(rw_crapdat.dtmvtopr,'DD/MM/YYYY')||'.';
+            vr_cdcritic:= 0;            
+            --Data mínima obtida de dtmvtocd se não for dia útil
+            IF pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN 
+               vr_dscritic:= 'A data mínima para agendamento deve ser '||To_Char(rw_crapdat.dtmvtocd,'DD/MM/YYYY')||'.';
+            ELSE
+               vr_dscritic:= 'A data mínima para agendamento deve ser '||To_Char(rw_crapdat.dtmvtopr,'DD/MM/YYYY')||'.';
+            END IF;
           ELSE
             --Montar mensagem erro
             vr_cdcritic:= 0;
