@@ -659,6 +659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
       --Limpar tabela memoria
       pr_tab_limite.DELETE;
+	  
+	  /** Horario diferenciado para finais de semana e feriados **/
+      vr_datdodia:= PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);
 
       -- Se for para todos ou for ted ou for vr-boleto
       IF pr_tpoperac IN (0,4,6)  THEN
@@ -765,10 +768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         pr_tab_limite(vr_index_limite).flsgproc:= vr_flsgproc;
         pr_tab_limite(vr_index_limite).qtmesagd:= vr_qtmesagd;
         pr_tab_limite(vr_index_limite).idtpdpag:= 15;
-      END IF;
-
-      /** Horario diferenciado para finais de semana e feriados **/
-      vr_datdodia:= PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);
+      END IF;      
 
       --Se for para todos ou for transferencia
       IF pr_tpoperac IN (0,1,5)  THEN
@@ -2608,7 +2608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       ELSE
         IF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN  /** Pagamento - DARF/DAS **/
 
-          IF pr_tpoperac = 10 AND 
+          IF pr_tpoperac = 10 AND pr_idagenda = 1 AND 
              pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
            
             vr_cdcritic := 0;
