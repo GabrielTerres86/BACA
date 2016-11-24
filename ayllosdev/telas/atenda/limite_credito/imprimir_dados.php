@@ -15,7 +15,9 @@
 	   			    18/07/2014 - Ajustes referentes ao Projeto CET	  
 				  			    (Lucas R.)							   
 								
-					07/05/2015 - Consultas automatizadas (Gabriel-RKAM).			
+					07/05/2015 - Consultas automatizadas (Gabriel-RKAM).		
+					
+					07/11/2016 - Ajustes referente projeto 314 (Daniel)	
 	**************************************************************************/
 	
 	session_cache_limiter("private");
@@ -79,6 +81,39 @@
 		exit();
 	}
 	
+    if ($idimpres == 1 || $idimpres == 2) {
+        
+        $xml  = "<Root>";
+        $xml .= "  <Dados>";
+        $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "    <idseqttl>1</idseqttl>";
+        $xml .= "    <idimpres>".$idimpres."</idimpres>";
+        $xml .= "    <nrctrlim>".$nrctrlim."</nrctrlim>";
+        $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
+        $xml .= "    <flgimpnp>".($flgimpnp == 'yes' ? 1 : 0)."</flgimpnp>";
+        $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
+        $xml .= "  </Dados>";
+        $xml .= "</Root>";
+        
+        $xmlResult = mensageria($xml, "ATENDA", "IMPRES_CTRLIMCRED", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObject = getObjectXML($xmlResult);
+
+        if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msg = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			?><script language="javascript">alert('<?php echo $msg; ?>');</script><?php
+			exit();
+		}
+
+        // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
+        $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
+
+        // Chama função para mostrar PDF do impresso gerado no browser
+        visualizaPDF($nmarqpdf);         
+
+
+        
+    }else {
+    
 	$procedure = ($idimpres == 7) ? 'Imprime_Consulta' : 'gera-impressao-limite';
 	$bo        = ($idimpres == 7) ? 'b1wgen0191.p'     : 'b1wgen0019.p';
 	
@@ -131,5 +166,5 @@
 	
 	// Chama função para mostrar PDF do impresso gerado no browser
 	visualizaPDF($nmarqpdf);
-
+    }
 ?>
