@@ -3073,6 +3073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Procedure para efetuar busca dados para montar contratos etc para desconto de titulos
     --
     --   Alteração : 05/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+	--
+	--               24/11/2016 - Ajustes nome do avalista2. (Odirlei-AMcom)
     -- .........................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -3585,7 +3587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       --> Localizar dados do proximo avalista
       vr_idxavais := vr_tab_dados_avais.next(vr_idxavais);
       IF vr_idxavais IS NOT NULL THEN
-        vr_rel_nmdaval1 := vr_tab_dados_avais(vr_idxavais).nmdavali;
+        vr_rel_nmdaval2 := vr_tab_dados_avais(vr_idxavais).nmdavali;
         
         IF  vr_tab_dados_avais(vr_idxavais).nrcpfcgc > 0 THEN
           vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
@@ -4743,14 +4745,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         CLOSE cr_crapage;
       END IF;
 
-      vr_dsextmail := 'pdf';
       vr_dsmailcop := REPLACE(rw_craprel.dsdemail, ',', ';');
       vr_dscormail := 'SEGUE ARQUIVO EM ANEXO.';
       vr_dsassmail := 'crrl' || vr_cdrelato || ' - Conta/dv: ' ||
                       TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) || ' - PA ' ||
                       rw_crapage.cdagenci || ' ' || rw_crapage.nmresage;
     ELSE
-      vr_dsextmail := NULL;
       vr_dsmailcop := NULL;
       vr_dscormail := NULL;
       vr_dsassmail := NULL;
@@ -4773,7 +4773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                , pr_nmformul  => ' '
                                , pr_nrcopias  => 1
                                , pr_nrvergrl  => 1
-                               , pr_dsextmail => vr_dsextmail
+                               , pr_dsextmail => NULL
                                , pr_dsmailcop => vr_dsmailcop
                                , pr_dsassmail => vr_dsassmail
                                , pr_dscormail => vr_dscormail
@@ -5242,35 +5242,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           '<vltitulo>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vltitulo,'fm999G999G999G990D00')   ||'</vltitulo>'|| 
                           '<vlliquid>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vlliquid,'fm999G999G999G990D00')   ||'</vlliquid>'|| 
                           '<qtdprazo>'||   vr_rel_qtdprazo                              ||'</qtdprazo>'|| 
-                          '<nmsacado>'||   substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32)   ||'</nmsacado>'|| 
+                          '<nmsacado>'||   gene0007.fn_caract_controle(substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32))   ||'</nmsacado>'|| 
                           '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>'|| 
                           '<restricoes>');
         
         -- Percorre as restricoes
-        FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
-          -- Sea for restricao do cheque em questao
-          IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
-            
-            --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
-            IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
-              continue;
-            END IF;  
-            
-            vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
-            
-            pc_escreve_xml('<restricao><texto>'|| vr_tab_bordero_restri(idx2).dsrestri ||'</texto></restricao>');
-            -- Se foi aprovado pelo coordenador
-            IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+        IF vr_tab_bordero_restri.COUNT > 0 THEN
+          FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
+            -- Sea for restricao do cheque em questao
+            IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
               
-              IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
-                vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-              END IF;              
+              --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
+              IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
+                continue;
+              END IF;  
+            
+              vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
               
+              pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
+              -- Se foi aprovado pelo coordenador
+              IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+              
+                IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
+                  vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
+                END IF;              
+              
+              END IF;
             END IF;
-          END IF;
-        END LOOP;
-        
-       pc_escreve_xml('</restricoes></titulo>');
+          END LOOP;
+        END IF;
+        pc_escreve_xml('</restricoes></titulo>');
         
       
         vr_idxord := vr_tab_tit_bordero_ord.next(vr_idxord);
@@ -5325,7 +5326,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');
         vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
         WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| vr_idxrestr ||'</texto></restricao>');
+          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto></restricao>');
           vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
         END LOOP;
         pc_escreve_xml(  '</restricoes_coord>');
@@ -5337,7 +5338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_idxsac := vr_tab_sacado_nao_pagou.first;
         WHILE vr_idxsac IS NOT NULL LOOP        
           pc_escreve_xml('<sacado>
-                             <nmsacado>'|| vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado ||'</nmsacado>
+                             <nmsacado>'|| gene0007.fn_caract_controle(vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado) ||'</nmsacado>
                              <qtdtitul>'|| vr_tab_sacado_nao_pagou(vr_idxsac).qtdtitul ||'</qtdtitul>
                              <vlrtitul>'|| to_char(vr_tab_sacado_nao_pagou(vr_idxsac).vlrtitul,'fm999G999G999G990D00') ||'</vlrtitul>
                           </sacado>');  
