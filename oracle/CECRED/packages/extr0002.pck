@@ -3863,20 +3863,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND fatura.nrdconta = pr_nrdconta
          AND fatura.insituacao = 1
          AND fatura.vlpendente > 0
-         AND (fatura.dtvencimento >= pr_dtiniper
-         AND fatura.dtvencimento <= pr_dtfimper)
-         union
-        SELECT fatura.dtvencimento
-              ,fatura.dsdocumento
-              ,fatura.vlpendente
-              ,fatura.progress_recid
-          FROM  tbcrd_fatura fatura
-       WHERE fatura.cdcooper = pr_cdcooper
-         AND fatura.nrdconta = pr_nrdconta
-         AND fatura.insituacao = 1
-         AND fatura.vlpendente > 0
-         AND fatura.dtvencimento <= (SELECT crapdat.dtmvtolt from crapdat
-                                  where crapdat.cdcooper = pr_cdcooper );
+         AND ((fatura.dtvencimento >= pr_dtiniper
+         AND fatura.dtvencimento <= pr_dtfimper) 
+          OR pr_dtiniper IS NULL 
+         AND pr_dtfimper IS NULL); 
 
       --Selecionar Cadastro de linhas de credito rotativos
       CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE
