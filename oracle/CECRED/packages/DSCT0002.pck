@@ -3073,6 +3073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Procedure para efetuar busca dados para montar contratos etc para desconto de titulos
     --
     --   Alteração : 05/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+	--
+	--               24/11/2016 - Ajustes nome do avalista2. (Odirlei-AMcom)
     -- .........................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -3585,7 +3587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       --> Localizar dados do proximo avalista
       vr_idxavais := vr_tab_dados_avais.next(vr_idxavais);
       IF vr_idxavais IS NOT NULL THEN
-        vr_rel_nmdaval1 := vr_tab_dados_avais(vr_idxavais).nmdavali;
+        vr_rel_nmdaval2 := vr_tab_dados_avais(vr_idxavais).nmdavali;
         
         IF  vr_tab_dados_avais(vr_idxavais).nrcpfcgc > 0 THEN
           vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
