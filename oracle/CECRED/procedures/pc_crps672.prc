@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 11/11/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 24/11/2016
 
        Dados referentes ao programa:
 
@@ -99,6 +99,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
                                 para que os cartões solicitados como reposição também tenham a mesma
                                 flag de primeiro cartão (Douglas - Chamado 499054 / 541033)
+                                
+                   24/11/2016 - Ajuste para alimentar o campo de indicador de funcao debito (flgdebit)
+                                com a informacao que existe na linha do arquivo referente a
+                                funcao habilitada ou nao. (Fabricio)
     ............................................................................ */
 
     DECLARE
@@ -2269,6 +2273,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                       
                       -- Deve buscar o contrato para inserir
                       vr_nrseqcrd := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => vr_cdcooper);
+                      
+                      -- olha o indicador de funcao debito direto na linha que esta sendo processada
+                      IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
+                        vr_flgdebit := 0;
+                      ELSE
+                        vr_flgdebit := 1;
+                      END IF;
                   
                       -- cria nova proposta com número do cartão vindo no arquivo
                       BEGIN
@@ -2326,7 +2337,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             vr_nrseqcrd,
                             vr_dtentr2v,
                             rw_crapdat.dtmvtolt,
-                            rw_crawcrd.flgdebit,
+                            vr_flgdebit,
                             rw_crawcrd.nmempcrd)
                             RETURNING ROWID INTO rw_crawcrd.rowid;
                       EXCEPTION
