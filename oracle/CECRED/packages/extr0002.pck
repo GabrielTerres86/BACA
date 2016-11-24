@@ -4981,8 +4981,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             /* Valor da parcela vencida */
             IF vr_tab_dados_epr(vr_index_epr).vlprvenc > 0 THEN
               -- Se os periodos foram informados, filtrar por eles
-              IF (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
-                  vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN
+              IF (pr_dtiniper IS NULL   AND
+                  pr_dtfimper IS NULL)  OR
+                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
+                  vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN  
                
               --Incrementar contador lancamentos na tabela
               vr_index:= pr_tab_lancamento_futuro.COUNT+1;
