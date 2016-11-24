@@ -362,11 +362,17 @@
                29/06/2016 - Adicionado ROUND para o calculo de Multa e Juros da 
                             consulta-boleto-2via para que arredonde os valores
                             (Douglas - Chamado 457956)
-			   04/08/2016 - Alterado procedure gera_relatorio para permitir 
-							enviar relatorio de movimento de cobranca por 
-							e-mail. (Reinert)
+			         04/08/2016 - Alterado procedure gera_relatorio para permitir 
+							              enviar relatorio de movimento de cobranca por 
+							              e-mail. (Reinert)
 
-			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+			         03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+               
+               24/11/2016 - A busca de conta transferida/migrada nao estava sendo
+                            feita corretamente na consulta de 2via de boleto.
+                            Nao estava considerando a conta retornada na pesquisa
+                            da craptco ao buscar na crapass.
+                            Heitor (Mouts) - Chamado 554866
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -537,6 +543,7 @@ PROCEDURE consulta-boleto-2via.
                   NO-LOCK
             ,EACH crapass WHERE
                   crapass.cdcooper = p-cdcooper AND
+                  crapass.nrdconta = craptco.nrdconta AND
                   crapass.nrcpfcgc = p-nrcpfcgc
                   NO-LOCK:                       
             ASSIGN p-nrdconta = craptco.nrdconta.
