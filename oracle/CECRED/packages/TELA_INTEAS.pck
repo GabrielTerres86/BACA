@@ -139,6 +139,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                aquela pessoa eh o primeiro titular. Isso para garantir
                                que os dados estejam atualizados e estar de acordo com o 
                                funcionamento do Ayllos Web.
+                               
+                  18/11/2016 - Ajustado para quando a data de demissao do cooperado for
+                               posterior a data final de geracao, exportar como se a conta
+                               estivesse ativa (exportando nulo no lugar do dtdemiss).
       
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
@@ -207,7 +211,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Odirlei Busana(Amcom)
-    Data     : Abril/2016.                   Ultima atualizacao: 13/04/2016
+    Data     : Abril/2016.                   Ultima atualizacao: 10/11/2016
     
     Dados referentes ao programa:
     
@@ -215,8 +219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Objetivo  : Procedimento responsavel em gerar o arquivo de Cadastro de Cooperados para a Easyway
     
     Alteração : Alterado para remover os acentos das linhas de exportação desse arquivo,
-	              por solicitação do Mathera (10/11/2016).
-                
+	            por solicitação do Mathera (10/11/2016).
+        
                 Alterado para quando os segundo e demais titulares nao tiverem endereco preenchido,
                 buscar do primeiro titular. 
                 Alterado para quando os procuradores e representantes de menores nao tiverem endereco
@@ -979,7 +983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_complend  => rw_crapcrl.complend,  
                               pr_nrcepend  => rw_crapcrl.nrcepend,  
                               pr_nmbairro  => rw_crapcrl.nmbairro,  
-                              pr_nmcidade  => rw_crapcrl.nmcidade,
+                              pr_nmcidade  => rw_crapcrl.nmcidade,  
                               pr_cdufende  => rw_crapcrl.cdufresd,    
                               pr_tplograd  => rw_crapcrl.tplograd,  
                               pr_dtmvtolt  => rw_crapcrl.dtmvtolt,  
@@ -1053,7 +1057,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
               
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
               pc_trata_outro( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
-                              pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,
+                              pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,  
                               pr_inpessoa  => rw_crapavt.inpessoa,  
                               pr_dspessoa  => rw_crapavt.dspessoa,  
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
@@ -1183,7 +1187,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       SELECT ass.cdcooper
             ,ass.nrdconta
             ,ass.nrcpfcgc
-            ,ass.dtdemiss
+            /* Se a conta foi demitida depois do periodo, quer dizer
+               que temos que exporta-la como ativa ainda. */
+            ,case when ass.dtdemiss > pr_dtfimger
+                  then null
+                  else ass.dtdemiss
+              end dtdemiss
             ,ass.inpessoa
             ,ass.cdagenci
         FROM crapass ass
@@ -1589,7 +1598,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       SELECT ass.cdcooper
              ,ass.nrdconta
              ,ass.nrcpfcgc
-             ,ass.dtdemiss
+             /* Se a conta foi demitida depois do periodo, quer dizer
+                que temos que exporta-la como ativa ainda. */
+             ,case when ass.dtdemiss > pr_dtfimger
+                  then null
+                  else ass.dtdemiss
+              end dtdemiss
              ,ass.cdagenci
              ,ass.inpessoa 
              ,sda.dtmvtolt
@@ -1856,7 +1870,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,ass.nrdconta
             ,ass.cdagenci 
             ,ass.dtadmiss
-            ,ass.dtdemiss
+            /* Se a conta foi demitida depois do periodo, quer dizer
+               que temos que exporta-la como ativa ainda. */
+            ,case when ass.dtdemiss > pr_dtfimger
+                  then null
+                  else ass.dtdemiss
+              end dtdemiss
             ,ttl.nrcpfcgc
             ,ttl.inpessoa
             ,ttl.idseqttl
@@ -1899,7 +1918,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,ass.nrdconta
             ,ass.cdagenci 
             ,ass.dtadmiss
-            ,ass.dtdemiss
+            /* Se a conta foi demitida depois do periodo, quer dizer
+               que temos que exporta-la como ativa ainda. */
+            ,case when ass.dtdemiss > pr_dtfimger
+                  then null
+                  else ass.dtdemiss
+              end dtdemiss
             ,ass.nrcpfcgc
             ,ass.inpessoa
             ,1   AS idseqttl
@@ -2255,7 +2279,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       SELECT nvl(ass.nrcpfcgc, crl.nrcpfcgc) AS nrcpfcgc
             ,nvl(ass.inpessoa, 1) inpessoa
             ,ass.dtadmiss
-            ,ass.dtdemiss
+            /* Se a conta foi demitida depois do periodo, quer dizer
+               que temos que exporta-la como ativa ainda. */
+            ,case when ass.dtdemiss > pr_dtfimger
+                  then null
+                  else ass.dtdemiss
+              end dtdemiss
             ,3   AS tipo_relacao -- Representante Legal 
         FROM crapcrl crl
         LEFT JOIN crapass ass
@@ -2269,7 +2298,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       SELECT avt.nrcpfcgc AS nrcpfcgc
             ,avt.inpessoa AS inpessoa
             ,nvl(avt.dtmvtolt, ass.dtadmiss) AS dtadmiss
-            ,nvl(avt.dtvalida, ass.dtdemiss) AS dtdemiss
+            /* Se a vigência for posterior a data final do periodo, 
+               vamos exportar vazio, cfme solicitacao Suelen J. */
+            ,case when nvl(avt.dtvalida, ass.dtdemiss) > pr_dtfimger
+                  then null
+                  else nvl(avt.dtvalida, ass.dtdemiss)
+              end dtdemiss
             ,2            AS tipo_relacao -- Procurador 
         FROM crapavt avt
    LEFT JOIN crapass ass
@@ -2288,7 +2322,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       SELECT avt.nrcpfcgc
             ,avt.inpessoa
             ,nvl(avt.dtmvtolt, ass.dtadmiss) AS dtadmiss
-            ,nvl(avt.dtvalida, ass.dtdemiss) AS dtdemiss
+            /* Se a vigência for posterior a data final do periodo, 
+               vamos exportar vazio, cfme solicitacao Suelen J. */
+            ,case when nvl(avt.dtvalida, ass.dtdemiss) > pr_dtfimger
+                  then null
+                  else nvl(avt.dtvalida, ass.dtdemiss)
+              end dtdemiss
             ,(CASE
                 WHEN upper(avt.dsproftl) LIKE '%PROCURADOR%' THEN 2 -- Procurador
                 ELSE 3
