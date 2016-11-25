@@ -42,7 +42,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 03/10/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 25/11/2016
 
    Dados referentes ao programa:
 
@@ -367,6 +367,9 @@
 							e-mail. (Reinert)
 
 			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+
+			   25/11/2016 - Correção no calculo de multa e juros da Melhoria 271
+			                (Douglas Quisinski - Chamado 562804)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -721,13 +724,14 @@ PROCEDURE consulta-boleto-2via.
                           INPUT 7 /*todos*/,
                           INPUT 1).
     
-    IF  RETURN-VALUE = "NOK" THEN
+    IF  RETURN-VALUE <> "OK" THEN
         DO:
             CREATE tt-erro.
             ASSIGN tt-erro.dscritic = "Erro ao gerar boleto.".
             RETURN "NOK".
         END.
         
+
     RUN sistema/generico/procedures/b1wgen0089.p PERSISTENT SET h-b1wgen0089.
 
     IF  NOT VALID-HANDLE(h-b1wgen0089) THEN
@@ -746,8 +750,8 @@ PROCEDURE consulta-boleto-2via.
     DELETE PROCEDURE h-b1wgen0089.
 
     RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
-                                   INPUT crapcob.nrdconta,           
-                                                 INPUT crapcob.dtvencto,
+                                   INPUT crapcob.nrdconta,
+                                   INPUT crapcob.dtvencto,
                                    INPUT crapdat.dtmvtocd,           
                                    INPUT crapcob.vlabatim,           
                                    INPUT crapcob.vltitulo,           
@@ -766,8 +770,8 @@ PROCEDURE consulta-boleto-2via.
                                    OUTPUT aux_vlmormut_atualizado,          
                                    OUTPUT aux_vldescut,           
                                    OUTPUT aux_cdmensut,
-                                                OUTPUT aux_critdata).
-    
+                                   OUTPUT aux_critdata).
+
     /* verifica se o titulo esta vencido */
     IF  aux_critdata  THEN
     DO: 
@@ -1087,35 +1091,38 @@ PROCEDURE consulta-bloqueto.
 
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
-                                      
-                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
-                                                                INPUT crapcob.nrdconta,           
-                                                                INPUT crapcob.dtvencto,           
-                                                                INPUT crapdat.dtmvtocd,           
-                                                                INPUT crapcob.vlabatim,           
-                                                                INPUT crapcob.vltitulo,           
-                                                                INPUT crapcob.vlrmulta,           
-                                                                INPUT crapcob.vljurdia,           
-                                                                INPUT crapcob.cdmensag,           
-                                                                INPUT crapcob.vldescto,           
-                                                                INPUT crapcob.tpdmulta,           
-                                                                INPUT crapcob.tpjurmor,           
-                                                                INPUT NO,           
-                                                                OUTPUT aux_dtvencut,           
-                                                                OUTPUT aux_vltituut,           
-                                                                OUTPUT aux_vlmormut,           
-                                                                OUTPUT aux_dtvencut_atualizado,
-                                                                OUTPUT aux_vltituut_atualizado,
-                                                                OUTPUT aux_vlmormut_atualizado,          
-                                                                OUTPUT aux_vldescut,           
-                                                                OUTPUT aux_cdmensut,
-                                                                OUTPUT aux_critdata).     
-                                 
-                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
-                                          
+
+                                 /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                 IF   RETURN-VALUE = "OK"  THEN
+                                 DO:
+                                     RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                    INPUT crapcob.nrdconta,           
+                                                                    INPUT crapcob.dtvencto,           
+                                                                    INPUT crapdat.dtmvtocd,           
+                                                                    INPUT crapcob.vlabatim,           
+                                                                    INPUT crapcob.vltitulo,           
+                                                                    INPUT crapcob.vlrmulta,           
+                                                                    INPUT crapcob.vljurdia,           
+                                                                    INPUT crapcob.cdmensag,           
+                                                                    INPUT crapcob.vldescto,           
+                                                                    INPUT crapcob.tpdmulta,           
+                                                                    INPUT crapcob.tpjurmor,           
+                                                                    INPUT NO,           
+                                                                    OUTPUT aux_dtvencut,           
+                                                                    OUTPUT aux_vltituut,           
+                                                                    OUTPUT aux_vlmormut,           
+                                                                    OUTPUT aux_dtvencut_atualizado,
+                                                                    OUTPUT aux_vltituut_atualizado,
+                                                                    OUTPUT aux_vlmormut_atualizado,          
+                                                                    OUTPUT aux_vldescut,           
+                                                                    OUTPUT aux_cdmensut,
+                                                                    OUTPUT aux_critdata).     
+
+                                     ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                            tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                            tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                            tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                 END.
                                       
                              END.
 
@@ -1275,34 +1282,37 @@ PROCEDURE consulta-bloqueto.
                                   IF   RETURN-VALUE = "NOK"  THEN
                                        RETURN "NOK".
                              
-                             RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
-                                                            INPUT crapcob.nrdconta,           
-                                                            INPUT crapcob.dtvencto,           
-                                                            INPUT crapdat.dtmvtocd,           
-                                                            INPUT crapcob.vlabatim,           
-                                                            INPUT crapcob.vltitulo,           
-                                                            INPUT crapcob.vlrmulta,           
-                                                            INPUT crapcob.vljurdia,           
-                                                            INPUT crapcob.cdmensag,           
-                                                            INPUT crapcob.vldescto,           
-                                                            INPUT crapcob.tpdmulta,           
-                                                            INPUT crapcob.tpjurmor,           
-                                                            INPUT NO,           
-                                                            OUTPUT aux_dtvencut,           
-                                                            OUTPUT aux_vltituut,           
-                                                            OUTPUT aux_vlmormut,           
-                                                            OUTPUT aux_dtvencut_atualizado,
-                                                            OUTPUT aux_vltituut_atualizado,
-                                                            OUTPUT aux_vlmormut_atualizado,          
-                                                            OUTPUT aux_vldescut,           
-                                                            OUTPUT aux_cdmensut,
-                                                            OUTPUT aux_critdata).     
-                             
-                             ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-                                    tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-                                    tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                    tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
-                             
+                                 /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                 IF   RETURN-VALUE = "OK"  THEN
+                                 DO:                                                   
+                                     RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                    INPUT crapcob.nrdconta,           
+                                                                    INPUT crapcob.dtvencto,           
+                                                                    INPUT crapdat.dtmvtocd,           
+                                                                    INPUT crapcob.vlabatim,           
+                                                                    INPUT crapcob.vltitulo,           
+                                                                    INPUT crapcob.vlrmulta,           
+                                                                    INPUT crapcob.vljurdia,           
+                                                                    INPUT crapcob.cdmensag,           
+                                                                    INPUT crapcob.vldescto,           
+                                                                    INPUT crapcob.tpdmulta,           
+                                                                    INPUT crapcob.tpjurmor,           
+                                                                    INPUT NO,           
+                                                                    OUTPUT aux_dtvencut,           
+                                                                    OUTPUT aux_vltituut,           
+                                                                    OUTPUT aux_vlmormut,           
+                                                                    OUTPUT aux_dtvencut_atualizado,
+                                                                    OUTPUT aux_vltituut_atualizado,
+                                                                    OUTPUT aux_vlmormut_atualizado,          
+                                                                    OUTPUT aux_vldescut,           
+                                                                    OUTPUT aux_cdmensut,
+                                                                    OUTPUT aux_critdata).     
+
+                                     ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                            tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                            tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                            tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                                 END.
                              END.    
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -1417,81 +1427,85 @@ PROCEDURE consulta-bloqueto.
                                  
                                 DO aux_data = p-ini-pagamento TO p-fim-pagamento:
                                                                          
-                                FOR EACH crapcob WHERE 
-                                      crapcob.cdcooper  = p-cdcooper       AND
-                                      crapcob.nrcnvcob  = crapceb.nrconven AND
-                                      crapcob.dtdpagto  = aux_data         AND
-                                      crapcob.nrdconta  = crapceb.nrdconta
-                                      NO-LOCK BY crapcob.nrdconta
-                                              BY crapcob.nrinssac
-                                              BY crapcob.dtdpagto
-                                              BY crapcob.nrdocmto:
-                                 
-                                 FIND crapsab WHERE
-                                      crapsab.cdcooper = p-cdcooper      AND
-                                      crapsab.nrdconta = p-nro-conta     AND
-                                      crapsab.nrinssac = crapcob.nrinssac
-                                      NO-LOCK NO-ERROR.
-                                
-                                 IF  TRIM(p-nome-sacado) <> "" THEN
-                                     DO:
-                                        IF  AVAIL crapsab THEN
-                                            DO:
-                                                IF  NOT crapsab.nmdsacad 
-                                                    MATCHES p-nome-sacado 
+                                    FOR EACH crapcob WHERE 
+                                          crapcob.cdcooper  = p-cdcooper       AND
+                                          crapcob.nrcnvcob  = crapceb.nrconven AND
+                                          crapcob.dtdpagto  = aux_data         AND
+                                          crapcob.nrdconta  = crapceb.nrdconta
+                                          NO-LOCK BY crapcob.nrdconta
+                                                  BY crapcob.nrinssac
+                                                  BY crapcob.dtdpagto
+                                                  BY crapcob.nrdocmto:
+                                     
+                                         FIND crapsab WHERE
+                                              crapsab.cdcooper = p-cdcooper      AND
+                                              crapsab.nrdconta = p-nro-conta     AND
+                                              crapsab.nrinssac = crapcob.nrinssac
+                                              NO-LOCK NO-ERROR.
+                                        
+                                         IF  TRIM(p-nome-sacado) <> "" THEN
+                                             DO:
+                                                IF  AVAIL crapsab THEN
+                                                    DO:
+                                                        IF  NOT crapsab.nmdsacad 
+                                                            MATCHES p-nome-sacado 
+                                                            THEN NEXT.
+                                                    END.
+                                                ELSE
+                                                    NEXT.
+                                             END.
+                                         
+                                         IF  p-nrins-sacado > 0 THEN
+                                             DO:
+                                                IF  crapcob.nrinssac <> p-nrins-sacado 
                                                     THEN NEXT.
-                                            END.
-                                        ELSE
-                                            NEXT.
-                                     END.
-                                 
-                                 IF  p-nrins-sacado > 0 THEN
-                                     DO:
-                                        IF  crapcob.nrinssac <> p-nrins-sacado 
-                                            THEN NEXT.
-                                     END.
+                                             END.
 
-                                 IF  p-flgregis <> ? THEN
-                                     IF crapcob.flgregis <> p-flgregis THEN NEXT.
+                                         IF  p-flgregis <> ? THEN
+                                             IF crapcob.flgregis <> p-flgregis THEN NEXT.
+                                                      
+                                         RUN proc_nosso_numero(INPUT p-cdcooper,
+                                                               INPUT p-cod-agencia,
+                                                               INPUT p-nro-caixa,
+                                                               INPUT p-ind-situacao,
+                                                               INPUT p-num-registros).
+
+                                         IF   RETURN-VALUE = "NOK"  THEN
+                                              RETURN "NOK".
                                               
-                                 RUN proc_nosso_numero(INPUT p-cdcooper,
-                                                       INPUT p-cod-agencia,
-                                                       INPUT p-nro-caixa,
-                                                       INPUT p-ind-situacao,
-                                                       INPUT p-num-registros).
+                                         /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                         IF   RETURN-VALUE = "OK"  THEN
+                                         DO:  
+                                             RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                            INPUT crapcob.nrdconta,           
+                                                                            INPUT crapcob.dtvencto,           
+                                                                            INPUT crapdat.dtmvtocd,           
+                                                                            INPUT crapcob.vlabatim,           
+                                                                            INPUT crapcob.vltitulo,           
+                                                                            INPUT crapcob.vlrmulta,           
+                                                                            INPUT crapcob.vljurdia,           
+                                                                            INPUT crapcob.cdmensag,           
+                                                                            INPUT crapcob.vldescto,           
+                                                                            INPUT crapcob.tpdmulta,           
+                                                                            INPUT crapcob.tpjurmor,           
+                                                                            INPUT NO,           
+                                                                            OUTPUT aux_dtvencut,           
+                                                                            OUTPUT aux_vltituut,           
+                                                                            OUTPUT aux_vlmormut,           
+                                                                            OUTPUT aux_dtvencut_atualizado,
+                                                                            OUTPUT aux_vltituut_atualizado,
+                                                                            OUTPUT aux_vlmormut_atualizado,          
+                                                                            OUTPUT aux_vldescut,           
+                                                                            OUTPUT aux_cdmensut,
+                                                                            OUTPUT aux_critdata).     
 
-                                 IF   RETURN-VALUE = "NOK"  THEN
-                                      RETURN "NOK".
-                                      
-                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
-                                                                INPUT crapcob.nrdconta,           
-                                                                INPUT crapcob.dtvencto,           
-                                                                INPUT crapdat.dtmvtocd,           
-                                                                INPUT crapcob.vlabatim,           
-                                                                INPUT crapcob.vltitulo,           
-                                                                INPUT crapcob.vlrmulta,           
-                                                                INPUT crapcob.vljurdia,           
-                                                                INPUT crapcob.cdmensag,           
-                                                                INPUT crapcob.vldescto,           
-                                                                INPUT crapcob.tpdmulta,           
-                                                                INPUT crapcob.tpjurmor,           
-                                                                INPUT NO,           
-                                                                OUTPUT aux_dtvencut,           
-                                                                OUTPUT aux_vltituut,           
-                                                                OUTPUT aux_vlmormut,           
-                                                                OUTPUT aux_dtvencut_atualizado,
-                                                                OUTPUT aux_vltituut_atualizado,
-                                                                OUTPUT aux_vlmormut_atualizado,          
-                                                                OUTPUT aux_vldescut,           
-                                                                OUTPUT aux_cdmensut,
-                                                                OUTPUT aux_critdata).     
-                                 
-                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
-                                END.
-                                END.
+                                             ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                                    tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                                    tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                                    tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                                          END.
+                                      END.
+                                 END.
                              END.
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -1607,81 +1621,85 @@ PROCEDURE consulta-bloqueto.
                                 DO aux_data = p-ini-vencimento TO p-fim-vencimento:
 
 
-                                FOR EACH crapcob WHERE 
-                                      crapcob.cdcooper  = p-cdcooper       AND
-                                      crapcob.nrcnvcob  = crapceb.nrconven AND
-                                      crapcob.nrdconta  = crapceb.nrdconta AND 
-                                      crapcob.dtvencto = aux_data
-                                      NO-LOCK BY crapcob.nrdconta
-                                              BY crapcob.dtvencto
-                                              BY crapcob.nrinssac
-                                              BY crapcob.nrdocmto:
+                                    FOR EACH crapcob WHERE 
+                                          crapcob.cdcooper  = p-cdcooper       AND
+                                          crapcob.nrcnvcob  = crapceb.nrconven AND
+                                          crapcob.nrdconta  = crapceb.nrdconta AND 
+                                          crapcob.dtvencto = aux_data
+                                          NO-LOCK BY crapcob.nrdconta
+                                                  BY crapcob.dtvencto
+                                                  BY crapcob.nrinssac
+                                                  BY crapcob.nrdocmto:
 
-                                 FIND crapsab WHERE
-                                      crapsab.cdcooper = p-cdcooper      AND
-                                      crapsab.nrdconta = p-nro-conta     AND
-                                      crapsab.nrinssac = crapcob.nrinssac
-                                      NO-LOCK NO-ERROR.
-                                
-                                 IF  TRIM(p-nome-sacado) <> "" THEN
-                                     DO:
-                                        IF  AVAIL crapsab THEN
-                                            DO:
-                                                IF  NOT crapsab.nmdsacad 
-                                                    MATCHES p-nome-sacado 
-                                                    THEN NEXT.
-                                            END.
-                                        ELSE
-                                            NEXT.
-                                     END.
+                                     FIND crapsab WHERE
+                                          crapsab.cdcooper = p-cdcooper      AND
+                                          crapsab.nrdconta = p-nro-conta     AND
+                                          crapsab.nrinssac = crapcob.nrinssac
+                                          NO-LOCK NO-ERROR.
+                                    
+                                     IF  TRIM(p-nome-sacado) <> "" THEN
+                                         DO:
+                                            IF  AVAIL crapsab THEN
+                                                DO:
+                                                    IF  NOT crapsab.nmdsacad 
+                                                        MATCHES p-nome-sacado 
+                                                        THEN NEXT.
+                                                END.
+                                            ELSE
+                                                NEXT.
+                                         END.
 
-                                 IF  p-nrins-sacado > 0 THEN
-                                     DO:
-                                        IF  crapcob.nrinssac <> p-nrins-sacado 
-                                            THEN NEXT.
-                                     END.              
+                                     IF  p-nrins-sacado > 0 THEN
+                                         DO:
+                                            IF  crapcob.nrinssac <> p-nrins-sacado 
+                                                THEN NEXT.
+                                         END.              
 
-                                 IF  p-flgregis <> ? THEN
-                                     IF crapcob.flgregis <> p-flgregis THEN NEXT.
-                                     
-                                 RUN proc_nosso_numero(INPUT p-cdcooper,
-                                                       INPUT p-cod-agencia,
-                                                       INPUT p-nro-caixa,
-                                                       INPUT p-ind-situacao,
-                                                       INPUT p-num-registros).
-                                                           
-                                 IF   RETURN-VALUE = "NOK"  THEN
-                                      RETURN "NOK".
-                                      
-                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
-                                                                INPUT crapcob.nrdconta,           
-                                                                INPUT crapcob.dtvencto,           
-                                                                INPUT crapdat.dtmvtocd,           
-                                                                INPUT crapcob.vlabatim,           
-                                                                INPUT crapcob.vltitulo,           
-                                                                INPUT crapcob.vlrmulta,           
-                                                                INPUT crapcob.vljurdia,           
-                                                                INPUT crapcob.cdmensag,           
-                                                                INPUT crapcob.vldescto,           
-                                                                INPUT crapcob.tpdmulta,           
-                                                                INPUT crapcob.tpjurmor,           
-                                                                INPUT NO,           
-                                                                OUTPUT aux_dtvencut,           
-                                                                OUTPUT aux_vltituut,           
-                                                                OUTPUT aux_vlmormut,           
-                                                                OUTPUT aux_dtvencut_atualizado,
-                                                                OUTPUT aux_vltituut_atualizado,
-                                                                OUTPUT aux_vlmormut_atualizado,          
-                                                                OUTPUT aux_vldescut,           
-                                                                OUTPUT aux_cdmensut,
-                                                                OUTPUT aux_critdata).     
-                                 
-                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
-                                 
-                                END.
+                                     IF  p-flgregis <> ? THEN
+                                         IF crapcob.flgregis <> p-flgregis THEN NEXT.
+                                         
+                                     RUN proc_nosso_numero(INPUT p-cdcooper,
+                                                           INPUT p-cod-agencia,
+                                                           INPUT p-nro-caixa,
+                                                           INPUT p-ind-situacao,
+                                                           INPUT p-num-registros).
+                                                               
+                                     IF   RETURN-VALUE = "NOK"  THEN
+                                          RETURN "NOK".
+                                          
+                                     /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                     IF   RETURN-VALUE = "OK"  THEN
+                                     DO:                                                   
+                                         RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                        INPUT crapcob.nrdconta,           
+                                                                        INPUT crapcob.dtvencto,           
+                                                                        INPUT crapdat.dtmvtocd,           
+                                                                        INPUT crapcob.vlabatim,           
+                                                                        INPUT crapcob.vltitulo,           
+                                                                        INPUT crapcob.vlrmulta,           
+                                                                        INPUT crapcob.vljurdia,           
+                                                                        INPUT crapcob.cdmensag,           
+                                                                        INPUT crapcob.vldescto,           
+                                                                        INPUT crapcob.tpdmulta,           
+                                                                        INPUT crapcob.tpjurmor,           
+                                                                        INPUT NO,           
+                                                                        OUTPUT aux_dtvencut,           
+                                                                        OUTPUT aux_vltituut,           
+                                                                        OUTPUT aux_vlmormut,           
+                                                                        OUTPUT aux_dtvencut_atualizado,
+                                                                        OUTPUT aux_vltituut_atualizado,
+                                                                        OUTPUT aux_vlmormut_atualizado,          
+                                                                        OUTPUT aux_vldescut,           
+                                                                        OUTPUT aux_cdmensut,
+                                                                        OUTPUT aux_critdata).     
+
+                                         ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                                tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                                tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                                tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                                         
+                                        END.
+                                    END.
                                 END.
                              END.
 
@@ -2019,36 +2037,39 @@ PROCEDURE consulta-bloqueto.
                                                       INPUT p-num-registros).
                                                            
                                 IF   RETURN-VALUE = "NOK"  THEN
-                             RETURN "NOK".
+                                    RETURN "NOK".
                               
-                               RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
-                                                              INPUT crapcob.nrdconta,           
-                                                              INPUT crapcob.dtvencto,           
-                                                              INPUT crapdat.dtmvtocd,           
-                                                              INPUT crapcob.vlabatim,           
-                                                              INPUT crapcob.vltitulo,           
-                                                              INPUT crapcob.vlrmulta,           
-                                                              INPUT crapcob.vljurdia,           
-                                                              INPUT crapcob.cdmensag,           
-                                                              INPUT crapcob.vldescto,           
-                                                              INPUT crapcob.tpdmulta,           
-                                                              INPUT crapcob.tpjurmor,           
-                                                              INPUT NO,           
-                                                              OUTPUT aux_dtvencut,           
-                                                              OUTPUT aux_vltituut,           
-                                                              OUTPUT aux_vlmormut,           
-                                                              OUTPUT aux_dtvencut_atualizado,
-                                                              OUTPUT aux_vltituut_atualizado,
-                                                              OUTPUT aux_vlmormut_atualizado,          
-                                                              OUTPUT aux_vldescut,           
-                                                              OUTPUT aux_cdmensut,
-                                                              OUTPUT aux_critdata).     
-                               
-                               ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
-                                      tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
-                                      tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                      tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
-                              
+                                /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                IF   RETURN-VALUE = "OK"  THEN
+                                DO:
+                                   RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                  INPUT crapcob.nrdconta,           
+                                                                  INPUT crapcob.dtvencto,           
+                                                                  INPUT crapdat.dtmvtocd,           
+                                                                  INPUT crapcob.vlabatim,           
+                                                                  INPUT crapcob.vltitulo,           
+                                                                  INPUT crapcob.vlrmulta,           
+                                                                  INPUT crapcob.vljurdia,           
+                                                                  INPUT crapcob.cdmensag,           
+                                                                  INPUT crapcob.vldescto,           
+                                                                  INPUT crapcob.tpdmulta,           
+                                                                  INPUT crapcob.tpjurmor,           
+                                                                  INPUT NO,           
+                                                                  OUTPUT aux_dtvencut,           
+                                                                  OUTPUT aux_vltituut,           
+                                                                  OUTPUT aux_vlmormut,           
+                                                                  OUTPUT aux_dtvencut_atualizado,
+                                                                  OUTPUT aux_vltituut_atualizado,
+                                                                  OUTPUT aux_vlmormut_atualizado,          
+                                                                  OUTPUT aux_vldescut,           
+                                                                  OUTPUT aux_cdmensut,
+                                                                  OUTPUT aux_critdata).     
+                                   
+                                   ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                          tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                          tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                          tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                                END.
                             END.
 
                             FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -4959,6 +4980,7 @@ PROCEDURE proc_nosso_numero.
 
     END. /* Fim do DO TRANSACTION */
     
+    RETURN "OK".
 END PROCEDURE. /* proc_nosso_numero */
 
 /********************************************************************/
@@ -8452,4 +8474,3 @@ PROCEDURE calcula_multa_juros_boleto:
 
     RETURN "OK".
 END PROCEDURE.
-
