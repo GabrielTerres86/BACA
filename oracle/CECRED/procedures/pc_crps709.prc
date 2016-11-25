@@ -10,7 +10,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 01/11/2016
+   Data    : Setembro/2016                        Ultima atualizacao: 24/11/206
 
    Dados referentes ao programa:
 
@@ -20,6 +20,11 @@ BEGIN
    Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
 							              durante a homologação da área de negócio
 							              (Adriano - M211).
+
+			         24/11/2016 - Ajuste para alimentar correta o lote utilizado no 
+						              	lançamento de créditos na conta do cooperado
+							              (Adriano - SD 563707).
+
    ............................................................................. */
    DECLARE
 
@@ -69,22 +74,19 @@ BEGIN
           AND craplot.cdagenci = 1
           AND craplot.cdbccxlt = 100
           AND craplot.nrdolote = pr_nrdolote;
-    rw_craplot cr_craplot%ROWTYPE;
-    vr_hasfound BOOLEAN := FALSE;
+     rw_craplot cr_craplot%ROWTYPE;
+     vr_hasfound BOOLEAN := FALSE;
 
      --Variaveis Locais
      vr_cdcritic     INTEGER;
      vr_cdprogra     VARCHAR2(10);
      vr_dscritic     VARCHAR2(4000);
      vr_nmarqlog     VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
-      
 
      --Variaveis de Excecao
      vr_exc_saida   EXCEPTION;
      vr_exc_email   EXCEPTION;
      vr_exc_fimprg  EXCEPTION;
-
-
 
    ---------------------------------------
    -- Inicio Bloco Principal pc_crps707
@@ -126,10 +128,10 @@ BEGIN
      IF BTCH0001.cr_crapdat%NOTFOUND THEN     
        CLOSE BTCH0001.cr_crapdat;
         
-      -- Montar mensagem de critica
-      vr_cdcritic:= 1;
-      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      RAISE vr_exc_email;
+       -- Montar mensagem de critica
+       vr_cdcritic:= 1;
+       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+       RAISE vr_exc_email;
         
      ELSE
        -- Apenas fechar o cursor
@@ -144,14 +146,19 @@ BEGIN
                                 pr_nmarqlog     => vr_nmarqlog);                                
      
      vr_vllanmto := 0;
+     
      -- Buscaremos todos os lançamentos de TEDs efetuadas no dia para cada Cooperativa
      FOR rw_lcm IN cr_craplcm LOOP
+       
        -- Busca Lote
        OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                       ,pr_nrdolote => 8483);
+                      
        FETCH cr_craplot INTO rw_craplot;
+       
        vr_hasfound := cr_craplot%FOUND;
+       
        CLOSE cr_craplot;
 
        -- Se não existir
@@ -165,6 +172,7 @@ BEGIN
                                ,nrdolote
                                ,tplotmov
                                ,qtcompln
+                               ,qtinfoln
                                ,vlinfocr
                                ,vlcompcr
                                ,nrseqdig)
@@ -173,6 +181,7 @@ BEGIN
                                ,1           -- cdagenci
                                ,100         -- cdbccxlt
                                ,8483
+                               ,1
                                ,1
                                ,1
                                ,rw_lcm.vllanmto
@@ -187,12 +196,13 @@ BEGIN
          END;
        ELSE -- Se Existir
          BEGIN
-           -- Atualiza Lote
+		       -- Atualiza Lote
            UPDATE craplot
-              SET qtcompln = qtcompln + 1
-                , vlinfocr = vlinfocr + rw_lcm.vllanmto
-                , vlcompcr = vlcompcr + rw_lcm.vllanmto
-                , nrseqdig = nrseqdig + 1
+              SET qtcompln = nvl(craplot.qtcompln,0) + 1
+			          , qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                , vlinfocr = nvl(craplot.vlinfocr,0) + rw_lcm.vllanmto
+                , vlcompcr = nvl(craplot.vlcompcr,0) + rw_lcm.vllanmto
+                , nrseqdig = nvl(craplot.nrseqdig,0) + 1
             WHERE craplot.cdcooper = pr_cdcooper
               AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplot.cdagenci = 1
@@ -248,12 +258,16 @@ BEGIN
      
      -- Se houve valor acumulado
      IF vr_vllanmto > 0 THEN 
+       
        -- Busca Lote
        OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                       ,pr_nrdolote => 8484);
+                      
        FETCH cr_craplot INTO rw_craplot;
+       
        vr_hasfound := cr_craplot%FOUND;
+       
        CLOSE cr_craplot;
 
        -- Se não existir
@@ -267,6 +281,7 @@ BEGIN
                                ,nrdolote
                                ,tplotmov
                                ,qtcompln
+                               ,qtinfoln
                                ,vlinfocr
                                ,vlcompcr
                                ,nrseqdig)
@@ -275,6 +290,7 @@ BEGIN
                                ,1           -- cdagenci
                                ,100         -- cdbccxlt
                                ,8484
+                               ,1
                                ,1
                                ,1
                                ,vr_vllanmto
@@ -290,11 +306,12 @@ BEGIN
        ELSE -- Se Existir
          BEGIN
            -- Atualiza Lote
-           UPDATE craplot
-              SET qtcompln = qtcompln + 1
-                , vlinfocr = vlinfocr + vr_vllanmto
-                , vlcompcr = vlcompcr + vr_vllanmto
-                , nrseqdig = nrseqdig + 1
+           UPDATE craplot              
+		          SET qtcompln = nvl(craplot.qtcompln,0) + 1
+			          , qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                , vlinfocr = nvl(craplot.vlinfocr,0) + vr_vllanmto
+                , vlcompcr = nvl(craplot.vlcompcr,0) + vr_vllanmto
+                , nrseqdig = nvl(craplot.nrseqdig,0) + 1
             WHERE craplot.cdcooper = pr_cdcooper
               AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
               AND craplot.cdagenci = 1
@@ -311,8 +328,9 @@ BEGIN
        
        -- Buscar conta da AV na Central
        OPEN cr_crapcop (pr_cdcooper => 16);
-       FETCH cr_crapcop
-        INTO rw_crapcop;
+       
+       FETCH cr_crapcop INTO rw_crapcop;
+       
        CLOSE cr_crapcop;
        
        -- Cria o lancamento em C/C
@@ -350,7 +368,6 @@ BEGIN
        END;              
      END IF;  
 
-
      -- Processo OK, devemos chamar a fimprg
      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                               ,pr_cdprogra => vr_cdprogra
@@ -366,6 +383,7 @@ BEGIN
 
      --Salvar informacoes no banco de dados
      COMMIT;
+     
    EXCEPTION
      WHEN vr_exc_fimprg THEN
        -- Se foi retornado apenas codigo

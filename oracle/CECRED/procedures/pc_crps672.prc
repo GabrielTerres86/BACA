@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 11/11/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 24/11/2016
 
        Dados referentes ao programa:
 
@@ -99,6 +99,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    11/11/2016 - Adicionado validação de CPF do primeiro cartão da administradora
                                 para que os cartões solicitados como reposição também tenham a mesma
                                 flag de primeiro cartão (Douglas - Chamado 499054 / 541033)
+                                
+                   24/11/2016 - Ajuste para alimentar o campo de indicador de funcao debito (flgdebit)
+                                com a informacao que existe na linha do arquivo referente a
+                                funcao habilitada ou nao. (Fabricio)
+                              - Quando tipo de operacao for 10 (desbloqueio) e for uma reposicao de cartao,
+                                chamar a procedure atualiza_situacao_cartao para cancelar o cartao
+                                anterior. (Chamado 559710) - (Fabricio)
     ............................................................................ */
 
     DECLARE
@@ -1445,11 +1452,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 3 - Cancelamento de Cartao
                 4 - Inclusao de Adicional
                 7 - Reativacao de Contas
+                10 - Desbloqueio (exclusivo p/ tratamento de reposicao)
                 12 - Alteracao de Estado
                 13 - Alteracao de Estado Conta
                 25 - Reativar Cartao do Adicional                
                 */                
-                IF vr_tipooper NOT IN (1,3,4,7,12,13,25) THEN
+                IF vr_tipooper NOT IN (1,3,4,7,10,12,13,25) THEN
                    CONTINUE;
                 END IF;
                 
@@ -1601,6 +1609,32 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                                          
                     CONTINUE;                      
                   END IF;
+                END IF;
+                
+                /* Tratamento especifico para casos de operacao 10 (desbloqueio), porem, onde a
+                   informacao que vem no arquivo informa que o cartao esta sendo REPOSTO (deve cancelar).
+                   Fabricio - chamado 559710 */
+                IF vr_tipooper = 10 THEN
+                  IF TO_NUMBER(substr(vr_des_text,114,2)) = 10 THEN /*reposicao*/
+                    -- Atualiza os dados da situacao do cartao
+                    atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
+                                             pr_nrdconta => vr_nrdconta,
+                                             pr_nrcrcard => TO_NUMBER(substr(vr_des_text,38,19)),                                           
+                                             pr_insitcrd => TO_NUMBER(substr(vr_des_text,114,2)),                                    
+                                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                             pr_des_erro => vr_des_erro,
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);
+                                             
+                    -- Verifica se ocorreu erro                          
+                    IF vr_des_erro <> 'OK' THEN
+                      pc_log_message;
+                      vr_des_erro := '';
+                    END IF;
+                  END IF;
+
+                  -- tipo de operacao 10 (desbloqueio) nao deve fazer mais nada alem disto (Fabricio).
+                  CONTINUE;
                 END IF;
                 
                 /* 
@@ -2269,6 +2303,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                       
                       -- Deve buscar o contrato para inserir
                       vr_nrseqcrd := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => vr_cdcooper);
+                      
+                      -- olha o indicador de funcao debito direto na linha que esta sendo processada
+                      IF to_number(TRIM(substr(vr_des_text,337,12))) = 0 THEN
+                        vr_flgdebit := 0;
+                      ELSE
+                        vr_flgdebit := 1;
+                      END IF;
                   
                       -- cria nova proposta com número do cartão vindo no arquivo
                       BEGIN
@@ -2326,7 +2367,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                             vr_nrseqcrd,
                             vr_dtentr2v,
                             rw_crapdat.dtmvtolt,
-                            rw_crawcrd.flgdebit,
+                            vr_flgdebit,
                             rw_crawcrd.nmempcrd)
                             RETURNING ROWID INTO rw_crawcrd.rowid;
                       EXCEPTION

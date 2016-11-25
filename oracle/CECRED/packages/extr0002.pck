@@ -3863,20 +3863,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
          AND fatura.nrdconta = pr_nrdconta
          AND fatura.insituacao = 1
          AND fatura.vlpendente > 0
-         AND (fatura.dtvencimento >= pr_dtiniper
-         AND fatura.dtvencimento <= pr_dtfimper)
-         union
-        SELECT fatura.dtvencimento
-              ,fatura.dsdocumento
-              ,fatura.vlpendente
-              ,fatura.progress_recid
-          FROM  tbcrd_fatura fatura
-       WHERE fatura.cdcooper = pr_cdcooper
-         AND fatura.nrdconta = pr_nrdconta
-         AND fatura.insituacao = 1
-         AND fatura.vlpendente > 0
-         AND fatura.dtvencimento <= (SELECT crapdat.dtmvtolt from crapdat
-                                  where crapdat.cdcooper = pr_cdcooper );
+         AND ((fatura.dtvencimento >= pr_dtiniper
+         AND fatura.dtvencimento <= pr_dtfimper) 
+          OR pr_dtiniper IS NULL 
+         AND pr_dtfimper IS NULL); 
 
       --Selecionar Cadastro de linhas de credito rotativos
       CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE
@@ -4981,8 +4971,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             /* Valor da parcela vencida */
             IF vr_tab_dados_epr(vr_index_epr).vlprvenc > 0 THEN
               -- Se os periodos foram informados, filtrar por eles
-              IF (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
-                  vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN
+              IF (pr_dtiniper IS NULL   AND
+                  pr_dtfimper IS NULL)  OR
+                 (vr_tab_dados_epr(vr_index_epr).dtdpagto >= pr_dtiniper   AND
+                  vr_tab_dados_epr(vr_index_epr).dtdpagto <= pr_dtfimper)  THEN  
                
               --Incrementar contador lancamentos na tabela
               vr_index:= pr_tab_lancamento_futuro.COUNT+1;

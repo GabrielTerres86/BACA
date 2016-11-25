@@ -4,14 +4,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENCONTABSICREDI
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha 
-   Data    : Setembro/2016.                     Ultima atualizacao: 
+   Data    : Setembro/2016.                     Ultima atualizacao: 24/11/2016
 
    Dados referentes ao programa:
 
    Frequencia: Segunda a sexta, a cada 15 minutos, das 10:05 as 18:50.
    Objetivo  : Controlar a execução dos programas CRPS709. 
               
-   Alteracoes:
+   Alteracoes: 24/11/2016 - Ajuste para retirar o tratamento de inproces
+                            (Adriano - SD 563707).
    
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -97,8 +98,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
     
       -- Verificação do calendário
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      
       IF BTCH0001.cr_crapdat%NOTFOUND THEN     
+        
         CLOSE BTCH0001.cr_crapdat;
         
         -- Montar mensagem de critica
@@ -110,30 +114,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENCONTABSICREDI(pr_cdcooper in crapc
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
       END IF;
-
-      -- Somente se o processo já encerrou
-      IF rw_crapdat.inproces = 0 THEN
-                             
-        --> Executar programa
-        pc_crps709 (pr_cdcooper => pr_cdcooper, 
-                    pr_stprogra => vr_stprogra,
-                    pr_infimsol => vr_infimsol, 
-                    pr_cdcritic => vr_cdcritic, 
-                    pr_dscritic => vr_dscritic);
+                         
+      --> Executar programa
+      pc_crps709 (pr_cdcooper => pr_cdcooper, 
+                  pr_stprogra => vr_stprogra,
+                  pr_infimsol => vr_infimsol, 
+                  pr_cdcritic => vr_cdcritic, 
+                  pr_dscritic => vr_dscritic);
           
-        --> Tratamento de erro                                 
-        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
+      --> Tratamento de erro                                 
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN 
              
-          pc_gera_log_execucao(pr_indexecu  => 'Fim execucao com critica: '||vr_dscritic ,
-                               pr_cdcooper  => pr_cdcooper, 
-                               pr_tpexecuc  => NULL,
-                               pr_idtiplog  => 'E');
+        pc_gera_log_execucao(pr_indexecu  => 'Fim execucao com critica: '||vr_dscritic ,
+                             pr_cdcooper  => pr_cdcooper, 
+                             pr_tpexecuc  => NULL,
+                             pr_idtiplog  => 'E');
                                 
-          RAISE vr_exc_email;    
+        RAISE vr_exc_email;    
                      
-        END IF;   
-           
-      END IF;    
+      END IF;   
         
       --> Log de fim de execucao
       pc_gera_log_execucao(pr_indexecu  => 'Fim execucao',

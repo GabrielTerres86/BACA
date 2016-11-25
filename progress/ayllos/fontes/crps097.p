@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 23/11/2016
+   Data    : Outubro/94.                     Ultima atualizacao: 24/11/2016
 
    Dados referentes ao programa:
 
@@ -108,6 +108,9 @@
                             
                23/11/2016 - Para as devolucoes por falta de saldo (11 e 12) nao vamos efetuar o 
                             lancamento atraves deste programa (Lucas Ranghetti/Elton - Melhoria 69) 
+                            
+               24/11/2016 - Alterar ordem da verificacao das alineas 11 e 12 
+                            (Lucas Ranghetti/Elton - Melhoria 69)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -256,6 +259,12 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                
          END.
 
+    /* Para as devolucoes por falta de saldo (11 e 12) nao vamos efetuar o 
+       lancamento atraves deste programa (Lucas Ranghetti/Elton) */
+    IF  (crapdev.cdalinea = 11 OR  
+        crapdev.cdalinea = 12) THEN
+        NEXT.
+
     IF  crapass.inpessoa = 1 THEN
         ASSIGN aux_cdtarifa = "DEVOLCHQPF" 
                aux_cdtarbac = "DEVCHQBCPF". 
@@ -374,12 +383,6 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                         DELETE PROCEDURE h-b1wgen0153.
                         RETURN.
                  END.
-
-            /* Para as devolucoes por falta de saldo (11 e 12) nao vamos efetuar o 
-               lancamento atraves deste programa (Lucas Ranghetti/Elton) */
-            IF  (crapdev.cdalinea = 11 OR  
-                crapdev.cdalinea = 12) THEN
-                NEXT.
 
              /*  Verifica se a conta esta cadastrado no TCO - Se existir 
                  despreza a criacao do lanc. Soh ira criar no dia seguinte 

@@ -51,6 +51,8 @@
 	$flgemail = $_POST["flgemail"];
 	$flgimpnp = $_POST["flgimpnp"];
 
+	$dsiduser = session_id();
+
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		?><script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
@@ -117,8 +119,6 @@
 	$procedure = ($idimpres == 7) ? 'Imprime_Consulta' : 'gera-impressao-limite';
 	$bo        = ($idimpres == 7) ? 'b1wgen0191.p'     : 'b1wgen0019.p';
 	
-	$dsiduser = session_id();
-		
 	// Monta o xml de requisição
 	$xmlImpressao  = "";
 	$xmlImpressao .= "<Root>";

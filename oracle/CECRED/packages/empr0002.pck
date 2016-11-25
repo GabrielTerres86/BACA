@@ -162,7 +162,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
 
   PROCEDURE pc_limpeza_diretorio(pr_nmdireto IN VARCHAR2      --> Diretorio para limpeza
                                 ,pr_dscritic OUT VARCHAR2);   --> Retorno de critica
-  
+                               
   -- Buscar as linhas de crédito.
   PROCEDURE pc_busca_linha_credito_prog(pr_cdcooper  IN crapcop.cdcooper%TYPE              --> Diretorio para limpeza
                                        ,pr_inpessoa  IN crapass.inpessoa%TYPE DEFAULT NULL --> Tipo de pessoa
@@ -434,7 +434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
                  08/01/2016 - Inclusao/Exclusao de campos PRJ261 - Pre-Aprovado fase II.
                               (Jaison/Anderson)
-                 
+
                  07/07/2016 - Inclusao/Exclusao de campos PRJ299 - Pre-Aprovado fase III.
                               (Lombardi)
 
@@ -454,7 +454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa;
       rw_crappre cr_crappre%ROWTYPE;
-      
+
       -- Selecionar os dados da Finalidade
       CURSOR cr_crapfin (pr_cdcooper IN crapfin.cdcooper%TYPE
                         ,pr_cdfinemp IN crapfin.cdfinemp%TYPE) IS
@@ -573,7 +573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_contador      NUMBER;                --> Contador auxiliar
       vr_vllimite      NUMBER(15,2);
       vr_cdlcremp      NUMBER;
-      
+
       BEGIN
         GENE0004.pc_extrai_dados(pr_xml      => pr_retxml 
                                 ,pr_cdcooper => vr_cdcooper
@@ -720,7 +720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
               RAISE vr_exc_saida;
             END IF;
           END IF;
-          
+
           FOR vr_risco IN 1..8 LOOP
             CASE vr_risco
                     WHEN 1 THEN 
@@ -741,46 +741,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                       vr_cdlcremp := pr_cdlcremp_h;
             END CASE;
             IF vr_cdlcremp > 0 THEN
-              -- Cursor com os dados da Linha de Credito
+          -- Cursor com os dados da Linha de Credito
               OPEN cr_craplcr(pr_cdlcremp => vr_cdlcremp);
-              FETCH cr_craplcr 
-               INTO rw_craplcr;
+          FETCH cr_craplcr 
+           INTO rw_craplcr;
+
+          -- Se nao encontrar
+          IF cr_craplcr%NOTFOUND THEN
+            -- Fecha o cursor
+            CLOSE cr_craplcr;
+            vr_dscritic := 'Linha de Credito nao cadastrada.';
+            RAISE vr_exc_saida;
+          ELSE
+            -- Fecha o cursor
+            CLOSE cr_craplcr;
+            -- Se a Linha de Credito estiver bloqueada
+            IF rw_craplcr.flgstlcr = 0 THEN
+              vr_dscritic := 'Linha de Credito esta bloqueada.';
+              RAISE vr_exc_saida;
+            ELSE
+              -- Verifica se a Linha de Credito pertence a Finalidade
+              OPEN cr_craplch(pr_cdcooper => vr_cdcooper
+                             ,pr_cdfinemp => pr_cdfinemp
+                                 ,pr_cdlcrhab => vr_cdlcremp);
+              FETCH cr_craplch 
+               INTO rw_craplch;
 
               -- Se nao encontrar
-              IF cr_craplcr%NOTFOUND THEN
+              IF cr_craplch%NOTFOUND THEN
                 -- Fecha o cursor
-                CLOSE cr_craplcr;
-                vr_dscritic := 'Linha de Credito nao cadastrada.';
+                CLOSE cr_craplch;
+                vr_dscritic := 'Linha de Credito nao pertence a Finalidade escolhida.';
                 RAISE vr_exc_saida;
-              ELSE
-                -- Fecha o cursor
-                CLOSE cr_craplcr;
-                -- Se a Linha de Credito estiver bloqueada
-                IF rw_craplcr.flgstlcr = 0 THEN
-                  vr_dscritic := 'Linha de Credito esta bloqueada.';
-                  RAISE vr_exc_saida;
-                ELSE
-                  -- Verifica se a Linha de Credito pertence a Finalidade
-                  OPEN cr_craplch(pr_cdcooper => vr_cdcooper
-                                 ,pr_cdfinemp => pr_cdfinemp
-                                 ,pr_cdlcrhab => vr_cdlcremp);
-                  FETCH cr_craplch 
-                   INTO rw_craplch;
-
-                  -- Se nao encontrar
-                  IF cr_craplch%NOTFOUND THEN
-                    -- Fecha o cursor
-                    CLOSE cr_craplch;
-                    vr_dscritic := 'Linha de Credito nao pertence a Finalidade escolhida.';
-                    RAISE vr_exc_saida;
-                  END IF;
-                  -- Fecha o cursor
-                  CLOSE cr_craplch;
-                END IF;
               END IF;
+              -- Fecha o cursor
+              CLOSE cr_craplch;
             END IF;
+          END IF;
+          END IF;
           END LOOP;
-          
+
           -- Alteracao
           IF pr_cddopcao = 'A' THEN
 
@@ -928,7 +928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
-                
+
                 -- dsrisco, vllimite, cdlcremp, dslcremp, txmensal
                 FOR rw_riscos IN cr_riscos(vr_cdcooper, pr_inpessoa) LOOP
                   
@@ -938,8 +938,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                   CASE rw_riscos.dsrisco
                     WHEN 'A' THEN 
                       IF rw_riscos.vllimite <> pr_vllimite_a THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco A de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco A de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_a;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -949,17 +949,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_a;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_a;
                       vr_cdlcremp := pr_cdlcremp_a;
 
                     WHEN 'B' THEN 
                       IF rw_riscos.vllimite <> pr_vllimite_b THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco B de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco B de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_b;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -969,17 +969,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_b;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_b;
                       vr_cdlcremp := pr_cdlcremp_b;
-                      
+
                     WHEN 'C' THEN 
                       IF rw_riscos.vllimite <> pr_vllimite_c THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco C de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco C de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_c;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -989,17 +989,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_c;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_c;
                       vr_cdlcremp := pr_cdlcremp_c;
-                      
+
                     WHEN 'D' THEN 
                       IF rw_riscos.vllimite <> pr_vllimite_d THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco D de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco D de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_d;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -1009,17 +1009,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_d;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_d;
                       vr_cdlcremp := pr_cdlcremp_d;
-                      
+
                     WHEN 'E' THEN
                       IF rw_riscos.vllimite <> pr_vllimite_e THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco E de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco E de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_e;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -1029,17 +1029,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_e;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_e;
                       vr_cdlcremp := pr_cdlcremp_e;
-                      
+
                     WHEN 'F' THEN 
                       IF rw_riscos.vllimite <> pr_vllimite_f THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco F de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco F de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_f;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -1049,17 +1049,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_f;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_f;
                       vr_cdlcremp := pr_cdlcremp_f;
-                      
+
                     WHEN 'G' THEN 
                       IF rw_riscos.vllimite <> pr_vllimite_g THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco G de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco G de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_g;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -1069,17 +1069,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_g;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_g;
                       vr_cdlcremp := pr_cdlcremp_g;
-                      
+
                     WHEN 'H' THEN 
                       IF rw_riscos.vllimite <> pr_vllimite_h THEN
-                        vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
-                                       || ' alterou o campo Limite Operacao Risco H de ' 
+                  vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
+                                 || ' alterou o campo Limite Operacao Risco H de ' 
                                        || rw_riscos.vllimite || ' para ' || pr_vllimite_h;
                         -- Gravar linha no arquivo
                         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
@@ -1089,10 +1089,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                        || ' alterou o campo Codigo da Linha Credito de ' 
                                        || rw_riscos.cdlcremp || ' para ' || pr_cdlcremp_h;
-                        -- Gravar linha no arquivo
-                        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
-                                                      ,pr_des_text => vr_dsclinha);
-                      END IF;
+                  -- Gravar linha no arquivo
+                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                                ,pr_des_text => vr_dsclinha);
+                END IF;
                       vr_vllimite := pr_vllimite_h;
                       vr_cdlcremp := pr_cdlcremp_h;
                       
@@ -1150,7 +1150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                     CLOSE cr_risco;
                   END IF;
                 END LOOP;
-                
+
                 IF rw_crappre.dslstali <> pr_dslstali THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Alineas de Devolucoes de ' 
@@ -1213,7 +1213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                                 ,pr_des_text => vr_dsclinha);
                 END IF;
-                
+
                 IF rw_crappre.qtavlatr <> pr_qtavlatr THEN
                   vr_dsclinha := vr_dtaltcad || ' -->  Operador ' || vr_cdoperad 
                                  || ' alterou o campo Qtd. dias em Atraso em Operacoes como Avalista de ' 
@@ -1287,11 +1287,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                   qtdiaest = pr_qtdiaest, qtavlatr = pr_qtavlatr, vlavlatr = pr_vlavlatr, 
                   qtavlope = pr_qtavlope, qtcjgatr = pr_qtcjgatr, vlcjgatr = pr_vlcjgatr, 
                   qtcjgope = pr_qtcjgope
-                WHERE cdcooper = vr_cdcooper                        
-                  AND inpessoa = pr_inpessoa;                       
-                                                                    
-                COMMIT;                                             
-                                                                    
+                WHERE cdcooper = vr_cdcooper
+                  AND inpessoa = pr_inpessoa;
+
+                COMMIT;
+
               EXCEPTION
                 WHEN OTHERS THEN
                 vr_dscritic := 'Problema ao atualizar Regra: ' || sqlerrm;
@@ -1878,7 +1878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
          AND cpa.nrdconta = pr_nrdconta
          AND cpa.iddcarga = pr_idcarga;
     rw_crapcpa cr_crapcpa%rowtype;
-    
+
     CURSOR cr_carga_manual(pr_iddcarga IN crapcpa.iddcarga%TYPE) IS
       SELECT to_char(carga.dsmensagem_aviso) || ' Limite: R$ ' mensagem
         FROM tbepr_carga_pre_aprv carga 
@@ -1935,7 +1935,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     vr_idcarga   tbepr_carga_pre_aprv.idcarga%TYPE;
     vr_flgmanual BOOLEAN;
     vr_flgfound  BOOLEAN;
-    
+
   BEGIN
 
     pr_tab_erro.delete;
@@ -1985,7 +1985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     ELSE
       CLOSE cr_crapass;
     END IF;
-    
+
     -- Na tela de contas nao podemos verificar a flag 
     IF pr_nmdatela <> 'CONTAS' THEN
       
@@ -1999,10 +1999,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       -- Caso nao exista registro, conta como liberado
       IF vr_flgfound AND
          rw_param_conta.flglibera_pre_aprv = 0 THEN
-        pr_des_reto := 'OK';
-        RETURN; 
-      END IF;
-      
+      pr_des_reto := 'OK';
+      RETURN; 
+    END IF;
+
     END IF;
     
     --> Verifica se esta bloqueado o pre-aprovado 
@@ -2032,7 +2032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     ELSE
       CLOSE cr_craplcr;
     END IF;
-    
+
      --> Buscar carga manual
     OPEN cr_carga_manual (pr_iddcarga => vr_idcarga);
     FETCH cr_carga_manual INTO rw_carga_manual;
@@ -2047,7 +2047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     pr_tab_dados_cpa(vr_idx).vldiscrd := rw_crapcpa.vllimdis;
     pr_tab_dados_cpa(vr_idx).txmensal := rw_craplcr.txmensal;
     pr_tab_dados_cpa(vr_idx).vllimctr := rw_crappre.vllimctr;
-    
+
     IF vr_flgmanual THEN
       pr_tab_dados_cpa(vr_idx).msgmanua := rw_carga_manual.mensagem || to_char(rw_crapcpa.vllimdis,'FM999G999G990D00MI');
     END IF;
@@ -2121,7 +2121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_xml_temp      VARCHAR2(32767);
       vr_clob_cpa      CLOB;
       vr_clob_erro     CLOB;
-      
+
     BEGIN
       -- Procedimento para buscar dados do credito pré-aprovado (crapcpa)
       EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
@@ -2713,6 +2713,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_nrdcaixa      VARCHAR2(100);
       vr_idorigem      VARCHAR2(100);
       
+      --Variaveis auxiliares
+      vr_qtmesblq crappre.qtmesblq%TYPE;
+      
       -- Variaveis de Erro
       vr_dscritic  VARCHAR2(1000);
       vr_exc_saida EXCEPTION;
@@ -2724,7 +2727,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           FROM crappre
          WHERE cdcooper = pr_cdcooper
            AND inpessoa = pr_inpessoa;
-      rw_crappre cr_crappre%ROWTYPE;
       
     BEGIN
       
@@ -2738,17 +2740,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
       
+      -- Inicializa variavel
+      vr_qtmesblq := 0;
+      
       -- Busca período de bloqueio de limite por refinanceamento
       OPEN cr_crappre(vr_cdcooper, pr_inpessoa);
-      FETCH cr_crappre INTO rw_crappre;
-      IF cr_crappre%FOUND THEN
-        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><Dados>' || rw_crappre.qtmesblq || '</Dados></Root>');
-      ELSE
-        vr_dscritic := 'Parametros pre-aprovado nao cadastrados.';
-        RAISE vr_exc_saida;
-      END IF;
+      FETCH cr_crappre INTO vr_qtmesblq;
       CLOSE cr_crappre;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Dados>' || vr_qtmesblq || '</Dados></Root>');
       
     EXCEPTION
       WHEN vr_exc_saida THEN
