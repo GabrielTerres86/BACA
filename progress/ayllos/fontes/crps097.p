@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 16/08/2016
+   Data    : Outubro/94.                     Ultima atualizacao: 24/11/2016
 
    Dados referentes ao programa:
 
@@ -101,10 +101,16 @@
 							no primeiro horário da manhã
 							(Adriano - SD 501761).
 
-			   18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
-			                caso o aviso de debito ja existir, evitando acionamento
-							desnecessario visto que essa critica nao abortado a
-							execucao do processo. (Daniel)	
+			         18/08/2016 - Efetuada a troca da nomenclatura "ERRO" para "CRITICA"
+			                      caso o aviso de debito ja existir, evitando acionamento
+                            desnecessario visto que essa critica nao abortado a
+                            execucao do processo. (Daniel)	
+                            
+               23/11/2016 - Para as devolucoes por falta de saldo (11 e 12) nao vamos efetuar o 
+                            lancamento atraves deste programa (Lucas Ranghetti/Elton - Melhoria 69) 
+                            
+               24/11/2016 - Alterar ordem da verificacao das alineas 11 e 12 
+                            (Lucas Ranghetti/Elton - Melhoria 69)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -222,8 +228,9 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
                        crapdev.nrdconta >= glb_nrctares EXCLUSIVE-LOCK
                        TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
 
-    IF   crapdev.nrdconta = 0  AND 
-         crapdev.cdalinea = 37 AND 
+    IF   crapdev.nrdconta = 0   AND 
+        (crapdev.cdalinea = 37  OR 
+         crapdev.cdalinea = 35) AND 
          crapdev.cdhistor = 47 THEN
          DO:
              ASSIGN crapdev.indevarq = 2 
@@ -251,6 +258,12 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
               UNDO TRANS_1, RETURN.
                
          END.
+
+    /* Para as devolucoes por falta de saldo (11 e 12) nao vamos efetuar o 
+       lancamento atraves deste programa (Lucas Ranghetti/Elton) */
+    IF  (crapdev.cdalinea = 11 OR  
+        crapdev.cdalinea = 12) THEN
+        NEXT.
 
     IF  crapass.inpessoa = 1 THEN
         ASSIGN aux_cdtarifa = "DEVOLCHQPF" 
