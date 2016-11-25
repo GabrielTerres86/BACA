@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 29/06/2016
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 08/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -315,6 +315,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   -- Alteracoes: 29/06/2016 - Adicionar validacao de substr para a leitura da crapass com a 
   --                          crapenc na procedure pc_gera_boleto_contrato (Lucas Ranghetti #456095)
   --
+  --             08/11/2016 - #551164 padronizar os nomes do job por produto e monitorar a sua 
+  --                          execução em logs; correções dos nomes das variáveis pr_[cd][ds]critic para
+  --                          vr_ (rotinas pc_gera_arq_remessa_sms e pc_processa_retorno_sms) (Carlos)
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -1993,23 +1996,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           vr_dtultpag := rw_crapepr.dtultpag;
           -- Chamar rotina de cálculo externa
           EMPR0001.pc_leitura_lem_car(pr_cdcooper    => pr_cdcooper
-                                     ,pr_cdprogra    => vr_cdprogra
-                                     ,pr_nrdconta    => rw_crapepr.nrdconta
-                                     ,pr_nrctremp    => rw_crapepr.nrctremp
-                                     ,pr_dtcalcul    => NULL
-                                     ,pr_diapagto    => vr_diapagto
-                                     ,pr_txdjuros    => vr_txdjuros
+                                 ,pr_cdprogra    => vr_cdprogra
+                                 ,pr_nrdconta    => rw_crapepr.nrdconta
+                                 ,pr_nrctremp    => rw_crapepr.nrctremp
+                                 ,pr_dtcalcul    => NULL
+                                 ,pr_diapagto    => vr_diapagto
+                                 ,pr_txdjuros    => vr_txdjuros
                                      ,pr_qtprecal    => vr_qtprecal
-                                     ,pr_qtprepag    => vr_qtprepag
-                                     ,pr_vlprepag    => vr_vlprepag
-                                     ,pr_vljurmes    => vr_vljurmes
-                                     ,pr_vljuracu    => vr_vljuracu
-                                     ,pr_vlsdeved    => vr_vlsdeved
-                                     ,pr_dtultpag    => vr_dtultpag
-                                     ,pr_qtmesdec    => vr_qtmesdec
-                                     ,pr_vlpreapg    => vr_vlpreapg
-                                     ,pr_cdcritic    => vr_cdcritic
-                                     ,pr_dscritic    => vr_dscritic);
+                                 ,pr_qtprepag    => vr_qtprepag
+                                 ,pr_vlprepag    => vr_vlprepag
+                                 ,pr_vljurmes    => vr_vljurmes
+                                 ,pr_vljuracu    => vr_vljuracu
+                                 ,pr_vlsdeved    => vr_vlsdeved
+                                 ,pr_dtultpag    => vr_dtultpag
+                                 ,pr_qtmesdec    => vr_qtmesdec
+                                 ,pr_vlpreapg    => vr_vlpreapg
+                                 ,pr_cdcritic    => vr_cdcritic
+                                 ,pr_dscritic    => vr_dscritic);
           -- Se a rotina retornou com erro
           IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
             -- Gerar exceção
@@ -3521,7 +3524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                ao dia da parcela. (Rafael)
                                
                   16/12/2015 - Nao permitir gerar boleto TR com vencimento igual ou superior
-                               ao dia da parcela e data do dia inferior a data do debito. (Rafael)
+                               ao dia da parcela e data do dia inferior a data do debito. (Rafael)                               
                                
                   29/06/2016 - Adicionar validacao de substr para a leitura da crapass com a 
                                crapenc (Lucas Ranghetti #456095)
@@ -3590,16 +3593,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 			CURSOR cr_crapass(pr_cdcooper IN crapsab.cdcooper%TYPE
 											 ,pr_nrdconta IN crapsab.nrdconta%TYPE) IS
 				SELECT ass.nrcpfcgc nrcpfcgc
-              ,ass.inpessoa inpessoa              
-              ,SUBSTR(ass.nmprimtl,1,50) nmprimtl
-              ,ass.cdagenci cdagenci
-              ,enc.dsendere dsendere
-              ,enc.nrendere nrendere
-              ,enc.nrcepend nrcepend
-              ,SUBSTR(enc.complend,1,40) complend
-              ,SUBSTR(enc.nmbairro,1,30) nmbairro
-              ,enc.nmcidade nmcidade
-              ,enc.cdufende cdufende
+				      ,ass.inpessoa inpessoa
+                      ,SUBSTR(ass.nmprimtl,1,50) nmprimtl
+					  ,ass.cdagenci cdagenci
+					  ,enc.dsendere dsendere
+					  ,enc.nrendere nrendere
+					  ,enc.nrcepend nrcepend
+                      ,SUBSTR(enc.complend,1,40) complend
+                      ,SUBSTR(enc.nmbairro,1,30) nmbairro
+					  ,enc.nmcidade nmcidade
+					  ,enc.cdufende cdufende
 				  FROM crapass ass
 					    ,crapenc enc
 				 WHERE ass.cdcooper = pr_cdcooper
@@ -4880,7 +4883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Setembro/15.                    Ultima atualizacao: --/--/----
+      Data    : Setembro/15.                    Ultima atualizacao: 20/01/2016
 
       Dados referentes ao programa:
 
@@ -4891,7 +4894,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       Observacao: -----
 
-      Alteracoes: 
+      Alteracoes: 20/01/2016 - Alterado a chamada da procedure pc_inst_pedido_baixa da 
+                               PAGA0001 para COBR0007 (Douglas - Importacao de Arquivo CNAB)
   ..............................................................................*/																								
 		DECLARE
 		
@@ -4974,7 +4978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				END IF;
 				
 				-- Efetua baixa
-				PAGA0001.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
+				COBR0007.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
 				                             ,pr_cdocorre => 0
 																		 ,pr_dtmvtolt => pr_dtmvtolt
 																		 ,pr_cdoperad => pr_cdoperad
@@ -5579,7 +5583,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		DECLARE
 		  ------------------------------- VARIAVEIS ---------------------------------
       -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_cdcritic crapcri.cdcritic%TYPE := 0;
       vr_dscritic VARCHAR2(10000);
       vr_des_erro VARCHAR2(4000);
 			
@@ -5638,6 +5642,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          WHERE idtpreme = 'COBEMP';
       rw_param_sms cr_param_sms%ROWTYPE;
                                    
+      vr_cdprogra    VARCHAR2(40) := 'PC_GERA_ARQ_REMESSA_SMS';
+      vr_nomdojob    VARCHAR2(40) := 'JBEPR_COBEMP_BUREAUX';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+      BEGIN
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;
+                                   
   BEGIN
     
       vr_cdcooper := 0;
@@ -5646,8 +5667,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       FETCH cr_param_sms INTO rw_param_sms;
       
       IF cr_param_sms%NOTFOUND THEN
-         pr_cdcritic := 0;
-         pr_dscritic := 'Parametro SMS ZENVIA nao encontrado';
+        vr_cdcritic := 0;
+        vr_dscritic := 'Parametro SMS ZENVIA nao encontrado';
+         
+        -- logar erro
+        vr_flgerlog := TRUE;
+        pc_controla_log_batch('E', vr_dscritic);
          RAISE vr_exc_saida;  
       END IF;
       
@@ -5661,6 +5686,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         
         FETCH cr_cde_sms INTO rw_cde_sms;
         EXIT WHEN cr_cde_sms%NOTFOUND;                
+        
+        -- logar início da execução
+        pc_controla_log_batch('I');
         
         IF vr_cdcooper <> rw_cde_sms.cdcooper THEN
           
@@ -5764,23 +5792,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   
       END LOOP;
       
-      IF vr_cdcooper > 0 THEN
-         -- Fechar os arquivos
-         GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_cfg);
-         GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_rem);        
-      END IF;
-      
       IF cr_cde_sms%ISOPEN THEN
          CLOSE cr_cde_sms;
       END IF;
       
       IF vr_cdcooper > 0 THEN
+        
+        -- Fechar os arquivos
+        GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_cfg);
+        GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_rem);
         -- solicitar envio de remessa SMS Zenvia
         cybe0002.pc_solicita_remessa(pr_dtmvtolt => vr_dhenvio
                                    , pr_idtpreme => 'COBEMP'
-                                   , pr_dscritic => pr_dscritic);
+                                   , pr_dscritic => vr_dscritic);
                                    
-        IF pr_dscritic IS NOT NULL THEN
+        IF vr_dscritic IS NOT NULL THEN
+                                   
+          -- logar erro
+          pc_controla_log_batch('E', vr_dscritic);        
            RAISE vr_exc_saida;
         END IF;
         
@@ -5791,9 +5820,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         vr_cdcritic := 0;
         vr_dscritic := 'Nao haviam SMS a serem enviados';
         pr_dsretorn := 'NOK';         
+        
+        -- Gravar no proc_message e sair do programa
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
+                                   pr_ind_tipo_log => 2, -- erro tratado 
+                                   pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                      || 'EMPR0007.pc_gera_arq_remessa_sms --> '
+                                                      || vr_dscritic, 
+                                   pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+        
+        
         RAISE vr_exc_saida;        
       END IF;
     
+      IF vr_cdcooper > 0 THEN
+        -- fim da execução.      
+        pc_controla_log_batch('F');
+      END IF;
+  
 		EXCEPTION	
 		  WHEN vr_exc_saida THEN
         
@@ -5827,6 +5871,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         ROLLBACK;
         
         pr_dsretorn := 'NOK';        
+        
+        -- fim execução, com erro
+        vr_flgerlog := TRUE;
+        pc_controla_log_batch('E', to_char(vr_cdcritic) || ' _ '  || pr_dscritic);
 		END;					                                                                      
     
   END pc_gera_arq_remessa_sms;  
@@ -5914,6 +5962,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          WHERE idtpreme = 'COBEMP';
       rw_param_sms cr_param_sms%ROWTYPE;
                                    
+      vr_cdprogra    VARCHAR2(40) := 'PC_PROCESSA_RETORNO_SMS';
+      vr_nomdojob    VARCHAR2(40) := 'JBEPR_COBEMP_BUREAUX';
+      vr_flgerlog    BOOLEAN := FALSE;
+
+      --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+      PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                      pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+      BEGIN
+        --> Controlar geração de log de execução dos jobs 
+        BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                                 ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                                 ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                                 ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                                 ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                                 ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+      END pc_controla_log_batch;
+
   BEGIN
     
       -- Diretorio Salvar
@@ -5925,8 +5990,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       FETCH cr_param_sms INTO rw_param_sms;
       
       IF cr_param_sms%NOTFOUND THEN
-         pr_cdcritic := 0;
-         pr_dscritic := 'Parametro SMS ZENVIA nao encontrado';
+        vr_cdcritic := 0;
+        vr_dscritic := 'Parametro SMS ZENVIA nao encontrado';
+
+        -- logar erro
+        vr_flgerlog := TRUE;
+        pc_controla_log_batch('E', vr_dscritic);
          RAISE vr_exc_saida;  
       END IF;
       
@@ -5952,6 +6021,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          -- Percorrer todos os arquivos encontrados na pasta
          FOR ind IN vr_array_arquivo.FIRST..vr_array_arquivo.LAST LOOP                                                          
            
+            pc_controla_log_batch('I');
+         
             vr_nmarquiv := vr_array_arquivo(ind);
       
             -- Abrir Arquivo
@@ -5963,6 +6034,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                     
             IF vr_des_erro IS NOT NULL THEN
               vr_dscritic := vr_des_erro;
+              
+              -- logar erro
+              pc_controla_log_batch('E', vr_dscritic);
+              
               --Levantar Excecao
               RAISE vr_exc_saida;
             END IF;
@@ -6060,6 +6135,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       
       pr_dsretorn := 'OK';
     
+      -- fim da execução
+      pc_controla_log_batch('F');
+
 		EXCEPTION	
       
 		  WHEN vr_exc_saida THEN
@@ -6081,6 +6159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         ROLLBACK;
         
         pr_dsretorn := 'NOK';
+
 			WHEN OTHERS THEN  				
         
         IF cr_cde_sms%ISOPEN THEN
@@ -6094,6 +6173,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         ROLLBACK;
         
         pr_dsretorn := 'NOK';
+
+        -- fim da execução, com erro
+        vr_flgerlog := TRUE;
+        pc_controla_log_batch('E', pr_dscritic);
 		END;					                                                                      
     
   END pc_processa_retorno_sms;   
