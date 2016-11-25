@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 01/11/2016
+   Data    : Setembro/2016                        Ultima atualizacao: 24/11/2016
 
    Dados referentes ao programa:
 
@@ -21,6 +21,11 @@ BEGIN
    Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
 							              durante a homologação da área de negócio
 							             (Adriano - M211).
+
+	             24/11/2016 - Ajuste para alimentar correta o lote utilizado no 
+							              lançamento de créditos na conta do cooperado
+							              (Adriano - SD 563707).
+
    ............................................................................. */
 
    DECLARE
@@ -842,6 +847,7 @@ BEGIN
                                        ,nrdolote
                                        ,tplotmov
                                        ,qtcompln
+                                       ,qtinfoln
                                        ,vlinfocr
                                        ,vlcompcr
                                        ,nrseqdig)
@@ -850,6 +856,7 @@ BEGIN
                                        ,1           -- cdagenci
                                        ,100         -- cdbccxlt
                                        ,8482
+                                       ,1
                                        ,1
                                        ,1
                                        ,vr_vloperac
@@ -867,10 +874,11 @@ BEGIN
                  BEGIN
                    -- Atualiza Lote
                    UPDATE craplot
-                      SET qtcompln = qtcompln + 1
-                        , vlinfocr = vlinfocr + vr_vloperac
-                        , vlcompcr = vlcompcr + vr_vloperac
-                        , nrseqdig = nrseqdig + 1
+                      SET qtcompln = nvl(craplot.qtcompln,0) + 1
+                        , qtinfoln = nvl(craplot.qtinfoln,0) + 1
+                        , vlinfocr = nvl(craplot.vlinfocr,0) + vr_vloperac
+                        , vlcompcr = nvl(craplot.vlcompcr,0) + vr_vloperac
+                        , nrseqdig = nvl(craplot.nrseqdig,0) + 1
                     WHERE craplot.cdcooper = vr_cdcooper
                       AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                       AND craplot.cdagenci = 1
