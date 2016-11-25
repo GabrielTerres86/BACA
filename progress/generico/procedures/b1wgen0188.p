@@ -2117,6 +2117,7 @@ PROCEDURE imprime_previa_demonstrativo:
     DEF VAR aux_nrdconta AS CHAR                                    NO-UNDO.
     DEF VAR aux_inpessoa LIKE crapass.inpessoa                      NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdlcremp AS INTE                                    NO-UNDO.
     DEF VAR aux_percmult AS DECI                                    NO-UNDO.
     DEF VAR aux_dsestcvl LIKE gnetcvl.dsestcvl                      NO-UNDO.
     DEF VAR aux_dsendere LIKE tt-endereco-cooperado.dsendere        NO-UNDO.
@@ -2178,6 +2179,8 @@ PROCEDURE imprime_previa_demonstrativo:
            END. /* END IF NOT AVAIL crapass */
 
         
+        IF par_nrctremp = 0 THEN
+          DO:
         /* Busca a carga ativa */
         RUN busca_carga_ativa(INPUT par_cdcooper,
                               INPUT par_nrdconta,
@@ -2215,9 +2218,27 @@ PROCEDURE imprime_previa_demonstrativo:
                RETURN "NOK".
            END.
 
+            ASSIGN aux_cdlcremp = crapcpa.cdlcremp.
+          END. /*IF par_nrctremp = 0 THEN*/
+        ELSE 
+          DO:
+            FOR crapepr FIELDS(cdlcremp)
+                        WHERE crapepr.cdcooper = par_cdcooper AND
+                              crapepr.nrdconta = par_nrdconta AND
+                              crapepr.nrctremp = par_nrctremp
+                              NO-LOCK: END.
+        
+            IF NOT AVAIL crapepr THEN
+               DO:
+                   ASSIGN aux_dscritic = "Emprestimo nao cadastrado".
+                   LEAVE Imprime.
+               END.
+            ASSIGN aux_cdlcremp = crapepr.cdlcremp.
+           END.
+
         FOR craplcr FIELDS(txmensal perjurmo flgcobmu)
                     WHERE craplcr.cdcooper = par_cdcooper     AND
-                          craplcr.cdlcremp = crapcpa.cdlcremp
+                          craplcr.cdlcremp = aux_cdlcremp
                           NO-LOCK: END.
     
         IF NOT AVAIL craplcr THEN
@@ -2796,7 +2817,7 @@ PROCEDURE verifica_mostra_banner_taa:
            ASSIGN par_flgdobnr = FALSE.
 		   RETURN "OK".
        END.
-
+   
    /* Verifica se já contratou pré-aprovado esse mês */
    FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper        AND
                           crapepr.nrdconta = par_nrdconta        AND
