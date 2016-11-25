@@ -694,7 +694,6 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
 
 END APLI0001;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
   /* Tratamento de erro */
@@ -856,11 +855,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
         -- Buscar a descricao das faixas contido na craptab
         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'CONFIG'
-                                                 ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'PERCIRRDCA'
-                                                 ,pr_tpregist => 0);
+                       ,pr_nmsistem => 'CRED'
+                       ,pr_tptabela => 'CONFIG'
+                       ,pr_cdempres => 0
+                       ,pr_cdacesso => 'PERCIRRDCA'
+                       ,pr_tpregist => 0);
         
         -- Efetuar o split das informacoes contidas na dstextab separados por ;
         vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
@@ -907,11 +906,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
         -- Buscar a descricao das faixas contido na craptab
         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'CONFIG'
-                                                 ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'PERCIRFRDC'
-                                                 ,pr_tpregist => 0);
+                       ,pr_nmsistem => 'CRED'
+                       ,pr_tptabela => 'CONFIG'
+                       ,pr_cdempres => 0
+                       ,pr_cdacesso => 'PERCIRFRDC'
+                       ,pr_tpregist => 0);
         
         -- Efetuar o split das informacoes contidas na dstextab separados por ;
         vr_vet_dados := gene0002.fn_quebra_string(pr_string  => vr_dstextab
@@ -4452,6 +4451,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
       -- Buscar as taxas contratadas
       CURSOR cr_craplap IS
         SELECT /*+ Index (cp CRAPLAP##CRAPLAP5) */
@@ -4614,6 +4615,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         CLOSE cr_craplap;
       END IF;
 
+
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      IF rw_crapdat.inproces > 1 THEN
       -- Se o vetor de dias uteis ainda não possuir informacoes
       IF vr_tab_qtdiaute.COUNT = 0 THEN
         -- Buscar os dias uteis
@@ -4636,6 +4642,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper) LOOP
+          -- MOntar a chave do registro com o tipo + data
+          vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
+          -- Atribuir o valor selecionado ao vetor
+          vr_tab_moedatx(vr_idx_moeda).vlmoefix := rw_crapmfx.vlmoefix;
+          -- Para moeda 6 - CDI
+          IF rw_crapmfx.tpmoefix = 6 THEN
+            -- Calcular a taxa de aplicacao
+            vr_tab_moedatx(vr_idx_moeda).txaplmes := (POWER((1 + rw_crapmfx.vlmoefix / 100),(1 / 252)) - 1) * 100;
+          END IF;
+        END LOOP;
+      END IF;
+      ELSE
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                 ,craptrd.qtdiaute
+                                 ,count(*) over (partition by craptrd.dtiniper
+                                                     order by craptrd.progress_recid) registro
+                             FROM craptrd
+                            WHERE craptrd.cdcooper = pr_cdcooper
+                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+          END IF;
+        END LOOP;
+
+        -- Buscar todos os registros das moedas do tipo 6 e 8
+        FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
+                                 ,CRAPMFX.TPMOEFIX
+                                 ,CRAPMFX.VLMOEFIX 
+                             FROM CRAPMFX
+                            WHERE CRAPMFX.CDCOOPER = pr_cdcooper 
+                              AND CRAPMFX.DTMVTOLT > vr_dtiniper -35
+                              AND CRAPMFX.DTMVTOLT <= vr_dtfimper
+                              AND CRAPMFX.TPMOEFIX IN(6,8,20)) LOOP
           -- MOntar a chave do registro com o tipo + data
           vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
           -- Atribuir o valor selecionado ao vetor
@@ -4977,11 +5018,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       --  a poupanca, a cooperativa opta por usar ou nao.
       -- Buscar a descricao das faixas contido na craptab
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'USUARI'
-                                               ,pr_cdempres => 11
-                                               ,pr_cdacesso => 'MXRENDIPOS'
-                                               ,pr_tpregist => 1);
+                     ,pr_nmsistem => 'CRED'
+                     ,pr_tptabela => 'USUARI'
+                     ,pr_cdempres => 11
+                     ,pr_cdacesso => 'MXRENDIPOS'
+                     ,pr_tpregist => 1);
       
       -- Se não encontrar
       IF TRIM(vr_dstextab) IS NULL THEN
@@ -6881,8 +6922,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
            WHERE cp1.cdcooper = pr_cdcooper
              AND cp1.nrdconta = pr_nrdconta
              AND cp1.nraplica = pr_nraplica
-             AND cp1.cdhistor IN (529, 531) --retirado hist 532, pois nao utiliza valor carregado
              AND cp1.dtmvtolt >= pr_dtmvtolt 
+             AND cp1.cdhistor IN (529, 531) --retirado hist 532, pois nao utiliza valor carregado 
            GROUP BY cp1.cdhistor;
 
         -- Cursor sobre a tabela CRAPLAP, criado novamente pois o campo do anterior CDHISTOR
@@ -7376,6 +7417,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_exc_saida  EXCEPTION;
       vr_flgimune   BOOLEAN;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
       -- Cadastro do lancamento de aplicacões
       CURSOR cr_craplap (pr_cdcooper   IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta   IN craprda.nrdconta%TYPE
@@ -7413,7 +7456,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               ,cx.dtmvtolt
               ,cx.vlmoefix
         FROM crapmfx cx
-        WHERE cx.cdcooper = pr_cdcooper;
+        WHERE cx.cdcooper = pr_cdcooper
+          AND cx.tpmoefix IN(6,8,20);
 
     BEGIN
       -- Inicializacão de variaveis
@@ -7487,6 +7531,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_dtfimtax := pr_dtfimtax;
       END IF;
 
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+
+      IF rw_crapdat.inproces > 1 THEN        
       -- Se o vetor de dias uteis ainda não possuir informacões
       IF vr_tab_qtdiaute.COUNT = 0 THEN
         -- Buscar os dias uteis
@@ -7502,6 +7551,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper) LOOP
+          -- MOntar a chave do registro com o tipo + data
+          vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
+          -- Atribuir o valor selecionado ao vetor
+          vr_tab_moedatx(vr_idx_moeda).vlmoefix := rw_crapmfx.vlmoefix;
+          -- Para moeda 6 - CDI
+          IF rw_crapmfx.tpmoefix = 6 THEN
+            -- Calcular a taxa de aplicacao
+            vr_tab_moedatx(vr_idx_moeda).txaplmes := (POWER((1 + rw_crapmfx.vlmoefix / 100),(1 / 252)) - 1) * 100;
+          END IF;
+        END LOOP;
+      END IF;
+      ELSE
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                 ,craptrd.qtdiaute
+                                 ,count(*) over (partition by craptrd.dtiniper
+                                                     order by craptrd.progress_recid) registro
+                             FROM craptrd
+                            WHERE craptrd.cdcooper = pr_cdcooper
+                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+          END IF;
+        END LOOP;
+
+        -- Buscar todos os registros das moedas do tipo 6 e 8
+        FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
+                                 ,CRAPMFX.TPMOEFIX
+                                 ,CRAPMFX.VLMOEFIX 
+                             FROM CRAPMFX
+                            WHERE CRAPMFX.CDCOOPER = pr_cdcooper 
+                              AND CRAPMFX.DTMVTOLT > vr_dtiniper -35
+                              AND CRAPMFX.DTMVTOLT <= vr_dtfimper
+                              AND CRAPMFX.TPMOEFIX IN(6,8,20)) LOOP
           -- MOntar a chave do registro com o tipo + data
           vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
           -- Atribuir o valor selecionado ao vetor
@@ -9506,12 +9590,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       CURSOR cr_crapspp (pr_cdcooper IN crapspp.cdcooper%TYPE
                         ,pr_nrdconta IN crapspp.nrdconta%TYPE
                         ,pr_nrctrrpp IN crapspp.nrctrrpp%TYPE) IS
-        SELECT crapspp.dtsldrpp
+          SELECT MIN(crapspp.dtsldrpp) dtsldrpp
         FROM crapspp crapspp
         WHERE crapspp.cdcooper = pr_cdcooper
         AND   crapspp.nrdconta = pr_nrdconta
-        AND   crapspp.nrctrrpp = pr_nrctrrpp
-        ORDER BY crapspp.progress_recid ASC;
+             AND crapspp.nrctrrpp = pr_nrctrrpp;
       rw_crapspp cr_crapspp%ROWTYPE;
 
 
@@ -12358,11 +12441,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     --  a poupanca, a cooperativa opta por usar ou nao.
     -- Buscar a descricao das faixas contido na craptab
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'USUARI'
-                                             ,pr_cdempres => 11
-                                             ,pr_cdacesso => 'MXRENDIPOS'
-                                             ,pr_tpregist => 1);
+                   ,pr_nmsistem => 'CRED'
+                   ,pr_tptabela => 'USUARI'
+                   ,pr_cdempres => 11
+                   ,pr_cdacesso => 'MXRENDIPOS'
+                   ,pr_tpregist => 1);
     
     -- Se não encontrar
     IF TRIM(vr_dstextab) IS NULL THEN
@@ -12917,4 +13000,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
 END APLI0001;
 /
-
