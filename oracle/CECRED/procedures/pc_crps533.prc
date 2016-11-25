@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 07/10/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 24/11/2016
 
    Dados referentes ao programa:
 
@@ -241,7 +241,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                20/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
                             
-                                              
+               24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
+                            cada conta do arquivo - Melhoria 69 (Lucas Ranghetti/Elton)
      ............................................................................. */
 
      DECLARE
@@ -2592,6 +2593,8 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
               vr_des_erro:= NULL;
                           vr_compl_erro:= NULL;
                       END;
+                      -- Limpar variavel de critica auxiliar para cada conta do arquivo
+                      vr_cdcritic_aux:= 0;
 
                       --Numero da conta anterior recebe a que está processando
                       vr_ant_nrdconta:= vr_nrdconta;
