@@ -10,6 +10,11 @@
   | gera_retorno_arq_cobranca         | COBR0001.pc_gera_retorno_arq_cobranca|
   | p_gera_arquivo_febraban           | COBR0001.pc_gera_arquivo_febraban    |
   | p_gera_arquivo_outros             | COBR0001.pc_gera_arquivo_outros      | 
+  | valida-arquivo-cobranca           | COBR0006.pc_valida_arquivo_cobranca  |
+  | identifica-arq-cnab               | COBR0006.pc_identifica_arq_cnab      |
+  | p_importa                         | COBR0006.pc_importa                  |
+  | p_importa_cnab240_085             | COBR0006.pc_importa_cnab240_085      |
+  | p_importa_cnab400_085             | COBR0006.pc_importa_cnab400_085      |  
   +---------------------------------+----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -37,7 +42,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 29/06/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 03/10/2016
 
    Dados referentes ao programa:
 
@@ -337,6 +342,16 @@
                             crapret/craprtc
                             (Adriano - SD 391157)
 
+               08/03/2016 - Conversao da rotinas abaixo para PL SQL:
+							  - valida-arquivo-cobranca   
+							  - identifica-arq-cnab       
+							  - p_importa                 
+							  - p_importa_cnab240_085     
+							  - p_importa_cnab400_085     
+							  - f_EhData 
+							  - f_numericos
+							(Andrei - RKAM).
+
                10/05/2016 - Ajustar a proc. consulta-bloqueto para filtrar o parametro
                             numero da conta nas consultas 2,3,4,5,6 
                             (Douglas - Chamado 441759)
@@ -347,6 +362,11 @@
                29/06/2016 - Adicionado ROUND para o calculo de Multa e Juros da 
                             consulta-boleto-2via para que arredonde os valores
                             (Douglas - Chamado 457956)
+			   04/08/2016 - Alterado procedure gera_relatorio para permitir 
+							enviar relatorio de movimento de cobranca por 
+							e-mail. (Reinert)
+
+			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -465,36 +485,45 @@ DEF TEMP-TABLE tt-crapcob        LIKE crapcob.
 
 PROCEDURE consulta-boleto-2via.
 
-    DEF INPUT        PARAM p-cdcooper       AS INTE             NO-UNDO.
-    DEF INPUT        PARAM p-nrcpfcgc       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-nrinssac       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-nrdconta       AS INTE             NO-UNDO.
-    DEF INPUT        PARAM p-nrcnvcob       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-nrdocmto       AS DECI             NO-UNDO.
-    DEF INPUT        PARAM p-dsdoccop       AS CHAR             NO-UNDO.
-    DEF INPUT        PARAM p-idorigem       AS INTE             NO-UNDO.
-    DEF INPUT        PARAM p-cdoperad       AS CHAR             NO-UNDO.
+    DEF INPUT        PARAM p-cdcooper  AS INTE             NO-UNDO.
+    DEF INPUT        PARAM p-nrcpfcgc  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-nrinssac  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-nrdconta  AS INTE             NO-UNDO.
+    DEF INPUT        PARAM p-nrcnvcob  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-nrdocmto  AS DECI             NO-UNDO.
+    DEF INPUT        PARAM p-dsdoccop  AS CHAR             NO-UNDO.
+    DEF INPUT        PARAM p-idorigem  AS INTE             NO-UNDO.
+    DEF INPUT        PARAM p-cdoperad  AS CHAR             NO-UNDO.
     
     DEF OUTPUT       PARAM TABLE FOR  tt-erro.
     DEF OUTPUT       PARAM TABLE FOR  tt-consulta-blt.
 
-    DEF VAR aux_critdata AS LOGI                                NO-UNDO.
-    DEF VAR aux_contador AS INTE                                NO-UNDO.
-    DEF VAR aux_vlrjuros AS DECI                                NO-UNDO.
-    DEF VAR aux_vlrmulta AS DECI                                NO-UNDO.
-    DEF VAR aux_vldescto AS DECI                                NO-UNDO.
-    DEF VAR aux_vlabatim AS DECI                                NO-UNDO.
-    DEF VAR aux_vlfatura AS DECI                                NO-UNDO.
-    DEF VAR aux_dscritic AS CHAR                                NO-UNDO.
+    DEF VAR aux_critdata               AS LOGI             NO-UNDO.
+    DEF VAR aux_contador               AS INTE             NO-UNDO.
+    DEF VAR aux_vlrjuros               AS DECI             NO-UNDO.
+    DEF VAR aux_vlrmulta               AS DECI             NO-UNDO.
+    DEF VAR aux_vldescto               AS DECI             NO-UNDO.
+    DEF VAR aux_vlabatim               AS DECI             NO-UNDO.
+    DEF VAR aux_vlfatura               AS DECI             NO-UNDO.
+    DEF VAR aux_dscritic               AS CHAR             NO-UNDO.
 
-    DEF VAR h-b2crap14   AS HANDLE                              NO-UNDO.
-    DEF VAR h-b1wgen0089 AS HANDLE                              NO-UNDO.
+    DEF VAR aux_dtvencut               AS DATE             NO-UNDO.          
+    DEF VAR aux_vltituut               AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut               AS DECI             NO-UNDO.
+    DEF VAR aux_dtvencut_atualizado    AS DATE             NO-UNDO.
+    DEF VAR aux_vltituut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vldescut               AS DECI             NO-UNDO.
+    DEF VAR aux_cdmensut               AS INTE             NO-UNDO.
 
-    DEF VAR aux_rowidcob AS ROWID                               NO-UNDO.
-    DEF VAR aux_rowidcco AS ROWID                               NO-UNDO.
+    DEF VAR h-b2crap14                 AS HANDLE           NO-UNDO.
+    DEF VAR h-b1wgen0089               AS HANDLE           NO-UNDO.
+
+    DEF VAR aux_rowidcob               AS ROWID            NO-UNDO.
+    DEF VAR aux_rowidcco               AS ROWID            NO-UNDO.
 
     DEF QUERY q_crapcob FOR crapcob, crapcco.
-    DEF VAR   aux_query AS CHAR                                 NO-UNDO.
+    DEF VAR   aux_query                AS CHAR             NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-consulta-blt. 
@@ -716,92 +745,52 @@ PROCEDURE consulta-boleto-2via.
                           INPUT "2 via de boleto gerado pelo pagador.").
     DELETE PROCEDURE h-b1wgen0089.
 
-    /* rotina para criticar data de vencimento */
-    RUN sistema/siscaixa/web/dbo/b2crap14.p PERSISTENT SET h-b2crap14.
-    
-    RUN verifica-vencimento-titulo IN h-b2crap14(INPUT crapcob.cdcooper, 
-                                                 INPUT 90 /*internet*/,
-                                                 INPUT crapdat.dtmvtocd,
+    RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                   INPUT crapcob.nrdconta,           
                                                  INPUT crapcob.dtvencto,
+                                   INPUT crapdat.dtmvtocd,           
+                                   INPUT crapcob.vlabatim,           
+                                   INPUT crapcob.vltitulo,           
+                                   INPUT crapcob.vlrmulta,           
+                                   INPUT crapcob.vljurdia,           
+                                   INPUT crapcob.cdmensag,           
+                                   INPUT crapcob.vldescto,           
+                                   INPUT crapcob.tpdmulta,           
+                                   INPUT crapcob.tpjurmor,           
+                                   INPUT YES,           
+                                   OUTPUT aux_dtvencut,           
+                                   OUTPUT aux_vltituut,           
+                                   OUTPUT aux_vlmormut,           
+                                   OUTPUT aux_dtvencut_atualizado,
+                                   OUTPUT aux_vltituut_atualizado,
+                                   OUTPUT aux_vlmormut_atualizado,          
+                                   OUTPUT aux_vldescut,           
+                                   OUTPUT aux_cdmensut,
                                                 OUTPUT aux_critdata).
-    DELETE PROCEDURE h-b2crap14. 
     
-    ASSIGN aux_vldescto = 0
-           aux_vlabatim = crapcob.vlabatim
-           aux_vlfatura = crapcob.vltitulo.
-
-    /* abatimento deve ser calculado antes dos juros/multa */
-    IF crapcob.vlabatim > 0 THEN
-       ASSIGN aux_vlfatura = aux_vlfatura - crapcob.vlabatim.
-   
     /* verifica se o titulo esta vencido */
     IF  aux_critdata  THEN
     DO: 
-        /* MULTA PARA ATRASO */
-        IF  crapcob.tpdmulta = 1  THEN /* Valor */
-            ASSIGN aux_vlrmulta = crapcob.vlrmulta.
-        ELSE
-        IF  crapcob.tpdmulta = 2  THEN /* % de multa */
-            ASSIGN aux_vlrmulta = ROUND( (crapcob.vlrmulta * aux_vlfatura) / 100 , 2).
-
-        /* MORA PARA ATRASO */
-        IF  crapcob.tpjurmor = 1  THEN /* dias */
-            ASSIGN aux_vlrjuros =  crapcob.vljurdia * 
-                                  (crapdat.dtmvtocd - crapcob.dtvencto). 
-        ELSE
-        IF  crapcob.tpjurmor = 2  THEN /* mes */
-            ASSIGN aux_vlrjuros = ROUND( (aux_vlfatura * 
-                                  ((crapcob.vljurdia / 100) / 30) * 
-                                  (crapdat.dtmvtocd - crapcob.dtvencto)), 2). 
-    
-       /* ASSIGN tt-consulta-blt.tpdmulta = 3
-               tt-consulta-blt.tpjurmor = 3
-               tt-consulta-blt.flgdprot = FALSE. */
-
         /* se concede ate o vencimento */
         IF  crapcob.cdmensag = 1 OR
             crapcob.cdmensag = 0 THEN
-            ASSIGN tt-consulta-blt.vldescto = 0
-                   tt-consulta-blt.cdmensag = 0
-                   aux_vldescto             = 0.
+            ASSIGN tt-consulta-blt.vldescto = aux_vldescut
+                   tt-consulta-blt.cdmensag = aux_cdmensut.
 
     END.
-    ELSE
-    DO:
         
-        /* 11/04/2013 - Jorge (retirado esta condicao para poder imprimir DDA)
-        /* se for a vencer e DDA */
-        IF  crapcob.flgcbdda THEN
-            DO:
-                CREATE tt-erro.
-                ASSIGN tt-erro.dscritic = "Boleto DDA. Acesse a sua conta.".
-                RETURN "NOK".
-            END.
-        */    
-        /* se concede ate o vencto, ja calculou */
-        IF  crapcob.cdmensag <> 2  THEN
-            ASSIGN aux_vldescto = crapcob.vldescto
-                   aux_vlfatura = aux_vlfatura - aux_vldescto.
-    END.
+    ASSIGN tt-consulta-blt.dtvencto            = aux_dtvencut
+           tt-consulta-blt.vltitulo            = aux_vltituut
+           tt-consulta-blt.vlmormul            = aux_vlmormut
 
-    /* se concede apos o vencimento */
-    IF  crapcob.cdmensag = 2  THEN
-        ASSIGN aux_vldescto = crapcob.vldescto
-               aux_vlfatura = aux_vlfatura - aux_vldescto.
+           tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+           tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+           tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+           tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
 
-
-    /* valor final da tarifa */
-    ASSIGN aux_vlfatura = aux_vlfatura + aux_vlrmulta + aux_vlrjuros.
-
-    ASSIGN tt-consulta-blt.dtvencto = (IF aux_critdata THEN 
-                                          crapdat.dtmvtocd  
-                                       ELSE
-                                          crapcob.dtvencto)
-           tt-consulta-blt.vltitulo = aux_vlfatura
            tt-consulta-blt.nrdconta = crapcob.nrdconta
            tt-consulta-blt.vldocmto = crapcob.vltitulo
-           tt-consulta-blt.vlmormul = (aux_vlrmulta + aux_vlrjuros)
-           tt-consulta-blt.dtvctori = crapcob.dtvencto
+           tt-consulta-blt.dtvctori = aux_dtvencut
            tt-consulta-blt.flgaceit = "N".
 
     RETURN "OK".
@@ -843,6 +832,16 @@ PROCEDURE consulta-bloqueto.
 
     DEF VAR aux_data             AS DATE                      NO-UNDO.
     DEF VAR h-b1wgen0030         AS HANDLE                    NO-UNDO.
+    
+    DEF VAR aux_dtvencut               AS DATE             NO-UNDO.          
+    DEF VAR aux_vltituut               AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut               AS DECI             NO-UNDO.
+    DEF VAR aux_dtvencut_atualizado    AS DATE             NO-UNDO.
+    DEF VAR aux_vltituut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vlmormut_atualizado    AS DECI             NO-UNDO.
+    DEF VAR aux_vldescut               AS DECI             NO-UNDO.
+    DEF VAR aux_cdmensut               AS INTE             NO-UNDO.
+    DEF VAR aux_critdata               AS LOGI             NO-UNDO.
     
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
@@ -1088,12 +1087,43 @@ PROCEDURE consulta-bloqueto.
 
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
+                                      
+                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                INPUT crapcob.nrdconta,           
+                                                                INPUT crapcob.dtvencto,           
+                                                                INPUT crapdat.dtmvtocd,           
+                                                                INPUT crapcob.vlabatim,           
+                                                                INPUT crapcob.vltitulo,           
+                                                                INPUT crapcob.vlrmulta,           
+                                                                INPUT crapcob.vljurdia,           
+                                                                INPUT crapcob.cdmensag,           
+                                                                INPUT crapcob.vldescto,           
+                                                                INPUT crapcob.tpdmulta,           
+                                                                INPUT crapcob.tpjurmor,           
+                                                                INPUT NO,           
+                                                                OUTPUT aux_dtvencut,           
+                                                                OUTPUT aux_vltituut,           
+                                                                OUTPUT aux_vlmormut,           
+                                                                OUTPUT aux_dtvencut_atualizado,
+                                                                OUTPUT aux_vltituut_atualizado,
+                                                                OUTPUT aux_vlmormut_atualizado,          
+                                                                OUTPUT aux_vldescut,           
+                                                                OUTPUT aux_cdmensut,
+                                                                OUTPUT aux_critdata).     
+                                 
+                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                          
+                                      
                              END.
+
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
             
                              IF   AVAILABLE tt-consulta-blt  THEN
-                                  tt-consulta-blt.nrregist = aux_nrregist.
+                                  tt-consulta-blt.nrregist            = aux_nrregist.
                          END.
                     ELSE
                          DO:
@@ -1244,6 +1274,35 @@ PROCEDURE consulta-bloqueto.
                                                     
                                   IF   RETURN-VALUE = "NOK"  THEN
                                        RETURN "NOK".
+                             
+                             RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                            INPUT crapcob.nrdconta,           
+                                                            INPUT crapcob.dtvencto,           
+                                                            INPUT crapdat.dtmvtocd,           
+                                                            INPUT crapcob.vlabatim,           
+                                                            INPUT crapcob.vltitulo,           
+                                                            INPUT crapcob.vlrmulta,           
+                                                            INPUT crapcob.vljurdia,           
+                                                            INPUT crapcob.cdmensag,           
+                                                            INPUT crapcob.vldescto,           
+                                                            INPUT crapcob.tpdmulta,           
+                                                            INPUT crapcob.tpjurmor,           
+                                                            INPUT NO,           
+                                                            OUTPUT aux_dtvencut,           
+                                                            OUTPUT aux_vltituut,           
+                                                            OUTPUT aux_vlmormut,           
+                                                            OUTPUT aux_dtvencut_atualizado,
+                                                            OUTPUT aux_vltituut_atualizado,
+                                                            OUTPUT aux_vlmormut_atualizado,          
+                                                            OUTPUT aux_vldescut,           
+                                                            OUTPUT aux_cdmensut,
+                                                            OUTPUT aux_critdata).     
+                             
+                             ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                    tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                    tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                    tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                             
                              END.    
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -1403,6 +1462,34 @@ PROCEDURE consulta-bloqueto.
 
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
+                                      
+                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                INPUT crapcob.nrdconta,           
+                                                                INPUT crapcob.dtvencto,           
+                                                                INPUT crapdat.dtmvtocd,           
+                                                                INPUT crapcob.vlabatim,           
+                                                                INPUT crapcob.vltitulo,           
+                                                                INPUT crapcob.vlrmulta,           
+                                                                INPUT crapcob.vljurdia,           
+                                                                INPUT crapcob.cdmensag,           
+                                                                INPUT crapcob.vldescto,           
+                                                                INPUT crapcob.tpdmulta,           
+                                                                INPUT crapcob.tpjurmor,           
+                                                                INPUT NO,           
+                                                                OUTPUT aux_dtvencut,           
+                                                                OUTPUT aux_vltituut,           
+                                                                OUTPUT aux_vlmormut,           
+                                                                OUTPUT aux_dtvencut_atualizado,
+                                                                OUTPUT aux_vltituut_atualizado,
+                                                                OUTPUT aux_vlmormut_atualizado,          
+                                                                OUTPUT aux_vldescut,           
+                                                                OUTPUT aux_cdmensut,
+                                                                OUTPUT aux_critdata).     
+                                 
+                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
                                 END.
                                 END.
                              END.
@@ -1565,6 +1652,35 @@ PROCEDURE consulta-bloqueto.
                                                            
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
+                                      
+                                 RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                                INPUT crapcob.nrdconta,           
+                                                                INPUT crapcob.dtvencto,           
+                                                                INPUT crapdat.dtmvtocd,           
+                                                                INPUT crapcob.vlabatim,           
+                                                                INPUT crapcob.vltitulo,           
+                                                                INPUT crapcob.vlrmulta,           
+                                                                INPUT crapcob.vljurdia,           
+                                                                INPUT crapcob.cdmensag,           
+                                                                INPUT crapcob.vldescto,           
+                                                                INPUT crapcob.tpdmulta,           
+                                                                INPUT crapcob.tpjurmor,           
+                                                                INPUT NO,           
+                                                                OUTPUT aux_dtvencut,           
+                                                                OUTPUT aux_vltituut,           
+                                                                OUTPUT aux_vlmormut,           
+                                                                OUTPUT aux_dtvencut_atualizado,
+                                                                OUTPUT aux_vltituut_atualizado,
+                                                                OUTPUT aux_vlmormut_atualizado,          
+                                                                OUTPUT aux_vldescut,           
+                                                                OUTPUT aux_cdmensut,
+                                                                OUTPUT aux_critdata).     
+                                 
+                                 ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                        tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                        tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                                 
                                 END.
                                 END.
                              END.
@@ -1861,6 +1977,88 @@ PROCEDURE consulta-bloqueto.
 
                              RETURN "NOK".
                         END.
+                   
+                    IF   p-origem = 3 THEN                /* Internet */
+                         DO:
+                            
+                            FOR EACH crapcco WHERE 
+                                     crapcco.cdcooper = p-cdcooper 
+                                     NO-LOCK
+                               ,EACH crapceb WHERE 
+                                     crapceb.cdcooper = crapcco.cdcooper  AND
+                                     crapceb.nrconven = crapcco.nrconven  AND
+                                     crapceb.nrdconta = p-nro-conta
+                                     NO-LOCK
+                               ,EACH crapcob WHERE 
+                                     crapcob.cdcooper  = crapceb.cdcooper  AND
+                                     crapcob.nrdconta  = crapceb.nrdconta  AND
+                                     crapcob.nrcnvcob  = crapceb.nrconven  AND
+                                     crapcob.dsdoccop MATCHES "*" + STRING(p-dsdoccop) + "*" 
+                                     NO-LOCK
+                                     BY crapcob.dtmvtolt:
+                                
+                                FIND crapsab WHERE 
+                                     crapsab.cdcooper = p-cdcooper     AND
+                                     crapsab.nrdconta = p-nro-conta    AND
+                                     crapsab.nrinssac = crapcob.nrinssac
+                                     NO-LOCK NO-ERROR.
+                                     
+                                IF  p-flgregis <> ? THEN
+                                    IF crapcob.flgregis <> p-flgregis THEN NEXT.
+                                       
+                                IF   AVAILABLE crapcco  THEN
+                                     aux_dsorgarq = crapcco.dsorgarq.
+                                ELSE
+                                     aux_dsorgarq = "".
+
+
+                                RUN proc_nosso_numero(INPUT p-cdcooper,
+                                                      INPUT p-cod-agencia,
+                                                      INPUT p-nro-caixa,
+                                                      INPUT p-ind-situacao,
+                                                      INPUT p-num-registros).
+                                                           
+                                IF   RETURN-VALUE = "NOK"  THEN
+                             RETURN "NOK".
+                              
+                               RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
+                                                              INPUT crapcob.nrdconta,           
+                                                              INPUT crapcob.dtvencto,           
+                                                              INPUT crapdat.dtmvtocd,           
+                                                              INPUT crapcob.vlabatim,           
+                                                              INPUT crapcob.vltitulo,           
+                                                              INPUT crapcob.vlrmulta,           
+                                                              INPUT crapcob.vljurdia,           
+                                                              INPUT crapcob.cdmensag,           
+                                                              INPUT crapcob.vldescto,           
+                                                              INPUT crapcob.tpdmulta,           
+                                                              INPUT crapcob.tpjurmor,           
+                                                              INPUT NO,           
+                                                              OUTPUT aux_dtvencut,           
+                                                              OUTPUT aux_vltituut,           
+                                                              OUTPUT aux_vlmormut,           
+                                                              OUTPUT aux_dtvencut_atualizado,
+                                                              OUTPUT aux_vltituut_atualizado,
+                                                              OUTPUT aux_vlmormut_atualizado,          
+                                                              OUTPUT aux_vldescut,           
+                                                              OUTPUT aux_cdmensut,
+                                                              OUTPUT aux_critdata).     
+                               
+                               ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
+                                      tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
+                                      tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
+                                      tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                              
+                            END.
+
+                            FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
+            
+                            IF   AVAILABLE tt-consulta-blt  THEN
+                                 tt-consulta-blt.nrregist = aux_nrregist.
+                         
+                        END.
+                    ELSE
+                    DO:
 
                         FOR EACH crapcco WHERE 
                                  crapcco.cdcooper = p-cdcooper AND
@@ -1924,6 +2122,7 @@ PROCEDURE consulta-bloqueto.
                                       INPUT-OUTPUT par_qtregist,
                                             OUTPUT TABLE tt-consulta-blt).
                     END.
+         END.
          END.
          WHEN  9 THEN      /* Por Vencimento "1 - Em Aberto */
                 DO:
@@ -3261,6 +3460,11 @@ PROCEDURE cria_tt-consulta-blt.
    DEF VAR aux_vlrmulta AS DECI                NO-UNDO.
    DEF VAR aux_vlrjuros AS DECI                NO-UNDO.
 
+   DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+   DEF VAR aux_dsdemail AS CHAR                NO-UNDO.
+   DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+   DEF VAR aux_dscritic AS CHAR                NO-UNDO.
+   
    IF  NOT AVAILABLE crapcco  THEN
        DO:
            ASSIGN i-cod-erro = 0
@@ -3303,6 +3507,43 @@ PROCEDURE cria_tt-consulta-blt.
         ASSIGN aux_nossonro = STRING(crapcob.nrdconta,"99999999") +
                               STRING(crapcob.nrdocmto,"999999999").
     
+   
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+   RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+     aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT deci(crapcob.cdcooper),
+                         INPUT deci(crapcob.nrdconta),
+                         OUTPUT "",
+                         OUTPUT "",
+                         OUTPUT "").
+                        
+                       
+   CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+         WHERE PROC-HANDLE = aux_handproc.
+
+   ASSIGN aux_nmprimtl = ""
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                         WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+          aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                         WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+          aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                         WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+   IF  aux_des_erro <> "OK" OR
+       aux_dscritic <> ""   THEN DO: 
+
+       IF  aux_dscritic = "" THEN DO:   
+           ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+       END.
+      
+       RETURN "NOK".
+   END.
+   
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
@@ -3319,6 +3560,7 @@ PROCEDURE cria_tt-consulta-blt.
                         crapsab.nrinssac = crapcob.nrinssac NO-LOCK NO-ERROR.
 
      IF  AVAILABLE crapsab  THEN
+         DO:
          ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapsab.nmdsacad,"&","%26")
                 tt-consulta-blt.dsendsac = TRIM(TRIM(crapsab.dsendsac) + 
                                            IF crapsab.nrendsac > 0 THEN
@@ -3328,13 +3570,37 @@ PROCEDURE cria_tt-consulta-blt.
                 tt-consulta-blt.nmbaisac = crapsab.nmbaisac
                 tt-consulta-blt.nmcidsac = crapsab.nmcidsac
                 tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-                tt-consulta-blt.nrcepsac = crapsab.nrcepsac
-                tt-consulta-blt.dsdemail = crapsab.dsdemail
-                tt-consulta-blt.flgemail = (IF crapsab.dsdemail <> "" THEN
-                                                TRUE
+                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+                    
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+             RUN STORED-PROCEDURE pc_busca_emails_pagador
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                         (INPUT crapsab.cdcooper,
+                                          INPUT crapsab.nrdconta,
+                                          INPUT crapsab.nrinssac,
+                                         OUTPUT "",  /* pr_dsdemail */
+                                         OUTPUT "",  /* pr_des_erro */
+                                         OUTPUT ""). /* pr_dscritic */
+             CLOSE STORED-PROC pc_busca_emails_pagador
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_dsdemail = ""
+                    aux_dscritic = ""
+                    aux_des_erro = ""
+                    aux_dsdemail = pc_busca_emails_pagador.pr_dsdemail
+                                       WHEN pc_busca_emails_pagador.pr_dsdemail <> ?
+                    aux_dscritic = pc_busca_emails_pagador.pr_dscritic
+                                       WHEN pc_busca_emails_pagador.pr_dscritic <> ?
+                    aux_des_erro = pc_busca_emails_pagador.pr_des_erro
+                                       WHEN pc_busca_emails_pagador.pr_des_erro <> ?.
+
+              ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
+                     tt-consulta-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).
+         END.
                                             ELSE 
-                                                FALSE).
-     ELSE
          ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapcob.nmdsacad,"&","%26")
                 tt-consulta-blt.flgemail = FALSE.
 
@@ -3350,7 +3616,7 @@ PROCEDURE cria_tt-consulta-blt.
 
      ASSIGN tt-consulta-blt.cdcooper = crapcob.cdcooper
             tt-consulta-blt.nrdconta = crapcob.nrdconta
-            tt-consulta-blt.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
+            tt-consulta-blt.nmprimtl = aux_nmprimtl
             tt-consulta-blt.idseqttl = crapcob.idseqttl
             tt-consulta-blt.nossonro = aux_nossonro
             tt-consulta-blt.incobran = IF  crapcob.incobran = 0  THEN
@@ -3736,6 +4002,10 @@ PROCEDURE cria_tt-consulta-blt_rej.
    DEF VAR aux_vlrmulta AS DECI                NO-UNDO.
    DEF VAR aux_vlrjuros AS DECI                NO-UNDO.  
      
+   DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+   DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+   DEF VAR aux_dscritic AS CHAR                NO-UNDO.
+   
    FIND crapdat WHERE crapdat.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
 
    IF  NOT AVAILABLE crapcco  THEN
@@ -3779,6 +4049,42 @@ PROCEDURE cria_tt-consulta-blt_rej.
     ELSE
         ASSIGN aux_nossonro = STRING(crapret.nrnosnum,"99999999999999999").
     
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+   RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+     aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT deci(crapcob.cdcooper),
+                         INPUT deci(crapcob.nrdconta),
+                         OUTPUT "",
+                         OUTPUT "",
+                         OUTPUT "").
+                        
+                       
+   CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+         WHERE PROC-HANDLE = aux_handproc.
+
+   ASSIGN aux_nmprimtl = ""
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                         WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+          aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                         WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+          aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                         WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+   IF  aux_des_erro <> "OK" OR
+       aux_dscritic <> ""   THEN DO: 
+
+       IF  aux_dscritic = "" THEN DO:   
+           ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+       END.
+      
+       RETURN "NOK".
+   END.
+   
    DO TRANSACTION:
 
      CREATE tt-consulta-blt.
@@ -3818,7 +4124,7 @@ PROCEDURE cria_tt-consulta-blt_rej.
     
      ASSIGN tt-consulta-blt.cdcooper = crapret.cdcooper
             tt-consulta-blt.nrdconta = crapret.nrdconta
-            tt-consulta-blt.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
+            tt-consulta-blt.nmprimtl = aux_nmprimtl
             tt-consulta-blt.idseqttl = 0
             tt-consulta-blt.nossonro = aux_nossonro
             tt-consulta-blt.incobran = "R"
@@ -3939,12 +4245,52 @@ PROCEDURE cria_tt-consulta-blt_tdb.
 
    DEF OUTPUT       PARAM TABLE FOR tt-consulta-blt.
    
+   DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+   DEF VAR aux_dsdemail AS CHAR                NO-UNDO.
+   DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+   DEF VAR aux_dscritic AS CHAR                NO-UNDO.
    
    FOR FIRST crapass FIELDS(nmprimtl cdagenci)
        WHERE crapass.cdcooper = crapcob.cdcooper AND
              crapass.nrdconta = crapcob.nrdconta
              NO-LOCK: END.
              
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+   RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+     aux_handproc = PROC-HANDLE NO-ERROR
+                        (INPUT deci(crapcob.cdcooper),
+                         INPUT deci(crapcob.nrdconta),
+                         OUTPUT "",
+                         OUTPUT "",
+                         OUTPUT "").
+                        
+                       
+   CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+         WHERE PROC-HANDLE = aux_handproc.
+
+   ASSIGN aux_nmprimtl = ""
+          aux_des_erro = ""
+          aux_dscritic = ""
+          aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                         WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+          aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                         WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+          aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                         WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+   { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+   IF  aux_des_erro <> "OK" OR
+       aux_dscritic <> ""   THEN DO: 
+
+       IF  aux_dscritic = "" THEN DO:   
+           ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+       END.
+      
+       RETURN "NOK".
+   END.
+   
    DO TRANSACTION:
      CREATE tt-consulta-blt.
      
@@ -3954,6 +4300,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
             crapsab.nrinssac = crapcob.nrinssac NO-LOCK NO-ERROR.
 
      IF  AVAILABLE crapsab  THEN
+         DO:
        ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapsab.nmdsacad,"&","%26")
               tt-consulta-blt.dsendsac = TRIM(TRIM(crapsab.dsendsac) + 
                                          IF crapsab.nrendsac > 0 THEN
@@ -3963,13 +4310,38 @@ PROCEDURE cria_tt-consulta-blt_tdb.
               tt-consulta-blt.nmbaisac = crapsab.nmbaisac
               tt-consulta-blt.nmcidsac = crapsab.nmcidsac
               tt-consulta-blt.cdufsaca = crapsab.cdufsaca
-              tt-consulta-blt.nrcepsac = crapsab.nrcepsac
-              tt-consulta-blt.dsdemail = crapsab.dsdemail
-              tt-consulta-blt.flgemail = (IF crapsab.dsdemail <> "" THEN
-                                              TRUE
+                    tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
+
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+             RUN STORED-PROCEDURE pc_busca_emails_pagador
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                         (INPUT crapsab.cdcooper,
+                                          INPUT crapsab.nrdconta,
+                                          INPUT crapsab.nrinssac,
+                                         OUTPUT "",  /* pr_dsdemail */
+                                         OUTPUT "",  /* pr_des_erro */
+                                         OUTPUT ""). /* pr_dscritic */
+             CLOSE STORED-PROC pc_busca_emails_pagador
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_dsdemail = ""
+                    aux_dscritic = ""
+                    aux_des_erro = ""
+                    aux_dsdemail = pc_busca_emails_pagador.pr_dsdemail
+                                       WHEN pc_busca_emails_pagador.pr_dsdemail <> ?
+                    aux_dscritic = pc_busca_emails_pagador.pr_dscritic
+                                       WHEN pc_busca_emails_pagador.pr_dscritic <> ?
+                    aux_des_erro = pc_busca_emails_pagador.pr_des_erro
+                                       WHEN pc_busca_emails_pagador.pr_des_erro <> ?.
+
+              ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
+                     tt-consulta-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).                    
+             
+         END.
                                           ELSE 
-                                              FALSE).
-       ELSE
            ASSIGN tt-consulta-blt.nmdsacad = REPLACE(crapcob.nmdsacad,"&","%26")
                   tt-consulta-blt.flgemail = FALSE.
            
@@ -3998,7 +4370,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
        
        ASSIGN tt-consulta-blt.cdcooper = crapcob.cdcooper
               tt-consulta-blt.nrdconta = crapcob.nrdconta
-              tt-consulta-blt.nmprimtl = crapass.nmprimtl WHEN AVAIL crapass
+              tt-consulta-blt.nmprimtl = aux_nmprimtl
               tt-consulta-blt.nrdocmto = crapcob.nrdocmto
               tt-consulta-blt.nrctrlim = craptdb.nrctrlim
               tt-consulta-blt.dsdoccop = crapcob.dsdoccop   
@@ -4087,6 +4459,11 @@ PROCEDURE proc_nosso_numero.
     DEF VAR aux_cdsituac AS CHAR                NO-UNDO.
     DEF VAR aux_dssituac AS CHAR                NO-UNDO.
     DEF VAR aux_flgdesco AS CHAR                NO-UNDO.
+    
+    DEF VAR aux_nmprimtl AS CHAR                NO-UNDO.
+    DEF VAR aux_dsdemail AS CHAR                NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                NO-UNDO.   
     
     /* Variaveis auxiliares para calculo do digito verificador */
     DEF VAR aux_var01    AS INTE INITIAL 0      NO-UNDO.
@@ -4235,7 +4612,7 @@ PROCEDURE proc_nosso_numero.
         aux_nrregist >= aux_fimseque) THEN
         RETURN.
 
-    IF  crapass.inpessoa = 1  THEN
+    /*IF  crapass.inpessoa = 1  THEN
         DO:               
             FIND FIRST crapttl WHERE 
                  crapttl.cdcooper = crapcob.cdcooper AND
@@ -4258,6 +4635,42 @@ PROCEDURE proc_nosso_numero.
         DO:
             IF AVAIL crapass THEN
                ASSIGN aux_nmprimtl = REPLACE(crapass.nmprimtl,"&","%26"). 
+        END.*/
+    
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+      aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT deci(crapcob.cdcooper),
+                          INPUT deci(crapcob.nrdconta),
+                          OUTPUT "",
+                          OUTPUT "",
+                          OUTPUT "").
+                          
+                         
+    CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    ASSIGN aux_nmprimtl = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                          WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+           aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                          WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+           aux_nmprimtl = pc_busca_nome_imp_blt.pr_nmprimtl
+                          WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_des_erro <> "OK" OR
+        aux_dscritic <> ""   THEN DO: 
+
+        IF  aux_dscritic = "" THEN DO:   
+            ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+        END.
+        
+        RETURN "NOK".
         END.
     
     DO TRANSACTION:
@@ -4355,13 +4768,36 @@ PROCEDURE proc_nosso_numero.
                               ELSE
                                   REPLACE(crapsab.dsendsac,"&","%26")
                                   + ", " +
-                                  TRIM(STRING(crapsab.nrendsac))
-                              tt-consulta-blt.dsdemail = crapsab.dsdemail
-                              tt-consulta-blt.flgemail = 
-                                                 (IF crapsab.dsdemail <> "" THEN
-                                                      TRUE
-                                                  ELSE 
-                                                      FALSE).
+                                  TRIM(STRING(crapsab.nrendsac)).
+                                  
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+                       RUN STORED-PROCEDURE pc_busca_emails_pagador
+                           aux_handproc = PROC-HANDLE NO-ERROR
+                                                   (INPUT crapsab.cdcooper,
+                                                    INPUT crapsab.nrdconta,
+                                                    INPUT crapsab.nrinssac,
+                                                   OUTPUT "",  /* pr_dsdemail */
+                                                   OUTPUT "",  /* pr_des_erro */
+                                                   OUTPUT ""). /* pr_dscritic */
+                       CLOSE STORED-PROC pc_busca_emails_pagador
+                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                       ASSIGN aux_dsdemail = ""
+                              aux_dscritic = ""
+                              aux_des_erro = ""
+                              aux_dsdemail = pc_busca_emails_pagador.pr_dsdemail
+                                                 WHEN pc_busca_emails_pagador.pr_dsdemail <> ?
+                              aux_dscritic = pc_busca_emails_pagador.pr_dscritic
+                                                 WHEN pc_busca_emails_pagador.pr_dscritic <> ?
+                              aux_des_erro = pc_busca_emails_pagador.pr_des_erro
+                                                 WHEN pc_busca_emails_pagador.pr_des_erro <> ?.
+
+                        ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
+                               tt-consulta-blt.flgemail = (IF TRIM(aux_dsdemail) <> "" THEN TRUE ELSE FALSE).                    
+                              
                    END.
                ELSE
                    ASSIGN tt-consulta-blt.dsendsac = REPLACE(aux_na_dsendsac,"&","%26")
@@ -5944,4322 +6380,7 @@ PROCEDURE grava_totais:
         
 END PROCEDURE. /* grava_totais */
 
-/****************************************************************************/
-PROCEDURE valida-arquivo-cobranca:
-
-   DEF  INPUT  PARAM p-cdcooper    AS INTEGER                        NO-UNDO.
-   DEF  INPUT  PARAM p-nmarqint    AS CHAR                           NO-UNDO.
-   DEF  OUTPUT PARAM TABLE FOR tt-rejeita.
-
-   DEF  VAR    aux_tparquiv        AS CHAR                           NO-UNDO.
-   DEF  VAR    aux_cddbanco        AS INTE                           NO-UNDO.
-
-   RUN identifica-arq-cnab (INPUT  p-cdcooper
-                           ,INPUT  p-nmarqint
-                           ,OUTPUT aux_tparquiv
-                           ,OUTPUT aux_cddbanco
-                           ,OUTPUT TABLE tt-rejeita).
-   
-   IF  aux_tparquiv = "CNAB240" AND aux_cddbanco = 001 THEN
-       RUN p_importa 
-          (INPUT  p-cdcooper
-          ,INPUT  p-nmarqint
-          ,OUTPUT TABLE tt-rejeita).
-   ELSE
-   IF  aux_tparquiv = "CNAB240" AND aux_cddbanco = 085 THEN
-       RUN p_importa_cnab240_085 
-           (INPUT  p-cdcooper
-           ,INPUT  p-nmarqint
-           ,OUTPUT TABLE tt-rejeita).
-   ELSE
-   /* CNAB400 - Anderson D. Passig - 22/05/2013 */
-   IF  aux_tparquiv = "CNAB400" AND aux_cddbanco = 085 THEN
-       RUN p_importa_cnab400_085
-           (INPUT  p-cdcooper
-           ,INPUT  p-nmarqint
-           ,OUTPUT TABLE tt-rejeita).
-   ELSE
-       RETURN "NOK".
-
-   IF  TEMP-TABLE tt-rejeita:HAS-RECORDS THEN
-       RETURN "NOK".
-   ELSE
-       RETURN "OK".
-
-END. /* valida-arquivo-cobranca */
-
-PROCEDURE identifica-arq-cnab:
-       
-    DEF INPUT  PARAM p-cdcooper  AS INTEGER                          NO-UNDO.
-    DEF INPUT  PARAM p-nmarqint  AS CHAR                             NO-UNDO.
-    DEF OUTPUT PARAM p-tparquiv  AS CHAR                             NO-UNDO.
-    DEF OUTPUT PARAM p-cddbanco  AS INTEGER                          NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-rejeita.
-
-    DEF VAR aux_contaerr         AS INTEGER                          NO-UNDO.
-    DEF VAR aux_setlinha         AS CHAR                             NO-UNDO.
-    DEF VAR aux_tamlinha         AS INTEGER                          NO-UNDO.
-
-    FORM aux_setlinha  
-         WITH FRAME CNAB WIDTH 403 NO-BOX NO-LABELS.
-
-    IF SEARCH(p-nmarqint) = ? THEN
-    DO:
-        MESSAGE "Arquivo nao encontrado".
-        ASSIGN aux_contaerr = aux_contaerr + 1.
-        CREATE tt-rejeita.
-        ASSIGN tt-rejeita.tpcritic = 1
-               tt-rejeita.nrlinseq = "99999"
-               tt-rejeita.cdseqcri = aux_contaerr
-               tt-rejeita.dscritic = "Arquivo nao encontrado".
-
-        RETURN "NOK".
-    END.
-
-    INPUT STREAM str_3 FROM VALUE(p-nmarqint)  NO-ECHO.
-
-    DO  WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
-
-       IMPORT STREAM str_3 UNFORMATTED aux_setlinha. 
-
-       ASSIGN aux_tamlinha = LENGTH(aux_setlinha).
-
-       IF  NOT (aux_tamlinha = 240 OR 
-                aux_tamlinha = 241 OR
-                aux_tamlinha = 400 OR 
-                aux_tamlinha = 401) THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = "99999"
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Arquivo CNAB invalido".
-
-               INPUT STREAM str_3 CLOSE.
-
-               RETURN "NOK".
-           END.       
-
-           IF  (aux_tamlinha = 240 OR aux_tamlinha = 241) THEN
-               ASSIGN p-tparquiv = "CNAB240".
-           ELSE 
-           IF  (aux_tamlinha = 400 OR aux_tamlinha = 401) THEN
-               ASSIGN p-tparquiv = "CNAB400".
-           ELSE
-               ASSIGN p-tparquiv = "NOK".
-
-           IF  p-tparquiv = "CNAB240" THEN
-               ASSIGN p-cddbanco = INTE(SUBSTR(aux_setlinha,1,3)) NO-ERROR.
-           ELSE
-           IF  p-tparquiv = "CNAB400" THEN
-               ASSIGN p-cddbanco = INTE(SUBSTR(aux_setlinha,77,3)) NO-ERROR.
-
-           IF  p-cddbanco <> 001 AND p-cddbanco <> 085 THEN
-               DO:
-                   ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                   CREATE tt-rejeita.
-                   ASSIGN tt-rejeita.tpcritic = 1
-                          tt-rejeita.nrlinseq = "99999"
-                          tt-rejeita.cdseqcri = aux_contaerr
-                          tt-rejeita.dscritic = "Codigo do banco invalido".
-
-                   INPUT STREAM str_3 CLOSE.
-
-                   RETURN "NOK".
-               END.
-
-       LEAVE.
-    END.
-
-    INPUT STREAM str_3 CLOSE.
-
-    RETURN "OK".
-
-END. /* identifica-arq-cnab */
-
-/********************  Verifica campo Numerico  *****************************/
-FUNCTION f_numericos RETURN LOGICAL(INPUT par_conteudo AS CHAR):
-  
-  DEF VAR aux_contador AS INT                                   NO-UNDO.
-
-  DEF VAR aux_algarismos AS CHAR                                NO-UNDO.
-  ASSIGN aux_algarismos = "0,1,2,3,4,5,6,7,8,9".
-
-  IF   par_conteudo = " "  THEN
-       RETURN FALSE.
-  ELSE
-       DO:
-           DO   aux_contador = 1 TO LENGTH(par_conteudo):
-                IF   NOT(CAN-DO(aux_algarismos,
-                                SUBSTR(par_conteudo,aux_contador,1)))  THEN 
-                     RETURN FALSE.
-           END.
-       END.
-END. /* FUNCTION */
-/********************  Verifica campo Data  *****************************/
-FUNCTION f_EhData RETURN LOGICAL(INPUT par_conteudo AS CHAR,
-                                 INPUT par_formato AS CHAR):
-  
-  DEF VAR aux_data AS DATE                                     NO-UNDO.
-
-  IF  R-INDEX(par_formato,"AAAA") > 0 THEN
-      aux_data = DATE(INT(SUBSTR(par_conteudo, R-INDEX(par_formato,"MM"),2)), 
-                      INT(SUBSTR(par_conteudo, R-INDEX(par_formato,"DD"),2)),
-                      INT(SUBSTR(par_conteudo, R-INDEX(par_formato,"AAAA"),4)))
-                      NO-ERROR.
-  ELSE
-  IF  R-INDEX(par_formato,"AA") > 0 THEN
-      aux_data = DATE(INT(SUBSTR(par_conteudo, R-INDEX(par_formato,"MM"),2)), 
-                      INT(SUBSTR(par_conteudo, R-INDEX(par_formato,"DD"),2)),
-                      INT(SUBSTR(par_conteudo, R-INDEX(par_formato,"AA"),4)))
-                      NO-ERROR.
-  ELSE
-      RETURN FALSE.
-
-  IF  ERROR-STATUS:ERROR THEN
-      RETURN FALSE.
-  ELSE
-      RETURN TRUE.
-
-END. /* FUNCTION */
-
-/****************************************************************************/
-PROCEDURE p_importa:
-
-   DEF  INPUT  PARAM p-cdcooper    AS INTEGER                        NO-UNDO.
-   DEF  INPUT  PARAM p-nmarqint    AS CHAR                           NO-UNDO.
-   DEF  OUTPUT PARAM TABLE FOR tt-rejeita.   
-   
-   DEF BUFFER crabcco FOR crapcco.
-   DEF BUFFER crabrej FOR tt-rejeita.
-
-   DEF VAR aux_dslocali AS CHAR                                      NO-UNDO.
-   DEF VAR aux_dscriti1 AS CHAR    FORMAT "x(40)"                    NO-UNDO.
-   DEF VAR aux_dscriti2 AS CHAR    FORMAT "x(40)"                    NO-UNDO.
-   
-   DEF VAR aux_nmarquiv AS CHAR                                      NO-UNDO.
-   DEF VAR aux_setlinha AS CHAR    FORMAT "x(243)"                   NO-UNDO.
-   DEF VAR aux_flgfirst AS LOGICAL                                   NO-UNDO.
-   DEF VAR aux_nmendter AS CHAR                                      NO-UNDO.
-   DEF VAR aux_nmfisico AS CHAR                                      NO-UNDO.
-   
-   DEF VAR aux_cdagenci AS INT                                       NO-UNDO.
-   
-   DEF VAR aux_dsnosnum AS CHARACTER                                 NO-UNDO.
-   DEF VAR aux_flgutceb AS LOGICAL                                   NO-UNDO.
-      
-   DEF VAR rel_nrmodulo AS INT     FORMAT "9"                        NO-UNDO.
-
-   FORM aux_setlinha  FORMAT "x(243)"
-        WITH FRAME AA WIDTH 243 NO-BOX NO-LABELS.
-
-   DEF VAR aux_erronume AS LOGICAL                               NO-UNDO.
-   DEF VAR aux_nmprimtl AS CHAR                                  NO-UNDO.
-   DEF VAR aux_nmarqimp AS CHAR                                  NO-UNDO.
-
-   DEF VAR aux_nrcnvcob AS INT                                   NO-UNDO.
-   DEF VAR aux_nrdconta AS INT                                   NO-UNDO.
-   DEF VAR aux_dsdoccop LIKE crapcob.dsdoccop                    NO-UNDO.
-   DEF VAR aux_contaerr AS INT                                   NO-UNDO.
-   DEF VAR aux_contalin AS INT                                   NO-UNDO.
-   DEF VAR aux_cdcritic AS INT     FORMAT "zz9"              NO-UNDO.
-   DEF VAR aux_dscritic AS CHAR    FORMAT "x(40)"            NO-UNDO.
-   
-   EMPTY TEMP-TABLE tt-rejeita.
-
-   ASSIGN aux_contaerr = 0
-          aux_contalin = 0
-          aux_dscriti1 = "Informar valores numericos"
-          aux_dscriti2 = "Deve ser campo CARACTER"
-          aux_flgfirst = TRUE.
-
-   IF SEARCH(p-nmarqint) = ? THEN
-   DO:
-       MESSAGE "Arquivo nao encontrado".
-       ASSIGN aux_contaerr = aux_contaerr + 1.
-       CREATE tt-rejeita.
-       ASSIGN tt-rejeita.tpcritic = 1
-              tt-rejeita.nrlinseq = "99999"
-              tt-rejeita.cdseqcri = aux_contaerr
-              tt-rejeita.dscritic = "Arquivo nao encontrado".
-
-       RETURN "NOK".
-   END.
-   
-   INPUT STREAM str_3 FROM VALUE(p-nmarqint)  NO-ECHO.
-   
-   DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
-
-      /**********************************************
-               HEADER DO ARQUIVO
-      ***********************************************/
-
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha. 
-      
-      ASSIGN aux_flgfirst = FALSE  
-             aux_contalin = aux_contalin + 1. 
-                  
-      IF   SUBSTR(aux_setlinha,1,3) <> "001"  THEN  /* Cod. Banco na compen. */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 1 ate 3 (" +
-                                         "Codigo do banco deve ser 001)".
-           END.
-           
-      IF   SUBSTR(aux_setlinha,04,04) <> "0000" THEN   /* Lote do servico */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 4 ate 7 (" +
-                                         "Lote do servico deve ser 0000)".
-
-           END.
-                 
-      IF   SUBSTR(aux_setlinha,08,01) <> "0" THEN   /* Tipo de registro */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 8 ate 8 (" + 
-                                         "Tipo de registro deve ser 0)".
-                                         
-           END.
-      
-      /* Uso exclusivo FEBRABAN */ 
-      IF   SUBSTR(aux_setlinha,9,9) <> " " AND
-           SUBSTR(aux_setlinha,9,9) <> "000000000"  THEN
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 9 ate 17 (" +
-                                         "Preencher com brancos)".
-                                         
-           END.
-       
-      /* Tipo de Inscricao */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,18,1)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 18 (" +
-                                         aux_dscriti1 + ")".
-           END.
-
-      IF   DEC(SUBSTR(aux_setlinha,19,14)) = 0  THEN  /* Numero de inscricao */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 19 ate 32 (" +
-                                     "Informar numero de inscricao da empresa)".
-                                         
-           END. 
-
-      IF   INT(SUBSTR(aux_setlinha,53,05)) = 0  THEN  /* Agencia */ 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 53 ate 57 (" +
-                                     "Informar agencia mantenedora da conta)".
-           
-           END.
-      
-      /* Convenio */
-      FIND  crapcco WHERE 
-                       crapcco.cdcooper = p-cdcooper                       AND
-                       crapcco.cddbanco = 1                                AND
-                       crapcco.cdagenci = 1                                AND
-      /* Conta Base */ crapcco.nrdctabb = INT(SUBSTR(aux_setlinha,59,13))  AND
-      /* Convenio */   crapcco.nrconven = INT(SUBSTR(aux_setlinha,33,20))
-                       NO-LOCK NO-ERROR.
-
-      IF   NOT AVAILABLE crapcco  THEN
-           DO:
-               /* Parametros do cadastro de cobranca(CADCCO) */ 
-               FIND crabcco WHERE 
-                    crabcco.cdcooper = p-cdcooper    AND
-                    crabcco.nrconven = INT(SUBSTR(aux_setlinha,33,20))
-                    NO-LOCK NO-ERROR.
-                    
-               IF   NOT AVAIL crabcco  THEN
-                    DO:                        
-                        aux_cdcritic = 563.
-                        RUN busca_critica(INPUT  aux_cdcritic
-                                         ,OUTPUT aux_dscritic).
-                                         
-                        ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                        CREATE tt-rejeita.
-                        ASSIGN tt-rejeita.tpcritic = 1
-                               tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                               tt-rejeita.cdseqcri = aux_contaerr
-                               tt-rejeita.dscritic = 
-                                       "Posicao: 33 ate 52 (" +
-                                        SUBSTRING(aux_dscritic,
-                                                 R-INDEX(aux_dscritic,"-") + 2)
-                                        + ")".
-                    END.
-               
-               IF   AVAIL crabcco OR 
-                    DEC(SUBSTR(aux_setlinha,59,13)) = 0  THEN
-                    DO:
-                        ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                        CREATE tt-rejeita.
-                        ASSIGN tt-rejeita.tpcritic = 1
-                               tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                               tt-rejeita.cdseqcri = aux_contaerr
-                               tt-rejeita.dscritic = "Posicao: 59 ate 71 (" +
-                                                  "Conta Base nao cadastrada)".
-                                              
-                    END.
-           END.
-      ELSE
-           ASSIGN aux_flgutceb = crapcco.flgutceb /*Utiliza sequencia CADCEB*/
-                  aux_nrcnvcob = crapcco.nrconven.
-                  
-      IF   SUBSTRING(aux_setlinha,73,30) = " "  THEN   /* Nome da empresa */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 73 ate 102 (" +
-                                         "Informar nome da empresa)".
-           END.
-           
-
-      IF   SUBSTRING(aux_setlinha,103,30) = " "  THEN  /* Nome do banco */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 103 ate 132 (" +
-                                         "Informar nome do banco)".
-           END.
-
-      /* Codigo de Remessa/Retorno */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,143,1)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 143 ate 143 (" +
-                                         aux_dscriti1 + ")".
-           END.
-      
-      /* Data de geracao arquivo */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,144,8)) = FALSE  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 144 ate 151 (" +
-                                         aux_dscriti1 + ")".
-           END.
-
-      /* Hora Geracao arquivo */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,152,6)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 152 ate 157 (" +
-                                         aux_dscriti1 + ")".
-           END.
-            
-      /* No Seq. do arquivo */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,158,6)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 158 ate 163 (" +
-                                         aux_dscriti1 + ")".
-           END.
-                 
-      /* Numero versao layout */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,164,3)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 164 ate 166 (" +
-                                         aux_dscriti1 + ")".
-           END.
-           
-      /* Densidade de gravacao */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,167,5)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 167 ate 171 (" +
-                                         aux_dscriti1 + ")".
-           END.
-     
-      /***************************************************
-                        HEADER DO LOTE
-      ****************************************************/
-      
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-      
-      ASSIGN aux_contalin = aux_contalin + 1. 
-      
-      IF   SUBSTR(aux_setlinha,1,3) <> "001"  THEN /* Cod. Banco na compensa. */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 1 ate 3 (" +
-                                         "Codigo do banco deve ser 001)".
-           END.
-                 
-      /* Lote do servico */ 
-      IF   SUBSTR(aux_setlinha,4,4) <> "0001"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 4 ate 7 (" +
-                                         "Lote do servico deve ser 0001)".
-           END.
-
-      IF   SUBSTR(aux_setlinha,08,01) <> "1" THEN   /* Tipo de registro */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 8 ate 8 (" + 
-                                         "Tipo de registro deve ser 1)".
-           END.
-
-      IF   SUBSTR(aux_setlinha,10,02) <> "01" THEN   /* Tipo de servico */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 10 ate 11 (" + 
-                                         "Tipo de servico deve ser 01)".
-           END.
-       
-      /* Exclusivo FEBRABAN */ 
-      IF   SUBSTRING(aux_setlinha,12,2) <> "  "  AND
-           SUBSTRING(aux_setlinha,12,2) <> "00"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 12 ate 13 (" +
-                                         "Preencher com brancos)".
-           END.
-      
-      /* Numero  versao layout */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,14,3)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 14 ate 16 (" +
-                                         aux_dscriti1 + ")".
-           END.
-
-      /* Uso exclusivo Febraban */ 
-      IF   SUBSTR(aux_setlinha,17,1) <> " "  AND
-           SUBSTR(aux_setlinha,17,1) <> "0"  THEN
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 17 ate 17 (" +
-                                         "Preencher com brancos)".
-                                         
-           END.
-                 
-      /* Tipo de Inscricao */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,18,1)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 18 (" +
-                                         aux_dscriti1 + ")".
-           END.
-      
-      /* Numero de Inscricao da empresa*/
-      IF   DEC(SUBSTR(aux_setlinha,19,15)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 19 ate 33 (" +
-                                    "Informar numero de inscricao da empresa)".
-                                    
-           END. 
-           
-      IF   INT(SUBSTR(aux_setlinha,54,05)) = 0  THEN   /* Agencia */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 54 ate 58 (" +
-                                     "Informar agencia mantenedora da conta)".
-           
-           END.
-      
-      FIND crapcco WHERE 
-                   crapcco.cdcooper = p-cdcooper                     AND
-                   crapcco.cddbanco = 1                                AND
-                   crapcco.cdagenci = 1                                AND
- /* Conta Base */  crapcco.nrdctabb = INT(SUBSTR(aux_setlinha,60,13))  AND
- /* Convenio */    crapcco.nrconven = INT(SUBSTR(aux_setlinha,34,20))
-                   NO-LOCK NO-ERROR.
-                   
-      IF   NOT AVAILABLE crapcco  THEN
-           DO:
-               FIND crabcco WHERE 
-                    crabcco.cdcooper = p-cdcooper  AND
-                    crabcco.nrconven = INT(SUBSTR(aux_setlinha,34,20))
-                    NO-LOCK NO-ERROR.
-                    
-               IF   NOT AVAIL crabcco  THEN
-                    DO:
-                        aux_cdcritic = 563.
-                        RUN busca_critica(INPUT  aux_cdcritic
-                                         ,OUTPUT aux_dscritic).
-                        
-                        ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                        CREATE tt-rejeita.
-                        ASSIGN tt-rejeita.tpcritic = 2
-                               tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                               tt-rejeita.cdseqcri = aux_contaerr
-                               tt-rejeita.dscritic = 
-                                       "Posicao: 34 a 53 (" +
-                                        SUBSTRING(aux_dscritic,
-                                                 R-INDEX(aux_dscritic,"-") + 2)
-                                        + ")".
-                    END.
-                    
-               IF   AVAIL crabcco OR
-                    SUBSTR(aux_setlinha,60,13) = "0000000000000"  THEN
-                    DO:
-                        ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                        CREATE tt-rejeita.
-                        ASSIGN tt-rejeita.tpcritic = 2
-                               tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                               tt-rejeita.cdseqcri = aux_contaerr
-                               tt-rejeita.dscritic = "Posicao: 60 a 72 (" +
-                                              "Conta Base nao cadastrada)".
-                                              
-                    END.
-           END.
-
-      IF   SUBSTRING(aux_setlinha,74,30) = " "  THEN  /* Nome da empresa */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 74 a 103 (" +
-                                         "Informar nome da empresa)".
-           END.
-      
-      /* Numero Remessa/Retorno */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,184,8)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 184 ate 191 (" +
-                                         aux_dscriti1 + ")".
-           END.
-
-               
-      /* Data de gravacao */ 
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,192,8)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 192 ate 199 (" +
-                                         aux_dscriti1 + ")".
-           END.          
-           
-      INT(SUBSTR(aux_setlinha,200,8)) NO-ERROR.  /* Data do Credito */
-               
-      IF   ERROR-STATUS:ERROR  OR
-           f_numericos(INPUT SUBSTRING(aux_setlinha,200,8)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 200 ate 207 (" +
-                                         aux_dscriti1 + ")".
-           END.
-           
-      /*****************************************************
-                         DETALHE
-      ******************************************************/
-      
-      DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-
-         IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-          
-            /* Se acabou detalhe */ 
-         IF   SUBSTRING(aux_setlinha,8,01) <> "3" THEN 
-              LEAVE.
-         
-         ASSIGN aux_contalin = aux_contalin + 1.
-                              
-         IF   SUBSTR(aux_setlinha,14,01) = "P" THEN
-              DO:
-                  ASSIGN aux_dsnosnum = TRIM(SUBSTR(aux_setlinha,38,20))
-                         aux_dsnosnum = LEFT-TRIM(aux_dsnosnum, "0").
-                                        
-                  DO WHILE LENGTH(aux_dsnosnum) < 17:
-                     ASSIGN aux_dsnosnum = "0" + aux_dsnosnum.
-                  END.
- 
-                  IF   NOT aux_flgutceb THEN
-                       ASSIGN aux_nrdconta = INT(SUBSTR(aux_dsnosnum,01,08)).
-                      ELSE
-                       ASSIGN aux_nrdconta = INT(SUBSTR(aux_dsnosnum,08,04)).
-                          
-                  /* Cod. movimento de remessa */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,16,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 16 ate 17 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                  ELSE
-                  IF  SUBSTRING(aux_setlinha,16,2) <> "01" THEN
-                      DO:
-                          ASSIGN aux_contaerr = aux_contaerr + 1.
-    
-                          CREATE tt-rejeita.
-                          ASSIGN tt-rejeita.tpcritic = 3
-                                 tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                 tt-rejeita.cdseqcri = aux_contaerr
-                                 tt-rejeita.seqdetal =
-                                  SUBSTR(aux_setlinha,09,05)
-                                 tt-rejeita.dscritic = "(" +
-                                                    SUBSTR(aux_setlinha,14,01)
-                                                    + ")" +
-                                                    "Posicao: 16 ate 17 (" +
-                                         "Informar 01 Solicitadao de remessa)".
-                      END.
                        
-                  /* Agencia Mantenedora da Conta */ 
-                  IF   INT(SUBSTRING(aux_setlinha,18,5)) = 0 THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 18 ate 22 (" +
-                                     "Informar agencia mantenedora da conta)".
-                       END.
-                  
-                  /* Conta corrente */
-                  IF  DEC(SUBSTR(aux_setlinha,24,12)) = 0  THEN
-                      DO:
-                          ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                  
-                          CREATE tt-rejeita.
-                          ASSIGN tt-rejeita.tpcritic = 3
-                                 tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                 tt-rejeita.cdseqcri = aux_contaerr
-                                 tt-rejeita.seqdetal =
-                                  SUBSTR(aux_setlinha,09,05)
-                                 tt-rejeita.dscritic = "(" +
-                                                    SUBSTR(aux_setlinha,14,01)
-                                                    + ")" +
-                                                    "Posicao: 24 ate 35 (" +
-                                                   "Informar numero da conta)".
-                                                    
-                      END.
-                  ELSE
-                       IF  f_numericos
-                             (INPUT SUBSTRING(aux_setlinha,24,12)) = FALSE THEN
-                           DO:
-                               ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                               CREATE tt-rejeita.
-                               ASSIGN tt-rejeita.tpcritic = 3
-                                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                      tt-rejeita.cdseqcri = aux_contaerr
-                                      tt-rejeita.seqdetal =
-                                              SUBSTR(aux_setlinha,09,05)
-                                      tt-rejeita.dscritic = 
-                                              "(" + SUBSTR(aux_setlinha,14,01)
-                                              + ")" + "Posicao: 24 ate 35 (" +
-                                              aux_dscriti1 + ")". 
-                           END.                        
-
-                  /* Codigo da Carteira */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,58,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 58 ate 58 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Forma de cadastramento */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,59,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 59 ate 59 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Emissao do boleto */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,61,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 61 ate 61 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                  
-                  /* Numero do documento */ 
-                  IF   SUBSTR(aux_setlinha,63,15) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 63 ate 77 (" +
-                                  "Informar numero do documento de cobranca)".
-                       END.
-                  
-                  /* Data de vencimento do titulo */
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,78,08)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                               SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 78 ate 85 (" +
-                                      "Informar data de vencimento do titulo)".
-        
-                       END.
-                  
-                  /* Valor do Titulo */ 
-                  IF   DEC(SUBSTR(aux_setlinha,86,15)) = 0  OR
-                       f_numericos(INPUT SUBSTRING(aux_setlinha,86,15)) = FALSE
-                          THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 86 ate 100 (" +
-                                             "Informar valor do titulo)".
-                       
-                       END.
-                       
-                  /* Agencia encarregada da cobranca */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,101,5)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 101 ate 105 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Especie do Titulo */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,107,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 107 ate 108 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                  
-                  /* Data de emissao do titulo */ 
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,110,8)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                               SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 110 ate 117 (" +
-                                   "Informar data de emissao do titulo)".
-                       END.
-                       
-                  /* Codigo Juros Mora */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,118,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                  SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 118 ate 118 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Data do Juros de Mora */ 
-                  IF   f_numericos (INPUT SUBSTRING(aux_setlinha,119,8)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 119 ate 126 (" +
-                                               aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Juros de Mora  por dia */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,127,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                  SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 127 ate 141 (" +
-                                                     aux_dscriti1 + ")".
-                       END.     
-                       
-                  /* Codigo do Desconto 1  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,142,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 142 ate 142 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-
-                  /* Data do Desconto 1 */ 
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,143,8)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 143 ate 150 (" +
-                                               aux_dscriti1 + ")".
-                       END. 
-                                                                               
-                  /* Valor Percentual a ser concedido   */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,151,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 151 ate 165 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Valor do IOF a ser Recolhido  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,166,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 166 ate 180 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                      
-                  /* Valor do abatimento  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,181,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 181 ate 195 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Codigo para protesto  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,221,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 221 ate 221 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                        
-                  /* Numero de dias para protesto  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,222,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 222 ate 223 (" +
-                                                     aux_dscriti1 + ")".
-                       END. 
-                       
-                  /* Codigo para baixa/devolucao  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,224,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 224 ate 224 (" +
-                                                     aux_dscriti1 + ")".
-                       END. 
-                       
-                  /* Codigo da moeda  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,228,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 228 ate 229 (" +
-                                                     aux_dscriti1 + ")".
-                       END. 
-                       
-                  /* Numero do contrato da operacao de Cred.  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,230,10)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 230 ate 239 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                                                                       
-              END.  /*  Tipo de  Registro  P   */ 
-         ELSE     
-         IF   SUBSTR(aux_setlinha,14,01) = "Q"  THEN
-              DO:
-                  /*  Possui convenio CECRED */
-                  IF   aux_flgutceb THEN
-                       DO:
-                           FIND crapceb WHERE 
-                                crapceb.cdcooper = p-cdcooper   AND
-                                crapceb.nrconven = aux_nrcnvcob AND
-                                crapceb.nrcnvceb = aux_nrdconta 
-                                USE-INDEX crapceb3 NO-LOCK NO-ERROR.
-                       END.
-                  ELSE
-                       DO:
-                           FIND crapceb WHERE 
-                                crapceb.cdcooper = p-cdcooper   AND
-                                crapceb.nrdconta = aux_nrdconta AND
-                                crapceb.nrconven = aux_nrcnvcob
-                                NO-LOCK NO-ERROR.
-                       END.
-
-                  IF   NOT AVAILABLE crapceb  OR 
-                       crapceb.insitceb <> 1 THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                       
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                         STRING(INT(
-                                         SUBSTR(aux_setlinha,09,05)) 
-                                         - 1,"99999")
-                                  tt-rejeita.dscritic =
-                                          "(P)" +
-                                          "Posicao: 38 ate 57 (" +
-                                          "Nosso numero esta " + 
-                                          "incorreto)".
-                             
-                           NEXT.                            
-                       END.
-                  ELSE
-                       ASSIGN aux_nrdconta = crapceb.nrdconta.
-                                                     
-                  FIND crapass WHERE crapass.cdcooper = p-cdcooper AND
-                                     crapass.nrdconta = aux_nrdconta
-                                     USE-INDEX crapass1 NO-LOCK NO-ERROR.
-
-                  IF   NOT AVAILABLE crapass   THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                           
-                           aux_cdcritic = 9.
-                           RUN busca_critica(INPUT  aux_cdcritic
-                                            ,OUTPUT aux_dscritic).
-         
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                  STRING(INT(SUBSTR(aux_setlinha,09,05)) - 1,
-                                         "99999") 
-                                  tt-rejeita.dscritic = "(P)" +
-                                                     "Posicao: 38 ate 57 (" +
-                                                     "Nosso numero esta " + 
-                                                     "incorreto)".
-
-                       END.
-                  ELSE
-                       aux_nmprimtl = crapass.nmprimtl.
-                       
-                  /* Cod. movimento de remessa */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,16,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 16 ate 17 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                  ELSE
-                  IF  SUBSTRING(aux_setlinha,16,2) <> "01" THEN
-                      DO:
-                          ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                          CREATE tt-rejeita.
-                          ASSIGN tt-rejeita.tpcritic = 3
-                                 tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                 tt-rejeita.cdseqcri = aux_contaerr
-                                 tt-rejeita.seqdetal =
-                                  SUBSTR(aux_setlinha,09,05)
-                                 tt-rejeita.dscritic = "(" +
-                                                    SUBSTR(aux_setlinha,14,01)
-                                                    + ")" +
-                                                    "Posicao: 16 ate 17 (" +
-                                         "Informar 01 Solicitadao de remessa)".
-                      END.
-
-                       
-                  /* Tipo de inscricao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,18,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 18 ate 18 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /*  Numero de inscricao */
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,19,15)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 19 ate 33 (" +
-                                          "Informar numero de inscricao)".
-                       END.
-                       
-                  /* Nome do sacado */ 
-                  IF   SUBSTRING(aux_setlinha,34,40) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 34 ate 73 (" +
-                                           "Informar o nome do Pagador)".
-                       END.
-                  
-                  /* Endereco */ 
-                  IF   SUBSTRING(aux_setlinha,74,40) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 74 ate 113 (" +
-                                                     "Informar Endereco)".
-                       END.
-                       
-                  /* Bairro */ 
-                  IF   SUBSTRING(aux_setlinha,114,15) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 114 ate 128 (" +
-                                                     "Informar Bairro)".
-                       END.
-                       
-                  /* CEP */ 
-                  INT(SUBSTRING(aux_setlinha,129,8)) NO-ERROR.
-                  
-                  IF   ERROR-STATUS:ERROR  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 129 ate 136 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                    ELSE    
-                         IF   INT(SUBSTRING(aux_setlinha,129,8)) = 0  THEN
-                              DO:
-                                  ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                                  CREATE tt-rejeita.
-                                  ASSIGN tt-rejeita.tpcritic = 3
-                                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                         tt-rejeita.cdseqcri = aux_contaerr
-                                         tt-rejeita.seqdetal = 
-                                                     SUBSTR(aux_setlinha,09,05) 
-                                         tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 129 ate 136 (" +
-                                                     "Informar CEP)".
-                              END.
-                       
-                  /* Cidade */      
-                  IF   SUBSTRING(aux_setlinha,137,15) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 137 ate 151 (" +
-                                                     "Informar Cidade)".
-                       END.
-                       
-                  /* Unidade da Federacao */      
-                  IF   SUBSTRING(aux_setlinha,152,2) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 152 ate 153 (" +
-                                                     "Informar U.F.)".
-                       END. 
-                       
-                  /* Tipo de inscricao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,154,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 154 ate 154 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Numero de inscricao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,155,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 155 ate 169 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                      
-                  /* Cod. banco correspondente na compensacao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,210,3)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 210 ate 212 (" +
-                                                     aux_dscriti1 + ")".
-                       END.     
-                      
-              END.  /*  Tipo de  Registro  Q   */
-         ELSE
-         IF   SUBSTR(aux_setlinha,14,01) <> "S"  THEN
-              DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 3
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.seqdetal = SUBSTR(aux_setlinha,09,05) 
-                         tt-rejeita.dscritic = "(" + SUBSTR(aux_setlinha,14,01)
-                                            + ")" +
-                                            "Este tipo de Registro nao eh" + 
-                                            " tratado.".
-              END.
-              
-      END.  /*    Fim do While True   */
-      
-      /*******************************
-      /* Trailer do Lote */ 
-                   
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-      **********************************************/         
-      ASSIGN aux_contalin = aux_contalin + 1.
-      
-      IF   SUBSTRING(aux_setlinha,08,01) <> "5"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               aux_cdcritic = 468.
-               RUN busca_critica(INPUT  aux_cdcritic
-                                ,OUTPUT aux_dscritic).
-         
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 8 ate 8 (" +
-                                         SUBSTRING(aux_dscritic,
-                                         R-INDEX(aux_dscritic,"-") + 2)
-                                         + ")".
-           END.
-           
-      /* Qtd. registros do lote */ 
-      IF   INT(SUBSTR(aux_setlinha,18,06)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 23 " +  
-                                       "(Informar Qtd. de registros no lote)".
-
-           END.
-           
-      /* Qtd. titulos em cobranca */ 
-      IF   INT(SUBSTR(aux_setlinha,24,06)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 24 ate 29 " +  
-                                     "(Informar Qtd. de titulos em cobranca)".
-
-           END.
-
-      /* Vlr. total dos titulos em carteira */ 
-      IF   DEC(SUBSTR(aux_setlinha,30,17)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 30 ate 46 " +  
-                                         "(Informar Vlr. total dos titulos)".
-
-           END.
-           
-
-
-      /*****************************************************
-                      TRAILER DO ARQUIVO     
-      ******************************************************/
-      
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-      
-      ASSIGN aux_contalin = aux_contalin + 1.
-      
-      IF   SUBSTRING(aux_setlinha,04,04) <> "9999"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-                                       
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic =
-                       "Posicao: 4 ate 7 (Lote do servico" + 
-                                         " deve ser 9999)".
-           END.
-      
-      IF   SUBSTRING(aux_setlinha,08,01) <> "9"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic =
-                       "Posicao: 8 ate 8 (Tipo de registro" +
-                                         " deve ser 9)".
-           END.           
-           
-      IF   SUBSTRING(aux_setlinha,09,09) <> ""  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 9 ate 17 (" +
-                                         "Preencher com brancos)".
-           
-           END.
-
-      /* Qtd. Lotes do arquivo */
-      IF   SUBSTR(aux_setlinha,18,6) <> "000001"  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 23 (" +
-                                         "Qtd. de Lotes do arquivo eh 0001)".
-           END.
-           
-      IF   INT(SUBSTRING(aux_setlinha,24,06)) <> aux_contalin  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 24 ate 29 " +
-                         "(Quantidade de registros do arquivo esta errada" + 
-                         " => " + STRING(aux_contalin,"999999") + ")".
-               
-           END.
-
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,30,6)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 30 ate 35 (" +
-                                         aux_dscriti1 + ")".           
-           END.
-           
-      LEAVE.
-       
-   END.  /*   Fim do for each   */
-                                                            
-   INPUT STREAM str_3 CLOSE.
-
-   ASSIGN aux_contaerr = 0.
-   
-   /*******  incluir cabecalhos dos arquivos ********/
-   FOR EACH crabrej BREAK BY crabrej.tpcritic
-                            BY crabrej.cdseqcri:
-      
-       ASSIGN aux_contaerr = aux_contaerr + 1.
- 
-       IF   FIRST-OF(crabrej.tpcritic)  THEN
-            DO:
-                IF   crabrej.tpcritic = 1  THEN
-                     ASSIGN aux_dslocali = "Header do Arquivo".
-                ELSE
-                IF   crabrej.tpcritic = 2  THEN
-                     ASSIGN aux_dslocali = "Header do Lote".
-                ELSE
-                IF   crabrej.tpcritic = 3  THEN
-                     ASSIGN aux_dslocali = "Detalhe do Arquivo".
-                ELSE
-                IF   crabrej.tpcritic = 4  THEN
-                     ASSIGN aux_dslocali = "Trailer do Lote".
-                ELSE
-                     ASSIGN aux_dslocali = "Trailer do Arquivo".
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = tt-rejeita.tpcritic
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = "==>  " + aux_dslocali.
-                       
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               ASSIGN crabrej.cdseqcri = aux_contaerr.         
-            END.
-       ELSE
-            ASSIGN crabrej.cdseqcri = aux_contaerr.
-   END.
-
-END PROCEDURE.   /*  Fim da PROCEDURE p_importa */
-
-/****************************************************************************/
-PROCEDURE p_importa_cnab240_085:
-
-   DEF  INPUT  PARAM p-cdcooper    AS INTEGER                        NO-UNDO.
-   DEF  INPUT  PARAM p-nmarqint    AS CHAR                           NO-UNDO.
-   DEF  OUTPUT PARAM TABLE FOR tt-rejeita.   
-   
-   DEF BUFFER crabcco FOR crapcco.
-   DEF BUFFER crabrej FOR tt-rejeita.
-
-   DEF VAR aux_dslocali AS CHAR                                      NO-UNDO.
-   DEF VAR aux_dscriti1 AS CHAR    FORMAT "x(40)"                    NO-UNDO.
-   DEF VAR aux_dscriti2 AS CHAR    FORMAT "x(40)"                    NO-UNDO.
-   
-   DEF VAR aux_nmarquiv AS CHAR                                      NO-UNDO.
-   DEF VAR aux_setlinha AS CHAR    FORMAT "x(243)"                   NO-UNDO.
-   DEF VAR aux_flgfirst AS LOGICAL                                   NO-UNDO.
-   DEF VAR aux_nmendter AS CHAR                                      NO-UNDO.
-   DEF VAR aux_nmfisico AS CHAR                                      NO-UNDO.
-   
-   DEF VAR aux_cdagenci AS INT                                       NO-UNDO.
-   
-   DEF VAR aux_dsnosnum AS CHARACTER                                 NO-UNDO.
-   DEF VAR aux_flgutceb AS LOGICAL                                   NO-UNDO.
-      
-   DEF VAR rel_nrmodulo AS INT     FORMAT "9"                        NO-UNDO.
-
-   FORM aux_setlinha  FORMAT "x(243)"
-        WITH FRAME AA WIDTH 243 NO-BOX NO-LABELS.
-
-   DEF VAR aux_erronume AS LOGICAL                               NO-UNDO.
-   DEF VAR aux_nmprimtl AS CHAR                                  NO-UNDO.
-   DEF VAR aux_nmarqimp AS CHAR                                  NO-UNDO.
-
-   DEF VAR aux_nrcnvcob AS INT                                   NO-UNDO.
-   DEF VAR aux_nrdconta AS INT                                   NO-UNDO.
-   DEF VAR aux_dsdoccop LIKE crapcob.dsdoccop                    NO-UNDO.
-   DEF VAR aux_contaerr AS INT                                   NO-UNDO.
-   DEF VAR aux_contalin AS INT                                   NO-UNDO.
-   DEF VAR aux_cdcritic AS INT     FORMAT "zz9"              NO-UNDO.
-   DEF VAR aux_dscritic AS CHAR    FORMAT "x(40)"            NO-UNDO.
-   
-   EMPTY TEMP-TABLE tt-rejeita.
-
-   ASSIGN aux_contaerr = 0
-          aux_contalin = 0
-          aux_dscriti1 = "Informar valores numericos"
-          aux_dscriti2 = "Deve ser campo CARACTER"
-          aux_flgfirst = TRUE.
-
-   IF SEARCH(p-nmarqint) = ? THEN
-   DO:
-       MESSAGE "Arquivo nao encontrado".
-       ASSIGN aux_contaerr = aux_contaerr + 1.
-       CREATE tt-rejeita.
-       ASSIGN tt-rejeita.tpcritic = 1
-              tt-rejeita.nrlinseq = "99999"
-              tt-rejeita.cdseqcri = aux_contaerr
-              tt-rejeita.dscritic = "Arquivo nao encontrado".
-
-       RETURN "NOK".
-   END.
-   
-   INPUT STREAM str_3 FROM VALUE(p-nmarqint)  NO-ECHO.
-   
-   DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
-
-      /**********************************************
-               HEADER DO ARQUIVO
-      ***********************************************/
-
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha. 
-      
-      ASSIGN aux_flgfirst = FALSE  
-             aux_contalin = aux_contalin + 1. 
-                  
-      IF   SUBSTR(aux_setlinha,1,3) <> "085"  THEN  /* Cod. Banco na compen. */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 1 ate 3 (" +
-                                         "Codigo do banco deve ser 085)".
-           END.
-           
-      IF   SUBSTR(aux_setlinha,04,04) <> "0000" THEN   /* Lote do servico */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 4 ate 7 (" +
-                                         "Lote do servico deve ser 0000)".
-
-           END.
-                 
-      IF   SUBSTR(aux_setlinha,08,01) <> "0" THEN   /* Tipo de registro */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 8 ate 8 (" + 
-                                         "Tipo de registro deve ser 0)".
-                                         
-           END.
-      
-      /* Uso exclusivo FEBRABAN */ 
-      IF   SUBSTR(aux_setlinha,9,9) <> " " AND
-           SUBSTR(aux_setlinha,9,9) <> "000000000"  THEN
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 9 ate 17 (" +
-                                         "Preencher com brancos)".
-                                         
-           END.
-       
-      /* Tipo de Inscricao */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,18,1)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 18 (" +
-                                         aux_dscriti1 + ")".
-           END.
-
-      IF   DEC(SUBSTR(aux_setlinha,19,14)) = 0  THEN  /* Numero de inscricao */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 19 ate 32 (" +
-                                     "Informar numero de inscricao da empresa)".
-                                         
-           END. 
-
-      IF   INT(SUBSTR(aux_setlinha,53,05)) = 0  THEN  /* Agencia */ 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 53 ate 57 (" +
-                                     "Informar agencia mantenedora da conta)".
-           
-           END.
-      
-      /* Convenio */
-      FIND  crapcco WHERE 
-                       crapcco.cdcooper = p-cdcooper                       AND
-                       crapcco.cddbanco = 085                              AND
-                       crapcco.dsorgarq = "IMPRESSO PELO SOFTWARE"         AND
-      /* Convenio */   crapcco.nrconven = INT(SUBSTR(aux_setlinha,33,20))
-                       NO-LOCK NO-ERROR.
-
-      IF   NOT AVAILABLE crapcco  THEN
-           DO:
-                aux_cdcritic = 563.
-                RUN busca_critica(INPUT  aux_cdcritic
-                                 ,OUTPUT aux_dscritic).
-                                 
-                ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = 1
-                       tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = 
-                               "Posicao: 33 ate 52 (" +
-                                SUBSTRING(aux_dscritic,
-                                         R-INDEX(aux_dscritic,"-") + 2)
-                                + ")".
-           END.
-      ELSE
-           ASSIGN aux_flgutceb = crapcco.flgutceb /*Utiliza sequencia CADCEB*/
-                  aux_nrcnvcob = crapcco.nrconven.
-
-      FIND  crapass WHERE
-            crapass.cdcooper = p-cdcooper   AND
-            /* Conta do cooperado deve constar no arquivo */ 
-            crapass.nrdconta = INT(SUBSTR(aux_setlinha,59,13)) 
-            NO-LOCK NO-ERROR.
-
-      IF  NOT AVAIL crapass THEN
-          DO:
-            
-            ASSIGN aux_contaerr = aux_contaerr + 1.
-
-            CREATE tt-rejeita.
-            ASSIGN tt-rejeita.tpcritic = 1
-                   tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                   tt-rejeita.cdseqcri = aux_contaerr
-                   tt-rejeita.dscritic = "Posicao: 59 ate 71 (" +
-                                      "Conta do cooperado nao cadastrada)".
-          END.
-      ELSE 
-          ASSIGN aux_nrdconta = crapass.nrdconta
-                 aux_nmprimtl = crapass.nmprimtl.
-
-      /*  Possui convenio CECRED */
-      FIND crapceb WHERE 
-           crapceb.cdcooper = p-cdcooper   AND
-           crapceb.nrdconta = aux_nrdconta AND
-           crapceb.nrconven = aux_nrcnvcob
-           NO-LOCK NO-ERROR.
-
-      IF  NOT AVAILABLE crapceb  THEN
-          DO:
-              ASSIGN aux_contaerr = aux_contaerr + 1.
-    
-              CREATE tt-rejeita.
-              ASSIGN tt-rejeita.tpcritic = 1
-                     tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                     tt-rejeita.cdseqcri = aux_contaerr
-                     tt-rejeita.dscritic = "Posicao: 33 ate 52 (" +
-                                        "Convenio de cobranca nao habilitado)".
-          END.
-      ELSE
-          IF  crapceb.insitceb <> 1 THEN 
-              DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-        
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 33 ate 52 (" +
-                                            "Convenio de cobranca inativo)".
-              END.
-                  
-      IF   TRIM(SUBSTRING(aux_setlinha,73,30)) = "" THEN /* Nome da cooperado */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 73 ate 102 (" +
-                                         "Informar nome do cooperado)".
-           END.                                         
-
-      IF   TRIM(SUBSTRING(aux_setlinha,103,30)) = "" THEN  /* Nome da cooperativa */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 103 ate 132 (" +
-                                         "Informar nome da cooperativa)".
-           END.
-
-      /* Codigo de Remessa/Retorno */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,143,1)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 143 ate 143 (" +
-                                         aux_dscriti1 + ")".
-           END.
-      
-      /* Data de geracao arquivo */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,144,8)) = FALSE  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 144 ate 151 (" +
-                                         aux_dscriti1 + ")".
-           END.
-
-      /* Hora Geracao arquivo */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,152,6)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 152 ate 157 (" +
-                                         aux_dscriti1 + ")".
-           END.
-            
-      /* No Seq. do arquivo */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,158,6)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 158 ate 163 (" +
-                                         aux_dscriti1 + ")".
-           END.
-     
-      /***************************************************
-                        HEADER DO LOTE
-      ****************************************************/
-      
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-      
-      ASSIGN aux_contalin = aux_contalin + 1. 
-      
-      IF   SUBSTR(aux_setlinha,1,3) <> "085"  THEN /* Cod. Banco na compensa. */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 1 ate 3 (" +
-                                         "Codigo do banco deve ser 085)".
-           END.
-                 
-      /* Lote do servico */ 
-      IF   SUBSTR(aux_setlinha,4,4) <> "0001"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 4 ate 7 (" +
-                                         "Lote do servico deve ser 0001)".
-           END.
-
-      IF   SUBSTR(aux_setlinha,08,01) <> "1" THEN   /* Tipo de registro */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 8 ate 8 (" + 
-                                         "Tipo de registro deve ser 1)".
-           END.
-
-      IF   SUBSTR(aux_setlinha,10,02) <> "01" THEN   /* Tipo de servico */ 
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 10 ate 11 (" + 
-                                         "Tipo de servico deve ser 01)".
-           END.
-       
-      /* Exclusivo FEBRABAN */ 
-      IF   SUBSTRING(aux_setlinha,12,2) <> "  "  AND
-           SUBSTRING(aux_setlinha,12,2) <> "00"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 12 ate 13 (" +
-                                         "Preencher com brancos)".
-           END.
-      
-
-      /* Uso exclusivo Febraban */ 
-      IF   SUBSTR(aux_setlinha,17,1) <> " "  AND
-           SUBSTR(aux_setlinha,17,1) <> "0"  THEN
-           DO: 
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 17 ate 17 (" +
-                                         "Preencher com brancos)".
-                                         
-           END.
-                 
-      /* Tipo de Inscricao */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,18,1)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 18 (" +
-                                         aux_dscriti1 + ")".
-           END.
-      
-      /* Numero de Inscricao da empresa */
-      IF   DEC(SUBSTR(aux_setlinha,19,15)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 19 ate 33 (" +
-                                    "Informar numero de inscricao da empresa)".
-                                    
-           END. 
-           
-      IF   INT(SUBSTR(aux_setlinha,54,05)) = 0  THEN   /* Agencia */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 54 ate 58 (" +
-                                     "Informar agencia mantenedora da conta)".
-           
-           END.
-      
-      FIND crapcco WHERE 
-                   crapcco.cdcooper = p-cdcooper                     AND
-                   crapcco.cddbanco = 085                            AND
- /* Convenio */    crapcco.nrconven = INT(SUBSTR(aux_setlinha,34,20))
-                   NO-LOCK NO-ERROR.
-                   
-      IF   NOT AVAILABLE crapcco  THEN
-           DO:
-                aux_cdcritic = 563.
-                RUN busca_critica(INPUT  aux_cdcritic
-                                 ,OUTPUT aux_dscritic).
-                
-                ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = 2
-                       tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = 
-                               "Posicao: 34 a 53 (" +
-                                SUBSTRING(aux_dscritic,
-                                         R-INDEX(aux_dscritic,"-") + 2)
-                                + ")".
-            END.
-
-
-        FIND  crapass WHERE
-              crapass.cdcooper = p-cdcooper   AND
-              /* Conta do cooperado deve constar no arquivo */ 
-              crapass.nrdconta = INT(SUBSTR(aux_setlinha,60,13)) 
-              NO-LOCK NO-ERROR.
-
-        IF  NOT AVAIL crapass THEN
-            DO:
-                ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = 1
-                       tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = "Posicao: 60 ate 72 (" +
-                                          "Conta do cooperado nao cadastrada)".
-            END.           
-
-      IF   SUBSTRING(aux_setlinha,74,30) = " "  THEN  /* Nome da empresa */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 74 a 103 (" +
-                                         "Informar nome da empresa)".
-           END.
-      
-      /* Numero Remessa/Retorno */
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,184,8)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 184 ate 191 (" +
-                                         aux_dscriti1 + ")".
-           END.
-
-               
-      /* Data de gravacao */ 
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,192,8)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 192 ate 199 (" +
-                                         aux_dscriti1 + ")".
-           END.
-           
-      INT(SUBSTR(aux_setlinha,200,8)) NO-ERROR.  /* Data do Credito */
-               
-      IF   ERROR-STATUS:ERROR  OR
-           f_numericos(INPUT SUBSTRING(aux_setlinha,200,8)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 2
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 200 ate 207 (" +
-                                         aux_dscriti1 + ")".
-           END.
-           
-      /*****************************************************
-                         DETALHE
-      ******************************************************/
-      
-      DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-
-         IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-          
-            /* Se acabou detalhe */ 
-         IF   SUBSTRING(aux_setlinha,8,01) <> "3" THEN 
-              LEAVE.
-         
-         ASSIGN aux_contalin = aux_contalin + 1.
-                              
-         IF   SUBSTR(aux_setlinha,14,01) = "P" THEN
-              DO:
-                  ASSIGN aux_dsnosnum = TRIM(SUBSTR(aux_setlinha,38,20))
-                         aux_dsnosnum = LEFT-TRIM(aux_dsnosnum, "0").
-                                        
-                  DO WHILE LENGTH(aux_dsnosnum) < 17:
-                     ASSIGN aux_dsnosnum = "0" + aux_dsnosnum.
-                  END.
- 
-                  IF aux_nrdconta <> INT(SUBSTR(aux_setlinha,24,13)) THEN
-                  DO:
-                      ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                      CREATE tt-rejeita.
-                      ASSIGN tt-rejeita.tpcritic = 3
-                             tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                             tt-rejeita.cdseqcri = aux_contaerr
-                             tt-rejeita.seqdetal =
-                              SUBSTR(aux_setlinha,24,13)
-                             tt-rejeita.dscritic = "(" +
-                                                SUBSTR(aux_setlinha,14,01)
-                                                + ")" +
-                                                "Posicao: 24 ate 36 (" +
-                                                "Conta informada diferente do header" + ")".
-                  END.
-                          
-                  /* Cod. movimento de remessa */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,16,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 16 ate 17 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Agencia Mantenedora da Conta */ 
-                  IF   INT(SUBSTRING(aux_setlinha,18,5)) = 0 THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 18 ate 22 (" +
-                                     "Informar agencia mantenedora da conta)".
-                       END.
-                  
-                  /* Conta corrente */
-                  IF  DEC(SUBSTR(aux_setlinha,24,12)) = 0  THEN
-                      DO:
-                          ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                  
-                          CREATE tt-rejeita.
-                          ASSIGN tt-rejeita.tpcritic = 3
-                                 tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                 tt-rejeita.cdseqcri = aux_contaerr
-                                 tt-rejeita.seqdetal =
-                                  SUBSTR(aux_setlinha,09,05)
-                                 tt-rejeita.dscritic = "(" +
-                                                    SUBSTR(aux_setlinha,14,01)
-                                                    + ")" +
-                                                    "Posicao: 24 ate 35 (" +
-                                                   "Informar numero da conta)".
-                                                    
-                      END.
-                  ELSE
-                       IF  f_numericos
-                             (INPUT SUBSTRING(aux_setlinha,24,12)) = FALSE THEN
-                           DO:
-                               ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                               CREATE tt-rejeita.
-                               ASSIGN tt-rejeita.tpcritic = 3
-                                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                      tt-rejeita.cdseqcri = aux_contaerr
-                                      tt-rejeita.seqdetal =
-                                              SUBSTR(aux_setlinha,09,05)
-                                      tt-rejeita.dscritic = 
-                                              "(" + SUBSTR(aux_setlinha,14,01)
-                                              + ")" + "Posicao: 24 ate 35 (" +
-                                              aux_dscriti1 + ")". 
-                           END.                        
-
-                  /* Codigo da Carteira */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,58,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 58 ate 58 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Forma de cadastramento */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,59,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 59 ate 59 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Emissao do boleto */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,61,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 61 ate 61 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                  
-                  /* Numero do documento */ 
-                  IF   SUBSTR(aux_setlinha,63,15) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 63 ate 77 (" +
-                                  "Informar numero do documento de cobranca)".
-                       END.
-                  
-                  /* Data de vencimento do titulo */
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,78,08)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                               SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 78 ate 85 (" +
-                                      "Informar data de vencimento do titulo)".
-        
-                       END.
-                  
-                  /* Valor do Titulo */ 
-                  IF   DEC(SUBSTR(aux_setlinha,86,15)) = 0  OR
-                       f_numericos(INPUT SUBSTRING(aux_setlinha,86,15)) = FALSE
-                          THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 86 ate 100 (" +
-                                             "Informar valor do titulo)".
-                       
-                       END.
-                       
-                  /* Agencia encarregada da cobranca */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,101,5)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 101 ate 105 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Especie do Titulo */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,107,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 107 ate 108 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                  
-                  /* Data de emissao do titulo */ 
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,110,8)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                               SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 110 ate 117 (" +
-                                   "Informar data de emissao do titulo)".
-                       END.
-                       
-                  /* Codigo Juros Mora */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,118,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                  SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 118 ate 118 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Data do Juros de Mora */ 
-                  IF   f_numericos (INPUT SUBSTRING(aux_setlinha,119,8)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 119 ate 126 (" +
-                                               aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Juros de Mora  por dia */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,127,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                  SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 127 ate 141 (" +
-                                                     aux_dscriti1 + ")".
-                       END.     
-                       
-                  /* Codigo do Desconto 1  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,142,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 142 ate 142 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-
-                  /* Data do Desconto 1 */ 
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,143,8)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = 
-                                               "(" + SUBSTR(aux_setlinha,14,01)
-                                               + ")" +
-                                               "Posicao: 143 ate 150 (" +
-                                               aux_dscriti1 + ")".
-                       END. 
-                                                                               
-                  /* Valor Percentual a ser concedido   */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,151,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 151 ate 165 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Valor do IOF a ser Recolhido  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,166,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 166 ate 180 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                      
-                  /* Valor do abatimento  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,181,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 181 ate 195 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Codigo para protesto  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,221,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 221 ate 221 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                        
-                  /* Numero de dias para protesto  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,222,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 222 ate 223 (" +
-                                                     aux_dscriti1 + ")".
-                       END. 
-                       
-                  /* Codigo para baixa/devolucao  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,224,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 224 ate 224 (" +
-                                                     aux_dscriti1 + ")".
-                       END. 
-                       
-                  /* Codigo da moeda  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,228,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 228 ate 229 (" +
-                                                     aux_dscriti1 + ")".
-                       END. 
-                       
-                  /* Numero do contrato da operacao de Cred.  */
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,230,10)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 230 ate 239 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                                                                       
-              END.  /*  Tipo de  Registro  P   */ 
-         ELSE     
-         IF   SUBSTR(aux_setlinha,14,01) = "Q"  THEN
-              DO:                                   
-                       
-                  /* Cod. movimento de remessa */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,16,2)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 16 ate 17 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Tipo de inscricao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,18,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 18 ate 18 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /*  Numero de inscricao */
-                  IF   f_numericos
-                         (INPUT SUBSTRING(aux_setlinha,19,15)) = FALSE  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 19 ate 33 (" +
-                                          "Informar numero de inscricao)".
-                       END.
-                       
-                  /* Nome do sacado */ 
-                  IF   SUBSTRING(aux_setlinha,34,40) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 34 ate 73 (" +
-                                           "Informar o nome do sacado)".
-                       END.
-                  
-                  /* Endereco */ 
-                  IF   SUBSTRING(aux_setlinha,74,40) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 74 ate 113 (" +
-                                                     "Informar Endereco)".
-                       END.
-                       
-                  /* Bairro */ 
-                  IF   SUBSTRING(aux_setlinha,114,15) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 114 ate 128 (" +
-                                                     "Informar Bairro)".
-                       END.
-                       
-                  /* CEP */ 
-                  INT(SUBSTRING(aux_setlinha,129,8)) NO-ERROR.
-                  
-                  IF   ERROR-STATUS:ERROR  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 129 ate 136 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                    ELSE    
-                         IF   INT(SUBSTRING(aux_setlinha,129,8)) = 0  THEN
-                              DO:
-                                  ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                                  CREATE tt-rejeita.
-                                  ASSIGN tt-rejeita.tpcritic = 3
-                                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                         tt-rejeita.cdseqcri = aux_contaerr
-                                         tt-rejeita.seqdetal = 
-                                                     SUBSTR(aux_setlinha,09,05) 
-                                         tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 129 ate 136 (" +
-                                                     "Informar CEP)".
-                              END.
-                       
-                  /* Cidade */      
-                  IF   SUBSTRING(aux_setlinha,137,15) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 137 ate 151 (" +
-                                                     "Informar Cidade)".
-                       END.
-                       
-                  /* Unidade da Federacao */      
-                  IF   SUBSTRING(aux_setlinha,152,2) = " "  THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = 
-                                          SUBSTR(aux_setlinha,09,05) 
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 152 ate 153 (" +
-                                                     "Informar U.F.)".
-                       END. 
-                       
-                  /* Tipo de inscricao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,154,1)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal = SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 154 ate 154 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                       
-                  /* Numero de inscricao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,155,15)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 155 ate 169 (" +
-                                                     aux_dscriti1 + ")".
-                       END.
-                      
-                  /* Cod. banco correspondente na compensacao */ 
-                  IF   f_numericos(INPUT SUBSTRING(aux_setlinha,210,3)) = FALSE
-                         THEN
-                       DO:
-                           ASSIGN aux_contaerr = aux_contaerr + 1.
-                                                     
-                           CREATE tt-rejeita.
-                           ASSIGN tt-rejeita.tpcritic = 3
-                                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                                  tt-rejeita.cdseqcri = aux_contaerr
-                                  tt-rejeita.seqdetal =
-                                   SUBSTR(aux_setlinha,09,05)
-                                  tt-rejeita.dscritic = "(" +
-                                                     SUBSTR(aux_setlinha,14,01)
-                                                     + ")" +
-                                                     "Posicao: 210 ate 212 (" +
-                                                     aux_dscriti1 + ")".
-                       END.     
-                      
-              END.  /*  Tipo de  Registro  Q   */
-         ELSE
-         IF   SUBSTR(aux_setlinha,14,01) <> "S"  THEN
-              DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-                  
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 3
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.seqdetal = SUBSTR(aux_setlinha,09,05) 
-                         tt-rejeita.dscritic = "(" + SUBSTR(aux_setlinha,14,01)
-                                            + ")" +
-                                            "Este tipo de Registro nao eh" + 
-                                            " tratado.".
-              END.
-              
-      END.  /*    Fim do While True   */
-      
-      /*******************************
-      /* Trailer do Lote */ 
-                   
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-      **********************************************/         
-      ASSIGN aux_contalin = aux_contalin + 1.
-      
-      IF   SUBSTRING(aux_setlinha,08,01) <> "5"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               aux_cdcritic = 468.
-               RUN busca_critica(INPUT  aux_cdcritic
-                                ,OUTPUT aux_dscritic).
-         
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 8 ate 8 (" +
-                                         SUBSTRING(aux_dscritic,
-                                         R-INDEX(aux_dscritic,"-") + 2)
-                                         + ")".
-           END.
-           
-      /* Qtd. registros do lote */ 
-      IF   INT(SUBSTR(aux_setlinha,18,06)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 23 " +  
-                                       "(Informar Qtd. de registros no lote)".
-
-           END.
-           
-      /* Qtd. titulos em cobranca */ 
-      IF   INT(SUBSTR(aux_setlinha,24,06)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 24 ate 29 " +  
-                                     "(Informar Qtd. de titulos em cobranca)".
-
-           END.
-
-      /* Vlr. total dos titulos em carteira */ 
-      IF   DEC(SUBSTR(aux_setlinha,30,17)) = 0  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 30 ate 46 " +  
-                                         "(Informar Vlr. total dos titulos)".
-
-           END.
-           
-
-
-      /*****************************************************
-                      TRAILER DO ARQUIVO     
-      ******************************************************/
-      
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-      
-      ASSIGN aux_contalin = aux_contalin + 1.
-      
-      IF   SUBSTRING(aux_setlinha,04,04) <> "9999"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-                                       
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic =
-                       "Posicao: 4 ate 7 (Lote do servico" + 
-                                         " deve ser 9999)".
-           END.
-      
-      IF   SUBSTRING(aux_setlinha,08,01) <> "9"  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic =
-                       "Posicao: 8 ate 8 (Tipo de registro" +
-                                         " deve ser 9)".
-           END.           
-           
-      IF   SUBSTRING(aux_setlinha,09,09) <> ""  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 9 ate 17 (" +
-                                         "Preencher com brancos)".
-           
-           END.
-
-      /* Qtd. Lotes do arquivo */
-      IF   SUBSTR(aux_setlinha,18,6) <> "000001"  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 18 ate 23 (" +
-                                         "Qtd. de Lotes do arquivo eh 0001)".
-           END.
-           
-      IF   INT(SUBSTRING(aux_setlinha,24,06)) <> aux_contalin  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 24 ate 29 " +
-                         "(Quantidade de registros do arquivo esta errada" + 
-                         " => " + STRING(aux_contalin,"999999") + ")".
-               
-           END.
-
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,30,6)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 30 ate 35 (" +
-                                         aux_dscriti1 + ")".           
-           END.
-           
-      LEAVE.
-       
-   END.  /*   Fim do for each   */
-                                                            
-   INPUT STREAM str_3 CLOSE.
-
-   ASSIGN aux_contaerr = 0.
-   
-   /*******  incluir cabecalhos dos arquivos ********/
-   FOR EACH crabrej BREAK BY crabrej.tpcritic
-                            BY crabrej.cdseqcri:
-      
-       ASSIGN aux_contaerr = aux_contaerr + 1.
- 
-       IF   FIRST-OF(crabrej.tpcritic)  THEN
-            DO:
-                IF   crabrej.tpcritic = 1  THEN
-                     ASSIGN aux_dslocali = "Header do Arquivo".
-                ELSE
-                IF   crabrej.tpcritic = 2  THEN
-                     ASSIGN aux_dslocali = "Header do Lote".
-                ELSE
-                IF   crabrej.tpcritic = 3  THEN
-                     ASSIGN aux_dslocali = "Detalhe do Arquivo".
-                ELSE
-                IF   crabrej.tpcritic = 4  THEN
-                     ASSIGN aux_dslocali = "Trailer do Lote".
-                ELSE
-                     ASSIGN aux_dslocali = "Trailer do Arquivo".
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = tt-rejeita.tpcritic
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = "==>  " + aux_dslocali.
-                       
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               ASSIGN crabrej.cdseqcri = aux_contaerr.         
-            END.
-       ELSE
-            ASSIGN crabrej.cdseqcri = aux_contaerr.
-   END.
-
-END PROCEDURE.   /*  Fim da PROCEDURE p_importa_cnab240_085 */
-
-/***************************************************************************/
-/* CNAB400 - Anderson D. Passig 22/05/2013*/
-/****************************************************************************/
-PROCEDURE p_importa_cnab400_085:
-
-   DEF  INPUT  PARAM p-cdcooper    AS INTEGER                        NO-UNDO.
-   DEF  INPUT  PARAM p-nmarqint    AS CHAR                           NO-UNDO.
-   DEF  OUTPUT PARAM TABLE FOR tt-rejeita.   
-   
-   DEF BUFFER crabcco FOR crapcco.
-   DEF BUFFER crabrej FOR tt-rejeita.
-
-   DEF VAR aux_dslocali AS CHAR                                      NO-UNDO.
-   DEF VAR aux_dscriti1 AS CHAR    FORMAT "x(40)"                    NO-UNDO.
-   DEF VAR aux_dscriti2 AS CHAR    FORMAT "x(40)"                    NO-UNDO.
-   
-   DEF VAR aux_nmarquiv AS CHAR                                      NO-UNDO.
-   DEF VAR aux_setlinha AS CHAR    FORMAT "x(400)"                   NO-UNDO.
-   DEF VAR aux_flgfirst AS LOGICAL                                   NO-UNDO.
-   DEF VAR aux_nmendter AS CHAR                                      NO-UNDO.
-   DEF VAR aux_nmfisico AS CHAR                                      NO-UNDO.
-   
-   DEF VAR aux_cdagenci AS INT                                       NO-UNDO.
-   
-   DEF VAR aux_dsnosnum AS CHARACTER                                 NO-UNDO.
-   DEF VAR aux_flgutceb AS LOGICAL                                   NO-UNDO.
-      
-   DEF VAR rel_nrmodulo AS INT     FORMAT "9"                        NO-UNDO.
-
-   DEF VAR aux_erronume AS LOGICAL                               NO-UNDO.
-   DEF VAR aux_nmprimtl AS CHAR                                  NO-UNDO.
-   DEF VAR aux_nmarqimp AS CHAR                                  NO-UNDO.
-
-   DEF VAR aux_nrcnvcob AS INT                                   NO-UNDO.
-   DEF VAR aux_nrdconta AS INT                                   NO-UNDO.
-   DEF VAR aux_dsdoccop LIKE crapcob.dsdoccop                    NO-UNDO.
-   DEF VAR aux_contaerr AS INT                                   NO-UNDO.
-   DEF VAR aux_contalin AS INT                                   NO-UNDO.
-   DEF VAR aux_cdcritic AS INT     FORMAT "zz9"              NO-UNDO.
-   DEF VAR aux_dscritic AS CHAR    FORMAT "x(40)"            NO-UNDO.
-   
-   EMPTY TEMP-TABLE tt-rejeita.
-
-   ASSIGN aux_contaerr = 0
-          aux_contalin = 0
-          aux_dscriti1 = "Informar valores numericos"
-          aux_dscriti2 = "Deve ser campo CARACTER"
-          aux_flgfirst = TRUE.
-
-   IF SEARCH(p-nmarqint) = ? THEN
-   DO:
-       MESSAGE "Arquivo nao encontrado".
-       ASSIGN aux_contaerr = aux_contaerr + 1.
-       CREATE tt-rejeita.
-       ASSIGN tt-rejeita.tpcritic = 1
-              tt-rejeita.nrlinseq = "99999"
-              tt-rejeita.cdseqcri = aux_contaerr
-              tt-rejeita.dscritic = "Arquivo nao encontrado".
-
-       RETURN "NOK".
-   END.
-   
-   INPUT STREAM str_3 FROM VALUE(p-nmarqint)  NO-ECHO.
-   
-   DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
-
-      /**********************************************
-               HEADER DO ARQUIVO
-      ***********************************************/
-
-      IMPORT STREAM str_3 UNFORMATTED aux_setlinha. 
-      
-      ASSIGN aux_flgfirst = FALSE  
-             aux_contalin = aux_contalin + 1.       
-
-      /* Inicio */
-      
-      IF   SUBSTR(aux_setlinha,77,03) <> "085" THEN  /* Cod. Banco na compen. */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 77 ate 94 (" +
-                                         "Codigo do banco deve ser 085)".        
-           END.
-
-      
-       IF   SUBSTR(aux_setlinha,01,01) <> "0" THEN   /* Tipo de registro */ 
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 1 ate 1 (" + 
-                                     "Tipo de registro deve ser 0)".
-       END.
-       
-       
-        /* Tipo de operação - Fixo */
-       /*IF   SUBSTR(aux_setlinha,02,01) <> "1" THEN    
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 2 ate 2 (" +
-                                     "Tipo de operacao deve ser 1)".
-       END.*/
-       
-
-       IF   SUBSTR(aux_setlinha,03,07) <> "REMESSA" THEN   /* Tipo de operação - REMESSA*/
-       /* Pode conter a Palavra Teste no tipo de operação, mas até o momento não estou considerando a mesma. */
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 3 ate 9 (" +
-                                     "Tipo de operacao deve ser REMESSA)".
-       END.
-       
-       /* Identificacao do tipo de servico - Fixo "01" */ 
-       /*IF   SUBSTR(aux_setlinha,10,01) <> "01" THEN   
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 10 ate 11 (" +
-                                     "Tipo de servico deve ser 01)".
-       END.*/
-           
-       IF   SUBSTR(aux_setlinha,12,08) <> "COBRANCA" THEN   /* Tipo de Servico */ 
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 12 ate 19 (" +
-                                     "Tipo de servico deve ser COBRANCA)".
-       END.
-       
-
-       IF   f_numericos(INPUT SUBSTR(aux_setlinha,27,05)) = FALSE THEN  /* Agencia */ 
-            DO:
-                ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = 1
-                       tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = "Posicao: 27 ate 30 (" +
-                                      "Informar agencia mantenedora da conta)".
-
-            END.
-  
-      /* Conta Corrente */ 
-      IF   f_numericos(INPUT SUBSTR(aux_setlinha,32,09)) = FALSE  THEN  
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 32 ate 39 (" +
-                                     "Conta corrente Beneficiario nao informada".
-
-           END.
-
-      IF   SUBSTR(aux_setlinha,41,06) <> "000000"  THEN  /* Complemento do registro */ 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 1
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 41 ate 46 (" +
-                                          "Complemento registro deve ser 000000".
-
-                END.
-
-
-       
-       IF  TRIM(SUBSTR(aux_setlinha,47,30)) = "" THEN   /* Nome cedente */ 
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 47 ate 76 (" +
-                                     "Nome Beneficiario nao informado)".
-       END.     
-
-       /* Data Gravacao */
-       IF   f_EhData(INPUT SUBSTRING(aux_setlinha,95,06),
-                     INPUT "DDMMAA") = FALSE  THEN 
-            DO:
-                ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = 1
-                       tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = "Posicao: 95 ate 100 (" +
-                                          aux_dscriti1 + ")".
-            END.
-       
-       /* Sequencial da remessa */
-       IF  f_numericos(INPUT SUBSTR(aux_setlinha,101,07)) = FALSE THEN    
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 101 ate 107 (" +
-                                     "Sequencial da remessa nao informado)".
-       END.
-
-       
-       IF  TRIM(SUBSTR(aux_setlinha,108,22)) <> "" THEN   /* Nome cedente */ 
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 108 ate 129 (" +
-                                     "Complemento registro deve ser BRANCOS)".
-       END.
-
-       /* Complemento Registro - BRANCOS */ 
-       /*IF  SUBSTR(aux_setlinha,137,258) <> "" THEN   
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 137 ate 394 (" +
-                                     "Complemento registro deve ser BRANCOS)".
-       END.*/
-
-       
-       /* Convenio */
-       IF  f_numericos(INPUT SUBSTR(aux_setlinha,130,07)) = FALSE THEN    
-       DO: 
-           ASSIGN aux_contaerr = aux_contaerr + 1. 
-           
-           CREATE tt-rejeita.
-           ASSIGN tt-rejeita.tpcritic = 1
-                  tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                  tt-rejeita.cdseqcri = aux_contaerr
-                  tt-rejeita.dscritic = "Posicao: 130 ate 136 (" +
-                                     "Convenio nao informado)".
-       END.
-
-
-      /* Convenio */
-      FIND  crapcco WHERE 
-            crapcco.cdcooper = p-cdcooper                       AND
-            crapcco.cddbanco = 085                              AND
-            crapcco.dsorgarq = "IMPRESSO PELO SOFTWARE"         AND
-            crapcco.nrconven = INT(SUBSTR(aux_setlinha,130,07))   /* Convenio */
-            NO-LOCK NO-ERROR.
-
-      IF   NOT AVAILABLE crapcco  THEN
-           DO:
-                aux_cdcritic = 563.
-                RUN busca_critica(INPUT  aux_cdcritic
-                                 ,OUTPUT aux_dscritic).
-                                 
-                ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = 1
-                       tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = 
-                               "Posicao: 130 ate 136 (" +
-                                SUBSTRING(aux_dscritic,
-                                         R-INDEX(aux_dscritic,"-") + 2)
-                                + ")".
-           END.
-      ELSE
-           ASSIGN aux_flgutceb = crapcco.flgutceb /*Utiliza sequencia CADCEB*/
-                  aux_nrcnvcob = crapcco.nrconven.
-
-
-       FIND  crapass WHERE
-             crapass.cdcooper = p-cdcooper   AND
-             /* Conta do cooperado deve constar no arquivo */ 
-             crapass.nrdconta = INT(SUBSTR(aux_setlinha,32,09))
-             NO-LOCK NO-ERROR.
-    
-       IF  NOT AVAIL crapass THEN
-           DO:
-    
-             ASSIGN aux_contaerr = aux_contaerr + 1.
-    
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 32 ate 40 (" +
-                                       "Conta do cooperado nao cadastrada)".
-           END.
-       ELSE 
-           ASSIGN aux_nrdconta = crapass.nrdconta
-                  aux_nmprimtl = crapass.nmprimtl.
-    
-    
-           /*  Possui convenio CECRED */
-           FIND crapceb WHERE 
-                crapceb.cdcooper = p-cdcooper   AND
-                crapceb.nrdconta = aux_nrdconta AND
-                crapceb.nrconven = aux_nrcnvcob
-                NO-LOCK NO-ERROR.
-    
-           IF  NOT AVAILABLE crapceb  THEN
-               DO:
-                   ASSIGN aux_contaerr = aux_contaerr + 1.
-    
-                   CREATE tt-rejeita.
-                   ASSIGN tt-rejeita.tpcritic = 1
-                          tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                          tt-rejeita.cdseqcri = aux_contaerr
-                          tt-rejeita.dscritic = "Posicao: 33 ate 52 (" +
-                                             "Convenio de cobranca nao habilitado)".
-               END.
-           ELSE
-               IF  crapceb.insitceb <> 1 THEN 
-                   DO:
-                       ASSIGN aux_contaerr = aux_contaerr + 1.
-    
-                       CREATE tt-rejeita.
-                       ASSIGN tt-rejeita.tpcritic = 1
-                              tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                              tt-rejeita.cdseqcri = aux_contaerr
-                              tt-rejeita.dscritic = "Posicao: 33 ate 52 (" +
-                                                 "Convenio de cobranca inativo)".
-                   END.
-    
-       
-           LEAVE.
-
-       END. /* fim do while */
-               
-       /* Fim Header */
-                  
-      /*****************************************************
-                         DETALHE
-      ******************************************************/
-      
-      DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-
-         IMPORT STREAM str_3 UNFORMATTED aux_setlinha.
-
-         /* Inicio */
-
-            /* Se acabou detalhe */ 
-         IF   SUBSTR(aux_setlinha,01,01) <> "7" AND 
-              SUBSTR(aux_setlinha,01,01) <> "1" AND 
-              SUBSTR(aux_setlinha,01,01) <> "5" THEN 
-              LEAVE.
-
-         /* se registro detalhe tipo 5, eh opcional - sera tratado no futuro */
-         IF  SUBSTR(aux_setlinha,01,01) = "5" THEN
-             NEXT.
-         
-         ASSIGN aux_contalin = aux_contalin + 1.
-                              
-                  
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,02,01)) = FALSE THEN   /* Tipo Inscrição Cedente */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 02 ate 03 (" +
-                                       "Tipo Inscricao Cendente nao informada)".
-         END.
-
-         
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,04,14)) = FALSE THEN   /* CPF/CNPJ Cedente */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 4 ate 17 (" +
-                                       "CPF/CNPJ Beneficiario nao informado)".
-         END.
-
-         
-         /* Prefixo Agencia  
-         IF   INT(SUBSTR(aux_setlinha,18,04)) = 0 THEN   
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 18 ate 21 (" +
-                                       "Prefixo Agencia nao informado)".
-         END. */
-
-         /* Numero da conta corrente */ 
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,23,09)) = FALSE THEN   
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 23 ate 30 (" +
-                                       "Conta corrente nao informada)".
-         END.
-
-         
-         /* Controle da empresa nao eh obrigatorio */
-         /*IF   SUBSTR(aux_setlinha,39,25) = "" THEN   /* Controle da enpresa */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 39 ate 63 (" +
-                                       "Controle da empresa nao informado)". /* verificar a viabilidade na consistencia */
-         END.*/
-
-         
-         /* Nosso Numero */ 
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,64,17)) = FALSE THEN   
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 64 ate 80 (" +
-                                       "Nosso numero nao informado)".
-         END.
-
-         /* Numero da prestacao é fixo no CNAB400 = "00"
-         IF   INT(SUBSTR(aux_setlinha,81,02)) <> 0 THEN   /* Numero da prestacao */  /* Duvida */
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 81 ate 82 (" +
-                                       "Numero da prestacao deve ser 00)".
-         END.*/
-         
-         /* Nao eh necessário criticar sacador/avalista
-         IF   SUBSTR(aux_setlinha,88,01) = " " THEN   /* Indicador Sacador Avalista */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 88 (" +
-                                       "Indicador de Sacador/Avalista não informado".
-         END. */
-       
-         /* Nao eh necessario criticar variacao da carteira 
-         IF   INT(SUBSTR(aux_setlinha,92,03)) = 0 THEN   /* variacao da carteira */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 92 ate 94 (" +
-                                       "Complemento registro deve ser BRANCOS".
-         END. */
-
-         
-         /*IF   SUBSTR(aux_setlinha,102,05)) <> "     " THEN   /* Tipo de cobranca */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 102 ate 106 (" +
-                                       "Tpo cobranca deve ser informado".
-         END.
-
-         
-         IF   INT(SUBSTR(aux_setlinha,107,02)) = 0 THEN   /* Carteira de cobranca */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 107 ate 108 (" +
-                                       "Carteira de cobranca deve ser informado".
-         END.*/
-
-         
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,109,02)) = FALSE THEN  /* Comando/Instrucao */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 109 ate 110 (" +
-                                       "Comando deve ser informado".
-         END.
-         
-         
-         IF  TRIM(SUBSTR(aux_setlinha,111,20)) = "" THEN   /* Numero do titulo */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 111 ate 120 (" +
-                                       "Seu numero do titulo deve ser informado".
-         END.
-
-         IF  f_EhData(INPUT SUBSTR(aux_setlinha,121,06),
-                      INPUT "DDMMAA") = FALSE THEN /* Data de vencimento */ 
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 121 ate 126 (" +
-                                       "Data de vencimento invalida".
-         END.
-         
-         /* Valor do titulo */ 
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,127,13)) = FALSE THEN   
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 127 ate 139 (" +
-                                       "Valor Titulo deve ser informada)".
-         END.
-         
-         /* Especie do titulo */ 
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,148,02)) = FALSE THEN   
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 148 ate 149 (" +
-                                       "Especie titulo deve ser informada)".
-         END.
-         
-
-         /* Data Emissao */ 
-         IF  f_EhData(INPUT SUBSTR(aux_setlinha,151,06),
-                      INPUT "DDMMAA") = FALSE THEN   
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 151 ate 156 (" +
-                                       "Data de emissao deve ser informada)".
-         END.
-
-
-         /* Instrução codificada 1 */
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,157,02)) = FALSE THEN    
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 157 ate 158 (" +
-                                       "Instrucao codificada deve ser informada)".
-         END.
-
-         /* Instrução codificada 2 */ 
-         IF  f_numericos(INPUT SUBSTR(aux_setlinha,159,02)) = FALSE THEN   
-         DO: 
-             ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-             CREATE tt-rejeita.
-             ASSIGN tt-rejeita.tpcritic = 1
-                    tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                    tt-rejeita.cdseqcri = aux_contaerr
-                    tt-rejeita.dscritic = "Posicao: 159 ate 160 (" +
-                                       "Instrucao codificada deve ser informada)".
-         END. 
-
-         /* Juros Mora */
-         IF  f_numericos(INPUT SUBSTRING(aux_setlinha,161,13)) = FALSE THEN
-             DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 161 ate 173 (" +
-                                            "Juros/Mora invalido" + ")".
-             END.
-
-         /* Data Limite p/ desconto */
-         /*IF  f_(INPUT SUBSTRING(aux_setlinha,174,06)) = FALSE THEN
-              DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 3
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                       /*  tt-rejeita.seqdetal =
-                          SUBSTR(aux_setlinha,09,05) REVER */ 
-                         tt-rejeita.dscritic = "Posicao: 174 ate 179 (" +
-                                            aux_dscriti1 + ")".
-              END.*/
-         
-
-         /* Valor de desconto */
-         IF  f_numericos(INPUT SUBSTRING(aux_setlinha,180,13)) = FALSE THEN
-              DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 180 ate 192 (" +
-                                            "Valor de desconto invalido)".
-              END.
-       
-
-         /* Valor de Abatimento */
-         IF   f_numericos(INPUT SUBSTRING(aux_setlinha,206,13)) = FALSE  
-                THEN
-              DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 206 ate 218 (" +
-                                            "Valor de abatimento invalido)".
-              END.
-
-         /* Tipo de inscricao do sacado */ 
-         IF   SUBSTR(aux_setlinha,219,02) <> "01" AND
-              SUBSTR(aux_setlinha,219,02) <> "02" THEN   
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 219 ate 220 (" +
-                                            "Tipo inscricao do Pagador invalido".
-              END.
-
-         /* CPF/CNPJ sacado */ 
-         IF   f_numericos(INPUT SUBSTR(aux_setlinha,221,14)) = FALSE THEN   
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 221 ate 234 (" +
-                                            "CPF/CNPJ do Pagador deve ser informada".
-              END.
-
-         IF   TRIM(SUBSTR(aux_setlinha,235,37)) = "" THEN   /* Nome do sacado */ 
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 235 ate 271 (" +
-                                            "Nome Pagador deve ser informado".
-              END.
-         
-         /* Endereco do sacado */
-         IF   TRIM(SUBSTR(aux_setlinha,275,40)) = "" THEN   
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 275 ate 314 (" +
-                                            "Endereco Pagador deve ser informado".
-              END.
-                      
-         
-         IF   TRIM(SUBSTR(aux_setlinha,315,12)) = "" THEN   /* Bairro do sacado */ 
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 315 ate 326 (" +
-                                            "Bairro Pagador deve ser informado".
-              END.
-              
-
-         IF   f_numericos(INPUT SUBSTR(aux_setlinha,327,08)) = FALSE THEN   /* CEP endereco sacado */ 
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 327 ate 334 (" +
-                                            "CEP endereco Pagador deve ser informada".
-              END.
-         
-         
-         IF   TRIM(SUBSTR(aux_setlinha,335,15)) = "" THEN   /* Cidade do sacado */ 
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 335 ate 349 (" +
-                                            "Cidade Pagador deve ser informado".
-              END.
-
-         
-         /* UF do sacado */
-         IF   TRIM(SUBSTR(aux_setlinha,350,02)) = "" THEN    
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 350 ate 351 (" +
-                                            "UF da cidade Pagador deve ser informado".
-              END.
-
-         
-         /* Observacao ou Sacador Avalista */
-         /* Se Sacador/Avalista, (pos 88 = "A"), entao validar */
-         /*IF   TRIM(SUBSTR(aux_setlinha,352,40)) = "" THEN   /* Observação */ 
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 352 ate 391 (" +
-                                            "Observacao sacado deve ser informado".
-              END.*/
-         
-         /* Qtdade dias protesto*/ 
-         /*IF   TRIM(SUBSTR(aux_setlinha,392,01)) = "" THEN   
-              DO: 
-                  ASSIGN aux_contaerr = aux_contaerr + 1. 
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 392 ate 393 (" +
-                                            "Qtde dias Protesto deve ser informado".
-              END.*/
-         
-         IF   f_numericos(INPUT SUBSTRING(aux_setlinha,395,06)) = FALSE  /* Sequencial */
-                THEN
-              DO:
-                  ASSIGN aux_contaerr = aux_contaerr + 1.
-
-                  CREATE tt-rejeita.
-                  ASSIGN tt-rejeita.tpcritic = 1
-                         tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                         tt-rejeita.cdseqcri = aux_contaerr
-                         tt-rejeita.dscritic = "Posicao: 395 ate 400 (" +
-                                            "Numero sequencial invalido)".
-              END.
-
-      END.  /*    Fim do While True   */
-      
-
-      /***********************/
-      /* Trailer de Arquivo  */
-      /***********************/
-
-      ASSIGN aux_contalin = aux_contalin + 1.
-      
-      IF   SUBSTRING(aux_setlinha,01,01) <> "9"  THEN  /* Identificacao do registro de trailler */
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               aux_cdcritic = 468.
-               RUN busca_critica(INPUT  aux_cdcritic
-                                ,OUTPUT aux_dscritic).
-         
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 4
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 1 (" +
-                                         SUBSTRING(aux_dscritic,
-                                         R-INDEX(aux_dscritic,"-") + 2)
-                                         + ")".
-           END.
-      
-           IF   SUBSTRING(aux_setlinha,02,393) <> ""  THEN 
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1. 
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 2 ate 394 (" +
-                                         "Preencher com brancos)".
-           
-           END.
-
-
-      IF   f_numericos(INPUT SUBSTRING(aux_setlinha,395,6)) = FALSE  THEN
-           DO:
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               
-               CREATE tt-rejeita.
-               ASSIGN tt-rejeita.tpcritic = 5
-                      tt-rejeita.nrlinseq = STRING(aux_contalin,"99999")
-                      tt-rejeita.cdseqcri = aux_contaerr
-                      tt-rejeita.dscritic = "Posicao: 395 ate 400 (" +
-                                         aux_dscriti1 + ")".           
-           END.
-                                                            
-   INPUT STREAM str_3 CLOSE.
-
-   ASSIGN aux_contaerr = 0.
-   
-   /*******  incluir cabecalhos dos arquivos ********/
-   FOR EACH crabrej BREAK BY crabrej.tpcritic
-                            BY crabrej.cdseqcri:
-      
-       ASSIGN aux_contaerr = aux_contaerr + 1.
- 
-       IF   FIRST-OF(crabrej.tpcritic)  THEN
-            DO:
-                IF   crabrej.tpcritic = 1  THEN
-                     ASSIGN aux_dslocali = "Header do Arquivo".
-                ELSE
-                     ASSIGN aux_dslocali = "Trailer do Arquivo".
-
-                CREATE tt-rejeita.
-                ASSIGN tt-rejeita.tpcritic = tt-rejeita.tpcritic
-                       tt-rejeita.cdseqcri = aux_contaerr
-                       tt-rejeita.dscritic = "==>  " + aux_dslocali.
-                       
-               ASSIGN aux_contaerr = aux_contaerr + 1.
-               ASSIGN crabrej.cdseqcri = aux_contaerr.         
-            END.
-       ELSE
-            ASSIGN crabrej.cdseqcri = aux_contaerr.
-   END.
-
-END PROCEDURE.   /*  Fim da PROCEDURE p_importa_cnab400_085 */
-
-
 /***************************************************************************/
 
 PROCEDURE busca_critica.
@@ -11066,6 +7187,7 @@ PROCEDURE gera_relatorio:
     DEF  INPUT PARAM par_cdagencx AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_inserasa AS INTE                           NO-UNDO. 
+    DEF  INPUT PARAM par_cddemail AS INTE                           NO-UNDO.
 
     DEF  OUTPUT PARAM aux_nmarqimp AS CHAR                          NO-UNDO.
     DEF  OUTPUT PARAM aux_nmarqpdf AS CHAR                          NO-UNDO.
@@ -11085,6 +7207,8 @@ PROCEDURE gera_relatorio:
     DEF VAR aux_flgregis AS LOGI                                    NO-UNDO.
     DEF VAR aux_cdstatus AS CHAR                                    NO-UNDO.
     DEF VAR aux_tpconsul AS INTE                                    NO-UNDO.
+    DEF VAR aux_direcoop AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmarqzip AS CHAR                                    NO-UNDO.
 
     Imprime: DO ON ERROR UNDO Imprime, LEAVE Imprime:
         EMPTY TEMP-TABLE tt-erro.
@@ -11247,7 +7371,7 @@ PROCEDURE gera_relatorio:
                                  INPUT par_inserasa,
                                  INPUT TABLE tt-consulta-blt).
 
-            WHEN 6 THEN
+            WHEN 6 THEN DO:            
                 RUN proc_crrl601 IN h-b1wgen0010i
                                ( INPUT par_cdcooper,
                                  INPUT par_dtmvtolt,
@@ -11256,6 +7380,92 @@ PROCEDURE gera_relatorio:
                                  INPUT aux_inidtmvt,
                                  INPUT aux_fimdtmvt,
                                  INPUT TABLE tt-consulta-blt).
+                                 
+                IF  par_idorigem = 3  THEN  /** Internet Bank **/
+                    DO:
+                        /*** Buscar diretorio root da cooperativa pelo oracle para 
+                             funcionar corretamente em ambiente de desenvolvimento/homologacao  ***/
+                        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+                                    
+                        RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
+                                           (INPUT "CRED",           /* pr_nmsistem */
+                                            INPUT par_cdcooper,     /* pr_cdcooper */
+                                            INPUT "ROOT_DIRCOOP",  /* pr_cdacesso */
+                                            OUTPUT ""               /* pr_dsvlrprm */
+                                            ).
+                    
+                        CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
+                        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_direcoop = ""
+                               aux_direcoop = pc_param_sistema.pr_dsvlrprm 
+                                              WHEN pc_param_sistema.pr_dsvlrprm <> ?.                       
+                        /** Fim Busca **/                        
+
+                        FOR FIRST crapcem
+                           FIELDS (dsdemail)
+                            WHERE crapcem.cdcooper = par_cdcooper
+                              AND crapcem.nrdconta = par_nrdconta
+                              AND crapcem.idseqttl = 1
+                              AND crapcem.cddemail = par_cddemail
+                              NO-LOCK:
+                              
+                          IF  NOT VALID-HANDLE(h-b1wgen0024) THEN
+                              RUN sistema/generico/procedures/b1wgen0024.p
+                                  PERSISTENT SET h-b1wgen0024.
+
+                          IF  NOT VALID-HANDLE(h-b1wgen0024)  THEN
+                              DO:
+                                  ASSIGN aux_dscritic = "Nao foi possivel gerar o relatorio.".
+                                  LEAVE Imprime.
+                              END.
+
+                          RUN gera-pdf-impressao IN h-b1wgen0024 
+                              ( INPUT aux_nmarqimp,
+                                INPUT aux_nmarqpdf).
+
+                          IF  VALID-HANDLE(h-b1wgen0024)  THEN
+                              DELETE PROCEDURE h-b1wgen0024.
+
+                          IF  RETURN-VALUE <> "OK" THEN
+                              RETURN "NOK".
+                        
+                          ASSIGN aux_nmarqzip = REPLACE(aux_nmarqpdf, ".pdf", ".zip").
+
+                          UNIX SILENT VALUE("zipcecred.pl -silent -add " +
+                                            aux_nmarqzip + " " + aux_nmarqpdf).
+                                                            
+                          ASSIGN aux_nmarqzip = REPLACE(aux_nmarqzip, "/usr/coop/", aux_direcoop).
+
+                           /* Enviar e-mail informando para a empresa a falta de saldo. */
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+                           /* Efetuar a chamada a rotina Oracle */
+                           RUN STORED-PROCEDURE pc_solicita_email_prog aux_handproc = PROC-HANDLE NO-ERROR
+                                                             (INPUT  par_cdcooper        /* par_cdcooper         */
+                                                             ,INPUT  ""                  /* par_cdprogra         */
+                                                             ,INPUT  crapcem.dsdemail    /* par_des_destino      */
+                                                             ,INPUT  "ARQUIVO DE MOVIMENTO DE COBRANÇA COM REGISTRO"     /* par_des_assunto      */
+                                                             ,INPUT  ""                  /* par_des_corpo        */
+                                                             ,INPUT  aux_nmarqzip        /* par_des_anexo        */
+                                                             ,INPUT  "S"                 /* par_flg_remove_anex  */
+                                                             ,INPUT  "N"                 /* par_flg_remete_coop  */                                                   
+                                                             ,INPUT  ""                  /* PR_DES_NOME_REPLY */
+                                                             ,INPUT  ""                  /* PR_DES_EMAIL_REPLY */
+                                                             ,INPUT  "N"                 /* par_flg_log_batch    */
+                                                             ,INPUT  "S"                 /* par_flg_enviar       */
+                                                             ,OUTPUT "").      /* par_des_erro         */
+                                                             
+                          /* Fechar o procedimento para buscarmos o resultado */ 
+                          CLOSE STORED-PROC pc_solicita_email_prog
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                          
+                          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        END.
+                              
+                    END.
+            END.
         END CASE.
 
         IF  VALID-HANDLE(h-b1wgen0010i) THEN
@@ -12114,5 +8324,132 @@ PROCEDURE verifica_sit_serasa:
     END.
   END CASE.
 
-
 END PROCEDURE.
+
+PROCEDURE calcula_multa_juros_boleto:
+    DEF INPUT PARAM par_cdcooper             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_nrdconta             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_dtvencto             AS DATE              NO-UNDO.
+    DEF INPUT PARAM par_dtmvtocd             AS DATE              NO-UNDO.
+    DEF INPUT PARAM par_vlabatim             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_vltitulo             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_vlrmulta             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_vljurdia             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_cdmensag             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_vldescto             AS DECI              NO-UNDO.
+    DEF INPUT PARAM par_tpdmulta             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_tpjurmor             AS INTE              NO-UNDO.
+    DEF INPUT PARAM par_flag2via             AS LOGI              NO-UNDO.
+    DEF OUTPUT PARAM par_dtvencut            AS DATE              NO-UNDO.
+    DEF OUTPUT PARAM par_vltituut            AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_vlmormut            AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_dtvencut_atualizado AS DATE              NO-UNDO.
+    DEF OUTPUT PARAM par_vltituut_atualizado AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_vlmormut_atualizado AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_vldescut            AS DECI              NO-UNDO.
+    DEF OUTPUT PARAM par_cdmensut            AS INTE              NO-UNDO.
+    DEF OUTPUT PARAM par_cridatut            AS LOGI              NO-UNDO.
+                                             
+    DEF VAR h-b2crap14                       AS HANDLE            NO-UNDO.
+    DEF VAR aux_critdata                     AS LOGI              NO-UNDO.
+    DEF VAR aux_vlrjuros                     AS DECI              NO-UNDO.
+    DEF VAR aux_vlrmulta                     AS DECI              NO-UNDO.
+    DEF VAR aux_vldescto                     AS DECI              NO-UNDO.
+    DEF VAR aux_vlabatim                     AS DECI              NO-UNDO.
+    DEF VAR aux_vlfatura                     AS DECI              NO-UNDO.
+    DEF VAR aux_dscritic                     AS CHAR              NO-UNDO.
+   
+    /* rotina para criticar data de vencimento */
+    RUN sistema/siscaixa/web/dbo/b2crap14.p PERSISTENT SET h-b2crap14.
+    
+    RUN verifica-vencimento-titulo IN h-b2crap14(INPUT par_cdcooper, 
+                                                 INPUT 90 /*internet*/,
+                                                 INPUT par_dtmvtocd,
+                                                 INPUT par_dtvencto,
+                                                OUTPUT aux_critdata).
+    DELETE PROCEDURE h-b2crap14. 
+    
+    ASSIGN aux_vldescto = 0
+           aux_vlabatim = par_vlabatim
+           aux_vlfatura = par_vltitulo.
+
+    /* abatimento deve ser calculado antes dos juros/multa */
+    IF par_vlabatim > 0 THEN
+       ASSIGN aux_vlfatura = aux_vlfatura - par_vlabatim.
+   
+    /* verifica se o titulo esta vencido */
+    IF  aux_critdata  THEN
+    DO: 
+        /* MULTA PARA ATRASO */
+        IF  par_tpdmulta = 1  THEN /* Valor */
+            ASSIGN aux_vlrmulta = par_vlrmulta.
+        ELSE
+        IF  par_tpdmulta = 2  THEN /* % de multa */
+            ASSIGN aux_vlrmulta = ROUND( (par_vlrmulta * aux_vlfatura) / 100 , 2).
+
+        /* MORA PARA ATRASO */
+        IF  par_tpjurmor = 1  THEN /* dias */
+            ASSIGN aux_vlrjuros =  par_vljurdia * 
+                                  (par_dtmvtocd - par_dtvencto). 
+        ELSE
+        IF  par_tpjurmor = 2  THEN /* mes */
+            ASSIGN aux_vlrjuros = ROUND( (aux_vlfatura * 
+                                  ((par_vljurdia / 100) / 30) * 
+                                  (par_dtmvtocd - par_dtvencto)), 2). 
+    
+        /* se concede ate o vencimento */
+        IF  par_cdmensag = 1 OR
+            par_cdmensag = 0 THEN
+            ASSIGN par_vldescut = 0
+                   par_cdmensut = 0
+                   aux_vldescto = 0.
+
+    END.
+    ELSE
+    DO:       
+        /* se concede ate o vencto, ja calculou */
+        IF  par_cdmensag <> 2  THEN
+            ASSIGN aux_vldescto = par_vldescto
+                   aux_vlfatura = aux_vlfatura - aux_vldescto.
+    END.
+
+    /* se concede apos o vencimento */
+    IF  par_cdmensag = 2  THEN
+        ASSIGN aux_vldescto = par_vldescto
+               aux_vlfatura = aux_vlfatura - aux_vldescto.
+
+
+    /* valor final da tarifa */
+    ASSIGN aux_vlfatura = aux_vlfatura + aux_vlrmulta + aux_vlrjuros.
+
+    IF  par_flag2via  THEN
+        DO:
+            ASSIGN par_dtvencut = (IF aux_critdata THEN 
+                                       par_dtmvtocd 
+                                   ELSE
+                                       par_dtvencto)
+                   par_vltituut = aux_vlfatura
+                   par_vlmormut = (aux_vlrmulta + aux_vlrjuros).
+           
+        END.
+    ELSE 
+        DO:
+            ASSIGN par_dtvencut_atualizado = (IF aux_critdata THEN 
+                                                  par_dtmvtocd  
+                                              ELSE
+                                                  par_dtvencto)
+                   par_vltituut_atualizado = (IF aux_critdata THEN 
+                                                  aux_vlfatura  
+                                              ELSE
+                                                  par_vltitulo)
+                   par_vlmormut_atualizado = (aux_vlrmulta + aux_vlrjuros)      
+                   par_dtvencut = par_dtvencto
+                   par_vltituut = par_vltitulo.
+           
+        END.
+
+    ASSIGN par_cridatut = aux_critdata.
+
+    RETURN "OK".
+END PROCEDURE.
+
