@@ -1893,6 +1893,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     -- Se o contrato não for encontrado
     IF cr_crapepr%NOTFOUND THEN
+      -- Fecha o cursor
+      CLOSE cr_crapepr;
+      
       -- Deve retornar erro de execução
       pr_cdcritic := 0;
       pr_dscritic := 'Contrato '||TRIM(GENE0002.fn_mask_contrato(pr_nrctremp))||
@@ -2143,6 +2146,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     -- Se o acordo não for encontrado
     IF cr_acordo%NOTFOUND THEN
+      -- Fecha o cursor
+      CLOSE cr_acordo;  
+    
       pr_dscritic := 'Acordo número '||pr_nracordo||' não foi encontrado.';
       RAISE vr_exc_erro;
     END IF;
@@ -2156,6 +2162,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         
     -- Se não encontrar registro na CRAPDAT
     IF BTCH0001.cr_crapdat%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE BTCH0001.cr_crapdat;
+    
       pr_dscritic := 'Erro ao buscar datas da cooperativa('||rw_acordo.cdcooper||').';
       RAISE vr_exc_erro;
     END IF;
@@ -2170,6 +2179,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     -- Se não encontrar registro na CRAPASS
     IF cr_crapass%NOTFOUND THEN
+      -- Fecha o cursor
+      CLOSE cr_crapass; 
+    
       pr_dscritic := 'Erro ao buscar dados da conta do cooperado.';
       RAISE vr_exc_erro;
     END IF;
