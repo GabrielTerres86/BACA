@@ -7501,127 +7501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           RAISE vr_exc_erro;
 
       END;
-
-
-      /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
-      FOR i IN 1..100 LOOP
-        BEGIN
-          -- Leitura do lote
-          OPEN cr_craplot_rowid (pr_rowid  => rw_craplot.rowid);
-          FETCH cr_craplot_rowid INTO rw_craplot_rowid;
-          CLOSE cr_craplot_rowid;
-          vr_dscritic := NULL;
-          EXIT;
-        EXCEPTION
-          WHEN OTHERS THEN
-             IF cr_craplot_rowid%ISOPEN THEN
-               CLOSE cr_craplot_rowid;
-             END IF;
-
-
-             -- setar critica caso for o ultimo
-             IF i = 100 THEN
-               vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
-             END IF;
-
-             -- aguardar 0,5 seg. antes de tentar novamente
-             sys.dbms_lock.sleep(0.1);
-
-        END;
-
-      END LOOP;
-
-
-      -- se encontrou erro ao buscar lote, abortar programa
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-
-
-      -- Atualiza o lote na craplot
-      BEGIN
-        UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                          ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                          ,craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + vr_vllantot
-                          ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + vr_vllantot
-        WHERE craplot.ROWID = rw_craplot.ROWID
-        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic:= 0;
-          vr_dscritic := 'Erro ao atualizar tabela craplot. (lote:'||rw_craplot.nrdolote||')'||SQLERRM;
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-
-      END;
-
-
-      -- se for pagemento pela INTERNET deve atualizar o lote referente a
-      -- criação do titulo, estrategia utilizada para diminuir o tempo de lock do lote
-      IF vr_cdagenci = 90 THEN --> INTERNET
-        rw_craplot := NULL;
-        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
-        FOR i IN 1..100 LOOP
-          BEGIN
-            -- Leitura do lote
-            OPEN cr_craplot( pr_cdcooper  => rw_crapcop.cdcooper,
-                             pr_dtmvtolt  => rw_crapdat.dtmvtocd,
-                             pr_cdagenci  => vr_cdagenci,
-                             pr_cdbccxlt  => 11,
-                             pr_nrdolote  => 15900); --> Lote fixo, pois na chamada da CXON0014 as informações estao fixas
-            FETCH cr_craplot INTO rw_craplot;
-            CLOSE cr_craplot;
-            vr_dscritic := NULL;
-            EXIT;
-          EXCEPTION
-            WHEN OTHERS THEN
-              IF cr_craplot%ISOPEN THEN
-                CLOSE cr_craplot;
-              END IF;
-
-
-              -- setar critica caso for o ultimo
-              IF i = 100 THEN
-                vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
-              END IF;
-
-              -- aguardar 0,5 seg. antes de tentar novamente
-              sys.dbms_lock.sleep(0.1);
-
-          END;
-
-        END LOOP;
-
-
-        -- se encontrou erro ao buscar lote, abortar programa
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-
-
-        -- Atualizar lote de criação da Tit, deixado por ultimo para diminuir tempo de lock
-        BEGIN
-          UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                            ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                            ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + pr_vlfatura
-                            ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + pr_vlfatura
-          WHERE craplot.ROWID = rw_craplot.ROWID
-          RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-
-        END;
-
-      END IF; -- IF vr_cdagenci = 90 --INTERNET
-
-
-
+      
       /** ------------------------------------------------------------- **
        ** Monitoracao Pagamentos - Antes de alterar verificar com David **
        ** ------------------------------------------------------------- **
@@ -7638,7 +7518,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        ** - Valor pago for maior ou igual a 700,00 até 2.999,99 será    **
        ** verificado o IP anterior, caso seja diferente, envia email.   **
        ** ------------------------------------------------------------- **/
-
 
       IF vr_cdagenci = 90 AND pr_flgagend = 0 /*false*/ THEN
         --Flag email recebe true
@@ -7943,7 +7822,125 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         END IF;
 
       END IF;
+            
+      -- [INÍCIO DO LOCK DA CRAPLOT]
+      /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+      FOR i IN 1..100 LOOP
+        BEGIN
+          -- Leitura do lote
+          OPEN cr_craplot_rowid (pr_rowid  => rw_craplot.rowid);
+          FETCH cr_craplot_rowid INTO rw_craplot_rowid;
+          CLOSE cr_craplot_rowid;
+          vr_dscritic := NULL;
+          EXIT;
+        EXCEPTION
+          WHEN OTHERS THEN
+             IF cr_craplot_rowid%ISOPEN THEN
+               CLOSE cr_craplot_rowid;
+             END IF;
 
+             -- setar critica caso for o ultimo
+             IF i = 100 THEN
+               vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
+             END IF;
+
+             -- aguardar 0,5 seg. antes de tentar novamente
+             sys.dbms_lock.sleep(0.1);
+
+        END;
+      END LOOP;
+      
+      -- se encontrou erro ao buscar lote, abortar programa
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Atualiza o lote na craplot
+      BEGIN
+        UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                          ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                          ,craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + vr_vllantot
+                          ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + vr_vllantot
+        WHERE craplot.ROWID = rw_craplot.ROWID
+        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic := 'Erro ao atualizar tabela craplot. (lote:'||rw_craplot.nrdolote||')'||SQLERRM;
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+      END;
+
+
+      -- se for pagemento pela INTERNET deve atualizar o lote referente a
+      -- criação do titulo, estrategia utilizada para diminuir o tempo de lock do lote
+      IF vr_cdagenci = 90 THEN --> INTERNET
+        rw_craplot := NULL;
+        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+        FOR i IN 1..100 LOOP
+          BEGIN
+            -- Leitura do lote
+            OPEN cr_craplot( pr_cdcooper  => rw_crapcop.cdcooper,
+                             pr_dtmvtolt  => rw_crapdat.dtmvtocd,
+                             pr_cdagenci  => vr_cdagenci,
+                             pr_cdbccxlt  => 11,
+                             pr_nrdolote  => 15900); --> Lote fixo, pois na chamada da CXON0014 as informações estao fixas
+            FETCH cr_craplot INTO rw_craplot;
+            CLOSE cr_craplot;
+            vr_dscritic := NULL;
+            EXIT;
+          EXCEPTION
+            WHEN OTHERS THEN
+              IF cr_craplot%ISOPEN THEN
+                CLOSE cr_craplot;
+              END IF;
+
+              -- setar critica caso for o ultimo
+              IF i = 100 THEN
+                vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
+              END IF;
+
+              -- aguardar 0,5 seg. antes de tentar novamente
+              sys.dbms_lock.sleep(0.1);
+          END;
+        END LOOP;
+
+        -- se encontrou erro ao buscar lote, abortar programa
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Atualizar lote de criação da Tit, deixado por ultimo para diminuir tempo de lock
+        BEGIN
+          UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                            ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                            ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + pr_vlfatura
+                            ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + pr_vlfatura
+          WHERE craplot.ROWID = rw_craplot.ROWID
+          RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+        END;
+      END IF; -- IF vr_cdagenci = 90 --INTERNET
+      
+      /*
+      #################################################
+      NÃO COLOCAR MAIS NENHUM PROCESSAMENTO NO FIM DESTA PROCEDURE!!!
+      Tudo o que for adicionado de novas chamadas de procedure, leitura de cursores, ou qualquer outro
+      processo demorado deve ser adicionado antes de efetuar a somatória dos valores da CRAPLOT, para
+      evitar locks nesta tabela.
+      Favor procutar a linha com o comentário "[INÍCIO DO LOCK DA CRAPLOT]" e aplicar qualquer novo
+      processamento antes desta linha.
+      - 25/11/2016 - Dionathan Henchel
+      #################################################
+      */
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         --rollback do savepoint
@@ -9533,6 +9530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         END IF;*/
       END IF;
 
+      --[INÍCIO DO LOCK DA CRAPLOT]
       /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
       FOR i IN 1..100 LOOP
         BEGIN
@@ -9671,7 +9669,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           RAISE vr_exc_erro;
         END IF;
       END IF;
-
+    
+    /*
+    #################################################
+    NÃO COLOCAR MAIS NENHUM PROCESSAMENTO NO FIM DESTA PROCEDURE!!!
+    Tudo o que for adicionado de novas chamadas de procedure, leitura de cursores, ou qualquer outro
+    processo demorado deve ser adicionado antes de efetuar a somatória dos valores da CRAPLOT, para
+    evitar locks nesta tabela.
+    Favor procutar a linha com o comentário "[INÍCIO DO LOCK DA CRAPLOT]" e aplicar qualquer novo
+    processamento antes desta linha.
+    - 25/11/2016 - Dionathan Henchel
+    #################################################
+    */
+    
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
