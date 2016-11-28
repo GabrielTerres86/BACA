@@ -1460,7 +1460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_tab_sacado(vr_index).cdcooper := pr_rec_cobranca.cdcooper;
     pr_tab_sacado(vr_index).nrdconta := pr_rec_cobranca.nrdconta;
-    pr_tab_sacado(vr_index).nmdsacad := gene0007.fn_caract_acento(pr_rec_cobranca.nmdsacad, 1);
+    pr_tab_sacado(vr_index).nmdsacad := gene0007.fn_caract_acento(pr_rec_cobranca.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
     pr_tab_sacado(vr_index).cdtpinsc := pr_rec_cobranca.cdtpinsc;
     pr_tab_sacado(vr_index).nrinssac := pr_rec_cobranca.nrinssac;
     pr_tab_sacado(vr_index).dsendsac := pr_rec_cobranca.dsendsac;
@@ -3109,7 +3109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	  -- Limpar Variavel vr_nmdsacad
       vr_nmdsacad := NULL;
       -- remover caracter especial vr_nmdsacad
-      vr_nmdsacad := gene0007.fn_caract_acento(vr_sacado.nmdsacad, 1);
+      vr_nmdsacad := gene0007.fn_caract_acento(vr_sacado.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
       -- Verifica se encontrou
       IF cr_crapsab%NOTFOUND THEN
         -- Fecha cursor
