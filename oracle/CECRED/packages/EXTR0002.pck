@@ -8515,7 +8515,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= 0;
                     END IF;
                   END IF;
-                  END IF;
+                  
                   --Zerar Valor IR retido Fonte
                   vr_vlirfont:= 0; 
                   --Percorrer Lancamentos de Cota

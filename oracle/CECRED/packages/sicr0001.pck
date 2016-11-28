@@ -2267,6 +2267,12 @@ create or replace package body cecred.SICR0001 is
         -- completar com 25 espaços se resultado for inferior a 25 poscoes
         vr_resultado := RPAD(vr_resultado,25,' ');
       END IF;
+	  
+      /* Se for o convenio 045 - 14 BRT CELULAR - FEBRABAN e tiver 11 posicoes, devemos 
+         adicionar um hifen para completar 12 posicoes ex:(40151016407-) chamado 453337 */
+      IF pr_cdempres = '045' AND LENGTH(pr_nrdocmto) = 11 THEN
+        vr_resultado := RPAD(pr_nrdocmto,12,'-') || RPAD(' ',13,' ');
+      END IF; 	  
 
       vr_cdagenci :=  SUBSTR(gene0002.fn_mask(pr_cdagenci,'999'),2,2);
 

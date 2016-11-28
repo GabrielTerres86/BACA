@@ -8864,6 +8864,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
       END;
       /* Cria o registro do movimento da internet */
       IF  pr_idorigem <> 4  THEN /* TAA */
+	    --Buscar a data do dia
+        vr_datdodia:= trunc(sysdate); /*PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper); */
 
         IF rw_crapass_prot.idastcjt = 0 THEN
 
