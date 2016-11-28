@@ -89,6 +89,9 @@
                              (Lucas Ranghetti #447067)
                              
                 06/09/2016 - Inclusao coluna Tarifa Sicredi (Projeto 338 - Lucas Lunelli)
+				
+                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                             (Guilherme/SUPERO)				
                 
 ..............................................................................*/
 
