@@ -42,7 +42,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 03/10/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 25/11/2016
 
    Dados referentes ao programa:
 
@@ -362,17 +362,20 @@
                29/06/2016 - Adicionado ROUND para o calculo de Multa e Juros da 
                             consulta-boleto-2via para que arredonde os valores
                             (Douglas - Chamado 457956)
-			         04/08/2016 - Alterado procedure gera_relatorio para permitir 
-							              enviar relatorio de movimento de cobranca por 
-							              e-mail. (Reinert)
+			   04/08/2016 - Alterado procedure gera_relatorio para permitir 
+							enviar relatorio de movimento de cobranca por 
+							e-mail. (Reinert)
 
-			         03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
                
                24/11/2016 - A busca de conta transferida/migrada nao estava sendo
                             feita corretamente na consulta de 2via de boleto.
                             Nao estava considerando a conta retornada na pesquisa
                             da craptco ao buscar na crapass.
                             Heitor (Mouts) - Chamado 554866
+
+			   25/11/2016 - Correção no calculo de multa e juros da Melhoria 271
+			                (Douglas Quisinski - Chamado 562804)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -728,13 +731,14 @@ PROCEDURE consulta-boleto-2via.
                           INPUT 7 /*todos*/,
                           INPUT 1).
     
-    IF  RETURN-VALUE = "NOK" THEN
+    IF  RETURN-VALUE <> "OK" THEN
         DO:
             CREATE tt-erro.
             ASSIGN tt-erro.dscritic = "Erro ao gerar boleto.".
             RETURN "NOK".
         END.
         
+
     RUN sistema/generico/procedures/b1wgen0089.p PERSISTENT SET h-b1wgen0089.
 
     IF  NOT VALID-HANDLE(h-b1wgen0089) THEN
@@ -1095,6 +1099,9 @@ PROCEDURE consulta-bloqueto.
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
                                       
+                                 /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                 IF   RETURN-VALUE = "OK"  THEN
+                                 DO:
                                  RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
                                                                 INPUT crapcob.nrdconta,           
                                                                 INPUT crapcob.dtvencto,           
@@ -1122,8 +1129,8 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                 END.
                                           
-                                      
                              END.
 
 
@@ -1282,6 +1289,9 @@ PROCEDURE consulta-bloqueto.
                                   IF   RETURN-VALUE = "NOK"  THEN
                                        RETURN "NOK".
                              
+                                 /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                 IF   RETURN-VALUE = "OK"  THEN
+                                 DO:                                                   
                              RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
                                                             INPUT crapcob.nrdconta,           
                                                             INPUT crapcob.dtvencto,           
@@ -1309,7 +1319,7 @@ PROCEDURE consulta-bloqueto.
                                     tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                     tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                     tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
-                             
+                                 END.
                              END.    
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -1470,6 +1480,9 @@ PROCEDURE consulta-bloqueto.
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
                                       
+                                         /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                         IF   RETURN-VALUE = "OK"  THEN
+                                         DO:  
                                  RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
                                                                 INPUT crapcob.nrdconta,           
                                                                 INPUT crapcob.dtvencto,           
@@ -1499,6 +1512,7 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
                                 END.
                                 END.
+                             END.
                              END.
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -1660,6 +1674,9 @@ PROCEDURE consulta-bloqueto.
                                  IF   RETURN-VALUE = "NOK"  THEN
                                       RETURN "NOK".
                                       
+                                     /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                     IF   RETURN-VALUE = "OK"  THEN
+                                     DO:                                                   
                                  RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
                                                                 INPUT crapcob.nrdconta,           
                                                                 INPUT crapcob.dtvencto,           
@@ -1690,6 +1707,7 @@ PROCEDURE consulta-bloqueto.
                                  
                                 END.
                                 END.
+                             END.
                              END.
 
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -2028,6 +2046,9 @@ PROCEDURE consulta-bloqueto.
                                 IF   RETURN-VALUE = "NOK"  THEN
                              RETURN "NOK".
                               
+                                /* Se deu certo a criacao da tt-consulta-blt, calcular o valor atualizado */
+                                IF   RETURN-VALUE = "OK"  THEN
+                                DO:
                                RUN calcula_multa_juros_boleto(INPUT crapcob.cdcooper,           
                                                               INPUT crapcob.nrdconta,           
                                                               INPUT crapcob.dtvencto,           
@@ -2055,7 +2076,7 @@ PROCEDURE consulta-bloqueto.
                                       tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                       tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                       tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
-                              
+                                END.
                             END.
 
                             FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
@@ -4966,6 +4987,7 @@ PROCEDURE proc_nosso_numero.
 
     END. /* Fim do DO TRANSACTION */
     
+    RETURN "OK".
 END PROCEDURE. /* proc_nosso_numero */
 
 /********************************************************************/
@@ -8459,4 +8481,3 @@ PROCEDURE calcula_multa_juros_boleto:
 
     RETURN "OK".
 END PROCEDURE.
-
