@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --
 --    Programa: SSPB0002
 --    Autor   : Douglas Quisinski
---    Data    : Julho/2015                      Ultima Atualizacao: 08/08/2016
+--    Data    : Julho/2015                      Ultima Atualizacao: 10/11/2016
 --
 --    Dados referentes ao programa:
 --
@@ -58,6 +58,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --                             milhares e decimais na procedure pc_proc_arq_jdspb_ayllos 
 --                            (Douglas - Chamado 501071)
 --
+--                10/11/2016 - Ajustado a conciliação das mensagens de VR Boleto
+--                             (Douglas - Chamado 503347)
 ---------------------------------------------------------------------------------------------------------------
   -- Tipo de registro para conter as informações das linhas do arquivo
   TYPE typ_recdados IS RECORD (nrdlinha INTEGER
@@ -688,7 +690,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                 vr_conciliar    := 1;
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
                 -- Quando VR BOLETO, validar apenas se existe o registro na gnmvspb
-                vr_chave_conciliar:= TO_CHAR(vr_tbagenci_coop(NVL(vr_cdagenci_deb,0))) || '_' || 
+                -- VR BOLETO enviado
+                vr_chave_conciliar:= TO_CHAR(vr_nrcpfcgc_deb_pesq) || '_' || 
+                                     TO_CHAR(vr_nrcpfcgc_cre_pesq) || '_' || 
                                      TO_CHAR(vr_dsmensag) || '_' ||
                                      TO_CHAR(vr_dtmensag,'DDMMRRRR') || '_' ||
                                      TO_CHAR(vr_vlconsul * 100);
@@ -699,7 +703,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                 vr_conciliar    := 1;
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
                 -- Quando VR BOLETO, validar apenas se existe o registro na gnmvspb
-                vr_chave_conciliar:= TO_CHAR(vr_tbagenci_coop(NVL(vr_cdagenci_cre,0))) || '_' || 
+                -- VR BOLETO recebido
+                vr_chave_conciliar:= TO_CHAR(vr_nrcpfcgc_cre_pesq) || '_' || 
+                                     TO_CHAR(vr_nrcpfcgc_deb_pesq) || '_' || 
                                      TO_CHAR(vr_dsmensag) || '_' ||
                                      TO_CHAR(vr_dtmensag,'DDMMRRRR') || '_' ||
                                      TO_CHAR(vr_vlconsul * 100);
@@ -1184,7 +1190,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
           IF rw_gnmvspb.dsmensag IN ('STR0026','PAG0122') THEN
             -- Montar a chave de acordo com os campos que sao comparados para conciliar
             -- Quando VR BOLETO, validar apenas se existe o registro na gnmvspb
-            vr_chave_conciliar:= TO_CHAR(rw_gnmvspb.cdcooper) || '_' || 
+            vr_chave_conciliar:= TO_CHAR(rw_gnmvspb.nrcnpjdb) || '_' || 
+                                 TO_CHAR(rw_gnmvspb.nrcnpjcr) || '_' || 
                                  TO_CHAR(rw_gnmvspb.dsmensag) || '_' ||
                                  TO_CHAR(rw_gnmvspb.dtmensag,'DDMMRRRR') || '_' ||
                                  TO_CHAR(rw_gnmvspb.vllanmto * 100);
@@ -1193,7 +1200,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
           ELSIF rw_gnmvspb.dsmensag IN ('STR0026R2','PAG0122R2') THEN
             -- Montar a chave de acordo com os campos que sao comparados para conciliar
             -- Quando VR BOLETO, validar apenas se existe o registro na gnmvspb
-            vr_chave_conciliar:= TO_CHAR(rw_gnmvspb.cdcooper) || '_' || 
+            vr_chave_conciliar:= TO_CHAR(rw_gnmvspb.nrcnpjcr) || '_' || 
+                                 TO_CHAR(rw_gnmvspb.nrcnpjdb) || '_' || 
                                  TO_CHAR(rw_gnmvspb.dsmensag) || '_' ||
                                  TO_CHAR(rw_gnmvspb.dtmensag,'DDMMRRRR') || '_' ||
                                  TO_CHAR(rw_gnmvspb.vllanmto * 100);
