@@ -22,10 +22,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --				 	       o número do ISPB vier nulo e incluir a verificação de senha
   --						   para contas com assinatura conjunta
   --						  (Adriano - M117).
-	--
-	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
-	--						               InternetBanking (Projeto 338 - Lucas Lunelli)
-	--
+  --
+  --              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+  --						   InternetBanking (Projeto 338 - Lucas Lunelli)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   ---------------------- TEMPTABLE ----------------------------
@@ -240,9 +240,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --             23/06/2016 - Correcao no indice sobre a tabela crapope da pc_mudsen para comparar os campo
   --                          cdoperad com o comando UPPER. (Carlos Rafael Tanholi).
   --
-	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
-	--						               InternetBanking (Projeto 338 - Lucas Lunelli)
-	--
+  --              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+  --						   InternetBanking (Projeto 338 - Lucas Lunelli)
+  --
   ---------------------------------------------------------------------------------------------------------------------------
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -309,6 +309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,vlrjuros   NUMBER
                             ,vltotfat   NUMBER
 							,nrdocdas   VARCHAR2(100)
+							,nrdocdrf   VARCHAR2(100)
                             ,dsidepag   VARCHAR2(100)
                             ,dtmvtdrf   DATE
                             ,hrautdrf   VARCHAR2(100)
@@ -1422,6 +1423,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
 	END IF;
 		
+    -- Se tem informação de numero do documento (DARF 385)
+    IF  TRIM(pr_xmldata.nrdocdrf) IS NOT NULL THEN
+      	pc_escreve_xml('  Nr. Docmto.(DARF): ' ||pr_xmldata.nrdocdrf,vr_nrdlinha);
+      	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+	END IF;		
+				
 	IF  pr_xmldata.tpcaptur = 1 THEN --CDBARRA
 		-- Se tem informação de valor total
 		IF  TRIM(pr_xmldata.vltotfat) IS NOT NULL THEN
@@ -2298,6 +2305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 		rw_xmldata.vlrjuros := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vlrjuros/text()'));
 		rw_xmldata.vltotfat := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vltotfat/text()'));
 		rw_xmldata.nrdocdas := fn_extract('/Root/Dados/nrdocdas/text()');
+		rw_xmldata.nrdocdrf := fn_extract('/Root/Dados/nrdocdrf/text()');		
 		rw_xmldata.dsidepag := fn_extract('/Root/Dados/dsidepag/text()');
 		rw_xmldata.dtmvtdrf := to_date(fn_extract('/Root/Dados/dtmvtdrf/text()'),'dd/mm/rrrr');
 		rw_xmldata.dtvencto_drf := to_date(fn_extract('/Root/Dados/dtvencto_drf/text()'),'dd/mm/rrrr');		

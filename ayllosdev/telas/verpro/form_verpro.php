@@ -94,6 +94,9 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 		if ($cdtippro == 17 || $cdtippro == 19) { //DAS
 			$nrdocmto_das = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
 			$dsidepag = trim(substr($aux_dslinha3[11], strpos($aux_dslinha3[11], ":") + 1));
+		} elseif (substr($cdbarras, 15, 4) == 385 && substr($cdbarras, 1, 1) == 5){ // DARF385
+			$nrdocmto_drf = trim(substr($aux_dslinha3[9], strpos($aux_dslinha3[9], ":") + 1));
+			$dsidepag = trim(substr($aux_dslinha3[11], strpos($aux_dslinha3[11], ":") + 1));
 		} else {
 			$dsidepag = trim(substr($aux_dslinha3[10], strpos($aux_dslinha3[10], ":") + 1));
 		}
@@ -278,6 +281,9 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 														<?php if ($cdtippro == 17 || $cdtippro == 19) { //DAS ?>
 															<label for="nrdocmto_das"><? echo utf8ToHtml('Nr. Docmto. (DAS):') ?></label>
 															<input name="nrdocmto_das" id="nrdocmto_das" type="text" value="<? echo $nrdocmto_das; ?>" />
+														<?php } elseif (substr($cdbarras, 15, 4) == 385 && substr($cdbarras, 1, 1) == 5) { // DARF385 ?>
+															<label for="nrdocmto_drf"><? echo utf8ToHtml('Nr. Docmto.(DARF):') ?></label>
+															<input name="nrdocmto_drf" id="nrdocmto_drf" type="text" value="<? echo $nrdocmto_drf; ?>" />
 														<?php } ?>
 														
 														<label for="vltotfat"><? echo utf8ToHtml('Valor Total:') ?></label>

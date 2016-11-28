@@ -95,6 +95,7 @@
 	$vlrjuros     = $_POST['vlrjuros'];
 	$vltotfat     = $_POST['vltotfat'];
 	$nrdocmto_das = $_POST['nrdocmto_das'];
+	$nrdocmto_drf = $_POST['nrdocmto_drf'];
 	$dsidepag	  = $_POST['dsidepag'];
 	$dtmvtdrf	  = $_POST['dtmvtdrf'];
 	$hrautdrf	  = $_POST['hrautdrf'];
@@ -189,6 +190,7 @@
 	$xml .= '		<vlrjuros>'.$vlrjuros.'</vlrjuros>';
 	$xml .= '		<vltotfat>'.$vltotfat.'</vltotfat>';
 	$xml .= '		<nrdocdas>'.$nrdocmto_das.'</nrdocdas>';
+	$xml .= '		<nrdocdrf>'.$nrdocmto_drf.'</nrdocdrf>';
 	$xml .= '		<dsidepag>'.$dsidepag.'</dsidepag>';
 	$xml .= '		<dtmvtdrf>'.$dtmvtdrf.'</dtmvtdrf>';
 	$xml .= '		<hrautdrf>'.$hrautdrf.'</hrautdrf>';

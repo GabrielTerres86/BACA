@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 24/08/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 28/11/2016
     
     Dados referente ao programa:
     
@@ -129,6 +129,12 @@
                               PRJ320 - Oferta Debaut (Odirlei-AMcom)
                               
                  24/08/2016 - Incluir tratamento para autorizações suspensas (Lucas Ranghetti #499496)
+				                 
+                 21/11/2016 - Efetuar replace de '-' por nada no nrdocmto da crapndb (Lucas Ranghetti #560620)
+
+				 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
+                              colocando zeros a esquerda (Projeto 338 - Lucas Lunelli)
+
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1232,7 +1238,7 @@ FOR EACH crapcop NO-LOCK.
                 IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
                     ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
 
-                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(SUBSTR(aux_dslinreg,2,25)) NO-ERROR.
+                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(REPLACE(SUBSTR(aux_dslinreg,2,25),"-","")) NO-ERROR.
             END.
 
         PUT STREAM str_2 aux_dslinreg FORMAT "x(160)" SKIP.
@@ -2325,8 +2331,7 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                       "COD.BARRAS ". 
         
             IF  craplft.cdbarras <> "" OR 
-                craplft.nrrefere  = "" OR
-				craplft.nrrefere  = ?  THEN
+                craplft.nrrefere  = "" THEN
                 ASSIGN aux_nrrefere = FILL(" ", 17).
             ELSE
                 DO:
@@ -2335,8 +2340,8 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                               TRIM(SUBSTR(craplft.nrrefere,1,17)).
                 END.
         
-            ASSIGN aux_nrcpfcgc = TRIM(SUBSTR(STRING(craplft.nrcpfcgc),1,14)) +
-                                  FILL(" ", 14 - LENGTH(STRING(craplft.nrcpfcgc))).
+            ASSIGN aux_nrcpfcgc = FILL("0", 14 - LENGTH(STRING(craplft.nrcpfcgc))) +
+                                  TRIM(SUBSTR(STRING(craplft.nrcpfcgc),1,14)).
         
             DATE(craplft.dtlimite) NO-ERROR.
         
