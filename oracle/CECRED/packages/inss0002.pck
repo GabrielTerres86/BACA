@@ -2893,18 +2893,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               /* Verifica o Digito Verificador */
               vr_lindigi1 := SUBSTR(vr_cdbarras, 1,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi1
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig1);
               /* Verifica o Digito Verificador */
               vr_lindigi2 := SUBSTR(vr_cdbarras, 12,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi2
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig2);
               /* Verifica o Digito Verificador */
               vr_lindigi3 := SUBSTR(vr_cdbarras, 23,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi3
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig3);
               /* Verifica o Digito Verificador */
               vr_lindigi4 := SUBSTR(vr_cdbarras, 34,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi4
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig4);
 
               /* Montando a linha digitavel para CRAPLAU*/
@@ -4199,18 +4203,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               /* Verifica o Digito Verificador */
               vr_lindigi1 := SUBSTR(vr_cdbarras, 1,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi1
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig1);
               /* Verifica o Digito Verificador */
               vr_lindigi2 := SUBSTR(vr_cdbarras, 12,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi2
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig2);
               /* Verifica o Digito Verificador */
               vr_lindigi3 := SUBSTR(vr_cdbarras, 23,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi3
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig3);
               /* Verifica o Digito Verificador */
               vr_lindigi4 := SUBSTR(vr_cdbarras, 34,11);
               CXON0014.pc_verifica_digito(pr_nrcalcul => vr_lindigi4
+							             ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_validig4);
 
               /* Montando a linha digitavel */

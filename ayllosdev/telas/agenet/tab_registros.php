@@ -14,7 +14,7 @@
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
-	isPostMethod();	
+	isPostMethod();
 ?>
 
 <form id="frmAgendamentos" name="frmAgendamentos" class="formulario" style="display:none;">
@@ -38,7 +38,7 @@
 				</thead>
 				<tbody>
 					<? foreach( $registros as $result ) {    ?>
-						<tr>	
+						<tr onClick="selecionaAgendamentos(this);" >	
 							<td><span><? echo getByTagName($result->tags,'cdagenci'); ?></span> <? echo getByTagName($result->tags,'cdagenci'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'nrdconta'); ?></span> <? echo getByTagName($result->tags,'nrdconta'); ?> </td>
 							<td><span><? echo getByTagName($result->tags,'dtmvtopg'); ?></span> <? echo getByTagName($result->tags,'dtmvtopg'); ?> </td>
@@ -54,6 +54,21 @@
 							<input type="hidden" id="dtmvtolt" name="dtmvtolt" value="<? echo getByTagName($result->tags,'dtmvtolt'); ?>" />
 							<input type="hidden" id="nrdocmto" name="nrdocmto" value="<? echo getByTagName($result->tags,'nrdocmto'); ?>" />
 							<input type="hidden" id="insitlau" name="insitlau" value="<? echo getByTagName($result->tags,'insitlau'); ?>" />
+							<input type="hidden" id="vllanaut" name="vllanaut" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vllanaut')),2,",","."); ?>" />
+							<input type="hidden" id="tpcaptura" name="tpcaptura" value="<? echo getByTagName($result->tags,'tpcaptura'); ?>" />
+							<input type="hidden" id="dstpcaptura" name="dstpcaptura" value="<? echo getByTagName($result->tags,'dstpcaptura'); ?>" />
+							<input type="hidden" id="dslinha_digitavel" name="dslinha_digitavel" value="<? echo getByTagName($result->tags,'dslinha_digitavel'); ?>" />
+							<input type="hidden" id="dsnome_fone" name="dsnome_fone" value="<? echo getByTagName($result->tags,'dsnome_fone'); ?>" />
+							<input type="hidden" id="dtapuracao" name="dtapuracao" value="<? echo getByTagName($result->tags,'dtapuracao'); ?>" />
+							<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="<? echo getByTagName($result->tags,'nrcpfcgc'); ?>" />
+							<input type="hidden" id="cdtributo" name="cdtributo" value="<? echo getByTagName($result->tags,'cdtributo'); ?>" />
+							<input type="hidden" id="nrrefere" name="nrrefere" value="<? echo getByTagName($result->tags,'nrrefere'); ?>" />
+							<input type="hidden" id="dtvencto" name="dtvencto" value="<? echo getByTagName($result->tags,'dtvencto'); ?>" />
+							<input type="hidden" id="vlprincipal" name="vlprincipal" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlprincipal')),2,",","."); ?>" />
+							<input type="hidden" id="vlmulta" name="vlmulta" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlmulta')),2,",","."); ?>" />
+							<input type="hidden" id="vljuros" name="vljuros" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vljuros')),2,",","."); ?>" />
+							<input type="hidden" id="vlreceita_bruta" name="vlreceita_bruta" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlreceita_bruta')),2,",","."); ?>" />
+							<input type="hidden" id="vlpercentual" name="vlpercentual" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlpercentual')),2,",","."); ?>" />
 						
 						</tr>	
 					<? } ?>
@@ -134,6 +149,64 @@
 		<input type="text" id="hrtransa" name="hrtransa"/>
 		
 		<input type="text" id="dstitdda" name="dstitdda"/>
+		
+	</fieldset>
+	
+	<fieldset id="fsetAgendamentoDarfDas" name="fsetAgendamentoDarfDas" style="padding:0px; margin:0px; padding-bottom:10px; display:none;">
+		
+		<legend><? echo "Informa&ccedil;&atilde;o"; ?></legend>
+		
+		<label for="dstpcaptura"><? echo utf8ToHtml('Tipo de Captura:') ?></label>
+		<input type="text" id="dstpcaptura" name="dstpcaptura"/>
+
+		<label for="dsnome_fone"><? echo utf8ToHtml('Nome / Telefone:') ?></label>
+		<input type="text" id="dsnome_fone" name="dsnome_fone"/>
+		
+		<div id="divDarfDasLinDig" name="divDarfDasLinDig" style="display:none">
+			<label for="dslinha_digitavel"><? echo utf8ToHtml('Linha Digitável:') ?></label>
+			<input type="text" id="dslinha_digitavel" name="dslinha_digitavel"/>
+		</div>
+		
+		<div id="divDarfDasManual" name="divDarfDasManual" style="display:none">
+			<label for="nrcpfcgc"><? echo utf8ToHtml('CPF / CNPJ:') ?></label>
+			<input type="text" id="nrcpfcgc" name="nrcpfcgc"/>
+
+			<label for="dtapuracao"><? echo utf8ToHtml('Período de Apuração:') ?></label>
+			<input type="text" id="dtapuracao" name="dtapuracao"/>
+
+			<label for="dtvencto"><? echo utf8ToHtml('Data de Vencimento:') ?></label>
+			<input type="text" id="dtvencto" name="dtvencto"/>
+
+			<label for="cdtributo"><? echo utf8ToHtml('Código da Receita:') ?></label>
+			<input type="text" id="cdtributo" name="cdtributo"/>
+
+			<label for="nrrefere"><? echo utf8ToHtml('Número de Referência:') ?></label>
+			<input type="text" id="nrrefere" name="nrrefere"/>
+
+			<label for="vlreceita_bruta"><? echo utf8ToHtml('Receita Bruta Acumulada:') ?></label>
+			<input type="text" id="vlreceita_bruta" name="vlreceita_bruta"/>
+
+			<label for="vlpercentual"><? echo utf8ToHtml('Percentual:') ?></label>
+			<input type="text" id="vlpercentual" name="vlpercentual"/>
+
+			<label for="vlprincipal"><? echo utf8ToHtml('Valor Principal:') ?></label>
+			<input type="text" id="vlprincipal" name="vlprincipal"/>
+
+			<label for="vlmulta"><? echo utf8ToHtml('Valor da Multa:') ?></label>
+			<input type="text" id="vlmulta" name="vlmulta"/>
+
+			<label for="vljuros"><? echo utf8ToHtml('Valor dos Juros:') ?></label>
+			<input type="text" id="vljuros" name="vljuros"/>
+
+			<label for="vllanaut"><? echo utf8ToHtml('Valor Total:') ?></label>
+			<input type="text" id="vllanaut" name="vllanaut"/>
+		</div>
+		
+		<label for="dttransa"><? echo utf8ToHtml('Data Cadastro:') ?></label>
+		<input type="text" id="dttransa" name="dttransa"/>
+		
+		<label for="hrtransa"><? echo utf8ToHtml('Hora Cadastro:') ?></label>
+		<input type="text" id="hrtransa" name="hrtransa"/>
 		
 	</fieldset>
 	

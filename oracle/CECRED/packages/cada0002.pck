@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 19/05/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 19/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -22,6 +22,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --				 	       o número do ISPB vier nulo e incluir a verificação de senha
   --						   para contas com assinatura conjunta
   --						  (Adriano - M117).
+	--
+	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+	--						               InternetBanking (Projeto 338 - Lucas Lunelli)
+	--
   ---------------------------------------------------------------------------------------------------------------
   
   ---------------------- TEMPTABLE ----------------------------
@@ -201,7 +205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 30/08/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 19/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -241,6 +245,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --
   --             30/08/2016 - Criar rotina para impressão de resgate de aplicação 
   --                          pc_impressao_resg_aplica (Lucas Ranghetti #490678)
+	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+	--						               InternetBanking (Projeto 338 - Lucas Lunelli)
+	--
   ---------------------------------------------------------------------------------------------------------------------------
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -285,9 +292,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,dsfinali   VARCHAR2(100)
                             ,dstransf   VARCHAR2(100)
                             ,dsispbif   VARCHAR2(100)
-														,dspacote   VARCHAR2(100)
-														,dtdiadeb   NUMBER
-														,dtinivig   DATE);
+							,dspacote   VARCHAR2(100)
+							,dtdiadeb   NUMBER
+							,dtinivig   DATE
+							--DARF/DAS
+							,tpcaptur   NUMBER
+                            ,dsagtare   VARCHAR2(100)
+                            ,dsagenci   VARCHAR2(100)
+                            ,tpdocmto   VARCHAR2(100)
+                            ,dsnomfon   VARCHAR2(100)
+                            ,nmsolici   VARCHAR2(100)
+                            ,dtvencto   DATE 
+                            ,dtapurac   DATE
+                            ,nrcpfcgc   VARCHAR2(100)
+                            ,cdtribut   NUMBER
+                            ,nrrefere   VARCHAR2(100)
+                            ,vlrecbru   NUMBER
+                            ,vlpercen   NUMBER
+                            ,vlprinci   NUMBER
+                            ,vlrmulta   NUMBER
+                            ,vlrjuros   NUMBER
+                            ,vltotfat   NUMBER
+							,nrdocdas   VARCHAR2(100)
+                            ,dsidepag   VARCHAR2(100)
+                            ,dtmvtdrf   DATE
+                            ,hrautdrf   VARCHAR2(100)
+							,dtvencto_drf DATE);
     
   
   -- REGISTROS
@@ -1441,6 +1471,257 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_impressao_pac_tar;
   
+	-- Rotina para impressão de DARF/DAS
+  PROCEDURE pc_impressao_darf_das(pr_xmldata  IN typ_xmldata
+                                 ,pr_nmrescop IN VARCHAR2
+                                 ,pr_cdbcoctl IN NUMBER
+                                 ,pr_cdagectl IN NUMBER) IS
+    -- ..........................................................................
+    --
+    --  Programa : 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : Lucas Lunelli
+    --  Data     : Setembro/2016.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de pagamentos de DARF/DAS
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha     NUMBER := 0;  
+    vr_dsbanco      VARCHAR2(50);
+		vr_dsdcabec     VARCHAR2(50);
+		                          
+  BEGIN
+		
+	  IF    pr_xmldata.cdtippro = 16 THEN
+			vr_dsdcabec := 'Pagamento DARF';
+		ELSIF pr_xmldata.cdtippro = 17 THEN
+			vr_dsdcabec := 'Pagamento DAS';
+		ELSIF pr_xmldata.cdtippro = 18 THEN
+			vr_dsdcabec := 'Agendamento DARF';
+		ELSIF pr_xmldata.cdtippro = 19 THEN
+      vr_dsdcabec := 'Agendamento DAS';
+		END IF;
+
+    -- IMPRIMIR O CABEÇALHO
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante '|| vr_dsdcabec || ' - '||
+                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml('              Banco: '||to_char(pr_cdbcoctl) ,4);
+    pc_escreve_xml('            Agencia: '||to_char(pr_cdagectl) ,5);
+    pc_escreve_xml('           Conta/DV: '||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl,6);
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,7);
+    -- IMPRIMIR O CONTEÚDO
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 8;
+		
+		-- Se tem Preposto
+    IF TRIM(pr_xmldata.nmprepos) IS NOT NULL THEN
+      pc_escreve_xml('           Preposto: '||pr_xmldata.nmprepos,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    -- Se tem Operador
+    IF TRIM(pr_xmldata.nmoperad) IS NOT NULL THEN
+      pc_escreve_xml('           Operador: '||pr_xmldata.nmoperad,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem solicitante
+		IF TRIM(pr_xmldata.nmsolici) IS NOT NULL THEN
+      pc_escreve_xml('        Solicitante: '||pr_xmldata.nmsolici,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Agente arrecadador
+		IF TRIM(pr_xmldata.dsagtare) IS NOT NULL THEN
+      pc_escreve_xml(' Agente Arrecadador: '||pr_xmldata.dsagtare,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Agência
+		IF TRIM(pr_xmldata.dsagenci) IS NOT NULL THEN
+      pc_escreve_xml('            Agencia: '||pr_xmldata.dsagenci,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Tipo de Docmto		
+		IF TRIM(pr_xmldata.tpdocmto) IS NOT NULL THEN
+      pc_escreve_xml('  Tipo de Documento: '||pr_xmldata.tpdocmto,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Nome/Telefone
+    IF TRIM(pr_xmldata.dsnomfon) IS NOT NULL THEN
+      pc_escreve_xml('      Nome/Telefone: '||pr_xmldata.dsnomfon,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    -- Se tem informação de código de barras
+    IF  TRIM(pr_xmldata.cdbarras) IS NOT NULL THEN
+      pc_escreve_xml('   Codigo de Barras: '||pr_xmldata.cdbarras,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+    -- Se tem informação de linha digitável
+    IF  TRIM(pr_xmldata.lndigita) IS NOT NULL THEN
+      pc_escreve_xml('    Linha Digitavel: '||pr_xmldata.lndigita,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+	END IF;
+		
+	IF  pr_xmldata.tpcaptur = 1 THEN --CDBARRA
+		-- Se tem informação de data de vencimento
+		IF  TRIM(pr_xmldata.dtvencto_drf) IS NOT NULL THEN
+				pc_escreve_xml(' Data de vencimento: '||to_char(pr_xmldata.dtvencto_drf,'dd/mm/rrrr'),vr_nrdlinha);
+      			vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    	END IF;
+	END IF;
+		
+    -- Se tem informação de numero do documento (DAS)
+    IF  TRIM(pr_xmldata.nrdocdas) IS NOT NULL THEN
+      	pc_escreve_xml('  Nr. Docmto. (DAS): ' ||pr_xmldata.nrdocdas,vr_nrdlinha);
+      	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+	END IF;
+		
+	IF  pr_xmldata.tpcaptur = 1 THEN --CDBARRA
+		-- Se tem informação de valor total
+		IF  TRIM(pr_xmldata.vltotfat) IS NOT NULL THEN
+			pc_escreve_xml('        Valor Total: '||to_char(pr_xmldata.vltotfat,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+			vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+		END IF;
+	END IF;		
+		
+		-- Se tem Dt Apurac
+    IF TRIM(pr_xmldata.dtapurac) IS NOT NULL THEN
+      pc_escreve_xml('   Data de Apuracao: '||to_char(pr_xmldata.dtapurac,'dd/mm/rrrr'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem CPF/CNPJ
+    IF TRIM(pr_xmldata.nrcpfcgc) IS NOT NULL THEN
+      pc_escreve_xml(' Numero do CPF/CNPJ: '||pr_xmldata.nrcpfcgc,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Cod Receita
+    IF TRIM(pr_xmldata.cdtribut) IS NOT NULL THEN
+      pc_escreve_xml('  Codigo do Tributo: '||pr_xmldata.cdtribut,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Nr de Referencia
+    IF TRIM(pr_xmldata.nrrefere) IS NOT NULL THEN
+      pc_escreve_xml(' Nro. de Referencia: '||pr_xmldata.nrrefere,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+	IF  pr_xmldata.tpcaptur = 2 THEN --MANUAL
+		-- Se tem Dt Vencto
+		IF TRIM(pr_xmldata.dtvencto_drf) IS NOT NULL THEN
+			pc_escreve_xml(' Data de Vencimento: '||to_char(pr_xmldata.dtvencto_drf,'dd/mm/rrrr'),vr_nrdlinha);
+	      	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+	    END IF;
+	END IF;			
+		
+		-- Se tem Valor Rec Bruta
+    IF TRIM(pr_xmldata.vlrecbru) IS NOT NULL THEN
+      pc_escreve_xml('Valor Receita Bruta: '||to_char(pr_xmldata.vlrecbru,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Percentual
+    IF TRIM(pr_xmldata.vlpercen) IS NOT NULL THEN
+      pc_escreve_xml('         Percentual: '||to_char(pr_xmldata.vlpercen,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Valor Principal
+    IF TRIM(pr_xmldata.vlprinci) IS NOT NULL THEN
+      pc_escreve_xml(' Valor do Principal: '||to_char(pr_xmldata.vlprinci,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Valor Multa
+    IF TRIM(pr_xmldata.vlrmulta) IS NOT NULL THEN
+      pc_escreve_xml('     Valor da Multa: '||to_char(pr_xmldata.vlrmulta,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Valor Juros
+    IF TRIM(pr_xmldata.vlrjuros) IS NOT NULL THEN
+      pc_escreve_xml('    Valor dos Juros: '||to_char(pr_xmldata.vlrjuros,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+	IF  pr_xmldata.tpcaptur = 2 THEN --MANUAL
+		-- Se tem Valor Total
+	    IF TRIM(pr_xmldata.vltotfat) IS NOT NULL THEN
+	      pc_escreve_xml('        Valor Total: '||to_char(pr_xmldata.vltotfat,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+	      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+	    END IF;
+	END IF;
+    
+	-- Se tem Descricao
+	IF TRIM(pr_xmldata.dsidepag) IS NOT NULL THEN
+		pc_escreve_xml(' Descricao do Pagto: '||pr_xmldata.dsidepag,vr_nrdlinha);
+		vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+	END IF;
+  
+  IF pr_xmldata.cdtippro IN(18,19) THEN -- Se for agendamento
+    -- Se tem Data Pagamento
+    IF TRIM(pr_xmldata.dtmvtdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Data Transação: '||to_char(pr_xmldata.dtmvtdrf,'dd/mm/yy') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    
+    -- Se tem Hora Pagamento
+    IF TRIM(pr_xmldata.hrautdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Hora Transação: '|| pr_xmldata.hrautdrf ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha      		
+    END IF;
+  ELSE
+    -- Se tem Data Pagamento
+    IF TRIM(pr_xmldata.dtmvtdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Data Pagamento: '||to_char(pr_xmldata.dtmvtdrf,'dd/mm/yy') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    
+    -- Se tem Hora Pagamento
+    IF TRIM(pr_xmldata.hrautdrf) IS NOT NULL THEN
+      pc_escreve_xml('     Hora Pagamento: '|| pr_xmldata.hrautdrf ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha      		
+    END IF;
+  END IF;
+		            
+    -- Imprimir documento e sequencia de autenticação
+    pc_escreve_xml('      Nr. Documento: '||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        
+    pc_escreve_xml('  Seq. Autenticacao: '||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+		-- Protocolo
+		pc_escreve_xml('          Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+		vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Se vai escrever a linha 20... ou mais
+    IF vr_nrdlinha >= 20 THEN
+      pc_escreve_xml('--------------------------------------------------------------------------------',vr_nrdlinha);
+    ELSE 
+      pc_escreve_xml('--------------------------------------------------------------------------------',20);
+    END IF;
+
+  END pc_impressao_darf_das;   
+  
   -- TELA: VERPRO - Verificação de Protocolos
   PROCEDURE pc_verpro(pr_cdcooper IN NUMBER                --> Código da cooperativa
                      ,pr_idorigem IN NUMBER                --> ID da origem
@@ -1499,6 +1780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     vr_tab_tags    gene0007.typ_tab_tagxml;       --> PL Table para armazenar TAG´s do XML
     vr_tab_tagd    gene0007.typ_tab_tagxml;       --> PL Table para armazenar dados referentes a descrição para TAG´s do XML
     vr_qtregist    NUMBER;                        --> Quantidade de registros processados
+		vr_tpcaptur    NUMBER;                        --> tipo de captura DARF/DAS
     vr_index       PLS_INTEGER;                   --> Indexador da PL Table
     vr_tagoco      PLS_INTEGER;                   --> Número de ocorrências do nodo XML
     vr_dataini     DATE;                          --> Data inicial
@@ -1656,6 +1938,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         IF vr_cratpro(vr_ind).cdtippro IN (2,6,7) THEN
           vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(1, vr_cratpro(vr_ind).dsinform##3, '#'));
           vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2, vr_cratpro(vr_ind).dsinform##3, '#'));
+		-- DARF/DAS
+		ELSIF vr_cratpro(vr_ind).cdtippro IN (16,17,18,19) THEN
+			vr_tpcaptur := TO_NUMBER(TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(1, vr_cratpro(vr_ind).dsinform##3, '#')), ':')));
+				
+			IF vr_tpcaptur = 1 THEN 
+				vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(7, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
+            	vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(8, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
+			END IF;
         ELSE
           vr_tab_dados(vr_index)('cdbarras') := '';
           vr_tab_dados(vr_index)('lndigita') := '';
@@ -2157,6 +2447,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 		rw_xmldata.dspacote := fn_extract('/Root/Dados/dspacote/text()');
 		rw_xmldata.dtdiadeb := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/dtdiadeb/text()'));		
 		rw_xmldata.dtinivig := to_date(fn_extract('/Root/Dados/dtinivig/text()'),'dd/mm/yyyy');		
+		--DARF/DAS
+    rw_xmldata.tpcaptur := fn_extract('/Root/Dados/tpcaptur/text()');
+		rw_xmldata.dsagtare := fn_extract('/Root/Dados/dsagtare/text()');
+		rw_xmldata.dsagenci := fn_extract('/Root/Dados/dsagenci/text()');
+		rw_xmldata.tpdocmto := fn_extract('/Root/Dados/tpdocmto/text()');
+		rw_xmldata.dsnomfon := fn_extract('/Root/Dados/dsnomfon/text()');
+		rw_xmldata.nmsolici := fn_extract('/Root/Dados/nmsolici/text()');
+		rw_xmldata.dtvencto := to_date(fn_extract('/Root/Dados/dtvencto/text()'),'dd/mm/rrrr');
+		rw_xmldata.dtapurac := to_date(fn_extract('/Root/Dados/dtapurac/text()'),'dd/mm/rrrr');
+		rw_xmldata.nrcpfcgc := fn_extract('/Root/Dados/nrcpfcgc/text()');
+		rw_xmldata.cdtribut := fn_extract('/Root/Dados/cdtribut/text()');
+		rw_xmldata.nrrefere := fn_extract('/Root/Dados/nrrefere/text()');
+		rw_xmldata.vlrecbru := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vlrecbru/text()'));
+		rw_xmldata.vlpercen := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vlpercen/text()'));
+		rw_xmldata.vlprinci := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vlprinci/text()'));
+		rw_xmldata.vlrmulta := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vlrmulta/text()'));
+		rw_xmldata.vlrjuros := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vlrjuros/text()'));
+		rw_xmldata.vltotfat := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vltotfat/text()'));
+		rw_xmldata.nrdocdas := fn_extract('/Root/Dados/nrdocdas/text()');
+		rw_xmldata.dsidepag := fn_extract('/Root/Dados/dsidepag/text()');
+		rw_xmldata.dtmvtdrf := to_date(fn_extract('/Root/Dados/dtmvtdrf/text()'),'dd/mm/rrrr');
+		rw_xmldata.dtvencto_drf := to_date(fn_extract('/Root/Dados/dtvencto_drf/text()'),'dd/mm/rrrr');		
+		rw_xmldata.hrautdrf := fn_extract('/Root/Dados/hrautdrf/text()');
     
     -- Inicializar o CLOB do XML
     vr_dsxmlrel := null;
@@ -2270,6 +2583,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       pc_impressao_pac_tar(pr_xmldata  => rw_xmldata
                           ,pr_nmrescop => rw_crapcop.nmrescop);  
       
+    ELSIF rw_xmldata.cdtippro IN (16,17,18,19) THEN --DARF/DAS
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_DARFDAS';
+    
+      -- Imprimir pagamento
+      pc_impressao_darf_das(pr_xmldata  => rw_xmldata
+                           ,pr_nmrescop => rw_crapcop.nmrescop
+                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                           ,pr_cdagectl => rw_crapcop.cdagectl);      
     END IF;
     
     -- Tag de finalização do XML
@@ -2537,8 +2859,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     vr_rowid_craplgm ROWID;
 	vr_crapsnhFound BOOLEAN:=FALSE;
     
-  BEGIN
-  
+    BEGIN
+        
     IF pr_flgerlog = 1 /*1 = TRUE*/ THEN
       vr_dsorigem :=  gene0001.vr_vet_des_origens(pr_idorigem);
       vr_dstransa := 'Inclusao de Conta para Transferencia.';
@@ -2624,25 +2946,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_crapsnhFound:=TRUE;
         END IF;
         ELSE
-      
-      -- Verificar cadastro de senha
-      OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
-                       pr_nrdconta => pr_nrdconta,
+        
+        -- Verificar cadastro de senha
+        OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
+                         pr_nrdconta => pr_nrdconta,
                          pr_idseqttl => pr_idseqttl,
                          pr_cdsitsnh => 1); 
         
-      FETCH cr_crapsnh INTO rw_crapsnh;
+        FETCH cr_crapsnh INTO rw_crapsnh;
         
-      IF cr_crapsnh%NOTFOUND THEN
+        IF cr_crapsnh%NOTFOUND THEN
                                       
-        CLOSE cr_crapsnh;
+          CLOSE cr_crapsnh;
           
-        vr_dscritic := 'Senha para conta on-line nao cadastrada';
-        RAISE vr_exec_inclui;
+          vr_dscritic := 'Senha para conta on-line nao cadastrada';
+          RAISE vr_exec_inclui;
         ELSE
-      CLOSE cr_crapsnh;
+          CLOSE cr_crapsnh;
           vr_crapsnhFound:=TRUE;
-          END IF;
+          END IF;    
         
       END IF;
 
@@ -2759,9 +3081,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             vr_dscritic := 'Não foi possivel inserir registro de tranferencia: '||SQLERRM;
             RAISE vr_exec_inclui; 
         END;
-        
-          END IF;
-          
+
+      END IF;
+
       IF vr_crapsnhFound THEN
         -- Verificar limites do cooperado
         IF pr_intipdif = 1       AND  

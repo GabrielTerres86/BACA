@@ -2325,7 +2325,8 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                       "COD.BARRAS ". 
         
             IF  craplft.cdbarras <> "" OR 
-                craplft.nrrefere  = "" THEN
+                craplft.nrrefere  = "" OR
+				craplft.nrrefere  = ?  THEN
                 ASSIGN aux_nrrefere = FILL(" ", 17).
             ELSE
                 DO:

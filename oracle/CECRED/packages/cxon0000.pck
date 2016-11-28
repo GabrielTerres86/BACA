@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0000 AS
    Sistema : Caixa On-line
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/06/2016
+   Data    : Marco/2001                      Ultima atualizacao: 21/11/2016
 
    Dados referentes ao programa:
 
@@ -116,7 +116,11 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0000 AS
                             
                23/06/2016 - Correcao no cursor da crapbcx utilizando o indice 
                             correto sobre o campo cdopecxa.(Carlos Rafael Tanholi). 							
-                                
+                  
+               21/11/2016 - Alterado procedure pc_cria_erro, substr de 92 para 200 do campo 
+                            craperr.dscritic conforme tamanho do campo na tabela,
+                            Prj. 338 - DARF/DAS. (Jean Michel)
+
   ..............................................................................*/
 
   /* Tipo de tabela para os dias da semana por extenso */
@@ -255,12 +259,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0000 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: --/--/----
+  --  Data     : Junho/2013.                   Ultima atualizacao: 21/11/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos e funcoes das transacoes do caixa online
+  --
+  --              21/11/2016 - Alterado procedure pc_cria_erro, substr de 92 para 200 do campo 
+  --                           craperr.dscritic conforme tamanho do campo na tabela,
+  --                           Prj. 338 - DARF/DAS. (Jean Michel)
 
   ---------------------------------------------------------------------------------------------------------------
 
@@ -476,7 +484,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0000 AS
   --  Sistema  : Procedure para criar erro
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 17/04/2014
+  --  Data     : Junho/2013.                   Ultima atualizacao: 21/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -484,6 +492,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0000 AS
   -- Objetivo   : Procedure para criar erro
   -- Alterações : 17/04/2014 - Ajuste na procedure "cria-erro" para buscar a
   --                           proxima sequence banco Oracle. (James)
+  --
+  --              21/11/2016 - Alterado substr de 92 para 200 do campo craperr.dscritic
+  --                           conforme tamanho do campo na tabela, Prj. 338 - DARF/DAS. (Jean Michel)           
 
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -545,7 +556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0000 AS
           ,pr_nrdcaixa
           ,fn_sequence('CRAPERR','NRSEQUEN',pr_cdcooper||';'||pr_cdagenci||';'||pr_nrdcaixa)
           ,pr_cod_erro
-          ,substr(nvl(trim(vr_dsc_erro),pr_dsc_erro),1,92) --tamanho maximo do campo
+          ,substr(nvl(trim(vr_dsc_erro),pr_dsc_erro),1,200) --tamanho maximo do campo
           ,vr_ind_erro);
       EXCEPTION
         WHEN Others THEN

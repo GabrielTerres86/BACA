@@ -11,6 +11,9 @@
 				  06/10/2015 - Incluindo validacao de protocolo MD5 - Sicredi
                                (Andre Santos - SUPERO)
 
+				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+							   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+
  * --------------
  */
 
@@ -50,7 +53,7 @@
 	<label for="dsprotoc"><? echo utf8ToHtml('Protocolo:') ?></label>
 	<input name="dsprotoc" id="dsprotoc" type="text" alt="Informe o protocolo do comprovante."  autocomplete="off" />
 	
-	<label for="flvalgps"><? echo utf8ToHtml('Valida Informa&ccedil;&atilde;s do GPS? :') ?></label>
+	<label for="flvalgps"><? echo utf8ToHtml('Valida Informa&ccedil;&atilde;s do GPS, DARF ou DAS? :') ?></label>
 	<select id="flvalgps" name="flvalgps" class="campo" >
 	    <option value="1" ><? echo utf8ToHtml('Sim') ?></option>
 		<option value="0" selected><? echo utf8ToHtml('N&atilde;o') ?></option>		
