@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : Lucas Reinert
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 08/11/2016
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 28/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -318,6 +318,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --             08/11/2016 - #551164 padronizar os nomes do job por produto e monitorar a sua 
   --                          execução em logs; correções dos nomes das variáveis pr_[cd][ds]critic para
   --                          vr_ (rotinas pc_gera_arq_remessa_sms e pc_processa_retorno_sms) (Carlos)
+  --
+  --             28/11/2016 - Adicionado liberação para canais para gerar boleto de quitação de
+  --                          emprestimo. (Kelvin SD 535306)
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -3505,7 +3508,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 29/06/2016
+      Data    : Agosto/15.                    Ultima atualizacao: 28/11/2016
 
       Dados referentes ao programa:
 
@@ -3528,6 +3531,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                
                   29/06/2016 - Adicionar validacao de substr para a leitura da crapass com a 
                                crapenc (Lucas Ranghetti #456095)
+                               
+                  28/11/2016 - Adicionado liberação para canais para gerar boleto de quitação de
+                               emprestimo. (Kelvin SD 535306)
   ..............................................................................*/
 
 		DECLARE
@@ -3653,10 +3659,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
          END IF;
          
          -- se o boleto eh para quitacao do contrato e nao for da central telefonica, criticar...
-         IF pr_tpparepr = 4 AND nvl(rw_ope.dsdepart,' ') <> 'CENTRAL TELEFONICA' THEN
+         IF pr_tpparepr = 4 AND 
+            nvl(rw_ope.dsdepart,' ') <> 'CENTRAL TELEFONICA' AND
+            nvl(rw_ope.dsdepart,' ') <> 'CANAIS' THEN --Adicionado CANAIS (SD 548663)
             -- Atribui crítica
             vr_cdcritic := 0;
-            vr_dscritic := 'Quitacao do contrado permitido apenas para operadores da CENTRAL TELEFONICA.';
+            vr_dscritic := 'Quitacao  do contrado permitido apenas para operadores da CENTRAL TELEFONICA.';
             -- Levanta exceção
             RAISE vr_exc_saida;                                
          END IF;
