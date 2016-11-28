@@ -6879,7 +6879,8 @@ BEGIN
                              cdpesqbb,
                              nrseqdig,
                              vllanmto,
-                             dtrefere)
+                             dtrefere,
+                             nrdocmto)
         values (pr_cdcooper,
                 rw_craplft2.cdagenci,
                 rw_craphis2.cdhistor,
@@ -6887,7 +6888,8 @@ BEGIN
                 vr_cdprogra,
                 rw_craplft2.qtlanmto,
                 rw_craplft2.qtlanmto * rw_crapstn.vltrfuni,
-                rw_crapscn2.cdempres);
+                rw_crapscn2.cdempres,
+                rw_craplft2.cdagenci_fatura);
       exception
         when others then
           vr_cdcritic := 0;

@@ -555,9 +555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                            TRIM(TO_CHAR(TRIM(gene0002.fn_mask(rw_craplau.nrctadst,'zzzzzzzzzz.zzz.z')))) || ' - ' ||
                            TRIM(rw_crapcti_dst.nmtitula);
 
-          ELSE
-            
-            IF rw_craplau.cdtiptra = 0 THEN
+          ELSIF rw_craplau.cdtiptra = 0 THEN
               
               IF rw_craplau.nrdolote = 32001 THEN
                 
@@ -571,7 +569,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
               
               END IF;
               
-            END IF;  
+          ELSIF rw_craplau.cdtiptra = 10 THEN --Pagamentos de DARF/DAS
+            
+            vr_dstiptra := 'PAGAMENTO-' || CASE rw_craplau.tppagamento WHEN 1 THEN 'DARF' ELSE 'DAS' END; 
                                 
             IF rw_craplau.tpcaptura = 1 THEN -- 1 - Com códiog de barras
               
@@ -657,6 +657,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                                                       TRIM(TO_CHAR(rw_craplau.nrterfin,'0000'));                                          
                                                       
            END IF;
+		   
+		 END IF;
          
          -- ################################## DADOS RELACIONADOS À DARF/DAS ##################################
          vr_tab_agendamentos(vr_index).tpcaptura         := rw_craplau.tpcaptura;         -- Tipo de Captura

@@ -191,6 +191,50 @@ create or replace package cecred.PAGA0002 is
   --Tipo de tabela de memoria para convenios aceitos
   TYPE typ_tab_convenios IS TABLE OF typ_reg_convenios INDEX BY PLS_INTEGER;
   
+  --Antigo tt-dados-agendamento da BO16
+  TYPE typ_reg_dados_agendamento IS
+    RECORD (dtmvtage DATE
+           ,dtmvtopg DATE
+		   ,dtvencto DATE
+           ,vllanaut NUMBER
+           ,dttransa DATE
+           ,hrtransa INTEGER
+           ,nrdocmto INTEGER
+           ,dssitlau VARCHAR2(100)
+           ,dslindig VARCHAR2(100)
+           ,dscedent VARCHAR2(100)
+           ,dtvendrf DATE
+           ,dsageban VARCHAR2(100)
+           ,nrctadst VARCHAR2(100)
+           ,incancel INTEGER
+           ,nmprimtl VARCHAR2(100)
+           ,nmprepos VARCHAR2(100)
+           ,nrcpfpre NUMBER
+           ,nmoperad VARCHAR2(100)
+           ,nrcpfope NUMBER
+		   ,nrcpfcgc NUMBER
+           ,idtitdda NUMBER
+           ,cdageban VARCHAR2(100)
+           ,cdtiptra INTEGER
+           ,dstiptra VARCHAR2(100)
+           ,dtagenda DATE    
+		   ,tpcaptur INTEGER 
+           ,dstipcat VARCHAR2(100)
+           ,dsidpgto VARCHAR2(100)
+           ,dsnomfon VARCHAR2(100)
+           ,dtperiod DATE    
+           ,cdreceit INTEGER
+           ,nrrefere INTEGER
+           ,vlprinci NUMBER 
+           ,vlrmulta NUMBER 
+           ,vlrjuros NUMBER 
+           ,vlrtotal NUMBER 
+           ,vlrrecbr NUMBER 
+           ,vlrperce NUMBER);   
+
+  --Tipo de tabela de memoria para dados de agendamentos
+  TYPE typ_tab_dados_agendamento IS TABLE OF typ_reg_dados_agendamento INDEX BY PLS_INTEGER;  
+  
   /* Procedimento do internetbank operação 22 - Transferencia */
   PROCEDURE pc_InternetBank22 ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
                                ,pr_nmrescop IN crapcop.nmrescop%TYPE   --> Nome da cooperativa 

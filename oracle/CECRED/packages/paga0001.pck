@@ -10668,7 +10668,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                       ,pr_nrctatrf => 0                    --Numero Conta Destino
                                       ,pr_cdtiptra => 0                    --Tipo transacao
                                       ,pr_cdoperad => pr_cdoperad          --Codigo Operador
-                                      ,pr_tpoperac => 2                    --Pagamento
+                                      ,pr_tpoperac => rw_craplau.cdtiptra  --Pagamento
                                       ,pr_flgvalid => TRUE                 --Indicador validacoes
                                       ,pr_dsorigem => vr_dsorigem          --Descricao Origem
                                       ,pr_nrcpfope => 0                    --CPF operador
@@ -12157,7 +12157,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
               
             vr_idagenda := rw_tbpagto_trans_pend.idagendamento;
             vr_dtmvtopg := rw_tbpagto_trans_pend.dtdebito; 
+        --Pagamento DARF/DAS
+        ELSIF vr_tptransa = 11 THEN
+            --Selecionar transacao pendente
+            OPEN cr_tbpagto_darf_das_trans_pend (pr_cdtrapen => vr_cdtransa);
+            --Posicionar no primeiro registro
+            FETCH cr_tbpagto_darf_das_trans_pend INTO rw_tbpagto_darf_das_trans_pend;
+            --Se encontrou
+            IF cr_tbpagto_darf_das_trans_pend%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_tbpagto_darf_das_trans_pend;
+              --Erro
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Transacao pendente não cadastrada.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+            --Fechar Cursor
+            CLOSE cr_tbpagto_darf_das_trans_pend;
               
+            vr_idagenda := rw_tbpagto_darf_das_trans_pend.idagendamento;
+            vr_dtmvtopg := rw_tbpagto_darf_das_trans_pend.dtdebito;
         --TED
         ELSIF vr_tptransa = 4 THEN    
             --Selecionar transacao pendente
@@ -12196,7 +12216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
         -- tptransa 7     Aplicacao
         -- tptransa 8     Debito Automatico
         -- tptransa 9     Folha Pagamento
-        --
+        -- tptransa 11     DARF/DAS
         -- Codigo Horario
         -- 1 - Transferencia, 2 - Pagamento,        3 - Cobranca
         -- 4 - TED,           5 - Intercooperativa, 6 - VRBoleto
