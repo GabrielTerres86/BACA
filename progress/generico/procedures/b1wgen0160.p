@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0160.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 16/07/2013                     Ultima atualizacao: 18/09/2014
+    Data    : 16/07/2013                     Ultima atualizacao: 07/07/2016
 
     Objetivo  : Tranformacao BO tela PESQSR.
 
@@ -11,7 +11,14 @@
                              procedure Busca_Opcao_C e na Busca_Opcao_D. 
                              (Reinert)
                 18/09/2014 - Integracao cooperativas 4 e 15 (Vanessa)
-                                                                                
+                 
+				24/06/2016 - Ajustes referente a homologacao da área de negocio 
+                            (Adriano - SD 412556).                                                               
+
+                07/07/2016 - #442054 Correcao do proc Busca_Opcao_C para
+                             pegar os dados do favorecido do cheque (cdbancdep,
+                             cdagedep e nrctadep) (Carlos)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -222,7 +229,7 @@ PROCEDURE Busca_Opcao_C:
     DEF OUTPUT PARAM TABLE FOR tt-dados-cheque.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    DEF VAR aux_nrdctitg AS INTE                                    NO-UNDO.
+    DEF VAR aux_nrdctitg AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrctaass AS INTE                                    NO-UNDO.
     DEF VAR aux_dsdctitg AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrchqsdv AS INTE                                    NO-UNDO.
@@ -237,7 +244,7 @@ PROCEDURE Busca_Opcao_C:
     DEF VAR aux_regexist AS LOGI INIT FALSE                         NO-UNDO.
     DEF VAR aux_nrseqchq AS INT     INIT 0                          NO-UNDO.
     DEF VAR aux_ctamigra AS LOGICAL INIT FALSE                      NO-UNDO.
-
+	DEF VAR aux_contador AS INT										NO-UNDO.
     
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
@@ -360,10 +367,61 @@ PROCEDURE Busca_Opcao_C:
                 LEAVE Busca.
             END.
 
-        ASSIGN aux_nmprimtl = crapass.nmprimtl
-               aux_nrfonemp = crapass.nrfonemp
-               aux_nrramemp = crapass.nrramemp.
+		ASSIGN aux_nmprimtl = crapass.nmprimtl
+		       aux_nrfonemp = "0"
+			   aux_nrramemp = 0.
 
+		Telefone:
+		DO aux_contador = 1 TO 4:
+
+          FOR FIRST craptfc FIELDS (tptelefo nrtelefo nrdddtfc nrdramal)
+              WHERE craptfc.cdcooper = crapfdc.cdcooper    
+                AND craptfc.nrdconta = crapfdc.nrdconta 
+                AND craptfc.idseqttl = 1 
+                AND craptfc.tptelefo = aux_contador NO-LOCK:
+
+              /* 1 - Residencial */
+              /* 2 - Celular     */
+              /* 3 - Comercial   */
+              /* 4 - Contato     */
+              CASE craptfc.tptelefo:
+                WHEN 1 THEN 
+                DO:
+                    IF craptfc.nrtelefo > 0 THEN 
+                    DO:
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
+								aux_nrramemp = craptfc.nrdramal.
+
+                        LEAVE telefone.
+                    END.
+                END.
+
+                WHEN 2 THEN 
+                DO:
+                    IF craptfc.nrtelefo > 0 THEN 
+                    DO:
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
+								aux_nrramemp = craptfc.nrdramal.
+
+                        LEAVE telefone.
+                    END.
+                END.
+
+                WHEN 4 THEN 
+                DO:
+                    IF craptfc.nrtelefo > 0 THEN 
+                    DO:
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
+								aux_nrramemp = craptfc.nrdramal.
+
+                        LEAVE telefone.
+                    END.
+                END.
+            END CASE.
+                  
+          END.
+        END.
+		
         FOR FIRST crapttl
             WHERE crapttl.cdcooper = par_cdcooper     AND
                   crapttl.nrdconta = crapass.nrdconta AND
@@ -428,6 +486,13 @@ PROCEDURE Busca_Opcao_C:
                          craplcm.cdhistor = 621)
                          USE-INDEX craplcm2 NO-LOCK :
 
+                    FIND FIRST crapfdc WHERE 
+                        crapfdc.cdcooper = par_cdcooper AND
+                        crapfdc.nrdconta = crapass.nrdconta AND
+                        crapfdc.nrcheque = 
+                        INTE(SUBSTRING(STRING(craplcm.nrdocmto), 1, (LENGTH(STRING(craplcm.nrdocmto)) - 1)))
+                        NO-LOCK NO-WAIT.
+
                     CREATE tt-pesqsr.
                     ASSIGN tt-pesqsr.dtmvtolt = craplcm.dtmvtolt
                            tt-pesqsr.cdagenci = craplcm.cdagenci
@@ -437,12 +502,12 @@ PROCEDURE Busca_Opcao_C:
                            tt-pesqsr.cdpesqbb = craplcm.cdpesqbb
                            tt-pesqsr.nrseqimp = craplcm.nrseqdig 
                            tt-pesqsr.vldoipmf = DEC(TRUNC(crapfdc.vlcheque * 0.0038 , 2))
-                           tt-pesqsr.cdbanchq = STRING(craplcm.cdbanchq,"zzz9") + "-" +
-                                                STRING(craplcm.cdagechq,"9999")
+                           tt-pesqsr.cdbanchq = STRING(crapfdc.cdbandep,"zzz9") + "-" +
+                                                STRING(crapfdc.cdagedep,"9999")
                            tt-pesqsr.sqlotchq = craplcm.sqlotchq
                            tt-pesqsr.cdcmpchq = craplcm.cdcmpchq
                            tt-pesqsr.nrlotchq = craplcm.nrlotchq
-                           tt-pesqsr.nrctachq = craplcm.nrctachq
+                           tt-pesqsr.nrctachq = crapfdc.nrctadep
                            tt-pesqsr.cdbaninf = par_cdbaninf 
                             
                            tt-pesqsr.cdagechq = aux_cdagechq
@@ -495,8 +560,8 @@ PROCEDURE Busca_Opcao_C:
 
                 IF  NOT aux_regexist   THEN
                     DO:
-                        ASSIGN aux_cdcritic = 242
-                               aux_dscritic = "".
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Cheque nao compensado".
                         LEAVE Busca.
                     END.
                 ELSE
@@ -591,7 +656,8 @@ PROCEDURE Busca_Opcao_D:
     DEF VAR aux_dsagenci AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtlimite AS DATE                                    NO-UNDO.
     DEF VAR aux_regexist AS LOGI                                    NO-UNDO.
-    
+    DEF VAR aux_contador AS INT										NO-UNDO.
+
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_returnvl = "NOK"
@@ -651,8 +717,59 @@ PROCEDURE Busca_Opcao_D:
                    aux_cdturnos = 0.
 
         ASSIGN aux_nmprimtl = crapass.nmprimtl
-               aux_nrfonemp = crapass.nrfonemp
-               aux_nrramemp = crapass.nrramemp.
+		       aux_nrfonemp = "0"
+			   aux_nrramemp = 0.
+
+		Telefone:
+		DO aux_contador = 1 TO 4:
+
+          FOR FIRST craptfc FIELDS (tptelefo nrtelefo nrdddtfc nrdramal)
+              WHERE craptfc.cdcooper = par_cdcooper    
+                AND craptfc.nrdconta = crapass.nrdconta 
+                AND craptfc.idseqttl = 1 
+                AND craptfc.tptelefo = aux_contador NO-LOCK:
+
+              /* 1 - Residencial */
+              /* 2 - Celular     */
+              /* 3 - Comercial   */
+              /* 4 - Contato     */
+              CASE craptfc.tptelefo:
+                WHEN 1 THEN 
+                DO:
+                    IF craptfc.nrtelefo > 0 THEN 
+                    DO:
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
+							   aux_nrramemp = craptfc.nrdramal.
+
+                        LEAVE telefone.
+                    END.
+                END.
+
+                WHEN 2 THEN 
+                DO:
+                    IF craptfc.nrtelefo > 0 THEN 
+                    DO:
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
+							   aux_nrramemp = craptfc.nrdramal.
+
+                        LEAVE telefone.
+                    END.
+                END.
+
+                WHEN 4 THEN 
+                DO:
+                    IF craptfc.nrtelefo > 0 THEN 
+                    DO:
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
+							   aux_nrramemp = craptfc.nrdramal.
+
+                        LEAVE telefone.
+                    END.
+                END.
+              END CASE.
+                  
+          END.
+        END.
 
         FOR FIRST crapage 
             WHERE crapage.cdcooper = par_cdcooper     AND
