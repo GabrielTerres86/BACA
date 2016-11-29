@@ -2192,9 +2192,11 @@ PROCEDURE gera-linha-arquivo-exp-darf:
             IF  craplft.cdagenci = 90 THEN  /** Internet**/   
                 DO:
                     /* Obter cod. da transacao e vl tarifa */
-                    FIND FIRST crapstn WHERE 
-                               crapstn.cdempres = crapscn.cdempres AND
-                               crapstn.tpmeiarr = "D"
+                    FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres   AND
+                                             crapstn.tpmeiarr = "D"                AND
+                                             IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                             AND
+                                             IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
                                NO-LOCK NO-ERROR.
         
                     IF  AVAIL crapstn THEN
@@ -2331,7 +2333,8 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                       "COD.BARRAS ". 
         
             IF  craplft.cdbarras <> "" OR 
-                craplft.nrrefere  = "" THEN
+                craplft.nrrefere  = "" OR
+                craplft.nrrefere  = ?  THEN
                 ASSIGN aux_nrrefere = FILL(" ", 17).
             ELSE
                 DO:
@@ -2340,8 +2343,8 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                               TRIM(SUBSTR(craplft.nrrefere,1,17)).
                 END.
         
-            ASSIGN aux_nrcpfcgc = FILL("0", 14 - LENGTH(STRING(craplft.nrcpfcgc))) +
-                                  TRIM(SUBSTR(STRING(craplft.nrcpfcgc),1,14)).
+            ASSIGN aux_nrcpfcgc = TRIM(SUBSTR(STRING(craplft.nrcpfcgc),1,14)) +
+                                  FILL(" ", 14 - LENGTH(STRING(craplft.nrcpfcgc))).
         
             DATE(craplft.dtlimite) NO-ERROR.
         
