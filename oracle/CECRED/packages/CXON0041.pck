@@ -91,7 +91,7 @@
                                     ,pr_cdagenci IN crapage.cdagenci%TYPE -- Codigo do PA
                                     ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE -- Numero do Caixa
                                     ,pr_cdtribut IN craplft.cdtribut%TYPE -- Codigo do Tributo
-                                    ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE -- Numero do CPF/CNPJ
+                                    ,pr_nrcpfcgc IN craplft.nrcpfcgc%TYPE -- Numero do CPF/CNPJ
                                     ,pr_dtapurac IN crapdat.dtmvtolt%TYPE -- Data de Apuracao
                                     ,pr_dtlimite IN crapdat.dtmvtolt%TYPE -- Data Limite
                                     ,pr_cdrefere IN craplft.nrrefere%TYPE -- Codigo de Referencia
@@ -595,7 +595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
                                     ,pr_cdagenci IN crapage.cdagenci%TYPE -- Codigo do PA
                                     ,pr_nrdcaixa IN craplot.nrdcaixa%TYPE -- Numero do Caixa
                                     ,pr_cdtribut IN craplft.cdtribut%TYPE -- Codigo do Tributo
-                                    ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE -- Numero do CPF/CNPJ
+                                    ,pr_nrcpfcgc IN craplft.nrcpfcgc%TYPE -- Numero do CPF/CNPJ
                                     ,pr_dtapurac IN crapdat.dtmvtolt%TYPE -- Data de Apuracao
                                     ,pr_dtlimite IN crapdat.dtmvtolt%TYPE -- Data Limite
                                     ,pr_cdrefere IN craplft.nrrefere%TYPE -- Codigo de Referencia
@@ -912,7 +912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
             pr_cdtribut = '9167' OR
             pr_cdtribut = '9170' OR
             pr_cdtribut = '9182')           AND
-            pr_nrcpfcgc <> 360305000104 THEN
+            pr_nrcpfcgc <> '00360305000104' THEN
             
           vr_cdcritic := 0;
           vr_dscritic := 'Documento nao pode ser ser acolhido por esse CPF/CNPJ.';
@@ -922,7 +922,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
         END IF;
 
         IF pr_cdtribut = '4584' AND
-           pr_nrcpfcgc <> 191 THEN
+           pr_nrcpfcgc <> '00000000000191' THEN
 
           vr_cdcritic := 0;
           vr_dscritic := 'Documento nao pode ser ser acolhido por esse CPF/CNPJ.';
@@ -999,7 +999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       END IF;
 
       IF SUBSTR(rw_crapstb.dsrestri,2,1) <> 'S' THEN
-        IF pr_nrcpfcgc = 191 THEN
+        IF pr_nrcpfcgc = '00000000000191' THEN
           vr_cdcritic := 0;
           vr_dscritic := 'Documento nao pode possuir esse CNPJ.';
           pr_foco     := '10';

@@ -6671,7 +6671,7 @@ PROCEDURE busca_darf_das:
             ASSIGN tt-tbpagto_darf_das_trans_pend.dscod_barras         =      xText:NODE-VALUE  WHEN xField:NAME = "dscod_barras".
             ASSIGN tt-tbpagto_darf_das_trans_pend.dslinha_digitavel    =      xText:NODE-VALUE  WHEN xField:NAME = "dslinha_digitavel".
             ASSIGN tt-tbpagto_darf_das_trans_pend.dtapuracao           = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtapuracao".
-            ASSIGN tt-tbpagto_darf_das_trans_pend.nrcpfcgc             =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc".
+            ASSIGN tt-tbpagto_darf_das_trans_pend.nrcpfcgc             =     (xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc".
             ASSIGN tt-tbpagto_darf_das_trans_pend.cdtributo            =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "cdtributo".
             ASSIGN tt-tbpagto_darf_das_trans_pend.nrrefere             =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "nrrefere".
             ASSIGN tt-tbpagto_darf_das_trans_pend.vlprincipal          =  DEC(xText:NODE-VALUE) WHEN xField:NAME = "vlprincipal".

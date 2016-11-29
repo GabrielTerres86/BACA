@@ -211,7 +211,7 @@ create or replace package cecred.PAGA0002 is
            ,nrcpfpre NUMBER
            ,nmoperad VARCHAR2(100)
            ,nrcpfope NUMBER
-		   ,nrcpfcgc NUMBER
+		   ,nrcpfcgc VARCHAR2(200)
            ,idtitdda NUMBER
            ,cdageban VARCHAR2(100)
            ,cdtiptra INTEGER
@@ -8348,8 +8348,8 @@ create or replace package body cecred.PAGA0002 is
     vr_hrfimcan INTEGER := 0;
     vr_cdindice INTEGER := 0;
     vr_tpcaptur INTEGER := 0;		
-	  vr_nrcpfcgc NUMBER  := 0;
-	  vr_dtvencto DATE;
+	vr_nrcpfcgc VARCHAR2(200) := '';
+	vr_dtvencto DATE;
     vr_datdodia DATE := SYSDATE;
     vr_dssgproc VARCHAR2(500) := '';
     vr_dssitlau VARCHAR2(500) := '';
@@ -8862,9 +8862,13 @@ create or replace package body cecred.PAGA0002 is
         END IF;
         
 		vr_inpessoa := 0;
-		gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_tab_dados_agendamento(vr_contador).nrcpfcgc,
-                                    pr_stsnrcal => vr_stsnrcal,
-                                    pr_inpessoa => vr_inpessoa);
+		IF TRIM(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) <> '' THEN 
+			 IF LENGTH(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) = 11 THEN -- CPF
+				 vr_inpessoa := 1;
+			 ELSE -- CNPJ
+				 vr_inpessoa := 2; 
+			 END IF;
+		END IF;
         
         -- Montar XML com registros de aplicação
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc

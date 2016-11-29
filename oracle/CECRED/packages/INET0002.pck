@@ -5245,7 +5245,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       --Variáveis locais
       vr_idastcjt NUMBER := 0;
       vr_nrcpfcgc NUMBER(14) := 0;
-      vr_nrcpfgui NUMBER(14) := 0;
+      vr_nrcpfgui VARCHAR2(100) := '';
       vr_nrdctato crapavt.nrdctato%TYPE;
       vr_nmprimtl crapass.nmprimtl%TYPE;
       vr_dstransa VARCHAR2(500);

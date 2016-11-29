@@ -41,7 +41,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                 ,pr_cdbarras IN OUT VARCHAR2 -- Código de barras da guia
                                 ,pr_vlrtotal IN NUMBER -- Valor total do pagamento da guia
                                 ,pr_dtapurac IN DATE -- Período de apuração da guia
-                                ,pr_nrcpfcgc IN NUMBER -- CPF/CNPJ da guia
+                                ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                 ,pr_cdtribut IN NUMBER -- Código de tributação da guia
                                 ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                 ,pr_dtvencto IN DATE -- Data de vencimento da guia
@@ -78,7 +78,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                             ,pr_vlrtotal IN NUMBER	-- Valor total do pagamento da guia
                             ,pr_dsnomfon IN VARCHAR2	-- Nome e telefone da guia
                             ,pr_dtapurac IN DATE		-- Período de apuração da guia
-                            ,pr_nrcpfcgc IN NUMBER  -- CPF/CNPJ da guia
+                            ,pr_nrcpfcgc IN VARCHAR2  -- CPF/CNPJ da guia
                             ,pr_cdtribut IN NUMBER  -- Código de tributação da guia
                             ,pr_nrrefere IN NUMBER  -- Número de referência da guia
                             ,pr_dtvencto IN DATE		-- Data de vencimento da guia
@@ -115,7 +115,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
 															,pr_vlrtotal IN  NUMBER                 -- Nome e telefone da guia
 															,pr_dsnomfon IN  VARCHAR2               -- Período de apuração da guia
 															,pr_dtapurac IN  DATE                   -- CPF/CNPJ da guia
-															,pr_nrcpfcgc IN  NUMBER                 -- Código de tributação da guia
+															,pr_nrcpfcgc IN  VARCHAR2               -- Código de tributação da guia
 															,pr_cdtribut IN  NUMBER                 -- Número de referência da guia
 															,pr_nrrefere IN  NUMBER                 -- Data de vencimento da guia
 															,pr_dtvencto IN  DATE                   -- Valor principal da guia
@@ -152,7 +152,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                   ,pr_vlrtotal IN NUMBER -- Valor total do pagamento da guia
                                   ,pr_dsnomfon IN VARCHAR2 -- Nome e telefone da guia
                                   ,pr_dtapurac IN DATE -- Período de apuração da guia
-                                  ,pr_nrcpfcgc IN NUMBER -- CPF/CNPJ da guia
+                                  ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                   ,pr_cdtribut IN NUMBER -- Código de tributação da guia
                                   ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                   ,pr_dtvencto IN DATE -- Data de vencimento da guia
@@ -800,9 +800,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
     vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
 			
-	gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc,
-								pr_stsnrcal => vr_stsnrcal,
-								pr_inpessoa => vr_inpessoa);  
+	  vr_inpessoa := 0;				
+		IF TRIM(pr_nrcpfcgc) <> '' THEN 
+			 IF LENGTH(pr_nrcpfcgc) = 11 THEN -- CPF
+				 vr_inpessoa := 1;
+			 ELSE -- CNPJ
+				 vr_inpessoa := 2; 
+			 END IF;
+		END IF;
 	
     --Título do comprovante
     vr_dsinfor1 := CASE pr_cdtippro
@@ -931,7 +936,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ,pr_cdbarras IN OUT VARCHAR2 -- Código de barras da guia
                                 ,pr_vlrtotal IN NUMBER -- Valor total do pagamento da guia
                                 ,pr_dtapurac IN DATE -- Período de apuração da guia
-                                ,pr_nrcpfcgc IN NUMBER -- CPF/CNPJ da guia
+                                ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                 ,pr_cdtribut IN NUMBER -- Código de tributação da guia
                                 ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                 ,pr_dtvencto IN DATE -- Data de vencimento da guia
@@ -1514,7 +1519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                             ,pr_vlrtotal IN NUMBER	-- Valor total do pagamento da guia
                             ,pr_dsnomfon IN VARCHAR2	-- Nome e telefone da guia
                             ,pr_dtapurac IN DATE		-- Período de apuração da guia
-                            ,pr_nrcpfcgc IN NUMBER  -- CPF/CNPJ da guia
+                            ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                             ,pr_cdtribut IN NUMBER  -- Código de tributação da guia
                             ,pr_nrrefere IN NUMBER  -- Número de referência da guia
                             ,pr_dtvencto IN DATE		-- Data de vencimento da guia
@@ -2409,7 +2414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_vlrtotal IN  NUMBER                 -- Valor total do pagamento da guia
                                ,pr_dsnomfon IN  VARCHAR2               -- Nome e telefone da guia
                                ,pr_dtapurac IN  DATE                   -- Período de apuração da guia
-                               ,pr_nrcpfcgc IN  NUMBER                 -- CPF/CNPJ da guia
+                               ,pr_nrcpfcgc IN  VARCHAR2               -- CPF/CNPJ da guia
                                ,pr_cdtribut IN  NUMBER                 -- Código de tributação da guia
                                ,pr_nrrefere IN  NUMBER                 -- Número de referência da guia
                                ,pr_dtvencto IN  DATE                   -- Data de vencimento da guia
@@ -2459,7 +2464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     vr_dstrans1  VARCHAR2(200) := '';		
 		vr_vlrvalid  NUMBER;              -- Valor a ser validado pela rotina
 		vr_idastcjt  crapass.idastcjt%TYPE;
-    vr_nrcpfcgc  INTEGER := 0;
+    vr_nrcpfcgc  VARCHAR2(200) := '';
     vr_nmprimtl  VARCHAR2(500);
     vr_flcartma  INTEGER(1) := 0;
 		vr_cdseqfat  VARCHAR2(500);
@@ -3148,7 +3153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_vlrtotal IN NUMBER -- Valor total do pagamento da guia
                                   ,pr_dsnomfon IN VARCHAR2 -- Nome e telefone da guia
                                   ,pr_dtapurac IN DATE -- Período de apuração da guia
-                                  ,pr_nrcpfcgc IN NUMBER -- CPF/CNPJ da guia
+                                  ,pr_nrcpfcgc IN VARCHAR2 -- CPF/CNPJ da guia
                                   ,pr_cdtribut IN NUMBER -- Código de tributação da guia
                                   ,pr_nrrefere IN NUMBER -- Número de referência da guia
                                   ,pr_dtvencto IN DATE -- Data de vencimento da guia
