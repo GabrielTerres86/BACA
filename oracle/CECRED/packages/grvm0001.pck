@@ -906,7 +906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  05/11/2014
+     Data    : Agosto/2013                     Ultima atualizacao:  28/11/2016
 
      Dados referentes ao programa:
 
