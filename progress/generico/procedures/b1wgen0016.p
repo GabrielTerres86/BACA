@@ -1442,8 +1442,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     END.
                 ELSE
                 IF tbgen_trans_pend.tptransacao = 9  THEN /** FOLHA DE PAGAMENTO **/ 
-                    DO:
-                            
+                    DO:                            
                         FIND tbfolha_trans_pend 
                             WHERE tbfolha_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
                             NO-LOCK NO-ERROR NO-WAIT.
@@ -1452,24 +1451,35 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_vllantra = tbfolha_trans_pend.vlfolha
                                aux_dscedent = "FOLHA DE PAGAMENTO".
                     END.
+				ELSE
+                IF tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/ 
+                    DO:                
+                        FIND tbtarif_pacote_trans_pend 
+                            WHERE tbtarif_pacote_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
+                            NO-LOCK NO-ERROR NO-WAIT.
+                
+                        
+                        ASSIGN aux_dtdebito = "Mes atual"
+                               aux_vllantra = tbtarif_pacote_trans_pend.vlpacote
+                               aux_dscedent = "SERVICOS COOPERATIVOS".
+                    END.	
                 ELSE IF tbgen_trans_pend.tptransacao = 11 THEN /* DARF-DAS */
-                  DO:
-                    
-                    FIND tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK NO-ERROR NO-WAIT.
-                            
-                    ASSIGN aux_dtdebito = (IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN "Nesta Data" ELSE STRING(tt-tbpagto_darf_das_trans_pend.dtdebito,"99/99/9999"))
-						   aux_vllantra = tt-tbpagto_darf_das_trans_pend.vlpagamento.
-                           
-                    IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? AND
-					   TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> "" THEN 
-                      ASSIGN aux_dscedent = TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto).
-                    ELSE DO: 
-                      IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
-                        ASSIGN aux_dscedent = "Pagamento de DARF".
-                      ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
-                        ASSIGN aux_dscedent = "Pagamento de DAS".
-                    END.
-                  END. /* FIM DARF/DAS */
+					DO:                    
+						FIND tt-tbpagto_darf_das_trans_pend WHERE tt-tbpagto_darf_das_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente NO-LOCK NO-ERROR NO-WAIT.
+								
+						ASSIGN aux_dtdebito = (IF tt-tbpagto_darf_das_trans_pend.idagendamento = 1 THEN "Nesta Data" ELSE STRING(tt-tbpagto_darf_das_trans_pend.dtdebito,"99/99/9999"))
+							   aux_vllantra = tt-tbpagto_darf_das_trans_pend.vlpagamento.
+							   
+						IF TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> ? AND
+						   TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto) <> "" THEN 
+						   ASSIGN aux_dscedent = TRIM(tt-tbpagto_darf_das_trans_pend.dsidentif_pagto).
+						ELSE DO: 
+						   IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN
+							 ASSIGN aux_dscedent = "Pagamento de DARF".
+						   ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
+							 ASSIGN aux_dscedent = "Pagamento de DAS".
+						END.
+					END. /* FIM DARF/DAS */
                   
                 IF tbgen_trans_pend.tptransacao = 2 THEN
                     aux_dstiptra= (IF tbpagto_trans_pend.tppagamento = 1 THEN "Pagamento de Convenio" ELSE "Pagamento de Boletos Diversos").
@@ -1481,7 +1491,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     aux_dstiptra = "TED".
                 ELSE
                 IF tbgen_trans_pend.tptransacao = 1 OR
-                 tbgen_trans_pend.tptransacao = 5 THEN
+                   tbgen_trans_pend.tptransacao = 5 THEN
                     aux_dstiptra = "Transferencia".
                 ELSE
                 IF tbgen_trans_pend.tptransacao = 6 THEN
@@ -1497,22 +1507,12 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     aux_dstiptra = "Folha de Pagamento".
 				ELSE
                 IF tbgen_trans_pend.tptransacao = 10  THEN /** PACOTE DE TARIFAS **/ 
-                    DO:
-                
-                        FIND tbtarif_pacote_trans_pend 
-                            WHERE tbtarif_pacote_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente
-                            NO-LOCK NO-ERROR NO-WAIT.
-                
-                        
-                        ASSIGN aux_dtdebito = "Mes atual"
-                               aux_vllantra = tbtarif_pacote_trans_pend.vlpacote
-                               aux_dscedent = "SERVICOS COOPERATIVOS".
-                    END.
-				 ELSE
+                    aux_dstiptra = "Servicos Cooperativos".                    
+				ELSE
                 IF tbgen_trans_pend.tptransacao = 11 THEN
                     DO:
                         IF tt-tbpagto_darf_das_trans_pend.tppagamento = 1 THEN 
-                            aux_dstiptra =  "Pagamento de DARF".
+                            aux_dstiptra = "Pagamento de DARF".
                         ELSE IF tt-tbpagto_darf_das_trans_pend.tppagamento = 2 THEN
                             aux_dstiptra = "Pagamento de DAS".
                     END.

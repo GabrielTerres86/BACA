@@ -1232,7 +1232,7 @@ FOR EACH crapcop NO-LOCK.
                 IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
                     ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
 
-                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(SUBSTR(aux_dslinreg,2,25)) NO-ERROR.
+                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(REPLACE(SUBSTR(aux_dslinreg,2,25),"-","")) NO-ERROR.
             END.
 
         PUT STREAM str_2 aux_dslinreg FORMAT "x(160)" SKIP.
