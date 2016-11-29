@@ -785,6 +785,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   
 	vr_inpessoa INTEGER;
 	vr_stsnrcal BOOLEAN;		
+	vr_cdempcon crapcon.cdempcon%TYPE;
+	vr_cdsegmto	crapcon.cdsegmto%TYPE;
     vr_dsinfor1 crappro.dsinform##1%TYPE;
     vr_dsinfor2 crappro.dsinform##2%TYPE;
     vr_dsinfor3 crappro.dsinform##3%TYPE;
@@ -795,6 +797,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   BEGIN
     
 	vr_inpessoa := 0;
+	vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
+    vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
+			
 	gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => pr_nrcpfcgc,
 								pr_stsnrcal => vr_stsnrcal,
 								pr_inpessoa => vr_inpessoa);  
@@ -843,6 +848,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       --Apenas para DAS
       IF pr_cdtippro IN (17, 19) THEN
          vr_dsinfor3 := vr_dsinfor3 || '#Número Documento (DAS): '	|| SUBSTR(pr_cdbarras,25,17);
+	  ELSE
+		 -- Apenas para DARF 385
+		 IF vr_cdempcon = 385 AND
+			 vr_cdsegmto = 5   THEN
+			 vr_dsinfor3 := vr_dsinfor3 || '#Número Documento (DARF): '	|| SUBSTR(pr_cdbarras,27,9) || SUBSTR(pr_cdbarras,37,8);
+ 		 END IF;
       END IF;
       
     -- Se for Captura Manual

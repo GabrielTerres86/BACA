@@ -516,7 +516,8 @@ function formataVerpro() {
 	rDsidepag = $('label[for="vltotfat"]', '#' + frmDados);
 	rDtmvtdrf = $('label[for="vltotfat"]', '#' + frmDados);
 	rHrautdrf = $('label[for="vltotfat"]', '#' + frmDados);
-	rNrdocmto_das = $('label[for="nrdocmto_das"]', '#' + frmDados);
+	rNrdocmto_das  = $('label[for="nrdocmto_das"]', '#' + frmDados);
+	rNrdocmto_drf = $('label[for="nrdocmto_drf"]', '#' + frmDados);
 	
     //labels protocolo de resgate de aplicação
     rDtresgat = $('label[for="dtresgat"]', '#' + frmDados);
@@ -588,6 +589,7 @@ function formataVerpro() {
 	rDtmvtdrf.addClass('rotulo').css({'width': '130px'});	
 	rHrautdrf.addClass('rotulo').css({'width': '130px'});	
 	rNrdocmto_das.addClass('rotulo').css({'width': '130px'});	
+	rNrdocmto_drf.addClass('rotulo').css({'width': '130px'});	
 
     rDtresgat.addClass('rotulo').css({'width': '130px'});
     rHrresgat.addClass('rotulo').css({'width': '130px'});
@@ -656,7 +658,8 @@ function formataVerpro() {
 	cDsidepag = $('#dsidepag', '#' + frmDados);
 	cDtmvtdrf = $('#dtmvtdrf', '#' + frmDados);
 	cHrautdrf = $('#hrautdrf', '#' + frmDados);
-	cNrdocmto_das = $('#nrdocmto_das', '#' + frmDados);
+	cNrdocmto_das  = $('#nrdocmto_das', '#' + frmDados);
+	cNrdocmto_drf = $('#nrdocmto_das', '#' + frmDados);
 
     //Campos protoclo aplicação
     cDtresgat = $('#dtresgat', '#' + frmDados);
@@ -725,6 +728,7 @@ function formataVerpro() {
 	cDtmvtdrf.css({'width': '400px'});
 	cHrautdrf.css({'width': '400px'});
 	cNrdocmto_das.css({'width': '400px'});
+	cNrdocmto_drf.css({'width': '400px'});
 
     cDtresgat.css({'width': '400px'});
     cHrresgat.css({'width': '400px'});
@@ -850,6 +854,7 @@ function formataVerpro() {
 	rDtmvtdrf.css({'display': 'none'});
 	rHrautdrf.css({'display': 'none'});
 	rNrdocmto_das.css({'display': 'none'});
+	rNrdocmto_drf.css({'display': 'none'});
 
 	cDsagtare.css({'display': 'none'});
 	cDsagenci.css({'display': 'none'});
@@ -871,6 +876,7 @@ function formataVerpro() {
 	cDtmvtdrf.css({'display': 'none'});
 	cHrautdrf.css({'display': 'none'});
 	cNrdocmto_das.css({'display': 'none'});
+	cNrdocmto_drf.css({'display': 'none'});
 
     cDtresgat.css({'display': 'none'});
     cHrresgat.css({'display': 'none'});
@@ -1180,6 +1186,9 @@ function formataVerpro() {
 			if (cdtippro == 17 || cdtippro == 19) { //DAS 
 				rNrdocmto_das.css({'display': 'block'});
 				cNrdocmto_das.css({'display': 'block'});			
+			} else if (cCdbarras.val().substr(15, 4) == 385 && cCdbarras.val().substr(1, 1) == 5){ // DARF385				
+				rNrdocmto_drf.css({'display': 'block'});
+				cNrdocmto_drf.css({'display': 'block'});			
 			}
 			
 		} else if (tpcaptur == 2) {

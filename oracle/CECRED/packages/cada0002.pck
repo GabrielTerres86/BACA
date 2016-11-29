@@ -24,7 +24,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --						  (Adriano - M117).
 	--
 	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
-	--						               InternetBanking (Projeto 338 - Lucas Lunelli)
+  --						   InternetBanking (Projeto 338 - Lucas Lunelli)
 	--
   ---------------------------------------------------------------------------------------------------------------
   
@@ -246,7 +246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --             30/08/2016 - Criar rotina para impressão de resgate de aplicação 
   --                          pc_impressao_resg_aplica (Lucas Ranghetti #490678)
 	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
-	--						               InternetBanking (Projeto 338 - Lucas Lunelli)
+  --						   InternetBanking (Projeto 338 - Lucas Lunelli)
 	--
   ---------------------------------------------------------------------------------------------------------------------------
 
@@ -314,6 +314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,vlrjuros   NUMBER
                             ,vltotfat   NUMBER
 							,nrdocdas   VARCHAR2(100)
+							,nrdocdrf   VARCHAR2(100)
                             ,dsidepag   VARCHAR2(100)
                             ,dtmvtdrf   DATE
                             ,hrautdrf   VARCHAR2(100)
@@ -1590,6 +1591,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
 	END IF;
 		
+    -- Se tem informação de numero do documento (DARF 385)
+    IF  TRIM(pr_xmldata.nrdocdrf) IS NOT NULL THEN
+      	pc_escreve_xml('  Nr. Docmto.(DARF): ' ||pr_xmldata.nrdocdrf,vr_nrdlinha);
+      	vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+	END IF;		
+				
 	IF  pr_xmldata.tpcaptur = 1 THEN --CDBARRA
 		-- Se tem informação de valor total
 		IF  TRIM(pr_xmldata.vltotfat) IS NOT NULL THEN
@@ -2466,6 +2473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 		rw_xmldata.vlrjuros := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vlrjuros/text()'));
 		rw_xmldata.vltotfat := GENE0002.fn_char_para_number(fn_extract('/Root/Dados/vltotfat/text()'));
 		rw_xmldata.nrdocdas := fn_extract('/Root/Dados/nrdocdas/text()');
+		rw_xmldata.nrdocdrf := fn_extract('/Root/Dados/nrdocdrf/text()');		
 		rw_xmldata.dsidepag := fn_extract('/Root/Dados/dsidepag/text()');
 		rw_xmldata.dtmvtdrf := to_date(fn_extract('/Root/Dados/dtmvtdrf/text()'),'dd/mm/rrrr');
 		rw_xmldata.dtvencto_drf := to_date(fn_extract('/Root/Dados/dtvencto_drf/text()'),'dd/mm/rrrr');		
@@ -2565,7 +2573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                          ,pr_cdcooper => pr_cdcooper
                          ,pr_nmrescop => rw_crapcop.nmrescop);  
     ELSIF rw_xmldata.cdtippro = 12 THEN
-      
+
       -- Guardar o nome da rotina chamada para exibir em caso de erro
       vr_nmrotina := 'PC_IMPRESSAO_RESG_APLICA';
     
@@ -3081,9 +3089,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             vr_dscritic := 'Não foi possivel inserir registro de tranferencia: '||SQLERRM;
             RAISE vr_exec_inclui; 
         END;
-
+          
       END IF;
-
+      
       IF vr_crapsnhFound THEN
         -- Verificar limites do cooperado
         IF pr_intipdif = 1       AND  
