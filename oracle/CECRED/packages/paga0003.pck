@@ -852,7 +852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 		 -- Apenas para DARF 385
 		 IF vr_cdempcon = 385 AND
 			 vr_cdsegmto = 5   THEN
-			 vr_dsinfor3 := vr_dsinfor3 || '#Número Documento (DARF): '	|| SUBSTR(pr_cdbarras,27,9) || SUBSTR(pr_cdbarras,37,8);
+			 vr_dsinfor3 := vr_dsinfor3 || '#Número Documento (DARF): '	|| SUBSTR(pr_cdbarras,25,17);
  		 END IF;
       END IF;
       
