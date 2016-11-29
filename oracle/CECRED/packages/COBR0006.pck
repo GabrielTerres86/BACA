@@ -1444,7 +1444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Frequencia: Sempre que chamado
        Objetivo  : Gravar as informacoes do sacado
 
-       Alteracoes: 
+       Alteracoes: 25/11/2016 - Remover caracteres especial no nome do sacado (Gil Furtado - MOUTS)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1460,7 +1460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_tab_sacado(vr_index).cdcooper := pr_rec_cobranca.cdcooper;
     pr_tab_sacado(vr_index).nrdconta := pr_rec_cobranca.nrdconta;
-    pr_tab_sacado(vr_index).nmdsacad := pr_rec_cobranca.nmdsacad;
+    pr_tab_sacado(vr_index).nmdsacad := gene0007.fn_caract_acento(pr_rec_cobranca.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
     pr_tab_sacado(vr_index).cdtpinsc := pr_rec_cobranca.cdtpinsc;
     pr_tab_sacado(vr_index).nrinssac := pr_rec_cobranca.nrinssac;
     pr_tab_sacado(vr_index).dsendsac := pr_rec_cobranca.dsendsac;
@@ -3071,6 +3071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Atualizar as informacoes dos sacados
 
        Alteracoes: 27/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+				   25/11/2016 - Correção dos caracteres invalidos no nome do sacado (Gil Furtado - MOUTS)         
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3092,6 +3093,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_sacado  typ_rec_sacado;
     ------------------------------- VARIAVEIS --------------------------------
     vr_nrendsac INTEGER;
+	vr_nmdsacad crapsab.nmdsacad%type;
 
   BEGIN
   
@@ -3104,6 +3106,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                       ,pr_nrdconta =>  vr_sacado.nrdconta
                       ,pr_nrinssac => vr_sacado.nrinssac);
       FETCH cr_crapsab INTO rw_crapsab;
+	  -- Limpar Variavel vr_nmdsacad
+      vr_nmdsacad := '';
+      -- remover caracter especial vr_nmdsacad
+      vr_nmdsacad := gene0007.fn_caract_acento(vr_sacado.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
       -- Verifica se encontrou
       IF cr_crapsab%NOTFOUND THEN
         -- Fecha cursor
@@ -3124,7 +3130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            ,dtmvtolt)
                     VALUES(vr_sacado.cdcooper
                           ,vr_sacado.nrdconta
-                          ,vr_sacado.nmdsacad
+                          ,vr_nmdsacad
                           ,vr_sacado.cdtpinsc
                           ,vr_sacado.nrinssac
                           ,vr_sacado.dsendsac
@@ -3147,7 +3153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
         -- Se o sacado existir, Efetua atualizacao dados do sacado
         UPDATE crapsab
-           SET crapsab.nmdsacad = vr_sacado.nmdsacad
+           SET crapsab.nmdsacad = vr_nmdsacad
               ,crapsab.dsendsac = vr_sacado.dsendsac
               ,crapsab.nrendsac = vr_nrendsac
               ,crapsab.nmbaisac = vr_sacado.nmbaisac
