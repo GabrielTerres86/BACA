@@ -906,7 +906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  05/11/2014
+     Data    : Agosto/2013                     Ultima atualizacao:  28/11/2016
 
      Dados referentes ao programa:
 
@@ -914,6 +914,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Objetivo  : Gerar arquivos GRAVAMES - Inclusão
 
      Alteracoes: 05/11/2014 - Conversão Progress para Oracle (Marcos-Supero)
+
+                 28/11/2016 - Complemento do endereço da cooperativa nulo gera problema com layout
+                              na Credicomin. Incluído NVL na geração do registro (SD#563418 - AJFink).
+
     ............................................................................. */
   BEGIN
     DECLARE
@@ -1037,15 +1041,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       gene0002.pc_escreve_xml(pr_clobarq,pr_clobaux,vr_set_linha);
 
       --****** DADOS CREDOR             *******
-      vr_set_linha := rpad(substr(pr_reg_dado_arquiv.dsendcop,1,30),30,' ')
-                   || to_char(pr_reg_dado_arquiv.nrendcop,'fm00000')
-                   || rpad(substr(pr_reg_dado_arquiv.dscomple,1,20),20,' ')
-                   || rpad(substr(pr_reg_dado_arquiv.nmbaienc,1,20),20,' ')
-                   || to_char(pr_reg_dado_arquiv.cdcidenc,'fm0000')
-                   || rpad(substr(pr_reg_dado_arquiv.cdufdenc,1,2),2,' ')
-                   || to_char(pr_reg_dado_arquiv.nrcepenc,'fm00000000')
-                   || rpad(substr(pr_reg_dado_arquiv.nrdddenc,1,3),3,' ')
-                   || rpad(substr(pr_reg_dado_arquiv.nrtelenc,1,9),9,' '); -- Sem quebra
+      vr_set_linha := rpad(substr(nvl(pr_reg_dado_arquiv.dsendcop,' '),1,30),30,' ')
+                   || to_char(nvl(pr_reg_dado_arquiv.nrendcop,0),'fm00000')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.dscomple,' '),1,20),20,' ') --SD#563418
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.nmbaienc,' '),1,20),20,' ')
+                   || to_char(nvl(pr_reg_dado_arquiv.cdcidenc,0),'fm0000')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.cdufdenc,' '),1,2),2,' ')
+                   || to_char(nvl(pr_reg_dado_arquiv.nrcepenc,0),'fm00000000')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.nrdddenc,' '),1,3),3,' ')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.nrtelenc,' '),1,9),9,' '); -- Sem quebra
       -- Envio ao clob
       gene0002.pc_escreve_xml(pr_clobarq,pr_clobaux,vr_set_linha);
 
