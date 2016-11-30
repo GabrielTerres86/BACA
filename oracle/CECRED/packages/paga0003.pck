@@ -1869,12 +1869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                              ,pr_flnrtole      => FALSE                                             
 																						 ,pr_dttolera      => vr_dttolera
 																						 ,pr_cdcritic      => vr_cdcritic
-																						 ,pr_dscritic      => vr_dscritic);
-		                                           
-				IF nvl(vr_cdcritic,0) > 0 OR
-					 TRIM(vr_dscritic) IS NOT NULL THEN
-					RAISE vr_exc_erro;
-				END IF;
+																						 ,pr_dscritic      => vr_dscritic);				
 																
 				vr_dsnomcnv := rw_crapcon.nmextcon;
 				vr_dtvencto := vr_dttolera;
