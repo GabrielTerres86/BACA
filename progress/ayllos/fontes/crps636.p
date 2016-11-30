@@ -1634,10 +1634,12 @@ PROCEDURE gera-linha-arquivo-exp-conv:
             IF  craplft.cdagenci = 90 THEN  /** Internet**/   
                 DO:  
                     /* Obter cod. da transacao e vl tarifa */
-                    FIND FIRST crapstn WHERE 
-                               crapstn.cdempres = crapscn.cdempres AND
-                               crapstn.tpmeiarr = "D"
-                               NO-LOCK NO-ERROR.
+                    FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres   AND
+                                             crapstn.tpmeiarr = "D"                AND
+                                             IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                             AND
+                                             IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
+                               				 NO-LOCK NO-ERROR.
         
                     IF  AVAIL crapstn THEN
                         ASSIGN aux_cdtransa = crapstn.cdtransa
