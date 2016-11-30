@@ -513,9 +513,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
-														
+                            
 			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
-			                na leitura do cursor cr_crapepr. (Reinert)   
+			                na leitura do cursor cr_crapepr. (Reinert)
+							
+			   28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares).   
 
                13/10/2016 - Ajuste leitura CRAPTAB, incluso UPPER para utilizar index principal
 			                (Daniel)
@@ -532,6 +535,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
                      
 ............................................................................ */
+
+  -- Constantes para geração de arquivos contábeis                                                                          
+  vc_dsdircont CONSTANT VARCHAR(30) := 'arquivos_contabeis/ayllos'; 
+  vc_cdacesso CONSTANT VARCHAR(24) := 'ROOT_SISTEMAS';
+  vc_cdtodascooperativas INTEGER := 0; 
 
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
@@ -6761,7 +6769,7 @@ BEGIN
       vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft.qtlanmto;
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
       vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft.vllanmto;
-      vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft.qtlanmto;                      
+      vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft.qtlanmto;
       -- Tratamento para Tarifa
       if rw_craplft.cdagenci = 90 then
         vr_tpdarrec := 'D';
@@ -6835,74 +6843,74 @@ BEGIN
   loop
     vr_vllanmto_fat := 0;
     vr_qtlanmto_fat := 0;
-    for rw_craplft2 in cr_craplft2 (pr_cdcooper,
-                                    vr_dtmvtolt,
-                                    0,
-                                    6,
-                                    rw_craphis2.cdhistor,
+  for rw_craplft2 in cr_craplft2 (pr_cdcooper,
+                                  vr_dtmvtolt,
+                                  0,
+                                  6,
+                                  rw_craphis2.cdhistor,
                                     2,
                                     vr_idtributo_6106 -- DARF'S - .ARF
-                                     ) loop
-      -- Incrementa o contador na pl/table de faturas
-      vr_indice_faturas := to_char(rw_craplft2.tpfatura, 'fm0')||to_char(rw_craplft2.cdagenci_fatura, 'fm000');
-      vr_tab_faturas(vr_indice_faturas).vr_tpfatura := rw_craplft2.tpfatura;
-      vr_tab_faturas(vr_indice_faturas).vr_cdagenci := rw_craplft2.cdagenci_fatura;
-      vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft2.qtlanmto;
+                                   ) loop
+    -- Incrementa o contador na pl/table de faturas
+    vr_indice_faturas := to_char(rw_craplft2.tpfatura, 'fm0')||to_char(rw_craplft2.cdagenci_fatura, 'fm000');
+    vr_tab_faturas(vr_indice_faturas).vr_tpfatura := rw_craplft2.tpfatura;
+    vr_tab_faturas(vr_indice_faturas).vr_cdagenci := rw_craplft2.cdagenci_fatura;
+    vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft2.qtlanmto;
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
       vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft2.vllanmto;
       vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft2.qtlanmto;
-      --
-      open cr_crapscn2 (rw_craplft2.cdempres);
+    --
+    open cr_crapscn2 (rw_craplft2.cdempres);
       fetch cr_crapscn2 into rw_crapscn2;
-      close cr_crapscn2;    
-      -- Para DPVAT usar conta 4336
-      IF rw_crapscn2.cdempres = '85' THEN
-        vr_nrctasic := 4336;
-      ELSE
-        vr_nrctasic := vr_nrctacrd;
-      END IF;    
-      -- Tratamento para Tarifa
-      if rw_craplft2.cdagenci = 90 then
-        vr_tpdarrec := 'D';
-      elsif rw_craplft2.cdagenci = 91 then
-        vr_tpdarrec := 'A';
-      else
-        vr_tpdarrec := 'C';
-      end if;
-      -- Convênio Sicredi
-      open cr_crapstn (rw_crapscn2.cdempres,
-                       vr_tpdarrec);
+    close cr_crapscn2;
+    -- Para DPVAT usar conta 4336
+    IF rw_crapscn2.cdempres = '85' THEN
+      vr_nrctasic := 4336;
+    ELSE
+      vr_nrctasic := vr_nrctacrd;
+    END IF;
+    -- Tratamento para Tarifa
+    if rw_craplft2.cdagenci = 90 then
+      vr_tpdarrec := 'D';
+    elsif rw_craplft2.cdagenci = 91 then
+      vr_tpdarrec := 'A';
+    else
+      vr_tpdarrec := 'C';
+    end if;
+    -- Convênio Sicredi
+    open cr_crapstn (rw_crapscn2.cdempres,
+                     vr_tpdarrec);
       fetch cr_crapstn into rw_crapstn;
-      close cr_crapstn;
-      --
-      if rw_crapstn.vltrfuni > 0 then
-        BEGIN
-          -- Inserir registro de rejeitados na integracao - D23
-          insert into craprej (cdcooper,
-                               cdagenci,
-                               cdhistor,
-                               dtmvtolt,
-                               cdpesqbb,
-                               nrseqdig,
-                               vllanmto,
+    close cr_crapstn;
+    --
+    if rw_crapstn.vltrfuni > 0 then
+      BEGIN
+        -- Inserir registro de rejeitados na integracao - D23
+        insert into craprej (cdcooper,
+                             cdagenci,
+                             cdhistor,
+                             dtmvtolt,
+                             cdpesqbb,
+                             nrseqdig,
+                             vllanmto,
                                dtrefere,
                                nrdocmto)
-          values (pr_cdcooper,
-                  rw_craplft2.cdagenci,
-                  rw_craphis2.cdhistor,
-                  vr_dtmvtolt,
-                  vr_cdprogra,
-                  rw_craplft2.qtlanmto,
-                  rw_craplft2.qtlanmto * rw_crapstn.vltrfuni,
+        values (pr_cdcooper,
+                rw_craplft2.cdagenci,
+                rw_craphis2.cdhistor,
+                vr_dtmvtolt,
+                vr_cdprogra,
+                rw_craplft2.qtlanmto,
+                rw_craplft2.qtlanmto * rw_crapstn.vltrfuni,
                   rw_crapscn2.cdempres,
                   rw_craplft2.cdagenci_fatura);
-        exception
-          when others then
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao excluir registros já processados na craprej: '||sqlerrm;
-            raise vr_exc_saida;
-        end;
-      end if;
+      exception
+        when others then
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao excluir registros já processados na craprej: '||sqlerrm;
+          raise vr_exc_saida;
+      end;
+    end if;
       -- Verifica se é a mesma agência e, se for, busca o próximo registro
       if rw_craplft2.cdagenci = rw_craplft2.proxima_agencia then
         continue;
@@ -10386,12 +10394,13 @@ BEGIN
     END IF;
     
     -- Busca o diretório final para copiar o relatório
-    vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
-                                        ,pr_cdcooper => pr_cdcooper
-                                        ,pr_nmsubdir => 'contab');
+    vr_dsdircop := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);                                                
+    vr_dsdircop := vr_dsdircop || vc_dsdircont;
+                                        
+    vr_nmarqdat_ope_cred_nov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_OPCRED.txt';
 
     -- Copia o arquivo gerado para o diretório final convertendo para DOS
-    gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||' > '||vr_dsdircop||'/'||vr_nmarqdat_ope_cred||' 2>/dev/null',
+    gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat_ope_cred||' > '||vr_dsdircop||'/'||vr_nmarqdat_ope_cred_nov||' 2>/dev/null',
                                 pr_typ_saida   => vr_typ_said,
                                 pr_des_saida   => vr_dscritic);
     -- Testar erro
@@ -10418,13 +10427,13 @@ BEGIN
   gene0001.pc_fecha_arquivo(vr_arquivo_txt);
 
   -- Busca o diretório final para copiar o relatório
-  vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'M',
-                                       pr_cdcooper => pr_cdcooper,
-                                       pr_nmsubdir => gene0001.fn_param_sistema('CRED',
-                                                                                pr_cdcooper,
-                                                                                'DIR_FINAL_REL_CTB'));
+  vr_dsdircop := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);        
+  vr_dsdircop := vr_dsdircop || vc_dsdircont;
+                                                                                
+  vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'.txt';                        
+                                                        
   -- Copia o arquivo gerado para o diretório final convertendo para DOS
-  gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqdat||' 2>/dev/null',
+  gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
                               pr_typ_saida   => vr_typ_said,
                               pr_des_saida   => vr_dscritic);
   -- Testar erro

@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 06/10/2016
+   Data    : Dezembro/2009.                  Ultima atualizacao: 10/10/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -108,9 +108,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
                31/08/2016 - Adicionar validação para o campo de CPF recebido no arquivo ser
                             diferente do CPF do titular da conta (Douglas - Chamado 476269)
-                            
+
                06/10/2016 - Ajuste na leitura do CPF do destintario quando processar a linha
                             do arquivo (Douglas - Chamado 533206)
+
+			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares).
   ............................................................................ */
 
 
@@ -276,7 +279,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_nmarquiv        VARCHAR2(100);
   vr_nmarquiv_incorp VARCHAR2(100);
   vr_dsdireto        VARCHAR2(100);
-  vr_nom_dirmic      VARCHAR2(200);
   vr_dsdirarq        VARCHAR2(200);
   vr_dsdirrel        VARCHAR2(200);
   vr_listaarq        VARCHAR2(30000);
@@ -292,6 +294,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_cdcritic     PLS_INTEGER;
   vr_dscritic     VARCHAR2(4000);
   vr_dsobserv     VARCHAR2(100);
+  
+  -- variáveis para controle de arquivos
+   vr_dircon VARCHAR2(200);
+   vr_arqcon VARCHAR2(200);
+   vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+   vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+   vc_cdtodascooperativas INTEGER := 0;        
   
   --------------------------- ROTINAS INTERNAS ----------------------------
   
@@ -2578,7 +2587,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         vr_inpessoa    NUMBER;
         vr_dspathcop   VARCHAR2(80);
         vr_nmrelato    VARCHAR2(80);
-        vr_nmarquiv_cri VARCHAR2(4000);
         -- Informações envio de e-mail
         vr_dsmailcop   crapprm.dstexprm%TYPE;
         vr_dsassmail   VARCHAR2(100);
@@ -2823,26 +2831,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
         -- Se possuir conteudo de critica no CLOB
         IF LENGTH(vr_clobcri) > 0 THEN
-          -- Arquivo de saida
-          vr_nmarquiv_cri := TO_CHAR(vr_dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
-
-          -- busca o diretorio micros contab
-          vr_nom_dirmic := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
-                                                ,pr_cdcooper => pr_cdcooper
-                                                ,pr_nmsubdir => 'contab');
+          -- Busca o diretório para contabilidade
+          vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+          vr_dircon := vr_dircon || vc_dircon;
+          vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
 
           -- Chama a geracao do TXT
           GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
                                              ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
                                              ,pr_dtmvtolt  => vr_dtmvtolt              --> Data do movimento atual
                                              ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                             ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_nmarquiv_cri    --> Arquivo final com o path
+                                             ,pr_dsarqsaid => vr_dsdireto || '/contab/' || vr_arqcon    --> Arquivo final com o path
                                              ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                              ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                             ,pr_dspathcop => vr_nom_dirmic            --> Copiar para a Micros
-                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
+                                             ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
+                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos                                             
                                              ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                              ,pr_des_erro  => vr_des_erro);            --> Saída com erro
+                                     
+                                             
         END IF;
 
         -- Liberando a memória alocada pro CLOB
@@ -2855,7 +2862,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_nmarquiv_cri || ': '
+                                                     || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_arqcon || ': '
                                                      || vr_des_erro );
         END IF;
 

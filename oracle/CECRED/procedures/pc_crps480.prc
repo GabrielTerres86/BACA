@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : David
-     Data    : Maio/2007                       Ultima atualizacao: 10/06/2016
+     Data    : Maio/2007                       Ultima atualizacao: 28/09/2016
 
      Dados referentes ao programa:
 
@@ -136,6 +136,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                  10/06/2016 - Ajustado a leitura da craptab para utilizar a procedure padrao TABE0001.fn_busca_dstextab
                               e carregar as contas bloqueadas com a TABE0001.pc_carrega_ctablq
                               (Douglas - Chamado 454248)
+                              
+
+                 28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                              P308 (Ricardo Linhares).                                    
   ..............................................................................*/
 
     DECLARE
@@ -608,7 +612,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
       --
       vr_dsxmldad_arq       CLOB;           -- Arquivo de informação de tarifas
       vr_nom_direto         VARCHAR2(100);  -- Diretorio /coop/rl
-      vr_nom_micros         VARCHAR2(100);  -- Diretorio /coop/rl
       vr_nom_arquivo        VARCHAR2(100);  -- Nome do arquivo de relatório
       vr_nmarqrdc           VARCHAR2(100);  -- Nome do arquivo RDC
       vr_dscomand           VARCHAR2(500);  -- comando Unix
@@ -627,6 +630,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
   
       vr_Bufdes_xml varchar2(32000);
       
+     vr_dircon VARCHAR2(200);
+     vr_arqcon VARCHAR2(200);
+     vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+     vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+     vc_cdtodascooperativas INTEGER := 0;  
+      
+
       -------- SubRotinas para reaproveitamento de código --------------
 
       -- Subrotina para escrever texto na variável CLOB do XML
@@ -2351,9 +2361,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'   
                                               ,pr_cdcooper => pr_cdcooper
                                               ,pr_nmsubdir => '/contab'); 
-        vr_nom_micros := gene0001.fn_diretorio(pr_tpdireto => 'M'   
-                                              ,pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsubdir => '/contab'); 
+
         -- Define o nome do arquivo
         vr_nmarqrdc := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_RDC.txt';
             
@@ -2373,9 +2381,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
           RAISE vr_exc_erro;
         END IF; 
         
+         -- Busca o diretório para contabilidade
+        vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+        vr_dircon := vr_dircon || vc_dircon;
+        vr_arqcon := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_RDC.txt';
+
         -- Executa comando UNIX para converter arq para Dos
         vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqrdc||' > '
-                                 || vr_nom_micros ||'/'||vr_nmarqrdc || ' 2>/dev/null';
+                                 || vr_dircon ||'/'||vr_arqcon || ' 2>/dev/null';
 
         -- Executar o comando no unix
         GENE0001.pc_OScommand(pr_typ_comando => 'S'
