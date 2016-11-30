@@ -10891,7 +10891,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                                      ,pr_lindigi2 => vr_lindigi2 -- Segundo campo da linha digitável da guia
                                      ,pr_lindigi3 => vr_lindigi3 -- Terceiro campo da linha digitável da guia
                                      ,pr_lindigi4 => vr_lindigi4 -- Quarto campo da linha digitável da guia
-                                     ,pr_cdbarras => vr_dscodbar -- Código de barras da guia
+                                     ,pr_cdbarras => rw_craplau.dscodbar -- Código de barras da guia
                                      ,pr_dsidepag => rw_craplau.dsidentif_pagto -- Descrição da identificação do pagamento
                                      ,pr_vlrtotal => rw_craplau.vllanaut -- Valor total do pagamento da guia
                                      ,pr_dsnomfon => NVL(rw_craplau.dsnome_fone,' ') -- Nome e telefone da guia
