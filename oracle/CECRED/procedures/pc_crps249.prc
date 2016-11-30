@@ -523,6 +523,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                16/11/2016 - Ajustar cursor cr_craplcm6 para efetuar a busca correta das 
                             Despesas Sicredi (Lucas Ranghetti #508130)
                      
+			   30/11/2016 - Correção para buscar corretamente registro da crapstn
+			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
+                     
 ............................................................................ */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop(pr_cdcooper in craptab.cdcooper%type) is
@@ -1426,7 +1429,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select crapstn.vltrfuni
       from crapstn
      where upper(crapstn.cdempres) = pr_cdempres
-       and upper(crapstn.tpmeiarr) = pr_tpdarrec;
+       and upper(crapstn.tpmeiarr) = pr_tpdarrec
+	   AND crapstn.cdtransa = DECODE(crapstn.tpmeiarr, 
+							  'D', DECODE(crapstn.cdempres, 'K0', '0XY', '147', '1CK', crapstn.cdtransa), 
+							  crapstn.cdtransa);
   rw_crapstn     cr_crapstn%rowtype;
   -- Lançamento de faturas
   cursor cr_craplft (pr_cdcooper in craplft.cdcooper%type,
