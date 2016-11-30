@@ -56,6 +56,10 @@
                             
                19/05/2015 - Aumento do campo de Nr.Docmto (Lunelli SD 285059)
                
+               18/11/2016 - Ajuste realizado para corrigir problema que nao permitia
+                            estornar lancamentos de cheques, conforme solicitado
+                            no chamado 525940. (Kelvin)
+               
 ...........................................................................*/
                              
 {dbo/bo-erro1.i}
@@ -339,7 +343,8 @@ PROCEDURE valida-cheque-com-captura:
                                           crapchd.cdagenci = craplcm.cdagenci   AND
                                           crapchd.cdbccxlt = craplcm.cdbccxlt   AND
                                           crapchd.nrdolote = craplcm.nrdolote   AND
-                                          crapchd.nrseqdig = craplcm.nrseqdig
+                                          crapchd.nrseqdig = craplcm.nrseqdig   AND
+                                          crapchd.nrdconta = craplcm.nrdconta
                                           USE-INDEX crapchd3 NO-LOCK:
                        IF  crapchd.insitprv > 0 THEN DO:
                            ASSIGN i-cod-erro =  9999.
@@ -615,7 +620,8 @@ PROCEDURE estorna-cheque-com-captura:
                                                crapchd.cdagenci = craplcm.cdagenci   AND
                                                crapchd.cdbccxlt = craplcm.cdbccxlt   AND
                                                crapchd.nrdolote = craplcm.nrdolote   AND
-                                               crapchd.nrseqdig = craplcm.nrseqdig
+                                               crapchd.nrseqdig = craplcm.nrseqdig   AND
+                                               crapchd.nrdconta = craplcm.nrdconta
                                                USE-INDEX crapchd3 NO-LOCK:
                             
                             IF  crapchd.insitprv > 0 THEN DO:
