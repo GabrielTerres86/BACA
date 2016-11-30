@@ -1,17 +1,18 @@
 <!--
 	Alteracoes: 22/10/2012 - Limitação tamanho maximo dos campos Facilitador, Curriculum
-							 e Avaliação. Efetuado ajustado layout da tela e incluso
-							 chamada para biblioteca de funções funcoes.js 
-							 Retirado funções valida_ddd e valida_telefone e alterado 
-							 para usar da biblioteca de funções (Daniel).
+                           e Avaliação. Efetuado ajustado layout da tela e incluso
+                           chamada para biblioteca de funções funcoes.js 
+                           Retirado funções valida_ddd e valida_telefone e alterado 
+                           para usar da biblioteca de funções (Daniel).
 							 
-				15/10/2015 - Inclusão dos Campos UF e Cidade PRJ 229 (Vanessa).
+              15/10/2015 - Inclusão dos Campos UF e Cidade PRJ 229 (Vanessa).
         
-                19/01/2016 - Inclusão dos Campos Formação Acadêmica, Formação Complementar, 
-                             Tempo Experiência, Publicações, Nível, Período e Dias (Lombardi).
+              19/01/2016 - Inclusão dos Campos Formação Acadêmica, Formação Complementar, 
+                           Tempo Experiência, Publicações, Nível, Período e Dias (Lombardi).
                 
-                30/05/2016 - Ajuste criticas validadados PRJ229 - Melhoria OQS (Odirlei - AMcom)                
-                     
+              30/05/2016 - Ajuste criticas validadados PRJ229 - Melhoria OQS (Odirlei - AMcom)                
+              
+              28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601 (Jean Michel).
                      
 -->
 
@@ -35,8 +36,7 @@
   <input name="aux_cdfacili" type="hidden" value="">
   <input name="cdestado" type="hidden" value="">  
   <input name="cdcidade" type="hidden" value="">
-  <input name="aux_hdcidade" type="hidden" value="">
-  
+  <input name="aux_hdcidade" type="hidden" value="">  
   <input name="dtmvtolt"     type="hidden" value="">
   <input name="dtvalpro"     type="hidden" value="">
   <input name="aux_cdtemeix" type="hidden" value="">
@@ -458,55 +458,54 @@ function TiraFormato(campo)
    return campo;
 }
 function MostraEstados(){ 
-   for (var i=document.all.aux_dsestado.options.length; i>=0; i--)
-      document.all.aux_dsestado.remove(i); 
-
-   var oOption;
-   var cdestado;
-
-   oOption = document.createElement("OPTION");
-   document.all.aux_dsestado.options.add(oOption);
-   oOption.innerText = "Selecione o Estado";
-   oOption.value = 0;
   
-   for(i=0;i<estados.length;i++){     
-	     oOption = document.createElement("OPTION");
-         document.all.aux_dsestado.options.add(oOption);
-         oOption.innerText = estados[i].cdestado;
-         oOption.value = estados[i].cdestado;
-		 if (estados[i].cdestado == document.form.cdestado.value){ 
-			oOption.selected = estados[i].cdestado;
-		}
-      
-   }
-      
+  var oOption;
+  
+  for (var i=document.all.aux_dsestado.options.length; i>=0; i--){
+    document.all.aux_dsestado.remove(i); 
+  }
+   
+  oOption = document.createElement("OPTION");
+  document.all.aux_dsestado.options.add(oOption);
+  oOption.innerText = "Selecione o Estado";
+  oOption.value = 0;
+  
+  for(i=0;i<estados.length;i++){     
+	  oOption = document.createElement("OPTION");
+    document.all.aux_dsestado.options.add(oOption);
+    oOption.innerText = estados[i].cdestado;
+    oOption.value = estados[i].cdestado;
+		if (estados[i].cdestado == document.form.cdestado.value){ 
+      oOption.selected = estados[i].cdestado;
+		}      
+  }      
 }
 
 function MostraCidades(){ 
-   for (var i=document.all.aux_cdcidade.options.length; i>=0; i--)
-      document.all.aux_cdcidade.remove(i); 
-  
-   var oOption;
-   var cdcidade;
-   
-   oOption = document.createElement("OPTION");
-   document.all.aux_cdcidade.options.add(oOption);
-   oOption.innerText = "Selecione a Cidade"; 
-   oOption.value = 0;
-   
-   for(i=0;i<cidades.length;i++){
-		 document.form.cdestado.value = cidades[i].cdestado;
-	     oOption = document.createElement("OPTION");
-         document.all.aux_cdcidade.options.add(oOption);
-         oOption.innerText = cidades[i].dscidade;
-         oOption.value = cidades[i].cdcidade;
-		 oOption.idrecpor = cidades[i].cdestado;
-		 if (cidades[i].cdcidade == document.form.aux_hdcidade.value){ 
-			oOption.selected = cidades[i].cdcidade;
-		}
+
+  var oOption;
+ 
+  for(var i=document.all.aux_cdcidade.options.length; i>=0; i--){
+    document.all.aux_cdcidade.remove(i); 
+  }  
       
-   }
-      
+  oOption = document.createElement("OPTION");
+  document.all.aux_cdcidade.options.add(oOption);
+  oOption.innerText = "Selecione a Cidade"; 
+  oOption.value = 0;
+   
+  for(i=0;i<cidades.length;i++){
+	  document.form.cdestado.value = cidades[i].cdestado;
+	  oOption = document.createElement("OPTION");
+    document.all.aux_cdcidade.options.add(oOption);
+    oOption.innerText = cidades[i].dscidade;
+    oOption.value = cidades[i].cdcidade;
+		oOption.idrecpor = cidades[i].cdestado;
+		
+    if (cidades[i].cdcidade == document.form.aux_hdcidade.value){ 
+		  oOption.selected = cidades[i].cdcidade;
+		}      
+  }      
 }
 
 function CarregaCidades(){
