@@ -157,9 +157,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             
                26/07/2016 - Correção não estava trazendo o nome da assessoria de cobrança
                             na manutenção cadastral. (Oscar)  
+               
+               27/09/2016 - Correcao na chamada da gene0007 para remocao de caracteres especiais.
+			                Nao deve remover o @ devido ao campo de email.
+							Heitor (RKAM) - Chamado 521909
 
                20/09/2016 - Inclusao do arquivo de acordo de pagamentos,
-                            Prj. 302 (Jean Michel)                        
+                            Prj. 302 (Jean Michel)  
+
+			   10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
+                            do cyber. (Gil - Mouts)	                      
      ............................................................................. */
 
      DECLARE
@@ -373,6 +380,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcyb.ROWID
              ,crapass.cdagenci cdagenci_ass
              ,crapass.nrcpfcgc
+			 ,(select sum(x.vlmtapar)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and x.inliquid = 0) vlmtapar
+             ,(select sum(x.vlmrapar)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and x.inliquid = 0) vlmrapar
        FROM crapcyb
            ,crapass
        WHERE crapass.cdcooper = crapcyb.cdcooper
@@ -778,7 +797,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          -- Concatena os espaços em branco e o novo texto
          vr_linha := vr_linha || rpad(' ', vr_qtd_brancos, ' ') || pr_text;
          --Modificar vetor com a linha atualizada
-         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,1),1,'`´','  ');
+         vr_tab_linha(pr_arquivo) := gene0007.fn_caract_acento(GENE0007.fn_caract_acento(vr_linha,0),1,'`´#$&%¹²³ªº°*!?<>/\|','                    ');
        END pc_monta_linha;
 
        --Procedure para incrementar contador linha
@@ -1623,7 +1642,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                           LPAD(pr_nrdconta,10,'0') || LPAD(pr_nrctremp,10,'0');
 
            IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
-             pc_monta_linha(vr_tab_acordo(vr_cdindice),76,15);
+             pc_monta_linha(LPAD(vr_tab_acordo(vr_cdindice),15,'0'),76,6);
              pc_monta_linha(LPAD('PC',6,''),91,6);
            ELSE  
              pc_monta_linha(SUBSTR(NVL(pr_dshistor,''),1,15),76,6);
@@ -3648,7 +3667,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                              ,pr_cdorigem IN crapcyc.cdorigem%type
                              ,pr_nrdconta IN crapcyc.nrdconta%type
                              ,pr_nrctremp IN crapcyc.nrctremp%type) IS
-             SELECT tbcobran_assessorias.nmassessoria
+             SELECT crapcyc.cdassess
+                   ,tbcobran_assessorias.nmassessoria
                    ,crapcyc.cdmotcin
                    ,tbcobran_assessorias.cdassessoria_cyber
              FROM crapcyc, tbcobran_assessorias
@@ -3729,7 +3749,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            pc_monta_linha(rpad(' ',45,' '),pr_posicini+401,pr_idarquivo);-- Posicoes em branco reservadas para futuros campos
            
-           -- JMD
            IF pr_idarquivo = 1 THEN
              pc_monta_linha(LPAD(rw_crapcyc.cdassessoria_cyber,8,'0') ,pr_posicini+446,pr_idarquivo);
            END IF;                                
