@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 24/03/2016
+   Data    : Marco/2004                        Ultima Atualizacao: 18/07/2016
    
    Dados referentes ao programa:
 
@@ -150,6 +150,9 @@
                              Adaptação para a nova chamda - Jéssica (DB1)
                              
                 24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+
+                18/07/2016 - Incluido campo tel_nrtelvoz.
+                             PRJ229 - Melhorias OQS (Odirlei - AMcom)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -206,6 +209,7 @@ DEF VAR tel_qtddlslf LIKE crapage.qtddlslf                             NO-UNDO.
 DEF VAR tel_vllimapv LIKE crapage.vllimapv                             NO-UNDO.
 DEF VAR tel_qtchqprv AS INT FORMAT "zz9"                               NO-UNDO.
 DEF VAR tel_nrtelfax LIKE crapage.nrtelfax                             NO-UNDO.
+DEF VAR tel_nrtelvoz LIKE crapage.nrtelvoz                             NO-UNDO.
 DEF VAR tel_cdagepac LIKE crapage.cdagepac                             NO-UNDO.
                                                       
 DEF VAR tel_hhtitini AS INTE                                           NO-UNDO.
@@ -280,6 +284,7 @@ DEF VAR log_qtddlslf LIKE crapage.qtddlslf                             NO-UNDO.
 DEF VAR log_vllimapv LIKE crapage.vllimapv                             NO-UNDO.
 DEF VAR log_qtchqprv LIKE crapage.qtchqprv                             NO-UNDO.
 DEF VAR log_nrtelfax LIKE crapage.nrtelfax                             NO-UNDO.
+DEF VAR log_nrtelvoz LIKE crapage.nrtelvoz                             NO-UNDO.
 DEF VAR log_flgdsede LIKE crapage.flgdsede                             NO-UNDO.
 DEF VAR log_cdagectl LIKE crapage.cdagectl                             NO-UNDO.
 DEF VAR log_cdagepac LIKE crapage.cdagepac                             NO-UNDO.
@@ -607,7 +612,9 @@ FORM tel_hhsicini AT 10 LABEL "Pagamentos Faturas Sicredi" AUTO-RETURN FORMAT "9
      ":"          AT 44
      tel_mmlimcan AT 45 NO-LABEL 
                   HELP "Informe os minutos (0 a 59)." 
-     "h"                  
+     "h"     
+     tel_nrtelvoz AT 51 LABEL "Telefone" 
+         HELP "Informe o numero do telefone."
      SKIP
      "Cancelamento pgto SICREDI:   Horario:" AT 04
      tel_hhsiccan AT 42 NO-LABEL AUTO-RETURN  FORMAT "99"      
@@ -618,7 +625,7 @@ FORM tel_hhsicini AT 10 LABEL "Pagamentos Faturas Sicredi" AUTO-RETURN FORMAT "9
                         HELP "Informe o minuto limite para cancelamentos de pag. de conv. SICREDI" 
                         VALIDATE(INPUT tel_mmsiccan <= 59 , "Minutos invalidos.")
      "h"          
-     tel_nrtelfax AT 52 LABEL "FAX" 
+     tel_nrtelfax AT 56 LABEL "FAX" 
          HELP "Informe o numero do FAX para envio das solicitacoes."
      SKIP(1)
      "Parametros Agendamentos:" AT 06
@@ -1115,6 +1122,10 @@ PROCEDURE gera_log_cadpac:
              RUN item_log (INPUT "fax cancelamento pagamentos", 
                            INPUT log_nrtelfax, 
                            INPUT crapage.nrtelfax).
+             
+             RUN item_log (INPUT "Telefone agencia", 
+                           INPUT log_nrtelvoz, 
+                           INPUT crapage.nrtelvoz).
       
              RUN item_log (INPUT "limite dias agendamento", 
                            INPUT STRING(log_qtddaglf), 
