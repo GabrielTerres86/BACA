@@ -794,20 +794,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	vr_nrrefere VARCHAR2(500) := '';
     vr_exc_erro EXCEPTION;
   
-  BEGIN
-    
-	vr_inpessoa := 0;
+  BEGIN    
+	
 	vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
     vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
 			
-	  vr_inpessoa := 0;				
-		IF TRIM(pr_nrcpfcgc) <> '' THEN 
-			 IF LENGTH(pr_nrcpfcgc) = 11 THEN -- CPF
-				 vr_inpessoa := 1;
-			 ELSE -- CNPJ
-				 vr_inpessoa := 2; 
-			 END IF;
-		END IF;
+	vr_inpessoa := 0;				
+    IF LENGTH(pr_nrcpfcgc) = 11 THEN -- CPF
+	   vr_inpessoa := 1;
+	ELSIF LENGTH(pr_nrcpfcgc) = 14 THEN-- CNPJ
+  	   vr_inpessoa := 2; 	
+	END IF;
 	
     --Título do comprovante
     vr_dsinfor1 := CASE pr_cdtippro

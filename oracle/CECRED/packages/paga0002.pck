@@ -9546,6 +9546,7 @@ create or replace package body cecred.PAGA0002 is
     vr_contador INTEGER       := 0;
 	vr_stsnrcal BOOLEAN;
 	vr_inpessoa INTEGER;
+	vr_dscpfcgc VARCHAR(20);
 
     -- Variaveis de XML 
     vr_xml_temp VARCHAR2(32767);
@@ -9595,15 +9596,17 @@ create or replace package body cecred.PAGA0002 is
         IF NOT vr_tab_dados_agendamento.exists(vr_contador) THEN
           CONTINUE;
         END IF;
-        
-		vr_inpessoa := 0;
-		IF TRIM(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) <> '' THEN 
-			 IF LENGTH(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) = 11 THEN -- CPF
-				 vr_inpessoa := 1;
-			 ELSE -- CNPJ
-				 vr_inpessoa := 2; 
-			 END IF;
-		END IF;
+		
+        vr_inpessoa := 0;
+        vr_dscpfcgc := '';        
+        IF LENGTH(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) = 11 THEN -- CPF
+           vr_inpessoa := 1;
+        ELSIF LENGTH(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) = 14 THEN -- CNPJ
+           vr_inpessoa := 2; 		
+        END IF;        
+        IF vr_inpessoa > 0 THEN
+          vr_dscpfcgc := TO_CHAR(gene0002.fn_mask_cpf_cnpj(vr_tab_dados_agendamento(vr_contador).nrcpfcgc,vr_inpessoa));
+        END IF;
         
         -- Montar XML com registros de aplicação
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc
@@ -9632,9 +9635,9 @@ create or replace package body cecred.PAGA0002 is
                                                   ||  '<cdtiptra>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).cdtiptra)              || '</cdtiptra>'
                                                   ||  '<dstiptra>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dstiptra) || '</dstiptra>'
                                                   ||  '<dtagenda>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dtagenda,'DD/MM/RRRR') || '</dtagenda>'
-												                          ||  '<tpcaptur>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).tpcaptur)              || '</tpcaptur>'
+												  ||  '<tpcaptur>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).tpcaptur)              || '</tpcaptur>'
                                                   ||  '<dtvendrf>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dtvendrf,'DD/MM/RRRR') || '</dtvendrf>'
-												  ||  '<nrcpfcgc>' || TO_CHAR(gene0002.fn_mask_cpf_cnpj(vr_tab_dados_agendamento(vr_contador).nrcpfcgc,vr_inpessoa)) || '</nrcpfcgc>'																								 
+												  ||  '<nrcpfcgc>' || vr_dscpfcgc || '</nrcpfcgc>'																								 
                                                   ||  '<dstipcat>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dstipcat) || '</dstipcat>'
                                                   ||  '<dsidpgto>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dsidpgto) || '</dsidpgto>'
                                                   ||  '<dsnomfon>' || TO_CHAR(vr_tab_dados_agendamento(vr_contador).dsnomfon) || '</dsnomfon>'

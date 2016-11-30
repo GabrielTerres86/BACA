@@ -1354,8 +1354,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       UPDATE craplft
          SET craplft.nrautdoc = pr_cdultseq
        WHERE craplft.progress_recid = vr_progress_recid_lft;
-   
-      COMMIT;
 
     EXCEPTION
       WHEN vr_exc_null THEN
