@@ -12,6 +12,7 @@
                 
                 30/05/2016 - Ajuste criticas validadados PRJ229 - Melhoria OQS (Odirlei - AMcom)                
                      
+              28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601 (Jean Michel).
                      
 -->
 
@@ -36,7 +37,6 @@
   <input name="cdestado" type="hidden" value="">  
   <input name="cdcidade" type="hidden" value="">
   <input name="aux_hdcidade" type="hidden" value="">
-  
   <input name="dtmvtolt"     type="hidden" value="">
   <input name="dtvalpro"     type="hidden" value="">
   <input name="aux_cdtemeix" type="hidden" value="">
@@ -458,12 +458,13 @@ function TiraFormato(campo)
    return campo;
 }
 function MostraEstados(){ 
-   for (var i=document.all.aux_dsestado.options.length; i>=0; i--)
-      document.all.aux_dsestado.remove(i); 
 
    var oOption;
-   var cdestado;
 
+  for (var i=document.all.aux_dsestado.options.length; i>=0; i--){
+    document.all.aux_dsestado.remove(i); 
+  }
+   
    oOption = document.createElement("OPTION");
    document.all.aux_dsestado.options.add(oOption);
    oOption.innerText = "Selecione o Estado";
@@ -477,17 +478,16 @@ function MostraEstados(){
 		 if (estados[i].cdestado == document.form.cdestado.value){ 
 			oOption.selected = estados[i].cdestado;
 		}
-      
    }
-      
 }
 
 function MostraCidades(){ 
-   for (var i=document.all.aux_cdcidade.options.length; i>=0; i--)
-      document.all.aux_cdcidade.remove(i); 
   
    var oOption;
-   var cdcidade;
+ 
+  for(var i=document.all.aux_cdcidade.options.length; i>=0; i--){
+    document.all.aux_cdcidade.remove(i); 
+  }  
    
    oOption = document.createElement("OPTION");
    document.all.aux_cdcidade.options.add(oOption);
@@ -501,12 +501,11 @@ function MostraCidades(){
          oOption.innerText = cidades[i].dscidade;
          oOption.value = cidades[i].cdcidade;
 		 oOption.idrecpor = cidades[i].cdestado;
+		
 		 if (cidades[i].cdcidade == document.form.aux_hdcidade.value){ 
 			oOption.selected = cidades[i].cdcidade;
 		}
-      
    }
-      
 }
 
 function CarregaCidades(){

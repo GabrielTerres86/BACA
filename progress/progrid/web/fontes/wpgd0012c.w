@@ -8,33 +8,31 @@ Alteraçoes: 29/01/2008 - Nao permitir a digitaçao do Número da proposta,
             04/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
                         
             05/06/2012 - Adaptaçao dos fontes para projeto Oracle. Alterado
-                                                 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+                         busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
             22/10/2012 - Tratar nova estrutura gnappob (Gabriel).
-
+            
             30/06/2015 - Inclusao de novos campos Projeto Progrid (Vanessa)
-             
+            
             08/10/2015 - Inclusao do campo Recurso e Transporte Incluso(Vanessa).
             
             09/12/2015 - Inclusão do campo cdcopope (Vanessa)
 
-			      19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanhol).
-            
+			19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanhol).
+
             30/05/2016 - Ajustes PRJ229 - Melhorias OQS (Odirlei-AMcom)
+
+			28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
 
 ......................................................................... */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
-/* Connected Databases 
-          gener            PROGRESS
-*/
 
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
 
 DEF BUFFER b-gnappdp  FOR gnappdp.
 
-/* Temp-Table and Buffer definitions                                    */
 DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_cdtemeix AS CHARACTER 
@@ -58,14 +56,12 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD txrecurs AS CHARACTER
        FIELD aux_flgtrinc AS LOGICAL
        FIELD aux_idforrev AS CHARACTER
-       FIELD aux_dspublic AS CHARACTER
        FIELD idforrev AS CHARACTER
        FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U
        FIELD aux_idvapost AS CHARACTER FORMAT "X(256)":U
        FIELD aux_nrpropos AS CHARACTER FORMAT "X(256)":U.
        
-       
-/* Temp-Table and Buffer definitions                                    */
+/* Temp-Table and Buffer definitions */
 DEFINE TEMP-TABLE temas
        FIELD dstemeix LIKE craptem.dstemeix
        FIELD nrseqtem LIKE craptem.nrseqtem
@@ -74,40 +70,9 @@ DEFINE TEMP-TABLE temas
        FIELD cdeixtem LIKE craptem.cdeixtem.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
-/*------------------------------------------------------------------------
 
-  File: 
-
-  Description: 
-
-  Input Parameters:
-      <none>
-
-  Output Parameters:
-      <none>
-
-  Author: 
-
-  Created: 
-
-------------------------------------------------------------------------*/
-/*           This .W file was created with AppBuilder.                  */
-/*----------------------------------------------------------------------*/
-
-/* Create an unnamed pool to store all the widgets created 
-     by this procedure. This is a good default which assures
-     that this procedure's triggers and internal procedures 
-     will execute in this procedure's storage, and that proper
-     cleanup will occur on deletion of the procedure. */
 CREATE WIDGET-POOL.
 
-/* ***************************  Definitions  ************************** */
-
-/* Preprocessor Definitions ---                                         */
-
-/* Parameters Definitions ---                                           */
-
-/* Local Variable Definitions ---                                       */
 DEFINE VARIABLE ProgramaEmUso AS CHARACTER INITIAL ["wpgdXXXX"].
 DEFINE VARIABLE NmeDoPrograma AS CHARACTER INITIAL ["wpgdXXXX.w"].
 
@@ -132,7 +97,6 @@ DEFINE VARIABLE aux_gnapetp           AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE aux_flgescol          AS LOGICAL                        NO-UNDO.
 DEFINE VARIABLE aux_nrpropos          AS CHAR                           NO-UNDO.
 
-
 DEFINE VARIABLE vetorevento           AS CHAR FORMAT "x(2000)"          NO-UNDO.
 DEFINE VARIABLE vetorfacili           AS CHAR FORMAT "x(2000)"          NO-UNDO.
 DEFINE VARIABLE vetoreixo             AS CHAR FORMAT "x(2000)"          NO-UNDO.
@@ -156,7 +120,6 @@ DEFINE VARIABLE aux_craptem           AS CHARACTER                      NO-UNDO.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-
 &ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
 
 /* ********************  Preprocessor Definitions  ******************** */
@@ -167,10 +130,10 @@ DEFINE VARIABLE aux_craptem           AS CHARACTER                      NO-UNDO.
 &Scoped-define WEB-FILE fontes/wpgd0012c.htm
 
 /* Name of first Frame and/or Browse and/or first Query                 */
-&Scoped-define FRAME-NAME Web-Frame
+&Scoped-define FRAME-NAME Web-Frame 
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-FIELDS gnappdp.dsconteu gnappdp.dsmetodo gnappob.dsobjeti gnappdp.dsobserv gnappdp.dsidadpa gnappdp.dsprereq gnappdp.nrseqpap ~
+&Scoped-Define ENABLED-FIELDS gnappdp.dsconteu gnappdp.dsmetodo gnappob.dsobjeti gnappdp.dsobserv gnappdp.dsprereq gnappdp.nrseqpap ~
  gnappdp.dtmvtolt gnappdp.dtvalpro gnappdp.nmevefor gnappdp.nrpropos gnappdp.vlinvest gnappdp.idtrainc gnappdp.idforrev
 &Scoped-define ENABLED-TABLES ab_unmap gnappdp
 &Scoped-define FIRST-ENABLED-TABLE ab_unmap
@@ -178,8 +141,8 @@ DEFINE VARIABLE aux_craptem           AS CHARACTER                      NO-UNDO.
 &Scoped-Define ENABLED-OBJECTS ab_unmap.txfacili ab_unmap.txrecurs ab_unmap.aux_lsfacili ab_unmap.aux_nmpagina ab_unmap.cdeixtem ab_unmap.aux_cddopcao ~
 ab_unmap.aux_cdtemeix ab_unmap.aux_cdeixtem ab_unmap.aux_idvapost ab_unmap.aux_nrpropos ~
 ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_idevento ab_unmap.aux_idexclui ab_unmap.aux_lspermis ab_unmap.aux_nrcpfcgc ~
-ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdevento ab_unmap.qtcarhor ab_unmap.aux_flgtrinc ab_unmap.aux_idforrev ab_unmap.aux_dspublic ab_unmap.aux_cdcopope
-&Scoped-Define DISPLAYED-FIELDS gnappdp.dsconteu gnappdp.dsmetodo gnappob.dsobjeti gnappdp.dsobserv gnappdp.dsidadpa gnappdp.dsprereq gnappdp.nrseqpap ~
+ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdevento ab_unmap.qtcarhor ab_unmap.aux_flgtrinc ab_unmap.aux_idforrev ab_unmap.aux_cdcopope
+&Scoped-Define DISPLAYED-FIELDS gnappdp.dsconteu gnappdp.dsmetodo gnappob.dsobjeti gnappdp.dsobserv gnappdp.dsprereq gnappdp.nrseqpap ~
 gnappdp.dtmvtolt gnappdp.dtvalpro gnappdp.nmevefor gnappdp.nrpropos gnappdp.vlinvest gnappdp.idtrainc gnappdp.idforrev 
 &Scoped-define DISPLAYED-TABLES ab_unmap gnappdp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
@@ -188,22 +151,9 @@ gnappdp.dtmvtolt gnappdp.dtvalpro gnappdp.nmevefor gnappdp.nrpropos gnappdp.vlin
 ab_unmap.aux_cdtemeix ab_unmap.aux_idvapost ab_unmap.aux_nrpropos ~
 ab_unmap.aux_cdeixtem ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_idevento ab_unmap.aux_idexclui ab_unmap.aux_lspermis ~
 ab_unmap.aux_nrcpfcgc ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdevento ab_unmap.qtcarhor ab_unmap.aux_flgtrinc  ab_unmap.aux_idforrev ~
-ab_unmap.aux_dspublic ab_unmap.aux_cdcopope
+ab_unmap.aux_cdcopope
 
-/* Custom List Definitions                                              */
-/* List-1,List-2,List-3,List-4,List-5,List-6                            */
-
-/* _UIB-PREPROCESSOR-BLOCK-END */
 &ANALYZE-RESUME
-
-
-
-/* ***********************  Control Definitions  ********************** */
-
-
-/* Definitions of the field level widgets                               */
-
-/* ************************  Frame Definitions  *********************** */
 
 DEFINE FRAME Web-Frame
      ab_unmap.txfacili AT ROW 1 COL 1 HELP
@@ -242,12 +192,10 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
-          
      ab_unmap.aux_cdevento AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
-      
      ab_unmap.aux_dsendurl AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
@@ -283,10 +231,10 @@ DEFINE FRAME Web-Frame
      ab_unmap.aux_stdopcao AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
-          SIZE 20 BY 1
+          SIZE 20 BY 1          
      ab_unmap.cdevento AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
-          SIZE 20 BY 1
+          SIZE 20 BY 1          
      ab_unmap.aux_idforrev AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
@@ -297,7 +245,7 @@ DEFINE FRAME Web-Frame
      ab_unmap.aux_nrpropos AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1       
-         gnappdp.dsconteu AT ROW 1 COL 1 NO-LABEL
+     gnappdp.dsconteu AT ROW 1 COL 1 NO-LABEL
           VIEW-AS EDITOR NO-WORD-WRAP
           SIZE 20 BY 4
      gnappdp.dsmetodo AT ROW 1 COL 1 NO-LABEL
@@ -312,17 +260,9 @@ DEFINE FRAME Web-Frame
      gnappdp.nrseqpap AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-     ab_unmap.aux_dspublic AT ROW 1 COL 1 HELP
-          "" NO-LABEL
-          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
-          SIZE 20 BY 4    
-     gnappdp.dsidadpa AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
      gnappdp.dsprereq AT ROW 1 COL 1 NO-LABEL
           VIEW-AS EDITOR NO-WORD-WRAP
-          SIZE 20 BY 4
+          SIZE 20 BY 4          
      gnappdp.dtmvtolt AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -332,7 +272,7 @@ DEFINE FRAME Web-Frame
      gnappdp.nmevefor AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
-         gnappdp.nrpropos AT ROW 1 COL 1 NO-LABEL
+     gnappdp.nrpropos AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      gnappdp.idtrainc AT ROW 1 COL 1 NO-LABEL
@@ -352,54 +292,19 @@ DEFINE FRAME Web-Frame
           SIZE 20 BY 1
      gnappdp.vlinvest AT ROW 1 COL 1 NO-LABEL
           VIEW-AS FILL-IN 
-          SIZE 20 BY 1
+          SIZE 20 BY 1         
      ab_unmap.aux_flgtrinc AT ROW 1 COL 1
           LABEL "Transporte Incluso"
           VIEW-AS TOGGLE-BOX
           SIZE 20 BY 1
-          
     WITH 1 DOWN KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS 
          AT COL 1 ROW 1
          SIZE 52.2 BY 12.67.
 
-/* *********************** Procedure Settings ************************ */
-
 &ANALYZE-SUSPEND _PROCEDURE-SETTINGS
-/* Settings for THIS-PROCEDURE
-   Type: Web-Object
-   Allow: Query
-   Frames: 1
-   Add Fields to: Neither
-   Editing: Special-Events-Only
-   Events: web.output,web.input
-   Other Settings: COMPILE
-   Temp-Tables and Buffers:
-      TABLE: ab_unmap W "?" ?  
-      ADDITIONAL-FIELDS:
-          FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_cdeixtem AS CHARACTER 
-          FIELD aux_cdevento AS CHARACTER 
-          FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_idexclui AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_lsfacili AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_nmpagina AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_nrcpfcgc AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
-          FIELD cdeixtem AS CHARACTER FORMAT "X(256)":U 
-          FIELD cdevento AS CHARACTER FORMAT "X(256)":U 
-          FIELD txfacili AS CHARACTER
-          FIELD txrecurs AS CHARACTER
-      END-FIELDS.
-   END-TABLES.
- */
-&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
 
-/* *************************  Create Window  ************************** */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
 
 &ANALYZE-SUSPEND _CREATE-WINDOW
 /* DESIGN Window definition (used by the UIB) 
@@ -408,195 +313,72 @@ DEFINE FRAME Web-Frame
          WIDTH              = 52.2.
 /* END WINDOW DEFINITION */
                                                                         */
-&ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB w-html 
-/* *********************** Included-Libraries ************************* */
 
 {src/web2/html-map.i}
 
-/* _UIB-CODE-BLOCK-END */
-&ANALYZE-RESUME
-
-/* ***********  Runtime Attributes and AppBuilder Settings  *********** */
-
 &ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
-/* SETTINGS FOR WINDOW w-html
-  VISIBLE,,RUN-PERSISTENT                                               */
-/* SETTINGS FOR FRAME Web-Frame
-   UNDERLINE                                                            */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_cddopcao IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR SELECTION-LIST ab_unmap.aux_cdeixtem IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR SELECTION-LIST ab_unmap.aux_cdevento IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_dsendurl IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_dsretorn IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_idevento IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_idexclui IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_lsfacili IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_lspermis IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_nmpagina IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_nrcpfcgc IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_nrdrowid IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_stdopcao IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.cdeixtem IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.cdevento IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR EDITOR gnappdp.dsconteu IN FRAME Web-Frame
-   EXP-LABEL                                                            */
-/* SETTINGS FOR EDITOR gnappdp.dsmetodo IN FRAME Web-Frame
-   EXP-LABEL                                                            */
-/* SETTINGS FOR EDITOR gnappob.dsobjeti IN FRAME Web-Frame
-   EXP-LABEL                                                            */
-/* SETTINGS FOR EDITOR gnappdp.dsobserv IN FRAME Web-Frame
-   EXP-LABEL                                                            */
-/* SETTINGS FOR EDITOR gnappdp.dspublic IN FRAME Web-Frame
-   EXP-LABEL                                                            */
-/* SETTINGS FOR FILL-IN gnappdp.dtmvtolt IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN gnappdp.dtvalpro IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN gnappdp.nmevefor IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN gnappdp.nrpropos IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR FILL-IN gnappdp.qtcarhor IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* SETTINGS FOR EDITOR ab_unmap.txfacili IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR EDITOR ab_unmap.txrecurs IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */     
-/* SETTINGS FOR FILL-IN gnappdp.vlinvest IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* _RUN-TIME-ATTRIBUTES-END */
-&ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html 
 
-/* ************************  Main Code Block  ************************* */
-
-/* Standard Main Block that runs adm-create-objects, initializeObject 
- * and process-web-request.
- * The bulk of the web processing is in the Procedure process-web-request
- * elsewhere in this Web object.
- */
 {src/web2/template/hmapmain.i}
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-/* **********************  Internal Procedures  *********************** */
-
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEixos w-html 
-PROCEDURE CriaListaPublicoAlvo :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-   FOR EACH crappap  WHERE NO-LOCK BY crappap.dspubalv: 
-      
-       
-          IF  vetopubalvo = "" THEN
-              vetopubalvo =
-                            "~{" + "nrseqpap:"    + "'" + TRIM(string(crappap.nrseqpap))  
-                                 + "',dspubalv:"  + "'" + TRIM(string(crappap.dspubalv))+ "'~}".
-          ELSE
-             vetopubalvo = vetopubalvo + "," + 
-                            "~{" + "nrseqpap:"    + "'" + TRIM(string(crappap.nrseqpap))  
-                                 + "',dspubalv:"  + "'" + TRIM(string(crappap.dspubalv))+ "'~}".
-
-
-    END. /* for each */
-    RUN RodaJavaScript("var mpublicalvo=new Array();mpublicalvo=["  + vetopubalvo + "]").
-
-END PROCEDURE.
-
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEixos w-html 
 PROCEDURE CriaListaEixos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+      
+  RUN RodaJavaScript("var meixos = new Array();").
+       
    FOR EACH gnapetp NO-LOCK BY gnapetp.dseixtem: 
       
+   IF TRIM(vetoreixo) <> "" AND TRIM(vetoreixo) <> ? THEN
+     ASSIGN vetoreixo = vetoreixo + ",".     
        
-          IF  vetoreixo = "" THEN
-              vetoreixo =
-                            "~{" + "idevento:"    + "'" + TRIM(string(gnapetp.idevento))  
-                                 + "',cdcooper:"  + "'" + TRIM(string(gnapetp.cdcooper))
-                                 + "',cdeixtem:"  + "'" + TRIM(string(gnapetp.cdeixtem))
-                                 + "',dseixtem:"  + "'" + TRIM(string(gnapetp.dseixtem))+ "'~}".
-          ELSE
-             vetoreixo = vetoreixo + "," + 
-                            "~{" + "idevento:"    + "'" + TRIM(string(gnapetp.idevento))  
-                                 + "',cdcooper:"  + "'" + TRIM(string(gnapetp.cdcooper))
-                                 + "',cdeixtem:"  + "'" + TRIM(string(gnapetp.cdeixtem))
-                                 + "',dseixtem:"  + "'" + TRIM(string(gnapetp.dseixtem))+ "'~}".
-
-    
+   ASSIGN vetoreixo = vetoreixo + "~{idevento:'" + TRIM(string(gnapetp.idevento))  
+                                + "',cdcooper:'" + TRIM(string(gnapetp.cdcooper))
+                                + "',cdeixtem:'" + TRIM(string(gnapetp.cdeixtem))
+                                + "',dseixtem:'" + TRIM(string(gnapetp.dseixtem))+ "'~}".   
     END. /* for each */
-    RUN RodaJavaScript("var meixos=new Array();meixos=["  + vetoreixo + "]").
+
+  RUN RodaJavaScript("meixos.push(" + STRING(vetoreixo) + ");").
 
 END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEvento w-html 
 PROCEDURE CriaListaEvento :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-/*****###########ver######*/
-    /*FOR EACH crapedp NO-LOCK 
-        WHERE crapedp.flgativo = TRUE*/
-    RUN RodaJavaScript("var mevento=new Array();"). 
+     
+  RUN RodaJavaScript("var mevento = new Array();"). 
     
-      FOR EACH crapedp WHERE
-          crapedp.cdcooper = 0 AND
-          crapedp.dtanoage = 0 AND
-          crapedp.flgativo = TRUE  NO-LOCK 
+  FOR EACH crapedp WHERE crapedp.cdcooper = 0
+                     AND crapedp.dtanoage = 0
+                     AND crapedp.flgativo = TRUE  NO-LOCK 
           BY crapedp.nmevento:
 
-          IF  vetorevento = "" THEN
-              vetorevento =
-                            "~{" + "cdeixtem:"    + "'" + TRIM(string(crapedp.cdeixtem))  
-                                 + "',nrseqtem:"  + "'" + TRIM(string(crapedp.nrseqtem))
-                           + "',cdevento:"  + "'" + TRIM(string(crapedp.cdevento))
-                           + "',nmevento:"  + "'" + TRIM(string(crapedp.nmevento)) + "'~}".
-          ELSE
-             vetorevento = vetorevento + "," + 
-                            "~{" + "cdeixtem:"    + "'" + TRIM(string(crapedp.cdeixtem)) 
-                                 + "',nrseqtem:"  + "'" + TRIM(string(crapedp.nrseqtem))
-                                 + "',cdevento:"  + "'" + TRIM(string(crapedp.cdevento))
-                                 + "',nmevento:"  + "'" + TRIM(string(crapedp.nmevento)) + "'~}".
-          
+    IF TRIM(vetorevento) <> "" AND TRIM(vetorevento) <> ? THEN
+      ASSIGN vetorevento = vetorevento + ",".
+                                 
+    ASSIGN vetorevento = vetorevento + "~{cdeixtem:"    + "'" + TRIM(string(crapedp.cdeixtem)) 
+                                     + "',nrseqtem:'" + TRIM(string(crapedp.nrseqtem))
+                                     + "',cdevento:'" + TRIM(string(crapedp.cdevento))
+                                     + "',nmevento:'" + TRIM(string(crapedp.nmevento)) + "'~}".
+                                 
 
-           aux_registros  = aux_registros  + 1.
+    ASSIGN aux_registros  = aux_registros  + 1.
+      
         IF aux_registros > 50 THEN
           DO:
             RUN RodaJavaScript("mevento.push(" + STRING(vetorevento) + ");").
-      
+            
             ASSIGN vetorevento = ""
                    aux_registros = 0.
           END.
 
-    
     END. /* for each */
+    
     RUN RodaJavaScript("mevento.push(" + STRING(vetorevento) + ");").
+    
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -604,39 +386,33 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaFacili w-html 
 PROCEDURE CriaListaFacili :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
 
-FOR EACH gnapfep WHERE gnapfep.idevento = INTEGER(ab_unmap.aux_idevento)   AND
-                       gnapfep.cdcooper = 0                                AND
-                       gnapfep.nrcpfcgc = DECIMAL(ab_unmap.aux_nrcpfcgc)   NO-LOCK
+  RUN RodaJavaScript("var mfacili = new Array();").
+  
+  FOR EACH gnapfep WHERE gnapfep.idevento = INTEGER(ab_unmap.aux_idevento)
+                     AND gnapfep.cdcooper = 0                               
+                     AND gnapfep.nrcpfcgc = DECIMAL(ab_unmap.aux_nrcpfcgc) NO-LOCK
                        BY gnapfep.nmfacili:
 
     /* Se é a primeira vez, busca na tabela, senao pega da tela */
-    IF  REQUEST_METHOD = "GET"  THEN
+    IF REQUEST_METHOD = "GET" THEN
         DO:
            /* Busca o registro caso ele nao esteja disponível */
-          /* IF   NOT AVAILABLE {&SECOND-ENABLED-TABLE}   THEN
-                FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-ERROR.        
-*/         IF AVAILABLE {&SECOND-ENABLED-TABLE}   THEN
+         IF AVAILABLE {&SECOND-ENABLED-TABLE}   THEN
              ASSIGN aux_nrpropos = {&SECOND-ENABLED-TABLE}.nrpropos.
-
+             
            FIND gnfacep WHERE gnfacep.cdcooper = 0                AND
                               gnfacep.cdfacili = gnapfep.cdfacili AND
                               gnfacep.idevento = gnapfep.idevento AND
                               gnfacep.nrcpfcgc = gnapfep.nrcpfcgc AND
                               gnfacep.nrpropos = {&SECOND-ENABLED-TABLE}.nrpropos
                               NO-LOCK NO-ERROR.
-
+          
          
            IF  AVAILABLE gnfacep  THEN
               ASSIGN aux_flgescol = TRUE.
            ELSE
                ASSIGN aux_flgescol = FALSE.
-                      /*aux_nrpropos = gnappdp.nrpropos.*/
                       
         END.
     ELSE 
@@ -648,20 +424,16 @@ FOR EACH gnapfep WHERE gnapfep.idevento = INTEGER(ab_unmap.aux_idevento)   AND
            aux_flgescol = FALSE.
     END.
     
-    IF  vetorfacili = "" THEN
-        vetorfacili =
-                      "~{" + "idfacili:"    + "'" + string(rowid(gnapfep))
-                           + "',nmfacili:"  + "'" + TRIM(string(gnapfep.nmfacili))
-                           + "',flgescol:"  + "'" + STRING(aux_flgescol,"yes/no") + "'~}".
-    ELSE
-       vetorfacili = vetorfacili + "," + 
-                      "~{" + "idfacili:"    + "'" + string(rowid(gnapfep))
-                           + "',nmfacili:"  + "'" + TRIM(string(gnapfep.nmfacili))
-                           + "',flgescol:"  + "'" + STRING(aux_flgescol,"yes/no") + "'~}".
+    IF TRIM(vetorfacili) <> "" AND TRIM(vetorfacili) <> ? THEN
+      ASSIGN vetorfacili = vetorfacili + ",".
 
+    ASSIGN vetorfacili = vetorfacili + "~{idfacili:'" + string(rowid(gnapfep))
+                                     + "',nmfacili:'" + TRIM(string(gnapfep.nmfacili))
+                                     + "',flgescol:'" + STRING(aux_flgescol,"yes/no") + "'~}".
+    
 END. /* for each */
 
-RUN RodaJavaScript("var mfacili=new Array();mfacili=["  + vetorfacili + "]").
+  RUN RodaJavaScript("mfacili.push(" + vetorfacili + ");").
 
 END PROCEDURE.
 
@@ -671,11 +443,10 @@ END PROCEDURE.
 PROCEDURE LimpaRecurso:
   
   /* Verificar se a proposta existe*/
-  FIND FIRST gnappdp 
-       WHERE gnappdp.IDEVENTO = INTEGER(ab_unmap.aux_idevento)
+  FIND FIRST gnappdp WHERE gnappdp.IDEVENTO = INTEGER(ab_unmap.aux_idevento)
          AND gnappdp.NRCPFCGC = DECIMAL(ab_unmap.aux_nrcpfcgc)
-         AND gnappdp.NRPROPOS = aux_nrpropos
-         NO-LOCK NO-ERROR.
+                       AND gnappdp.NRPROPOS = aux_nrpropos NO-LOCK NO-ERROR.
+                       
   /* Caso nao exista deve eliminar os recursos atrelados, 
     para garantir que nao mantenha sujeira na base */  
   IF NOT AVAILABLE gnappdp THEN       
@@ -699,28 +470,23 @@ PROCEDURE LimpaRecurso:
         END.       
     END.
     
-    
 END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaRecurso w-html 
 PROCEDURE CriaListaRecurso :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-    /* Se é a primeira vez deve limpar registros 
-       que podem ter ficado de sessoes anteriores */
-    IF  REQUEST_METHOD = "GET"  THEN
-    DO:
+
+  RUN RodaJavaScript("var mrecurso = new Array();").
+  
+  /* Se é a primeira vez deve limpar registros que podem ter ficado de sessoes anteriores */
+  IF REQUEST_METHOD = "GET"  THEN
       RUN LimpaRecurso.
-    END.  
     
     ASSIGN vetorecurso = "".
+  
     FOR EACH gnaprdp WHERE gnaprdp.idevento = INTEGER(ab_unmap.aux_idevento)
                       AND  gnaprdp.cdcooper = 0
                       BY   gnaprdp.dsrecurs: 
-                                                        
+                              
                               
         FIND FIRST craprdf WHERE craprdf.idevento = gnaprdp.idevento
                              AND craprdf.cdcooper = gnaprdp.cdcooper
@@ -730,21 +496,17 @@ PROCEDURE CriaListaRecurso :
                       
         IF AVAIL craprdf THEN
         DO:
-            IF  vetorecurso = "" THEN
-                vetorecurso =
-                              "~{" + "nrseqdig:"    + "'" + TRIM(string(gnaprdp.nrseqdig))
-                                   + "',dsrecurs:"  + "'" + TRIM(string(gnaprdp.dsrecurs))
-                                   + "',rowidrec:"  + "'" + TRIM(string(ROWID(craprdf)))+ "'~}".
-            ELSE
-               vetorecurso = vetorecurso + "," + 
-                              "~{" + "nrseqdig:"    + "'" + TRIM(string(gnaprdp.nrseqdig))
-                                   + "',dsrecurs:"  + "'" + TRIM(string(gnaprdp.dsrecurs))
-                                   + "',rowidrec:"  + "'" + TRIM(string(ROWID(craprdf)))+ "'~}".
+        IF TRIM(vetorecurso) <> "" AND TRIM(vetorecurso) <> ? THEN
+          ASSIGN vetorecurso = vetorecurso + ",".
+            
+        ASSIGN vetorecurso = vetorecurso + "~{nrseqdig:'" + TRIM(string(gnaprdp.nrseqdig))
+                                         + "',dsrecurs:'" + TRIM(string(gnaprdp.dsrecurs))
+                                         + "',rowidrec:'" + TRIM(string(ROWID(craprdf)))+ "'~}".
         END.
     
     END. /* for each */
     
-    RUN RodaJavaScript("var mrecurso=new Array();mrecurso=["  + vetorecurso + "]").
+  RUN RodaJavaScript("mrecurso.push(" + vetorecurso + ");").
 
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
@@ -752,12 +514,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
 PROCEDURE htmOffsets :
-/*------------------------------------------------------------------------------
-  Purpose:     Runs procedure to associate each HTML field with its
-               corresponding widget name and handle.
-  Parameters:  
-  Notes:       
-------------------------------------------------------------------------------*/
+
   RUN readOffsets ("{&WEB-FILE}":U).
   RUN htmAssociate
     ("aux_cddopcao":U,"ab_unmap.aux_cddopcao":U,ab_unmap.aux_cddopcao:HANDLE IN FRAME {&FRAME-NAME}).
@@ -801,15 +558,8 @@ PROCEDURE htmOffsets :
     ("dsobjeti":U,"gnappob.dsobjeti":U,gnappob.dsobjeti:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("dsobserv":U,"gnappdp.dsobserv":U,gnappdp.dsobserv:HANDLE IN FRAME {&FRAME-NAME}).
-  /*RUN htmAssociate
-    ("dspublic":U,"gnappdp.nrseqpap":U,gnappdp.nrseqpap:HANDLE IN FRAME {&FRAME-NAME}).*/
-    
-  RUN htmAssociate
-    ("dsidadpa":U,"gnappdp.dsidadpa":U,gnappdp.dsidadpa:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
+   RUN htmAssociate
     ("dsprereq":U,"gnappdp.dsprereq":U,gnappdp.dsprereq:HANDLE IN FRAME {&FRAME-NAME}).
-  
-    
   RUN htmAssociate
     ("dtmvtolt":U,"gnappdp.dtmvtolt":U,gnappdp.dtmvtolt:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -830,42 +580,31 @@ PROCEDURE htmOffsets :
     ("txrecurs":U,"ab_unmap.txrecurs":U,ab_unmap.txrecurs:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_flgtrinc":U,"ab_unmap.aux_flgtrinc":U,ab_unmap.aux_flgtrinc:HANDLE IN FRAME {&FRAME-NAME}).  
-    
   RUN htmAssociate
     ("aux_idforrev":U,"ab_unmap.aux_idforrev":U,ab_unmap.aux_idforrev:HANDLE IN FRAME {&FRAME-NAME}).  
-   
     RUN htmAssociate
     ("idforrev":U,"gnappdp.idforrev":U,gnappdp.idforrev:HANDLE IN FRAME {&FRAME-NAME}).
    RUN htmAssociate
-    ("aux_dspublic":U,"ab_unmap.aux_dspublic":U,ab_unmap.aux_dspublic:HANDLE IN FRAME {&FRAME-NAME}).
-    RUN htmAssociate
     ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
     ("aux_idvapost":U,"ab_unmap.aux_idvapost":U,ab_unmap.aux_idvapost:HANDLE IN FRAME {&FRAME-NAME}).
     RUN htmAssociate
     ("aux_nrpropos":U,"ab_unmap.aux_nrpropos":U,ab_unmap.aux_nrpropos:HANDLE IN FRAME {&FRAME-NAME}).
-    
-    
 END PROCEDURE.
-
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE inclui-facilitador w-html 
-PROCEDURE inclui-facilitador :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+PROCEDURE inclui-facilitador:
+
+  IF NOT VALID-HANDLE(h-b1wpgd0012d) THEN
 /* Instancia a BO para executar as procedures */
 RUN dbo/b1wpgd0012d.p PERSISTENT SET h-b1wpgd0012d.
  
 /* Se BO foi instanciada */
 IF VALID-HANDLE(h-b1wpgd0012d) THEN
    DO:
- MESSAGE "ab_unmap.aux_lsfacili: " + STRING(ab_unmap.aux_lsfacili).
       /* Busca o registro caso ele nao esteja disponível (acabou de ser incluído) */
       IF   NOT AVAILABLE {&SECOND-ENABLED-TABLE}   THEN
            FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-ERROR.
@@ -909,18 +648,14 @@ IF VALID-HANDLE(h-b1wpgd0012d) THEN
       DELETE PROCEDURE h-b1wpgd0012d NO-ERROR.
    END.
 
-
 END PROCEDURE.
 
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE exclui-recurso w-html 
 PROCEDURE exclui-recurso :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+
+  IF NOT VALID-HANDLE(h-b1wpgd0012e) THEN
 /* Instancia a BO para executar as procedures */
 RUN dbo/b1wpgd0012e.p PERSISTENT SET h-b1wpgd0012e.
  
@@ -929,9 +664,6 @@ IF VALID-HANDLE(h-b1wpgd0012e) THEN
    DO:
 
       /* Busca o registro caso ele nao esteja disponível (acabou de ser incluído) */
-      /*IF   NOT AVAILABLE {&SECOND-ENABLED-TABLE}   THEN
-           FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-ERROR.
-    */
       /* Apaga todos os facilitadores da proposta e recria somente os escolhidos */
       FOR EACH craprdf WHERE  ROWID(craprdf) = TO-ROWID(ab_unmap.aux_nrdrowid)   NO-LOCK:
           EMPTY TEMP-TABLE cratrdf.
@@ -942,7 +674,6 @@ IF VALID-HANDLE(h-b1wpgd0012e) THEN
           RUN exclui-registro IN h-b1wpgd0012e(INPUT TABLE cratrdf, OUTPUT msg-erro).
       END.
 
-
       /* "mata" a instância da BO */
       DELETE PROCEDURE h-b1wpgd0012e NO-ERROR.
    END.
@@ -952,7 +683,7 @@ END PROCEDURE.
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE local-assign-record w-html 
-PROCEDURE local-assign-record :
+PROCEDURE local-assign-record:
 DEFINE INPUT PARAMETER opcao AS CHARACTER.
 
 DEFINE VARIABLE aux_qtcarhor AS CHAR NO-UNDO.
@@ -961,11 +692,12 @@ aux_qtcarhor = string(INPUT FRAME {&FRAME-NAME} ab_unmap.qtcarhor).
 aux_qtcarhor = REPLACE(aux_qtcarhor, ":", ",").
 
 /* Instancia a BO para executar as procedures */
+  IF NOT VALID-HANDLE(h-b1wpgd0012c) THEN
 RUN dbo/b1wpgd0012c.p PERSISTENT SET h-b1wpgd0012c.
 
 /* Se BO foi instanciada */
 IF VALID-HANDLE(h-b1wpgd0012c) THEN
-   DO:
+   DO: 
       IF INT(ab_unmap.aux_flgtrinc) = 1 THEN
         ASSIGN aux_idtrainc = 'S'.
       ELSE 
@@ -973,63 +705,54 @@ IF VALID-HANDLE(h-b1wpgd0012c) THEN
       
       DO WITH FRAME {&FRAME-NAME}:
          IF opcao = "inclusao" THEN
-            DO: 
+            DO:
+                
                 CREATE gnatpdp.
-                ASSIGN
-                    gnatpdp.cdevento = INT(get-value("aux_cdevento"))
-                    gnatpdp.dsconteu = INPUT gnappdp.dsconteu
+                ASSIGN gnatpdp.cdevento = INT(get-value("aux_cdevento"))
+                    gnatpdp.dsconteu = INPUT gnappdp.dsconteu 
                     gnatpdp.dsmetodo = INPUT gnappdp.dsmetodo
                     gnatpdp.dsobserv = INPUT gnappdp.dsobserv
-                    /*gnatpdp.dspublic = (ab_unmap.aux_dspublic) */
-                    gnatpdp.nrseqpap = INT(ab_unmap.aux_dspublic) 
-                    gnatpdp.dsidadpa = INPUT gnappdp.dsidadpa
                     gnatpdp.dsprereq = INPUT gnappdp.dsprereq                    
                     gnatpdp.dtmvtolt = INPUT gnappdp.dtmvtolt
                     gnatpdp.dtvalpro = INPUT gnappdp.dtvalpro
                     gnatpdp.idevento = INT(ab_unmap.aux_idevento)
                     gnatpdp.nmevefor = INPUT gnappdp.nmevefor
                     gnatpdp.nrcpfcgc = DEC(ab_unmap.aux_nrcpfcgc)
-                                        gnatpdp.nrpropos = INPUT gnappdp.nrpropos
-                                        gnatpdp.nrctrpro = INT(SUBSTRING(gnatpdp.nrpropos,1,3))
+                    gnatpdp.nrpropos = INPUT gnappdp.nrpropos
+                    gnatpdp.nrctrpro = INT(SUBSTRING(gnatpdp.nrpropos,1,3))
                     gnatpdp.qtcarhor = DEC(aux_qtcarhor)
                     gnatpdp.vlinvest = INPUT gnappdp.vlinvest
                     gnatpdp.idforrev = INT(ab_unmap.aux_idforrev)
-                    gnatpdp.idtrainc = aux_idtrainc .
+                       gnatpdp.idtrainc = aux_idtrainc.
                  
-                RUN inclui-registro IN h-b1wpgd0012c
-                                               (INPUT TABLE gnatpdp, 
+                RUN inclui-registro IN h-b1wpgd0012c(INPUT TABLE gnatpdp, 
                                                 INPUT INPUT gnappob.dsobjeti,
                                                 OUTPUT msg-erro, 
                                                 OUTPUT ab_unmap.aux_nrdrowid).
             END.
          ELSE  /* alteracao */
-            DO:
+            DO: 
                 /* cria a temp-table e joga o novo valor digitado para o campo */
                 CREATE gnatpdp.
                 BUFFER-COPY gnappdp TO gnatpdp.
-
-                ASSIGN
-                    gnatpdp.cdevento = INT(get-value("aux_cdevento"))
+              
+                  ASSIGN gnatpdp.cdevento = INT(get-value("aux_cdevento"))
                     gnatpdp.dsconteu = INPUT gnappdp.dsconteu
                     gnatpdp.dsmetodo = INPUT gnappdp.dsmetodo
                     gnatpdp.dsobserv = INPUT gnappdp.dsobserv
-                    gnatpdp.dsidadpa = INPUT gnappdp.dsidadpa
                     gnatpdp.dsprereq = INPUT gnappdp.dsprereq 
-                    /*gnatpdp.dspublic = (ab_unmap.aux_dspublic) */
-                    gnatpdp.nrseqpap = INT(ab_unmap.aux_dspublic) 
                     gnatpdp.dtmvtolt = INPUT gnappdp.dtmvtolt
                     gnatpdp.dtvalpro = INPUT gnappdp.dtvalpro
                     gnatpdp.idevento = INT(ab_unmap.aux_idevento)
                     gnatpdp.nmevefor = INPUT gnappdp.nmevefor
                     gnatpdp.nrcpfcgc = DEC(ab_unmap.aux_nrcpfcgc)
-                                        gnatpdp.nrpropos = INPUT gnappdp.nrpropos
-                                        gnatpdp.qtcarhor = DEC(aux_qtcarhor)
+                    gnatpdp.nrpropos = INPUT gnappdp.nrpropos
+                    gnatpdp.qtcarhor = DEC(aux_qtcarhor)
                     gnatpdp.vlinvest = INPUT gnappdp.vlinvest
                     gnatpdp.idtrainc = aux_idtrainc
                     gnatpdp.idforrev = INT(ab_unmap.aux_idforrev).
                  
-                RUN altera-registro IN h-b1wpgd0012c
-                                            (INPUT TABLE gnatpdp, 
+                  RUN altera-registro IN h-b1wpgd0012c(INPUT TABLE gnatpdp, 
                                              INPUT INPUT gnappob.dsobjeti,
                                             OUTPUT msg-erro).
             END.    
@@ -1072,13 +795,13 @@ PROCEDURE local-display-fields :
 RUN displayFields.
 
 IF REQUEST_METHOD = "GET" THEN
-   DO:
+   DO: 
       /* Busca o registro caso ele nao esteja disponível */   
       IF NOT AVAILABLE {&SECOND-ENABLED-TABLE}   THEN
          FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-ERROR.
       
       IF AVAIL {&SECOND-ENABLED-TABLE} THEN
-         DO:
+         DO: 
              ASSIGN ab_unmap.cdevento = STRING({&SECOND-ENABLED-TABLE}.cdevento).
       
              FIND gnappob WHERE 
@@ -1092,22 +815,18 @@ IF REQUEST_METHOD = "GET" THEN
                   ASSIGN 
                     gnappob.dsobjeti:SCREEN-VALUE IN FRAME {&FRAME-NAME} =
                          gnappob.dsobjeti.
-         END.
+         END. 
          
-      FIND FIRST crapedp WHERE
-          crapedp.cdcooper = 0 AND
-          crapedp.dtanoage = 0 AND
-          crapedp.cdevento = INT({&FIRST-ENABLED-TABLE}.cdevento) NO-LOCK NO-ERROR.
+      FIND FIRST crapedp WHERE crapedp.cdcooper = 0
+                           AND crapedp.dtanoage = 0
+                           AND crapedp.cdevento = INT({&FIRST-ENABLED-TABLE}.cdevento) NO-LOCK NO-ERROR.
 
-      IF AVAIL crapedp THEN 
-       DO: 
-        
+      IF AVAIL crapedp THEN  
           ASSIGN ab_unmap.cdeixtem:SCREEN-VALUE IN FRAME {&FRAME-NAME} = STRING(crapedp.nrseqtem) + "-" + STRING(crapedp.idevento) + "-" + STRING(crapedp.cdcooper) + "-" + STRING(crapedp.cdeixtem)
                  ab_unmap.cdevento:SCREEN-VALUE IN FRAME {&FRAME-NAME} = STRING(crapedp.cdevento)
                  ab_unmap.aux_cdtemeix:SCREEN-VALUE IN FRAME {&FRAME-NAME} = STRING(crapedp.nrseqtem) + "-" + STRING(crapedp.idevento) + "-" + STRING(crapedp.cdcooper) + "-" + STRING(crapedp.cdeixtem).
+   
    END.
-   END.
-
 
 END PROCEDURE.
 
@@ -1116,16 +835,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE outputHeader w-html 
 PROCEDURE outputHeader :
-/*------------------------------------------------------------------------
-  Purpose:     Output the MIME header, and any "cookie" information needed 
-               by this procedure.  
-  Parameters:  <none>
-  Notes:       In the event that this Web object is state-aware, this is 
-               a good place to set the WebState and WebTimeout attributes.
-------------------------------------------------------------------------*/
-
   output-content-type ("text/html":U).
-  
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1135,10 +845,8 @@ END PROCEDURE.
 PROCEDURE PermissaoDeAcesso :
 { includes/wpgd0009.i }
 
-ASSIGN 
-    v-identificacao = get-cookie("cookie-usuario-em-uso")
+  ASSIGN v-identificacao = get-cookie("cookie-usuario-em-uso")
     v-permissoes    = "IAEPLU".
-
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1146,12 +854,6 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE PosicionaEvento w-html 
 PROCEDURE PosicionaEvento :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-
     RUN RodaJavaScript('PosicionaEvento();').
 END PROCEDURE.
 
@@ -1282,7 +984,6 @@ IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
 ELSE
     ASSIGN ab_unmap.aux_nrdrowid  = STRING(ROWID({&SECOND-ENABLED-TABLE}))
            ab_unmap.aux_stdopcao = "".   /* aqui u */
-
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1317,7 +1018,7 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_dsendurl = AppURL                        
        ab_unmap.aux_lspermis = FlagPermissoes                
        ab_unmap.aux_nrdrowid = GET-VALUE("aux_nrdrowid")         
-       ab_unmap.aux_stdopcao = GET-VALUE("aux_stdopcao")
+       ab_unmap.aux_stdopcao = GET-VALUE("aux_stdopcao")       
        ab_unmap.aux_cdtemeix = GET-VALUE("aux_cdtemeix")
        ab_unmap.aux_cdeixtem = GET-VALUE("aux_cdeixtem")
        ab_unmap.aux_nrcpfcgc = GET-VALUE("aux_nrcpfcgc")
@@ -1329,7 +1030,6 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.qtcarhor     = GET-VALUE("qtcarhor")
        operacao              = GET-VALUE("aux_operacao")
        ab_unmap.aux_idforrev = GET-VALUE("aux_idforrev")
-       ab_unmap.aux_dspublic = GET-FIELD("aux_dspublic")
        ab_unmap.aux_cdcopope = GET-VALUE("aux_cdcopope")
        ab_unmap.aux_idvapost = GET-VALUE("aux_idvapost")
        ab_unmap.aux_nrpropos = GET-VALUE("aux_nrpropos").
@@ -1340,14 +1040,15 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
           ASSIGN ab_unmap.aux_flgtrinc = FALSE.
 
 RUN outputHeader.
-aux_craptem = ",0,".
+  
+  ASSIGN aux_craptem = ",0,".
 
 EMPTY TEMP-TABLE temas.
 
-FOR EACH gnapefp WHERE gnapefp.cdcooper = 0                AND
-                       gnapefp.nrcpfcgc = dec(ab_unmap.aux_nrcpfcgc) NO-LOCK,
-  FIRST gnapetp WHERE gnapetp.cdcooper = 0                AND
-                      gnapetp.cdeixtem = gnapefp.cdeixtem NO-LOCK 
+  FOR EACH gnapefp WHERE gnapefp.cdcooper = 0                
+                     AND gnapefp.nrcpfcgc = dec(ab_unmap.aux_nrcpfcgc) NO-LOCK,
+    FIRST gnapetp WHERE gnapetp.cdcooper = 0                
+                    AND gnapetp.cdeixtem = gnapefp.cdeixtem NO-LOCK 
                       BY gnapetp.dseixtem:
       
   FOR EACH craptem NO-LOCK WHERE craptem.idevento = 1 
@@ -1370,12 +1071,11 @@ END.
 
 aux_craptem = SUBSTRING(aux_craptem, 1, LENGTH(aux_craptem) - 1).
 
-ASSIGN 
-    ab_unmap.aux_cdtemeix:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_craptem.
+  ASSIGN ab_unmap.aux_cdtemeix:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_craptem.
 
 /***************#################***************/
+  ASSIGN aux_gnapetp = ",0,".
 
-aux_gnapetp = ",0,".
 FOR EACH gnapetp NO-LOCK WHERE
     gnapetp.cdcooper = 0                      AND
     gnapetp.idevento = INT(ab_unmap.aux_idevento),
@@ -1389,53 +1089,46 @@ FOR EACH gnapetp NO-LOCK WHERE
 END.
 
 aux_gnapetp = SUBSTRING(aux_gnapetp, 1, LENGTH(aux_gnapetp) - 1).
-        
-ASSIGN
-    ab_unmap.aux_cdeixtem:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_gnapetp.
-
+       
+  ASSIGN ab_unmap.aux_cdeixtem:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_gnapetp.
+    
 /***************#################***************/
 DEF VAR aux_ano AS INT   NO-UNDO.   
-
+   
 IF   operacao = "incluir" THEN 
      DO:        
          /* busca última proposta cadastrada */ 
-         FOR LAST b-gnappdp WHERE b-gnappdp.idevento       = INT(ab_unmap.aux_idevento) AND
-                                              b-gnappdp.cdcooper       = 0                          AND
-                                                                   YEAR(b-gnappdp.dtmvtolt) = YEAR(TODAY)
-                             /*USE-INDEX gnappdp3 removido o indice devido a performace
-                               por causa do filtro de ano n*/
-                            NO-LOCK 
+           FOR LAST b-gnappdp WHERE b-gnappdp.idevento       = INT(ab_unmap.aux_idevento)
+                                AND b-gnappdp.cdcooper       = 0                         
+                                AND YEAR(b-gnappdp.dtmvtolt) = YEAR(TODAY) NO-LOCK 
                               BY b-gnappdp.IDEVENTO      
                               BY b-gnappdp.CDCOOPER      
                               BY b-gnappdp.NRCTRPRO: END.
                               
-
          IF AVAIL b-gnappdp  THEN
          DO:
-              gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = STRING(b-gnappdp.nrctrpro + 1,"999") + "/" + STRING(YEAR(TODAY),"9999"). 
+               ASSIGN gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = STRING(b-gnappdp.nrctrpro + 1,"999") + "/" + STRING(YEAR(TODAY),"9999")
             aux_nrpropos = STRING(b-gnappdp.nrctrpro + 1,"999") + "/" + STRING(YEAR(TODAY),"9999").
          END.
-             ELSE
+         ELSE
          DO:
-                      gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = "001/" + STRING(YEAR(TODAY),"9999"). /* Primeira Proposta do ano */ 
+               ASSIGn gnappdp.nrpropos:SCREEN-VALUE IN FRAME {&FRAME-NAME} = "001/" + STRING(YEAR(TODAY),"9999") /* Primeira Proposta do ano */ 
             aux_nrpropos = "001/" + STRING(YEAR(TODAY),"9999").
-            
          END.
      END.
 ELSE
-  ASSIGN aux_nrpropos = ab_unmap.aux_nrpropos.  
-
+  ASSIGN aux_nrpropos = ab_unmap.aux_nrpropos.
+     
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:
-      
+    
       RUN inputFields.
           
       CASE opcao:
            WHEN "ft" THEN /* fechar tela */
                 DO:
-                  /* Procedimento para eliminar recursos que estajam 
-                     atrelados a proposta caso ela nao esteja salva */
+            /* Procedimento para eliminar recursos que estajam atrelados a proposta caso ela nao esteja salva */
                   RUN LimpaRecurso.
                   RETURN "OK".
                 END.
@@ -1444,21 +1137,18 @@ IF REQUEST_METHOD = "POST":U THEN
                     IF ab_unmap.aux_stdopcao = "i" THEN /* inclusao */
                         DO:
                             RUN local-assign-record ("inclusao").
-
+                            
                             IF msg-erro <> "" THEN
                               DO:
-                                
                                 ASSIGN msg-erro-aux = 3. /* erros da validaçao de dados */
                               END.
                             ELSE 
                             DO:
-                              
                                /* Se deu certo a inclusao da proposta, aí inclui os facilitadores */
                                RUN inclui-facilitador.
+                    ASSIGN msg-erro-aux = 10
+                           ab_unmap.aux_stdopcao = "al".
 
-                               ASSIGN 
-                                   msg-erro-aux = 10
-                                   ab_unmap.aux_stdopcao = "al".
                                FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
 
                                IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
@@ -1472,7 +1162,6 @@ IF REQUEST_METHOD = "POST":U THEN
                                          ASSIGN msg-erro-aux = 2. /* registro nao existe */
                                          RUN PosicionaNoSeguinte.
                                      END.
-
                             END.
                         END.  /* fim inclusao */
                     ELSE     /* alteraçao */ 
@@ -1493,11 +1182,11 @@ IF REQUEST_METHOD = "POST":U THEN
                                   END.
                             ELSE
                                DO:
-                                                                  RUN local-assign-record ("alteracao").  
+                    RUN local-assign-record("alteracao").  
+                    
                                   IF msg-erro = "" THEN
                                      DO:
                                          ASSIGN msg-erro-aux = 10. /* Solicitaçao realizada com sucesso */ 
-
                                          /* Se deu certo a alteraçao da proposta, aí inclui os facilitadores */
                                          RUN inclui-facilitador.
                                      END.
@@ -1510,14 +1199,11 @@ IF REQUEST_METHOD = "POST":U THEN
           /* Recarrega */
           WHEN "rec" THEN
           DO:
-            
               FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
-              ASSIGN 
-                  opcao = ""
+              ASSIGN opcao = ""
                   msg-erro-aux = 11
                   ab_unmap.aux_cddopcao = "".
           END.
-
           WHEN "exr" THEN /*exclui recurso*/
            DO:
               RUN exclui-recurso.  
@@ -1525,128 +1211,13 @@ IF REQUEST_METHOD = "POST":U THEN
                  ASSIGN msg-erro-aux = 10. /* Solicitação realizada com sucesso */ 
               ELSE
                  ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
-
-                 /* IF AVAIL gnapfdp THEN
-                      IF gnapfdp.inpessoa = 1 THEN
-                          ab_unmap.aux_nrcpfcgc = STRING(gnapfdp.nrcpfcgc, "99999999999").
-                      ELSE
-                          ab_unmap.aux_nrcpfcgc = STRING(gnapfdp.nrcpfcgc, "99999999999999"). */
-                
-          END.
-           /***
-           WHEN "in" THEN /* inclusao */
-                DO:
-                    IF ab_unmap.aux_stdopcao <> "i" THEN
-                       DO:
-                          CLEAR FRAME {&FRAME-NAME}.
-                          ASSIGN ab_unmap.aux_stdopcao = "i".
-                       END.
-                END. /* fim inclusao */
-
-           WHEN "ex" THEN /* exclusao */
-                DO:
-                    FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-
-                    /* busca o próximo registro para fazer o reposicionamento */
-                    FIND NEXT {&SECOND-ENABLED-TABLE} WHERE {&SECOND-ENABLED-TABLE}.cdcooper = 0                              AND
-                                                            {&SECOND-ENABLED-TABLE}.idevento = INTEGER(ab_unmap.aux_idevento) NO-LOCK NO-WAIT NO-ERROR.
-
-                    IF AVAILABLE {&SECOND-ENABLED-TABLE} THEN
-                       ASSIGN aux_nrdrowid-auxiliar = STRING(ROWID({&SECOND-ENABLED-TABLE})).
-                    ELSE
-                       DO:
-                           /* nao encontrou próximo registro entao procura pelo registro anterior para o reposicionamento */
-                           FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                           
-                           FIND PREV {&SECOND-ENABLED-TABLE} WHERE {&SECOND-ENABLED-TABLE}.cdcooper = 0                              AND
-                                                                   {&SECOND-ENABLED-TABLE}.idevento = INTEGER(ab_unmap.aux_idevento) NO-LOCK NO-WAIT NO-ERROR.
-
-                           IF AVAILABLE {&SECOND-ENABLED-TABLE} THEN
-                              ASSIGN aux_nrdrowid-auxiliar = STRING(ROWID({&SECOND-ENABLED-TABLE})).
-                           ELSE
-                              ASSIGN aux_nrdrowid-auxiliar = "?".
-                       END.          
-                       
-                    /*** PROCURA TABELA PARA VALIDAR -> COM NO-LOCK ***/
-                    FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                    
-                    /*** PROCURA TABELA PARA EXCLUIR -> COM EXCLUSIVE-LOCK ***/
-                    FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) EXCLUSIVE-LOCK NO-WAIT NO-ERROR.
-                    
-                    IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
-                       IF LOCKED {&SECOND-ENABLED-TABLE} THEN
-                          DO:
-                              ASSIGN msg-erro-aux = 1. /* registro em uso por outro usuário */ 
-                              FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                          END.
-                       ELSE
-                          ASSIGN msg-erro-aux = 2. /* registro nao existe */
-                    ELSE
-                       DO:
-                          IF msg-erro = "" THEN
-                             DO:
-                                RUN local-delete-record.
-                                DO i = 1 TO ERROR-STATUS:NUM-MESSAGES:
-                                   ASSIGN msg-erro = msg-erro + ERROR-STATUS:GET-MESSAGE(i).
-                                END.    
-
-                                IF msg-erro = " " THEN
-                                   DO:
-                                       IF aux_nrdrowid-auxiliar = "?" THEN
-                                          RUN PosicionaNoPrimeiro.
-                                       ELSE
-                                          DO:
-                                              ASSIGN ab_unmap.aux_nrdrowid = aux_nrdrowid-auxiliar.
-                                              FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                                              
-                                              IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
-                                                 RUN PosicionaNoSeguinte.
-                                          END.   
-                                          
-                                       ASSIGN msg-erro-aux = 10. /* Solicitaçao realizada com sucesso */ 
-                                   END.
-                                ELSE
-                                   ASSIGN msg-erro-aux = 3. /* Exclusao rejeitada */ 
-                             END.
-                          ELSE
-                             ASSIGN msg-erro-aux = 3. /* erros da validaçao de dados */
                        END.  
-                END. /* fim exclusao */
-
-           WHEN "pe" THEN /* pesquisar */
-                DO:   
-                    FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                    IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN 
-                       RUN PosicionaNoSeguinte.
-                END. /* fim pesquisar */
-
-           WHEN "li" THEN /* listar */
-                DO:
-                    FIND {&SECOND-ENABLED-TABLE} WHERE ROWID({&SECOND-ENABLED-TABLE}) = TO-ROWID(ab_unmap.aux_nrdrowid) NO-LOCK NO-WAIT NO-ERROR.
-                    IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN 
-                       RUN PosicionaNoSeguinte.
-                END. /* fim listar */
-
-           WHEN "pr" THEN /* primeiro */
-                RUN PosicionaNoPrimeiro.
-      
-           WHEN "ul" THEN /* ultimo */
-                RUN PosicionaNoUltimo.
-      
-           WHEN "an" THEN /* anterior */
-                RUN PosicionaNoAnterior.
-      
-           WHEN "se" THEN /* seguinte */
-                RUN PosicionaNoSeguinte.
-                *****/
-    
       END CASE.
       
       RUN CriaListaEixos.
       RUN CriaListaEvento.
       RUN CriaListaFacili.
       RUN CriaListaRecurso.
-      RUN CriaListaPublicoAlvo.
 
       IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
          RUN local-display-fields.
@@ -1663,10 +1234,8 @@ IF REQUEST_METHOD = "POST":U THEN
 
                     RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').
                 END.
-
            WHEN 2 THEN
                 RUN RodaJavaScript("alert('Registro foi excluído. Solicitaçao nao pode ser executada.')").
-      
            WHEN 3 THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
@@ -1674,7 +1243,6 @@ IF REQUEST_METHOD = "POST":U THEN
 
                     RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').
                 END.
-
            WHEN 4 THEN
                 DO:
                     ASSIGN v-qtdeerro      = 1
@@ -1682,18 +1250,15 @@ IF REQUEST_METHOD = "POST":U THEN
 
                     RUN RodaJavaScript('alert("'+ v-descricaoerro + '"); ').
                 END.
-
            WHEN 10 THEN
-           DO: 
-             IF opcao <> "exr" THEN DO:
-               RUN RodaJavaScript('window.opener.Recarrega();'). 
-               RUN RodaJavaScript('self.close();'). 
-           END. 
+           DO:
+            IF opcao <> "exr" THEN
+              DO:
+                RUN RodaJavaScript('window.opener.Recarrega();'). 
+                RUN RodaJavaScript('self.close();'). 
+               END.
            END.          
-         
-         
       END CASE.     
-
    END. /* Fim do método POST */
 ELSE /* Método GET */ 
    DO:
@@ -1725,7 +1290,7 @@ ELSE /* Método GET */
                                          ab_unmap.aux_idevento = STRING({&SECOND-ENABLED-TABLE}.idevento)
                                          ab_unmap.qtcarhor     = STRING({&SECOND-ENABLED-TABLE}.qtcarhor,"99.99")
                                          ab_unmap.aux_nrpropos = STRING({&SECOND-ENABLED-TABLE}.nrpropos).
-                                                                   FIND NEXT {&SECOND-ENABLED-TABLE} 
+                                    FIND NEXT {&SECOND-ENABLED-TABLE} 
                                             NO-LOCK NO-WAIT NO-ERROR.
 
                                   IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
@@ -1748,9 +1313,9 @@ ELSE /* Método GET */
                               ASSIGN ab_unmap.aux_nrdrowid = "?"
                                      ab_unmap.aux_stdopcao = "?".
                        END.  
-                    ELSE                    
+                    ELSE
                       DO:
-                       RUN PosicionaNoPrimeiro.
+                        RUN PosicionaNoPrimeiro.
                         ASSIGN ab_unmap.aux_nrpropos = aux_nrpropos.
                       END.
                     
@@ -1759,7 +1324,6 @@ ELSE /* Método GET */
                     RUN CriaListaRecurso.
                     RUN CriaListaEixos.
                     RUN CriaListaEvento.
-                    RUN CriaListaPublicoAlvo.
                     RUN local-display-fields.
                     RUN enableFields.
 
@@ -1781,14 +1345,7 @@ END. /* fim do método GET */
 
 /* Show error messages. */
 IF AnyMessage() THEN 
-DO:
-   /* ShowDataMessage may return a Progress column name. This means you
-    * can use the function as a parameter to HTMLSetFocus instead of 
-    * calling it directly.  The first parameter is the form name.   
-    *
-    * HTMLSetFocus("document.DetailForm",ShowDataMessages()). */
    ShowDataMessages().
-END.
 
 END PROCEDURE.
 
@@ -1798,7 +1355,6 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE RodaJavaScript w-html 
 PROCEDURE RodaJavaScript :
 {includes/rodajava.i}
-
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */

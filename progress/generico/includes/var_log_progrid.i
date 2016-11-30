@@ -9,12 +9,13 @@
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamada (On-line)
-   Objetivo  : Execucao de Store Procedure Oracle para gravar informacoes de log do
-							 sistema PROGRID.
+   Objetivo  : Execucao de Store Procedure Oracle para gravar informacoes
+			   de log do sistema PROGRID.
 
    Alteracoes:
                
 ............................................................................. */
+
 { includes/var_progrid.i }
 { sistema/generico/includes/var_oracle.i }
 

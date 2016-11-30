@@ -69,42 +69,10 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U
        FIELD aux_eventsel AS CHARACTER FORMAT "X(256)":U.
 
-
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
-/*------------------------------------------------------------------------
 
-  File: 
-
-  Description: 
-
-  Input Parameters:
-      <none>
-
-  Output Parameters:
-      <none>
-
-  Author: 
-
-  Created: 
-
-------------------------------------------------------------------------*/
-/*           This .W file was created with AppBuilder.                  */
-/*----------------------------------------------------------------------*/
-
-/* Create an unnamed pool to store all the widgets created 
-     by this procedure. This is a good default which assures
-     that this procedure's triggers and internal procedures 
-     will execute in this procedure's storage, and that proper
-     cleanup will occur on deletion of the procedure. */
 CREATE WIDGET-POOL.
 
-/* ***************************  Definitions  ************************** */
-
-/* Preprocessor Definitions ---                                         */
-
-/* Parameters Definitions ---                                           */
-
-/* Local Variable Definitions ---                                       */
 DEFINE VARIABLE ProgramaEmUso         AS CHARACTER INITIAL ["wpgd0020"].
 DEFINE VARIABLE NmeDoPrograma         AS CHARACTER INITIAL ["wpgd0020.w"].
 
@@ -466,7 +434,9 @@ PROCEDURE CriaListaEventos :
     DEF VAR aux_qttoteve AS INT  NO-UNDO.
     
     DEFINE BUFFER bf-craptab FOR craptab.
+    DEFINE VARIABLE aux_registros AS INTEGER NO-UNDO.
     
+    RUN RodaJavaScript("var mevento = new Array();").
     
    FOR EACH crapeap WHERE crapeap.dtanoage = INT(ab_unmap.aux_dtanoage)    AND
                            crapeap.idevento = INT(ab_unmap.aux_idevento)    AND
@@ -601,59 +571,43 @@ PROCEDURE CriaListaEventos :
             ASSIGN aux_flgevobr = "disabled"
                    aux_flgcusfe = "2". /* ja foi fechado*/
        
-        IF  vetorevento = "" THEN DO:
-            vetorevento = "~{" +
-                          "cdagenci:'" +         STRING(crapeap.cdagenci)            + "'," + 
-                          "cdcooper:'" +         STRING(crapeap.cdcooper)            + "'," +
-                          "cdevento:'" +         STRING(crapeap.cdevento)            + "'," +
-                          "nmevento:'" +         STRING(crapedp.nmevento)            + "'," +
-                          "dstpeven:'" +         STRING(crapedp.tpevento)            + "'," +
-                          "tpevento:'" +         STRING(aux_tpevento)                + "'," +
-                          "cdeixtem:'" +         STRING(gnapetp.cdeixtem)            + "'," +
-                          "dseixtem:'" +         STRING(gnapetp.dseixtem)            + "'," +
-                          "dtanoage:'" +         STRING(crapeap.dtanoage)            + "'," +
-                          "flgevobr:'" +         STRING(aux_flgevobr)                + "'," +
-                          "cpgevobr:'" +         STRING(crapeap.flgevobr)            + "'," +
-                          "flgevsel:'" +         STRING(aux_flgevsel)                + "'," +
-                          "vlcuseve:'" +         STRING(aux_vlcuseve, "->>>,>>9.99") + "'," +
-                          "qtcarhor:'" + REPLACE(STRING(aux_qtcarhor), ",", ":")     + "'," +
-                          "vlverbap:'" +         STRING(aux_vlverbap)                + "'," +
-                          "qtpreeve:'" +         STRING(aux_qtpreeve)                + "'," +
-                          "flgcusfe:'" +         STRING(aux_flgcusfe)                + "'," +
-                          "qtintegr:'" +         STRING(qtintegr)                    + "'," +
-                          "ctevento:'" +         STRING(crapedp.tpevento)            + "'," +
-                          "idevento:'" +         STRING(crapeap.idevento)            + "'," + 
-                          "qttoteve:'" +         STRING(aux_qttoteve)            + "'"  +                        
-                          "~}".
+        IF TRIM(vetorevento) <> "" AND TRIM(vetorevento) <> ? THEN
+           ASSIGN vetorevento =  vetorevento + ",".
+        
+        ASSIGN aux_registros = aux_registros + 1
+               vetorevento = vetorevento + "~{cdagenci:'" + STRING(crapeap.cdagenci)            + "'," + 
+                                           "cdcooper:'" + STRING(crapeap.cdcooper)            + "'," +
+                                           "cdevento:'" + STRING(crapeap.cdevento)            + "'," +
+                                           "nmevento:'" + STRING(crapedp.nmevento)            + "'," +
+                                           "dstpeven:'" + STRING(crapedp.tpevento)            + "'," +
+                                           "tpevento:'" + STRING(aux_tpevento)                + "'," +
+                                           "cdeixtem:'" + STRING(gnapetp.cdeixtem)            + "'," +
+                                           "dseixtem:'" + STRING(gnapetp.dseixtem)            + "'," +
+                                           "dtanoage:'" + STRING(crapeap.dtanoage)            + "'," +
+                                           "flgevobr:'" + STRING(aux_flgevobr)                + "'," +
+                                           "cpgevobr:'" + STRING(crapeap.flgevobr)            + "'," +
+                                           "flgevsel:'" + STRING(aux_flgevsel)                + "'," +
+                                           "vlcuseve:'" + STRING(aux_vlcuseve, "->>>,>>9.99") + "'," +
+                                           "qtcarhor:'" + REPLACE(STRING(aux_qtcarhor), ",", ":") + "'," +
+                                           "vlverbap:'" + STRING(aux_vlverbap)                + "'," +
+                                           "qtpreeve:'" + STRING(aux_qtpreeve)                + "'," +
+                                           "flgcusfe:'" + STRING(aux_flgcusfe)                + "'," +
+                                           "qtintegr:'" + STRING(qtintegr)                    + "'," +
+                                           "ctevento:'" + STRING(crapedp.tpevento)            + "'," +
+                                           "idevento:'" + STRING(crapeap.idevento)            + "'," + 
+                                           "qttoteve:'" + STRING(aux_qttoteve)                + "'~}".
+                               
+      IF aux_registros = 15 THEN
+        DO:
+          RUN RodaJavaScript("mevento.push(" + STRING(vetorevento) + ");").
+
+          ASSIGN vetorevento = ""
+                 aux_registros = 0.
         END.
-        ELSE 
-            vetorevento = vetorevento + ",~{" +
-                          "cdagenci:'" +         STRING(crapeap.cdagenci)            + "'," + 
-                          "cdcooper:'" +         STRING(crapeap.cdcooper)            + "'," +
-                          "cdevento:'" +         STRING(crapeap.cdevento)            + "'," +
-                          "nmevento:'" +         STRING(crapedp.nmevento)            + "'," +
-                          "dstpeven:'" +         STRING(crapedp.tpevento)            + "'," +
-                          "tpevento:'" +         STRING(aux_tpevento)                + "'," +
-                          "cdeixtem:'" +         STRING(gnapetp.cdeixtem)            + "'," +
-                          "dseixtem:'" +         STRING(gnapetp.dseixtem)            + "'," +
-                          "dtanoage:'" +         STRING(crapeap.dtanoage)            + "'," +
-                          "flgevobr:'" +         STRING(aux_flgevobr)                + "'," +
-                          "cpgevobr:'" +         STRING(crapeap.flgevobr)             + "'," +
-                          "flgevsel:'" +         STRING(aux_flgevsel)                + "'," +
-                          "vlcuseve:'" +         STRING(aux_vlcuseve, "->>>,>>9.99") + "'," +
-                          "qtcarhor:'" + REPLACE(STRING(aux_qtcarhor), ",", ":")     + "'," +
-                          "vlverbap:'" +         STRING(aux_vlverbap)                + "'," +
-                          "qtpreeve:'" +         STRING(aux_qtpreeve)                + "'," +
-                          "flgcusfe:'" +         STRING(aux_flgcusfe)                + "'," +
-                          "qtintegr:'" +         STRING(qtintegr)                    + "'," +
-                          "ctevento:'" +         STRING(crapedp.tpevento)            + "'," +
-                          "idevento:'" +         STRING(crapeap.idevento)            + "'," + 
-                          "qttoteve:'" +         STRING(aux_qttoteve)            + "'"  + 
-                          "~}".
     
     END.
     
-    RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]"). 
+    RUN RodaJavaScript("mevento.push(" + STRING(vetorevento) + ");").
 
 END PROCEDURE.
 
@@ -662,15 +616,8 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPac w-html 
 PROCEDURE CriaListaPac :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-
     {includes/wpgd0099.i ab_unmap.aux_dtanoage}
-    
-    RUN RodaJavaScript("var mpac=new Array();mpac=["  + vetorpac + "]"). 
+  RUN RodaJavaScript("var mpac = new Array();mpac=["  + vetorpac + "]"). 
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -678,11 +625,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE Encerra w-html 
 PROCEDURE Encerra :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+
     FOR EACH crapagp WHERE crapagp.idevento = INT(ab_unmap.aux_idevento)    AND
                            crapagp.cdcooper = INT(ab_unmap.aux_cdcooper)    AND
                            crapagp.dtanoage = INT(ab_unmap.aux_dtanoage)    AND
@@ -724,31 +667,19 @@ END PROCEDURE.
 
 PROCEDURE envia-email :
 
-/*------------------------------------------------------------------------------
-  
-  Purpose:     
-  Parameters:  <none>
-  Notes: Envia e-mail para a central comunicando que foi fechada a lista de 
-         eventos
-
-------------------------------------------------------------------------------*/
-  
-    FIND FIRST crapcop WHERE crapcop.cdcooper = INT(ab_unmap.aux_cdcooper)  
-                             NO-LOCK NO-ERROR.
+  FIND FIRST crapcop WHERE crapcop.cdcooper = INT(ab_unmap.aux_cdcooper) NO-LOCK NO-ERROR.
     
-    FIND FIRST crapage WHERE crapage.cdcooper = INT(ab_unmap.aux_cdcooper)  AND
-                             crapage.cdagenci = INT(ab_unmap.cdagenci)      
-                             NO-LOCK NO-ERROR.
+  FIND FIRST crapage WHERE crapage.cdcooper = INT(ab_unmap.aux_cdcooper)
+                       AND crapage.cdagenci = INT(ab_unmap.cdagenci) NO-LOCK NO-ERROR.
     
-    IF   AVAIL crapcop   AND   AVAIL crapage THEN
+  IF AVAILABLE crapcop AND AVAILABLE crapage THEN
          DO:
              RUN sistema/generico/procedures/b1wgen0011.p
                  PERSISTENT SET b1wgen0011.
             
-             IF   VALID-HANDLE (b1wgen0011)   THEN
+       IF VALID-HANDLE (b1wgen0011)   THEN
                   DO:                  
-                      RUN enviar_email IN b1wgen0011 
-                                      (INPUT crapcop.cdcooper,
+           RUN enviar_email IN b1wgen0011(INPUT crapcop.cdcooper,
                                        INPUT "wpgd0020",
                                        INPUT "progrid@cecred.coop.br",
                                        INPUT "PROGRID - EVENTOS SELECIONADOS"  +
@@ -768,6 +699,8 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEixos w-html 
 PROCEDURE CriaListaEixos :
 
+  RUN RodaJavaScript("var meixos = new Array();").
+  
     FOR EACH gnapetp WHERE NO-LOCK 
                     BY gnapetp.dseixtem:
       FIND FIRST crapppe WHERE crapppe.cdeixtem = gnapetp.cdeixtem
@@ -776,30 +709,23 @@ PROCEDURE CriaListaEixos :
                             
         IF AVAILABLE crapppe THEN
         DO:
-            IF  vetoreixos = "" THEN DO:
-                vetoreixos = "~{" + "cdeixtem:"    + "'" + TRIM(string(crapppe.cdeixtem))  
-                                  + "',dseixtem:"  + "'" + TRIM(string(gnapetp.dseixtem))
-                                  + "',qtmineve:"  + "'" + TRIM(string(crapppe.qtmineve))+ "'~}".
-            END.
-            ELSE DO:
-                vetoreixos = vetoreixos + "," + 
-                              "~{" + "cdeixtem:"    + "'" + TRIM(string(crapppe.cdeixtem))  
-                                 + "',dseixtem:"  + "'" + TRIM(string(gnapetp.dseixtem))
-                                 + "',qtmineve:"  + "'" + TRIM(string(crapppe.qtmineve))+ "'~}".
-      
+        IF TRIM(vetoreixos) <> "" AND TRIM(vetoreixos) <> ? THEN
+          ASSIGN vetoreixos = vetoreixos + ",".
              
-            END.
+        ASSIGN vetoreixos = vetoreixos + "~{cdeixtem:'" + TRIM(string(crapppe.cdeixtem))  
+                                       + "',dseixtem:'" + TRIM(string(gnapetp.dseixtem))
+                                       + "',qtmineve:'" + TRIM(string(crapppe.qtmineve))+ "'~}".
         END.
     END.
 
-    RUN RodaJavaScript("var meixos=new Array();meixos=["  + vetoreixos + "]"). 
+  RUN RodaJavaScript("meixos.push(" + STRING(vetoreixos) + ");"). 
 
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
-PROCEDURE htmOffsets :
+PROCEDURE htmOffsets:
 /*------------------------------------------------------------------------------
   Purpose:     Runs procedure to associate each HTML field with its
                corresponding widget name and handle.
@@ -860,9 +786,7 @@ PROCEDURE htmOffsets :
     RUN htmAssociate
     ("aux_eventsel":U,"ab_unmap.aux_eventsel":U,ab_unmap.aux_eventsel:HANDLE IN FRAME {&FRAME-NAME}).
  
-    
 END PROCEDURE.
-
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -1001,16 +925,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE outputHeader w-html 
 PROCEDURE outputHeader :
-/*------------------------------------------------------------------------
-  Purpose:     Output the MIME header, and any "cookie" information needed 
-               by this procedure.  
-  Parameters:  <none>
-  Notes:       In the event that this Web object is state-aware, this is 
-               a good place to set the WebState and WebTimeout attributes.
-------------------------------------------------------------------------*/
-
   output-content-type ("text/html":U).
-  
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1019,7 +934,6 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE PermissaoDeAcesso w-html 
 PROCEDURE PermissaoDeAcesso :
 {includes/wpgd0009.i}
-
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -1547,4 +1461,3 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-

@@ -20,11 +20,13 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                    ja selecionada quando apresentar critica.
                    Projeto 229 - Melhorias OQS (Odirlei - AMcom).
                    
-      13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)  
-
+            13/09/2016 - Ajustes PRJ229 - Melhorias OQS RF07 (Odirlei-AMcom)  
+            
       17/10/2016 - Ajustes para consulta de propostas. (Jean Michel)
 
-	  09/11/2016 - inclusao de LOG. (Jean Michel)
+            09/11/2016 - inclusao de LOG. (Jean Michel)
+
+			28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
 ...............................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -623,36 +625,38 @@ DEFINE FRAME Web-Frame
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaContatos w-html 
 PROCEDURE CriaListaContatos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
 
-FOR EACH gnapcfp WHERE gnapcfp.cdcooper = 0               AND
-                       gnapcfp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
+  DEF VAR aux_contador AS INTEGER INIT 0 NO-UNDO.
+
+  RUN RodaJavaScript("var mcontato = new Array();"). 
+
+  FOR EACH gnapcfp WHERE gnapcfp.cdcooper = 0            
+                     AND gnapcfp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
                        BY gnapcfp.nmconfor:
-      IF  vetorcontato = "" THEN
-          vetorcontato =
-                        "~{" + "nmconfor:"    + "'" + replace(TRIM(string(gnapcfp.nmconfor)),"'","`")
-                             + "',dsdepart:"  + "'" + replace(string(gnapcfp.dsdepart),"'","`") 
-                             + "',dsdemail:"  + "'" + replace(string(gnapcfp.dsdemail),"'","`")
-                             + "',cddddfor:'"        + string(gnapcfp.cddddfor) 
-                             + "',nrfonfor:'"        + string(gnapcfp.nrfonfor)
-                             + "',idconfor:"  + "'"  + string(rowid(gnapcfp)) + "'~}".
-      ELSE
-         vetorcontato = vetorcontato + "," + 
-                        "~{" + "nmconfor:"    + "'" + replace(TRIM(string(gnapcfp.nmconfor)),"'","`")
-                             + "',dsdepart:"  + "'" + replace(string(gnapcfp.dsdepart),"'","`") 
-                             + "',dsdemail:"  + "'" + replace(string(gnapcfp.dsdemail),"'","`")
-                             + "',cddddfor:'"        + string(gnapcfp.cddddfor) 
-                             + "',nrfonfor:'"        + string(gnapcfp.nrfonfor)
-                             + "',idconfor:"  + "'"  + string(rowid(gnapcfp)) + "'~}".
 
+    IF TRIM(vetorcontato) <> "" AND TRIM(vetorcontato) <> ? THEN
+      ASSIGN vetorcontato = vetorcontato + ",".
+    
+    ASSIGN vetorcontato = vetorcontato + "~{nmconfor:'" + REPLACE(TRIM(STRING(gnapcfp.nmconfor)),"'","`")
+                                       + "',dsdepart:'" + REPLACE(STRING(gnapcfp.dsdepart),"'","`") 
+                                       + "',dsdemail:'" + REPLACE(STRING(gnapcfp.dsdemail),"'","`")
+                                       + "',cddddfor:'" + STRING(gnapcfp.cddddfor) 
+                                       + "',nrfonfor:'" + STRING(gnapcfp.nrfonfor)
+                                       + "',idconfor:'" + STRING(ROWID(gnapcfp)) + "'~}"
+            aux_contador = aux_contador + 1.
+            
+    IF aux_contador = 30 Then
+      DO:
+        RUN RodaJavaScript("mcontato.push(" + STRING(vetorcontato) + ");").
+
+        ASSIGN vetorcontato = ""
+               aux_contador = 0.
+      END.
     
    END. /* for each */
-   RUN RodaJavaScript("var mcontato=new Array();mcontato=["  + vetorcontato + "]"). 
 
+  RUN RodaJavaScript("mcontato.push(" + STRING(vetorcontato) + ");").
+  
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -660,31 +664,36 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEixos w-html 
 PROCEDURE CriaListaEixos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
 
-FOR EACH gnapefp WHERE gnapefp.cdcooper = 0                AND
-                       gnapefp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK,
-    FIRST gnapetp WHERE gnapetp.cdcooper = 0                AND
-                        gnapetp.cdeixtem = gnapefp.cdeixtem NO-LOCK 
+  DEF VAR aux_contador AS INTEGER INIT 0 NO-UNDO.
+  
+  RUN RodaJavaScript("var meixo = new Array();").  
+
+  FOR EACH gnapefp WHERE gnapefp.cdcooper = 0                
+                     AND gnapefp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK,
+    FIRST gnapetp WHERE gnapetp.cdcooper = 0  
+                    AND gnapetp.cdeixtem = gnapefp.cdeixtem NO-LOCK 
                         BY gnapetp.dseixtem:
-      IF  vetoreixo = "" THEN
-          vetoreixo =
-                        "~{" + "dseixtem:"    + "'" + REPLACE(TRIM(string(gnapetp.dseixtem)),"'","`")
-                             + "',ideixfor:"  + "'"  + string(rowid(gnapefp)) 
-                             + "',cdeixtem:"  + "'" + STRING(gnapetp.cdeixtem) + "'~}".
-      ELSE
-         vetoreixo = vetoreixo + "," + 
-                        "~{" + "dseixtem:"    + "'" + REPLACE(TRIM(string(gnapetp.dseixtem)),"'","`")
-                             + "',ideixfor:"  + "'"  + string(rowid(gnapefp)) 
-                             + "',cdeixtem:"  + "'" + STRING(gnapetp.cdeixtem) + "'~}".
+                      
+      IF TRIM(vetoreixo) <> ""  AND TRIM(vetoreixo) <> ? THEN
+        ASSIGN vetoreixo = vetoreixo + ",".
+        
+      ASSIGN vetoreixo = vetoreixo + "~{dseixtem:'" + REPLACE(TRIM(STRING(gnapetp.dseixtem)),"'","`")
+                                   + "',ideixfor:'" + STRING(ROWID(gnapefp)) 
+                                   + "',cdeixtem:'" + STRING(gnapetp.cdeixtem) + "'~}"
+             aux_contador = aux_contador + 1.
+      
+      IF aux_contador = 30 Then
+        DO:
+          RUN RodaJavaScript("meixo.push(" + STRING(vetoreixo) + ");").
 
+          ASSIGN vetoreixo = ""
+                 aux_contador = 0.
+        END.
     
    END. /* for each */
-   RUN RodaJavaScript("var meixo=new Array();meixo=["  + vetoreixo + "]").  
+  
+  RUN RodaJavaScript("meixo.push(" + STRING(vetoreixo) + ");").
 
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
@@ -692,6 +701,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPropostas w-html 
 PROCEDURE LimpaRecursos:
+
   FOR EACH craprdf WHERE craprdf.idevento = INT(ab_unmap.aux_idevento)
                              AND craprdf.cdcooper = 0
                              AND craprdf.nrcpfcgc = DECIMAL(ab_unmap.aux_nrcpfcgc)
@@ -717,48 +727,50 @@ PROCEDURE CriaListaPropostas :
   Parameters:  <none>
   Notes:       
 ------------------------------------------------------------------------------*/
-DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+
+  DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
 
   DEF VAR aux_contador AS INTEGER NO-UNDO INIT 0.
   
-  RUN RodaJavaScript("var mproposta=new Array();").
+  RUN RodaJavaScript("var mproposta = new Array();").
   
-    FOR EACH gnappdp WHERE gnappdp.cdcooper = 0                AND
-                           gnappdp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
-                           BY gnappdp.dtmvtolt DESC
-                           BY gnappdp.nrpropos DESC:
+  FOR EACH gnappdp WHERE gnappdp.cdcooper = 0                AND
+                         gnappdp.nrcpfcgc = gnapfdp.nrcpfcgc NO-LOCK
+                         BY gnappdp.dtmvtolt DESC
+                         BY gnappdp.nrpropos DESC:
 
-      FIND FIRST crapedp WHERE
-          crapedp.cdcooper = 0 AND
-          crapedp.dtanoage = 0 AND
-          crapedp.cdevento = gnappdp.cdevento NO-LOCK NO-ERROR.
+    FIND FIRST crapedp WHERE crapedp.cdcooper = 0
+						 AND crapedp.dtanoage = 0
+						 AND crapedp.cdevento = gnappdp.cdevento NO-LOCK NO-ERROR.
 
-      IF AVAIL crapedp THEN
-          aux_nmevento = crapedp.nmevento.
-      ELSE
-          aux_nmevento = "Sem vínculo.".
+    IF AVAIL crapedp THEN
+        aux_nmevento = crapedp.nmevento.
+    ELSE
+        aux_nmevento = "Sem vínculo.".
 
     ASSIGN aux_contador = aux_contador + 1.
     
-    IF vetorproposta <> "" THEN
+    IF TRIM(vetorproposta) <> "" AND TRIM(vetorproposta) <> ? THEN
       ASSIGN vetorproposta = vetorproposta + ",".
         
-    ASSIGN vetorproposta = vetorproposta + "~{" + "nrpropos:"    + "'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
-                             + "',dtmvtolt:"  + "'" + string(gnappdp.dtmvtolt,"99/99/9999")
-                             + "',dtvalpro:"  + "'" + string(gnappdp.dtvalpro,"99/99/9999") 
-                             + "',nmevento:"  + "'" + REPLACE(string(aux_nmevento),"'","`")
-                             + "',idprofor:"  + "'" + string(rowid(gnappdp))   + "'~}".
-                             
+    ASSIGN vetorproposta = vetorproposta + "~{nrpropos:'" + REPLACE(TRIM(string(gnappdp.nrpropos)),"'","`")
+										 + "',dtmvtolt:'" + string(gnappdp.dtmvtolt,"99/99/9999")
+										 + "',dtvalpro:'" + string(gnappdp.dtvalpro,"99/99/9999") 
+										 + "',nmevento:'" + REPLACE(string(aux_nmevento),"'","`")
+										 + "',idprofor:'" + string(rowid(gnappdp))   + "'~}"
+		   aux_contador = aux_contador + 1.
+                           
     IF aux_contador = 30 THEN
       DO:
-        ASSIGN aux_contador = 0.
-        RUN RodaJavaScript("mproposta=["  + vetorproposta + "]").
+        RUN RodaJavaScript("mproposta.push(" + vetorproposta + ");").
+		ASSIGN aux_contador = 0
+			   vetorproposta = "".
+        
       END.
 
-   END. /* for each */
+  END. /* for each */
   
-  RUN RodaJavaScript("mproposta=["  + vetorproposta + "]").
-
+  RUN RodaJavaScript("mproposta.push(" + vetorproposta + ");").
 
 END PROCEDURE.
 
