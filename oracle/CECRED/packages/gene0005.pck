@@ -1794,9 +1794,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       vr_nrposica:= 0;
       vr_vlcalcul:= 0;
 
-      vr_nrcalcul:= pr_nrcalcul + vr_nrdigit1;
+      vr_nrcalcul:= TO_NUMBER(TO_CHAR(pr_nrcalcul) || TO_CHAR(vr_nrdigit1));
+			
       --Calcular digito
-      FOR vr_nrposica IN REVERSE 1..LENGTH(vr_nrcalcul) - 1 LOOP
+      FOR vr_nrposica IN REVERSE 1..LENGTH(vr_nrcalcul) LOOP
         vr_vlcalcul:= vr_vlcalcul + (TO_NUMBER(SUBSTR(vr_nrcalcul,vr_nrposica,1)) * vr_vlrdpeso);
         --Incrementar peso
         vr_vlrdpeso:= vr_vlrdpeso+1;
@@ -1815,7 +1816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         vr_nrdigit2:= 11 - vr_vldresto;
       END IF;
       --retornar digitos
-      RETURN(vr_nrdigit1 + vr_nrdigit2);
+      RETURN(TO_NUMBER(TO_CHAR(vr_nrdigit1) || TO_CHAR(vr_nrdigit2)));
 
     EXCEPTION
       WHEN OTHERS THEN
