@@ -8609,20 +8609,22 @@ create or replace package body cecred.PAGA0002 is
     CURSOR cr_craplau(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_insitlau craplau.insitlau%TYPE
                      ,pr_dtmvtopg crapdat.dtmvtolt%TYPE) IS
-      SELECT * 
-      FROM craplau lau
-       WHERE lau.cdcooper = pr_cdcooper
+      SELECT lau.* 
+        FROM craplau lau, crapass ass
+       WHERE lau.cdcooper = ass.cdcooper
+         AND lau.nrdconta = ass.nrdconta
+         AND lau.cdcooper = pr_cdcooper
          AND lau.dtmvtopg = pr_dtmvtopg                
          AND lau.insitlau = pr_insitlau
          AND UPPER(lau.dsorigem) IN (UPPER('INTERNET'),UPPER('TAA'),UPPER('DEBAUT'))
-         AND lau.tpdvalor = DECODE(lau.dsorigem, 'DEBAUT', 0, lau.tpdvalor)
+         AND lau.tpdvalor = DECODE(lau.dsorigem, 'DEBAUT', lau.tpdvalor, 0)
          AND lau.cdtiptra <> 4;                      
 
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
-    SELECT cop.cdcooper 
-      FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
+      SELECT cop.cdcooper 
+        FROM crapcop cop
+         WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
  
     CURSOR cr_crapcop1(pr_cdcooper crapcop.cdcooper%TYPE) IS
       SELECT cop.cdcooper
