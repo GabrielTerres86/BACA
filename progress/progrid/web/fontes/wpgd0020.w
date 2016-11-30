@@ -709,7 +709,7 @@ PROCEDURE CriaListaEixos :
                           
     IF AVAILABLE crapppe THEN
       DO:
-        IF vetoreixos <> "" AND vetoreixos <> ? THEN
+        IF TRIM(vetoreixos) <> "" AND TRIM(vetoreixos) <> ? THEN
           ASSIGN vetoreixos = vetoreixos + ",".
           
         ASSIGN vetoreixos = vetoreixos + "~{cdeixtem:'" + TRIM(string(crapppe.cdeixtem))  
