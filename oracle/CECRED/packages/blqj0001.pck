@@ -1074,7 +1074,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
    
     -- Se houve o retorno de erro
     IF vr_tab_erro.count() > 0 THEN
-      vr_dscritic := 'Nao foi possivel consultar os registros.';
+      --vr_dscritic := 'Nao foi possivel consultar os registros.';
+      vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic; -- Retornar o erro ocorrido na rotina
       RAISE vr_exc_saida;
     END IF;
     
@@ -1134,12 +1135,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     -- Buscar dados do cadastro de bloqueio
     CURSOR cr_crapblj(pr_cdcooper  crapblj.cdcooper%TYPE
                      ,pr_nrdconta  crapblj.nrdconta%TYPE
-                     ,pr_nroficio  crapblj.nroficio%TYPE) IS
+                     ,pr_nroficio  crapblj.nroficio%TYPE
+                     ,pr_cdmodali  crapblj.cdmodali%TYPE) IS
       SELECT 1
         FROM crapblj blj
        WHERE blj.cdcooper = pr_cdcooper
          AND blj.nrdconta = pr_nrdconta
-         AND blj.nroficio = pr_nroficio;
+         AND blj.nroficio = pr_nroficio
+         AND blj.cdmodali = pr_cdmodali;
     rw_crapblj   cr_crapblj%ROWTYPE;
     
     -- Buscar dados da conta do cooperado
@@ -1257,7 +1260,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
         -- Buscar registro de cadastro de bloqueio
         OPEN  cr_crapblj(pr_cdcooper
                         ,vr_tbcontas(vr_indice)
-                        ,pr_nroficio);
+                        ,pr_nroficio
+                        ,vr_tbmodali(vr_indice));
         FETCH cr_crapblj INTO rw_crapblj;
         
         -- Se encontrar registro
