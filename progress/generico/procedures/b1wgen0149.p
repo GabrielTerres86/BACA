@@ -8,7 +8,9 @@
     Objetivo  : BO de uso para tela AGENCI.
                     
     Alteracoes: 08/01/2014 - Ajustes homologacao (Adriano).
-    
+				
+				06/09/2016 - Adicionado filtro pelo nome da agencia e do banco, conforme solicitado
+						 	 no chamado 504477 (Kelvin).
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0149tt.i } 
@@ -31,6 +33,7 @@ PROCEDURE busca-banco:
   DEF INPUT PARAM par_dtmvtolt AS DATE                            NO-UNDO.
   DEF INPUT PARAM par_nrregist AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_nriniseq AS INTE                            NO-UNDO.
+  DEF INPUT PARAM par_nmextbcc AS CHAR                            NO-UNDO.
                                                               
   DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
   DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
@@ -44,7 +47,7 @@ PROCEDURE busca-banco:
   
   EMPTY TEMP-TABLE tt-erro.
   EMPTY TEMP-TABLE tt-banco.
-
+ 
   ASSIGN aux_cdcritic = 0
          aux_dscritic = ""
          aux_cddbanco = INTE(par_cddbanco).
@@ -79,7 +82,8 @@ PROCEDURE busca-banco:
         FOR EACH crapban WHERE (IF par_cddbanco <> ""              THEN
                                    crapban.cdbccxlt = aux_cddbanco
                                  ELSE 
-                                    TRUE) 
+                                    TRUE)  AND
+							    crapban.nmextbcc MATCHES "*" + par_nmextbcc + "*" 
                                 NO-LOCK:
 
             ASSIGN par_qtregist = par_qtregist + 1.
@@ -167,6 +171,8 @@ PROCEDURE busca-agencia:
   DEF INPUT PARAM par_cddopcao AS CHAR                          NO-UNDO.
   DEF INPUT PARAM par_nrregist AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_nriniseq AS INTE                          NO-UNDO.
+  DEF INPUT PARAM par_nmageban AS CHAR                          NO-UNDO.
+  
                                                            
   DEF OUTPUT PARAM par_nmdcampo AS CHAR                         NO-UNDO.
   DEF OUTPUT PARAM par_qtregist AS INTE                         NO-UNDO.
@@ -208,98 +214,20 @@ PROCEDURE busca-agencia:
            
      END.
 
-  IF par_cdageban > 0 THEN
-     DO:
-        FIND crapagb WHERE crapagb.cddbanco = par_cddbanco AND
-                           crapagb.cdageban = par_cdageban 
-                           NO-LOCK NO-ERROR.
-  
-        IF NOT AVAIL crapagb THEN
-           DO: 
-               IF par_cddopcao = "I" THEN
-                  RETURN "OK".
-                         
-               ASSIGN aux_cdcritic = 15
-                      par_nmdcampo = "cdageban". 
-
-               RUN gera_erro(INPUT par_cdcooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT 1,            /** Sequencia **/
-                             INPUT aux_cdcritic,
-                             INPUT-OUTPUT aux_dscritic ).
-  
-               RETURN "NOK".
-
-           END.
-
-     END.
-
-  IF par_cddbanco <> 0 AND
-     par_cdageban <> 0 THEN
-     DO:  
-         IF par_cddopcao = "I" THEN
-            DO:
-               ASSIGN aux_cdcritic = 787
-                      par_nmdcampo = "cdageban". 
-
-               RUN gera_erro(INPUT par_cdcooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT 1,            /** Sequencia **/
-                             INPUT aux_cdcritic,
-                             INPUT-OUTPUT aux_dscritic ).
-  
-               RETURN "NOK".
-
-            END.
-         
-         FIND crapcaf WHERE crapcaf.cdcidade = crapagb.cdcidade 
-                            NO-LOCK NO-ERROR.
-         
-         CREATE tt-agencia.
-
-         ASSIGN tt-agencia.nrdrowid = ROWID(crapagb)
-                tt-agencia.cddbanco = crapagb.cddbanco
-                tt-agencia.cdageban = crapagb.cdageban
-                tt-agencia.dgagenci = crapagb.dgagenci
-                tt-agencia.nmageban = crapagb.nmageban
-                tt-agencia.nmcidade = (IF AVAILABLE crapcaf THEN
-                                         crapcaf.nmcidade
-                                      ELSE 
-                                         "")
-                tt-agencia.cdufresd = (IF AVAILABLE crapcaf THEN
-                                         crapcaf.cdufresd
-                                      ELSE 
-                                         "")
-                tt-agencia.cdcompen = (IF AVAILABLE crapcaf THEN
-                                         crapcaf.cdcompen
-                                     ELSE 
-                                        0)
-                tt-agencia.cdsitagb = crapagb.cdsitagb. 
-         
-         FOR EACH crapfsf WHERE crapfsf.cdcidade = crapagb.cdcidade 
-                                NO-LOCK:
-                       
-             IF ABS(crapfsf.dtferiad - par_dtmvtolt) > 365 THEN 
-                NEXT.
-         
-             CREATE tt-feriados.
-             
-             ASSIGN tt-feriados.nrdrowid = tt-agencia.nrdrowid
-                    tt-feriados.dtferiad = crapfsf.dtferiad.
-         
-         END.
-
-     END.
-  ELSE
-     DO:   
-        ASSIGN aux_nrregist = par_nrregist.
+  IF par_nmageban <> ""	 THEN
+     DO: 
+		ASSIGN aux_nrregist = par_nrregist.
         
-        FOR EACH crapagb WHERE crapagb.cddbanco = par_cddbanco
+        FOR EACH crapagb WHERE crapagb.cddbanco = par_cddbanco AND
+						       crapagb.nmageban MATCHES "*" + par_nmageban + "*"
                                NO-LOCK BY crapagb.cddbanco
                                         BY crapagb.cdageban.
-
+			
+			MESSAGE STRING(par_cdageban) "KELVINNNNN".
+			IF par_cdageban > 0 AND
+			   par_cdageban <> crapagb.cdageban THEN
+			   NEXT.
+			   
             ASSIGN par_qtregist = par_qtregist + 1.
 
             /* controles da paginação */
@@ -374,9 +302,179 @@ PROCEDURE busca-agencia:
            
               RETURN "NOK".
            
-           END.
-         
+           END.		
+
      END.
+
+  IF par_cddbanco <> 0 AND
+     par_cdageban <> 0 AND
+	 par_nmageban = "" THEN
+     DO:  
+         IF par_cddopcao = "I" THEN
+            DO:
+               ASSIGN aux_cdcritic = 787
+                      par_nmdcampo = "cdageban". 
+
+               RUN gera_erro(INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,            /** Sequencia **/
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic ).
+  
+               RETURN "NOK".
+
+            END.
+         
+		 FIND crapagb WHERE crapagb.cddbanco = par_cddbanco AND
+                            crapagb.cdageban = par_cdageban 
+							NO-LOCK NO-ERROR.
+  
+        IF NOT AVAIL crapagb THEN
+           DO: 
+               IF par_cddopcao = "I" THEN
+                  RETURN "OK".
+                         
+               ASSIGN aux_cdcritic = 15
+                      par_nmdcampo = "cdageban". 
+
+               RUN gera_erro(INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,            /** Sequencia **/
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic ).
+  
+               RETURN "NOK".
+
+           END.
+		   
+         FIND crapcaf WHERE crapcaf.cdcidade = crapagb.cdcidade 
+                            NO-LOCK NO-ERROR.
+         
+         CREATE tt-agencia.
+
+         ASSIGN tt-agencia.nrdrowid = ROWID(crapagb)
+                tt-agencia.cddbanco = crapagb.cddbanco
+                tt-agencia.cdageban = crapagb.cdageban
+                tt-agencia.dgagenci = crapagb.dgagenci
+                tt-agencia.nmageban = crapagb.nmageban
+                tt-agencia.nmcidade = (IF AVAILABLE crapcaf THEN
+                                         crapcaf.nmcidade
+                                      ELSE 
+                                         "")
+                tt-agencia.cdufresd = (IF AVAILABLE crapcaf THEN
+                                         crapcaf.cdufresd
+                                      ELSE 
+                                         "")
+                tt-agencia.cdcompen = (IF AVAILABLE crapcaf THEN
+                                         crapcaf.cdcompen
+                                     ELSE 
+                                        0)
+                tt-agencia.cdsitagb = crapagb.cdsitagb. 
+         
+         FOR EACH crapfsf WHERE crapfsf.cdcidade = crapagb.cdcidade 
+                                NO-LOCK:
+                       
+             IF ABS(crapfsf.dtferiad - par_dtmvtolt) > 365 THEN 
+                NEXT.
+         
+             CREATE tt-feriados.
+             
+             ASSIGN tt-feriados.nrdrowid = tt-agencia.nrdrowid
+                    tt-feriados.dtferiad = crapfsf.dtferiad.
+         
+         END.
+
+     END.
+  ELSE
+     DO:
+		IF par_nmageban = "" THEN
+		   DO:
+		
+				ASSIGN aux_nrregist = par_nrregist.
+				
+				FOR EACH crapagb WHERE crapagb.cddbanco = par_cddbanco
+									   NO-LOCK BY crapagb.cddbanco
+												BY crapagb.cdageban.
+
+					ASSIGN par_qtregist = par_qtregist + 1.
+
+					/* controles da paginação */
+					IF (par_qtregist < par_nriniseq) OR
+					   (par_qtregist > (par_nriniseq + par_nrregist)) THEN
+						NEXT.
+
+					IF aux_nrregist > 0 THEN
+					   DO: 
+						  FIND tt-agencia WHERE tt-agencia.cddbanco = crapagb.cddbanco AND
+												tt-agencia.cdageban = crapagb.cdageban
+												NO-LOCK NO-ERROR.
+
+						  IF NOT AVAIL tt-agencia THEN
+							 DO:
+								FIND crapcaf WHERE crapcaf.cdcidade = crapagb.cdcidade 
+												   NO-LOCK NO-ERROR.
+				 
+								CREATE tt-agencia.
+							 
+								ASSIGN tt-agencia.nrdrowid = ROWID(crapagb)
+									   tt-agencia.cddbanco = crapagb.cddbanco
+									   tt-agencia.cdageban = crapagb.cdageban
+									   tt-agencia.dgagenci = crapagb.dgagenci
+									   tt-agencia.nmageban = crapagb.nmageban
+									   tt-agencia.nmcidade = (IF AVAIL crapcaf THEN
+																crapcaf.nmcidade
+															 ELSE 
+																"")
+									   tt-agencia.cdufresd = (IF AVAIL crapcaf THEN
+																crapcaf.cdufresd
+															 ELSE 
+																"")
+									   tt-agencia.cdcompen = (IF AVAIL crapcaf THEN
+																crapcaf.cdcompen
+															ELSE 
+															   0)
+									   tt-agencia.cdsitagb = crapagb.cdsitagb. 
+								
+								FOR EACH crapfsf WHERE crapfsf.cdcidade = crapagb.cdcidade 
+													   NO-LOCK:
+											  
+									IF ABS(crapfsf.dtferiad - par_dtmvtolt) > 365 THEN 
+									   NEXT.
+								
+									CREATE tt-feriados.
+								
+									ASSIGN tt-feriados.nrdrowid = tt-agencia.nrdrowid
+										   tt-feriados.dtferiad = crapfsf.dtferiad.
+								
+								END.
+
+							 END.
+
+					   END.
+
+					ASSIGN aux_nrregist = aux_nrregist - 1.
+					
+				END.
+
+				IF NOT TEMP-TABLE tt-agencia:HAS-RECORDS THEN
+				   DO:
+					  ASSIGN aux_cdcritic = 15
+							 par_nmdcampo = "cdageban". 
+				   
+					  RUN gera_erro(INPUT par_cdcooper,
+									INPUT par_cdagenci,
+									INPUT par_nrdcaixa,
+									INPUT 1,            /** Sequencia **/
+									INPUT aux_cdcritic,
+									INPUT-OUTPUT aux_dscritic ).
+				   
+					  RETURN "NOK".
+				   
+				   END.
+			END.	 
+	END.
 
   RETURN "OK".
 

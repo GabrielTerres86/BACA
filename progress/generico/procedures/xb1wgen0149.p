@@ -10,6 +10,9 @@
    
 
    Alteracoes: 08/01/2014 - Ajuste homologacao (Adriano)
+			   
+			   06/09/2016 - Adicionado filtro pelo nome da agencia e do banco, conforme solicitado
+							no chamado 504477 (Kelvin).
 
 ..............................................................................*/
 
@@ -31,6 +34,7 @@ DEF VAR aux_nriniseq AS INTE                                        NO-UNDO.
 DEF VAR aux_qtregist AS INTE                                        NO-UNDO.
 DEF VAR aux_nmdcampo AS CHAR                                        NO-UNDO.
 DEF VAR aux_dsdepart AS CHAR                                        NO-UNDO.
+
 
 
 { sistema/generico/includes/b1wgen0149tt.i }
@@ -67,7 +71,9 @@ PROCEDURE valores_entrada:
             WHEN "nriniseq" THEN aux_nriniseq = INTE(tt-param.valorCampo).
             WHEN "qtregist" THEN aux_qtregist = INTE(tt-param.valorCampo).
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.			
+			WHEN "nmextbcc" THEN aux_nmextbcc = tt-param.valorCampo.
+			
 
 
             
@@ -92,6 +98,7 @@ PROCEDURE busca-banco:
                             INPUT aux_dtmvtolt,
                             INPUT aux_nrregist,
                             INPUT aux_nriniseq,
+							INPUT aux_nmextbcc,
                             OUTPUT aux_nmdcampo,
                             OUTPUT aux_qtregist,
                             OUTPUT TABLE tt-banco,
@@ -141,6 +148,7 @@ PROCEDURE busca-agencia:
                               INPUT aux_cddopcao,
                               INPUT aux_nrregist,
                               INPUT aux_nriniseq,
+							  INPUT aux_nmageban,
                               OUTPUT aux_nmdcampo,
                               OUTPUT aux_qtregist,
                               OUTPUT TABLE tt-agencia, 
