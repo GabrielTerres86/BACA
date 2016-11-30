@@ -21,7 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
     
                 20/06/2016 - Correcao para o uso da function fn_busca_dstextab da TABE0001 em 
                              varias procedures desta package.(Carlos Rafael Tanholi). 
-
+                
                 18/07/2016 - Criação da procedure pc_cria_trans_pend_darf_das para o
                              Prj. 338, Pagamento de DARF e DAS (Jean Michel) 
 
@@ -450,7 +450,7 @@ CREATE OR REPLACE PACKAGE CECRED.INET0002 AS
                                ,pr_clobxmlc OUT CLOB                  --> XML com informações
                                ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2);            --> Descricao da crítica
-                                 
+
   --> Rotina responsavel pela criacao de transacoes pendentes de DARF/DAS
   PROCEDURE pc_cria_trans_pend_darf_das(pr_cdcooper  IN crapcop.cdcooper%TYPE                 --> Código da cooperativa
                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                 --> Numero do Caixa
@@ -2387,7 +2387,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
     vr_auxditem gene0002.typ_split;
     -- Rowid tabela de log
     vr_nrdrowid ROWID;
-
+	  
     --Variaveis de Erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
@@ -5231,7 +5231,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
       --Variáveis locais
       vr_idastcjt NUMBER := 0;
       vr_nrcpfcgc NUMBER(14) := 0;
-      vr_nrcpfgui NUMBER(14) := 0;
+      vr_nrcpfgui VARCHAR2(100) := '';
       vr_nrdctato crapavt.nrdctato%TYPE;
       vr_nmprimtl crapass.nmprimtl%TYPE;
       vr_dstransa VARCHAR2(500);
@@ -6424,8 +6424,8 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                  
                  vr_nrqtlnac := rw_tbfolha_trans_pend.nrlanctos; --Quantidade de Lançamentos
                  vr_solestou := CASE WHEN rw_tbfolha_trans_pend.idestouro = 0 THEN 'NÃO' ELSE 'SIM' END; --Solicitado Estouro
-                 vr_vltarifa := TO_CHAR(rw_tbfolha_trans_pend.vltarifa,'fm999g999g990d00'); --Valor da Tarifa						
-							
+                 vr_vltarifa := TO_CHAR(rw_tbfolha_trans_pend.vltarifa,'fm999g999g990d00'); --Valor da Tarifa
+
             WHEN vr_tptranpe = 10 THEN --Pacote de tarifas
 							
 						     OPEN cr_pactar(vr_cdtranpe);
@@ -6494,7 +6494,7 @@ WHEN pr_tptransa = 10 THEN --Pacote de tarifas
                vr_dsagenda := (CASE WHEN rw_tbpagto_darf_das_trans_pend.IDAGENDAMENTO = 1 THEN
                                'NAO' ELSE 'SIM' END);                                             -- Indicador de Agendamento
                vr_dsnomfone := rw_tbpagto_darf_das_trans_pend.dsnome_fone;
-
+                 
                --DADOS ESPECIFICOS
                IF vr_tpcaptura = 1 THEN
                  vr_dslinha_digitavel := rw_tbpagto_darf_das_trans_pend.dslinha_digitavel; -- Linha Digitável

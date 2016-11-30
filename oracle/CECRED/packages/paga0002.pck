@@ -212,7 +212,7 @@ create or replace package cecred.PAGA0002 is
            ,nrcpfpre NUMBER
            ,nmoperad VARCHAR2(100)
            ,nrcpfope NUMBER
-		   ,nrcpfcgc NUMBER
+		   ,nrcpfcgc VARCHAR2(200)
            ,idtitdda NUMBER
            ,cdageban VARCHAR2(100)
            ,cdtiptra INTEGER
@@ -233,8 +233,8 @@ create or replace package cecred.PAGA0002 is
            ,vlrperce NUMBER);   
 
   --Tipo de tabela de memoria para dados de agendamentos
-  TYPE typ_tab_dados_agendamento IS TABLE OF typ_reg_dados_agendamento INDEX BY PLS_INTEGER;  
-  
+  TYPE typ_tab_dados_agendamento IS TABLE OF typ_reg_dados_agendamento INDEX BY PLS_INTEGER;
+
   /* Procedimento do internetbank operação 22 - Transferencia */
   PROCEDURE pc_InternetBank22 ( pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo da cooperativa
                                ,pr_nmrescop IN crapcop.nmrescop%TYPE   --> Nome da cooperativa 
@@ -653,7 +653,7 @@ PROCEDURE pc_tranf_sal_intercooperativa(pr_cdcooper IN crapcop.cdcooper%TYPE  --
                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Codigo da critica
                              ,pr_dscritic OUT crapcri.dscritic%TYPE);    --> Descricao critica                                      
                              
-/* Procedimento para obter dados de agendamentos via PROGRESS */
+  /* Procedimento para obter dados de agendamentos via PROGRESS */
   PROCEDURE pc_obtem_agendamentos_car(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                      ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Código do PA
                                      ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE --> Numero do Caixa
@@ -739,10 +739,10 @@ create or replace package body cecred.PAGA0002 is
 	--
   --             18/07/2016 - Ajuste da mensagem de confirmacao do agendamento de ted para 7h30min ao inves de 9h
   --                          (Carlos)
-  --                            
-  --             20/07/2016 - Inclusão dos parametros pr_cdfinali, pr_dstransf e pr_dshistor para criação do 
-  --                          registro tbted_det_agendamento ao cadastrar um agendamento de ted 
-  --                          (insert craplau) (Carlos)
+	--
+  	--             20/07/2016 - Inclusão dos parametros pr_cdfinali, pr_dstransf e pr_dshistor para criação do 
+  	--                          registro tbted_det_agendamento ao cadastrar um agendamento de ted 
+  	--                          (insert craplau) (Carlos)
   --                            
   --             22/07/2016 - Correção de xml sendo limpo e de format da data na rotina pc_verif_agend_recor_prog 
   --                          (Carlos)
@@ -750,8 +750,8 @@ create or replace package body cecred.PAGA0002 is
   --             05/08/2016 - Incluido tratamento para verificacao de transacoes duplicadas na procedure
   --                          pc_cadastrar_agendamento, SD 494025 (Jean Michel).
   --
-  --             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
-  --						              InternetBanking (Projeto 338 - Lucas Lunelli)															
+	--             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+	--						              InternetBanking (Projeto 338 - Lucas Lunelli)															
   --                          
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -6039,7 +6039,7 @@ create or replace package body cecred.PAGA0002 is
     vr_dscritic VARCHAR2(4000);
     --Tabela de memoria de erros
     vr_tab_erro GENE0001.typ_tab_erro;
-      
+		
 		vr_idlancto craplau.idlancto%type;
       
     --Variaveis de Excecao
@@ -8753,7 +8753,7 @@ create or replace package body cecred.PAGA0002 is
           pr_dscritic := 'Erro ao buscar convenios aceitos: '||SQLERRM;  
   END pc_sumario_debnet;
 
-/* Procedimento para consultar parametros de cancelamento */
+  /* Procedimento para consultar parametros de cancelamento */
   PROCEDURE pc_param_cancelamento(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
                                  ,pr_cdagenci  IN crapage.cdagenci%TYPE     --> Codigo do PA
                                  ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE     --> Data Atual de Movimentacao             
@@ -8831,7 +8831,7 @@ create or replace package body cecred.PAGA0002 is
 
   END pc_param_cancelamento;
 
-/* Procedimento para obter dados de agendamentos */
+  /* Procedimento para obter dados de agendamentos */
   PROCEDURE pc_obtem_agendamentos(pr_cdcooper               IN crapcop.cdcooper%TYPE              --> Código da Cooperativa
                                  ,pr_cdagenci               IN crapage.cdagenci%TYPE              --> Código do PA
                                  ,pr_nrdcaixa               IN craplot.nrdcaixa%TYPE              --> Numero do Caixa
@@ -9083,7 +9083,7 @@ create or replace package body cecred.PAGA0002 is
     vr_hrfimcan INTEGER := 0;
     vr_cdindice INTEGER := 0;
     vr_tpcaptur INTEGER := 0;		
-	  vr_nrcpfcgc NUMBER  := 0;
+	vr_nrcpfcgc VARCHAR2(200) := '';
 	  vr_dtvencto DATE;
     vr_datdodia DATE := SYSDATE;
     vr_dssgproc VARCHAR2(500) := '';
@@ -9597,9 +9597,13 @@ create or replace package body cecred.PAGA0002 is
         END IF;
         
 		vr_inpessoa := 0;
-		gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_tab_dados_agendamento(vr_contador).nrcpfcgc,
-                                    pr_stsnrcal => vr_stsnrcal,
-                                    pr_inpessoa => vr_inpessoa);
+		IF TRIM(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) <> '' THEN 
+			 IF LENGTH(vr_tab_dados_agendamento(vr_contador).nrcpfcgc) = 11 THEN -- CPF
+				 vr_inpessoa := 1;
+			 ELSE -- CNPJ
+				 vr_inpessoa := 2; 
+			 END IF;
+		END IF;
         
         -- Montar XML com registros de aplicação
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc

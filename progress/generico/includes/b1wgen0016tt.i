@@ -171,7 +171,7 @@ DEF TEMP-TABLE tt-tbpagto_darf_das_trans_pend NO-UNDO
   FIELD dscod_barras         AS CHAR
   FIELD dslinha_digitavel    AS CHAR
   FIELD dtapuracao           AS DATE
-  FIELD nrcpfcgc             AS DECIMAL
+  FIELD nrcpfcgc             AS CHAR
   FIELD cdtributo            AS DECIMAL
   FIELD nrrefere             AS DECIMAL
   FIELD vlprincipal          AS DECIMAL

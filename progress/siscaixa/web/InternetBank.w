@@ -851,6 +851,7 @@ DEF VAR aux_nrcpfapr AS DECI                                           NO-UNDO.
 DEF VAR aux_vltitulo AS DECI                                           NO-UNDO.
 DEF VAR aux_nrinsava AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
+DEF VAR aux_nrcpfdrf AS CHAR                                           NO-UNDO.
 DEF VAR aux_vldescto AS DECI                                           NO-UNDO.
 DEF VAR aux_inidocto AS DECI                                           NO-UNDO.
 DEF VAR aux_fimdocto AS DECI                                           NO-UNDO.
@@ -2078,10 +2079,10 @@ PROCEDURE process-web-request :
             IF  aux_operacao = 186 THEN /* Retorna valor atualizado de titulos vencidos */
                 RUN proc_operacao186.
 		ELSE
-			IF  aux_operacao = 187 THEN /* Consulta Horario Limite de DARF/DAS */
+            IF  aux_operacao = 187 THEN /* Consulta Horario Limite de DARF/DAS */
                 RUN proc_operacao187.   
-		ELSE
-			IF  aux_operacao = 188 THEN /* Operar pagamento de DARF/DAS */
+        ELSE
+            IF  aux_operacao = 188 THEN /* Operar pagamento de DARF/DAS */
                 RUN proc_operacao188.
     END.
 /*....................................................................*/
@@ -7796,7 +7797,7 @@ PROCEDURE proc_operacao188:
 
     ASSIGN  aux_dtapurac = DATE(GET-VALUE("aux_dtapurac"))
             aux_tpcaptur = INTE(GET-VALUE("aux_tpcaptur"))
-            aux_nrcpfcgc = DECI(GET-VALUE("aux_nrcpfcgc"))
+            aux_nrcpfdrf = GET-VALUE("aux_nrcpfcgc")
             aux_nrrefere = DECI(GET-VALUE("aux_nrrefere"))
             aux_dtvencto = DATE(GET-VALUE("aux_dtvencto"))
             aux_cdtribut = INTE(GET-VALUE("aux_cdtribut"))
@@ -7843,7 +7844,7 @@ PROCEDURE proc_operacao188:
                                                    INPUT aux_vlrtotal,
                                                    INPUT aux_dsnomfon,
                                                    INPUT aux_dtapurac,
-                                                   INPUT aux_nrcpfcgc,
+                                                   INPUT aux_nrcpfdrf,
                                                    INPUT aux_cdtribut,
                                                    INPUT aux_nrrefere,
                                                    INPUT aux_dtvencto,
