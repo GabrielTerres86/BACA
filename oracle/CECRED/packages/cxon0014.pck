@@ -8229,7 +8229,7 @@ END pc_gera_titulos_iptu_prog;
       vr_cdempres VARCHAR2(100);
       vr_nrdigito INTEGER;
       vr_flgachou BOOLEAN;
-      vr_nrcpfcgc NUMBER;
+      vr_nrcpfcgc VARCHAR2(100);
       vr_registro ROWID;
       --Tipo de registro de data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
