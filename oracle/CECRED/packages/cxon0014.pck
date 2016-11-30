@@ -370,7 +370,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                         ,pr_cdsegmto      IN crapcon.cdsegmto%TYPE -- Codigo Segmento Convenio
                                         ,pr_codigo_barras IN VARCHAR2    -- Codigo barras
                                         ,pr_dtmvtopg      IN DATE        -- Data da operação
-										,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
+                                        ,pr_flnrtole      IN BOOLEAN DEFAULT TRUE -- Verificar se a tolerância é ilimitada
+										                    ,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
                                         ,pr_cdcritic      OUT INTEGER    -- Codigo do erro
                                         ,pr_dscritic      OUT VARCHAR2);
   
@@ -6619,7 +6620,8 @@ END pc_gera_titulos_iptu_prog;
                                         ,pr_cdsegmto      IN crapcon.cdsegmto%TYPE -- Codigo Segmento Convenio
                                         ,pr_codigo_barras IN VARCHAR2    -- Codigo barras
                                         ,pr_dtmvtopg      IN DATE        -- Data da operação
-										,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
+                                        ,pr_flnrtole      IN BOOLEAN DEFAULT TRUE -- Verificar se a tolerância é ilimitada
+									                    	,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
                                         ,pr_cdcritic      OUT INTEGER    -- Codigo do erro
                                         ,pr_dscritic      OUT VARCHAR2) IS
   --------------------------------------------------------------------------------------------------------------
@@ -6699,7 +6701,7 @@ END pc_gera_titulos_iptu_prog;
     END IF;
     
   
-   IF rw_crapscn.nrtolera <> 99 THEN /* Se nao for tolerancia ilimitada */
+   IF rw_crapscn.nrtolera <> 99 OR NOT pr_flnrtole THEN /* Se nao for tolerancia ilimitada */
     IF nvl(rw_crapstn.dstipdrf, ' ') <> ' '  OR
        rw_crapscn.cdempres = 'K0' THEN
       /* DARF PRETO EUROPA */
@@ -7205,7 +7207,8 @@ END pc_gera_titulos_iptu_prog;
                                     ,pr_cdsegmto      => pr_cdsegmto
                                     ,pr_codigo_barras => pr_codigo_barras
                                     ,pr_dtmvtopg      => rw_crapdat.dtmvtocd
-									,pr_dttolera      => vr_dttolera
+                                    ,pr_flnrtole      => TRUE                                    
+									                  ,pr_dttolera      => vr_dttolera
                                     ,pr_cdcritic      => pr_cdcritic
                                     ,pr_dscritic      => pr_dscritic);
         
