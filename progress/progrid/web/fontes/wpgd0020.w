@@ -699,7 +699,7 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEixos w-html 
 PROCEDURE CriaListaEixos :
 
-  RUN RodaJavaScript("var meixos=new Array();").
+  RUN RodaJavaScript("var meixos = new Array();").
   
   FOR EACH gnapetp WHERE NO-LOCK 
                   BY gnapetp.dseixtem:
@@ -718,7 +718,7 @@ PROCEDURE CriaListaEixos :
       END.
   END.
 
-  RUN RodaJavaScript("meixos=[" + vetoreixos + "]"). 
+  RUN RodaJavaScript("meixos.push(" + STRING(vetoreixos) + ");"). 
 
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
