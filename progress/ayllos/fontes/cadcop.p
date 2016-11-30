@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro/Diego
-   Data    : Novembro/2006                      Ultima atualizacao: 26/04/2016
+   Data    : Novembro/2006                      Ultima atualizacao: 06/10/2016
    
    Dados referentes ao programa:
 
@@ -184,7 +184,6 @@
                27/01/2016 - Inclusao do campo crapcop.flsaqpre, frame f_coop15 
                             (Lombardi - #393807)
                
-               
                24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
                06/04/2016 - Inclusao dos horarios de atendimento do SAC e
                             OUVIDORIA (melhoria 212 Tiago/Elton).
@@ -192,6 +191,12 @@
 			   26/04/2016 - Ajustes para melhoria 212 (Tiago/Elton).
 
 			   27/04/2016 - Ajustes para melhoria 212 (Tiago/Elton).
+
+               01/08/2016 - Adicionado novo campo de arrecadacao GPS
+                            conforme solicitado no chamado 460485. (Kelvin)
+
+               06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
+                           (Guilherme/SUPERO)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -228,6 +233,7 @@ DEF  VAR tel_nrconven AS INT                                         NO-UNDO.
 DEF  VAR tel_nrversao AS INT                                         NO-UNDO.
 DEF  VAR tel_vldataxa AS DEC                                         NO-UNDO.
 DEF  VAR tel_vltxinss AS DEC                                         NO-UNDO.
+DEF  VAR tel_flgargps AS LOGI FORMAT "SIM/NAO"                       NO-UNDO.  
 
 /* GPS */
 DEF  VAR tel_vltfcxsb AS DEC INIT 0                                  NO-UNDO.
@@ -308,7 +314,7 @@ DEF VAR par_dsdevice AS CHAR                                         NO-UNDO.
 DEF VAR par_dtconnec AS CHAR                                         NO-UNDO.
 DEF VAR par_numipusr AS CHAR                                         NO-UNDO.
 DEF VAR tel_flgkitbv AS LOGI FORMAT "SIM/NAO"                        NO-UNDO.
-DEF VAR tel_flsaqpre AS LOGI FORMAT "Isentar/Nao isentar"            NO-UNDO.
+DEF VAR tel_flsaqpre AS LOGI FORMAT "Isentar/Nao isentar"              NO-UNDO.
 DEF VAR tel_flrecpct AS LOGI FORMAT "Sim/Nao"                        NO-UNDO.
 DEF VAR h-b1wgen9999 AS HANDLE                                       NO-UNDO.
 
@@ -665,12 +671,15 @@ FORM SKIP
      SKIP(1)
      tel_nrconven  FORMAT "999999999"     LABEL "Convenio"        AT 27
                    HELP "Informe o numero do convenio."
-     tel_nrversao  FORMAT "999"           LABEL "Versao"          AT 29
+         tel_nrversao  FORMAT "999"           LABEL "Versao"          AT 50
                    HELP "Informe a versao do software."
      tel_vldataxa  FORMAT "999.99"        LABEL "Tarifa Pagto."   AT 22
                    HELP "Informe a tarifa de pagamento."
      tel_vltxinss  FORMAT "999.99"        LABEL "Tarifa INSS"     AT 24
                    HELP "Informe a tarifa de recebimento de INSS."
+     crapcop.flgargps  FORMAT "SIM/NAO"       LABEL "Arrecada GPS"    AT 23
+                       HELP "Informe a arrecadacao do GPS"
+     
      SKIP(1)
      "-- DDA --"   AT 33
      SKIP(1)
@@ -686,7 +695,7 @@ FORM SKIP
                    HELP "Informe o local do registro."
      crapcop.dsciddda LABEL "Cidade"                             AT 21
                    HELP "Informe o nome da cidade."
-     WITH ROW 7 WIDTH 78 SIDE-LABELS OVERLAY CENTERED FRAME f_coop8.
+     WITH ROW 6 WIDTH 78 SIDE-LABELS OVERLAY CENTERED FRAME f_coop8.
 
 FORM SKIP
      "-- COBRANCA REGISTRADA --" AT 25
@@ -879,7 +888,7 @@ FORM SKIP
      tel_flsaqpre LABEL "Saque Presencial" AT 22 FORMAT "Isentar/Nao isentar"
             HELP "I - Isentar / N - Nao isentar."
      SKIP(1)
-     "-- PACOTE DE TARIFAS --" AT 26
+     "-- SERVICOS COOPERATIVOS --" AT 26
      SKIP
      crapcop.permaxde LABEL "Percentual máximo de desconto manual" FORMAT "zz9.99" AT 2 
            HELP "Informe o percentual máximo de desconto manual."
@@ -926,7 +935,7 @@ FORM SKIP
         VALIDATE(INTEGER(tel_mmfimouv) <= 59,"Minutos incorretos (00 min ate 59 min).")
 
      WITH DOWN ROW 7 WIDTH 78 SIDE-LABELS OVERLAY CENTERED FRAME f_coop15.
-     
+
 
 DEF QUERY q_cidades FOR w-crapmun.
 
@@ -1440,7 +1449,7 @@ DO WHILE TRUE:
                                                            22,6)).
                                 
                                  DISPLAY tel_nrconven tel_nrversao 
-                                         tel_vldataxa tel_vltxinss
+                                         tel_vldataxa tel_vltxinss crapcop.flgargps 
                                          crapcop.dtctrdda crapcop.nrctrdda
                                          crapcop.idlivdda crapcop.nrfoldda
                                          crapcop.dslocdda crapcop.dsciddda
@@ -2470,9 +2479,10 @@ DO WHILE TRUE:
                          (aux_cdcrdarr      = 0   AND
                           crapcop.cdcrdarr <> 0)        THEN
                           DO:
-                             FIND FIRST craplgp WHERE
-                                        craplgp.cdcooper = glb_cdcooper   AND
-                                        craplgp.dtmvtolt = glb_dtmvtolt
+                             FIND FIRST craplgp
+                                  WHERE craplgp.cdcooper = glb_cdcooper
+                                    AND craplgp.dtmvtolt = glb_dtmvtolt
+                                    AND craplgp.flgativo = TRUE
                                         NO-LOCK NO-ERROR.
 
                              IF   AVAILABLE craplgp   THEN
@@ -2712,7 +2722,7 @@ DO WHILE TRUE:
                                      END.
                                 
                                 UPDATE tel_nrconven tel_nrversao 
-                                       tel_vldataxa tel_vltxinss
+                                       tel_vldataxa tel_vltxinss crapcop.flgargps 
                                        crapcop.dtctrdda crapcop.nrctrdda
                                        crapcop.idlivdda crapcop.nrfoldda
                                        crapcop.dslocdda crapcop.dsciddda
@@ -2986,7 +2996,7 @@ DO WHILE TRUE:
                                                            WITH FRAME f_coop15												    
                                                     EDITING:
                                                     DO:
-                                                      READKEY.
+                                                        READKEY.
                                                       HIDE MESSAGE NO-PAUSE.
                                                       
                                                       IF (FRAME-FIELD = "permaxde") THEN
@@ -2995,8 +3005,8 @@ DO WHILE TRUE:
                                                               APPLY LASTKEY.                                                            
                                                         END.
                                                       ELSE
-                                                          APPLY LASTKEY.
-                                                      
+                                                        APPLY LASTKEY.
+
                                                         IF  GO-PENDING  THEN
                                                             DO:               
                                                                 ASSIGN INPUT tel_flsaqpre 
@@ -3016,13 +3026,13 @@ DO WHILE TRUE:
                                                                 END.
                                                     
                                                                 IF ((tel_hriniouv * 3600) + (tel_mminiouv * 60)) >= ((tel_hrfimouv * 3600) + (tel_mmfimouv * 60)) THEN
-                                                                DO:
+                                                    DO:
                                                                     ASSIGN aux_nmdcampo = "tel_hriniouv".
 
-                                                                END.
-                                                      
+                                                    END.
+
                                                                 IF  aux_nmdcampo <> "" THEN
-                                                        DO:
+                                                    DO:
                                                                     MESSAGE "Horario inicial maior que o final.".
 
                                                                     {sistema/generico/includes/foco_campo.i
@@ -3032,10 +3042,10 @@ DO WHILE TRUE:
                                                                 END.
 
 
-                                                        END.
-                                                      
+                                                            END.                                    
+
                                                     END.
-                                                    
+
 
                                                     ASSIGN crapcop.flsaqpre = tel_flsaqpre
 													       crapcop.flrecpct = tel_flrecpct
@@ -3045,7 +3055,7 @@ DO WHILE TRUE:
                                                            crapcop.hrfimouv = ((tel_hrfimouv * 3600) + (tel_mmfimouv * 60)).
                                                     
 												END.
-                                                    
+												    
                                                 IF KEYFUNCTION(LASTKEY) = "RETURN" OR
                                                    KEYFUNCTION(LASTKEY) = "GO" THEN
                                                     RUN Confirma.
@@ -3239,6 +3249,9 @@ PROCEDURE Gera_log.
   RUN log ("tarifa inss - coban",STRING(tel_vltxinss,"zz9.99"),
                                          STRING(aux_vltxinss,"zz9.99")).
                                          
+  RUN log ("Arrecadacao GPS - coban",STRING(crapcop.flgargps,"SIM/NAO"),
+                                     STRING(w-crapcop.flgargps,"SIM/NAO")). 
+  
   RUN log ("Data do Contrato - DDA",STRING(crapcop.dtctrdda),
                                     STRING(w-crapcop.dtctrdda)).
   RUN log ("N. do Contrato - DDA",STRING(crapcop.nrctrdda),
@@ -3289,7 +3302,7 @@ PROCEDURE Gera_log.
   RUN log ("Tarifa Tributo Federal",STRING(crapcop.vltardrf, "zzz,zzz,zz9.99"),
                                     STRING(w-crapcop.vltardrf, "zzz,zzz,zz9.99")).
 
-  RUN log ("Horario inicio pagamento GPS",STRING(crapcop.hrinigps, "HH:MM"),
+RUN log ("Horario inicio pagamento GPS",STRING(crapcop.hrinigps, "HH:MM"),
                                           STRING(w-crapcop.hrinigps, "HH:MM")).
 
   RUN log ("Horario fim pagamento GPS",STRING(crapcop.hrfimgps, "HH:MM"),
@@ -3300,7 +3313,7 @@ PROCEDURE Gera_log.
 
   RUN log ("Saque presencial",STRING(crapcop.flsaqpre, "Isentar/Nao isentar"),
                                               STRING(w-crapcop.flsaqpre, "Isentar/Nao isentar")).
-                                              
+
   RUN log ("Percentual máximo de desconto manual",STRING(crapcop.permaxde, "zz9.99"),
                                               STRING(w-crapcop.permaxde, "zz9.99")).
                                               
