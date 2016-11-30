@@ -513,7 +513,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                             
                22/06/2016 - Inclusão dos históricos 1755, 1758 e 1937 referente
                             as recusas de TEC salário outros IF (Marcos-Supero)             
-                            
+														
 			   23/08/2016 - Inclusão dos históricos de portabilidade (1915 e 1916) 
 			                na leitura do cursor cr_crapepr. (Reinert)   
 
@@ -527,7 +527,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                16/11/2016 - Ajustar cursor cr_craplcm6 para efetuar a busca correta das 
                             Despesas Sicredi (Lucas Ranghetti #508130)
-
+                     
+			   30/11/2016 - Correção para buscar corretamente registro da crapstn
+			                de acordo com o tipo de arrecadação (Lucas Lunelli - Projeto 338)
+                     
 ............................................................................ */
 
   -- Buscar os dados da cooperativa
@@ -1438,7 +1441,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
     select crapstn.vltrfuni
       from crapstn
      where upper(crapstn.cdempres) = pr_cdempres
-       and upper(crapstn.tpmeiarr) = pr_tpdarrec;
+       and upper(crapstn.tpmeiarr) = pr_tpdarrec
+	   AND crapstn.cdtransa = DECODE(crapstn.tpmeiarr, 
+							  'D', DECODE(crapstn.cdempres, 'K0', '0XY', '147', '1CK', crapstn.cdtransa), 
+							  crapstn.cdtransa);
   rw_crapstn     cr_crapstn%rowtype;
   -- Lançamento de faturas
   cursor cr_craplft (pr_cdcooper in craplft.cdcooper%type,
@@ -6755,7 +6761,7 @@ BEGIN
       vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft.qtlanmto;
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
       vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft.vllanmto;
-      vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft.qtlanmto;
+      vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft.qtlanmto;                      
       -- Tratamento para Tarifa
       if rw_craplft.cdagenci = 90 then
         vr_tpdarrec := 'D';
@@ -6829,74 +6835,74 @@ BEGIN
   loop
     vr_vllanmto_fat := 0;
     vr_qtlanmto_fat := 0;
-  for rw_craplft2 in cr_craplft2 (pr_cdcooper,
-                                  vr_dtmvtolt,
-                                  0,
-                                  6,
-                                  rw_craphis2.cdhistor,
+    for rw_craplft2 in cr_craplft2 (pr_cdcooper,
+                                    vr_dtmvtolt,
+                                    0,
+                                    6,
+                                    rw_craphis2.cdhistor,
                                     2,
                                     vr_idtributo_6106 -- DARF'S - .ARF
-                                   ) loop
-    -- Incrementa o contador na pl/table de faturas
-    vr_indice_faturas := to_char(rw_craplft2.tpfatura, 'fm0')||to_char(rw_craplft2.cdagenci_fatura, 'fm000');
-    vr_tab_faturas(vr_indice_faturas).vr_tpfatura := rw_craplft2.tpfatura;
-    vr_tab_faturas(vr_indice_faturas).vr_cdagenci := rw_craplft2.cdagenci_fatura;
-    vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft2.qtlanmto;
+                                     ) loop
+      -- Incrementa o contador na pl/table de faturas
+      vr_indice_faturas := to_char(rw_craplft2.tpfatura, 'fm0')||to_char(rw_craplft2.cdagenci_fatura, 'fm000');
+      vr_tab_faturas(vr_indice_faturas).vr_tpfatura := rw_craplft2.tpfatura;
+      vr_tab_faturas(vr_indice_faturas).vr_cdagenci := rw_craplft2.cdagenci_fatura;
+      vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft2.qtlanmto;
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
       vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft2.vllanmto;
       vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft2.qtlanmto;
-    --
-    open cr_crapscn2 (rw_craplft2.cdempres);
+      --
+      open cr_crapscn2 (rw_craplft2.cdempres);
       fetch cr_crapscn2 into rw_crapscn2;
-    close cr_crapscn2;
-    -- Para DPVAT usar conta 4336
-    IF rw_crapscn2.cdempres = '85' THEN
-      vr_nrctasic := 4336;
-    ELSE
-      vr_nrctasic := vr_nrctacrd;
-    END IF;
-    -- Tratamento para Tarifa
-    if rw_craplft2.cdagenci = 90 then
-      vr_tpdarrec := 'D';
-    elsif rw_craplft2.cdagenci = 91 then
-      vr_tpdarrec := 'A';
-    else
-      vr_tpdarrec := 'C';
-    end if;
-    -- Convênio Sicredi
-    open cr_crapstn (rw_crapscn2.cdempres,
-                     vr_tpdarrec);
+      close cr_crapscn2;    
+      -- Para DPVAT usar conta 4336
+      IF rw_crapscn2.cdempres = '85' THEN
+        vr_nrctasic := 4336;
+      ELSE
+        vr_nrctasic := vr_nrctacrd;
+      END IF;    
+      -- Tratamento para Tarifa
+      if rw_craplft2.cdagenci = 90 then
+        vr_tpdarrec := 'D';
+      elsif rw_craplft2.cdagenci = 91 then
+        vr_tpdarrec := 'A';
+      else
+        vr_tpdarrec := 'C';
+      end if;
+      -- Convênio Sicredi
+      open cr_crapstn (rw_crapscn2.cdempres,
+                       vr_tpdarrec);
       fetch cr_crapstn into rw_crapstn;
-    close cr_crapstn;
-    --
-    if rw_crapstn.vltrfuni > 0 then
-      BEGIN
-        -- Inserir registro de rejeitados na integracao - D23
-        insert into craprej (cdcooper,
-                             cdagenci,
-                             cdhistor,
-                             dtmvtolt,
-                             cdpesqbb,
-                             nrseqdig,
-                             vllanmto,
-                             dtrefere,
-                             nrdocmto)
-        values (pr_cdcooper,
-                rw_craplft2.cdagenci,
-                rw_craphis2.cdhistor,
-                vr_dtmvtolt,
-                vr_cdprogra,
-                rw_craplft2.qtlanmto,
-                rw_craplft2.qtlanmto * rw_crapstn.vltrfuni,
-                rw_crapscn2.cdempres,
-                rw_craplft2.cdagenci_fatura);
-      exception
-        when others then
-          vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao excluir registros já processados na craprej: '||sqlerrm;
-          raise vr_exc_saida;
-      end;
-    end if;
+      close cr_crapstn;
+      --
+      if rw_crapstn.vltrfuni > 0 then
+        BEGIN
+          -- Inserir registro de rejeitados na integracao - D23
+          insert into craprej (cdcooper,
+                               cdagenci,
+                               cdhistor,
+                               dtmvtolt,
+                               cdpesqbb,
+                               nrseqdig,
+                               vllanmto,
+                               dtrefere,
+                               nrdocmto)
+          values (pr_cdcooper,
+                  rw_craplft2.cdagenci,
+                  rw_craphis2.cdhistor,
+                  vr_dtmvtolt,
+                  vr_cdprogra,
+                  rw_craplft2.qtlanmto,
+                  rw_craplft2.qtlanmto * rw_crapstn.vltrfuni,
+                  rw_crapscn2.cdempres,
+                  rw_craplft2.cdagenci_fatura);
+        exception
+          when others then
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao excluir registros já processados na craprej: '||sqlerrm;
+            raise vr_exc_saida;
+        end;
+      end if;
       -- Verifica se é a mesma agência e, se for, busca o próximo registro
       if rw_craplft2.cdagenci = rw_craplft2.proxima_agencia then
         continue;

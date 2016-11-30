@@ -642,8 +642,12 @@ FOR EACH craplft FIELDS(cdtribut cdempcon cdsegmto tpfatura vllanmto
         DO:
             /* INTERNET */
             FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
-                                     crapstn.tpmeiarr = "D"
+                                     crapstn.tpmeiarr = "D"                AND
+                                     IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                     AND
+                                     IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
                                      NO-LOCK NO-ERROR.
+                                             
             IF  tot_qtfatint > 0 AND
                 AVAIL crapstn    AND
                 AVAIL crapthi    THEN
@@ -1395,7 +1399,10 @@ PROCEDURE executa-rel-mensais:
                 DO:
                     /* INTERNET */
                     FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
-                                             crapstn.tpmeiarr = "D"
+                                             crapstn.tpmeiarr = "D"                AND
+                                             IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                             AND
+                                             IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
                                              NO-LOCK NO-ERROR.
 
                     IF  tot_qtfatint > 0 AND
@@ -2471,7 +2478,10 @@ PROCEDURE gera-rel-mensal-cecred:
                     DO:
                         /* INTERNET */
                         FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
-                                                 crapstn.tpmeiarr = "D"
+                                                 crapstn.tpmeiarr = "D"                AND
+                                                 IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                                 AND
+                                                 IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
                                                  NO-LOCK NO-ERROR.
 
                         IF  tot_qtfatint > 0 AND
