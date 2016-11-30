@@ -680,7 +680,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 05/08/2016
+  --  Data     : Março/2014.                   Ultima atualizacao: 30/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -753,6 +753,8 @@ create or replace package body cecred.PAGA0002 is
 	--             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
 	--						              InternetBanking (Projeto 338 - Lucas Lunelli)															
   --                          
+  --             30/11/2016 - Alterado query do sumario da tela debnet pra trazer corretamente 
+  --                          os resultados (Tiago/Elton SD566237)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -8599,7 +8601,8 @@ create or replace package body cecred.PAGA0002 is
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure utilizada sumarizar os agendamentos DEBNET
     --
-    --  Alteração : 
+    --  Alteração : 30/11/2016 Alterado query do sumario da tela debnet pra trazer 
+    --                         corretamente os resultados (Tiago/Elton SD566237)
     --
     -- ..........................................................................*/
     
@@ -8609,13 +8612,15 @@ create or replace package body cecred.PAGA0002 is
     CURSOR cr_craplau(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_insitlau craplau.insitlau%TYPE
                      ,pr_dtmvtopg crapdat.dtmvtolt%TYPE) IS
-      SELECT * 
-      FROM craplau lau
-       WHERE lau.cdcooper = pr_cdcooper
+      SELECT lau.* 
+        FROM craplau lau, crapass ass
+       WHERE lau.cdcooper = ass.cdcooper
+         AND lau.nrdconta = ass.nrdconta
+         AND lau.cdcooper = pr_cdcooper
          AND lau.dtmvtopg = pr_dtmvtopg                
          AND lau.insitlau = pr_insitlau
          AND UPPER(lau.dsorigem) IN (UPPER('INTERNET'),UPPER('TAA'),UPPER('DEBAUT'))
-         AND lau.tpdvalor = DECODE(lau.dsorigem, 'DEBAUT', 0, lau.tpdvalor)
+         AND lau.tpdvalor = DECODE(lau.dsorigem, 'DEBAUT', lau.tpdvalor, 0)
          AND lau.cdtiptra <> 4;                      
 
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
