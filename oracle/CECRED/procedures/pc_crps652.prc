@@ -379,12 +379,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 where x.cdcooper = crapcyb.cdcooper
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
-                  and x.inliquid = 0) vlmtapar
+                  and crapcyb.cdorigem IN (2,3)
+				  and x.inliquid = 0) vlmtapar
              ,(select sum(x.vlmrapar)
                  from crappep x
                 where x.cdcooper = crapcyb.cdcooper
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
+				  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmrapar
        FROM crapcyb
            ,crapass
