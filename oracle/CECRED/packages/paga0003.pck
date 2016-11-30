@@ -1307,7 +1307,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                            ,pr_cdsegmto      => rw_crapcon.cdsegmto
                                            ,pr_codigo_barras => pr_cdbarras
                                            ,pr_dtmvtopg      => vr_dtmvtopg
-										   ,pr_dttolera      => vr_dttolera
+                                           ,pr_flnrtole      => TRUE                                           
+										                       ,pr_dttolera      => vr_dttolera
                                            ,pr_cdcritic      => vr_cdcritic
                                            ,pr_dscritic      => vr_dscritic);
                                            
@@ -1865,6 +1866,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																						 ,pr_cdsegmto      => rw_crapcon.cdsegmto
 																						 ,pr_codigo_barras => vr_cdbarras
 																						 ,pr_dtmvtopg      => vr_dtvencto
+                                             ,pr_flnrtole      => FALSE                                             
 																						 ,pr_dttolera      => vr_dttolera
 																						 ,pr_cdcritic      => vr_cdcritic
 																						 ,pr_dscritic      => vr_dscritic);
@@ -1917,19 +1919,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 			
 			-- Validação referente aos dias de tolerancia
 			cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
-												,pr_cdagenci      => vr_cdagenci
-												,pr_cdempcon      => rw_crapcon.cdempcon
-												,pr_cdsegmto      => rw_crapcon.cdsegmto
-												,pr_codigo_barras => vr_cdbarras
-												,pr_dtmvtopg      => vr_dtvencto
-												,pr_dttolera      => vr_dttolera
-												,pr_cdcritic      => vr_cdcritic
-                           						,pr_dscritic => vr_dscritic);
-
-			IF nvl(vr_cdcritic,0) > 0 OR
-				 TRIM(vr_dscritic) IS NOT NULL THEN
-		      RAISE vr_exc_erro;
-		    END IF;
+                                           ,pr_cdagenci      => vr_cdagenci
+                                           ,pr_cdempcon      => rw_crapcon.cdempcon
+                                           ,pr_cdsegmto      => rw_crapcon.cdsegmto
+                                           ,pr_codigo_barras => vr_cdbarras
+                                           ,pr_dtmvtopg      => vr_dtvencto
+                                           ,pr_flnrtole      => FALSE                        
+                                           ,pr_dttolera      => vr_dttolera                        
+                                           ,pr_cdcritic      => vr_cdcritic
+                               						 ,pr_dscritic => vr_dscritic);
     
 			vr_dsnomcnv := rw_crapcon.nmextcon;		
 			vr_dtvencto := vr_dttolera;
@@ -1944,7 +1942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                          ,pr_nrdconta => pr_nrdconta -- Número da conta
                                          ,pr_nmextttl => rw_crapass.nmextttl -- Nome do Titular
                                          ,pr_nrcpfope => pr_nrcpfope -- CPF do operador PJ
-										 ,pr_nrcpfpre => rw_crapass.nrcpfpre -- Número pré operação
+										                     ,pr_nrcpfpre => rw_crapass.nrcpfpre -- Número pré operação
                                          ,pr_nmprepos => rw_crapass.nmprepos -- Nome Preposto
                                          ,pr_tpcaptur => pr_tpcaptur -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
                                          ,pr_cdtippro => vr_cdtippro -- Código do tipo do comprovante
@@ -3627,25 +3625,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 					
 					-- Validação referente aos dias de tolerancia
 					cxon0014.pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
-														 ,pr_cdagenci      => pr_cdagenci
-														 ,pr_cdempcon      => rw_crapcon.cdempcon
-														 ,pr_cdsegmto      => rw_crapcon.cdsegmto
-														 ,pr_codigo_barras => vr_cdbarras
-														 ,pr_dtmvtopg      => vr_dtvencto
-														 ,pr_dttolera      => vr_dttolera
-														 ,pr_cdcritic      => vr_cdcritic
-														 ,pr_dscritic      => vr_dscritic);
-		                                           
-					IF nvl(vr_cdcritic,0) > 0 OR
-						 TRIM(vr_dscritic) IS NOT NULL THEN
-						RAISE vr_exc_erro;
-					END IF;
+                                               ,pr_cdagenci      => pr_cdagenci
+                                               ,pr_cdempcon      => rw_crapcon.cdempcon
+                                               ,pr_cdsegmto      => rw_crapcon.cdsegmto
+                                               ,pr_codigo_barras => vr_cdbarras
+                                               ,pr_dtmvtopg      => vr_dtvencto
+                                               ,pr_flnrtole      => FALSE                                               
+                                               ,pr_dttolera      => vr_dttolera
+                                               ,pr_cdcritic      => vr_cdcritic
+                                               ,pr_dscritic      => vr_dscritic);
+
 					vr_dtvencto := vr_dttolera;					
 				ELSE -- MANUAL
 					vr_dtvencto := pr_dtvencto;
 				END IF;
 								
-		  -- tipo do protocolo
+		    -- tipo do protocolo
 	      vr_cdtippro := CASE pr_tpdaguia
 	                     WHEN 1 THEN 18
 	                     ELSE 19
@@ -3660,7 +3655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																					 ,pr_nmextttl => rw_crapass.nmextttl -- Nome do Titular
 																					 ,pr_nrcpfope => pr_nrcpfope         -- CPF do operador PJ
 																					 ,pr_nrcpfpre => vr_nrcpfpre         -- Número pré operação
-                                           											 ,pr_nmprepos => nvl(vr_nmprepos,' ')-- Nome Preposto
+                                           ,pr_nmprepos => nvl(vr_nmprepos,' ')-- Nome Preposto
 																					 ,pr_tpcaptur => pr_tpcaptur         -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
 																					 ,pr_cdtippro => vr_cdtippro         -- Código do tipo do comprovante
 																					 ,pr_dtmvtolt => rw_craplau.dtmvtolt -- Data de movimento da autenticação
