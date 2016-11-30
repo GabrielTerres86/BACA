@@ -680,7 +680,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 05/08/2016
+  --  Data     : Março/2014.                   Ultima atualizacao: 30/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -753,6 +753,8 @@ create or replace package body cecred.PAGA0002 is
 	--             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
 	--						              InternetBanking (Projeto 338 - Lucas Lunelli)															
   --                          
+  --             30/11/2016 - Alterado query do sumario da tela debnet pra trazer corretamente 
+  --                          os resultados (Tiago/Elton SD566237)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ----------------------> CURSORES <----------------------
@@ -8599,7 +8601,8 @@ create or replace package body cecred.PAGA0002 is
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure utilizada sumarizar os agendamentos DEBNET
     --
-    --  Alteração : 
+    --  Alteração : 30/11/2016 Alterado query do sumario da tela debnet pra trazer 
+    --                         corretamente os resultados (Tiago/Elton SD566237)
     --
     -- ..........................................................................*/
     
