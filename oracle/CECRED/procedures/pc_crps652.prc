@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 26/07/2016
+   Data    : AGOSTO/2013                      Ultima atualizacao: 30/11/2016
 
    Dados referentes ao programa:
 
@@ -163,6 +163,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
                             do cyber. (Gil - Mouts)
+			   
+			   30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
+			                Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
+							Gil (Mouts)
      ............................................................................. */
 
      DECLARE
@@ -379,12 +383,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                 where x.cdcooper = crapcyb.cdcooper
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
+                  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmtapar
              ,(select sum(x.vlmrapar)
                  from crappep x
                 where x.cdcooper = crapcyb.cdcooper
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
+				  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmrapar
        FROM crapcyb
            ,crapass
