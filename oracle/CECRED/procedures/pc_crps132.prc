@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/95.                        Ultima atualizacao: 22/11/2013
+   Data    : Setembro/95.                        Ultima atualizacao: 22/08/2016
 
    Dados referentes ao programa:
 
@@ -60,6 +60,8 @@ BEGIN
                             variaveis vr_vlmensal, vr_vlsaldev, vr_saldodev de
                             crapepr.vlsdeved%type para number(25,2). (Edison-AMcom)
 
+               22/08/2016 - Adicionado operações de financiamento do BNDES 
+							              no relatório 109. (Reinert)
 ............................................................................. */
 
   DECLARE
@@ -99,6 +101,23 @@ BEGIN
        WHERE crapepr.cdcooper = pr_cdcooper
          AND crapepr.inliquid = 0
          AND crapepr.vlsdeved > 0;
+
+    -- Financiamentos BNDES
+    CURSOR cr_crapebn(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+		  SELECT ebn.vlaven30 -- Divida a vencer ate 30 dias.
+			      ,ebn.vlaven60 -- Divida a vender de 31 a 60 dias.
+						,ebn.vlaven90 -- Divida a vencer de 61 a 90 dias.
+						,ebn.vlave180 -- Divida a vencer de 91 a 180 dias.
+						,ebn.vlave360 -- Divida a vencer de 181 a 360 dias.
+						,ebn.vlave720 -- Divida a vencer de 361 a 720 dias.
+						,ebn.vlav1080 -- Divida a vencer de 721 a 1080 dias.
+						,ebn.vlav1440 -- Divida a vencer de 1081 a 1440 dias.
+						,ebn.vlav1800 -- Divida a vencer de 1441 a 1800 dias.
+						,ebn.vlav5400 -- Divida a vencer de 1801 a 5400 dias.
+						,ebn.vlaa5400 -- Divida a vencer acima de 5400 dias.
+			  FROM crapebn ebn
+			 WHERE ebn.cdcooper = pr_cdcooper
+			   AND ebn.insitctr IN('N','A');
 
     -- Ler Cadastro de Linhas de Credito
     CURSOR cr_craplcr (pr_cdcooper IN craptab.cdcooper%TYPE,
@@ -263,6 +282,7 @@ BEGIN
           IF pr_dsoperac = 'FINANCIAMENTO' THEN
             vr_tab_financ(pr_idfina).retfinan := nvl(vr_tab_financ(pr_idfina).retfinan,0) + vr_vldivida;
             vr_tab_financ(pr_idfina).qtfinanc := nvl(vr_tab_financ(pr_idfina).qtfinanc,0) + 1;
+
           ELSE /* EMPRESTIMO */
             vr_tab_financ(pr_idfina).retempre := nvl(vr_tab_financ(pr_idfina).retempre,0) + vr_vldivida;
             vr_tab_financ(pr_idfina).qtempres := nvl(vr_tab_financ(pr_idfina).qtempres,0) + 1;
@@ -393,7 +413,7 @@ BEGIN
 
     --Ler Cadastro de emprestimos
     FOR rw_crapepr in cr_crapepr(pr_cdcooper => pr_cdcooper) LOOP
-
+      
       -- Verificar se existe Cadastro de Linhas de Credito
       OPEN cr_craplcr( pr_cdcooper => pr_cdcooper
                       ,pr_cdlcremp => rw_crapepr.cdlcremp);
@@ -568,6 +588,74 @@ BEGIN
                      pr_saldoacu   => vr_saldoacu);
 
     END LOOP; /*  Fim do FOR --  Leitura dos resgates programados  */
+		
+		-- Empréstimos do BNDES
+		FOR rw_crapebn IN cr_crapebn(pr_cdcooper => pr_cdcooper) LOOP
+			
+      -- 90 dias / 3 meses
+			vr_idfina := 1;
+			vr_nrmes := 3;
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlaven30 + rw_crapebn.vlaven60 + rw_crapebn.vlaven90;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+				
+      -- 180 dias / 6 meses
+			vr_idfina := 2;
+			vr_nrmes := 6;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave180;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+
+      -- 360 dias / 12 meses
+			vr_idfina := 4;
+			vr_nrmes := 12;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave360;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			
+      -- 720 dias / 24 meses
+			vr_idfina := 5;
+			vr_nrmes := 24;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave720;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			
+      -- 1080 dias / 36 meses
+			vr_idfina := 6;
+			vr_nrmes := 36;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1080;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+
+      -- 1440 dias / 48 meses
+			vr_idfina := 7;
+			vr_nrmes := 48;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1440;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			
+      -- 1800 dias / 60 meses
+			vr_idfina := 8;
+			vr_nrmes := 60;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1800;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+
+      -- 5400 dias / 180 meses
+			vr_idfina := 18;
+			vr_nrmes := 180;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav5400;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+
+      -- >5400 dias / 181 meses
+			vr_idfina := 19;
+			vr_nrmes := 181;			
+			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
+			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlaa5400;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			
+		END LOOP;
 
     --Armazenar valores acumulados
     FOR vr_idx in 1..19 LOOP
@@ -867,4 +955,3 @@ BEGIN
   END;
 END;
 /
-
