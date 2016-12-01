@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 05/07/2016
+   Data    : Setembro/2009.                     Ultima atualizacao: 01/12/2016
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -163,11 +163,11 @@
                             da verifica_conta (Douglas - Chamado 406267)
                
 			   05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
-							juridicas
-			                (Adriano - SD 480514).
+							juridicas (Adriano - SD 480514).
 			
+			   01/12/2016 - Tratamento credito TED/TEC Transposul (Diego).
                
-                          #######################################################
+             #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
              #######################################################
@@ -1118,7 +1118,22 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                      NO-LOCK NO-ERROR.
                                         
              IF   NOT AVAIL crabcop   THEN
-                  ASSIGN aux_flgderro = TRUE.
+			      DO:
+				      /* Tratamento incorporacao TRANSULCRED */ 
+                      IF   INT(aux_AgCredtd) = 116 and
+					       TODAY < 03/21/2017 THEN   /* Data de corte */ 
+						   DO:
+                               ASSIGN aux_cdageinc = INT(aux_AgCredtd)
+                                      aux_AgCredtd = "0108"
+                                      aux_nrctainc = INT(aux_CtCredtd).
+
+							   /* Busca cooperativa de destino (nova) */ 
+                               FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
+							        NO-LOCK NO-ERROR.
+					       END.		    
+				      ELSE
+					       ASSIGN aux_flgderro = TRUE.
+				  END.
              
              IF  aux_flestcri > 0  THEN
                  DO:
@@ -1868,97 +1883,118 @@ PROCEDURE verifica_conta.
                END.
            *************************************************************/
 
+		   /* Incorporada Transulcred */ 
+		   IF   aux_cdageinc = 116  THEN
+		        DO:
+				    FIND craptco WHERE 
+                         craptco.cdcooper = val_cdcooper  AND
+                         craptco.nrctaant = val_nrdconta  AND
+                         craptco.cdcopant = 17  NO-LOCK NO-ERROR.
+         
+                   IF   AVAIL craptco THEN
+                        /*Nova conta*/
+                        ASSIGN aux_CtCredtd = STRING(craptco.nrdconta)
+						       val_nrdconta = craptco.nrdconta.
+                   ELSE
+                        DO:
+                            ASSIGN aux_codierro = 2 /*Conta invalida*/
+                                   aux_dsdehist = "Conta informada invalida.".
 
-           /* -----  VALIDA CONTA MIGRADA ------- */
+                            RETURN "NOK".
+                        END.
+			    END.
+           ELSE
+		        DO:
+				   /* -----  VALIDA CONTA MIGRADA ------- */
 
-           FIND craptco WHERE craptco.cdcopant = val_cdcooper AND
-                              craptco.nrctaant = val_nrdconta AND
-                              craptco.flgativo = TRUE         AND
-                              craptco.tpctatrf = 1   
-                              NO-LOCK NO-ERROR.
+				   FIND craptco WHERE craptco.cdcopant = val_cdcooper AND
+									  craptco.nrctaant = val_nrdconta AND
+									  craptco.flgativo = TRUE         AND
+									  craptco.tpctatrf = 1   
+									  NO-LOCK NO-ERROR.
             
-           IF  AVAIL(craptco) THEN
-           DO:  
-               /* Verificar se conta foi migrada ACREDI >> VIACREDI */
-               IF  craptco.cdcooper = 1 AND   /* VIACREDI */
-                   craptco.cdcopant = 2 THEN  /* ACREDI */
-               DO:
-                   ASSIGN aux_codierro = 1. /* Conta encerrada */
-                   RETURN "NOK".
-               END.
+				   IF  AVAIL(craptco) THEN
+				   DO:  
+					   /* Verificar se conta foi migrada ACREDI >> VIACREDI */
+					   IF  craptco.cdcooper = 1 AND   /* VIACREDI */
+						   craptco.cdcopant = 2 THEN  /* ACREDI */
+					   DO:
+						   ASSIGN aux_codierro = 1. /* Conta encerrada */
+						   RETURN "NOK".
+					   END.
  
-               /* Verificar se conta foi migrada VIACREDI >> ALTO VALE */
-               IF  craptco.cdcooper = 16 AND   /* ALTO VALE */
-                   craptco.cdcopant = 1  THEN  /* VIACREDI */
-               DO:
-                   ASSIGN aux_codierro = 1. /* Conta encerrada */
-                   RETURN "NOK".
-               END.
+					   /* Verificar se conta foi migrada VIACREDI >> ALTO VALE */
+					   IF  craptco.cdcooper = 16 AND   /* ALTO VALE */
+						   craptco.cdcopant = 1  THEN  /* VIACREDI */
+					   DO:
+						   ASSIGN aux_codierro = 1. /* Conta encerrada */
+						   RETURN "NOK".
+					   END.
 
-               /* validacao da conta migrada */
-               ASSIGN val_cdcooper = craptco.cdcooper
-                      val_nrdconta = craptco.nrdconta.
+					   /* validacao da conta migrada */
+					   ASSIGN val_cdcooper = craptco.cdcooper
+							  val_nrdconta = craptco.nrdconta.
 
-               /* Busca cooperativa onde a conta foi transferida */ 
-               FIND b-crapcop WHERE b-crapcop.cdcooper = val_cdcooper
-                                    NO-LOCK NO-ERROR.
+					   /* Busca cooperativa onde a conta foi transferida */ 
+					   FIND b-crapcop WHERE b-crapcop.cdcooper = val_cdcooper
+											NO-LOCK NO-ERROR.
 
-               IF  NOT AVAIL(b-crapcop) THEN
-               DO:
-                   ASSIGN aux_codierro = 99
-                          aux_dsdehist = "Cooperativa migrada nao encontrada.".
-                   RETURN "NOK".
-               END.
+					   IF  NOT AVAIL(b-crapcop) THEN
+					   DO:
+						   ASSIGN aux_codierro = 99
+								  aux_dsdehist = "Cooperativa migrada nao encontrada.".
+						   RETURN "NOK".
+					   END.
                
-               /* Busca data na cooperativa onde a conta foi transferida */ 
-               FIND b-crapdat WHERE b-crapdat.cdcooper = val_cdcooper
-                                    NO-LOCK NO-ERROR.
+					   /* Busca data na cooperativa onde a conta foi transferida */ 
+					   FIND b-crapdat WHERE b-crapdat.cdcooper = val_cdcooper
+											NO-LOCK NO-ERROR.
     
-               IF  NOT AVAIL(b-crapdat) THEN
-               DO:
-                   ASSIGN aux_codierro = 99
-                          aux_dsdehist = "Data da cooperativa migrada " +
-                                         "nao encontrada.".
-                   RETURN "NOK".
-               END.
+					   IF  NOT AVAIL(b-crapdat) THEN
+					   DO:
+						   ASSIGN aux_codierro = 99
+								  aux_dsdehist = "Data da cooperativa migrada " +
+												 "nao encontrada.".
+						   RETURN "NOK".
+					   END.
 
-               /* Verifica se conta transferida existe */ 
-               FIND crapass WHERE crapass.cdcooper = val_cdcooper  AND
-                                  crapass.nrdconta = val_nrdconta
-                                  NO-LOCK NO-ERROR.
+					   /* Verifica se conta transferida existe */ 
+					   FIND crapass WHERE crapass.cdcooper = val_cdcooper  AND
+										  crapass.nrdconta = val_nrdconta
+										  NO-LOCK NO-ERROR.
     
-               IF   NOT AVAIL crapass THEN
-               DO:
-                   ASSIGN aux_codierro = 99
-                           aux_dsdehist = "Conta migrada nao encontrada.".
-                   RETURN "NOK".
-               END.
+					   IF   NOT AVAIL crapass THEN
+					   DO:
+						   ASSIGN aux_codierro = 99
+								   aux_dsdehist = "Conta migrada nao encontrada.".
+						   RETURN "NOK".
+					   END.
 
-               ASSIGN val_tppessoa = IF crapass.inpessoa = 1 THEN "F" ELSE "J"
-                      val_nrcpfcgc = crapass.nrcpfcgc.
+					   ASSIGN val_tppessoa = IF crapass.inpessoa = 1 THEN "F" ELSE "J"
+							  val_nrcpfcgc = crapass.nrcpfcgc.
                
-               /* Verifica cpf da TED com o cpf da conta */
-               FIND FIRST b-crapttl WHERE b-crapttl.cdcooper = val_cdcooper
-                                      AND b-crapttl.nrdconta = val_nrdconta
-                                      AND b-crapttl.nrcpfcgc = val_nrcpfcgc
-                                      NO-LOCK NO-ERROR.
-               /* Se nao achar, verifica novamente na conta */ 
-               IF NOT AVAIL b-crapttl THEN
-               DO:
-                   FIND b-crapass WHERE b-crapass.cdcooper = val_cdcooper
-                                    AND b-crapass.nrdconta = val_nrdconta
-                                    AND b-crapass.nrcpfcgc = val_nrcpfcgc
-                                    NO-LOCK NO-ERROR.
-                   IF  NOT AVAIL b-crapass THEN
-                   DO:
-                       ASSIGN aux_codierro = 3. /*CPF divergente*/
-                       RETURN "NOK". 
-                   END.
-               END. 
-           END. /* IF avail craptco */
+					   /* Verifica cpf da TED com o cpf da conta */
+					   FIND FIRST b-crapttl WHERE b-crapttl.cdcooper = val_cdcooper
+											  AND b-crapttl.nrdconta = val_nrdconta
+											  AND b-crapttl.nrcpfcgc = val_nrcpfcgc
+											  NO-LOCK NO-ERROR.
+					   /* Se nao achar, verifica novamente na conta */ 
+					   IF NOT AVAIL b-crapttl THEN
+					   DO:
+						   FIND b-crapass WHERE b-crapass.cdcooper = val_cdcooper
+											AND b-crapass.nrdconta = val_nrdconta
+											AND b-crapass.nrcpfcgc = val_nrcpfcgc
+											NO-LOCK NO-ERROR.
+						   IF  NOT AVAIL b-crapass THEN
+						   DO:
+							   ASSIGN aux_codierro = 3. /*CPF divergente*/
+							   RETURN "NOK". 
+						   END.
+					   END. 
+				   END. /* IF avail craptco */
            
-           /*-----  FIM CONTA MIGRADA -------*/
-
+				   /*-----  FIM CONTA MIGRADA -------*/
+				END.
                
                /* Pessoa Fisica */
            IF   val_tppessoa = "F" OR CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg) THEN
