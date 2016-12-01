@@ -64,8 +64,7 @@ BEGIN
 							              no relatório 109. (Reinert)
 
                01/12/2016 - Ajuste para zerar a vr_tab_financ(vr_idfina).qtfinanc
-							              quando nao tem valor para 5400 dias / 181 meses.
-                            (Jaison/Diego - SD: 534498)
+							              quando nao tem valor. (Jaison/Diego - SD: 534498)
 
 ............................................................................. */
 
@@ -602,56 +601,64 @@ BEGIN
 			vr_nrmes := 3;
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlaven30 + rw_crapebn.vlaven60 + rw_crapebn.vlaven90;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN (rw_crapebn.vlaven30 + rw_crapebn.vlaven60 + rw_crapebn.vlaven90) > 0 THEN 1 ELSE 0 END);
 				
       -- 180 dias / 6 meses
 			vr_idfina := 2;
 			vr_nrmes := 6;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave180;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlave180 > 0 THEN 1 ELSE 0 END);
 
       -- 360 dias / 12 meses
 			vr_idfina := 4;
 			vr_nrmes := 12;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave360;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlave360 > 0 THEN 1 ELSE 0 END);
 			
       -- 720 dias / 24 meses
 			vr_idfina := 5;
 			vr_nrmes := 24;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlave720;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlave720 > 0 THEN 1 ELSE 0 END);
 			
       -- 1080 dias / 36 meses
 			vr_idfina := 6;
 			vr_nrmes := 36;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1080;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav1080 > 0 THEN 1 ELSE 0 END);
 
       -- 1440 dias / 48 meses
 			vr_idfina := 7;
 			vr_nrmes := 48;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1440;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav1440 > 0 THEN 1 ELSE 0 END);
 			
       -- 1800 dias / 60 meses
 			vr_idfina := 8;
 			vr_nrmes := 60;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav1800;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav1800 > 0 THEN 1 ELSE 0 END);
 
       -- 5400 dias / 180 meses
 			vr_idfina := 18;
 			vr_nrmes := 180;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlav5400;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlav5400 > 0 THEN 1 ELSE 0 END);
 
       -- >5400 dias / 181 meses
 			vr_idfina := 19;
