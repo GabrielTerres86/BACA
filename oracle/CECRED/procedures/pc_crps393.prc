@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Evandro
-       Data    : Junho/2004                     Ultima atualizacao: 16/01/2014
+       Data    : Junho/2004                     Ultima atualizacao: 01/12/2016
 
        Dados referentes ao programa:
 
@@ -38,6 +38,9 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 (Reinert)
                    16/01/2014 - Conversão Progress >> Oracle PLSQL (Tiago Castro - RKAM)
 
+                   01/12/2016 - Modificado a mensagem de PA NAO CADASTRADO na variavel
+                                vr_nmresage para '- PA NAO CADAS.' pois estourava
+                                o limite do campo abortando o programa (Tiago/Elton)
     ............................................................................ */
 
     DECLARE
@@ -210,7 +213,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
           FETCH cr_crapage INTO vr_nmresage;
           CLOSE cr_crapage;
           IF vr_nmresage IS NULL THEN
-            vr_nmresage := '- PA NAO CADASTRADO.';
+            vr_nmresage := '- PA NAO CADAS.';
           END IF;
           vr_nmarqim := '/crrl352_'||lpad(vr_tab_relato(vr_des_chave).cdagenci,3, '0')||'.lst';
           pc_escreve_clob(vr_clobxml,'<pac cdagenci="'||vr_tab_relato(vr_des_chave).cdagenci||'" nmresage="'||vr_nmresage||'">');
@@ -322,5 +325,3 @@ CREATE OR REPLACE PROCEDURE CECRED.
     END;
 
   END pc_crps393;
-/
-
