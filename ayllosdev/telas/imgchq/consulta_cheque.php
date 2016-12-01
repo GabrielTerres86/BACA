@@ -1,9 +1,8 @@
 <?php
-
     //*******************************************************************************************************************//
     //*** Fonte: consulta_cheque.php                                                                                  ***//
     //*** Autor: Fabrício                                                                                             ***//
-    //*** Data : Junho/2012                   Última Alteração: 15/03/2016                                            ***//
+    //*** Data : Junho/2012                   Última Alteração: 27/07/2016                                            ***//
     //***                                                                                                             ***//
     //*** Objetivo  : Consultar se o cheque ja foi compensado.                                                        ***//
     //***                                                                                                             ***//
@@ -20,6 +19,8 @@
     //***             15/03/2016 - Projeto 316 - Efetuar download das imagens no arquivo zip (Guilherme/SUPERO)       ***//
 	//***                                                                                                             ***//
 	//***             13/07/2016 - Alteração de link de acesso das imagens para Curitiba (Elton)                      ***//
+	//***                                                                                                             ***//
+	//***             27/07/2016 - Correcao da forma de recuperacao dos indices do post. SD 479874 (Carlos R.)		  ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -44,14 +45,14 @@
             exibeErro($msgError);
         }
 
-        $cdcooper = $_POST["cdcooper"];
-        $dtcompen = $_POST["dtcompen"];
-        $cdcmpchq = $_POST["cdcmpchq"];
-        $cdbanchq = $_POST["cdbanchq"];
-        $cdagechq = $_POST["cdagechq"];
-        $nrctachq = $_POST["nrctachq"];
-        $nrcheque = $_POST["nrcheque"];
-        $tpremess = $_POST["tpremess"];
+        $cdcooper = ( isset($_POST["cdcooper"]) ) ? $_POST["cdcooper"] : '';
+        $dtcompen = ( isset($_POST["dtcompen"]) ) ? $_POST["dtcompen"] : '';
+        $cdcmpchq = ( isset($_POST["cdcmpchq"]) ) ? $_POST["cdcmpchq"] : '';
+        $cdbanchq = ( isset($_POST["cdbanchq"]) ) ? $_POST["cdbanchq"] : '';
+        $cdagechq = ( isset($_POST["cdagechq"]) ) ? $_POST["cdagechq"] : '';
+        $nrctachq = ( isset($_POST["nrctachq"]) ) ? $_POST["nrctachq"] : '';
+        $nrcheque = ( isset($_POST["nrcheque"]) ) ? $_POST["nrcheque"] : '';
+        $tpremess = ( isset($_POST["tpremess"]) ) ? $_POST["tpremess"] : '';
 		
         // Monta o xml de requisição
         $xmlConsultaCheque  = "";
@@ -82,15 +83,15 @@
         $xmlObjCheque = getObjectXML($xmlResult);
 			
         // Se ocorrer um erro, mostra crítica
-        if (strtoupper($xmlObjCheque->roottag->tags[0]->name) == "ERRO") {
+        if (isset($xmlObjCheque->roottag->tags[0]->name) && strtoupper($xmlObjCheque->roottag->tags[0]->name) == "ERRO") {
             exibeErro($xmlObjCheque->roottag->tags[0]->tags[0]->tags[4]->cdata);
         }
 
-        $dsdocmc7   = $xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"];
-        $cdagechq   = $xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"];
-        $nmrescop   = $xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"];
-        $cdcmpchq   = $xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"];
-        $cdtpddoc   = $xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"];
+        $dsdocmc7   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["DSDOCMC7"] : '';
+        $cdagechq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDAGECHQ"] : '';
+        $nmrescop   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["NMRESCOP"] : '';
+        $cdcmpchq   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDCMPCHQ"] : '';
+        $cdtpddoc   = ( isset($xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"]) ) ? $xmlObjCheque->roottag->tags[0]->attributes["CDTPDDOC"] : '';
 
         if ($dsdocmc7 == ""){
             echo "bGerarPdf.hide();bSalvarImgs.hide();";
@@ -102,7 +103,7 @@
             exibeErro("Cheque compensado apenas pelo arquivo l&oacute;gico, n&atilde;o h&aacute; imagem!");
         }
 
-        $DATA = split('/', $dtcompen);
+        $DATA = explode('/', $dtcompen);
         $DATA = $DATA[2].'-'.$DATA[1].'-'.$DATA[0];
 
         $AGENCIAC = str_pad($cdagechq, 4, '0', STR_PAD_LEFT);
@@ -267,15 +268,15 @@
     } else {
         // GerarPDF = TRUE
 
-        $nmrescop = $_POST["nmrescop"];
-        $tpremess = $_POST["tpremess"];
-        $cdcmpchq = $_POST["cdcmpchq"];
-        $cdbanchq = $_POST["cdbanchq"];
-        $cdagechq = $_POST["cdagechq"];
-        $nrctachq = $_POST["nrctachq"];
-        $nrcheque = $_POST["nrcheque"];
-        $dsdocmc7 = $_POST["dsdocmc7"];
-        $dtcompen = $_POST["dtcompen"];
+        $nmrescop = ( isset($_POST["nmrescop"]) ) ? $_POST["nmrescop"] : '';
+        $tpremess = ( isset($_POST["tpremess"]) ) ? $_POST["tpremess"] : '';
+        $cdcmpchq = ( isset($_POST["cdcmpchq"]) ) ? $_POST["cdcmpchq"] : '';
+        $cdbanchq = ( isset($_POST["cdbanchq"]) ) ? $_POST["cdbanchq"] : '';
+        $cdagechq = ( isset($_POST["cdagechq"]) ) ? $_POST["cdagechq"] : '';
+        $nrctachq = ( isset($_POST["nrctachq"]) ) ? $_POST["nrctachq"] : '';
+        $nrcheque = ( isset($_POST["nrcheque"]) ) ? $_POST["nrcheque"] : '';
+        $dsdocmc7 = ( isset($_POST["dsdocmc7"]) ) ? $_POST["dsdocmc7"] : '';
+        $dtcompen = ( isset($_POST["dtcompen"]) ) ? $_POST["dtcompen"] : '';
 
         $lstcmc7[0] = substr($dsdocmc7, 0, strpos($dsdocmc7, ","));
         $lstcmc7[1] = substr($dsdocmc7, strpos($dsdocmc7, ",") + 1, strlen($dsdocmc7) - strpos($dsdocmc7, ","));
