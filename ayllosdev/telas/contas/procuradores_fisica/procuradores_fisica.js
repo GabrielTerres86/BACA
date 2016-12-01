@@ -10,6 +10,7 @@
  *				  25/09/2013 - Alteração da função de salvar poderes (Jean Michel).
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *				  25/08/2016 - Inclusao da validaResponsaveis e alteração da controlaOperacaoPoderes, SD 510426(Jean Michel).
+ *				  01/12/2016 - Inclusão de tratamento para pessoa física e jurídica na function validaResponsaveis, SD.564025 (Jean Michel).
  */
 
 var nrcpfcgc = '';
@@ -1335,7 +1336,7 @@ function controlaLayoutPoder() {
 
 function controlaOperacaoPoderes(operacao) {
 
-    switch (operacao) {
+	switch (operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
@@ -1364,16 +1365,17 @@ function validaResponsaveis() {
         }
 
     });
-
+    
     $.ajax({
         type: 'POST',
         dataType: 'html',
         url: UrlSite + 'includes/procuradores/valida_responsaveis.php',
         data: {
             nrdconta: nrdconta,
-            nrcpfcgc: nrcpfcgc_proc,
+            nrcpfcgc: nrcpfcgc,
             nrdctato: nrdctato,
             flgconju: flgconju,
+            inpessoa: 1,
             redirect: 'script_ajax'
         },
         success: function (response) {
