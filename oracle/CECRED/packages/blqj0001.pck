@@ -135,6 +135,7 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0001 AS
                                      ,pr_dsinfdes   IN VARCHAR2
                                      ,pr_fldestrf   IN BOOLEAN   
                                      ,pr_tpcooperad IN NUMBER     DEFAULT 0
+                                     ,pr_cdmodali   IN NUMBER     DEFAULT 0
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro);
   
 END BLQJ0001;
@@ -1795,6 +1796,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                       ,pr_dsinfdes   => pr_dsinfdes
                                       ,pr_fldestrf   => vr_fldestrf       
                                       ,pr_tpcooperad => NVL(pr_tpcooperad,0)
+                                      ,pr_cdmodali   => 0 -- Processar todas as modalidades
                                       ,pr_tab_erro   => vr_tab_erro);
    
     -- Se houve o retorno de erro
@@ -1848,6 +1850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                      ,pr_dsinfdes   IN VARCHAR2
                                      ,pr_fldestrf   IN BOOLEAN 
                                      ,pr_tpcooperad IN NUMBER     DEFAULT 0
+                                     ,pr_cdmodali   IN NUMBER     DEFAULT 0
                                      ,pr_tab_erro   IN OUT GENE0001.typ_tab_erro) IS  --> Retorno de erro   
     
     -- CURSORES
@@ -1883,6 +1886,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
          AND ((blj.nrcpfcgc = pr_nrcpfcgc AND pr_tpcooperad = 0) 
            OR (blj.nrdconta = pr_nrctacon AND pr_tpcooperad = 1) )
          AND blj.dtblqfim IS NULL
+         AND (blj.cdmodali = pr_cdmodali OR NVL(pr_cdmodali,0) = 0)
       ORDER BY blj.cdcooper
              , blj.nroficio
              , blj.nrcpfcgc

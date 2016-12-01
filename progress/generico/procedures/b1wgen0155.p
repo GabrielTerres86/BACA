@@ -1100,6 +1100,7 @@ PROCEDURE consulta-bloqueio-jud:
         END.
 
     /* Operacao Desbloqueio */
+    /* P341-Automatizaçao BACENJUD - Renato Darosci
     IF  par_operacao = "D" THEN
         DO:   
             FIND FIRST crapblj WHERE crapblj.cdcooper = par_cdcooper AND
@@ -1123,7 +1124,7 @@ PROCEDURE consulta-bloqueio-jud:
                     
                     RETURN "NOK".
                 END.
-        END.
+        END.*/
     
     ASSIGN aux_query = "FOR EACH crapblj NO-LOCK WHERE " +
                        "crapblj.cdcooper = " + STRING(par_cdcooper) + " AND " +
