@@ -22,10 +22,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --				 	       o número do ISPB vier nulo e incluir a verificação de senha
   --						   para contas com assinatura conjunta
   --						  (Adriano - M117).
-	--
-	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+  --
+  --              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
   --						   InternetBanking (Projeto 338 - Lucas Lunelli)
-	--
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   ---------------------- TEMPTABLE ----------------------------
@@ -205,7 +205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 19/09/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 11/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -245,9 +245,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   --
   --             30/08/2016 - Criar rotina para impressão de resgate de aplicação 
   --                          pc_impressao_resg_aplica (Lucas Ranghetti #490678)
-	--              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+  --              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
   --						   InternetBanking (Projeto 338 - Lucas Lunelli)
-	--
+  --
+  --	         11/11/2016 - Ajuste para efetuar log no arquivo internal_exception.log
+  --	                      (Adriano - SD 552561)
   ---------------------------------------------------------------------------------------------------------------------------
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -3239,7 +3241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --  Sistema  : Rotinas para validacao de inclusao de contas para transferencia
     --  Sigla    : CRED
     --  Autor    : Jean Michel
-    --  Data     : Fevereiro/2016.                   Ultima atualizacao: 11/02/2016
+    --  Data     : Fevereiro/2016.                   Ultima atualizacao: 11/11/2016
     --
     --  Dados referentes ao programa:
     --
@@ -3248,6 +3250,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --
     --   Alteracoes: 11/02/2016 - Conversão Progress >>> PL/SQL (Jean Michel)
     --
+	--  		     11/11/2016 - Ajuste para efetuar log no arquivo internal_exception.log
+  	--	                          (Adriano - SD 552561)
     -- .............................................................................
 
     -- CURSORES
@@ -3749,6 +3753,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         COMMIT;
 
       WHEN OTHERS THEN
+
+	    --Gera log
+	    btch0001.pc_log_internal_exception(pr_cdcooper => pr_cdcooper);
+
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro nao tratado na CADA0002.pc_val_inclui_conta_transf: ' || SQLERRM;
