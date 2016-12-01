@@ -3437,15 +3437,7 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 23.
                LEAVE Valida.
             END.
-        
-        IF  NOT CAN-DO("1,2,3,4,6",STRING(par_cdgraupr,"9")) AND 
-            par_idseqttl <> 1 THEN
-            DO:
-               ASSIGN 
-                   par_nmdcampo = "cdgraupr"
-                   aux_cdcritic = 23.
-               LEAVE Valida.
-            END.
+                
         
         /* Validar o cpf */
         IF  par_nrcpfcgc = "" THEN
