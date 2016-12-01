@@ -13,8 +13,10 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                          e possibilitar gerar o relatorio em branco.
                          PRJ229 - Melhorias OQS (Odirlei-AMcom)             
 
-			09/11/2016 - inclusao de LOG. (Jean Michel)
+            09/11/2016 - inclusao de LOG. (Jean Michel)
 
+            30/11/2016 - Melhoria de performance de array, SD 567771 (Jean Michel).
+            
 ......................................................................... */
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -164,15 +166,6 @@ ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdeixtem
 /* _UIB-PREPROCESSOR-BLOCK-END */
 &ANALYZE-RESUME
 
-
-
-/* ***********************  Control Definitions  ********************** */
-
-
-/* Definitions of the field level widgets                               */
-
-/* ************************  Frame Definitions  *********************** */
-
 DEFINE FRAME Web-Frame
      ab_unmap.aux_cdagenci AT ROW 1 COL 1 HELP
           "" NO-LABEL
@@ -247,41 +240,7 @@ DEFINE FRAME Web-Frame
          AT COL 1 ROW 1
          SIZE 71.4 BY 24.71.
 
-
-/* *********************** Procedure Settings ************************ */
-
-&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
-/* Settings for THIS-PROCEDURE
-   Type: Web-Object
-   Allow: Query
-   Frames: 1
-   Add Fields to: Neither
-   Editing: Special-Events-Only
-   Events: web.output,web.input
-   Other Settings: COMPILE
-   Temp-Tables and Buffers:
-      TABLE: ab_unmap W "?" ?  
-      ADDITIONAL-FIELDS:
-          FIELD aux_cdagenci AS CHARACTER 
-          FIELD aux_cdcooper AS CHARACTER 
-          FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_cdevento AS CHARACTER 
-          FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_dtanoage AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
-          FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
-          FIELD cdagenci AS CHARACTER FORMAT "X(256)":U 
-          FIELD cdcooper AS CHARACTER FORMAT "X(256)":U 
-          FIELD cdeixtem AS CHARACTER FORMAT "X(256)":U 
-      END-FIELDS.
-   END-TABLES.
- */
 &ANALYZE-RESUME _END-PROCEDURE-SETTINGS
-
-/* *************************  Create Window  ************************** */
 
 &ANALYZE-SUSPEND _CREATE-WINDOW
 /* DESIGN Window definition (used by the UIB) 
@@ -293,84 +252,25 @@ DEFINE FRAME Web-Frame
 &ANALYZE-RESUME
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB w-html 
-/* *********************** Included-Libraries ************************* */
 
 {src/web2/html-map.i}
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-
-
-
-/* ***********  Runtime Attributes and AppBuilder Settings  *********** */
-
 &ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
-/* SETTINGS FOR WINDOW w-html
-  VISIBLE,,RUN-PERSISTENT                                               */
-/* SETTINGS FOR FRAME Web-Frame
-   UNDERLINE                                                            */
-/* SETTINGS FOR SELECTION-LIST ab_unmap.aux_cdagenci IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR SELECTION-LIST ab_unmap.aux_cdcooper IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_cddopcao IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR SELECTION-LIST ab_unmap.aux_cdevento IN FRAME Web-Frame
-   EXP-LABEL EXP-FORMAT EXP-HELP                                        */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_dsendurl IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_dsretorn IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_dtanoage IN FRAME Web-Frame
-   ALIGN-L                                                              */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_idevento IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_lspermis IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_nrdrowid IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.aux_stdopcao IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN ab_unmap.cdagenci IN FRAME Web-Frame
-   ALIGN-L                                                              */
-/* SETTINGS FOR FILL-IN ab_unmap.cdcooper IN FRAME Web-Frame
-   ALIGN-L                                                              */
-/* SETTINGS FOR FILL-IN ab_unmap.cdeixtem IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL EXP-FORMAT EXP-HELP                                */
-/* SETTINGS FOR FILL-IN crapidp.idevento IN FRAME Web-Frame
-   ALIGN-L EXP-LABEL                                                    */
-/* _RUN-TIME-ATTRIBUTES-END */
+
 &ANALYZE-RESUME
-
- 
-
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html 
 
-
-/* ************************  Main Code Block  ************************* */
-
-/* Standard Main Block that runs adm-create-objects, initializeObject 
- * and process-web-request.
- * The bulk of the web processing is in the Procedure process-web-request
- * elsewhere in this Web object.
- */
 {src/web2/template/hmapmain.i}
 
-/* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-
-
-/* **********************  Internal Procedures  *********************** */
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEventos w-html 
 PROCEDURE CriaListaEventos :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+
     DEFINE VARIABLE aux_tppartic AS CHAR NO-UNDO.
     DEFINE VARIABLE aux_flgcompr AS CHAR NO-UNDO.
     DEFINE VARIABLE aux_qtmaxtur AS CHAR NO-UNDO.
@@ -379,6 +279,9 @@ PROCEDURE CriaListaEventos :
     DEFINE VARIABLE aux_nrseqeve AS INT  NO-UNDO.
     DEFINE VARIABLE aux_nrdturma AS INT  NO-UNDO.
     DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
+    DEFINE VARIABLE aux_contador AS INT INIT 0 NO-UNDO.
+    
+    RUN RodaJavaScript("var mevento = new Array();").
     
     FOR EACH crapeap WHERE (crapeap.idevento = INT(ab_unmap.aux_idevento)   AND
 						    crapeap.cdcooper = INT(ab_unmap.cdcooper)       AND
@@ -468,35 +371,30 @@ PROCEDURE CriaListaEventos :
         IF  crapadp.dshroeve <> "" THEN
             aux_nmevento = aux_nmevento + " - " + crapadp.dshroeve.
                                                                            
-        IF  vetorevento = "" THEN
-            vetorevento = "~{" +
-                 "cdagenci:'" +  STRING(INT(ab_unmap.cdagenci)) + "'," + 
-                 "cdcooper:'" +  STRING(crapeap.cdcooper)       + "'," +
-                 "cdevento:'" +  STRING(crapeap.cdevento)       + "'," +
-                 "nmevento:'" +  STRING(aux_nmevento)           + "'," +
-                 "idstaeve:'" +  STRING(crapadp.idstaeve)       + "'," +
-                 "flgcompr:'" +  STRING(aux_flgcompr)           + "'," +
-                 "qtmaxtur:'" +  STRING(aux_qtmaxtur)           + "'," +
-                 "nrinscri:'" +  STRING(aux_nrinscri)           + "'," +
-                 "nrconfir:'" +  STRING(aux_nrconfir)           + "'," +
-                 "nrseqeve:'" +  STRING(aux_nrseqeve)           + "'," +
-                 "tppartic:'" +  STRING(aux_tppartic)           + "'" + "~}".
-        ELSE
-            vetorevento = vetorevento + "," + "~{" +
-                 "cdagenci:'" +  STRING(INT(ab_unmap.cdagenci)) + "'," + 
-                 "cdcooper:'" +  STRING(crapeap.cdcooper)       + "'," +
-                 "cdevento:'" +  STRING(crapeap.cdevento)       + "'," +
-                 "nmevento:'" +  STRING(aux_nmevento)           + "'," +
-                 "idstaeve:'" +  STRING(crapadp.idstaeve)       + "'," +
-                 "flgcompr:'" +  STRING(aux_flgcompr)           + "'," +
-                 "qtmaxtur:'" +  STRING(aux_qtmaxtur)           + "'," +
-                 "nrinscri:'" +  STRING(aux_nrinscri)           + "'," +
-                 "nrconfir:'" +  STRING(aux_nrconfir)           + "'," +
-                 "nrseqeve:'" +  STRING(aux_nrseqeve)           + "'," +
-                 "tppartic:'" +  STRING(aux_tppartic)           + "'" + "~}".
+        IF TRIM(vetorevento) <> "" AND TRIM(vetorevento) <> ? THEN
+          ASSIGN vetorevento = vetorevento + ",".
+          
+        ASSIGN aux_contador = aux_contador + 1
+               vetorevento = vetorevento + "~{cdagenci:'" + STRING(INT(ab_unmap.cdagenci))
+                                         + "',cdcooper:'" + STRING(crapeap.cdcooper)      
+                                         + "',cdevento:'" + STRING(crapeap.cdevento)      
+                                         + "',nmevento:'" + STRING(aux_nmevento)          
+                                         + "',idstaeve:'" + STRING(crapadp.idstaeve)      
+                                         + "',flgcompr:'" + STRING(aux_flgcompr)          
+                                         + "',qtmaxtur:'" + STRING(aux_qtmaxtur)          
+                                         + "',nrinscri:'" + STRING(aux_nrinscri)          
+                                         + "',nrconfir:'" + STRING(aux_nrconfir)          
+                                         + "',nrseqeve:'" + STRING(aux_nrseqeve)          
+                                         + "',tppartic:'" + STRING(aux_tppartic) + "'~}".
+        If aux_contador = 10 Then
+          DO:
+            RUN RodaJavaScript("mevento.push(" + vetorevento + ");").
+            ASSIGN vetorevento = ""
+                   aux_contador = 0.
+          END.
     END.
     
-    RUN RodaJavaScript("var mevento=new Array();mevento=["  + vetorevento + "]").
+    RUN RodaJavaScript("mevento.push(" + vetorevento + ");").
     
 END PROCEDURE.
 
@@ -986,4 +884,3 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-
