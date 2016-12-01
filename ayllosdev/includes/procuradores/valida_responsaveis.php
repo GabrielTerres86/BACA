@@ -7,8 +7,6 @@
 	 *
 	 * ALTERACOES   : 31/08/2016 - Alteracao da procedure para parametro de quantidade minima de ass. conjunta,
 	 *							   SD.514239 (Jean Michel). 
-	 *
-	 *				  01/12/2016 - Inclusão de tratamento para pessoa física e jurídica, SD.564025 (Jean Michel).
 	 */
 	
 	session_start();
@@ -22,8 +20,7 @@
 	$nrdctato = (isset($_POST['nrdctato'])) ? $_POST['nrdctato'] : '';
 	$flgconju = (isset($_POST['flgconju'])) ? $_POST['flgconju'] : '';
 	$qtminast = (isset($_POST['qtminast'])) ? $_POST['qtminast'] : '0';
-	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] :  2;
-
+	
 	$xml  = "<Root>";
 	$xml .= "	<Cabecalho>";
 	$xml .= "		<Bo>b1wgen0058.p</Bo>";
@@ -60,17 +57,15 @@
 		}else{
 			echo 'showConfirmacao("Essa conta possui transações pendentes de aprovação.<br><br>Se o poder de assinatura conjunta for modificado essas transações<br>não poderão ser aprovadas e ficarão pendentes até o prazo de expiração.<br><br>Confirma a alteração no poder de assinatura conjunta?","Confirma&ccedil;&atilde;o - Ayllos","salvarRepresentantes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}*/
-		if($inpessoa == 2){
-			if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 0){
-				echo 'showConfirmacao("H&aacute; transa&ccedil;&otilde;es pendentes de aprova&ccedil;&atilde;o. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
-			}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 1){
-				echo 'showConfirmacao("Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
-			}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 2){
-				echo 'showConfirmacao("Revise a senha de acesso a Conta Online do novo respons&aacute;vel pela assinatura conjunta. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
-			}
-		}else if($inpessoa == 1){
+		
+		if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 0){
+			echo 'showConfirmacao("H&aacute; transa&ccedil;&otilde;es pendentes de aprova&ccedil;&atilde;o. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+		}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 1){
 			echo 'showConfirmacao("Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
+		}else if($xmlObj->roottag->tags[0]->attributes['FLGPENDE'] == 2){
+			echo 'showConfirmacao("Revise a senha de acesso a Conta Online do novo respons&aacute;vel pela assinatura conjunta. Deseja confirmar a altera&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","salvarPoderes()","blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));","sim.gif","nao.gif");';
 		}
+		
 	}
 	
 ?>
