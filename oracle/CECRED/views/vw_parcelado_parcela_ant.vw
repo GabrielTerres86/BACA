@@ -43,6 +43,7 @@ from
   craptdb tdb
 where
   ass.cdcooper = cop.cdcooper
+  and cop.flgativo = 1
   and ass.cdcooper = bdt.cdcooper
   and ass.nrdconta = bdt.nrdconta
   and bdt.cdcooper = tdb.cdcooper
@@ -118,6 +119,7 @@ from
   crapcdb cdb --cheques do Bordero
 where
   ass.cdcooper = cop.cdcooper
+  and cop.flgativo = 1
   and ass.cdcooper = bdc.cdcooper
   and ass.nrdconta = bdc.nrdconta
   and bdc.cdcooper = cdb.cdcooper
@@ -183,6 +185,7 @@ from
 	crappep pep
 where
 	ass.cdcooper = cop.cdcooper
+	and cop.flgativo = 1
 	and ass.cdcooper = epr.cdcooper
 	and ass.nrdconta = epr.nrdconta
 	and epr.cdcooper = pep.cdcooper

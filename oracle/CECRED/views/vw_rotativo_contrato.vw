@@ -37,6 +37,7 @@ from
   crapcop cop
 where
   cop.cdcooper = ass.cdcooper
+  and cop.flgativo = 1
   and ris.cdcooper = ass.cdcooper
   and ris.nrdconta = ass.nrdconta
   and ass.incadpos = 2
@@ -78,6 +79,7 @@ from
   crapris ris
 WHERE
   cop.cdcooper = ass.cdcooper
+  and cop.flgativo = 1
   and lim.cdcooper = ass.cdcooper
   and lim.nrdconta = ass.nrdconta --101 não tem contrato
   and ass.incadpos = 2

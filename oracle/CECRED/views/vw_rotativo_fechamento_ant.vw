@@ -17,6 +17,7 @@ from
   crapris ris
 where
   cop.cdcooper = ass.cdcooper
+  and cop.flgativo = 1
   and ris.cdcooper = ass.cdcooper
   and ris.nrdconta = ass.nrdconta
   and ass.incadpos = 2 --autorizado
@@ -44,6 +45,7 @@ from
   crapris ris
 WHERE
   cop.cdcooper = ass.cdcooper
+  and cop.flgativo = 1
   AND ris.cdcooper = ass.cdcooper
   and ris.nrdconta = ass.nrdconta
   and ass.incadpos = 2
