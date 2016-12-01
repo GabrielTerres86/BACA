@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/04/2016
+    Data    : Maio/2010                   Ultima atualizacao: 11/11/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -125,7 +125,7 @@
                              
                 23/10/2014 - Removida a crítica exigindo cadastro de contato
                              de acordo com SD.205276 - Lunelli
-
+                             
                 19/12/2014 - Ajuste na rotina Grava_Dados para tratar contas
                              de beneficiarios com conta migrada - 
                              SD 228692 (Adriano).
@@ -151,14 +151,14 @@
                 11/08/2015 - Gravacao do novo campo indserma na tabela crapass
                              correspondente a tela CONTAS, OPCAO Conta Corrente                             
                              (Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi)
-                             
+                  
 				27/10/2015 - Inclusao de novo campo para a tela CONTAS,
 							 crapass.idastcjt (Jean Michel) 
                              
                 07/12/2015 - Ajuste para deixar alterar normalmente o PA de
                              cooperados que possuem beneficios com status
                              de "Aguardando atualização."
-                             (Adriano).
+                             (Adriano).     
                 
                 17/12/2015 - Remocao da pendencia do documento de ficha cadastral
                              no DigiDoc conforme solicitado na melhoria 114.  
@@ -166,7 +166,7 @@
                              
                 22/12/2015 - Ajuste na data de abertura da conta
                              Chamado 373200 (Heitor - RKAM)
-                                                                        
+
 				01/04/2016 - Retiradas consistências para exclusão de ITG na
 							 Credimilsul - SD 417127 (Rodrigo)
 
@@ -185,6 +185,11 @@
 
 	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
 				             estiver em execucao (Andrino - Chamado 495821)
+                     
+                11/11/2016 - #511290 Correcao de como o sistema verifica se eh
+                             abertura de conta ou mudanca do tipo da mesma, 
+                             para solicitar talao de cheque para o cooperado 
+                             (Carlos)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -763,8 +768,8 @@ PROCEDURE Valida_Dados:
                              OUTPUT par_msgconfi,
                              OUTPUT aux_cdcritic,
 													 OUTPUT aux_dscritic).
-						END.
                     END.
+            END.
             END.
             WHEN "X" THEN DO: /* EXCLUI TITULARES */
                 RUN Valida_Dados_Exclui
@@ -1839,7 +1844,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_flgrestr AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
 	DEF  INPUT PARAM par_idastcjt AS INTE							NO-UNDO.
-
+	
     DEF OUTPUT PARAM log_tpatlcad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM log_msgatcad AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM log_chavealt AS CHAR                           NO-UNDO.
@@ -2579,7 +2584,7 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_flgrestr AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
 	DEF  INPUT PARAM par_idastcjt AS INTE							NO-UNDO.
-
+	
     DEF PARAM BUFFER crabass FOR crapass.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -2618,56 +2623,58 @@ PROCEDURE Grava_Dados_Altera:
           IF crabass.dtabtcct = ? THEN
             ASSIGN crabass.dtabtcct = par_dtmvtolt.
 
-        IF par_cdtipcta <> crabass.cdtipcta   THEN
-           DO:
+        /* Se estiver alterando o tipo de conta ou estiver cadastrando ... */
+        IF par_cdtipcta <> crabass.cdtipcta   OR
+           crabass.dtinsori = par_dtmvtolt    THEN
+           DO:  
                 /* Removido a criação da doc conforme solicitado no chamado 372880*/
                 /*ContadorDoc7: DO aux_contador = 1 TO 10:
-    
-                    FIND crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                       crapdoc.nrdconta = par_nrdconta AND
-                                       crapdoc.tpdocmto = 7            AND
-                                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = 1
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-    
-                    IF NOT AVAILABLE crapdoc THEN
-                        DO:
+                
+                   FIND crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
+                                      crapdoc.nrdconta = par_nrdconta AND
+                                      crapdoc.tpdocmto = 7            AND
+                                      crapdoc.dtmvtolt = par_dtmvtolt AND
+                                      crapdoc.idseqttl = 1
+                                      EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                      IF NOT AVAILABLE crapdoc THEN
+                         DO:
                             IF LOCKED(crapdoc) THEN
-                                DO:
-                                    IF aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            LEAVE ContadorDoc7.
-                                        END.
-                                    ELSE 
-                                        DO: 
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT ContadorDoc7.
-                                        END.
-                                END.
+                               DO:
+                                  IF aux_contador = 10 THEN
+                                     DO:
+                                        ASSIGN aux_cdcritic = 341.
+                                        LEAVE ContadorDoc7.
+                                      END.
+                                  ELSE 
+                                     DO: 
+                                        PAUSE 1 NO-MESSAGE.
+                                        NEXT ContadorDoc7.
+                                     END.
+                               END.
                             ELSE
-                                DO:
-                                    CREATE crapdoc.
-                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                           crapdoc.nrdconta = par_nrdconta
-                                           crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                           crapdoc.tpdocmto = 7
-                                           crapdoc.idseqttl = 1.
-                                    VALIDATE crapdoc.
-                                            
-                                    LEAVE ContadorDoc7.
-                                END.
-                        END.
-                    ELSE
-                        DO:
+                               DO:
+                                  CREATE crapdoc.
+                                  ASSIGN crapdoc.cdcooper = par_cdcooper
+                                         crapdoc.nrdconta = par_nrdconta
+                                         crapdoc.flgdigit = FALSE
+                                         crapdoc.dtmvtolt = par_dtmvtolt
+                                         crapdoc.tpdocmto = 7
+                                         crapdoc.idseqttl = 1.
+                                  VALIDATE crapdoc.
+                                                
+                                  LEAVE ContadorDoc7.
+                               END.
+                         END.
+                      ELSE
+                         DO:
                             ASSIGN crapdoc.flgdigit = FALSE
                                    crapdoc.dtmvtolt = par_dtmvtolt.
-
+    
                             LEAVE ContadorDoc7.
-                        END.
+                         END.                    
                 END.*/
-
+                 
 
               /* Mudando para Conta Integracao */
               IF par_cdtipcta >= 12 AND par_cdtipcta <= 18  THEN
