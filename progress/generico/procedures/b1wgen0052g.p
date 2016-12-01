@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052g.p                  
     Autor(a): Jose Luis Marchezoni (DB1 Informatica)
-    Data    : Junho/2010                      Ultima atualizacao: 07/06/2016
+    Data    : Junho/2010                      Ultima atualizacao: 01/12/2016
   
     Dados referentes ao programa:
   
@@ -140,9 +140,16 @@
                 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                              solicitado no chamado 402159 (Kelvin).
 
+                12/05/2016 - Ajustado rotina Grava_Dados para verificar situaçao
+                             do novo associado na cabine JBNF apos gerar a nova
+                             matricula PRJ318. (Odirlei-AMcom)
+
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				
+                15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
+                             (Lucas Ranghetti #484923)
+
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
 .............................................................................*/
                                                      
 
@@ -383,6 +390,33 @@ PROCEDURE Grava_Dados :
                        IF  RETURN-VALUE <> "OK" THEN
                            UNDO Grava, LEAVE Grava.
 
+                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+                       RUN STORED-PROCEDURE pc_grava_tbchq_param_conta 
+                            aux_handproc = PROC-HANDLE NO-ERROR
+                                             (INPUT "I",  /* Opcao, Incluir*/
+                                              INPUT par_cdcooper,  /* Cooperativa */
+                                              INPUT par_nrdconta,  /* Numero da Conta */
+                                              INPUT 1,  /* Flag devolucao automatica/ 1=sim/0=nao */
+                                              INPUT par_cdoperad,  /* Operador */  
+                                              INPUT " ", /* Operador Coordenador */
+                                             OUTPUT "").
+
+                        CLOSE STORED-PROC pc_grava_tbchq_param_conta 
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_dscritic = ""                         
+                               aux_dscritic = pc_grava_tbchq_param_conta.pr_dscritic 
+                                              WHEN pc_grava_tbchq_param_conta.pr_dscritic <> ?.
+                            
+                        IF  aux_dscritic <> ""  THEN
+                            DO:  
+                                ASSIGN par_dscritic = aux_dscritic.
+                                UNDO Grava, LEAVE Grava.
+                            END.
+                       
                        /* Parcelamento do Capital - 'fontes/matric_pc.p' */
                        IF  par_inpessoa <> 3  THEN
                            DO:
@@ -407,6 +441,14 @@ PROCEDURE Grava_Dados :
                               IF  RETURN-VALUE <> "OK" THEN
                                   UNDO Grava, LEAVE Grava.
                            END.
+                    
+                       /* Verificar situacao do cpf/cnpj na cabine e enviar e-mail*/
+                       RUN verifica_sit_JDBNF 
+                           (INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT par_nrcpfcgc,
+                            INPUT par_inpessoa).
+                    
                     END.
 
                 /* Procurador/Representante */
@@ -4934,7 +4976,7 @@ PROCEDURE Inclui_Fis PRIVATE :
                               crabttl.inhabmen = par_inhabmen
                               crabttl.dthabmen = par_dthabmen
                               crabttl.flgimpri = TRUE 
-                              crabttl.inpolexp = 2
+                              crabttl.inpolexp = 0
                               NO-ERROR.
     
                           IF  ERROR-STATUS:ERROR THEN
@@ -6456,3 +6498,45 @@ PROCEDURE atualiza_nome_cooperado PRIVATE :
 
     RETURN "OK".
 END PROCEDURE.
+
+PROCEDURE verifica_sit_JDBNF: 
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
+
+    DEF VAR aux_insitif  AS CHAR                                    NO-UNDO.
+    DEF VAR aux_insitcip AS CHAR                                    NO-UNDO. 
+	DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
+
+    /* Chamar rotina para verificar situacao do CPF/CNPJ e enviar email */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_verifica_sit_JDBNF 
+          aux_handproc = PROC-HANDLE NO-ERROR
+                           (INPUT par_cdcooper,  /* Codigo da cooperativa */
+                            INPUT par_nrdconta,  /* Numero da conta do cooperado */
+                            INPUT par_inpessoa,  /* Tipo de pessoa */
+                            INPUT par_nrcpfcgc,  /* CPF/CNPJ do beneficiario */
+                           OUTPUT "",            /* pr_insitif  Retornar situaçao IF */  
+                           OUTPUT "",            /* pr_insitcip Retornar situaçao CIP */  
+                           OUTPUT "").
+
+      CLOSE STORED-PROC pc_verifica_sit_JDBNF 
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+      ASSIGN aux_dscritic = ""
+             aux_insitif  = ""
+             aux_insitcip = ""
+             aux_insitif  = pc_verifica_sit_JDBNF.pr_insitif 
+                            WHEN pc_verifica_sit_JDBNF.pr_insitif <> ?
+             aux_insitcip = pc_verifica_sit_JDBNF.pr_dscritic 
+                            WHEN pc_verifica_sit_JDBNF.pr_insitcip <> ?
+             aux_dscritic = pc_verifica_sit_JDBNF.pr_insitcip 
+                            WHEN pc_verifica_sit_JDBNF.pr_dscritic <> ?.
+          
+      RETURN "OK".
+
+END PROCEDURE. /* Fim procedure verifica_sit_JDBNF*/

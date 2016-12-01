@@ -12,6 +12,7 @@
  * 				  19/12/2013 - Alterado nome do id vldrend2 para vldrend22 do form frmDadosComercial. Estava dando conflito. (Jorge)
  *                18/08/2015 - Reformulacao cadastral (Gabriel-RKAM)
  *                23/12/2015 - #350828 Inclusão da operação PPE (Carlos)
+ *                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
  * --------------
  */
 
@@ -83,10 +84,6 @@ function controlaOperacao(operacao, flgConcluir) {
 
     var inpolexp = $('#inpolexp', '#' + nomeForm).val();
     var inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
-    if (inpolexp == 2 && flgConcluir) {
-        showError("error", "Escolha uma op&ccedil;&atilde;o para o campo Pessoa exposta politicamente.", "Alerta - Ayllos", "$('#inpolexp','#frmDadosComercial').focus()");
-        return false;
-    }
 	
     // Se a operacao de salvar veio do botão concluir, e não do botão continuar; e o campo ppe foi alterado, ou veio da matricula:
     if ((operacao == 'AV' && flgConcluir  && inpolexp !== inpolexpAnt) || (operacao == 'AV' && flgcadas == "M")) {
@@ -1207,11 +1204,6 @@ function controlaContinuar(flgPrimertela) {
 
     var inpolexp = $('#inpolexp', '#' + nomeForm).val();
     var inpolexpAnt = $('#inpolexpAnt', '#' + nomeForm).val();
-
-    if (inpolexp == 2) {
-        showError("error", "Escolha uma op&ccedil;&atilde;o para o campo Pessoa exposta politicamente.", "Alerta - Ayllos", "$('#inpolexp','#frmDadosComercial').focus()");
-        return false;
-    }
 	
     if (inpolexp !== inpolexpAnt) {
         controlaOperacao('PPE');

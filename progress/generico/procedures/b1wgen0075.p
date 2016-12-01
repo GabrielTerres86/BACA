@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 31/08/2016
+    Data    : Maio/2010                   Ultima atualizacao: 16/11/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -71,11 +71,18 @@
                 12/04/2016 - Incluir crapdoc.cdoperad na procedure Grava_Dados e
                              Grava_Dados_Ppe (Lucas Ranghetti #410302)
                              
+                04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
+                             (Jaison/Anderson)
+                             
                 31/08/2016 - Ajustar gravacao na crapdoc do documento 37 para 
                              gerar pendencia apenas para o primeiro titular
                              e tambem duplicar dados de pessoa politicamente
                              exposta para todos as contas do cooperado incluido
                              contas onde ele eh primeiro titular (Lucas Ranghetti #491441)
+                             
+                16/11/2016 - Ajuste para nao gerar mais pendencia no digidoc com
+                             tpdocmto = 37 e criar o campo inpolexp sempre como
+                             nao inpolexp = 0 (Tiago/Thiago SD532690)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1093,7 +1100,8 @@ PROCEDURE Grava_Dados:
             END.
         END.
                  
-        IF tt-comercial-ant.inpolexp <> par_inpolexp THEN
+        IF tt-comercial-ant.inpolexp <> par_inpolexp AND
+           par_inpolexp = 1 /*Politicamente exposto SIM*/ THEN
         DO:
             IF par_idseqttl = 1 THEN        
             DO: 
@@ -1111,27 +1119,27 @@ PROCEDURE Grava_Dados:
                     ASSIGN bcrapttl.inpolexp = par_inpolexp.
                                    
                 END.
+				FOR FIRST crapdoc WHERE 
+						  crapdoc.cdcooper = par_cdcooper AND
+						  crapdoc.nrdconta = par_nrdconta AND
+						  crapdoc.tpdocmto = 37           AND
+						  crapdoc.dtmvtolt = par_dtmvtolt AND
+						  crapdoc.idseqttl = par_idseqttl 
+						  NO-LOCK: END.
 
-            FOR FIRST crapdoc WHERE 
-                      crapdoc.cdcooper = par_cdcooper AND
-                      crapdoc.nrdconta = par_nrdconta AND
-                      crapdoc.tpdocmto = 37           AND
-                      crapdoc.dtmvtolt = par_dtmvtolt AND
-                      crapdoc.idseqttl = par_idseqttl 
-                      NO-LOCK: END.
+				IF NOT AVAILABLE crapdoc THEN
+				DO:
+					CREATE crapdoc.
+					ASSIGN crapdoc.cdcooper = par_cdcooper
+						   crapdoc.nrdconta = par_nrdconta
+						   crapdoc.flgdigit = FALSE
+						   crapdoc.dtmvtolt = par_dtmvtolt
+						   crapdoc.tpdocmto = 37
+						   crapdoc.idseqttl = par_idseqttl
+						   crapdoc.cdoperad = par_cdoperad.
+					VALIDATE crapdoc.
+				END.
 
-            IF NOT AVAILABLE crapdoc THEN
-            DO:
-                CREATE crapdoc.
-                ASSIGN crapdoc.cdcooper = par_cdcooper
-                       crapdoc.nrdconta = par_nrdconta
-                       crapdoc.flgdigit = FALSE
-                       crapdoc.dtmvtolt = par_dtmvtolt
-                       crapdoc.tpdocmto = 37
-                       crapdoc.idseqttl = par_idseqttl
-                       crapdoc.cdoperad = par_cdoperad.
-                VALIDATE crapdoc.
-                END.
             END.
         END.   
 
@@ -2176,7 +2184,7 @@ PROCEDURE Busca_Dados_PPE:
                 END.
 
                 /* Busca dados da agencia */
-                FOR FIRST crapage FIELDS(cdcidade)
+                FOR FIRST crapage FIELDS(idcidade)
                                   WHERE crapage.cdcooper = par_cdcooper     AND
                                         crapage.cdagenci = crapass.cdagenci 
                                         NO-LOCK:
@@ -2184,7 +2192,7 @@ PROCEDURE Busca_Dados_PPE:
         
                 IF AVAIL crapage THEN
                 DO:
-                    FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                    FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                         NO-LOCK NO-ERROR.
                 
                     ASSIGN tt-ppe.cidade = IF AVAIL crapmun 
@@ -2241,7 +2249,7 @@ PROCEDURE Busca_Dados_PPE:
                 END.
 
                 /* Busca dados da agencia */
-                FOR FIRST crapage FIELDS(cdcidade)
+                FOR FIRST crapage FIELDS(idcidade)
                                   WHERE crapage.cdcooper = par_cdcooper     AND
                                         crapage.cdagenci = crapass.cdagenci 
                                         NO-LOCK:
@@ -2249,7 +2257,7 @@ PROCEDURE Busca_Dados_PPE:
         
                 IF AVAIL crapage THEN
                 DO:
-                    FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                    FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                         NO-LOCK NO-ERROR.
                 
                     ASSIGN tt-ppe.cidade = IF AVAIL crapmun 
@@ -2287,7 +2295,7 @@ PROCEDURE Busca_Dados_PPE:
             END.
 
             /* Busca dados da agencia */
-            FOR FIRST crapage FIELDS(cdcidade)
+            FOR FIRST crapage FIELDS(idcidade)
                               WHERE crapage.cdcooper = par_cdcooper     AND
                                     crapage.cdagenci = crapass.cdagenci 
                                     NO-LOCK:
@@ -2295,7 +2303,7 @@ PROCEDURE Busca_Dados_PPE:
     
             IF AVAIL crapage THEN
             DO:
-                FIND FIRST crapmun WHERE crapmun.cdcidade = crapage.cdcidade 
+                FIND FIRST crapmun WHERE crapmun.idcidade = crapage.idcidade 
                     NO-LOCK NO-ERROR.
             
                 ASSIGN tt-ppe.cidade = IF AVAIL crapmun 
