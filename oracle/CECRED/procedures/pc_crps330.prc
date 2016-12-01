@@ -254,8 +254,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                NVL(gene0007.fn_caract_acento(pr_texto => complend), ' ') complend, --> Complemento do Endereço do Devedor
                NVL(gene0007.fn_caract_acento(pr_texto => nmbaisac), ' ') nmbaisac, --> Bairro do Devedor
                NVL(gene0007.fn_caract_acento(pr_texto => nmcidsac), ' ') nmcidsac, --> Município do Devedor
-               cdufsaca, --> Sigla Unidade Federativa do Devedor
-               nrcepsac  --> CEP do Devedor
+               NVL(cdufsaca, ' ') cdufsaca, --> Sigla Unidade Federativa do Devedor
+               NVL(nrcepsac, 0) nrcepsac  --> CEP do Devedor
           FROM crapsab
           WHERE cdcooper = pr_cdcooper 
             AND nrdconta = pr_nrdconta 
