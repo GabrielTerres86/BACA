@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS330
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 20/06/2016
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 21/11/2016
   --
   --  Dados referentes ao programa:
   --
@@ -21,6 +21,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --              04/07/2016 - Nao enviar para o Serasa automaticamente se ja foi enviado uma vez
   --                           (Chamado 480923 - Andrino - RKAM)
+  --
+  --              21/11/2016 - Ajustado cursor do cr_crapsab para retornar espaço em branco caso o campo possua
+  --                           valor NULL (Douglas - Chamado 560819)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Atualiza a situacao do boleto como enviada
@@ -246,11 +249,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS330(pr_cdcritic OUT crapcri.cdcritic%T
                          pr_nrinssac crapsab.nrinssac%TYPE) IS                  
         SELECT cdtpinsc, --> Tipo de pessoa do Devedor (F - Fisica / J - Juridica)
                nrinssac, --> Documento do Devedor (CPF ou CNPJ)
-               gene0007.fn_caract_acento(pr_texto => nmdsacad) nmdsacad, --> Nome do Devedor
-               gene0007.fn_caract_acento(pr_texto => dsendsac) dsendsac, --> Endereço do Devedor
-               gene0007.fn_caract_acento(pr_texto => complend) complend, --> Complemento do Endereço do Devedor
-               gene0007.fn_caract_acento(pr_texto => nmbaisac) nmbaisac, --> Bairro do Devedor
-               gene0007.fn_caract_acento(pr_texto => nmcidsac) nmcidsac, --> Município do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => nmdsacad), ' ') nmdsacad, --> Nome do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => dsendsac), ' ') dsendsac, --> Endereço do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => complend), ' ') complend, --> Complemento do Endereço do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => nmbaisac), ' ') nmbaisac, --> Bairro do Devedor
+               NVL(gene0007.fn_caract_acento(pr_texto => nmcidsac), ' ') nmcidsac, --> Município do Devedor
                cdufsaca, --> Sigla Unidade Federativa do Devedor
                nrcepsac  --> CEP do Devedor
           FROM crapsab
