@@ -3664,7 +3664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
             nvl(rw_ope.dsdepart,' ') <> 'CANAIS' THEN --Adicionado CANAIS (SD 548663)
             -- Atribui crítica
             vr_cdcritic := 0;
-            vr_dscritic := 'Quitacao  do contrado permitido apenas para operadores da CENTRAL TELEFONICA.';
+            vr_dscritic := 'Quitacao  do contrado permitido apenas para operadores da CENTRAL TELEFONICA e CANAIS.';
             -- Levanta exceção
             RAISE vr_exc_saida;                                
          END IF;
