@@ -451,6 +451,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              cdacesso = "QTD_DIAS_EMISSAO_RETR" para armazenar o valor.
                              Sera alterado de 90 para 365 dias. (Douglas - Chamado 523329)
 
+				01/12/2016 - Inserir texto informativo no campo dsinform e nao mais no campo dsdinstr
+				             Por estar utilizando o campo indevido, nao estava enviando a info para a PG
+							 Heitor (Mouts) - Chamado 564818
+
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -1901,7 +1905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 nmdavali,
                 nrinsava,
                 cdtpinav,
-                dsdinstr,
+                dsinform, --dsdinstr --> Conforme chamado 564818, deve gravar a informacao no campo dsinform para correto envio a PG
                 dsusoemp,
                 nrremass,
                 flgregis,
