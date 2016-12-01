@@ -794,8 +794,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	vr_nrrefere VARCHAR2(500) := '';
     vr_exc_erro EXCEPTION;
   
-  BEGIN    
-	
+  BEGIN
+    
 	vr_cdempcon := SUBSTR(pr_cdbarras, 16, 4);
     vr_cdsegmto := SUBSTR(pr_cdbarras, 2, 1);
 			
@@ -863,7 +863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 
       vr_dsinfor3 := vr_dsinfor3 || '#Período de Apuração: '    || TO_CHAR(pr_dtapurac,'DD/MM/YYYY');
       vr_dsinfor3 := vr_dsinfor3 || '#Número do CPF ou CNPJ: '  || TO_CHAR(gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc,vr_inpessoa));
-      vr_dsinfor3 := vr_dsinfor3 || '#Código da Receita: '      || pr_cdtribut;
+      vr_dsinfor3 := vr_dsinfor3 || '#Código da Receita: '      || LPAD(pr_cdtribut, 4, '0');
       
       IF pr_cdtribut = 6106 THEN
         vr_dsinfor3 := vr_dsinfor3 || '#Valor da Receita Bruta: ' || TO_CHAR(pr_vlrecbru,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.');
