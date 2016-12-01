@@ -225,6 +225,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                 buscar do primeiro titular. 
                 Alterado para quando os procuradores e representantes de menores nao tiverem endereco
                 preenchido, buscar da conta principal (17/11/2016).
+                
+                Ajustado para que a busca pela conta mais atualizada desconsidere as contas que foram
+                demitidas antes do período inicial (28/11/2016).
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -267,6 +270,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
        WHERE ass.nrcpfcgc = pr_nrcpfcgc
          AND alt.cdcooper = ass.cdcooper
          AND alt.nrdconta = ass.nrdconta
+             /* Considerar apenas as contas nao demitidas, 
+                ou demitidas depois do periodo inicial */
+         AND (ass.dtdemiss IS NULL OR
+              ass.dtdemiss >= pr_dtiniger) 
     ORDER BY alt.dtaltera DESC;
     rw_crapass     cr_crapass%ROWTYPE;
     rw_crapass_ttl cr_crapass%ROWTYPE;
@@ -598,7 +605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       pc_escreve_clob(vr_dslinha);
       
       /* Geração de Log */
-      IF (nvl(rw_crapenc.endereco,' ') = ' ') then
+      IF (fn_remove_caract_espec(nvl(rw_crapenc.endereco,' ')) = ' ') then
          pr_dscritic := nvl(pr_dscritic,' ') || 'Sem logradouro cadastrado.';
       END IF;
       IF (nvl(pr_dtadmiss,' ') = ' ') then
@@ -2222,7 +2229,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Objetivo  : Procedimento responsavel em gerar o arquivo com os terceiros vinculados ao cooperados para a Easyway
                 (C19.2)
                 
-    Alteração : 
+    Alteração : Ajustado para que na geração dos procuradores e responsaveis de menores o sistema ignore
+                os registros que sao titulares da conta, pois ja serao exportados no arquivo de titulares (28/11/2016).
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
@@ -2294,6 +2302,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND crl.nrctamen = pr_nrdconta
          AND (crl.nrdconta > 0 OR 
               crl.nrcpfcgc > 0)
+             /* Nao exportar como terceiro se o responsavel for um
+                titular daquela conta. */
+         AND NOT EXISTS (SELECT 1
+                           FROM crapttl ttl
+                          WHERE ttl.cdcooper = crl.cdcooper
+                            AND ttl.nrdconta = crl.nrctamen
+                            AND ttl.nrcpfcgc = nvl(ass.nrcpfcgc, crl.nrcpfcgc))
       UNION
       SELECT avt.nrcpfcgc AS nrcpfcgc
             ,avt.inpessoa AS inpessoa
