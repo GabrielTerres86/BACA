@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Requisição de Conta da tela DEVOLU
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
  *
  * --------------
  */
@@ -30,13 +30,14 @@
 	$cddopcao = '';
 	
 	// Recebe a operação que está sendo realizada
-	$nrdconta		= (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0  ;
+	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
+	$cdagenci = (isset($_POST['cdagenci'])) ? $_POST['cdagenci'] : 0;
 	$nrregist = (isset($_POST["nrregist"])) ? $_POST["nrregist"] : 30;
 	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
+	$opcao    = (isset($_POST["opcao"]))    ? $_POST["opcao"] : '';
 	
+    $retornoAposErro = 'estadoInicial();';
 	
-    $retornoAposErro = 'focaCampoErro(\'nrdconta\', \'frmCab\');';
-
 	if ($nrdconta == 0) {
 		$cddopcao = 'D';
 	} else {
@@ -66,6 +67,7 @@
 	$xml .= "       <nrregist>".$nrregist."</nrregist>";
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+	$xml .= '		<cdagenci>'.$cdagenci.'</cdagenci>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 
@@ -76,20 +78,24 @@
     // ----------------------------------------------------------------------------------------------------------------------------------
 	// Controle de Erros
 	// ----------------------------------------------------------------------------------------------------------------------------------
-	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
-		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+	// Somente se for a consulta inicial
+	if($opcao == 'CI') {
+		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+			$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		}	
 	}
-    
 	$qtregist   = $xmlObjeto->roottag->tags[1]->attributes["QTREGIST"];
-    $nmprimtl	= $xmlObjeto->roottag->tags[1]->attributes['NMPRIMTL'];
+	$nmprimtl	= $xmlObjeto->roottag->tags[1]->attributes['NMPRIMTL'];
+	
 	include('form_devolu.php');
 
-	if ($nrdconta == 0) {
+	if ( $nrdconta == 0 ) {
 		$devolucoes = $xmlObjeto->roottag->tags[0]->tags;
 		include('tab_devolu_dados.php');
-	} else {
-        $lancamento = $xmlObjeto->roottag->tags[1]->tags;
+	} else {		
+		$lancamento = $xmlObjeto->roottag->tags[1]->tags;
 		include('tab_devolu_conta.php');
 	}
+
 ?>

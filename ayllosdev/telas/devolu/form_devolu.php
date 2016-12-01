@@ -1,14 +1,14 @@
 <?php
-	/*!
-	* FONTE        : DEVOLU.php
-	* CRIAÇÃO      : Andre Santos - SUPERO
-	* DATA CRIAÇÃO : 25/09/2013
-	* OBJETIVO     : Formulário tela DEVOLU
-	* --------------
+/*!
+ * FONTE        : DEVOLU.php
+ * CRIAÇÃO      : Andre Santos - SUPERO
+ * DATA CRIAÇÃO : 25/09/2013
+ * OBJETIVO     : Formulário tela DEVOLU
+ * --------------
 	* ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
-	*
-	* --------------
-	*/
+ *
+ * --------------
+ */
 
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');

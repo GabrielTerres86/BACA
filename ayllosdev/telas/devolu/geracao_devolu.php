@@ -1,13 +1,13 @@
 <? 
-/*!
+/*! 
  * FONTE        : DEVOLU.php
  * CRIAÇÃO      : Andre Santos - SUPERO
  * DATA CRIAÇÃO : 25/09/2013
  * OBJETIVO     : Requisição da tela DEVOLU
  * --------------
- * ALTERAÇÕES   :
- * 
+ * ALTERAÇÕES   : 19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao Automatica de Cheques (Lucas Ranghetti #484923)
  * --------------
+ *			      09/11/2016 - Remover validação de permissao nas telas secundares (Lucas Ranghetti #544579)
  */
 ?>
 
@@ -39,12 +39,10 @@
     $nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : 0  ;
 	$nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0  ;
     $flag = (isset($_POST['flag'])) ? $_POST['flag'] : 0  ;
+	$camposDc = (isset($_POST['camposDc']))  ? $_POST['camposDc']  : '' ;
+	$dadosDc  = (isset($_POST['dadosDc']))   ? $_POST['dadosDc']   : '' ;
 
 	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\');';
-
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],"D")) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
 
 	// Monta o xml dinâmico de acordo com a operação 
 	$xml = '';
@@ -68,6 +66,7 @@
 	$xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
 	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
 	$xml .= '		<flag>'.$flag.'</flag>';
+	$xml .= 		retornaXmlFilhos( $camposDc, $dadosDc, 'Desmarcar', 'Itens');
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 

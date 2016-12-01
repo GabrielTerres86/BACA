@@ -1,13 +1,13 @@
 <?
-/*!
- * FONTE        : DEVOLU.php
- * CRIAÇÃO      : Andre Santos - SUPERO
- * DATA CRIAÇÃO : 25/09/2013
- * OBJETIVO     : Requisição da tela DEVOLU
+/*! 
+ * FONTE        : altera_alinea.php
+ * CRIAÇÃO      : Lucas Ranghetti
+ * DATA CRIAÇÃO : 12/08/2016
+ * OBJETIVO     : Alterar alinea
  * --------------
- * ALTERAÇÕES   : 09/11/2016 - Remover validação de permissao nas telas secundares (Lucas Ranghetti #544579)
+ * ALTERAÇÕES   :
+ *
  * --------------
- * 
  */
 ?>
 
@@ -24,34 +24,28 @@
 
     // Classe para leitura do xml de retorno
 	require_once("../../class/xmlfile.php");
-
-	// Inicializa
-	$retornoAposErro = '';
-
-    $cdcooper = (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0  ;
-    $cdbanchq = (isset($_POST['cdbanchq'])) ? $_POST['cdbanchq'] : 0  ;
-    $cdagechq = (isset($_POST['cdagechq'])) ? $_POST['cdagechq'] : 0  ;
-    $nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : 0  ;
-    $nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0  ;
-    $cdalinea = (isset($_POST['cdalinea'])) ? $_POST['cdalinea'] : 0  ;
-
-	$retornoAposErro = 'focaCampoErro(\'cdalinea\', \'frmAlinea\',false,\'divRotina\');';
-
-	// Monta o xml da operação
+	
+	// Recebe a operação que está sendo realizada
+	$nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : 0;
+	$cdbanchq = (isset($_POST['cdbanchq'])) ? $_POST['cdbanchq'] : 0;
+	$cdagechq = (isset($_POST['cdagechq'])) ? $_POST['cdagechq'] : 0;
+	$nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
+	$cdalinea = (isset($_POST['cdalinea'])) ? $_POST['cdalinea'] : 0;
+	
+	// Monta o xml dinâmico de acordo com a operação
 	$xml = '';
 	$xml .= '<Root>';
 	$xml .= '	<Cabecalho>';
 	$xml .= '		<Bo>b1wgen0175.p</Bo>';
-	$xml .= '		<Proc>verifica_alinea</Proc>';
+	$xml .= '		<Proc>altera-alinea</Proc>';
 	$xml .= '	</Cabecalho>';
 	$xml .= '	<Dados>';
-    $xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xml .= '		<cdcooper>'.$cdcooper.'</cdcooper>';
+	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+	$xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
 	$xml .= '		<cdbanchq>'.$cdbanchq.'</cdbanchq>';
 	$xml .= '		<cdagechq>'.$cdagechq.'</cdagechq>';
-	$xml .= '		<nrctachq>'.$nrctachq.'</nrctachq>';
 	$xml .= '		<nrdocmto>'.$nrdocmto.'</nrdocmto>';
-	$xml .= '		<cdagechq>'.$cdagechq.'</cdagechq>';
 	$xml .= '		<cdalinea>'.$cdalinea.'</cdalinea>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
@@ -65,6 +59,8 @@
 	// ----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 	}
+	
+	exibirErro('inform','Alinea alterada com sucesso!','Alerta - Ayllos','hideMsgAguardo();BuscaDevolu(1,30);',false);
 ?>
