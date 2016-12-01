@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Setembro/95.                        Ultima atualizacao: 22/08/2016
+   Data    : Setembro/95.                        Ultima atualizacao: 01/12/2016
 
    Dados referentes ao programa:
 
@@ -62,6 +62,11 @@ BEGIN
 
                22/08/2016 - Adicionado operações de financiamento do BNDES 
 							              no relatório 109. (Reinert)
+
+               01/12/2016 - Ajuste para zerar a vr_tab_financ(vr_idfina).qtfinanc
+							              quando nao tem valor para 5400 dias / 181 meses.
+                            (Jaison/Diego - SD: 534498)
+
 ............................................................................. */
 
   DECLARE
@@ -653,8 +658,8 @@ BEGIN
 			vr_nrmes := 181;			
 			vr_tab_financ(vr_idfina).qtdiames := vr_nrmes*30;
 			vr_tab_financ(vr_idfina).retfinan := nvl(vr_tab_financ(vr_idfina).retfinan,0) + rw_crapebn.vlaa5400;
-			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0) + 1;
-			
+			vr_tab_financ(vr_idfina).qtfinanc := nvl(vr_tab_financ(vr_idfina).qtfinanc,0)
+                                         + (CASE WHEN rw_crapebn.vlaa5400 > 0 THEN 1 ELSE 0 END);
 		END LOOP;
 
     --Armazenar valores acumulados
