@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
   ---------------------------------------------------------------------------------------------------------------
-  -- 
+  --
   --  Programa : CADA0003
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
@@ -466,7 +466,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 16/11/2016
+  --  Data     : Julho/2014.                   Ultima atualizacao: 29/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -511,6 +511,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             16/11/2016 - Inclusao do UPPER(dscnae) na pesquisa por texto. (Jaison/Anderson)
   --
+  --             29/11/2016 - Retirado COMMIT da procedure pc_grava_tbchq_param_conta
+  --                          pois estava ocasionando problemas na abertura de contas 
+  --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -6535,8 +6538,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para gravar dados na tabela tbchq_param_conta
 
-    Alteracoes: 
-
+    Alteracoes: 29/11/2016 - Retirado COMMIT pois estava ocasionando problemas na
+                             abertura de contas na MATRIC criando registros com PA
+                             zerado (Tiago/Thiago).
     ............................................................................. */
     vr_exc_saida  EXCEPTION;
     vr_dsflgdevolu_antes VARCHAR2(3);
@@ -6622,7 +6626,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         END IF;
       END IF;  
 
-      COMMIT;
     EXCEPTION
       WHEN vr_exc_saida THEN        
         NULL;
