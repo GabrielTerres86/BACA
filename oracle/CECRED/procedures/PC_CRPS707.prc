@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro Guaranha - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 24/11/2016
+   Data    : Setembro/2016                        Ultima atualizacao: 01/12/2016
 
    Dados referentes ao programa:
 
@@ -25,6 +25,9 @@ BEGIN
 	             24/11/2016 - Ajuste para alimentar correta o lote utilizado no 
 							              lançamento de créditos na conta do cooperado
 							              (Adriano - SD 563707).
+                            
+               01/12/2016 - Ajuste para incluir mais informações no e-mail de rejeições
+                            (Adriano - SD 568539).             
 
    ............................................................................. */
 
@@ -1033,6 +1036,12 @@ BEGIN
                                                                 '<b>Tipo Trans.</b>' ||
                                                               '</td>' ||
                                                               '<td width="100px">' ||
+                                                                '<b>Nr. Operação</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
+                                                                '<b>Valor</b>' ||
+                                                              '</td>' ||
+                                                              '<td width="100px">' ||
                                                                 '<b>Dt.Arquivo</b>' ||
                                                               '</td>' ||
                                                               '<td width="100px">' ||
@@ -1052,7 +1061,7 @@ BEGIN
                                                               '</td>' ||
                                                               '<td width="250px">' ||
                                                                 '<b>Cod.Devolução</b>' ||
-                                                              '</td>' ||
+                                                              '</td>' ||                                                              
                                                             '</thead>' ||
                                                             '<tbody align="center" style="background-color: #F0F0F0;">');
                  
@@ -1064,6 +1073,12 @@ BEGIN
                                         ,pr_texto_novo => '<tr>' ||
                                                             '<td>' ||
                                                               vr_nmevehead ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              vr_nrctrlif ||
+                                                            '</td>' ||
+                                                            '<td>' ||
+                                                              to_char(vr_vloperac,'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''') || 
                                                             '</td>' ||
                                                             '<td>' ||
                                                               to_char(vr_dtarquiv,'DD/MM/RRRR') ||
@@ -1085,7 +1100,7 @@ BEGIN
                                                             '</td>' ||
                                                             '<td>' ||
                                                               vr_cdmotivo ||
-                                                            '</td>' ||
+                                                            '</td>' ||                                                            
                                                           '</tr>');
 
                  -- Efetuar geração do LOG da TED com erro
