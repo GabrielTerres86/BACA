@@ -1,9 +1,9 @@
 <?php 
 /***************************************************************************************
- * FONTE        : cheques_renova_limite.php				Última alteração: --/--/----
+ * FONTE        : cheques_desbloqueia_bordero.php				Última alteração: --/--/----
  * CRIAÇÃO      : Lombardi
  * DATA CRIAÇÃO : 06/09/2016
- * OBJETIVO     : 
+ * OBJETIVO     : Desbloquear a inclusão de novos borderos de desconto de cheque.
  *
  * Alterações   : 
  *

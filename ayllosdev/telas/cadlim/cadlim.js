@@ -113,7 +113,7 @@ function formataCabecalho() {
 	rCddopcao = $('label[for="cddopcao"]','#frmCab');
 	rTplimite = $('label[for="tplimite"]','#frmCab');
 	rInpessoa = $('label[for="inpessoa"]','#frmCab');
-    
+
 	cCddopcao = $('#cddopcao','#frmCab'); 
 	cTplimite = $('#tplimite','#frmCab'); 
 	cInpessoa = $('#inpessoa','#frmCab'); 
@@ -156,7 +156,7 @@ function formataRegra(){
 		var rNrrevcad = $('label[for="nrrevcad"]');
 		var rPcliqdez = $('label[for="pcliqdez"]');
 		var rQtdialiq = $('label[for="qtdialiq"]');
-	
+
 		rVlmaxren.css({width:'200px'});
 		rQtdiaren.css({width:'200px'});
 		rQtmaxren.css({width:'200px'});
@@ -170,7 +170,7 @@ function formataRegra(){
 		rNrrevcad.css({width:'200px'});
 		rPcliqdez.css({width:'200px'});
 		rQtdialiq.css({width:'200px'});
-		
+
 		// Campos
 		var cVlmaxren = $('#vlmaxren');	
 		var cQtdiaren = $('#qtdiaren');	
@@ -184,12 +184,12 @@ function formataRegra(){
 		var cNrrevcad = $('#nrrevcad');	
 		var cPcliqdez = $('#pcliqdez');	
 		var cQtdialiq = $('#qtdialiq');	
-		
+
 		cVlmaxren.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cQtdiaren.addClass('campo').setMask('INTEGER','zzz9');
 		cQtmaxren.addClass('campo').setMask('INTEGER','zz9');
 		cQtdiaatr.addClass('campo').setMask('INTEGER','zz9');
-		cQtatracc.addClass('campo').setMask('INTEGER','zz9');
+		cQtatracc.addClass('campo').setMask('INTEGER','zz9');		
 		cDssitopt.css({border:'0px'});
 		cDstipopt.css({border:'0px'});
 		cDsrisopt.css({border:'0px'});		

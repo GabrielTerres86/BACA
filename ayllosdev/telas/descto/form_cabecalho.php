@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 26/12/2011
  * OBJETIVO     : Cabeçalho para a tela DESCTO
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - PRJ 300: Inclusao das opcoes L e N. (Jaison/Daniel)
+ * ALTERAÇÕES   : 21/09/2016 - Projeto 300: Inclusao das opcoes L e N. (Jaison/Daniel)
  * --------------
  */
 

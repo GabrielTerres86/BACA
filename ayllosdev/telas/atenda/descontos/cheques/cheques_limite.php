@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Março/2009                Última Alteração: 11/05/2015
+	 Data : Março/2009                Última Alteração: 12/09/2016
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos de cheques da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -19,7 +19,7 @@
 							    menores nao emancipados. (Reinert)
 
 			      17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
-				  
+
 				  12/09/2016 - Inclusão do campo "Confirmar Novo Limite" que vai substituir a "LANCDC"
 
 	************************************************************************/

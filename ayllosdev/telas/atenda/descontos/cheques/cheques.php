@@ -67,7 +67,7 @@
 	
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlDesctoChq);
-	
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDscChq = getObjectXML($xmlResult);
 	
@@ -111,7 +111,6 @@
 		
 		<label for="qtrenova"><? echo utf8ToHtml('Renovado por:') ?></label>
 		<input type="text" name="qtrenova" id="qtrenova" value="<?php echo $dados[4]->cdata; if ($dados[4]->cdata > 1) { echo " vezes"; } else { echo " vez"; } ?>" />
-		
 		<br />
 		<label for="dsdlinha"><? echo utf8ToHtml('Linha de descontos:') ?></label>
 		<input type="text" name="dsdlinha" id="dsdlinha" value="<?php echo $dados[5]->cdata; ?>" />

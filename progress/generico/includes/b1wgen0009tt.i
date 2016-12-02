@@ -43,15 +43,15 @@
                21/06/2016 - Criacao do campo dsopecoo na tt-dscchq_dados_bordero,
                             campos flaprcoo e dsdetres na tt-dscchq_bordero_restricoes
                             e dsopecoo na tt-dados_chqs_bordero. (Jaison/James)
-                            
+
                05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
                             Projeto 300. (Lombardi)
                             
                09/09/2016 - Criacao do campo insitblq na tt-desconto_cheques.
                             Projeto 300. (Lombardi)
                             
-               12/09/2016 - Criacao do campo insitlim na tt-limite_chq.
-                            Projeto 300. (Lombardi)
+               12/09/2016 - Criacao do campo insitlim na tt-limite_chq
+                            Projeto 300. (Lombardi) 
 
 ..............................................................................*/
 

@@ -7,7 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 11/05/2016 - Adicionar a variavel dtmvtolx na requisicao (Douglas - Chamado 445477)
  *
- *                21/09/2016 - PRJ 300: Inclusao das opcoes L e N. (Jaison/Daniel)
+ *                21/09/2016 - Projeto 300: Inclusao das opcoes L e N. (Jaison/Daniel)
  * -------------- 
  */
 
@@ -79,7 +79,7 @@ if ($cddopcao == 'L' || $cddopcao == 'N') {
 
     // Obtém nome do arquivo PDF copiado do Servidor PROGRESS para o Servidor Web
     $nmarqpdf = $xmlObject->roottag->tags[0]->tags[0]->cdata;
-    
+
 } else {
     $procedure = '';
 
@@ -91,7 +91,7 @@ if ($cddopcao == 'L' || $cddopcao == 'N') {
         $procedure = 'gera-relatorio-lotes';
     } else if ($cddopcao == 'O') {
         $procedure = "gera-conferencia-cheques";
-    }
+}
 
     // Monta o xml de requisição
     $xml = '';

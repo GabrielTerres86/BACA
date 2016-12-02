@@ -2,7 +2,7 @@
 
    Programa: b1wgen0009.p
    Autor   : Guilherme
-   Data    : Marco/2009                     Última atualizacao: 07/06/2016
+   Data    : Marco/2009                     Última atualizacao: 25/10/2016
    
    Dados referentes ao programa:
 
@@ -237,13 +237,17 @@
                                              
            17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
                                              
-           20/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
-                        efetua_liber_anali_bordero. Inclusao de funcionamento
-                        de pedir senha do coordenador. (Jaison/James)
-                         
+            20/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
+                         efetua_liber_anali_bordero. Inclusao de funcionamento
+                         de pedir senha do coordenador. (Jaison/James)
+
+	       25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago)
            05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
                         Projeto 300. (Lombardi)
-                        
+
+
+          07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
+
            09/09/2016 - Criacao do campo insitblq na tt-desconto_cheques.
                         Projeto 300. (Lombardi)
                             
@@ -545,7 +549,6 @@ PROCEDURE busca_dados_dscchq:
                aux_perrenov = IF (craplim.dtfimvig < par_dtmvtolt) THEN 1 ELSE 0
                aux_insitblq = craplim.insitblq
                opcao        = 1.
-               
     END.
 
     FOR EACH crapcdb WHERE crapcdb.cdcooper = par_cdcooper   AND
@@ -620,6 +623,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR         aux_nrdmeses AS INTE            NO-UNDO.
     DEF VAR         aux_dsdidade AS CHAR            NO-UNDO.
     DEF VAR         aux_dsoperac AS CHAR            NO-UNDO.
+	DEF VAR      aux_flgrestrito AS INTE            NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -747,6 +751,34 @@ PROCEDURE busca_dados_limite_incluir:
 
        END.
     
+   /*Se tem cnae verificar se e um cnae restrito*/
+   IF  crapass.cdclcnae > 0 THEN
+	   DO:
+
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            /* Busca a se o CNAE eh restrito */
+            RUN STORED-PROCEDURE pc_valida_cnae_restrito
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdclcnae
+                                                ,0).
+
+            CLOSE STORED-PROC pc_valida_cnae_restrito
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
+                                        WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
+
+			IF  aux_flgrestrito = 1 THEN
+				DO:
+    					CREATE tt-msg-confirma.
+						ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema CECRED. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+       END.
+    
+		END.
+
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p
            PERSISTENT SET h-b1wgen0110.
@@ -12443,6 +12475,8 @@ PROCEDURE imprime_cet:
                           INPUT p-qtdiavig, /* Dias de vigencia */                                     
                           INPUT p-vlemprst, /* Valor emprestado */
                           INPUT p-txmensal, /* Taxa mensal/crapldc.txmensal */
+                          INPUT 0,          /* 0 - false pr_flretxml*/
+                         OUTPUT "",
                          OUTPUT "", 
                          OUTPUT 0,
                          OUTPUT "").

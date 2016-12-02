@@ -30,7 +30,7 @@
 	$vlriscop = (isset($_POST['vlriscop'])) ? $_POST['vlriscop'] : '';
 	$pcliqdez = (isset($_POST['pcliqdez'])) ? $_POST['pcliqdez'] : '';	
 	$qtdialiq = (isset($_POST['qtdialiq'])) ? $_POST['qtdialiq'] : '';
-	
+
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
@@ -47,7 +47,7 @@
 		$xml .= "   <qtdiaren>".$qtdiaren."</qtdiaren>";
 		$xml .= "   <qtmaxren>".$qtmaxren."</qtmaxren>";
 		$xml .= "   <qtdiaatr>".$qtdiaatr."</qtdiaatr>";
-		$xml .= "   <qtatracc>".$qtatracc."</qtatracc>";
+		$xml .= "   <qtatracc>".$qtatracc."</qtatracc>";		
 		$xml .= "   <dssitdop>".$vlsitdop."</dssitdop>";
 		$xml .= "   <dsrisdop>".$vlriscop."</dsrisdop>";
 		$xml .= "   <tplimite>".$tplimite."</tplimite>";

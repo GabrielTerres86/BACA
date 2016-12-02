@@ -3,7 +3,7 @@
  * FONTE        : cheques_renova_limite.php				Última alteração: --/--/----
  * CRIAÇÃO      : Lombardi
  * DATA CRIAÇÃO : 06/09/2016
- * OBJETIVO     : 
+ * OBJETIVO     : Efetuar renovação Manuel de Limites.
  *
  * Alterações   : 
  *

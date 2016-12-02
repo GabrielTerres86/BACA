@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de cheques
  * --------------
- * ALTERAÇÕES   : 20/06/2016
+ * ALTERAÇÕES   : 22/11/2016
  * --------------
  * 000: [14/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [21/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -22,9 +22,11 @@
  *
  * 008: [17/12/2015] Lunelli   (CECRED) : Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
  * 009: [20/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
- * 010: [06/09/2016] Lombardi  (CECRED) : Inclusao do botão "Renovação" para renovação do limite de desconto de cheque. Projeto 300.
- * 011: [09/09/2016] Lombardi  (CECRED) : Inclusao do botão "Desbloquear Inclusao de Bordero" para desbloquear inclusao de desconto de cheque. Projeto 300.
- * 012: [12/09/2016] Lombardi  (CECRED) : Inclusao do botão "Confirmar Novo Limite" para confirmar o novo limite que esta em estudo(Antiga LANCDC). Projeto 300.
+ * 010: [18/11/2016] Jaison/James (CECRED) : Reinicializa glb_codigoOperadorLiberacao somente quando pede a senha do coordenador.
+ * 011: [22/11/2016] Jaison/James (CECRED) : Zerar glb_codigoOperadorLiberacao antes da cdopcolb.
+ * 012: [06/09/2016] Lombardi  (CECRED) : Inclusao do botão "Renovação" para renovação do limite de desconto de cheque. Projeto 300.
+ * 013: [09/09/2016] Lombardi  (CECRED) : Inclusao do botão "Desbloquear Inclusao de Bordero" para desbloquear inclusao de desconto de cheque. Projeto 300.
+ * 014: [12/09/2016] Lombardi  (CECRED) : Inclusao do botão "Confirmar Novo Limite" para confirmar o novo limite que esta em estudo(Antiga LANCDC). Projeto 300.
  *
  */
  
@@ -266,16 +268,19 @@ function liberaAnalisaBorderoDscChq(opcao,idconfir,idconfi2,idconfi3,idconfi4,id
     var cdopcoan = 0;
     var cdopcolb = 0;
 	
+    // Reinicializa somente quando pede a senha
+    if (idconfi6 == 51) {
+        glb_codigoOperadorLiberacao = 0;
+    }
+	
 	// Mostra mensagem de aguardo
-	if (opcao == "N"){
+	if (opcao == "N") {
 		mensagem = "analisando";
         cdopcoan = glb_codigoOperadorLiberacao;
-	}else{
+	} else {
 		mensagem = "liberando";
         cdopcolb = glb_codigoOperadorLiberacao;
 	}
-
-	glb_codigoOperadorLiberacao = 0;
 
 	showMsgAguardo("Aguarde, "+mensagem+" o border&ocirc; ...");
 
@@ -1029,6 +1034,8 @@ function formataGrupoEconomico(){
 	
 }
 
+
+
 function buscaGrupoEconomico() {
 
 	showMsgAguardo("Aguarde, verificando grupo econ&ocirc;mico...");
@@ -1087,7 +1094,6 @@ function calcEndividRiscoGrupo(nrdgrupo) {
 	return false;
 	
 }
-
 function removeAcentos(str){
 	return str.replace(/[àáâãäå]/g,"a").replace(/[ÀÁÂÃÄÅ]/g,"A").replace(/[ÒÓÔÕÖØ]/g,"O").replace(/[òóôõöø]/g,"o").replace(/[ÈÉÊË]/g,"E").replace(/[èéêë]/g,"e").replace(/[Ç]/g,"C").replace(/[ç]/g,"c").replace(/[ÌÍÎÏ]/g,"I").replace(/[ìíîï]/g,"i").replace(/[ÙÚÛÜ]/g,"U").replace(/[ùúûü]/g,"u").replace(/[ÿ]/g,"y").replace(/[Ñ]/g,"N").replace(/[ñ]/g,"n");
 }
@@ -1340,7 +1346,7 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,qtcta
 				bloqueiaFundo($('#divUsoGenerico'));
 			}
 		});
-	}
+}
 	else if (mensagem_04 != '')
 		showError("inform",mensagem_04,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));verificaMensagens('','','','','','','','');");
 	else

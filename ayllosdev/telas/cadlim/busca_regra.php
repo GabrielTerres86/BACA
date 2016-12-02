@@ -28,7 +28,7 @@
 	// Monta o xml de requisicao
 	$xml  = "";
 	$xml .= "<Root>";
-	$xml .= " <Dados>";		
+	$xml .= " <Dados>";	
     $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";	
 	$xml .= "   <flgdepop>".(($cddopcao == 'C') ? 0 : 1)."</flgdepop>";
 	$xml .= "   <idgerlog>0</idgerlog>";

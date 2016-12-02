@@ -8,7 +8,7 @@
  * --------------
  * [29/03/2012] Rogérius Militão   (DB1) : Ajuste no layout padrão
  * [29/06/2012] Jorge Hamaguchi (CECRED) : AJuste para novo esquema de impressao em funcao Gera_Impressao()
- * [21/09/2016] Jaison (CECRED)          : PRJ 300 - Inclusao das opcoes L e N.
+ * [21/09/2016] Jaison (CECRED)          : Projeto 300 - Inclusao das opcoes L e N.
  */
 
 //Formulários e Tabela
@@ -1648,7 +1648,7 @@ function formataOpcaoS() {
     controlaPesquisas();
     return false;
 
-}
+        }
 
 // opcao L
 function formataOpcaoL() {

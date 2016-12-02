@@ -1,14 +1,16 @@
 <? 
 /*!
- * FONTE        : cadlim.php
- * CRIAÇÃO      : James Prust Júnior        
- * DATA CRIAÇÃO : 15/12/2014
- * OBJETIVO     : Mostrar tela CADLIM
+ * FONTE        : mancec.php
+ * CRIAÇÃO      : Daniel Zimmermann
+ * DATA CRIAÇÃO : 18/10/2016
+ * OBJETIVO     : Mostrar tela MANCEC
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Alteração do titulo da tela. Projeto 300. (Lombardi)
- *				  
+ * ALTERAÇÕES   :
  * --------------
  */
+?>
+
+<? 
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');	
@@ -16,7 +18,8 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 	
-	require_once("../../includes/carrega_permissoes.php");	
+	require_once("../../includes/carrega_permissoes.php");
+	
 ?>
 
 <html>
@@ -31,7 +34,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="cadlim.js?keyrand=<?php echo mt_rand(); ?>"></script>
+		<script type="text/javascript" src="mancec.js?key=<?php echo time();?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -56,7 +59,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('CADLIM - Parâmetros das Regras Renovação Limite') ?></td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('MANCEC - Manutenção de Emitentes de Cheques') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -72,20 +75,25 @@
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="590" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table width="750" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
 																		<!-- INCLUDE DA TELA DE PESQUISA -->
 																		<? require_once("../../includes/pesquisa/pesquisa.php"); ?>
 																		
+																		<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
+																		<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
+																		
+																		<div id="divRotina"></div>
+																		<div id="divUsoGenerico"></div>
+																		
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
-																			
-																			<div id="divRegra"></div>
-
-																			<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none"></div> 
-																			
+																			<? include('form_emitente.php'); ?>
+																			<div id="divTabela"></div>
 																		</div>
+																																																						
+																		
 																	</td>
 																</tr>
 															</table>					

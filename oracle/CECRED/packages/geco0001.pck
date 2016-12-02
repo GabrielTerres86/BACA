@@ -2172,7 +2172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.geco0001 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Calcula o endividamento do grupo
     --
-    --  Alteração :
+    --   Alteração :
     --
     --
     -- ..........................................................................*/
