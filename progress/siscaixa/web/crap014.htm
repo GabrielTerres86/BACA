@@ -21,6 +21,10 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
     
             12/02/2016 - Ajustes para nao editar o campo de valor quando
                          for pagamento de fatura (Tiago/Fabricio SD385720)           
+
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                
+   
+            03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)        
 -->
 
 <html>
@@ -418,7 +422,7 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event)" method=post >
 <input type="hidden" name="v_msg">
 <input type="hidden" name="vh_foco" value="6">
@@ -480,10 +484,6 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
         </td>
     </tr>
     <tr>
-        <td width=15% align="right">Valor:</td>
-                <td> <input type="text" name="v_valor" id="v_valor" size="20" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" maxlength="18" style="text-align: right"></td>
-    </tr>
-    <tr>
         <td width=15% align="right">Cod Barra: </td>
                   <td>
                      <input type="text" id="v_fmtcodbar" name="v_fmtcodbar" size="79" class="input" style="text-align: Right" />
@@ -496,6 +496,10 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
              Fim do comentario -->        
              
           </td>
+    </tr>
+    <tr>
+        <td width=15% align="right">Valor:</td>
+                <td> <input type="text" name="v_valor" id="v_valor" size="20" class="input" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,14,event)" maxlength="18" style="text-align: right"></td>
     </tr>
     <tr>
         <td align="right" class="linhaform" colspan="2" height="50">
