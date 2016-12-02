@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 24/11/2016
+   Data    : Outubro/94.                     Ultima atualizacao: 28/11/2016
 
    Dados referentes ao programa:
 
@@ -111,6 +111,10 @@
                             
                24/11/2016 - Alterar ordem da verificacao das alineas 11 e 12 
                             (Lucas Ranghetti/Elton - Melhoria 69)
+                            
+               28/11/2016 - Somente vamos atualizar a situaçao da devolucao caso 
+                            nao seja alinea de cheque ja entrou, caso contrario 
+                            daremos um next (Lucas Ranghetti/Elton)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -233,9 +237,12 @@ FOR EACH crapdev WHERE crapdev.cdcooper = glb_cdcooper   AND
          crapdev.cdalinea = 35) AND 
          crapdev.cdhistor = 47 THEN
          DO:
+             /* Somente vamos atualizar a situaçao da devolucao caso 
+                nao seja alinea de cheque ja entrou(alinea 35), caso contrario 
+                daremos um next */
+             IF  crapdev.cdalinea <> 35 THEN
              ASSIGN crapdev.indevarq = 2 
 			        crapdev.insitdev = 1.
-
              NEXT.
          END.
 
