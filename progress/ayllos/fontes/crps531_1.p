@@ -164,9 +164,14 @@
                
 			   05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
 							juridicas (Adriano - SD 480514).
-			
-			   01/12/2016 - Tratamento credito TED/TEC Transposul (Diego).
                
+               
+			   14/09/2016 - Ajuste para utilizar uma sequence na geracao do numero
+			                de controle, garantindo sua unicidade
+						   (Adriano - SD 518645).
+    
+	           01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
+
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -252,6 +257,7 @@ DEF VAR aux_CNPJ_CPFCred2 AS CHAR                                   NO-UNDO.
 DEF VAR aux_NomCliCredtd  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCodBarras  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NUPortdd      AS CHAR                                   NO-UNDO.
+DEF VAR aux_CodProdt      AS CHAR                                   NO-UNDO.  
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -1011,11 +1017,6 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
     IF   CAN-DO("PAG0101,STR0018,STR0019",aux_CodMsg)   THEN
          DO:
              
-             RUN verifica_processo.
-
-             IF   RETURN-VALUE <> "OK"   THEN
-                  NEXT.
-
              RUN sistema/generico/procedures/b1wgen0046.p
                  PERSISTENT SET b1wgen0046.
                                      
@@ -1035,10 +1036,26 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
              RUN log_mqcecred.
 
              IF   aux_CodMsg = "PAG0101"  THEN
-                  RUN proc_pag0101 IN b1wgen0046 (INPUT glb_cdprogra,
-                                                  INPUT aux_nmarqxml,
-                                                  INPUT aux_nmarqlog,
-                                                  INPUT TABLE tt-situacao-if).
+                  DO:
+                    IF CAPS(aux_CodProdt) = "TED" THEN
+                      DO:
+                          RUN proc_pag0101 IN b1wgen0046 (INPUT glb_cdprogra,
+                                                          INPUT aux_nmarqxml,
+                                                          INPUT aux_nmarqlog,
+                                                          INPUT TABLE tt-situacao-if).
+                                                          
+                          IF  RETURN-VALUE = "OK"  THEN
+                              RUN gera_logspb (INPUT "PAG0101",
+                                               INPUT "",
+                                               INPUT TIME).
+                      END.
+             ELSE
+                  DO:
+                         RUN salva_arquivo.
+                         RUN deleta_objetos.
+                         NEXT.
+                      END.
+                    END.
              ELSE
                   DO:
                  
@@ -1486,7 +1503,8 @@ PROCEDURE gera_erro_xml:
                          + STRING(MONTH(TODAY),"99") + STRING(DAY(TODAY),"99")
                          + STRING(TIME,"99999") + 
                          /* para evitar duplicidade devido paralelismo */
-                         SUBSTRING(STRING(NOW),21,3) + ".xml"
+                         SUBSTRING(STRING(NOW),21,3) + 
+						 STRING(NEXT-VALUE(SEQ_TEDENVIO),"999") + ".xml"
                         
          aux_VlrLanc   = REPLACE(aux_VlrLanc,",",".")
          aux_CdLegado  = STRING(aux_cdagectl)
@@ -1500,7 +1518,7 @@ PROCEDURE gera_erro_xml:
                          STRING(aux_cdagectl,"9999")  + 
                          STRING(TIME,"99999") + 
                          /* para evitar duplicidade devido paralelismo */
-                         SUBSTRING(STRING(NOW),21,3) /*milesimo de segundos*/ + 
+                         STRING(NEXT-VALUE(SEQ_TEDENVIO),"999") +
                          "A". /* origem AYLLOS */ 
          aux_dsarqenv = "". 
                               
@@ -1884,12 +1902,12 @@ PROCEDURE verifica_conta.
 		        DO:
 				    /* identifica cooperativa antiga */ 
 					FIND m-crabcop WHERE m-crabcop.cdagectl = aux_cdageinc NO-LOCK NO-ERROR. 
-				 
+
 				    FIND craptco WHERE 
                          craptco.cdcooper = val_cdcooper  AND
                          craptco.nrctaant = val_nrdconta  AND
                          craptco.cdcopant = m-crabcop.cdcooper  NO-LOCK NO-ERROR.
-         
+
                    IF   AVAIL craptco THEN
                         /*Nova conta*/
                         ASSIGN val_nrdconta = craptco.nrdconta.
@@ -2799,7 +2817,14 @@ PROCEDURE gera_logspb.
                           "Arquivo " + STRING(aux_nmarqxml,"x(40)") + ". " +
                           par_msgderro + " => ISPB " + STRING(aux_nrispbif) + 
                           '"' + ". >> " + aux_nmarqlog).  
-
+   ELSE
+   IF  par_tipodlog = "PAG0101"  THEN
+       UNIX SILENT VALUE ("echo " + '"' + STRING(TODAY,"99/99/9999") + 
+                          " - " + STRING(TIME,"HH:MM:SS") + " - " +
+                          glb_cdprogra + " - " + STRING(aux_CodMsg,"x(18)") +
+                          " --> "  +
+                          "Arquivo " + STRING(aux_nmarqxml,"x(40)") + " " +                          
+                          '"' + ". >> " + aux_nmarqlog).  
 
 END PROCEDURE.
 
@@ -2921,6 +2946,9 @@ PROCEDURE trata_IFs.
 
                  IF   hSubNode:NAME = "CodMsg"  THEN
                       ASSIGN aux_CodMsg = aux_descrica.
+                 ELSE
+                 IF   hSubNode:NAME = "CodProdt"  THEN
+                      ASSIGN aux_CodProdt = aux_descrica.
                  ELSE
                  IF   hSubNode:NAME = "ISPBPartIncld_Altd"  OR
                       hSubNode:NAME = "ISPBPartExcl"  THEN
@@ -4712,9 +4740,15 @@ PROCEDURE log_mqcecred:
                            ELSE
                                 crapcop.dsdircop.
 
-            aux_nmarqlog = "/usr/coop/" + 
-                           aux_dsdircop + "/log/" + "mqcecred_processa_" +
-                          STRING(crabdat.dtmvtolt,"999999") + ".log".
+     /* Para estas mensagens nao e necessario aguardar processo */
+     IF   CAN-DO("PAG0101,STR0018,STR0019",aux_CodMsg)   THEN
+       ASSIGN aux_nmarqlog = "/usr/coop/" + 
+                            aux_dsdircop + "/log/" + "mqcecred_processa_" +
+                            STRING(TODAY,"999999") + ".log".
+     ELSE
+       ASSIGN aux_nmarqlog = "/usr/coop/" + 
+                            aux_dsdircop + "/log/" + "mqcecred_processa_" +
+                            STRING(crabdat.dtmvtolt,"999999") + ".log".
 
 END PROCEDURE.
 
