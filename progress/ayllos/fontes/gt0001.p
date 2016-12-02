@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 18/09/2015
+   Data    : Marco/2004                        Ultima Atualizacao: 14/09/2016
 
    Dados referentes ao programa:
                      
@@ -115,9 +115,11 @@
                             
                18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)
  
+               14/09/2016 - Incluir chamada da rotina var_oracle.i (Lucas Ranghetti #484556)
 ............................................................................. */
 
 { includes/var_online.i  }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR tel_nrseqatu    LIKE gnconve.nrseqatu                 NO-UNDO.
 DEF        VAR tel_nrseqint    LIKE gnconve.nrseqint                 NO-UNDO.
@@ -273,8 +275,8 @@ FORM "Opcao:"       AT 6
      SKIP
      tel_flgcvuni           LABEL "Arquivo Unico"
      tel_tpdenvio    AT 31  LABEL "Tipo de Envio"
-         HELP "1-E_MAIL/2-E-SALES/3-NEXXERA/4-E_MAIL COM SENHA/5-ACCESSTAGE"
-                            VALIDATE (tel_tpdenvio >= 1 AND tel_tpdenvio <= 5,
+         HELP "1-MAIL/2-E-SALES/3-NEXXERA/4-MAIL(SENHA)/5-ACCESSTAGE/6-WEBSERVI"
+                            VALIDATE (tel_tpdenvio >= 1 AND tel_tpdenvio <= 6,
                                       "380 - Numero errado")
      tel_dsdiracc    AT 53  LABEL "Dir.Accesstage" FORMAT "X(10)"
          HELP "Informe o diretorio da acesstage"
