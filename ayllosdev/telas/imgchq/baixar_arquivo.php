@@ -1,15 +1,16 @@
 <?php
-
     //*******************************************************************************************************************//
     //*** Fonte: baixar_arquivo.php                                                                                   ***//
     //*** Autor: Guilherme/SUPERO                                                                                     ***//
-    //*** Data : Março/2016                   Última Alteração:                                                       ***//
+    //*** Data : Março/2016                   Última Alteração: 12/09/2016                                            ***//
     //***                                                                                                             ***//
     //*** Objetivo  : Buscar Imagens e Certificados do Cheque, gerar ZIP e baixar.                                    ***//
     //***                                                                                                             ***//
     //***                                                                                                             ***//
-    //*** Alterações:                                                                                                 ***//
-    //***                                                                                                             ***//
+    //*** Alterações: 29/07/2016 - Corrigi o uso da funcao split depreciada. SD 480705 (Carlos R.)                    ***//
+    //*** Alterações: 12/09/2016 - Ajustado para efetudar downlaod do arquivo                                         ***//
+    //***                          original com extensão TIF. SD 518443 (Ricardo Linhares)                            ***//
+    //***                          //alterar o caminho do servidor                                                    ***//                                                                ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -26,18 +27,17 @@
     // Classe para leitura do xml de retorno
     require_once("../../class/xmlfile.php");
 
+    $cdcooper = ( isset($_POST["cdcooper"]) ) ? $_POST["cdcooper"] : '';
+    $dtcompen = ( isset($_POST["dtcompen"]) ) ? $_POST["dtcompen"] : '';
+    $cdcmpchq = ( isset($_POST["cdcmpchq"]) ) ? $_POST["cdcmpchq"] : '';
+    $cdbanchq = ( isset($_POST["cdbanchq"]) ) ? $_POST["cdbanchq"] : '';
+    $cdagechq = ( isset($_POST["cdagechq"]) ) ? $_POST["cdagechq"] : '';
+    $nrctachq = ( isset($_POST["nrctachq"]) ) ? $_POST["nrctachq"] : '';
+    $nrcheque = ( isset($_POST["nrcheque"]) ) ? $_POST["nrcheque"] : '';
+    $tpremess = ( isset($_POST["tpremess"]) ) ? $_POST["tpremess"] : '';
+    $dsdocmc7 = ( isset($_POST["dsdocmc7"]) ) ? $_POST["dsdocmc7"] : '';
 
-    $cdcooper = $_POST["cdcooper"];
-    $dtcompen = $_POST["dtcompen"];
-    $cdcmpchq = $_POST["cdcmpchq"];
-    $cdbanchq = $_POST["cdbanchq"];
-    $cdagechq = $_POST["cdagechq"];
-    $nrctachq = $_POST["nrctachq"];
-    $nrcheque = $_POST["nrcheque"];
-    $tpremess = $_POST["tpremess"];
-    $dsdocmc7 = $_POST["dsdocmc7"];
-
-    $DATA = split('/', $dtcompen);
+    $DATA = explode('/', $dtcompen);
     $DATA = $DATA[2].'-'.$DATA[1].'-'.$DATA[0];
 
     $AGENCIAC   = str_pad($cdagechq, 4, '0', STR_PAD_LEFT);
@@ -127,18 +127,11 @@
 
     curl_close($ch);
     fclose($fp);
-    $srcF = str_replace(".TIF", ".gif", $tifF);
-    shell_exec("convert " . $tifF . " " . $srcF);
 
-    unlink($tifF);
 
-    if(!file_exists($srcF)){
-        echo "bGerarPdf.hide();bSalvarImgs.hide();";
-        exibeErro("Cheque n&atilde;o encontrado!");
-    }
     // Põe nome do arquivo no Array
     array_push($arrZipName, $dsdocmc7 . "F.TIF");
-    array_push($arrZipFile, $srcF);
+    array_push($arrZipFile, $tifF);
 
 
 
@@ -148,6 +141,8 @@
     $ch = curl_init($find);
 
     $tifV = $dirdestino . $dsdocmc7 . "V.TIF";
+	
+
 
     $fp = fopen($tifV, "w");
     curl_setopt($ch, CURLOPT_FILE, $fp);
@@ -156,25 +151,19 @@
     curl_close($ch);
     fclose($fp);
 
-    $srcV = str_replace(".TIF", ".gif", $tifV);
-    shell_exec("convert " . $tifV . " " . $srcV);
-
-    unlink($tifV);
-
-    if(!file_exists($srcV)){
-        echo "bGerarPdf.hide();bSalvarImgs.hide();";
-        exibeErro("Cheque n&atilde;o encontrado!");
-    }
     // Põe nome do arquivo no Array
     array_push($arrZipName, $dsdocmc7 . "V.TIF");
-    array_push($arrZipFile, $srcV);
-
-
+    array_push($arrZipFile, $tifV);
 
     // BUSCAR CERTIFICADO NO SERVIDOR (FRENTE DO CHEQUE)
     $find = $urlOrigem ."/certificado/085/".$DATA."/".$AGENCIAC."/".$REMESSA."/".$dsdocmc7."F.P7S";
 
     $ch = curl_init($find);
+	
+	if(!existeArquivo($find)) {
+		echo "bGerarPdf.hide();bSalvarImgs.hide();";
+		exibeErro("Certificado n&atilde;o encontrado!");
+	}		
 
     $certF = $dirdestino . $dsdocmc7 . "F.P7S";
 
@@ -193,12 +182,15 @@
     array_push($arrZipName, $dsdocmc7 . "F.P7S");
     array_push($arrZipFile, $certF);
 
-
-
     // BUSCAR CERTIFICADO NO SERVIDOR (VERSO DO CHEQUE)
     $find = $urlOrigem ."/certificado/085/".$DATA."/".$AGENCIAC."/".$REMESSA."/".$dsdocmc7."V.P7S";
 
     $ch = curl_init($find);
+	
+	if(!existeArquivo($find)) {
+		echo "bGerarPdf.hide();bSalvarImgs.hide();";
+		exibeErro("Certificado n&atilde;o encontrado!");
+	}			
 
     $certV = $dirdestino . $dsdocmc7 . "V.P7S";
 
@@ -253,5 +245,23 @@
         echo 'showError("error","'.$msgErro.'","Alerta - Ayllos");';
         exit();
     }
+	
+	//Verifica se o arquivo existe
+	function existeArquivo($url)
+	{
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL,$url);
+		curl_setopt($ch, CURLOPT_NOBODY, 1);
+		curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		if(curl_exec($ch)!==FALSE)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 ?>
