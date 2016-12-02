@@ -11,7 +11,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Precise
-   Data    : Dezembro/2009                   Ultima atualizacao: 24/06/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 22/07/2016
 
    Dados referentes ao programa:
 
@@ -114,6 +114,12 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                             
                24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se 
                             possuir deve utilizar a agencia de destino (Douglas - Chamado 431378)
+                            
+			   22/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
+                            (Lucas Ranghetti #484923)
+
+               25/08/2016 - Permite integrar arquivos de cheques DVA615 devido
+                            aos cheques VLB (Elton - SD 476261)
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -872,8 +878,9 @@ BEGIN
       ww_nrlinha := ww_nrlinha + 1;
 
       -- Verifica se é final de arquivo
-      IF substr(vr_dstexto,1,10)  = '9999999999' AND
-         substr(vr_dstexto,48,06) = 'CEL615'     THEN
+      IF SUBSTR(vr_dstexto,1,10)  = '9999999999' AND
+        (SUBSTR(vr_dstexto,48,06) = 'CEL615'     OR
+         SUBSTR(vr_dstexto,48,06) = 'DVA615')    THEN -- Cheque VLB
          IF substr(vr_dstexto,151,10) <> ww_nrlinha THEN
             vr_cdcritic := 166;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -916,7 +923,8 @@ BEGIN
 
       -- Faz validacoes especificas para a primeira linha
       IF ww_nrlinha = 1 THEN
-        IF SUBSTR(vr_dstexto,48,06) <> 'CEL615' THEN
+        IF (SUBSTR(vr_dstexto,48,06) <> 'CEL615'  AND
+            SUBSTR(vr_dstexto,48,06) <> 'DVA615') THEN   -- Cheque VLB
           vr_cdcritic := 473; --Codigo de remessa invalido.
         ELSIF SUBSTR(vr_dstexto,151,10) <> ww_nrlinha THEN
           vr_cdcritic := 166; -- Sequencia errada
@@ -1527,6 +1535,7 @@ BEGIN
             vr_tab_crawrel(vr_ind_crawrel).dtlibera   := rw_crapcdb.dtlibera;
             vr_tab_crawrel(vr_ind_crawrel).cdagenci   := rw_crapcdb.cdagenci;
             vr_tab_crawrel(vr_ind_crawrel).insitprv   := rw_crapcdb.insitprv;
+            vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
           END IF;
           CLOSE cr_crapcdb;
         ELSIF rw_crapchd.cdbccxlt = 11
@@ -1549,6 +1558,7 @@ BEGIN
           vr_tab_crawrel(vr_ind_crawrel).dtlibera   := rw_crapchd.dtmvtolt;
           vr_tab_crawrel(vr_ind_crawrel).cdagenci   := rw_crapchd.cdagenci;
           vr_tab_crawrel(vr_ind_crawrel).insitprv   := rw_crapchd.insitprv;
+          vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         ELSE
 					IF vr_cdcopaco <> pr_cdcooper THEN
 						vr_cdagenci_ass := rw_crapass.cdagenci;
@@ -1568,6 +1578,7 @@ BEGIN
           vr_tab_crawrel(vr_ind_crawrel).dtlibera   := rw_crapchd.dtmvtolt;
           vr_tab_crawrel(vr_ind_crawrel).cdagenci   := vr_cdagenci_ass;
           vr_tab_crawrel(vr_ind_crawrel).insitprv   := rw_crapchd.insitprv;
+          vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         END IF;
 
         -- Atualiza a tabela de memoria de dados do arquivo
@@ -1582,8 +1593,8 @@ BEGIN
         vr_tab_crawrel(vr_ind_crawrel).nrcheque   := rw_crapchd.nrcheque;
         vr_tab_crawrel(vr_ind_crawrel).nralinea   := vr_cdalinea;
         vr_tab_crawrel(vr_ind_crawrel).vlcheque   := rw_crapchd.vlcheque;
-		vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
-
+		    vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
+        vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         -- move os dados para a variavel vr_tab_crawrel_2 com outra ordenacao
         vr_ind_crawrel_2 := substr(vr_ind_crawrel,1,6)|| -- flgmigra e Agencia
                             vr_tab_crawrel(vr_ind_crawrel).dsprodut ||-- Produto
@@ -1860,6 +1871,7 @@ BEGIN
                        '<nralinea>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nralinea                             ||'</nralinea>'||
                        '<nrcheque>'|| gene0002.fn_mask(vr_tab_crawrel_2(vr_ind_crawrel_2).nrcheque,'zzz.zz9') ||'</nrcheque>'||
 											 '<cdageapr>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdageapr                             ||'</cdageapr>'||
+ 											 '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                             ||'</nrctachq>'||
                      '</cheque>',3);
 
       -- Se for o ultimo registro de erro, fecha o nó de erro
@@ -1922,6 +1934,7 @@ BEGIN
                        '<dtlibera>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).dtlibera,'DD/MM/YY')            ||'</dtlibera>'||
                        '<nrprevia>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrprevia                                ||'</nrprevia>'||
                        '<insitprv>'|| vr_dssitprv                                                                ||'</insitprv>'||
+ 											 '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                                ||'</nrctachq>'||
                      '</cheque>',3);
 
     END IF; -- Final do IF de verificacao de agencia igual ou diferente de zeros
@@ -1992,10 +2005,10 @@ BEGIN
                                     pr_dsparams  => 'PR_TPRELATO##0',                --> Enviar como parametro apenas a agencia
                                     pr_dsarqsaid =>  vr_diretori_rl||'/crrl529_'||lpad(vr_tab_crawrel_2(vr_ind_crawrel_2).cdagenci,3,'0')||'.lst', --> Arquivo final
                                     pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
-                                    pr_qtcoluna  => 132,
-                                    pr_sqcabrel  => 3,
+                                    pr_qtcoluna  => 234,
+                                    pr_sqcabrel  => 1,
                                     pr_flg_impri => 'N',                 --> Chamar a impressão (Imprim.p)
-                                    pr_nmformul  => '132col',            --> Nome do formulário para impressão
+                                    pr_nmformul  => '234dh',            --> Nome do formulário para impressão
                                     pr_nrcopias  => 1,                   --> Número de cópias para impressão
                                     pr_dspathcop => vr_dspathcop,        --> Diretorio para copia dos arquivos
                                     pr_des_erro  => vr_dscritic);        --> Saida com erro
@@ -2071,10 +2084,10 @@ BEGIN
                                       pr_dsparams  => 'PR_TPRELATO##99',     --> Enviar como parametro apenas a agencia
                                       pr_dsarqsaid =>  vr_diretori_rl||'/'||vr_nmarquiv, --> Arquivo final
                                       pr_flg_gerar => 'N',                 --> Não gerar o arquivo na hora
-                                      pr_qtcoluna  => 132,
+                                      pr_qtcoluna  => 234,
                                       pr_sqcabrel  => 2,
                                       pr_flg_impri => 'S',                 --> Chamar a impressão (Imprim.p)
-                                      pr_nmformul  => '132col',            --> Nome do formulário para impressão
+                                      pr_nmformul  => '234dh',            --> Nome do formulário para impressão
                                       pr_nrcopias  => 1,                   --> Número de cópias para impressão
                                       pr_dsmailcop => vr_email_dest,       --> Lista sep. por ';' de emails para envio do relatório
                                       pr_dsassmail => vr_dsassmail,        --> Assunto do e-mail que enviará o relatório
