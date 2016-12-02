@@ -207,6 +207,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
          vr_vlmindeb := to_number(vr_dstextab);
       END IF;
       
+      -- Verificar se está sendo chamado da rotina de pagamento de acordos
+      IF pr_cdprogra <> 'RECP0001' THEN
+        -- Verifica se existe contrato de acordo ativo
+        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_nrctremp => pr_nrctremp
+                                         ,pr_flgativo => vr_flgativo
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_saida;
+        ELSIF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;      
+        END IF;
+                                   
+        IF vr_flgativo = 1 THEN
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
       --Ler emprestimos
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
@@ -310,30 +332,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
         --retonar para o programa chamador
         RETURN;
       END IF;
-      
-      -- VErificar se está sendo chamado da rotina de pagamento de acordos
-      IF pr_cdprogra <> 'RECP0001' THEN
-        -- Verifica se existe contrato de acordo ativo
-        RECP0001.pc_verifica_acordo_ativo(pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => pr_nrdconta
-                                         ,pr_nrctremp => pr_nrctremp
-                                         ,pr_flgativo => vr_flgativo
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-
-        IF NVL(vr_cdcritic,0) > 0 THEN
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          RAISE vr_exc_saida;
-        ELSIF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;      
-        END IF;
-                                   
-        IF vr_flgativo = 1 THEN
-          vr_dscritic := 'Lancamento nao permitido, contrato para liquidar esta em acordo.';
-          RAISE vr_exc_saida;
-        END IF;
-      END IF;
-      
       
       -- Saldo devedor menor ou igual a zero
       IF vr_vlsdeved <= 0   THEN 
