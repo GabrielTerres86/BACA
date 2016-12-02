@@ -277,7 +277,6 @@ DEF VAR aux_cdbanpag      AS INT                                    NO-UNDO.
 DEF VAR aux_dsmotivo      AS CHAR                                   NO-UNDO.
 DEF VAR aux_nrretcoo      AS INT                                    NO-UNDO.
 DEF VAR aux_cdageinc      AS INT                                    NO-UNDO.
-DEF VAR aux_nrctainc      AS INT                                    NO-UNDO.
 DEF VAR aux_nrctremp      AS DECI                                   NO-UNDO.
 DEF VAR aux_tpemprst      AS INT                                    NO-UNDO.
 DEF VAR aux_qtregist      AS INTE                                   NO-UNDO.
@@ -341,6 +340,7 @@ DEF BUFFER crablot FOR craplot.
 DEF BUFFER b-craplot FOR craplot. /* Credito conta corrente Portabilidade */
 DEF BUFFER b-crabcop FOR crapcop. /* Portabilidade */ 
 DEF BUFFER b-crabdat FOR crapdat. /* Portabilidade */ 
+DEF BUFFER m-crabcop FOR crapcop. /* Incorporacao */
 
 DEFINE TEMP-TABLE crawarq                                           NO-UNDO
        FIELD nrsequen AS INTEGER
@@ -537,7 +537,6 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_flgderro      = FALSE
            aux_nrctrole      = ""
            aux_cdageinc      = 0  /* Agencia antiga incorporada */
-           aux_nrctainc      = 0  /* Conta antiga incorporada */ 
            aux_nrctremp      = 0
            aux_tpemprst      = 2
            aux_qtregist      = 0
@@ -1124,8 +1123,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 					       TODAY < 03/21/2017 THEN   /* Data de corte */ 
 						   DO:
                                ASSIGN aux_cdageinc = INT(aux_AgCredtd)
-                                      aux_AgCredtd = "0108"
-                                      aux_nrctainc = INT(aux_CtCredtd).
+                                      aux_AgCredtd = "0108".
 
 							   /* Busca cooperativa de destino (nova) */ 
                                FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
@@ -1600,12 +1598,10 @@ PROCEDURE gera_erro_xml:
   ASSIGN aux_VlrLanc  = REPLACE(aux_VlrLanc,".",",").
 
 
-  /*** IFs incorporadas foram desativadas (crapcop.flgativo = FALSE
+  /*** Tratamento incorporação Transposul ***/
   /* Necessario retornar os valores originais para apresentar no LOG */ 
   IF   aux_cdageinc > 0 THEN /* Agencia incorporada */ 
-       ASSIGN aux_AgCredtd = STRING(aux_cdageinc,"9999")
-              aux_CtCredtd = STRING(aux_nrctainc).
-  *****************************************************************/
+       ASSIGN aux_AgCredtd = STRING(aux_cdageinc,"9999").
   
   RUN gera_logspb (INPUT "RECEBIDA",
                    INPUT log_msgderro,
@@ -1884,17 +1880,19 @@ PROCEDURE verifica_conta.
            *************************************************************/
 
 		   /* Incorporada Transulcred */ 
-		   IF   aux_cdageinc = 116  THEN
+		   IF   aux_cdageinc > 0  THEN
 		        DO:
+				    /* identifica cooperativa antiga */ 
+					FIND m-crabcop WHERE m-crabcop.cdagectl = aux_cdageinc NO-LOCK NO-ERROR. 
+				 
 				    FIND craptco WHERE 
                          craptco.cdcooper = val_cdcooper  AND
                          craptco.nrctaant = val_nrdconta  AND
-                         craptco.cdcopant = 17  NO-LOCK NO-ERROR.
+                         craptco.cdcopant = m-crabcop.cdcooper  NO-LOCK NO-ERROR.
          
                    IF   AVAIL craptco THEN
                         /*Nova conta*/
-                        ASSIGN aux_CtCredtd = STRING(craptco.nrdconta)
-						       val_nrdconta = craptco.nrdconta.
+                        ASSIGN val_nrdconta = craptco.nrdconta.
                    ELSE
                         DO:
                             ASSIGN aux_codierro = 2 /*Conta invalida*/
@@ -4391,7 +4389,19 @@ PROCEDURE processa_conta_transferida:
                        craptco.flgativo = TRUE         AND
                        craptco.tpctatrf = 1
                        NO-LOCK NO-ERROR.
-    
+
+    IF  NOT AVAIL(craptco)  THEN
+	    DO:
+		    /* No caso de TED destinada a uma IF incorporada,
+			   o parametro par_cdcopant contera o codigo da 
+			   nova IF */ 
+		    FIND craptco WHERE craptco.cdcooper = par_cdcopant AND
+						       craptco.nrctaant = par_nrctaant AND
+						       craptco.flgativo = TRUE         AND
+                               craptco.tpctatrf = 1
+                               NO-LOCK NO-ERROR.
+		END.
+
     IF  AVAIL(craptco) THEN
         DO:                                 
             /* Busca cooperativa onde a conta foi transferida */ 
@@ -4585,25 +4595,28 @@ PROCEDURE processa_conta_transferida:
                                 INPUT " ",
                                 INPUT aux_hrtransa).
     
-    IF par_cdcopant = 1 OR     /* Migracao VIACREDI >> Alto Vale */
-       par_cdcopant = 2 OR     /* Migracao ACREDI >> VIACREDI */
-       par_cdcopant = 4 OR     /* Incorporação CONCREDI >> VIACREDI */
-       par_cdcopant = 15  THEN /* Incorporação CREDIMILSUL >>  SCRCRED */
+    IF craptco.cdcopant = 1 OR     /* Migracao VIACREDI >> Alto Vale */
+       craptco.cdcopant = 2 OR     /* Migracao ACREDI >> VIACREDI */
+       craptco.cdcopant = 4 OR     /* Incorporação CONCREDI >> VIACREDI */
+       craptco.cdcopant = 15 OR    /* Incorporação CREDIMILSUL >>  SCRCRED */
+	   craptco.cdcopant = 17 THEN  /* Incorporação TRANSULCRED >>  TRANSPOCRED */
     DO: 
         
-        IF  par_cdcopant = 1 THEN
+        IF  craptco.cdcopant = 1 THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: VIACREDI --> VIACREDI AV".
-        ELSE IF  par_cdcopant = 2 THEN
+        ELSE IF  craptco.cdcopant = 2 THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: ACREDI --> VIACREDI".
-        ELSE IF par_cdcopant = 4   THEN
+        ELSE IF craptco.cdcopant = 4   THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: CONCREDI --> VIACREDI".
-        ELSE IF par_cdcopant = 15  THEN
+        ELSE IF craptco.cdcopant = 15  THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: CREDIMILSUL --> SCRCRED".
+	    ELSE IF craptco.cdcopant = 17  THEN
+		    ASSIGN aux_strmigra = "TEDs MIGRADAS: TRANSULCRED --> TRANSPOCRED".
         
         ASSIGN aux_horario = STRING(TIME, "HH:MM:SS").
     
         ASSIGN aux_nmarqimp = "/usr/coop/cecred/log/teds_migradas" +
-                               STRING(par_cdcopant, "99")     +
+                               STRING(craptco.cdcopant, "99")     +
                                STRING(DAY(aux_dtmvtolt), "99")     +
                                STRING(MONTH(aux_dtmvtolt), "99")   +
                                STRING(YEAR(aux_dtmvtolt), "9999")  +
