@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Fevereiro/2014                       Ultima Atualizacao: 13/06/2016
+   Data    : Fevereiro/2014                       Ultima Atualizacao: 21/09/2016
 
    Dados referentes ao programa:
 
@@ -22,6 +22,10 @@
                            
                13/06/2016 - Incluir flgativo na busca das cooperativas na PROCEDURE
                             Busca_Cooperativas (Lucas Ranghetti #462237)
+                            
+               21/09/2016 - Incluir tratamento para poder alterar a cooperativa cecred e 
+                            escolher o programa "DEVOLUCAO DOC" - Melhoria 316 
+                            (Lucas Ranghetti #525623)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -105,7 +109,17 @@ ON RETURN OF b_consulta DO:
 
     IF  glb_cddopcao = "A" THEN
         DO: 
-            DO WHILE TRUE:
+            DO  WHILE TRUE:
+            
+                /* para a CECRED, somente permitir alteracao do processo "Devolucao Doc"  */ 
+                IF  INT(tel_cdcooper) = 3 AND 
+                    tt-processos.nmproces <> "DEVOLUCAO DOC" THEN
+                    DO:
+                        MESSAGE "Cooperativa nao permite alteracao.".
+                        PAUSE 3 NO-MESSAGE.
+                        b_consulta:REFRESH().                        
+                        LEAVE.
+                    END.
 
                 ASSIGN aux_flgativo = tt-processos.flgativo
                        aux_ageinihr = tt-processos.ageinihr
@@ -163,8 +177,17 @@ ON RETURN OF b_consulta DO:
                                STRING(tt-processos.agefimhr,"99") + ":" +
                                STRING(tt-processos.agefimmm,"99").
                     END.
+                ELSE /* Nao confirmou */
+                    DO:
+                        ASSIGN tt-processos.flgativo = aux_flgativo
+                               tt-processos.ageinihr = aux_ageinihr
+                               tt-processos.ageinimm = aux_ageinimm
+                               tt-processos.agefimhr = aux_agefimhr 
+                               tt-processos.agefimmm = aux_agefimmm.
+                    END.
                            
                 b_consulta:REFRESH().
+                CLEAR FRAME f_edita.
                 HIDE FRAME f_edita.
                 LEAVE.
             END.
@@ -284,6 +307,7 @@ DO WHILE TRUE:
 
 END.
 
+/* Buscar todas cooperativas ativas do sistema */
 PROCEDURE Busca_Cooperativas:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
@@ -291,9 +315,8 @@ PROCEDURE Busca_Cooperativas:
     
     ASSIGN aux_nmcooper = CAPS("todas") + "," +
                           STRING(0).
-
-    FOR EACH crapcop WHERE crapcop.cdcooper <> 3 AND 
-                           crapcop.flgativo = TRUE
+    
+    FOR EACH crapcop WHERE crapcop.flgativo = TRUE
                            NO-LOCK BY crapcop.dsdircop:
                            
              ASSIGN aux_nmcooper = aux_nmcooper + "," + CAPS(crapcop.dsdircop)
