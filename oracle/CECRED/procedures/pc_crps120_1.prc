@@ -225,6 +225,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps120_1 (pr_cdcooper  IN crapcop.cdcoope
         END IF;
                                    
         IF vr_flgativo = 1 THEN
+   		  pr_insitavs := 0; -- situacao do aviso (0-naodeb).
+          pr_flgproce := 0; --FALSE;
+		  pr_vlestdif := pr_vldaviso * -1;
           RAISE vr_exc_saida;
         END IF;
       END IF;
