@@ -471,7 +471,7 @@ PROCEDURE pc_retorna_vlr_tit_vencto (pr_cdcooper      IN INTEGER    -- Cooperati
                                     ,pr_vlrjuros      OUT NUMBER    -- Valor dos juros
                                     ,pr_vlrmulta      OUT NUMBER    -- Valor da multa
                                     ,pr_fltitven      OUT NUMBER    -- Indicador Vencido 
-                                    ,pr_des_erro      OUT CLOB      -- Indicador erro OK/NOK   
+                                    ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                     ,pr_dscritic      OUT VARCHAR2);                 
    
 END CXON0014;
@@ -10199,14 +10199,16 @@ END pc_gera_titulos_iptu_prog;
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: --/--/----
+	  Data     : Setembro/2016.                   Ultima atualizacao: 02/12/2016
 	
 	  Dados referentes ao programa:
 	
 	  Frequencia: Sempre que for chamado
 	  Objetivo  : Procedure para retornar o valor do titulo vencido
 	
-	  Alteração :
+	  Alteração : 02/12/2016 - Correcao do paramentro pr_des_erro para ser VARCHAR2
+                             - Corrigido tratamento de erro para quando existir apenas 
+                               o cdcritic preenchido (Douglas - Chamado 563281)
 	...........................................................................*/
   PROCEDURE pc_retorna_vlr_tit_vencto (pr_cdcooper      IN INTEGER    -- Cooperativa
                                       ,pr_nrdconta      IN INTEGER    -- Conta
@@ -10223,7 +10225,7 @@ END pc_gera_titulos_iptu_prog;
                                       ,pr_vlrjuros      OUT NUMBER    -- Valor dos juros
                                       ,pr_vlrmulta      OUT NUMBER    -- Valor da multa
                                       ,pr_fltitven      OUT NUMBER    -- Indicador Vencido 
-                                      ,pr_des_erro      OUT CLOB      -- Indicador erro OK/NOK   
+                                      ,pr_des_erro      OUT VARCHAR2  -- Indicador erro OK/NOK   
                                       ,pr_dscritic      OUT VARCHAR2) IS --Descricao do erro
       
      CURSOR cr_crapcco2 (pr_cdcooper IN crapcco.cdcooper%type
@@ -10686,11 +10688,30 @@ END pc_gera_titulos_iptu_prog;
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_des_erro := 'NOK';
+      IF TRIM(vr_dscritic) IS NULL THEN
+        IF vr_cdcritic > 0 THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        ELSE
+          vr_dscritic := 'Erro nao tratado na procedure CXON0014.pc_retorna_vlr_tit_vencto (1): ' || SQLERRM 
+                         || ' - ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+        END IF;
+      END IF;
+      vr_dscritic:= REPLACE(vr_dscritic,'"', NULL);
+      vr_dscritic:= REPLACE(vr_dscritic,'''', NULL);
+      vr_dscritic:= REPLACE(vr_dscritic,chr(10), NULL);
+      vr_dscritic:= REPLACE(vr_dscritic,chr(13), NULL);
       pr_dscritic := vr_dscritic;
+      
     WHEN OTHERS THEN
       pr_des_erro := 'NOK';
-      pr_dscritic := 'Erro nao tratado na procedure CXON0014.pc_retorna_vlr_tit_vencto: ' || SQLERRM 
-                     || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+      vr_dscritic:= 'Erro nao tratado na procedure CXON0014.pc_retorna_vlr_tit_vencto (2): ' || SQLERRM 
+                    || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+      
+      vr_dscritic:= REPLACE(vr_dscritic,'"', NULL);
+      vr_dscritic:= REPLACE(vr_dscritic,'''', NULL);
+      vr_dscritic:= REPLACE(vr_dscritic,chr(10), NULL);
+      vr_dscritic:= REPLACE(vr_dscritic,chr(13), NULL);
+      pr_dscritic := vr_dscritic;
      
   END pc_retorna_vlr_tit_vencto;
 END CXON0014;
