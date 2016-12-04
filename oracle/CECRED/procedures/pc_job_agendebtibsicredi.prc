@@ -6,14 +6,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
    JOB: PC_JOB_AGENDEBTIBSICREDI
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Evandro Guaranha 
-   Data    : Setembro/2016.                     Ultima atualizacao: 
+   Data    : Setembro/2016.                     Ultima atualizacao: 30/11/2016 
 
    Dados referentes ao programa:
 
    Frequencia: Segunda as 09:00.
    Objetivo  : Controlar a execução dos programas CRPS708. 
               
-   Alteracoes:
+   Alteracoes: 30/11/2016 - Ajuste para efetuar o reagendamento de forma correta
+                           (Adriano - SD 568045).
    
   ..........................................................................*/
   
@@ -30,7 +31,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
     vr_dsplsql     VARCHAR2(2000);
     vr_jobname     VARCHAR2(20);
     
-    vr_qtintsom    NUMBER;
+    vr_qtintsom    NUMBER:=0;
     
     vr_email_dest  VARCHAR2(1000); 
     vr_conteudo    VARCHAR2(4000);
@@ -105,7 +106,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
       
       -- Verificação do calendário
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
-      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;        
+      
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;    
+          
       IF BTCH0001.cr_crapdat%NOTFOUND THEN     
         CLOSE BTCH0001.cr_crapdat;
           
@@ -119,30 +122,36 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
         CLOSE BTCH0001.cr_crapdat;
       END IF;
         
-      --> Verificar se a data do sistema eh o dia de hoje
-      IF vr_dtdiahoje <> rw_crapdat.dtmvtolt THEN
-        --> Executaremos no proximo dia util
-        vr_qtintsom := 1;
+      --> Se a coop ainda estiver no processo batch, usar proxima data util
+      IF rw_crapdat.inproces > 1 THEN
+        
+        vr_qtintsom := (1/24/60); --> 1 - minuto
+          
+        -- Executaremos daqui 15 minutos
+        vr_qtintsom := vr_qtintsom * 15;
+        
       ELSE
-        --> Se a CECRED ainda estiver no processo batch
-        IF rw_crapdat.inproces > 1 THEN        
-          vr_qtintsom := 0.01; -- Executaremos daqui 15 minutos
-        ELSE
-          vr_qtintsom := 0; -- POde executar agora
-        END IF;  
-      END IF;
+        --> Verificar se a data do sistema eh o dia de hoje
+        IF vr_dtdiahoje <> rw_crapdat.dtmvtolt THEN
+          --> Executaremos no proximo dia util
+          vr_qtintsom := 1;
+         
+        END IF;
+          
+      END IF;   
 
       --> Se náo podemos executar agora
       IF vr_qtintsom > 0 THEN
+
         -- Re-agendaremos a execucao com coop = 3 conforme intervalo somado acima
         vr_jobname := 'PC_CRPS708_3$';
-        vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTEDSICREDI(3,null,null); end;';
+        vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTIBSICREDI(3,null,null); end;';
                     
         -- Faz a chamada ao programa paralelo atraves de JOB
         gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
                               ,pr_cdprogra  => vr_cdprogra       --> Código do programa
                               ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
-                              ,pr_dthrexe   => TO_TIMESTAMP(to_char(SYSDATE+vr_qtintsom,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:MI:SS')
+                              ,pr_dthrexe   => TO_TIMESTAMP(to_char(SYSDATE+vr_qtintsom,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:MI:SS') || ' AMERICA/SAO_PAULO' --> Executar nesta hora
                               ,pr_interva   => NULL                     --> apenas uma vez
                               ,pr_jobname   => vr_jobname               --> Nome randomico criado
                               ,pr_des_erro  => vr_dscritic);
@@ -152,9 +161,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
           RAISE vr_exc_email;              
         END IF;
       ELSE
+	      vr_qtintsom := (1/24/60); --> 1 - minuto
+          
+        -- Executaremos daqui 5 minutos
+        vr_qtintsom := vr_qtintsom * 5;
+
         --> Podemos executar o processo das singulares          
-        vr_jobname := 'PC_CRPS708_SINGULARES$';
-        vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTEDSICREDI(pr_cdcooper => 3 '||
+        vr_jobname := 'PC_CRPS708_S$';
+        vr_dsplsql := 'begin cecred.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper => 3 '||
                                                     ',pr_cdprogra => '' PC_CRPS708  '''||
                                                     ',pr_dsjobnam => '''||vr_jobname||'''); end;';
             
@@ -162,7 +176,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTIBSICREDI(pr_cdcooper in crapc
         gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
                               ,pr_cdprogra  => vr_cdprogra       --> Código do programa
                               ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
-                              ,pr_dthrexe   => TO_TIMESTAMP(to_char(SYSDATE,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:MI:SS')
+                              ,pr_dthrexe   => TO_TIMESTAMP(to_char(SYSDATE + vr_qtintsom,'DD/MM/RRRR HH24:MI:SS'),'DD/MM/RRRR HH24:MI:SS') || ' AMERICA/SAO_PAULO' --> Executar nesta hora
                               ,pr_interva   => NULL                     --> apenas uma vez
                               ,pr_jobname   => vr_jobname               --> Nome randomico criado
                               ,pr_des_erro  => vr_dscritic);

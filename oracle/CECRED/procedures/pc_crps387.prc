@@ -2176,8 +2176,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                   IF pr_cdcooper = 3 THEN
                     vr_nro_conta_dec := 0;
                   ELSE                  
-                    -- Validar caracteres especiais
-                    BEGIN                      
+                  -- Validar caracteres especiais
+                  BEGIN
                         vr_nro_conta_dec := SUBSTR(vr_setlinha,31,14);
                     EXCEPTION
                         WHEN OTHERS THEN                                              
@@ -2207,8 +2207,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                0,
                                vr_dstexarq,
                                pr_cdcooper);
-                          EXCEPTION
-                            WHEN OTHERS THEN
+                  EXCEPTION
+                      WHEN OTHERS THEN
                               vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
                               RAISE vr_exc_saida;
                           END;
@@ -2415,7 +2415,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     vr_cdrefere := 0;
                   END IF;  
                   END IF;  
-                  
+
                   -- Verifica se o convenio usa agencias no arquivo enviado
                   IF rw_gnconve.flgagenc = 1 THEN
                     /* Verificacao para tratar recebimento de agencia invalida
@@ -2486,7 +2486,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         pc_critica_debito_cooperativa(1, rw_gnconve.cdhisdeb, vr_tab_nmarquiv(i));
                       END IF;
                       continue;
-                    END IF;
+                      END IF;
                     END IF;
                     
                     -- Se a agencia de debito for diferente da agencia de controle

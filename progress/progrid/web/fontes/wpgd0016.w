@@ -2,14 +2,17 @@
 
 Alterações: 04/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
 
-			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+			      05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+                         busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
-      15/10/2015 - Inclusão dos Campos UF e Cidade PRJ 229 (Vanessa).
+            15/10/2015 - Inclusão dos Campos UF e Cidade PRJ 229 (Vanessa).
       
-      30/05/2016 - Ajustes navegaçao com a tela fornecedor wpgd0012c
-                   PRJ229 - Melhorias OQS (Odirlei-AMcom)
+            30/05/2016 - Ajustes navegaçao com a tela fornecedor wpgd0012c
+                         PRJ229 - Melhorias OQS (Odirlei-AMcom)
 
+            28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601
+                         (Jean Michel).
+            
 ...............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -564,22 +567,30 @@ PROCEDURE CriaListaEstados :
   Parameters:  <none>
   Notes:       
 ------------------------------------------------------------------------------*/
-   FOR EACH crapmun NO-LOCK WHERE BREAK BY crapmun.cdestado:
+  DEF VAR aux_contador AS INTEGER INIT 0 NO-UNDO.
+  
+  RUN RodaJavaScript("var estados = new Array();").
+  
+  FOR EACH crapmun NO-LOCK WHERE BREAK BY crapmun.cdestado:
    
-   IF FIRST-OF(crapmun.cdestado) THEN
-    DO:
-          IF  vetorestados = "" THEN
-              vetorestados =
-                            "~{" + "cdestado:"    + "'" + TRIM(string(crapmun.cdestado)) + "'~}".
-          ELSE
-             vetorestados = vetorestados + "," + 
-                             "~{" + "cdestado:"    + "'" + TRIM(string(crapmun.cdestado))+ "'~}".
-     END.
-
+    IF FIRST-OF(crapmun.cdestado) THEN
+      DO:
+        IF TRIM(vetorestados) <> "" AND TRIM(vetorestados) <> ? THEN
+          ASSIGN vetorestados = vetorestados + ",".
+           
+        ASSIGN vetorestados = vetorestados + "~{cdestado:'" + TRIM(STRING(crapmun.cdestado))+ "'~}"
+               aux_contador = aux_contador + 1.
+          
+        IF aux_contador = 10 THEN
+          DO:
+            RUN RodaJavaScript("estados.push(" + vetorestados + ");").
+            ASSIGN aux_contador = 0
+                   vetorestados = "".
+          END.
+      END.   
+  END. /* for each */  
     
-    END. /* for each */  
-    
-    RUN RodaJavaScript("var estados=new Array();estados=["  + vetorestados + "]").
+  RUN RodaJavaScript("estados.push("  + vetorestados + ");").
 
 END PROCEDURE.
 
@@ -587,23 +598,37 @@ END PROCEDURE.
 
 PROCEDURE CriaListaCidades :
 
-  FOR EACH crapmun NO-LOCK WHERE crapmun.cdestado = ab_unmap.aux_dsestado BREAK BY crapmun.dscidade:
+  DEF VAR aux_contador AS INTEGER INIT 0 NO-UNDO.
+  
+  RUN RodaJavaScript("var cidades = new Array();").
+  
+  FOR EACH crapmun NO-LOCK WHERE crapmun.cdestado = ab_unmap.aux_dsestado 
+                             AND crapmun.cdcidade <> 0
+                             AND TRIM(STRING(crapmun.cdcidade)) <> "" BY crapmun.dscidade:
    
-    IF vetorcidades <> "" THEN
+    IF TRIM(vetorcidades) <> "" AND TRIM(vetorcidades) <> ? THEN
       ASSIGN vetorcidades = vetorcidades + ",".
               
-    vetorcidades = vetorcidades + "~{" + "cdestado:"    + "'" + TRIM(string(crapmun.cdestado))
-                                       + "',dscidade:"  + "'" + TRIM(string(crapmun.dscidade))
-                                       + "',cdcidade:"  + "'" + TRIM(string(crapmun.cdcidade))+ "'~}".
+    ASSIGN vetorcidades = vetorcidades + "~{cdestado:'" + TRIM(string(crapmun.cdestado))
+                                       + "',dscidade:'" + TRIM(string(crapmun.dscidade))
+                                       + "',cdcidade:'" + TRIM(string(crapmun.cdcidade))+ "'~}"
+           aux_contador = aux_contador + 1.
+                                       
+    IF aux_contador = 20 AND (TRIM(vetorcidades) <> ? AND TRIM(vetorcidades) <> "") THEN
+      DO:
+        RUN RodaJavaScript("cidades.push(" + vetorcidades + ");").
+        ASSIGN aux_contador = 0
+               vetorcidades = "".
+      END.                                
     
   END. /* for each */ 
   
-  RUN RodaJavaScript("var cidades=new Array();cidades=["  + vetorcidades + "]").
+  RUN RodaJavaScript("cidades.push(" + vetorcidades + ");").
 
 END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
-PROCEDURE htmOffsets :
+PROCEDURE htmOffsets:
 /*------------------------------------------------------------------------------
   Purpose:     Runs procedure to associate each HTML field with its
                corresponding widget name and handle.
@@ -1068,7 +1093,6 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_idvapost = GET-VALUE("aux_idvapost")
        ab_unmap.aux_lsfacili = GET-VALUE("aux_lsfacili").
 
-MESSAGE "opcao: " + STRING(opcao).
 RUN outputHeader.
 /* método POST crampmun.cdestado crapmun.cdcidade*/
 IF REQUEST_METHOD = "POST":U THEN 

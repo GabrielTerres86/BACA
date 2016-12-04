@@ -10,6 +10,7 @@
  *				  25/09/2013 - Alteração da função de salvar poderes (Jean Michel).
  *                03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
  *				  25/08/2016 - Inclusao da validaResponsaveis e alteração da controlaOperacaoPoderes, SD 510426(Jean Michel).
+ *				  01/12/2016 - Retirada da function validaResponsaveis, SD.564025 (Jean Michel).
  */
 
 var nrcpfcgc = '';
@@ -1339,48 +1340,11 @@ function controlaOperacaoPoderes(operacao) {
 		
 		case 'SP':
 			// Oculto o formulario e mostro a tabela
-		    //showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
-		    validaResponsaveis();
+		    showConfirmacao('Deseja confirmar altera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','salvarPoderes()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');
 			return false;
 			break;
 	}
-}
-
-function validaResponsaveis() {
-
-    var valRadio;
-    var flgconju;
-    
-    $('table > tbody > tr', 'div.divRegistros').each(function () {
-
-        valRadio = $('input:checked', $(this)).val();
-
-        if ($('input[name="hdnCodPoder"]', $(this)).val() == 10) {
-            if (valRadio == 'con') {
-                flgconju = "yes";
-            } else {
-                flgconju = "no";
-            }
         }
-
-    });
-
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'includes/procuradores/valida_responsaveis.php',
-        data: {
-            nrdconta: nrdconta,
-            nrcpfcgc: nrcpfcgc_proc,
-            nrdctato: nrdctato,
-            flgconju: flgconju,
-            redirect: 'script_ajax'
-        },
-        success: function (response) {
-            eval(response);
-        }
-    });
-}
 
 function salvarPoderes(){
 	

@@ -20,8 +20,11 @@
 
               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).        
     
-              03/11/2016 - Ajustes para TAB e ESC funcionarem de acrodo com o padrão
+              03/11/2016 - Ajustes para TAB e ESC funcionarem de acordo com o padrão
                            de navegação (Tiago/Elton SD535217).          
+
+              02/12/2016 - Trocar a chamada callBLass(event); por callBlass(event); pq o js
+                           é casesensitive e bugava a chamada dos BLs (Tiago/Elton SD563166).
 -->
 
 <html>
@@ -44,7 +47,7 @@
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBLass(event); callBLini(event); callBLsal(event);">
+<body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript:mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event)" method=post>
 
 <input type="hidden" name="v_msg">

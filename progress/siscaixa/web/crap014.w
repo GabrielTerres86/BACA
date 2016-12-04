@@ -21,7 +21,7 @@
 
 Programa: siscaixa/web/crap014.w
 Sistema : CAIXA ON-LINE
-Sigla   : CRED                               Ultima atualizacao: 03/10/2016
+Sigla   : CRED                               Ultima atualizacao: 01/12/2016
    
 Dados referentes ao programa:
 
@@ -110,6 +110,9 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                         tambem (Lucas Ranghetti #436077)
 
 		   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+
+		   01/12/2016 - Adicionado tratamento de erro na chamada Oracle para devolver 
+		                o valor do boleto (correcao M271) (Douglas - Chamado 563281)
 ..............................................................................*/
 
 /* comentado pq dentro da include  {dbo/bo-erro1.i} tbem tem o var_oracle
@@ -587,14 +590,6 @@ PROCEDURE process-web-request:
   DEF VAR aux_des_erro  AS  CHAR                           NO-UNDO. 
   DEF VAR aux_dscritic  AS  CHAR                           NO-UNDO. 
   
-  
-  
-  
-  
-  
-  
-  
-  
 
   RUN outputHeader.
 
@@ -694,126 +689,206 @@ PROCEDURE process-web-request:
                          ASSIGN v_conta = TRIM(STRING(tt-crapcbl.nrdconta, "zzzz,zzz,9"))
                                 v_nome  = TRIM(tt-crapcbl.dsdonome).
                      END.
+                     
+                 ASSIGN aux_des_erro = "OK".
 
-                 IF get-value("v_codbarras") <> "" AND 
-                    v_tipdocto <> "2" THEN
-                    DO:
-                                
-                       RUN retorna-vlr-tit-vencto(INPUT INT(glb_cdcooper),     
-                                                  INPUT IF TRIM(v_conta) = "" THEN 0 ELSE INT(v_conta),    
-                                                  INPUT 1,     
-                                                  INPUT INT(glb_cdagenci),     
-                                                  INPUT INT(glb_cdbccxlt),     
-                                                  INPUT DEC(SUBSTR(v_codbarras,1,10)),     
-                                                  INPUT DEC(SUBSTR(v_codbarras,11,11)),      
-                                                  INPUT DEC(SUBSTR(v_codbarras,22,11)),      
-                                                  INPUT DEC(SUBSTR(v_codbarras,33,1)),      
-                                                  INPUT DEC(SUBSTR(v_codbarras,34,14)),      
-                                                  INPUT v_codbarras,
-                                                 OUTPUT aux_vltitulo,    
-                                                 OUTPUT aux_vlrjuros,    
-                                                 OUTPUT aux_vlrmulta,    
-                                                 OUTPUT aux_fltitven,    
-                                                 OUTPUT aux_des_erro,    
-                                                 OUTPUT aux_dscritic).   
-                  
-                       IF  aux_des_erro <> "OK" THEN
-                           DO:
-                             
-                           END.
-                       ELSE
-                          DO:
-                             ASSIGN v_valor = TRIM(STRING(aux_vltitulo,'zzz,zzz,zz9.99')).
-                          END.
-                           
-                    END.
-                 
                  /*se o cod barras estiver preenchido verifica o campo 
                    de valor e volta o foco para ele caso haja algum problema
                    ou o campo nao estiver preenchido*/
-                 /*IF get-value("v_codbarras") <> "" AND 
+                 IF get-value("v_codbarras") <> "" AND 
                     v_tipdocto <> "2" THEN
                     DO:       
-                        RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
-                        RUN valida-valor IN h_b1crap14(INPUT v_coop,
-                                            INPUT INT(v_pac),
-                                            INPUT INT(v_caixa),
-                                            INPUT DEC(GET-VALUE("v_valor"))).
-                        DELETE PROCEDURE h_b1crap14.                
-                        IF RETURN-VALUE = "NOK" THEN
-                           DO:                                   
-                              RUN gera-erro(INPUT glb_cdcooper,
-                                            INPUT glb_cdagenci,
-                                            INPUT glb_cdbccxlt).
-                              /* ASSIGN vh_foco  = "10". */
 
-                              
-                           END.         
-                    END.*/
-                
-               /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
-               IF  INT(v_tpproces) = 1 THEN
-                   DO:
-                       /*pagamento de titulo ou fatura lido pela leitora, 
-                         processo automatico*/  
-                       RUN processo-automatico(INPUT glb_cdcooper,    /*Cooperativa*/
-                                               INPUT glb_nmrescop,    /*Nome resumido coop*/
-                                               INPUT glb_cdoperad,    /*Operador*/
-                                               INPUT glb_cdagenci,    /*PA*/
-                                               INPUT glb_cdbccxlt,    /*Caixa*/
-                                               INPUT glb_dtmvtolt,    /*Data Movimento*/
-                                               INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
-                                               INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
-                                               INPUT v_conta,                   /*Numero da conta*/
-                                               INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
-                                               INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
-                                               INPUT 0, /*CPF/CNPJ CEDENTE */
-                                               INPUT 0, /*CPF/CNPJ SACADO */
-                                               OUTPUT aux_funcaojs,
-                                               OUTPUT vh_foco).       /*Foco do campo da tela*/
-        
-                       
-                       
-                       IF  RETURN-VALUE = "NOK" THEN
-                           DO:
-                              RUN gera-erro(INPUT glb_cdcooper,
-                                            INPUT glb_cdagenci,
-                                            INPUT glb_cdbccxlt).
-
-                           END.      
-                       ELSE
-                           DO:
-                             aux_funcaojs = aux_funcaojs + "$('#v_valor').val('');".
-                           END.
-                       
-                       ASSIGN aux_funcaojs = aux_funcaojs + "$('#v_fmtcodbar').val('');"
-                              aux_funcaojs = aux_funcaojs + "$('#v_codbarras').val('');". 
-                   END.
-               ELSE     
-                   DO:
-                        RUN processo-manual(INPUT glb_cdcooper,
-                                            INPUT glb_nmrescop,
-                                            INPUT glb_cdoperad,
-                                            INPUT glb_cdagenci,
-                                            INPUT glb_cdbccxlt,
-                                            INPUT glb_dtmvtolt,
-                                            INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
-                                            INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
-                                            INPUT v_conta,                   /*Numero da conta*/
-                                            INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
-                                            INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
-                                            INPUT 0, /*CPF/CNPJ CEDENTE */
-                                            INPUT 0, /*CPF/CNPJ SACADO */
-                                            OUTPUT aux_funcaojs,
-                                            OUTPUT vh_foco).
-
-                        IF  RETURN-VALUE = "NOK" THEN
+                        /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
+                        IF  INT(v_tpproces) = 1 THEN
+                        DO:
+                            /* Limpar as variaveis de critica */
+                            ASSIGN aux_des_erro = ""
+                                   aux_dscritic = "".
+                           
+                            RUN retorna-vlr-tit-vencto(INPUT INT(glb_cdcooper),     
+                                                       INPUT IF TRIM(v_conta) = "" THEN 0 ELSE INT(v_conta),    
+                                                       INPUT 1,     
+                                                       INPUT INT(glb_cdagenci),     
+                                                       INPUT INT(glb_cdbccxlt),     
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT 0,
+                                                       INPUT v_codbarras,
+                                                      OUTPUT aux_vltitulo,    
+                                                      OUTPUT aux_vlrjuros,    
+                                                      OUTPUT aux_vlrmulta,    
+                                                      OUTPUT aux_fltitven,    
+                                                      OUTPUT aux_des_erro,    
+                                                      OUTPUT aux_dscritic).   
+                          
+                            /* Tratamento de erro */ 
+                            IF  aux_des_erro <> "OK" THEN
                             DO:
-                               RUN gera-erro(INPUT glb_cdcooper,
-                                             INPUT glb_cdagenci,
-                                             INPUT glb_cdbccxlt).
+                                IF aux_dscritic = "" THEN
+                                DO:
+                                    ASSIGN aux_dscritic = "Erro na busca do valor do titulo. " + 
+                                                          "Retornou NOK porem sem mensagem de erro. " +
+                                                          "(Processo automatico)".
+                                END.
+                                
+                                /* Limpar as criticas */
+                                RUN elimina-erro(INPUT glb_nmrescop,
+                                                 INPUT glb_cdagenci,
+                                                 INPUT glb_cdbccxlt).
+                                /* Criar o erro novo */
+                                RUN cria-erro(INPUT glb_nmrescop,
+                                              INPUT glb_cdagenci,
+                                              INPUT glb_cdbccxlt,
+                                              INPUT 0,
+                                              INPUT aux_dscritic,
+                                              INPUT YES).
+                                /* Exibir o erro */ 
+                                RUN gera-erro(INPUT glb_cdcooper,
+                                              INPUT glb_cdagenci,
+                                              INPUT glb_cdbccxlt).                                   
+                                
+                                /* Setar o foco no campo Codigo de Barras */ 
+                                ASSIGN vh_foco = "10".
                             END.
-                   END. 
+                            ELSE
+                                DO:
+                                    /* Atribuir valor e setar foco no campo de VALOR */
+                                    ASSIGN v_valor = TRIM(STRING(aux_vltitulo,'zzz,zzz,zz9.99')).
+                                END.
+                        END.
+                        ELSE 
+                            DO:
+                            
+                               /* Limpar as variaveis de critica */
+                               ASSIGN aux_des_erro = ""
+                                      aux_dscritic = "".
+                                      
+                               RUN retorna-vlr-tit-vencto(INPUT INT(glb_cdcooper),     
+                                                          INPUT IF TRIM(v_conta) = "" THEN 0 ELSE INT(v_conta),    
+                                                          INPUT 1,     
+                                                          INPUT INT(glb_cdagenci),     
+                                                          INPUT INT(glb_cdbccxlt),     
+                                                          INPUT DEC(SUBSTR(v_codbarras,1,10)),
+                                                          INPUT DEC(SUBSTR(v_codbarras,11,11)),
+                                                          INPUT DEC(SUBSTR(v_codbarras,22,11)),
+                                                          INPUT DEC(SUBSTR(v_codbarras,33,1)),
+                                                          INPUT DEC(SUBSTR(v_codbarras,34,14)),
+                                                          INPUT "",
+                                                         OUTPUT aux_vltitulo,    
+                                                         OUTPUT aux_vlrjuros,    
+                                                         OUTPUT aux_vlrmulta,    
+                                                         OUTPUT aux_fltitven,    
+                                                         OUTPUT aux_des_erro,    
+                                                         OUTPUT aux_dscritic).   
+                          
+                               /* Tratamento de erro */ 
+                               IF  aux_des_erro <> "OK" THEN
+                               DO:
+                                   IF aux_dscritic = "" THEN
+                                   DO:
+                                       ASSIGN aux_dscritic = "Erro na busca do valor do titulo. " + 
+                                                             "Retornou NOK porem sem mensagem de erro."+
+                                                             "(Processo manual)".
+                                   END.
+                                   
+                                   /* Limpar as criticas */
+                                   RUN elimina-erro(INPUT glb_nmrescop,
+                                                    INPUT glb_cdagenci,
+                                                    INPUT glb_cdbccxlt).
+                                                    
+                                   /* Criar o erro novo */
+                                   RUN cria-erro(INPUT glb_nmrescop,
+                                                 INPUT glb_cdagenci,
+                                                 INPUT glb_cdbccxlt,
+                                                 INPUT 0,
+                                                 INPUT aux_dscritic,
+                                                 INPUT YES).
+                                                 
+                                   /* Exibir o erro */ 
+                                   RUN gera-erro(INPUT glb_cdcooper,
+                                                 INPUT glb_cdagenci,
+                                                 INPUT glb_cdbccxlt).                                   
+                                   
+                                   /* Setar o foco no campo Codigo de Barras */ 
+                                   ASSIGN vh_foco = "10".
+                               END.
+                               ELSE
+                                   DO:
+                                       /* Atribuir valor e setar foco no campo de VALOR */
+                                       ASSIGN v_valor = TRIM(STRING(aux_vltitulo,'zzz,zzz,zz9.99')).
+                                   END.
+                            END.
+                    END.
+                
+               IF aux_des_erro = "OK" THEN
+               DO:
+                   /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
+                   IF  INT(v_tpproces) = 1 THEN
+                       DO:
+                           /*pagamento de titulo ou fatura lido pela leitora, 
+                             processo automatico*/  
+                           RUN processo-automatico(INPUT glb_cdcooper,    /*Cooperativa*/
+                                                   INPUT glb_nmrescop,    /*Nome resumido coop*/
+                                                   INPUT glb_cdoperad,    /*Operador*/
+                                                   INPUT glb_cdagenci,    /*PA*/
+                                                   INPUT glb_cdbccxlt,    /*Caixa*/
+                                                   INPUT glb_dtmvtolt,    /*Data Movimento*/
+                                                   INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
+                                                   INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
+                                                   INPUT v_conta,                   /*Numero da conta*/
+                                                   INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
+                                                   INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
+                                                   INPUT 0, /*CPF/CNPJ CEDENTE */
+                                                   INPUT 0, /*CPF/CNPJ SACADO */
+                                                   OUTPUT aux_funcaojs,
+                                                   OUTPUT vh_foco).       /*Foco do campo da tela*/
+            
+                           
+                           
+                           IF  RETURN-VALUE = "NOK" THEN
+                               DO:
+                                  RUN gera-erro(INPUT glb_cdcooper,
+                                                INPUT glb_cdagenci,
+                                                INPUT glb_cdbccxlt).
+
+                               END.      
+                           ELSE
+                               DO:
+                                 aux_funcaojs = aux_funcaojs + "$('#v_valor').val('');".
+                               END.
+                           
+                           ASSIGN aux_funcaojs = aux_funcaojs + "$('#v_fmtcodbar').val('');"
+                                  aux_funcaojs = aux_funcaojs + "$('#v_codbarras').val('');". 
+                       END.
+                   ELSE     
+                       DO:
+                            RUN processo-manual(INPUT glb_cdcooper,
+                                                INPUT glb_nmrescop,
+                                                INPUT glb_cdoperad,
+                                                INPUT glb_cdagenci,
+                                                INPUT glb_cdbccxlt,
+                                                INPUT glb_dtmvtolt,
+                                                INPUT INT(v_tipdocto), /*1-TIT | 2-FAT*/
+                                                INPUT get-value("v_codbarras"),  /*Codigo de Barras*/
+                                                INPUT v_conta,                   /*Numero da conta*/
+                                                INPUT DEC(GET-VALUE("v_valor")), /*Valor do titulo ou fatura*/
+                                                INPUT v_msg_vencido,   /*Titulo vencido (yes | no)*/
+                                                INPUT 0, /*CPF/CNPJ CEDENTE */
+                                                INPUT 0, /*CPF/CNPJ SACADO */
+                                                OUTPUT aux_funcaojs,
+                                                OUTPUT vh_foco).
+
+                            IF  RETURN-VALUE = "NOK" THEN
+                                DO:
+                                   RUN gera-erro(INPUT glb_cdcooper,
+                                                 INPUT glb_cdagenci,
+                                                 INPUT glb_cdbccxlt).
+                                END.
+                       END. 
+               END.
             END.
         END.
      END.
@@ -1125,9 +1200,9 @@ PROCEDURE processa-titulo:
         DO: 
 
             IF  UPPER(craperr.dscritic) MATCHES "*VALOR*" THEN
-                ASSIGN par_setafoco = "10". 
-            ELSE
                 ASSIGN par_setafoco = "11". 
+            ELSE
+                ASSIGN par_setafoco = "10". 
 
 
             RETURN "NOK".
@@ -1139,7 +1214,7 @@ PROCEDURE processa-titulo:
     IF  (aux_cdcritic > 0 OR aux_dscritic <> "") AND 
          aux_cdcritic <> 13 THEN 
         DO: 
-           ASSIGN par_setafoco = "11".
+           ASSIGN par_setafoco = "10".
            RETURN "NOK".
         END. 
      
@@ -1592,7 +1667,7 @@ PROCEDURE processo-manual:
     
     IF RETURN-VALUE = "NOK" THEN
        DO:                    
-           ASSIGN par_setafoco    = "11".
+           ASSIGN par_setafoco    = "10".
            RETURN "NOK".
        END.
     ELSE
@@ -1763,22 +1838,14 @@ PROCEDURE retorna-vlr-tit-vencto:
 
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
     
-    /*IF  aux_des_erro <> "OK" OR
-        aux_dscritic <> ""   THEN DO: 
+    IF  par_des_erro <> "OK" OR
+        par_dscritic <> ""   THEN DO: 
 
-        IF  aux_dscritic = "" THEN DO:   
-            ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca do valor do titulo".
-        END.
-
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                           "</dsmsgerr>".  
-        
         RETURN "NOK".
         
-    END.*/
+    END.
 
-    /*CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = aux_dsxmlout.*/
+    RETURN "OK".
 
 END PROCEDURE.
 

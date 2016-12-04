@@ -91,7 +91,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0131.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 07/11/2016
+    Data    : Dezembro/2011                     Ultima atualizacao: 29/11/2016
 
     Objetivo  : Tranformacao BO tela PREVIS
 
@@ -134,11 +134,14 @@
                 12/11/2015 - Na chamada da procedure obtem-log-cecred, incluir
                              novo parametro inestcri projeto Estado de Crise
                              (Jorge/Andrino)             
-                             
+
                 27/09/2016 - M211 - Envio do parado cdifconv na chamada da 
                             obtem-log-cecred pela pi_sr_ted_f (Jonata-RKAM)        
                         
 				07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)                        
+
+				29/11/2016 - Ajuste para gravar corretamente os movimentos de
+						     entrada referente as TED - SICREDI (Adriano - M211).   
                         
 ............................................................................*/
 
@@ -2685,33 +2688,24 @@ PROCEDURE pi_sr_ted_f:
        ASSIGN aux_vlrtedsr = tt-logspb-totais.vlrrecok.
     ELSE
        ASSIGN aux_vlrtedsr = 0.
-
-
+	   
     IF VALID-HANDLE(h-b1wgen0050) THEN
        DELETE OBJECT h-b1wgen0050.
     
     RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT TRUE).
 
-
-    DO aux_contador = 1 TO NUM-ENTRIES(aux_cdbccxlt,","):
-        
-       RUN grava-movimentacao 
+    RUN grava-movimentacao 
                       (INPUT par_cdcoopex,
                        INPUT par_cdoperad,
                        INPUT par_dtmvtolt,
                        INPUT 1,
-                       INPUT INT(ENTRY(aux_contador,aux_cdbccxlt)),
+                       INPUT 100,
                        INPUT 3,
-                       INPUT (IF ENTRY(aux_contador,aux_cdbccxlt) = "100" THEN
-                                 aux_vlrtedsr
-                              ELSE
-                                 0)).
+                       INPUT aux_vlrtedsr).
        
-       IF RETURN-VALUE <> "OK" THEN
-          RETURN "NOK".
-
-    END.
+    IF RETURN-VALUE <> "OK" THEN
+       RETURN "NOK".
 
     RETURN "OK".
 

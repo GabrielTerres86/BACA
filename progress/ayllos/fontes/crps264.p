@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 11/10/2016
+    Data    : Marco/07.                       Ultima atualizacao: 28/11/2016
     
     Dados referentes ao programa:
 
@@ -192,6 +192,9 @@
                             envia_arquivo_xml (Carlos)
 
               11/10/2016 - Acesso da tela PRCCTL DEVOLU em todas cooperativas SD381526 (Tiago/Elton)
+              
+              28/11/2016 - Alterar parametro da busca da tabela crapcst que estava errado 
+                           (Lucas Ranghetti/Elton)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -2858,7 +2861,7 @@ PROCEDURE gera_arquivo_cecred:
                                                   AND crapcst.cdagechq = crapfdc.cdagechq
                                                   AND crapcst.nrctachq = crapfdc.nrctachq
                                                   AND crapcst.nrcheque = crapfdc.nrcheque
-                                                  AND CAN-DO("0,2",STRING(crapcdb.insitchq))
+                                                  AND CAN-DO("0,2",STRING(crapcst.insitchq))
                                                   NO-LOCK:
                               END.
                         
