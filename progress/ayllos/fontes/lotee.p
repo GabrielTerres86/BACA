@@ -167,6 +167,14 @@
 
                27/06/2016 - Se o departamento nao for TI ou SUPORTE, nao deixar
 			                deletar tipo de lote 26 (Tiago/Elton SD438123).
+
+               28/07/2016 - Permitido exclusao a todos operadores (Tiago/Elton).
+               
+               16/08/2016 - Corrigir problema na exclusao do lote, pois nao pode ser 
+                            alterado o INLIQUID quando o lote é excluído.
+                          + Controlar o preenchimento da data de pagamento do prejuízo,
+                            voltando o prejuizo antes da liquidaçao. (Renato Darosci - M176)
+                          
 ............................................................................. */
 
 DEF BUFFER crabseg FOR crapseg.
@@ -383,15 +391,6 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
 
    IF   tel_tplotmov = 26   THEN                     /*  Desconto de cheques  */
         DO:
-
-            IF  glb_dsdepart <> "TI" AND
-                glb_dsdepart <> "SUPORTE"  THEN
-                DO:
-                    glb_cdcritic = 650.
-                    CLEAR FRAME f_lote NO-PAUSE.
-                    NEXT.
-                END.
-
             FIND crapbdc WHERE crapbdc.cdcooper = glb_cdcooper AND
                                crapbdc.nrborder = craplot.cdhistor 
                                NO-LOCK NO-ERROR.
@@ -1109,25 +1108,36 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
 
                    { includes/lelem.i }  /* Rotina para calc do sld.devedor */
 
-                   IF   craphis.indebcre = "D"   THEN
+                   IF   craphis.indebcre = "D"   THEN DO:
                         ASSIGN par_qtexclln = par_qtexclln + 1
                                par_vlexcldb = par_vlexcldb + crablem.vllanmto
-                               aux_contador = 0
+                               aux_contador = 0.
 
+                        /* Renato Darosci - Inclusao do IF - 16/08/2016 */
+                        IF crapepr.inprejuz = 0 THEN
                                crapepr.inliquid = IF (aux_vlsdeved -
                                                       crablem.vllanmto) > 0
                                                       THEN 0
                                                       ELSE 1.
+                                                      
+                      END.
                    ELSE
-                   IF   craphis.indebcre = "C"   THEN
+                   IF   craphis.indebcre = "C"   THEN DO:
                         ASSIGN par_qtexclln = par_qtexclln + 1
                                par_vlexclcr = par_vlexclcr + crablem.vllanmto
-                               aux_contador = 0
+                               aux_contador = 0.
 
+                        /* Renato Darosci - Inclusao do IF - 16/08/2016 */
+                        IF crapepr.inprejuz = 0 THEN
                                crapepr.inliquid = IF (aux_vlsdeved +
                                                       crablem.vllanmto) > 0
                                                       THEN 0
                                                       ELSE 1.
+                      END.
+                   
+                   /* Voltar a situaçao antes de ter pago o prejuizo - Renato Darosci - 16/08/2016 */
+                   IF crapepr.dtliqprj <> ? THEN
+                      ASSIGN crapepr.dtliqprj = ?.
 
                    IF   crablem.cdhistor = 349   THEN 
                         ASSIGN crapepr.vlprejuz = crapepr.vlprejuz - 
