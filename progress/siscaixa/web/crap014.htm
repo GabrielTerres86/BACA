@@ -25,6 +25,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                
    
             03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)        
+    
+            01/12/2016 - Ajuste na navegacao dos campos (correcao M271) 
+                        (Douglas - Chamado 563281)
 -->
 
 <html>
@@ -76,13 +79,11 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
         $('#v_codbarras').val('');
 
         $(cValor).prop("disabled", false);
-        $(cValor).focus();
-
     }	
 
     $( document ).ready(function(){         
 
-        $(btnCancela).unbind("click").bind( "click", function(){resetaCampo();$(cValor).val("");} );
+        $(btnCancela).unbind("click").bind( "click", function(){resetaCampo();$(cValor).val("");$(cCodBarras).focus();} );
         $(btnOk).unbind("click").bind( "click", function(){document.forms[0].submit();} );
 
         $(cCodBarras).attr("maxlength","57");
@@ -412,7 +413,14 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 
 		});
 
-		$(cCodBarras).focus();
+        /* Controle do foco no campo */
+        if( $(cValor).val().length > 0 ) {
+		       // $(cValor).focus();
+           document.forms[0].vh_foco.value = "11";
+        } else {
+           // $(cCodBarras).focus();
+           document.forms[0].vh_foco.value = "10";
+        }
         
 		//$("#key").css('width','390px');     
 
