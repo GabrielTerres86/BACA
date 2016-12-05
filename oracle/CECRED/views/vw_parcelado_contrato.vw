@@ -30,7 +30,7 @@ from
   crapbdc bdc
 where
   cop.cdcooper = ass.cdcooper
-  cop.flgativo = 1
+  and cop.flgativo = 1
   and bdc.nrdconta = ass.nrdconta
   and bdc.cdcooper = ass.cdcooper
   and ass.incadpos = 2
@@ -70,7 +70,7 @@ from
   crapbdt bdt
 where
   cop.cdcooper = ass.cdcooper
-  cop.flgativo = 1
+  and cop.flgativo = 1
   and bdt.nrdconta = ass.nrdconta
   and bdt.cdcooper = ass.cdcooper
   and ass.incadpos = 2
@@ -117,7 +117,7 @@ from
   crapepr epr
 where
   cop.cdcooper = ass.cdcooper
-  cop.flgativo = 1
+  and cop.flgativo = 1
   and ass.cdcooper = epr.cdcooper
   and ass.nrdconta = epr.nrdconta
   and ass.incadpos = 2
@@ -153,7 +153,7 @@ from
   crapcop cop
 where
   cop.cdcooper = ass.cdcooper
-  cop.flgativo = 1
+  and cop.flgativo = 1
   and ass.cdcooper = epr.cdcooper
   and ass.nrdconta = epr.nrdconta
   and ass.incadpos = 2
