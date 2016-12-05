@@ -19,61 +19,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB019 IS
 
   ---------------------------- ESTRUTURAS DE REGISTRO -----------------------
   
-  TYPE typ_rec_lim_desconto 
-      IS RECORD ( vllimite    NUMBER,
-                  qtdiavig    INTEGER,
-                  qtdiavig_c  INTEGER,
-                  qtprzmin    INTEGER,
-                  qtprzmin_c  INTEGER,
-                  qtprzmax    INTEGER,
-                  txdmulta    NUMBER,
-                  txdmulta_c  NUMBER,
-                  vlconchq    NUMBER,
-                  vlconchq_c  NUMBER,
-                  vlmaxemi    NUMBER,
-                  pcchqloc    NUMBER,
-                  pcchqloc_c  NUMBER,
-                  pcchqemi    NUMBER,
-                  pcchqemi_c  NUMBER,
-                  qtdiasoc    NUMBER,
-                  qtdiasoc_c  NUMBER,
-                  qtdevchq    NUMBER,
-                  qtdevchq_c  NUMBER,
-                  pctollim    NUMBER,
-                  vllimite_c  NUMBER,
-                  vlmaxemi_c  NUMBER,
-                  qtprzmax_c  NUMBER,
-                  pctollim_c  NUMBER,
-                  qtdiasli    NUMBER,
-                  horalimt    NUMBER,
-                  minlimit    NUMBER,
-                  qtdiasli_c  NUMBER,
-                  horalimt_c  NUMBER,
-                  minlimit_c  NUMBER,
-                  Flemipar    INTEGER,  -- Verificar se Emitente é Conjugue do Cooperado
-                  Flemipar_c  INTEGER,  -- Verificar se Emitente é Conjugue do Cooperado
-                  Przmxcmp    NUMBER,   -- Prazo Máximo de Compensação
-                  Przmxcmp_c  NUMBER,   -- Prazo Máximo de Compensação
-                  Flpjzemi    INTEGER,  -- Verificar Prejuízo do Emitente
-                  Flpjzemi_c  INTEGER,  -- Verificar Prejuízo do Emitente
-                  Flemisol    INTEGER,  -- Verificar Emitente x Conta Solicitante
-                  Flemisol_c  INTEGER,  -- Verificar Emitente x Conta Solicitante
-                  Prcliqui    INTEGER,  -- Percentual de Liquidez
-                  Prcliqui_c  INTEGER,  -- Percentual de Liquidez
-                  Qtmesliq    INTEGER,  -- Qtd. Meses Cálculo Percentual de Liquidez
-                  Qtmesliq_c  INTEGER,  -- Qtd. Meses Cálculo Percentual de Liquidez                  
-                  Vlrenlim    NUMBER,   -- Renda x Limite Desconto
-                  Vlrenlim_c  NUMBER,   -- Renda x Limite Desconto
-                  Qtmxrede    INTEGER,  -- Qtd. Máxima Redesconto
-                  Qtmxrede_c  INTEGER,  -- Qtd. Máxima Redesconto
-                  Fldchqdv    INTEGER,  -- Permitir Desconto Cheque Devolvido
-                  Fldchqdv_c  INTEGER,  -- Permitir Desconto Cheque Devolvido
-                  Vlmxassi    NUMBER,   -- Valor Máximo Dispensa Assinatura
-                  Vlmxassi_c  NUMBER    -- Valor Máximo Dispensa Assinatura
-                  );
-                  
-  TYPE typ_tab_lim_desconto IS TABLE OF typ_rec_lim_desconto
-       INDEX BY PLS_INTEGER;
   ---------------------------------- ROTINAS --------------------------------
   PROCEDURE pc_consulta_web(pr_inpessoa IN NUMBER
                            ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -161,233 +106,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
   --
   ---------------------------------------------------------------------------
 
-  PROCEDURE pc_busca_limite_desconto( pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
-                                     ,pr_inpessoa IN NUMBER                --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
-                                     ,pr_tab_lim_desconto OUT typ_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
-                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                     ) IS
-    /* .............................................................................
-    
-        Programa: pc_busca_limite_desconto
-        Sistema : CECRED
-        Sigla   : EMPR
-        Autor   : Odirlei Busana (Amcom)
-        Data    : Julho/2016.                    Ultima atualizacao: --/--/----
-    
-        Dados referentes ao programa:
-    
-        Frequencia: Sempre que for chamado
-    
-        Objetivo  : Retorna na temptable os dados da tab de limite de desconto
-    
-        Observacao: -----
-    
-        Alteracoes:
-    ..............................................................................*/
-      ----------->>> VARIAVEIS <<<--------   
-      -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
-      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
-    
-      -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
-      
-      -- Variaveis retornadas da gene0004.pc_extrai_dados
-      vr_ini  INTEGER;     
-      vr_fim  INTEGER;
-      
-      vr_cdacesso VARCHAR2(100);
-      vr_tab_limdesconto gene0002.typ_split;
-      
-      
-      ---------->> CURSORES <<--------
-      CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
-                       ,pr_cdacesso IN craptab.cdacesso%TYPE) IS
-        SELECT tab.dstextab 
-          FROM craptab tab
-         WHERE tab.cdcooper = pr_cdcooper
-           AND upper(tab.nmsistem) = 'CRED'
-           AND upper(tab.tptabela) = 'USUARI'
-           AND tab.cdempres = 11
-           AND upper(tab.cdacesso) = pr_cdacesso
-           AND tab.tpregist = 0;
-      rw_craptab cr_craptab%ROWTYPE;
-    
-    
-    BEGIN
-    
-      --> Caso informado inpessoa 0, deve buscar 
-      --> de pessoa fisica e juridica
-      IF pr_inpessoa = 0 THEN
-        vr_ini := 1;
-        vr_fim := 2;
-      ELSE
-        vr_ini := pr_inpessoa;
-        vr_fim := pr_inpessoa;
-      END IF;   
-      
-      --> Buscar limites
-      FOR vr_inpessoa IN vr_ini..vr_fim LOOP            
-      
-        IF vr_inpessoa = 1 THEN
-          vr_cdacesso := 'LIMDESCONTPF';
-        ELSE
-          vr_cdacesso := 'LIMDESCONTPJ';
-        END IF;
-        
-        --> Buscar dados de limites de descontos 
-        --> conforma a tipo de pessoa
-        OPEN cr_craptab (pr_cdcooper => pr_cdcooper
-                        ,pr_cdacesso => vr_cdacesso);
-        FETCH cr_craptab INTO rw_craptab;    
-        -- Se nao encontrar
-        IF cr_craptab%NOTFOUND THEN
-          -- Fechar o cursor
-          CLOSE cr_craptab;
-        
-          -- Montar mensagem de critica
-          vr_cdcritic := 55;
-          vr_dscritic := '';
-          -- volta para o programa chamador
-          RAISE vr_exc_saida;
-        
-        END IF;    
-        -- Fechar o cursor
-        CLOSE cr_craptab;
-        
-        vr_tab_limdesconto := gene0002.fn_quebra_string(rw_craptab.dstextab,' ');
-        
-        IF vr_tab_limdesconto.count > 0 THEN
-          
-          -- Ler os dados da linha do limite de desconto 
-          FOR i IN vr_tab_limdesconto.first..vr_tab_limdesconto.last LOOP          
-            
-            CASE i 
-              WHEN 1 THEN -- pos 1 - 12
-                pr_tab_lim_desconto(vr_inpessoa).vllimite  := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-              WHEN 2 THEN -- pos 87 - 12
-                pr_tab_lim_desconto(vr_inpessoa).vllimite_c := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-              WHEN 3 THEN -- pos 14 - 4
-                pr_tab_lim_desconto(vr_inpessoa).qtdiavig   := vr_tab_limdesconto(i);    
-                pr_tab_lim_desconto(vr_inpessoa).qtdiavig_c := vr_tab_limdesconto(i);    
-              WHEN 4 THEN -- pos 22 - 3
-                pr_tab_lim_desconto(vr_inpessoa).qtprzmin   := vr_tab_limdesconto(i);   
-                pr_tab_lim_desconto(vr_inpessoa).qtprzmin_c := vr_tab_limdesconto(i);   
-              WHEN 5 THEN -- pos 26 - 3
-                pr_tab_lim_desconto(vr_inpessoa).qtprzmax := vr_tab_limdesconto(i);     
-              WHEN 6 THEN -- pos 113 - 3
-                pr_tab_lim_desconto(vr_inpessoa).qtprzmax_c := vr_tab_limdesconto(i);   
-              WHEN 7 THEN -- pos 30 - 10
-                pr_tab_lim_desconto(vr_inpessoa).txdmulta   := to_number(vr_tab_limdesconto(i),'000d000000','NLS_NUMERIC_CHARACTERS='',.'''); 
-                pr_tab_lim_desconto(vr_inpessoa).txdmulta_c := to_number(vr_tab_limdesconto(i),'000d000000','NLS_NUMERIC_CHARACTERS='',.'''); 
-              WHEN 8 THEN -- pos 41 - 12
-                pr_tab_lim_desconto(vr_inpessoa).vlconchq   := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.'''); 
-                pr_tab_lim_desconto(vr_inpessoa).vlconchq_c := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.'''); 
-              WHEN 9 THEN -- pos 54 - 12
-                pr_tab_lim_desconto(vr_inpessoa).vlmaxemi   := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.'''); 
-              WHEN 10 THEN -- pos 101 - 12
-                pr_tab_lim_desconto(vr_inpessoa).vlmaxemi_c := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');                
-              WHEN 11 THEN -- pos 67 - 3
-                pr_tab_lim_desconto(vr_inpessoa).pcchqloc   := vr_tab_limdesconto(i);   
-                pr_tab_lim_desconto(vr_inpessoa).pcchqloc_c := vr_tab_limdesconto(i);   
-              WHEN 12 THEN -- pos 71 - 3
-                pr_tab_lim_desconto(vr_inpessoa).pcchqemi   := vr_tab_limdesconto(i);   
-                pr_tab_lim_desconto(vr_inpessoa).pcchqemi_c := vr_tab_limdesconto(i);        
-              WHEN 13 THEN -- pos 75 - 3
-                pr_tab_lim_desconto(vr_inpessoa).qtdiasoc   := vr_tab_limdesconto(i);   
-                pr_tab_lim_desconto(vr_inpessoa).qtdiasoc_c := vr_tab_limdesconto(i);
-              WHEN 14 THEN -- pos 79 - 3
-                pr_tab_lim_desconto(vr_inpessoa).qtdevchq   := vr_tab_limdesconto(i);   
-                pr_tab_lim_desconto(vr_inpessoa).qtdevchq_c := vr_tab_limdesconto(i); 
-              WHEN 15 THEN -- pos 83 - 3
-                pr_tab_lim_desconto(vr_inpessoa).pctollim   := vr_tab_limdesconto(i);                               
-              WHEN 16 THEN -- pos 117 - 3
-                pr_tab_lim_desconto(vr_inpessoa).pctollim_c := vr_tab_limdesconto(i);    
-              WHEN 17 THEN -- pos 121 - 2
-                pr_tab_lim_desconto(vr_inpessoa).qtdiasli   := vr_tab_limdesconto(i);  
-              WHEN 18 THEN -- pos 124 - 5 
-                pr_tab_lim_desconto(vr_inpessoa).horalimt   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'HH24');
-                pr_tab_lim_desconto(vr_inpessoa).minlimit   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'MI');
-              WHEN 19 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).qtdiasli_c := vr_tab_limdesconto(i);                              
-              WHEN 20 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).horalimt_c   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'HH24');
-                pr_tab_lim_desconto(vr_inpessoa).minlimit_c   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'MI');  
-              WHEN 21 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Flemipar     := vr_tab_limdesconto(i);  
-              WHEN 22 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Flemipar_c   := vr_tab_limdesconto(i);  
-              WHEN 23 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Przmxcmp     := vr_tab_limdesconto(i);  
-              WHEN 24 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Przmxcmp_c   := vr_tab_limdesconto(i);  
-              WHEN 25 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Flpjzemi     := vr_tab_limdesconto(i);  
-              WHEN 26 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Flpjzemi_c   := vr_tab_limdesconto(i);  
-              WHEN 27 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Flemisol     := vr_tab_limdesconto(i);  
-              WHEN 28 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Flemisol_c   := vr_tab_limdesconto(i);  
-              WHEN 29 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Prcliqui     := vr_tab_limdesconto(i);  
-              WHEN 30 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Prcliqui_c   := vr_tab_limdesconto(i);  
-              WHEN 31 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Qtmesliq     := vr_tab_limdesconto(i);  
-              WHEN 32 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Qtmesliq_c   := vr_tab_limdesconto(i);   
-              WHEN 33 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Vlrenlim     := vr_tab_limdesconto(i);  
-              WHEN 34 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Vlrenlim_c   := vr_tab_limdesconto(i);  
-              WHEN 35 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Qtmxrede     := vr_tab_limdesconto(i);   
-              WHEN 36 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Qtmxrede_c   := vr_tab_limdesconto(i);  
-              WHEN 37 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Fldchqdv     := vr_tab_limdesconto(i);  
-              WHEN 38 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Fldchqdv_c   := vr_tab_limdesconto(i);  
-              WHEN 39 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Vlmxassi     := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-              WHEN 40 THEN 
-                pr_tab_lim_desconto(vr_inpessoa).Vlmxassi_c   := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-              ELSE
-                NULL;
-              END CASE;
-          END LOOP;
-        
-        
-        ELSE
-          -- Montar mensagem de critica
-          vr_dscritic := 'Dados de limite de desconto não encontrados';
-          -- volta para o programa chamador
-          RAISE vr_exc_saida;  
-        
-        END IF;            
-      END LOOP;
-      
-    
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-      
-      IF vr_cdcritic <> 0 THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      ELSE
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-      END IF;
-      
-    WHEN OTHERS THEN
-      
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro ao buscar limites: ' || SQLERRM;
-      
-  END pc_busca_limite_desconto;
-  
   PROCEDURE pc_consulta_web(pr_inpessoa IN NUMBER             --> Tipo de pessoa (1-Fisica e 2-Juridica)
                            ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
                            ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
@@ -432,7 +150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
                  
-      vr_tab_lim_desconto typ_tab_lim_desconto;      
+      vr_tab_lim_desconto dscc0001.typ_tab_lim_desconto;      
       
       ---------->> CURSORES <<--------
       --> Buscar dados operador    
@@ -464,7 +182,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
         RAISE vr_exc_saida;
       END IF;
       
-      pc_busca_limite_desconto( pr_cdcooper => vr_cdcooper    --> Codigo da cooperativa 
+      DSCC0001.pc_busca_tab_limdescont
+                              ( pr_cdcooper => vr_cdcooper    --> Codigo da cooperativa 
                                ,pr_inpessoa => pr_inpessoa    --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
                                ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                                ,pr_cdcritic => vr_cdcritic    --> Código da crítica
@@ -1011,7 +730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
     vr_cdacesso VARCHAR2(100);
     vr_dsccampo VARCHAR2(1000);
       
-    vr_tab_lim_desconto typ_tab_lim_desconto;      
+    vr_tab_lim_desconto DSCC0001.typ_tab_lim_desconto;      
     
     vr_horalimt NUMBER;
     vr_horalim2 NUMBER;
@@ -1095,7 +814,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB019 IS
       vr_cdacesso := 'LIMDESCONTPJ';
     END IF;
     
-    pc_busca_limite_desconto( pr_cdcooper => vr_cdcooper    --> Codigo da cooperativa 
+    DSCC0001.pc_busca_tab_limdescont
+                            ( pr_cdcooper => vr_cdcooper    --> Codigo da cooperativa 
                              ,pr_inpessoa => pr_inpessoa    --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
                              ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                              ,pr_cdcritic => vr_cdcritic    --> Código da crítica

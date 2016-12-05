@@ -2,7 +2,7 @@
 
     Programa: b1wgen0018.p
     Autor   : GATI - Peixoto/Eder
-    Data    : Setembro/2009                   Ultima Atualizacao: 07/06/2016
+    Data    : Setembro/2009                   Ultima Atualizacao: 23/09/2016
     
     Dados referentes ao programa:
 
@@ -121,6 +121,11 @@
                               solicitado no chamado 303654. (Kelvin)
                               
                  17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+                 
+                 23/09/2016 - Alterado valida_limites_desconto e valida_dados_desconto
+                              para leitura da nova TAB de desconto segmentada por tipo de pessoa.
+                              PRJ-300 - Desconto de cheque(Odirlei-AMcom)
+                              
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -2606,8 +2611,26 @@ PROCEDURE valida_limites_desconto:
     DEFINE OUTPUT PARAMETER par_dtlibera AS DATE        NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     
+    DEFINE VAR aux_cdacesso AS CHAR                     NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
 
+    FIND FIRST crapass 
+         WHERE crapass.cdcooper = par_cdcooper
+           AND crapass.nrdconta = par_nrdconta
+           NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE crapass THEN
+    DO:
+             ASSIGN aux_cdcritic = 9.
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,            /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+             RETURN "NOK".
+         END.
+    
     FIND FIRST craplim WHERE 
                craplim.cdcooper = par_cdcooper   AND
                craplim.nrdconta = par_nrdconta   AND
@@ -2645,11 +2668,20 @@ PROCEDURE valida_limites_desconto:
              RETURN "NOK".
          END.                
     
+    IF crapass.inpessoa = 1 THEN
+      DO:
+         ASSIGN aux_cdacesso = "LIMDESCONTPF".
+      END.
+    ELSE
+      DO: 
+         ASSIGN aux_cdacesso = "LIMDESCONTPJ".
+      END.
+    
     FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
                        craptab.nmsistem = "CRED"       AND
                        craptab.tptabela = "USUARI"     AND
                        craptab.cdempres = 11           AND
-                       craptab.cdacesso = "LIMDESCONT" AND
+                       craptab.cdacesso = aux_cdacesso AND
                        craptab.tpregist = 0            NO-LOCK NO-ERROR.
     IF   NOT AVAILABLE craptab   THEN
          DO:
@@ -2664,8 +2696,9 @@ PROCEDURE valida_limites_desconto:
                             INPUT-OUTPUT aux_dscritic).
              RETURN "NOK".
          END.
-
-    ASSIGN tab_qtprzmin = DECIMAL(SUBSTRING(craptab.dstextab,22,03))
+    
+    /*Antigo DECIMAL(SUBSTRING(craptab.dstextab,22,03))*/
+    ASSIGN tab_qtprzmin = DECIMAL(ENTRY(4,craptab.dstextab," "))
            par_dtlibera = par_dtmvtolt + tab_qtprzmin + 1.
 
     RETURN "OK".
@@ -2685,6 +2718,25 @@ PROCEDURE valida_dados_desconto:
     DEFINE INPUT  PARAMETER par_dtlibera AS DATE        NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     
+    DEFINE VAR aux_cdacesso AS CHAR                     NO-UNDO.
+    
+    FIND FIRST crapass 
+         WHERE crapass.cdcooper = par_cdcooper
+           AND crapass.nrdconta = par_nrdconta
+           NO-LOCK NO-ERROR.
+    IF NOT AVAILABLE crapass THEN
+    DO:
+         ASSIGN aux_cdcritic = 9.
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1,            /** Sequencia **/
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic).
+         RETURN "NOK".
+    END.
+    
+    
     FIND FIRST craplim WHERE 
                craplim.cdcooper = par_cdcooper   AND
                craplim.nrdconta = par_nrdconta   AND
@@ -2703,12 +2755,21 @@ PROCEDURE valida_dados_desconto:
                             INPUT-OUTPUT aux_dscritic).
              RETURN "NOK".
          END.
-         
+    
+    IF crapass.inpessoa = 1 THEN
+      DO:
+         ASSIGN aux_cdacesso = "LIMDESCONTPF".
+      END.
+    ELSE
+      DO: 
+         ASSIGN aux_cdacesso = "LIMDESCONTPJ".
+      END.
+    
     FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
                        craptab.nmsistem = "CRED"       AND
                        craptab.tptabela = "USUARI"     AND
                        craptab.cdempres = 11           AND
-                       craptab.cdacesso = "LIMDESCONT" AND
+                       craptab.cdacesso = aux_cdacesso AND
                        craptab.tpregist = 0            NO-LOCK NO-ERROR.
     IF   NOT AVAILABLE craptab   THEN
          DO:
@@ -2723,10 +2784,32 @@ PROCEDURE valida_dados_desconto:
                             INPUT-OUTPUT aux_dscritic).
              RETURN "NOK".
          END.
+    
+    /** Buscar regra para renovaçao **/
+    FIND FIRST craprli 
+         WHERE craprli.cdcooper = par_cdcooper
+           AND craprli.tplimite = 2
+           AND craprli.inpessoa = crapass.inpessoa
+           NO-LOCK NO-ERROR.
+    
+    IF NOT AVAILABLE craprli  THEN
+    DO:
+             ASSIGN aux_cdcritic = 0
+                    aux_dscritic = "Tabela Regra de limite nao cadastrada.".
+
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,      /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
+             RETURN "NOK".
+         END.
+       
          
-    ASSIGN tab_qtrenova = DECIMAL(SUBSTRING(craptab.dstextab,19,02))
-           tab_qtprzmin = DECIMAL(SUBSTRING(craptab.dstextab,22,03))
-           tab_qtprzmax = DECIMAL(SUBSTRING(craptab.dstextab,26,03))
+    ASSIGN tab_qtrenova = craprli.qtmaxren
+           tab_qtprzmin = DECIMAL(ENTRY(4,craptab.dstextab," "))
+           tab_qtprzmax = DECIMAL(ENTRY(5,craptab.dstextab," "))
            aux_dtminima = par_dtmvtolt + tab_qtprzmin
            aux_dtmaxima = par_dtmvtolt + tab_qtprzmax
            aux_dtlimite = craplim.dtinivig +

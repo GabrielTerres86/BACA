@@ -239,7 +239,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
        IS RECORD (vllimite  NUMBER,
                   vlconchq  NUMBER,
                   vlmaxemi  NUMBER,
-                  qtrenova  INTEGER,
                   qtdiavig  INTEGER,
                   qtprzmin  INTEGER,
                   qtprzmax  INTEGER,
@@ -1336,6 +1335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                    ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                    ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
                                    ,pr_cddopcao IN VARCHAR2               --> Tipo de busca
+                                   ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indicador de tipo de pessoa
                                    --------> OUT <--------                                   
                                    ,pr_tab_dados_limite    OUT typ_tab_dados_limite          --> retorna dos dados
                                    ,pr_tab_dados_dsctit    OUT typ_tab_dados_dsctit          --> tabela contendo os parametros da cooperativa
@@ -1516,6 +1516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                           ,pr_cdoperad => pr_cdoperad  --> Código do Operador
                                           ,pr_dtmvtolt => pr_dtmvtolt  --> Data do movimento
                                           ,pr_idorigem => pr_idorigem  --> Identificador de Origem 
+                                          ,pr_inpessoa => pr_inpessoa  --> Indicador de tipo de pessoa
                                            --------> OUT <--------          
                                           ,pr_tab_dados_dscchq => vr_tab_dados_dscchq  --> tabela contendo os parametros da cooperativa
                                           ,pr_cdcritic         => vr_cdcritic          --> Código da crítica
@@ -1649,6 +1650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                        ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
                                        ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
                                        ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato                                       
+                                       ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indicador de tipo de pessoa
                                        --------> OUT <--------                                   
                                        ,pr_tab_dados_limite     OUT typ_tab_dados_limite          --> retorna dos dados                                       
                                        ,pr_tab_dados_dsctit     OUT typ_tab_dados_dsctit          --> tabela contendo os parametros da cooperativa
@@ -1700,6 +1702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            ,pr_nmdatela => pr_nmdatela  --> Nome da Tela
                            ,pr_nrctrlim => pr_nrctrlim  --> Contrato
                            ,pr_cddopcao => 'C'          --> Tipo de busca
+                           ,pr_inpessoa => pr_inpessoa  --> Indicador de tipo de pessoa
                            --------> OUT <--------                                   
                            ,pr_tab_dados_limite   => pr_tab_dados_limite --> retorna dos dados
                            ,pr_tab_dados_dsctit   => pr_tab_dados_dsctit --> tabela contendo os parametros da cooperativa                           
@@ -3073,6 +3076,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Procedure para efetuar busca dados para montar contratos etc para desconto de titulos
     --
     --   Alteração : 05/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+	--
+	--               24/11/2016 - Ajustes nome do avalista2. (Odirlei-AMcom)
     -- .........................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -3449,6 +3454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                ,pr_idseqttl => pr_idseqttl  --> Titular da Conta
                                ,pr_nmdatela => pr_nmdatela  --> Nome da Tela
                                ,pr_nrctrlim => pr_nrctrlim  --> Contrato
+                               ,pr_inpessoa => rw_crapass.inpessoa  --> Indicador de tipo de pessoa
                                --------> OUT <--------                                   
                                ,pr_tab_dados_limite    => vr_tab_dados_limite --> retorna dos dados
                                ,pr_tab_dados_dsctit    => vr_tab_dados_dsctit              --> tabela contendo os parametros da cooperativa
@@ -3585,7 +3591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       --> Localizar dados do proximo avalista
       vr_idxavais := vr_tab_dados_avais.next(vr_idxavais);
       IF vr_idxavais IS NOT NULL THEN
-        vr_rel_nmdaval1 := vr_tab_dados_avais(vr_idxavais).nmdavali;
+        vr_rel_nmdaval2 := vr_tab_dados_avais(vr_idxavais).nmdavali;
         
         IF  vr_tab_dados_avais(vr_idxavais).nrcpfcgc > 0 THEN
           vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
@@ -3743,6 +3749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                              ,pr_nmdatela => pr_nmdatela  --> Nome da Tela
                              ,pr_nrctrlim => vr_tab_dados_border(vr_idxborde).nrctrlim  --> Contrato
                              ,pr_cddopcao => 'M'          --> Tipo de busca
+                             ,pr_inpessoa => rw_crapass.inpessoa  --> Indicador de tipo de pessoa
                              --------> OUT <--------                                   
                              ,pr_tab_dados_limite   => vr_tab_dados_limite   --> retorna dos dados
                              ,pr_tab_dados_dsctit   => vr_tab_dados_dsctit         --> tabela contendo os parametros da cooperativa                            
@@ -4167,6 +4174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
       SELECT lim.nrdconta,
+             lim.cdageori,
              lim.vllimite,
              lim.cddlinha,
              lim.dtinivig
@@ -4252,6 +4260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_typsaida        VARCHAR2(100); 
     
     vr_cdtipdoc        INTEGER;
+    vr_cdageqrc        INTEGER;
     vr_dstextab        craptab.dstextab%TYPE;
     
     vr_qrcode          VARCHAR2(100);
@@ -4529,11 +4538,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_dstitulo := 'CONTRATO DE DESCONTO DE TÍTULOS No:';
       END IF;
       
+      --Incluir no QRcode a agencia onde foi criado o contrato.
+      IF nvl(rw_craplim.cdageori,0) = 0 THEN
+        vr_cdageqrc := vr_tab_contrato_limite(vr_idxctlim).cdagenci;
+      ELSE
+        vr_cdageqrc := rw_craplim.cdageori;
+      END IF;
+      
       vr_qrcode := pr_cdcooper ||'_'||
-                   vr_tab_contrato_limite(vr_idxctlim).cdagenci ||'_'||
-                   pr_nrdconta ||'_'||
+                   vr_cdageqrc ||'_'||
+                   TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'_'||
                    0           ||'_'||
-                   pr_nrctrlim ||'_'||
+                   TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'_'||
                    0           ||'_'||
                    vr_cdtipdoc;
       
@@ -4734,14 +4750,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         CLOSE cr_crapage;
       END IF;
 
-      vr_dsextmail := 'pdf';
       vr_dsmailcop := REPLACE(rw_craprel.dsdemail, ',', ';');
       vr_dscormail := 'SEGUE ARQUIVO EM ANEXO.';
       vr_dsassmail := 'crrl' || vr_cdrelato || ' - Conta/dv: ' ||
                       TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) || ' - PA ' ||
                       rw_crapage.cdagenci || ' ' || rw_crapage.nmresage;
     ELSE
-      vr_dsextmail := NULL;
       vr_dsmailcop := NULL;
       vr_dscormail := NULL;
       vr_dsassmail := NULL;
@@ -4764,7 +4778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                , pr_nmformul  => ' '
                                , pr_nrcopias  => 1
                                , pr_nrvergrl  => 1
-                               , pr_dsextmail => vr_dsextmail
+                               , pr_dsextmail => NULL
                                , pr_dsmailcop => vr_dsmailcop
                                , pr_dsassmail => vr_dsassmail
                                , pr_dscormail => vr_dscormail
@@ -4987,6 +5001,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_typsaida        VARCHAR2(100); 
 
     vr_cdtipdoc        INTEGER;
+    vr_cdageqrc        INTEGER;
     vr_dstextab        craptab.dstextab%TYPE;
     
     vr_dstitulo        VARCHAR2(200);
@@ -5027,7 +5042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       RAISE vr_exc_erro;
     END IF;
     
-     -- Busca dos dados do bordero
+    -- Busca dos dados do bordero
     OPEN cr_crapbdt;
     FETCH cr_crapbdt INTO rw_crapbdt;
     vr_blnfound := cr_crapbdt%FOUND;
@@ -5143,10 +5158,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       END IF;  
       
       vr_dsmvtolt := vr_tab_dados_itens_bordero(vr_idxborde).nmcidade ||', '|| GENE0005.fn_data_extenso(pr_dtmvtolt);
+      
+      --Incluir no QRcode a agencia onde foi criado o contrato.
+      IF nvl(rw_crapbdt.cdageori,0) = 0 THEN
+        vr_cdageqrc := vr_tab_dados_itens_bordero(vr_idxborde).cdagenci;
+      ELSE
+        vr_cdageqrc := rw_crapbdt.cdageori;
+      END IF;
+      
       vr_qrcode   := pr_cdcooper ||'_'||
-                     vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'_'||
-                     pr_nrdconta ||'_'||
-                     pr_nrborder ||'_'||
+                     vr_cdageqrc ||'_'||
+                     TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
+                     TRIM(gene0002.fn_mask_contrato(pr_nrborder)) ||'_'||
                      0           ||'_'||
                      0           ||'_'||
                      vr_cdtipdoc;
@@ -5224,35 +5247,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           '<vltitulo>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vltitulo,'fm999G999G999G990D00')   ||'</vltitulo>'|| 
                           '<vlliquid>'||   to_char(vr_tab_tit_bordero_ord(vr_idxord).vlliquid,'fm999G999G999G990D00')   ||'</vlliquid>'|| 
                           '<qtdprazo>'||   vr_rel_qtdprazo                              ||'</qtdprazo>'|| 
-                          '<nmsacado>'||   substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32)   ||'</nmsacado>'|| 
+                          '<nmsacado>'||   gene0007.fn_caract_controle(substr(vr_tab_tit_bordero_ord(vr_idxord).nmsacado,1,32))   ||'</nmsacado>'|| 
                           '<dscpfcgc>'||   vr_dscpfcgc                                  ||'</dscpfcgc>'|| 
                           '<restricoes>');
         
         -- Percorre as restricoes
-        FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
-          -- Sea for restricao do cheque em questao
-          IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
-            
-            --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
-            IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91) THEN
-              continue;
-            END IF;  
-            
-            vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
-            
-            pc_escreve_xml('<restricao><texto>'|| vr_tab_bordero_restri(idx2).dsrestri ||'</texto></restricao>');
-            -- Se foi aprovado pelo coordenador
-            IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+        IF vr_tab_bordero_restri.COUNT > 0 THEN
+          FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
+            -- Sea for restricao do cheque em questao
+            IF vr_tab_bordero_restri(idx2).nrdocmto = vr_tab_tit_bordero_ord(vr_idxord).nrdocmto THEN
               
-              IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
-                vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-              END IF;              
+              --> Nao imprimir restriçoes referentes a titulos protestados ou em cartório
+              IF vr_tab_bordero_restri(idx2).nrseqdig IN (90,91,11) THEN
+                continue;
+              END IF;  
+            
+              vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
               
+              pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
+              -- Se foi aprovado pelo coordenador
+              IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+              
+                IF NOT vr_tab_restri_apr_coo.exists(vr_tab_bordero_restri(idx2).dsrestri) THEN
+                  vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
+                END IF;              
+
+              END IF;
             END IF;
-          END IF;
-        END LOOP;
-        
-       pc_escreve_xml('</restricoes></titulo>');
+          END LOOP;
+        END IF;
+        pc_escreve_xml('</restricoes></titulo>');
         
       
         vr_idxord := vr_tab_tit_bordero_ord.next(vr_idxord);
@@ -5307,7 +5331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');
         vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
         WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| vr_idxrestr ||'</texto></restricao>');
+          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto></restricao>');
           vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
         END LOOP;
         pc_escreve_xml(  '</restricoes_coord>');
@@ -5319,7 +5343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_idxsac := vr_tab_sacado_nao_pagou.first;
         WHILE vr_idxsac IS NOT NULL LOOP        
           pc_escreve_xml('<sacado>
-                             <nmsacado>'|| vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado ||'</nmsacado>
+                             <nmsacado>'|| gene0007.fn_caract_controle(vr_tab_sacado_nao_pagou(vr_idxsac).nmsacado) ||'</nmsacado>
                              <qtdtitul>'|| vr_tab_sacado_nao_pagou(vr_idxsac).qtdtitul ||'</qtdtitul>
                              <vlrtitul>'|| to_char(vr_tab_sacado_nao_pagou(vr_idxsac).vlrtitul,'fm999G999G999G990D00') ||'</vlrtitul>
                           </sacado>');  

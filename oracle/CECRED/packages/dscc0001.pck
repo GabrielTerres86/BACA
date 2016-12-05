@@ -14,6 +14,69 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
   --  
   --------------------------------------------------------------------------------------------------------------*/
 
+  TYPE typ_rec_lim_desconto 
+      IS RECORD ( vllimite    NUMBER,
+                  qtdiavig    INTEGER,
+                  qtdiavig_c  INTEGER,
+                  qtprzmin    INTEGER,
+                  qtprzmin_c  INTEGER,
+                  qtprzmax    INTEGER,
+                  txdmulta    NUMBER,
+                  txdmulta_c  NUMBER,
+                  vlconchq    NUMBER,
+                  vlconchq_c  NUMBER,
+                  vlmaxemi    NUMBER,
+                  pcchqloc    NUMBER,
+                  pcchqloc_c  NUMBER,
+                  pcchqemi    NUMBER,
+                  pcchqemi_c  NUMBER,
+                  qtdiasoc    NUMBER,
+                  qtdiasoc_c  NUMBER,
+                  qtdevchq    NUMBER,
+                  qtdevchq_c  NUMBER,
+                  pctollim    NUMBER,
+                  vllimite_c  NUMBER,
+                  vlmaxemi_c  NUMBER,
+                  qtprzmax_c  NUMBER,
+                  pctollim_c  NUMBER,
+                  qtdiasli    NUMBER,
+                  horalimt    NUMBER,
+                  minlimit    NUMBER,
+                  qtdiasli_c  NUMBER,
+                  horalimt_c  NUMBER,
+                  minlimit_c  NUMBER,
+                  Flemipar    INTEGER,  -- Verificar se Emitente é Conjugue do Cooperado
+                  Flemipar_c  INTEGER,  -- Verificar se Emitente é Conjugue do Cooperado
+                  Przmxcmp    NUMBER,   -- Prazo Máximo de Compensação
+                  Przmxcmp_c  NUMBER,   -- Prazo Máximo de Compensação
+                  Flpjzemi    INTEGER,  -- Verificar Prejuízo do Emitente
+                  Flpjzemi_c  INTEGER,  -- Verificar Prejuízo do Emitente
+                  Flemisol    INTEGER,  -- Verificar Emitente x Conta Solicitante
+                  Flemisol_c  INTEGER,  -- Verificar Emitente x Conta Solicitante
+                  Prcliqui    INTEGER,  -- Percentual de Liquidez
+                  Prcliqui_c  INTEGER,  -- Percentual de Liquidez
+                  Qtmesliq    INTEGER,  -- Qtd. Meses Cálculo Percentual de Liquidez
+                  Qtmesliq_c  INTEGER,  -- Qtd. Meses Cálculo Percentual de Liquidez                  
+                  Vlrenlim    NUMBER,   -- Renda x Limite Desconto
+                  Vlrenlim_c  NUMBER,   -- Renda x Limite Desconto
+                  Qtmxrede    INTEGER,  -- Qtd. Máxima Redesconto
+                  Qtmxrede_c  INTEGER,  -- Qtd. Máxima Redesconto
+                  Fldchqdv    INTEGER,  -- Permitir Desconto Cheque Devolvido
+                  Fldchqdv_c  INTEGER,  -- Permitir Desconto Cheque Devolvido
+                  Vlmxassi    NUMBER,   -- Valor Máximo Dispensa Assinatura
+                  Vlmxassi_c  NUMBER    -- Valor Máximo Dispensa Assinatura
+                  );
+                  
+  TYPE typ_tab_lim_desconto IS TABLE OF typ_rec_lim_desconto
+       INDEX BY PLS_INTEGER;
+  
+  PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
+                                     ,pr_inpessoa IN NUMBER                --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
+                                     ,pr_tab_lim_desconto OUT typ_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
+                                     
+  
   --> Buscar parametros gerais de desconto de cheque - TAB019
   PROCEDURE pc_busca_parametros_dscchq(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da Cooperativa
                                       ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -21,6 +84,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
                                       ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> data do movimento 
                                       ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                      ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indicador de tipo de pessoa
                                        --------> OUT <--------
                                       ,pr_tab_dados_dscchq  OUT DSCT0002.typ_tab_dados_dscchq --> Tabela contendo os parametros
                                       ,pr_cdcritic          OUT PLS_INTEGER  --> Codigo da critica
@@ -173,6 +237,233 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --  
   --------------------------------------------------------------------------------------------------------------*/
 
+  PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
+                                     ,pr_inpessoa IN NUMBER                --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
+                                     ,pr_tab_lim_desconto OUT typ_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                     ) IS
+    /* .............................................................................
+    
+        Programa: pc_busca_tab_limdescont
+        Sistema : CECRED
+        Sigla   : DSCC
+        Autor   : Odirlei Busana (Amcom)
+        Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Retorna na temptable os dados da tab de limite de desconto
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+      ----------->>> VARIAVEIS <<<--------   
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_ini  INTEGER;     
+      vr_fim  INTEGER;
+      
+      vr_cdacesso VARCHAR2(100);
+      vr_tab_limdesconto gene0002.typ_split;
+      
+      
+      ---------->> CURSORES <<--------
+      CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+                       ,pr_cdacesso IN craptab.cdacesso%TYPE) IS
+        SELECT tab.dstextab 
+          FROM craptab tab
+         WHERE tab.cdcooper = pr_cdcooper
+           AND upper(tab.nmsistem) = 'CRED'
+           AND upper(tab.tptabela) = 'USUARI'
+           AND tab.cdempres = 11
+           AND upper(tab.cdacesso) = pr_cdacesso
+           AND tab.tpregist = 0;
+      rw_craptab cr_craptab%ROWTYPE;
+    
+    
+    BEGIN
+    
+      --> Caso informado inpessoa 0, deve buscar 
+      --> de pessoa fisica e juridica
+      IF pr_inpessoa = 0 THEN
+        vr_ini := 1;
+        vr_fim := 2;
+      ELSE
+        vr_ini := pr_inpessoa;
+        vr_fim := pr_inpessoa;
+      END IF;   
+      
+      --> Buscar limites
+      FOR vr_inpessoa IN vr_ini..vr_fim LOOP            
+      
+        IF vr_inpessoa = 1 THEN
+          vr_cdacesso := 'LIMDESCONTPF';
+        ELSE
+          vr_cdacesso := 'LIMDESCONTPJ';
+        END IF;
+        
+        --> Buscar dados de limites de descontos 
+        --> conforma a tipo de pessoa
+        OPEN cr_craptab (pr_cdcooper => pr_cdcooper
+                        ,pr_cdacesso => vr_cdacesso);
+        FETCH cr_craptab INTO rw_craptab;    
+        -- Se nao encontrar
+        IF cr_craptab%NOTFOUND THEN
+          -- Fechar o cursor
+          CLOSE cr_craptab;
+        
+          -- Montar mensagem de critica
+          vr_cdcritic := 55;
+          vr_dscritic := '';
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
+        
+        END IF;    
+        -- Fechar o cursor
+        CLOSE cr_craptab;
+        
+        vr_tab_limdesconto := gene0002.fn_quebra_string(rw_craptab.dstextab,' ');
+        
+        IF vr_tab_limdesconto.count > 0 THEN
+          
+          -- Ler os dados da linha do limite de desconto 
+          FOR i IN vr_tab_limdesconto.first..vr_tab_limdesconto.last LOOP          
+            
+            CASE i 
+              WHEN 1 THEN -- pos 1 - 12
+                pr_tab_lim_desconto(vr_inpessoa).vllimite  := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+              WHEN 2 THEN -- pos 87 - 12
+                pr_tab_lim_desconto(vr_inpessoa).vllimite_c := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+              WHEN 3 THEN -- pos 14 - 4
+                pr_tab_lim_desconto(vr_inpessoa).qtdiavig   := vr_tab_limdesconto(i);    
+                pr_tab_lim_desconto(vr_inpessoa).qtdiavig_c := vr_tab_limdesconto(i);    
+              WHEN 4 THEN -- pos 22 - 3
+                pr_tab_lim_desconto(vr_inpessoa).qtprzmin   := vr_tab_limdesconto(i);   
+                pr_tab_lim_desconto(vr_inpessoa).qtprzmin_c := vr_tab_limdesconto(i);   
+              WHEN 5 THEN -- pos 26 - 3
+                pr_tab_lim_desconto(vr_inpessoa).qtprzmax := vr_tab_limdesconto(i);     
+              WHEN 6 THEN -- pos 113 - 3
+                pr_tab_lim_desconto(vr_inpessoa).qtprzmax_c := vr_tab_limdesconto(i);   
+              WHEN 7 THEN -- pos 30 - 10
+                pr_tab_lim_desconto(vr_inpessoa).txdmulta   := to_number(vr_tab_limdesconto(i),'000d000000','NLS_NUMERIC_CHARACTERS='',.'''); 
+                pr_tab_lim_desconto(vr_inpessoa).txdmulta_c := to_number(vr_tab_limdesconto(i),'000d000000','NLS_NUMERIC_CHARACTERS='',.'''); 
+              WHEN 8 THEN -- pos 41 - 12
+                pr_tab_lim_desconto(vr_inpessoa).vlconchq   := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.'''); 
+                pr_tab_lim_desconto(vr_inpessoa).vlconchq_c := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.'''); 
+              WHEN 9 THEN -- pos 54 - 12
+                pr_tab_lim_desconto(vr_inpessoa).vlmaxemi   := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.'''); 
+              WHEN 10 THEN -- pos 101 - 12
+                pr_tab_lim_desconto(vr_inpessoa).vlmaxemi_c := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');                
+              WHEN 11 THEN -- pos 67 - 3
+                pr_tab_lim_desconto(vr_inpessoa).pcchqloc   := vr_tab_limdesconto(i);   
+                pr_tab_lim_desconto(vr_inpessoa).pcchqloc_c := vr_tab_limdesconto(i);   
+              WHEN 12 THEN -- pos 71 - 3
+                pr_tab_lim_desconto(vr_inpessoa).pcchqemi   := vr_tab_limdesconto(i);   
+                pr_tab_lim_desconto(vr_inpessoa).pcchqemi_c := vr_tab_limdesconto(i);        
+              WHEN 13 THEN -- pos 75 - 3
+                pr_tab_lim_desconto(vr_inpessoa).qtdiasoc   := vr_tab_limdesconto(i);   
+                pr_tab_lim_desconto(vr_inpessoa).qtdiasoc_c := vr_tab_limdesconto(i);
+              WHEN 14 THEN -- pos 79 - 3
+                pr_tab_lim_desconto(vr_inpessoa).qtdevchq   := vr_tab_limdesconto(i);   
+                pr_tab_lim_desconto(vr_inpessoa).qtdevchq_c := vr_tab_limdesconto(i); 
+              WHEN 15 THEN -- pos 83 - 3
+                pr_tab_lim_desconto(vr_inpessoa).pctollim   := vr_tab_limdesconto(i);                               
+              WHEN 16 THEN -- pos 117 - 3
+                pr_tab_lim_desconto(vr_inpessoa).pctollim_c := vr_tab_limdesconto(i);    
+              WHEN 17 THEN -- pos 121 - 2
+                pr_tab_lim_desconto(vr_inpessoa).qtdiasli   := vr_tab_limdesconto(i);  
+              WHEN 18 THEN -- pos 124 - 5 
+                pr_tab_lim_desconto(vr_inpessoa).horalimt   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'HH24');
+                pr_tab_lim_desconto(vr_inpessoa).minlimit   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'MI');
+              WHEN 19 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).qtdiasli_c := vr_tab_limdesconto(i);                              
+              WHEN 20 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).horalimt_c   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'HH24');
+                pr_tab_lim_desconto(vr_inpessoa).minlimit_c   := to_char(to_date(vr_tab_limdesconto(i),'SSSSS'),'MI');  
+              WHEN 21 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Flemipar     := vr_tab_limdesconto(i);  
+              WHEN 22 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Flemipar_c   := vr_tab_limdesconto(i);  
+              WHEN 23 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Przmxcmp     := vr_tab_limdesconto(i);  
+              WHEN 24 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Przmxcmp_c   := vr_tab_limdesconto(i);  
+              WHEN 25 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Flpjzemi     := vr_tab_limdesconto(i);  
+              WHEN 26 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Flpjzemi_c   := vr_tab_limdesconto(i);  
+              WHEN 27 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Flemisol     := vr_tab_limdesconto(i);  
+              WHEN 28 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Flemisol_c   := vr_tab_limdesconto(i);  
+              WHEN 29 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Prcliqui     := vr_tab_limdesconto(i);  
+              WHEN 30 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Prcliqui_c   := vr_tab_limdesconto(i);  
+              WHEN 31 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Qtmesliq     := vr_tab_limdesconto(i);  
+              WHEN 32 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Qtmesliq_c   := vr_tab_limdesconto(i);   
+              WHEN 33 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Vlrenlim     := vr_tab_limdesconto(i);  
+              WHEN 34 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Vlrenlim_c   := vr_tab_limdesconto(i);  
+              WHEN 35 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Qtmxrede     := vr_tab_limdesconto(i);   
+              WHEN 36 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Qtmxrede_c   := vr_tab_limdesconto(i);  
+              WHEN 37 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Fldchqdv     := vr_tab_limdesconto(i);  
+              WHEN 38 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Fldchqdv_c   := vr_tab_limdesconto(i);  
+              WHEN 39 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Vlmxassi     := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+              WHEN 40 THEN 
+                pr_tab_lim_desconto(vr_inpessoa).Vlmxassi_c   := to_number(vr_tab_limdesconto(i),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+              ELSE
+                NULL;
+              END CASE;
+          END LOOP;
+        
+        
+        ELSE
+          -- Montar mensagem de critica
+          vr_dscritic := 'Dados de limite de desconto não encontrados';
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;  
+        
+        END IF;            
+      END LOOP;
+      
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro ao buscar limites: ' || SQLERRM;
+      
+  END pc_busca_tab_limdescont;
+  
   --> Buscar parametros gerais de desconto de cheque - TAB019
   PROCEDURE pc_busca_parametros_dscchq(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da Cooperativa
                                       ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -180,6 +471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                       ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> data do movimento 
                                       ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                      ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indicador de tipo de pessoa
                                        --------> OUT <--------
                                       ,pr_tab_dados_dscchq  OUT DSCT0002.typ_tab_dados_dscchq --> Tabela contendo os parametros
                                       ,pr_cdcritic          OUT PLS_INTEGER  --> Codigo da critica
@@ -190,7 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --  Sistema  : CRED
     --  Sigla    : DSCC0001
     --  Autor    : Jaison
-    --  Data     : Agosto/2016                          Ultima atualizacao: 22/08/2016
+    --  Data     : Agosto/2016                          Ultima atualizacao: 22/09/2016
     --
     --  Dados referentes ao programa:
     --
@@ -198,6 +490,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --   Objetivo  : Procedure para efetuar buscar de parametros gerais de desconto de cheque - TAB019
     --
     --   Alteração : 22/08/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
+    --
+    --               22/09/2016 - Alterado a leitura dos parametros para buscar da nova tab
+    --                            segmentada por tipo de pessoa.
+    --                            PRJ300 - Desconto de cheque (Odirlei-AMcom)
     -- .........................................................................*/
     
     --------->> VARIAVEIS <<--------
@@ -206,38 +502,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
     -- Tratamento de erros
     vr_exc_erro        EXCEPTION;    
-
-    vr_dstextab          craptab.dstextab%TYPE;
-    vr_idxdscti          PLS_INTEGER;
+    
+    vr_tab_lim_desconto typ_tab_lim_desconto;
+    vr_idxdscti         PLS_INTEGER;
 
   BEGIN
     -- Limpa a PLTABLE
     pr_tab_dados_dscchq.DELETE;
-
+    
     -- Buscar valores do parametro
-    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper, 
-                                              pr_nmsistem => 'CRED'     , 
-                                              pr_tptabela => 'USUARI'   , 
-                                              pr_cdempres => 11         , 
-                                              pr_cdacesso => 'LIMDESCONT', 
-                                              pr_tpregist => 0);
-
-    IF TRIM(vr_dstextab) IS NOT NULL THEN
+    pc_busca_tab_limdescont ( pr_cdcooper => pr_cdcooper    --> Codigo da cooperativa
+                               ,pr_inpessoa => pr_inpessoa    --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
+                               ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
+                               ,pr_cdcritic => vr_cdcritic    --> Código da crítica
+                               ,pr_dscritic => vr_dscritic);  --> Descrição da crítica                
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL OR 
+      nvl(vr_cdcritic,0) > 0 THEN
+      -- Levanta exceção
+      RAISE vr_exc_erro;
+    END IF;
+    
+    IF vr_tab_lim_desconto.exists(pr_inpessoa) THEN
 
       vr_idxdscti := pr_tab_dados_dscchq.COUNT() + 1;
-      pr_tab_dados_dscchq(vr_idxdscti).vllimite := SUBSTR(vr_dstextab,01,12);
-      pr_tab_dados_dscchq(vr_idxdscti).qtdiavig := SUBSTR(vr_dstextab,14,04);
-      pr_tab_dados_dscchq(vr_idxdscti).qtrenova := SUBSTR(vr_dstextab,19,02);
-      pr_tab_dados_dscchq(vr_idxdscti).qtprzmin := SUBSTR(vr_dstextab,22,03);
-      pr_tab_dados_dscchq(vr_idxdscti).qtprzmax := SUBSTR(vr_dstextab,26,03);
-      pr_tab_dados_dscchq(vr_idxdscti).pcdmulta := SUBSTR(vr_dstextab,30,10);
-      pr_tab_dados_dscchq(vr_idxdscti).vlconchq := SUBSTR(vr_dstextab,41,12);
-      pr_tab_dados_dscchq(vr_idxdscti).vlmaxemi := SUBSTR(vr_dstextab,54,12);
-      pr_tab_dados_dscchq(vr_idxdscti).pcchqloc := SUBSTR(vr_dstextab,67,03);
-      pr_tab_dados_dscchq(vr_idxdscti).pcchqemi := SUBSTR(vr_dstextab,71,03);
-      pr_tab_dados_dscchq(vr_idxdscti).qtdiasoc := SUBSTR(vr_dstextab,75,03);
-      pr_tab_dados_dscchq(vr_idxdscti).qtdevchq := SUBSTR(vr_dstextab,79,03);
-      pr_tab_dados_dscchq(vr_idxdscti).pctolera := SUBSTR(vr_dstextab,83,03);
+      pr_tab_dados_dscchq(vr_idxdscti).vllimite := vr_tab_lim_desconto(pr_inpessoa).vllimite;
+      pr_tab_dados_dscchq(vr_idxdscti).qtdiavig := vr_tab_lim_desconto(pr_inpessoa).qtdiavig;
+      pr_tab_dados_dscchq(vr_idxdscti).qtprzmin := vr_tab_lim_desconto(pr_inpessoa).qtprzmin;
+      pr_tab_dados_dscchq(vr_idxdscti).qtprzmax := vr_tab_lim_desconto(pr_inpessoa).qtprzmax;
+      pr_tab_dados_dscchq(vr_idxdscti).pcdmulta := vr_tab_lim_desconto(pr_inpessoa).txdmulta;
+      pr_tab_dados_dscchq(vr_idxdscti).vlconchq := vr_tab_lim_desconto(pr_inpessoa).vlconchq;
+      pr_tab_dados_dscchq(vr_idxdscti).vlmaxemi := vr_tab_lim_desconto(pr_inpessoa).vlmaxemi;
+      pr_tab_dados_dscchq(vr_idxdscti).pcchqloc := vr_tab_lim_desconto(pr_inpessoa).pcchqloc;
+      pr_tab_dados_dscchq(vr_idxdscti).pcchqemi := vr_tab_lim_desconto(pr_inpessoa).pcchqemi;
+      pr_tab_dados_dscchq(vr_idxdscti).qtdiasoc := vr_tab_lim_desconto(pr_inpessoa).qtdiasoc;
+      pr_tab_dados_dscchq(vr_idxdscti).qtdevchq := vr_tab_lim_desconto(pr_inpessoa).qtdevchq;
+      pr_tab_dados_dscchq(vr_idxdscti).pctolera := vr_tab_lim_desconto(pr_inpessoa).pctollim;
 
     ELSE
       vr_cdcritic := 0;
@@ -1140,9 +1441,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --   Objetivo  : Procedure para gerar impressoes do bordero
     --
     --   Alteração : 06/09/2016 - Conversao Progress -> Oracle (Jaison/Daniel)
+    --
+    --               23/11/2016 - Tratamento na montagem do XML para alterar caracteres
+    --                            nao permitidos no XML(ex. &). (Odirlei-AMcom) 
     -- .........................................................................*/
 
     ----------->>> CURSORES  <<<--------
+    --> Buscar dados do bordero
+    CURSOR cr_crapbdc IS
+      SELECT *
+        FROM crapbdc
+       WHERE crapbdc.cdcooper = pr_cdcooper
+         AND crapbdc.nrdconta = pr_nrdconta
+         AND crapbdc.nrborder = pr_nrborder;
+         
+    rw_crapbdc cr_crapbdc%ROWTYPE;
 
     ----------->>> TEMPTABLE <<<--------
     vr_tab_dados_avais         DSCT0002.typ_tab_dados_avais;
@@ -1176,6 +1489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_typsaida        VARCHAR2(100); 
 
     vr_cdtipdoc        INTEGER;
+    vr_cdageqrc        INTEGER;
     vr_dstextab        craptab.dstextab%TYPE;
 
     vr_qrcode          VARCHAR2(100);
@@ -1209,6 +1523,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
       vr_dstransa := 'Gerar impressao de bordero de cheque';
     END IF;
+
+    -- Busca dos dados do bordero
+    OPEN cr_crapbdc;
+    FETCH cr_crapbdc INTO rw_crapbdc;
+    
+    -- Se NAO encontrar
+    IF cr_crapbdc%NOTFOUND THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Nao foi possivel encontrar Bordero.';
+      CLOSE cr_crapbdc;
+      RAISE vr_exc_erro;
+    END IF;
+    CLOSE cr_crapbdc;
 
     --> Buscar dados para montar contratos etc para desconto de cheques
     DSCT0002.pc_busca_dados_imp_descont
@@ -1308,10 +1635,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       vr_dstitulo := 'BORDERÔ DE DESCONTO DE CHEQUES E TERMO DE CUSTÓDIA';
       vr_dsmvtolt := vr_tab_dados_itens_bordero(vr_idxborde).nmcidade ||', '|| GENE0005.fn_data_extenso(pr_dtmvtolt);
+      
+      --Incluir no QRcode a agencia onde foi criado o contrato.
+      IF nvl(rw_crapbdc.cdageori,0) = 0 THEN
+        vr_cdageqrc := vr_tab_dados_itens_bordero(vr_idxborde).cdagenci;
+      ELSE
+        vr_cdageqrc := rw_crapbdc.cdageori;
+      END IF;
+      
       vr_qrcode   := pr_cdcooper ||'_'||
-                     vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'_'||
-                     pr_nrdconta ||'_'||
-                     pr_nrborder ||'_'||
+                     vr_cdageqrc ||'_'||
+                     TRIM(gene0002.fn_mask_conta(   pr_nrdconta)) ||'_'||
+                     TRIM(gene0002.fn_mask_contrato(pr_nrborder)) ||'_'||
                      0           ||'_'||
                      0           ||'_'||
                      vr_cdtipdoc;
@@ -1325,7 +1660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                          '<dstitulo>'|| vr_dstitulo ||'</dstitulo>'||
                          '<dsqrcode>'|| vr_qrcode ||'</dsqrcode>'||
                          '<nrdconta>'|| TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) ||'</nrdconta>'||
-                         '<nmprimtl>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmprimtl ||'</nmprimtl>'||
+                         '<nmprimtl>'|| gene0007.fn_caract_controle(vr_tab_dados_itens_bordero(vr_idxborde).nmprimtl) ||'</nmprimtl>'||
                          '<cdagenci>'|| vr_tab_dados_itens_bordero(vr_idxborde).cdagenci ||'</cdagenci>'||
                          '<nrborder>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrborder)) ||'</nrborder>'||
                          '<nrctrlim>'|| TRIM(GENE0002.fn_mask_contrato(pr_nrctrlim)) ||'</nrctrlim>'||
@@ -1360,7 +1695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  '<vlcheque>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlcheque,'fm999G999G999G990D00') ||'</vlcheque>'||
                                  '<vlliquid>'|| TO_CHAR(vr_tab_chq_bordero(idx).vlliquid,'fm999G999G999G990D00') ||'</vlliquid>'||
                                  '<qtdiaprz>'|| vr_qtdiaprz ||'</qtdiaprz>'||
-                                 '<nmcheque>'|| SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23) ||'</nmcheque>'||
+                                 '<nmcheque>'|| gene0007.fn_caract_controle(SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23)) ||'</nmcheque>'||
                                  '<dscpfcgc>'|| vr_tab_chq_bordero(idx).dscpfcgc ||'</dscpfcgc>'||
                                  '<restricoes>');
 
@@ -1372,7 +1707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
               -- Seta o total
               vr_qtrestri := NVL(vr_qtrestri, 0) + 1;
 
-              pc_escreve_xml(          '<restricao><texto>'|| vr_tab_bordero_restri(idx2).dsrestri ||'</texto></restricao>');
+              pc_escreve_xml(          '<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
               -- Se foi aprovado pelo coordenador
               IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
                 -- Se NAO existir na PLTABLE
@@ -1407,7 +1742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| TRIM(vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo) ||'">');
         vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
         WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| vr_idxrestr ||'</texto></restricao>');
+          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto></restricao>');
           vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
         END LOOP;
         pc_escreve_xml(  '</restricoes_coord>');
@@ -1418,7 +1753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       IF vr_tab_bordero_restri.COUNT > 0 THEN
         FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
           IF vr_tab_bordero_restri(idx2).nrcheque = 888888 THEN
-            pc_escreve_xml(          '<restricao><texto>'|| vr_tab_bordero_restri(idx2).dsrestri ||'</texto></restricao>');
+            pc_escreve_xml(          '<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
           END IF;
         END LOOP;
       END IF;
@@ -1442,7 +1777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  , pr_flg_impri => 'N'
                                  , pr_nmformul  => ' '
                                  , pr_nrcopias  => 1
-                                 , pr_nrvergrl  => 1
+                                 , pr_nrvergrl  => 1 
                                  , pr_des_erro  => vr_dscritic);
       
       IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro

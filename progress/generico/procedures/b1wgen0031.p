@@ -26,7 +26,7 @@
 
     Programa: b1wgen0031.p
     Autor   : Guilherme/David
-    Data    : Julho/2008                     Ultima Atualizacao: 01/12/2015
+    Data    : Julho/2008                     Ultima Atualizacao: 09/09/2016
            
     Dados referentes ao programa:
                 
@@ -186,6 +186,15 @@
                              procedure obtem-mensagens-alerta-contas.
                              Projeto 255 - INSS (Lombardi).
                 
+				09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
+						     aux_qtminast referente a quantidade minima de assinatura
+						     conjunta na procedure obtem-mensagens-alerta,
+						     SD 514239 (Jean Michel).
+                
+                22/09/2016 - Alterado rotina obtem-mensagens-alerta 
+                             para buscar o qtd dias de renovacao da tabela craprli
+								  			     PRJ300 - Desconto de cheque (Odirlei-AMcom)             
+                
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0002tt.i }
@@ -268,7 +277,8 @@ PROCEDURE obtem-mensagens-alerta:
     DEF VAR par_flgdinss AS LOGICAL                                 NO-UNDO.
     DEF VAR aux_flgbinss AS LOGICAL                                 NO-UNDO.
     DEF VAR par_dscritic AS CHAR                                    NO-UNDO.
-    
+    DEF VAR aux_qtminast AS INTE								    NO-UNDO.
+
     EMPTY TEMP-TABLE tt-erro.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -530,6 +540,7 @@ PROCEDURE obtem-mensagens-alerta:
                                         INPUT ?,
                                        OUTPUT TABLE tt-crapavt,
                                        OUTPUT TABLE tt-bens,
+									   OUTPUT aux_qtminast,
                                        OUTPUT TABLE tt-erro) NO-ERROR.
 
        FOR EACH tt-crapavt WHERE tt-crapavt.idrspleg = 1 NO-LOCK: 
@@ -576,18 +587,16 @@ PROCEDURE obtem-mensagens-alerta:
               RUN cria-registro-msg ("Contrato de limite de credito" +
                                      " vencido.").
        END.
-         
-    /** Tabela de limite de desconto de cheques **/
-    FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                       craptab.nmsistem = "CRED"       AND
-                       craptab.tptabela = "USUARI"     AND
-                       craptab.cdempres = 11           AND
-                       craptab.cdacesso = "LIMDESCONT" AND
-                       craptab.tpregist = 0            
-                       NO-LOCK NO-ERROR.
 
-    IF NOT AVAILABLE craptab  THEN
-       RUN cria-registro-msg ("Tabela LIMDESCONT nao cadastrada.").
+    /** Buscar regra para renovaçao **/
+    FIND FIRST craprli 
+         WHERE craprli.cdcooper = par_cdcooper
+           AND craprli.tplimite = 2
+           AND craprli.inpessoa = crapass.inpessoa
+           NO-LOCK NO-ERROR.
+    
+    IF NOT AVAILABLE craprli  THEN
+       RUN cria-registro-msg ("Tabela Regra de limite nao cadastrada.").
 
     /** Verifica se ja excedeu a vigencia do limite de desconto de cheques **/
     FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
@@ -598,8 +607,7 @@ PROCEDURE obtem-mensagens-alerta:
 
     IF AVAILABLE craplim  THEN
        DO:
-           IF par_dtmvtolt >= (craplim.dtinivig + (craplim.qtdiavig * 
-              INTEGER(SUBSTRING(craptab.dstextab,19,02))))             THEN
+           IF par_dtmvtolt >= (craplim.dtinivig + (craplim.qtdiavig * craprli.qtmaxren ))THEN
               RUN cria-registro-msg ("Contrato de Desconto de Cheques " +
                                      "Vencido.").
        END.
