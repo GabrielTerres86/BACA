@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-09-05T14:00:16 -->
+<!-- 2016-11-25T14:15:00 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite_avais" language="groovy" pageWidth="480" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="Promissoria"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="nota"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -40,7 +40,7 @@
 	<columnHeader>
 		<band height="25">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
-			<textField isStretchWithOverflow="true">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
 				<reportElement x="0" y="0" width="200" height="14" uuid="ad814cd3-4931-45eb-9c55-603749ff9856">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
@@ -70,7 +70,7 @@
 		<band height="60">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<line>
-				<reportElement x="0" y="11" width="200" height="1" uuid="776cc854-4009-487c-bb31-2148cb056d60">
+				<reportElement positionType="Float" x="0" y="11" width="200" height="1" uuid="776cc854-4009-487c-bb31-2148cb056d60">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -81,7 +81,7 @@
 				</graphicElement>
 			</line>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-				<reportElement x="0" y="24" width="200" height="14" uuid="9262c110-7b01-4449-9486-9b10a46fcc62">
+				<reportElement positionType="Float" x="0" y="26" width="200" height="14" uuid="9262c110-7b01-4449-9486-9b10a46fcc62">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -92,7 +92,7 @@
 				<textFieldExpression><![CDATA[$F{cpfavali}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement x="0" y="35" width="200" height="1" uuid="3553925a-b7af-4a00-85b4-65dffe267b97">
+				<reportElement positionType="Float" x="0" y="37" width="200" height="1" uuid="3553925a-b7af-4a00-85b4-65dffe267b97">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -104,7 +104,7 @@
 				</graphicElement>
 			</line>
 			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-				<reportElement x="0" y="36" width="200" height="14" uuid="dafe9636-d53c-49b6-b317-0b20510744f0">
+				<reportElement positionType="Float" x="0" y="38" width="200" height="14" uuid="dafe9636-d53c-49b6-b317-0b20510744f0">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
@@ -116,7 +116,7 @@
 				<textFieldExpression><![CDATA[$F{dsendava}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement x="0" y="48" width="200" height="1" uuid="cb9bc967-03fb-49c8-b51f-645fae3d8ab3">
+				<reportElement positionType="Float" x="0" y="50" width="200" height="1" uuid="cb9bc967-03fb-49c8-b51f-645fae3d8ab3">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -128,7 +128,7 @@
 				</graphicElement>
 			</line>
 			<line>
-				<reportElement x="240" y="11" width="200" height="1" uuid="f6e90a7d-7b38-4857-a3d4-71824c2113ba">
+				<reportElement positionType="Float" x="240" y="11" width="200" height="1" uuid="f6e90a7d-7b38-4857-a3d4-71824c2113ba">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -138,8 +138,8 @@
 					<pen lineWidth="0.5" lineStyle="Solid"/>
 				</graphicElement>
 			</line>
-			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
-				<reportElement x="240" y="24" width="201" height="14" isRemoveLineWhenBlank="true" uuid="cec8eb4f-c0bd-4f7b-91d1-449486a69a31">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement positionType="Float" x="240" y="26" width="201" height="14" isRemoveLineWhenBlank="true" uuid="cec8eb4f-c0bd-4f7b-91d1-449486a69a31">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -150,7 +150,7 @@
 				<textFieldExpression><![CDATA[$F{nrcpfcjg}]]></textFieldExpression>
 			</textField>
 			<line>
-				<reportElement x="240" y="37" width="200" height="1" uuid="46915f66-a185-44c1-91b5-bc9aa25a80c9">
+				<reportElement positionType="Float" x="240" y="40" width="200" height="1" uuid="46915f66-a185-44c1-91b5-bc9aa25a80c9">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -161,8 +161,8 @@
 					<pen lineWidth="0.5" lineStyle="Solid"/>
 				</graphicElement>
 			</line>
-			<textField isStretchWithOverflow="true">
-				<reportElement x="0" y="11" width="200" height="14" uuid="2f51ba53-2ce4-49d4-ad03-d4fc72cfa378">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement positionType="Float" x="0" y="11" width="200" height="14" uuid="2f51ba53-2ce4-49d4-ad03-d4fc72cfa378">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -173,8 +173,8 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{nmdavali}]]></textFieldExpression>
 			</textField>
-			<textField isStretchWithOverflow="true">
-				<reportElement x="240" y="11" width="200" height="14" uuid="f2b55a87-7252-41ee-a7f8-99d79ae447b0">
+			<textField isStretchWithOverflow="true" isBlankWhenNull="false">
+				<reportElement positionType="Float" x="240" y="11" width="200" height="14" uuid="f2b55a87-7252-41ee-a7f8-99d79ae447b0">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
