@@ -119,12 +119,10 @@
 				<? if (strtoupper($dssitlli) == "ATIVO"){ ?>
 				<input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)',metodoBlock,'sim.gif','nao.gif');return false;">
 				<? } ?>
-				
-				<?php if ($flgdigit == 'yes'){   ?>
-					<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $tpdocmto ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos("z.zzz.zz9",$nrctrlim,"."); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank">
-						<img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" />
-					</a> 
-				<?php } ?>
+
+				<a onclick="window.open('http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $tpdocmto ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos("z.zzz.zz9",$nrctrlim,"."); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>', '_blank')">						
+					<img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" />
+				</a>
 				
 			<?php } ?>
 		</div>
