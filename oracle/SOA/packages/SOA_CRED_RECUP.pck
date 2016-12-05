@@ -104,6 +104,11 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
                                         ,pr_cdcritic   => pr_cdcritic
                                         ,pr_dscritic   => pr_dscritic
                                         ,pr_dsdetcri   => pr_dsdetcri);
+                                        
+    pr_vlsdeved   := nvl(pr_vlsdeved,0);
+    pr_vlsdprej   := nvl(pr_vlsdprej,0);
+    pr_vlatraso   := nvl(pr_vlatraso,0);                                   
+                                        
   EXCEPTION
     WHEN OTHERS THEN
       pr_cdcritic := 983;
