@@ -3801,8 +3801,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         AND   pr_dtfimper IS NULL)
         AND   craplau.dtdebito IS NULL
         and   craplau.vllanaut > 0
-        union
-                SELECT craplau.cdhistor
+        UNION
+        SELECT craplau.cdhistor
               ,craplau.dtmvtopg
               ,craplau.vllanaut
               ,craplau.nrdocmto
@@ -3814,6 +3814,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplau.nrdolote
               ,craplau.nrseqdig
               ,craplau.dtmvtolt
+              ,craplau.cdtiptra
+              ,craplau.idlancto			  
               ,craplau.progress_recid
         FROM craplau craplau
         WHERE craplau.cdcooper = pr_cdcooper
