@@ -16,6 +16,9 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 			             nas rotinas do caixa online SD 474875 (Tiago/Elton).
      
             12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                 
+    
+            02/12/2016 - Corrigido a ordem do fluxo da tela para nao reclamar do historico
+                         (Tiago/Elton SD563166) .
 -->
 <html>
 
@@ -32,6 +35,34 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
 <script language=JavaScript src="/script/jquery.js"></script>
 <script language=JavaScript src="/script/mascara.js"></script>
 <script language=JavaScript src="/script/formataconta.js"></script>
+
+<script language=Javascript >
+
+$(document).ready(function(){
+
+	// Evento onKeyDown no campo "nrdconta"
+	$("#v_conta").unbind("keydown").bind("keydown", function (e) {
+        //Verificar tecla ENTER para realizar acao
+	    var code = (e.keyCode ? e.keyCode : e.which);
+	    if (code == 13) {
+	        document.forms[0].submit();
+	        e.preventDefault();
+	    }
+
+		if(e.keyCode == 27){
+			top.frames[0].document.forms[0].v_rotina.focus();
+			e.preventDefault();
+	    }
+
+		// Seta máscara ao campo
+		return $("#v_conta").setMaskOnKeyDown("INTEGER","zzzz.zzz.z",".",e);		
+	});
+
+})
+
+
+
+</script>
 
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <title>LAN€AMENTO INCLUSÇO - BOLETIM CAIXA</title>
