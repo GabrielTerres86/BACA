@@ -8812,7 +8812,7 @@ create or replace package body cecred.PAGA0002 is
 
     -- Horario limite para cancelamento no dia do agendamento
     IF TO_NUMBER(TO_CHAR(pr_dtmvtolt,'d')) IN(1,7) OR
-       vr_dtmvtolt <> pr_dtmvtolt THEN
+       TRUNC(vr_dtmvtolt) <> TRUNC(pr_dtmvtolt) THEN
       pr_hrfimcan := 86400; --00:00 horas
     ELSE
       pr_hrfimcan := TO_NUMBER(SUBSTR(vr_dstextab,3,5));
@@ -9224,7 +9224,7 @@ create or replace package body cecred.PAGA0002 is
             IF rw_craplau.insitlau = 2 THEN
               vr_incancel := 2;
             ELSE
-              IF rw_craplau.dtmvtopg > vr_datdodia  THEN
+              IF TRUNC(rw_craplau.dtmvtopg) > TRUNC(vr_datdodia)  THEN
                 vr_incancel := 1;
               ELSE
                                     
@@ -9235,7 +9235,7 @@ create or replace package body cecred.PAGA0002 is
                 -- a equipe do financeiro (Juliana), do canais de atendimento (Jefferson),
 							  -- Seguranca Corporativa (Maicon) e de sistemas (Adriano, Rosangela).
                 
-                IF rw_craplau.dtmvtopg = vr_datdodia AND
+                IF TRUNC(rw_craplau.dtmvtopg) = TRUNC(vr_datdodia) AND
                    gene0002.fn_busca_time < TO_NUMBER(GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'HORARIO_CANCELAMENTO_TED'))  THEN 
                   vr_incancel := 1;
                 ELSE
@@ -9249,9 +9249,9 @@ create or replace package body cecred.PAGA0002 is
             -- dentro do horario limite permite o cancelamento
             -- Se for data menor que hoje nao permitir
                               
-            IF rw_craplau.dtmvtopg > vr_datdodia  THEN
+            IF TRUNC(rw_craplau.dtmvtopg) > TRUNC(vr_datdodia)  THEN
               vr_incancel := 1;
-            ELSIF rw_craplau.dtmvtopg = vr_datdodia
+            ELSIF TRUNC(rw_craplau.dtmvtopg) = TRUNC(vr_datdodia)
               AND gene0002.fn_busca_time <= vr_hrfimcan
               AND vr_dssgproc = 'SIM' THEN
               vr_incancel := 1;
