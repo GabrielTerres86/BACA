@@ -56,12 +56,12 @@
     <input type="hidden" name="hdnServSM" id="hdnServSM" value="<?php echo($GEDServidor); ?>" />
 
     <div id="divCooper">
-        <label for="nmrescop"><? echo utf8ToHtml('Cooperativa:') ?></label>
-        <select id="nmrescop" name="nmrescop">
+        <label for="nmrescop"><?php echo utf8ToHtml('Cooperativa:') ?></label>
+        <select id="nmrescop" name="nmrescop" onChange="buscaAgeCtl(1);">
         </select>
     </div>
 
-    <label for="tiporeme"><? echo utf8ToHtml('Remessa:') ?></label>
+    <label for="tiporeme"><?php echo utf8ToHtml('Remessa:') ?></label>
     <select id="tiporeme" name="tiporeme" onChange="mostraCamposChq();" class="campo" style="width: 300px;">
         <option></option>
         <option value="N"> Cheques Depositados (Nossa Remessa) </option>
@@ -75,28 +75,28 @@
     <div id="divDadosChq">
     <fieldset style=" width:650px; margin-left:60px;">
 
-        <label for="dtcompen"><? echo utf8ToHtml('Data Compensa&ccedil;&atilde;o:') ?></label>
+        <label for="dtcompen"><?php echo utf8ToHtml('Data Compensa&ccedil;&atilde;o:') ?></label>
         <input id="dtcompen" name="dtcompen" type="text" size="10" maxlength="10" class="txtNormal" />
 
-        <label for="bancochq"><? echo utf8ToHtml('Banco do Cheque:') ?></label>
+        <label for="bancochq"><?php echo utf8ToHtml('Banco do Cheque:') ?></label>
         <input id="bancochq" name="bancochq" type="text" size="3" maxlength="3" class="txtNormal"/>
 
         <div id="cartaoas"><a style="margin-left: 265px; margin-top: 7px; cursor:default">&nbsp;&nbsp;Cart&atilde;o Ass.</a> </div>
 
         </br>
 
-        <label for="compechq"><? echo utf8ToHtml('Compe do Cheque:') ?></label>
+        <label for="compechq"><?php echo utf8ToHtml('Compe do Cheque:') ?></label>
         <input id="compechq" name="compechq" type="text" size="3" maxlength="3" class="txtNormal"/>
 
-        <label for="agencchq"><? echo utf8ToHtml('Ag&ecirc;ncia do Cheque:') ?></label>
+        <label for="agencchq"><?php echo utf8ToHtml('Ag&ecirc;ncia do Cheque:') ?></label>
         <input id="agencchq" name="agencchq" type="text" size="4" maxlength="4" class="txtNormal"/>
 
         </br>
 
-        <label for="contachq"><? echo utf8ToHtml('Conta do Cheque:') ?></label>
+        <label for="contachq"><?php echo utf8ToHtml('Conta do Cheque:') ?></label>
         <input id="contachq" name="contachq" type="text" size="10" maxlength="10" class="txtNormal" onBlur="validarNumeroConta();"/>
 
-        <label for="numerchq"><? echo utf8ToHtml('N&uacute;mero do Cheque:') ?></label>
+        <label for="numerchq"><?php echo utf8ToHtml('N&uacute;mero do Cheque:') ?></label>
         <input id="numerchq" name="numerchq" type="text" size="6" maxlength="6" class="txtNormal"/>
 
     </fieldset>

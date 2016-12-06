@@ -10,8 +10,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Programa: pc_crps535 - antigo Fontes/crps535.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Guilherme / Precise
-   Data    : Dezembro/2009                   Ultima atualizacao: 22/07/2016
+   Autor   : Guilherme/SUPERO
+   Data    : Dezembro/2009                   Ultima atualizacao: 02/12/2016
 
    Dados referentes ao programa:
 
@@ -20,7 +20,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                devolvidos.
                Emite relatorio 529 e 530.
 
-   Alteracoes: 15/12/2009 - Versao Inicial (Guilherme / Precise)
+   Alteracoes: 15/12/2009 - Versao Inicial (Guilherme/SUPERO)
 
                04/06/2010 - Acertos Gerais (Ze).
 
@@ -95,31 +95,34 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                             comando tail -1 no oracle retorna o caracter de final de arquivo
                             diferentemente se for executado direto no unix. (Odirlei-AMcom)
 
-						   11/06/2014 - Alterado para permitir devoluções de cheques inter-
-							              cooperativa. (Reinert)
+               11/06/2014 - Alterado para permitir devoluções de cheques inter-
+                            cooperativa. (Reinert)
 
                17/09/2014 - Incluso tratamento para incorporação cooperativa (Daniel)
 
-			         21/11/2014 - Incluso tratamento para incorporação VIACON SCRMIL (Reinert)
-               
+               21/11/2014 - Incluso tratamento para incorporação VIACON SCRMIL (Reinert)
+
                18/12/2014 - Ajustes tratamento para incorporação VIACON SCRMIL (Daniel)
-               
+
                01/04/2015 - Remocao da formatacao da mascara do campo nrprevia do XML.
                             (Jaison/Elton - SD: 269550)
-                            
-               18/01/2016 - Alterado log do proc_batch para o proc_message (Daniel)             
+
+               18/01/2016 - Alterado log do proc_batch para o proc_message (Daniel)
 
                25/04/2016 - Ajustes no relatorio 530 referente a melhoria 112
                             (Tiago/Elton).
-                            
-               24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se 
+
+               24/06/2016 - Verificar se a agencia acolhedora possui informacao ZERO, se
                             possuir deve utilizar a agencia de destino (Douglas - Chamado 431378)
-                            
-			   22/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
+
+               22/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
 
                25/08/2016 - Permite integrar arquivos de cheques DVA615 devido
                             aos cheques VLB (Elton - SD 476261)
+
+               02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -192,7 +195,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
            nrprevia,
            dtmvtolt,
            insitprv,
-					 nrctadst
+                     nrctadst
       FROM crapchd
      WHERE crapchd.cdcooper = pr_cdcooper
        AND crapchd.cdbanchq = pr_cdbanchq
@@ -205,7 +208,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
   CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
                      pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT nmprimtl,
-		       cdagenci
+           cdagenci
       FROM crapass crapass
      WHERE crapass.cdcooper = pr_cdcooper
        AND crapass.nrdconta = pr_nrdconta;
@@ -221,7 +224,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta
        AND idseqttl = pr_idseqttl
-      ORDER BY progress_recid;
+     ORDER BY progress_recid;
   rw_craptfc cr_craptfc%ROWTYPE;
 
   --Selecionar Transferencias entre cooperativas
@@ -233,26 +236,26 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
           ,craptco.nrctaant
           ,craptco.nrdconta
           ,craptco.cdcooper
-    FROM craptco craptco
+     FROM craptco craptco
     WHERE craptco.cdcopant = pr_cdcooper
-    AND   craptco.nrctaant = pr_nrctaant
-    AND   craptco.tpctatrf = pr_tpctatrf
-    AND   craptco.flgativo = pr_flgativo;
+      AND craptco.nrctaant = pr_nrctaant
+      AND craptco.tpctatrf = pr_tpctatrf
+      AND craptco.flgativo = pr_flgativo;
    rw_craptco cr_craptco%ROWTYPE;
 
   CURSOR cr_craptco_inc (pr_cdcooper IN craptco.cdcooper%TYPE
                         ,pr_cdcopant in craptco.cdcopant%type
                         ,pr_nrctaant IN craptco.nrctaant%TYPE
                         ,pr_flgativo IN craptco.flgativo%TYPE) IS
-        SELECT craptco.cdcopant
-              ,craptco.nrctaant
-              ,craptco.nrdconta
-              ,craptco.cdcooper
-        FROM craptco craptco
-        WHERE craptco.cdcopant = pr_cdcopant
-        AND   craptco.cdcooper = pr_cdcooper
-        AND   craptco.nrctaant = pr_nrctaant
-        AND   craptco.flgativo = pr_flgativo;
+    SELECT craptco.cdcopant
+          ,craptco.nrctaant
+          ,craptco.nrdconta
+            ,craptco.cdcooper
+       FROM craptco craptco
+      WHERE craptco.cdcopant = pr_cdcopant
+        AND craptco.cdcooper = pr_cdcooper
+        AND craptco.nrctaant = pr_nrctaant
+	      AND craptco.flgativo = pr_flgativo;
    rw_craptco_inc cr_craptco_inc%ROWTYPE;
 
 
@@ -351,7 +354,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
       FROM crapcst
      WHERE crapcst.cdcooper        = pr_cdcooper
        AND upper(crapcst.dsdocmc7) = upper(pr_dsdocmc7)
-      ORDER BY PROGRESS_RECID DESC;
+     ORDER BY PROGRESS_RECID DESC;
   rw_crapcst cr_crapcst%ROWTYPE;
 
   -- Cursor sobre a tabela de Cheques contidos do Bordero de desconto de cheques
@@ -367,7 +370,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
       FROM crapcdb
      WHERE cdcooper        = pr_cdcooper
        AND upper(dsdocmc7) = upper(pr_dsdocmc7)
-      ORDER BY PROGRESS_RECID DESC;
+     ORDER BY PROGRESS_RECID DESC;
   rw_crapcdb cr_crapcdb%ROWTYPE;
 
   -- Cursor para buscar a descricao do Alinea
@@ -405,7 +408,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
          ,dtlibera DATE
          ,insitprv NUMBER(03)
          ,flgmigra NUMBER(01)
-				 ,cdageapr crapcop.cdagectl%TYPE);
+                 ,cdageapr crapcop.cdagectl%TYPE);
 
   -- Tipo de registro para armazenar o conteudo dos boletos
   TYPE typ_crawbol  IS
@@ -465,9 +468,9 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
   vr_cdalinea      PLS_INTEGER;
   vr_nrtelefo      VARCHAR2(20);
   vr_cdperdev      NUMBER(01);
-	vr_cdageapr      NUMBER(04);              -- Código da agencia apresentante
-	vr_nrctachd      crapchd.nrdconta%TYPE;   -- Nr. da conta de depósito
-	vr_dtdapres      crapddi.dtdeposi%TYPE;
+  vr_cdageapr      NUMBER(04);              -- Código da agencia apresentante
+  vr_nrctachd      crapchd.nrdconta%TYPE;   -- Nr. da conta de depósito
+  vr_dtdapres      crapddi.dtdeposi%TYPE;
   -- Variaveis utilizadas para processo de depositos bloqueados
   vr_dpb_cdagenci  crapchd.cdagenci%TYPE;
   vr_dpb_cdbccxlt  crapchd.cdbccxlt%TYPE;
@@ -515,9 +518,9 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
   vr_cdcoptfn      PLS_INTEGER :=0;
   vr_cdcooper      crapcop.cdcooper%TYPE;
   vr_nrdconta      craptco.nrdconta%TYPE;
-  vr_cdagenci_ass      crapchd.cdagenci%TYPE;
+  vr_cdagenci_ass  crapchd.cdagenci%TYPE;
   vr_cdcopaco      crapcop.cdcooper%type;
-  
+
   vr_nome_arq_log  VARCHAR2(1000);
 
   PROCEDURE pc_escreve_xml(pr_des_dados in VARCHAR2,
@@ -647,18 +650,18 @@ BEGIN
     FETCH cr_crapcop INTO rw_crapcop;
   CLOSE cr_crapcop;
   --
-  
+
   -- Busca nome do arquivo de log
   vr_nome_arq_log := gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE');
 
   -- VIACON - Tratamento para buscar dados cooperativa incorporada
-  IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+  IF pr_cdcooper IN (1,9,13) THEN
 
-    IF pr_cdcooper = 1 THEN
-      vr_cdcooper := 4;
-    ELSE
-      vr_cdcooper := 15;
-    END IF;
+    CASE pr_cdcooper
+      WHEN 1   THEN vr_cdcooper := 4;  --    VIACREDI --> CONCREDI
+      WHEN 13  THEN vr_cdcooper := 15; --     SCRCRED --> CREDIMILSUL
+      WHEN 9   THEN vr_cdcooper := 17; -- TRANSPOCRED --> TRANSULCRED
+    END CASE;
 
     -- Buscar os dados da cooperativa
     OPEN  cr_crabcop(vr_cdcooper);
@@ -721,11 +724,11 @@ BEGIN
 
   -- Busca do diretório INTEGRA base da cooperativa
   vr_diretori    := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                        ,pr_cdcooper => pr_cdcooper) || '/integra';
+                                         ,pr_cdcooper => pr_cdcooper) || '/integra';
 
   -- Busca do diretório RL base da cooperativa
   vr_diretori_rl := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                        ,pr_cdcooper => pr_cdcooper) || '/rl';
+                                         ,pr_cdcooper => pr_cdcooper) || '/rl';
 
 
   -- Retorna um array com todos os arquivos do diretório
@@ -765,7 +768,7 @@ BEGIN
       END IF;
 
       -- VIACON - Tratamento para incluir arquivos das cooperativas incorporadas
-      IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+      IF  pr_cdcooper IN (1,9,13) THEN
 
         -- Verifica através da extensão do arquivo a qual grupo o mesmo pertence
         IF    vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crabcop.cdagectl,4,'0')||'%.D%N') THEN
@@ -804,7 +807,6 @@ BEGIN
                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic);
-    --
 
 
     -- Atualiza variaveis iniciais do controle
@@ -891,7 +893,7 @@ BEGIN
                                                              || vr_cdprogra || ' --> '
                                                              || vr_dscritic);
 
-            vr_nrdconta := SUBSTR(vr_dstexto,67,12);           
+            vr_nrdconta := SUBSTR(vr_dstexto,67,12);
 
             vr_flgrejei := TRUE;
             -- Atualiza a tabela de memoria de dados do arquivo
@@ -949,9 +951,9 @@ BEGIN
         vr_nrctachq := SUBSTR(vr_dstexto,12,12);
         vr_nrcheque := SUBSTR(vr_dstexto,25,06);
         vr_cdalinea := SUBSTR(vr_dstexto,54,02);
-				vr_cdageapr := to_number(SUBSTR(vr_dstexto,59,04));
-				vr_nrctachd := to_number(SUBSTR(vr_dstexto,67,12));
-				vr_dtdapres := to_date(SUBSTR(vr_dstexto,82,8), 'RRRR/MM/DD');
+                vr_cdageapr := to_number(SUBSTR(vr_dstexto,59,04));
+                vr_nrctachd := to_number(SUBSTR(vr_dstexto,67,12));
+                vr_dtdapres := to_date(SUBSTR(vr_dstexto,82,8), 'RRRR/MM/DD');
 
         -- Verificar se a agencia acolhedora possui informacao ZERO
         IF vr_cdageapr = 0 THEN
@@ -967,47 +969,47 @@ BEGIN
         END IF;
 
         OPEN cr_crapcop_ctl(pr_cdagectl => vr_cdageapr);
-				FETCH cr_crapcop_ctl INTO vr_cdcopaco;
+        FETCH cr_crapcop_ctl INTO vr_cdcopaco;
 
         IF cr_crapcop_ctl%FOUND THEN
           /* Tratamento para incorporação viacon scrmil */
-          IF (pr_cdcooper = 1 and vr_cdcopaco = 4) or
-             (pr_cdcooper = 13 and vr_cdcopaco = 15) then
-             open cr_craptco_inc(pr_cdcooper => pr_cdcooper,
+          IF (pr_cdcooper = 1  AND vr_cdcopaco = 4 ) OR
+             (pr_cdcooper = 13 AND vr_cdcopaco = 15) OR
+             (pr_cdcooper = 9  AND vr_cdcopaco = 17) THEN
+             OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                  pr_cdcopant => vr_cdcopaco,
                                  pr_nrctaant => vr_nrctachd,
                                  pr_flgativo => 1);
-             fetch cr_craptco_inc into rw_craptco_inc;
+             FETCH cr_craptco_inc INTO rw_craptco_inc;
 
-             if cr_craptco_inc%found then
-                /* Variaveis recebem valores da nova conta */
-                vr_nrctachd := rw_craptco_inc.nrdconta;
-                vr_cdcopaco := pr_cdcooper;
-             end if;
-             close cr_craptco_inc;
+             IF cr_craptco_inc%FOUND THEN
+               /* Variaveis recebem valores da nova conta */
+               vr_nrctachd := rw_craptco_inc.nrdconta;
+               vr_cdcopaco := pr_cdcooper;
+             END IF;
+             CLOSE cr_craptco_inc;
 
-          end if;
-
-					-- Abre o cursor contendo os dados dos cheques
-					OPEN cr_crapchd(pr_cdcooper => vr_cdcopaco,
-													pr_cdbanchq => vr_cdbanchq,
-													pr_cdagechq => vr_cdagechq,
-													pr_nrctachq => vr_nrctachq,
-													pr_nrcheque => vr_nrcheque);
-					FETCH cr_crapchd INTO rw_crapchd;
-					IF cr_crapchd%NOTFOUND THEN
-						vr_cdcritic := 244; -- Cheque inexistente
-						rw_crapchd := NULL;
-					END IF;
-					CLOSE cr_crapchd;
-				ELSE
-					vr_dscritic := 'Agencia apresentante inválida';
+          END IF;
+          -- Abre o cursor contendo os dados dos cheques
+          OPEN cr_crapchd(pr_cdcooper => vr_cdcopaco,
+                          pr_cdbanchq => vr_cdbanchq,
+                          pr_cdagechq => vr_cdagechq,
+                          pr_nrctachq => vr_nrctachq,
+                          pr_nrcheque => vr_nrcheque);
+          FETCH cr_crapchd INTO rw_crapchd;
+          IF cr_crapchd%NOTFOUND THEN
+            vr_cdcritic := 244; -- Cheque inexistente
+            rw_crapchd := NULL;
+          END IF;
+          CLOSE cr_crapchd;
+        ELSE
+          vr_dscritic := 'Agencia apresentante inválida';
         END IF;
 
-				CLOSE cr_crapcop_ctl;
+        CLOSE cr_crapcop_ctl;
 
         IF vr_cdcritic = 0   AND
-					 TRIM(vr_dscritic) IS NULL THEN
+           TRIM(vr_dscritic) IS NULL THEN
           -- Abre o cursor de cooperados
           OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => vr_nrctachd);
@@ -1020,7 +1022,7 @@ BEGIN
 
         -- Se nao tiver inconsistencias
         IF vr_cdcritic = 0   AND
-					 TRIM(vr_dscritic) IS NULL THEN
+           TRIM(vr_dscritic) IS NULL THEN
           -- Abre o cursor de numeros de telefone do cooperado
           OPEN cr_craptfc(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => vr_nrctachd,
@@ -1069,7 +1071,7 @@ BEGIN
             vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
             vr_tab_crawrel(vr_ind_crawrel).nrcheque   := vr_nrcheque;
             vr_tab_crawrel(vr_ind_crawrel).vlcheque   := substr(vr_dstexto,34,17) / 100;
-			vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
+            vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
 
             -- move os dados para a variavel vr_tab_crawrel_2 com outra ordenacao
             vr_ind_crawrel_2 := vr_ind_crawrel; --substr(vr_ind_crawrel,1,16)||substr(vr_ind_crawrel,27,5);
@@ -1090,9 +1092,9 @@ BEGIN
 
             vr_nrdconta := SUBSTR(vr_dstexto,67,12);
 
-            IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
+            IF (pr_cdcooper IN (1,9,13)) AND
                 vr_arquivos(ind).idarquivo > 2 THEN
-                
+
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                   pr_cdcopant => vr_cdcopaco,
                                   pr_nrctaant => vr_nrctachd,
@@ -1103,8 +1105,8 @@ BEGIN
                 /* Variaveis recebem valores da nova conta */
                 vr_nrdconta := rw_craptco_inc.nrdconta;
               END IF;
-              CLOSE cr_craptco_inc;  
-                
+              CLOSE cr_craptco_inc;
+
             END IF;
 
             -- Atualiza a tabela de memoria de dados do arquivo
@@ -1125,7 +1127,7 @@ BEGIN
             vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
             vr_tab_crawrel(vr_ind_crawrel).nrcheque   := vr_nrcheque;
             vr_tab_crawrel(vr_ind_crawrel).vlcheque   := substr(vr_dstexto,34,17) / 100;
-			vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
+            vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
 
             -- move os dados para a variavel vr_tab_crawrel_2 com outra ordenacao
             vr_ind_crawrel_2 := vr_ind_crawrel; --substr(vr_ind_crawrel,1,16)||substr(vr_ind_crawrel,27,5);
@@ -1177,7 +1179,7 @@ BEGIN
             vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
             vr_tab_crawrel(vr_ind_crawrel).nrcheque   := vr_nrcheque;
             vr_tab_crawrel(vr_ind_crawrel).vlcheque   := substr(vr_dstexto,34,17) / 100;
-			vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
+            vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
 
             -- move os dados para a variavel vr_tab_crawrel_2 com outra ordenacao
             vr_ind_crawrel_2 := vr_ind_crawrel; --substr(vr_ind_crawrel,1,16)||substr(vr_ind_crawrel,27,5);
@@ -1198,17 +1200,17 @@ BEGIN
           vr_dpb_cdagenci := 1;
           vr_dpb_cdbccxlt := 100;
           vr_dpb_nrdolote := 4500;
-					vr_cdcoptfn := 0;
+          vr_cdcoptfn := 0;
         ELSIF vr_cdcopaco <> pr_cdcooper THEN -- se foi deposito intercooperativo
           vr_dpb_cdagenci := 1;
           vr_dpb_cdbccxlt := 100;
           vr_dpb_nrdolote := 10118;
-					vr_cdcoptfn := vr_cdcopaco;
+          vr_cdcoptfn := vr_cdcopaco;
         ELSE
           vr_dpb_cdagenci := rw_crapchd.cdagenci;
           vr_dpb_cdbccxlt := rw_crapchd.cdbccxlt;
           vr_dpb_nrdolote := rw_crapchd.nrdolote;
-					vr_cdcoptfn := 0;
+          vr_cdcoptfn := 0;
         END IF;
 
         -- Abre o cursor de depositos bloqueados
@@ -1356,7 +1358,7 @@ BEGIN
              sqlotchq,
              cdcooper,
              dsidenti,
-						 cdcoptfn)
+             cdcoptfn)
           VALUES
             (rw_crapdat.dtmvtolt,
              1,
@@ -1381,48 +1383,47 @@ BEGIN
              0,
              pr_cdcooper,
              'CTL',
-						 vr_cdcoptfn);
+             vr_cdcoptfn);
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
 
-				-- Se é depósito intercoop.
-				IF vr_cdcopaco <> pr_cdcooper THEN
-					BEGIN
+        -- Se é depósito intercoop.
+        IF vr_cdcopaco <> pr_cdcooper THEN
 
-						INSERT INTO crapddi
-									 (cdcooper,
-										cdcopaco,
-										nrdconta,
-										cdbanchq,
-										cdagechq,
-										nrctachq,
-										nrcheque,
-										vlcheque,
-										cdalinea,
-										dtmvtolt,
-										dtdeposi)
-						 VALUES(pr_cdcooper,
-										vr_cdcopaco,
-										vr_nrctachd,
-										rw_crapchd.cdbanchq,
-										rw_crapchd.cdagechq,
-										rw_crapchd.nrctachq,
-										vr_nrcheque_tmp,
-										(substr(vr_dstexto,34,17) / 100),
-										vr_cdalinea,
-										rw_crapdat.dtmvtolt,
-										vr_dtdapres);
-
-					EXCEPTION
-						WHEN OTHERS THEN
-							vr_cdcritic := 0;
-							vr_dscritic := 'Erro ao inserir CRAPDDI: ' || SQLERRM;
-							RAISE vr_exc_saida;
-					END;
-				END IF;
+          BEGIN
+            INSERT INTO crapddi
+                         (cdcooper,
+                          cdcopaco,
+                          nrdconta,
+                          cdbanchq,
+                          cdagechq,
+                          nrctachq,
+                          nrcheque,
+                          vlcheque,
+                          cdalinea,
+                          dtmvtolt,
+                          dtdeposi)
+                 VALUES (pr_cdcooper,
+                         vr_cdcopaco,
+                         vr_nrctachd,
+                         rw_crapchd.cdbanchq,
+                         rw_crapchd.cdagechq,
+                         rw_crapchd.nrctachq,
+                         vr_nrcheque_tmp,
+                         (substr(vr_dstexto,34,17) / 100),
+                         vr_cdalinea,
+                         rw_crapdat.dtmvtolt,
+                         vr_dtdapres);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao inserir CRAPDDI: ' || SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        END IF;
 
         pc_cria_generica(pr_cdcritic => 0,
                          pr_cdalinea => vr_cdalinea,
@@ -1455,7 +1456,7 @@ BEGIN
         END IF;  -- Final da validacao de cheques bloqueados
 
         -- Atualiza indice da tabela temporaria
-        vr_nrcontad := vr_nrcontad + 1;
+        vr_nrcontad    := vr_nrcontad + 1;
         vr_ind_crawrel := '0'||                                      --flgmigra
                              '00000'||                               --agencia
                              lpad(SUBSTR(vr_dstexto,67,12),10,'0')|| --conta
@@ -1473,11 +1474,9 @@ BEGIN
             -- Se for conta migrada das cooperativas 4 ou 15 nas condicoes
             -- abaixo devera atribui para crawrel.cdagenci o codigo do novo
             -- PA na coopertaiva nova
+            IF  (pr_cdcooper IN (1,9,13))
+            AND vr_arquivos(ind).idarquivo > 3 THEN
 
-
-            IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
-              vr_arquivos(ind).idarquivo > 3 THEN
-              
               OPEN cr_craptco_inc(pr_cdcooper => pr_cdcooper,
                                   pr_cdcopant => vr_cdcopaco,
                                   pr_nrctaant => vr_nrctachd,
@@ -1488,8 +1487,8 @@ BEGIN
                 /* Variaveis recebem valores da nova conta */
                 vr_nrdconta := rw_craptco_inc.nrdconta;
               END IF;
-              CLOSE cr_craptco_inc;  
-              
+              CLOSE cr_craptco_inc;
+
             END IF;
 
             -- Atualiza a tabela de memoria de dados do arquivo
@@ -1560,16 +1559,16 @@ BEGIN
           vr_tab_crawrel(vr_ind_crawrel).insitprv   := rw_crapchd.insitprv;
           vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         ELSE
-					IF vr_cdcopaco <> pr_cdcooper THEN
-						vr_cdagenci_ass := rw_crapass.cdagenci;
-					ELSE
-						vr_cdagenci_ass := rw_crapchd.cdagenci;
-					END IF;
-          vr_ind_crawrel := '0'||                                      --flgmigra
-                               lpad(vr_cdagenci_ass,5,'0')||               --agencia
-                               lpad(vr_nrctachd,10,'0')||      --conta
-                               lpad(rw_crapchd.nrcheque,10,'0')||      --cheque
-                               lpad(vr_nrcontad,5,'0');                --sequencial
+          IF vr_cdcopaco <> pr_cdcooper THEN
+            vr_cdagenci_ass := rw_crapass.cdagenci;
+          ELSE
+            vr_cdagenci_ass := rw_crapchd.cdagenci;
+          END IF;
+          vr_ind_crawrel := '0'||                                    --flgmigra
+                             lpad(vr_cdagenci_ass,5,'0')||           --agencia
+                             lpad(vr_nrctachd,10,'0')||              --conta
+                             lpad(rw_crapchd.nrcheque,10,'0')||      --cheque
+                             lpad(vr_nrcontad,5,'0');                --sequencial
           vr_tab_crawrel(vr_ind_crawrel).dsprodut   := 'CAIXA';
           vr_tab_crawrel(vr_ind_crawrel).lotborde   := SUBSTR(gene0002.fn_mask(rw_crapchd.nrdolote,'99999'),3,3);
           vr_tab_crawrel(vr_ind_crawrel).flgmigra   := 0;
@@ -1593,7 +1592,7 @@ BEGIN
         vr_tab_crawrel(vr_ind_crawrel).nrcheque   := rw_crapchd.nrcheque;
         vr_tab_crawrel(vr_ind_crawrel).nralinea   := vr_cdalinea;
         vr_tab_crawrel(vr_ind_crawrel).vlcheque   := rw_crapchd.vlcheque;
-		    vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
+        vr_tab_crawrel(vr_ind_crawrel).cdageapr   := substr(vr_dstexto,59,04);
         vr_tab_crawrel(vr_ind_crawrel).nrctachq   := vr_nrctachq;
         -- move os dados para a variavel vr_tab_crawrel_2 com outra ordenacao
         vr_ind_crawrel_2 := substr(vr_ind_crawrel,1,6)|| -- flgmigra e Agencia
@@ -1606,7 +1605,7 @@ BEGIN
 
         -- Se existir boletos atualiza tabela temporaria de boletos
         IF rw_crapchd.nrboleto <> 0 THEN
-          vr_tab_crawbol(vr_tab_crawbol.COUNT()+1).cdagenci   := rw_crapchd.cdagenci;
+          vr_tab_crawbol(vr_tab_crawbol.COUNT()+1).cdagenci := rw_crapchd.cdagenci;
           vr_tab_crawbol(vr_tab_crawbol.COUNT()).nrboleto   := rw_crapchd.nrboleto;
           vr_tab_crawbol(vr_tab_crawbol.COUNT()).nrctabol   := rw_crapchd.nrctabol;
           vr_tab_crawbol(vr_tab_crawbol.COUNT()).nrcnvbol   := rw_crapchd.nrcnvbol;
@@ -1727,7 +1726,7 @@ BEGIN
 
     -- Insere a linha de detalhes com os dados dos cheques
     pc_escreve_xml('<cheque>'||
-		                 '<cdageapr>'|| vr_tab_crawrel(vr_ind_crawrel).cdageapr                             ||'</cdageapr>'||
+                         '<cdageapr>'|| vr_tab_crawrel(vr_ind_crawrel).cdageapr                             ||'</cdageapr>'||
                      '<cdbanchq>'|| vr_tab_crawrel(vr_ind_crawrel).cdbanchq                             ||'</cdbanchq>'||
                      '<nrcheque>'|| to_char(vr_tab_crawrel(vr_ind_crawrel).nrcheque,'999G999G990')      ||'</nrcheque>'||
                      '<nralinea>'|| vr_tab_crawrel(vr_ind_crawrel).nralinea                             ||'</nralinea>'||
@@ -1762,7 +1761,7 @@ BEGIN
 
       IF pr_nmtelant = 'COMPEFORA' THEN
         vr_dspathcop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                        ,pr_cdcooper => pr_cdcooper) || '/rlnsv';
+                                             ,pr_cdcooper => pr_cdcooper) || '/rlnsv';
       END IF;
 
       -- Chamada do iReport para gerar o arquivo de saida
@@ -1870,8 +1869,8 @@ BEGIN
                        '<vlcheque>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).vlcheque,'FM99G999G990D00')  ||'</vlcheque>'||
                        '<nralinea>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nralinea                             ||'</nralinea>'||
                        '<nrcheque>'|| gene0002.fn_mask(vr_tab_crawrel_2(vr_ind_crawrel_2).nrcheque,'zzz.zz9') ||'</nrcheque>'||
-											 '<cdageapr>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdageapr                             ||'</cdageapr>'||
- 											 '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                             ||'</nrctachq>'||
+                                             '<cdageapr>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdageapr                             ||'</cdageapr>'||
+                                             '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                             ||'</nrctachq>'||
                      '</cheque>',3);
 
       -- Se for o ultimo registro de erro, fecha o nó de erro
@@ -1924,7 +1923,7 @@ BEGIN
                        '<nrdconta>'|| gene0002.fn_mask_conta(vr_tab_crawrel_2(vr_ind_crawrel_2).nrdconta)        ||'</nrdconta>'||
                        '<nmprimtl>'|| substr(vr_tab_crawrel_2(vr_ind_crawrel_2).nmprimtl,1,23)                   ||'</nmprimtl>'||
                        '<nrcheque>'|| gene0002.fn_mask(vr_tab_crawrel_2(vr_ind_crawrel_2).nrcheque,'zzz.zz9')    ||'</nrcheque>'||
-											 '<cdageapr>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdageapr                                ||'</cdageapr>'||
+                                             '<cdageapr>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdageapr                                ||'</cdageapr>'||
                        '<cdbanchq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).cdbanchq                                ||'</cdbanchq>'||
                        '<nralinea>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nralinea                                ||'</nralinea>'||
                        '<vlcheque>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).vlcheque,'FM99G999G990D00')     ||'</vlcheque>'||
@@ -1934,7 +1933,7 @@ BEGIN
                        '<dtlibera>'|| to_char(vr_tab_crawrel_2(vr_ind_crawrel_2).dtlibera,'DD/MM/YY')            ||'</dtlibera>'||
                        '<nrprevia>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrprevia                                ||'</nrprevia>'||
                        '<insitprv>'|| vr_dssitprv                                                                ||'</insitprv>'||
- 											 '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                                ||'</nrctachq>'||
+                                             '<nrctachq>'|| vr_tab_crawrel_2(vr_ind_crawrel_2).nrctachq                                ||'</nrctachq>'||
                      '</cheque>',3);
 
     END IF; -- Final do IF de verificacao de agencia igual ou diferente de zeros
@@ -2139,17 +2138,17 @@ BEGIN
                             pr_infimsol => pr_infimsol,
                             pr_stprogra => pr_stprogra);
   --
-  commit;
+  COMMIT;
 
-exception
-  when vr_exc_fimprg then
+EXCEPTION
+  WHEN vr_exc_fimprg THEN
     -- Se foi retornado apenas código
-    if nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+    IF nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
+    END IF;
     -- Se foi gerada critica para envio ao log
-    if nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
+    IF nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
       -- Envio centralizado de log de erro
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                  pr_ind_tipo_log => 2, -- Erro tratato
@@ -2157,31 +2156,31 @@ exception
                                  pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                  || vr_cdprogra || ' --> '
                                                  || vr_dscritic );
-    end if;
+    END IF;
     -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
     btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
                              ,pr_cdprogra => vr_cdprogra
                              ,pr_infimsol => pr_infimsol
                              ,pr_stprogra => pr_stprogra);
     -- Efetuar commit pois gravaremos o que foi processo até então
-    commit;
+    COMMIT;
 
-  when vr_exc_saida then
+  WHEN vr_exc_saida THEN
     -- Se foi retornado apenas código
-    if nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+    IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
       -- Buscar a descrição
       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
+    END IF;
     -- Devolvemos código e critica encontradas
     pr_cdcritic := NVL(vr_cdcritic,0);
     pr_dscritic := vr_dscritic;
     -- Efetuar rollback
-    rollback;
-  when others then
+    ROLLBACK;
+  WHEN OTHERS THEN
     -- Efetuar retorno do erro não tratado
     pr_cdcritic := 0;
-    pr_dscritic := sqlerrm;
-    -- Efetuar rollback
-    rollback;
-end;
+    pr_dscritic := SQLERRM;
+    -- EFETUAR ROLLBACK
+    ROLLBACK;
+END;
 /

@@ -27,43 +27,45 @@
 
     Programa: b1wgen0040.p
     Autor   : David
-    Data    : Maio/2009                       Ultima Atualizacao: 10/10/2014
-           
+    Data    : Maio/2009                       Ultima Atualizacao: 01/12/2016
+
     Dados referentes ao programa:
-                
+
     Objetivo  : BO ref. a Custodia e Consulta de Cheques.
                 Baseada nos programas fontes/custod.p e fontes/cheque.p.
-                    
+
     Alteracoes: 16/12/2009 - Incluir procedure para consulta de folhas de
                              cheque (David).
-                             
+
                 02/05/2011 - Incluir procedure de busca de cheques. 
                              (André - DB1)
-                
+
                 09/12/2011 - Sustação provisória (André R./Supero).
-                
+
                 31/07/2012 - Tratamento para a tela IMGCHQ (Fabricio/Ze).
-                
+
                 20/08/2012 - Incluir parametro no consulta-cheque-compensado 
                              - Tipo de Documento (Ze).
-                             
+
                 31/08/2012 - Incluido na gravacao da tt-cheques os campos
                              de custodia de cheque (Tiago).  
-                             
+
                 18/10/2012 - Nova chamada da procedure valida_operador_migrado
                              da b1wgen9998 para controle de contas e operadores
                              migrados (David Kruger).                       
-                
-                20/12/2013 - Adicionado validate para tabela craplgm (Tiago).                                                     
-                
+
+                20/12/2013 - Adicionado validate para tabela craplgm (Tiago).
                 30/06/2014 - Incluir campo cdageaco ao criar temp-table 
                              tt-cheques na procedure gera-tt-cheque. (Reinert)
-                             
+
                 16/09/2014 - Inclusão do campo cdagechq na tt-cheque
                              na procedure gera-tt-cheque. (Vanessa)
-                
+
                 10/10/2014 - #200504 Ajustes consulta-cheque-compensado para
                              incorporacoes (Concredi e Credimilsul) (Carlos)
+
+                01/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ..............................................................................*/
 
 
@@ -1175,14 +1177,18 @@ PROCEDURE consulta-cheque-compensado:
     DEF OUTPUT PARAM par_cdtpddoc AS INTE NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-
     DEF VAR aux_cdagectl LIKE crapcop.cdagectl NO-UNDO.
+    DEF VAR aux_cdagemig LIKE crapcop.cdagectl NO-UNDO.
+
     DEF BUFFER crabcop FOR crapcop.
 
     ASSIGN par_dsdocmc7 = ""
            par_cdtpddoc = 0.
 
-    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+    FIND FIRST crapcop
+         WHERE crapcop.cdcooper = par_cdcooper
+       NO-LOCK NO-ERROR.
 
     IF  NOT AVAILABLE crapcop  THEN
         DO:
@@ -1195,59 +1201,32 @@ PROCEDURE consulta-cheque-compensado:
                            INPUT 1,     /** Sequencia **/
                            INPUT aux_cdcritic,
                            INPUT-OUTPUT aux_dscritic).
-
             RETURN "NOK".
-
-        END.
-
-    /*** Tratamento incorporacao ***/
-    ASSIGN aux_cdagectl =  crapcop.cdagectl.
+    END.
 
     ASSIGN par_nmrescop = UPPER(crapcop.nmrescop).
 
-    IF (par_tpremess = "N" AND par_cdbanchq = 85 AND 
-        par_cdagechq = aux_cdagectl) OR (par_tpremess = "S") THEN
-    DO:
-        IF par_tpremess = "S" THEN DO:
-            ASSIGN par_cdagechq = aux_cdagectl.
-        END.
+    ASSIGN aux_cdagectl =  crapcop.cdagectl.
+    
+    IF (par_tpremess = "N" AND
+        par_cdbanchq = 85  AND 
+        par_cdagechq = aux_cdagectl)
+    OR (par_tpremess = "S") THEN DO:
 
-        FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper AND
-                           crapfdc.cdbanchq = par_cdbanchq AND
-                           crapfdc.cdagechq = par_cdagechq AND
-                           crapfdc.nrctachq = par_nrctachq AND
-                           crapfdc.nrcheque = par_nrcheque NO-LOCK NO-ERROR.
+        FIND FIRST crapfdc
+             WHERE crapfdc.cdcooper = par_cdcooper
+               AND crapfdc.cdbanchq = par_cdbanchq
+               AND crapfdc.cdagechq = par_cdagechq
+               AND crapfdc.nrctachq = par_nrctachq
+               AND crapfdc.nrcheque = par_nrcheque
+           NO-LOCK NO-ERROR.
 
-        IF AVAIL crapfdc THEN
+        IF  AVAIL crapfdc THEN DO:
+
             ASSIGN par_dsdocmc7 = crapfdc.dsdocmc7
                    par_cdcmpchq = crapfdc.cdcmpchq
                    par_cdtpddoc = crapfdc.cdtpdchq.
-
-        ELSE DO: /* #200504 Tratamento incorporacao concredi e credimilsul */
-
-            /* Verifica se o cheque vem de cooperativas incorporadas */
-            FOR EACH craptco WHERE craptco.cdcooper = crapcop.cdcooper AND 
-                                   craptco.nrctaant = par_nrctachq NO-LOCK:
-
-                /* atualiza a agencia para a anterior a incorporacao */
-                FIND crabcop WHERE crabcop.cdcooper = craptco.cdcopant NO-LOCK NO-ERROR.
-                
-                FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper AND
-                                   crapfdc.cdbanchq = par_cdbanchq AND
-                                   crapfdc.cdagechq = crabcop.cdagectl AND
-                                   crapfdc.nrctachq = par_nrctachq AND
-                                   crapfdc.nrcheque = par_nrcheque
-                                   NO-LOCK NO-ERROR.
-
-                IF  AVAIL crapfdc THEN DO:
-                    ASSIGN par_dsdocmc7 = crapfdc.dsdocmc7
-                           aux_cdagectl = crabcop.cdagectl 
-                           par_cdagechq = aux_cdagectl.
-                    LEAVE.
-                END.
-            END.
         END.
-        
     END.
     ELSE /* nossa remessa */
     DO:

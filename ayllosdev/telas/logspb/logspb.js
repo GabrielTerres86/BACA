@@ -1,42 +1,45 @@
 //************************************************************************//
 //*** Fonte: logspb.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Novembro/2009                Última Alteração: 07/11/2016 ***//
+//*** Data : Novembro/2009                Última Alteração: 05/12/2016 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela LOGSPB                 ***//
-//***                                                                  ***//	 
+//***                                                                  ***//
 //*** Alterações: 18/04/2012 - Criado a funcao controlaOperacao().     ***//
 //***                          (Fabricio)                              ***//
-//***			  02/07/2012 - Alterado funcao obtemLog(), retirado ajax**//
-//***						   imprimeLog(), alterado esquema para     ***//
-//***						   impressao (Jorge)                       ***//
-//***																   ***//
-//***			  27/03/2013 - Alteração na padronização da tela para  ***//
+//***             02/07/2012 - Alterado funcao obtemLog(), retirado ajax**//
+//***                          imprimeLog(), alterado esquema para     ***//
+//***                          impressao (Jorge)                       ***//
+//***                                                                  ***//
+//***             27/03/2013 - Alteração na padronização da tela para  ***//
 //***                          novo layout (David Kruger).             ***//
-//***																   ***//
-//***			  18/11/2014 - Tratamento para a Incorporação Concredi ***//
+//***                                                                  ***//
+//***             18/11/2014 - Tratamento para a Incorporação Concredi ***//
 //***                          e Credimilsul SD 223543 (Vanessa).      ***//
-//***																   ***//
-//***             06/07/2015 - Inclusão do campo ISPB (Vanessa)		   ***//
-//***            													   ***//
-//***			  07/08/2015 - Gestão de TEDs/TECs - melhoria 85 (Lucas Ranghetti)
-//***			                                                       ***//
+//***                                                                  ***//
+//***             06/07/2015 - Inclusão do campo ISPB (Vanessa)        ***//
+//***                                                                  ***//
+//***             07/08/2015 - Gestão de TEDs/TECs - melhoria 85 (Lucas Ranghetti)
+//***                                                                  ***//
 //***             21/09/2015 - Adicionar para a cooperativa 16, a opção***//
 //***                          "M" com a cooperativa VIACREDI          ***//
 //***                          (Douglas - Chamado 288683)              ***//
-//***			                                                       ***//
+//***                                                                  ***//
 //***             09/11/2015 - Adicionar campo "Crise" no formulario de **//
-//***                          consulta, opcao "L"		               ***//
-//***                          (Jorge/Andrino) 			               ***//
-//***			                                                       ***//
+//***                          consulta, opcao "L"                     ***//
+//***                          (Jorge/Andrino)                         ***//
+//***                                                                  ***//
 //***             14/09/2016 - Adicionado validação do campo Sicredi    **//
-//***                          e botões concluir e voltar 			   ***//
-//***                          (Evandro - RKAM) 			           ***//
-//***														           ***//
+//***                          e botões concluir e voltar              ***//
+//***                          (Evandro - RKAM)                        ***//
+//***                                                                  ***//
 //***             07/11/2016 - Ajustes para corrigir problemas encontrados ***//
-//***                          durante a homologação da área		   ***//
-//***                          (Adriano - M211)				           ***//
-//***														           ***//
+//***                          durante a homologação da área           ***//
+//***                          (Adriano - M211)                        ***//
+//***                                                                  ***//
+//***             05/12/2016 - Incorporação Transulcred                ***//
+//***                          (Guilherme/SUPERO)                      ***//
+//***                                                                  ***//
 //************************************************************************//
 
 var contWin = 0;
@@ -580,8 +583,7 @@ function imprimeLog(nmarqpdf, sidlogin) {
 
 function carregaOpcoes() {
 
-
-    if (cdcooper == 1 || cdcooper == 2 || cdcooper == 3 || cdcooper == 13 || cdcooper == 16) {
+    if (cdcooper == 1 || cdcooper == 2 || cdcooper == 3 || cdcooper == 13 || cdcooper == 16 || cdcooper == 9) {
         $('#cddopcao', '#frmLogSPB').append("<option value='L' selected> L - Consultar o log das Teds</option>");
         $('#cddopcao', '#frmLogSPB').append("<option value='R'> R - Gerar relatório de transações SPB</option>");
         $('#cddopcao', '#frmLogSPB').append("<option value='M'> M - Gerar relatório de Teds migradas</option>");
@@ -597,11 +599,10 @@ function carregaOpcoes() {
     } else
         if (cdcooper == 3) {
             $('#cdcopmig', '#frmLogSPB').append("<option value='1' selected>VIACREDI</option>");
-            $('#cdcopmig', '#frmLogSPB').append("<option value='2'>ACREDI</option>");
-            $('#cdcopmig', '#frmLogSPB').append("<option value='4'>CONCREDI</option>");
+            $('#cdcopmig', '#frmLogSPB').append("<option value='2' >ACREDI</option>");
+            $('#cdcopmig', '#frmLogSPB').append("<option value='4' >CONCREDI</option>");
             $('#cdcopmig', '#frmLogSPB').append("<option value='15'>CREDIMILSUL</option>");
-
-
+            $('#cdcopmig', '#frmLogSPB').append("<option value='9' >TRANSULCRED</option>");
         } else
             if (cdcooper == 13) {
                 $('#cdcopmig', '#frmLogSPB').append("<option value='15'>CREDIMILSUL</option>");
@@ -609,11 +610,15 @@ function carregaOpcoes() {
             } else
                 if (cdcooper == 16) {
                     $('#cdcopmig', '#frmLogSPB').append("<option value='1'>VIACREDI</option>");
-
-                } else {
-                    $('#cdcopmig', '#frmLogSPB').append("<option value='" + cdcooper + "'>" + nmcooper + "</option>");
                 }
-
+                else{
+                    if (cdcooper ==  9) {
+                        $('#cdcopmig', '#frmLogSPB').append("<option value='9' >TRANSULCRED</option>");
+                    }
+                    else {
+                        $('#cdcopmig', '#frmLogSPB').append("<option value='" + cdcooper + "'>" + nmcooper + "</option>");
+                    }
+                }
 
     carregouOpcoes = true;
 

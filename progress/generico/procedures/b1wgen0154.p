@@ -2,25 +2,28 @@
 
     Programa: sistema/generico/procedures/b1wgen0154.p
     Autor(a): Fabricio
-    Data    : Marco/2013                     Ultima atualizacao: 25/11/2014
-  
+    Data    : Marco/2013                     Ultima atualizacao: 05/12/2016
+
     Dados referentes ao programa:
-  
+
     Objetivo  : BO com regras de negocio refente a tela ICFJUD.
-                
-  
-    Alteracoes: 18/03/2013 -  Geracao/Importacao de Arquivos ICF 
+
+
+    Alteracoes: 18/03/2013 -  Geracao/Importacao de Arquivos ICF
                               (Andre Santos - SUPERO)
-                              
-                12/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)      
-                
+
+                12/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)
+
                 12/09/2014 - Tratamento devido a migração das coops Concredi e
                              Credimilsul, alterado importar_icf614 para quando
-                             inportar uma conta migrada, buscar informações na conta
-                             na nova coop(Odirlei/AMcom).
-                             
+                             inportar uma conta migrada, buscar informações na
+                             conta na nova coop(Odirlei/AMcom).
+
                 25/11/2014 - Incluir clausula no craptco flgativo = TRUE
-                            (Lucas R./Rodrigo)  
+                            (Lucas R./Rodrigo)
+
+                05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -99,25 +102,25 @@ DEF        VAR aux_dscooper AS CHAR                                  NO-UNDO.
 DEF        VAR aux_nmarqlog AS CHAR                                  NO-UNDO.
 
 DEFINE TEMP-TABLE tt-icf606
-            FIELD nrsequen AS INTE 
+            FIELD nrsequen AS INTE
             FIELD dsdlinha AS CHAR.
 
 DEF TEMP-TABLE tt-icf606-dados
-         FIELD nrsequen AS INTE 
+         FIELD nrsequen AS INTE
          FIELD dsdlinha AS CHAR
          FIELD seqcliet AS INTE
          FIELD cdocorre LIKE crapicf.cdcritic
-         FIELD cdtipcta AS INTE 
-         FIELD nmprimtl AS CHAR          
-         FIELD nrcpfcgc LIKE crapicf.nrcpfcgc 
+         FIELD cdtipcta AS INTE
+         FIELD nmprimtl AS CHAR
+         FIELD nrcpfcgc LIKE crapicf.nrcpfcgc
          FIELD totalreg AS INTE.
 
 FORM aux_setlinha  FORMAT "x(170)"
      WITH FRAME AA WIDTH 170 NO-BOX NO-LABELS.
 
 
-DEF QUERY q-crapicf FOR crapicf.                                               
-    
+DEF QUERY q-crapicf FOR crapicf.
+
 
 /*............................................................................*/
 
@@ -212,9 +215,9 @@ PROCEDURE consulta-icf:
     ASSIGN aux_query = "FOR EACH crapicf WHERE crapicf.cdcooper = " +
                         STRING(par_cdcooper) + " AND crapicf.intipreq = " +
                         STRING(par_intipreq).
-    
+
     IF   par_dtinireq <> ? THEN
-         ASSIGN aux_query = aux_query + " AND crapicf.dtinireq = " + 
+         ASSIGN aux_query = aux_query + " AND crapicf.dtinireq = " +
                             STRING(par_dtinireq).
 
     IF   par_cdbanreq <> 0 THEN
@@ -230,7 +233,7 @@ PROCEDURE consulta-icf:
                             STRING(par_nrctareq).
 
     ASSIGN aux_query = aux_query + " NO-LOCK.".
-    
+
     QUERY q-crapicf:QUERY-CLOSE().
     QUERY q-crapicf:QUERY-PREPARE(aux_query).
     QUERY q-crapicf:QUERY-OPEN().
@@ -253,7 +256,7 @@ PROCEDURE consulta-icf:
          END.
 
     DO WHILE AVAIL(crapicf):
-        
+
        IF   crapicf.cdcritic <> 0 THEN
             aux_dsstatus = "ERRO".
        ELSE
@@ -347,8 +350,8 @@ PROCEDURE imprime-icf:
          PUT STREAM str_1 SKIP(1)
                           "Tipo de Requisicao: Recebida" AT 01.
 
-    IF   par_dtinireq <> ? OR 
-         par_cdbanreq <> 0 OR 
+    IF   par_dtinireq <> ? OR
+         par_cdbanreq <> 0 OR
          par_cdagereq <> 0 OR
          par_nrctareq <> 0 THEN
          PUT STREAM str_1 SKIP(2)
@@ -371,7 +374,7 @@ PROCEDURE imprime-icf:
                           par_nrctareq FORMAT "zzzzzzzz9"  SKIP.
 
     PUT STREAM str_1 SKIP(2).
-     
+
     IF   par_intipreq = 1 THEN
          PUT STREAM str_1 "Requisicao"                  AT 10
                           "Destino"                     AT 60
@@ -383,20 +386,20 @@ PROCEDURE imprime-icf:
                           "Destino"                     AT 79
                           SKIP
  "-----------------------------------------------"      AT 01
- "-------------------------------------------------------------------------" 
+ "-------------------------------------------------------------------------"
                                                         AT 50.
-    
+
     FOR EACH tt-consulta-icf NO-LOCK:
-        
+
         IF   LENGTH(STRING(tt-consulta-icf.nrcpfcgc)) > 11   THEN
-             ASSIGN aux_dscpfcgc = 
+             ASSIGN aux_dscpfcgc =
                            STRING(tt-consulta-icf.nrcpfcgc,"99999999999999")
                     aux_dscpfcgc = STRING(aux_dscpfcgc,"xx.xxx.xxx/xxxx-xx").
         ELSE
-             ASSIGN aux_dscpfcgc = 
+             ASSIGN aux_dscpfcgc =
                            STRING(tt-consulta-icf.nrcpfcgc,"99999999999")
                     aux_dscpfcgc = STRING(aux_dscpfcgc,"xxx.xxx.xxx-xx").
-            
+
         IF   tt-consulta-icf.nmprimtl = "" THEN
              aux_dsdenome = "".
         ELSE
@@ -416,7 +419,7 @@ PROCEDURE imprime-icf:
              aux_dstipcta = "PF Cnj".
         ELSE
              aux_dstipcta = "".
-             
+
         IF   tt-consulta-icf.cdcritic <> 0 THEN
              aux_dsstatus = "ERRO".
         ELSE
@@ -424,7 +427,7 @@ PROCEDURE imprime-icf:
              aux_dsstatus = "Em And".
         ELSE
              aux_dsstatus = "Concl.".
-             
+
         IF   par_intipreq = 1 THEN         /* Enviado */
              DO:
                  DISPLAY STREAM str_1 tt-consulta-icf.nrctaori
@@ -449,7 +452,7 @@ PROCEDURE imprime-icf:
                                       tt-consulta-icf.cdbanori
                                       tt-consulta-icf.dacaojud
                                       tt-consulta-icf.nrctareq
-                                      aux_dsdenome              
+                                      aux_dsdenome
                                       aux_dscpfcgc
                                       aux_dstipcta
                                       tt-consulta-icf.cdcritic
@@ -499,40 +502,40 @@ PROCEDURE gera_impressao:
 
     DEF VARIABLE h-b1wgen0024     AS HANDLE            NO-UNDO.
 
-               
+
     Imp-Web: DO WHILE TRUE:
-                RUN sistema/generico/procedures/b1wgen0024.p 
+                RUN sistema/generico/procedures/b1wgen0024.p
                                     PERSISTENT SET h-b1wgen0024.
-               
+
                 IF   NOT VALID-HANDLE(h-b1wgen0024)  THEN
                      DO:
-                         ASSIGN par_dscritic = 
+                         ASSIGN par_dscritic =
                                     "Handle invalido para BO b1wgen0024.".
                          LEAVE Imp-Web.
                      END.
 
                 RUN gera-pdf-impressao IN h-b1wgen0024 (INPUT par_nmarqimp,
                                                         INPUT par_nmarqpdf).
-        
+
                 IF   SEARCH(par_nmarqpdf) = ?  THEN
                      DO:
-                         ASSIGN par_dscritic = "Nao foi possivel gerar " + 
+                         ASSIGN par_dscritic = "Nao foi possivel gerar " +
                                                "a impressao.".
                          LEAVE Imp-Web.
                      END.
-               
+
                 UNIX SILENT VALUE ('sudo /usr/bin/su - scpuser -c ' +
-                                   '"scp ' + par_nmarqpdf + 
+                                   '"scp ' + par_nmarqpdf +
                                    ' scpuser@' + aux_srvintra +
-                                   ':/var/www/ayllos/documentos/' + 
+                                   ':/var/www/ayllos/documentos/' +
                                    crapcop.dsdircop +
                                    '/temp/" 2>/dev/null').
-               
+
                 LEAVE Imp-Web.
              END. /** Fim do DO WHILE TRUE **/
-               
+
     IF   VALID-HANDLE(h-b1wgen0024)  THEN
-         DELETE OBJECT h-b1wgen0024.  
+         DELETE OBJECT h-b1wgen0024.
 
     ASSIGN par_nmarqpdf = ENTRY(NUM-ENTRIES(par_nmarqpdf,"/"),par_nmarqpdf,"/").
 
@@ -554,7 +557,7 @@ PROCEDURE gerar_icf604:
 
    /* Busca Coop. Cecred para usar no nome do Arquivo */
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-   
+
    /* Nome do Arquivo */
    ASSIGN aux_nmarquiv = "i2" + STRING(crapcop.cdbcoctl,"999") +
                          STRING(DAY(par_dtmvtolt),"99") + ".REM"
@@ -574,7 +577,7 @@ PROCEDURE gerar_icf604:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Sem dados para geracao do arquivo ICF604."
                    par_dsmensag = aux_dscritic.
-         
+
             RUN gera_erro (INPUT 3, /*par_cdcooper,*/
                            INPUT 1,
                            INPUT 1,
@@ -585,7 +588,7 @@ PROCEDURE gerar_icf604:
             RETURN "NOK".
         END.
 
-     
+
     ASSIGN aux_dtfimreq = par_dtmvtolt
            aux_contador = 0.
 
@@ -601,8 +604,8 @@ PROCEDURE gerar_icf604:
 
         ASSIGN aux_contador = aux_contador + 1.
     END.
- 
-   
+
+
    /* Remove os arquivos temporarios */
    UNIX SILENT VALUE("rm " + aux_dscooper + "arq/i2*.REM 2>/dev/null").
 
@@ -705,7 +708,7 @@ END PROCEDURE.
 /*............................................................................*/
 
 PROCEDURE importar_icf614:
-   
+
    DEF INPUT  PARAM par_cdcooper AS INT                               NO-UNDO.
    DEF INPUT  PARAM par_dtmvtolt AS DATE                              NO-UNDO.
    DEF INPUT  PARAM par_dtmvtoan AS DATE                              NO-UNDO.
@@ -740,7 +743,7 @@ PROCEDURE importar_icf614:
    FIND crapcop WHERE crapcop.cdcooper = 3 NO-LOCK NO-ERROR.
 
    /* Nome Arqivo de Origem */
-   ASSIGN aux_nmarquiv = "integra/ICF614" + 
+   ASSIGN aux_nmarquiv = "integra/ICF614" +
                          STRING(DAY(par_dtmvtoan),"99") + ".RET"
           aux_dscooper = "/usr/coop/" + crapcop.dsdircop + "/"
           aux_contador = 0.
@@ -755,7 +758,7 @@ PROCEDURE importar_icf614:
    /* Listar o nome do arquivo caso exista */
    INPUT STREAM str_1 THROUGH VALUE("ls " + aux_dscooper + aux_nmarquiv +
                                     " 2> /dev/null") NO-ECHO.
-   
+
    /* Lê o Conteudo do Diretorio */
    DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
@@ -777,7 +780,7 @@ PROCEDURE importar_icf614:
         DO:
             ASSIGN aux_cdcritic = 182
                    aux_dscritic = "".
-       
+
             RUN gera_erro (INPUT 3, /*par_cdcooper,*/
                            INPUT 1,
                            INPUT 1,
@@ -880,81 +883,78 @@ PROCEDURE importar_icf614:
                                      + " >> log/proc_batch.log").
                    aux_cdcritic = 0.
                    NEXT TRANS_1.
-               END.          
+               END.
 
           /* Busca Cooperativa pela Agencia do Cooperado */
           FIND FIRST crapcop WHERE crapcop.cdbcoctl = aux_cdbanreq AND
                                    crapcop.cdagectl = aux_cdagereq
                                    NO-LOCK NO-ERROR.
 
-          IF   AVAIL crapcop THEN 
-               DO:
-                   
-                   IF crapcop.cdagectl = 103 OR
-                      crapcop.cdagectl = 114  THEN
-                   DO:
-                       /* verificar se é uma conta migrada */
-                       FIND FIRST craptco 
-                        WHERE craptco.nrctaant = aux_nrctareq 
-                          AND craptco.cdcopant = crapcop.cdcooper  
-                          AND craptco.flgativo = TRUE
-                          NO-LOCK NO-ERROR.
-                       
-                       /* se for uma conta migrada deve buscar dados 
-                          do associado na cooperativa nova */
-                       IF AVAIL(craptco) THEN 
-                         DO:                       
-                           
-                           /* Crapass - Buscar o Associado */
-                           FIND FIRST crapass WHERE 
-                                      crapass.cdcooper = craptco.cdcooper AND
-                                      crapass.nrdconta = craptco.nrdconta
-                                      NO-LOCK NO-ERROR.
-                         END.
-                      ELSE /* senao for buscar com os dados do arquivo*/
-                         DO:
-                           /* Crapass - Buscar o Associado */
-                           FIND FIRST crapass WHERE 
-                                      crapass.cdcooper = crapcop.cdcooper AND
-                                      crapass.nrdconta = aux_nrctareq
-                                      NO-LOCK NO-ERROR.
-                        END.
-                   END.
-                   ELSE
-                       /* Crapass - Buscar o Associado */
-                       FIND FIRST crapass WHERE 
-                                  crapass.cdcooper = crapcop.cdcooper AND
-                                  crapass.nrdconta = aux_nrctareq
-                                  NO-LOCK NO-ERROR.
-                   
-                   IF   NOT AVAIL crapass THEN
-                        ASSIGN aux_cdcooper = 0
-                               aux_cdocorre = 1  /* Conta Nao Localizada      */
-                               aux_cdtipcta = 1  /* Tipo Conta Nao Localizada */
-                               aux_nmprimtl = " "
-                               aux_nrcpfcgc = 0.
-                   ELSE
-                        DO:
-                            /* Tipo de Conta Pesquisada - Pessoa Fisica   */
-                            IF   crapass.inpessoa = 1 THEN
-                                 IF   CAN-DO("3,6,10,11,14,15,17",
-                                      STRING(crapass.cdtipcta)) THEN
-                                      aux_cdtipcta = 5. /* Pessoa PF Conjunta */
-                                 ELSE
-                                      aux_cdtipcta = 3. /* Pessoa PF Normal   */
-                            ELSE
-                                 aux_cdtipcta = 4. /* Pessoa Juridica    */
+          IF  AVAIL crapcop THEN DO:
 
+              IF  crapcop.cdagectl = 103 OR
+                  crapcop.cdagectl = 114 OR
+                  crapcop.cdagectl = 116 THEN DO:
 
-                            ASSIGN aux_cdcooper = crapcop.cdcooper
-                                   aux_cdocorre = 0 /* Conta Localizada   */
-                                   aux_nmprimtl = crapass.nmprimtl
-                                   aux_nrcpfcgc = crapass.nrcpfcgc.
+                  /* verificar se é uma conta migrada */
+                  FIND FIRST craptco
+                       WHERE craptco.nrctaant = aux_nrctareq
+                         AND craptco.cdcopant = crapcop.cdcooper
+                         AND craptco.flgativo = TRUE
+                     NO-LOCK NO-ERROR.
 
-                        END. /* Fim da Verificacao do Associado */
-               END.
-          ELSE 
+                  /* se for uma conta migrada deve buscar dados
+                     do associado na cooperativa nova */
+                  IF  AVAIL(craptco) THEN DO:
+
+                      /* Crapass - Buscar o Associado */
+                      FIND FIRST crapass
+                           WHERE crapass.cdcooper = craptco.cdcooper
+                             AND crapass.nrdconta = craptco.nrdconta
+                         NO-LOCK NO-ERROR.
+                  END.
+                  ELSE DO: /* senao for buscar com os dados do arquivo*/
+
+                      /* Crapass - Buscar o Associado */
+                      FIND FIRST crapass
+                           WHERE crapass.cdcooper = crapcop.cdcooper
+                             AND crapass.nrdconta = aux_nrctareq
+                         NO-LOCK NO-ERROR.
+                  END.
+              END.
+              ELSE
+                   /* Crapass - Buscar o Associado */
+                   FIND FIRST crapass WHERE
+                              crapass.cdcooper = crapcop.cdcooper AND
+                              crapass.nrdconta = aux_nrctareq
+                              NO-LOCK NO-ERROR.
+
+              IF  NOT AVAIL crapass THEN
+                  ASSIGN aux_cdcooper = 0
+                         aux_cdocorre = 1  /* Conta Nao Localizada      */
+                         aux_cdtipcta = 1  /* Tipo Conta Nao Localizada */
+                         aux_nmprimtl = " "
+                         aux_nrcpfcgc = 0.
+              ELSE DO:
+                  /* Tipo de Conta Pesquisada - Pessoa Fisica   */
+                  IF  crapass.inpessoa = 1 THEN
+                      IF  CAN-DO("3,6,10,11,14,15,17",
+                           STRING(crapass.cdtipcta)) THEN
+                          aux_cdtipcta = 5. /* Pessoa PF Conjunta */
+                      ELSE
+                          aux_cdtipcta = 3. /* Pessoa PF Normal   */
+                  ELSE
+                      aux_cdtipcta = 4. /* Pessoa Juridica    */
+
+                  ASSIGN aux_cdcooper = crapcop.cdcooper
+                         aux_cdocorre = 0 /* Conta Localizada   */
+                         aux_nmprimtl = crapass.nmprimtl
+                         aux_nrcpfcgc = crapass.nrcpfcgc.
+              END. /* Fim da Verificacao do Associado */
+          END.
+          ELSE
                NEXT. /* Se nao encontrar COOP, Segue Prox. Registro */
+
 
          /* Atualiza as Informacoes na Tabela */
          CREATE crapicf.
@@ -974,7 +974,7 @@ PROCEDURE importar_icf614:
                 crapicf.cdtipcta = aux_cdtipcta
                 crapicf.cdoperad = par_cdoperad.
          VALIDATE crapicf.
-       
+
          /* Grava Linha Detalhes */
          CREATE tt-icf606-dados.
          ASSIGN tt-icf606-dados.nrsequen = aux_nrsequen
@@ -1111,7 +1111,7 @@ PROCEDURE importar_icf616.
 
 
    /* Nome Arqivo de Origem */
-   ASSIGN aux_nmarquiv = "integra/ICF616" + 
+   ASSIGN aux_nmarquiv = "integra/ICF616" +
                           STRING(DAY(par_dtmvtoan),"99") + ".RET"
           aux_dscooper = "/usr/coop/" + crapcop.dsdircop + "/"
           aux_contador = 0.
@@ -1149,7 +1149,7 @@ PROCEDURE importar_icf616.
         DO:
             ASSIGN aux_cdcritic = 182
                    aux_dscritic = "".
-      
+
             RUN gera_erro (INPUT 3, /*par_cdcooper,*/
                            INPUT 1,
                            INPUT 1,
@@ -1344,7 +1344,7 @@ PROCEDURE icf_validar_retorno:
                  DO:
                      ASSIGN aux_cdcritic = 182
                             aux_dscritic = "".
-           
+
                      RUN gera_erro (INPUT 3, /*par_cdcooper,*/
                                     INPUT 1,
                                     INPUT 1,
@@ -1374,19 +1374,19 @@ PROCEDURE icf_validar_retorno:
                IF   SUBSTR(aux_setlinha,19,6) <> "ICF674" THEN /* ICF674 */
                     aux_cdcritic = 173.
 
-               IF   aux_cdcritic <> 0 THEN 
+               IF   aux_cdcritic <> 0 THEN
                     DO:
                         INPUT STREAM str_2 CLOSE.
                         RUN fontes/critic.p.
                         aux_nmarquiv = "integra/err" +
                                        SUBSTR(tab_nmarqtel[i],26,12).
-                        UNIX SILENT VALUE("rm " + tab_nmarqtel[i] + 
+                        UNIX SILENT VALUE("rm " + tab_nmarqtel[i] +
                                           ".q 2> /dev/null").
-                        UNIX SILENT VALUE("mv " + tab_nmarqtel[i] + 
+                        UNIX SILENT VALUE("mv " + tab_nmarqtel[i] +
                                           " " + aux_nmarquiv).
                         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                          " - PRCCTL" + "' --> '" + 
-                                          aux_dscritic + " " + aux_nmarquiv + 
+                                          " - PRCCTL" + "' --> '" +
+                                          aux_dscritic + " " + aux_nmarquiv +
                                           " >> log/proc_batch.log").
                         aux_cdcritic = 0.
                         NEXT.
@@ -1425,8 +1425,8 @@ PROCEDURE icf_validar_retorno:
                            aux_cdcritic = 86.
                            RUN fontes/critic.p.
                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")
-                                             + " -PRCCTL" + "' --> '" 
-                                             + aux_dscritic + " " + 
+                                             + " -PRCCTL" + "' --> '"
+                                             + aux_dscritic + " " +
                                              STRING(aux_nrseqarq,"zzzz,zz9")
                                              + " >> log/proc_batch.log").
                            aux_cdcritic = 0.
@@ -1457,9 +1457,9 @@ PROCEDURE icf_validar_retorno:
 
         END. /* Fim Importacao do Arq. ICF674 */
    ELSE
-   IF   par_nmretorn  = "ICF676"  THEN 
+   IF   par_nmretorn  = "ICF676"  THEN
         DO: /* Importação do Arq. ICF676 */
- 
+
             /* Nome Arqivo de Origem */
             ASSIGN aux_nmarquiv = "integra/ICF676" +
                                   STRING(DAY(par_dtmvtoan),"99") + ".RET"
@@ -1475,7 +1475,7 @@ PROCEDURE icf_validar_retorno:
 
             /* Listar o nome do arquivo caso exista */
             INPUT STREAM str_1 THROUGH VALUE("ls " + aux_dscooper +
-                                             aux_nmarquiv + " 2> /dev/null") 
+                                             aux_nmarquiv + " 2> /dev/null")
                                              NO-ECHO.
 
 
@@ -1500,7 +1500,7 @@ PROCEDURE icf_validar_retorno:
                  DO:
                      ASSIGN aux_cdcritic = 182
                             aux_dscritic = "".
-                 
+
                      RUN gera_erro (INPUT 3, /*par_cdcooper,*/
                                     INPUT 1,
                                     INPUT 1,
@@ -1527,20 +1527,20 @@ PROCEDURE icf_validar_retorno:
                IF   SUBSTR(aux_setlinha,19,6) <> "ICF676" THEN /* ICF676 */
                     aux_cdcritic = 173.
 
-               IF   aux_cdcritic <> 0 THEN 
+               IF   aux_cdcritic <> 0 THEN
                     DO:
                         INPUT STREAM str_2 CLOSE.
                         RUN fontes/critic.p.
                         aux_nmarquiv = "integra/err" +
                                        SUBSTR(tab_nmarqtel[i],26,12).
-                        UNIX SILENT VALUE("rm " + tab_nmarqtel[i] + 
+                        UNIX SILENT VALUE("rm " + tab_nmarqtel[i] +
                                           ".q 2> /dev/null").
-                        UNIX SILENT VALUE("mv " + tab_nmarqtel[i] + 
+                        UNIX SILENT VALUE("mv " + tab_nmarqtel[i] +
                                           " " + aux_nmarquiv).
-                        UNIX SILENT VALUE("echo " + 
+                        UNIX SILENT VALUE("echo " +
                                           STRING(TIME,"HH:MM:SS") +
-                                          " - PRCCTL" + "' --> '" + 
-                                          aux_dscritic + " " + aux_nmarquiv + 
+                                          " - PRCCTL" + "' --> '" +
+                                          aux_dscritic + " " + aux_nmarquiv +
                                           " >> log/proc_batch.log").
                         aux_cdcritic = 0.
                         NEXT.
@@ -1574,7 +1574,7 @@ PROCEDURE icf_validar_retorno:
                          aux_dacaojud = SUBSTR(aux_setlinha,45,25)
                          aux_cdocorre = INT(SUBSTR(aux_setlinha,148,3)).
 
-                  IF   ERROR-STATUS:ERROR  THEN 
+                  IF   ERROR-STATUS:ERROR  THEN
                        DO:
                            aux_cdcritic = 86.
                            RUN fontes/critic.p.
@@ -1593,7 +1593,7 @@ PROCEDURE icf_validar_retorno:
 
 
                  /* Busca o registro na tabela para atualizar a critica */
-                 FIND FIRST crapicf WHERE 
+                 FIND FIRST crapicf WHERE
                             crapicf.cdcooper = crapcop.cdcooper AND
                             crapicf.dtmvtolt = aux_dtmvtolt     AND
                             crapicf.dacaojud = aux_dacaojud     AND
@@ -1611,16 +1611,16 @@ PROCEDURE icf_validar_retorno:
 
                UNIX SILENT VALUE("mv " + tab_nmarqtel[i] + " " +
                                  aux_dscooper + "salvar").
-               
+
                UNIX SILENT VALUE("rm " + tab_nmarqtel[i] + ".q 2> /dev/null").
 
             END. /* Fim do contador */
         END. /* Fim Importacao do Arq. ICF676 */
-   ELSE 
+   ELSE
         DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Parametro Invalido".
-        
+
             RUN gera_erro (INPUT 3, /*par_cdcooper,*/
                            INPUT 1,
                            INPUT 1,

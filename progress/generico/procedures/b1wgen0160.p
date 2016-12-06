@@ -1,23 +1,26 @@
-
 /*.............................................................................
 
     Programa: sistema/generico/procedures/b1wgen0160.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 16/07/2013                     Ultima atualizacao: 07/07/2016
+    Data    : 16/07/2013                     Ultima atualizacao: 28/11/2016
 
     Objetivo  : Tranformacao BO tela PESQSR.
 
-    Alteracoes: 01/07/2014 - Adicionado campo tt-pesqsr.cdagetfn na 
-                             procedure Busca_Opcao_C e na Busca_Opcao_D. 
+    Alteracoes: 01/07/2014 - Adicionado campo tt-pesqsr.cdagetfn na
+                             procedure Busca_Opcao_C e na Busca_Opcao_D.
                              (Reinert)
                 18/09/2014 - Integracao cooperativas 4 e 15 (Vanessa)
-                 
-				24/06/2016 - Ajustes referente a homologacao da área de negocio 
-                            (Adriano - SD 412556).                                                               
+
+                24/06/2016 - Ajustes referente a homologacao da área de negocio
+                             (Adriano - SD 412556).
 
                 07/07/2016 - #442054 Correcao do proc Busca_Opcao_C para
                              pegar os dados do favorecido do cheque (cdbancdep,
                              cdagedep e nrctadep) (Carlos)
+
+                28/11/2016 - Incorporacao Transulcred
+                             Correcao do FIND da TCO, estava errado
+                             (Guilherme/SUPERO)
 
 ............................................................................*/
 
@@ -85,13 +88,13 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_cdturnos AS INTE                                    NO-UNDO.
     DEF VAR aux_dsagenci AS CHAR                                    NO-UNDO.
     DEF VAR aux_regexist AS LOGI INIT FALSE                         NO-UNDO.
-    
+
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_returnvl = "NOK"
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Busca Dados Pesquisa de Remessa".
-           
+
 
     Busca:
     DO  ON ERROR UNDO Busca, LEAVE Busca:
@@ -106,10 +109,12 @@ PROCEDURE Busca_Dados:
                 LEAVE Busca.
             END.
 
-        FOR FIRST crapcop FIELDS(cdcooper cdagebcb cdagectl cdageitg) WHERE crapcop.cdcooper = par_cdcooper NO-LOCK: END.
+        FOR FIRST crapcop FIELDS(cdcooper cdagebcb cdagectl cdageitg)
+            WHERE crapcop.cdcooper = par_cdcooper NO-LOCK:
+        END.
 
         IF  NOT AVAILABLE crapcop  THEN
-            DO: 
+            DO:
                 ASSIGN aux_cdcritic = 651
                        aux_dscritic = "".
                 LEAVE Busca.
@@ -130,10 +135,10 @@ PROCEDURE Busca_Dados:
                   INPUT par_flgerlog,
                  OUTPUT TABLE tt-pesqsr,
                  OUTPUT TABLE tt-dados-cheque,
-                 OUTPUT TABLE tt-erro). 
+                 OUTPUT TABLE tt-erro).
         ELSE
         IF  par_cddopcao = "D" THEN
-    
+
             RUN Busca_Opcao_D
                     ( INPUT par_cdcooper,
                       INPUT par_cdagenci,
@@ -153,7 +158,7 @@ PROCEDURE Busca_Dados:
                      OUTPUT TABLE tt-pesqsr,
                      OUTPUT TABLE tt-dados-cheque,
                      OUTPUT TABLE tt-erro).
-    
+
         ELSE
             DO:
                 ASSIGN aux_cdcritic = 14
@@ -167,7 +172,7 @@ PROCEDURE Busca_Dados:
     END. /* Busca */
 
     IF  aux_dscritic <> "" OR
-        aux_cdcritic <> 0  OR 
+        aux_cdcritic <> 0  OR
         TEMP-TABLE tt-erro:HAS-RECORDS THEN
         DO:
             ASSIGN aux_returnvl = "NOK".
@@ -178,7 +183,7 @@ PROCEDURE Busca_Dados:
 
                 IF  AVAIL tt-erro THEN
                     ASSIGN aux_dscritic = tt-erro.dscritic.
-                
+
             ELSE
                 RUN gera_erro (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -202,7 +207,7 @@ PROCEDURE Busca_Dados:
         END.
     ELSE
         ASSIGN aux_returnvl = "OK".
-    
+
     RETURN aux_returnvl.
 
 END PROCEDURE. /* Busca_Dados */
@@ -244,8 +249,8 @@ PROCEDURE Busca_Opcao_C:
     DEF VAR aux_regexist AS LOGI INIT FALSE                         NO-UNDO.
     DEF VAR aux_nrseqchq AS INT     INIT 0                          NO-UNDO.
     DEF VAR aux_ctamigra AS LOGICAL INIT FALSE                      NO-UNDO.
-	DEF VAR aux_contador AS INT										NO-UNDO.
-    
+    DEF VAR aux_contador AS INT                                     NO-UNDO.
+
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_returnvl = "NOK"
@@ -266,7 +271,7 @@ PROCEDURE Busca_Opcao_C:
                        aux_dscritic = "".
                 LEAVE Busca.
             END.
-        
+
         /* Validar o numero conta base ou cheque */
         IF  NOT ValidaDigFun ( INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -287,7 +292,7 @@ PROCEDURE Busca_Opcao_C:
                                     INPUT par_nrdctabb,
                                    OUTPUT aux_nrdctitg,
                                    OUTPUT aux_nrctaass).
-        
+
         RUN dig_bbx IN h-b1wgen9998
                   ( INPUT par_cdcooper,
                     INPUT par_cdagenci,
@@ -306,35 +311,42 @@ PROCEDURE Busca_Opcao_C:
 
         CASE par_cdbaninf:
             WHEN 756 THEN ASSIGN aux_cdagechq = crapcop.cdagebcb.
-            WHEN  85 THEN 
-            DO:
-           
+
+            WHEN  85 THEN DO:
                 ASSIGN aux_cdagechq = crapcop.cdagectl.
-                FIND FIRST craptco WHERE craptco.cdcooper = par_cdcooper AND /*VERIFICA SE É CONTA MIGRADA*/
-                                         craptco.nrctaant = aux_cdagechq NO-LOCK NO-ERROR.
-                IF   AVAILABLE craptco  THEN
-                    DO:
-                        IF craptco.cdcopant = 4 OR craptco.cdcopant = 15 THEN
-                            DO:
-                                ASSIGN aux_ctamigra = TRUE. /* PESQUISA A AGENCIA DA CONTA MIGRADA*/
-                                FIND crapcop WHERE crapcop.cdcooper = craptco.cdcopant NO-LOCK NO-ERROR.
-                                 
-                            END.
+
+                /*VERIFICA SE É CONTA MIGRADA*/
+                FIND FIRST craptco
+                     WHERE craptco.cdcooper = par_cdcooper
+                       AND craptco.nrctaant = par_nrdctabb
+                   NO-LOCK NO-ERROR.
+
+                IF  AVAILABLE craptco  THEN DO:
+                    IF  craptco.cdcopant = 4   /* CONCREDI    */
+                    OR  craptco.cdcopant = 15  /* CREDIMILSUL */
+                    OR  craptco.cdcopant = 17  /* TRANSULCRED */ THEN DO:
+                        ASSIGN aux_ctamigra = TRUE.
+
+                        /* PESQUISA A AGENCIA DA CONTA MIGRADA*/
+                        FIND FIRST crapcop
+                             WHERE crapcop.cdcooper = craptco.cdcopant
+                           NO-LOCK NO-ERROR.
                     END.
+                END.
             END.
             OTHERWISE     ASSIGN aux_cdagechq = crapcop.cdageitg.
         END CASE.
-         
-        IF aux_ctamigra  THEN
-            DO:
-                FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper      AND /*PESQUISA COM AS DUAS AGENCIAS*/
-                                   crapfdc.cdbanchq = par_cdbaninf      AND
-                                   (crapfdc.cdagechq = aux_cdagechq OR
-                                    crapfdc.cdagechq = crapcop.cdagectl) AND
-                                    crapfdc.nrctachq = par_nrdctabb      AND
-                                    crapfdc.nrcheque = aux_nrchqsdv
-                                    NO-LOCK NO-ERROR.
-            END.
+
+        IF  aux_ctamigra  THEN DO:
+                               /*PESQUISA COM AS DUAS AGENCIAS*/
+            FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper
+                           AND crapfdc.cdbanchq = par_cdbaninf
+                           AND (crapfdc.cdagechq = aux_cdagechq OR
+                                crapfdc.cdagechq = crapcop.cdagectl)
+                           AND crapfdc.nrctachq = par_nrdctabb
+                           AND crapfdc.nrcheque = aux_nrchqsdv
+                       NO-LOCK NO-ERROR.
+        END.
         ELSE
             FOR FIRST crapfdc
                 WHERE crapfdc.cdcooper = par_cdcooper AND
@@ -367,17 +379,17 @@ PROCEDURE Busca_Opcao_C:
                 LEAVE Busca.
             END.
 
-		ASSIGN aux_nmprimtl = crapass.nmprimtl
-		       aux_nrfonemp = "0"
-			   aux_nrramemp = 0.
+                ASSIGN aux_nmprimtl = crapass.nmprimtl
+                       aux_nrfonemp = "0"
+                           aux_nrramemp = 0.
 
-		Telefone:
-		DO aux_contador = 1 TO 4:
+                Telefone:
+                DO aux_contador = 1 TO 4:
 
           FOR FIRST craptfc FIELDS (tptelefo nrtelefo nrdddtfc nrdramal)
-              WHERE craptfc.cdcooper = crapfdc.cdcooper    
-                AND craptfc.nrdconta = crapfdc.nrdconta 
-                AND craptfc.idseqttl = 1 
+              WHERE craptfc.cdcooper = crapfdc.cdcooper
+                AND craptfc.nrdconta = crapfdc.nrdconta
+                AND craptfc.idseqttl = 1
                 AND craptfc.tptelefo = aux_contador NO-LOCK:
 
               /* 1 - Residencial */
@@ -385,49 +397,52 @@ PROCEDURE Busca_Opcao_C:
               /* 3 - Comercial   */
               /* 4 - Contato     */
               CASE craptfc.tptelefo:
-                WHEN 1 THEN 
+                WHEN 1 THEN
                 DO:
-                    IF craptfc.nrtelefo > 0 THEN 
+                    IF craptfc.nrtelefo > 0 THEN
                     DO:
-                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
-								aux_nrramemp = craptfc.nrdramal.
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) +
+                                              string(craptfc.nrtelefo)
+                               aux_nrramemp = craptfc.nrdramal.
 
                         LEAVE telefone.
                     END.
                 END.
 
-                WHEN 2 THEN 
+                WHEN 2 THEN
                 DO:
-                    IF craptfc.nrtelefo > 0 THEN 
+                    IF craptfc.nrtelefo > 0 THEN
                     DO:
-                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
-								aux_nrramemp = craptfc.nrdramal.
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) +
+                                              string(craptfc.nrtelefo)
+                               aux_nrramemp = craptfc.nrdramal.
 
                         LEAVE telefone.
                     END.
                 END.
 
-                WHEN 4 THEN 
+                WHEN 4 THEN
                 DO:
-                    IF craptfc.nrtelefo > 0 THEN 
+                    IF craptfc.nrtelefo > 0 THEN
                     DO:
-                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
-								aux_nrramemp = craptfc.nrdramal.
+                        ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) +
+                                              string(craptfc.nrtelefo)
+                               aux_nrramemp = craptfc.nrdramal.
 
                         LEAVE telefone.
                     END.
                 END.
             END CASE.
-                  
+
           END.
         END.
-		
+
         FOR FIRST crapttl
             WHERE crapttl.cdcooper = par_cdcooper     AND
                   crapttl.nrdconta = crapass.nrdconta AND
                   crapttl.idseqttl = 1  NO-LOCK:
         END.
-   
+
         IF  AVAIL crapttl THEN
             ASSIGN aux_nmdsecao = crapttl.nmdsecao
                    aux_cdturnos = crapttl.cdturnos.
@@ -439,12 +454,12 @@ PROCEDURE Busca_Opcao_C:
             WHERE crapage.cdcooper = par_cdcooper AND
                   crapage.cdagenci = crapass.cdagenci NO-LOCK:
         END.
-    
+
         IF  NOT AVAIL crapage THEN
-            ASSIGN aux_dsagenci = 
+            ASSIGN aux_dsagenci =
                      STRING(crapass.cdagenci,"zz9") + " - " + FILL("*",15).
         ELSE
-            ASSIGN aux_dsagenci = 
+            ASSIGN aux_dsagenci =
                      STRING(crapass.cdagenci,"zz9") + " - " + crapage.nmresage.
 
         IF  crapfdc.incheque = 8 THEN
@@ -468,8 +483,8 @@ PROCEDURE Busca_Opcao_C:
                                            THEN 96
                                            ELSE 257.
 
-                FOR EACH craplcm 
-                   WHERE craplcm.cdcooper = par_cdcooper     AND 
+                FOR EACH craplcm
+                   WHERE craplcm.cdcooper = par_cdcooper     AND
                          craplcm.nrdconta = crapass.nrdconta AND
                          craplcm.nrdocmto = par_nrdocmto     AND
                         (craplcm.cdhistor = 50   OR
@@ -486,11 +501,12 @@ PROCEDURE Busca_Opcao_C:
                          craplcm.cdhistor = 621)
                          USE-INDEX craplcm2 NO-LOCK :
 
-                    FIND FIRST crapfdc WHERE 
+                    FIND FIRST crapfdc WHERE
                         crapfdc.cdcooper = par_cdcooper AND
                         crapfdc.nrdconta = crapass.nrdconta AND
-                        crapfdc.nrcheque = 
-                        INTE(SUBSTRING(STRING(craplcm.nrdocmto), 1, (LENGTH(STRING(craplcm.nrdocmto)) - 1)))
+                        crapfdc.nrcheque =
+                        INTE(SUBSTRING(STRING(craplcm.nrdocmto), 1,
+                                       (LENGTH(STRING(craplcm.nrdocmto)) - 1)))
                         NO-LOCK NO-WAIT.
 
                     CREATE tt-pesqsr.
@@ -500,16 +516,18 @@ PROCEDURE Busca_Opcao_C:
                            tt-pesqsr.nrdolote = craplcm.nrdolote
                            tt-pesqsr.vllanmto = craplcm.vllanmto
                            tt-pesqsr.cdpesqbb = craplcm.cdpesqbb
-                           tt-pesqsr.nrseqimp = craplcm.nrseqdig 
-                           tt-pesqsr.vldoipmf = DEC(TRUNC(crapfdc.vlcheque * 0.0038 , 2))
-                           tt-pesqsr.cdbanchq = STRING(crapfdc.cdbandep,"zzz9") + "-" +
+                           tt-pesqsr.nrseqimp = craplcm.nrseqdig
+                           tt-pesqsr.vldoipmf = DEC(TRUNC(crapfdc.vlcheque *
+                                                    0.0038 , 2))
+                           tt-pesqsr.cdbanchq = STRING(crapfdc.cdbandep,"zzz9")
+                                                + "-" +
                                                 STRING(crapfdc.cdagedep,"9999")
                            tt-pesqsr.sqlotchq = craplcm.sqlotchq
                            tt-pesqsr.cdcmpchq = craplcm.cdcmpchq
                            tt-pesqsr.nrlotchq = craplcm.nrlotchq
                            tt-pesqsr.nrctachq = crapfdc.nrctadep
-                           tt-pesqsr.cdbaninf = par_cdbaninf 
-                            
+                           tt-pesqsr.cdbaninf = par_cdbaninf
+
                            tt-pesqsr.cdagechq = aux_cdagechq
 
                            tt-pesqsr.nrdocmto = par_nrdocmto
@@ -523,20 +541,21 @@ PROCEDURE Busca_Opcao_C:
                            tt-pesqsr.nrdconta = aux_nrdconta
                            tt-pesqsr.dsdocmc7 = crapfdc.dsdocmc7
                            tt-pesqsr.cdagetfn = craplcm.cdagetfn
-                           aux_regexist       = TRUE. 
+                           aux_regexist       = TRUE.
 
                     /*** LOCALIZA MOVIMENTO DE DEVOLUCAO CHEQUE ***/
                     FIND FIRST crablcm
                          WHERE crablcm.cdcooper   = craplcm.cdcooper
                            AND crablcm.nrdconta   = craplcm.nrdconta
                            AND crablcm.dtmvtolt  >= craplcm.dtmvtolt
-                            
+
                            AND (crablcm.cdhistor  = 47   OR
                                 crablcm.cdhistor  = 191  OR
                                 crablcm.cdhistor  = 338  OR
                                 crablcm.cdhistor  = 573)
-                           AND crablcm.nrdocmto  = craplcm.nrdocmto NO-LOCK NO-ERROR.
-                    
+                           AND crablcm.nrdocmto  = craplcm.nrdocmto
+                       NO-LOCK NO-ERROR.
+
                     IF  AVAIL crablcm THEN DO:
 
                         ASSIGN aux_nrseqchq = aux_nrseqchq + 1.
@@ -549,8 +568,8 @@ PROCEDURE Busca_Opcao_C:
                                tt-dados-cheque.cdbanchq = STRING(craplcm.cdbanchq,"zzz9")
                                                           + "-" +
                                                           STRING(craplcm.cdagechq,"9999")
-                               tt-dados-cheque.cdagechq = craplcm.cdagechq 
-                               tt-dados-cheque.cdcmpchq = craplcm.cdcmpchq 
+                               tt-dados-cheque.cdagechq = craplcm.cdagechq
+                               tt-dados-cheque.cdcmpchq = craplcm.cdcmpchq
                                tt-dados-cheque.nrlotchq = craplcm.nrlotchq
                                tt-dados-cheque.sqlotchq = craplcm.sqlotchq
                                tt-dados-cheque.nrctachq = craplcm.nrctachq.
@@ -577,7 +596,7 @@ PROCEDURE Busca_Opcao_C:
     END. /* Busca */
 
     IF  aux_dscritic <> "" OR
-        aux_cdcritic <> 0  OR 
+        aux_cdcritic <> 0  OR
         TEMP-TABLE tt-erro:HAS-RECORDS THEN
         DO:
             ASSIGN aux_returnvl = "NOK".
@@ -588,7 +607,7 @@ PROCEDURE Busca_Opcao_C:
 
                 IF  AVAIL tt-erro THEN
                     ASSIGN aux_dscritic = tt-erro.dscritic.
-                
+
             ELSE
                 RUN gera_erro (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -612,7 +631,7 @@ PROCEDURE Busca_Opcao_C:
         END.
     ELSE
         ASSIGN aux_returnvl = "OK".
-    
+
     RETURN aux_returnvl.
 
 END PROCEDURE. /* Busca_Opcao_C */
@@ -656,7 +675,7 @@ PROCEDURE Busca_Opcao_D:
     DEF VAR aux_dsagenci AS CHAR                                    NO-UNDO.
     DEF VAR aux_dtlimite AS DATE                                    NO-UNDO.
     DEF VAR aux_regexist AS LOGI                                    NO-UNDO.
-    DEF VAR aux_contador AS INT										NO-UNDO.
+    DEF VAR aux_contador AS INT                                                                                NO-UNDO.
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
@@ -670,7 +689,7 @@ PROCEDURE Busca_Opcao_D:
 
     Busca: DO ON ERROR UNDO Busca, LEAVE Busca:
         EMPTY TEMP-TABLE tt-pesqsr.
-        EMPTY TEMP-TABLE tt-erro.             
+        EMPTY TEMP-TABLE tt-erro.
 
         /*? par_nrdconta do associado*/
         IF par_nrdconta <= 0 THEN
@@ -681,9 +700,9 @@ PROCEDURE Busca_Opcao_D:
             END.
 
 
-        FOR FIRST crapass 
+        FOR FIRST crapass
             WHERE crapass.cdcooper = par_cdcooper AND
-                  crapass.nrdconta = par_nrdconta NO-LOCK: 
+                  crapass.nrdconta = par_nrdconta NO-LOCK:
         END.
 
         IF  NOT AVAIL crapass THEN
@@ -693,7 +712,7 @@ PROCEDURE Busca_Opcao_D:
                 LEAVE Busca.
             END.
 
-        ASSIGN aux_nrdctabb_x = " " 
+        ASSIGN aux_nrdctabb_x = " "
                aux_nrdctabb   = 0.
 
         IF  par_cdbccxlt = 756 OR
@@ -706,27 +725,27 @@ PROCEDURE Busca_Opcao_D:
         FOR FIRST crapttl
             WHERE crapttl.cdcooper = par_cdcooper     AND
                   crapttl.nrdconta = crapass.nrdconta AND
-                  crapttl.idseqttl = 1 NO-LOCK: 
+                  crapttl.idseqttl = 1 NO-LOCK:
         END.
 
         IF  AVAIL crapttl THEN
             ASSIGN aux_nmdsecao = crapttl.nmdsecao
                    aux_cdturnos = crapttl.cdturnos.
         ELSE
-            ASSIGN aux_nmdsecao = "" 
+            ASSIGN aux_nmdsecao = ""
                    aux_cdturnos = 0.
 
         ASSIGN aux_nmprimtl = crapass.nmprimtl
-		       aux_nrfonemp = "0"
-			   aux_nrramemp = 0.
+                       aux_nrfonemp = "0"
+                           aux_nrramemp = 0.
 
-		Telefone:
-		DO aux_contador = 1 TO 4:
+                Telefone:
+                DO aux_contador = 1 TO 4:
 
           FOR FIRST craptfc FIELDS (tptelefo nrtelefo nrdddtfc nrdramal)
-              WHERE craptfc.cdcooper = par_cdcooper    
-                AND craptfc.nrdconta = crapass.nrdconta 
-                AND craptfc.idseqttl = 1 
+              WHERE craptfc.cdcooper = par_cdcooper
+                AND craptfc.nrdconta = crapass.nrdconta
+                AND craptfc.idseqttl = 1
                 AND craptfc.tptelefo = aux_contador NO-LOCK:
 
               /* 1 - Residencial */
@@ -734,46 +753,46 @@ PROCEDURE Busca_Opcao_D:
               /* 3 - Comercial   */
               /* 4 - Contato     */
               CASE craptfc.tptelefo:
-                WHEN 1 THEN 
+                WHEN 1 THEN
                 DO:
-                    IF craptfc.nrtelefo > 0 THEN 
+                    IF craptfc.nrtelefo > 0 THEN
                     DO:
                         ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
-							   aux_nrramemp = craptfc.nrdramal.
+                                                           aux_nrramemp = craptfc.nrdramal.
 
                         LEAVE telefone.
                     END.
                 END.
 
-                WHEN 2 THEN 
+                WHEN 2 THEN
                 DO:
-                    IF craptfc.nrtelefo > 0 THEN 
+                    IF craptfc.nrtelefo > 0 THEN
                     DO:
                         ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
-							   aux_nrramemp = craptfc.nrdramal.
+                                                           aux_nrramemp = craptfc.nrdramal.
 
                         LEAVE telefone.
                     END.
                 END.
 
-                WHEN 4 THEN 
+                WHEN 4 THEN
                 DO:
-                    IF craptfc.nrtelefo > 0 THEN 
+                    IF craptfc.nrtelefo > 0 THEN
                     DO:
                         ASSIGN aux_nrfonemp = string(craptfc.nrdddtfc) + string(craptfc.nrtelefo)
-							   aux_nrramemp = craptfc.nrdramal.
+                                                           aux_nrramemp = craptfc.nrdramal.
 
                         LEAVE telefone.
                     END.
                 END.
               END CASE.
-                  
+
           END.
         END.
 
-        FOR FIRST crapage 
+        FOR FIRST crapage
             WHERE crapage.cdcooper = par_cdcooper     AND
-                  crapage.cdagenci = crapass.cdagenci NO-LOCK: 
+                  crapage.cdagenci = crapass.cdagenci NO-LOCK:
         END.
 
         IF  NOT AVAIL crapage THEN
@@ -781,21 +800,21 @@ PROCEDURE Busca_Opcao_D:
         ELSE
             ASSIGN aux_dsagenci = STRING(crapass.cdagenci,"zz9") + " - " + crapage.nmresage.
 
-        FOR EACH craplcm 
-           WHERE craplcm.cdcooper = crapass.cdcooper   AND 
-                 craplcm.nrdconta = crapass.nrdconta   AND 
+        FOR EACH craplcm
+           WHERE craplcm.cdcooper = crapass.cdcooper   AND
+                 craplcm.nrdconta = crapass.nrdconta   AND
                  craplcm.nrdocmto = par_nrdocmto       AND
                 (craplcm.cdbccxlt = 1   OR
                  craplcm.cdbccxlt = 756 OR
                  craplcm.cdbccxlt = 85) NO-LOCK,
-            FIRST craphis 
+            FIRST craphis
             WHERE craphis.cdcooper = par_cdcooper      AND
                   craphis.cdhistor = craplcm.cdhistor  AND
                   craphis.indebcre = "C"               AND
                  (craphis.dshistor MATCHES "*TED*" OR
-                  craphis.dshistor MATCHES "*TEC*"  OR  
+                  craphis.dshistor MATCHES "*TEC*"  OR
                   craphis.dshistor MATCHES "*DOC*") NO-LOCK:
-            
+
             IF  craplcm.dtmvtolt < aux_dtlimite OR
                 craplcm.dtmvtolt > par_dtmvtolt THEN
             DO:
@@ -812,7 +831,7 @@ PROCEDURE Busca_Opcao_D:
                    tt-pesqsr.nrdolote = craplcm.nrdolote
                    tt-pesqsr.vllanmto = craplcm.vllanmto
                    tt-pesqsr.cdpesqbb = craplcm.cdpesqbb
-                   tt-pesqsr.nrseqimp = craplcm.nrseqdig 
+                   tt-pesqsr.nrseqimp = craplcm.nrseqdig
                    tt-pesqsr.vldoipmf = DEC(TRUNC(craplcm.vllanmto * 0.0038 , 2))
                    tt-pesqsr.cdbanchq = STRING(craplcm.cdbanchq,"zzz9") + "-" +
                                         STRING(craplcm.cdagechq,"9999")
@@ -823,7 +842,7 @@ PROCEDURE Busca_Opcao_D:
                    tt-pesqsr.nrdocmto = par_nrdocmto
                    tt-pesqsr.nrdctabb = aux_nrdctabb
                    tt-pesqsr.nrdctabx = aux_nrdctabb_x
-                   tt-pesqsr.cdbaninf = craplcm.cdbccxlt 
+                   tt-pesqsr.cdbaninf = craplcm.cdbccxlt
                    tt-pesqsr.nmprimtl = aux_nmprimtl
                    tt-pesqsr.dsagenci = aux_dsagenci
                    tt-pesqsr.nmdsecao = aux_nmdsecao
@@ -853,7 +872,7 @@ PROCEDURE Busca_Opcao_D:
     END. /* Busca */
 
     IF  aux_dscritic <> "" OR
-        aux_cdcritic <> 0  OR 
+        aux_cdcritic <> 0  OR
         TEMP-TABLE tt-erro:HAS-RECORDS THEN
         DO:
             ASSIGN aux_returnvl = "NOK".
@@ -864,7 +883,7 @@ PROCEDURE Busca_Opcao_D:
 
                 IF  AVAIL tt-erro THEN
                     ASSIGN aux_dscritic = tt-erro.dscritic.
-                
+
             ELSE
                 RUN gera_erro (INPUT par_cdcooper,
                                INPUT par_cdagenci,
@@ -888,7 +907,7 @@ PROCEDURE Busca_Opcao_D:
         END.
     ELSE
         ASSIGN aux_returnvl = "OK".
-    
+
     RETURN aux_returnvl.
 
 END PROCEDURE. /* Busca_Opcao_D */
@@ -896,18 +915,18 @@ END PROCEDURE. /* Busca_Opcao_D */
 
 
 PROCEDURE Busca_Opcao_R.
-    
+
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dtmvtolt AS DATE FORMAT "99/99/9999"       NO-UNDO.          
+    DEF  INPUT PARAM par_dtmvtolt AS DATE FORMAT "99/99/9999"       NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcheque AS DATE FORMAT "99/99/9999"       NO-UNDO.
     DEF  INPUT PARAM par_nmarqimp AS CHAR FORMAT "X(20)"            NO-UNDO.
-    
+
     DEF OUTPUT PARAM ret_nmarquiv AS CHAR FORMAT "X(30)"            NO-UNDO.
     DEF OUTPUT PARAM ret_nmarqpdf AS CHAR FORMAT "X(30)"            NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    DEF VAR aux_nrdocmto AS INTE                                    NO-UNDO.      
+    DEF VAR aux_nrdocmto AS INTE                                    NO-UNDO.
     DEF VAR aux_cddcompe AS INTE                                    NO-UNDO.
     DEF VAR aux_nmdircop AS CHAR                                    NO-UNDO.
     DEF VAR aux_nmoperad AS CHAR                                    NO-UNDO.
@@ -922,15 +941,15 @@ PROCEDURE Busca_Opcao_R.
     /* Busca descricao da Cooperativa */
     FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper
                              NO-LOCK NO-ERROR.
-   
+
     IF  AVAIL crapcop THEN DO:
-        
-        IF  par_idorigem = 5 THEN 
+
+        IF  par_idorigem = 5 THEN
             ASSIGN aux_nmdircop = "/usr/coop/" + crapcop.dsdircop +
                                   "/rl/".
         ELSE
             ASSIGN aux_nmdircop = "/micros/" + crapcop.dsdircop + "/".
-       
+
         ASSIGN ret_nmarquiv = aux_nmdircop + par_nmarqimp
                ret_nmarqpdf = aux_nmdircop + par_nmarqimp + ".ex".
 
@@ -943,7 +962,7 @@ PROCEDURE Busca_Opcao_R.
         "PA;"              FORMAT "X(3)"  AT 4
         "CONTA;"           FORMAT "X(6)"  AT 11
         "BCO CHQ;"         FORMAT "X(8)"  AT 17
-        "DOCUMENTO;"       FORMAT "X(10)" AT 26 
+        "DOCUMENTO;"       FORMAT "X(10)" AT 26
         "COMP;"            FORMAT "X(5)"  AT 36
         "BCO DEP;"         FORMAT "X(8)"  AT 41
         "AGE DEP;"         FORMAT "X(8)"  AT 49
@@ -959,20 +978,20 @@ PROCEDURE Busca_Opcao_R.
                            craplcm.dtmvtolt = par_dtcheque AND
             CAN-DO("50,59,313,340,524,572",STRING(craplcm.cdhistor))
                            NO-LOCK:
-    
+
         ASSIGN aux_nrdocmto = INT(SUBSTR(STRING(craplcm.nrdocmto,"9999999"),1,6)).
-        
-        FIND FIRST crapfdc WHERE crapfdc.cdcooper = craplcm.cdcooper  
-                             AND crapfdc.cdbanchq = craplcm.cdbanchq         
-                             AND crapfdc.cdagechq = craplcm.cdagechq         
-                             AND crapfdc.nrctachq = craplcm.nrctachq  
+
+        FIND FIRST crapfdc WHERE crapfdc.cdcooper = craplcm.cdcooper
+                             AND crapfdc.cdbanchq = craplcm.cdbanchq
+                             AND crapfdc.cdagechq = craplcm.cdagechq
+                             AND crapfdc.nrctachq = craplcm.nrctachq
                              AND crapfdc.nrcheque = aux_nrdocmto
                              NO-LOCK NO-ERROR.
-        
+
         IF  AVAIL crapfdc THEN DO:
 
             ASSIGN aux_contador = aux_contador + 1.
-            
+
             PUT STREAM str_1
                 crapfdc.cdagechq FORMAT "z,zz9"          AT 1
                 ";"                                      AT 6
@@ -998,12 +1017,12 @@ PROCEDURE Busca_Opcao_R.
                 SKIP.
 
         END.
-        
+
     END. /*FIM FOR EACH*/
-    
+
     OUTPUT STREAM str_1 CLOSE.
-    
-    IF  aux_contador = 0 THEN DO: 
+
+    IF  aux_contador = 0 THEN DO:
         ASSIGN aux_cdcritic = 0
                aux_dscritic = "Nenhum registro encontrado".
 
@@ -1013,35 +1032,35 @@ PROCEDURE Busca_Opcao_R.
                        INPUT 1,
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
-            
+
         RETURN "NOK".
-    END.     
+    END.
 
 
     IF  par_idorigem = 5 THEN DO: /* Ayllos Web */
 
         UNIX SILENT VALUE("cp " + ret_nmarquiv + " " + ret_nmarqpdf +
                           " 2> /dev/null").
-    
+
         RUN sistema/generico/procedures/b1wgen0024.p PERSISTENT
             SET h-b1wgen0024.
-    
+
         IF  NOT VALID-HANDLE(h-b1wgen0024)  THEN
             DO:
                ASSIGN aux_cdcritic = 0
                       aux_dscritic = "Handle invalido para BO " +
                                      "b1wgen0024.".
-      
+
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT 0,
                               INPUT 0,
                               INPUT 1, /*sequencia*/
                               INPUT aux_cdcritic,
                               INPUT-OUTPUT aux_dscritic).
-    
+
                RETURN "NOK".
             END.
-            
+
         RUN envia-arquivo-web IN h-b1wgen0024 ( INPUT par_cdcooper,
                                                 INPUT 1, /* cdagenci */
                                                 INPUT 1, /* nrdcaixa */
@@ -1049,10 +1068,10 @@ PROCEDURE Busca_Opcao_R.
                                                 OUTPUT ret_nmarqpdf,
                                                 OUTPUT TABLE tt-erro ).
 
-       
+
         IF  VALID-HANDLE(h-b1wgen0024)  THEN
             DELETE PROCEDURE h-b1wgen0024.
-    
+
         IF  RETURN-VALUE <> "OK"   THEN
             RETURN "NOK".
 
@@ -1060,7 +1079,7 @@ PROCEDURE Busca_Opcao_R.
 
     RETURN "OK".
 
-END PROCEDURE.  
+END PROCEDURE.
 
 /*.............................. PROCEDURES (FIM) ...........................*/
 
@@ -1073,7 +1092,7 @@ FUNCTION ValidaDigFun RETURNS LOGICAL PRIVATE
       INPUT par_nrdconta AS INTEGER ):
 /*-----------------------------------------------------------------------------
   Objetivo:  Valida o digita verificador
-     Notas:  
+     Notas:
 -----------------------------------------------------------------------------*/
 
     DEFINE VARIABLE h-b1wgen9999 AS HANDLE      NO-UNDO.
@@ -1081,20 +1100,20 @@ FUNCTION ValidaDigFun RETURNS LOGICAL PRIVATE
     DEFINE VARIABLE aux_vlresult AS LOGICAL     NO-UNDO.
 
     IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
-        RUN sistema/generico/procedures/b1wgen9999.p 
+        RUN sistema/generico/procedures/b1wgen9999.p
             PERSISTENT SET h-b1wgen9999.
 
-    ASSIGN 
+    ASSIGN
         aux_nrdconta = par_nrdconta
         aux_vlresult = TRUE.
 
-    RUN dig_fun IN h-b1wgen9999 
+    RUN dig_fun IN h-b1wgen9999
         ( INPUT par_cdcooper,
           INPUT par_cdagenci,
           INPUT par_nrdcaixa,
           INPUT-OUTPUT aux_nrdconta,
           OUTPUT TABLE tt-erro ).
-    
+
     DELETE OBJECT h-b1wgen9999.
 
     /* verifica se o digito foi informado corretamente */
@@ -1109,5 +1128,5 @@ FUNCTION ValidaDigFun RETURNS LOGICAL PRIVATE
     EMPTY TEMP-TABLE tt-erro.
 
     RETURN aux_vlresult.
-        
+
 END FUNCTION.

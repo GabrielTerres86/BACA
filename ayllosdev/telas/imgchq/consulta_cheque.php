@@ -17,10 +17,12 @@
     //***             12/05/2015 - Ajuste controle de apagar arquivos no temp e geracao de pdf. (Jorge/Elton) - SD 283911//
     //***                                                                                                             ***//
     //***             15/03/2016 - Projeto 316 - Efetuar download das imagens no arquivo zip (Guilherme/SUPERO)       ***//
-	//***                                                                                                             ***//
-	//***             13/07/2016 - Alteração de link de acesso das imagens para Curitiba (Elton)                      ***//
-	//***                                                                                                             ***//
-	//***             27/07/2016 - Correcao da forma de recuperacao dos indices do post. SD 479874 (Carlos R.)		  ***//
+    //***                                                                                                             ***//
+    //***             13/07/2016 - Alteração de link de acesso das imagens para Curitiba (Elton)                      ***//
+    //***                                                                                                             ***//
+    //***             27/07/2016 - Correcao da forma de recuperacao dos indices do post. SD 479874 (Carlos R.)        ***//
+    //***                                                                                                             ***//
+    //***             02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)                                        ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -53,7 +55,7 @@
         $nrctachq = ( isset($_POST["nrctachq"]) ) ? $_POST["nrctachq"] : '';
         $nrcheque = ( isset($_POST["nrcheque"]) ) ? $_POST["nrcheque"] : '';
         $tpremess = ( isset($_POST["tpremess"]) ) ? $_POST["tpremess"] : '';
-		
+
         // Monta o xml de requisição
         $xmlConsultaCheque  = "";
         $xmlConsultaCheque .= "<Root>";
@@ -63,7 +65,7 @@
         $xmlConsultaCheque .= " </Cabecalho>";
         $xmlConsultaCheque .= " <Dados>";
         $xmlConsultaCheque .= "     <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xmlConsultaCheque .= "     <cdcopchq>".$cdcooper."</cdcopchq>";
+        $xmlConsultaCheque .= "     <cdcopchq>".$cdcooper."</cdcopchq>";
         $xmlConsultaCheque .= "     <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
         $xmlConsultaCheque .= "     <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
         $xmlConsultaCheque .= "     <dtcompen>".$dtcompen."</dtcompen>";
@@ -81,7 +83,7 @@
 
         // Cria objeto para classe de tratamento de XML
         $xmlObjCheque = getObjectXML($xmlResult);
-			
+
         // Se ocorrer um erro, mostra crítica
         if (isset($xmlObjCheque->roottag->tags[0]->name) && strtoupper($xmlObjCheque->roottag->tags[0]->name) == "ERRO") {
             exibeErro($xmlObjCheque->roottag->tags[0]->tags[0]->tags[4]->cdata);
@@ -114,7 +116,6 @@
 
         $dirdestino = "/var/www/ayllos/documentos/" . $glbvars["dsdircop"]. "/temp/";
 
-
 /* ******  ENDEREÇO PARA BUSCAR AS IMAGENS NO SERVIDOR - CUIDADO AO ALTERAR E LIBERAR  *********** */
         //$urlOrigem = "http://imagenschequedev.cecred.coop.br"; // DESENV
         $urlOrigem = "http://imagenschequectb.cecred.coop.br";    // PRODUÇÃO
@@ -136,29 +137,40 @@
         $info = curl_getinfo($ch);
 
         if  ($info['size_download'] <= 8000) {
-
-                if ($cdcooper == 1) {
-                    if ($cdagechq == 101) {
-                        $cdagechq = 103;
+            if ($cdcooper == 1) {
+                if ($cdagechq == 101) {     // VIACREDI
+                    $cdagechq = 103;        // CONCREDI
+                }
+            }
+            else {
+                if ($cdcooper == 13) {
+                    if ($cdagechq == 112) { // SCRCRED
+                        $cdagechq = 114;    // CREDIMILSUL
+                    }
+                } else {
+                    if ($cdagechq == 108) { // TRANSPOCRED
+                        $cdagechq = 116;    // TRANSULCRED
                     }
                 }
-                else {
-                    if ($cdagechq == 112) {
-                        $cdagechq = 114;
-                    }
-                }
+            }
 
             //#200504 Tratamento incorporação
             //Se não encontrou o cheque, verificar se é cheque da concredi ou credimilsul
-            if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13)) {
+            if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13 || $cdcooper == 9)) {
                 if ($cdcooper == 1) {
-                    if ($cdagechq == 101) {
-                        $cdagechq = 103;
+                    if ($cdagechq == 101) {     // VIACREDI
+                        $cdagechq = 103;        // CONCREDI
                     }
                 }
                 else {
-                    if ($cdagechq == 112) {
-                        $cdagechq = 114;
+                    if ($cdcooper == 13) {
+                        if ($cdagechq == 112) { // SCRCRED
+                            $cdagechq = 114;    // CREDIMILSUL
+                        }
+                    } else {
+                        if ($cdagechq == 108) { // TRANSPOCRED
+                            $cdagechq = 116;    // TRANSULCRED
+                        }
                     }
                 }
 
@@ -234,18 +246,18 @@
 
         ?>
 
-        nmrescop = '<? echo $nmrescop; ?>';
-        tremessa = '<? echo $REMESSA;  ?>';
-        compechq = '<? echo $cdcmpchq; ?>';
-        bancochq = '<? echo $cdbanchq; ?>';
-        agencchq = '<? echo $AGENCIAC; ?>';
-        contachq = '<? echo $nrctachq; ?>';
-        numerchq = '<? echo $nrcheque; ?>';
-        datacomp = '<? echo $dtcompen; ?>';
-        dsdocmc7 = '<? echo $dsdocmc7; ?>';
+        nmrescop = '<?php echo $nmrescop; ?>';
+        tremessa = '<?php echo $REMESSA;  ?>';
+        compechq = '<?php echo $cdcmpchq; ?>';
+        bancochq = '<?php echo $cdbanchq; ?>';
+        agencchq = '<?php echo $AGENCIAC; ?>';
+        contachq = '<?php echo $nrctachq; ?>';
+        numerchq = '<?php echo $nrcheque; ?>';
+        datacomp = '<?php echo $dtcompen; ?>';
+        dsdocmc7 = '<?php echo $dsdocmc7; ?>';
         lstCmc7  = new Array();
-        lstCmc7[0] = '<? echo $srcF; ?>';
-        lstCmc7[1] = '<? echo $srcV; ?>';
+        lstCmc7[0] = '<?php echo $srcF; ?>';
+        lstCmc7[1] = '<?php echo $srcV; ?>';
 
         var strHTML = "";
 /*       retirado o link para baixar imagem...apenas exibe na tela.
@@ -258,9 +270,9 @@
         strHTML +='     <img onload="limpaChequeTemp(\'imgchqV\',\'<?php echo $srcF?>\',\'<?php echo $srcV?>\');" src="preview.php?keyrand=<?php echo mt_rand(); ?>&sidlogin=<?php echo base64_encode($glbvars["sidlogin"]); ?>&src=<?php echo $srcV?>" border="0" width="800"  id="imgchqV">';
 
 <?php
-		if ($glbvars["cdcooper"] <> 3) { // So gravar LOG quando for na Filiada, na Central não
+        if ($glbvars["cdcooper"] <> 3) { // So gravar LOG quando for na Filiada, na Central não
         echo 'gravaLog("'.$dsdocmc7.'","'.$nrctachq.'");';
-		}
+        }
         echo "$('#divImagem').html(strHTML);";
         echo "$('#divImagem').css({'display':'block'});";
         echo "setTimeout(function(){gerarPDF();},500);"; //ira gerar pdf apenas quando variavel flgerpdf = true, hack para ie

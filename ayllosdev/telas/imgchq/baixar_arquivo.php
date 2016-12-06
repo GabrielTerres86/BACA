@@ -8,9 +8,12 @@
     //***                                                                                                             ***//
     //***                                                                                                             ***//
     //*** Alterações: 29/07/2016 - Corrigi o uso da funcao split depreciada. SD 480705 (Carlos R.)                    ***//
-    //*** Alterações: 12/09/2016 - Ajustado para efetudar downlaod do arquivo                                         ***//
+    //***                                                                                                             ***//
+    //***             12/09/2016 - Ajustado para efetudar downlaod do arquivo                                         ***//
     //***                          original com extensão TIF. SD 518443 (Ricardo Linhares)                            ***//
     //***                          //alterar o caminho do servidor                                                    ***//                                                                ***//
+    //***                                                                                                             ***//
+    //***             02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)                                        ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -50,7 +53,7 @@
 
 /* ******  ENDEREÇO PARA BUSCAR AS IMAGENS NO SERVIDOR - CUIDADO AO ALTERAR E LIBERAR  *********** */
     //$urlOrigem = "http://imagenschequedev.cecred.coop.br"; // DESENV
-    $urlOrigem = "http://imagenscheque.cecred.coop.br";    // PRODUÇÃO
+    $urlOrigem = "http://imagenschequectb.cecred.coop.br";    // PRODUÇÃO
 /* ******  ENDEREÇO PARA BUSCAR AS IMAGENS NO SERVIDOR - CUIDADO AO ALTERAR E LIBERAR  *********** */
 
 
@@ -70,28 +73,40 @@
     $info = curl_getinfo($ch);
 
     if  ($info['size_download'] <= 8000) {
-            if ($cdcooper == 1) {
-                if ($cdagechq == 101) {
-                    $cdagechq = 103;
+        if ($cdcooper == 1) {
+            if ($cdagechq == 101) {     // VIACREDI
+                $cdagechq = 103;        // CONCREDI
+            }
+        }
+        else {
+            if ($cdcooper == 13) {
+                if ($cdagechq == 112) { // SCRCRED
+                    $cdagechq = 114;    // CREDIMILSUL
+                }
+            } else {
+                if ($cdagechq == 108) { // TRANSPOCRED
+                    $cdagechq = 116;    // TRANSULCRED
                 }
             }
-            else {
-                if ($cdagechq == 112) {
-                    $cdagechq = 114;
-                }
-            }
+        }
 
         //#200504 Tratamento incorporação
         //Se não encontrou o cheque, verificar se é cheque da concredi ou credimilsul
-        if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13)) {
+        if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13 || $cdcooper == 9)) {
             if ($cdcooper == 1) {
-                if ($cdagechq == 101) {
-                    $cdagechq = 103;
+                if ($cdagechq == 101) {     // VIACREDI
+                    $cdagechq = 103;        // CONCREDI
                 }
             }
             else {
-                if ($cdagechq == 112) {
-                    $cdagechq = 114;
+                if ($cdcooper == 13) {
+                    if ($cdagechq == 112) { // SCRCRED
+                        $cdagechq = 114;    // CREDIMILSUL
+                    }
+                } else {
+                    if ($cdagechq == 108) { // TRANSPOCRED
+                        $cdagechq = 116;    // TRANSULCRED
+                    }
                 }
             }
 
@@ -141,7 +156,7 @@
     $ch = curl_init($find);
 
     $tifV = $dirdestino . $dsdocmc7 . "V.TIF";
-	
+
 
 
     $fp = fopen($tifV, "w");
@@ -159,11 +174,11 @@
     $find = $urlOrigem ."/certificado/085/".$DATA."/".$AGENCIAC."/".$REMESSA."/".$dsdocmc7."F.P7S";
 
     $ch = curl_init($find);
-	
-	if(!existeArquivo($find)) {
-		echo "bGerarPdf.hide();bSalvarImgs.hide();";
-		exibeErro("Certificado n&atilde;o encontrado!");
-	}		
+
+    if(!existeArquivo($find)) {
+        echo "bGerarPdf.hide();bSalvarImgs.hide();";
+        exibeErro("Certificado n&atilde;o encontrado!");
+    }
 
     $certF = $dirdestino . $dsdocmc7 . "F.P7S";
 
@@ -186,11 +201,11 @@
     $find = $urlOrigem ."/certificado/085/".$DATA."/".$AGENCIAC."/".$REMESSA."/".$dsdocmc7."V.P7S";
 
     $ch = curl_init($find);
-	
-	if(!existeArquivo($find)) {
-		echo "bGerarPdf.hide();bSalvarImgs.hide();";
-		exibeErro("Certificado n&atilde;o encontrado!");
-	}			
+
+    if(!existeArquivo($find)) {
+        echo "bGerarPdf.hide();bSalvarImgs.hide();";
+        exibeErro("Certificado n&atilde;o encontrado!");
+    }
 
     $certV = $dirdestino . $dsdocmc7 . "V.P7S";
 
@@ -228,8 +243,8 @@
     echo "bGerarPdf.show('slow');bSalvarImgs.show('slow');";
     ?>
 
-    nmArqZip = '<? echo $dirdestino . $dsdocmc7 . '.zip'; ?>';
-    idlogin  = '<? echo base64_encode($glbvars["sidlogin"]);?>';
+    nmArqZip = '<?php echo $dirdestino . $dsdocmc7 . '.zip'; ?>';
+    idlogin  = '<?php echo base64_encode($glbvars["sidlogin"]);?>';
 
     var strHTML = "";
 
@@ -245,23 +260,23 @@
         echo 'showError("error","'.$msgErro.'","Alerta - Ayllos");';
         exit();
     }
-	
-	//Verifica se o arquivo existe
-	function existeArquivo($url)
-	{
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_URL,$url);
-		curl_setopt($ch, CURLOPT_NOBODY, 1);
-		curl_setopt($ch, CURLOPT_FAILONERROR, 1);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		if(curl_exec($ch)!==FALSE)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
+
+    //Verifica se o arquivo existe
+    function existeArquivo($url)
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL,$url);
+        curl_setopt($ch, CURLOPT_NOBODY, 1);
+        curl_setopt($ch, CURLOPT_FAILONERROR, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        if(curl_exec($ch)!==FALSE)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
 ?>

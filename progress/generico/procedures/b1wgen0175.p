@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 21/07/2016
+   Data    : Setembro/2013                      Ultima atualizacao: 02/12/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -18,7 +18,7 @@
 
    Alteracoes: 06/03/2014 - Incluso VALIDATE (Daniel).
    
-   
+
    27/04/2015 - #273953 - Inclusao de verificacao das incorporacoes de concredi e
                   credimilsul;
                 - Correcao de verificacao de avail do buffer crabcop;
@@ -32,7 +32,7 @@
                 - Verificacao de erros para nao gerar log falso;
                 - Correcao de mensagem de log de erro.
                 (Carlos)
-                
+
    16/06/2015 - #281178 Para separar os lançamentos manuais ref. a cheque compensado
                 e não integrado dos demais lançamentos, foi criado o historico 1873 
                 com base no 521. Tratamento p hist 1873 igual ao tratamento 
@@ -43,18 +43,18 @@
                 log para informar o que está acontecendo no processo ao invés de 
                 imprimir MESSAGE que poluem o proc_batch (Douglas - Chamado 307649)
                 (Carlos)
-                
+
    07/08/2015 - Ajuste na busca-devolucoes-cheque na consulta na tabela craplcm 
                 para melhorias de performace SD281896 (Odirlei-AMcom)      
 
    29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
-                
+
    16/11/2015 - Incluido Fato Gerador no parametro cdpesqbb na procedure
                 cria_lan_auto_tarifa, Projeto Tarifas (Jean Michel).
-                
+
    07/12/2015 - #367740 Criado o tratamento para o historico 1874 assim como eh
                 feito com o historico 1873 (Carlos)
-                
+
    14/12/2015 - Incluir tratamento da alinea 59 SD360177 (Odirlei-AMcom)            
 
    21/12/2015 - Ajustar as validacoes de alinea, conforme revisao de alineas
@@ -63,7 +63,7 @@
    07/01/2016 - Ajustado para quando existir uma descricao especifica na validacao
                 de alineas, gerar o erro com cdcritic = 0, para manter a descricao
                 (Douglas - Melhoria 100)
-                
+
    08/01/2016 - Ajustado para criar apenas um registro de erro na procedure
                 valida_saldo_devolu (Douglas - Melhoria 100)
 
@@ -73,18 +73,21 @@
    05/05/2016 - Ajuste na lógica utilizada para devolução de cheques
 			    pela alinea 11
 				(Adriano - SD 445681)
-							
+
    12/07/2016 - #451040 Trazer número da conta para as devoluções de alínea 37 
                 (Carlos)
-   
+
    11/10/2016 - #534932 Incluido o parametro ISPB na chamada de grava-log-ted em 
                 envia_arquivo_xml (Carlos)
 
    19/08/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
                 de cheques (Lucas Ranghetti #484923)
-                
+
    07/11/2016 - Validar horario para devolucao de acordo com o parametrizado na TAB055
                 (Lucas Ranghetti #539626)
+
+   02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -455,11 +458,12 @@ PROCEDURE busca-devolucoes-cheque:
                     IF  craplcm.nrdolote = 7009 OR
                         craplcm.nrdolote = 7010 THEN DO:
             
-                        FIND FIRST craptco WHERE craptco.cdcooper = craplcm.cdcooper
-                                             AND craptco.nrdconta = craplcm.nrdconta
-                                             AND craptco.tpctatrf = 1               
-                                             AND craptco.flgativo = TRUE
-                                             NO-LOCK NO-ERROR.
+                        FIND FIRST craptco
+                             WHERE craptco.cdcooper = craplcm.cdcooper
+                               AND craptco.nrdconta = craplcm.nrdconta
+                               AND craptco.tpctatrf = 1               
+                               AND craptco.flgativo = TRUE
+                           NO-LOCK NO-ERROR.
                  
                         IF  AVAILABLE craptco THEN
                             
@@ -590,44 +594,47 @@ PROCEDURE busca-devolucoes-cheque:
                         /*  Tratamento para as contas migradas da 
                             Viacredi->AltoVale ou  Acredi->Viacredi 
                             Concredi->Viacredi e da Credimilsul->Scrcred
+                            Transulcred -> Transpocred
                             */
-                        IF  par_cdcooper = 16  OR
-                            par_cdcooper = 1   OR
-                            par_cdcooper = 13  THEN DO:
-                            FIND craptco WHERE craptco.cdcooper = craplcm.cdcooper
-                                           AND craptco.nrdconta = craplcm.nrdconta 
-                                           AND craptco.tpctatrf = 1                
-                                           AND craptco.flgativo = TRUE
-                                           NO-LOCK NO-ERROR.
-                 
+                        IF  par_cdcooper = 16
+                        OR  par_cdcooper = 1
+                        OR  par_cdcooper = 13
+                        OR  par_cdcooper = 9  THEN DO:
+
+                            FIND FIRST craptco
+							     WHERE craptco.cdcooper = craplcm.cdcooper
+                                   AND craptco.nrdconta = craplcm.nrdconta
+                                   AND craptco.tpctatrf = 1
+                                   AND craptco.flgativo = TRUE
+                               NO-LOCK NO-ERROR.
+
                             IF  AVAIL craptco THEN DO:
-                                
-                                FIND crabcop WHERE crabcop.cdcooper = craptco.cdcopant 
+
+                                FIND crabcop WHERE crabcop.cdcooper = craptco.cdcopant
                                                    NO-LOCK NO-ERROR.
-                             
+
                                 IF  NOT AVAILABLE crabcop THEN DO:
                                     ASSIGN aux_cdcritic = 651
                                            aux_dscritic = "".
-                                                        
+
                                     RUN gera_erro (INPUT par_cdcooper,
                                                    INPUT 0,
                                                    INPUT 0,
                                                    INPUT 1, /*sequencia*/
                                                    INPUT aux_cdcritic,
                                                    INPUT-OUTPUT aux_dscritic).
-                                                        
+
                                     RETURN "NOK".
                                 END. 
-                               
+
                                 ASSIGN aux_nrdconta = craptco.nrctaant
                                        aux_cdcooper = craptco.cdcopant.       
-                                                   
+
                                 /*  Cheque vindos da Compensacao  */
-                               
                                 ASSIGN aux_cdbanchq = IF craplcm.cdbccxlt <> 100 
                                                       THEN craplcm.cdbccxlt
                                                       ELSE craplcm.cdbanchq.
-                                                                       
+
                                 IF  aux_cdbanchq = 756 THEN
                                     ASSIGN aux_cdagechq = crabcop.cdagebcb. 
                                 ELSE
@@ -637,13 +644,14 @@ PROCEDURE busca-devolucoes-cheque:
                                     ASSIGN aux_cdagechq = crabcop.cdageitg.
         
                                 /* Cheques incorporados - copiados para coop nova */ 
-                                IF   craptco.cdcopant = 4 OR
-                                   craptco.cdcopant = 15 THEN
+                                IF  craptco.cdcopant = 4
+                                OR  craptco.cdcopant = 15
+                                OR  craptco.cdcopant = 17 THEN
                                    ASSIGN aux_cdcopfdc = craptco.cdcooper.
                                 ELSE
-                                  /* Cheques migrados - permanecem na coop antiga */ 
+                                   /* Cheques migrados - permanecem na coop antiga */ 
                                    ASSIGN aux_cdcopfdc = craptco.cdcopant.
-        
+
                                 FIND crapfdc WHERE crapfdc.cdcooper = aux_cdcopfdc 
                                                AND crapfdc.cdbanchq = aux_cdbanchq     
                                                AND crapfdc.cdagechq = aux_cdagechq     
@@ -652,15 +660,15 @@ PROCEDURE busca-devolucoes-cheque:
                                                    INT(SUBSTR(STRING(craplcm.nrdocmto,
                                                    "99999999"),1,7))
                                                    USE-INDEX crapfdc1 NO-LOCK NO-ERROR.
-                                
-                            END.
+
+                            END. /* FIM -> IF  AVAIL craptco */
                         END.
-                    END.
-            
+                    END. /* FIM -> IF  NOT AVAIL crapfdc */
+
                     IF  NOT AVAILABLE crabcop THEN DO:
                         ASSIGN aux_cdcritic = 244
                                aux_dscritic = "".
-            
+
                         RUN gera_erro (INPUT par_cdcooper,
                                        INPUT 0,
                                        INPUT 0,

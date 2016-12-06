@@ -12,24 +12,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps681(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Marco/2014.                  Ultima atualizacao: 10/11/2015
+   Data    : Marco/2014.                  Ultima atualizacao: 05/12/2016
+
    Dados referentes ao programa: Projeto automatiza compe.
 
    Frequencia : Diario (Batch).
    Objetivo   : Conciliar arquivos de devolução enviados.
-   
+
    Alterações : 24/09/2014 - Incluir tratamentos para incorporação Concredi pela Via
                             e Credimilsul pela SCRCred (Marcos-Supero)
-                            
+
                 08/01/2015 - Ajustes para enviar as criticas de não processamento do arquivo
-                             via email, para não ser mais apresentada no log_bacth SD240262 (Odirlei/AMcom)            
-                             
+                             via email, para não ser mais apresentada no log_bacth SD240262 (Odirlei/AMcom)
+
                 10/11/2015 - Filtrado tabela gncpddc com dtliquid para pegar apenas
                              registros relevantes ao relatorio 675
-                             (Tiago / Elton SD340990).             
-							
-			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
-							da rotina padrão. (Rodrigo)                             
+                             (Tiago / Elton SD340990).
+
+                13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
+                             da rotina padrão. (Rodrigo)
+
+                05/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
   ............................................................................ */
 
 
@@ -82,18 +86,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps681(pr_cdcooper IN crapcop.cdcooper%TY
        AND ddc.nrctadoc = pr_nrctadoc
        AND ddc.cdmotdev = pr_cdmotdev
        AND ddc.cdtipreg = pr_cdtipreg;
-  
+
   -- buscar nome do programa
   CURSOR cr_crapprg (pr_cdprogra crapprg.cdprogra%TYPE)IS
     SELECT crapprg.dsprogra##1 dsprogra
-      FROM crapprg 
+      FROM crapprg
      WHERE crapprg.cdcooper = pr_cdcooper
        AND crapprg.cdprogra = pr_cdprogra;
-  rw_crapprg cr_crapprg%ROWTYPE;      
-  
+  rw_crapprg cr_crapprg%ROWTYPE;
+
   ------------------------------- TIPOS -------------------------------
   TYPE typ_arquivo IS TABLE OF VARCHAR2(1000) INDEX BY BINARY_INTEGER;
-  
+
   ------------------------------- REGISTROS -------------------------------
   rw_crapcop        cr_crapcop%ROWTYPE;
   rw_crapcop_incorp cr_crapcop%ROWTYPE;
@@ -173,7 +177,7 @@ BEGIN -- Principal
 
   -- Apenas fechar o cursor
   CLOSE cr_crapcop;
-  
+
   -- Verifica se a Cooperativa esta preparada para executa COMPE 85 - ABBC
   vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                            ,pr_nmsistem => 'CRED'
@@ -242,15 +246,14 @@ BEGIN -- Principal
   END IF;
 
   -- Para cooperativas com Incorporação
-  IF pr_cdcooper in(1,13) THEN
+  IF pr_cdcooper in(1,9,13) THEN
     -- Buscar dados da cooperativa incorporada
-    IF pr_cdcooper = 1 THEN
-      -- Para Viacredi >> Concredi
-      OPEN cr_crapcop(4);
-    ELSE
-      -- Para ScrCred >> Credimilsul
-      OPEN cr_crapcop(15);
-    END IF;
+    CASE pr_cdcooper
+      WHEN 1   THEN OPEN cr_crapcop(4);  --    VIACREDI --> CONCREDI
+      WHEN 13  THEN OPEN cr_crapcop(15); --     SCRCRED --> CREDIMILSUL
+      WHEN 9   THEN OPEN cr_crapcop(17); -- TRANSPOCRED --> TRANSULCRED
+    END CASE;    
+
     -- Retornar as informações
     FETCH cr_crapcop
      INTO rw_crapcop_incorp;
@@ -273,7 +276,7 @@ BEGIN -- Principal
       END IF;
     END IF;
   END IF;
-  
+
   --Buscar destinatario email
   vr_email_dest:= nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'CRPS681_EMAIL')
                       ,'compe@cecred.coop.br');
@@ -282,8 +285,8 @@ BEGIN -- Principal
   FETCH cr_crapprg
    INTO rw_crapprg;
   CLOSE cr_crapprg;
-  
-  vr_conteudo := NULL;  
+
+  vr_conteudo := NULL;
   -- Se retornou arquivos
   -- Separar a lista de arquivos em vetor
   vr_vet_arquivos := gene0002.fn_quebra_string(pr_string => vr_listarq, pr_delimit => ',');
@@ -344,11 +347,11 @@ BEGIN -- Principal
         -- Exclui a ultima linha lida no arquivo
         vr_leit_arq.delete(vr_leit_arq.last());
       END LOOP;
-      
+
       -- Limpa variaveis de criticas
       pr_cdcritic := 0;
       pr_dscritic := NULL;
-       
+
       -- Se encontrou linhas no arquivo
       IF vr_leit_arq.count() > 0 THEN
         -- Verifica se o arquivo está completo
@@ -364,17 +367,18 @@ BEGIN -- Principal
           ELSIF to_date( SUBSTR(vr_leit_arq(vr_leit_arq.first()),31,08), 'RRRRMMDD') <> vr_dtmvtolt THEN
             pr_cdcritic := 789; -- 789 - Data invalida no arquivo
           END IF;
-        END IF;  
+        END IF;
 
         -- Se houve alguma critica
         IF pr_cdcritic <> 0 THEN
           pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
 
-          vr_conteudo := vr_conteudo || 
+          vr_conteudo := vr_conteudo ||
                          'Nao foi possível processar arquivo <b>'||vr_vet_arquivos(ind)||':'||
-                         '</b><br>&nbsp&nbsp&nbsp&nbsp - '||to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||
+                         '</b><br>'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||
+                         ' - '||to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||
                          ' --> '|| pr_dscritic ||'<br><br>';
-          
+
           -- Reinicializa a variável de críticas
           pr_cdcritic := 0;
           pr_dscritic := NULL;
@@ -525,8 +529,8 @@ BEGIN -- Principal
           EXIT WHEN vr_nrlinha = vr_leit_arq.last;
           vr_nrlinha := vr_leit_arq.next(vr_nrlinha); -- Próximo
         END LOOP; -- Fim LOOP linhas do arquivo
-        
-          
+
+
         -- Montar o XML para o relatório e solicitar o mesmo
         DECLARE
           -- Cursores locais
@@ -652,7 +656,7 @@ BEGIN -- Principal
         COMMIT;
       END IF;
     END LOOP; -- Fim varredura vr_vet_arquivos
-    
+
     -- se existe informaçao para enviar por email
     IF vr_conteudo IS NOT NULL THEN
       --Enviar Email
@@ -672,7 +676,7 @@ BEGIN -- Principal
         RAISE vr_exc_saida;
       END IF;
     END IF;
-    
+
   END IF;
 
   -- Processo OK, devemos chamar a fimprg

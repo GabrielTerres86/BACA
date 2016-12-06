@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 25/11/2014
+   Data    : Marco/2010                        Ultima atualizacao: 30/11/2016
 
    Dados referentes ao programa:
 
@@ -15,30 +15,32 @@
 
    Alteracoes: 05/04/2010 - Alterado para processar todas cooperativas, nao
                             mais por cooperativa Singular (Guilherme/Supero)
-                            
+
                01/06/2010 - Acertos Gerais (Guilherme).
-               
+
                06/07/2010 - Alterar nomenclatura dos arquivos (Guilherme).
-               
+
                16/09/2010 - Utilizar o imprim_unif (Guilherme).
-               
+
                02/08/2012 - Ajuste do format no campo nmrescop (David Kruger).
-               
+
                28/08/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).
-                            
+                            a escrita sera PA (Andre Euzebio - Supero).
+
                05/11/2013 - Alterado totalizador de PAs de 99 para 999.
                             (Reinert)  
-                            
+
                20/06/2014 - Corrigida utilizacao do codigo da cooperativa
                             no arquivo de LOG (Diego).   
-               
+
                12/09/2014 - Tratar importaçao informaçoes de contas migradas
                             das cooperativas Concredi e Credimilsul
-                            (Odirlei/Amcom).                                                 
-
+                            (Odirlei/Amcom).
                25/11/2014 - Incluir clausula no craptco flgativo = TRUE
-                            (Lucas R./Rodrigo)  
+                            (Lucas R./Rodrigo)
+
+               29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ..............................................................................*/
 
 { includes/var_batch.i }
@@ -532,26 +534,29 @@ PROCEDURE proc_processa_arquivo:
                 /* se for uma das cooperativas migradas, 
                   deve buscar a nova conta e coop */
                 IF crapcop.cdcooper =  4 OR
-                   crapcop.cdcooper = 15 THEN 
-                DO:                
-                  /*verifica se é uma conta migrada da concredi
-                    ou credimilsul*/
+                   crapcop.cdcooper = 15 OR
+                   crapcop.cdcooper = 17 THEN DO:
+
+                  /*verifica se é uma conta migrada da:
+                      concredi
+                      credimilsul
+                      transulcred */
                   FIND FIRST craptco 
-                    WHERE craptco.cdcopant = crapcop.cdcooper 
-                      AND craptco.nrctaant = aux_nrdconta 
-                      AND craptco.flgativo = TRUE
-                      NO-LOCK NO-ERROR.
+                       WHERE craptco.cdcopant = crapcop.cdcooper 
+                         AND craptco.nrctaant = aux_nrdconta 
+                         AND craptco.flgativo = TRUE
+                     NO-LOCK NO-ERROR.
             
                   /* se encontrar deve utilizar o novo
                     numero de conta na coop nova*/
-                  IF AVAIL(craptco) THEN 
-                  DO:                      
+                  IF AVAIL(craptco) THEN DO:
+
                     /* Busca dados da nova Cooperativa */
-                    FIND FIRST crapcop 
+                    FIND FIRST crapcop
                          WHERE crapcop.cdcooper = craptco.cdcooper
-                            NO-LOCK NO-ERROR.
+                       NO-LOCK NO-ERROR.
                     ASSIGN aux_nrdconta = craptco.nrdconta.
-                    
+
                   END.    
                 END.
 

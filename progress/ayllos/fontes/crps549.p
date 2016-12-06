@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 18/10/2016
+   Data    : Marco/2010                        Ultima atualizacao: 30/11/2016
 
    Dados referentes ao programa:
 
@@ -15,34 +15,39 @@
 
    Alteracoes: 05/04/2010 - Alterado para processar todas cooperativas, nao
                             mais por cooperativa Singular (Guilherme/Supero)
-                            
+
                01/06/2010 - Acertos Gerais (Guilherme).
-               
+
                16/09/2010 - Utilizar o imprim_unif (Guilherme).
-               
+
                09/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
-                            
+
                05/11/2013 - Alterado totalizador de PAs de 99 para 999.
                             (Reinert)
-                            
-               11/09/2014 - Ajuste migraçao Concredi, ao enviar arquivo(registro)    
-                            verificar se é uma conta migrada e enviar a cta antiga
-                            (Odirlei/Amcom).
-                                         
+
+               11/09/2014 - Ajuste migraçao Concredi, ao enviar arquivo
+                            (registro) verificar se é uma conta migrada e
+                            enviar a cta antiga (Odirlei/Amcom).
+
                25/11/2014 - Incluir clausula no craptco flgativo = TRUE
-                            (Lucas R./Rodrigo)                                       
+                            (Lucas R./Rodrigo)
                             
-               18/10/2016 - #536120 - Correção da verificação de incorporação das
-                            cooperativas concredi e credimilsul (Carlos)
+               18/10/2016 - #536120 - Correção da verificação de incorporação
+                            das cooperativas concredi e credimilsul (Carlos)
+
+               29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ..............................................................................*/
                   
 { includes/var_batch.i }
 
 DEF STREAM str_1.
 
-DEF BUFFER crabneg FOR crapneg.
-DEF BUFFER crabttl FOR crapttl.
+DEF BUFFER crabneg   FOR crapneg.
+DEF BUFFER crabttl   FOR crapttl.
+DEF BUFFER crabcop   FOR crapcop.
+DEF BUFFER b-crapcop FOR crapcop.
 
 DEF TEMP-TABLE w_enviados
     FIELD cdcooper LIKE crapcop.cdcooper
@@ -73,7 +78,6 @@ DEF TEMP-TABLE w_criticas
     INDEX w_criticas1 cdcooper cdagenci nrdconta idseqttl.
 
 DEF BUFFER b_criticas FOR w_criticas.      
-DEF BUFFER crabcop    FOR crapcop. 
 
 DEF VAR aux_contattl AS INT                                            NO-UNDO.
 DEF VAR flg_containd AS LOG                                            NO-UNDO.
@@ -96,6 +100,7 @@ DEF VAR aux_qttpreg6 AS INTE                                           NO-UNDO.
 DEF VAR aux_maxregis AS INTE                                           NO-UNDO.
 DEF VAR aux_tpregist AS INTE                                           NO-UNDO.
 DEF VAR aux_nrdconta_arq LIKE crapass.nrdconta                         NO-UNDO.
+DEF VAR aux_cdagechq_arq LIKE crapcop.cdagectl                         NO-UNDO.
 
 DEF VAR aux_vlcheque AS DECI                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO. 
@@ -537,40 +542,50 @@ PROCEDURE registro:
     IF  aux_tpregist = 4  THEN
         ASSIGN aux_qttpreg4 = aux_qttpreg4 + 1.
 
-    ASSIGN aux_nrdconta_arq = crapneg.nrdconta.
+    ASSIGN aux_nrdconta_arq = crapneg.nrdconta
+           aux_cdagechq_arq = crapneg.cdagechq.
 
-    /*verifica se é uma conta incorporada*/
+
+    /* verifica se é uma conta incorporada*/
     FIND FIRST craptco 
-      WHERE craptco.cdcooper = crapcop.cdcooper
-        AND craptco.nrdconta = crapneg.nrdconta 
-        AND (craptco.cdcopant = 4 OR
-             craptco.cdcopant = 15) 
-        AND craptco.flgativo = TRUE
-        NO-LOCK NO-ERROR.
+         WHERE craptco.cdcooper = crapcop.cdcooper
+           AND craptco.nrdconta = crapneg.nrdconta 
+           AND (craptco.cdcopant = 4  OR
+                craptco.cdcopant = 15 OR
+                craptco.cdcopant = 17) 
+           AND craptco.flgativo = TRUE
+       NO-LOCK NO-ERROR.
 
     /* se encontrar deve enviar cta antiga
        se o cheque for da coop. antiga */
-    IF AVAIL(craptco) THEN 
-    DO:                      
-      FIND FIRST crapfdc
-     WHERE crapfdc.cdcooper = craptco.cdcopant
-       AND crapfdc.cdbanchq = crapneg.cdbanchq
-       AND crapfdc.cdagechq = crapneg.cdagechq
-       AND crapfdc.nrctachq = craptco.nrctaant 
-       AND crapfdc.nrcheque = aux_nrcheque 
-        NO-LOCK NO-ERROR.
+    IF  AVAIL(craptco) THEN DO:
+
+        /* COOP ANTIGA
+          Verificar se Conta Migrada
+          - Se for, verificar o FDC baseado no AGECHQ(AGECTL) da 
+            Coop antiga.       */
+
+        FIND FIRST b-crapcop
+             WHERE b-crapcop.cdcooper = craptco.cdcopant
+           NO-LOCK NO-ERROR.
+
+        FIND FIRST crapfdc
+             WHERE crapfdc.cdcooper = craptco.cdcopant
+               AND crapfdc.cdbanchq = crapneg.cdbanchq
+               AND crapfdc.cdagechq = b-crapcop.cdagectl /*crapneg.cdagechq*/
+               AND crapfdc.nrctachq = craptco.nrctaant 
+               AND crapfdc.nrcheque = aux_nrcheque 
+           NO-LOCK NO-ERROR.
       
-      IF  AVAIL crapfdc THEN
-      DO: 
-          ASSIGN aux_nrdconta_arq = craptco.nrctaant.          
-      END.
-        
-        
+        IF  AVAIL crapfdc THEN DO: 
+            ASSIGN aux_nrdconta_arq = craptco.nrctaant
+                   aux_cdagechq_arq = crapfdc.cdagechq.          
+        END.        
     END. 
 
     /*** Detalhe ***/
     PUT STREAM str_1 crapcop.cdbcoctl           FORMAT "999"
-                     crapneg.cdagechq           FORMAT "9999"
+                     aux_cdagechq_arq           FORMAT "9999"
                      aux_nrdconta_arq           FORMAT "999999999999"
                      aux_nrcheque               FORMAT "999999"
                      "01"

@@ -4,8 +4,8 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 11/10/2016
-    
+    Data    : Marco/07.                       Ultima atualizacao: 02/12/2016
+
     Dados referentes ao programa:
 
     Frequencia: Diario (Batch).
@@ -18,180 +18,188 @@
                              devolucoes de cheques (Elton).
                              
                 28/05/2007 - Acerto na selecao do relatorio de devolucao (Ze).
-                
+
                 18/06/2007 - Acerto na geracao do arquivo do Bancoob e 
                              Listagem (Ze).
-                             
+
                 31/07/2007 - Adicionado tipo de conta ao relatorio (Guilherme).
-                
+
                 20/08/2007 - Acerto para o BANCOOB, Desconto e Custodia (Ze).
-                
+
                 24/09/2007 - Acerto para Desconto de Cheques e Custodia (Ze).
-                
+
                 07/03/2008 - Tratar cheque BANCOOB lancado por fora(landpv) (Ze)
-                
+
                 01/09/2008 - Alteracao CDEMPRES (Kbase).
                 
                            - Mostrar mensagem com um contador de registros
                              para maior interacao com o usuario e na procedure
                              gera_lancamento alterar o 'RETURN' para 'UNDO 
                              TRANS_1, RETURN' (Gabriel).
-                             
+
                 11/12/2008 - Incluir o CriaPDF para o rel. 219 (Ze).
-                
+
                 21/01/2009 - Verifica se possui registros com lock antes
                              de executar a devolucao (Ze).
-                             
+
                 27/04/2009 - Definir bloco de Transacao e remove CONTACONVE
                              nao mais utilizada (Ze).
-                             
+
                 30/09/2009 - Adaptacoes projeto IF CECRED (Guilherme).
-                
+
                 26/11/2009 - Inclusao de tratamento para Devolucoes banco CECRED
-                             de Compe (Guilherme/Precise)
+                             de Compe (Guilherme/SUPERO)
 
                 12/01/2010 - Inclusao do codigo 573 no CAN-DO do 338
-                             (Guilherme/Precise)
-                             
+                             (Guilherme/SUPERO)
+
                 06/08/2010 - Acertos para devolucao CECRED (Ze).
-                             
+
                 23/08/2010 - Alterar parametro de selecao de Cheques Cecred (Ze)
 
                 21/09/2010 - Acerto na selecao dos reg. 085 (Ze).
-                
+
                 04/10/2010 - Identificar quando lancamento foi enviado para
                              ABBC na 1a ou 2a Devolucao (Ze).
-                             
+
                 25/10/2010 - Ajuste no relatorio crrl219 - Compe ABBC (Ze).
 
                 19/11/2010 - Ajuste no relatorio crrl219 - Inclusao coluna
                              Noturna/Diurna (Guilherme/Supero).
-                             
+
                 11/01/2011 - Ajuste para a Migracao do PAC VIACREDI (Ze).
-                
+
                 08/02/2011 - Ajuste para incluir no arquivo 085 cheques
                              cancelados, talonario nao retirado,... (Ze).
 
                 18/04/2011 - Alterado layout de relatório quando for 
                              Cheques Cecred (Isara - RKAM).
-                             
+
                 19/04/2011 - Acerto para incluir os cheques rejeitados na
                              integracao da Compe no arquivo Cecred (Ze).
-                             
+
                 27/05/2011 - Incluir CriaPDF no rel. 219 da 085 e incluir o
                              campo dstipcta no rel. 219_4 e 219_5 (Magui/Ze).
-                             
-                30/05/2011 - Ajuste para criar 219_4, 219_5 nas coops singulares,
-                             utilizar o imprim_unif 
+
+                30/05/2011 - Ajuste para criar 219_4, 219_5 nas coops
+                             singulares, utilizar o imprim_unif 
                            - Ajuste layout relatorio 219_4, 219_5 (Guilherme).
-                           
+
                 10/06/2011 - Realizado verificao em locked quando for criado
                              o craplcm e o crapavs (Adriano). 
-                             
+
                 15/07/2011 - Ajuste para dev. das contas transferidas (Ze).
-                
+
                 05/04/2012 - Tratado na procedure gera_arquivo_cecred
                              os registros com crapdev.nrdconta = 0;
                              (cdcritic = 9 ou 108).
                              Criado esses registros no relatorio 219 como
                              "Rejeitado". (Fabricio)
-                        
+
                 18/06/2012 - Alteracao na leitura da craptco (David Kruger).
-                
+
                 15/08/2012 - Alterado posições do cdtipchq de 52,2 para 148,3 
                             (Lucas R.).
-                            
+
                 27/08/2012 - Removido parametro p-flghrexe e adicionado os
                              codigos de devolucao 5 e 6, ao parametro 
                              p-cddevolu. Ambos, devolucao CECRED. (Fabricio)
-                
+
                 28/08/2012 - Tratamento campo crapcop.nmrescop "x(20)" (Diego).
-                
+
                 06/09/2012 - Realizado tratamento para devolucao VLB nas
                              procedures gera_lancamento e gera_arquivo_cecred.
                              Criada a procedure envia_mensagem_spb, para as
                              devolucoes VLB. (Fabricio)
-                             
+
                 20/12/2012 - Adaptacao para a Migracao AltoVale (Ze).
                 
                 17/01/2013 - Enviar email para 
                              juliana.carla@viacredialtovale.coop.br quando
                              for devolucao 085 e cdcooper = 1. (Fabricio)
-                             
+
                 20/02/2013 - Ajuste no gncpchq para TCO - Trf. 41667 (Ze).
-                             
+
                 21/03/2013 - Ajustes referentes ao Projeto tarifas - fase 2
                              Grupo de cheque (Lucas R.)
-                             
+
                 10/06/2013 - Alteração função enviar_email_completo para
-                            nova versão (Jean Michel).
-                            
+                             nova versão (Jean Michel).
+
                 09/09/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).            
-                           
-               11/10/2013 - Incluido parametro cdprogra nas procedures da 
-                            b1wgen0153 que carregam dados de tarifas (Tiago).
-                            
-               13/11/2013 - Tratamento para Migracao para Viacredi (Ze).
-               
-               17/12/2013 - Corrigido para enviar email para suporte@viacredi
-                            quando cdcooper = 2 e data a partir de 02/01/2014.
-                            (Fabricio)
-                            
-               20/01/2014 - Incluir VALIDATE craplot, craplcm, gncpdev e 
-                            gnmvcen (Lucas R.)
-                            
-               19/03/2014 - Efetuada correcao na leitura da tabela craplcm ref.
-                            conta migrada, antes de efetuar lancamento de 
-                            devolucao (Diego).
-                            
-               31/10/2014 - Incluso tratamento para incorporacao VIACON e
-                            SCRMIL (Daniel). 
-                            
-               02/12/2014 - Alterado para zerar variavel aux_vldtotal a cada 
-                            arquivo de cheques devolvidos gerado. (Reinert)
+                             a escrita será PA (André Euzébio - Supero).        
+                11/10/2013 - Incluido parametro cdprogra nas procedures da 
+                             b1wgen0153 que carregam dados de tarifas (Tiago).
 
-               19/12/2014 - Efetuado acerto na procedure 'gera_arquivo_cecred'
-                            na abertura/fechamento do arquivo (Diego).
-                            
-               19/01/2015 - Adição dos parâmetros "arq" e "coop" na chamada do
-                            fonte mqcecred_envia.pl. (Dionathan)
-                            
-               11/03/2015 - Incluido tratamento para as contas migradas.(James)
-               
-               16/07/2015 - Ajustar os log para informar o que está acontecendo no 
-                            processo ao invés de imprimir MESSAGE que poluem o 
-                            proc_batch (Douglas - Chamado 307649)
+                13/11/2013 - Tratamento para Migracao para Viacredi (Ze).
 
-               29/10/2015 - Inclusao do indicador estado de crise. (Jaison/Andrino)
-							
-			   16/11/2015 - Incluido Fato Gerador no parametro cdpesqbb na procedure
-							cria_lan_auto_tarifa, Projeto Tarifas (Jean Michel).
-                            
-               25/11/2015 - Alterar e-mail "juliana.carla@viacredialtovale.coop.br" 
-                            para "suporte@viacredialtovale.coop.br" (Lucas Ranghetti #359073)
-                          - Alterar glb_nmrescop para buscar da cecred, alterado log do
-                            proc_batch para o proc_message (Lucas Ranghetti #359051)
-                            
-               07/12/2015 - #367740 Criado o tratamento para o historico 1874 assim como eh
-                            feito com o historico 1873 (Carlos)
-                            
-               14/12/2015 Inicializar variavel aux_dsorigem para nao apresentar 
-                          descricao errada, qnd valor deve ser em branco 
-                          SD351285 (Odirlei-AMcom)   
-                          
-               05/05/2016 - Adicionado validacao para que na devolucao diaria 
-                            "p-cddevolu = 5" nao sejam considerados as devolucoes
-                            com valor superior ao parametro VALORESVLB
-                            (Douglas - Chamado 414930)
-                            
-              21/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica 
-                           de cheques (Lucas Ranghetti #484923)
+                17/12/2013 - Corrigido para enviar email para suporte@viacredi
+                             quando cdcooper = 2 e data a partir de 02/01/2014.
+                             (Fabricio)
 
-              16/09/2016 - #520378 Incluido o parametro ISPB na chamada de grava-log-ted em 
-                            envia_arquivo_xml (Carlos)
+                20/01/2014 - Incluir VALIDATE craplot, craplcm, gncpdev e 
+                             gnmvcen (Lucas R.)
 
-              11/10/2016 - Acesso da tela PRCCTL DEVOLU em todas cooperativas SD381526 (Tiago/Elton)
+                19/03/2014 - Efetuada correcao na leitura da tabela craplcm ref.
+                             conta migrada, antes de efetuar lancamento de 
+                             devolucao (Diego).
+
+                31/10/2014 - Incluso tratamento para incorporacao VIACON e
+                             SCRMIL (Daniel). 
+
+                02/12/2014 - Alterado para zerar variavel aux_vldtotal a cada 
+                             arquivo de cheques devolvidos gerado. (Reinert)
+
+                19/12/2014 - Efetuado acerto na procedure 'gera_arquivo_cecred'
+                             na abertura/fechamento do arquivo (Diego).
+
+                19/01/2015 - Adição dos parâmetros "arq" e "coop" na chamada do
+                             fonte mqcecred_envia.pl. (Dionathan)
+
+                11/03/2015 - Incluido tratamento para as contas migradas.(James)
+
+                16/07/2015 - Ajustar os log para informar o que está acontecendo
+                             no processo ao invés de imprimir MESSAGE que poluem
+                             o proc_batch (Douglas - Chamado 307649)
+
+                29/10/2015 - Inclusao do indicador estado de crise.
+                             (Jaison/Andrino)
+
+                16/11/2015 - Incluido Fato Gerador no parametro cdpesqbb na
+                             procedure cria_lan_auto_tarifa, Projeto Tarifas
+                             (Jean Michel).
+
+                25/11/2015 - Alterar e-mail
+                             "juliana.carla@viacredialtovale.coop.br" 
+                             para "suporte@viacredialtovale.coop.br"
+                             (Lucas Rang~ hetti #359073)
+                           - Alterar glb_nmrescop para buscar da cecred,
+                             alterado log do proc_batch para o proc_message
+                             (Lucas Ranghetti #359051)
+
+                07/12/2015 - #367740 Criado o tratamento para o historico 1874
+                             assim como eh feito com o historico 1873 (Carlos)
+
+                14/12/2015 - Inicializar variavel aux_dsorigem para nao
+                             apresentar descricao errada, qnd valor deve ser em
+                             branco SD351285 (Odirlei-AMcom)   
+
+                05/05/2016 - Adicionado validacao para que na devolucao diaria 
+                             "p-cddevolu = 5" nao sejam considerados as
+                             devolucoes com valor superior ao parametro
+                             VALORESVLB   (Douglas - Chamado 414930)
+
+                21/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao
+                             automatica de cheques (Lucas Ranghetti #484923)
+
+                16/09/2016 - #520378 Incluido o parametro ISPB na chamada de
+                             grava-log-ted em envia_arquivo_xml (Carlos)
+
+                11/10/2016 - Acesso da tela PRCCTL DEVOLU em todas cooperativas
+                             SD381526 (Tiago/Elton)
+
+                02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)  
+
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -481,7 +489,8 @@ ELSE
                                 END.
                        
                            /* Gerar log com o fim da execução */ 
-                           UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                           UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")
+                                             + " - " +
                                              glb_cdprogra + "' --> '" +
                                              " Devolucoes processadas. " +
                                              " Coop: " + STRING(p-cdcooper) + 
@@ -551,8 +560,7 @@ PROCEDURE gera_lancamento:
                             aux_nrdconta = crapdev.nrdconta
                             aux_nrctalcm = crapdev.nrdctabb.
             END.
-        ELSE
-        DO:
+        ELSE DO:
 
             ASSIGN aux_cdcooper = p-cdcooper
                    aux_nrdconta = crapdev.nrdconta
@@ -561,9 +569,9 @@ PROCEDURE gera_lancamento:
             /* VIACON - Se for conta migrada das cooperativas 4 ou 15 devera
             tratar aux_nrctalcm para receber a nova conta. O campo
             crapdev.nrdctabb contem o numero da conta cheque */ 
-            IF p-cdcooper = 1 OR     /* Viacredi */
-               p-cdcooper = 13 THEN  /* Scrcred  */
-            DO:
+            IF  p-cdcooper = 1  OR    /* Viacredi    */
+                p-cdcooper = 13 OR    /* Scrcred     */
+                p-cdcooper = 9  THEN  /* Transulcred */ DO:
 
                 RUN verifica_incorporacao(INPUT  p-cdcooper,
                                           INPUT  crapdev.nrdconta,
@@ -573,11 +581,9 @@ PROCEDURE gera_lancamento:
                                           OUTPUT aux_cdagectl).
 
                 /* Se aux_nrdconta_tco > 0 eh incorporacao */
-                IF aux_nrdconta_tco > 0 THEN
+                IF  aux_nrdconta_tco > 0 THEN
                     ASSIGN aux_nrctalcm = crapdev.nrdconta. 
-               
             END.
-                
         END.
 
         IF  crapdev.insitdev = 0 THEN
@@ -594,7 +600,8 @@ PROCEDURE gera_lancamento:
                                aux_cdtarbac = "DEVCHQBCPJ". 
                     END.
                     
-                IF  aux_cdtarifa = "DEVOLCHQPF" OR aux_cdtarifa = "DEVOLCHQPJ" THEN
+                IF  aux_cdtarifa = "DEVOLCHQPF"
+                OR  aux_cdtarifa = "DEVOLCHQPJ" THEN
                     DO:
                         RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
                                                         (INPUT  p-cdcooper,
@@ -629,7 +636,8 @@ PROCEDURE gera_lancamento:
                     END.
                 
                 /* BUSCA INFORMACOES TAXA BACEN*/
-                IF  aux_cdtarbac = "DEVCHQBCPJ" OR aux_cdtarbac = "DEVCHQBCPF" THEN
+                IF  aux_cdtarbac = "DEVCHQBCPJ"
+                OR  aux_cdtarbac = "DEVCHQBCPF" THEN
                     DO:
                         RUN carrega_dados_tarifa_vigente IN h-b1wgen0153
                                                         (INPUT  p-cdcooper,
@@ -2018,9 +2026,9 @@ PROCEDURE gera_arquivo_ctaitg:
            END.
       
       ASSIGN aux_cdseqchq = aux_cdseqchq + 1.
-    
+
       ASSIGN glb_nrcalcul = INT(SUBSTR(STRING(crapdev.nrcheque,"9999999"),1,6)).
-      
+
       PUT STREAM str_2 aux_cdseqchq              FORMAT "99999"
                        "01"
                        crapass.nrdctitg          FORMAT "9999999X"
@@ -2471,24 +2479,23 @@ PROCEDURE gera_arquivo_cecred:
 
        END.
 
-       IF p-cdcooper = 1 OR     /* Viacredi */
-          p-cdcooper = 13 THEN  /* Scrcred  */
-       DO:
+       IF  p-cdcooper = 1  OR    /* Viacredi    */
+           p-cdcooper = 13 OR    /* Scrcred     */
+           p-cdcooper = 9  THEN  /* Transulcred */ DO:
 
-            RUN verifica_incorporacao(INPUT  p-cdcooper,
-                                      INPUT  crapdev.nrdconta,
-                                      INPUT  crapdev.nrcheque,
-                                      OUTPUT aux_cdcopant,
-                                      OUTPUT aux_nrdconta_tco,
-                                      OUTPUT aux_cdagectl).
-
-        END.
+           RUN verifica_incorporacao(INPUT  p-cdcooper,
+                                     INPUT  crapdev.nrdconta,
+                                     INPUT  crapdev.nrcheque,
+                                     OUTPUT aux_cdcopant,
+                                     OUTPUT aux_nrdconta_tco,
+                                     OUTPUT aux_cdagectl).
+       END.
 
 
        /* Diego - Devolucoes automaticas alinea 37, não geram lançamento de 
        devolução na conta do cooperado, serão apenas retornadas no arquivo 
        de devolução  */
-       IF   crapdev.nrdconta = 0 THEN
+       IF  crapdev.nrdconta = 0 THEN
             DO:
                 CREATE tt-relchdv.
                 ASSIGN tt-relchdv.nrdconta = 0
@@ -2654,7 +2661,7 @@ PROCEDURE gera_arquivo_cecred:
                        tt-relchdv.cdagenci = crapass.cdagenci
                        tt-relchdv.cdoperad = crapdev.cdoperad
                        tt-relchdv.dstipcta = aux_dstipcta.
-            END.
+       END.
                       
        IF   crapdev.cdpesqui = "" THEN
             DO:
@@ -2823,8 +2830,9 @@ PROCEDURE gera_arquivo_cecred:
        IF  crapdev.cdpesqui <> ""    AND
            crapdev.cdpesqui <> "TCO" THEN
            DO:                
-               glb_nrcalcul = INT(SUBSTRING(STRING(crapdev.nrcheque,"9999999"),1,6)).
-               
+               glb_nrcalcul = INT(SUBSTRING(
+                                    STRING(crapdev.nrcheque,"9999999"),1,6)).
+
                FIND crapfdc WHERE crapfdc.cdcooper = p-cdcooper
                               AND crapfdc.cdbanchq = crapdev.cdbanchq
                               AND crapfdc.cdagechq = crapdev.cdagechq
@@ -3871,31 +3879,36 @@ PROCEDURE verifica_incorporacao:
 
     ASSIGN par_contatco = 0. /* Se retornar 0 nao eh conta incorporada */
 
-    FIND craptco WHERE craptco.cdcooper = par_cdcooper     AND
-                       craptco.nrdconta = par_nrdconta     AND
-                       craptco.tpctatrf = 1                AND
-                       craptco.flgativo = TRUE
-                       NO-LOCK NO-ERROR.
+    FIND FIRST craptco
+         WHERE craptco.cdcooper = par_cdcooper
+           AND craptco.nrdconta = par_nrdconta
+           AND craptco.tpctatrf = 1
+           AND craptco.flgativo = TRUE
+       NO-LOCK NO-ERROR.
 
-    IF AVAILABLE craptco THEN 
-    DO:
+    IF  AVAILABLE craptco THEN DO:
 
-        IF par_cdcooper = 1 THEN
-            aux_cdagechq = 103.
-        ELSE
-            aux_cdagechq = 114.
+        CASE par_cdcooper:
+            WHEN 1  THEN            /* VIACREDI       */
+               aux_cdagechq = 103.  /* -> CONCREDI    */
+            WHEN 13 THEN            /* SCRCRED        */
+               aux_cdagechq = 114.  /* -> CREDIMILSUL */
+            WHEN 9  THEN            /* TRANSPOCRED    */
+               aux_cdagechq = 116.  /* -> TRANSULCRED */
+        END CASE.
 
+        FIND FIRST crapfdc
+             WHERE crapfdc.cdcooper = par_cdcooper
+               AND crapfdc.cdbanchq = 085
+               AND crapfdc.cdagechq = aux_cdagechq
+               AND crapfdc.nrctachq = craptco.nrctaant
+               AND crapfdc.nrcheque = INT(SUBSTR
+                                        (STRING(par_nrcheque,"9999999"),1,6))
+               USE-INDEX crapfdc1
+           NO-LOCK NO-ERROR NO-WAIT.
 
-        FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper      AND
-                           crapfdc.cdbanchq = 085               AND
-                           crapfdc.cdagechq = aux_cdagechq      AND 
-                           crapfdc.nrctachq = craptco.nrctaant  AND
-                           crapfdc.nrcheque = INT(SUBSTR(STRING(par_nrcheque,"9999999"),1,6))
-                           USE-INDEX crapfdc1
-                           NO-LOCK NO-ERROR NO-WAIT.
+        IF  AVAIL(crapfdc) THEN DO:
 
-        IF AVAIL(crapfdc) THEN 
-        DO:
             ASSIGN par_contatco  = craptco.nrctaant
                    par_cdcooptco = craptco.cdcopant.
 
@@ -3904,12 +3917,9 @@ PROCEDURE verifica_incorporacao:
                  NO-LOCK NO-ERROR.
 
             ASSIGN par_cdagectl =  crabcop.cdagectl.
-                  
 
         END.
-
     END.
-
 
 END PROCEDURE.
 
