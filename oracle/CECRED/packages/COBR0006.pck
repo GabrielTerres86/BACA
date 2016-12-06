@@ -81,7 +81,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                cdtpinsc  crapcob.cdtpinsc%TYPE,
                nrinssac  crapcob.nrinssac%TYPE,
                -- Email e telefone do Sacado
-               dsdemail  crapsab.dsdemail%TYPE,
+               dsdemail  VARCHAR2(5000),
                nrcelsac  crapsab.nrcelsac%TYPE,
                -- Dados do Avalista
                nmdavali  crapcob.nmdavali%TYPE,
@@ -377,7 +377,7 @@ PROCEDURE pc_importa_cnab400_085 (pr_cdcooper    IN crapcop.cdcooper%TYPE      -
                                    ,pr_nmarqint IN VARCHAR2               --> Nome do arquivo
                                    ,pr_tparquiv OUT VARCHAR2              --> Tipo do arquivo
                                    ,pr_cddbanco OUT INTEGER               --> Codigo do banco
-                   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado    
+								   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado    
                                    ,pr_rec_rejeita OUT COBR0006.typ_tab_rejeita --> Tabela com rejeitados
                                    ,pr_cdcritic OUT INTEGER               --> CÛdigo da critica
                                    ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da critica
@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 26/10/2016
+    Data     : Novembro/2015.                   Ultima atualizacao: 07/11/2016
   
    Dados referentes ao programa:
   
@@ -435,17 +435,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 26/10/2016 - Ajuste na validacao do nome do sacado (pc_trata_segmento_q_240_85)
                              para considerar o caracter ':' como valido.
                              (Chamado 535830) - (Fabricio)
-
+                                           
 				01/11/2016 - Incluido tratamento NVL no campo QTDIAPRT ao inserir na CRAPCOB.
 				             Alterado local de atribuicao de valores nos campos da pc_rec_cobranca
 							 na rotina pc_trata_detalhe_cnab400. Estava gerando erro nas instrucoes
 							 enviadas pelos cooperados.
 							 Heitor (Mouts) - Chamado 545476
-
+                                           
 				04/11/2016 - Removidas validacoes de CEP quanto a UF, se a UF que vier no arquivo for
 				             diferente da UF da base de enderecos, nao vai rejeitar.
 							 Heitor (Mouts) - Chamado 523346
                                            
+                07/11/2016 - Ajustado a validacao de Data de Emissao, para que a quantidade 
+                             de dias seja parametrizada. Foi definido o parametro na crapprm
+                             cdacesso = "QTD_DIAS_EMISSAO_RETR" para armazenar o valor.
+                             Sera alterado de 90 para 365 dias. (Douglas - Chamado 523329)
+
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -512,6 +517,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
      AND rtc.intipmvt = pr_intipmvt
    ORDER BY rtc.progress_recid DESC;
   
+  ---------------------------------
+  -- Quantidade de dias para emiss„o retroativa
+  vr_qtd_emi_ret CONSTANT INTEGER := NVL(gene0001.fn_param_sistema('CRED',0,'QTD_DIAS_EMISSAO_RETR'), 90);
+  ---------------------------------
+  
   /* Funcao para validacao dos caracteres */
   FUNCTION fn_valida_caracteres (pr_flgnumer IN BOOLEAN,  -- Validar Numeros?
                                  pr_flgletra IN BOOLEAN,  -- Validar Letras?
@@ -540,7 +550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dsvalida VARCHAR2(30000);
       
     vr_numeros  VARCHAR2(10) := '0123456789';
-  --Necessario acrescentar esta variavel por causa da 
+	--Necessario acrescentar esta variavel por causa da 
     --funcao CAN-DO do Progress, que permite simbolos como "(" e ")";
     vr_simbolos VARCHAR2(10) := '()';
     vr_letras   VARCHAR2(49) := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ¡¿ƒ¬√…»À ÕÃœŒ”“÷‘’⁄Ÿ‹€«';
@@ -575,7 +585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_validar:= vr_validar || pr_listaesp;
     END IF;
 
-  --Necessario permitir simbolos "(" e ")";
+	--Necessario permitir simbolos "(" e ")";
     vr_validar := vr_validar || vr_simbolos;
     FOR vr_pos IN 1..length(vr_validar) LOOP
       vr_caracter:= SUBSTR(vr_validar,vr_pos,1);
@@ -1022,7 +1032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.cdocorre := NULL;
     -- Inicializa como NAO rejeitada
     pr_rec_cobranca.flgrejei := FALSE;
-  pr_rec_cobranca.inserasa := 0;
+	pr_rec_cobranca.inserasa := 0;
     pr_rec_cobranca.flserasa := 0;
   END pc_inicializa_cobranca;
   
@@ -1197,7 +1207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).qtdiaprt := pr_rec_cobranca.qtdiaprt;
     pr_tab_crapcob(vr_index).inemiexp := pr_rec_cobranca.inemiexp;
     
-  pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
+	pr_tab_crapcob(vr_index).inserasa := pr_rec_cobranca.inserasa;
     pr_tab_crapcob(vr_index).flserasa := pr_rec_cobranca.flserasa;
     pr_tab_crapcob(vr_index).qtdianeg := pr_rec_cobranca.qtdianeg;
     -- Atualizar os totalizadores
@@ -1497,9 +1507,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 foi descomentado o cÛdigo para trata-lo
                                 (Andrei - RKAM).
 
-           27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
-                a rotina de validaÁ„o de caracteres para endereÁos
-                (Andrei). 
+				   27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
+								a rotina de validaÁ„o de caracteres para endereÁos
+								(Andrei). 
 
     ............................................................................ */   
     
@@ -1730,7 +1740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
       
       /*
-	  IF pr_tab_linhas('CDUFSACA').texto <> rw_crapdne.cduflogr THEN
+      IF pr_tab_linhas('CDUFSACA').texto <> rw_crapdne.cduflogr THEN
         --  CEP incompativel com a Unidade da Federacao
         pr_cdmotivo := '51';
         RAISE vr_exc_motivo;
@@ -3458,7 +3468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                    ,pr_nmarqint IN VARCHAR2               --> Nome do arquivo
                                    ,pr_tparquiv OUT VARCHAR2              --> Tipo do arquivo
                                    ,pr_cddbanco OUT INTEGER               --> Codigo do banco
-                   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado
+								   ,pr_nrdconta OUT crapass.nrdconta%TYPE --> Numero da conta do cooperado
                                    ,pr_rec_rejeita OUT COBR0006.typ_tab_rejeita --> Tabela com rejeitados
                                    ,pr_cdcritic OUT INTEGER               --> CÛdigo da critica
                                    ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da critica
@@ -3497,7 +3507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_ind_arquiv utl_file.file_type;
     
     -- Tratamento de erros
-    vr_exc_saida EXCEPTION;
+		vr_exc_saida EXCEPTION;
     
   BEGIN
 
@@ -3583,12 +3593,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           IF pr_tparquiv = 'CNAB240' THEN
             
             pr_cddbanco := to_number(substr(vr_dslinha,1,3));
-        pr_nrdconta := to_number(substr(vr_dslinha,59,13));
+		    pr_nrdconta := to_number(substr(vr_dslinha,59,13));
             
           ELSIF pr_tparquiv = 'CNAB400' THEN
             
             pr_cddbanco := to_number(substr(vr_dslinha,77,3));
-      pr_nrdconta := to_number(substr(vr_dslinha,32,9));
+			pr_nrdconta := to_number(substr(vr_dslinha,32,9));
                                 
           END IF;           
         
@@ -3650,7 +3660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   PROCEDURE pc_altera_email_cel_sacado (pr_cdcooper IN crapcop.cdcooper%TYPE --Cooperativa 
                                        ,pr_nrdconta IN crapass.nrdconta%TYPE --Conta
                                        ,pr_nrinssac IN crapsab.nrinssac%TYPE --InscriÁ„o do sacado
-                                       ,pr_dsdemail IN crapsab.dsdemail%TYPE --E-mail
+                                       ,pr_dsdemail IN VARCHAR2              --E-mail
                                        ,pr_nrcelsac IN crapsab.nrcelsac%TYPE --N˙mero do celular
                                        ,pr_des_erro OUT VARCHAR2             --Retorno OK/NOK
                                        ,pr_cdcritic OUT INTEGER              --Codigo Critica
@@ -3662,21 +3672,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 05/10/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Alterar e-mail dos sacados
     
-    AlteraÁıes : 
+    AlteraÁıes : 05/10/2016 - Ajustes referente a melhoria M271 (Kelvin)
     -------------------------------------------------------------------------------------------------------------*/                                
   
     CURSOR cr_crapsab(pr_cdcooper IN crapsab.cdcooper%TYPE
                      ,pr_nrdconta IN crapsab.nrdconta%TYPE
                      ,pr_nrinssac IN crapsab.nrinssac%TYPE) IS
-    SELECT crapsab.dsdemail
-          ,crapsab.nrcelsac
+    SELECT crapsab.nrcelsac
       FROM crapsab 
      WHERE crapsab.cdcooper = pr_cdcooper
        AND crapsab.nrdconta = pr_nrdconta
@@ -3686,11 +3695,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     --Variaveis de Criticas
     vr_cdcritic INTEGER := 0;
     vr_dscritic VARCHAR2(4000):= NULL;
+    vr_des_erro VARCHAR2(1000);
     vr_exc_erro EXCEPTION;
     vr_exc_saida EXCEPTION;
     
     --Variaveis locais 
-    vr_dsdemail crapsab.dsdemail%TYPE;
+    vr_dsdemail VARCHAR2(5000);
     
     --> Tabela de retorno do operadores que estao alocando a tabela especifidada
     vr_tab_locktab GENE0001.typ_tab_locktab;
@@ -3770,14 +3780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     --Realiza a alteraÁ„o do registro de sacado                          
     BEGIN
             
-      UPDATE crapsab SET crapsab.dsdemail = (CASE 
-                                               WHEN vr_dsdemail IS NOT NULL            AND 
-                                                    vr_dsdemail <> rw_crapsab.dsdemail THEN 
-                                                 vr_dsdemail 
-                                               ELSE 
-                                                 rw_crapsab.dsdemail 
-                                             END)  
-                        ,crapsab.nrcelsac = (CASE 
+      UPDATE crapsab SET crapsab.nrcelsac = (CASE 
                                                WHEN nvl(pr_nrcelsac,0) <> 0            AND 
                                                     pr_nrcelsac <> rw_crapsab.nrcelsac THEN 
                                                  pr_nrcelsac 
@@ -3797,6 +3800,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_erro;             
     
     END;
+    
+    -- Realizar a gravaÁ„o do email do pagador    
+    COBR0009.pc_grava_email_pagador(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrinssac => pr_nrinssac
+                                   ,pr_dsdemail => vr_dsdemail
+                                   ,pr_des_erro => vr_des_erro
+                                   ,pr_dscritic => vr_dscritic);
+    -- Validacao de erro 
+    IF vr_des_erro <> 'OK' THEN
+      IF TRIM(vr_dscritic) IS NULL THEN
+        vr_dscritic := 'Nao foi possivel atualizar o email do sacado - COBR0009.pc_grava_email_pagador';
+      END IF;
+      RAISE vr_exc_erro;
+    END IF;
     
     --Retorno OK
     pr_des_erro:= 'OK';  
@@ -3864,7 +3882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
     vr_tparquiv   VARCHAR2(100);
     vr_cddbanco   INTEGER;
-  vr_nrdconta   crapass.nrdconta%TYPE;
+	vr_nrdconta   crapass.nrdconta%TYPE;
     
   BEGIN
        
@@ -3872,7 +3890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      pr_nmarqint => pr_nmarqint,  --> Numero da conta do cooperado
                                      pr_tparquiv => vr_tparquiv,  --> Data de movimento
                                      pr_cddbanco => vr_cddbanco,  --> Operador
-                   pr_nrdconta => vr_nrdconta,  --> Conta do cooperado (header do arq)
+									 pr_nrdconta => vr_nrdconta,  --> Conta do cooperado (header do arq)
                                      pr_rec_rejeita => pr_rec_rejeita, --> Tabela com rejeitados
                                      pr_cdcritic => vr_cdcritic,  --> CÛdigo da critica
                                      pr_dscritic => vr_dscritic,  -->DescriÁ„o da critica
@@ -4546,7 +4564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 25/11/2015
+       Data    : Novembro/2015.                   Ultima atualizacao: 07/11/2015
 
        Dados referentes ao programa:
 
@@ -4554,6 +4572,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquivo tipo de segmento P
 
        Alteracoes: 25/11/2015 - Convers„o Progress -> Oracle (Douglas Quisinski)
+       
+                   07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
+                                quantidade de dias seja parametrizada. Sera alterado 
+                                de 90 para 365 dias. (Douglas - Chamado 523329)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4667,7 +4689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.vltitulo:= pr_tab_linhas('VLTITULO').numero;
     pr_rec_cobranca.dtvencto:= pr_tab_linhas('DTVENCTO').data;
     pr_rec_cobranca.dtemscob:= pr_tab_linhas('DTEMSCOB').data;
-  pr_rec_cobranca.vlabatim:= pr_tab_linhas('VLABATIM').numero;  
+	pr_rec_cobranca.vlabatim:= pr_tab_linhas('VLABATIM').numero;	
 
     --> Validacao de Comandos de Instrucao
     IF pr_rec_cobranca.cdocorre <> 1 THEN -- 01 - Remessa
@@ -4800,7 +4822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- 26.3P Valida Data de Emissao
     IF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
-       TRUNC(SYSDATE) - 90      > pr_rec_cobranca.dtemscob           THEN
+       TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob    THEN
 
       -- Data de documento superior ao limite 13/10/2049 ou
       -- Data retroativa maior que 90 dias.
@@ -5080,9 +5102,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 06/01/2016 - Convers„o Progress -> Oracle (Douglas Quisinski)
 
-               27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
-                a rotina de validaÁ„o de caracteres para endereÁos
-                (Andrei).
+		           27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
+								a rotina de validaÁ„o de caracteres para endereÁos
+								(Andrei).
                 
                26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
                             o caracter ':' como valido.
@@ -5984,14 +6006,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 07/11/2016
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquivo tipo de segmento P
 
-       Alteracoes:  
+       Alteracoes: 07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
+                                quantidade de dias seja parametrizada. Sera alterado 
+                                de 90 para 365 dias. (Douglas - Chamado 523329)
+       
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6066,12 +6091,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
     END IF;
     
-    IF TRUNC(SYSDATE) - 90 > pr_rec_cobranca.dtemscob THEN
+    IF TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob THEN
     
       COBR0006.pc_grava_critica(pr_cdcooper => pr_cdcooper,
                                 pr_nrdconta => pr_nrdconta,
                                 pr_nrdocmto => 999999,
-                                pr_dscritic => 'Data retroativa maior que 90 dias.',
+                                pr_dscritic => 'Data retroativa maior que ' || 
+                                               to_char(vr_qtd_emi_ret) ||
+                                               ' dias.',
                                 pr_tab_crawrej => pr_tab_crawrej);
                                 
     END IF;
@@ -7168,7 +7195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 27/05/2016 
+       Data    : Marco/2016.                   Ultima atualizacao: 07/11/2016 
 
        Dados referentes ao programa:
 
@@ -7176,8 +7203,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha de detalhe do arquivo cnab400
 
        Alteracoes: 27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
-                a rotina de validaÁ„o de caracteres para endereÁos
-                (Andrei). 
+								a rotina de validaÁ„o de caracteres para endereÁos
+								(Andrei). 
+                                
+                   07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
+                                quantidade de dias seja parametrizada. Sera alterado 
+                                de 90 para 365 dias. (Douglas - Chamado 523329)
+
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -7275,7 +7307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.dsdoccop := TRIM(pr_tab_linhas('NRDOCMTO').texto);
     pr_rec_cobranca.dsusoemp := pr_tab_linhas('DSUSOEMP').texto;
     pr_rec_cobranca.cdocorre := pr_tab_linhas('TPCOMAND').numero;
-
+    
     --Registros de controle serasa
     pr_rec_cobranca.flserasa := 0;
     pr_rec_cobranca.qtdianeg := 0;
@@ -7579,7 +7611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_rec_cobranca.dtemscob IS NOT NULL THEN
       
       IF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
-         TRUNC(SYSDATE) - 90      > pr_rec_cobranca.dtemscob           THEN
+         TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob    THEN
 
         -- Data de documento superior ao limite 13/10/2049 ou
         -- Data retroativa maior que 90 dias.
@@ -7905,7 +7937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   
     -- 46.7 UF do Sacado
     /*
-	IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
+    IF pr_rec_cobranca.cdufsaca <> rw_crapdne.cduflogr THEN
       
       --  CEP Incompativel com a Unidade da Federacao
       vr_rej_cdmotivo := '51';
@@ -9458,13 +9490,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         --> Varrer linhas do arquivo
         FOR vr_idlinha IN vr_tab_linhas.first..vr_tab_linhas.last LOOP
           
-      --Gerar critica do arquivo quando os erros forem nos HA, HL, TL, TA;
+		  --Gerar critica do arquivo quando os erros forem nos HA, HL, TL, TA;
           IF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto IN ('HA','HL','TL','TA') THEN
              IF vr_tab_linhas(vr_idlinha).exists('$ERRO$') THEN --Problemas com importacao do layout
                vr_dscritic := 'Linha '||vr_idlinha||' '|| vr_tab_linhas(vr_idlinha)('$ERRO$').texto;
                vr_nrdoccri := 0;      
                RAISE vr_exc_saida;
-       END IF;
+			 END IF;
           END IF;
           
           -------------------  Header do Arquivo --------------------
@@ -10505,7 +10537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     ,pr_rec_cobranca  => vr_rec_cobranca           --> Dados da Cobranca
                                     ,pr_tab_rejeitado => vr_tab_rejeitado          --> Tabela de Rejeitados
                                     ,pr_tab_sacado    => vr_tab_sacado             --> Tabela de Sacados
-                                    ,pr_des_reto      => pr_des_reto);  
+                                    ,pr_des_reto      => pr_des_reto);	
              
              END IF;
                       
@@ -12351,7 +12383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_vltitulo NUMBER(15,2);
     vr_vldmulta NUMBER(15,2);
     vr_nrinssac crapcob.nrinssac%TYPE;
-    vr_dsdemail crapsab.dsdemail%TYPE;
+    vr_dsdemail VARCHAR2(5000);
     vr_nrcelsac crapsab.nrcelsac%TYPE;
     vr_idx      PLS_INTEGER;
     
@@ -14455,7 +14487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      ,pr_nmarqint => vr_dsdircop || '/upload/' || pr_nmarquiv --> Nome do arquivo
                                      ,pr_tparquiv => vr_tparquiv               --> Tipo do arquivo
                                      ,pr_cddbanco => vr_cddbanco               --> Codigo do banco
-                   ,pr_nrdconta => vr_nrdconta               --> Recebe nrdconta
+									 ,pr_nrdconta => vr_nrdconta               --> Recebe nrdconta
                                      ,pr_rec_rejeita => vr_tab_rejeita         --> Dados invalidados
                                      ,pr_cdcritic => vr_cdcritic               --> CÛdigo da critica
                                      ,pr_dscritic => vr_dscritic               -->DescriÁ„o da critica
