@@ -9218,10 +9218,8 @@ create or replace package body cecred.PAGA0002 is
                   
         IF rw_craplau.insitlau = 1 OR -- PENDENTE
            rw_craplau.insitlau = 2 THEN -- EFETIVADO
-        
-          -- TED / DARF-DAS
-          IF rw_craplau.cdtiptra IN(4,10) THEN
-                        
+         
+          IF rw_craplau.cdtiptra = 4 THEN -- TED                        
             -- Se jah foi efetivado nao pode ser permitido o cancelamento.
             IF rw_craplau.insitlau = 2 THEN
               vr_incancel := 2;
@@ -9230,56 +9228,51 @@ create or replace package body cecred.PAGA0002 is
                 vr_incancel := 1;
               ELSE
                                     
-                -- O cancelamento de TED dever ser permitido somente ate as 7:30 pois
-                -- o programa pr_crps705 (Responsavel pelo debito de agendamentos de TED)
-                -- sera iniciado as 8:00.
+                -- O cancelamento de TED dever ser permitido somente ate as 8:30 (Horario
+						    -- parametrizado atraves da tabela crapprm) pois o programa pr_crps705 
+							  -- (Responsavel pelo debito de agendamentos de TED) sera iniciado as 8:40.
                 -- Qualquer mudanca na condicao abaixo devera ser previamente discutida com
-                -- a equipe do financeiro (Juliana), do canais de atendimento (Jefferson) e
-                -- de sistemas (Adriano, Rosangela).
+                -- a equipe do financeiro (Juliana), do canais de atendimento (Jefferson),
+							  -- Seguranca Corporativa (Maicon) e de sistemas (Adriano, Rosangela).
                 
                 IF rw_craplau.dtmvtopg = vr_datdodia AND
-                   gene0002.fn_busca_time < 27000  THEN -- 27000 = (7,5 * 3600)
+                   gene0002.fn_busca_time < TO_NUMBER(GENE0001.FN_PARAM_SISTEMA('CRED',pr_cdcooper,'HORARIO_CANCELAMENTO_TED'))  THEN 
                   vr_incancel := 1;
                 ELSE
                   vr_incancel := 2;
-                END IF; -- FIM rw_craplau.dtmvtopg = aux_datdodia
-                 
-              END IF;
-        
+                END IF; -- FIM rw_craplau.dtmvtopg = aux_datdodia                 
+              END IF;        
+            END IF;                        
+          ELSE 
+            -- Se agendamento for data futura ou a cooperativa
+            -- possui segundo processo para debito e estiver
+            -- dentro do horario limite permite o cancelamento
+            -- Se for data menor que hoje nao permitir
+                              
+            IF rw_craplau.dtmvtopg > vr_datdodia  THEN
+              vr_incancel := 1;
+            ELSIF rw_craplau.dtmvtopg = vr_datdodia
+              AND gene0002.fn_busca_time <= vr_hrfimcan
+              AND vr_dssgproc = 'SIM' THEN
+              vr_incancel := 1;
+            ELSE
+              vr_incancel := 2;
+            END IF;    
+                
+            -- Se for GPS, nao permite cancelar na tela de Agendamentos
+            IF rw_craplau.dscedent LIKE '%GPS IDENTIFICADOR%' THEN
+              vr_incancel := 3;
+            END IF;    
+                
+            -- Se for DARF/DAS e jah foi efetivado nao pode ser permitido o cancelamento.
+            IF rw_craplau.cdtiptra = 10 AND rw_craplau.insitlau = 2 THEN
+              vr_incancel := 2;
             END IF;
-                        
-        ELSE -- cdtiptra = 4
-                                           
-          -- Se agendamento for data futura ou a cooperativa
-          -- possui segundo processo para debito e estiver
-          -- dentro do horario limite permite o cancelamento
-          -- Se for data menor que hoje nao permitir
-                            
-          IF rw_craplau.dtmvtopg > vr_datdodia  THEN
-            vr_incancel := 1;
-          ELSIF rw_craplau.dtmvtopg = vr_datdodia
-            AND gene0002.fn_busca_time <= vr_hrfimcan
-            AND vr_dssgproc = 'SIM' THEN
-            vr_incancel := 1;
-          ELSE
-            vr_incancel := 2;
-          END IF;    
-              
-          -- Se for GPS, nao permite cancelar na tela de Agendamentos
-          IF rw_craplau.dscedent LIKE '%GPS IDENTIFICADOR%' THEN
-            vr_incancel := 2;
-          END IF;    
-              
-          -- Se for TED e jah foi efetivado nao pode ser permitido o cancelamento.
-          IF (rw_craplau.cdtiptra = 4 OR rw_craplau.cdtiptra = 10) AND
-             rw_craplau.insitlau = 2 THEN
-            vr_incancel := 2;
-          END IF;
-          
-        END IF; -- ELSE cdtiptra
-      ELSE
-        vr_incancel := 2;
-      END IF;                                          
+            
+          END IF; -- ELSE cdtiptra
+        ELSE
+          vr_incancel := 2;
+        END IF;                                          
 
         IF rw_craplau.insitlau = 1 OR
            rw_craplau.insitlau = 2 THEN
@@ -9370,12 +9363,12 @@ create or replace package body cecred.PAGA0002 is
             vr_dsageban := 'NAO CADASTRADO';
           END IF; -- AVAILABLE crapban
 
-            -- Consultar crapcti para pegar conta e nome dst
-            OPEN cr_crapcti(pr_cdcooper => rw_craplau.cdcooper
-                           ,pr_nrdconta => rw_craplau.nrdconta
-                           ,pr_cddbanco => rw_craplau.cddbanco
-                           ,pr_cdageban => rw_craplau.cdageban
-                           ,pr_nrctadst => rw_craplau.nrctadst);
+          -- Consultar crapcti para pegar conta e nome dst
+          OPEN cr_crapcti(pr_cdcooper => rw_craplau.cdcooper
+                         ,pr_nrdconta => rw_craplau.nrdconta
+                         ,pr_cddbanco => rw_craplau.cddbanco
+                         ,pr_cdageban => rw_craplau.cdageban
+                         ,pr_nrctadst => rw_craplau.nrctadst);
           
           FETCH cr_crapcti INTO rw_crapcti;
                              
@@ -9404,9 +9397,9 @@ create or replace package body cecred.PAGA0002 is
           END IF;
 
           vr_dtagenda := rw_craplau.dtmvtopg;
-		  vr_tpcaptur := rw_darf_das.tpcaptura;
-		  vr_dtvencto := rw_darf_das.dtvencto;
-		  vr_nrcpfcgc := rw_darf_das.nrcpfcgc;
+		      vr_tpcaptur := rw_darf_das.tpcaptura;
+		      vr_dtvencto := rw_darf_das.dtvencto;
+		      vr_nrcpfcgc := rw_darf_das.nrcpfcgc;
           vr_dstipcat := (CASE WHEN rw_darf_das.tpcaptura = 1 THEN 'Com Código de Barras' ELSE 'Sem Código de Barras' END);
           vr_dsidpgto := rw_darf_das.dsidentif_pagto;
           vr_dsnomfon := rw_darf_das.dsnome_fone;
