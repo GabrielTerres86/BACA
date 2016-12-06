@@ -52,7 +52,7 @@ create or replace package cecred.SICR0001 is
           ,cdagenci NUMBER(3)    --  FORMAT "zz9"
           ,nrdconta NUMBER       --  FORMAT "zzzz,zzz,9"
           ,nmprimtl crapass.nmprimtl%TYPE --  FORMAT "x(40)"
-          ,cdtiptra NUMBER(1)    --  FORMAT "9"
+          ,cdtiptra NUMBER(2)    --  FORMAT "99"
           ,fltiptra BOOLEAN
           ,dstiptra VARCHAR2(13) --  FORMAT "x(13)"
           ,fltipdoc VARCHAR2(10) --  CONVENIO ou TITULO
@@ -3123,3 +3123,4 @@ create or replace package body cecred.SICR0001 is
   END pc_sumario_debsic;
 
 END SICR0001;
+/
