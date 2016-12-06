@@ -298,7 +298,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
      vr_comando  VARCHAR2(1000);
      vr_typ_saida VARCHAR2(3);
      
-     vr_stsnrcal_darf BOOLEAN;     --Situacao CPF/CNPJ DARF
      vr_inpessoa_darf INTEGER; --Tipo Inscricao Cedente DARF
      vr_nrcpfcgc_darf VARCHAR(20); --Tipo Inscricao Cedente DARF
      
@@ -668,13 +667,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
          vr_tab_agendamentos(vr_index).dtapuracao        := rw_craplau.dtapuracao;        -- Período de Apuração
          
          vr_nrcpfcgc_darf := rw_craplau.nrcpfcgc;
-         -- Valida o CPF/CNPJ para formatar
-         gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => vr_nrcpfcgc_darf
-                                    ,pr_stsnrcal => vr_stsnrcal_darf
-                                    ,pr_inpessoa => vr_inpessoa_darf);
+         vr_inpessoa_darf := 0;
+         
+         IF LENGTH(vr_nrcpfcgc_darf) = 11 THEN -- CPF
+           vr_inpessoa_darf := 1;
+         ELSIF LENGTH(vr_nrcpfcgc_darf) = 14 THEN-- CNPJ
+           vr_inpessoa_darf := 2; 	
+         END IF; 
          
          --Se validou com sucesso então formata
-         IF vr_stsnrcal_darf THEN
+         IF vr_inpessoa_darf > 0 THEN
            vr_nrcpfcgc_darf := gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc_darf, vr_inpessoa_darf);
          END IF;
                   
