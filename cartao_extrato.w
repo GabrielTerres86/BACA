@@ -24,7 +24,9 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                               (Carlos)
 			     
 				 08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
-                              Futuros. Lenilson (Mouts)
+                              Futuros. Lenilson (Mouts)	  
+				 07/12/2016 - alteracao ajustes TAA chamado 564807 Futuros. Lenilson (Mouts)
+ 
 
 ............................................................................... */
 
@@ -374,7 +376,7 @@ DO:
     
     h_principal:MOVE-TO-TOP().
 
-    RUN procedures/obtem_extrato_conta.p ( INPUT tmp_dtiniext,
+    RUN procedures/obtem_extrato_conta_lanc.p ( INPUT tmp_dtiniext,
                                            INPUT tmp_dtfimext,
                                            INPUT aux_inisenta,
                                           OUTPUT tmp_tximpres,
@@ -432,7 +434,7 @@ DO:
     
     h_principal:MOVE-TO-TOP().
 
-    RUN procedures/obtem_extrato_conta.p ( INPUT tmp_dtiniext,
+    RUN procedures/obtem_extrato_conta_lanc.p ( INPUT tmp_dtiniext,
                                            INPUT tmp_dtfimext,
                                            INPUT aux_inisenta,
                                           OUTPUT tmp_tximpres,
@@ -469,7 +471,7 @@ DO:
     h_principal:MOVE-TO-TOP().
 
     ASSIGN aux_inisenta = 2. /* Insenta extrato para opções de Extrato em TELA */
-    RUN procedures/obtem_extrato_conta.p ( INPUT tmp_dtiniext,
+    RUN procedures/obtem_extrato_conta_lanc.p ( INPUT tmp_dtiniext,
                                            INPUT tmp_dtfimext,
                                            INPUT aux_inisenta,
                                           OUTPUT tmp_tximpres,
