@@ -19,6 +19,7 @@ DEFINE OUTPUT PARAMETER par_flgderro    AS LOGICAL      INIT NO     NO-UNDO.
 DEFINE VARIABLE aux_nmtitula            AS CHARACTER    EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_vlsddisp            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllautom            AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vllauded            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vlldeb              AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllcre              AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllaucre            AS DECIMAL                  NO-UNDO.
@@ -330,6 +331,7 @@ END. /* Fim REQUISICAO */
 RESPOSTA:
 DO:
     DEFINE VARIABLE aux_contador  AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_conttext  AS DECIMAL     NO-UNDO.
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
     CREATE X-NODEREF  xField.
@@ -467,10 +469,22 @@ RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                      OUTPUT par_flgderro).
                
                IF  xField:NAME = "vllautom"  THEN
+                     aux_conttext = DECIMAL(xText:NODE-VALUE).
+                     IF aux_conttext = 0 THEN
+                       DO:
+                        aux_vllautom = 0. 
 par_tximpres = par_tximpres +
-               "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_vllautom),"zzzzz,zz9.99-")   + 
+               "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_conttext),"zzzzz,zz9.99-")    + 
+               "    TOTAL DE CREDITOS - DEBITOS:   " + STRING(DECIMAL(aux_conttext),"zzzzz,zz9.99-")    . 
+                       END.
+                     
+                    ELSE   
+                       DO:
+                        aux_vllauded = DECIMAL(xText:NODE-VALUE) - DECIMAL(aux_vllaucre). 
+par_tximpres = par_tximpres +
+               "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_vllauded),"zzzzz,zz9.99-")   + 
                "    TOTAL DE CREDITOS - DEBITOS:   " + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-"). 
-                       
+                       END.
         
  
     DELETE OBJECT xDoc.
@@ -545,9 +559,18 @@ RUN procedures/obtem_saldo_limite.p ( INPUT 0,
                                      OUTPUT aux_idastcjt,
                                      OUTPUT par_flgderro).
 
-aux_vlstotal = aux_vlsddisp - aux_vllautom + aux_vlsdbloq +
+aux_vlstotal = aux_vlsddisp - aux_vlsdbloq +
                aux_vlsdblpr + aux_vlsdblfp + aux_vlsdchsl.
+IF aux_conttext = 0 THEN
+   DO:
+     aux_vllautom = 0. 
+   END.
+ELSE
+   DO:
+        aux_vllautom = aux_vllauded. 
+        aux_vlstotal = aux_vlsddisp + aux_vllauded.
 
+   END.
 /* monta o comprovante do saldo, passa os nome em branco para
    nao montar o cabecalho dos saldos */
 
