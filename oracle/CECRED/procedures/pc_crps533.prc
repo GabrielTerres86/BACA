@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 24/11/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -243,6 +243,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
                             cada conta do arquivo - Melhoria 69 (Lucas Ranghetti/Elton)
+                            
+               07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+                            (Lucas Ranghetti/Elton)
      ............................................................................. */
 
      DECLARE
@@ -392,7 +395,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
           FROM crapneg crapneg
          WHERE crapneg.cdcooper = pr_cdcooper
          AND   crapneg.cdhisest = 1
-         AND   crapneg.cdobserv IN (11,12,13,14,20,25,28,30,35,43,44,45)
+         AND   crapneg.cdobserv IN (12,13,14,20,25,28,30,35,43,44,45)
          AND   crapneg.dtfimest IS NULL;
        rw_crapneg cr_crapneg%ROWTYPE;
 
@@ -415,10 +418,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        rw_crapneg_reg cr_crapneg_reg%ROWTYPE;
        
        --Selecionar Saldos Negativos e Devolucoes de Cheque
-       CURSOR cr_crapneg_reg_not (pr_cdcooper IN crapneg.cdcooper%TYPE,
-                                  pr_nrdconta IN crapneg.nrdconta%TYPE,
-                                  pr_nrdocmto IN crapneg.nrdocmto%TYPE,
-                                  pr_cdobserv IN VARCHAR ) IS
+       CURSOR cr_crapneg_2 (pr_cdcooper IN crapneg.cdcooper%TYPE,
+                            pr_nrdconta IN crapneg.nrdconta%TYPE,
+                            pr_nrdocmto IN crapneg.nrdocmto%TYPE) IS
          SELECT /*+ index (crapneg crapneg##crapneg7) */
                 crapneg.nrdconta
                ,crapneg.nrdocmto
@@ -428,9 +430,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
          AND   crapneg.cdhisest = 1
          AND   crapneg.nrdconta = pr_nrdconta
          AND   crapneg.nrdocmto = pr_nrdocmto
-         AND   crapneg.cdobserv NOT IN(pr_cdobserv) 
+         AND   crapneg.cdobserv IN (11,12,13,14,20,25,28,30,35,43,44,45)
          AND   crapneg.dtfimest IS NULL;
-       rw_crapneg_reg_not cr_crapneg_reg_not%ROWTYPE;
+       rw_crapneg_2 cr_crapneg_2%ROWTYPE;
        
        -- Verificar se devolucao é automatica
        CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -2963,21 +2965,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_index_crapneg:= lpad(nvl(vr_nrdconta_incorp,vr_nrdconta),10,'0')||lpad(vr_nrdocmto,10,'0');
                           -- Testar se existe saldos negativos e controles de cheque
                           IF vr_tab_crapneg.EXISTS(vr_index_crapneg) THEN
-                            
-                            IF cr_crapneg_reg_not%ISOPEN THEN
-                              CLOSE cr_crapneg_reg_not;  
-                            END IF;  
-                            -- Caso tenha alguma crapneg com alinea diferente de 11
-                            OPEN cr_crapneg_reg_not(pr_cdcooper => pr_cdcooper
-                                                   ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                   ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                   ,pr_cdobserv => '11'); -- not in('11')
-                            FETCH cr_crapneg_reg_not INTO rw_crapneg_reg_not;                                      
-                                  
-                            -- Caso não encontre registro de devolucao automatica com alinea 11
-                            IF cr_crapneg_reg_not%FOUND THEN
-                              CLOSE cr_crapneg_reg_not;        
-                            
                             --Se o codigo de observacao for 12 ou 13
                             IF rw_crapfdc.tpcheque = 1 THEN
                               vr_indevchq:= 1;
@@ -2986,13 +2973,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             END IF;
                             vr_cdcritic:= 414;
                             vr_cdalinea:= 49;
-                            ELSE
-                              CLOSE cr_crapneg_reg_not;  
-                            END IF;                            
                           END IF;
                         END IF; --cr_cdcritic = 0
-                      END IF; --cr_crapfdc%NOTFOUND
-
+                      END IF;
                       --Fechar cursor caso esteja aberto
                       IF cr_crapfdc%ISOPEN THEN
                         --Fechar cursor
@@ -3879,10 +3862,18 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               **************** ALINEA DE DEVOLUÇÃO ***********************
                               ***********************************************************/
                               
-                              --Montar indice crapneg
-                              vr_index_crapneg:= lpad(nvl(vr_nrdconta_incorp,vr_nrdconta),10,'0')||lpad(vr_nrdocmto,10,'0');
-                              -- Testar se existe saldos negativos e controles de cheque
-                              IF vr_tab_crapneg.EXISTS(vr_index_crapneg) THEN
+                              IF cr_crapneg_2%ISOPEN THEN
+                                CLOSE cr_crapneg_2;  
+                              END IF;  
+                              -- Verificar se existe alineas ja devolvidas
+                              OPEN cr_crapneg_2(pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
+                                               ,pr_nrdocmto => nvl(vr_nrdocmto,0));
+                              FETCH cr_crapneg_2 INTO rw_crapneg_2;                                      
+                                    
+                              -- Caso houver alguma alinea devolvida
+                              IF cr_crapneg_2%FOUND THEN
+                                CLOSE cr_crapneg_2;        
                                 
                                 IF cr_crapneg_reg%ISOPEN THEN
                                   CLOSE cr_crapneg_reg;  
@@ -3909,13 +3900,14 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                   -- Caso encontre registro de devolucao automatica com alinea 11
                                   IF cr_crapneg_reg%FOUND THEN
                                     CLOSE cr_crapneg_reg;  
-                                  vr_cdalinea := 12;
-                                ELSE
-                                   CLOSE cr_crapneg_reg;  
-                                  vr_cdalinea := 49;
-                                END IF;
+                                    vr_cdalinea := 12;
+                                  ELSE
+                                    CLOSE cr_crapneg_reg;  
+                                    vr_cdalinea := 49;
+                                  END IF;
                                 END IF;
                               ELSE
+                                CLOSE cr_crapneg_2;  
                                 vr_cdalinea:= 11;
                               END IF;
                               
