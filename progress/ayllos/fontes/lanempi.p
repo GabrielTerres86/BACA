@@ -839,7 +839,7 @@ DO WHILE TRUE:
 								 DO:
 									IF crapepr.vlsdprej < 0 THEN
 										DO:
-											ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej) * (-1) -
+											ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
 															   aux_vlrsaldo.
 										END.
 									ELSE
