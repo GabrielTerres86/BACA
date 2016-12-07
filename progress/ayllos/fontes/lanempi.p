@@ -92,6 +92,13 @@
                           
              06/11/2015 - Adicionado tratamento para pagamento de emprestimos por
                           boleto. (Reinert)                                                                               
+                          
+             15/08/2016 - Controlar o preenchimento da data de pagamento do prejuízo,
+                          no momento da liquidaçao do mesmo. (Renato Darosci - M176)
+		     
+			 31/10/2016 - Adicionado tratamento para casos onde o valor de prejuizo
+			              foi gravado como negativo na base. Chamado 533531
+                          
 ............................................................................. */
 
 { includes/var_online.i }
@@ -526,6 +533,9 @@ DO WHILE TRUE:
                ELSE
                     NEXT.
                        
+               /* Guardar o valor de saldo de prejuizo (Renato Darosci - 15/08/2016) */ 
+               ASSIGN ant_vlsdprej = crapepr.vlsdprej.
+                   
                IF   tab_inusatab           AND
                     crapepr.inliquid = 0   THEN
                     DO:
@@ -835,7 +845,8 @@ DO WHILE TRUE:
                                 END. /* END IF aux_vlrsaldo > 0 THEN */
 
                         
-                              IF aux_vlrsaldo > 0 THEN
+                                /* 3o Valor em Prejuizo */
+                             IF aux_vlrsaldo > 0 THEN
 								 DO:
 									IF crapepr.vlsdprej < 0 THEN
 										DO:
@@ -852,12 +863,24 @@ DO WHILE TRUE:
                          END. /* END crapepr.tpemprst = 1  */
                       ELSE  
                          DO:
-                             ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+							IF crapepr.vlsdprej < 0 THEN
+								DO:
+									ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej * -1) -
                                                        tel_vllanmto.
+								END.
+							ELSE
+								DO:
+									ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+															  tel_vllanmto.
+                         END.
                          END.
 
                   END. /* END IF aux_indebcre = "C"   THEN */
 
+               /* Setar a data de liquidaçao do prejuízo (Renato Darosci - 15/08/2016) */
+               IF ant_vlsdprej > 0 AND crapepr.vlsdprej = 0 THEN
+                   ASSIGN crapepr.dtliqprj = glb_dtmvtolt.
+                  
            END. /* END IF   crapepr.inprejuz <> 0   THEN */
       ELSE  
            DO:                                                   
