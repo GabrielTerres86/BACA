@@ -25,7 +25,7 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
                   08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
                                Futuros. Lenilson (Mouts)
 
-............................................................................... */
+..................07/12/2016 - alteracao chamado  564807............................................................. */
 
 DEFINE  INPUT PARAMETER par_dtiniext    AS DATE                     NO-UNDO.
 DEFINE  INPUT PARAMETER par_dtfimext    AS DATE                     NO-UNDO.
@@ -539,7 +539,7 @@ RUN procedures/obtem_saldo_limite.p ( INPUT 0,
 									 OUTPUT aux_idastcjt,
                                      OUTPUT par_flgderro).
 
-aux_vlstotal = aux_vlsddisp - aux_vllautom + aux_vlsdbloq +
+aux_vlstotal = aux_vlsddisp - aux_vlsdbloq +
                aux_vlsdblpr + aux_vlsdblfp + aux_vlsdchsl.
 
 /* monta o comprovante do saldo, passa os nome em branco para
