@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas/Guilherme
-   Data    : Março/2012.                     Ultima atualizacao: 25/03/2016
+   Data    : Março/2012.                     Ultima atualizacao: 20/09/2016
 
    Dados referentes ao programa:
 
@@ -44,6 +44,8 @@
                
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
                             
+               20/09/2016 - Adicionar filtro de data para o 620_termos (Lucas Ranghetti #480384/#469603)     
+                            
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -71,8 +73,10 @@ DEF  VAR aux_codsmart  AS INT                                           NO-UNDO.
 /*DEF  VAR aux_dtvalida  AS DATE                                          NO-UNDO.*/
 DEF  VAR aux_dtcadast  AS DATE                                          NO-UNDO.
 DEF  VAR aux_dtcredit  AS DATE                                          NO-UNDO.
+DEF  VAR aux_dttermos  AS DATE                                          NO-UNDO.
 DEF  VAR aux_dscritic  AS CHAR                                          NO-UNDO.
 DEF  VAR aux_nmcooper  AS CHAR                                          NO-UNDO.
+
 DEF  VAR tel_cdcooper  AS CHAR        FORMAT "x(12)" VIEW-AS COMBO-BOX   
     INNER-LINES 11  NO-UNDO.
 
@@ -170,6 +174,9 @@ FORM SKIP(1)
      aux_dtcredit LABEL "Data Validacao de Credito" AT 8 FORMAT "99/99/9999"
                   HELP "Informe a data inicial para validar documentos digitalizados"
      SKIP
+     aux_dttermos LABEL "Data Validacao de Termos" AT 9 FORMAT "99/99/9999"
+                  HELP "Informe a data inicial para validar documentos digitalizados"
+     SKIP
      flg_digitlib LABEL "Cadastro liberado?" AT 15
      SKIP
      flg_envemail LABEL "Enviar relat. por email?" AT 9 
@@ -187,7 +194,7 @@ FORM SKIP(1)
      tel_dsdemail[6] AT 35 NO-LABEL 
      HELP "Informe e-mails para envio."
      SKIP(1)
-     WITH ROW 8 COLUMN 5 OVERLAY SIDE-LABEL NO-BOX FRAME f_opcao_m.
+     WITH ROW 7 COLUMN 5 OVERLAY SIDE-LABEL NO-BOX FRAME f_opcao_m.
 
 FORM tel_cdcooper AT 07 LABEL "Cooperativa"
                         HELP "Selecione a Cooperativa"
@@ -746,9 +753,8 @@ DO WHILE TRUE:
 
             ASSIGN aux_codsmart = 0
                    aux_dtcredit = ?
-                   aux_dtcadast = ?.
-
-            
+                   aux_dtcadast = ?
+                   aux_dttermos = ?.
 
             /* Quando alterar esta tab, tambem alterar a b1wgen0137 */
             FIND craptab WHERE craptab.cdcooper = glb_cdcooper    AND
@@ -761,7 +767,8 @@ DO WHILE TRUE:
             IF  AVAIL craptab  THEN
                 ASSIGN aux_codsmart = INTE(ENTRY(1,craptab.dstextab,";"))
                        aux_dtcadast = DATE(ENTRY(2,craptab.dstextab,";"))
-                       aux_dtcredit = DATE(ENTRY(3,craptab.dstextab,";")).
+                       aux_dtcredit = DATE(ENTRY(3,craptab.dstextab,";"))
+                       aux_dttermos = DATE(ENTRY(4,craptab.dstextab,";")).
 
             /*LIBERADO*/           
             FIND craptab WHERE  craptab.cdcooper = glb_cdcooper    AND
@@ -774,18 +781,19 @@ DO WHILE TRUE:
             IF  AVAIL craptab  THEN
                 ASSIGN flg_digitlib = LOGICAL(ENTRY(1,craptab.dstextab,";"),"S/N").
                        
-
             /*LIBERADO*/ 
             DISPLAY tel_dsdemail 
                     aux_codsmart 
                     aux_dtcadast
                     aux_dtcredit
+                    aux_dttermos
                     flg_digitlib
                     WITH FRAME f_opcao_m.
            
             UPDATE aux_codsmart 
                    aux_dtcadast
                    aux_dtcredit
+                   aux_dttermos
                    flg_digitlib
                    flg_envemail 
                    WITH FRAME f_opcao_m.
@@ -841,8 +849,9 @@ DO WHILE TRUE:
 
                                 END.
                             END.
+
                             /* Alteração data de cadastro */
-                            IF ENTRY(2,craptab.dstextab,";") <> STRING(aux_dtcadast) THEN
+                            IF STRING(DATE(ENTRY(2,craptab.dstextab,";"))) <> STRING(aux_dtcadast) THEN
                                 DO:
                                     /* Mensagem do LOG */
                                     ASSIGN aux_msgdolog = "Alterou a data validacao de " + ENTRY(2,craptab.dstextab,";")
@@ -872,7 +881,7 @@ DO WHILE TRUE:
                                 END.
 
                             /* Alteração data de credito */
-                            IF  ENTRY(3,craptab.dstextab,";") <> STRING(aux_dtcredit) THEN
+                            IF  STRING(DATE(ENTRY(3,craptab.dstextab,";"))) <> STRING(aux_dtcredit) THEN
                                 DO:
                                     /* Mensagem do LOG */
                                     ASSIGN aux_msgdolog = "Alterou a data validacao de " + ENTRY(3,craptab.dstextab,";")
@@ -888,6 +897,36 @@ DO WHILE TRUE:
                                     IF  AVAIL craptab  THEN 
                                     DO:
                                         ASSIGN ENTRY(3,craptab.dstextab,";") = STRING(aux_dtcredit,"99/99/9999"). 
+    
+                                        /* Grava o LOG */
+                                        UNIX SILENT VALUE 
+                                          ("echo "          + STRING(glb_dtmvtolt,"99/99/9999")  +
+                                           " - "            + STRING(TIME,"HH:MM:SS")            +
+                                           " Operador: "    + glb_cdoperad + " --- "             +
+                                            aux_msgdolog                                         +
+                                           " >> /usr/coop/" + TRIM(crapcop.dsdircop)             +
+                                           "/log/tab093.log").
+    
+                                    END.
+                                END.
+
+                            /* Alteração data de termos */
+                            IF  STRING(DATE(ENTRY(4,craptab.dstextab,";"))) <> STRING(aux_dttermos) THEN
+                                DO:
+                                    /* Mensagem do LOG */
+                                    ASSIGN aux_msgdolog = "Alterou a data validacao de " + ENTRY(4,craptab.dstextab,";")
+                                                      + " para " + STRING(aux_dttermos,"99/99/9999").
+    
+                                    FIND craptab WHERE  craptab.cdcooper = glb_cdcooper    AND
+                                                        craptab.nmsistem = "CRED"          AND
+                                                        craptab.tptabela = "GENERI"        AND
+                                                        craptab.cdempres = 00              AND
+                                                        craptab.cdacesso = "DIGITACOOP"    AND
+                                                        craptab.tpregist = 0  EXCLUSIVE-LOCK NO-ERROR.
+        
+                                    IF  AVAIL craptab  THEN 
+                                    DO:
+                                        ASSIGN ENTRY(4,craptab.dstextab,";") = STRING(aux_dttermos,"99/99/9999"). 
     
                                         /* Grava o LOG */
                                         UNIX SILENT VALUE 
@@ -1004,7 +1043,7 @@ DO WHILE TRUE:
                     END.
                     
                     /* Verifica alteração da data de cadastro */
-                    IF  ENTRY(2,craptab.dstextab,";") <> STRING(aux_dtcadast) THEN
+                    IF  STRING(DATE(ENTRY(2,craptab.dstextab,";"))) <> STRING(aux_dtcadast) THEN
                     DO:
                         /* Mensagem do LOG */
                         ASSIGN aux_msgdolog = "Alterou a data validacao de cadastro de" + ENTRY(2,craptab.dstextab,";")
@@ -1034,10 +1073,10 @@ DO WHILE TRUE:
                     END.
 
                     /* Verifica alteração da data de credito */
-                    IF  ENTRY(3,craptab.dstextab,";") <> STRING(aux_dtcredit) THEN
+                    IF  STRING(DATE(ENTRY(3,craptab.dstextab,";"))) <> STRING(aux_dtcredit) THEN
                     DO:
                         /* Mensagem do LOG */
-                        ASSIGN aux_msgdolog = "Alterou a data validacao de cadastro de" + ENTRY(3,craptab.dstextab,";")
+                        ASSIGN aux_msgdolog = "Alterou a data validacao de credito de " + ENTRY(3,craptab.dstextab,";")
                                           + " para " + STRING(aux_dtcredit,"99/99/9999").
 
                         FIND craptab WHERE  craptab.cdcooper = glb_cdcooper    AND
@@ -1063,6 +1102,35 @@ DO WHILE TRUE:
                         END.
                     END.
 
+                    /* Alteração data de termos */
+                    IF  STRING(DATE(ENTRY(4,craptab.dstextab,";"))) <> STRING(aux_dttermos) THEN
+                        DO:
+                            /* Mensagem do LOG */
+                            ASSIGN aux_msgdolog = "Alterou a data validacao de termos de " + ENTRY(4,craptab.dstextab,";")
+                                              + " para " + STRING(aux_dttermos,"99/99/9999").
+
+                            FIND craptab WHERE  craptab.cdcooper = glb_cdcooper    AND
+                                                craptab.nmsistem = "CRED"          AND
+                                                craptab.tptabela = "GENERI"        AND
+                                                craptab.cdempres = 00              AND
+                                                craptab.cdacesso = "DIGITACOOP"    AND
+                                                craptab.tpregist = 0  EXCLUSIVE-LOCK NO-ERROR.
+
+                            IF  AVAIL craptab  THEN 
+                            DO:
+                                ASSIGN ENTRY(4,craptab.dstextab,";") = STRING(aux_dttermos,"99/99/9999"). 
+
+                                /* Grava o LOG */
+                                UNIX SILENT VALUE 
+                                  ("echo "          + STRING(glb_dtmvtolt,"99/99/9999")  +
+                                   " - "            + STRING(TIME,"HH:MM:SS")            +
+                                   " Operador: "    + glb_cdoperad + " --- "             +
+                                    aux_msgdolog                                         +
+                                   " >> /usr/coop/" + TRIM(crapcop.dsdircop)             +
+                                   "/log/tab093.log").
+
+                            END.
+                        END.                    
                     
                     /* Executa somente em caso de alterações */
                     IF aux_logalter <> tel_dstextab[3] OR LOGICAL(tel_dstextab[1], "S/N") <> flg_envemail THEN
