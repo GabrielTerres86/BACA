@@ -19,7 +19,7 @@ Ultima alteração: 15/10/2010 - Ajustes para TAA compartilhado (Evandro).
 				  08/11/2016 - Alteracoes referentes a melhoria 165 - Lancamentos
                                Futuros. Lenilson (Mouts)
 
-............................................................................... */
+.................07/12/2016 - alteracoes TAA chamado 564807.............................................................. */
 
 /*----------------------------------------------------------------------*/
 /*          This .W file was created with the Progress AppBuilder.      */
@@ -59,11 +59,11 @@ DEFINE VARIABLE aux_idastcjt        AS INTEGER     			NO-UNDO.
 
 /* Standard List Definitions                                            */
 &Scoped-Define ENABLED-OBJECTS RECT-15 RECT-16 ed_nmtitula ed_vlsddisp ~
-ed_vllautom ed_valaucre ed_vlsdbloq ed_vlblqtaa Btn_G ed_vlsdblpr ~
-ed_vlsdblfp ed_vlsdchsl ed_vlstotal Btn_H ed_vllimcre 
+ed_vllautom ed_valaucre ed_vlsdbloq ed_vlblqtaa ed_vlsdblpr ed_vlsdblfp ~
+Btn_G ed_vlsdchsl ed_vlstotal ed_vllimcre Btn_H ed_vlcreddeb 
 &Scoped-Define DISPLAYED-OBJECTS ed_nmtitula ed_vlsddisp ed_vllautom ~
 ed_valaucre ed_vlsdbloq ed_vlblqtaa ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl ~
-ed_vlstotal ed_vllimcre 
+ed_vlstotal ed_vllimcre ed_vlcreddeb 
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -104,6 +104,11 @@ DEFINE VARIABLE ed_valaucre AS DECIMAL FORMAT "zz,zzz,zzz,zz9.99-":U INITIAL 0
      BGCOLOR 15 FGCOLOR 1 FONT 11 NO-UNDO.
 
 DEFINE VARIABLE ed_vlblqtaa AS DECIMAL FORMAT "zz,zzz,zzz,zz9.99-":U INITIAL 0 
+     VIEW-AS FILL-IN 
+     SIZE 40 BY 1.19
+     BGCOLOR 15 FGCOLOR 1 FONT 11 NO-UNDO.
+
+DEFINE VARIABLE ed_vlcreddeb AS DECIMAL FORMAT "zz,zzz,zzz,zz9.99-":U INITIAL 0 
      VIEW-AS FILL-IN 
      SIZE 40 BY 1.19
      BGCOLOR 15 FGCOLOR 1 FONT 11 NO-UNDO.
@@ -165,7 +170,7 @@ DEFINE RECTANGLE RECT-103
 
 DEFINE RECTANGLE RECT-15
      EDGE-PIXELS 4 GRAPHIC-EDGE  NO-FILL   
-     SIZE 102 BY 19.52.
+     SIZE 102 BY 21.43.
 
 DEFINE RECTANGLE RECT-16
      EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
@@ -183,51 +188,38 @@ DEFINE FRAME f_cartao_saldos_conta
      ed_nmtitula AT ROW 8.29 COL 14 NO-LABEL WIDGET-ID 96
      ed_vlsddisp AT ROW 12.33 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 110
      ed_vllautom AT ROW 13.76 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 98
-     ed_valaucre AT ROW 15.1 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 168
+     ed_valaucre AT ROW 15.1 COL 68 COLON-ALIGNED NO-LABEL WIDGET-ID 168
      ed_vlsdbloq AT ROW 16.48 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 104
      ed_vlblqtaa AT ROW 17.91 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 140
-     Btn_G AT ROW 19.1 COL 116 WIDGET-ID 86
      ed_vlsdblpr AT ROW 19.33 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 106
      ed_vlsdblfp AT ROW 20.76 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 102
+     Btn_G AT ROW 21.95 COL 116 WIDGET-ID 86
      ed_vlsdchsl AT ROW 22.19 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 108
      ed_vlstotal AT ROW 24.1 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 112
      Btn_H AT ROW 24.1 COL 116 WIDGET-ID 74
      ed_vllimcre AT ROW 25.52 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 100
-     "CONSULTA DE SALDOS" VIEW-AS TEXT
-          SIZE 106 BY 3.33 AT ROW 1.48 COL 28 WIDGET-ID 166
-          FGCOLOR 1 FONT 10
-     "Em Cheques Fora Praça:" VIEW-AS TEXT
-          SIZE 44 BY 1.19 AT ROW 20.76 COL 68 RIGHT-ALIGNED WIDGET-ID 116
+     Btn_H AT ROW 25.62 COL 116 WIDGET-ID 74
+     ed_vlcreddeb AT ROW 26.91 COL 109 RIGHT-ALIGNED NO-LABEL WIDGET-ID 172
+     "ao mês atual." VIEW-AS TEXT
+          SIZE 44 BY 1.19 AT ROW 18.95 COL 115 WIDGET-ID 178
           FONT 14
-     "Saldo Total:" VIEW-AS TEXT
-          SIZE 21 BY 1.19 AT ROW 24.1 COL 48 WIDGET-ID 114
-          FONT 14
-     "Débitos Programados:" VIEW-AS TEXT
-          SIZE 38 BY 1.19 AT ROW 15.05 COL 30.8 WIDGET-ID 128
-          FONT 14
-     "Limite Cheque Especial:" VIEW-AS TEXT
-          SIZE 42.8 BY 1.19 AT ROW 25.52 COL 27 WIDGET-ID 118
+     "*Lançamentos Referente" VIEW-AS TEXT
+          SIZE 44 BY 1.19 AT ROW 17.67 COL 115 WIDGET-ID 176
           FONT 14
      "Em Cheques da Praça:" VIEW-AS TEXT
           SIZE 40 BY 1.19 AT ROW 19.33 COL 29 WIDGET-ID 142
           FONT 14
-     "Cheque Salário:" VIEW-AS TEXT
-          SIZE 28 BY 1.19 AT ROW 22.19 COL 41 WIDGET-ID 120
+     "CONSULTA DE SALDOS" VIEW-AS TEXT
+          SIZE 106 BY 3.33 AT ROW 1.48 COL 28 WIDGET-ID 166
+          FGCOLOR 1 FONT 10
+     "Saldo Com Créditos e Débitos:" VIEW-AS TEXT
+          SIZE 52.8 BY 1.19 AT ROW 26.91 COL 17 WIDGET-ID 174
           FONT 14
      "Empréstimos a Liberar:" VIEW-AS TEXT
           SIZE 39.8 BY 1.19 AT ROW 16.48 COL 29.2 WIDGET-ID 122
           FONT 14
-     "Débitos Programados:" VIEW-AS TEXT
-          SIZE 38 BY 1.19 AT ROW 13.76 COL 30.8 WIDGET-ID 128
-          FONT 14
-     "Em Cheques Fora Praça:" VIEW-AS TEXT
-          SIZE 44 BY 1.19 AT ROW 20.76 COL 68 RIGHT-ALIGNED WIDGET-ID 116
-          FONT 14
-     "CONSULTA DE SALDOS" VIEW-AS TEXT
-          SIZE 106 BY 3.33 AT ROW 1.48 COL 28 WIDGET-ID 166
-          FGCOLOR 1 FONT 10
-     "Créditos Programados:" VIEW-AS TEXT
-          SIZE 38.8 BY 1.19 AT ROW 15.1 COL 29.4 WIDGET-ID 170
+     "Saldo Total:" VIEW-AS TEXT
+          SIZE 21 BY 1.19 AT ROW 24.1 COL 48 WIDGET-ID 114
           FONT 14
      "Disponível para Saque:" VIEW-AS TEXT
           SIZE 40 BY 1.19 AT ROW 12.33 COL 29 WIDGET-ID 126
@@ -235,7 +227,22 @@ DEFINE FRAME f_cartao_saldos_conta
      "Depósitos TAA a Confirmar:" VIEW-AS TEXT
           SIZE 47 BY 1.19 AT ROW 17.91 COL 21.6 WIDGET-ID 124
           FONT 14
-     RECT-15 AT ROW 9.1 COL 11 WIDGET-ID 92
+     "Em Cheques Fora Praça:" VIEW-AS TEXT
+          SIZE 44 BY 1.19 AT ROW 20.76 COL 68 RIGHT-ALIGNED WIDGET-ID 116
+          FONT 14
+     "Cheque Salário:" VIEW-AS TEXT
+          SIZE 28 BY 1.19 AT ROW 22.19 COL 41 WIDGET-ID 120
+          FONT 14
+     "Lançamentos Futuros a Crédito*:" VIEW-AS TEXT
+          SIZE 55.2 BY 1.19 AT ROW 15.1 COL 13 WIDGET-ID 170
+          FONT 14
+     "Lançamentos Futuros a Débito*:" VIEW-AS TEXT
+          SIZE 54.8 BY 1.19 AT ROW 13.76 COL 14 WIDGET-ID 128
+          FONT 14
+     "Limite Cheque Especial:" VIEW-AS TEXT
+          SIZE 42.8 BY 1.19 AT ROW 25.52 COL 27 WIDGET-ID 118
+          FONT 14
+     RECT-15 AT ROW 7.91 COL 11 WIDGET-ID 92
      RECT-16 AT ROW 23.62 COL 13 WIDGET-ID 94
      RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 162
      RECT-102 AT ROW 5.52 COL 19.6 WIDGET-ID 164
@@ -246,12 +253,6 @@ DEFINE FRAME f_cartao_saldos_conta
          SIZE 160 BY 28.57 WIDGET-ID 100.
 
 DEFINE FRAME f_saldo_madrugada
-     "SALDO ANTES DA" VIEW-AS TEXT
-          SIZE 31 BY .95 AT ROW 3.86 COL 4
-          FGCOLOR 9 FONT 11
-     "COMPENSAÇÃO" VIEW-AS TEXT
-          SIZE 31 BY .95 AT ROW 4.81 COL 4
-          FGCOLOR 9 FONT 11
      "    ATENÇÃO" VIEW-AS TEXT
           SIZE 33 BY 1.67 AT ROW 1.48 COL 3
           BGCOLOR 14 FGCOLOR 12 FONT 8
@@ -267,11 +268,17 @@ DEFINE FRAME f_saldo_madrugada
      "DIÁRIA DOS" VIEW-AS TEXT
           SIZE 31 BY .95 AT ROW 5.76 COL 4
           FGCOLOR 9 FONT 11
+     "SALDO ANTES DA" VIEW-AS TEXT
+          SIZE 31 BY .95 AT ROW 3.86 COL 4
+          FGCOLOR 9 FONT 11
+     "COMPENSAÇÃO" VIEW-AS TEXT
+          SIZE 31 BY .95 AT ROW 4.81 COL 4
+          FGCOLOR 9 FONT 11
      RECT-122 AT ROW 1.24 COL 2
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          NO-LABELS SIDE-LABELS NO-UNDERLINE THREE-D 
-         AT COL 115 ROW 8.86
-         SIZE 38 BY 10 WIDGET-ID 200.
+         AT COL 115 ROW 7.43
+         SIZE 37 BY 9.76 WIDGET-ID 200.
 
 
 /* *********************** Procedure Settings ************************ */
@@ -331,6 +338,8 @@ ASSIGN FRAME f_saldo_madrugada:FRAME = FRAME f_cartao_saldos_conta:HANDLE.
 /* SETTINGS FOR FRAME f_cartao_saldos_conta
    NOT-VISIBLE FRAME-NAME                                               */
 /* SETTINGS FOR FILL-IN ed_vlblqtaa IN FRAME f_cartao_saldos_conta
+   ALIGN-R                                                              */
+/* SETTINGS FOR FILL-IN ed_vlcreddeb IN FRAME f_cartao_saldos_conta
    ALIGN-R                                                              */
 /* SETTINGS FOR FILL-IN ed_vllautom IN FRAME f_cartao_saldos_conta
    ALIGN-R                                                              */
@@ -463,9 +472,10 @@ DO:
                                          OUTPUT aux_flgderro).
     
     /* monta o comprovante do saldo */
-    RUN procedures/imprime_saldo_limite.p ( INPUT glb_nmtitula,
+    RUN procedures/imprime_saldo_limite_lanc.p ( INPUT glb_nmtitula,
                                             INPUT ed_vlsddisp, 
                                             INPUT ed_vllautom, 
+                                            INPUT ed_valaucre,
                                             INPUT ed_vlsdbloq, 
                                             INPUT ed_vlblqtaa,
                                             INPUT ed_vlsdblpr, 
@@ -474,6 +484,7 @@ DO:
                                             INPUT ed_vllimcre,
                                             INPUT 0, /* pré-aprovado */
                                             INPUT ed_vlstotal,
+                                            INPUT ed_vlstotal + ed_valaucre - ed_vllautom,
                                            OUTPUT tmp_tximpres).
 
     RUN procedures/inicializa_dispositivo.p ( INPUT 6,
@@ -602,14 +613,20 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
         APPLY "CHOOSE" TO Btn_H.
     ELSE
         DO:
-            ed_vlstotal = ed_vlsddisp - ed_vllautom + ed_vlsdbloq +
+            ed_vlstotal = ed_vlsddisp - ed_vlsdbloq +
                           ed_vlsdblpr + ed_vlsdblfp + ed_vlsdchsl.
+
+            ed_vlcreddeb = ed_vlstotal + ed_valaucre - ed_vllautom.
+                                        
 
             IF  ed_vlsddisp < 0  THEN
                 ed_vlsddisp:FGCOLOR = 12.
 
             IF  ed_vlstotal < 0  THEN
                 ed_vlstotal:FGCOLOR = 12.
+
+            IF  ed_vlcreddeb < 0  THEN
+                ed_vlcreddeb:FGCOLOR = 12.    
 
             IF  ed_vllautom > 0  THEN
                 ed_vllautom:FGCOLOR = 12.
@@ -622,6 +639,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
                     ed_vlsdblfp
                     ed_vlsdchsl
                     ed_vlstotal
+                    ed_vlcreddeb
                     ed_vllimcre
                     WITH FRAME f_cartao_saldos_conta.
         END.
@@ -713,11 +731,11 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_nmtitula ed_vlsddisp ed_vllautom ed_valaucre ed_vlsdbloq 
           ed_vlblqtaa ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl ed_vlstotal 
-          ed_vllimcre 
+          ed_vllimcre ed_vlcreddeb 
       WITH FRAME f_cartao_saldos_conta.
   ENABLE RECT-15 RECT-16 ed_nmtitula ed_vlsddisp ed_vllautom ed_valaucre 
-         ed_vlsdbloq ed_vlblqtaa Btn_G ed_vlsdblpr ed_vlsdblfp ed_vlsdchsl 
-         ed_vlstotal Btn_H ed_vllimcre 
+         ed_vlsdbloq ed_vlblqtaa ed_vlsdblpr ed_vlsdblfp Btn_G ed_vlsdchsl 
+         ed_vlstotal ed_vllimcre Btn_H ed_vlcreddeb 
       WITH FRAME f_cartao_saldos_conta.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_saldos_conta}
   ENABLE RECT-122 
