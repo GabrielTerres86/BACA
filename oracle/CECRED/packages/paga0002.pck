@@ -195,14 +195,14 @@ create or replace package cecred.PAGA0002 is
   TYPE typ_reg_dados_agendamento IS
     RECORD (dtmvtage DATE
            ,dtmvtopg DATE
-		   ,dtvencto DATE
+		       ,dtvencto DATE
            ,vllanaut NUMBER
            ,dttransa DATE
            ,hrtransa INTEGER
            ,nrdocmto INTEGER
            ,dssitlau VARCHAR2(100)
-           ,dslindig VARCHAR2(100)
-           ,dscedent VARCHAR2(100)
+           ,dslindig VARCHAR2(300)
+           ,dscedent VARCHAR2(300)
            ,dtvendrf DATE
            ,dsageban VARCHAR2(100)
            ,nrctadst VARCHAR2(100)
@@ -212,13 +212,13 @@ create or replace package cecred.PAGA0002 is
            ,nrcpfpre NUMBER
            ,nmoperad VARCHAR2(100)
            ,nrcpfope NUMBER
-		   ,nrcpfcgc VARCHAR2(200)
+		       ,nrcpfcgc VARCHAR2(200)
            ,idtitdda NUMBER
            ,cdageban VARCHAR2(100)
            ,cdtiptra INTEGER
            ,dstiptra VARCHAR2(100)
            ,dtagenda DATE    
-		   ,tpcaptur INTEGER 
+		       ,tpcaptur INTEGER 
            ,dstipcat VARCHAR2(100)
            ,dsidpgto VARCHAR2(100)
            ,dsnomfon VARCHAR2(100)
