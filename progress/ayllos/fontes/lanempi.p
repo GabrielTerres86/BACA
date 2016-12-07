@@ -835,10 +835,19 @@ DO WHILE TRUE:
                                 END. /* END IF aux_vlrsaldo > 0 THEN */
 
                         
-                                /* 3o Valor em Prejuizo */
-                             IF aux_vlrsaldo > 0 THEN
-                                ASSIGN crapepr.vlsdprej = crapepr.vlsdprej - 
-                                                          aux_vlrsaldo.
+                              IF aux_vlrsaldo > 0 THEN
+								 DO:
+									IF crapepr.vlsdprej < 0 THEN
+										DO:
+											ASSIGN crapepr.vlsdprej = (crapepr.vlsdprej) * (-1) -
+															   aux_vlrsaldo.
+										END.
+									ELSE
+										DO:
+											ASSIGN crapepr.vlsdprej = crapepr.vlsdprej -
+																	  aux_vlrsaldo.
+									END.
+								 END.
                 
                          END. /* END crapepr.tpemprst = 1  */
                       ELSE  
