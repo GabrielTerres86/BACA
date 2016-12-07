@@ -1,10 +1,10 @@
-CREATE OR REPLACE PACKAGE CECRED.inss0002 AS
+CREATE OR REPLACE PACKAGE CECRED.INSS0002 AS
 
    /*---------------------------------------------------------------------------------------------------------------
 
    Programa : INSS0002
    Autor    : Dionathan
-   Data     : 27/08/2015                        Ultima atualizacao: 23/06/2016
+   Data     : 27/08/2015                        Ultima atualizacao: 26/09/2016
 
    Dados referentes ao programa:
 
@@ -37,6 +37,25 @@ CREATE OR REPLACE PACKAGE CECRED.inss0002 AS
                             
                23/06/2016 - Correcao no cursor da crapbcx utilizando o indice correto
                             sobre o campo cdopecxa.(Carlos Rafael Tanholi).       
+
+               03/08/2016 - Alteração na nomenclatura dos nomes dos XMLs de comunicação com o
+                            Sicredi, adicionado os milisecundos (Guilherme/SUPERO)
+
+               05/09/2016 - SD 514294 - Alterar as rotinas PC_GPS_VALIDAR_SICREDI e
+                            PC_GPS_ARRECADAR_SICREDI para formar a nova nomenclatura
+                            para os arquivos do GPS, possibilitando a busca e download
+                            dos mesmos.   (Renato Darosci - SUPERO)
+
+               05/09/2016 - SD 490844 - Removido o código que limpava a variável
+                            vr_cdlindig quando o agendamento era feito pelo código
+                            de barras (procedure pc_gps_agmto_novo). (Carlos)
+
+               26/09/2016 - SD 524122 - Ajuste no sequencial enviado no XML para  o SICREDI,
+                            nrautsic, para utilizar uma nova Sequence (Guilherme/SUPERO)
+                            SD 531444 - pc_gps_arquivo_download - Alterada a forma de
+                            listar os arquivos da pasta de pc_lista_arquivos para pc_OScommand_Shell
+                            (Guilherme/SUPERO)
+
   --------------------------------------------------------------------------------------------------------------- */
   PROCEDURE pc_gps_validar_sicredi(pr_cdcooper IN crapcop.cdcooper %TYPE
                                   ,pr_cdagenci IN NUMBER
@@ -268,9 +287,23 @@ CREATE OR REPLACE PACKAGE CECRED.inss0002 AS
                                  ,pr_cdcritic  OUT NUMBER
                                  ,pr_dscritic  OUT VARCHAR2);
 
+  /*---------------------------------------------------------------------------------------------------------------
+   Autor    : Renato Darosci - Supero
+   Objetivo : GPS - Organizar e preparar arquivos para download
+  ---------------------------------------------------------------------------------------------------------------*/
+  PROCEDURE pc_gps_arquivo_download(pr_cdcooper  IN NUMBER
+                                   ,pr_dtpagmto  IN VARCHAR2
+                                   ,pr_cdidenti  IN VARCHAR2
+                                   ,pr_xmllog    IN VARCHAR2             --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
 END inss0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
+CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
 
   /*---------------------------------------------------------------------------------------------------------------
    Programa : INSS0002
@@ -285,6 +318,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
    Alteracoes: 25/04/2016 - Ajustes na impressao comprovante de agendamento
                             na rotina pc_gps_agmto_novo referente a melhoria
                             112 (Tiago/Elton).
+
+               05/09/2016 - SD 514294 - Alterar as rotinas PC_GPS_VALIDAR_SICREDI e
+                            PC_GPS_ARRECADAR_SICREDI para formar a nova nomenclatura
+                            para os arquivos do GPS, possibilitando a busca e download
+                            dos mesmos.   (Renato Darosci - SUPERO)
+
+               05/09/2016 - SD 490844 - Removido o código que limpava a variável
+                            vr_cdlindig quando o agendamento era feito pelo código
+                            de barras (procedure pc_gps_agmto_novo). (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Buscar informacoes de lote
@@ -908,14 +950,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nmsubdir => NULL);
     vr_nmarqlog := vr_raizcoop || '/log/' || 'SICREDI_Soap_LogErros.log';
+
+    -- Alterado por Renato Darosci - 05/09/2016 - SD 514294
+    /******************************************************************
     vr_msgenvio := vr_raizcoop || '/arq/' ||
-                   'INSS.SOAP.GPS.E.VALIDACAO' ||
-                   to_char(pr_dtmvtolt, 'yyyymmdd') ||
-                   to_char(SYSDATE, 'sssss') || pr_cdoperad;
+                   'INSS.SOAP.GPS.E.V.' ||   -- ENVIO VALIDACAO
+                   to_char(pr_dtmvtolt, 'yyyymmdd') || '.' ||
+                   to_char(SYSDATE,'SSSSS')         ||
+                   to_char(SYSTIMESTAMP,'FF6')      || '.' ||
+                   pr_cdoperad;
     vr_msgreceb := vr_raizcoop || '/arq/' ||
-                   'INSS.SOAP.GPS.R.VALIDACAO' ||
-                   to_char(pr_dtmvtolt, 'yyyymmdd') ||
-                   to_char(SYSDATE, 'sssss') || pr_cdoperad;
+                   'INSS.SOAP.GPS.R.V.' ||   -- RECEBIMENTO VALIDACAO
+                   to_char(pr_dtmvtolt, 'yyyymmdd') || '.' ||
+                   to_char(SYSDATE,'SSSSS')         ||
+                   to_char(SYSTIMESTAMP,'FF6')      || '.' ||
+                   pr_cdoperad;
+    *******************************************************************/
+    vr_msgenvio := vr_raizcoop || '/arq/' ||
+                   'GPS.' ||   -- ENVIO VALIDACAO
+                   LPAD(vr_cdidenti,14,'0') || '.' ||
+                   to_char(pr_dtmvtolt, 'RRRRMMDD') || '.' ||
+                   to_char(SYSTIMESTAMP, 'hh24miss.FF6') || '.' ||
+                   'E.V.' ||
+                   pr_cdoperad;
+    vr_msgreceb := vr_raizcoop || '/arq/' ||
+                   'GPS.' ||   -- RECEBIMENTO VALIDACAO
+                   LPAD(vr_cdidenti,14,'0') || '.' ||
+                   to_char(pr_dtmvtolt, 'RRRRMMDD') || '.' ||
+                   to_char(SYSTIMESTAMP, 'hh24miss.FF6') || '.' ||
+                   'R.V.' ||
+                   pr_cdoperad;
+
     vr_movarqto := vr_raizcoop || '/salvar/gps/';
 
     /* APESAR DE A TAG DataVencimento SIGNIFICAR  QUE DEVE SER INFORMADA
@@ -1384,6 +1449,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
     vr_idarrgps NUMBER(10) := 0;
     vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
     vr_dsmsglog VARCHAR2(32767) := '';
+    vr_nrautsic NUMBER(5)       :=0; -- Numero Sequencial para enviar ao Sicredi
+    vr_busca    VARCHAR2(50);
 
     vr_dtdenvio VARCHAR2(19);
 
@@ -1515,14 +1582,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nmsubdir => NULL);
     vr_nmarqlog := vr_raizcoop || '/log/' || 'SICREDI_Soap_LogErros.log';
+
+    -- Alterado por Renato Darosci - 05/09/2016 - SD 514294
+    /******************************************************************
     vr_msgenvio := vr_raizcoop || '/arq/' ||
-                   'INSS.SOAP.GPS.E.ARRECADACAO' ||
-                   to_char(pr_dtmvtolt, 'yyyymmdd') ||
-                   to_char(SYSDATE, 'sssss') || pr_cdoperad;
+                     'INSS.SOAP.GPS.' ||   -- ENVIO ARRECADACAO
+                   to_char(pr_dtmvtolt, 'yyyymmdd') || '.' ||
+                   to_char(SYSDATE,'SSSSS')         ||
+                   to_char(SYSTIMESTAMP,'FF6')      || '.' ||
+                   pr_cdoperad;
     vr_msgreceb := vr_raizcoop || '/arq/' ||
-                   'INSS.SOAP.GPS.R.ARRECADACAO' ||
-                   to_char(pr_dtmvtolt, 'yyyymmdd') ||
-                   to_char(SYSDATE, 'sssss') || pr_cdoperad;
+                     'INSS.SOAP.GPS.' ||   -- RECEBIMENTO ARRECADACAO
+                   to_char(pr_dtmvtolt, 'yyyymmdd') || '.' ||
+                   to_char(SYSDATE,'SSSSS')         ||
+                   to_char(SYSTIMESTAMP,'FF6')      || '.' ||
+                   pr_cdoperad;
+    *******************************************************************/
+    vr_msgenvio := vr_raizcoop || '/arq/' ||
+                   'GPS.' ||   -- ENVIO ARRECADACAO
+                   LPAD(vr_cdidenti,14,'0') || '.' ||
+                   to_char(pr_dtmvtolt, 'RRRRMMDD') || '.' ||
+                   to_char(SYSTIMESTAMP, 'hh24miss.FF6') || '.' ||
+                   'E.A.' ||
+                   pr_cdoperad;
+    vr_msgreceb := vr_raizcoop || '/arq/' ||
+                   'GPS.' ||   -- RECEBIMENTO ARRECADACAO
+                   LPAD(vr_cdidenti,14,'0') || '.' ||
+                   to_char(pr_dtmvtolt, 'RRRRMMDD') || '.' ||
+                   to_char(SYSTIMESTAMP, 'hh24miss.FF6') || '.' ||
+                   'R.A.' ||
+                   pr_cdoperad;
+
     vr_movarqto := vr_raizcoop || '/salvar/gps/';
 
     /* APESAR DE A TAG DataVencimento SIGNIFICAR  QUE DEVE SER INFORMADA
@@ -1673,10 +1763,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
       -- Completa literal com o Identificador
       pr_dslitera := pr_dslitera || pr_cdidenti;
 
+
+      -- Nr Sequencial para enviar no XML do SICREDI apenas
+      vr_busca    :=  TRIM(pr_cdcooper)    || ';' ||
+                      TO_char(rw_crapdat.dtmvtocd,'dd/mm/yyyy');
+      vr_nrautsic := fn_sequence('CRAPLGP','NRAUTSIC',vr_busca);
+
       /* Grava id da arrecadacao da gps do sicredi na lgp */
       BEGIN
         UPDATE craplgp lgp
            SET lgp.nrautdoc = pr_nrseqaut  -- ID autenticacao CECRED
+             , lgp.nrautsic = vr_nrautsic  -- ID autenticacao apenas para envio ao SICREDI
          WHERE lgp.rowid = vr_craplgp_rowid;
         --Se nao atualizou registro
         IF SQL%ROWCOUNT = 0 THEN
@@ -1836,7 +1933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
                   '<arr:autenticacao>' ||
                       '<aut:usuario>CECR</aut:usuario>' || -- No Máximo 4 Letras/números
                       '<aut:terminal>1</aut:terminal>' ||
-                      '<aut:numeroAutenticacao>' || to_char(pr_nrseqaut) || '</aut:numeroAutenticacao>' ||
+                      '<aut:numeroAutenticacao>' || to_char( vr_nrautsic) || '</aut:numeroAutenticacao>' ||
                   '</arr:autenticacao>';
 
     --FECHA AS TAGS E FINALIZA O XML
@@ -2083,8 +2180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
        WHERE lgp.cdcooper = gps.cdcooper
          AND lgp.nrctapag = gps.nrdconta
          AND lgp.nrseqagp = gps.nrseqagp
-         AND gps.nrdconta = pr_nrdconta  /*825077 -- */
-         AND gps.cdcooper = pr_cdcooper  /*1 -- */
+         AND gps.nrdconta = pr_nrdconta
+         AND gps.cdcooper = pr_cdcooper
          AND gps.insituacao = 0 -- ATIVA
        GROUP BY gps.cdcooper
               , gps.nrdconta
@@ -3280,9 +3377,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
                          ,1);                                      -- tpdvalor
 
       -- Limpa a variavel
+      /* CARLOS - 05/09/2016 - SD 490844
       IF TRIM(pr_cdbarras) IS NOT NULL THEN
          vr_cdlindig := NULL;
-      END IF;
+      END IF; */
 
     EXCEPTION
       WHEN OTHERS THEN
@@ -5513,6 +5611,330 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inss0002 AS
       --Monta mensagem de critica
       pr_dscritic := 'Erro na INSS0002.pc_gps_atualiza_pagto --> '|| SQLERRM;
   END pc_gps_atualiza_pagto;
+
+
+  PROCEDURE pc_gps_arquivo_download(pr_cdcooper  IN NUMBER
+                                   ,pr_dtpagmto  IN VARCHAR2
+                                   ,pr_cdidenti  IN VARCHAR2
+                                   ,pr_xmllog    IN VARCHAR2             --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+
+    /* .............................................................................
+     Programa: pc_gps_arquivo_download
+     Sistema : Rotinas acessadas pelas telas de cadastros Web
+     Sigla   : INSS
+     Autor   : Renato Darosci - Supero
+     Data    : Setembro/2016.                  Ultima atualizacao: 30/09/2016
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Efetua o agrupamento e criação do ZIP com arquivos para DOWNLOAD
+     Observacao: -----
+
+     Alteracoes: 30/09/2016 - Alterada a forma de listar os arquivos da pasta
+                              de pc_lista_arquivos para pc_OScommand_Shell
+                              (Guilherme/SUPERO)
+
+    ..............................................................................*/
+    -- CURSORES
+    -- Buscar as informações da cooperativa
+    CURSOR cr_crapcop IS
+      SELECT crapcop.dsdircop
+        FROM crapcop
+       WHERE crapcop.cdcooper = pr_cdcooper;
+    rw_crapcop    cr_crapcop%ROWTYPE;
+
+    -- Tipos
+    TYPE vr_tab_delete IS TABLE OF VARCHAR2(1000) INDEX BY BINARY_INTEGER;
+
+    -- DATA DA LIBERAÇÃO
+    vr_dtlibera       CONSTANT DATE := to_date('27/09/2016','DD/MM/YYYY');
+
+    -- VARIÁVEIS
+    vr_tbdelete       vr_tab_delete; -- Guarda o nome dos arquivos a serem excluídos
+    vr_dtvalida       DATE;
+    vr_dsdireto       VARCHAR2(250);
+    vr_nmarqzip       VARCHAR2(50);
+    vr_dsprocur       VARCHAR2(50);
+    vr_list_arquivos  VARCHAR2(10000);
+    vr_array_arquivo  gene0002.typ_split;
+    vr_dscritic       VARCHAR2(1000);
+    vr_comando        VARCHAR2(32767);
+    vr_dscomora       VARCHAR2(1000);
+    vr_dsdirbin       VARCHAR2(1000);
+    vr_typ_saida      VARCHAR2(3);
+    vr_des_reto       VARCHAR2(30);
+    vr_nmarqcri       VARCHAR2(1000);
+    vr_arquivos       VARCHAR2(32767);
+
+    vr_cdcooper       NUMBER;
+    vr_nmdatela       VARCHAR2(25);
+    vr_nmeacao        VARCHAR2(25);
+    vr_cdagenci       VARCHAR2(25);
+    vr_nrdcaixa       VARCHAR2(25);
+    vr_idorigem       VARCHAR2(25);
+    vr_cdoperad       VARCHAR2(25);
+
+    -- EXCEPTION
+    vr_exc_saida      EXCEPTION;
+
+  BEGIN
+
+    -- extrair informações padrão do xml - parametros
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => pr_dscritic);
+
+    -- Criar cabecalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    -- Buscar pela cooperativa do Parametro
+    OPEN  cr_crapcop;
+    FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrar a cooperativa
+    IF cr_crapcop%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_crapcop;
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Cooperativa nao encontrada. PR_CDCOOPER = '||pr_cdcooper;
+      RAISE vr_exc_saida;
+    END IF;
+    CLOSE cr_crapcop;
+
+    -- Verificar se o identificador informado é diferente de zero, nulo ou branco
+    IF NVL(TRIM(pr_cdidenti), 0) = 0 THEN
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Identificador deve ser informado.';
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Verificar se a data está nula
+    IF TRIM(pr_dtpagmto) IS NULL THEN
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Data deve ser informada.';
+      RAISE vr_exc_saida;
+    ELSE
+      -- Verificar se a data é uma data valida
+      BEGIN
+        vr_dtvalida := to_date(pr_dtpagmto,'DD/MM/YYYY');
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Retornar a mensagem de erro
+          pr_des_erro := 'Data informada e inválida.';
+          RAISE vr_exc_saida;
+      END;
+    END IF;
+
+    -- Buscar as informações da CRAPDAT
+    OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO BTCH0001.rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+
+    -- Verificar se a data passada por parametro é data futura
+    IF vr_dtvalida > BTCH0001.rw_crapdat.dtmvtolt THEN
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Nao e permitido informar data futura.';
+      RAISE vr_exc_saida;
+
+    -- Verificar se a data passada por parâmetro é posterior a liberação da funcionalidade
+    ELSIF vr_dtvalida < vr_dtlibera THEN
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Para esta data, deve ser solicitado backup para INFRA.';
+      RAISE vr_exc_saida;
+
+    -- Se a data for superior a dois meses (considerando de forma direta)
+    ELSIF (to_number(to_char(BTCH0001.rw_crapdat.dtmvtolt,'MM')) - to_number(to_char(vr_dtvalida,'MM'))) >= 2 THEN
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Para esta data, deve ser solicitado backup para INFRA.';
+      RAISE vr_exc_saida;
+
+    -- Verificar se a data de consulta é o mês atual
+    ELSIF (to_number(to_char(BTCH0001.rw_crapdat.dtmvtolt,'MM')) = to_number(to_char(vr_dtvalida,'MM'))) THEN
+      -- Deve definir o diretório dis arquivos
+      vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_nmsubdir => 'salvar/gps');
+
+     -- Se for do mês anterior
+    ELSIF (to_number(to_char(BTCH0001.rw_crapdat.dtmvtolt,'MM')) - to_number(to_char(vr_dtvalida,'MM'))) = 1 THEN
+      -- Deve definir como diretorio de acesso dos arquivos o diretório e backup
+      vr_dsdireto := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_cdacesso => 'ROOT_WIN12')
+                   ||rw_crapcop.dsdircop
+                   ||'/salvar/gps';
+
+    ELSE
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Erro ao validar a data informada.';
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Montar o padrão do nome para a consulta dos arquivos
+    vr_dsprocur := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.*.crypto';
+
+    -- Retorna a lista dos arquivos do diretório, conforme máscara
+/*    gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
+                              ,pr_pesq     => vr_dsprocur
+                              ,pr_listarq  => vr_list_arquivos
+                              ,pr_des_erro => vr_dscritic);*/
+    gene0001.pc_OScommand_Shell(pr_des_comando => 'ls '||vr_dsdireto || '/' || vr_dsprocur ||' 2> /dev/null'
+                               ,pr_typ_saida   => vr_dscritic
+                               ,pr_des_saida   => vr_list_arquivos);
+
+    -- Se retornou erro na busca dos arquivos
+    IF NVL(vr_dscritic, ' ') = 'ERR' THEN
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Erro ao buscar lista de arquivos: ' || vr_list_arquivos;
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Se não retornou arquivos
+    IF vr_list_arquivos IS NULL THEN
+      -- Retornar a mensagem de erro
+      pr_des_erro := 'Nenhum arquivo encontrado para os parametros informados.';
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Listar os arquivos em uma tabela de memória
+    vr_array_arquivo := gene0002.fn_quebra_string(pr_string  => vr_list_arquivos
+                                                 ,pr_delimit => chr(10));
+
+    -- Buscar o diretório do script shell
+    vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
+    vr_dsdirbin:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_CECRED_BIN');
+
+    -- Percorrer todos os arquivos encontrados na pasta
+    FOR ind IN vr_array_arquivo.FIRST..vr_array_arquivo.LAST LOOP
+      /**** DESCRIPTOGRAFA O ARQUIVO ****/
+      -- Comando para descriptografar arquivo
+      vr_comando:= vr_dscomora || ' perl_remoto ' ||vr_dsdirbin||
+                   'mqcecred_descriptografa.pl --descriptografa='||
+                   chr(39)|| vr_array_arquivo(ind)||chr(39);
+
+      -- Executar o comando no unix
+      GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                            ,pr_des_comando => vr_comando
+                            ,pr_typ_saida   => vr_typ_saida
+                            ,pr_des_saida   => vr_nmarqcri);
+
+      -- Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        pr_des_erro := 'Nao foi possivel executar comando unix: '||
+                        vr_comando||' - '||vr_nmarqcri;
+
+        -- retornando ao programa chamador
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Retirar caracteres ENTER e LF do nome do arquivo
+      vr_nmarqcri := REPLACE(REPLACE(vr_nmarqcri,chr(10),''),chr(13),'');
+
+      -- Renomear o arquivo atribuindo a extensão XML
+      GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmarqcri||' '||REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml'));
+
+      -- Atualizar o nome do arquivo armazenado na variável
+      vr_nmarqcri := REPLACE(vr_nmarqcri,'.crypto.dcrypt','.xml');
+
+      /* Obtem arquivo temporario descriptografado / com .dcrypt no fim */
+      IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_nmarqcri) THEN
+        -- Se Existir o arquivo original
+        IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdireto||'/'||vr_array_arquivo(ind)) THEN
+          pr_des_erro := 'Arquivo descriptografado nao encontrado. Arquivo: '||vr_array_arquivo(ind);
+
+          -- retornando ao programa chamador
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
+      -- Guarda o nome do arquivo na lista para formar o arquivo ZIP
+      vr_arquivos := vr_arquivos||vr_nmarqcri||' ';
+
+      -- Guarda o nome do arquivo na lista de arquivos que serão aparados ao fim do processamento
+      vr_tbdelete(vr_tbdelete.count()+1) := vr_nmarqcri;
+    END LOOP;
+
+    -- Montar o nome do arquivo ZIP
+    vr_nmarqzip := 'GPS.'||LPAD(pr_cdidenti,14,'0')||'.'||to_char(vr_dtvalida,'RRRRMMDD')||'.'||vr_cdoperad||'.zip';
+
+    -- Compactar os arquivos
+    GENE0002.pc_zipcecred(pr_cdcooper => pr_cdcooper
+                         ,pr_tpfuncao => 'A'
+                         ,pr_dsorigem => vr_arquivos
+                         ,pr_dsdestin => vr_dsdireto||'/'||vr_nmarqzip
+                         ,pr_dspasswd => NULL
+                         ,pr_des_erro => vr_dscritic);
+
+    -- verifica se houve erro
+    IF vr_dscritic IS NOT NULL THEN
+      pr_des_erro := 'Erro ao compactar arquivos: '||vr_dscritic;
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Se há arquivos para excluir
+    IF vr_tbdelete.COUNT() > 0 THEN
+      -- Percorre todos os arquivos
+      FOR ind IN vr_tbdelete.FIRST..vr_tbdelete.LAST LOOP
+        -- Exclui o arquivo temporario
+        GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_tbdelete(ind));
+      END LOOP;
+    END IF;
+
+    -- Efetuar a cópia do ZIP gerado para o diretório da internet
+    GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_nmarqpdf => vr_dsdireto||'/'||vr_nmarqzip
+                                ,pr_des_reto => vr_des_reto    --> Saída com erro
+                                ,pr_tab_erro => vr_tab_erro);  --> tabela de erros
+
+    -- caso apresente erro na operação
+    IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+       IF vr_tab_erro.COUNT > 0 THEN
+          pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          pr_des_erro := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+
+          RAISE vr_exc_saida;
+       END IF;
+    END IF;
+
+    -- Exclui o arquivo ZIP
+    GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdireto||'/'||vr_nmarqzip);
+
+    -- Criar XML de retorno
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqzip>' || vr_nmarqzip || '</nmarqzip>');
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      pr_dscritic := pr_des_erro;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Dados>Rotina com erros</Dados></Root>');
+
+    WHEN OTHERS THEN
+      pr_des_erro := 'Erro geral em PC_LISGPS[pc_gps_arquivo_download]: ' || SQLERRM;
+      pr_dscritic := pr_des_erro;
+
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>Rotina com erros</Erro></Root>');
+  END pc_gps_arquivo_download;
+
 
 END inss0002;
 /
