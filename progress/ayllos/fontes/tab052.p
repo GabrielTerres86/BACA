@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Julho/2008                          Ultima alteracao: 08/03/2016
+   Data    : Julho/2008                          Ultima alteracao: 29/06/2016
       
    Dados referentes ao programa:
 
@@ -36,6 +36,11 @@
                              (Tiago/Rodrigo).  
                              
                 08/03/2016 - Ajuste no layout da tela (Kelvin).
+
+                29/06/2016 - Inclusao dos campos: Perc. de Titulos Nao Pago Beneficiario,
+                             Qtde de Titulos Nao Pago Pagador e Qtde de Titulos Protestados(Cooperado).
+                             (Jaison/James)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -180,6 +185,20 @@ FORM
     tt-dados_cecred_dsctit.pcdmulta AT 64 NO-LABEL
                        SPACE(0) "%"
 
+    tt-dados_dsctit.pcnaopag AT 2 LABEL "Perc. de Titulos Nao Pago Beneficiario"
+                       HELP "Entre com o percentual de titulos nao pago beneficiario."
+                       SPACE(0) "%"
+    tt-dados_cecred_dsctit.pcnaopag AT 64 NO-LABEL
+                       SPACE(0) "%"
+
+    tt-dados_dsctit.qtnaopag AT 8 LABEL "Qtde de Titulos Nao Pago Pagador"
+    tt-dados_cecred_dsctit.qtnaopag AT 64 NO-LABEL
+                       HELP "Entre com a qtde de titulos nao pago pagador."
+
+    tt-dados_dsctit.qtprotes AT 2 LABEL "Qtde de Titulos Protestados(Cooperado)"
+    tt-dados_cecred_dsctit.qtprotes AT 64 NO-LABEL
+                       HELP "Entre com a qtde de titulos protestados(cooperado)."
+
     WITH ROW 7 OVERLAY SIDE-LABELS WIDTH 80 FRAME f_tab052.
 
 ASSIGN glb_cddopcao = "C"
@@ -307,6 +326,9 @@ DO WHILE TRUE:
                     tt-dados_cecred_dsctit.cardbtit
                     tt-dados_cecred_dsctit.pctolera            
                     tt-dados_cecred_dsctit.pcdmulta 
+                    tt-dados_cecred_dsctit.pcnaopag 
+                    tt-dados_cecred_dsctit.qtnaopag 
+                    tt-dados_cecred_dsctit.qtprotes WHEN tel_tpcobran = TRUE
                     tt-dados_dsctit.qtrenova
                     tt-dados_dsctit.qtdiavig
                     tt-dados_cecred_dsctit.qtremcrt WHEN tel_tpcobran = TRUE
@@ -342,7 +364,10 @@ DO WHILE TRUE:
                       tt-dados_dsctit.nrmespsq 
                       tt-dados_dsctit.pctitemi 
                       tt-dados_dsctit.pctolera 
-                      tt-dados_dsctit.pcdmulta 
+                      tt-dados_dsctit.pcdmulta
+                      tt-dados_dsctit.pcnaopag
+                      tt-dados_dsctit.qtnaopag 
+                      tt-dados_dsctit.qtprotes WHEN tel_tpcobran = TRUE 
                       WITH FRAME f_tab052
   
                   EDITING:
@@ -362,7 +387,7 @@ DO WHILE TRUE:
                           APPLY LASTKEY.
   
                   END.  /*  Fim do EDITING  */            
-                
+                                
                 IF   tt-dados_dsctit.qtprzmin > tt-dados_dsctit.qtprzmax  THEN
                      DO:
                          glb_cdcritic = 26.
@@ -508,6 +533,9 @@ DO WHILE TRUE:
                           tt-dados_cecred_dsctit.pctitemi
                           tt-dados_cecred_dsctit.pctolera
                           tt-dados_cecred_dsctit.pcdmulta
+                          tt-dados_cecred_dsctit.pcnaopag
+                          tt-dados_cecred_dsctit.qtnaopag 
+                          tt-dados_cecred_dsctit.qtprotes WHEN tel_tpcobran = TRUE 
                           WITH FRAME f_tab052
         
                       EDITING:
@@ -794,7 +822,33 @@ DO WHILE TRUE:
                     RUN proc_log (STRING(tt-log_cecred.pcdmulta,"zz9.999999"),
                                   STRING(tt-dados_cecred_dsctit.pcdmulta,
                                                     "zz9.999999"),
-                                  INPUT "Percentual de Multa CECRED").                         END.
+                                  INPUT "Percentual de Multa CECRED").
+                                                    
+                    RUN proc_log (STRING(tt-log.pcnaopag,"zz9"),
+                                  STRING(tt-dados_dsctit.pcnaopag,"zz9"),
+                                  INPUT "Perc. de Titulos Nao Pago Beneficiario").
+                    
+                    RUN proc_log (STRING(tt-log_cecred.pcnaopag,"zz9"),
+                                  STRING(tt-dados_cecred_dsctit.pcnaopag,"zz9"),
+                                  INPUT "Perc. de Titulos Nao Pago Beneficiario CECRED").
+                                                    
+                    RUN proc_log (STRING(tt-log.qtnaopag,"z,zz9"),
+                                  STRING(tt-dados_dsctit.qtnaopag,"z,zz9"),
+                                  INPUT "Qtde de Titulos Nao Pago Pagador").
+                    
+                    RUN proc_log (STRING(tt-log_cecred.qtnaopag,"z,zz9"),
+                                  STRING(tt-dados_cecred_dsctit.qtnaopag,"z,zz9"),
+                                  INPUT "Qtde de Titulos Nao Pago Pagador CECRED").
+                                                    
+                    RUN proc_log (STRING(tt-log.qtprotes,"z,zz9"),
+                                  STRING(tt-dados_dsctit.qtprotes,"z,zz9"),
+                                  INPUT "Qtde de Titulos Protestados-Cooperado").
+                    
+                    RUN proc_log (STRING(tt-log_cecred.qtprotes,"z,zz9"),
+                                  STRING(tt-dados_cecred_dsctit.qtprotes,"z,zz9"),
+                                  INPUT "Qtde de Titulos Protestados-Cooperado CECRED").
+
+                END. /* NOT flg_erro */
     
             DELETE PROCEDURE h-b1wgen0030.    
             
@@ -956,7 +1010,26 @@ PROCEDURE carrega_browser:
     ASSIGN tt-param.dsparame = "Percentual de Multa"
            tt-param.properac = tt-dados_dsctit.pcdmulta
            tt-param.prcecred = tt-dados_cecred_dsctit.pcdmulta.
+           
+    CREATE tt-param.
+    ASSIGN tt-param.dsparame = "Perc. de Titulos Nao Pago Beneficiario" 
+           tt-param.properac = tt-dados_dsctit.pcnaopag
+           tt-param.prcecred = tt-dados_cecred_dsctit.pcnaopag.
+           
+    CREATE tt-param.
+    ASSIGN tt-param.dsparame = "Qtde de Titulos Nao Pago Pagador" 
+           tt-param.properac = tt-dados_dsctit.qtnaopag 
+           tt-param.prcecred = tt-dados_cecred_dsctit.qtnaopag .           
 
+    IF  tel_tpcobran = TRUE THEN
+        DO: 
+          CREATE tt-param.
+          ASSIGN tt-param.dsparame = "Qtde de Titulos Protestados-Cooperado"
+                 tt-param.properac = tt-dados_dsctit.qtprotes
+                 tt-param.prcecred = tt-dados_cecred_dsctit.qtprotes.
+                 
+        END.
+           
     OPEN QUERY param-q FOR EACH  tt-param NO-LOCK.
 
     ENABLE param-b    
