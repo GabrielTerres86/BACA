@@ -199,7 +199,7 @@ IF   NOT AVAILABLE crabcop THEN
                            " - " + glb_cdprogra + "' --> '"  +
                            glb_dscritic + " >> log/proc_batch.log").
          RETURN.
-     END.
+END.
 
 
 ASSIGN aux_nmarquiv = "integra/2011-EXTD2011_" + 
@@ -216,7 +216,7 @@ IF   SEARCH(aux_nmarquiv) = ? THEN
                             glb_cdprogra + "' --> '" + glb_dscritic +
                             " >> log/proc_batch.log").
          RETURN.
-     END.
+END.
 ELSE
      DO:  /*  Verifica a data do arquivo em todos os registros  */
      
@@ -237,7 +237,7 @@ ELSE
                  DO:
                      ASSIGN aux_regexist = FALSE.
                      LEAVE.
-                 END.
+            END.
          END.  
          
          INPUT STREAM str_1 CLOSE.
@@ -258,8 +258,8 @@ ELSE
                                     STRING(DAY(glb_dtmvtolt),"99")
                                     + ".TXT").
                   RETURN.              
-              END.
-     END.
+         END.
+END.
      
 
 INPUT STREAM str_1 FROM VALUE(aux_nmarquiv) NO-ECHO.
@@ -305,62 +305,73 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                NEXT.
            END.
 
-      IF crapcop.cdcooper = 4 THEN 
-      DO:
+      IF  crapcop.cdcooper = 4 THEN DO:  /* CONCREDI */
+
           /* Verifica cooperativa atraves do Codigo da Agencia */
           FIND FIRST crapcop WHERE crapcop.cdcooper = 1
-               NO-LOCK NO-ERROR.
-       
-          IF   NOT AVAIL crapcop  THEN
-               DO:
-                   RUN cria_rejeitado 
-                       (INPUT "Codigo de Agencia da Conta Centralizadora nao " +
-                              "encontrado.").
-                   NEXT.
-               END.
+             NO-LOCK NO-ERROR.
+
+          IF  NOT AVAIL crapcop  THEN DO:
+              RUN cria_rejeitado 
+                   (INPUT "Codigo de Agencia da Conta Centralizadora nao " +
+                          "encontrado.").
+              NEXT.
+          END.
       END.
       ELSE
-      IF crapcop.cdcooper = 15 THEN 
-      DO:
+      IF  crapcop.cdcooper = 15 THEN DO:  /* CREDIMILSUL */
+ 
           /* Verifica cooperativa atraves do Codigo da Agencia */
           FIND FIRST crapcop WHERE crapcop.cdcooper = 13
+             NO-LOCK NO-ERROR.
+       
+          IF  NOT AVAIL crapcop  THEN DO:
+              RUN cria_rejeitado 
+                  (INPUT "Codigo de Agencia da Conta Centralizadora nao " +
+                         "encontrado.").
+              NEXT.
+          END.
+      END.
+      ELSE
+      IF  crapcop.cdcooper = 17 THEN DO:  /* TRANSULCRED */
+
+          /* Verifica cooperativa atraves do Codigo da Agencia */
+          FIND FIRST crapcop WHERE crapcop.cdcooper = 9
                NO-LOCK NO-ERROR.
        
-          IF   NOT AVAIL crapcop  THEN
-               DO:
-                   RUN cria_rejeitado 
-                       (INPUT "Codigo de Agencia da Conta Centralizadora nao " +
-                              "encontrado.").
-                   NEXT.
-               END.
+          IF  NOT AVAIL crapcop  THEN DO:
+              RUN cria_rejeitado 
+                  (INPUT "Codigo de Agencia da Conta Centralizadora nao " +
+                         "encontrado.").
+              NEXT.
+          END.
       END.
 
-   
+
+
       ASSIGN aux_flgintce = FALSE
              aux_nrdocmto = INT(SUBSTR(aux_setlinha,16,4)).
 
       /* Varre Contas Centralizadoras desta Agencia(cooperativa) */ 
-      FOR EACH gnctace WHERE gnctace.cdcooper = crapcop.cdcooper  AND
-                             gnctace.cddbanco = aux_cdbccxlt      NO-LOCK:
-                             
-          IF   INT(SUBSTR(STRING(gnctace.cdageban,"zzzz9"),1,4)) = 
-               crapcop.cdagebcb THEN
-               DO:
-                   IF   gnctace.flgintce THEN
-                        DO:
-                            aux_flgintce = TRUE.
-                            LEAVE.
-                        END.
-               END.         
+      FOR EACH gnctace
+         WHERE gnctace.cdcooper = crapcop.cdcooper
+           AND gnctace.cddbanco = aux_cdbccxlt      NO-LOCK:
+
+          IF  INT(SUBSTR(STRING(gnctace.cdageban,"zzzz9"),1,4)) =               crapcop.cdagebcb THEN DO:
+
+              IF  gnctace.flgintce THEN DO:
+                  aux_flgintce = TRUE.
+                  LEAVE.
+              END.
+          END.
       END.
    
-      IF   NOT aux_flgintce  THEN
-           DO:
-               RUN cria_rejeitado
-                   (INPUT "Conta nao habilitada para integralizacao.").
-                
-               NEXT.
-           END.
+      IF  NOT aux_flgintce  THEN DO:
+          RUN cria_rejeitado
+              (INPUT "Conta nao habilitada para integralizacao.").
+
+          NEXT.
+      END.
    
       FIND crapass WHERE crapass.cdcooper = glb_cdcooper  AND
                          crapass.nrdconta = crapcop.nrctactl NO-LOCK NO-ERROR.
