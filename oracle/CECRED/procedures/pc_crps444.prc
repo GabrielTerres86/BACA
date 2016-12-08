@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 23/06/2016
+     Data    : Marco/2005.                     Ultima atualizacao: 05/12/2016
 
      Dados referentes ao programa:
 
@@ -330,6 +330,9 @@ BEGIN
 				              na hora (Tiago/Elton SD 464916).
                  23/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
                               (Carlos Rafael Tanholi).
+                              
+                 05/12/2016 - Tratamento para lancamentos das contas migradas 
+                              (Incorporacao Transposul). (Fabricio)
      ............................................................................. */
 
   DECLARE
@@ -890,6 +893,7 @@ BEGIN
      vr_cdconven            INTEGER;
      vr_cdconven_04         INTEGER;
      vr_cdconven_15         INTEGER;
+     vr_cdconven_17         INTEGER;
      vr_nrdocmt2            INTEGER;
      vr_flgfinal            BOOLEAN;
      vr_flgcraplcm          BOOLEAN;
@@ -1430,6 +1434,33 @@ BEGIN
              -- incluir no clob
              gene0002.pc_escreve_xml(vr_clob_rej,vr_char_rej,vr_dslinha||chr(13)||chr(10));
            END IF;
+           
+           
+           /* Gerar arquivo da incorporacao da Transulcred para Transpocred
+              somente no perido que as duas ctas estao ativas */
+           IF pr_cdcooper = 9 AND
+             (rw_crapdat.dtmvtolt >= to_date('12/12/2016','MM/DD/RRRR')   AND
+              rw_crapdat.dtmvtolt <= to_date('12/31/2016','MM/DD/RRRR'))  THEN
+             -- montar arquivo de rejeitados
+             vr_dslinha :=  to_char(rw_rej.dtmvtolt,'MM/DD/RRRR')          ||';'||
+                            nvl(to_char(rw_rej.dtrefere,'MM/DD/RRRR'),' ') ||';'||
+                            rw_rej.cdagenci ||';'||
+                            rw_rej.cdbccxlt ||';'||
+                            rw_rej.nrdolote ||';'||
+                            rw_rej.nrdconta ||';'||
+                            rw_rej.nrdctabb ||';'||
+                            rw_rej.nrdctitg ||';'||
+                            rw_rej.nrdocmto ||';'||
+                            vr_cdhistor     ||';'||
+                            rw_rej.vllanmto ||';'||
+                            rw_rej.cdpesqbb ||';'||
+                            rw_rej.cdcooper ||';'||
+                            rw_rej.nrseqdig ||';'||
+                            rw_rej.indebcre ||';'||
+                            nvl(vr_dsliblan,' ') ||';';
+             -- incluir no clob
+             gene0002.pc_escreve_xml(vr_clob_rej,vr_char_rej,vr_dslinha||chr(13)||chr(10));
+           END IF;
 
          END IF;
 
@@ -1524,6 +1555,25 @@ BEGIN
            gene0002.pc_escreve_xml(vr_clob_rej,vr_char_rej,'',TRUE);
 
            /*geração temporaria do arquivo devido a migração da concredi e credimilsul*/
+           gene0002.pc_clob_para_arquivo(pr_clob    => vr_clob_rej,
+                                         pr_caminho => gene0001.fn_diretorio(pr_tpdireto => 'M' --> Micros
+                                                                            ,pr_cdcooper => 3 --> cecred
+                                                                            ,pr_nmsubdir => 'lan444'),
+                                         pr_arquivo => 'RegistrosRejeitadosMigracao_'||lpad(pr_cdcooper,2,'0')||'.lst',
+                                         pr_des_erro=> vr_dscritic);
+
+         END IF;
+         
+         /* Gerar arquivo da incorporacao da Transulcred para Transpocred
+              somente no perido que as duas ctas estao ativas */
+         IF pr_cdcooper = 9 AND
+           (rw_crapdat.dtmvtolt >= to_date('12/12/2016','MM/DD/RRRR')   AND
+            rw_crapdat.dtmvtolt <= to_date('12/31/2016','MM/DD/RRRR'))  THEN
+
+           -- descarregar buffer
+           gene0002.pc_escreve_xml(vr_clob_rej,vr_char_rej,'',TRUE);
+
+           /*geração temporaria do arquivo devido a migração da transulcred */
            gene0002.pc_clob_para_arquivo(pr_clob    => vr_clob_rej,
                                          pr_caminho => gene0001.fn_diretorio(pr_tpdireto => 'M' --> Micros
                                                                             ,pr_cdcooper => 3 --> cecred
@@ -1727,6 +1777,31 @@ BEGIN
        ELSE
          --Codigo Convenio da credimilsul
          vr_cdconven_15:= gene0002.fn_char_para_number(SUBSTR(vr_dstextab,1,9));
+       END IF;
+     END IF;
+     
+     /* para a cooperativa TRANSPOCRED, é necessario importar também os arquivos
+        da cooperativa 17, incorporada */
+     IF pr_cdcooper = 9 THEN
+       /*  Le tabela com as codigo do convenio do Banco do Brasil com a Coop.  */
+       vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => 17
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'COMPEARQBB'
+                                               ,pr_tpregist => 444);
+
+       --Se nao encontrou
+       IF trim(vr_dstextab) IS NULL THEN
+         vr_cdcritic:= 55;
+         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         --Complementar mensagem
+         vr_dscritic := vr_dscritic||' (COMPEARQBB)';
+         --Levantar Excecao
+         RAISE vr_exc_saida;
+       ELSE
+         --Codigo Convenio da Transulcred
+         vr_cdconven_17:= gene0002.fn_char_para_number(SUBSTR(vr_dstextab,1,9));
        END IF;
      END IF;
 
@@ -2031,6 +2106,84 @@ BEGIN
            END LOOP;
          END IF; --vr_tab_arquivo.count
        END IF; --  fim verificação arquivos credimilsul
+       
+       
+       -----------------------------------------------------------
+       ------------- VERIFICAR ARQUIVO TRANSULCRED ---------------
+       -----------------------------------------------------------
+       IF pr_cdcooper = 9 THEN
+         --Nome filtro pesquisa
+         vr_nomedarq:= 'deb558.bco%' ||to_char(vr_dtleiarq,'DDMMYY')||'%'||
+                       gene0002.fn_mask(vr_cdconven_17,'999999999')||'%';
+
+         --Listar arquivos
+         gene0001.pc_lista_arquivos(pr_path    => vr_caminho_compbb
+                                   ,pr_pesq    => vr_nomedarq
+                                   ,pr_listarq => vr_listadir
+                                   ,pr_des_erro => vr_dscritic);
+         -- Se houve erro
+         IF vr_dscritic IS NOT NULL THEN
+           -- Apenas enviar ao log
+           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                     ,pr_ind_tipo_log => 2 -- Erro tratato
+                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                      || vr_cdprogra || ' --> '
+                                                      || vr_dscritic );
+           -- Limpar a critica
+           vr_dscritic := null;
+         END IF;
+
+         -- limpar temptable de arquivos
+         vr_tab_arquivo.delete;
+
+         --Carregar a lista de arquivos na temp table
+         vr_tab_arquivo:= GENE0002.fn_quebra_string(pr_string => vr_listadir);
+
+         --Nome arquivo destino (consolidado)
+         vr_nomedarq:= 'deb558_444_'||to_char(vr_dtleiarq,'YYYYMMDD')||'_TRANSULCRED.bb';
+
+         --Se encontrou arquivos
+         IF vr_tab_arquivo.Count > 0 THEN
+           --Percorrer todos os arquivos encontrados para gerar um unico arquivo deb558_444
+           -- para a transulcred.
+           FOR idx IN vr_tab_arquivo.FIRST..vr_tab_arquivo.LAST LOOP
+             --Verificar se o arquivo existe
+             IF GENE0001.fn_exis_arquivo(vr_caminho_compbb||'/'||vr_tab_arquivo(idx)) THEN
+               --Concatenar o conteudo do arquivo lido no arquivo de destino
+               vr_comando:= 'cat '||vr_caminho_compbb||'/'||vr_tab_arquivo(idx)||' >> '||
+                            vr_caminho_integra||'/'||vr_nomedarq||' 2> /dev/null';
+
+               --Executar o comando no unix
+               GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                    ,pr_des_comando => vr_comando
+                                    ,pr_typ_saida   => vr_typ_saida
+                                    ,pr_des_saida   => vr_dscritic);
+               --Se ocorreu erro dar RAISE
+               IF vr_typ_saida = 'ERR' THEN
+                 vr_dscritic:= 'Não foi possivel executar comando unix. '||vr_comando;
+                 RAISE vr_exc_saida;
+               END IF;
+             END IF;
+
+             -- Comando para remover o arquivo movido do diretorio compbb
+             vr_comando:= 'rm '||vr_caminho_compbb||'/'||vr_tab_arquivo(idx)||' 2> /dev/null';
+
+             --Executar o comando no unix
+             GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                                  ,pr_des_comando => vr_comando
+                                  ,pr_typ_saida   => vr_typ_saida
+                                  ,pr_des_saida   => vr_dscritic);
+             --Se ocorreu erro dar RAISE
+             IF vr_typ_saida = 'ERR' THEN
+               vr_dscritic:= 'Não foi possível executar comando unix. '||vr_comando;
+               RAISE vr_exc_saida;
+             END IF;
+
+             -- encontrou arquivo
+             vr_existe_arq := TRUE;
+           END LOOP;
+         END IF; --vr_tab_arquivo.count
+       END IF; --  fim verificação arquivos transulcred
 
        -- Senão encontrou nenhum arquivo, deve abortar programa
        IF NOT vr_existe_arq THEN
@@ -2395,7 +2548,7 @@ BEGIN
          vr_nrdctitg_arq := SUBSTR(vr_setlinha,34,8);
 
          -- se for processo da scrcred e o
-         -- arquivo importado for ca concredi
+         -- arquivo importado for da  credimilsul
          IF pr_cdcooper = 13 AND
             vr_tab_nmarqint(vr_contaarq) like '%_CREDIMILSUL%' THEN
 
@@ -2405,6 +2558,31 @@ BEGIN
            OPEN cr_craptco_itg (pr_cdcooper => pr_cdcooper
                                ,pr_nrdctitg => vr_nrdctitg_arq
                                ,pr_cdcopant => 15);
+           FETCH cr_craptco_itg INTO rw_craptco_itg;
+
+           -- se encontrar é necessario buscar a nova conta itg da conta
+           -- na nova cooperativa
+           IF cr_craptco_itg%FOUND THEN
+             vr_fcraptco_itg := TRUE;
+             IF vr_tab_nrdconta.exists(lpad(rw_craptco_itg.nrdconta,10,'0')) THEN
+               vr_nrdctitg_arq := vr_tab_nrdconta(lpad(rw_craptco_itg.nrdconta,10,'0')).nrdctitg;
+             END IF;
+           END IF;
+           CLOSE cr_craptco_itg;
+         END IF;
+         
+         
+         -- se for processo da transpocred e o
+         -- arquivo importado for da transulcred
+         IF pr_cdcooper = 9 AND
+            vr_tab_nmarqint(vr_contaarq) like '%_TRANSULCRED%' THEN
+
+           vr_nrdctitg_arq := SUBSTR(vr_setlinha,34,8);
+
+           -- Verificar se é uma conta migrada
+           OPEN cr_craptco_itg (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdctitg => vr_nrdctitg_arq
+                               ,pr_cdcopant => 17);
            FETCH cr_craptco_itg INTO rw_craptco_itg;
 
            -- se encontrar é necessario buscar a nova conta itg da conta
@@ -2796,6 +2974,81 @@ BEGIN
              END IF;
            END IF; -- Fim vr_tab_nrdctitg
          END IF; -- Fim pr_cdcooper = 1
+         
+         
+         /* tratar migração da 17-transulcred para 9-transpocred*/
+         IF pr_cdcooper = 9 AND
+           (rw_crapdat.dtmvtolt >= to_date('12/12/2016','MM/DD/RRRR')   AND
+            rw_crapdat.dtmvtolt <= to_date('12/31/2016','MM/DD/RRRR'))  THEN
+           --Localizar assosiado pelo numero integraçaõ
+           IF vr_tab_nrdctitg.EXISTS(lpad(vr_nrdctitg_arq,10,'0'))  THEN
+
+             --Selecionar transferencias entre cooperativas inativas
+             OPEN cr_craptco_i (pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => vr_tab_nrdctitg(lpad(vr_nrdctitg_arq,10,'0')).nrdconta);
+             --Posicionar primeiro registro
+             FETCH cr_craptco_i INTO rw_craptco_i;
+             --Se encontrou
+             IF cr_craptco_i%NOTFOUND THEN
+               close cr_craptco_i;
+             ELSE
+               close cr_craptco_i;
+               --Gravar rejeitado
+               BEGIN
+                 --Montar data aviso
+                 IF trim(vr_dtrefere) IS NOT NULL THEN
+                   --Recebe data referencia
+                   vr_dtdaviso:= to_date(SUBSTR(vr_dtrefere,1,10),'DD/MM/YYYY');
+                 ELSE
+                   --Recebe data movimento
+                   vr_dtdaviso:= rw_crapdat.dtmvtolt;
+                 END IF;
+
+                 INSERT INTO CRAPREJ
+                             ( craprej.dtmvtolt,
+                               craprej.nrdconta,
+                               craprej.cdagenci,
+                               craprej.nrdctabb,
+                               craprej.cdbccxlt,
+                               craprej.nrdctitg,
+                               craprej.nrseqdig,
+                               craprej.dshistor,
+                               craprej.cdpesqbb,
+                               craprej.nrdocmto,
+                               craprej.vllanmto,
+                               craprej.indebcre,
+                               craprej.dtrefere,
+                               craprej.cdcritic,
+                               craprej.dtdaviso,
+                               craprej.tpintegr,
+                               craprej.cdcooper,
+                               craprej.cdempres )
+                       VALUES( rw_crapdat.dtmvtolt,    -- craprej.dtmvtolt
+                               nvl(rw_craptco_i.nrctaant,0),  -- craprej.nrdconta
+                               nvl(rw_craptco_i.cdageant,0),  -- craprej.cdagenci
+                               nvl(rw_craptco_i.nrctaant,0),  -- craprej.nrdctabb
+                               1,                      -- craprej.cdbccxlt
+                               rw_craptco_i.nrdctitg,  -- craprej.nrdctitg
+                               nvl(vr_nrseqint,0),            -- craprej.nrseqdig
+                               RPad(vr_dshistor,30,' ')||vr_dsageori,   -- craprej.dshistor
+                               nvl(vr_cdpesqbb,''),            -- craprej.cdpesqbb
+                               nvl(vr_nrdocmto,0),            -- craprej.nrdocmto
+                               nvl(vr_vllanmto,0),            -- craprej.vllanmto
+                               vr_indebcre,            -- craprej.indebcre
+                               vr_dtrefere,            -- craprej.dtrefere
+                               999,                    -- craprej.cdcritic
+                               vr_dtdaviso,            -- craprej.dtdaviso
+                               vr_contaarq,            -- craprej.tpintegr
+                               pr_cdcooper,            -- craprej.cdcooper
+                               -- usado o campo cdempres para passar o cdcopant
+                               nvl(rw_craptco_i.cdcopant,0)); --craprej.cdempres
+               END;
+
+               continue; -- proximo registro
+
+             END IF;
+           END IF; -- Fim vr_tab_nrdctitg
+         END IF; -- Fim pr_cdcooper = 9
 
          --Se nao ocorreu erro e for cheque
          IF vr_cdcritic = 0 AND vr_flgchequ THEN
@@ -4926,8 +5179,8 @@ BEGIN
 
      END LOOP; /*  Fim do DO .. TO  --  Arquivos a integrar  */
 
-     /* Gera relatorio somente para Viacredi e SCRCRED */
-     IF pr_cdcooper in (1,13) THEN
+     /* Gera relatorio somente para Viacredi, SCRCRED e Transpocred */
+     IF pr_cdcooper in (1,13,9) THEN
        --Executar relatorio
        pc_imprime_rel_414_99 (pr_cdcooper => pr_cdcooper
                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt

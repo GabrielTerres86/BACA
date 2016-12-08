@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 13/04/2016
+    Data    : Maio/2010                   Ultima atualizacao: 02/12/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -181,6 +181,9 @@
                              (Douglas - Chamado 418424)
                 21/03/2016 - Inclusao campos consulta boa vista.
                              PRJ207 - Esteira (Odirlei/AMcom)    
+
+				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
+				             (Incorporacao Transposul). (Fabricio)
 
 .............................................................................*/
 
@@ -739,17 +742,19 @@ PROCEDURE Valida_Dados:
             END.
             WHEN "E" THEN DO: /* ENCERRA ITG */
                 
-                RUN bloqueia-opcao(INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdconta,
-                                   INPUT par_dtmvtolt).
+				IF par_cdcooper <> 17 THEN
+				DO:
+					RUN bloqueia-opcao(INPUT par_cdcooper,
+						               INPUT par_cdagenci,
+                                       INPUT par_nrdconta,
+                                       INPUT par_dtmvtolt).
 
-                IF  RETURN-VALUE = "NOK" THEN
+                    IF  RETURN-VALUE = "NOK" THEN
                     DO:
                         ASSIGN aux_dscritic = "Opcao indisponivel. Motivo: Transferencia do PA."
                                aux_cdcritic = 0.
                     END.
-                ELSE
+                    ELSE
                     DO: 
 						IF par_cdcooper <> 15 THEN
 						DO:
@@ -760,7 +765,19 @@ PROCEDURE Valida_Dados:
                              OUTPUT par_msgconfi,
                              OUTPUT aux_cdcritic,
 													 OUTPUT aux_dscritic).
-                    END.
+                        END.				
+			        END.
+				END.
+			    ELSE
+			    DO:
+					RUN Valida_Dados_Encerra(INPUT par_cdcooper,
+									         INPUT par_nrdconta,
+											OUTPUT par_nmdcampo,
+											OUTPUT par_tipconfi,
+											OUTPUT par_msgconfi,
+											OUTPUT aux_cdcritic,
+											OUTPUT aux_dscritic).
+			    END.
             END.
             END.
             WHEN "X" THEN DO: /* EXCLUI TITULARES */
@@ -5726,6 +5743,11 @@ PROCEDURE bloqueia-opcao:
                 par_dtmvtolt >= 11/07/2014  THEN
                 RETURN "NOK".
 			*/
+
+			/*Migracao Transulcred -> Transpocred*/
+            IF  crabass.cdcooper = 17        AND
+                par_dtmvtolt >= 12/12/2016  THEN
+                RETURN "NOK".
         END.
     ELSE
         RETURN "NOK".
