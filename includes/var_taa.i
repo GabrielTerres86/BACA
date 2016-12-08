@@ -96,7 +96,9 @@
 
 			   14/11/2016 - Atualização para versão 8.8 (Paulo Samuel).
 
-			   14/11/2016 - Atualização para versão Emergencial 8.9 (Paulo Samuel).
+			   23/11/2016 - Atualização para versão Emergencial 8.9 (Paulo Samuel).
+
+			   08/12/2016 - Atualização para versão 9.0 (Paulo Samuel).
 .............................................................................. */
 
                             
