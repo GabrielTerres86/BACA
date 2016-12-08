@@ -135,6 +135,9 @@
                 21/01/2016 - Para a opcao "X" (Alteracao do Nome) nao deve mais
                              validar as criticas de inclusao
                              (Douglas - Chamado 369449)
+
+				29/11/2016 - Incluso bloqueio de criacao de novas contas na cooperativa
+                             Transulcred (Daniel)
 ........................................................................*/
 
 
@@ -625,6 +628,17 @@ PROCEDURE Valida_Inicio_Inclusao:
         IF  ( /*Credimilsul*/
             par_cdcooper  = 15                 AND
             par_dtmvtolt >= DATE("11/11/2014") )
+            THEN
+            DO:    
+                ASSIGN par_dscritic = "Operacao Invalida! " +
+                                       "Incorporacao de Cooperativa!".
+                       par_nmdcampo = "nrdconta".
+                LEAVE.
+            END.
+
+        IF  ( /*Transulcred*/
+            par_cdcooper  = 17                 AND
+            par_dtmvtolt >= DATE("12/12/2016") )
             THEN
             DO:    
                 ASSIGN par_dscritic = "Operacao Invalida! " +
