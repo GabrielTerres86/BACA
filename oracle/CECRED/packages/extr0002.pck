@@ -4121,8 +4121,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                     sum(craplau.vllanaut) Credito
                FROM craplau
              WHERE craplau.dtmvtopg > to_date('04/30/1997','MM/DD/YYYY')
-               AND trunc(craplau.dtmvtopg,'MM') <= (select trunc(crapdat.dtmvtolt,'MM')  from crapdat
+               AND (craplau.dtmvtopg >= (select crapdat.dtmvtolt  from crapdat
                                          where cdcooper = pr_cdcooper)
+               AND  craplau.dtmvtopg <= (select crapdat.dtmvtolt + 30  from crapdat
+                                         where cdcooper = pr_cdcooper) )
                AND   craplau.dtdebito IS NULL
                and   nvl(craplau.vllanaut,0) > 0
                and exists ( select 1 from craphis
@@ -4136,8 +4138,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                     sum(craplau.vllanaut) debito
                FROM craplau craplau
              WHERE craplau.dtmvtopg > to_date('04/30/1997','MM/DD/YYYY')
-               AND trunc(craplau.dtmvtopg,'MM') <= (select trunc(crapdat.dtmvtolt,'MM')  from crapdat
+               AND (craplau.dtmvtopg >= (select crapdat.dtmvtolt  from crapdat
                                          where cdcooper = pr_cdcooper)
+               AND   craplau.dtmvtopg <= (select crapdat.dtmvtolt + 30  from crapdat
+                                          where cdcooper = pr_cdcooper) )
                AND   craplau.dtdebito IS NULL
                and   nvl(craplau.vllanaut,0) > 0
                and exists ( select 1 from craphis
@@ -19159,7 +19163,6 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
              vr_soma_tot := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            else
              vr_soma_tot :=vr_soma_cre - vr_soma_deb;
-			 vr_soma_deb := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            end if;
           -- Montar XML com registros de carencia
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc_totais
