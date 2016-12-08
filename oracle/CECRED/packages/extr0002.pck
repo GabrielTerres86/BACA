@@ -190,7 +190,6 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,cdagenci crapass.cdagenci%type
       ,nmsegntl crapass.nmsegntl%type
       ,dsanoant VARCHAR2(10)
-
       ,dtrefer1 DATE
       ,dtrefer2 DATE
 
@@ -3621,6 +3620,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              28/06/2016 - Incluir conta na busca do maximo Float (Marcos-Supero #477843)
   --
+  --              
+  --              08/08/2016 - Incluído tratamento para pagamento de DARF/DAS (Dionathan)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -3786,6 +3788,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplau.nrdolote
               ,craplau.nrseqdig
               ,craplau.dtmvtolt
+              ,craplau.cdtiptra
+              ,craplau.idlancto
               ,craplau.progress_recid
         FROM craplau craplau
         WHERE craplau.cdcooper = pr_cdcooper
@@ -3797,7 +3801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         AND   pr_dtfimper IS NULL)
         AND   craplau.dtdebito IS NULL
         and   craplau.vllanaut > 0
-        union
+        UNION
                 SELECT craplau.cdhistor
               ,craplau.dtmvtopg
               ,craplau.vllanaut
@@ -3810,6 +3814,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplau.nrdolote
               ,craplau.nrseqdig
               ,craplau.dtmvtolt
+              ,craplau.cdtiptra
+              ,craplau.idlancto			  
               ,craplau.progress_recid
         FROM craplau craplau
         WHERE craplau.cdcooper = pr_cdcooper
@@ -3819,6 +3825,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                   where crapdat.cdcooper = pr_cdcooper )
         and   craplau.vllanaut > 0
         AND   craplau.dtdebito IS NULL;
+
+      --Busca dados de agendamento de DARF/DAS
+      CURSOR cr_darf_das(pr_idlancto craplau.idlancto%TYPE) IS
+      SELECT darf_das.tppagamento
+            ,NVL(darf_das.dsidentif_pagto
+                ,DECODE(darf_das.tppagamento,1,'DARF',2,'DAS')) dsidentif_pagto
+        FROM tbpagto_agend_darf_das darf_das
+       WHERE darf_das.idlancto = pr_idlancto;
+      rw_darf_das cr_darf_das%ROWTYPE;
+
       --Selecionar avisos
       CURSOR cr_crapavs (pr_cdcooper IN crapavs.cdcooper%type
                         ,pr_nrdconta IN crapavs.nrdconta%type
@@ -4121,10 +4137,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                     sum(craplau.vllanaut) Credito
                FROM craplau
              WHERE craplau.dtmvtopg > to_date('04/30/1997','MM/DD/YYYY')
-               AND (craplau.dtmvtopg >= (select crapdat.dtmvtolt  from crapdat
+               AND trunc(craplau.dtmvtopg,'MM') <= (select trunc(crapdat.dtmvtolt,'MM')  from crapdat
                                          where cdcooper = pr_cdcooper)
-               AND  craplau.dtmvtopg <= (select crapdat.dtmvtolt + 30  from crapdat
-                                         where cdcooper = pr_cdcooper) )
                AND   craplau.dtdebito IS NULL
                and   nvl(craplau.vllanaut,0) > 0
                and exists ( select 1 from craphis
@@ -4138,10 +4152,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                     sum(craplau.vllanaut) debito
                FROM craplau craplau
              WHERE craplau.dtmvtopg > to_date('04/30/1997','MM/DD/YYYY')
-               AND (craplau.dtmvtopg >= (select crapdat.dtmvtolt  from crapdat
+               AND trunc(craplau.dtmvtopg,'MM') <= (select trunc(crapdat.dtmvtolt,'MM')  from crapdat
                                          where cdcooper = pr_cdcooper)
-               AND   craplau.dtmvtopg <= (select crapdat.dtmvtolt + 30  from crapdat
-                                          where cdcooper = pr_cdcooper) )
                AND   craplau.dtdebito IS NULL
                and   nvl(craplau.vllanaut,0) > 0
                and exists ( select 1 from craphis
@@ -4192,6 +4204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dtfatura DATE;
       vr_dtiniper01 DATE;
       vr_dtfimper01 DATE;
+      vr_dscedent VARCHAR(300);
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -4570,14 +4583,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).dtrefere := rw_craplau.dtmvtolt;
 
         /* Pagtos INTERNET */
-        IF rw_craphis.cdhistor = 508 THEN
+        IF rw_craplau.cdhistor = 508 THEN
           --Descricao do Historico
+
+          vr_dscedent := rw_craplau.dscedent;
+          
+          -- Se for pagamento de DARF/DAS
+          IF rw_craplau.cdtiptra = 10 THEN
+            
+            OPEN cr_darf_das(pr_idlancto => rw_craplau.idlancto);
+            FETCH cr_darf_das INTO rw_darf_das;
+            CLOSE cr_darf_das;
+            
+            vr_dscedent := rw_darf_das.dsidentif_pagto;
+          END IF;
+          
           --Chamado 376432
           pr_tab_lancamento_futuro(vr_index).dshistor:= substr(pr_tab_lancamento_futuro(vr_index).dshistor ||' - '||
-                                                        rw_craplau.dscedent,1,50);
-        END IF;
+                                                               vr_dscedent,1,50);
+                                                          
         --Historico Conta Destino
-        IF rw_craplau.cdhistor IN (375,376,377,537,538,539,771,772,1009) THEN
+        ELSIF rw_craplau.cdhistor IN (375,376,377,537,538,539,771,772,1009) THEN
           --Documento recebe conta destino
           pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_craplau.nrctadst,'fm99999g999g9');
         END IF;
@@ -6534,6 +6560,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
 
 
+                                
+                                   
     -- Subrotina para gerar impressao extrato conta corrente
     PROCEDURE pc_gera_impextdpv (pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa
                                 ,pr_cdagenci IN crapass.cdagenci%TYPE  --Codigo Agencia
@@ -7769,6 +7797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           AND   craplct.cdhistor IN (sobr0001.vr_cdhisjur_cot,sobr0001.vr_cdhisirr_cot);
 
 
+                                      
         --Variaveis Locais
         vr_flgemiss     BOOLEAN;
         vr_inrelext     INTEGER;
@@ -8018,7 +8047,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                nvl(rw_crapdir.vlrenrda##7,0) + nvl(rw_crapdir.vlrenrda##8,0) +
                                nvl(rw_crapdir.vlrenrda##9,0) + nvl(rw_crapdir.vlrenrda##10,0) +
                                nvl(rw_crapdir.vlrenrda##11,0) + nvl(rw_crapdir.vlrenrda##12,0) +
-
                                nvl(rw_crapdir.vlrenrdc##1,0) + nvl(rw_crapdir.vlrenrdc##2,0) +
                                nvl(rw_crapdir.vlrenrdc##3,0) + nvl(rw_crapdir.vlrenrdc##4,0) +
                                nvl(rw_crapdir.vlrenrdc##5,0) + nvl(rw_crapdir.vlrenrdc##6,0) +
@@ -8321,6 +8349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= 0;
                     END IF;
                   END IF;
+                  
                   --Zerar Valor IR retido Fonte
                   vr_vlirfont:= 0;
                   --Percorrer Lancamentos de Cota
@@ -8520,7 +8549,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                     pr_tab_retencao_ir(vr_index_retenc).cdretenc:= vr_cdretenc;
                     pr_tab_retencao_ir(vr_index_retenc).dsretenc:= vr_dsretenc;
                     pr_tab_retencao_ir(vr_index_retenc).vlrentot:= vr_vlrentot;
-
                     --Ano referencia maior ou igual 2004
                     IF pr_nranoref >= 2004 THEN
                       pr_tab_retencao_ir(vr_index_retenc).vlirfont:= vr_vlirfont;
@@ -19163,6 +19191,7 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
              vr_soma_tot := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            else
              vr_soma_tot :=vr_soma_cre - vr_soma_deb;
+			 vr_soma_deb := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            end if;
           -- Montar XML com registros de carencia
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc_totais
