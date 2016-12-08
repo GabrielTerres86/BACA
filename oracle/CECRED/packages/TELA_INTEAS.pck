@@ -139,11 +139,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                aquela pessoa eh o primeiro titular. Isso para garantir
                                que os dados estejam atualizados e estar de acordo com o 
                                funcionamento do Ayllos Web.
-      
+                               
                   18/11/2016 - Ajustado para quando a data de demissao do cooperado for
                                posterior a data final de geracao, exportar como se a conta
                                estivesse ativa (exportando nulo no lugar do dtdemiss).
       
+                  05/12/2016 - Alterado dtdemis por dtelimin, pois dtdemiss ainda permite movimentacao da conta
+                               e a conta ainda possui saldos, já dtelimin é apos a conta não possuir mais movimentação
+                               e os saldos zerados. (Odirlei-AMcom)
+                               
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
   FUNCTION fn_nrcpfcgc_easy (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE,
@@ -219,15 +223,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Objetivo  : Procedimento responsavel em gerar o arquivo de Cadastro de Cooperados para a Easyway
     
     Alteração : Alterado para remover os acentos das linhas de exportação desse arquivo,
-	              por solicitação do Mathera (10/11/2016).
-                
+	            por solicitação do Mathera (10/11/2016).
+        
                 Alterado para quando os segundo e demais titulares nao tiverem endereco preenchido,
                 buscar do primeiro titular. 
                 Alterado para quando os procuradores e representantes de menores nao tiverem endereco
                 preenchido, buscar da conta principal (17/11/2016).
         
+                Ajustado para que a busca pela conta mais atualizada desconsidere as contas que foram
+                demitidas antes do período inicial (28/11/2016).
+        
   ..........................................................................*/
     -----------> CURSORES <-----------     
+    --> Buscar cooperativas ativas
+    CURSOR cr_crapcop IS
+      SELECT cop.cdcooper,
+             cop.nmrescop,
+             cop.nrdocnpj
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper
+         AND cop.flgativo = 1
+       ORDER BY cop.cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;
+     
     --> Buscar os CPFs/CNPJs a serem enviados para a Easyway
     CURSOR cr_crapass_nrcpfcgc(pr_nrdconta crapass.nrdconta%TYPE,
                                pr_dtiniger DATE,
@@ -250,8 +268,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
        WHERE ass.cdcooper = decode(pr_cdcooper, 0, ass.cdcooper, pr_cdcooper) 
          AND ass.nrdconta = decode(pr_nrdconta, 0, ass.nrdconta, pr_nrdconta)
          AND ass.dtadmiss <= pr_dtfimger   -- Cooperados admitidos até a data final
-         AND (ass.dtdemiss IS NULL OR      -- Cooperados não demitidos                       
-              ass.dtdemiss >= pr_dtiniger) -- ou demitidos depois da data inicial 
+         AND (ass.dtelimin IS NULL OR      -- Cooperados não eliminacao da conta                       
+              ass.dtelimin >= pr_dtiniger) -- ou eliminacao depois da data inicial 
        ORDER BY ass.nrcpfcgc;          
     
     --> Buscar informacoes dos cooperados com o cadastro mais atualizado
@@ -267,6 +285,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
        WHERE ass.nrcpfcgc = pr_nrcpfcgc
          AND alt.cdcooper = ass.cdcooper
          AND alt.nrdconta = ass.nrdconta
+             /* Considerar apenas as contas nao eliminadas, 
+                ou demitidas depois do periodo inicial */
+         AND (ass.dtelimin IS NULL OR
+              ass.dtelimin >= pr_dtiniger) 
     ORDER BY alt.dtaltera DESC;
     rw_crapass     cr_crapass%ROWTYPE;
     rw_crapass_ttl cr_crapass%ROWTYPE;
@@ -354,6 +376,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                         pr_nrdconta  crapenc.nrdconta%TYPE) IS
       SELECT to_char(jur.nrinsmun) nrinsmun
             ,to_char(jur.nrinsest) nrinsest
+            ,to_char(jur.dtiniatv, 'RRRRMMDD') dtiniatv 
             ,(CASE nvl(jur.nrinsest, 0)
                 WHEN 0 THEN 'S'
                 ELSE 'N'
@@ -598,7 +621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
       pc_escreve_clob(vr_dslinha);
       
       /* Geração de Log */
-      IF (nvl(rw_crapenc.endereco,' ') = ' ') then
+      IF (fn_remove_caract_espec(nvl(rw_crapenc.endereco,' ')) = ' ') then
          pr_dscritic := nvl(pr_dscritic,' ') || 'Sem logradouro cadastrado.';
       END IF;
       IF (nvl(pr_dtadmiss,' ') = ' ') then
@@ -711,7 +734,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                 pr_nrdconta  => rw_crapttl.nrdconta,
                                 pr_nmprimtl  => rw_crapttl.nmprimtl,
                                 pr_idseqttl  => rw_crapttl.idseqttl,
-                                pr_dtnasctl  => rw_crapttl.dtnasctl,
+                                pr_dtnasctl  => (CASE WHEN pr_inpessoa = 2 THEN rw_crapjur.dtiniatv
+                                                      ELSE rw_crapttl.dtnasctl
+                                                 END),     
                                 pr_nrinsmun  => rw_crapjur.nrinsmun,
                                 pr_dtadmiss  => rw_crapass_admiss.dtadmiss,
                                 pr_dtaltera  => pr_dtaltera,
@@ -843,6 +868,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                          ' arquivo: '||vr_nmarqimp); 
     pc_gera_log_easyway( pr_nmarqlog,'Periodo de '|| to_char(pr_dtiniger,'DD/MM/RRRR') ||' ate '|| to_char(pr_dtfimger,'DD/MM/RRRR'));             
   
+    --> Se estiver processando uma cooperativa
+    IF nvl(pr_cdcooper,0) > 0 THEN
+    
+      --> Buscar CNPJ da coop
+      OPEN cr_crapcop;
+      FETCH cr_crapcop INTO rw_crapcop;
+      CLOSE cr_crapcop;
+      
+      IF rw_crapcop.nrdocnpj > 0 THEN        
+        --> Incluir como ja processado para não gerar informacoes da coop no arquivo
+        vr_idxctrl := lpad(rw_crapcop.nrdocnpj,14,'0');
+        vr_tab_nrcpfcnpj(vr_idxctrl) := rw_crapcop.nrdocnpj;         
+      END IF;
+    
+    END IF;
+    
+     
     --> Buscar os CPFs/CNPJs a serem enviados para a Easyway
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
                                                    pr_dtiniger => pr_dtiniger,
@@ -983,7 +1025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                               pr_complend  => rw_crapcrl.complend,  
                               pr_nrcepend  => rw_crapcrl.nrcepend,  
                               pr_nmbairro  => rw_crapcrl.nmbairro,  
-                              pr_nmcidade  => rw_crapcrl.nmcidade,
+                              pr_nmcidade  => rw_crapcrl.nmcidade,  
                               pr_cdufende  => rw_crapcrl.cdufresd,    
                               pr_tplograd  => rw_crapcrl.tplograd,  
                               pr_dtmvtolt  => rw_crapcrl.dtmvtolt,  
@@ -1057,7 +1099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
               
               --> Rotina para montar layout de cadastro do outras pessoas que nao possuem conta
               pc_trata_outro( pr_cdcooper  => rw_crapass_nrcpfcgc.cdcooper,
-                              pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,
+                              pr_nrcpfcgc  => rw_crapavt.nrcpfcgc,  
                               pr_inpessoa  => rw_crapavt.inpessoa,  
                               pr_dspessoa  => rw_crapavt.dspessoa,  
                               pr_nrdconta  => rw_crapass_nrcpfcgc.nrdconta,  
@@ -1173,7 +1215,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     --> Buscar cooperativas ativas
     CURSOR cr_crapcop IS
       SELECT cop.cdcooper,
-             cop.nmrescop
+             cop.nmrescop,
+             cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
          AND cop.flgativo = 1
@@ -1189,18 +1232,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,ass.nrcpfcgc
             /* Se a conta foi demitida depois do periodo, quer dizer
                que temos que exporta-la como ativa ainda. */
-            ,case when ass.dtdemiss > pr_dtfimger
+            ,case when ass.dtelimin > pr_dtfimger
                   then null
-                  else ass.dtdemiss
-              end dtdemiss
+                  else ass.dtelimin
+              end dtelimin
             ,ass.inpessoa
             ,ass.cdagenci
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = decode(pr_nrdconta, 0, ass.nrdconta, pr_nrdconta)
          AND ass.dtadmiss <= pr_dtfimger -- Cooperados admitidos até a data final
-         AND (ass.dtdemiss IS NULL OR    -- Cooperados não demitidos                       
-              ass.dtdemiss >= pr_dtiniger) -- ou demitidos depois da data inicial
+         AND (ass.dtelimin IS NULL OR    -- Cooperados não demitidos                       
+              ass.dtelimin >= pr_dtiniger) -- ou demitidos depois da data inicial
        ORDER BY ass.cdcooper
                ,ass.nrdconta;
     
@@ -1407,11 +1450,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                    pr_dtiniger => pr_dtiniger,
                                    pr_dtfimger => pr_dtfimger) LOOP
                                     
+        --> Tratativa para não enviar os dados da propria cooperativa                            
+        IF rw_crapass.nrcpfcgc = rw_crapcop.nrdocnpj THEN
+          continue;
+        END IF;
+        
         --> Buscar os totais de lançamento(debito - credito)
         FOR rw_craplcm IN cr_craplcm (pr_cdcooper => rw_crapass.cdcooper,
                                       pr_nrdconta => rw_crapass.nrdconta,
                                       pr_dtiniger => pr_dtiniger,
-                                      pr_dtfimger => pr_dtfimger) LOOP
+                                      --> Até o fim do periodo ou ate a data de demissao
+                                      pr_dtfimger => nvl(rw_crapass.dtelimin, pr_dtfimger)) LOOP
                                        
                                        
           -- Montar a linha conforme layout easyway
@@ -1424,7 +1473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_vloperac  => rw_craplcm.vllanmto,
                                   pr_indebcre  => rw_craplcm.indebcre,
                                   pr_dtinclus  => last_day(pr_dtiniger),
-                                  pr_dtdemiss  => rw_crapass.dtdemiss,
+                                  pr_dtdemiss  => rw_crapass.dtelimin,
                                   pr_cdagenci  => rw_crapass.cdagenci,
                                   ----- OUT ----
                                   pr_dscritic => vr_dscritic);
@@ -1447,7 +1496,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         FOR rw_aplicac IN cr_aplicac (pr_cdcooper => rw_crapass.cdcooper,
                                       pr_nrdconta => rw_crapass.nrdconta,
                                       pr_dtiniger => pr_dtiniger,
-                                      pr_dtfimger => pr_dtfimger) LOOP
+                                      --> Até o fim do periodo ou ate a data de demissao
+                                      pr_dtfimger => nvl(rw_crapass.dtelimin, pr_dtfimger)) LOOP
                                        
                                        
           -- Montar a linha conforme layout easyway
@@ -1460,7 +1510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_vloperac  => rw_aplicac.vllanmto,
                                   pr_indebcre  => rw_aplicac.indebcre,
                                   pr_dtinclus  => last_day(pr_dtiniger),
-                                  pr_dtdemiss  => rw_crapass.dtdemiss,
+                                  pr_dtdemiss  => rw_crapass.dtelimin,
                                   pr_cdagenci  => rw_crapass.cdagenci,
                                   ----- OUT ----
                                   pr_dscritic => vr_dscritic);
@@ -1577,7 +1627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     --> Buscar cooperativas ativas
     CURSOR cr_crapcop IS
       SELECT cop.cdcooper,
-             cop.nmrescop
+             cop.nmrescop,
+             cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
          AND cop.flgativo = 1
@@ -1600,10 +1651,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              ,ass.nrcpfcgc
              /* Se a conta foi demitida depois do periodo, quer dizer
                 que temos que exporta-la como ativa ainda. */
-             ,case when ass.dtdemiss > pr_dtfimger
+             ,case when ass.dtelimin > pr_dtfimger
                   then null
-                  else ass.dtdemiss
-              end dtdemiss
+                  else ass.dtelimin
+              end dtelimin
              ,ass.cdagenci
              ,ass.inpessoa 
              ,sda.dtmvtolt
@@ -1617,9 +1668,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND ass.nrdconta = sda.nrdconta
          AND sda.nrdconta = decode(pr_nrdconta,0,sda.nrdconta,pr_nrdconta)
          AND sda.dtmvtolt = pr_dtmvtolt
-         AND ass.dtadmiss <= pr_dtfimger -- Cooperados admitidos até a data final
-         AND (ass.dtdemiss IS NULL OR    -- Cooperados não demitidos                       
-              ass.dtdemiss >= pr_dtiniger); -- ou demitidos depois da data inicial;
+         --> Até o fim do periodo ou ate a data de demissao
+         AND ass.dtadmiss <= nvl(ass.dtelimin, pr_dtfimger) -- Cooperados admitidos até a data final
+         AND (ass.dtelimin IS NULL OR    -- Cooperados não demitidos                       
+              ass.dtelimin >= pr_dtiniger); -- ou demitidos depois da data inicial;
     
             
     -----------> VAIAVEIS <-----------        
@@ -1724,6 +1776,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                       pr_dtfimger => pr_dtfimger) LOOP
                                        
                                        
+          --> Tratativa para não enviar os dados da propria cooperativa                            
+          IF rw_crapsda.nrcpfcgc = rw_crapcop.nrdocnpj THEN
+            continue;
+          END IF;
+                                       
           -- Montar a linha conforme layout easyway
           pc_escreve_linha_layout(pr_cdcooper  => rw_crapsda.cdcooper,
                                   pr_nrcpfcgc  => rw_crapsda.nrcpfcgc,
@@ -1733,7 +1790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_dtultmes  => vr_dtmvtolt,
                                   pr_tpoperac  => 101, -- 101-Conta corrente
                                   pr_vlsldmes  => rw_crapsda.vlsddisp,
-                                  pr_dtdemiss  => rw_crapsda.dtdemiss, 
+                                  pr_dtdemiss  => rw_crapsda.dtelimin, 
                                   ----- OUT ----
                                   pr_dscritic => vr_dscritic);
                                   
@@ -1751,7 +1808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_dtultmes  => vr_dtmvtolt,
                                   pr_tpoperac  => 199, -- 199-Aplicação
                                   pr_vlsldmes  => rw_crapsda.vlsdapli,
-                                  pr_dtdemiss  => rw_crapsda.dtdemiss, 
+                                  pr_dtdemiss  => rw_crapsda.dtelimin, 
                                   ----- OUT ----
                                   pr_dscritic => vr_dscritic);
                                   
@@ -1854,7 +1911,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     --> Buscar cooperativas ativas
     CURSOR cr_crapcop IS
       SELECT cop.cdcooper,
-             cop.nmrescop
+             cop.nmrescop,
+             cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
          AND cop.flgativo = 1
@@ -1872,10 +1930,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,ass.dtadmiss
             /* Se a conta foi demitida depois do periodo, quer dizer
                que temos que exporta-la como ativa ainda. */
-            ,case when ass.dtdemiss > pr_dtfimger
+            ,case when ass.dtelimin > pr_dtfimger
                   then null
-                  else ass.dtdemiss
-              end dtdemiss
+                  else ass.dtelimin
+              end dtelimin
             ,ttl.nrcpfcgc
             ,ttl.inpessoa
             ,ttl.idseqttl
@@ -1905,8 +1963,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND ass.nrdconta = ttl.nrdconta
          AND ttl.nrdconta = decode(pr_nrdconta,0,ttl.nrdconta,pr_nrdconta)
          AND ass.dtadmiss <= pr_dtfimger -- Cooperados admitidos até a data final
-         AND (ass.dtdemiss IS NULL OR    -- Cooperados não demitidos                       
-              ass.dtdemiss >= pr_dtiniger); -- ou demitidos depois da data inicial;
+         AND (ass.dtelimin IS NULL OR    -- Cooperados não demitidos                       
+              ass.dtelimin >= pr_dtiniger); -- ou demitidos depois da data inicial;
     
     --> Buscar titulares Pessoa Juridica - enviar proprio cadastro da ass
     CURSOR cr_crapass (pr_cdcooper crapcop.cdcooper%TYPE,
@@ -1920,10 +1978,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,ass.dtadmiss
             /* Se a conta foi demitida depois do periodo, quer dizer
                que temos que exporta-la como ativa ainda. */
-            ,case when ass.dtdemiss > pr_dtfimger
+            ,case when ass.dtelimin > pr_dtfimger
                   then null
-                  else ass.dtdemiss
-              end dtdemiss
+                  else ass.dtelimin
+              end dtelimin
             ,ass.nrcpfcgc
             ,ass.inpessoa
             ,1   AS idseqttl
@@ -1950,8 +2008,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND ass.nrdconta = decode(pr_nrdconta,0,ass.nrdconta,pr_nrdconta)
          AND ass.inpessoa <> 1 -- Pessoa juridica e as coops
          AND ass.dtadmiss <= pr_dtfimger    -- Cooperados admitidos até a data final
-         AND (ass.dtdemiss IS NULL OR       -- Cooperados não demitidos                       
-              ass.dtdemiss >= pr_dtiniger); -- ou demitidos depois da data inicial;    
+         AND (ass.dtelimin IS NULL OR       -- Cooperados não demitidos                       
+              ass.dtelimin >= pr_dtiniger); -- ou demitidos depois da data inicial;    
                   
     -----------> VAIAVEIS <-----------        
 
@@ -2043,6 +2101,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_dtiniger => pr_dtiniger,
                                     pr_dtfimger => pr_dtfimger) LOOP
                                        
+        --> Tratativa para não enviar os dados da propria cooperativa                            
+        IF rw_crapttl.nrcpfcgc = rw_crapcop.nrdocnpj THEN
+          continue;
+        END IF;                               
                                        
         -- Montar a linha conforme layout easyway
         pc_escreve_linha_layout(pr_cdcooper => rw_crapttl.cdcooper,
@@ -2052,7 +2114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                 pr_nrdconta => rw_crapttl.nrdconta,
                                 pr_tiporegi => 'C', -- C-Conta Corrente 
                                 pr_inivigen => rw_crapttl.dtadmiss,
-                                pr_fimvigen => rw_crapttl.dtdemiss,
+                                pr_fimvigen => rw_crapttl.dtelimin,
                                 pr_tpoperac => 101, -- 101 – Conta Corrente
                                 pr_prititul => rw_crapttl.prititul,
                                 ----- OUT ----
@@ -2073,7 +2135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_nrdconta  => rw_crapttl.nrdconta,
                                   pr_tiporegi  => 'O', -- O-Outros
                                   pr_inivigen => rw_crapttl.dtadmiss,
-                                  pr_fimvigen => rw_crapttl.dtdemiss,
+                                  pr_fimvigen => rw_crapttl.dtelimin,
                                   pr_tpoperac  => 199, -- 199-Aplicação
                                   pr_prititul  => rw_crapttl.prititul,
                                   ----- OUT ----
@@ -2103,7 +2165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                 pr_nrdconta => rw_crapass.nrdconta,
                                 pr_tiporegi => 'C', -- C-Conta Corrente 
                                 pr_inivigen => rw_crapass.dtadmiss,
-                                pr_fimvigen => rw_crapass.dtdemiss,
+                                pr_fimvigen => rw_crapass.dtelimin,
                                 pr_tpoperac => 101, -- 101 – Conta Corrente
                                 pr_prititul => rw_crapass.prititul,
                                 ----- OUT ----
@@ -2124,7 +2186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                   pr_nrdconta  => rw_crapass.nrdconta,
                                   pr_tiporegi  => 'O', -- O-Outros
                                   pr_inivigen => rw_crapass.dtadmiss,
-                                  pr_fimvigen => rw_crapass.dtdemiss,
+                                  pr_fimvigen => rw_crapass.dtelimin,
                                   pr_tpoperac  => 199, -- 199-Aplicação
                                   pr_prititul  => rw_crapass.prititul,
                                   ----- OUT ----
@@ -2222,14 +2284,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     Objetivo  : Procedimento responsavel em gerar o arquivo com os terceiros vinculados ao cooperados para a Easyway
                 (C19.2)
                 
-    Alteração : 
+    Alteração : Ajustado para que na geração dos procuradores e responsaveis de menores o sistema ignore
+                os registros que sao titulares da conta, pois ja serao exportados no arquivo de titulares (28/11/2016).
         
   ..........................................................................*/
     -----------> CURSORES <-----------     
     --> Buscar cooperativas ativas
     CURSOR cr_crapcop IS
       SELECT cop.cdcooper,
-             cop.nmrescop
+             cop.nmrescop,
+             cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
          AND cop.flgativo = 1
@@ -2267,8 +2331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND ass.nrdconta =
              decode(pr_nrdconta, 0, ass.nrdconta, pr_nrdconta)
          AND ass.dtadmiss <= pr_dtfimger -- Cooperados admitidos até a data final
-         AND (ass.dtdemiss IS NULL OR -- Cooperados não demitidos                       
-             ass.dtdemiss >= pr_dtiniger) -- ou demitidos depois da data inicial
+         AND (ass.dtelimin IS NULL OR -- Cooperados não demitidos                       
+             ass.dtelimin >= pr_dtiniger) -- ou demitidos depois da data inicial
        ORDER BY ass.cdcooper
                ,ass.nrdconta;
                         
@@ -2281,10 +2345,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,ass.dtadmiss
             /* Se a conta foi demitida depois do periodo, quer dizer
                que temos que exporta-la como ativa ainda. */
-            ,case when ass.dtdemiss > pr_dtfimger
+            ,case when ass.dtelimin > pr_dtfimger
                   then null
-                  else ass.dtdemiss
-              end dtdemiss
+                  else ass.dtelimin
+              end dtelimin
             ,3   AS tipo_relacao -- Representante Legal 
         FROM crapcrl crl
         LEFT JOIN crapass ass
@@ -2294,16 +2358,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND crl.nrctamen = pr_nrdconta
          AND (crl.nrdconta > 0 OR 
               crl.nrcpfcgc > 0)
+             /* Nao exportar como terceiro se o responsavel for um
+                titular daquela conta. */
+         AND NOT EXISTS (SELECT 1
+                           FROM crapttl ttl
+                          WHERE ttl.cdcooper = crl.cdcooper
+                            AND ttl.nrdconta = crl.nrctamen
+                            AND ttl.nrcpfcgc = nvl(ass.nrcpfcgc, crl.nrcpfcgc))
       UNION
       SELECT avt.nrcpfcgc AS nrcpfcgc
             ,avt.inpessoa AS inpessoa
             ,nvl(avt.dtmvtolt, ass.dtadmiss) AS dtadmiss
             /* Se a vigência for posterior a data final do periodo, 
                vamos exportar vazio, cfme solicitacao Suelen J. */
-            ,case when nvl(avt.dtvalida, ass.dtdemiss) > pr_dtfimger
+            ,case when nvl(avt.dtvalida, ass.dtelimin) > pr_dtfimger
                   then null
-                  else nvl(avt.dtvalida, ass.dtdemiss)
-              end dtdemiss
+                  else nvl(avt.dtvalida, ass.dtelimin)
+              end dtelimin
             ,2            AS tipo_relacao -- Procurador 
         FROM crapavt avt
    LEFT JOIN crapass ass
@@ -2313,7 +2384,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND avt.nrdconta = pr_nrdconta
          AND (avt.nrcpfcgc > 0 OR
               avt.nrdctato > 0)
-         AND avt.tpctrato = 6;
+         AND avt.tpctrato = 6
+         /* Nao exportar repetir se o CPF já conter como rep. legal */
+         AND NOT EXISTS (SELECT 1
+                           FROM crapcrl crl,
+                                crapass ass
+                          WHERE crl.cdcooper = ass.cdcooper
+                            AND crl.nrdconta = ass.nrdconta
+                            AND crl.cdcooper = avt.cdcooper
+                            AND crl.nrctamen = avt.nrdconta
+                            AND nvl(ass.nrcpfcgc,crl.nrcpfcgc) = avt.nrcpfcgc);
     
     --> Pessoa juridica
     CURSOR cr_crapavt (pr_cdcooper crapcop.cdcooper%TYPE,
@@ -2324,10 +2404,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
             ,nvl(avt.dtmvtolt, ass.dtadmiss) AS dtadmiss
             /* Se a vigência for posterior a data final do periodo, 
                vamos exportar vazio, cfme solicitacao Suelen J. */
-            ,case when nvl(avt.dtvalida, ass.dtdemiss) > pr_dtfimger
+            ,case when nvl(avt.dtvalida, ass.dtelimin) > pr_dtfimger
                   then null
-                  else nvl(avt.dtvalida, ass.dtdemiss)
-              end dtdemiss
+                  else nvl(avt.dtvalida, ass.dtelimin)
+              end dtelimin
             ,(CASE
                 WHEN upper(avt.dsproftl) LIKE '%PROCURADOR%' THEN 2 -- Procurador
                 ELSE 3
@@ -2438,6 +2518,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_dtfimger => pr_dtfimger) LOOP
                                        
                                        
+        --> Tratativa para não enviar os dados da propria cooperativa                            
+        IF rw_crapass.nrcpfcgc = rw_crapcop.nrdocnpj THEN
+          continue;
+        END IF;  
+                                       
         IF rw_crapass.inpessoa = 1 THEN
           -- Buscar procuradoes e responsaveis legais da conta
           FOR rw_crapcrl IN  cr_crapcrl (pr_cdcooper => rw_crapcop.cdcooper,
@@ -2450,7 +2535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_cdagenci     => rw_crapass.cdagenci,
                                     pr_nrdconta     => rw_crapass.nrdconta,
                                     pr_inivigen     => rw_crapcrl.dtadmiss,
-                                    pr_fimvigen     => rw_crapcrl.dtdemiss,
+                                    pr_fimvigen     => rw_crapcrl.dtelimin,
                                     pr_tiporegi     => 'C', -- C-Conta Corrente 
                                     pr_tiprelac     => rw_crapcrl.tipo_relacao,
                                     pr_nrcpfcgc_ter => rw_crapcrl.nrcpfcgc,    
@@ -2471,7 +2556,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                       pr_cdagenci     => rw_crapass.cdagenci,
                                       pr_nrdconta     => rw_crapass.nrdconta,
                                       pr_inivigen     => rw_crapcrl.dtadmiss,
-                                      pr_fimvigen     => rw_crapcrl.dtdemiss,
+                                      pr_fimvigen     => rw_crapcrl.dtelimin,
                                       pr_tiporegi     => 'O', -- Outros
                                       pr_tiprelac     => rw_crapcrl.tipo_relacao,
                                       pr_nrcpfcgc_ter => rw_crapcrl.nrcpfcgc,  
@@ -2499,7 +2584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_cdagenci     => rw_crapass.cdagenci,
                                     pr_nrdconta     => rw_crapass.nrdconta,
                                     pr_inivigen     => rw_crapavt.dtadmiss,
-                                    pr_fimvigen     => rw_crapavt.dtdemiss,
+                                    pr_fimvigen     => rw_crapavt.dtelimin,
                                     pr_tiporegi     => 'C', -- C-Conta Corrente 
                                     pr_tiprelac     => rw_crapavt.tipo_relacao,
                                     pr_nrcpfcgc_ter => rw_crapavt.nrcpfcgc,     
@@ -2520,7 +2605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                       pr_cdagenci     => rw_crapass.cdagenci,
                                       pr_nrdconta     => rw_crapass.nrdconta,
                                       pr_inivigen     => rw_crapavt.dtadmiss,
-                                      pr_fimvigen     => rw_crapavt.dtdemiss,
+                                      pr_fimvigen     => rw_crapavt.dtelimin,
                                       pr_tiporegi     => 'O', -- Outros
                                       pr_tiprelac     => rw_crapavt.tipo_relacao,
                                       pr_nrcpfcgc_ter => rw_crapavt.nrcpfcgc,
