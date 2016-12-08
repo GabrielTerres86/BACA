@@ -6,14 +6,14 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                        ,pr_dscritic OUT varchar2) IS
   BEGIN
-   
+
   /* .............................................................................
 
    Programa: PC_CRPS533                      Antigo: Fontes/crps533.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 24/11/2016
+   Data    : Dezembro/2009                   Ultima atualizacao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -231,21 +231,24 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                22/12/2015 - Ajustar os codigos de alines conforme revisao de alineas e 
                             processo de devolucao de cheque (Douglas - Melhoria 100)
 
-			         31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
-							              (Adriano - SD 426308).
+         31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
+               (Adriano - SD 426308).
 
 
                26/04/2016 - Ajuste para evitar geracao de raise quando tiver erro de 
-      			                conversao para numerico (vr_cdcritic:= 843) (Daniel) 
+                            conversao para numerico (vr_cdcritic:= 843) (Daniel) 
                             
                20/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
-
+                            
                07/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
                             
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
                             cada conta do arquivo - Melhoria 69 (Lucas Ranghetti/Elton)
+                            
+               07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+                            (Lucas Ranghetti/Elton)
      ............................................................................. */
 
      DECLARE
@@ -402,10 +405,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
           FROM crapneg crapneg
          WHERE crapneg.cdcooper = pr_cdcooper
          AND   crapneg.cdhisest = 1
-         AND   crapneg.cdobserv IN (11,12,13,14,20,25,28,30,35,43,44,45)
+         AND   crapneg.cdobserv IN (12,13,14,20,25,28,30,35,43,44,45)
          AND   crapneg.dtfimest IS NULL;
        rw_crapneg cr_crapneg%ROWTYPE;
-       
+
        --Selecionar Saldos Negativos e Devolucoes de Cheque
        CURSOR cr_crapneg_reg (pr_cdcooper IN crapneg.cdcooper%TYPE,
                               pr_nrdconta IN crapneg.nrdconta%TYPE,
@@ -425,10 +428,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        rw_crapneg_reg cr_crapneg_reg%ROWTYPE;
        
        --Selecionar Saldos Negativos e Devolucoes de Cheque
-       CURSOR cr_crapneg_reg_not (pr_cdcooper IN crapneg.cdcooper%TYPE,
+       CURSOR cr_crapneg_2 (pr_cdcooper IN crapneg.cdcooper%TYPE,
                                   pr_nrdconta IN crapneg.nrdconta%TYPE,
-                                  pr_nrdocmto IN crapneg.nrdocmto%TYPE,
-                                  pr_cdobserv IN VARCHAR ) IS
+                            pr_nrdocmto IN crapneg.nrdocmto%TYPE) IS
          SELECT /*+ index (crapneg crapneg##crapneg7) */
                 crapneg.nrdconta
                ,crapneg.nrdocmto
@@ -438,9 +440,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
          AND   crapneg.cdhisest = 1
          AND   crapneg.nrdconta = pr_nrdconta
          AND   crapneg.nrdocmto = pr_nrdocmto
-         AND   crapneg.cdobserv NOT IN(pr_cdobserv) 
+         AND   crapneg.cdobserv IN (11,12,13,14,20,25,28,30,35,43,44,45)
          AND   crapneg.dtfimest IS NULL;
-       rw_crapneg_reg_not cr_crapneg_reg_not%ROWTYPE;
+       rw_crapneg_2 cr_crapneg_2%ROWTYPE;
        
        -- Verificar se devolucao é automatica
        CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -533,7 +535,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
           vr_nrcheque   gncpchq.nrcheque%TYPE;
           vr_cdtipreg   gncpchq.cdtipreg%TYPE;
           vr_exc_erro   EXCEPTION;
-
+          
       
 
         BEGIN
@@ -2595,15 +2597,15 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                         || vr_cdprogra || ' --> '
                                                                         || vr_des_erro || vr_compl_erro);
-						  
-						  -- Limpa as variaveis apos efetuar log.
-						  vr_cdcritic:= 0;
-						  vr_des_erro:= NULL;
+              
+                          -- Limpa as variaveis apos efetuar log.
+                          vr_cdcritic:= 0;
+                          vr_des_erro:= NULL;
                           vr_compl_erro:= NULL;
                       END;
                       -- Limpar variavel de critica auxiliar para cada conta do arquivo
                       vr_cdcritic_aux:= 0;
-
+                      
                       --Numero da conta anterior recebe a que está processando
                       vr_ant_nrdconta:= vr_nrdconta;
                       --Limpar código da conta incorporada
@@ -2971,21 +2973,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_index_crapneg:= lpad(nvl(vr_nrdconta_incorp,vr_nrdconta),10,'0')||lpad(vr_nrdocmto,10,'0');
                           -- Testar se existe saldos negativos e controles de cheque
                           IF vr_tab_crapneg.EXISTS(vr_index_crapneg) THEN
-                            
-                            IF cr_crapneg_reg_not%ISOPEN THEN
-                              CLOSE cr_crapneg_reg_not;  
-                            END IF;  
-                            -- Caso tenha alguma crapneg com alinea diferente de 11
-                            OPEN cr_crapneg_reg_not(pr_cdcooper => pr_cdcooper
-                                                   ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
-                                                   ,pr_nrdocmto => nvl(vr_nrdocmto,0)
-                                                   ,pr_cdobserv => '11'); -- not in('11')
-                            FETCH cr_crapneg_reg_not INTO rw_crapneg_reg_not;                                      
-                                  
-                            -- Caso não encontre registro de devolucao automatica com alinea 11
-                            IF cr_crapneg_reg_not%FOUND THEN
-                              CLOSE cr_crapneg_reg_not;        
-                            
                             --Se o codigo de observacao for 12 ou 13
                             IF rw_crapfdc.tpcheque = 1 THEN
                               vr_indevchq:= 1;
@@ -2994,13 +2981,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             END IF;
                             vr_cdcritic:= 414;
                             vr_cdalinea:= 49;
-                            ELSE
-                              CLOSE cr_crapneg_reg_not;  
-                            END IF;                            
                           END IF;
                         END IF; --cr_cdcritic = 0
-                      END IF; --cr_crapfdc%NOTFOUND
-
+                      END IF;
                       --Fechar cursor caso esteja aberto
                       IF cr_crapfdc%ISOPEN THEN
                         --Fechar cursor
@@ -3156,7 +3139,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         --Ler proxima linha do arquivo
                         RAISE vr_exc_pula;
                       END IF; --vr_cdcritic = 108
-                      
+
                       -- Se cheque ja entrou critica 97
                       IF vr_cdcritic = 97 THEN
 
@@ -3887,10 +3870,18 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                               **************** ALINEA DE DEVOLUÇÃO ***********************
                               ***********************************************************/
                               
-                              --Montar indice crapneg
-                              vr_index_crapneg:= lpad(nvl(vr_nrdconta_incorp,vr_nrdconta),10,'0')||lpad(vr_nrdocmto,10,'0');
-                              -- Testar se existe saldos negativos e controles de cheque
-                              IF vr_tab_crapneg.EXISTS(vr_index_crapneg) THEN
+                              IF cr_crapneg_2%ISOPEN THEN
+                                CLOSE cr_crapneg_2;  
+                              END IF;  
+                              -- Verificar se existe alineas ja devolvidas
+                              OPEN cr_crapneg_2(pr_cdcooper => pr_cdcooper
+                                               ,pr_nrdconta => nvl(vr_nrdconta_incorp,vr_nrdconta)
+                                               ,pr_nrdocmto => nvl(vr_nrdocmto,0));
+                              FETCH cr_crapneg_2 INTO rw_crapneg_2;                                      
+                                    
+                              -- Caso houver alguma alinea devolvida
+                              IF cr_crapneg_2%FOUND THEN
+                                CLOSE cr_crapneg_2;        
                                 
                                 IF cr_crapneg_reg%ISOPEN THEN
                                   CLOSE cr_crapneg_reg;  
@@ -3924,6 +3915,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                 END IF;
                                 END IF;
                               ELSE
+                                CLOSE cr_crapneg_2;  
                                 vr_cdalinea:= 11;
                               END IF;
                               
@@ -4974,7 +4966,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
                   vr_dircon := vr_dircon || vc_dircon;
                   vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
-
+                  
                   -- Chama a geracao do TXT
                   GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
                                                      ,pr_cdprogra  => vr_cdprogra              --> Programa chamador

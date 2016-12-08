@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 28/11/2016
+    Data    : Marco/07.                       Ultima atualizacao: 05/12/2016
     
     Dados referentes ao programa:
 
@@ -195,6 +195,9 @@
               
               28/11/2016 - Alterar parametro da busca da tabela crapcst que estava errado 
                            (Lucas Ranghetti/Elton)
+                           
+              05/12/2016 - Ajuste para criar lançamento com o historico 399 para a Diurna e Noturna.
+                           Também validar alinea 35 - Melhoria 69 (Lucas Ranghetti/Elton)
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -505,10 +508,13 @@ PROCEDURE gera_lancamento:
 
     TRANS_1:
     /* TCO = Transferencia de contas */
-    FOR EACH crapdev WHERE crapdev.cdcooper = p-cdcooper       AND
-                           crapdev.nrdconta > 0                EXCLUSIVE-LOCK
+    FOR EACH crapdev WHERE crapdev.cdcooper = p-cdcooper   AND                            
+                           crapdev.insitdev = 0 EXCLUSIVE-LOCK
                            TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
 
+        /* Se conta for maior que zero */
+        IF  crapdev.nrdconta > 0 THEN
+            DO:
         FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper AND
                                  crapass.nrdconta = crapdev.nrdconta
                                  NO-LOCK NO-ERROR.
@@ -583,8 +589,8 @@ PROCEDURE gera_lancamento:
                 
         END.
 
-        IF  crapdev.insitdev = 0 THEN
-            DO:            
+                
+                
                 IF  crapass.inpessoa = 1 THEN
                     DO:
                         ASSIGN aux_cdtarifa = "DEVOLCHQPF" 
@@ -1092,47 +1098,19 @@ PROCEDURE gera_lancamento:
                                       UNDO TRANS_1, RETURN "NOK".
                                   END.
                            END. /*fim do if taxa bacen*/
-                     END.
+                     END. /* Fim do historico 46 */
             
                 ASSIGN crapdev.insitdev = 1 /* 1 = devolvido */
                        crapdev.indctitg = IF   p-cddevolu = 3 THEN  /*  CONTA ITG  */
                                                TRUE
                                           ELSE FALSE.
-            END. /* crapdev.insitdev = 0 */                      
-        ELSE 
-            DO:                 
+                
                 /* iremos verificar se registro criado na craplcm anteriormente é historico 47, 
                    caso seja devmos criar outro com o 399 - DEVOLUCAO DE CHEQUE DESCONTADO */
-                IF  crapdev.cdhistor = 47 AND p-cddevolu = 6 THEN
-                    DO:                     
-                       glb_nrcalcul = 
-                           INT(SUBSTR(STRING(crapdev.nrcheque,"9999999"),1,6)).                      
-                       
-                        FIND crapfdc WHERE crapfdc.cdcooper = p-cdcooper        AND
-                                           crapfdc.cdbanchq = crapdev.cdbanchq  AND
-                                           crapfdc.cdagechq = crapdev.cdagechq  AND
-                                           crapfdc.nrctachq = crapdev.nrctachq  AND
-                                           crapfdc.nrcheque = INT(glb_nrcalcul)                                           
-                                           NO-LOCK NO-ERROR NO-WAIT.
-                      
-                       IF  NOT AVAILABLE crapfdc THEN
-                           glb_cdcritic = 268.
-                       
-                       IF  glb_cdcritic > 0 THEN
+                IF  crapdev.cdhistor = 47 AND 
+                   (p-cddevolu = 5 OR p-cddevolu = 6) THEN
                            DO:
-                               RUN fontes/critic.p.
-                               UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                                                 " - " + glb_cdprogra + "' --> '"  +
-                                                 glb_dscritic +
-                                                 "COOP: " + STRING(crapdev.cdcooper) +
-                                                 "CTA: " + STRING(crapdev.nrdconta) +
-                                                 "CBS: " + STRING(crapdev.nrdctabb) +
-                                                 "DOC: " + STRING(crapdev.nrcheque) +
-                                                 " >> log/proc_message.log").
                        
-                               UNDO TRANS_1, RETURN "NOK".
-                           END.  
-                    
                        FIND CURRENT craplot NO-LOCK NO-ERROR.                        
                        RELEASE craplot.
                        
@@ -1391,12 +1369,36 @@ PROCEDURE gera_lancamento:
                                   END.
                            END.
                     END. /* crapdev.cdhistor = 47 */
-            END. /* fim do else do IF insitdev = 0 THEN */
         
         IF   crapdev.cdpesqui = "TCO" THEN
              ASSIGN aux_cdcooper = p-cdcooper
                     aux_nrdconta = crapdev.nrdconta.
+            END.
+        ELSE /* Conta = 0 */
+            DO:                  
+                /*  CECRED */
+                IF  p-cddevolu = 4 THEN 
+                    DO:
+                        /*  Seleciona somente devolucoes VLB */
+                        IF   crapdev.cdbanchq <> crapcop.cdbcoctl THEN
+                             NEXT.
         
+                        IF   crapdev.vllanmto < aux_valorvlb THEN
+                             NEXT.
+                    END.
+                ELSE 
+                    DO:                  
+                        /* Diurna e Noturna */
+                        IF  p-cddevolu = 5 OR p-cddevolu = 6 THEN                             
+                            IF  crapdev.cdbanchq <> crapcop.cdbcoctl THEN
+                                NEXT.    
+                    END.
+        
+                /* Verificar se alinea do cheque devolvido é 35 */
+                IF  crapdev.cdalinea = 35 THEN
+                    ASSIGN crapdev.insitdev = 1
+                           crapdev.indevarq = 2.
+            END.
     END.  /*  Fim do FOR EACH e da transacao  */
     
     IF  VALID-HANDLE(h-b1wgen0153) THEN
