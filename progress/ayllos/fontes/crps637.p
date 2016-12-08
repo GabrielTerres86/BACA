@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 01/09/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 01/12/2016
     
     Dados referente ao programa:
     
@@ -39,6 +39,12 @@
                               
                  01/09/2016 - Retirar campo FCDEBAUTO da gravacao da tabela, 
                               pois nao utiliza em nenhum lugar (Lucas Ranghetti #506682)
+                              
+                 01/12/2016 - Alterar alteracao do CCROCONV para atualizar campos
+                              de segmento e empresa da crapscn somente se seguir a
+                              regra de crapscn.dsoparre = "E"  AND 
+                              (crapscn.cddmoden = "A"  OR crapscn.cddmoden = "C")
+                              (Lucas Ranghetti #531045)                          
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -547,13 +553,31 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                crapscn.dtulttar = IF ENTRY(32, aux_setlinha, "|") <> "00/00/0000" THEN                      
                                      DATE(TRIM(ENTRY(32, aux_setlinha, "|"),'"'))           /*  fdulttarif */  
                                   ELSE ?.
+        
+        /* 
+           FCENVIAOPT (crapscn.cddmoden) - identifica quem é o responsavel pelo cadastro do optante do debito 
+                                           automatico.
+           A-Agencia/Cooperativa
+           B-Empresa Conveniada
+           C-Misto
+           
+           FCPERARREC (crapscn.dsoparre) - Identifica se é convenio de arrecadacao ou debito automatico
+           As letras representam os canais:
+           A-Caixa
+           B-ATM
+           C-Agente credenciado
+           D-IB
+           E-Debito automatico
+           F-CNAB
+        */
+        
         IF  crapscn.dsoparre = "E"  AND
            (crapscn.cddmoden = "A"  OR
             crapscn.cddmoden = "C") THEN
-            NEXT.
-        ELSE
             ASSIGN crapscn.cdsegmto = TRIM(ENTRY(39, aux_setlinha, "|"),'"')         /*  fcsegmento */
                    crapscn.cdempcon = INTE(TRIM(ENTRY(38, aux_setlinha, "|"),'"')).  /*  fcnumbarra */ 
+        ELSE
+            NEXT.
              
         VALIDATE crapscn.
 
