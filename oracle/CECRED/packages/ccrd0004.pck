@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --  Sistema  : Rotinas referente ao processo de domicilio bancario
   --  Sigla    : CCRD
   --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-  --  Data     : Setembro - 2015.                   Ultima atualizacao: 
+  --  Data     : Setembro - 2015.                   Ultima atualizacao: 30/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -24,6 +24,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --						  Retirado a validação da data de lançamento ser inferior 
   --						  a data de processamento. Chamado 433399 (Gisele C. Neves - RKAM)
   --
+  --       20/09/2016 - #523937 Criação de log de controle de início, erros e fim de execução
+  --                    do job pc_efetua_processo (Carlos)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Rotina para o processamento do arquivo oriundo do Sicoob
@@ -77,7 +79,6 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
 
 END CCRD0004;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
 
 
@@ -1150,14 +1151,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
             vr_dserro := vr_dserro ||'CNPJ.';
           END IF;
           RAISE vr_erro;
-        ELSIF rw_crapass.nrcpfcgc <> rw_tabela.nrcpfcgc THEN
-          IF rw_crapass.inpessoa = 1 THEN
+        ELSIF rw_crapass.nrcpfcgc <> rw_tabela.nrcpfcgc AND rw_crapass.inpessoa = 1 THEN
             vr_dserro := 'CPF informado ('||gene0002.fn_mask_cpf_cnpj(rw_tabela.nrcpfcgc,vr_inpessoa)||
                          ') difere do CPF do associado ('||gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa)||').';
-          ELSE
-            vr_dserro := 'CNPJ informado ('||gene0002.fn_mask_cpf_cnpj(rw_tabela.nrcpfcgc,vr_inpessoa)||
-                         ') difere do CNPJ do associado ('||gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa)||').';
-          END IF;
+          RAISE vr_erro;
+        ELSIF substr(lpad(rw_crapass.nrcpfcgc,14,0),1,8) <> substr(lpad(rw_tabela.nrcpfcgc,14,0),1,8) AND rw_crapass.inpessoa = 2 then
+          vr_dserro := 'Base do CNPJ informado ('||substr(lpad(rw_tabela.nrcpfcgc,14,0),1,8)||
+                       ') difere da base do CNPJ do associado ('||substr(lpad(rw_crapass.nrcpfcgc,14,0),1,8)||').';
           RAISE vr_erro;
         END IF;
         
@@ -1489,13 +1489,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     vr_dsdiretorio VARCHAR2(100);      --> Local onde esta os arquivos Sicoob
     vr_listaarq    VARCHAR2(4000);     --> Lista de arquivos
 
+    vr_cdprogra    VARCHAR2(40) := 'PC_EFETUA_PROCESSO';
+    vr_nomdojob    VARCHAR2(40) := 'JBCRD_DOMICILIO_BANCARIO';
+    vr_flgerlog    BOOLEAN := FALSE;
 
-  BEGIN
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
+    BEGIN
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
+    END pc_controla_log_batch;
+
+    BEGIN
     
     -- Se o dia da semana for sabado ou domingo, nao deve executar o fonte
     IF to_char(SYSDATE,'D') IN (1,7) THEN
       RETURN; -- Encerra o programa;
     END IF;
+    
+    -- Log de inicio de execucao
+    pc_controla_log_batch(pr_dstiplog => 'I');
     
     -- Se for um feriado, nao deve executar o fonte
     OPEN cr_crapfer;
@@ -1582,6 +1601,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
       RAISE vr_exc_saida;
     END IF;
 
+    -- Log de fim da execucao
+    pc_controla_log_batch(pr_dstiplog => 'F');
+
     -- Efetua gravacao dos registros
     COMMIT;
 
@@ -1595,6 +1617,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
         pr_dscritic := vr_dscritic;
       END IF;
       pr_cdcritic := vr_cdcritic;
+
+      -- Log de erro de execucao
+      pc_controla_log_batch(pr_dstiplog => 'E',
+                            pr_dscritic => pr_dscritic);
+
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
@@ -1607,4 +1634,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
   END;
 END CCRD0004;
 /
-
