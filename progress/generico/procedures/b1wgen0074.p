@@ -787,7 +787,7 @@ PROCEDURE Valida_Dados:
 											OUTPUT aux_dscritic).
 			    END.
             END.
-            END.
+            
             WHEN "X" THEN DO: /* EXCLUI TITULARES */
                 RUN Valida_Dados_Exclui
                     ( INPUT par_cdcooper,
