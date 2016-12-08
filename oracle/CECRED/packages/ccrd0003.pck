@@ -1880,7 +1880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Sistema : Cartoes de Credito - Cooperativa de Credito
     Sigla   : CRRD
     Autor   : Lucas Lunelli
-    Data    : Maio/14.                    Ultima atualizacao: 22/06/2016
+    Data    : Maio/14.                    Ultima atualizacao: 07/12/2016
 
     Dados referentes ao programa:
 
@@ -1959,7 +1959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              a conciliação e gerar o debito corretamente SD356767 (Odirlei-AMcom) 
                              
                 16/02/2016 - Ajustes referentes ao projeto melhoria 157(Lucas Ranghetti #330322)
-                
+                             
                 22/06/2016 - Ajustes em relação a situacao de ja existir o lancamento de debito/credito
                              na conta do cooperado e verificarmos a necessidade de refaze-las com base
                              nas mensagens ja existentes na dcb, comparado com a linha do CEXT que
@@ -1967,6 +1967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              
                 04/08/2016 - Nao gerar mais arquivo para inicio do BI. Ao inves disso, sera inserido / alterado
                              registro na CRAPPRM. (495821 - Andrino - RKAM)
+                             
+                07/12/2016 - Tratamento Incorporacao Transposul. (Fabricio)
                              
     ....................................................................................................*/
     DECLARE
@@ -2034,6 +2036,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_flgdebcc   INTEGER;
       vr_cdtrnbcb_ori INTEGER;      
       vr_dstrnbcb VARCHAR2(100);
+      
+      vr_dsdircop crapcop.dsdircop%TYPE;
       
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
@@ -2186,7 +2190,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Cursor para retornar cooperativa com base agencia bancoob
       CURSOR cr_crapcop_cdagebcb (pr_cdagebcb IN crapcop.cdagebcb%TYPE) IS
       SELECT cop.cdcooper,
-             cop.nmrescop
+             cop.nmrescop,
+             cop.flgativo
         FROM crapcop cop
        WHERE cop.cdagebcb = pr_cdagebcb;
       rw_crapcop_cdagebcb cr_crapcop_cdagebcb%ROWTYPE;
@@ -2316,6 +2321,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           AND lcm.vllanmto = pr_vldtrans;
           
       rw_craplcm cr_craplcm%ROWTYPE;
+
+      CURSOR cr_craptco (pr_cdcopant IN crapcop.cdcooper%TYPE,
+                         pr_nrctaant IN craptco.nrctaant%TYPE) IS
+        SELECT tco.nrdconta,
+               tco.cdcooper
+          FROM craptco tco
+         WHERE tco.cdcopant = pr_cdcopant
+           AND tco.nrctaant = pr_nrctaant;
+      rw_craptco cr_craptco%ROWTYPE;
 
       -- Subrotina para escrever críticas no LOG do processo
       PROCEDURE pc_log_batch(pr_flgerro BOOLEAN) IS
@@ -2767,6 +2781,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           CLOSE cr_crapcop;
         END IF;
 
+        vr_dsdircop := rw_crapcop.dsdircop;
+
         -- Leitura do calendario da cooperativa
         OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
         FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -3110,6 +3126,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     RAISE vr_exc_rejeitado;
                 END;
                 
+                -- verifica se eh uma cooperativa inativa
+                IF rw_crapcop_cdagebcb.flgativo = 0 THEN
+                  OPEN cr_craptco (pr_cdcopant => rw_crapcop_cdagebcb.cdcooper,
+                                   pr_nrctaant => vr_nrdconta);
+                  FETCH cr_craptco INTO rw_craptco;
+                  
+                  IF cr_craptco%FOUND THEN
+                    vr_nrdconta := nvl(rw_craptco.nrdconta,0);
+                    
+                    IF cr_crapcop%ISOPEN THEN
+                      CLOSE cr_crapcop;
+                    END IF;
+                    
+                    OPEN cr_crapcop (pr_cdcooper => rw_craptco.cdcooper);
+                    FETCH cr_crapcop INTO rw_crapcop;
+                  ELSE
+                    vr_nrdconta := 0;
+                    rw_crapcop.cdagebcb := 0;
+                  END IF;                                   
+                  
+                  CLOSE cr_craptco;
+                  
+                  IF cr_crapcop_cdagebcb%ISOPEN THEN
+                    CLOSE cr_crapcop_cdagebcb;
+                  END IF;
+                  
+
+                  
+                  -- busca os dados da cooperativa TRANSPOCRED
+                  OPEN cr_crapcop_cdagebcb(pr_cdagebcb => rw_crapcop.cdagebcb);
+                  FETCH cr_crapcop_cdagebcb INTO rw_crapcop_cdagebcb;
+
+                  IF cr_crapcop_cdagebcb%NOTFOUND THEN
+                    -- Fechar o cursor pois havera raise
+                    CLOSE cr_crapcop_cdagebcb;
+                    -- Montar mensagem de critica
+                    vr_dscritic := 'Cod. Agencia da Bancoob ' || rw_crapcop.cdagebcb ||
+                                   ' nao possui Cooperativa correspondente.';
+                    RAISE vr_exc_rejeitado;
+                  END IF;
+
+                  -- Fecha cursor cooperativa
+                  CLOSE cr_crapcop_cdagebcb;
+                END IF;
+                
                 -- Buscar informações dos associados
                 OPEN cr_crapass (pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
                                  pr_nrdconta => vr_nrdconta);
@@ -3121,7 +3182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   RAISE vr_exc_rejeitado;
                 END IF;
 
-                CLOSE cr_crapass;                                 
+                CLOSE cr_crapass; 
                  
                 -- CÓDIGO DA TRANSAÇÃO
                 vr_cdtrnbcb := gene0002.fn_char_para_number(nvl(trim(substr(vr_des_text,28,3)),0));
@@ -3998,7 +4059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
             -- Montar Comando para mover o arquivo lido para o diretório salvar
             vr_comando:= 'mv '|| vr_direto_connect || '/' || vr_vet_nmarquiv(i) ||
-                         ' /usr/coop/' || rw_crapcop.dsdircop || '/salvar/ 2> /dev/null';
+                         ' /usr/coop/' || vr_dsdircop || '/salvar/ 2> /dev/null';
 
             -- Executar o comando no unix
             GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -6778,7 +6839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-      BEGIN
+    BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -6791,8 +6852,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     BEGIN
       
       -- Log de inicio de execucao
-      pc_controla_log_batch(pr_dstiplog => 'I');      
-
+      pc_controla_log_batch(pr_dstiplog => 'I');
+      
       FOR rw_crapcop IN cr_crapcop LOOP
          vr_contador := vr_contador + 1;
          vr_crapcop(vr_contador) := rw_crapcop.cdcooper;
@@ -6834,9 +6895,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            END IF;
            
            -- Envio centralizado de log de erro
-          pc_controla_log_batch(pr_dstiplog => 'E',
+           pc_controla_log_batch(pr_dstiplog => 'E',
                                 pr_dscritic => 'Coop: ' || vr_crapcop(i) || 
-                                               ' - ' || vr_dscritic);
+                                                ' - ' || vr_dscritic);
 
           CONTINUE; -- vai para a próxima cooperativa
         END IF;   
@@ -6847,7 +6908,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
       -- Log de fim de execucao
       pc_controla_log_batch(pr_dstiplog => 'F');
-
+      
     EXCEPTION
       WHEN vr_exc_saida THEN
         

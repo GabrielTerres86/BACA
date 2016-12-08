@@ -2,7 +2,7 @@
 
     Programa: b1wgen0074.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 11/11/2016
+    Data    : Maio/2010                   Ultima atualizacao: 02/12/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - CONTA CORRENTE
 
@@ -190,6 +190,9 @@
                              abertura de conta ou mudanca do tipo da mesma, 
                              para solicitar talao de cheque para o cooperado 
                              (Carlos)
+				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
+				             (Incorporacao Transposul). (Fabricio)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -747,6 +750,8 @@ PROCEDURE Valida_Dados:
             END.
             WHEN "E" THEN DO: /* ENCERRA ITG */
                 
+				IF par_cdcooper <> 17 THEN
+				DO:
                 RUN bloqueia-opcao(INPUT par_cdcooper,
                                    INPUT par_cdagenci,
                                    INPUT par_nrdconta,
@@ -769,6 +774,18 @@ PROCEDURE Valida_Dados:
                              OUTPUT aux_cdcritic,
 													 OUTPUT aux_dscritic).
                     END.
+            END.
+            END.
+			    ELSE
+			    DO:
+					RUN Valida_Dados_Encerra(INPUT par_cdcooper,
+									         INPUT par_nrdconta,
+											OUTPUT par_nmdcampo,
+											OUTPUT par_tipconfi,
+											OUTPUT par_msgconfi,
+											OUTPUT aux_cdcritic,
+											OUTPUT aux_dscritic).
+			    END.
             END.
             END.
             WHEN "X" THEN DO: /* EXCLUI TITULARES */
@@ -5755,6 +5772,11 @@ PROCEDURE bloqueia-opcao:
                 par_dtmvtolt >= 11/07/2014  THEN
                 RETURN "NOK".
 			*/
+
+			/*Migracao Transulcred -> Transpocred*/
+            IF  crabass.cdcooper = 17        AND
+                par_dtmvtolt >= 12/12/2016  THEN
+                RETURN "NOK".
         END.
     ELSE
         RETURN "NOK".
