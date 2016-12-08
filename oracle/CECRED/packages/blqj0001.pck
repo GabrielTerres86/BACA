@@ -569,7 +569,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
     vr_vlsldpou       NUMBER;
     
     vr_nrcpfcgc       crapass.nrcpfcgc%TYPE;
-    vr_nmprimtl       crapass.nmprimtl%TYPE;
         
     vr_flconven       INTEGER;
     vr_tab_cabec      CADA0004.typ_tab_cabec;
@@ -604,7 +603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
                                ,pr_nrctadoc   => pr_cooperad
                                ,pr_tpcooperad => pr_tpcooperad
                                ,pr_nrcpfcgc   => vr_nrcpfcgc
-                               ,pr_nmprimtl   => vr_nmprimtl
+                               ,pr_nmprimtl   => pr_nmprimtl
                                ,pr_dscritic   => vr_dscritic);
                               
     -- Se houver retorno de erro
