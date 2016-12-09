@@ -5231,7 +5231,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_tab_totais(vr_idxtot).vltottit := nvl(vr_tab_totais(vr_idxtot).vltottit,0) + vr_tab_tit_bordero_ord(vr_idxord).vltitulo;
         vr_tab_totais(vr_idxtot).vltotliq := nvl(vr_tab_totais(vr_idxtot).vltotliq,0) + vr_tab_tit_bordero_ord(vr_idxord).vlliquid;
         
-        IF vr_tab_tit_bordero_ord(vr_idxord).nrinssac > 11 THEN
+        IF length(vr_tab_tit_bordero_ord(vr_idxord).nrinssac) > 11 THEN
           vr_inpessoa := 2;
         ELSE
           vr_inpessoa := 1;
