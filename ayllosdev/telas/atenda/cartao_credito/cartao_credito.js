@@ -54,6 +54,7 @@
  * 036: [08/08/2016] Fabricio      (CECRED) : Alterado id do form utilizado na function ImprimeExtratoCartao2 (chamado 477696).
  * 037: [05/10/2016] Kelvin		   (CECRED) : Ajuste feito ao realizar o cadastro de um novo cartão no campo  "habilita funcao debito"
 										      conforme solicitado no chamado 508426. (Kelvin)
+   038: [09/12/2016] Kelvin		   (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
  */
   
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -1151,7 +1152,13 @@ function controlaLayout(nomeForm) {
 /******************************************************************************************************************/
 /*****************************************         OPÇÃO NOVO         *********************************************/
 /******************************************************************************************************************/
-function opcaoNovo() {	
+function opcaoNovo(cdcooper) {	
+
+	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
+	if(cdcooper == 17){		
+		showError("error", "Solicita&ccedil;&atilde;o n&atilde;o autorizada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;		
+	}
 
 	// ALTERAÇÃO 001
 	nomeForm = 'frmNovoCartao';

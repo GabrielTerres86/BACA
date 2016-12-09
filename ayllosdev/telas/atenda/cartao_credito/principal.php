@@ -3,7 +3,7 @@
 	/************************************************************************
 	  Fonte: principal.php
 	  Autor: Guilherme
-	  Data : Marco/2008                 Última Alteração: 29/07/2015
+	  Data : Marco/2008                 Última Alteração: 09/12/2016
 
 	  Objetivo  : Mostrar opcao Principal da rotina de Cartões de Crédito
 				  da tela ATENDA
@@ -29,7 +29,10 @@
 				  28/07/2014 - Novo tratamento para exibição parcial do
 							   número do cartão (Lunelli).
 
-				  29/07/2015 - Incluir a opcao TAA. (James)			   
+				  29/07/2015 - Incluir a opcao TAA. (James)		
+
+				  09/12/2016 - (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. (Kelvin)										  				  
+				  
 	************************************************************************/
 	
 	session_start();
@@ -168,7 +171,7 @@
 			
 			<input type="image" id="btncons" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>
 			
-			<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoNovo();return false;'"; } ?>>
+			<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>
 			<input type="image" id="btnimpr" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoImprimir();return false;'"; } ?>>
 			<input type="image" id="btnentr" src="<?php echo $UrlImagens; ?>botoes/entregar.gif"  <?php if (!in_array("F",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoEntregar();return false;'"; } ?>>
 			<input type="image" id="btnaltr" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoAlterar();return false;'"; } ?>>
