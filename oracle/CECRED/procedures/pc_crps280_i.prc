@@ -323,6 +323,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                               da inadimplencia. (James)
                               
                  03/06/2016 - Ajuste no cursor cr_crapris para somente buscar do dia. (James)
+                              
+                 30/08/2016 - Remover a validação do risco pela regra (vr_percentu <> 0.5) e 
+                              realizar a validação atráves do nível do risco.
   ............................................................................. */
 
    DECLARE
@@ -1967,8 +1970,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          -- Somente em caso de chamada pelo crps280
          IF pr_cdprogra = 'CRPS280' THEN
          
+            -- Renato Darosci - 30/08/2016 - ao invés de utilizar o percentual de 0.5 na 
+            -- condição, vamos verificar o nível de risco "A".
+            -- ANTES => IF vr_qtpreatr <= 0 AND vr_percentu <> 0.5 AND
+            --
             -- Somente com risco em dia, que não seja do tipo A, Sem Prejuízo e somente Empréstimo
-            IF vr_qtpreatr <= 0 AND vr_percentu <> 0.5 AND
+            IF vr_qtpreatr <= 0 AND vr_tab_crapris(vr_des_chave_crapris).innivris <> 2 AND 
                vr_vldivida > 0  AND vr_dsorigem = 'E' THEN -- So emprestimo
 
                vr_dsnivris := '';
@@ -3094,4 +3101,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
    END;
 END PC_CRPS280_I;
 /
-
