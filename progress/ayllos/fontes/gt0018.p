@@ -17,6 +17,10 @@
                05/03/2015 - Retirado a condicao
                             " crapscn.dsnomcnv MATCHES "*FEBRABAN*" "
                             do fonte (SD 233749 - Tiago).
+                            
+              30/11/2016 - Correçao para buscar corretamente registro da crapstn
+                           de acordo com o tipo de arrecadaçao (Lucas Lunelli - Projeto 338)
+                           
 .............................................................................*/
 
 { includes/var_online.i  }
@@ -278,7 +282,10 @@ DO WHILE TRUE:
                 ASSIGN tel_vltarcxa = crapstn.vltrfuni.
            
             FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres AND
-                                     crapstn.tpmeiarr = "D" 
+                                     crapstn.tpmeiarr = "D"                AND
+                                     IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                     AND
+                                     IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
                                      NO-LOCK NO-ERROR.
            
             IF  AVAIL crapstn THEN

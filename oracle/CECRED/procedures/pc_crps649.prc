@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS649 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Carlos Henrique
-   Data    : Julho/2013                        Ultima atualizacao: 04/12/2015
+   Data    : Julho/2013                        Ultima atualizacao: 28/09/2016
 
    Dados referentes ao programa:
 
@@ -41,6 +41,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS649 (pr_cdcooper  IN crapcop.cdcooper%
                             quanto a qual relatório deverá ser gerado. ( Renato - Supero)           
 
                04/12/2015 - Retirar trecho do código onde faz a reversão (Lucas Ranghetti #326987 )
+               
+               28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares).
+               
 .............................................................................*/
   -- Variaveis de uso no programa
   vr_cdprogra        crapprg.cdprogra%TYPE := 'CRPS649';  -- Codigo do presente programa
@@ -84,7 +88,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS649 (pr_cdcooper  IN crapcop.cdcooper%
   vr_nom_direto      VARCHAR2(100);                -- Diretorio /coop/rl
   vr_nmarqtxt        VARCHAR2(100);                -- Nome do arquivo RDC
   vr_dscomand        VARCHAR2(500);                -- comando Unix
-  vr_nom_micros      VARCHAR2(100);                -- Diretorio /coop/rl
   vr_exc_saida       EXCEPTION;                    -- Exeption parar cadeia
   vr_exc_fimprg      EXCEPTION;                    -- Exception para rodar fimprg
   vr_typ_saida       VARCHAR2(2000);               -- controle de erros de scripts unix
@@ -145,6 +148,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS649 (pr_cdcooper  IN crapcop.cdcooper%
   vr_tab_convenio_671 typ_tab_convenio_671; 
   vr_tab_conv_ord_671 typ_tab_convenio_671; 
   
+   vr_dircon VARCHAR2(200);
+   vr_arqcon VARCHAR2(200);
+   vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+   vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+   vc_cdtodascooperativas INTEGER := 0;   
+
   -- Cursor da cooperativa logada
   CURSOR cr_crapcop (pr_cdcooper crapcop.cdcooper%TYPE) IS
     SELECT cop.cdcooper 
@@ -1585,10 +1594,6 @@ BEGIN
     vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C'   
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nmsubdir => '/contab'); 
-    -- Micros
-    vr_nom_micros := gene0001.fn_diretorio(pr_tpdireto => 'M'   
-                                        ,pr_cdcooper => pr_cdcooper
-                                        ,pr_nmsubdir => '/contab'); 
                                         
     -- Define o nome do arquivo
     vr_nmarqtxt := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_CONVEN.txt';
@@ -1614,9 +1619,15 @@ BEGIN
       RAISE vr_exc_saida;
     END IF; 
     
+     -- Busca o diretório para contabilidade
+     vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+     vr_dircon := vr_dircon || vc_dircon;
+     vr_arqcon := to_char(rw_crapdat.dtmvtolt,'YYMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CONVEN.txt';
+
     -- Executa comando UNIX para converter arq para Dos
-    vr_dscomand := 'ux2dos ' || vr_nom_direto ||'/'||vr_nmarqtxt||' > '
-                             || vr_nom_micros ||'/'||vr_nmarqtxt || ' 2>/dev/null';
+     vr_dscomand := 'ux2dos '||vr_nom_direto||'/'||vr_nmarqtxt||' > '||
+                                vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
+
 
     -- Executar o comando no unix
     GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -1686,4 +1697,3 @@ EXCEPTION
   
 END PC_CRPS649;
 /
-

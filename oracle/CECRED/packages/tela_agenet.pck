@@ -33,7 +33,22 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_AGENET AS
       ,nrterfin craplau.nrterfin%TYPE
       ,dstitdda varchar2(100)
       ,dtmvtolt craplau.dtmvtolt%TYPE
-      ,nrdocmto craplau.nrdocmto%TYPE);
+      ,nrdocmto craplau.nrdocmto%TYPE
+      ,tpcaptura         tbpagto_agend_darf_das.tpcaptura%TYPE         -- Tipo de Captura
+      ,dstpcaptura       VARCHAR(100)                                  -- Descricao do Tipo de Captura
+      ,dslinha_digitavel tbpagto_agend_darf_das.dslinha_digitavel%TYPE -- Linha Digitável
+      ,dsnome_fone       tbpagto_agend_darf_das.dsnome_fone%TYPE       -- Nome / Telefone
+      ,dtapuracao        tbpagto_agend_darf_das.dtapuracao%TYPE        -- Período de Apuração
+      ,nrcpfcgc          VARCHAR2(20)                                  -- Número do CPF ou CNPJ (Formatado)
+      ,cdtributo         tbpagto_agend_darf_das.cdtributo%TYPE         -- Código da Receita
+      ,nrrefere          tbpagto_agend_darf_das.nrrefere%TYPE          -- Número de Referência
+      ,dtvencto          tbpagto_agend_darf_das.dtvencto%TYPE          -- Data de Vencimento
+      ,vlprincipal       tbpagto_agend_darf_das.vlprincipal%TYPE       -- Valor do Principal
+      ,vlmulta           tbpagto_agend_darf_das.vlmulta%TYPE           -- Valor da Multa
+      ,vljuros           tbpagto_agend_darf_das.vljuros%TYPE           -- Valor dos Juros
+      ,vlreceita_bruta   tbpagto_agend_darf_das.vlreceita_bruta%TYPE   -- Receita Bruta Acumulada
+      ,vlpercentual      tbpagto_agend_darf_das.vlpercentual%TYPE      -- Percentual
+      );
       
   --Tipo de Tabela de Beneficiario
   TYPE typ_tab_agendamentos IS TABLE OF typ_reg_agendamentos INDEX BY PLS_INTEGER;    
@@ -85,6 +100,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                              destino da TED (Carlos - M117)
                              
                 29/06/2016 - m117 Inclusao do tipo da transacao na busca dos agendamentos (Carlos)
+                
+                11/08/2016 - Inclusão de novos campos para pagamento de DARF/DAS (Dionathan)
                 
 ---------------------------------------------------------------------------------------------------------------*/
   /* Rotina para buscar os agendamentos */
@@ -159,27 +176,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             ,lau.dtmvtolt
             ,lau.nrdocmto
             ,ass.cdagenci
-        FROM craplau lau 
-            ,crapass ass        
-       WHERE (NVL(pr_nrdconta, 0) = 0 OR lau.nrdconta = pr_nrdconta)
+            ,darf_das.tppagamento -- Tipo pagamento (1-DARF, 2-DAS)
+            ,darf_das.tpcaptura -- Tipo de Captura (1 – Com Código de Barras / 2 – Sem Código de Barras)
+            ,DECODE(darf_das.tpcaptura,1,'COM','SEM') || ' CODIGO DE BARRAS' dstpcaptura -- Descricao do Tipo de Captura
+            ,darf_das.dslinha_digitavel -- Linha Digitável
+            ,darf_das.dsnome_fone -- Nome / Telefone
+            ,darf_das.dtapuracao -- Período de Apuração
+            ,darf_das.nrcpfcgc -- Número do CPF ou CNPJ
+            ,darf_das.cdtributo -- Código da Receita
+            ,darf_das.nrrefere -- Número de Referência
+            ,darf_das.dtvencto -- Data de Vencimento
+            ,darf_das.vlprincipal -- Valor do Principal
+            ,darf_das.vlmulta -- Valor da Multa
+            ,darf_das.vljuros -- Valor dos Juros
+            ,darf_das.vlreceita_bruta -- Receita Bruta Acumulada
+            ,darf_das.vlpercentual -- Percentual
+        FROM craplau                lau
+            ,crapass                ass
+            ,tbpagto_agend_darf_das darf_das
+       WHERE lau.cdcooper = ass.cdcooper
+         AND lau.nrdconta = ass.nrdconta
+         AND lau.idlancto = darf_das.idlancto(+)
+         AND (NVL(pr_nrdconta, 0) = 0 OR lau.nrdconta = pr_nrdconta)
          AND (NVL(pr_insitlau, 0) = 0 OR lau.insitlau = pr_insitlau)
          AND lau.dtmvtopg BETWEEN pr_dtiniper AND pr_dtfimper
          AND (NVL(pr_cdtiptra, 0) = 0 OR lau.cdtiptra = pr_cdtiptra)
          AND lau.cdcooper = pr_cdcooper
-         AND ((lau.dsorigem = 'INTERNET' 
-             AND lau.cdagenci = 90 
-             AND lau.cdbccxlt = 100
-             AND lau.nrdolote = 11900) 
+         AND ((lau.dsorigem = 'INTERNET'
+           AND lau.cdagenci = 90
+           AND lau.cdbccxlt = 100
+           AND lau.nrdolote = 11900)
           OR (lau.dsorigem = 'TAA' 
-         AND lau.cdagenci = 91 
-         AND lau.cdbccxlt = 100 
-         AND lau.nrdolote = 11900) 
+           AND lau.cdagenci = 91
+           AND lau.cdbccxlt = 100
+           AND lau.nrdolote = 11900)
           OR (lau.dsorigem = 'CAIXA' 
-         AND lau.cdbccxlt = 100 
-             AND lau.nrseqagp <> 0)         
+           AND lau.cdbccxlt = 100
+           AND lau.nrseqagp <> 0)
           OR (lau.dsorigem = 'CAPTACAO' 
-         AND lau.cdagenci = 1 
-         AND lau.cdbccxlt = 100 
+           AND lau.cdagenci = 1
+           AND lau.cdbccxlt = 100
          AND lau.nrdolote = 32001) 
           OR (lau.dsorigem = 'CAPTACAO' 
          AND lau.cdagenci = 1 
@@ -188,7 +224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
          AND ass.cdcooper = lau.cdcooper
          AND ass.nrdconta = lau.nrdconta
          AND (NVL(pr_cdagenci, 0) = 0 OR ass.cdagenci = pr_cdagenci)
-          ORDER BY ass.cdagenci;
+       ORDER BY ass.cdagenci;
       rw_craplau cr_craplau%ROWTYPE;     
           
       -- Busca dos dados do associado
@@ -233,7 +269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
       AND   crapcti.nrdconta = pr_nrdconta
       AND   crapcti.nrctatrf = pr_nrctatrf;
       rw_crapcti_dst cr_crapcti_dst%ROWTYPE;
-            
+     
      --Tabela de beneficiarios
      vr_tab_agendamentos TELA_AGENET.typ_tab_agendamentos;
 
@@ -261,6 +297,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
      vr_nmarqpdf VARCHAR2(200);
      vr_comando  VARCHAR2(1000);
      vr_typ_saida VARCHAR2(3);
+     
+     vr_inpessoa_darf INTEGER; --Tipo Inscricao Cedente DARF
+     vr_nrcpfcgc_darf VARCHAR(20); --Tipo Inscricao Cedente DARF
      
      -- Variaveis de log
      vr_cdcooper crapcop.cdcooper%TYPE;
@@ -402,7 +441,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
       -- Leitura do calendario da CENTRAL
       OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
       
-      FETCH btch0001.cr_crapdat INTO rw_crapdat;    
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
                                                                             
       --Busca os agendamentos
       FOR rw_craplau IN cr_craplau(pr_cdcooper => vr_cdcooper
@@ -514,9 +554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                            TRIM(TO_CHAR(TRIM(gene0002.fn_mask(rw_craplau.nrctadst,'zzzzzzzzzz.zzz.z')))) || ' - ' ||
                            TRIM(rw_crapcti_dst.nmtitula);
 
-          ELSE
-            
-            IF rw_craplau.cdtiptra = 0 THEN
+          ELSIF rw_craplau.cdtiptra = 0 THEN
               
               IF rw_craplau.nrdolote = 32001 THEN
                 
@@ -528,9 +566,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                 vr_dstiptra := 'RESGATE';
                 vr_dstransa := ' '; 
               
-              END IF;                           
+              END IF;
               
-            END IF;  
+          ELSIF rw_craplau.cdtiptra = 10 THEN --Pagamentos de DARF/DAS
+            
+            vr_dstiptra := 'PAGAMENTO-' || CASE rw_craplau.tppagamento WHEN 1 THEN 'DARF' ELSE 'DAS' END; 
+                                
+            IF rw_craplau.tpcaptura = 1 THEN -- 1 - Com códiog de barras
+              
+               vr_dstransa := rw_craplau.dslinha_digitavel;
+            
+            ELSE -- 2 - Sem códiog de barras
+              
+               vr_dstransa := rw_craplau.dsnome_fone;
+            
+            END IF;
                                 
           END IF;
                   
@@ -606,8 +656,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                                                       TRIM(TO_CHAR(rw_craplau.nrterfin,'0000'));                                          
                                                       
            END IF;
-                             
+		   
+		 END IF;
+         
+         -- ################################## DADOS RELACIONADOS À DARF/DAS ##################################
+         vr_tab_agendamentos(vr_index).tpcaptura         := rw_craplau.tpcaptura;         -- Tipo de Captura
+         vr_tab_agendamentos(vr_index).dstpcaptura       := rw_craplau.dstpcaptura;       -- Descricao do Tipo de Captura
+         vr_tab_agendamentos(vr_index).dslinha_digitavel := rw_craplau.dslinha_digitavel; -- Linha Digitável
+         vr_tab_agendamentos(vr_index).dsnome_fone       := rw_craplau.dsnome_fone;       -- Nome / Telefone
+         vr_tab_agendamentos(vr_index).dtapuracao        := rw_craplau.dtapuracao;        -- Período de Apuração
+         
+         vr_nrcpfcgc_darf := rw_craplau.nrcpfcgc;
+         vr_inpessoa_darf := 0;
+         
+         IF LENGTH(vr_nrcpfcgc_darf) = 11 THEN -- CPF
+           vr_inpessoa_darf := 1;
+         ELSIF LENGTH(vr_nrcpfcgc_darf) = 14 THEN-- CNPJ
+           vr_inpessoa_darf := 2; 	
+         END IF; 
+         
+         --Se validou com sucesso então formata
+         IF vr_inpessoa_darf > 0 THEN
+           vr_nrcpfcgc_darf := gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc_darf, vr_inpessoa_darf);
          END IF;
+                  
+         vr_tab_agendamentos(vr_index).nrcpfcgc          := vr_nrcpfcgc_darf;             -- Número do CPF ou CNPJ
+         vr_tab_agendamentos(vr_index).cdtributo         := rw_craplau.cdtributo;         -- Código da Receita
+         vr_tab_agendamentos(vr_index).nrrefere          := rw_craplau.nrrefere;          -- Número de Referência
+         vr_tab_agendamentos(vr_index).dtvencto          := rw_craplau.dtvencto;          -- Data de Vencimento
+         vr_tab_agendamentos(vr_index).vlprincipal       := rw_craplau.vlprincipal;       -- Valor do Principal
+         vr_tab_agendamentos(vr_index).vlmulta           := rw_craplau.vlmulta;           -- Valor da Multa
+         vr_tab_agendamentos(vr_index).vljuros           := rw_craplau.vljuros;           -- Valor dos Juros
+         vr_tab_agendamentos(vr_index).vlreceita_bruta   := rw_craplau.vlreceita_bruta;   -- Receita Bruta Acumulada
+         vr_tab_agendamentos(vr_index).vlpercentual      := rw_craplau.vlpercentual;      -- Percentual
          
          --Incrementar Contador
          vr_index:= vr_tab_agendamentos.COUNT + 1; 
@@ -802,7 +883,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
           gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dstitdda', pr_tag_cont => vr_tab_agendamentos(vr_index).dstitdda, pr_des_erro => vr_dscritic);
   				gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dtmvtolt', pr_tag_cont => TO_CHAR(vr_tab_agendamentos(vr_index).dtmvtolt,'dd/mm/RRRR'), pr_des_erro => vr_dscritic);
   				gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'nrdocmto', pr_tag_cont => vr_tab_agendamentos(vr_index).nrdocmto, pr_des_erro => vr_dscritic);
-  				            
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'tpcaptura', pr_tag_cont => vr_tab_agendamentos(vr_index).tpcaptura, pr_des_erro => vr_dscritic);                  -- Tipo de Captura
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dstpcaptura', pr_tag_cont => vr_tab_agendamentos(vr_index).dstpcaptura, pr_des_erro => vr_dscritic);              -- Descricao do Tipo de Captura
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dslinha_digitavel', pr_tag_cont => vr_tab_agendamentos(vr_index).dslinha_digitavel, pr_des_erro => vr_dscritic);  -- Linha Digitável
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dsnome_fone', pr_tag_cont => vr_tab_agendamentos(vr_index).dsnome_fone, pr_des_erro => vr_dscritic);              -- Nome / Telefone
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dtapuracao', pr_tag_cont => TO_CHAR(vr_tab_agendamentos(vr_index).dtapuracao,'dd/mm/RRRR'), pr_des_erro => vr_dscritic);                -- Período de Apuração
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'nrcpfcgc', pr_tag_cont => vr_tab_agendamentos(vr_index).nrcpfcgc, pr_des_erro => vr_dscritic);                    -- Número do CPF ou CNPJ
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'cdtributo', pr_tag_cont => vr_tab_agendamentos(vr_index).cdtributo, pr_des_erro => vr_dscritic);                  -- Código da Receita
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'nrrefere', pr_tag_cont => vr_tab_agendamentos(vr_index).nrrefere, pr_des_erro => vr_dscritic);                    -- Número de Referência
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'dtvencto', pr_tag_cont => TO_CHAR(vr_tab_agendamentos(vr_index).dtvencto,'dd/mm/RRRR'), pr_des_erro => vr_dscritic);                    -- Data de Vencimento
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vlprincipal', pr_tag_cont => vr_tab_agendamentos(vr_index).vlprincipal, pr_des_erro => vr_dscritic);              -- Valor do Principal
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vlmulta', pr_tag_cont => vr_tab_agendamentos(vr_index).vlmulta, pr_des_erro => vr_dscritic);                      -- Valor da Multa
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vljuros', pr_tag_cont => vr_tab_agendamentos(vr_index).vljuros, pr_des_erro => vr_dscritic);                      -- Valor dos Juros
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vlreceita_bruta', pr_tag_cont => vr_tab_agendamentos(vr_index).vlreceita_bruta, pr_des_erro => vr_dscritic);      -- Receita Bruta Acumulada
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'agendamentos', pr_posicao => vr_auxconta, pr_tag_nova => 'vlpercentual', pr_tag_cont => vr_tab_agendamentos(vr_index).vlpercentual, pr_des_erro => vr_dscritic);            -- Percentual
+  				
           -- Incrementa contador p/ posicao no XML
           vr_auxconta := nvl(vr_auxconta,0) + 1;
                 

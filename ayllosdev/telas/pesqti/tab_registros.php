@@ -6,6 +6,10 @@
  * OBJETIVO     : Tabela que apresenta a consulta PESQTI
  * --------------
  * ALTERAÇÕES   : 12/05/2016 - Adicionar o campo de linha digitavel (Douglas - Chamado 426870)
+ *
+ *				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+ *					  		   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+ *
  * --------------
  */ 
 
@@ -69,6 +73,7 @@
 						<input type="hidden" id="vlpercen" name="vlpercen" value="<? echo number_format(str_replace(",",".",getByTagName($result->tags,'vlpercen')),2,",","."); ?>" />
 						<input type="hidden" id="nmempres" name="nmempres" value="<? echo getByTagName($result->tags,'nmempres') ?>" />
 						<input type="hidden" id="dscptdoc" name="dscptdoc" value="<? echo getByTagName($result->tags,'dscptdoc') ?>" />
+						<input type="hidden" id="dsnomfon" name="dsnomfon" value="<? echo getByTagName($result->tags,'dsnomfon') ?>" />
 		
 				    </tr>	
 				<? } ?>

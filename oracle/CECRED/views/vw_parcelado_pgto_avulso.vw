@@ -21,6 +21,7 @@ from
   craplem lem
 where
   ass.cdcooper = cop.cdcooper
+  and cop.flgativo = 1
   and ass.cdcooper = epr.cdcooper
   and ass.nrdconta = epr.nrdconta
   and epr.cdcooper = lem.cdcooper

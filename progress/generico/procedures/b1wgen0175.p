@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 21/07/2016
+   Data    : Setembro/2013                      Ultima atualizacao: 02/12/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -85,6 +85,8 @@
                 
    07/11/2016 - Validar horario para devolucao de acordo com o parametrizado na TAB055
                 (Lucas Ranghetti #539626)
+                
+   02/12/2016 - Validar alinea zerada na marcacao do cheque (Lucas Ranghetti/Elton)
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -2636,6 +2638,20 @@ PROCEDURE geracao-devolu:
     
     IF  NOT AVAILABLE tt-desmarcar THEN
         DO:
+            IF  par_cdalinea = 0 THEN /* Validar alinea zerada na marcacao do cheque */
+                DO:
+                    ASSIGN aux_dscritic = "Erro ao marcar cheque. Tente novamente!".
+
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT 1, /*sequencia*/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+
+                    RETURN "NOK".
+                END.
+        
             DO  TRANSACTION:  /* transacao para devolver */        
 
                 IF  par_flag THEN DO: /* a devolver */

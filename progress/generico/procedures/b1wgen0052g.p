@@ -148,7 +148,8 @@
 
                 15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
                              (Lucas Ranghetti #484923)
-                
+				
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
 .............................................................................*/
                                                      
 
@@ -4975,7 +4976,7 @@ PROCEDURE Inclui_Fis PRIVATE :
                               crabttl.inhabmen = par_inhabmen
                               crabttl.dthabmen = par_dthabmen
                               crabttl.flgimpri = TRUE 
-                              crabttl.inpolexp = 2
+                              crabttl.inpolexp = 0
                               NO-ERROR.
     
                           IF  ERROR-STATUS:ERROR THEN

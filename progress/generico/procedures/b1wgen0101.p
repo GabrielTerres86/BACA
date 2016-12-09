@@ -2,7 +2,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0101.p
    Autor  : Adriano
-   Data   : Agosto/2011                      Ultima alteracao: 24/08/2015
+   Data   : Agosto/2011                      Ultima alteracao: 19/09/2016
 
    Dados referentes ao programa:
 
@@ -53,7 +53,10 @@
                             tt-dados-pesqti (Melhoria 21 Tiago/Fabricio).
                             
                13/05/2016 - Adicionado o campo de linha digitavel na 
-                            tt-dados-pesqti (Douglas - Chamado 426870)
+                            tt-dados-pesqti (Douglas - Chamado 426870)		 
+
+               19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+                            pelo InternetBanking (Projeto 338 - Lucas Lunelli)
 ..............................................................................*/
 
 { sistema/generico/includes/var_internet.i } 
@@ -373,7 +376,8 @@ PROCEDURE consulta_faturas:
                        tt-dados-pesqti.vlrecbru = craplft.vlrecbru   
                        tt-dados-pesqti.vlpercen = craplft.vlpercen
                        tt-dados-pesqti.vlrtotal = (craplft.vllanmto + craplft.vlrmulta + craplft.vlrjuros)
-                       tt-dados-pesqti.tpcptdoc = craplft.tpcptdoc.
+                       tt-dados-pesqti.tpcptdoc = craplft.tpcptdoc
+                       tt-dados-pesqti.dsnomfon = craplft.dsnomfon.
 
                 IF  tt-dados-pesqti.tpcptdoc = 1 THEN
                     DO:

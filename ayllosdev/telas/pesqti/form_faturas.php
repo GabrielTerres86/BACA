@@ -2,7 +2,7 @@
  /*!
  * FONTE        : form_faturas.php
  * CRIAÇÃO      : Adriano	
- * DATA CRIAÇÃO : Agosto/2011							 Última Alteração: 12/05/2016
+ * DATA CRIAÇÃO : Agosto/2011							 Última Alteração: 19/09/2016
  * OBJETIVO     : Formulário de exibição
  * --------------
  * ALTERAÇÕES   : 06/08/2012 - Listar Históricos, campo Vl.FOZ e 
@@ -17,6 +17,10 @@
  							  (Adriano).
 
                   12/05/2016 - Adicionar campo da linha digitavel (Douglas - Chamado 426870)
+				  
+				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+							   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+				  
  */	
 ?>
 
@@ -67,7 +71,9 @@
 		<label for="dscptdoc"><? echo utf8ToHtml('Origem pagto:') ?></label>
 		<input name="dscptdoc" id="dscptdoc" type="text" />	
 		
-		
+		<label for="dsnomfon"><? echo utf8ToHtml('Nome/Telefone:') ?></label>
+		<input name="dsnomfon" id="dsnomfon" type="text" />	
+
 		<input name="cdagenci" id="cdagenci" type="hidden" />	
 		<input name="nrdolote" id="nrdolote" type="hidden" />	
 		<input name="cdbccxlt" id="cdbccxlt" type="hidden" />	

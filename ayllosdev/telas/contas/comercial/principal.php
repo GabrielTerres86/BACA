@@ -1,8 +1,8 @@
 <?php
 /*!
  * FONTE        : principal.php
- * CRIA«√O      : Gabriel Capoia (DB1)
- * DATA CRIA«√O : 24/05/2010 
+ * CRIA√á√ÉO      : Gabriel Capoia (DB1)
+ * DATA CRIA√á√ÉO : 24/05/2010 
  * OBJETIVO     : Mostrar opcao Principal da rotina de Comercial da tela de CONTAS 
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1).
  *				  09/12/2011 - Ajuste para inclusao do campo Justificativa (Adriano).
@@ -12,6 +12,7 @@
  *			      12/01/2016 - Ajuste para pegar corretamento os valores vldrendi, tpdrendi (Adriano - CECRED).
  *                07/06/2016 - Melhoria 195 folha de pagamento (Tiago/Thiago)
  *				  13/07/2016 - Correcao de acesso ao indice MSGALERT do array XML. SD 479874. (Carlos R.)	
+ *                01/12/2016 - Definir a n√£o obrigatoriedade do PEP (Tiago/Thiago SD532690)
  */
 
 	session_start();
@@ -25,29 +26,29 @@
 	$flgcadas = (isset($_POST['flgcadas'])) ? $_POST['flgcadas'] : '';	
 	
 	
-	// Monta o "cddopcao" de acordo com a operaÁ„o
+	// Monta o "cddopcao" de acordo com a opera√ß√£o
 	$glbvars["nmrotina"] = (isset($_POST['nmrotina'])) ? $_POST['nmrotina'] : $glbvars["nmrotina"];
 	$cddopcao = ( $operacao == 'CA' || $operacao == 'CAE' ) ? 'A' : 'C';
 	$op       = ( $cddopcao == 'C' ) ? '@' : $cddopcao ;
 	
-	// Verifica permissıes de acessa a tela
+	// Verifica permiss√µes de acessa a tela
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$op,false)) <> '') {
 		$metodo =  ($flgcadas == 'M') ? 'proximaRotina();' : 'encerraRotina(false);';
 		exibirErro('error',$msgError,'Alerta - Ayllos',$metodo,false);
 	}
 	
-	// Verifica se o n˙mero da conta foi informado
+	// Verifica se o n√∫mero da conta foi informado
 	if (!isset($_POST['nrdconta']) || !isset($_POST['idseqttl'])) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 
-	// Carrega permissıes do operador
+	// Carrega permiss√µes do operador
 	include("../../../includes/carrega_permissoes.php");	
 	
 	setVarSession("opcoesTela",$opcoesTela);
 
-	// Carregas as opÁıes da Rotina de Bens
+	// Carregas as op√ß√µes da Rotina de Bens
 	$flgAlterar  = (in_array("A", $glbvars["opcoesTela"]));
 	
-	// Guardo os par‚metos do POST em vari·veis	
+	// Guardo os par√¢metos do POST em vari√°veis	
 	$nrdconta = $_POST['nrdconta'] == '' ?  0  : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ?  0  : $_POST['idseqttl'];
 	$nrdrowid = (isset($_POST['nrdrowid'])) ? $_POST['nrdrowid'] : '';
@@ -69,17 +70,17 @@
     $vldrend3 = (isset($_POST['vldrend3'])) ? $_POST['vldrend3'] : '';
     $tpdrend4 = (isset($_POST['tpdrend4'])) ? $_POST['tpdrend4'] : '';
     $vldrend4 = (isset($_POST['vldrend4'])) ? $_POST['vldrend4'] : '';
-	$inpolexp = (isset($_POST['inpolexp'])) ? $_POST['inpolexp'] : 2;	
+	$inpolexp = (isset($_POST['inpolexp'])) ? $_POST['inpolexp'] : 0;	
 	$nmdsecao = (isset($_POST['nmdsecao'])) ? $_POST['nmdsecao'] : '';
 	$cooperativa = $glbvars['cdcooper'];
 			
 
-	// Verifica se o n˙mero da conta e o titular s„o inteiros v·lidos
+	// Verifica se o n√∫mero da conta e o titular s√£o inteiros v√°lidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl n&atilde;o foi informada.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 	
 	
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xml  = '';
 	$xml .= '<Root>';
 	$xml .= '	<Cabecalho>';
@@ -136,13 +137,13 @@
 				
 	$inpolexp  = getByTagName($comercial,'inpolexp');	
 				
-	//Verifico se conta È titular em outra conta. Se atributo vier preenchido, muda operaÁ„o para 'SC' => Somente Consulta
+	//Verifico se conta √© titular em outra conta. Se atributo vier preenchido, muda opera√ß√£o para 'SC' => Somente Consulta
 	$msgConta = trim($xmlObjeto->roottag->tags[0]->attributes['MSGCONTA']);
 	if( $msgConta != '' ) $operacao = 'SC';
 	
 	
 	/*RENDAS AUTOMATICAS*/
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xml  = "";
 	$xml .= "<Root>";	
     $xml .= "	<Dados>";

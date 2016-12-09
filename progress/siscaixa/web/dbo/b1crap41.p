@@ -260,6 +260,8 @@ PROCEDURE valida-pagamento-darf:
 
     FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
 
+    FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper NO-LOCK NO-ERROR.
+    
     /* Validação horários de pagamento SICREDi */
     FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper  AND
                        craptab.nmsistem = "CRED"            AND
@@ -472,7 +474,7 @@ PROCEDURE valida-pagamento-darf:
     ELSE    /* DARF PRETO EUROPA */
         DO:
             IF  (aux_dtapurac < 01/01/1980) OR
-                (aux_dtapurac > 12/31/2016) THEN
+                (aux_dtapurac > DATE(SUBSTR(STRING(crapdat.dtmvtocd),1,6) + STRING(YEAR(crapdat.dtmvtocd) + 5))) THEN
                 DO:
                     ASSIGN i-cod-erro  = 0
                            c-desc-erro = "Periodo de apuracao incorreto.".

@@ -6,6 +6,8 @@
  * OBJETIVO     : Formulario de Listagem dos históricos da Tela LISLOT
  * --------------
  * ALTERAÇÕES   : 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+ *                
+ *                11/11/2016 - Ajustes referente ao chamado 492589. (Kelvin)
  * --------------
  */ 
 
@@ -18,7 +20,7 @@
 ?>
 
 <form id="frmConsulta" name="frmConsulta" class="formulario">
-	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+	
 	<fieldset id="fsetConsulta" name="fsetConsulta" style="padding:0px; margin:0px; padding-bottom:10px;">
 		<div id="divConsulta" >
 		
@@ -72,9 +74,3 @@
 </form>
 
 <br style="clear:both" />
-<form name="frmImprimir" id="frmImprimir">
-	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
-	<input type="hidden" name="dtmvtolt" id="dtmvtolt" type="hidden" value="" />
-	<input type="hidden" name="tpdopcao" id="tpdopcao" type="hidden" value="" />
-	<input type="hidden" name="nmarqimp" id="nmarqimp" type="hidden" value="" />
-</form>

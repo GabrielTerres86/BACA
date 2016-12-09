@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 31/08/2016
+    Data    : Maio/2010                   Ultima atualizacao: 16/11/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -70,7 +70,7 @@
 
                 12/04/2016 - Incluir crapdoc.cdoperad na procedure Grava_Dados e
                              Grava_Dados_Ppe (Lucas Ranghetti #410302)
-
+                             
                 04/08/2016 - Ajuste para pegar o idcidade e nao mais cdcidade.
                              (Jaison/Anderson)
                              
@@ -79,6 +79,10 @@
                              e tambem duplicar dados de pessoa politicamente
                              exposta para todos as contas do cooperado incluido
                              contas onde ele eh primeiro titular (Lucas Ranghetti #491441)
+                             
+                16/11/2016 - Ajuste para nao gerar mais pendencia no digidoc com
+                             tpdocmto = 37 e criar o campo inpolexp sempre como
+                             nao inpolexp = 0 (Tiago/Thiago SD532690)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1096,8 +1100,9 @@ PROCEDURE Grava_Dados:
             END.
         END.
                  
-        IF tt-comercial-ant.inpolexp <> par_inpolexp THEN
-        DO:  
+        IF tt-comercial-ant.inpolexp <> par_inpolexp AND
+           par_inpolexp = 1 /*Politicamente exposto SIM*/ THEN
+        DO:
             IF par_idseqttl = 1 THEN        
             DO: 
                 /*******************************************************************
@@ -1114,27 +1119,27 @@ PROCEDURE Grava_Dados:
                     ASSIGN bcrapttl.inpolexp = par_inpolexp.
                                    
                 END.
+            FOR FIRST crapdoc WHERE 
+                      crapdoc.cdcooper = par_cdcooper AND
+                      crapdoc.nrdconta = par_nrdconta AND
+                      crapdoc.tpdocmto = 37           AND
+                      crapdoc.dtmvtolt = par_dtmvtolt AND
+                      crapdoc.idseqttl = par_idseqttl 
+                      NO-LOCK: END.
 
-                FOR FIRST crapdoc WHERE 
-                          crapdoc.cdcooper = par_cdcooper AND
-                          crapdoc.nrdconta = par_nrdconta AND
-                          crapdoc.tpdocmto = 37           AND
-                          crapdoc.dtmvtolt = par_dtmvtolt AND
-                          crapdoc.idseqttl = par_idseqttl 
-                          NO-LOCK: END.
-
-                IF NOT AVAILABLE crapdoc THEN
-                DO:
-                    CREATE crapdoc.
-                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                           crapdoc.nrdconta = par_nrdconta
-                           crapdoc.flgdigit = FALSE
-                           crapdoc.dtmvtolt = par_dtmvtolt
-                           crapdoc.tpdocmto = 37
-                           crapdoc.idseqttl = par_idseqttl
-                           crapdoc.cdoperad = par_cdoperad.
-                    VALIDATE crapdoc.
+            IF NOT AVAILABLE crapdoc THEN
+            DO:
+                CREATE crapdoc.
+                ASSIGN crapdoc.cdcooper = par_cdcooper
+                       crapdoc.nrdconta = par_nrdconta
+                       crapdoc.flgdigit = FALSE
+                       crapdoc.dtmvtolt = par_dtmvtolt
+                       crapdoc.tpdocmto = 37
+                       crapdoc.idseqttl = par_idseqttl
+                       crapdoc.cdoperad = par_cdoperad.
+                VALIDATE crapdoc.
                 END.
+
             END.
         END.   
 

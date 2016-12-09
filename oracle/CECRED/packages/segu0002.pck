@@ -203,6 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
           ,cdagenci
           ,nrcpfcgc
           ,inpessoa
+          ,dtnasctl
       FROM crapass
      WHERE cdcooper = pr_cdcooper 
        AND nrdconta = pr_nrdconta
@@ -689,7 +690,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
        Sistema : Seguros
        Sigla   : CRED
        Autor   : Marcos Martini - Supero
-       Data    : Junho/2016.                    Ultima atualizacao:
+       Data    : Junho/2016.                    Ultima atualizacao: 10/10/2016
 
        Dados referentes ao programa:
 
@@ -698,8 +699,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
                    e retornar a lista de possíveis titulares e dependentes para 
                    contratacao de seguro.
 
-
-       Alteracoes:
+       Alteracoes: 10/10/2016 - P333.1 - Inclusao da TAG de pessoa politicamente exposta
+                                e dos outros rendimentos ao salário dos associados (Marcos-Supero)
 
     ..............................................................................*/
     DECLARE
@@ -726,12 +727,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
               ,to_char(dtnasttl,'dd/mm/rrrr') dtnasttl
               ,cdsexotl
               ,nvl(trim(dsproftl),'-') dsproftl
-              ,vlsalari
+              ,vlsalari + vldrendi##1 + vldrendi##2 + vldrendi##3
+                        + vldrendi##4 + vldrendi##5 + vldrendi##6 vlsalari
+              ,inpolexp
           FROM crapttl 
          WHERE cdcooper = pr_cdcooper 
            AND nrdconta = pr_nrdconta --> Oriundo da requisicao
            AND flgsittl = 1  --> Somente ativos
          ORDER BY idseqttl;
+      
+      -- BUsca dados de conjugue
+      CURSOR cr_crapcje(pr_cdcooper crapcop.cdcooper%TYPE
+                       ,pr_idseqttl crapttl.idseqttl%TYPE) IS 
+       SELECT nrctacje
+             ,nmconjug
+             ,nrcpfcjg
+             ,dtnasccj
+         FROM crapcje 
+        WHERE cdcooper = pr_cdcooper
+          AND nrdconta = pr_nrdconta
+          AND idseqttl = pr_idseqttl;
+      rw_crapcje cr_crapcje%ROWTYPE;
+         
       -- Busca de endereco
       CURSOR cr_crapenc(pr_cdcooper crapcop.cdcooper%TYPE
                        ,pr_tpendass crapenc.tpendass%TYPE
@@ -747,6 +764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
            AND idseqttl = pr_idseqttl --> Encontrado no loop da TTL
            AND tpendass = pr_tpendass;--> 09 - Comercial e 10-Residencial
       rw_crapenc cr_crapenc%ROWTYPE;
+
       -- Busca de telefone
       CURSOR cr_craptfc(pr_cdcooper crapcop.cdcooper%TYPE
                        ,pr_tptelefo craptfc.tptelefo%TYPE
@@ -779,8 +797,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
               ,gnrativ ram
          WHERE jur.cdcooper = pr_cdcooper
            AND jur.nrdconta = pr_nrdconta
-           AND jur.cdrmativ = ram.cdrmativ
-           AND ram.cdrmativ = 17;     
+           AND jur.cdrmativ = ram.cdrmativ;     
       rw_jur cr_crapjur%ROWTYPE;
     BEGIN
       -- Primeiramente acionaremos a rotina das validacoes basicas:
@@ -918,7 +935,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0002 AS
                                 ,pr_tag_nova => 'vlSalari'
                                 ,pr_tag_cont => rw_ttl.vlsalari
                                 ,pr_des_erro => vr_des_erro);
-
+                                
+          -- Enviar tag inPolitExp
+          gene0007.pc_insere_tag(pr_xml      => pr_dsxmlret
+                                ,pr_tag_pai  => 'Titular'
+                                ,pr_posicao  => vr_qtdtitular
+                                ,pr_tag_nova => 'inPolitExp'
+                                ,pr_tag_cont => rw_ttl.inpolexp
+                                ,pr_des_erro => vr_des_erro);          
+          
+          -- Busca do Conjugue do Titular atual
+          OPEN cr_crapcje(pr_cdcooper => vr_cdcooper
+                         ,pr_idseqttl => rw_ttl.idseqttl);
+          FETCH cr_crapcje
+           INTO rw_crapcje;
+          -- Se encontrar
+          IF cr_crapcje%FOUND THEN 
+            CLOSE cr_crapcje;
+            
+            -- Se o titular está em outra conta
+            IF rw_crapcje.nrctacje <> 0 THEN 
+              -- Buscaremos os dados na outra conta  
+              OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                             ,pr_nrdconta => rw_crapcje.nrctacje);
+              FETCH cr_crapass
+               INTO rw_crapass;
+              CLOSE cr_crapass;
+              
+              -- Enviar tag nmConjuge
+              gene0007.pc_insere_tag(pr_xml      => pr_dsxmlret
+                                    ,pr_tag_pai  => 'Titular'
+                                    ,pr_posicao  => vr_qtdtitular
+                                    ,pr_tag_nova => 'nmConjuge'
+                                    ,pr_tag_cont => rw_crapass.nmprimtl
+                                    ,pr_des_erro => vr_des_erro);  
+                                    
+              -- Enviar tag nrCpfConjuge
+              gene0007.pc_insere_tag(pr_xml      => pr_dsxmlret
+                                    ,pr_tag_pai  => 'Titular'
+                                    ,pr_posicao  => vr_qtdtitular
+                                    ,pr_tag_nova => 'nrCpfConjuge'
+                                    ,pr_tag_cont => rw_crapass.nrcpfcgc
+                                    ,pr_des_erro => vr_des_erro); 
+                                    
+              -- Enviar tag dtNasctoConjuge
+              gene0007.pc_insere_tag(pr_xml      => pr_dsxmlret
+                                    ,pr_tag_pai  => 'Titular'
+                                    ,pr_posicao  => vr_qtdtitular
+                                    ,pr_tag_nova => 'dtNasctoConjuge'
+                                    ,pr_tag_cont => to_char(rw_crapass.dtnasctl,'dd/mm/rrrr')
+                                    ,pr_des_erro => vr_des_erro);
+            
+            ELSE -- Usar os dados da CRAPCJE mesmo 
+            
+              -- Enviar tag nmConjuge
+              gene0007.pc_insere_tag(pr_xml      => pr_dsxmlret
+                                    ,pr_tag_pai  => 'Titular'
+                                    ,pr_posicao  => vr_qtdtitular
+                                    ,pr_tag_nova => 'nmConjuge'
+                                    ,pr_tag_cont => rw_crapcje.nmconjug
+                                    ,pr_des_erro => vr_des_erro);  
+                                    
+              -- Enviar tag nrCpfConjuge
+              gene0007.pc_insere_tag(pr_xml      => pr_dsxmlret
+                                    ,pr_tag_pai  => 'Titular'
+                                    ,pr_posicao  => vr_qtdtitular
+                                    ,pr_tag_nova => 'nrCpfConjuge'
+                                    ,pr_tag_cont => rw_crapcje.nrcpfcjg
+                                    ,pr_des_erro => vr_des_erro); 
+                                    
+              -- Enviar tag dtNasctoConjuge
+              gene0007.pc_insere_tag(pr_xml      => pr_dsxmlret
+                                    ,pr_tag_pai  => 'Titular'
+                                    ,pr_posicao  => vr_qtdtitular
+                                    ,pr_tag_nova => 'dtNasctoConjuge'
+                                    ,pr_tag_cont => to_char(rw_crapcje.dtnasccj,'dd/mm/rrrr')
+                                    ,pr_des_erro => vr_des_erro);
+            END IF;                      
+          ELSE 
+            CLOSE cr_crapcje;
+          END IF;
+          
           -- Ainda para cada registro de titular devemos buscar seu endereco:
           OPEN cr_crapenc(pr_cdcooper => vr_cdcooper
                          ,pr_tpendass => 10 -- Residencial

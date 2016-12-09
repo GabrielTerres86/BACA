@@ -37,6 +37,7 @@ from
   crapcop cop
 where
   cop.cdcooper = ass.cdcooper
+  and cop.flgativo = 1
   and ris.cdcooper = ass.cdcooper
   and ris.nrdconta = ass.nrdconta
   and ass.incadpos = 2
@@ -78,6 +79,7 @@ from
   crapris ris
 WHERE
   cop.cdcooper = ass.cdcooper
+  and cop.flgativo = 1
   and lim.cdcooper = ass.cdcooper
   and lim.nrdconta = ass.nrdconta --101 não tem contrato
   and ass.incadpos = 2
@@ -88,11 +90,9 @@ WHERE
                               and ris1.cdcooper = lim.cdcooper
                               and ris1.nrdconta = lim.nrdconta
                               and ris1.cdmodali = 201)
-
   --and ass.nrcpfcgc in (03297156902,91596670959,08486610000159,01268248940,18515174000152,05370297703,10381840000103,65468252287,11212502000100,73481289987)
   AND ((LIM.DTFIMVIG >= (SYSDATE - 366)) OR (lim.insitlim = 2)) --ativos ou que terminaram dentro do periodo apurado
   and lim.tpctrlim = 1  --cheque especial
-
 order by
   cnpjctrc, idfccli, cdproduto, nrctr
 ;

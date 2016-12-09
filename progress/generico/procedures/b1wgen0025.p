@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 25/07/2016
+    Data    : Novembro/2007                  Ultima Atualizacao: 18/11/2016
     
     Dados referentes ao programa:
 
@@ -332,6 +332,10 @@
                 25/07/2016 - #480602 tratada a verifica_saque para fazer a verificação do 
                              limite da pc_obtem_saldo_dia_prog e removida a chamada da 
                              procedure obtem-valor-limite (Carlos)
+                             
+                18/11/2016 - #559508 correção na verificação da existência do cartão
+                             magnético de operador. Quando for um cartão de operador,
+                             não consultar transferência de conta (Carlos)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -1910,7 +1914,7 @@ PROCEDURE verifica_transferencia:
             par_dscritic = "Limite de Transf. Excedido".
             RETURN "NOK".
         END.
-
+      
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
     
     /* Procedure para verificar horario permitido para transacoes */        
@@ -1957,54 +1961,54 @@ PROCEDURE verifica_transferencia:
             /* Se nao exige assinatura conjunta */
             IF  aux_idastcjt = 0 THEN
                 DO:
-            /* SALDOS */
-            TRANS_SALDO:
-            DO TRANSACTION ON ERROR UNDO, LEAVE:
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-        
-                /* Utilizar o tipo de busca A, para carregar do dia anterior
-                  (U=Nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1) */ 
-                RUN STORED-PROCEDURE pc_obtem_saldo_dia_prog
-                    aux_handproc = PROC-HANDLE NO-ERROR
-                                            (INPUT par_cdcooper,
-                                             INPUT 1,     /* cdagenci */
-                                             INPUT 999,   /* nrdcaixa */
-                                             INPUT "996", /* cdoperad */
-                                             INPUT par_nrdconta,
-                                             INPUT par_dtmvtocd,
-                                             INPUT "A", /* Tipo Busca */
-                                             OUTPUT 0,
-                                             OUTPUT "").
+                    /* SALDOS */
+                    TRANS_SALDO:
+                    DO TRANSACTION ON ERROR UNDO, LEAVE:
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                 
-                CLOSE STORED-PROC pc_obtem_saldo_dia_prog
-                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = ""
-                       aux_cdcritic = pc_obtem_saldo_dia_prog.pr_cdcritic 
-                                          WHEN pc_obtem_saldo_dia_prog.pr_cdcritic <> ?
-                       aux_dscritic = pc_obtem_saldo_dia_prog.pr_dscritic
-                                          WHEN pc_obtem_saldo_dia_prog.pr_dscritic <> ?. 
-        
-                IF aux_cdcritic <> 0  OR 
-                   aux_dscritic <> "" THEN
-                   DO: 
-                       IF  aux_dscritic = "" THEN
-                           ASSIGN aux_dscritic =  "Nao foi possivel carregar os saldos.".
+                        /* Utilizar o tipo de busca A, para carregar do dia anterior
+                          (U=Nao usa data, I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1) */ 
+                        RUN STORED-PROCEDURE pc_obtem_saldo_dia_prog
+                            aux_handproc = PROC-HANDLE NO-ERROR
+                                                    (INPUT par_cdcooper,
+                                                     INPUT 1,     /* cdagenci */
+                                                     INPUT 999,   /* nrdcaixa */
+                                                     INPUT "996", /* cdoperad */
+                                                     INPUT par_nrdconta,
+                                                     INPUT par_dtmvtocd,
+                                                     INPUT "A", /* Tipo Busca */
+                                                     OUTPUT 0,
+                                                     OUTPUT "").
                         
-                       ASSIGN par_dscritic = aux_dscritic.
-                       RETURN "NOK".
-                   END.
-            
-                FIND FIRST wt_saldos NO-LOCK NO-ERROR.
-                IF NOT AVAILABLE wt_saldos THEN
-                DO:
-                    ASSIGN par_dscritic = "Saldo nao encontrado.".
-                    RETURN "NOK".
-                END.
-            END. 
+                        CLOSE STORED-PROC pc_obtem_saldo_dia_prog
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                        
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = ""
+                               aux_cdcritic = pc_obtem_saldo_dia_prog.pr_cdcritic 
+                                                  WHEN pc_obtem_saldo_dia_prog.pr_cdcritic <> ?
+                               aux_dscritic = pc_obtem_saldo_dia_prog.pr_dscritic
+                                                  WHEN pc_obtem_saldo_dia_prog.pr_dscritic <> ?. 
+                
+                        IF aux_cdcritic <> 0  OR 
+                           aux_dscritic <> "" THEN
+                           DO: 
+                               IF  aux_dscritic = "" THEN
+                                   ASSIGN aux_dscritic =  "Nao foi possivel carregar os saldos.".
+                                
+                               ASSIGN par_dscritic = aux_dscritic.
+                               RETURN "NOK".
+                           END.
+                    
+                        FIND FIRST wt_saldos NO-LOCK NO-ERROR.
+                        IF NOT AVAILABLE wt_saldos THEN
+                        DO:
+                            ASSIGN par_dscritic = "Saldo nao encontrado.".
+                            RETURN "NOK".
+                        END.
+                    END. 
                 END.
 
             /* LIMITE */
@@ -4942,6 +4946,8 @@ PROCEDURE verifica_cartao_magnetico:
                     RETURN "NOK".
                 END.
 
+            IF  aux_tptitcar <> 9 THEN
+            DO:
             /* Verifica se a conta foi migrada para outra cooperativa */
             FIND craptco WHERE craptco.cdcopant = crapcop.cdcooper  AND
                                craptco.nrctaant = par_nrdconta      AND
@@ -4979,7 +4985,7 @@ PROCEDURE verifica_cartao_magnetico:
                             END.
                         END.
                 END.
-
+            END.
 
             /* verifica se o sistema das 2 cooperativas em questao,
                estao com as mesmas datas de movimento para o TAA */

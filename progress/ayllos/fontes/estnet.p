@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Abril/2008                        Ultima atualizacao: 05/12/2013
+   Data    : Abril/2008                        Ultima atualizacao: 07/11/2016
 
    Dados referentes ao programa:
 
@@ -36,6 +36,10 @@
 							Pagamentos e não mais validar o campo 
 							Pagamentos Titulos/Faturas. 
 							(RKAM Gisele Campos Neves - Chamado 408875)
+							
+			   07/11/2016 - Desconsiderar Guias DARF/DAS pois não podem ser
+			                estornadas - Projeto 338 (David)
+							
 ............................................................................. */
 
 { includes/var_online.i }
@@ -441,6 +445,11 @@ DO  WHILE TRUE:
                            craplft.nrdolote = 15000 + tel_nrdcaixa   AND
                            craplft.nrdconta = tel_nrdconta
                            NO-LOCK:
+					
+        /* Desconsiderar Guias DARF/DAS */					
+		IF  craplft.tpfatura = 1  OR
+		    craplft.tpfatura = 2  THEN
+			NEXT.
                            
         CREATE w_doctos.
         ASSIGN w_doctos.cdbarras = craplft.cdbarras

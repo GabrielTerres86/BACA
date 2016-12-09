@@ -19,7 +19,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS429(pr_cdcooper IN crapcop.cdcooper%TY
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Edson
-     Data    : Dezembro/2004                       Ultima atualizacao: 01/09/2015
+     Data    : Dezembro/2004                       Ultima atualizacao: 28/09/2016
   
      Dados referentes ao programa:
   
@@ -56,6 +56,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS429(pr_cdcooper IN crapcop.cdcooper%TY
                  21/12/2015 - Ajuste na data da reversão para rw_crapdat.dtmvtopr 
                               ao invés de (rw_crapdat.dtmvtolt + 1) para o arquivo 
                               AAMMDD_CTAINVST.TXT - vr_tab_inf_arquivo (Vanessa)
+                         
+			     28/09/2016 - Alteração do diretório para geração de arquivo contábil.
+                              P308 (Ricardo Linhares).                      
+                              
   ............................................................................ */
 
   ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -86,7 +90,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS429(pr_cdcooper IN crapcop.cdcooper%TY
 
   -- Variáveis para o caminho e nome do arquivo base
   vr_nom_diretorio VARCHAR2(200);
-  vr_nom_dirmicros VARCHAR2(200);
+  vr_dircon VARCHAR2(200);
+  vr_arqcon VARCHAR2(200);
+  vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos'; 
+  vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+  vc_cdtodascooperativas INTEGER := 0;    
+  
   -- Comando completo
   vr_dscomando         VARCHAR2(4000);
   -- Saida da OS Command
@@ -479,10 +488,6 @@ BEGIN
                                               pr_cdcooper,
                                               'contab');
                                               
-     -- Definição do diretório onde o relatório será gerado
-    vr_nom_dirmicros := gene0001.fn_diretorio('m', -- /usr/micros
-                                              pr_cdcooper,
-                                              'contab');
     --Define o nome do arquivo                                        
     vr_nomarqui := TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD') ||'_CTAINVST.txt';
     
@@ -499,10 +504,14 @@ BEGIN
         RAISE vr_exc_saida;
       END IF;
       
-     -- Executa comando UNIX para converter arq para Dos
-     vr_dscomando := 'ux2dos ' || vr_nom_diretorio || '/' || vr_nomarqui || ' > '
-                               || vr_nom_dirmicros || '/' || vr_nomarqui || ' 2>/dev/null';
+     -- Busca o diretório para contabilidade
+     vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+     vr_dircon := vr_dircon || vc_dircon;
+     vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD') ||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CTAINVST.txt';
 
+     -- Ao final, converter o arquivo para DOS e enviá-lo a pasta micros/<dsdircop>/contab
+     vr_dscomando := 'ux2dos '||vr_nom_diretorio||'/'||vr_nomarqui||' > '||
+                                vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
     
     -- Executar o comando no unix
     GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -590,4 +599,3 @@ EXCEPTION
   
 END PC_CRPS429;
 /
-

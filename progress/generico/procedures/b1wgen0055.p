@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 09/09/2016
+    Data    : Janeiro/2010                   Ultima atualizacao: 16/11/2016
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -133,6 +133,9 @@
 
                 09/09/2016 - Adicionar validacao para o relacionamento com o primeiro titular
                              cdgraupr = 0 e for segundo titular (Lucas Ranghetti #500760)
+
+                16/11/2016 - Criar ttl como nao politicamente exposto ao inves
+                             de pendente (Tiago/Thiago SD532690).
 .............................................................................*/
 
 
@@ -1220,7 +1223,7 @@ PROCEDURE Grava_Dados:
                                  crapttl.nrdconta = par_nrdconta
                                  crapttl.idseqttl = par_idseqttl
                                  crapttl.inpessoa = 1
-                                 crapttl.inpolexp = 2.
+                                 crapttl.inpolexp = 0. /*0-Nao Politicamente exposto*/
                           LEAVE ContadorTtl.
                        END.
                 END.
@@ -3434,6 +3437,7 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 23.
                LEAVE Valida.
             END.
+                
         
         /* Validar o cpf */
         IF  par_nrcpfcgc = "" THEN

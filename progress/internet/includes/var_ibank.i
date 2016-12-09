@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 04/05/2016
+   Data    : Julho/2004.                       Ultima atualizacao: 19/09/2016
 
    Dados referentes ao programa:
 
@@ -131,6 +131,10 @@
 
 			  04/05/2016 - Incluido o campo cdageban na tabela xml_operacao38
 						   (Adriano - M117).
+                            
+              19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+                           pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+                           
 ..............................................................................*/
 
 DEF TEMP-TABLE xml_operacao                                             NO-UNDO
@@ -383,7 +387,23 @@ DEF TEMP-TABLE xml_operacao38                                           NO-UNDO
     FIELD dscabfim AS CHAR
     FIELD idtitdda AS CHAR
     FIELD dsageban AS CHAR
-	FIELD cdageban AS CHAR.
+    FIELD cdageban AS CHAR
+    FIELD tpcaptur AS CHAR
+    FIELD dstipcat AS CHAR
+    FIELD dsidpgto AS CHAR
+    FIELD dsnomfon AS CHAR
+    FIELD vlprinci AS CHAR
+    FIELD vlrmulta AS CHAR
+    FIELD vlrjuros AS CHAR
+    FIELD vlrtotal AS CHAR
+    FIELD vlrrecbr AS CHAR
+    FIELD vlrperce AS CHAR
+    FIELD cdreceit AS CHAR
+    FIELD nrrefere AS CHAR
+    FIELD dtagenda AS CHAR
+    FIELD dtperiod AS CHAR
+    FIELD nrcpfcgc AS CHAR
+    FIELD dtvendrf AS CHAR.
 
 DEF TEMP-TABLE xml_operacao88                                           NO-UNDO
     FIELD dscabini AS CHAR

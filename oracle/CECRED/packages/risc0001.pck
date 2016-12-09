@@ -84,7 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas para Calculos de Risco
   --  Sigla    : RISC
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Agosto/2014.                   Ultima atualizacao: 24/02/2015
+  --  Data     : Agosto/2014.                   Ultima atualizacao: 20/06/2016
   --
   -- Dados referentes ao programa:
   --
@@ -93,7 +93,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   -- Alterações: 24/02/2015 - Correção em cursores com ORDER BY progress_recid para forçar o
   --                          índice utilizado pelo Progress (Dionathan)
+  --
+  --             20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em varias procedures 
+  --                          desta package.(Carlos Rafael Tanholi).     
   ---------------------------------------------------------------------------------------------------------------
+
+  -- constantes para geracao de arquivos contabeis
+  vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos';
+  vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+  vc_cdtodascooperativas INTEGER := 0;
 
   vr_dtrefris DATE;
 
@@ -636,7 +644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Felipe Oliveira
-  Data    : Dezembro/2014                       Ultima Alteracao: 07/12/2015
+  Data    : Dezembro/2014                       Ultima Alteracao: 07/10/2016
 
   Dados referentes ao programa:
 
@@ -666,6 +674,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       17/03/2016 - Tratar o arquivo contábil gerado na opção "K" da tela RISCO, 
                    para incluir a Provisão de operações do BNDES. 
                    (Carlos Rafael Tanholi - SD 370441)
+
+     06/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                   P308 (Ricardo Linhares).
+
+
   ............................................................................. */
 
 
@@ -780,10 +793,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       SELECT craptab.dstextab
         FROM craptab
        WHERE craptab.cdcooper = par_cdcooper
-         AND craptab.nmsistem = 'CRED'
-         AND craptab.tptabela = 'GENERI'
+         AND UPPER(craptab.nmsistem) = 'CRED'
+         AND UPPER(craptab.tptabela) = 'GENERI'
          AND craptab.cdempres = 00
-         AND craptab.cdacesso = 'PROVISAOCL';
+         AND UPPER(craptab.cdacesso) = 'PROVISAOCL';
 
 
     -- Inicializar tabela de Microcredito
@@ -853,6 +866,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     vr_nrmaxpas          INTEGER := 0;
     rw_crapdat           btch0001.cr_crapdat%ROWTYPE;
+
+    vr_dircon VARCHAR2(200);
+    vr_arqcon VARCHAR2(200);
+
 
     -- Constante para usar em indice do primeiro nivel
     vr_price_atr CONSTANT VARCHAR2(3) := 'ATR'; -- PRICE TR
@@ -1933,7 +1950,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
 
     -- Define o diretório do arquivo
-    vr_utlfileh := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /usr/coop
+    vr_utlfileh := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_nmsubdir => '/contab') ;
 
@@ -1962,11 +1979,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     -- Percorrer as agencias da cooperativa
     FOR rw_crapage IN cr_crapage(pr_cdcooper) LOOP
-
       vr_nrmaxpas := rw_crapage.cdagenci;
-
       vr_cdccuage(rw_crapage.cdagenci).dsc := rw_crapage.cdccuage;
-
     END LOOP;
 
     -- Inicializa variáveis
@@ -4457,6 +4471,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                          ,pr_des_comando => vr_dscomando
                          ,pr_typ_saida   => vr_typ_saida
                          ,pr_des_saida   => vr_dscritic);
+
+    IF vr_typ_saida = 'ERR' THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Busca o diretório para contabilidade
+     vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+     vr_dircon := vr_dircon || vc_dircon;
+     vr_arqcon := to_char(vr_dtmvtolt, 'yy') ||
+                  to_char(vr_dtmvtolt, 'mm') ||
+                  to_char(vr_dtmvtolt, 'dd') ||
+                  '_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||
+                  '_RISCO.txt';
+
+      -- Executa comando UNIX para converter arq para Dos
+     vr_dscomando := 'ux2dos '||vr_utlfileh||'/'||pr_retfile||' > '||
+                                vr_dircon||'/'||vr_arqcon||' 2>/dev/null';
+
+
+    -- Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomando
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_dscritic);
+
     IF vr_typ_saida = 'ERR' THEN
       RAISE vr_exc_erro;
     END IF;
@@ -4638,14 +4677,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : James Prust Junior
-    Data    : Marco/2016                       Ultima Alteracao:
+    Data    : Marco/2016                       Ultima Alteracao: 06/10/2016
 
     Dados referentes ao programa:
 
     Frequencia: Diario (on-line)
     Objetivo  : Gerar Arq. Contabilizacao Provisao
 
-    Alterações:
+    Alterações:   06/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                               P308 (Ricardo Linhares).
   ............................................................................. */
     DECLARE
       -- Buscar todos os percentual de cada nivel de risco
@@ -4653,10 +4693,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         SELECT craptab.dstextab
           FROM craptab
          WHERE craptab.cdcooper = pr_cdcooper
-           AND craptab.nmsistem = 'CRED'
-           AND craptab.tptabela = 'GENERI'
+           AND UPPER(craptab.nmsistem) = 'CRED'
+           AND UPPER(craptab.tptabela) = 'GENERI'
            AND craptab.cdempres = 00
-           AND craptab.cdacesso = 'PROVISAOCL';
+           AND UPPER(craptab.cdacesso) = 'PROVISAOCL';
          
       -- Buscar informações da central de risco para documento 3020
       CURSOR cr_crapris(pr_cdcooper IN crapris.cdcooper%TYPE
@@ -4807,8 +4847,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                                     ,pr_dtmvtolt  => vr_dtrefere + 1 -- último dia util
                                                     ,pr_tipo      => 'P');           -- Próximo ou anterior
                                                      
-      --- Define o diretório do arquivo                                              
-      vr_utlfileh := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ROOT_MICROS_CARTAO');
+     -- Define o diretório do arquivo
+     vr_utlfileh := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+     vr_utlfileh := vr_utlfileh || vc_dircon;
+
+
       -- Define Nome do Arquivo
       vr_nmarquiv := TO_CHAR(vr_dtultdma_util,'RR') || 
                      TO_CHAR(vr_dtultdma_util,'MM') ||

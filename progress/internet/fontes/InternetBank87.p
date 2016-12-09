@@ -5,14 +5,15 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jonata (RKAM)
-   Data    : Junho/2014.                       Ultima atualizacao: 
+   Data    : Junho/2014.                       Ultima atualizacao: 11/11/2016 
    
    Dados referentes ao programa:
    
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Ativar / Desativar contas benefiriciaras de TED.
    
-   Alteracoes:
+   Alteracoes: 11/11/2016 - Ajuste seja logado as alteracoes de favorecido
+							(Adriano - SD 547975)
 ..............................................................................*/
  
 CREATE WIDGET-POOL.
@@ -74,7 +75,7 @@ RUN altera-dados-cont-cadastrada IN h-b1wgen0015
                                 INPUT par_nrdconta,
                                 INPUT par_idseqttl,
                                 INPUT par_dtmvtolt,
-                                INPUT FALSE,
+                                INPUT TRUE,
                                 INPUT par_nmtitula,
                                 INPUT par_nrcpfcgc,
                                 INPUT par_inpessoa,

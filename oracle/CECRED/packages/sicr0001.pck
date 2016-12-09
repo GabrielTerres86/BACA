@@ -52,7 +52,7 @@ create or replace package cecred.SICR0001 is
           ,cdagenci NUMBER(3)    --  FORMAT "zz9"
           ,nrdconta NUMBER       --  FORMAT "zzzz,zzz,9"
           ,nmprimtl crapass.nmprimtl%TYPE --  FORMAT "x(40)"
-          ,cdtiptra NUMBER(1)    --  FORMAT "9"
+          ,cdtiptra NUMBER(2)    --  FORMAT "99"
           ,fltiptra BOOLEAN
           ,dstiptra VARCHAR2(13) --  FORMAT "x(13)"
           ,fltipdoc VARCHAR2(10) --  CONVENIO ou TITULO
@@ -2163,7 +2163,7 @@ create or replace package body cecred.SICR0001 is
                             ,pr_nrctacns  IN crapass.nrctacns%TYPE        --> Conta consórcio
                             ,pr_vllanaut  IN craplau.vllanaut%TYPE        --> Valor do lancemento
                             ,pr_cdagenci  IN crapass.cdagenci%TYPE        --> Agencia do cooperado PA
-                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
+              ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                             ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
   ---------------------------------------------------------------------------------------------------------------

@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0002 AS
   --  Sistema  : Rotinas genericas referente ao CABAL
   --  Sigla    : CCRD
   --  Autor    : Adriano - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 06/04/2016
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 06/12/2016
   --
   -- Dados referentes ao programa:
   --
@@ -25,6 +25,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0002 AS
   --             16/02/2016 - Ajustes referentes ao projeto melhoria 157(Lucas Ranghetti #330322)
   --             06/04/2016 - Retirar o lote, ajuste de lançamento duplicado quando a ordem das mensagens
   ---                         chega invertida (420, 220, 200), ajustes de performance. (Oscar 379672)  
+  --
+  --             06/12/2016 - Tratado cursor cr_crapcrd para buscar apenas o cartao na
+  --                          cooperativa que esta ativa (Incorporacao Transposul). 
+  --                          (Fabricio)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina tratar as mensagens referente ao CABAL 
@@ -172,10 +176,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
   SELECT crd.cdcooper
         ,crd.nrdconta
         ,crd.nrctrcrd
-    FROM crapcrd crd
-   WHERE crd.nrcrcard = pr_nrcrcard
+    FROM crapcrd crd,
+         crapcop cop
+   WHERE cop.cdcooper = crd.cdcooper
+     AND crd.nrcrcard = pr_nrcrcard
      AND crd.cdadmcrd >= 10  --Bancoob 
-     AND crd.cdadmcrd <= 80; --Bancoob
+     AND crd.cdadmcrd <= 80  --Bancoob
+     AND cop.flgativo = 1;
   rw_crapcrd cr_crapcrd%ROWTYPE;
    
   -- Cursor para buscar as informações do associado

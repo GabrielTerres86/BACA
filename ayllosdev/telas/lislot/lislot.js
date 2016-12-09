@@ -9,6 +9,7 @@
  *				  09/05/2016 - Ajustado os parametros para enviar e receber pelo metodo GET
  *							   para ajustar problema de permissão solicitado no chamado 447548. (Kelvin)
  *
+ *                11/11/2016 - Ajustes referente ao chamado 492589. (Kelvin)
  * --------------
  */
  
@@ -435,9 +436,20 @@ function Gera_Impressao() {
 	dttermin = cDttermin.val();
 	nmdopcao = cNmdopcao.val();
 		
-	var action = UrlSite + 'telas/lislot/imprimir_dados.php?cddopcao=' + cddopcao + '&tpdopcao=' + tpdopcao + '&cdagenci=' + cdagenci + '&cdhistor=' 
-																	   + cdhistor + '&nrdconta=' + nrdconta + '&dtinicio=' + dtinicio + '&dttermin=' 
-																	   + dttermin + '&nmdopcao=' + nmdopcao + '&dsiduser=' + dsiduser;	
+	$('#sidlogin','#frmConsulta').remove();	
+	
+	$('#frmConsulta').append('<input type="hidden" id="sidlogin" name="sidlogin" value="' + $('#sidlogin','#frmMenu').val() + '" />');	
+	
+	$('#frmConsulta').append('<input type="hidden" id="cddopcao" name="cddopcao" value="' + cddopcao + '" />');	
+	$('#frmConsulta').append('<input type="hidden" id="tpdopcao" name="tpdopcao" value="' + tpdopcao + '" />');
+	$('#frmConsulta').append('<input type="hidden" id="cdagenci" name="cdagenci" value="' + cdagenci + '" />');
+	$('#frmConsulta').append('<input type="hidden" id="cdhistor" name="cdhistor" value="' + cdhistor + '" />');
+	$('#frmConsulta').append('<input type="hidden" id="nrdconta" name="nrdconta" value="' + nrdconta + '" />');
+	$('#frmConsulta').append('<input type="hidden" id="dtinicio" name="dtinicio" value="' + dtinicio + '" />');
+	$('#frmConsulta').append('<input type="hidden" id="dttermin" name="dttermin" value="' + dttermin + '" />');
+	$('#frmConsulta').append('<input type="hidden" id="nmdopcao" name="nmdopcao" value="' + nmdopcao + '" />');
+		
+	var action = UrlSite + 'telas/lislot/imprimir_dados.php';
 	
 	carregaImpressaoAyllos("frmConsulta",action,"estadoInicial();");
 	

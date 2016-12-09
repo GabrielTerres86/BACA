@@ -16,6 +16,9 @@
 
                     05/07/2016 - Inclusao novo tipo protocolo => 15 - Pagamento Débito Automático
                                  PRJ320 - Oferta DebAut(Odirlei - AMcom)
+								 
+					05/07/2016 - Inclusão protocolo 16, 17, 18, 19 (PRJ338 - Lucas Lunelli)
+					
  *********************************************************************************************/
 ?>
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none" >
@@ -45,8 +48,12 @@
     <option value="10" <?php echo $cdtippro == '10' ? 'selected' : '' ?>>10 - Aplicacao</option>
     <option value="12" <?php echo $cdtippro == '12' ? 'selected' : '' ?>>12 - Resgate de Aplicacao</option>
     <option value="13" <?php echo $cdtippro == '13' ? 'selected' : '' ?>>13 - GPS (Previd&ecirc;ncia Social) </option>
+	<option value="14" <?php echo $cdtippro == '14' ? 'selected' : '' ?>><?php echo utf8ToHtml('14 - Serviços Cooperativos') ?> </option>
     <option value="15" <?php echo $cdtippro == '15' ? 'selected' : '' ?>> <?php echo utf8ToHtml('15 - Pagamento Débito Automático') ?> </option>
-    <option value="14" <?php echo $cdtippro == '14' ? 'selected' : '' ?>><?php echo utf8ToHtml('14 - Serviços Cooperativos') ?> </option>
+    <option value="16" <?php echo $cdtippro == '16' ? 'selected' : '' ?>>16 - DARF</option>
+    <option value="17" <?php echo $cdtippro == '17' ? 'selected' : '' ?>>17 - DAS</option>
+    <option value="18" <?php echo $cdtippro == '18' ? 'selected' : '' ?>>18 - Agendamento DARF</option>
+    <option value="19" <?php echo $cdtippro == '19' ? 'selected' : '' ?>>19 - Agendamento DAS</option>
     </select>
 
     <br />

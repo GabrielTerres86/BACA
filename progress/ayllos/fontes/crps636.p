@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 21/11/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 28/11/2016
     
     Dados referente ao programa:
     
@@ -129,8 +129,12 @@
                               PRJ320 - Oferta Debaut (Odirlei-AMcom)
                               
                  24/08/2016 - Incluir tratamento para autorizações suspensas (Lucas Ranghetti #499496)
-                 
+				                 
                  21/11/2016 - Efetuar replace de '-' por nada no nrdocmto da crapndb (Lucas Ranghetti #560620)
+
+				 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
+                              colocando zeros a esquerda (Projeto 338 - Lucas Lunelli)
+
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1233,7 +1237,7 @@ FOR EACH crapcop NO-LOCK.
                     
                 IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
                     ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
- 
+
                 ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(REPLACE(SUBSTR(aux_dslinreg,2,25),"-","")) NO-ERROR.
             END.
 
@@ -1630,10 +1634,12 @@ PROCEDURE gera-linha-arquivo-exp-conv:
             IF  craplft.cdagenci = 90 THEN  /** Internet**/   
                 DO:  
                     /* Obter cod. da transacao e vl tarifa */
-                    FIND FIRST crapstn WHERE 
-                               crapstn.cdempres = crapscn.cdempres AND
-                               crapstn.tpmeiarr = "D"
-                               NO-LOCK NO-ERROR.
+                    FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres   AND
+                                             crapstn.tpmeiarr = "D"                AND
+                                             IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                             AND
+                                             IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
+                               				 NO-LOCK NO-ERROR.
         
                     IF  AVAIL crapstn THEN
                         ASSIGN aux_cdtransa = crapstn.cdtransa
@@ -2188,9 +2194,11 @@ PROCEDURE gera-linha-arquivo-exp-darf:
             IF  craplft.cdagenci = 90 THEN  /** Internet**/   
                 DO:
                     /* Obter cod. da transacao e vl tarifa */
-                    FIND FIRST crapstn WHERE 
-                               crapstn.cdempres = crapscn.cdempres AND
-                               crapstn.tpmeiarr = "D"
+                    FIND FIRST crapstn WHERE crapstn.cdempres = crapscn.cdempres   AND
+                                             crapstn.tpmeiarr = "D"                AND
+                                             IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
+                                             AND
+                                             IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
                                NO-LOCK NO-ERROR.
         
                     IF  AVAIL crapstn THEN
@@ -2327,7 +2335,8 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                       "COD.BARRAS ". 
         
             IF  craplft.cdbarras <> "" OR 
-                craplft.nrrefere  = "" THEN
+                craplft.nrrefere  = "" OR
+                craplft.nrrefere  = ?  THEN
                 ASSIGN aux_nrrefere = FILL(" ", 17).
             ELSE
                 DO:
