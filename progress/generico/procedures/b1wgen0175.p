@@ -754,7 +754,9 @@ PROCEDURE busca-devolucoes-cheque:
                     ASSIGN tt-lancto.vlaplica = aux_vlaplica
                            tt-lancto.vlsldprp = aux_vlsldprp.
                                             
-                    FIND FIRST crapdev WHERE crapdev.cdcooper = aux_cdcooper
+                    FIND FIRST crapdev WHERE crapdev.cdcooper = (IF   aux_cdcopfdc > 0 
+																	  THEN aux_cdcopfdc
+																 ELSE aux_cdcooper)
                                          AND crapdev.cdbanchq = crapfdc.cdbanchq
                                          AND crapdev.cdagechq = crapfdc.cdagechq
                                          AND crapdev.nrctachq = crapfdc.nrctachq
