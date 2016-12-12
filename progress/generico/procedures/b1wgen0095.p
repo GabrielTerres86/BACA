@@ -938,7 +938,7 @@ PROCEDURE busca-ctachq:
     DEF  INPUT PARAM par_cdsitdtl AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_dsdctitg AS CHAR                              NO-UNDO.
     DEF  INPUT PARAM par_posvalid AS INTE                              NO-UNDO.
-[B
+
     DEF OUTPUT PARAM par_dtemscor AS DATE                              NO-UNDO.
     DEF OUTPUT PARAM par_cdhistor AS INTE                              NO-UNDO.
     DEF OUTPUT PARAM par_nrfinchq AS INTE                              NO-UNDO.
