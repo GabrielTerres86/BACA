@@ -459,7 +459,8 @@ PROCEDURE valida-ctachq:
                           AND craptco.nrctaant = par_nrctachq
                           AND (craptco.cdcopant = 4  OR 
                                craptco.cdcopant = 15 OR 
-                               craptco.cdcopant = 17 ) 
+                               craptco.cdcopant = 17 )
+                          AND craptco.flgativo = TRUE
                           NO-LOCK NO-ERROR.
 
                         /* Gerar critica apenas se não for
@@ -3400,7 +3401,7 @@ PROCEDURE busca-contra-ordens:
                                                 crapcor.nrctachq  = tt-dctror.nrctachq  AND
                                                 crapcor.nrcheque <= tt-dctror.nrfinchq  AND
                                                 crapcor.nrcheque >= tt-dctror.nrfinchq  AND
-                                                crapcor.flgativo = TRUE NO-LOCK NO-ERROR. 
+                                                crapcor.cr = TRUE NO-LOCK NO-ERROR. 
                          IF AVAIL crapcor THEN
                          DO:
                              ASSIGN aux_dscritic = "Sustacao provisoria ja realizada anteriormente " +
