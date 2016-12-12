@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0119.p                  
     Autor(a): Fabricio
-    Data    : Dezembro/2011                      Ultima atualizacao: 26/02/2014
+    Data    : Dezembro/2011                      Ultima atualizacao: 12/12/2016
   
     Dados referentes ao programa:
   
@@ -36,14 +36,18 @@
                               separar por PAC e adicionar totais das colunas 
                               RECARGA e TARIFA (Lucas).          
                 
-                 13/08/2013 - Nova forma de chamar as agências, de PAC agora 
-                              a escrita será PA (André Euzébio - Supero).  
-                              
+                 13/08/2013 - Nova forma de chamar as agências, de PAC agora
+                              a escrita será PA (André Euzébio - Supero).
+
                  12/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)
-                 
+
                  26/02/2014 - Atribuicao ao campo tt-dados-conta.flgdemis
                               na procedure obtem_dados_conta. (Fabricio)
-                             
+
+                 12/12/2016 - Incorporacao - Alterada busca_cooperativas para
+                              para listar apenas Coops Ativas
+                              Telas que utilizam a procedure (IMGCHQ/PARMON)
+                              (Guilherme/SUPERO)
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -257,17 +261,20 @@ PROCEDURE busca_cooperativas:
     DEF OUTPUT PARAM TABLE FOR tt-crapcop.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    IF par_cdcooper = 3 THEN
-       DO:
-           FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK:
-              
-               CREATE tt-crapcop.
+    IF  par_cdcooper = 3 THEN DO:
 
-               ASSIGN tt-crapcop.codcoope = crapcop.cdcooper
-                      tt-crapcop.nmrescop = crapcop.nmrescop.
-     
-           END.
-       END.
+        FOR EACH crapcop
+           WHERE crapcop.cdcooper <> 3
+             AND crapcop.flgativo = TRUE
+         NO-LOCK:
+
+            CREATE tt-crapcop.
+
+            ASSIGN tt-crapcop.codcoope = crapcop.cdcooper
+                   tt-crapcop.nmrescop = crapcop.nmrescop.
+
+        END.
+    END.
 
     RETURN "OK".
 
