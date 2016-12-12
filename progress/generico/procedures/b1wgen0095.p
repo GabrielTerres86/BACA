@@ -3401,7 +3401,7 @@ PROCEDURE busca-contra-ordens:
                                                 crapcor.nrctachq  = tt-dctror.nrctachq  AND
                                                 crapcor.nrcheque <= tt-dctror.nrfinchq  AND
                                                 crapcor.nrcheque >= tt-dctror.nrfinchq  AND
-                                                crapcor.cr = TRUE NO-LOCK NO-ERROR. 
+                                                crapcor.flgativo = TRUE NO-LOCK NO-ERROR. 
                          IF AVAIL crapcor THEN
                          DO:
                              ASSIGN aux_dscritic = "Sustacao provisoria ja realizada anteriormente " +
