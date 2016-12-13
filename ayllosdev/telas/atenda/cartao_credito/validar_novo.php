@@ -16,6 +16,7 @@
  * 006: [09/10/2015] James		 (CECRED) : Desenvolvimento do projeto 126.
  * 007: [17/06/2016] Rafael M.   (RKAM)   : - M181 - Alterar o CDAGENCI para passar o CDPACTRA
  * 008: [29/06/2016] Kelvin      (CECRED) : Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461
+ * 009: [09/12/2016] Kelvin		 (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
  */
 ?>
 
@@ -70,6 +71,9 @@
 	$dsrepres = $_POST["dsrepres"];
 	$nmempres = $_POST["nmempres"];
 
+	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
+	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Ayllos',$funcaoAposErro,false);
+	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
