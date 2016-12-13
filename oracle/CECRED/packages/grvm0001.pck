@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 10/05/2016
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 11/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -30,6 +30,9 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
   --
   --              10/05/2016 - Ajuste decorrente a conversao da tela GRAVAM
   --                           (Andrei - RKAM).
+  --  
+  --              11/10/2016 - M172 - Ajuste no formato do telefone para novo digito 9. 
+  --                           (Ricardo Linhares) 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicação de tipo e tabela para o arquivo do GRAVAMES
@@ -116,7 +119,7 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
         OR  crapbpr.dscatbem LIKE '%MOTO%'
         OR  crapbpr.dscatbem LIKE '%CAMINHAO%');
   rw_crapbpr cr_crapbpr%rowtype;
-
+  
   -- Atualiza os dados conforme o cdorigem para geração de arquivos cyber
   PROCEDURE pc_solicita_baixa_automatica(pr_cdcooper IN crapbpr.cdcooper%type -- Código da Cooperativa
                                      ,pr_nrdconta IN crapbpr.nrdconta%type -- Numero da conta do associado
@@ -175,6 +178,8 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                               ,pr_nranobem IN crapbpr.nranobem%TYPE --Ano do bem
                               ,pr_nrmodbem IN crapbpr.nrmodbem%TYPE --Modelo do bem
                               ,pr_tpctrpro IN crapbpr.tpctrpro%TYPE --Tipo do contrato
+                              ,pr_cdsitgrv IN crapbpr.cdsitgrv%TYPE --Situação do Gravame
+                              ,pr_dsaltsit IN VARCHAR2              --Descrição do motivo da alteração da situação do Gravame
                               ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                               ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -273,7 +278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --
   --  Programa: GRVM0001                        Antiga: b1wgen0171.p
   --  Autor   : Douglas Pagel
-  --  Data    : Dezembro/2013                     Ultima Atualizacao: 14/07/2016
+  --  Data    : Dezembro/2013                     Ultima Atualizacao: 11/10/2016
   --
   --  Dados referentes ao programa:
   --
@@ -291,11 +296,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
   --                           (Andrei - RKAM).
   --
   --              14/07/2016 - AjusteS realizados:
-  --							- Criado função para validar os caracteres do chassi e reliazado a chamada
-  --						      na rotina de alteração dos gravames;
-  --							- Realizado validação da data de referencia e tratado o lote passado para consulta
-  --							  na rotina de consulta dos gravames
-  --						    (Adnrei - RKAM).
+  --							            - Criado função para validar os caracteres do chassi e reliazado a chamada
+  --						                na rotina de alteração dos gravames;
+  --							            - Realizado validação da data de referencia e tratado o lote passado para consulta
+  --							              na rotina de consulta dos gravames
+  --						               (Adnrei - RKAM).
+  --
+  --              28/07/2016 - Ajustes realizados:
+  --						               -> Na rotina de importação dos arquivos de retorno para tratar corretamente
+  --                              as informações coletadas do arquivo;
+  --						               -> Ajuste para retirar validação que verifica se contrato
+  --                              esta em prejuízo;
+  --                            (Adriano - SD  495514)                          
+  --
+  --              05/08/2016 - Ajuste para efetuar commit/rollback
+  --						              (Adriano)
+  --
+  --              22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
+  --                           pois em alguns casos ele foi gravado em minusculo e outros em maisculo
+  --                           (Adriano - SD 527336)
+  --
+  --              11/10/2016 - M172 - Ajuste no formato do telefone para novo digito 9. 
+  --                           (Ricardo Linhares)  
+  
   ---------------------------------------------------------------------------------------------------------------
   
   /* Funcao para validacao dos caracteres */
@@ -401,13 +424,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --  Sistema  : Rotinas genericas para GRAVAMES
     --  Sigla    : GRVM
     --  Autor    : Douglas Pagel
-    --  Data     : Dezembro/2013.                   Ultima atualizacao: 04/12/2013
+    --  Data     : Dezembro/2013.                   Ultima atualizacao: 28/07/2016
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Retorna OK caso o contrato seja de alienacao fiduciaria
     --
-    --   Alteracoes: 04/12/2013 - Conversao Progress para Oracle (Douglas Pagel).                           
+    --   Alteracoes: 04/12/2013 - Conversao Progress para Oracle (Douglas Pagel). 
+    --
+    --               28/07/2016 - Ajuste para retirar validação que verifica se contrato
+    --                            esta em prejuízo
+    --                            (Adriano - SD  495514)                         
     -- .............................................................................
     -- CURSORES
 
@@ -451,19 +478,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
          AND craplcr.tpctrato = 2;
     rw_craplcr cr_craplcr%rowtype;
 
-    -- cursor para validar se o contrato esta emprejuizo
-    CURSOR cr_crapepr (pr_cdcooper crawepr.cdcooper%type
-                      ,pr_nrdconta crawepr.nrdconta%type
-                      ,pr_nrctrpro crawepr.nrctremp%type) IS
-      SELECT epr.inprejuz
-      FROM  crapepr epr
-      WHERE epr.cdcooper = pr_cdcooper
-      AND   epr.nrdconta = pr_nrdconta
-      AND   epr.nrctremp = pr_nrctrpro
-      AND   epr.inprejuz = 1; --prejuizo
-    rw_crapepr cr_crapepr%ROWTYPE;
-    
-    
     -- VARIÁVEIS
     vr_cdcritic PLS_INTEGER := 0; -- Variavel interna para erros
     vr_dscritic varchar2(4000) := ''; -- Variavel interna para erros
@@ -538,18 +552,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         CLOSE cr_crawepr;
         RETURN;
       END IF;
-
-      --verifica se contrato esta em prejuizo
-      OPEN cr_crapepr(rw_crawepr.cdcooper,      
-                      rw_crawepr.nrdconta,
-                      rw_crawepr.nrctremp);
-      FETCH cr_crapepr INTO rw_crapepr;
-      IF cr_crapepr%FOUND THEN
-        pr_des_reto := 'NOK';
-        CLOSE cr_crapepr;
-        RETURN;
-      END IF;
-      CLOSE cr_crapepr;      
 
       -- Verifica a linha de credito
       OPEN cr_craplcr(rw_crawepr.cdcooper,
@@ -904,7 +906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  05/11/2014
+     Data    : Agosto/2013                     Ultima atualizacao:  28/11/2016
 
      Dados referentes ao programa:
 
@@ -912,6 +914,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Objetivo  : Gerar arquivos GRAVAMES - Inclusão
 
      Alteracoes: 05/11/2014 - Conversão Progress para Oracle (Marcos-Supero)
+
+                 28/11/2016 - Complemento do endereço da cooperativa nulo gera problema com layout
+                              na Credicomin. Incluído NVL na geração do registro (SD#563418 - AJFink).
+
     ............................................................................. */
   BEGIN
     DECLARE
@@ -1035,15 +1041,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       gene0002.pc_escreve_xml(pr_clobarq,pr_clobaux,vr_set_linha);
 
       --****** DADOS CREDOR             *******
-      vr_set_linha := rpad(substr(pr_reg_dado_arquiv.dsendcop,1,30),30,' ')
-                   || to_char(pr_reg_dado_arquiv.nrendcop,'fm00000')
-                   || rpad(substr(pr_reg_dado_arquiv.dscomple,1,20),20,' ')
-                   || rpad(substr(pr_reg_dado_arquiv.nmbaienc,1,20),20,' ')
-                   || to_char(pr_reg_dado_arquiv.cdcidenc,'fm0000')
-                   || rpad(substr(pr_reg_dado_arquiv.cdufdenc,1,2),2,' ')
-                   || to_char(pr_reg_dado_arquiv.nrcepenc,'fm00000000')
-                   || rpad(substr(pr_reg_dado_arquiv.nrdddenc,1,3),3,' ')
-                   || rpad(substr(pr_reg_dado_arquiv.nrtelenc,1,9),9,' '); -- Sem quebra
+      vr_set_linha := rpad(substr(nvl(pr_reg_dado_arquiv.dsendcop,' '),1,30),30,' ')
+                   || to_char(nvl(pr_reg_dado_arquiv.nrendcop,0),'fm00000')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.dscomple,' '),1,20),20,' ') --SD#563418
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.nmbaienc,' '),1,20),20,' ')
+                   || to_char(nvl(pr_reg_dado_arquiv.cdcidenc,0),'fm0000')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.cdufdenc,' '),1,2),2,' ')
+                   || to_char(nvl(pr_reg_dado_arquiv.nrcepenc,0),'fm00000000')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.nrdddenc,' '),1,3),3,' ')
+                   || rpad(substr(nvl(pr_reg_dado_arquiv.nrtelenc,' '),1,9),9,' '); -- Sem quebra
       -- Envio ao clob
       gene0002.pc_escreve_xml(pr_clobarq,pr_clobaux,vr_set_linha);
 
@@ -1140,7 +1146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Guilherme/SUPERO
-     Data    : Agosto/2013                     Ultima atualizacao:  14/07/2016
+     Data    : Agosto/2013                     Ultima atualizacao:  22/09/2016
 
      Dados referentes ao programa:
 
@@ -1196,6 +1202,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                  14/07/2016 - Ajuste para retornar corretamente o erro quando houver uma exceção
                               (Andrei - RKAM).               
                                
+				         22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
+                              pois em alguns casos ele foi gravado em minusculo e outros em maisculo
+                              (Adriano - SD 527336)
+             
     ............................................................................. */
     DECLARE
 
@@ -1608,7 +1618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                 ,pr_nrdconta => rw_bpr.nrdconta) LOOP
           -- Formatar a informação
           vr_nrdddass := to_char(nvl(rw_tfc.nrdddtfc,0),'fm000');
-          vr_nrtelass := to_char(nvl(rw_tfc.nrtelefo,0),'fm00000000');
+          vr_nrtelass := to_char(nvl(rw_tfc.nrtelefo,0),'fm900000000');
           -- Sair quando encontrar
           EXIT WHEN (vr_nrdddass <> ' ' AND vr_nrtelass <> ' ');
         END LOOP;
@@ -1618,7 +1628,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         END IF;
         
         IF TRIM(vr_nrtelass) IS NULL THEN
-          vr_nrtelass := to_char(0,'fm00000000');
+          vr_nrtelass := to_char(0,'fm900000000');
         END IF;
           
         -- Montagem da chave para a tabela por Cooper(5)+TpArquivo(1)+Sequencia(14)
@@ -1910,7 +1920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                        ,vr_tab_dados_arquivo(vr_dsdchave).nrdconta           --nrdconta
                        ,vr_tab_dados_arquivo(vr_dsdchave).tpctrpro           --tpctrpro
                        ,vr_tab_dados_arquivo(vr_dsdchave).nrctrpro           --nrctrpro
-                       ,vr_tab_dados_arquivo(vr_dsdchave).dschassi           --dschassi
+                       ,UPPER(vr_tab_dados_arquivo(vr_dsdchave).dschassi)    --dschassi
                        ,vr_tab_dados_arquivo(vr_dsdchave).idseqbem           --idseqbem
                        ,vr_tab_dados_arquivo(vr_dsdchave).nrseqlot           --nrseqlot
                        ,vr_tab_dados_arquivo(vr_dsdchave).cdoperac           --cdoperac
@@ -2473,6 +2483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.tpctrpro
           ,crapbpr.dsjstbxa
           ,crapbpr.dsjstinc
+          ,crapbpr.tpinclus
           ,ROW_NUMBER() OVER(PARTITION BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp
                                ORDER BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp) nrseq_bem
       FROM crawepr
@@ -2525,6 +2536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.tpctrpro
           ,crapbpr.dsjstinc
           ,crapbpr.dsjstbxa      
+          ,crapbpr.tpinclus      
           ,ROW_NUMBER() OVER(PARTITION BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp
                                ORDER BY crawepr.cdcooper, crawepr.nrdconta, crawepr.nrctremp) nrseq_bem
       FROM crapbpr
@@ -2734,7 +2746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
             vr_tpjustif := 1;
             vr_dsjustif := nvl(TRIM(rw_propostas.dsjstinc),' ');  
             
-          ELSIF rw_crapbpr.cdsitgrv = 4 THEN
+          ELSIF rw_propostas.cdsitgrv = 4 THEN
             
             vr_tpjustif := 2;
             vr_dsjustif := nvl(TRIM(rw_propostas.dsjstbxa),' ');
@@ -2789,6 +2801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                                               WHEN 5 THEN
                                                                                 'Cancelado'
                                                                             END ) ||'</dssitgrv>'||                   
+                                                         '  <tpinclus>' || rw_propostas.tpinclus ||'</tpinclus>'|| 
                                                        '</ben>');
           
           --Diminuir registros
@@ -2931,6 +2944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                                                               WHEN 5 THEN
                                                                                 'Cancelado'
                                                                             END ) ||'</dssitgrv>'||                   
+                                                         '  <tpinclus>' || rw_crapbpr.tpinclus ||'</tpinclus>'|| 
                                                        '</ben>');
             
           --Diminuir registros
@@ -3010,6 +3024,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               ,pr_nranobem IN crapbpr.nranobem%TYPE --Ano do bem
                               ,pr_nrmodbem IN crapbpr.nrmodbem%TYPE --Modelo do bem
                               ,pr_tpctrpro IN crapbpr.tpctrpro%TYPE --Tipo do contrato
+                              ,pr_cdsitgrv IN crapbpr.cdsitgrv%TYPE --Situação do Gravame
+                              ,pr_dsaltsit IN VARCHAR2              --Descrição do motivo da alteração da situação do Gravame
                               ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                               ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
@@ -3023,7 +3039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 14/07/2016
+    Data     : Maio/2016                         Ultima atualizacao: 22/09/2016
     
     Dados referentes ao programa:
     
@@ -3032,6 +3048,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     
     Alterações : 14/07/2016 - Ajuste para utilziar rotina de validação dos caracteres do chassi
 							 (Andrei - RKAM).
+
+                 19/08/2016 - Inclusão de novos campos "pr_cdsitgrv" e "pr_dsaltsit " para 
+                              alteração do GRAVAMES. Projeto 369(Lombardi).
+
+     			       22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
+                              pois em alguns casos ele foi gravado em minusculo e outros em maisculo
+                             (Adriano - SD 527336)
 
     -------------------------------------------------------------------------------------------------------------*/                               
   
@@ -3062,6 +3085,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ,crapbpr.dtatugrv
           ,crapbpr.flblqjud
           ,crapbpr.cdsitgrv  
+          ,crapbpr.tpinclus
           ,ROWID rowid_bpr                 
       FROM crapbpr
      WHERE crapbpr.cdcooper = pr_cdcooper
@@ -3137,6 +3161,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     ELSE
       -- Apenas fechar o cursor
       CLOSE BTCH0001.cr_crapdat;
+    END IF;
+    
+    -- Validar campos 
+    IF pr_cdsitgrv IS NOT NULL AND pr_dsaltsit IS NULL THEN
+      vr_cdcritic:= 0;
+      vr_dscritic := 'Situacao foi alterada. Sera necessario informar MOTIVO';
+      pr_nmdcampo := 'dsaltsit';
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Validar campos
+    IF pr_cdsitgrv = 1 THEN
+      vr_cdcritic:= 0;
+      vr_dscritic := 'Situação não pode ser alterada para \"Em processamento\".';
+      pr_nmdcampo := 'cdsitgrv';
+      
+      --Levantar Excecao
+      RAISE vr_exc_erro;
     END IF;
     
     pc_valida_alienacao_fiduciaria (pr_cdcooper => vr_cdcooper  -- Código da cooperativa
@@ -3266,19 +3310,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       CLOSE cr_crapbpr;
     
+      IF rw_crapbpr.cdsitgrv = 1 AND 
+         rw_crapbpr.cdsitgrv <> pr_cdsitgrv THEN
+        vr_cdcritic:= 0;
+        vr_dscritic := 'Situação não pode ser alterada.';
+        pr_nmdcampo := 'cdsitgrv';
+        
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;  
+      
+    
       /* Apenas poder alterar chassi quando 
-         status for 0 ("nao enviado") ou 
-                    3 (processado com critica)  */
-      IF TRIM(rw_crapbpr.dschassi) <> TRIM(pr_dschassi) AND
+         status for 0 ("nao enviado") ou 3 (Processado com critica)  
+         Ou se o tipo da inclusao for igual a M (Manual) com situação 
+         diferente de 1 (Em processamento) e 3 (Processado com critica).*/
+      IF TRIM(UPPER(rw_crapbpr.dschassi)) <> TRIM(UPPER(pr_dschassi)) AND
+       ((rw_crapbpr.tpinclus <> 'M'                     AND
          rw_crapbpr.cdsitgrv <> 0                       AND
-         rw_crapbpr.cdsitgrv <> 3                       THEN
+         rw_crapbpr.cdsitgrv <> 3)                      OR
+        (rw_crapbpr.tpinclus = 'M'                      AND
+        (rw_crapbpr.cdsitgrv = 1                        OR
+         rw_crapbpr.cdsitgrv = 3)))                     THEN
          
         vr_cdcritic:= 0;
         vr_dscritic:= 'Alteracao de chassi nao permitida.';
-        
+            
         --Levantar Excecao  
         RAISE vr_exc_erro;        
-         
+                   
       END IF;  
       
       BEGIN
@@ -3287,12 +3347,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            SET crapbpr.flgalter = 1
               ,crapbpr.dtaltera = rw_crapdat.dtmvtolt
               ,crapbpr.tpaltera = 'M'
-              ,crapbpr.dschassi = pr_dschassi
+              ,crapbpr.dschassi = UPPER(pr_dschassi)
               ,crapbpr.ufplnovo = pr_ufdplaca
               ,crapbpr.nrplnovo = pr_nrdplaca
               ,crapbpr.nrrenovo = pr_nrrenava
               ,crapbpr.nranobem = pr_nranobem
               ,crapbpr.nrmodbem = pr_nrmodbem              
+              ,crapbpr.cdsitgrv = nvl(pr_cdsitgrv, cdsitgrv)
         WHERE ROWID = rw_crapbpr.rowid_bpr;
       EXCEPTION
         WHEN OTHERS THEN
@@ -3318,7 +3379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                           ,pr_nrdconta => pr_nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
     
-      IF TRIM(pr_dschassi) <> TRIM(rw_crapbpr.dschassi) THEN
+      IF TRIM(UPPER(pr_dschassi)) <> TRIM(UPPER(rw_crapbpr.dschassi)) THEN
       
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                   pr_nmdcampo => 'dschassi', 
@@ -3418,11 +3479,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       END IF;
       
+      IF pr_cdsitgrv IS NOT NULL THEN
+      
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'situacao', 
+                                  pr_dsdadant => CASE rw_crapbpr.cdsitgrv
+                                                   WHEN 0 THEN '0 – Nao enviado'
+                                                   WHEN 1 THEN '1 – Em processamento'
+                                                   WHEN 2 THEN '2 – Alienacao'
+                                                   WHEN 3 THEN '3 – Processado com Critica'
+                                                   WHEN 4 THEN '4 – Baixado'
+                                                   WHEN 5 THEN '5 – Cancelado'
+                                                 END, 
+                                  pr_dsdadatu => CASE pr_cdsitgrv
+                                                   WHEN 0 THEN '0 – Nao enviado'
+                                                   WHEN 1 THEN '1 – Em processamento'
+                                                   WHEN 2 THEN '2 – Alienacao'
+                                                   WHEN 3 THEN '3 – Processado com Critica'
+                                                   WHEN 4 THEN '4 – Baixado'
+                                                   WHEN 5 THEN '5 – Cancelado'
+                                                 END);
       
     END IF;
     
-                  
+      IF pr_dsaltsit IS NOT NULL THEN
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'MOTIVO ALT SITUACAO', 
+                                  pr_dsdadant => '', 
+                                  pr_dsdadatu => pr_dsaltsit);
+      END IF;
     
+    END IF;
                
     pr_des_erro := 'OK';
     
@@ -4955,7 +5042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Maio/2016                         Ultima atualizacao: 14/07/2016
+    Data     : Maio/2016                         Ultima atualizacao: 22/09/2016
     
     Dados referentes ao programa:
     
@@ -4965,6 +5052,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     Alterações : 14/07/2016 - Ajuste para validar a data nula e tratar corretamento
 						                  o lote a ser enviado para consulta
 							                (Andrei - RKAM).
+
+        				 22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
+                              pois em alguns casos ele foi gravado em minusculo e outros em maisculo
+                              (Adriano - SD 527336)
 
     -------------------------------------------------------------------------------------------------------------*/                               
   
@@ -5109,7 +5200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
        AND crapbpr.tpctrpro = pr_tpctrpro
        AND crapbpr.nrctrpro = pr_nrctrpro
        AND crapbpr.flgalien = 1
-       AND TRIM(pr_dschassi) = pr_dschassi;
+       AND TRIM(UPPER(pr_dschassi)) = UPPER(pr_dschassi);
     rw_crapbpr cr_crapbpr%ROWTYPE;           
                
     CURSOR cr_craprto(pr_cdoperac IN craprto.cdoperac%TYPE
@@ -5758,7 +5849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Andrei/RKAM
-     Data    : Maio/2016                     Ultima atualizacao: 14/07/2016 
+     Data    : Maio/2016                     Ultima atualizacao: 22/09/2016
 
      Dados referentes ao programa:
 
@@ -5767,6 +5858,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
 
      Alteracoes: 14/07/2016 - Ajuste para devolver corretamente as criticas quando houver um exceção
                               (Andrei - RKAM).
+                              
+                 28/07/2016 - Ajuste na rotina de importação dos arquivos de retorno para tratar corretamente
+                              as informações coletadas do arquivo
+                              (Adriano).
+
+				         05/08/2016 - Ajuste para efetuar commit/rollback e corrigir updates sendo realizados
+                              de forma errada
+                              Ajuste para utilizar informações da pltable para encontrar o registro de 
+                              bens do gravame
+							                (Adriano)
+                              
+        				 22/09/2016 - Ajuste para utilizar upper ao manipular a informação do chassi
+                              pois em alguns casos ele foi gravado em minusculo e outros em maisculo
+                              (Adriano - SD 527336)                              
+                              
     ............................................................................. */
     DECLARE
 
@@ -5799,9 +5905,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         AND crapbpr.nrdconta = crapgrv.nrdconta
         AND crapbpr.tpctrpro = crapgrv.tpctrpro
         AND crapbpr.nrctrpro = crapgrv.nrctrpro
-        AND TRIM(crapbpr.dschassi) = TRIM(crapgrv.dschassi)
+        AND TRIM(UPPER(crapbpr.dschassi)) = TRIM(UPPER(crapgrv.dschassi))
         AND crapbpr.flgalien = 1;
-
+        
       CURSOR cr_crapgrv(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrseqlot IN crapgrv.nrseqlot%TYPE
                        ,pr_cdoperac IN crapgrv.cdoperac%TYPE
@@ -5812,13 +5918,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
             ,crapgrv.tpctrpro
             ,crapgrv.nrctrpro
             ,crapgrv.dschassi
-       FROM crapbpr
-           ,crapgrv
+       FROM crapgrv
       WHERE crapgrv.cdcooper = pr_cdcooper
         AND crapgrv.nrseqlot = pr_nrseqlot
         AND crapgrv.cdoperac = pr_cdoperac
         AND TRIM(UPPER(crapgrv.dschassi)) = UPPER(pr_dschassi);
       rw_crapgrv cr_crapgrv%ROWTYPE;
+      
+      CURSOR cr_crapgrv_bulk(pr_cdcooper IN crapgrv.cdcooper%TYPE) IS
+      SELECT crapgrv.cdcooper
+            ,crapgrv.nrdconta
+            ,crapgrv.tpctrpro
+            ,crapgrv.nrctrpro
+            ,crapgrv.dschassi
+            ,crapgrv.nrseqlot
+            ,crapgrv.cdoperac
+            ,crapgrv.rowid rowid_grv
+       FROM crapgrv
+       WHERE (pr_cdcooper = 0 OR crapgrv.cdcooper = pr_cdcooper);
       
       CURSOR cr_crapbpr(pr_cdcooper IN crapbpr.cdcooper%TYPE
                        ,pr_nrdconta IN crapbpr.nrdconta%TYPE
@@ -5831,9 +5948,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
          AND crapbpr.nrdconta = pr_nrdconta
          AND crapbpr.tpctrpro = pr_tpctrpro
          AND crapbpr.nrctrpro = pr_nrctrpro
-         AND TRIM(crapbpr.dschassi) = TRIM(pr_dschassi)
+         AND TRIM(UPPER(crapbpr.dschassi)) = TRIM(UPPER(pr_dschassi))
          AND crapbpr.flgalien = 1;
       rw_crapbpr cr_crapbpr%ROWTYPE;
+      
+      TYPE typ_rec_crapgrv IS TABLE OF cr_crapgrv_bulk%ROWTYPE
+         INDEX BY PLS_INTEGER;
+      vr_tab_crapgrv_carga typ_rec_crapgrv;
+
+      TYPE typ_tab_crapgrv IS TABLE OF cr_crapgrv_bulk%ROWTYPE
+         INDEX BY VARCHAR2(70); 
+      vr_tab_crapgrv typ_tab_crapgrv;
       
       --Tabela para receber arquivos lidos no unix
       vr_tab_crawarq TYP_SIMPLESTRINGARRAY:= TYP_SIMPLESTRINGARRAY();
@@ -5843,6 +5968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     
       vr_nrseqreg PLS_INTEGER;           -- Sequenciador do registro na cooperativa
       vr_nmarqdir VARCHAR2(200);         -- Nome do diretorio
+      vr_nmarqsav VARCHAR2(200);         -- Nome do diretorio
       vr_nmarqret VARCHAR2(100);         -- Nome do arquivo
       vr_cdcooper INTEGER;               -- Código da cooperativa
       vr_qtsubstr INTEGER;                
@@ -5864,6 +5990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       vr_dtatugrv crapbpr.dtatugrv%TYPE; -- Data de registro do gravame 
       vr_comando   VARCHAR2(2000);
       vr_typ_saida VARCHAR2(100);
+      vr_index_gravames VARCHAR2(70);
       
     BEGIN
       
@@ -5881,9 +6008,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       vr_nmarqdir:= gene0001.fn_diretorio (pr_tpdireto => 'M' --> Usr/micros
                                           ,pr_cdcooper => 3
                                           ,pr_nmsubdir => 'gravames/retorno');
+                                          
+      --Buscar Diretorio Salvar da CECRED
+      vr_nmarqsav:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> /usr/coop
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_nmsubdir => '/salvar/');                                          
                                         
       -- Validar existencia da cooperativa informada
-      IF pr_cdcoptel <> 0 THEN
+      IF nvl(pr_cdcoptel,0) <> 0 THEN
         
         OPEN cr_crapcop(pr_cdcoptel);
         
@@ -5933,6 +6065,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
       
       END IF;
       
+      -- Carregar PL Table com dados da tabela CRAWEPR
+      OPEN cr_crapgrv_bulk(pr_cdcooper => nvl(pr_cdcoptel,0));
+      LOOP
+        FETCH cr_crapgrv_bulk BULK COLLECT INTO vr_tab_crapgrv_carga /* LIMIT 100000*/;
+        EXIT WHEN vr_tab_crapgrv_carga.COUNT = 0;
+
+        FOR idx IN vr_tab_crapgrv_carga.first..vr_tab_crapgrv_carga.last LOOP
+          
+          --Montar indice para tabela memoria
+          vr_index_gravames:= lpad(vr_tab_crapgrv_carga(idx).cdcooper, 15, '0') ||
+                              lpad(vr_tab_crapgrv_carga(idx).nrseqlot, 15, '0') ||
+                              LPad(vr_tab_crapgrv_carga(idx).cdoperac, 15, '0') ||
+                              lpad(UPPER(vr_tab_crapgrv_carga(idx).dschassi), 25, '0');
+                              
+          vr_tab_crapgrv(vr_index_gravames).cdcooper  := vr_tab_crapgrv_carga(idx).cdcooper;
+          vr_tab_crapgrv(vr_index_gravames).nrdconta  := vr_tab_crapgrv_carga(idx).nrdconta;
+          vr_tab_crapgrv(vr_index_gravames).tpctrpro  := vr_tab_crapgrv_carga(idx).tpctrpro;
+          vr_tab_crapgrv(vr_index_gravames).nrctrpro  := vr_tab_crapgrv_carga(idx).nrctrpro;
+          vr_tab_crapgrv(vr_index_gravames).dschassi  := UPPER(vr_tab_crapgrv_carga(idx).dschassi);
+          vr_tab_crapgrv(vr_index_gravames).rowid_grv := vr_tab_crapgrv_carga(idx).rowid_grv;
+          
+        END LOOP;
+
+      END LOOP;
+      
+      CLOSE cr_crapgrv_bulk;
+      
+      vr_tab_crapgrv_carga.delete; -- limpa dados do bulk ja armazenado em outra pl table
+       
       --Buscar a lista de arquivos do diretorio
       gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_crawarq
                                 ,pr_path          => vr_nmarqdir
@@ -5946,8 +6107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         
         --Levantar Excecao sem erros
         RAISE vr_exc_erro;          
-      END IF;         
-      
+      END IF;   
       
       /* EFETUA A LEITURA DE CADA ARQUIVO  */
       FOR idx IN 1..vr_tab_crawarq.COUNT() LOOP
@@ -5974,7 +6134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
             gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                         ,pr_des_text => vr_setlinha); --> Texto lido
             
-            --vr_setlinha:= replace(replace(vr_setlinha,chr(10),''),chr(13),'');
+            vr_setlinha:= replace(replace(vr_setlinha,chr(10),''),chr(13),'');
             
             IF vr_setlinha LIKE '%HEADER DE CONTROLE%' THEN
               
@@ -6071,25 +6231,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                               
               END IF;
           
-              vr_cdcooper := rw_crapcop_fin.cdcooper;
-          
+              vr_cdcooper := rw_crapcop_fin.cdcooper;          
           
               /*** A partir desse ponto, os SUBSTR serao tratados dinamicamente,
                somando a posicao inicial a variavel aux_qtsubstr por conta do
                tratamento de 4 ou 15 caracteres para o campo cdfingrv  ******/
-              vr_nrseqlot := to_number(TRIM(SUBSTR(vr_setlinha,16 + vr_qtsubstr,7)));
+              vr_nrseqlot := to_number(nvl(TRIM(SUBSTR(vr_setlinha,16 + vr_qtsubstr,7)),0));
 
               /*** Pega o Codigo de Retorno do Lote **/
               CASE vr_nmtiparq
                 WHEN 'B'  THEN
                   vr_cdoperac := 3;
-                  vr_cdretlot := to_number(SUBSTR(vr_setlinha,85 + vr_qtsubstr,03));
+                  vr_cdretlot := to_number(nvl(trim(SUBSTR(vr_setlinha,85 + vr_qtsubstr,03)),0));
                 WHEN 'C'  THEN 
                   vr_cdoperac := 2;
-                  vr_cdretlot := to_number(SUBSTR(vr_setlinha,85 + vr_qtsubstr,03));
+                  vr_cdretlot := to_number(nvl(trim(SUBSTR(vr_setlinha,85 + vr_qtsubstr,03)),0));
                 WHEN 'I'  THEN 
                   vr_cdoperac := 1;
-                  vr_cdretlot := to_number(SUBSTR(vr_setlinha,60 + vr_qtsubstr,03));
+                  vr_cdretlot := to_number(nvl(trim(SUBSTR(vr_setlinha,60 + vr_qtsubstr,03)),0));
               END CASE;
               
               /** Se houve retorno com erro no HEADER do LOTE **/
@@ -6140,46 +6299,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 
               END IF;              
               
-            ELSIF NOT vr_setlinha LIKE '%HEADER%'   OR 
+            ELSIF NOT vr_setlinha LIKE '%HEADER%'   AND 
                   NOT vr_setlinha LIKE '%TRAILLER%' THEN 
               
-              vr_nrseqlot := to_number(TRIM(SUBSTR(vr_setlinha,16 + vr_qtsubstr,7)));
-              vr_nrseqreg := to_number(TRIM(SUBSTR(vr_setlinha,23 + vr_qtsubstr,6)));
+              vr_nrseqlot := to_number(nvl(TRIM(SUBSTR(vr_setlinha,16 + vr_qtsubstr,7)),0));
+              vr_nrseqreg := to_number(nvl(TRIM(SUBSTR(vr_setlinha,23 + vr_qtsubstr,6)),0));
               
               IF vr_nmtiparq = 'I' THEN
                 
-                vr_cdretgrv := to_number(TRIM(SUBSTR(vr_setlinha,30 + vr_qtsubstr,33)));
-                vr_cdretctr := to_number(TRIM(SUBSTR(vr_setlinha,33 + vr_qtsubstr,3)));
-                vr_dschassi := to_number(TRIM(SUBSTR(vr_setlinha,36 + vr_qtsubstr,21)));
+                vr_cdretgrv := to_number(nvl(TRIM(SUBSTR(vr_setlinha,30 + vr_qtsubstr,3)),0));
+                vr_cdretctr := to_number(nvl(TRIM(SUBSTR(vr_setlinha,33 + vr_qtsubstr,3)),0));
+                vr_dschassi := TRIM(SUBSTR(vr_setlinha,36 + vr_qtsubstr,21));
                 
               ELSE
                 
-                vr_cdretgrv := to_number(TRIM(SUBSTR(vr_setlinha,85 + vr_qtsubstr,3)));
+                vr_cdretgrv := to_number(nvl(TRIM(SUBSTR(vr_setlinha,85 + vr_qtsubstr,3)),0));
                 vr_cdretctr := 0;
-                vr_dschassi := to_number(TRIM(SUBSTR(vr_setlinha,30 + vr_qtsubstr,21))); 
+                vr_dschassi := TRIM(SUBSTR(vr_setlinha,30 + vr_qtsubstr,21)); 
               
               END IF;
               
-              OPEN cr_crapgrv(pr_cdcooper => vr_cdcooper
-                             ,pr_nrseqlot => vr_nrseqlot
-                             ,pr_cdoperac => vr_cdoperac
-                             ,pr_dschassi => TRIM(vr_dschassi));
-              
-              FETCH cr_crapgrv INTO rw_crapgrv;              
-              
-              IF cr_crapgrv%FOUND THEN
+              --Montar indice para tabela memoria
+              vr_index_gravames:= lpad(vr_cdcooper, 15, '0') ||
+                                  lpad(vr_nrseqlot, 15, '0') ||
+                                  LPad(vr_cdoperac, 15, '0') ||
+                                  lpad(UPPER(vr_dschassi), 25, '0');
+               
+              IF vr_tab_crapgrv.exists(vr_index_gravames) THEN
                 
-                CLOSE cr_crapgrv;
-                
-                OPEN cr_crapbpr(pr_cdcooper => rw_crapgrv.cdcooper
-                               ,pr_nrdconta => rw_crapgrv.nrdconta
-                               ,pr_tpctrpro => rw_crapgrv.tpctrpro
-                               ,pr_nrctrpro => rw_crapgrv.nrctrpro
-                               ,pr_dschassi => rw_crapgrv.dschassi);
+                OPEN cr_crapbpr(pr_cdcooper => vr_tab_crapgrv(vr_index_gravames).cdcooper
+                               ,pr_nrdconta => vr_tab_crapgrv(vr_index_gravames).nrdconta
+                               ,pr_tpctrpro => vr_tab_crapgrv(vr_index_gravames).tpctrpro
+                               ,pr_nrctrpro => vr_tab_crapgrv(vr_index_gravames).nrctrpro
+                               ,pr_dschassi => vr_tab_crapgrv(vr_index_gravames).dschassi);
                 
                 FETCH cr_crapbpr INTO rw_crapbpr;                
                 
-                IF cr_crapbpr%NOTFOUND THEN
+                IF cr_crapbpr%FOUND THEN
                   
                   CLOSE cr_crapbpr;
                   
@@ -6195,16 +6351,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                       vr_nrgravam := to_number(TRIM(SUBSTR(vr_setlinha,62 + vr_qtsubstr,8)));   
                       
                       /** Validar se data veio Zerada **/
-                      IF nvl(to_number(TRIM(SUBSTR(vr_setlinha,74 + vr_qtsubstr,2))),0) = 0 OR
-                         nvl(to_number(TRIM(SUBSTR(vr_setlinha,76 + vr_qtsubstr,2))),0) = 0 OR
-                         nvl(to_number(TRIM(SUBSTR(vr_setlinha,70 + vr_qtsubstr,4))),0) = 0 THEN       
+                      IF to_number(nvl(TRIM(SUBSTR(vr_setlinha,74 + vr_qtsubstr,2)),0)) = 0 OR
+                         to_number(nvl(TRIM(SUBSTR(vr_setlinha,76 + vr_qtsubstr,2)),0)) = 0 OR
+                         to_number(nvl(TRIM(SUBSTR(vr_setlinha,70 + vr_qtsubstr,4)),0)) = 0 THEN       
                         
                         vr_dtatugrv := pr_dtmvtolt;
                       
                       ELSE
-                        
-                        vr_dtatugrv := to_date(to_char(TRIM(SUBSTR(vr_setlinha,76 + vr_qtsubstr,2)),'DD') || '/' || to_char(TRIM(SUBSTR(vr_setlinha,74 + vr_qtsubstr,2)),'MM') || '/' || 
-                                       to_char(TRIM(SUBSTR(vr_setlinha,70 + vr_qtsubstr,4)),'RRRR')  ,'DD/MM/RRRR');
+                                       
+                        vr_dtatugrv := to_date(TRIM(SUBSTR(vr_setlinha,76 + vr_qtsubstr,2)) || '/' || TRIM(SUBSTR(vr_setlinha,74 + vr_qtsubstr,2)) || '/' || 
+                                       TRIM(SUBSTR(vr_setlinha,70 + vr_qtsubstr,4))  ,'DD/MM/RRRR');
                                                 
                         BEGIN
                           
@@ -6288,7 +6444,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                             ,crapgrv.cdretlot = 0  /* Sucesso no lote */
                             ,crapgrv.cdretgrv = vr_cdretgrv
                             ,crapgrv.cdretctr = vr_cdretctr
-                      WHERE ROWID = rw_crapgrv.rowid_grv;
+                      WHERE ROWID = vr_tab_crapgrv(vr_index_gravames).rowid_grv;
                         
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -6333,7 +6489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                             ,crapgrv.cdretlot = 0  /* Sucesso no lote */
                             ,crapgrv.cdretgrv = vr_cdretgrv
                             ,crapgrv.cdretctr = vr_cdretctr
-                      WHERE ROWID = rw_crapgrv.rowid_grv;
+                      WHERE ROWID = vr_tab_crapgrv(vr_index_gravames).rowid_grv;
                         
                     EXCEPTION
                       WHEN OTHERS THEN
@@ -6375,8 +6531,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                 
               ELSE
                
-                CLOSE cr_crapgrv;              
-              
                 vr_cdcritic := 0;
                 vr_dscritic := ' Registro tipo ' || vr_nmtiparq     ||
                                ' Coop:' || to_char(vr_cdcooper,'00') ||
@@ -6400,9 +6554,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
         EXCEPTION
           WHEN no_data_found THEN
             -- Acabou a leitura
+            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
             NULL;
           WHEN vr_proximo_arq THEN
+            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
             continue;
+            
         END;  
         
         /** Copia o arquivo processado  **/
@@ -6426,14 +6583,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                         
         END IF;
         
-        --Buscar Diretorio Micros da CECRED
-        vr_nmarqdir:= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/micros
-                                            ,pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsubdir => '/salvar/');
-                                          
         /** Move o arquivo processado  **/
         -- Comando para mover arquivo
-        vr_comando:= 'mv '||vr_nmarqdir||'/' || vr_tab_crawarq(idx) || ' ' || vr_nmarqdir||' 2> /dev/null';
+        vr_comando:= 'mv '||vr_nmarqdir||'/' || vr_tab_crawarq(idx) || ' ' || vr_nmarqsav||' 2> /dev/null';
                       
         --Executar o comando no unix
         GENE0001.pc_OScommand (pr_typ_comando => 'S'
@@ -6451,21 +6603,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           RAISE vr_exc_erro;
                         
         END IF;
-                      
+              
+        --Commit das alterações para cada arquivo
+        COMMIT;
+                  
       END LOOP;  
-        
+      
     EXCEPTION
       WHEN vr_exc_erro THEN
         
         -- Erro
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
+
+		ROLLBACK;
         
       WHEN OTHERS THEN
         
         -- Retornar erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro GRVM0001.pc_gravames_processa_retorno -> '||SQLERRM;
+
+		ROLLBACK;
+
     END;
   END pc_gravames_processa_retorno;
   
