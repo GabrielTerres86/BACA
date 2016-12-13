@@ -6097,8 +6097,10 @@ PROCEDURE busca_numero_conta:
     DEFINE OUTPUT PARAM par_nrdconta AS INT                 NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic AS CHAR                NO-UNDO.
 
-    FOR FIRST crapcrd FIELDS(nrdconta) 
+    FOR FIRST crapcrd, crapcop FIELDS(nrdconta) 
                       WHERE crapcrd.nrcrcard = par_nrcrcard
+          AND crapcop.cdcooper = crapcrd.cdcooper
+          AND crapcop.flgativo = TRUE
                             NO-LOCK: END.
     
     /* Cartao de credito CECRED */
