@@ -1886,7 +1886,7 @@ PROCEDURE verifica_transferencia:
                 contas Transulcred que serao migradas no dia 31/12/2016. */
     IF  par_tpoperac     = 5           AND
         crabcop.cdcooper = 17          AND /* Transulcred */
-        aux_datdodia     = 12/31/2016  THEN
+        aux_datdodia    >= 12/31/2016  THEN
         DO: 
             ASSIGN par_dscritic = "Conta destino nao habilitada " +
                                   "para receber valores da " +
