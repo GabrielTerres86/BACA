@@ -4218,7 +4218,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Douglas Quisinski
-    Data     : Outubro/2015                          Ultima atualizacao: 10/02/2016
+    Data     : Outubro/2015                          Ultima atualizacao: 05/12/2016
     
     Dados referentes ao programa:
     
@@ -4233,6 +4233,8 @@ create or replace package body cecred.INSS0001 as
                               não for encontrado o OP do beneficio em questão
                               (Adriano - SD 398214).
                               
+                 05/12/2016 - Ajustes Incorporação Transulcred -> Transpocred.
+                              PRJ342 (Odirlei-AMcom)              
     -------------------------------------------------------------------------------------------------------------*/
 
       -- Busca dos dados da cooperativa
@@ -4286,26 +4288,27 @@ create or replace package body cecred.INSS0001 as
       rw_crapass cr_crapass%ROWTYPE;
       
       --Selecionar Contas Migradas
-      CURSOR cr_craptco (pr_cdcopant IN craptco.cdcopant%TYPE
+      CURSOR cr_craptco (pr_cdcooper IN craptco.cdcopant%TYPE
+                        ,pr_cdcopant IN craptco.cdcopant%TYPE
                         ,pr_nrctaant IN craptco.nrctaant%TYPE) IS
         SELECT craptco.cdcooper
              , craptco.cdagenci
              , craptco.nrdconta
           FROM craptco craptco
-         WHERE craptco.cdcopant = 4  
+         WHERE craptco.cdcopant = pr_cdcopant  
            AND craptco.nrctaant = pr_nrctaant
            AND  craptco.tpctatrf = 1                  
-           AND  craptco.cdcooper = 1                  
+           AND  craptco.cdcooper = pr_cdcooper                  
            AND  craptco.flgativo = 1 -- TRUE 
         UNION
         SELECT craptco.cdcooper
              , craptco.cdagenci
              , craptco.nrdconta
           FROM craptco craptco
-         WHERE craptco.cdcopant = 4  
+         WHERE craptco.cdcopant = pr_cdcopant  
            AND  craptco.nrdconta = pr_nrctaant
            AND  craptco.tpctatrf = 1 
-           AND  craptco.cdcooper = 1                  
+           AND  craptco.cdcooper = pr_cdcooper                  
            AND  craptco.flgativo = 1; -- TRUE    
       rw_craptco cr_craptco%ROWTYPE;
 
@@ -4315,6 +4318,7 @@ create or replace package body cecred.INSS0001 as
       vr_crapass   BOOLEAN:= FALSE;
       vr_craptco   BOOLEAN:= FALSE;
       vr_cdcooper  INTEGER;
+      vr_cdcooper_aux INTEGER;
       vr_cdagenci  NUMBER;
       vr_nrdconta  crapass.nrdconta%TYPE;
       vr_cdorgins  crapage.cdorgins%TYPE;
@@ -4367,10 +4371,18 @@ create or replace package body cecred.INSS0001 as
         rw_crapcop.cdcooper:= pr_tab_cdagesic(pr_tab_creditos(pr_index_creditos).cdagesic);
               
         /*Verifica se o beneficiario eh um cooperado com conta migrada.*/
-        IF TO_NUMBER(pr_tab_creditos(pr_index_creditos).cdorgins) IN (775431,775448) THEN
+        IF TO_NUMBER(pr_tab_creditos(pr_index_creditos).cdorgins) IN (775431,775448,       --> Concredi
+                                                                      801241, 787028) THEN --> Transulcred
+              
+          IF rw_crapcop.cdcooper = 4 THEN
+            vr_cdcooper_aux := 1;
+          ELSIF rw_crapcop.cdcooper = 17 THEN
+            vr_cdcooper_aux := 9;
+          END IF;
               
           /* Verifica se o beneficiario eh um cooperado com conta migrada. */
-          OPEN cr_craptco (pr_cdcopant => rw_crapcop.cdcooper
+          OPEN cr_craptco (pr_cdcooper => vr_cdcooper_aux
+                          ,pr_cdcopant => rw_crapcop.cdcooper
                           ,pr_nrctaant => pr_tab_creditos(pr_index_creditos).nrdconta);
                               
           FETCH cr_craptco INTO rw_craptco;
@@ -15171,7 +15183,7 @@ create or replace package body cecred.INSS0001 as
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Alisson C. Berrido - AMcom
-    Data     : Fevereiro/2015                           Ultima atualizacao: 21/06/2016
+    Data     : Fevereiro/2015                           Ultima atualizacao: 05/12/2016
   
     Dados referentes ao programa:
    
@@ -15201,6 +15213,8 @@ create or replace package body cecred.INSS0001 as
                  21/06/2016 - Ajuste para enviar o arquivo destino ao subdiretorio inss dentro da pasta salvar
                               (Adriano - SD 473539).
                               
+                 05/12/2016 - Ajustes Incorporação Transulcred -> Transpocred.
+                              PRJ342 (Odirlei-AMcom)              
   ---------------------------------------------------------------------------------------------------------------*/
 
     -- Busca dos dados da cooperativa
@@ -15250,15 +15264,16 @@ create or replace package body cecred.INSS0001 as
     rw_crapass2 cr_crapass2%ROWTYPE;
 
     -- cadastro de contas transferidas entre cooperativas
-    CURSOR cr_craptco(pr_cdcooper IN craptco.cdcopant%TYPE
+    CURSOR cr_craptco(pr_cdcopant IN craptco.cdcopant%TYPE
+                     ,pr_cdcooper IN craptco.cdcopant%TYPE
                      ,pr_nrdconta IN craptco.nrctaant%TYPE) IS
     SELECT craptco.cdcooper
           ,craptco.nrdconta
           ,craptco.cdagenci
      FROM craptco craptco
-     WHERE craptco.cdcopant = pr_cdcooper
+     WHERE craptco.cdcopant = pr_cdcopant
        AND craptco.nrctaant = pr_nrdconta
-       AND craptco.cdcooper = 1            
+       AND craptco.cdcooper = pr_cdcooper            
        AND craptco.tpctatrf = 1
        AND craptco.flgativo = 1 --true
      UNION
@@ -15266,9 +15281,9 @@ create or replace package body cecred.INSS0001 as
           ,craptco.nrdconta
           ,craptco.cdagenci
      FROM craptco craptco
-    WHERE craptco.cdcopant = pr_cdcooper
+    WHERE craptco.cdcopant = pr_cdcopant
       AND craptco.nrdconta = pr_nrdconta
-      AND craptco.cdcooper = 1            
+      AND craptco.cdcooper = pr_cdcooper
       AND craptco.tpctatrf = 1
       AND craptco.flgativo = 1; --true
     rw_craptco cr_craptco%ROWTYPE;    
@@ -15345,6 +15360,7 @@ create or replace package body cecred.INSS0001 as
     vr_qtlinha   INTEGER;
     vr_nrcpfcgc  NUMBER;
     vr_cdcooper  INTEGER;
+    vr_cdcopant  INTEGER;
     vr_nrdconta  INTEGER;
     vr_dstime    VARCHAR2(100);
     vr_msgenvio  VARCHAR2(32767);
@@ -16031,12 +16047,22 @@ create or replace package body cecred.INSS0001 as
         ate que o SICREDI efetue o cadastro para a nova conta.
         1 - 201 775431
         2 - 202 775448
-        Verifica se eh um OP da Concredi migrado para Viacredi*/
+        Verifica se eh um OP da Concredi migrado para Viacredi
+        ou da Transulcred migrado para Transpocred*/
         
-        IF pr_tab_beneficiario(vr_index).cdorgins IN (775431,775448) THEN
-          
-          /*Verifica se o beneficiario eh um cooperado migrado da Concredi para Viacredi.*/
-          OPEN cr_craptco(pr_cdcooper => 4
+        IF pr_tab_beneficiario(vr_index).cdorgins IN (775431,775448,787028,801241) THEN
+          --> Atribuir codigo da cooperativa anterior
+          IF pr_cdcooper = 1 THEN
+            vr_cdcopant := 4;
+          ELSIF pr_cdcooper = 9 THEN
+            vr_cdcopant := 17;
+          END IF;          
+                  
+          /*Verifica se o beneficiario eh um cooperado migrado da: 
+             - Concredi para Viacredi.
+             - Transulcred para Transpocred */
+          OPEN cr_craptco(pr_cdcopant => vr_cdcopant
+                         ,pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => pr_tab_beneficiario(vr_index).nrdconta);
                          
           FETCH cr_craptco INTO rw_craptco;
