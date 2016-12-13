@@ -137,7 +137,6 @@ CREATE OR REPLACE PACKAGE CECRED.RATI0002 is
                                       ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
 END RATI0002;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -161,6 +160,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   --                          parecer de credito, ira limpar o parecer gerado anteriormente, se houver.
   --                          Houve casos com alteracao de linha de credito que manteve o parecer indevidamente.
   --                          Heitor (RKAM) - Chamado 513641
+  --
+  --             01/12/2016 - Fazer tratamento para incorporação. (Oscar)   
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina que indica se deve habilitar / desabilitar o parecer da analise de credito
@@ -1794,6 +1795,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
            AND nrdconta = pr_nrdconta;
       rw_crapcot cr_crapcot%ROWTYPE;
            
+      /* Conta incorporada */    
+      CURSOR cr_craptco(pr_cdcooper IN craptco.cdcooper%TYPE,
+                        pr_nrdconta IN craptco.nrdconta%TYPE)  IS
+         SELECT 1
+           FROM craptco 
+          WHERE craptco.cdcooper = pr_cdcooper                 
+            AND craptco.nrdconta = pr_nrdconta;
+      rw_craptco cr_craptco%ROWTYPE;
+           
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
@@ -2145,13 +2155,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
 
           -- Se for indicador de DATA DE ABERTURA DA CONTA
           ELSIF rw_crapiac.nrseqiac = 6 THEN
+            
             -- Atualiza o conteudo do parametro 1
             vr_tab_crapdac.vlparam1 := to_char(rw_crapass.dtadmiss,'dd/mm/yyyy');
 
+            /* Procura se é uma conta incorporada */  
+            OPEN cr_craptco(pr_cdcooper, 
+                            pr_nrdconta);
+            FETCH cr_craptco 
+             INTO rw_craptco;
+
+            /* Só considera se não for conta incorporada */
+            IF cr_craptco%NOTFOUND THEN
+              CLOSE cr_craptco;
             -- Se a quantidade de meses de abertura da conta for inferior ao parametrizado
             IF trunc(months_between(pr_crapdat.dtmvtolt,rw_crapass.dtadmiss)) <= to_number(rw_crapqac.vlparam1) THEN  
               -- Encontrou uma condicao que satisfaz, entao sai do indicador
               EXIT;
+            END IF;
+            ELSE
+              CLOSE cr_craptco;
             END IF;
 
           -- Se for indicador de SITUACAO DA CONTA
@@ -3093,4 +3116,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
   END;
 END rati0002;
 /
-
