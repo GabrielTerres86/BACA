@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 10/10/2016
+   Data    : AGOSTO/2013                      Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -163,6 +163,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
                             do cyber. (Gil - Mouts)
+                            
+               06/12/2016 - Incorporação alteração no cursor "cr_crapcop" para retirar o filtro
+                            das cooperativas ativas campo "flgativo". (Oscar)
+
      ............................................................................. */
 
      DECLARE
@@ -250,7 +254,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcop.nrdocnpj
        FROM crapcop crapcop
        WHERE crapcop.cdcooper <> pr_cdcooper
-         AND crapcop.flgativo = 1
        ORDER BY crapcop.cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
 
