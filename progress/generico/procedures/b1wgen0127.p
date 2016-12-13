@@ -334,7 +334,18 @@ PROCEDURE pc_valida_protocolo:
  
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    IF  aux_msgerror <> "" THEN DO:
+    IF  aux_msgerror <> "" THEN
+        DO:
+            /* Verifica se eh uma conta migrada, e se for, valida novamente
+               com a cooperativa e conta antiga, pois o comprovante tambem
+               pode ter sido migrado */
+            FIND craptco WHERE craptco.cdcooper = par_cdcooper AND
+                               craptco.nrdconta = par_nrdconta AND
+                               craptco.tpctatrf = 1
+                               NO-LOCK NO-ERROR.
+
+            IF  NOT AVAIL craptco  THEN
+                DO:
         ASSIGN aux_cdcritic = 0
                aux_dscritic = aux_msgerror
                par_msgerror = aux_msgerror
@@ -347,8 +358,68 @@ PROCEDURE pc_valida_protocolo:
                        INPUT 1,
                        INPUT aux_cdcritic,
                        INPUT-OUTPUT aux_dscritic).
-
         RETURN "NOK".
+    END.
+        ELSE
+            DO:                
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* GENE0006 */
+                RUN STORED-PROCEDURE pc_valida_protocolo_md5 aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT craptco.cdcopant,
+                                        INPUT par_cdagenci,
+                                        INPUT par_nrdcaixa,
+                                        INPUT par_cdoperad,
+                                        INPUT par_cdprogra,
+                                        INPUT par_idorigem,
+                                        INPUT par_dtmvtolt,
+                                        INPUT par_dtmvtopr,
+                                        INPUT par_nmdatela,
+                                        INPUT par_cddopcao,
+                                        INPUT craptco.nrctaant,
+                                        INPUT par_nrdocmto,
+                                        INPUT par_dtmvtolx,
+                                        INPUT par_horproto,
+                                        INPUT par_minproto,
+                                        INPUT par_segproto,
+                                        INPUT par_vlprotoc,
+                                        INPUT par_dsprotoc,
+                                        INPUT par_nrseqaut,
+                                        INPUT INTE(STRING(par_flgerlog,"1/0")),
+                                        OUTPUT "",
+                                        OUTPUT "",
+                                        OUTPUT "").
+
+                CLOSE STORED-PROC pc_valida_protocolo_md5 aux_statproc = PROC-STATUS
+                        WHERE PROC-HANDLE = aux_handproc.
+
+                ASSIGN aux_nmdcampo = ""
+                        aux_msgretur = ""
+                        aux_msgerror = ""
+                        aux_nmdcampo = pc_valida_protocolo_md5.pr_nmdcampo
+                                        WHEN pc_valida_protocolo_md5.pr_nmdcampo <> ?
+                        aux_msgretur = pc_valida_protocolo_md5.pr_desmensg
+                                        WHEN pc_valida_protocolo_md5.pr_desmensg <> ?
+                        aux_msgerror = pc_valida_protocolo_md5.pr_dscritic
+                                        WHEN pc_valida_protocolo_md5.pr_dscritic <> ?.
+                 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                IF  aux_msgerror <> "" THEN DO:
+                    ASSIGN aux_cdcritic = 0
+                            aux_dscritic = aux_msgerror
+                            par_msgerror = aux_msgerror
+                            par_nmdcampo = aux_nmdcampo
+                            par_msgretur = "".
+
+                    RUN gera_erro (INPUT par_cdcooper,
+                                    INPUT par_cdagenci,
+                                    INPUT par_nrdcaixa,
+                                    INPUT 1,
+                                    INPUT aux_cdcritic,
+                                    INPUT-OUTPUT aux_dscritic).
+                END.        
+            END.        
     END.
 
     ASSIGN par_msgretur = aux_msgretur.

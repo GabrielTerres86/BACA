@@ -27,7 +27,7 @@
 
     Programa: b1wgen0025.p
     Autor   : Ze Eduardo
-    Data    : Novembro/2007                  Ultima Atualizacao: 01/03/2016
+    Data    : Novembro/2007                  Ultima Atualizacao: 18/11/2016
     
     Dados referentes ao programa:
 
@@ -326,6 +326,16 @@
                            - Alteração na rotina de alteração de senha 
                            - Criada rotina 'valida_senha_tp_cartao'
                            (Lucas Lunelli - [PROJ290])
+                05/04/2016 - Incluidos novos parametros na procedure
+                             pc_verifica_tarifa_operacao, Prj 218 (Jean Michel).           
+                             
+                25/07/2016 - #480602 tratada a verifica_saque para fazer a verificação do 
+                             limite da pc_obtem_saldo_dia_prog e removida a chamada da 
+                             procedure obtem-valor-limite (Carlos)
+                             
+                18/11/2016 - #559508 correção na verificação da existência do cartão
+                             magnético de operador. Quando for um cartão de operador,
+                             não consultar transferência de conta (Carlos)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0025tt.i }
@@ -482,8 +492,10 @@ PROCEDURE verifica_cartao:
            RETURN "NOK".
        END.    
     
-    FOR FIRST crapcrd FIELDS(cdcooper) 
+    FOR FIRST crapcrd, crapcop FIELDS(cdcooper) 
                       WHERE crapcrd.nrcrcard = aux_nrcrcard
+          				AND crapcop.cdcooper = crapcrd.cdcooper
+          				AND crapcop.flgativo = TRUE
                             NO-LOCK: END.
     
     /* Cartao de credito CECRED */
@@ -533,6 +545,30 @@ PROCEDURE verifica_cartao:
         ASSIGN par_idtipcar = 1.
         
     END.
+      
+    /* Impedir acesso contas Transpocred durante e apos data migraçao */
+    IF  par_cdcooper = 17           AND
+        par_dtmvtocd >= 12/31/2016  THEN
+        DO:
+            ASSIGN par_dscritic = "Conta nao habilitada para acesso".
+            RETURN "NOK".
+        END.
+       
+    /* impedir acesso de contas que serao migradas da Transulcred para a Transpocred */
+    IF par_cdcooper = 9           AND    /* Transpocred */
+       aux_datdodia <= 12/31/2016 THEN  /* Antes e durante a migraçao */
+       DO:           
+          FIND craptco WHERE craptco.cdcooper = par_cdcooper AND
+                             craptco.nrdconta = par_nrdconta AND
+                             craptco.tpctatrf = 1            
+                             NO-LOCK NO-ERROR.
+                             
+          IF  AVAILABLE craptco AND craptco.cdcopant = 17 /* Transulcred */ THEN
+              DO:
+                  ASSIGN par_dscritic = "Conta nao habilitada para acesso".
+                  RETURN "NOK". 
+              END.
+       END.
       
     RETURN "OK".
 
@@ -1167,6 +1203,17 @@ PROCEDURE entrega_envelope:
     DEFINE     VARIABLE aux_dsinform                AS CHAR     EXTENT  3       NO-UNDO.
     
     DO TRANSACTION ON ERROR UNDO, LEAVE: 
+    
+        /* Se a cooper de destino for Transulcred e data 30-31/12/2016, a conta será migrada */
+        IF  par_cdcopdst = 17          AND 
+           (par_dtmvtolt = 12/30/2016  OR 
+            par_dtmvtolt = 12/31/2016) THEN
+            DO:
+                ASSIGN par_dscritic = "Conta destino nao habilitada " +
+                                      "para receber valores de " +
+                                      "deposito.".
+                RETURN "NOK".
+            END.
     
         FIND craptfn WHERE craptfn.cdcooper = par_cdcoptfn  AND
                            craptfn.nrterfin = par_nrterfin
@@ -1835,6 +1882,18 @@ PROCEDURE verifica_transferencia:
                 END.
         END.
 
+    /* Regra para impedir transferencia intercooperativa para 
+                contas Transulcred que serao migradas no dia 31/12/2016. */
+    IF  par_tpoperac     = 5           AND
+        crabcop.cdcooper = 17          AND /* Transulcred */
+        aux_datdodia     = 12/31/2016  THEN
+        DO: 
+            ASSIGN par_dscritic = "Conta destino nao habilitada " +
+                                  "para receber valores da " +
+                                  "transferencia.".
+            RETURN "NOK".
+        END.
+       
     IF  par_flagenda THEN
         DO:
             RUN calcula_dia_util(INPUT  par_cdcooper,
@@ -2185,7 +2244,8 @@ PROCEDURE verifica_transferencia:
             IF  AVAIL craptco               AND
                 aux_datdodia >= 12/25/2013  AND
                 craptco.cdcopant <> 4       AND  /* Exceto Concredi    */
-                craptco.cdcopant <> 15      THEN /* Exceto Credimilsul */
+                craptco.cdcopant <> 15      AND  /* Exceto Credimilsul */
+                craptco.cdcopant <> 17      THEN /* Exceto Transulcred */                
                 DO:
                     ASSIGN par_dscritic = "Operacao de agendamento bloqueada." +
                                           " Entre em contato com seu PA.".
@@ -2281,46 +2341,13 @@ PROCEDURE verifica_saque:
 
 
     /* LIMITE */
-    RUN sistema/generico/procedures/b1wgen0019.p PERSISTENT SET h-b1wgen0019.
-
-    RUN obtem-valor-limite IN h-b1wgen0019 (INPUT par_cdcooper,
-                                            INPUT 1,            /* PAC */
-                                            INPUT 999,          /* Caixa */
-                                            INPUT "996",        /* Operador */
-                                            INPUT "TAA",       /* Tela */
-                                            INPUT 4,            /* Origem - TAA */
-                                            INPUT par_nrdconta,
-                                            INPUT 1,            /* Titular */
-                                            INPUT TRUE,         /* Log */
-                                           OUTPUT TABLE tt-limite-credito,
-                                           OUTPUT TABLE tt-erro).
-
-    DELETE PROCEDURE h-b1wgen0019.
-
-
-    FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-    IF  AVAILABLE tt-erro  THEN
-        DO:
-            par_dscritic = tt-erro.dscritic.
-            RETURN "NOK".
-        END.
-
-
-    FIND FIRST tt-limite-credito NO-LOCK NO-ERROR.
-
-    IF  NOT AVAILABLE tt-limite-credito  THEN
-        DO:
-            par_dscritic = "Limite nao encontrado.".
-            RETURN "NOK".
-        END.
 
     ASSIGN par_vlsddisp = wt_saldos.vlsddisp
-           par_vllimcre = tt-limite-credito.vllimcre.
+           par_vllimcre = wt_saldos.vllimcre.
 
     /* verifica se possui saldo suficiente */
     IF  par_vldsaque > (wt_saldos.vlsddisp +
-                        tt-limite-credito.vllimcre)  THEN
+                        wt_saldos.vllimcre)  THEN
         DO:
             par_dscritic = "Saldo insuficiente".
             RETURN "NOK".
@@ -2772,6 +2799,9 @@ PROCEDURE efetua_saque:
                                  INPUT par_nrdconta, /* Numero da Conta */
                                  INPUT 1,            /* Tipo de Tarifa(1-Saque,2-Consulta) */
                                  INPUT 0,            /* Tipo de TAA que foi efetuado a operacao(0-Cooperativas Filiadas,1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus) */
+                                 INPUT 0,            /* Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque) */
+                                 OUTPUT 0,           /* Quantidade de registros a cobrar tarifa na operação */
+                                 OUTPUT 0,           /* Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta */
                                 OUTPUT 0,            /* Código da crítica */
                                 OUTPUT "").          /* Descrição da crítica */
     
@@ -4966,6 +4996,8 @@ PROCEDURE verifica_cartao_magnetico:
                     RETURN "NOK".
                 END.
 
+            IF  aux_tptitcar <> 9 THEN
+            DO:
             /* Verifica se a conta foi migrada para outra cooperativa */
             FIND craptco WHERE craptco.cdcopant = crapcop.cdcooper  AND
                                craptco.nrctaant = par_nrdconta      AND
@@ -5003,7 +5035,7 @@ PROCEDURE verifica_cartao_magnetico:
                             END.
                         END.
                 END.
-
+            END.
 
             /* verifica se o sistema das 2 cooperativas em questao,
                estao com as mesmas datas de movimento para o TAA */
@@ -6270,5 +6302,3 @@ END PROCEDURE.
 
 
 /* .......................................................................... */
-
-

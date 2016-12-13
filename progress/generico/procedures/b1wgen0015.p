@@ -35,7 +35,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 28/09/2016
+    Data    : Abril/2006                      Ultima Atualizacao: 03/11/2016
     
     Dados referentes ao programa:
 
@@ -356,22 +356,22 @@
 
 			   16/05/2016 - Ajuste para retirar comentários e códigos desnecessários.
 					       (Adriano - M117).
+                            
                18/05/2016 - Projeto 117 - Verificacao de assinatura conjunta em 
                             acesso-cadastro-favorecidos (Carlos)
                             
                07/06/2016 - Inclusão de campos de controle de vendas ( Rafael Maciel [RKAM] )
 							
 			   09/06/2016 - Ajuste para corrigir rotinas que estejam ficando inteiramente como
-							um transacao
-							(Adriano).			
+                            um transacao (Adriano).			
 
                17/06/2016 - Inclusão de campos de controle de vendas ( Rafael Maciel [RKAM] )
 
 			   30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 			   25/07/2016 - Ajuste na rotina executa-envio-ted para corrigir nomenclatura 
-			                das tags do xml
-							(Adriano).
+                            das tags do xml(Adriano).
+                            
                30/08/2016 - Inclusao dos campos de último acesso via Mobile na procedure 
                             obtem-dados-titulares - PRJ286.5 - Cecred Mobile (Dionathan)
 
@@ -387,6 +387,8 @@
 			   25/10/2016 - Novo ajuste na validacao do horario de envio da TED, solicitado 
 			                pelo financeiro (Diego).
 
+               03/11/2016 - Correçao de leitura "FIRST crabsnh" da procedure liberar-senha-internet,
+                            Prj. Assinatura Conjunta (Jean Michel).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -857,7 +859,6 @@ PROCEDURE horario_operacao:
                 ASSIGN tt-limite.iddiauti = 1.  /* Dia util */
         END.
 
-         
     RETURN "OK".
 
 END.
@@ -1503,7 +1504,8 @@ PROCEDURE verifica_operacao:
             /** Bloquear agendamentos para conta migrada **/
             IF  aux_datdodia >= 12/25/2013  AND
                 craptco.cdcopant <> 4       AND  /* Exceto Concredi    */
-                craptco.cdcopant <> 15      THEN /* Exceto Credimilsul */
+                craptco.cdcopant <> 15      AND  /* Exceto Credimilsul */
+                craptco.cdcopant <> 17      THEN /* Exceto Transulcred */
                 DO:                                                  
                     ASSIGN par_dscritic = "Operacao de agendamento bloqueada." +
                                           " Entre em contato com seu PA.".
@@ -1639,6 +1641,19 @@ PROCEDURE verifica_operacao:
                                                            "transferencia.".
                                      RETURN "NOK".
                                  END.
+                         END.
+                        
+                     /* Nao permitir transf. intercooperativa para
+                        contas da Transulcred, durante
+                        e apos a migracao */
+                     IF  par_tpoperac     = 5           AND
+                         aux_datdodia    >= 12/31/2016  AND
+                         crabcop.cdcooper = 17          THEN                         
+                         DO:
+                             ASSIGN par_dscritic = "Conta destino nao habilitada " +
+                                                   "para receber valores da " +
+                                                   "transferencia.".
+                             RETURN "NOK".
                          END.
                  END.      
             ELSE        /* TED */
@@ -5249,6 +5264,7 @@ PROCEDURE obtem-dados-titulares:
 
     DEF VAR h-b1wgen0058 AS HANDLE NO-UNDO.
 
+	DEF VAR aux_qtminast AS INTEGER NO-UNDO.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Obter dados dos titulares".
@@ -5358,6 +5374,7 @@ PROCEDURE obtem-dados-titulares:
                                              INPUT ?,
                                             OUTPUT TABLE tt-crapavt,
                                             OUTPUT TABLE tt-bens,
+											OUTPUT aux_qtminast,
                                             OUTPUT TABLE tt-erro) NO-ERROR.
                 
                 /* Representantes Legais */
@@ -6873,8 +6890,12 @@ PROCEDURE liberar-senha-internet:
                     FIRST crabsnh WHERE crabsnh.cdcooper = par_cdcooper AND
                                         crabsnh.nrdconta = par_nrdconta AND
                                         crabsnh.tpdsenha = 1            AND
-                                        crabsnh.nrcpfcgc = crappod.nrcpfpro 
-                                        NO-LOCK:
+                                        crabsnh.nrcpfcgc = crappod.nrcpfpro AND
+                                        (crabsnh.vllimweb > 0 OR
+                                         crabsnh.vllimtrf > 0 OR
+                                         crabsnh.vllimpgo > 0 OR
+                                         crabsnh.vllimted > 0 OR
+                                         crabsnh.vllimvrb > 0) NO-LOCK:
                 
                     RUN replica-limite-internet (INPUT par_cdcooper,
                                                  INPUT par_cdoperad,
@@ -10684,6 +10705,8 @@ PROCEDURE gera-termo-responsabilidade:
                                          "DE  NOVEMBRO DE","DE  DEZEMBRO DE"]
                                                                      NO-UNDO.
 
+    DEF VAR aux_qtminast AS INTE NO-UNDO.
+
     FORM  
         /* Titulo em negrito inicio */
         "\033\105\TERMO DE RESPONSABILIDADE PARA ACESSO E " AT 10
@@ -11268,6 +11291,7 @@ PROCEDURE gera-termo-responsabilidade:
                                                      INPUT ?,
                                                     OUTPUT TABLE tt-crapavt,
                                                     OUTPUT TABLE tt-bens,
+													OUTPUT aux_qtminast,
                                                     OUTPUT TABLE tt-erro) NO-ERROR.
                 
                     IF  RETURN-VALUE <> "OK"   THEN
