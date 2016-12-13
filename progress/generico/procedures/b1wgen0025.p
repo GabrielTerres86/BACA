@@ -1206,8 +1206,8 @@ PROCEDURE entrega_envelope:
     
         /* Se a cooper de destino for Transulcred e data 30-31/12/2016, a conta será migrada */
         IF  par_cdcopdst = 17          AND 
-           (par_dtmvtolt = 12/30/2016  OR 
-            par_dtmvtolt = 12/31/2016) THEN
+           (TODAY = 12/30/2016  OR 
+            TODAY = 12/31/2016) THEN
             DO:
                 ASSIGN par_dscritic = "Conta destino nao habilitada " +
                                       "para receber valores de " +
