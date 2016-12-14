@@ -4089,6 +4089,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            AND lfp.cdorigem = ofp.cdorigem
            AND his.cdcooper = ofp.cdcooper
            AND his.cdhistor = DECODE(emp.idtpempr,'C',ofp.cdhscrcp,ofp.cdhiscre)
+           AND ((pfp.dtcredit >= pr_dtiniper
+           AND   pfp.dtcredit <= pr_dtfimper)
+           OR   pr_dtiniper IS NULL
+           AND  pr_dtfimper IS NULL)
          ORDER BY pfp.nrseqpag,lfp.nrseqlfp;
 
       /* busca lancamentos de tarifas agendados e pendentes para listar */
@@ -19084,13 +19088,34 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
       vr_soma_deb number(15,2);
       vr_soma_cre number(15,2);
       vr_soma_tot number(15,2);
+      vr_dtiniper DATE;
+      vr_dtfimper date;
       BEGIN
 
         CASE pr_flgerlog
           WHEN 1 THEN vr_flgerlog := TRUE;
           WHEN 0 THEN vr_flgerlog := FALSE;
         END CASE;
-
+        if (pr_nmdatela = 'TAL') AND
+           (pr_dtiniper IS NULL) AND
+           (pr_dtfimper IS NULL) THEN 
+            begin
+             select 
+             last_day(add_months(crapdat.dtmvtolt,-1)) + 1,
+             last_day(crapdat.dtmvtolt)
+             into 
+             vr_dtiniper,
+             vr_dtfimper from crapdat
+             where crapdat.cdcooper = pr_cdcooper;
+            exception 
+              when others then 
+                vr_dtiniper := null;
+                vr_dtfimper := null;
+            end;   
+         else
+           vr_dtiniper := pr_dtiniper;
+           vr_dtfimper := pr_dtfimper;   
+         end if;  
         pc_consulta_lancamento(pr_cdcooper => pr_cdcooper
                               ,pr_cdagenci => pr_cdagenci
                               ,pr_nrdcaixa => pr_nrdcaixa
@@ -19100,8 +19125,8 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
                               ,pr_idseqttl => pr_idseqttl
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_flgerlog => vr_flgerlog
-                              ,pr_dtiniper => pr_dtiniper
-                              ,pr_dtfimper => pr_dtfimper
+                              ,pr_dtiniper => vr_dtiniper
+                              ,pr_dtfimper => vr_dtfimper
                               ,pr_indebcre => pr_indebcre
                               ,pr_des_reto => vr_des_erro
                               ,pr_tab_erro => vr_tab_erro
@@ -19190,8 +19215,10 @@ btch0001.pc_log_internal_exception(pr_cdcooper);
              vr_soma_cre := nvl(vr_tab_totais_futuros(vr_contador_totais).vllaucre,0);
              vr_soma_tot := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            else
+           
              vr_soma_tot :=vr_soma_cre - vr_soma_deb;
-			 vr_soma_deb := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
+             
+             --vr_soma_deb := nvl(vr_tab_totais_futuros(vr_contador_totais).vllautom,0);
            end if;
           -- Montar XML com registros de carencia
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc_totais
