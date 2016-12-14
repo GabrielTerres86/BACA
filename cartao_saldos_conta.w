@@ -633,6 +633,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
             DISPLAY ed_vlsddisp
                     ed_vllautom
+                    ed_valaucre
                     ed_vlsdbloq
                     ed_vlblqtaa
                     ed_vlsdblpr
