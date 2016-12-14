@@ -20,7 +20,8 @@ DEFINE VARIABLE aux_nmtitula            AS CHARACTER    EXTENT 2    NO-UNDO.
 DEFINE VARIABLE aux_vlsddisp            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllautom            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllauded            AS DECIMAL                  NO-UNDO.
-DEFINE VARIABLE aux_vlldeb              AS DECIMAL                  NO-UNDO.
+DEFINE VARIABLE aux_vlldeb              AS CHARACTER                NO-UNDO.
+DEFINE VARIABLE aux_debcre              AS CHARACTER                NO-UNDO.
 DEFINE VARIABLE aux_vllcre              AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vllaucre            AS DECIMAL                  NO-UNDO.
 DEFINE VARIABLE aux_vlsdbloq            AS DECIMAL                  NO-UNDO.
@@ -344,6 +345,7 @@ DO:
                          "TAA_autorizador.p?xml=" + xml_req,FALSE) NO-ERROR.
         
         /* limpa a mensagem de aguarde.. */
+        
         h_mensagem:HIDDEN = YES.
                            
         xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
@@ -368,7 +370,7 @@ DO:
                 LEAVE.
             END.
     
-    
+        ASSIGN aux_vllcre = 0.       
         DO  aux_contador = 1 TO xRoot:NUM-CHILDREN:
             
             xRoot:GET-CHILD(xField,aux_contador).
@@ -443,10 +445,16 @@ DO:
                         par_tximpres = par_tximpres + "   ".
                     ELSE
                         par_tximpres = par_tximpres + " " + xText:NODE-VALUE .
+                        aux_debcre   = STRING(xText:NODE-VALUE).
                 END.
             ELSE
             IF  xField:NAME = "VLLANMTO"  THEN
+               DO: 
                 par_tximpres = par_tximpres + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-").
+                IF aux_debcre = "C" THEN
+                   aux_vlldeb = STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-").
+                   aux_vllcre = aux_vllcre + DECIMAL(aux_vlldeb).
+               END.    
 
         END. /* Fim DO..TO.. */
         
@@ -480,7 +488,7 @@ par_tximpres = par_tximpres +
                      
                     ELSE   
                        DO:
-                        aux_vllauded = DECIMAL(xText:NODE-VALUE) - DECIMAL(aux_vllaucre). 
+                        aux_vllauded = DECIMAL(xText:NODE-VALUE) - DECIMAL(aux_vllcre). 
 par_tximpres = par_tximpres +
                "    TOTAL DE DEBITOS:              " + STRING(DECIMAL(aux_vllauded),"zzzzz,zz9.99-")   + 
                "    TOTAL DE CREDITOS - DEBITOS:   " + STRING(DECIMAL(xText:NODE-VALUE),"zzzzz,zz9.99-"). 
@@ -583,9 +591,10 @@ FIND FIRST tt-dados-cpa NO-LOCK NO-ERROR.
 IF  AVAIL tt-dados-cpa THEN
     ASSIGN aux_vldiscrd = tt-dados-cpa.vldiscrd.
 
-RUN procedures/imprime_saldo_limite.p ( INPUT aux_nmtitula,
+RUN procedures/imprime_saldo_limite_lanc.p ( INPUT aux_nmtitula,
                                         INPUT aux_vlsddisp, 
                                         INPUT aux_vllautom, 
+                                            INPUT aux_vllcre,
                                         INPUT aux_vlsdbloq, 
                                         INPUT aux_vlblqtaa,
                                         INPUT aux_vlsdblpr, 
@@ -593,8 +602,10 @@ RUN procedures/imprime_saldo_limite.p ( INPUT aux_nmtitula,
                                         INPUT aux_vlsdchsl,
                                         INPUT aux_vllimcre, 
                                         INPUT aux_vldiscrd, /* pré-aprovado */
-                                        INPUT aux_vlstotal,
+                                            INPUT aux_vlsddisp,
+                                            INPUT aux_vllautom + aux_vllcre + aux_vlsddisp,
                                        OUTPUT aux_tximpres).
+
 
 RUN procedures/obtem_informacoes_comprovante.p (OUTPUT aux_nrtelsac,
                                                 OUTPUT aux_nrtelouv,
