@@ -2,7 +2,7 @@
     
     Programa: b1wgen0095.p
     Autor   : André - DB1
-    Data    : Junho/2011                         Ultima Atualizacao: 03/06/2016
+    Data    : Junho/2011                         Ultima Atualizacao: 02/12/2016
 
     Dados referentes ao programa:
 
@@ -70,6 +70,9 @@
                03/06/2016 - Incluir procedures valida-conta-migrada e valida-agencia
                             para validar se conta e migrada e agencia informada e 
                             valida (Lucas Ranghetti #449707)
+
+               02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -454,8 +457,10 @@ PROCEDURE valida-ctachq:
                         FIND FIRST craptco 
                         WHERE craptco.cdcooper = par_cdcooper 
                           AND craptco.nrctaant = par_nrctachq
-                          AND (craptco.cdcopant = 4 OR 
-                               craptco.cdcopant = 15 ) 
+                          AND (craptco.cdcopant = 4  OR 
+                               craptco.cdcopant = 15 OR 
+                               craptco.cdcopant = 17 )
+                          AND craptco.flgativo = TRUE
                           NO-LOCK NO-ERROR.
 
                         /* Gerar critica apenas se não for
@@ -4239,13 +4244,14 @@ PROCEDURE trata-custodia-desconto:
 
     IF  par_nrdconta <> par_nrctachq   THEN
         DO:
-         
+
             /*verifica se é uma conta cheque foi migrada*/
             FIND FIRST craptco 
             WHERE craptco.cdcooper = par_cdcooper 
               AND craptco.nrctaant = par_nrctachq 
-              AND (craptco.cdcopant = 4 OR 
-                   craptco.cdcopant = 15 ) 
+              AND (craptco.cdcopant = 4  OR
+                   craptco.cdcopant = 15 OR
+                   craptco.cdcopant = 17 ) 
               AND craptco.flgativo = TRUE
               NO-LOCK NO-ERROR.
 
@@ -4297,8 +4303,9 @@ PROCEDURE trata-custodia-desconto:
                     FIND FIRST craptco
                          WHERE craptco.cdcooper = par_cdcooper
                            AND craptco.nrdconta = crapcst.nrdconta
-                           AND (craptco.cdcopant = 4 OR
-                                craptco.cdcopant = 15 )
+                           AND (craptco.cdcopant = 4  OR
+                                craptco.cdcopant = 15 OR
+                                craptco.cdcopant = 17 )
                            AND craptco.flgativo = TRUE
                            NO-LOCK NO-ERROR.
                     
@@ -4393,8 +4400,9 @@ PROCEDURE trata-custodia-desconto:
              FIND FIRST craptco 
             WHERE craptco.cdcooper = par_cdcooper 
               AND craptco.nrctaant = par_nrctachq 
-              AND (craptco.cdcopant = 4 OR 
-                   craptco.cdcopant = 15 ) 
+              AND (craptco.cdcopant = 4  OR 
+                   craptco.cdcopant = 15 OR
+                   craptco.cdcopant = 17 ) 
               AND craptco.flgativo = TRUE
               NO-LOCK NO-ERROR.
 
@@ -4445,8 +4453,9 @@ PROCEDURE trata-custodia-desconto:
                     FIND FIRST craptco
                    WHERE craptco.cdcooper = par_cdcooper
                      AND craptco.nrdconta = crapcdb.nrdconta
-                     AND (craptco.cdcopant = 4 OR
-                          craptco.cdcopant = 15 )
+                     AND (craptco.cdcopant = 4  OR
+                          craptco.cdcopant = 15 OR
+                          craptco.cdcopant = 17 )
                      AND craptco.flgativo = TRUE
                      NO-LOCK NO-ERROR.
                    

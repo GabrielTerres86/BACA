@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 31/10/2016
+   Data    : Outubro/91.                     Ultima atualizacao: 05/12/2016
 
    Dados referentes ao programa:
 
@@ -485,6 +485,8 @@
 
                31/10/2016 - Bloquear os historicos 354 e 451 para a cooperativa Transulcred. (James)
 							
+               05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -1387,15 +1389,16 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                     DO:    
                                         /* Se for conta incorporada deve ler o
                                            registro crapfdc na coop. nova */
-                                        IF  craptco.cdcopant = 4 OR
-                                            craptco.cdcopant = 15 THEN
-                                            DO: 
-                                                FIND crapfdc WHERE 
-                                                     crapfdc.cdcooper = craptco.cdcooper AND
-                                                     crapfdc.cdbanchq = tel_cdbaninf     AND
-                                                     crapfdc.cdagechq = tel_cdageinf     AND
-                                                     crapfdc.nrctachq = craptco.nrctaant AND
-                                                     crapfdc.nrcheque = glb_nrchqsdv
+                          IF  craptco.cdcopant = 4  OR
+                              craptco.cdcopant = 15 OR
+                              craptco.cdcopant = 17 THEN DO:
+
+                              FIND FIRST crapfdc
+                                   WHERE crapfdc.cdcooper = craptco.cdcooper
+                                     AND crapfdc.cdbanchq = tel_cdbaninf
+                                     AND crapfdc.cdagechq = tel_cdageinf
+                                     AND crapfdc.nrctachq = craptco.nrctaant
+                                     AND crapfdc.nrcheque = glb_nrchqsdv
                                                      USE-INDEX crapfdc1 NO-LOCK NO-ERROR.
 
                                                 IF  AVAIL crapfdc THEN

@@ -10,7 +10,9 @@
     //*** Alterações: 29/07/2016 - Corrigi o uso da funcao split depreciada. SD 480705 (Carlos R.)                    ***//
     //*** Alterações: 12/09/2016 - Ajustado para efetudar downlaod do arquivo                                         ***//
     //***                          original com extensão TIF. SD 518443 (Ricardo Linhares)                            ***//
-    //***                   //alterar o caminho do servidor                                                                                                 ***//
+    //***                          //alterar o caminho do servidor                                                    ***//                                                                ***//
+    //***                                                                                                             ***//
+    //***             02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)                                        ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -71,27 +73,39 @@
 
     if  ($info['size_download'] <= 8000) {
             if ($cdcooper == 1) {
-                if ($cdagechq == 101) {
-                    $cdagechq = 103;
+            if ($cdagechq == 101) {     // VIACREDI
+                $cdagechq = 103;        // CONCREDI
                 }
             }
             else {
-                if ($cdagechq == 112) {
-                    $cdagechq = 114;
+            if ($cdcooper == 13) {
+                if ($cdagechq == 112) { // SCRCRED
+                    $cdagechq = 114;    // CREDIMILSUL
+                }
+            } else {
+                if ($cdagechq == 108) { // TRANSPOCRED
+                    $cdagechq = 116;    // TRANSULCRED
+                }
                 }
             }
 
         //#200504 Tratamento incorporação
         //Se não encontrou o cheque, verificar se é cheque da concredi ou credimilsul
-        if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13)) {
+        if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13 || $cdcooper == 9)) {
             if ($cdcooper == 1) {
-                if ($cdagechq == 101) {
-                    $cdagechq = 103;
+                if ($cdagechq == 101) {     // VIACREDI
+                    $cdagechq = 103;        // CONCREDI
                 }
             }
             else {
-                if ($cdagechq == 112) {
-                    $cdagechq = 114;
+                if ($cdcooper == 13) {
+                    if ($cdagechq == 112) { // SCRCRED
+                        $cdagechq = 114;    // CREDIMILSUL
+                    }
+                } else {
+                    if ($cdagechq == 108) { // TRANSPOCRED
+                        $cdagechq = 116;    // TRANSULCRED
+                    }
                 }
             }
 
@@ -228,8 +242,8 @@
     echo "bGerarPdf.show('slow');bSalvarImgs.show('slow');";
     ?>
 
-    nmArqZip = '<? echo $dirdestino . $dsdocmc7 . '.zip'; ?>';
-    idlogin  = '<? echo base64_encode($glbvars["sidlogin"]);?>';
+    nmArqZip = '<?php echo $dirdestino . $dsdocmc7 . '.zip'; ?>';
+    idlogin  = '<?php echo base64_encode($glbvars["sidlogin"]);?>';
 
     var strHTML = "";
 

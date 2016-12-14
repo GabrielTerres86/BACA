@@ -20,7 +20,9 @@
 	//***                                                                                                             ***//
 	//***             13/07/2016 - Alteração de link de acesso das imagens para Curitiba (Elton)                      ***//
 	//***                                                                                                             ***//
-	//***             27/07/2016 - Correcao da forma de recuperacao dos indices do post. SD 479874 (Carlos R.)		  ***//
+    //***             27/07/2016 - Correcao da forma de recuperacao dos indices do post. SD 479874 (Carlos R.)        ***//
+    //***                                                                                                             ***//
+    //***             02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)                                        ***//
     //*******************************************************************************************************************//
 
     session_cache_limiter("private");
@@ -138,27 +140,39 @@
         if  ($info['size_download'] <= 8000) {
 
                 if ($cdcooper == 1) {
-                    if ($cdagechq == 101) {
-                        $cdagechq = 103;
+                if ($cdagechq == 101) {     // VIACREDI
+                    $cdagechq = 103;        // CONCREDI
                     }
                 }
                 else {
-                    if ($cdagechq == 112) {
-                        $cdagechq = 114;
+                if ($cdcooper == 13) {
+                    if ($cdagechq == 112) { // SCRCRED
+                        $cdagechq = 114;    // CREDIMILSUL
                     }
+                } else {
+                    if ($cdagechq == 108) { // TRANSPOCRED
+                        $cdagechq = 116;    // TRANSULCRED
                 }
+                }
+            }
 
             //#200504 Tratamento incorporação
             //Se não encontrou o cheque, verificar se é cheque da concredi ou credimilsul
-            if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13)) {
+            if ($tpremess == "N" && ($cdcooper == 1 || $cdcooper == 13 || $cdcooper == 9)) {
                 if ($cdcooper == 1) {
-                    if ($cdagechq == 101) {
-                        $cdagechq = 103;
+                    if ($cdagechq == 101) {     // VIACREDI
+                        $cdagechq = 103;        // CONCREDI
                     }
                 }
                 else {
-                    if ($cdagechq == 112) {
-                        $cdagechq = 114;
+                    if ($cdcooper == 13) {
+                        if ($cdagechq == 112) { // SCRCRED
+                            $cdagechq = 114;    // CREDIMILSUL
+                        }
+                    } else {
+                        if ($cdagechq == 108) { // TRANSPOCRED
+                            $cdagechq = 116;    // TRANSULCRED
+                        }
                     }
                 }
 
@@ -234,18 +248,18 @@
 
         ?>
 
-        nmrescop = '<? echo $nmrescop; ?>';
-        tremessa = '<? echo $REMESSA;  ?>';
-        compechq = '<? echo $cdcmpchq; ?>';
-        bancochq = '<? echo $cdbanchq; ?>';
-        agencchq = '<? echo $AGENCIAC; ?>';
-        contachq = '<? echo $nrctachq; ?>';
-        numerchq = '<? echo $nrcheque; ?>';
-        datacomp = '<? echo $dtcompen; ?>';
-        dsdocmc7 = '<? echo $dsdocmc7; ?>';
+        nmrescop = '<?php echo $nmrescop; ?>';
+        tremessa = '<?php echo $REMESSA;  ?>';
+        compechq = '<?php echo $cdcmpchq; ?>';
+        bancochq = '<?php echo $cdbanchq; ?>';
+        agencchq = '<?php echo $AGENCIAC; ?>';
+        contachq = '<?php echo $nrctachq; ?>';
+        numerchq = '<?php echo $nrcheque; ?>';
+        datacomp = '<?php echo $dtcompen; ?>';
+        dsdocmc7 = '<?php echo $dsdocmc7; ?>';
         lstCmc7  = new Array();
-        lstCmc7[0] = '<? echo $srcF; ?>';
-        lstCmc7[1] = '<? echo $srcV; ?>';
+        lstCmc7[0] = '<?php echo $srcF; ?>';
+        lstCmc7[1] = '<?php echo $srcV; ?>';
 
         var strHTML = "";
 /*       retirado o link para baixar imagem...apenas exibe na tela.

@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0154.p
     Autor(a): Fabricio
-    Data    : Marco/2013                     Ultima atualizacao: 25/11/2014
+    Data    : Marco/2013                     Ultima atualizacao: 05/12/2016
   
     Dados referentes ao programa:
   
@@ -21,6 +21,9 @@
                              
                 25/11/2014 - Incluir clausula no craptco flgativo = TRUE
                             (Lucas R./Rodrigo)  
+
+                05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -887,12 +890,12 @@ PROCEDURE importar_icf614:
                                    crapcop.cdagectl = aux_cdagereq
                                    NO-LOCK NO-ERROR.
 
-          IF   AVAIL crapcop THEN 
-               DO:
+          IF  AVAIL crapcop THEN DO:
                    
-                   IF crapcop.cdagectl = 103 OR
-                      crapcop.cdagectl = 114  THEN
-                   DO:
+              IF  crapcop.cdagectl = 103 OR
+                  crapcop.cdagectl = 114 OR
+                  crapcop.cdagectl = 116 THEN DO:
+
                        /* verificar se é uma conta migrada */
                        FIND FIRST craptco 
                         WHERE craptco.nrctaant = aux_nrctareq 
@@ -902,17 +905,16 @@ PROCEDURE importar_icf614:
                        
                        /* se for uma conta migrada deve buscar dados 
                           do associado na cooperativa nova */
-                       IF AVAIL(craptco) THEN 
-                         DO:                       
+                  IF  AVAIL(craptco) THEN DO:
                            
                            /* Crapass - Buscar o Associado */
-                           FIND FIRST crapass WHERE 
-                                      crapass.cdcooper = craptco.cdcooper AND
-                                      crapass.nrdconta = craptco.nrdconta
+                      FIND FIRST crapass
+                           WHERE crapass.cdcooper = craptco.cdcooper
+                             AND crapass.nrdconta = craptco.nrdconta
                                       NO-LOCK NO-ERROR.
                          END.
-                      ELSE /* senao for buscar com os dados do arquivo*/
-                         DO:
+                  ELSE DO: /* senao for buscar com os dados do arquivo*/
+
                            /* Crapass - Buscar o Associado */
                            FIND FIRST crapass WHERE 
                                       crapass.cdcooper = crapcop.cdcooper AND

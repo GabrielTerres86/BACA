@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 25/11/2014
+   Data    : Marco/2010                        Ultima atualizacao: 30/11/2016
 
    Dados referentes ao programa:
 
@@ -39,6 +39,9 @@
 
                25/11/2014 - Incluir clausula no craptco flgativo = TRUE
                             (Lucas R./Rodrigo)  
+
+               29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ..............................................................................*/
 
 { includes/var_batch.i }
@@ -532,10 +535,13 @@ PROCEDURE proc_processa_arquivo:
                 /* se for uma das cooperativas migradas, 
                   deve buscar a nova conta e coop */
                 IF crapcop.cdcooper =  4 OR
-                   crapcop.cdcooper = 15 THEN 
-                DO:                
-                  /*verifica se é uma conta migrada da concredi
-                    ou credimilsul*/
+                   crapcop.cdcooper = 15 OR
+                   crapcop.cdcooper = 17 THEN DO:
+
+                  /*verifica se é uma conta migrada da:
+                      concredi
+                      credimilsul
+                      transulcred */
                   FIND FIRST craptco 
                     WHERE craptco.cdcopant = crapcop.cdcooper 
                       AND craptco.nrctaant = aux_nrdconta 
@@ -544,8 +550,8 @@ PROCEDURE proc_processa_arquivo:
             
                   /* se encontrar deve utilizar o novo
                     numero de conta na coop nova*/
-                  IF AVAIL(craptco) THEN 
-                  DO:                      
+                  IF AVAIL(craptco) THEN DO:
+
                     /* Busca dados da nova Cooperativa */
                     FIND FIRST crapcop 
                          WHERE crapcop.cdcooper = craptco.cdcooper
