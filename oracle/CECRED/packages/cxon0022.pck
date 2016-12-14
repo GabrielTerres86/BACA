@@ -77,7 +77,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
                         ,pr_dscritic     OUT VARCHAR2);  --Descricao do erro 
 
   /* Procedure para realizar transferencia */
-  PROCEDURE pc_realiza_transferencia (pr_cooper             IN INTEGER --Codigo Cooperativa
+  PROCEDURE pc_realiza_transferencia (pr_cooper             IN INTEGER --Codigo Cooperativareali
                                      ,pr_cod_agencia        IN INTEGER --Codigo Agencia
                                      ,pr_nro_caixa          IN INTEGER --Numero do caixa
                                      ,pr_cod_operador       IN VARCHAR2 --Codigo Operador
@@ -2327,14 +2327,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar deposito de cheques entre cooperativas
   --  Sigla    : CRED
   --  Autor    : Andre Santos - SUPERO
-  --  Data     : Junho/2014.                   Ultima atualizacao:
+  --  Data     : Junho/2014.                   Ultima atualizacao: 14/12/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : 
 
-  -- Alteracoes:
+  -- Alteracoes: 14/12/2016 - Corrigida atribuicao da variavel vr_aux_nrctachq para incorporacao (Diego).
   ---------------------------------------------------------------------------------------------------------------
   
   --Tipo de tabela para vetor literal
@@ -4737,12 +4737,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_aux_inchqcop := 0;
                END IF;
                
-               IF NVL(rw_consulta_chd.insitchq,0) = 1 THEN
+               IF vr_aux_inchqcop = 1 THEN 
+                  /* cheque da cooperativa: quando for conta incorporada 
+                     e cheque talao antigo, devera atribuir a conta cheque antiga */ 
                   vr_aux_nrctachq := rw_verifica_mdw.nrctabdb;
                ELSE
-                  vr_aux_nrctachq := rw_verifica_mdw.nrctachq;
+                  vr_aux_nrctachq := rw_verifica_mdw.nrctachq; 
                END IF;
-               
+			                  
                IF NVL(rw_verifica_mdw.cdhistor,0) = 386 THEN
                   vr_aux_nrseqdig := vr_i_seq_386;
                ELSE
