@@ -312,10 +312,12 @@ PROCEDURE ver_cheque:
 
                            IF  AVAIL b-crapcop THEN
                                DO:
-                                    FIND craptco WHERE craptco.cdcooper = crapcop.cdcooper AND
-                                                       craptco.nrctaant = i-p-nrctabdb     AND
-                                                       craptco.cdcopant = b-crapcop.cdcooper
-                                                       NO-LOCK NO-ERROR.
+                                    FIND FIRST craptco
+                                         WHERE craptco.cdcooper = crapcop.cdcooper
+                                           AND craptco.nrctaant = i-p-nrctabdb
+                                           AND craptco.cdcopant = b-crapcop.cdcooper
+                                           AND craptco.flgativo = TRUE
+                                       NO-LOCK NO-ERROR.
 
                                     IF  AVAIL craptco THEN
                                         aux_nrctcomp = craptco.nrdconta.
