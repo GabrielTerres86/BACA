@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 05/12/2014
+   Data    : Marco/2001                      Ultima atualizacao: 19/09/2016
 
    Dados referentes ao programa:
 
@@ -197,6 +197,13 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                27/07/2015 - #308980 Valida o pagamento em duplicidade dos convenios SICREDI (1154) verificando
                             os últimos 5 anos da craplft, assim como o sicredi, que também valida os últimos
                             5 anos (Carlos)
+                            
+               22/07/2016 - Ajustada a procedure pc_validacoes_sicredi para ser retirado o bloqueio de 
+                            pagamento de DARF e DAS via PA 90, Prj. 338. (Jean Michel)
+														
+					     19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+							              InternetBanking (Projeto 338 - Lucas Lunelli)
+														
 ..............................................................................*/
 
   /* Procedure para gerar os titulos de iptu */
@@ -342,6 +349,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
 
   /* Calcular Digito verificador Modulo 11 */
   PROCEDURE pc_verifica_digito (pr_nrcalcul IN VARCHAR2       --Numero a ser calculado
+		                       ,pr_poslimit IN INTEGER        --Utilizado para validação de dígito adicional de DAS
                                ,pr_nrdigito OUT INTEGER);   --Digito verificador
 
   /* Procedure para validar o codigo de barras */
@@ -355,6 +363,18 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                     ,pr_cdcritic       OUT INTEGER     --Codigo do erro
                                     ,pr_dscritic       OUT VARCHAR2);   --Descricao do erro
 
+  /*Validação referente aos dias de tolerancia nos convênios Sicredi*/
+  PROCEDURE pc_verifica_dtlimite_tributo(pr_cdcooper      IN INTEGER     -- Codigo Cooperativa
+                                        ,pr_cdagenci      IN INTEGER     --Codigo Agencia
+                                        ,pr_cdempcon      IN crapcon.cdempcon%TYPE -- Codigo Empresa Convenio
+                                        ,pr_cdsegmto      IN crapcon.cdsegmto%TYPE -- Codigo Segmento Convenio
+                                        ,pr_codigo_barras IN VARCHAR2    -- Codigo barras
+                                        ,pr_dtmvtopg      IN DATE        -- Data da operação
+                                        ,pr_flnrtole      IN BOOLEAN DEFAULT TRUE -- Verificar se a tolerância é ilimitada
+										                    ,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
+                                        ,pr_cdcritic      OUT INTEGER    -- Codigo do erro
+                                        ,pr_dscritic      OUT VARCHAR2);
+  
   /* Procedure para retornar valores fatura */
   PROCEDURE pc_retorna_valores_fatura (pr_cdcooper      IN INTEGER      --Codigo Cooperativa
                                       ,pr_nrdconta      IN INTEGER      --Numero da Conta
@@ -374,6 +394,11 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                       ,pr_cdcritic      OUT INTEGER     --Codigo do erro
                                       ,pr_dscritic      OUT VARCHAR2); --Descricao do erro
 
+  /* Function para buscar sequencial da fatura */
+  FUNCTION fn_busca_sequencial_fatura (pr_cdhistor      IN crapcon.cdhistor%TYPE --Codigo historico
+                                      ,pr_codigo_barras IN VARCHAR2)             --Codigo Barras
+                                       RETURN NUMBER;
+                                       
   /* Procedure para buscar sequencial da fatura */
   PROCEDURE pc_busca_sequencial_fatura (pr_cdhistor      IN crapcon.cdhistor%type    --Codigo historico
                                        ,pr_codigo_barras IN VARCHAR2                 --Codigo Barras
@@ -396,7 +421,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                             ,pr_cdcoptfn      IN INTEGER      --Cooperativa do terminal financeiro
                             ,pr_cdagetfn      IN INTEGER      --Agencia do terminal financeiro
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
-                            ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                            ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                            ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
@@ -484,7 +510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 25/08/2016
+  --  Data     : Julho/2013.                   Ultima atualizacao: 19/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -528,7 +554,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --                          pois será incluido o UPPER no indice desta tabela - SD 375854
   --                          (Adriano).
   --
+  --             22/07/2016 - Ajustada a procedure pc_validacoes_sicredi para ser retirado o bloqueio de 
+  --                          pagamento de DARF e DAS via PA 90, Prj. 338. (Jean Michel)
+	--
   --             25/08/2016 - #456682 Inclusao de ip na tentativa de pagamento de boleto incluido na crapcbf (Carlos)
+  --
+	--             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo 
+	--						              InternetBanking (Projeto 338 - Lucas Lunelli)
+	
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -620,6 +653,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
     WHERE craplot.rowid = pr_rowid
     FOR UPDATE NOWAIT;
   rw_craplot_rowid cr_craplot_rowid%ROWTYPE;
+
+  --Selecionar Convenio
+  CURSOR cr_crapscn (pr_cdempcon IN crapscn.cdempcon%type
+                    ,pr_cdsegmto IN crapscn.cdsegmto%type
+                    ,pr_tipo     IN INTEGER) IS
+    SELECT crapscn.cdsegmto
+          ,crapscn.nrtolera
+          ,crapscn.dsdiatol
+          ,crapscn.cdempres
+          ,crapscn.dsoparre
+    FROM crapscn
+    WHERE ((pr_tipo = 1 AND crapscn.cdempcon = pr_cdempcon) OR
+           (pr_tipo = 2 AND crapscn.cdempco2 = pr_cdempcon) OR
+           (pr_tipo = 3 AND crapscn.cdempco3 = pr_cdempcon) OR
+           (pr_tipo = 4 AND crapscn.cdempco4 = pr_cdempcon) OR
+           (pr_tipo = 5 AND crapscn.cdempco5 = pr_cdempcon)
+          )
+    AND   crapscn.cdsegmto = pr_cdsegmto
+    AND   crapscn.dtencemp IS NULL
+    AND   crapscn.dsoparre <> 'E'
+    ORDER BY crapscn.progress_recid ASC;
+ 
+  --Selecionar transacao de convenio
+  CURSOR cr_crapstn (pr_cdempres IN crapstn.cdempres%type
+                    ,pr_tpmeiarr IN crapstn.tpmeiarr%type) IS
+    SELECT crapstn.cdempres
+          ,crapstn.tpmeiarr
+          ,crapstn.dstipdrf
+    FROM crapstn
+    WHERE UPPER(crapstn.cdempres) = UPPER(pr_cdempres)
+    AND   UPPER(crapstn.tpmeiarr) = UPPER(pr_tpmeiarr);
 
   --Selecionar informacoes convenio cobranca
   CURSOR cr_crapcco (pr_cdcooper IN crapcco.cdcooper%type
@@ -6296,6 +6360,7 @@ END pc_gera_titulos_iptu_prog;
 
   /* Calcular Digito verificador Modulo 11 */
   PROCEDURE pc_verifica_digito (pr_nrcalcul IN VARCHAR2       --Numero a ser calculado
+		                       ,pr_poslimit IN INTEGER        --Utilizado para validação de dígito adicional de DAS
                                ,pr_nrdigito OUT INTEGER) IS --Digito verificador
 ---------------------------------------------------------------------------------------------------------------
   --
@@ -6327,7 +6392,16 @@ END pc_gera_titulos_iptu_prog;
         vr_peso:= vr_peso + 1;
         --Se Passou 9
         IF vr_peso > 9 THEN
+				
+			-- Para validação de dígito adicional de DAS
+			IF pr_poslimit <> 0 THEN
+				 IF pr_poslimit <> 38 THEN
           vr_peso:= 2;
+        END IF;
+			ELSE 
+				 vr_peso:= 2;
+			END IF;
+					
         END IF;
       END LOOP;
       --Resto
@@ -6539,6 +6613,193 @@ END pc_gera_titulos_iptu_prog;
     END;
   END fn_retorna_data_dias;
 
+  /* Valida os dias de tolerancia nos convênios Sicredi */
+  PROCEDURE pc_verifica_dtlimite_tributo(pr_cdcooper      IN INTEGER     -- Codigo Cooperativa
+                                        ,pr_cdagenci      IN INTEGER     --Codigo Agencia
+                                        ,pr_cdempcon      IN crapcon.cdempcon%TYPE -- Codigo Empresa Convenio
+                                        ,pr_cdsegmto      IN crapcon.cdsegmto%TYPE -- Codigo Segmento Convenio
+                                        ,pr_codigo_barras IN VARCHAR2    -- Codigo barras
+                                        ,pr_dtmvtopg      IN DATE        -- Data da operação
+                                        ,pr_flnrtole      IN BOOLEAN DEFAULT TRUE -- Verificar se a tolerância é ilimitada
+									                    	,pr_dttolera      OUT DATE       -- Data de Tolerância (Vencimento)
+                                        ,pr_cdcritic      OUT INTEGER    -- Codigo do erro
+                                        ,pr_dscritic      OUT VARCHAR2) IS
+  --------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_verifica_dtlimite_tributo
+  --  Sigla    : CXON
+  --  Autor    : Dionathan
+  --  Data     : Julho/2016.                   Ultima atualizacao: 
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Procedure para validação dos dias de tolerancia nos convênios Sicredi
+  --
+  -- Alterações: 
+  ---------------------------------------------------------------------------------------------------------------
+  
+  --Busca o convênio SICREDI
+  rw_crapscn cr_crapscn%ROWTYPE;
+  cr_crapscn_found BOOLEAN := FALSE;
+  --Selecionar transacao de convenio
+  rw_crapstn cr_crapstn%ROWTYPE;
+  cr_crapstn_found BOOLEAN := FALSE;
+  
+  --Variáveis
+  vr_contador  INTEGER;
+  vr_tpmeiarr  VARCHAR2(1);
+  vr_inanocal  INTEGER;
+  vr_dttolera  DATE;
+  vr_dtferiado DATE;
+  
+  vr_exc_erro EXCEPTION;
+  
+  BEGIN
+  
+    cr_crapscn_found := FALSE;
+    /* Procura cod. da empresa do convenio SICREDI em cada campo de Num. do Cod. Barras */
+    FOR idx IN 1..5 LOOP
+      /* Procura cod. da empresa do convenio SICREDI em cada campo de Num. do Cod. Barras */
+      OPEN cr_crapscn (pr_cdempcon  => TO_NUMBER(SUBSTR(pr_codigo_barras,16,4))
+                      ,pr_cdsegmto  => SUBSTR(pr_codigo_barras,2,1)
+                      ,pr_tipo      => idx);
+      FETCH cr_crapscn INTO rw_crapscn;
+      cr_crapscn_found := cr_crapscn%FOUND;
+      CLOSE cr_crapscn;
+      
+      IF cr_crapscn_found THEN
+        --Abandona loop
+        EXIT;
+      END IF;
+    END LOOP;
+    
+    IF NOT cr_crapscn_found THEN
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Documento nao aceito. Procure seu Posto de Atendimento para maiores informacoes.';
+        RAISE vr_exc_erro;
+    END IF;
+    
+    --Determinar tipo transacao
+    CASE pr_cdagenci
+        WHEN 90 THEN vr_tpmeiarr:= 'D';
+        WHEN 91 THEN vr_tpmeiarr:= 'A';
+        ELSE vr_tpmeiarr:= 'C';
+    END CASE;
+    
+    --selecionar transacao de convenio
+    OPEN cr_crapstn (pr_cdempres => rw_crapscn.cdempres
+                    ,pr_tpmeiarr => vr_tpmeiarr);
+    FETCH cr_crapstn INTO rw_crapstn;
+    cr_crapstn_found := cr_crapstn%FOUND;
+    CLOSE cr_crapstn;
+    
+    IF NOT cr_crapstn_found THEN
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Convenio nao disponivel para esse meio de arrecadacao.';
+        RAISE vr_exc_erro;
+    END IF;
+    
+  
+   IF rw_crapscn.nrtolera <> 99 OR NOT pr_flnrtole THEN /* Se nao for tolerancia ilimitada */
+    IF nvl(rw_crapstn.dstipdrf, ' ') <> ' '  OR
+       rw_crapscn.cdempres = 'K0' THEN
+      /* DARF PRETO EUROPA */
+      IF pr_cdempcon IN (64,153) AND pr_cdsegmto = 5 THEN /* DARFC0064 ou DARFC0153 */
+        --Retornar ano
+        vr_inanocal:= CXON0014.fn_retorna_ano_cdbarras(pr_innumano => TO_NUMBER(SUBSTR(pr_codigo_barras,20,1))
+                                                      ,pr_darfndas => FALSE);
+        --Retornar data dias
+        vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,21,3)) --Numero de Dias
+                                                   ,pr_inanocal => vr_inanocal); --Indicador do Ano
+      END IF;
+      /* DARF NUMERADO / DAS */
+      IF pr_cdempcon IN (385,328) AND pr_cdsegmto = 5 THEN /* DARFC0385 ou DAS - SIMPLES NACIONAL */
+        --Retornar ano
+        vr_inanocal:= CXON0014.fn_retorna_ano_cdbarras(pr_innumano => TO_NUMBER(SUBSTR(pr_codigo_barras,20,2))
+                                                      ,pr_darfndas => TRUE);
+        --Retornar data dias
+        vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,22,3)) --Numero de Dias
+                                                   ,pr_inanocal => vr_inanocal); --Indicador do Ano
+      END IF;
+      --Data agendamento maior tolerancia
+      IF pr_dtmvtopg > vr_dttolera THEN
+        --Montar mensagem erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Prazo para pagamento apos o vencimento excedido.';
+        RAISE vr_exc_erro;
+      END IF;
+    ELSE  /* Nao é DARF/DAS */
+      BEGIN
+        vr_dttolera:= TO_DATE(gene0002.fn_mask(SUBSTR(pr_codigo_barras,26,2),'99')|| '/'||
+                              gene0002.fn_mask(SUBSTR(pr_codigo_barras,24,2),'99')|| '/'||
+                              gene0002.fn_mask(SUBSTR(pr_codigo_barras,20,4),'9999'),'DD/MM/YYYY');
+        --Iniciar contador
+        vr_contador:= 1;
+        --Dia toleracia
+        IF rw_crapscn.dsdiatol = 'U' THEN /* Dias úteis */
+          LOOP
+            --Incrementa dia tolerancia
+            vr_dttolera:= vr_dttolera + 1;
+            --Verifica se eh feriado ou final de semana
+            vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                      ,pr_dtmvtolt => vr_dttolera --> Data do movimento
+                                                      ,pr_tipo     => 'P');       --> Proximo dia util
+            --Se for data diferente é feriado ou final semana
+            IF vr_dtferiado <> vr_dttolera THEN
+              --Proxima iteracao loop
+              CONTINUE;
+            END IF;
+            --Se contador igual tolerancia
+            IF vr_contador = rw_crapscn.nrtolera THEN
+              --Sair loop
+              EXIT;
+            END IF;
+            --Incrementar contador
+            vr_contador:= vr_contador + 1;
+          END LOOP;
+        ELSE  /* Dias corridos */
+          vr_dttolera:= vr_dttolera + rw_crapscn.nrtolera;
+          LOOP
+            --Verifica se eh feriado ou final de semana
+            vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                                      ,pr_dtmvtolt => vr_dttolera --> Data do movimento
+                                                      ,pr_tipo     => 'P');       --> Proximo dia util
+            --Se for dia util
+            IF vr_dtferiado = vr_dttolera THEN
+              --Sair loop
+              EXIT;
+            END IF;
+            --Incrementar data
+            vr_dttolera:= vr_dttolera + 1;
+          END LOOP;
+        END IF;
+        --Se for maior igual a 2010 e data agendamento maior tolerancia
+        IF To_Number(TO_CHAR(vr_dttolera,'YYYY')) >= 2010 AND
+           pr_dtmvtopg > vr_dttolera THEN
+          --Montar mensagem erro
+          pr_cdcritic := 0;
+          pr_dscritic := 'Prazo para pagamento apos o vencimento excedido.';
+          RAISE vr_exc_erro;
+        END IF;
+      EXCEPTION
+      WHEN OTHERS THEN
+        NULL;
+      END;
+    END IF;
+	-- sem críticas, devolve data calculada
+	pr_dttolera := vr_dttolera;		
+
+  END IF;
+  
+  EXCEPTION
+      WHEN OTHERS THEN
+        IF pr_dscritic IS NULL THEN
+          pr_dscritic := 'Erro ao validar dias de tolerancia.';
+        END IF;
+        RETURN;
+  END pc_verifica_dtlimite_tributo;
+
   /* Realizar validacoes para Sicredi */
   PROCEDURE pc_validacoes_sicredi (pr_cdcooper      IN INTEGER     --Codigo Cooperativa
                                   ,pr_cod_agencia   IN INTEGER     --Codigo Agencia
@@ -6559,7 +6820,7 @@ END pc_gera_titulos_iptu_prog;
   --  Sistema  : Procedure para validacoes Sicredi
   --  Sigla    : CXON
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Agosto/2013.                   Ultima atualizacao: 11/11/2015
+  --  Data     : Agosto/2013.                   Ultima atualizacao: 22/07/2016
   --
   -- Dados referentes ao programa:
   --
@@ -6572,39 +6833,18 @@ END pc_gera_titulos_iptu_prog;
   --
   --             11/11/2015 - Fechar cursor cr_lft_ult_pag_sicredi que estava permanecendo aberto quando
   --                          nao encontrava registro. (Fabricio)
+  --
+  --             22/07/2016 - Extração da validação dos dias de tolerancia nos convênios Sicredi para a procedure
+  --                          pc_verifica_dtlimite_tributo (Dionathan)
+  --
+  --             22/07/2016 - Ajustada para ser retirado o bloqueio de pagamento de DARF e DAS via PA 90,
+  --                          Prj. 338. (Jean Michel)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
-      --Selecionar Convenio
-      CURSOR cr_crapscn (pr_cdempcon IN crapscn.cdempcon%type
-                        ,pr_cdsegmto IN crapscn.cdsegmto%type
-                        ,pr_tipo     IN INTEGER) IS
-        SELECT crapscn.cdsegmto
-              ,crapscn.nrtolera
-              ,crapscn.dsdiatol
-              ,crapscn.cdempres
-                            ,crapscn.dsoparre
-        FROM crapscn
-        WHERE ((pr_tipo = 1 AND crapscn.cdempcon = pr_cdempcon) OR
-               (pr_tipo = 2 AND crapscn.cdempco2 = pr_cdempcon) OR
-               (pr_tipo = 3 AND crapscn.cdempco3 = pr_cdempcon) OR
-               (pr_tipo = 4 AND crapscn.cdempco4 = pr_cdempcon) OR
-               (pr_tipo = 5 AND crapscn.cdempco5 = pr_cdempcon)
-              )
-        AND   crapscn.cdsegmto = pr_cdsegmto
-        AND   crapscn.dtencemp IS NULL
-        AND   crapscn.dsoparre <> 'E'
-        ORDER BY crapscn.progress_recid ASC;
+      --Busca o convênio SICREDI
       rw_crapscn cr_crapscn%ROWTYPE;
       --selecionar transacao de convenio
-      CURSOR cr_crapstn (pr_cdempres IN crapstn.cdempres%type
-                        ,pr_tpmeiarr IN crapstn.tpmeiarr%type) IS
-        SELECT crapstn.cdempres
-              ,crapstn.tpmeiarr
-              ,crapstn.dstipdrf
-        FROM crapstn
-        WHERE crapstn.cdempres = pr_cdempres
-        AND   crapstn.tpmeiarr = pr_tpmeiarr;
       rw_crapstn cr_crapstn%ROWTYPE;
 
       CURSOR cr_lft_ult_pag_sicredi (pr_cdcooper      IN craplft.cdcooper%type
@@ -6620,22 +6860,23 @@ END pc_gera_titulos_iptu_prog;
            AND lft.tpfatura <> pr_tpfatura
            AND lft.dtvencto > ADD_MONTHS(SYSDATE,-60) -- Verifica apenas os últimos 5 anos pois o sicredi também
                                                         -- valida os pagamentos feitos em até 5 anos.
-        ORDER BY lft.dtvencto DESC
-      ;
+        ORDER BY lft.dtvencto DESC;
+      
       rw_lft_ult_pag_sicredi cr_lft_ult_pag_sicredi%ROWTYPE;
 
-
       --Variaveis Locais
+	  vr_dttolera  DATE;
       vr_hhsicini  INTEGER;
       vr_hhsicfim  INTEGER;
-      vr_contador  INTEGER;
-      vr_dttolera  DATE;
-      vr_dtferiado DATE;
-      vr_inanocal  INTEGER;
       vr_flgachou  BOOLEAN;
       vr_tpmeiarr  VARCHAR2(1);
       vr_nrdcaixa  INTEGER;
       vr_dstextab  craptab.dstextab%TYPE;
+	  vr_numerdas  VARCHAR2(100);
+	  vr_dvnrodas  INTEGER;
+	  vr_poslimit  INTEGER;
+	  vr_dvadicio  INTEGER;
+	  vr_digito    INTEGER;
       --Variaveis erro
       vr_cod_erro  INTEGER;
       vr_des_erro  VARCHAR2(400);
@@ -6841,8 +7082,8 @@ END pc_gera_titulos_iptu_prog;
                 END IF;
             END IF;
 
-      /* Validacao para nao aceitar DARFs e DAS na Internet/TAA/ */
-      IF pr_cod_agencia IN (90,91) THEN  /* TAA OU Internet*/
+      /* Validacao para nao aceitar DARFs e DAS no TAA/ */
+      IF pr_cod_agencia = 91 THEN  /* TAA */
         IF nvl(rw_crapstn.dstipdrf, ' ') <> ' ' OR rw_crapscn.cdempres = 'K0' THEN
           --Montar mensagem erro
           vr_cod_erro:= 0;
@@ -6864,9 +7105,84 @@ END pc_gera_titulos_iptu_prog;
             vr_dscritic:= vr_des_erro;
             --Levantar Excecao
             RAISE vr_exc_erro;
-          END IF;
-        END IF;
       END IF;
+            END IF;
+            END IF;
+			
+	  -- Se nao for Agendamento nem Pagto de Agendamento
+      IF pr_idagenda <> 2 AND NOT pr_flgpgag THEN
+			-- DAS - SIMPLES NACIONAL
+			IF rw_crapscn.cdempres = 'K0' THEN
+					
+				vr_numerdas := SUBSTR(pr_codigo_barras, 25, 16);
+      			vr_dvnrodas := TO_NUMBER(SUBSTR(pr_codigo_barras, 41, 1));
+				
+				CXON0014.pc_verifica_digito (pr_nrcalcul => vr_numerdas  --Numero a ser calculado
+				                            ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
+                                  			,pr_nrdigito => vr_digito);  --Digito verificador
+				IF vr_digito <> vr_dvnrodas THEN						
+					vr_cod_erro:= 8;
+        			vr_des_erro:= '';
+              --Criar erro
+              CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cod_agencia
+                                   ,pr_nrdcaixa => vr_nrdcaixa
+                                   ,pr_cod_erro => vr_cod_erro
+                                   ,pr_dsc_erro => vr_des_erro
+                                   ,pr_flg_erro => TRUE
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              ELSE
+                vr_cdcritic:= vr_cod_erro;
+                vr_dscritic:= vr_des_erro;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
+            END IF;
+				
+				FOR idx IN 42..44 LOOP
+					
+					vr_poslimit := idx;
+					
+				  	vr_dvnrodas := TO_NUMBER(SUBSTR(pr_codigo_barras, vr_poslimit, 1));
+					vr_poslimit := (vr_poslimit - 5);
+				  	vr_numerdas := (SUBSTR(pr_codigo_barras, 1, 3) || 
+					                SUBSTR(pr_codigo_barras, 5, vr_poslimit));
+					
+					CXON0014.pc_verifica_digito (pr_nrcalcul => vr_numerdas  --Numero a ser calculado
+					                            ,pr_poslimit => vr_poslimit  --Utilizado para validação de dígito adicional de DAS
+                                    			,pr_nrdigito => vr_digito);  --Digito verificador
+					IF vr_digito <> vr_dvnrodas THEN													
+						vr_cod_erro:= 8;
+						vr_des_erro:= '';
+              --Criar erro
+              CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cod_agencia
+                                   ,pr_nrdcaixa => vr_nrdcaixa
+                                   ,pr_cod_erro => vr_cod_erro
+                                   ,pr_dsc_erro => vr_des_erro
+                                   ,pr_flg_erro => TRUE
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              ELSE
+                vr_cdcritic:= vr_cod_erro;
+                vr_dscritic:= vr_des_erro;
+                --Levantar Excecao
+                RAISE vr_exc_erro;
+              END IF;
+            END IF;
+					
+				END LOOP;
+				
+			END IF;
+	  END IF;
+			
       -- Verifica se a data esta cadastrada
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -6881,130 +7197,34 @@ END pc_gera_titulos_iptu_prog;
       ELSE
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
-      END IF;
+          END IF;
       /* N¿o repete validacao ja realizada se for Agendamento */
       IF pr_idagenda <> 2 THEN
-        /* Valida¿¿o referente aos dias de tolerancia */
-        IF rw_crapscn.nrtolera <> 99 THEN /* Se nao for tolerancia ilimitada */
-          IF nvl(rw_crapstn.dstipdrf, ' ') <> ' '  OR
-             rw_crapscn.cdempres = 'K0' THEN
-            /* DARF PRETO EUROPA */
-            IF pr_cdempcon IN (64,153) AND pr_cdsegmto = 5 THEN /* DARFC0064 ou DARFC0153 */
-              --Retornar ano
-              vr_inanocal:= CXON0014.fn_retorna_ano_cdbarras(pr_innumano => TO_NUMBER(SUBSTR(pr_codigo_barras,20,1))
-                                                            ,pr_darfndas => FALSE);
-              --Retornar data dias
-              vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,21,3)) --Numero de Dias
-                                                         ,pr_inanocal => vr_inanocal); --Indicador do Ano
-            END IF;
-            /* DARF NUMERADO / DAS */
-            IF pr_cdempcon IN (385,328) AND pr_cdsegmto = 5 THEN /* DARFC0385 ou DAS - SIMPLES NACIONAL */
-              --Retornar ano
-              vr_inanocal:= CXON0014.fn_retorna_ano_cdbarras(pr_innumano => TO_NUMBER(SUBSTR(pr_codigo_barras,20,2))
-                                                            ,pr_darfndas => TRUE);
-              --Retornar data dias
-              vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,22,3)) --Numero de Dias
-                                                         ,pr_inanocal => vr_inanocal); --Indicador do Ano
-            END IF;
-            --Data agendamento maior tolerancia
-            IF rw_crapdat.dtmvtocd > vr_dttolera THEN
-              --Montar mensagem erro
-              vr_cod_erro:= 0;
-              vr_des_erro:= 'Prazo para pagamento apos o vencimento excedido.';
-              --Criar erro
-              CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
-                                   ,pr_cdagenci => pr_cod_agencia
-                                   ,pr_nrdcaixa => vr_nrdcaixa
-                                   ,pr_cod_erro => vr_cod_erro
-                                   ,pr_dsc_erro => vr_des_erro
-                                   ,pr_flg_erro => TRUE
-                                   ,pr_cdcritic => vr_cdcritic
-                                   ,pr_dscritic => vr_dscritic);
-              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                --Levantar Excecao
-                RAISE vr_exc_erro;
-              ELSE
-                vr_cdcritic:= vr_cod_erro;
-                vr_dscritic:= vr_des_erro;
-                --Levantar Excecao
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;
-          ELSE  /* Nao eh DARF/DAS */
-            BEGIN
-            vr_dttolera:= TO_DATE(gene0002.fn_mask(SUBSTR(pr_codigo_barras,26,2),'99')|| '/'||
-                                  gene0002.fn_mask(SUBSTR(pr_codigo_barras,24,2),'99')|| '/'||
-                                  gene0002.fn_mask(SUBSTR(pr_codigo_barras,20,4),'9999'),'DD/MM/YYYY');
-            --Iniciar contador
-            vr_contador:= 1;
-            --Dia toleracia
-            IF rw_crapscn.dsdiatol = 'U' THEN /* Dias ¿teis */
-              LOOP
-                --Incrementa dia tolerancia
-                vr_dttolera:= vr_dttolera + 1;
-                --Verifica se eh feriado ou final de semana
-                vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                                          ,pr_dtmvtolt => vr_dttolera --> Data do movimento
-                                                          ,pr_tipo     => 'P');       --> Proximo dia util
-                --Se for data diferenteeh feriado ou final semana
-                IF vr_dtferiado <> vr_dttolera THEN
-                  --Proxima iteracao loop
-                  CONTINUE;
-                END IF;
-                --Se contador igual tolerancia
-                IF vr_contador = rw_crapscn.nrtolera THEN
-                  --Sair loop
-                  EXIT;
-                END IF;
-                --Incrementar contador
-                vr_contador:= vr_contador + 1;
-              END LOOP;
-            ELSE  /* Dias corridos */
-              vr_dttolera:= vr_dttolera + rw_crapscn.nrtolera;
-              LOOP
-                --Verifica se eh feriado ou final de semana
-                vr_dtferiado:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                                          ,pr_dtmvtolt => vr_dttolera --> Data do movimento
-                                                          ,pr_tipo     => 'P');       --> Proximo dia util
-                --Se for dia util
-                IF vr_dtferiado = vr_dttolera THEN
-                  --Sair loop
-                  EXIT;
-                END IF;
-                --Incrementar data
-                vr_dttolera:= vr_dttolera + 1;
-              END LOOP;
-            END IF;
-            --Se for maior igual a 2010 e data agendamento maior tolerancia
-            IF To_Number(TO_CHAR(vr_dttolera,'YYYY')) >= 2010 AND
-               rw_crapdat.dtmvtocd > vr_dttolera THEN
-              --Montar mensagem erro
-              vr_cod_erro:= 0;
-              vr_des_erro:= 'Prazo para pagamento apos o vencimento excedido.';
-              --Criar erro
-              CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
-                                   ,pr_cdagenci => pr_cod_agencia
-                                   ,pr_nrdcaixa => vr_nrdcaixa
-                                   ,pr_cod_erro => vr_cod_erro
-                                   ,pr_dsc_erro => vr_des_erro
-                                   ,pr_flg_erro => TRUE
-                                   ,pr_cdcritic => vr_cdcritic
-                                   ,pr_dscritic => vr_dscritic);
-              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                --Levantar Excecao
-                RAISE vr_exc_erro;
-              ELSE
-                vr_cdcritic:= vr_cod_erro;
-                vr_dscritic:= vr_des_erro;
-                --Levantar Excecao
-                RAISE vr_exc_erro;
-              END IF;
-            END IF;
-            EXCEPTION
-            WHEN OTHERS THEN
-              NULL;
-            END;
-          END IF;
+        /* Validação referente aos dias de tolerancia */
+        pc_verifica_dtlimite_tributo(pr_cdcooper      => pr_cdcooper
+                                    ,pr_cdagenci      => pr_cod_agencia
+                                    ,pr_cdempcon      => pr_cdempcon
+                                    ,pr_cdsegmto      => pr_cdsegmto
+                                    ,pr_codigo_barras => pr_codigo_barras
+                                    ,pr_dtmvtopg      => rw_crapdat.dtmvtocd
+                                    ,pr_flnrtole      => TRUE                                    
+									                  ,pr_dttolera      => vr_dttolera
+                                    ,pr_cdcritic      => pr_cdcritic
+                                    ,pr_dscritic      => pr_dscritic);
+        
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+          --Criar erro
+          CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
+                               ,pr_cdagenci => pr_cod_agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa
+                               ,pr_cod_erro => vr_cod_erro
+                               ,pr_dsc_erro => vr_des_erro
+                               ,pr_flg_erro => TRUE
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+          
+          --Levantar Excecao
+          RAISE vr_exc_erro;
         END IF;
       END IF;
 
@@ -7071,6 +7291,81 @@ END pc_gera_titulos_iptu_prog;
     END;
   END pc_validacoes_sicredi;
 
+  FUNCTION fn_busca_sequencial_fatura (pr_cdhistor      IN crapcon.cdhistor%TYPE --Codigo historico
+                                      ,pr_codigo_barras IN VARCHAR2)             --Codigo Barras
+                                       RETURN NUMBER IS
+--------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : fn_busca_sequencial_fatura             Antigo: dbo/b1crap14.p/busca_sequencial_fatura
+  --  Sistema  : Buscar Sequencial da fatura
+  --  Sigla    : CXON
+  --  Autor    : Alisson C. Berrido - Amcom
+  --  Data     : Agosto/2013.                   Ultima atualizacao: 18/06/2014
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Buscar Sequencial da fatura
+
+  -- Alteracoes: 29/05/2014 - Removido as validacoes para Sicredi (1154), Samae
+  --                          Jaragua (396), DARE Sefaz (1063). Alterado o tamanho do
+  --                          substr do codigo de barras. (Douglas - Chamado 128278)
+  --
+  --             18/06/2014 - Removido as validacoes para GNRE - SEFAZ (1065).
+  --                          (Douglas - Chamado 128278)
+  --
+  --             26/07/2016 - Procedure transformada em Function para otimização de performance
+  --                         (Dionathan)
+  ---------------------------------------------------------------------------------------------------------------
+  
+  vr_cdseqfat NUMBER; --Codigo Sequencial Fatura
+    
+    BEGIN
+    
+    vr_cdseqfat := NULL;
+
+      CASE pr_cdhistor
+      WHEN 308 THEN /*  Telesc Brasil Telecom  */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,20,20));
+      WHEN 374 THEN     /*  Embratel  */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,21,13));
+      WHEN 398 THEN     /* Prefeitura Gaspar */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,20,25));
+      WHEN 663 THEN      /* Prefeitura de Pomerode */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,20,25));
+      WHEN 456 THEN      /* Aguas Itapema */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,30,13));
+      WHEN 964 THEN      /* Aguas de Massaranduba */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,30,13));
+      WHEN 618 THEN      /* Samae Pomerode */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,25,14));
+      WHEN 899 THEN     /* Samae Rio Negrinho */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,25,14));
+      WHEN 625 THEN      /* CELESC */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,27,16));
+      WHEN 666 THEN      /* CELESC */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,27,16));
+      WHEN 659 THEN      /* P.M.Itajai */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
+      WHEN 464 THEN      /* Aguas Pres.Getulio */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
+      WHEN 929 THEN       /* CERSAD */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
+      WHEN 963 THEN      /* Foz do Brasil */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
+      WHEN 671 THEN      /**DAE Navegantes**/
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,29,14));
+      WHEN 373 THEN      /**IPTU Blumenau**/
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,15));
+      WHEN 675 THEN       /** SEMASA Itajai **/
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,30,14));
+      ELSE /*  Casan e outros */
+        vr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,7,38));
+      END CASE;
+      
+      RETURN vr_cdseqfat;
+  END fn_busca_sequencial_fatura;
+                                       
 
   /* Buscar Sequencial da fatura */
   PROCEDURE pc_busca_sequencial_fatura (pr_cdhistor      IN crapcon.cdhistor%TYPE      --Codigo historico
@@ -7091,14 +7386,9 @@ END pc_gera_titulos_iptu_prog;
   --
   -- Frequencia: -----
   -- Objetivo  : Buscar Sequencial da fatura
-
-  -- Alteracoes: 29/05/2014 - Removido as validacoes para Sicredi (1154), Samae
-  --                          Jaragua (396), DARE Sefaz (1063). Alterado o tamanho do
-  --                          substr do codigo de barras. (Douglas - Chamado 128278)
   --
-  --             18/06/2014 - Removido as validacoes para GNRE - SEFAZ (1065).
-  --                          (Douglas - Chamado 128278)
-  --
+  -- Anotações : 26/07/2016 - Procedure transformada em Function para otimização de performance
+  --                         (Dionathan)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7111,45 +7401,10 @@ END pc_gera_titulos_iptu_prog;
       --Inicializar variaveis erro
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
-
-      CASE pr_cdhistor
-      WHEN 308 THEN /*  Telesc Brasil Telecom  */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,20,20));
-      WHEN 374 THEN     /*  Embratel  */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,21,13));
-      WHEN 398 THEN     /* Prefeitura Gaspar */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,20,25));
-      WHEN 663 THEN      /* Prefeitura de Pomerode */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,20,25));
-      WHEN 456 THEN      /* Aguas Itapema */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,30,13));
-      WHEN 964 THEN      /* Aguas de Massaranduba */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,30,13));
-      WHEN 618 THEN      /* Samae Pomerode */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,25,14));
-      WHEN 899 THEN     /* Samae Rio Negrinho */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,25,14));
-      WHEN 625 THEN      /* CELESC */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,27,16));
-      WHEN 666 THEN      /* CELESC */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,27,16));
-      WHEN 659 THEN      /* P.M.Itajai */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
-      WHEN 464 THEN      /* Aguas Pres.Getulio */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
-      WHEN 929 THEN       /* CERSAD */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
-      WHEN 963 THEN      /* Foz do Brasil */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,17));
-      WHEN 671 THEN      /**DAE Navegantes**/
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,29,14));
-      WHEN 373 THEN      /**IPTU Blumenau**/
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,28,15));
-      WHEN 675 THEN       /** SEMASA Itajai **/
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,30,14));
-      ELSE /*  Casan e outros */
-        pr_cdseqfat:= TO_NUMBER(SUBSTR(pr_codigo_barras,7,38));
-      END CASE;
+      
+      --Chama a function
+      pr_cdseqfat := fn_busca_sequencial_fatura(pr_cdhistor, pr_codigo_barras);
+      
     EXCEPTION
        WHEN vr_exc_erro THEN
          pr_cdcritic:= vr_cdcritic;
@@ -7159,7 +7414,6 @@ END pc_gera_titulos_iptu_prog;
          pr_dscritic:= 'Erro ao processar rotina CXON0014.pc_busca_sequencial_fatura. '||SQLERRM;
     END;
   END pc_busca_sequencial_fatura;
-
 
   /* Procedure para retornar valores fatura */
   PROCEDURE pc_retorna_valores_fatura (pr_cdcooper      IN INTEGER      --Codigo Cooperativa
@@ -7400,6 +7654,7 @@ END pc_gera_titulos_iptu_prog;
            ELSE
              /*** Verificacao pelo modulo 11 ***/
              CXON0014.pc_verifica_digito (pr_nrcalcul => vr_lindigit  --Numero a ser calculado
+						                 ,pr_poslimit => 0            --Utilizado para validação de dígito adicional de DAS
                                          ,pr_nrdigito => vr_digito); --Digito verificador
            END IF;
            --Verificar se os numeros batem
@@ -7772,10 +8027,10 @@ END pc_gera_titulos_iptu_prog;
       IF vr_tpdarf = 1 THEN
         vr_tab_literal(vr_iLnAut):= '    VALOR TOTAL (R$):      '||
                                     TO_CHAR((rw_craplft.vllanmto + rw_craplft.vlrjuros +
-                                            rw_craplft.vlrmulta),'fm999g999g999g990d00')|| '    ';
+                                            rw_craplft.vlrmulta),'999g999g999g990d00')|| '  ';
       ELSE
         vr_tab_literal(vr_iLnAut):= '    N. DO DOCUMENTO:    '||
-                                    gene0002.fn_mask(vr_cdseqfat,'99.99.99999.9999999-9')|| '    ';
+                                    gene0002.fn_mask(vr_cdseqfat,'99.99.99999.9999999-9')|| '   ';
       END IF;
       --Incrementar linha
       vr_iLnAut:= vr_iLnAut+1;
@@ -7784,7 +8039,7 @@ END pc_gera_titulos_iptu_prog;
       ELSE
         vr_tab_literal(vr_iLnAut):= '    VALOR TOTAL (R$):      '||
                                     TO_CHAR((rw_craplft.vllanmto + rw_craplft.vlrjuros +
-                                            rw_craplft.vlrmulta),'fm999g999g999g990d00')|| '    ';
+                                            rw_craplft.vlrmulta),'999g999g999g990d00')|| '  ';
       END IF;
       --Incrementar linha
       vr_iLnAut:= vr_iLnAut+1;
@@ -7925,11 +8180,6 @@ END pc_gera_titulos_iptu_prog;
           RAISE vr_exc_erro;
         END IF;
       ELSE
-        --Fechar Cursor
-        CLOSE cr_crapaut;
-
-      END IF;
-      --Fechar Cursor
       IF cr_crapaut%ISOPEN THEN
         CLOSE cr_crapaut;
         --Atualizar autenticacao
@@ -7944,6 +8194,8 @@ END pc_gera_titulos_iptu_prog;
             RAISE vr_exc_erro;
         END;
       END IF;
+     END IF;
+		 
     EXCEPTION
        WHEN vr_exc_erro THEN
          pr_cdcritic:= vr_cdcritic;
@@ -7971,6 +8223,7 @@ END pc_gera_titulos_iptu_prog;
                             ,pr_cdagetfn      IN INTEGER      --Agencia do terminal financeiro
                             ,pr_nrterfin      IN INTEGER      --Numero Terminal Financeiro
                             ,pr_tpcptdoc      IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
+                            ,pr_dsnomfon      IN VARCHAR2 DEFAULT ' ' -- Numero do Telefone
                             ,pr_histor        OUT INTEGER     --Codigo Historico
                             ,pr_pg            OUT BOOLEAN     --Indicador Pago
                             ,pr_docto         OUT NUMBER      --Numero Documento
@@ -8053,7 +8306,7 @@ END pc_gera_titulos_iptu_prog;
       vr_cdempres VARCHAR2(100);
       vr_nrdigito INTEGER;
       vr_flgachou BOOLEAN;
-      vr_nrcpfcgc NUMBER;
+      vr_nrcpfcgc VARCHAR2(100);
       vr_registro ROWID;
       --Tipo de registro de data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -8443,6 +8696,7 @@ END pc_gera_titulos_iptu_prog;
           ,craplft.cdagetfn
           ,craplft.nrterfin
           ,craplft.tpcptdoc
+          ,craplft.dsnomfon
           )
         VALUES
           (rw_crapcop.cdcooper
@@ -8465,6 +8719,7 @@ END pc_gera_titulos_iptu_prog;
           ,pr_cdagetfn
           ,pr_nrterfin
           ,pr_tpcptdoc
+          ,pr_dsnomfon
           )
         RETURNING
            craplft.ROWID
@@ -10705,8 +10960,8 @@ END pc_gera_titulos_iptu_prog;
     WHEN OTHERS THEN
       pr_des_erro := 'NOK';
       vr_dscritic:= 'Erro nao tratado na procedure CXON0014.pc_retorna_vlr_tit_vencto (2): ' || SQLERRM 
-                    || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
-      
+                     || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+     
       vr_dscritic:= REPLACE(vr_dscritic,'"', NULL);
       vr_dscritic:= REPLACE(vr_dscritic,'''', NULL);
       vr_dscritic:= REPLACE(vr_dscritic,chr(10), NULL);
