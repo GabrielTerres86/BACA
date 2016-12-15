@@ -91,7 +91,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0131.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 29/11/2016
+    Data    : Dezembro/2011                     Ultima atualizacao: 14/12/2016
 
     Objetivo  : Tranformacao BO tela PREVIS
 
@@ -142,6 +142,10 @@
 
 				29/11/2016 - Ajuste para gravar corretamente os movimentos de
 						     entrada referente as TED - SICREDI (Adriano - M211).   
+
+				14/12/2016 - Ajuste para gravar corretamente os movimentos de
+						     saida referente as TED - SICREDI 
+							 (Adriano - SD 577067).   
                         
 ............................................................................*/
 
@@ -2099,25 +2103,18 @@ PROCEDURE pi_tedtec_nr_f:
         
 
 		END. /* Fim Lancamentos */
-
-		DO aux_contador = 1 TO NUM-ENTRIES(aux_cdbccxlt,","):
-          
-		   RUN grava-movimentacao 
-						  (INPUT par_cdcoopex,
-						   INPUT par_cdoperad,
-						   INPUT par_dtmvtolt,
-						   INPUT 2,
-						   INPUT INT(ENTRY(aux_contador,aux_cdbccxlt)),
-						   INPUT 3,
-						   INPUT (IF ENTRY(aux_contador,aux_cdbccxlt) = "100" THEN
-									 aux_vlrtednr
-								  ELSE
-									 0)).
+  
+		RUN grava-movimentacao 
+						(INPUT par_cdcoopex,
+						INPUT par_cdoperad,
+						INPUT par_dtmvtolt,
+						INPUT 2,
+						INPUT 100,
+						INPUT 3,
+						INPUT aux_vlrtednr).
        
-		   IF RETURN-VALUE <> "OK" THEN
-			  RETURN "NOK".
-
-		END.
+		IF RETURN-VALUE <> "OK" THEN
+		   RETURN "NOK".
 
 	END.
 
