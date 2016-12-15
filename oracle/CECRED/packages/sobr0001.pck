@@ -121,7 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Sidnei - Precise
-   Data    : Abril/2008                        Ultima atualizacao: 28/07/2016
+   Data    : Abril/2008                        Ultima atualizacao: 14/12/2016
    Dados referentes ao programa:
 
    Frequencia: Anual (Batch)
@@ -220,6 +220,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                  - Fracionamento das distribuição entre CC e Cotas
                                  - Separação dos lançaemntos de DEP a Vista e a Prazo
                                  - Ajustes nos relatórios para os novos campos (Marcos-Supero)           
+
+               14/12/2016 - Adicao de funcionalidade para carregar uma pltable com
+                            contas que nao devem receber juros sobre o capital e nem
+                            retorno de sobras. No momento, necessario devido a incorporacao
+                            Transulcred -> Transpocred, posteriormente a estrutura podera 
+                            ser utilizada para outros casos de contas proibidas. (Anderson)
                             
 ............................................................................. */
 
@@ -587,6 +593,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
            AND cdagenci = pr_cdagenci;
       rw_crapage cr_crapage%ROWTYPE;
 
+      -- Cursor de contas migradas
+      CURSOR cr_craptco IS
+        SELECT nrdconta -- Conta nova na cooperativa migrada.
+          FROM craptco
+         WHERE cdcooper = 9   --Transpocred
+           and cdcopant = 17; --Transulcred
+      rw_craptco cr_craptco%ROWTYPE;
+      
+      /* Estrutura para armazenagem de contas que nao devem receber retorno de sobras 
+         e nem juros sobre o capital - Incorporacao Transulcred -> Transpocred */
+      TYPE vr_typ_cta_proibidas IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+      vr_tab_cta_proibidas vr_typ_cta_proibidas;
+      
       -- Vetor para armazenar os dados para o processo definitivo
       vr_tab_crrl048 typ_tab_crrl048;
       vr_indice      PLS_INTEGER := 0;      
@@ -847,6 +866,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         vr_tab_autoate(rw_aut.nrdconta) := rw_aut.nrsequen;
       END LOOP;
       
+      /* Carregar pltable das contas que NAO devem ter retorno de sobras e juros sobre o capital.
+         Pode ser carregado sempre que houver necessidade de ignorar algumas contas. */
+      vr_tab_cta_proibidas.delete;      
+      /* Incorporacao Transulcred -> Transpocred e ano referencia = 2016 */
+      IF (pr_cdcooper = 9) and (extract(year from vr_dtmvtaan) = 2016) THEN
+        FOR rw_craptco IN cr_craptco LOOP
+          vr_tab_cta_proibidas(rw_craptco.nrdconta) := rw_craptco.nrdconta;
+        END LOOP;
+      END IF;
+      
       -- Se haverá calculo de Juros sobre capital
       IF vr_txjurcap > 0 THEN
         -- Cursor para buscar faixa de IRRF a ser cobrada
@@ -929,6 +958,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Leitura da porção lida em memória
         FOR idx IN 1 .. vr_tab_crapcot.COUNT LOOP  
 
+          -- Verificar se a conta está na lista de contas proibidas
+          IF vr_tab_cta_proibidas.exists(vr_tab_crapcot(idx).nrdconta) THEN
+            CONTINUE;
+          END IF;
+          
           -- Garantir que haja o associado
           IF NOT vr_tab_crapass.exists(vr_tab_crapcot(idx).nrdconta) THEN
           vr_cdcritic := 251;
