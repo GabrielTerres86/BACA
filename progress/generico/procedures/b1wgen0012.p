@@ -193,6 +193,10 @@
                             nas procedures gerar_compel_prcctl, gerar_compel_dscchq,
                             gerar_compel_custodia, gerar_compel, gerar_digita e 
                             gerar_compel_altoVale (Douglas - Chamado 445731)
+
+			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
+							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
+							SD 476097. Carlos Rafael Tanholi.
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -2130,7 +2134,7 @@ PROCEDURE gerar_compel:
                          /* move para o salvar */
                          UNIX SILENT VALUE("mv " + aux_dscooper + "arq/"     +
                                            aux_nmarqdat + " " + aux_dscooper +
-                                           "salvar/" + aux_nmarqdat + "_"    +
+                                           "salvar/truncagem/" + aux_nmarqdat + "_"    +
                                            STRING(TIME,"99999")              + 
                                            " 2>/dev/null").
                                    
@@ -3327,7 +3331,7 @@ PROCEDURE gerar_compel_custodia:
                          UNIX SILENT VALUE(
                               "mv " + aux_dscooper + "arq/"     +
                               aux_nmarqdat + " " + aux_dscooper +
-                              "salvar/" + aux_nmarqdat + "_"    +
+                              "salvar/truncagem/" + aux_nmarqdat + "_"    +
                               STRING(TIME,"99999")              + 
                               " 2>/dev/null").
                 END.
@@ -3728,7 +3732,7 @@ PROCEDURE gerar_compel_dscchq:
                          UNIX SILENT VALUE(
                               "mv " + aux_dscooper + "arq/"     +
                               aux_nmarqdat + " " + aux_dscooper +
-                              "salvar/" + aux_nmarqdat + "_"    +
+                              "salvar/truncagem/" + aux_nmarqdat + "_"    +
                               STRING(TIME,"99999")              +
                               " 2>/dev/null").
                 END.
