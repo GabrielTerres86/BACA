@@ -38,8 +38,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
                             realiza_deposito_cheque              => pc_realiza_dep_cheq
                             realiza-deposito-cheque-migrado      => pc_realiz_dep_cheque_mig
                             realiza-deposito-cheque-migrado-host => pc_realiz_dep_chq_mig_host
-                            (Andre Santos - SUPERO)            
-                            
+                            (Andre Santos - SUPERO)             
+
                16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em
                             varias procedures desta package.(Carlos Rafael Tanholi).                                                             
 
@@ -199,7 +199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  
                                                                    
                  22/03/2016 - Ajuste na mensagem de alerta que identifica transferências duplicadas
-                              conforme solicitado no chamado 421403. (Kelvin)         
+                              conforme solicitado no chamado 421403. (Kelvin)                                                                   
                               
                  16/06/2016 - Correcao para o uso correto do indice da CRAPTAB em
                               varias procedures desta package.(Carlos Rafael Tanholi).       
@@ -499,7 +499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --                              de gerar o registro (Odirlei-AMcom)
   --
   --                 06/10/2015 - Ajustes para tratar insert e update na tabela craplot, diminuindo o tempo de lock
-  --                              (Odirlei-AMcom)     
+  --                              (Odirlei-AMcom)
   --
   --                 04/02/2016 - Aumento no tempo de verificacao de Transferencia duplicada. 
   --                              De 30 seg. para 10 min. (Jorge/David) - SD 397867     
@@ -2327,14 +2327,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar deposito de cheques entre cooperativas
   --  Sigla    : CRED
   --  Autor    : Andre Santos - SUPERO
-  --  Data     : Junho/2014.                   Ultima atualizacao:
+  --  Data     : Junho/2014.                   Ultima atualizacao: 14/12/2016
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : 
 
-  -- Alteracoes:
+  -- Alteracoes: 14/12/2016 - Corrigida atribuicao da variavel vr_aux_nrctachq para incorporacao (Diego).
   ---------------------------------------------------------------------------------------------------------------
   
   --Tipo de tabela para vetor literal
@@ -2523,7 +2523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
          AND mrw.vlchqifp <> 0 
          AND mrw.vlchqsfp <> 0;
   rw_verif_hora_corte cr_verif_hora_corte%ROWTYPE; 
- 
+
   /* Verifica se existe registro na CRAPLOT */
   CURSOR cr_existe_lot(p_cdcooper IN INTEGER
                       ,p_dtmvtolt IN DATE
@@ -2968,7 +2968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
      
      -- Se encontrou registro. Valida horario de Corte - Coop do Caixa
      IF vr_achou_horario_corte THEN
-  
+        
           -- Buscar configuração na tabela
           vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                    ,pr_nmsistem => 'CRED'
@@ -3119,7 +3119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
            vr_de_valor_total    := vr_de_cooperativa;           
         END IF;
      CLOSE cr_tot_chq_coop;
-                         
+     
      -- Buscar configuração na tabela
      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                               ,pr_nmsistem => 'CRED'
@@ -3127,7 +3127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                               ,pr_cdempres => 11
                                               ,pr_cdacesso => 'MAIORESCHQ'
                                               ,pr_tpregist => 1);
-                  
+            
      IF TRIM(vr_dstextab) IS NOT NULL THEN                          
             
         -- Buscar os totais de Cheques
@@ -4737,7 +4737,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                   vr_aux_inchqcop := 0;
                END IF;
                
-               IF NVL(rw_consulta_chd.insitchq,0) = 1 THEN
+               IF vr_aux_inchqcop = 1 THEN 
+                  /* cheque da cooperativa: quando for conta incorporada 
+                     e cheque talao antigo, devera atribuir a conta cheque antiga */ 
                   vr_aux_nrctachq := rw_verifica_mdw.nrctabdb;
                ELSE
                   vr_aux_nrctachq := rw_verifica_mdw.nrctachq;
@@ -5621,7 +5623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
          AND mrw.vlchqsfp <> 0;
   rw_verif_hora_corte cr_verif_hora_corte%ROWTYPE; 
 
- 
+  
   /* Verifica se existe registro na CRAPLOT */
   CURSOR cr_existe_lot(p_cdcooper IN INTEGER
                       ,p_dtmvtolt IN DATE
@@ -6112,70 +6114,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
 
         
            IF TRIM(vr_dstextab) IS NULL THEN 
-            pr_cdcritic := 676;
-            pr_dscritic := '';
+              pr_cdcritic := 676;
+              pr_dscritic := '';
               
-            cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                 ,pr_cdagenci => pr_cod_agencia
-                                 ,pr_nrdcaixa => pr_nro_caixa
-                                 ,pr_cod_erro => pr_cdcritic
-                                 ,pr_dsc_erro => pr_dscritic
-                                 ,pr_flg_erro => TRUE
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
+              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                   ,pr_cdagenci => pr_cod_agencia
+                                   ,pr_nrdcaixa => pr_nro_caixa
+                                   ,pr_cod_erro => pr_cdcritic
+                                   ,pr_dsc_erro => pr_dscritic
+                                   ,pr_flg_erro => TRUE
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
                                    
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-               pr_cdcritic := vr_cdcritic;
-               pr_dscritic := vr_dscritic;
-               RAISE vr_exc_erro;
-            END IF;
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                 pr_cdcritic := vr_cdcritic;
+                 pr_dscritic := vr_dscritic;
+                 RAISE vr_exc_erro;
+              END IF;
 
-            RAISE vr_exc_erro;
-         END IF;
+              RAISE vr_exc_erro;
+           END IF;
            
-         IF TO_NUMBER(SUBSTR(vr_dstextab,1,1)) <> 0 THEN
-            pr_cdcritic := 677;
-            pr_dscritic := '';
+           IF TO_NUMBER(SUBSTR(vr_dstextab,1,1)) <> 0 THEN
+              pr_cdcritic := 677;
+              pr_dscritic := '';
               
-            cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                 ,pr_cdagenci => pr_cod_agencia
-                                 ,pr_nrdcaixa => pr_nro_caixa
-                                 ,pr_cod_erro => pr_cdcritic
-                                 ,pr_dsc_erro => pr_dscritic
-                                 ,pr_flg_erro => TRUE
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
+              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                   ,pr_cdagenci => pr_cod_agencia
+                                   ,pr_nrdcaixa => pr_nro_caixa
+                                   ,pr_cod_erro => pr_cdcritic
+                                   ,pr_dsc_erro => pr_dscritic
+                                   ,pr_flg_erro => TRUE
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
               
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-               pr_cdcritic := vr_cdcritic;
-               pr_dscritic := vr_dscritic;
-               RAISE vr_exc_erro;
-            END IF;
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                 pr_cdcritic := vr_cdcritic;
+                 pr_dscritic := vr_dscritic;
+                 RAISE vr_exc_erro;
+              END IF;
 
-            RAISE vr_exc_erro;
-         END IF;
+              RAISE vr_exc_erro;
+           END IF;
            
-         IF TO_NUMBER(SUBSTR(vr_dstextab,3,5)) <= TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) THEN
-            pr_cdcritic := 676;
-            pr_dscritic := '';
+           IF TO_NUMBER(SUBSTR(vr_dstextab,3,5)) <= TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) THEN
+              pr_cdcritic := 676;
+              pr_dscritic := '';
               
-            cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                 ,pr_cdagenci => pr_cod_agencia
-                                 ,pr_nrdcaixa => pr_nro_caixa
-                                 ,pr_cod_erro => pr_cdcritic
-                                 ,pr_dsc_erro => pr_dscritic
-                                 ,pr_flg_erro => TRUE
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
+              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                   ,pr_cdagenci => pr_cod_agencia
+                                   ,pr_nrdcaixa => pr_nro_caixa
+                                   ,pr_cod_erro => pr_cdcritic
+                                   ,pr_dsc_erro => pr_dscritic
+                                   ,pr_flg_erro => TRUE
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
               
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-               pr_cdcritic := vr_cdcritic;
-               pr_dscritic := vr_dscritic;
-               RAISE vr_exc_erro;
-            END IF;
+              IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                 pr_cdcritic := vr_cdcritic;
+                 pr_dscritic := vr_dscritic;
+                 RAISE vr_exc_erro;
+              END IF;
 
-            RAISE vr_exc_erro;
-         END IF;
+              RAISE vr_exc_erro;
+           END IF;
            
      END IF; -- Verifica Horario de Corte
      
@@ -6262,58 +6264,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                ,pr_cdacesso => 'MAIORESCHQ'
                                                ,pr_tpregist => 1);                                                     
      
-      -- Buscar os totais de Cheques
-      FOR rw_verifica_mdw IN cr_verifica_mdw(rw_cod_coop_orig.cdcooper
-                                            ,pr_cod_agencia
-                                            ,pr_nro_caixa) LOOP
+        -- Buscar os totais de Cheques
+        FOR rw_verifica_mdw IN cr_verifica_mdw(rw_cod_coop_orig.cdcooper
+                                              ,pr_cod_agencia
+                                              ,pr_nro_caixa) LOOP
             
-         -- Montar chave de busca
-         vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
-                      TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
+           -- Montar chave de busca
+           vr_index :=  TO_CHAR(rw_verifica_mdw.dtlibcom,'DD/MM/RRRR')||
+                        TO_CHAR(LPAD(rw_verifica_mdw.nrdocmto,10,0));
            
-         -- Se a chave ainda não existir
-         IF pr_typ_tab_chq.count = 0 OR NOT pr_typ_tab_chq.exists(vr_index) THEN
-           pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
-         END IF;
+           -- Se a chave ainda não existir
+           IF pr_typ_tab_chq.count = 0 OR NOT pr_typ_tab_chq.exists(vr_index) THEN
+             pr_typ_tab_chq(vr_index).vlcompel := 0; -- Inicializa o campo de valor
+           END IF;
 
-         -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
-         IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
-            vr_tpdmovto := 2;             
-         ELSE
-            vr_tpdmovto := 1;
-         END IF;
+           -- Define o tipo do docmto (1-Menor Praca-Maior/2-Praca,1-Menor Fora Praca/2-Maior Fora Praca)
+           IF rw_verifica_mdw.vlcompel < TO_NUMBER(SUBSTR(vr_dstextab,1,15)) THEN               
+              vr_tpdmovto := 2;             
+           ELSE
+              vr_tpdmovto := 1;
+           END IF;
             
-          IF rw_verifica_mdw.cdhistor = 3 THEN -- Praca
-             IF vr_tpdmovto = 2 THEN -- Menor Praca
-                pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                pr_typ_tab_chq(vr_index).nrdocmto := 3;
-                vr_de_menor_praca                 := vr_de_menor_praca + rw_verifica_mdw.vlcompel;
-             ELSE -- Maior Praca
-                pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                pr_typ_tab_chq(vr_index).nrdocmto := 4;
-                vr_de_maior_praca                 := vr_de_maior_praca + rw_verifica_mdw.vlcompel;
-             END IF;                 
-          ELSE -- Fora Praca
-             IF rw_verifica_mdw.cdhistor = 4 THEN
-                IF vr_tpdmovto = 2 THEN -- Menor Fora Praca
-                   pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                   pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                   pr_typ_tab_chq(vr_index).nrdocmto := 5;
-                   vr_de_menor_fpraca                := vr_de_menor_fpraca + rw_verifica_mdw.vlcompel;
-                ELSE -- Maior Fora Praca
-                   pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
-                   pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
-                   pr_typ_tab_chq(vr_index).nrdocmto := 6;
-                   vr_de_maior_fpraca                := vr_de_maior_fpraca + rw_verifica_mdw.vlcompel;
-                END IF;  
-             END IF;
-          END IF;                                                   
+            IF rw_verifica_mdw.cdhistor = 3 THEN -- Praca
+               IF vr_tpdmovto = 2 THEN -- Menor Praca
+                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+                  pr_typ_tab_chq(vr_index).nrdocmto := 3;
+                  vr_de_menor_praca                 := vr_de_menor_praca + rw_verifica_mdw.vlcompel;
+               ELSE -- Maior Praca
+                  pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+                  pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+                  pr_typ_tab_chq(vr_index).nrdocmto := 4;
+                  vr_de_maior_praca                 := vr_de_maior_praca + rw_verifica_mdw.vlcompel;
+               END IF;                 
+            ELSE -- Fora Praca
+               IF rw_verifica_mdw.cdhistor = 4 THEN
+                  IF vr_tpdmovto = 2 THEN -- Menor Fora Praca
+                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+                     pr_typ_tab_chq(vr_index).nrdocmto := 5;
+                     vr_de_menor_fpraca                := vr_de_menor_fpraca + rw_verifica_mdw.vlcompel;
+                  ELSE -- Maior Fora Praca
+                     pr_typ_tab_chq(vr_index).dtlibcom := rw_verifica_mdw.dtlibcom;
+                     pr_typ_tab_chq(vr_index).vlcompel := pr_typ_tab_chq(vr_index).vlcompel + rw_verifica_mdw.vlcompel;
+                     pr_typ_tab_chq(vr_index).nrdocmto := 6;
+                     vr_de_maior_fpraca                := vr_de_maior_fpraca + rw_verifica_mdw.vlcompel;
+                  END IF;  
+               END IF;
+            END IF;                                                   
                                                                                                                  
-      END LOOP;
-      -- Fim da montagem do Resumo
-     
+        END LOOP;
+        -- Fim da montagem do Resumo
+          
      vr_de_valor_total := vr_de_valor_total
                         + vr_de_menor_fpraca + vr_de_menor_praca
                         + vr_de_maior_fpraca + vr_de_maior_praca;
@@ -9441,7 +9443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                  ,pr_cdempres => 0
                                                  ,pr_cdacesso => 'HRTRCOMPEL'
                                                  ,pr_tpregist => pr_cod_agencia);                            
-
+        
            IF TRIM(vr_dstextab) IS NULL THEN 
               pr_cdcritic := 676;
               pr_dscritic := '';
@@ -9646,7 +9648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                                                                                  
         END LOOP;
         -- Fim da montagem do Resumo
-     
+          
      vr_de_valor_total := vr_de_valor_total
                         + vr_de_menor_fpraca + vr_de_menor_praca
                         + vr_de_maior_fpraca + vr_de_maior_praca;

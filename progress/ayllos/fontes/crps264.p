@@ -195,6 +195,8 @@
               
               28/11/2016 - Alterar parametro da busca da tabela crapcst que estava errado 
                            (Lucas Ranghetti/Elton)
+
+			  02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
                            
               05/12/2016 - Ajuste para criar lançamento com o historico 399 para a Diurna e Noturna.
                            Também validar alinea 35 - Melhoria 69 (Lucas Ranghetti/Elton)
@@ -515,80 +517,80 @@ PROCEDURE gera_lancamento:
         /* Se conta for maior que zero */
         IF  crapdev.nrdconta > 0 THEN
             DO:
-                FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper AND
-                                         crapass.nrdconta = crapdev.nrdconta
-                                         NO-LOCK NO-ERROR.
-         
-                IF  NOT AVAILABLE crapass THEN
-                    DO:
-                        glb_cdcritic = 251.
-                        RUN fontes/critic.p. 
-                        UNIX SILENT VALUE
-                                 ("echo " + STRING(TIME,"HH:MM:SS") +
-                                 " - " + glb_cdprogra + "' --> '"  +
-                                 "Coop: "  + STRING(crapdev.cdcooper) +
-                                 "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
-                                 glb_dscritic + 
-                                 " >> log/proc_message.log").
+        FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper AND
+                                 crapass.nrdconta = crapdev.nrdconta
+                                 NO-LOCK NO-ERROR.
 
-                        IF  VALID-HANDLE(h-b1wgen0153) THEN
-                            DELETE OBJECT h-b1wgen0153.
+        IF  NOT AVAILABLE crapass THEN
+            DO:
+                glb_cdcritic = 251.
+                RUN fontes/critic.p. 
+                UNIX SILENT VALUE
+                         ("echo " + STRING(TIME,"HH:MM:SS") +
+                         " - " + glb_cdprogra + "' --> '"  +
+                         "Coop: "  + STRING(crapdev.cdcooper) +
+                         "Conta: " + STRING(crapdev.nrdconta,"zzzz,zz9,9") +
+                         glb_dscritic + 
+                         " >> log/proc_message.log").
 
-                        UNDO TRANS_1, RETURN "NOK".
-                    END.
+                IF  VALID-HANDLE(h-b1wgen0153) THEN
+                    DELETE OBJECT h-b1wgen0153.
 
-                ASSIGN glb_cdcritic = 0    
-                       glb_inrestar = 0
-                       aux_nrdconta_tco = 0
-                       aux_cdagectl = 0
-                       aux_cdcopant = 0.
-                    
-                IF  crapdev.cdpesqui = "TCO" THEN
-                    DO:
-                        FIND craptco WHERE craptco.cdcopant = p-cdcooper       AND
-                                           craptco.nrctaant = crapdev.nrdconta AND
-                                           craptco.tpctatrf = 1                AND
-                                           craptco.flgativo = TRUE
-                                           NO-LOCK NO-ERROR.
-                                                
-                        IF   AVAILABLE craptco THEN
-                             ASSIGN aux_cdcooper = craptco.cdcooper
-                                    aux_nrdconta = craptco.nrdconta
-                                    aux_nrctalcm = craptco.nrdconta.
-                        ELSE
-                             ASSIGN aux_cdcooper = p-cdcooper
-                                    aux_nrdconta = crapdev.nrdconta
-                                    aux_nrctalcm = crapdev.nrdctabb.
-                    END.
+                UNDO TRANS_1, RETURN "NOK".
+            END.
+
+        ASSIGN glb_cdcritic = 0    
+               glb_inrestar = 0
+               aux_nrdconta_tco = 0
+               aux_cdagectl = 0
+               aux_cdcopant = 0.
+            
+        IF  crapdev.cdpesqui = "TCO" THEN
+            DO:
+                FIND craptco WHERE craptco.cdcopant = p-cdcooper       AND
+                                   craptco.nrctaant = crapdev.nrdconta AND
+                                   craptco.tpctatrf = 1                AND
+                                   craptco.flgativo = TRUE
+                                   NO-LOCK NO-ERROR.
+                                        
+                IF   AVAILABLE craptco THEN
+                     ASSIGN aux_cdcooper = craptco.cdcooper
+                            aux_nrdconta = craptco.nrdconta
+                            aux_nrctalcm = craptco.nrdconta.
                 ELSE
-                DO:
+                     ASSIGN aux_cdcooper = p-cdcooper
+                            aux_nrdconta = crapdev.nrdconta
+                            aux_nrctalcm = crapdev.nrdctabb.
+            END.
+        ELSE
+        DO:
 
-                    ASSIGN aux_cdcooper = p-cdcooper
-                           aux_nrdconta = crapdev.nrdconta
-                           aux_nrctalcm = crapdev.nrdctabb.
+            ASSIGN aux_cdcooper = p-cdcooper
+                   aux_nrdconta = crapdev.nrdconta
+                   aux_nrctalcm = crapdev.nrdctabb.
 
-                    /* VIACON - Se for conta migrada das cooperativas 4 ou 15 devera
-                    tratar aux_nrctalcm para receber a nova conta. O campo
-                    crapdev.nrdctabb contem o numero da conta cheque */ 
-                    IF p-cdcooper = 1 OR     /* Viacredi */
-                       p-cdcooper = 13 THEN  /* Scrcred  */
-                    DO:
+            /* VIACON - Se for conta migrada das cooperativas 4 ou 15 devera
+            tratar aux_nrctalcm para receber a nova conta. O campo
+            crapdev.nrdctabb contem o numero da conta cheque */ 
+            IF  p-cdcooper = 1  OR    /* Viacredi    */
+                p-cdcooper = 13 OR    /* Scrcred     */
+                p-cdcooper = 9  THEN  /* Transulcred */ DO:
 
-                        RUN verifica_incorporacao(INPUT  p-cdcooper,
-                                                  INPUT  crapdev.nrdconta,
-                                                  INPUT  crapdev.nrcheque,
-                                                  OUTPUT aux_cdcopant,
-                                                  OUTPUT aux_nrdconta_tco,
-                                                  OUTPUT aux_cdagectl).
+                RUN verifica_incorporacao(INPUT  p-cdcooper,
+                                          INPUT  crapdev.nrdconta,
+                                          INPUT  crapdev.nrcheque,
+                                          OUTPUT aux_cdcopant,
+                                          OUTPUT aux_nrdconta_tco,
+                                          OUTPUT aux_cdagectl).
 
-                        /* Se aux_nrdconta_tco > 0 eh incorporacao */
-                        IF aux_nrdconta_tco > 0 THEN
-                            ASSIGN aux_nrctalcm = crapdev.nrdconta. 
-                       
-                    END.
-                        
-                END.
+                /* Se aux_nrdconta_tco > 0 eh incorporacao */
+                IF aux_nrdconta_tco > 0 THEN
+                    ASSIGN aux_nrctalcm = crapdev.nrdconta. 
+               
+            END.
                 
+        END.
+
                 
                 
                 IF  crapass.inpessoa = 1 THEN
@@ -1099,7 +1101,7 @@ PROCEDURE gera_lancamento:
                                   END.
                            END. /*fim do if taxa bacen*/
                      END. /* Fim do historico 46 */
-                
+            
                 ASSIGN crapdev.insitdev = 1 /* 1 = devolvido */
                        crapdev.indctitg = IF   p-cddevolu = 3 THEN  /*  CONTA ITG  */
                                                TRUE
@@ -1109,8 +1111,8 @@ PROCEDURE gera_lancamento:
                    caso seja devmos criar outro com o 399 - DEVOLUCAO DE CHEQUE DESCONTADO */
                 IF  crapdev.cdhistor = 47 AND 
                    (p-cddevolu = 5 OR p-cddevolu = 6) THEN
-                    DO:
-                    
+                    DO:                     
+                       
                        FIND CURRENT craplot NO-LOCK NO-ERROR.                        
                        RELEASE craplot.
                        
@@ -1369,10 +1371,10 @@ PROCEDURE gera_lancamento:
                                   END.
                            END.
                     END. /* crapdev.cdhistor = 47 */
-                
-                IF   crapdev.cdpesqui = "TCO" THEN
-                     ASSIGN aux_cdcooper = p-cdcooper
-                            aux_nrdconta = crapdev.nrdconta.
+        
+        IF   crapdev.cdpesqui = "TCO" THEN
+             ASSIGN aux_cdcooper = p-cdcooper
+                    aux_nrdconta = crapdev.nrdconta.
             END.
         ELSE /* Conta = 0 */
             DO:                  
@@ -1393,7 +1395,7 @@ PROCEDURE gera_lancamento:
                             IF  crapdev.cdbanchq <> crapcop.cdbcoctl THEN
                                 NEXT.    
                     END.
-              
+        
                 /* Verificar se alinea do cheque devolvido é 35 */
                 IF  crapdev.cdalinea = 35 THEN
                     ASSIGN crapdev.insitdev = 1
@@ -2476,9 +2478,9 @@ PROCEDURE gera_arquivo_cecred:
 
        END.
 
-       IF p-cdcooper = 1 OR     /* Viacredi */
-          p-cdcooper = 13 THEN  /* Scrcred  */
-       DO:
+       IF  p-cdcooper = 1  OR    /* Viacredi    */
+           p-cdcooper = 13 OR    /* Scrcred     */
+           p-cdcooper = 9  THEN  /* Transulcred */ DO:
 
             RUN verifica_incorporacao(INPUT  p-cdcooper,
                                       INPUT  crapdev.nrdconta,
@@ -2486,7 +2488,6 @@ PROCEDURE gera_arquivo_cecred:
                                       OUTPUT aux_cdcopant,
                                       OUTPUT aux_nrdconta_tco,
                                       OUTPUT aux_cdagectl).
-
         END.
 
 
@@ -3882,20 +3883,24 @@ PROCEDURE verifica_incorporacao:
                        craptco.flgativo = TRUE
                        NO-LOCK NO-ERROR.
 
-    IF AVAILABLE craptco THEN 
-    DO:
+    IF  AVAILABLE craptco THEN DO:
 
-        IF par_cdcooper = 1 THEN
-            aux_cdagechq = 103.
-        ELSE
-            aux_cdagechq = 114.
+        CASE par_cdcooper:
+            WHEN 1  THEN            /* VIACREDI       */
+               aux_cdagechq = 103.  /* -> CONCREDI    */
+            WHEN 13 THEN            /* SCRCRED        */
+               aux_cdagechq = 114.  /* -> CREDIMILSUL */
+            WHEN 9  THEN            /* TRANSPOCRED    */
+               aux_cdagechq = 116.  /* -> TRANSULCRED */
+        END CASE.
 
-
-        FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper      AND
-                           crapfdc.cdbanchq = 085               AND
-                           crapfdc.cdagechq = aux_cdagechq      AND 
-                           crapfdc.nrctachq = craptco.nrctaant  AND
-                           crapfdc.nrcheque = INT(SUBSTR(STRING(par_nrcheque,"9999999"),1,6))
+        FIND FIRST crapfdc
+             WHERE crapfdc.cdcooper = par_cdcooper
+               AND crapfdc.cdbanchq = 085
+               AND crapfdc.cdagechq = aux_cdagechq
+               AND crapfdc.nrctachq = craptco.nrctaant
+               AND crapfdc.nrcheque = INT(SUBSTR
+                                        (STRING(par_nrcheque,"9999999"),1,6))
                            USE-INDEX crapfdc1
                            NO-LOCK NO-ERROR NO-WAIT.
 
