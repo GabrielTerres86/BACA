@@ -1726,7 +1726,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            END LOOP;
 
            -- Se possuir conteudo de critica no CLOB
-           IF LENGTH(vr_clobcri) = 0 THEN
+           IF LENGTH(vr_clobcri) > 0 THEN
              -- Busca o diretório para contabilidade
              vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
              vr_dircon := vr_dircon || vc_dircon;
