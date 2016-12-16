@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 05/12/2016
+    Data    : Marco/07.                       Ultima atualizacao: 16/12/2016
     
     Dados referentes ao programa:
 
@@ -196,10 +196,13 @@
               28/11/2016 - Alterar parametro da busca da tabela crapcst que estava errado 
                            (Lucas Ranghetti/Elton)
 
-			  02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+			        02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
                            
               05/12/2016 - Ajuste para criar lançamento com o historico 399 para a Diurna e Noturna.
                            Também validar alinea 35 - Melhoria 69 (Lucas Ranghetti/Elton)
+                           
+              16/12/2016 - Substituido o histórico 399 pelo 351 na devoluçao de 
+                           cheques de custódia para a conta do beneficiario (Elton).             
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -1258,7 +1261,7 @@ PROCEDURE gera_lancamento:
                         
                               IF  AVAILABLE crapcst THEN
                                   DO:
-                                      /* criar lancamento com o historico 399 e historico 10119 */
+                                      /* criar lancamento com o historico 351 e lote 10119 */
                                       DO  WHILE TRUE:
                                 
                                           FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
@@ -1347,7 +1350,7 @@ PROCEDURE gera_lancamento:
                                              craplcm.nrdconta = crapcst.nrdconta
                                              craplcm.nrdctabb = aux_nrctalcm
                                              craplcm.nrdocmto = crapcst.nrcheque
-                                             craplcm.cdhistor = 399
+                                             craplcm.cdhistor = 351  
                                              craplcm.nrseqdig = craplot.nrseqdig + 1
                                              craplcm.vllanmto = crapdev.vllanmto
                                              craplcm.cdoperad = crapdev.cdoperad
