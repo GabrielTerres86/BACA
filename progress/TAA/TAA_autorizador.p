@@ -274,6 +274,10 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          pr_dshistor na rotina pc_cadastrar_agendamento e
                          pc_agendamento_recorrente (Carlos)
 
+            02/08/2016 - Tratada procedure 'obtem_tarifa_extrato' para nao validar
+                         extratos isentos da cooperativa quando o cooperado possuir
+                         o servico "extrato" no pacote de tarifas (Diego).
+
             04/11/2016 - M172 - Atualizacao Telefone - Nova operacao 64/65/66
                          (Guilherme/SUPERO)
 
@@ -975,7 +979,7 @@ DO:
                  RUN verifica_cartao.
 
                  IF   RETURN-VALUE = "NOK"   THEN
-~                      NEXT.
+                      NEXT.
              END.
         ELSE
         IF   aux_operacao = 2  THEN
@@ -1756,7 +1760,7 @@ PROCEDURE verifica_cartao:
 
 
     /* ---------- */
-    xDoc:~CREATE-NODE(xField,"CDCOOPER","ELEMENT").
+    xDoc:CREATE-NODE(xField,"CDCOOPER","ELEMENT").
     xRoot:APPEND-CHILD(xField).
 
     xDoc:CREATE-NODE(xText,"","TEXT").
