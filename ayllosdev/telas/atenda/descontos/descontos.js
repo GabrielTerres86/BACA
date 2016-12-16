@@ -20,6 +20,8 @@
              20/06/2016 - Inclusao da divRestricoes/divRestricoesTit para
                           formatacao da tabela. (Jaison/James)
 			
+             25/07/2016 - Adicionado função controlaFoco.(Evandro - RKAM).			 
+
 			 06/09/2016 - Inclusao do botão "Renovação" para renovação do limite 
 						  de desconto de cheque. Projeto 300. (Lombardi)
 			
@@ -71,6 +73,25 @@ function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {
 			$("#divOpcoesDaOpcao"+i).css("display",(mostrar == i ? "block" : "none"));			
 		}
 	}
+}
+
+//Função para controle de navegação
+function controlaFoco() {
+    $('#divConteudoOpcao').each(function () {
+        $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
+        $(this).find("#divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
+        $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
+
+        //Se estiver com foco na classe FluxoNavega
+        $(".FluxoNavega").focus(function () {
+            $(this).bind('keydown', function (e) {
+                if (e.keyCode == 13) {
+                    $(this).click();
+                }
+            });
+        });
+    });
+    $(".FirstInputModal").focus();
 }
 
 // Função para mostrar div com formulário de dados para digitação ou consulta
