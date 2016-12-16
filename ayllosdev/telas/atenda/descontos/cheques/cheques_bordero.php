@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_bordero.php                                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 02/01/2015
+	 Data : Novembro/2008                Última Alteração: 16/12/2016 
 	                                                                  
 	 Objetivo  : Mostrar opcao Borderos de descontos de cheques        
 	                                                                  	 
@@ -14,6 +14,8 @@
 				 10/08/2012 - Substituição do botão ANALISE por PRE-ANALISE (Lucas)
 				 
 				 02/01/2015 - Ajuste format nrborder. (Chamado 181988) - (Fabricio)
+
+				 16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
 				 
 	************************************************************************/
 	
@@ -99,13 +101,14 @@
 					<th>Qt.Chqs</th>
 					<th>Valor</th>
 					<th>Situa&ccedil;&atilde;o</th>
+					<th>Data Libera&ccedil;&atilde;o</th>
 				</tr>			
 			</thead>
 			<tbody>
 				<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
 						$cor = "";
 						
-						$mtdClick = "selecionaBorderoCheques('".($i + 1)."','".$qtBorderos."','".$borderos[$i]->tags[1]->cdata."','".$borderos[$i]->tags[2]->cdata."');";
+						$mtdClick = "selecionaBorderoCheques('".($i + 1)."','".$qtBorderos."','".$borderos[$i]->tags[1]->cdata."','".$borderos[$i]->tags[2]->cdata."','".$borderos[$i]->tags[7]->cdata."');";
 					?>
 					<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 					
@@ -124,6 +127,7 @@
 							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
 						
 						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
+						<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
 					</tr>							
 				<?} // Fim do for ?>			
 			</tbody>
@@ -140,12 +144,15 @@
 ?>
 
 <div id="divBotoes" >
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;" />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/pre-analise.gif"  <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostraDadosBorderoDscChq(\'N\');return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/consultar.gif" <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscChq(\'C\');return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/excluir.gif"   <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscChq(\'E\');return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/imprimir.gif"  <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
-	<input type="image" src="<? echo $UrlImagens; ?>botoes/liberar.gif"   <? if ($qtBorderos == 0) { echo 'style="cursor:default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostraDadosBorderoDscChq(\'L\');return false;"'; } ?> />
+	<a href="#" class="botao" id="btVoltar" onclick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;">Voltar</a>
+	<a href="#" class="botao" id="btIncluir" onclick="mostraFormIABordero('I');">Incluir</a>
+	<a href="#" class="botao" id="btConsultar" <? if ($qtBorderos == 0) { echo 'style="'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscChq(\'C\');return false;"'; } ?>>Consultar</a>
+	<a href="#" class="botao" id="btAlterar" onclick="mostraFormIABordero('A');">Alterar</a>
+	<a href="#" class="botao" id="btExcluir"   <? if ($qtBorderos == 0) { echo 'style="'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscChq(\'E\');return false;"'; } ?>>Excluir</a>
+	<a href="#" class="botao" id="btAnalisar" onclick="mostraFormAnaliseBordero();return false;" >Analisar</a>
+	<a href="#" class="botao" id="btImprimir"  <? if ($qtBorderos == 0) { echo 'style="'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?>>Imprimir</a>
+	<a href="#" class="botao" id="btLiberar" onclick="verificaAssinaturaBordero(); return false;" >Liberar</a>
+	<a href="#" class="botao" id="btResgatar" onclick="mostraFormResgate(); return false;">Resgatar</a>
 </div>
 
 <script type="text/javascript">

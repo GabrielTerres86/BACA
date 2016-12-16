@@ -410,7 +410,7 @@ PROCEDURE busca_parametros_dscchq:
               tt-dados_dscchq.qtdiavig = INTEGER(ENTRY(3,craptab.dstextab," ")) 
 
               tt-dados_dscchq.qtrenova = craprli.qtmaxren
-
+              
               tt-dados_dscchq.qtprzmin = DECIMAL(ENTRY( 4,craptab.dstextab," "))
               tt-dados_dscchq.qtprzmax = DECIMAL(ENTRY( 5,craptab.dstextab," "))
               tt-dados_dscchq.pcdmulta = DECIMAL(ENTRY( 7,craptab.dstextab," "))
@@ -9318,12 +9318,14 @@ PROCEDURE busca_borderos:
                                             "EM ESTUDO"
                                          ELSE 
                                          IF crapbdc.insitbdc = 2 THEN
-                                            "ANALISADO"
+                                            "ANALISE"
                                          ELSE 
                                          IF crapbdc.insitbdc = 3 THEN
                                             "LIBERADO"
                                          ELSE
-                                            STRING(crapbdc.insitbdc) + "DEVOLVIDO".
+                                            STRING(crapbdc.insitbdc) + "DEVOLVIDO"
+               tt-bordero_chq.nrdolote = crapbdc.nrdolote
+               tt-bordero_chq.dtlibbdc = crapbdc.dtlibbdc.
     
     END.  /*  Fim da leitura do crapbdc  */
     

@@ -1726,12 +1726,19 @@ PROCEDURE consulta_cheques_custodia:
     DEFINE INPUT  PARAMETER par_cdagenci AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdcaixa AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrdconta AS INTEGER     NO-UNDO.
-    DEFINE INPUT  PARAMETER par_tpcheque AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtmvtoan AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtcusini AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtcusfim AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_tpcheque AS INTEGER     NO-UNDO.    
+    DEFINE INPUT  PARAMETER par_nrdolote AS INTEGER     NO-UNDO.    
     DEFINE INPUT  PARAMETER par_dtlibini AS DATE        NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtlibfim AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dsdocmc7 AS CHAR        NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-crapcst.
+
+    DEF VAR aux_query AS CHAR                           NO-UNDO.
+    DEF QUERY q_crapcst FOR crapcst.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-crapcst.
@@ -1758,19 +1765,54 @@ PROCEDURE consulta_cheques_custodia:
 
         END.
 
-    FOR EACH crapcst WHERE 
-             (crapcst.cdcooper =  par_cdcooper   AND
-              crapcst.nrdconta =  par_nrdconta   AND
-              crapcst.dtlibera >  par_dtmvtoan   AND
-               par_dtlibini = ?)   OR
-             (crapcst.cdcooper =  par_cdcooper   AND
-              crapcst.nrdconta =  par_nrdconta   AND
-              crapcst.dtlibera >=  par_dtlibini  AND
-              crapcst.dtlibera <=  par_dtlibfim  AND  
-               par_dtlibini <> ?)   NO-LOCK:
+    ASSIGN aux_query = "FOR EACH crapcst WHERE crapcst.cdcooper = " + STRING(par_cdcooper).
+    
+
+    IF par_nrdconta > 0 THEN
+      ASSIGN aux_query = aux_query + " AND " +
+                         "crapcst.nrdconta = " + STRING(par_nrdconta).                         
+                       
+    IF par_dtlibini = ? THEN
+      ASSIGN aux_query = aux_query + " AND " +
+                         "crapcst.dtlibera > " + STRING(par_dtmvtoan).
+    ELSE
+      ASSIGN aux_query = aux_query + " AND " +
+                         "crapcst.dtlibera >= " + STRING(par_dtlibini) + " AND " + 
+                         "crapcst.dtlibera <= " + STRING(par_dtlibfim).
+                         
+    IF par_cdagenci <> ? AND par_cdagenci <> 0 THEN
+      ASSIGN aux_query = aux_query + " AND " +
+                       "crapcst.cdagenci = " + STRING(par_cdagenci).
+                       
+    IF par_nrdolote <> ? AND par_nrdolote <> 0 THEN
+      ASSIGN aux_query = aux_query + " AND " +
+                       "crapcst.nrdolote = " + STRING(par_nrdolote).                           
+                       
+    IF par_dtcusini <> ? THEN
+      ASSIGN aux_query = aux_query + " AND " +
+                       "crapcst.dtmvtolt >= " + STRING(par_dtcusini).
+
+    IF par_dtcusfim <> ? THEN
+      ASSIGN aux_query = aux_query + " AND " +
+                       "crapcst.dtmvtolt <= " + STRING(par_dtcusfim).
+
+    IF par_dsdocmc7 <> ? AND par_dsdocmc7 <> "" THEN
+      ASSIGN aux_query = aux_query + " AND " +
+                       "crapcst.dsdocmc7 = """ + 
+                       STRING(par_dsdocmc7, "<99999999<9999999999>999999999999:") + """".
+                           
+    QUERY q_crapcst:QUERY-PREPARE(aux_query).
+    QUERY q_crapcst:QUERY-OPEN().
+
+    GET FIRST q_crapcst NO-LOCK.
+    
+    REPEAT:
+    
+      IF QUERY q_crapcst:QUERY-OFF-END THEN LEAVE.
 
         IF   par_tpcheque = 1 THEN
              DO:
+
                  IF   crapcst.dtdevolu <> ?  AND
                       crapcst.insitchq  = 1  THEN
                       DO:
@@ -1779,8 +1821,11 @@ PROCEDURE consulta_cheques_custodia:
                           ASSIGN tt-crapcst.tpdevolu = "Resgat".
                       END.
                  ELSE
+                   DO:                          
+                     QUERY q_crapcst:GET-NEXT().
                       NEXT.
              END.
+           END.
        ELSE
              IF    par_tpcheque = 2 THEN
                    DO:
@@ -1792,8 +1837,11 @@ PROCEDURE consulta_cheques_custodia:
                                ASSIGN tt-crapcst.tpdevolu = "Descon".
                            END.
                        ELSE
+                         DO:                          
+                           QUERY q_crapcst:GET-NEXT().
                            NEXT.
                    END.
+                 END.
        ELSE
              IF    par_tpcheque = 3 THEN
                    DO:
@@ -1804,8 +1852,11 @@ PROCEDURE consulta_cheques_custodia:
                                ASSIGN tt-crapcst.tpdevolu = "Custod".
                            END.
                        ELSE
+                        DO:                          
+                          QUERY q_crapcst:GET-NEXT().
                            NEXT.
                    END.
+                 END.
        ELSE 
              IF    par_tpcheque = 4 THEN
                    DO:
@@ -1823,7 +1874,11 @@ PROCEDURE consulta_cheques_custodia:
                            ASSIGN tt-crapcst.tpdevolu = "Custod".
                    END.
 
-    END.  /*  Fim do FOR EACH  */
+      QUERY q_crapcst:GET-NEXT().
+
+    END.  /*  Fim da query crapcst */
+    
+    QUERY q_crapcst:QUERY-CLOSE().
 
     IF   NOT CAN-FIND(FIRST tt-crapcst)   THEN
          DO:
@@ -2696,7 +2751,7 @@ PROCEDURE valida_limites_desconto:
                             INPUT-OUTPUT aux_dscritic).
              RETURN "NOK".
          END.
-    
+
     /*Antigo DECIMAL(SUBSTRING(craptab.dstextab,22,03))*/
     ASSIGN tab_qtprzmin = DECIMAL(ENTRY(4,craptab.dstextab," "))
            par_dtlibera = par_dtmvtolt + tab_qtprzmin + 1.
@@ -2764,7 +2819,7 @@ PROCEDURE valida_dados_desconto:
       DO: 
          ASSIGN aux_cdacesso = "LIMDESCONTPJ".
       END.
-    
+         
     FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
                        craptab.nmsistem = "CRED"       AND
                        craptab.tptabela = "USUARI"     AND
@@ -2805,7 +2860,7 @@ PROCEDURE valida_dados_desconto:
                             INPUT-OUTPUT aux_dscritic).
              RETURN "NOK".
          END.
-       
+         
          
     ASSIGN tab_qtrenova = craprli.qtmaxren
            tab_qtprzmin = DECIMAL(ENTRY(4,craptab.dstextab," "))

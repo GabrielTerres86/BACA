@@ -43,7 +43,7 @@
                21/06/2016 - Criacao do campo dsopecoo na tt-dscchq_dados_bordero,
                             campos flaprcoo e dsdetres na tt-dscchq_bordero_restricoes
                             e dsopecoo na tt-dados_chqs_bordero. (Jaison/James)
-
+                            
                05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
                             Projeto 300. (Lombardi)
                             
@@ -51,7 +51,7 @@
                             Projeto 300. (Lombardi)
                             
                12/09/2016 - Criacao do campo insitlim na tt-limite_chq
-                            Projeto 300. (Lombardi) 
+                            Projeto 300. (Lombardi)
 
 ..............................................................................*/
 
@@ -256,7 +256,9 @@ DEF TEMP-TABLE tt-bordero_chq NO-UNDO
     FIELD qtcompln AS INTE
     FIELD vlcompcr AS DECI
     FIELD dssitbdc AS CHAR
-    FIELD nrrecid  AS INTE.    
+    FIELD nrrecid  AS INTE
+    FIELD nrdolote LIKE crapbdc.nrdolote
+    FIELD dtlibbdc LIKE crapbdc.dtlibbdc.    
     
 DEF TEMP-TABLE tt-dscchq_dados_bordero NO-UNDO
     FIELD nrborder AS INTE

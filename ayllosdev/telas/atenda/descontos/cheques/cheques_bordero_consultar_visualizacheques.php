@@ -3,11 +3,13 @@
 	/************************************************************************
 	 Fonte: cheques_bordero_consultar_visualizacheques.php                                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 12/07/2011
+	 Data : Novembro/2008                Última Alteração: 16/12/2016 
 	                                                                  
 	 Objetivo  : Visualizar os cheques de um Borderos de descontos de cheques        
 	                                                                  	 
 	 Alterações: 12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
+
+				 16/12/2016 - Alterações referente ao projeto 300. (Reinert)
 	************************************************************************/
 	
 	session_start();
@@ -85,7 +87,7 @@
 	
 ?>
 
-<div id="divCheques" style="overflow-y: scroll; overflow-x: scroll; height: 150px; width: 470px;">
+<div id="divCheques" style="overflow-y: scroll; height: 250px; width: 885px;">
 	<table width="860px" border="0" cellpadding="1" cellspacing="2">
 		
 		<thead>
@@ -187,6 +189,7 @@ $("#tdTitRotina").html("CONSULTA DE CHEQUES DO BORDER&Ocirc;");
 // Esconde mensagem de aguardo
 hideMsgAguardo();
 
+ajustarCentralizacao();
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 </script>
