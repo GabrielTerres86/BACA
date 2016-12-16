@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 16/02/2016
+   Data    : Marco/2007                        Ultima atualizacao: 11/10/2016
 
    Dados referentes ao programa:
 
@@ -41,6 +41,9 @@
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
 
                16/02/2016 - Criacao do campo flprotes no XML. (Jaison/Marcos)
+
+               11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
+                            PRJ319 - SMS Cobrança(Odirlei-AMcom)
 
 ..............................................................................*/
     
@@ -306,6 +309,8 @@ IF  AVAILABLE tt-dados-blt  THEN
                                        "<valormin>" + STRING(tt-dados-blt.valormin) + "</valormin>" +
                                        "<textodia>" + STRING(tt-dados-blt.textodia) + "</textodia>" +
                                        "<flprotes>" + STRING(tt-dados-blt.flprotes) + "</flprotes>" +
+                                       "<flpersms>" + STRING(tt-dados-blt.flpersms) + "</flpersms>" +
+                                       "<fllindig>" + STRING(tt-dados-blt.fllindig) + "</fllindig>" +
                                        "</BOLETO>".
 
     END.
