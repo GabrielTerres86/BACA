@@ -319,6 +319,7 @@ PROCEDURE Busca_Opcao_C:
                 FIND FIRST craptco
                      WHERE craptco.cdcooper = par_cdcooper
                        AND craptco.nrctaant = par_nrdctabb
+					   AND craptco.flgativo = TRUE
                    NO-LOCK NO-ERROR.
 
                 IF  AVAILABLE craptco  THEN DO:
