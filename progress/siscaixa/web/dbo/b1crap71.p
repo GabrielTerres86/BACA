@@ -1246,7 +1246,8 @@ PROCEDURE verifica-crapchd:
                             OR
                             (crapchd.cdcooper = 9                AND
                              crapchd.cdbanchq = crapcop.cdbcoctl AND
-                             crapchd.cdagechq = 0116)  /* Incorporação Transulcred */
+                             crapchd.cdagechq = 0116             AND
+							 TODAY > 12/30/2016)  /* Incorporação Transulcred */
                            THEN DO:
 
                            IF   CAN-DO(aux_lsconta3,

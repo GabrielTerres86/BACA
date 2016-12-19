@@ -233,7 +233,8 @@ PROCEDURE ver_cheque:
              /* Incorporacao TRANSULCRED */
              (i-p-cdbanchq     = crapcop.cdbcoctl AND
               i-p-cdagechq     = 0116             AND
-              crapcop.cdcooper =  9) THEN DO:
+              crapcop.cdcooper =  9               AND
+			  TODAY > 12/30/2016) THEN DO:
 
                   IF   CAN-DO(aux_lsconta3,STRING(i-p-nrctabdb))   THEN
                        DO:
