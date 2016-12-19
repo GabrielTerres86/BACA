@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro/Diego
-   Data    : Novembro/2006                      Ultima atualizacao: 06/10/2016
+   Data    : Novembro/2006                      Ultima atualizacao: 30/11/2016
    
    Dados referentes ao programa:
 
@@ -197,6 +197,9 @@
 
                06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
                            (Guilherme/SUPERO)
+                           
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)            
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -1843,15 +1846,15 @@ DO WHILE TRUE:
         DO TRANSACTION ON ERROR UNDO, LEAVE:
 
            /* critica para permitir somente os seguintes operadores  */
-           IF   glb_dsdepart <> "TI"                    AND
-                glb_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-                glb_dsdepart <> "COMPE"                 AND
-                glb_dsdepart <> "SUPORTE"               AND
-                glb_dsdepart <> "COORD.PRODUTOS"        AND
-                glb_dsdepart <> "CONTABILIDADE"         AND
-                glb_dsdepart <> "CONTROLE"              AND
-                glb_dsdepart <> "PRODUTOS"              AND 
-                glb_dsdepart <> "CANAIS"                THEN
+           IF   glb_cddepart <> 20 AND    /* TI                   */
+                glb_cddepart <> 8  AND    /* COORD.ADM/FINANCEIRO */
+                glb_cddepart <> 4  AND    /* COMPE                */
+                glb_cddepart <> 18 AND    /* SUPORTE              */
+                glb_cddepart <> 9  AND    /* COORD.PRODUTOS       */
+                glb_cddepart <> 6  AND    /* CONTABILIDADE        */
+                glb_cddepart <> 7  AND    /* CONTROLE             */
+                glb_cddepart <> 14 AND    /* PRODUTOS             */
+                glb_cddepart <> 1  THEN   /* CANAIS               */
                 DO:
                     glb_cdcritic = 36.
                     RUN fontes/critic.p.
@@ -2877,7 +2880,7 @@ DO WHILE TRUE:
                                                         "HH:MM"), 4, 2)).
                                             
                                             ASSIGN tel_flgkitbv = crapcop.flgkitbv.
-                                            IF glb_dsdepart <> "TI" THEN
+                                            IF glb_cddepart <> 20 /* TI */ THEN
                                                DO:
                                                   DISP hor_intersgr
                                                        min_intersgr

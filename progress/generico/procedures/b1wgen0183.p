@@ -5,7 +5,7 @@
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Tiago
-  Data    : Fevereiro/14                           Ultima alteracao: 24/10/2016
+  Data    : Fevereiro/14                           Ultima alteracao: 02/12/2016
 
   Objetivo  : Procedures referentes a tela HRCOMP.
 
@@ -13,7 +13,7 @@
                            para todas cooperativas de uma vez so 
                            (Tiago/Elton SD172634).
                            
-			  10/06/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET,688)
+			        10/06/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET,688)
 			               (Tiago/Thiago SD402010)             
 						           
               13/06/2016 - Incluir flgativo na busca das cooperativas na PROCEDURE
@@ -26,17 +26,20 @@
               21/09/2016 - Na procedure grava_dados incluir tratamento para caso 
                            alterar a cooperativa cecred e escolher o programa
                            "DEVOLUCAO DOC" - Melhoria 316 (Lucas Ranghetti #525623)
-			  10/06/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET,688)
+			        10/06/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET,688)
 			               (Tiago/Thiago SD402010)             
 						           
               13/06/2016 - Incluir flgativo na busca das cooperativas na PROCEDURE
                            grava_dados (Lucas Ranghetti #462237)
 
-	          25/08/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET) e
-			               nao permitir alterar o horario para antes do horario
-						   atual (Tiago/Thiago #493693).
+	            25/08/2016 - Alteracao para reagendar o JOB (DEBSIC,DEBNET) e
+			                     nao permitir alterar o horario para antes do horario
+						               atual (Tiago/Thiago #493693).
 
-			  24/10/2016 - Ajustes referentes a melhoria349 (Tiago/Elton).
+			        24/10/2016 - Ajustes referentes a melhoria349 (Tiago/Elton).
+              
+              02/12/2016 - Alterado campo dsdepart para cddepart.
+                           PRJ341 - BANCENJUD (Odirlei-AMcom)   
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -51,7 +54,7 @@ PROCEDURE busca_dados:
     DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
     DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
     DEF INPUT  PARAM par_cdcoopex    AS   INT                           NO-UNDO.
@@ -81,7 +84,7 @@ PROCEDURE busca_dados:
                       INPUT par_nrdcaixa,
                       INPUT par_cdoperad,
                       INPUT par_nmdatela,
-                      INPUT par_dsdepart,
+                      INPUT par_cddepart,
                       INPUT par_idorigem,
                       INPUT par_dtmvtolt,
                       INPUT-OUTPUT TABLE tt-processos,
@@ -164,7 +167,7 @@ PROCEDURE carrega_cooperativas:
     DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
     DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
     
@@ -204,7 +207,7 @@ PROCEDURE grava_dados:
     DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
     DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
     DEF INPUT  PARAM par_cdcoopex    AS   INT                           NO-UNDO.
@@ -649,7 +652,7 @@ PROCEDURE acesso_opcao:
 
     DEF INPUT  PARAM par_cdcooper    AS  INTEGER                        NO-UNDO.
     DEF INPUT  PARAM par_cdagenci    AS  INTEGER                        NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS  CHARACTER                      NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS  INTEGER                        NO-UNDO.
     DEF INPUT  PARAM par_cddopcao    AS  CHARACTER                      NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -663,9 +666,9 @@ PROCEDURE acesso_opcao:
 
     EMPTY TEMP-TABLE tt-erro.
 
-    IF  par_dsdepart <> "COMPE"  AND
-        par_dsdepart <> "TI"     AND
-        par_cddopcao <> "C"      THEN
+    IF  par_cddepart <>  4    AND   /* COMPE */
+        par_cddepart <> 20    AND   /* TI    */
+        par_cddopcao <> "C"   THEN
         DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Permissao de acesso negada.".
@@ -955,7 +958,7 @@ PROCEDURE cria_reg_proc:
     DEF INPUT  PARAM par_nrdcaixa    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_cdoperad    LIKE crapope.cdoperad              NO-UNDO.
     DEF INPUT  PARAM par_nmdatela    AS   CHAR                          NO-UNDO.
-    DEF INPUT  PARAM par_dsdepart    AS   CHAR                          NO-UNDO.
+    DEF INPUT  PARAM par_cddepart    AS   INT                          NO-UNDO.
     DEF INPUT  PARAM par_idorigem    AS   INT                           NO-UNDO.
     DEF INPUT  PARAM par_dtmvtolt    AS   DATE                          NO-UNDO.
 

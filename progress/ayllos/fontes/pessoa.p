@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Fevereiro/95.                   Ultima atualizacao: 24/04/2014
+   Data    : Fevereiro/95.                   Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -44,6 +44,10 @@
                             
                24/04/2014 - Incluido as descrições do vinculo: "DI - Diretor de Cooperat" e
                             "DC - Diretor da Central" (Jaison).
+                            
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -235,7 +239,7 @@ DO WHILE TRUE:
   
    IF   glb_cddopcao = "A" THEN
         DO:
-            IF   glb_dsdepart <>  "CONTABILIDADE"  THEN
+            IF glb_cddepart <> 6 THEN /* CONTABILIDADE */
                 DO:
                    MESSAGE "Apenas CONSULTA esta liberada para esta tela.".
                    NEXT.

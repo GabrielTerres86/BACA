@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito 
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Fevereiro/2011.                    Ultima Atualizacao: 29/11/2013
+   Data    : Fevereiro/2011.                    Ultima Atualizacao: 30/11/2016
             
    Dados referentes ao programa:
 
@@ -17,6 +17,8 @@
    
                29/11/2013 - Inclusao de VALIDATE crapmei (Carlos)
 
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 .............................................................................*/
 
 { includes/var_online.i }
@@ -110,9 +112,9 @@ DO   WHILE TRUE:
                  WITH FRAME f_opcao.
             
           IF   glb_cddopcao <> "C" THEN
-               IF   glb_dsdepart <> "TI" AND
-                    glb_dsdepart <> "PRODUTOS" AND
-                    glb_dsdepart <> "COMPE"  THEN
+               IF   glb_cddepart <> 20 AND  /* TI       */
+                    glb_cddepart <> 14 AND  /* PRODUTOS */
+                    glb_cddepart <> 4  THEN /* COMPE    */
                     DO:
                         BELL.
                         MESSAGE "Sistema liberado somente para Consulta!".

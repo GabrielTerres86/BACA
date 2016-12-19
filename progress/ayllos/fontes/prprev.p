@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : GATI (Daniel S. / Eder)
-    Data    : Maio/2011                   Ultima atualizacao: 25/03/2016
+    Data    : Maio/2011                   Ultima atualizacao: 06/12/2016
 
     Dados referentes ao programa:
 
@@ -42,7 +42,10 @@
                             acesso a opcao "H" de alteracao de horario
                             (Daniele).
                             
-               25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).               
+               25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
+               
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                             
 ..............................................................................*/
 
@@ -529,10 +532,10 @@ PAUSE(0).
 
 IF glb_cdcooper = 3 THEN
    DO:
-      IF glb_dsdepart <> "TI"                   AND
-         glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-         glb_dsdepart <> "COORD.PRODUTOS"       AND
-         glb_dsdepart <> "COMPE"                THEN
+      IF glb_cddepart <> 20 AND   /* TI                   */
+         glb_cddepart <>  8 AND   /* COORD.ADM/FINANCEIRO */
+         glb_cddepart <>  9 AND   /* COORD.PRODUTOS       */
+         glb_cddepart <>  4 THEN  /* COMPE                */
       DO:
          ASSIGN glb_nmdatela = "MENU00"
                 glb_cdcritic = 36.
@@ -600,7 +603,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
       END.
 
-   IF  glb_cddopcao = "H"  AND NOT CAN-DO("TI,COMPE",glb_dsdepart)  THEN 
+   IF  glb_cddopcao = "H"  AND 
+       NOT CAN-DO("20,4",string(glb_cddepart)) THEN  /*TI,COMPE*/
        DO:
            BELL.
            MESSAGE "Operador sem autorizacao para alterar horario".
@@ -772,7 +776,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                            (INPUT glb_cdcooper,
                                             INPUT glb_cdagenci,
                                             INPUT 0,
-                                            INPUT glb_dsdepart,
+                                            INPUT glb_cddepart,
                                             INPUT glb_dtmvtolt,
                                             INPUT glb_cdoperad,
                                             INPUT tel_concilia,
@@ -810,7 +814,10 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
              
 
              /*--- Enviar e-mail ---*/
-             IF CAN-DO("TI,COORD.ADM/FINANCEIRO,COMPE",glb_dsdepart) THEN
+             IF CAN-DO("20," + /* TI */
+                       "8,"  + /* COORD.ADM/FINANCEIRO */
+                       "4",    /* COMPE */
+                      string(glb_cddepart)) THEN
                 DO: 
                     /* Se houveram diferencas ... */
                     IF CAN-FIND(FIRST tt-dif-import)   THEN
@@ -820,7 +827,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                            
                            RUN gera_relatorio_diferencas_importacao 
                                                 IN h_b1wgen0091 
-                                               (INPUT glb_dsdepart,
+                                               (INPUT glb_cddepart,
                                                 INPUT glb_dtmvtolt,
                                                 INPUT TABLE tt-dif-import,
                                                 OUTPUT aux_nomedarq).
@@ -1291,7 +1298,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                                       INPUT tel_cdagenci,
                                                       INPUT glb_dtmvtolt,
                                                       INPUT glb_cdoperad,
-                                                      INPUT glb_dsdepart,
+                                                      INPUT glb_cddepart,
                                                       OUTPUT TABLE tt-erro).
 
              DELETE PROCEDURE h_b1wgen0091.

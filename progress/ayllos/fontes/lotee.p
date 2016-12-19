@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 27/06/2016
+   Data    : Outubro/91.                         Ultima atualizacao: 05/12/2016
 
    Dados referentes ao programa:
 
@@ -174,7 +174,9 @@
                             alterado o INLIQUID quando o lote é excluído.
                           + Controlar o preenchimento da data de pagamento do prejuízo,
                             voltando o prejuizo antes da liquidaçao. (Renato Darosci - M176)
-                          
+                
+               05/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom) 
 ............................................................................. */
 
 DEF BUFFER crabseg FOR crapseg.
@@ -284,7 +286,7 @@ IF  (tel_nrdolote >  9010   AND     /*  Folha de pagamento  */
     (tel_nrdolote >  5010   AND     /*  Emprestimos  */
      tel_nrdolote <= 5999)  THEN
      DO:
-         IF   glb_dsdepart = "TI" THEN
+         IF   glb_cddepart = 20 /* TI */  THEN
               DO:
                   aux_confirma = "N".
                   BELL.

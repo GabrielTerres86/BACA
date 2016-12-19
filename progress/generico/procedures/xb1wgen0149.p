@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0149.p
    Autor   : David Kruger
-   Data    : Fevereiro/2013                      Ultima atualizacao: 08/01/2014
+   Data    : Fevereiro/2013                      Ultima atualizacao: 30/11/2016
 
    Dados referentes ao programa:
 
@@ -11,8 +11,11 @@
 
    Alteracoes: 08/01/2014 - Ajuste homologacao (Adriano)
 			   
-			   06/09/2016 - Adicionado filtro pelo nome da agencia e do banco, conforme solicitado
-							no chamado 504477 (Kelvin).
+			         06/09/2016 - Adicionado filtro pelo nome da agencia e do banco, conforme solicitado
+							              no chamado 504477 (Kelvin).
+                            
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
 
 ..............................................................................*/
 
@@ -33,7 +36,7 @@ DEF VAR aux_nrregist AS INTE                                        NO-UNDO.
 DEF VAR aux_nriniseq AS INTE                                        NO-UNDO.
 DEF VAR aux_qtregist AS INTE                                        NO-UNDO.
 DEF VAR aux_nmdcampo AS CHAR                                        NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                        NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                        NO-UNDO.
 
 
 
@@ -71,7 +74,7 @@ PROCEDURE valores_entrada:
             WHEN "nriniseq" THEN aux_nriniseq = INTE(tt-param.valorCampo).
             WHEN "qtregist" THEN aux_qtregist = INTE(tt-param.valorCampo).
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.			
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).			
 			WHEN "nmextbcc" THEN aux_nmextbcc = tt-param.valorCampo.
 			
 
@@ -90,7 +93,7 @@ PROCEDURE busca-banco:
                             INPUT aux_cdagenci,
                             INPUT aux_nrdcaixa,
                             INPUT aux_cdoperad,
-                            INPUT aux_dsdepart,
+                            INPUT aux_cddepart,
                             INPUT aux_nmdatela,
                             INPUT aux_idorigem,
                             INPUT aux_cddopcao,
@@ -139,7 +142,7 @@ PROCEDURE busca-agencia:
                               INPUT aux_cdagenci,
                               INPUT aux_nrdcaixa,
                               INPUT aux_cdoperad,
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                               INPUT aux_nmdatela,
                               INPUT aux_idorigem,
                               INPUT aux_cdageban,
@@ -190,7 +193,7 @@ PROCEDURE altera-agencia:
                                INPUT aux_cdagenci,
                                INPUT aux_nrdcaixa,
                                INPUT aux_cdoperad,
-                               INPUT aux_dsdepart,
+                               INPUT aux_cddepart,
                                INPUT aux_nmdatela,
                                INPUT aux_idorigem,
                                INPUT aux_cddopcao,
@@ -234,7 +237,7 @@ PROCEDURE nova-agencia:
                              INPUT aux_cdagenci,
                              INPUT aux_nrdcaixa,
                              INPUT aux_cdoperad,
-                             INPUT aux_dsdepart,
+                             INPUT aux_cddepart,
                              INPUT aux_nmdatela,
                              INPUT aux_idorigem,
                              INPUT aux_cddopcao,
@@ -278,7 +281,7 @@ PROCEDURE deleta-agencia:
                                INPUT aux_cdagenci,
                                INPUT aux_nrdcaixa,
                                INPUT aux_cdoperad,
-                               INPUT aux_dsdepart,
+                               INPUT aux_cddepart,
                                INPUT aux_nmdatela,
                                INPUT aux_idorigem,
                                INPUT aux_cddopcao,

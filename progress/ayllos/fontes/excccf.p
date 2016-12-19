@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Elton
-   Data    : Marco/2008                         Ultima atualizacao: 24/03/2016
+   Data    : Marco/2008                         Ultima atualizacao: 01/12/2016
    
    Dados referentes ao programa:
 
@@ -19,6 +19,10 @@
                20/05/2009 - Alteracao CDOPERAD (Kbase).
                
                24/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+               
+               01/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ..............................................................................*/
 
 {includes/var_online.i }
@@ -248,9 +252,9 @@ DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
                   NEXT.
               END.
 
-    IF   glb_dsdepart <> "TI"                   AND
-         glb_dsdepart <> "COORD.PRODUTOS"       AND         
-         glb_dsdepart <> "COORD.ADM/FINANCEIRO" THEN
+    IF   glb_cddepart <> 20  AND  /* TI                   */    
+         glb_cddepart <>  9  AND  /* COORD.PRODUTOS       */       
+         glb_cddepart <>  8  THEN /* COORD.ADM/FINANCEIRO */
          DO:
              BELL.
              MESSAGE "Somente podem utilizar esta tela os departamentos TI,"

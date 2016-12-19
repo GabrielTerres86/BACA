@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Novembro/2008                     Ultima atualizacao: 16/12/2013
+   Data    : Novembro/2008                     Ultima atualizacao: 05/12/2016
 
    Dados referentes ao programa:
 
@@ -16,6 +16,9 @@
                29/09/2011 - Adicionado opcao de Dispon. Operador (Jorge).
                
                16/12/2013 - Inclusao de VALIDATE crapmni (Carlos)
+               
+               05/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 
 ..............................................................................*/
 
@@ -537,7 +540,7 @@ DO WHILE TRUE:
             ASSIGN aux_cddopcao = INPUT glb_cddopcao.
         END.
 
-    IF  glb_dsdepart <> "TI" THEN
+    IF  glb_cddepart <> 20 THEN /* TI */
         DO:
             BELL.
             MESSAGE "Acesso negado. Restrito ao SUPER-USUARIO.".

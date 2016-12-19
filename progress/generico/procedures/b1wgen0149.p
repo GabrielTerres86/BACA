@@ -1,7 +1,7 @@
 /*.............................................................................
     Programa: b1wgen0149.p
     Autor   : David Kruger
-    Data    : Janeiro/2013                     Ultima Atualizacao: 08/01/2014
+    Data    : Janeiro/2013                     Ultima Atualizacao: 30/11/2016
            
     Dados referentes ao programa:
                 
@@ -9,8 +9,12 @@
                     
     Alteracoes: 08/01/2014 - Ajustes homologacao (Adriano).
 				
-				06/09/2016 - Adicionado filtro pelo nome da agencia e do banco, conforme solicitado
-						 	 no chamado 504477 (Kelvin).
+                06/09/2016 - Adicionado filtro pelo nome da agencia e do banco, conforme solicitado
+						 	               no chamado 504477 (Kelvin).
+                
+                30/11/2016 - Alterado campo dsdepart para cddepart.
+                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+               
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0149tt.i } 
@@ -25,7 +29,7 @@ PROCEDURE busca-banco:
   DEF INPUT PARAM par_cdagenci AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_nrdcaixa AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_cdoperad AS CHAR                            NO-UNDO.
-  DEF INPUT PARAM par_dsdepart AS CHAR                            NO-UNDO.
+  DEF INPUT PARAM par_cddepart AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_nmdatela AS CHAR                            NO-UNDO.
   DEF INPUT PARAM par_idorigem AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_cddopcao AS CHAR                            NO-UNDO.
@@ -54,10 +58,10 @@ PROCEDURE busca-banco:
 
   IF CAN-DO("A,E,I",par_cddopcao)  THEN
      DO:
-        IF par_dsdepart <> "TI"                    AND
-           par_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-           par_dsdepart <> "COORD.PRODUTOS"        AND
-           par_dsdepart <> "COMPE"                 THEN
+        IF par_cddepart <> 20  AND   /* TI */                    
+           par_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */  
+           par_cddepart <> 9   AND   /* COORD.PRODUTOS       */   
+           par_cddepart <> 4   THEN  /* COMPE                */   
            DO:
               ASSIGN aux_cdcritic = 36
                      par_nmdcampo = "cddbanco". 
@@ -162,7 +166,7 @@ PROCEDURE busca-agencia:
   DEF INPUT PARAM par_cdagenci AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_nrdcaixa AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_cdoperad AS CHAR                          NO-UNDO.
-  DEF INPUT PARAM par_dsdepart AS CHAR                          NO-UNDO.
+  DEF INPUT PARAM par_cddepart AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_nmdatela AS CHAR                          NO-UNDO.
   DEF INPUT PARAM par_idorigem AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_cdageban AS INTE                          NO-UNDO.
@@ -193,10 +197,10 @@ PROCEDURE busca-agencia:
 
   IF CAN-DO("A,E,I",par_cddopcao)  THEN
      DO:
-        IF par_dsdepart <> "TI"                    AND
-           par_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-           par_dsdepart <> "COORD.PRODUTOS"        AND
-           par_dsdepart <> "COMPE"                 THEN
+        IF par_cddepart <> 20  AND   /* TI */                    
+           par_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */  
+           par_cddepart <> 9   AND   /* COORD.PRODUTOS       */   
+           par_cddepart <> 4   THEN  /* COMPE                */   
            DO:
               ASSIGN aux_cdcritic = 36
                      par_nmdcampo = "cddbanco". 
@@ -223,7 +227,6 @@ PROCEDURE busca-agencia:
                                NO-LOCK BY crapagb.cddbanco
                                         BY crapagb.cdageban.
 			
-			MESSAGE STRING(par_cdageban) "KELVINNNNN".
 			IF par_cdageban > 0 AND
 			   par_cdageban <> crapagb.cdageban THEN
 			   NEXT.
@@ -487,7 +490,7 @@ PROCEDURE altera-agencia:
   DEF INPUT PARAM par_cdagenci AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_nrdcaixa AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_cdoperad AS CHAR                            NO-UNDO.
-  DEF INPUT PARAM par_dsdepart AS CHAR                            NO-UNDO.
+  DEF INPUT PARAM par_cddepart AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_nmdatela AS CHAR                            NO-UNDO.
   DEF INPUT PARAM par_idorigem AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_cddopcao AS CHAR                            NO-UNDO.
@@ -512,10 +515,10 @@ PROCEDURE altera-agencia:
 
   IF CAN-DO("A,E,I",par_cddopcao)  THEN
      DO:
-        IF par_dsdepart <> "TI"                    AND
-           par_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-           par_dsdepart <> "COORD.PRODUTOS"        AND
-           par_dsdepart <> "COMPE"                 THEN
+        IF par_cddepart <> 20  AND   /* TI */                    
+           par_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */  
+           par_cddepart <> 9   AND   /* COORD.PRODUTOS       */   
+           par_cddepart <> 4   THEN  /* COMPE                */   
            DO:
               ASSIGN aux_cdcritic = 36
                      par_nmdcampo = "cddbanco". 
@@ -616,7 +619,7 @@ PROCEDURE deleta-agencia:
   DEF INPUT PARAM par_cdagenci AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_nrdcaixa AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_cdoperad AS CHAR                          NO-UNDO.
-  DEF INPUT PARAM par_dsdepart AS CHAR                          NO-UNDO.
+  DEF INPUT PARAM par_cddepart AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_nmdatela AS CHAR                          NO-UNDO.
   DEF INPUT PARAM par_idorigem AS INTE                          NO-UNDO.
   DEF INPUT PARAM par_cddopcao AS CHAR                          NO-UNDO.
@@ -641,10 +644,10 @@ PROCEDURE deleta-agencia:
 
   IF CAN-DO("A,E,I",par_cddopcao)  THEN
      DO:
-        IF par_dsdepart <> "TI"                    AND
-           par_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-           par_dsdepart <> "COORD.PRODUTOS"        AND
-           par_dsdepart <> "COMPE"                 THEN
+        IF par_cddepart <> 20  AND   /* TI */                    
+           par_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */  
+           par_cddepart <> 9   AND   /* COORD.PRODUTOS       */   
+           par_cddepart <> 4   THEN  /* COMPE                */   
            DO:
               ASSIGN aux_cdcritic = 36
                      par_nmdcampo = "cddbanco". 
@@ -737,7 +740,7 @@ PROCEDURE nova-agencia.
   DEF INPUT PARAM par_cdagenci AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_nrdcaixa AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_cdoperad AS CHAR                            NO-UNDO.
-  DEF INPUT PARAM par_dsdepart AS CHAR                            NO-UNDO.
+  DEF INPUT PARAM par_cddepart AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_nmdatela AS CHAR                            NO-UNDO.
   DEF INPUT PARAM par_idorigem AS INTE                            NO-UNDO.
   DEF INPUT PARAM par_cddopcao AS CHAR                            NO-UNDO.
@@ -763,10 +766,10 @@ PROCEDURE nova-agencia.
 
   IF CAN-DO("A,E,I",par_cddopcao)  THEN
      DO:
-        IF par_dsdepart <> "TI"                    AND
-           par_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-           par_dsdepart <> "COORD.PRODUTOS"        AND
-           par_dsdepart <> "COMPE"                 THEN
+        IF par_cddepart <> 20  AND   /* TI */                    
+           par_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */  
+           par_cddepart <> 9   AND   /* COORD.PRODUTOS       */   
+           par_cddepart <> 4   THEN  /* COMPE                */   
            DO:
               ASSIGN aux_cdcritic = 36
                      par_nmdcampo = "cddbanco". 

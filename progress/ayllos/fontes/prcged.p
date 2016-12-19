@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme Luis Maba
-    Data    : Maio/2012                   Ultima atualizacao: 15/03/2016
+    Data    : Maio/2012                   Ultima atualizacao: 06/12/2016
 
     Dados referentes ao programa:
 
@@ -43,7 +43,14 @@
                 15/03/2016 - Desabilitar batimento de credito para a viacredi
                              (Lucas Ranghetti #394316 )
 
-				25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+				        25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+                
+                14/10/2016 - Retirar validacao que desabilitava o batimento do credito para a Viacredi 
+                             (Lucas Ranghetti #510032)
+                
+                06/12/2016 - Alterado campo dsdepart para cddepart.
+                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+                             
 .............................................................................*/
 
 { includes/var_online.i }
@@ -207,10 +214,10 @@ DO WHILE TRUE:
    IF  glb_cddopcao = "B"   THEN
    DO:
       /* verifica permissão para rotina de batimento */
-      IF glb_cdcooper =  3           AND
-                 glb_dsdepart <> "TI" THEN
-        DO:
-                    BELL.
+      IF glb_cdcooper =  3   AND
+         glb_cddepart <> 20  THEN /*TI*/
+      DO:
+            BELL.
             MESSAGE "Sem autorizacao para opcao 'B'.".
             NEXT.
       END.
@@ -271,15 +278,6 @@ DO WHILE TRUE:
 
       IF   aux_confirma <> "S"   THEN
            NEXT.
-
-      /* Desabilitar batimento para viacredi e tipo Credito */    
-      IF  INT(tel_tipopcao) = 2 AND INT(tel_cdcooper) = 1 THEN
-          DO:
-              MESSAGE "Batimento desabilitado para o grupo Credito.".
-              BELL.
-              CLEAR FRAME f_dados.
-              NEXT.            
-          END.
 
       MESSAGE "Aguarde, efetuando batimento das informacoes ...".
 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Novembro/96                         Ultima alteracao: 25/03/2016
+   Data    : Novembro/96                         Ultima alteracao: 07/12/2016
      
    Dados referentes ao programa:
 
@@ -49,6 +49,9 @@
                            é o usuario que esta prendendo a transaçao. (Vanessa)
                
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin). 
+               
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ............................................................................ */
 
 { includes/var_online.i }
@@ -383,8 +386,8 @@ DO WHILE TRUE:
                          tel_qtopatpj    
                          tel_qtoplipj
                          tel_flginter
-                         tel_inqrdimp WHEN (glb_dsdepart = "TI"       OR
-                                            glb_dsdepart = "PRODUTOS") AND
+                         tel_inqrdimp WHEN (glb_cddepart = 20   OR   /* TI */      
+                                            glb_cddepart = 14 ) AND /* PRODUTOS */
                                             tel_cdagenci = 0
                          tel_diasmini
                          WITH FRAME f_tab016.

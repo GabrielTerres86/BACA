@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Setembro/91                         Ultima Atualizacao: 22/11/2011
+   Data    : Setembro/91                         Ultima Atualizacao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -18,6 +18,10 @@
                02/02/2006 - Unificacao dos Bancos - SQLWorks - Fernando.
                
                22/11/2011 - Adaptações para trabalhar com a B0130. (Lucas).
+               
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -170,7 +174,7 @@ DO WHILE TRUE:
                                                        INPUT 1, /* Ayllos */
                                                        INPUT glb_dtmvtolt, 
                                                        INPUT TRUE, /* Gerar log */
-                                                       INPUT glb_dsdepart,
+                                                       INPUT glb_cddepart,
                                                        INPUT tel_qtfolind,
                                                        INPUT tel_qtfolcjt,
                                                        OUTPUT TABLE tt-erro).
@@ -234,7 +238,7 @@ DO WHILE TRUE:
                                                        INPUT 1, /* Ayllos */
                                                        INPUT glb_dtmvtolt, 
                                                        INPUT TRUE, /* Gerar log */
-                                                       INPUT glb_dsdepart,
+                                                       INPUT glb_cddepart,
                                                        OUTPUT TABLE tt-erro).
                     
                     DELETE PROCEDURE h-b1wgen0130.
@@ -279,7 +283,7 @@ DO WHILE TRUE:
                                                      INPUT 1, /* Ayllos */
                                                      INPUT glb_dtmvtolt, 
                                                      INPUT TRUE, /* Gerar log */
-                                                     INPUT glb_dsdepart,
+                                                     INPUT glb_cddepart,
                                                      INPUT tel_qtfolind,
                                                      INPUT tel_qtfolcjt,
                                                      OUTPUT TABLE tt-erro).

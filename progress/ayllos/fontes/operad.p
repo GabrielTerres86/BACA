@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/99.                     Ultima atualizacao: 05/05/2016
+   Data    : Fevereiro/99.                     Ultima atualizacao: 05/12/2016
 
    Dados referentes ao programa:
 
@@ -169,6 +169,9 @@
                             
                16/09/2016 - Permitir alterar o campo flgacres, para resolver o problema relatado
                             no chamado 512411. (Kelvin)
+                            
+               05/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
 ............................................................................. */
 
 { includes/var_online.i }
@@ -181,6 +184,7 @@ DEF        VAR tel_nvoperad AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR tel_tpoperad AS CHAR    FORMAT "x(17)"                NO-UNDO.
 DEF        VAR tel_dssitope AS CHAR    FORMAT "x(15)"                NO-UNDO.
 DEF        VAR tel_dsdepart AS CHAR    FORMAT "x(25)"                NO-UNDO.
+DEF        VAR tel_cddepart AS INTE    FORMAT "ZZZ9"                 NO-UNDO.
 DEF        VAR tel_nmdatela AS CHAR    FORMAT "x(6)"                 NO-UNDO.
 DEF        VAR tel_cddopcao AS CHAR    FORMAT "x(1)"                 NO-UNDO.
 DEF        VAR tel_tldatela AS CHAR                                  NO-UNDO.
@@ -319,8 +323,9 @@ FORM SKIP
          HELP "SIM - acesso a unico PA / NAO - acesso a todos PA'S"
      tel_dssitope AT 46 LABEL "Situacao"
      SKIP
-     tel_dsdepart AT 17 LABEL "Departamento"  AUTO-RETURN
+     tel_cddepart AT 17 LABEL "Departamento"    
         HELP "Tecle <F7> para listar os departamentos."
+     tel_dsdepart AT 36 NO-LABELS 
      SKIP 
      tel_vlpagchq AT 14 LABEL "Valor de Limite" 
          HELP "Informe o valor maximo de liberacao."
@@ -438,10 +443,10 @@ DO WHILE TRUE:
                  
    RUN fontes/inicia.p.
 
-   IF   glb_dsdepart = "SUPORTE"   OR
-        glb_dsdepart = "CONTROLE"  OR
-        glb_dsdepart = "CANAIS"    OR
-        glb_dsdepart = "TI"        THEN
+   IF   glb_cddepart = 18  OR   /* SUPORTE  */
+        glb_cddepart =  7  OR   /* CONTROLE */
+        glb_cddepart =  1  OR   /* CANAIS   */
+        glb_cddepart = 20  THEN /* TI       */
         ASSIGN flg_altdepto = YES.
    ELSE 
         ASSIGN flg_altdepto = NO.
@@ -537,7 +542,7 @@ DO WHILE TRUE:
                         NO-LOCK NO-ERROR.
 
    IF  AVAIL b-crapope THEN
-       ASSIGN glb_dsdepart = b-crapope.dsdepart.
+       ASSIGN glb_cddepart = b-crapope.cddepart.
 
 
    /*alteracao de registro */
@@ -559,18 +564,18 @@ DO WHILE TRUE:
                 END.
                           
            /* Nao permitir filiadas alterar operadores cecred */
-           IF   glb_dsdepart <> "TI"                   AND
-                glb_dsdepart <> "SUPORTE"              AND
-                glb_dsdepart <> "CANAIS"               AND
-                glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-                glb_dsdepart <> "COORD.PRODUTOS"       THEN
+           IF   glb_cddepart <> 20  AND   /* TI                  */
+                glb_cddepart <> 18  AND   /* SUPORTE             */
+                glb_cddepart <>  1  AND   /* CANAIS              */
+                glb_cddepart <>  8  AND   /* COORD.ADM/FINANCEIRO*/
+                glb_cddepart <>  9  THEN  /* COORD.PRODUTOS      */
                 DO:
                     IF   AVAIL crapope THEN                
-                         IF   crapope.dsdepart = "TI"                   OR
-                              crapope.dsdepart = "SUPORTE"              OR
-                              crapope.dsdepart = "CANAIS"               OR
-                              crapope.dsdepart = "COORD.ADM/FINANCEIRO" OR
-                              crapope.dsdepart = "COORD.PRODUTOS"       THEN
+                         IF   crapope.cddepart = 20 OR    /* TI                  */
+                              crapope.cddepart = 18 OR    /* SUPORTE             */
+                              crapope.cddepart =  1 OR    /* CANAIS              */
+                              crapope.cddepart =  8 OR    /* COORD.ADM/FINANCEIRO*/
+                              crapope.cddepart =  9 THEN  /* COORD.PRODUTOS      */
                               DO:
                                   ASSIGN glb_cdcritic = 527.
                                   RUN fontes/critic.p.
@@ -579,13 +584,22 @@ DO WHILE TRUE:
                                   LEAVE.
                               END.
                 END.
+           
+           /* Buscar descriçao do departamento */
+           FIND FIRST crapdpo 
+                WHERE crapdpo.cdcooper = glb_cdcooper 
+                  AND crapdpo.cddepart = crapope.cddepart
+                  NO-LOCK NO-ERROR.
                          
            ASSIGN tel_nmoperad = crapope.nmoperad
                   tel_nvoperad = ENTRY(crapope.nvoperad,aux_nvoperad)
                   tel_flgperac = crapope.flgperac
                   tel_tpoperad = ENTRY(crapope.tpoperad,aux_tpoperad)
                   tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)
-                  tel_dsdepart = crapope.dsdepart
+                  tel_dsdepart = IF avail crapdpo THEN 
+                                   crapdpo.dsdepart 
+                                 ELSE "" 
+                  tel_cddepart = crapope.cddepart
                   tel_cdagenci = crapope.cdagenci
                   tel_cdpactra = crapope.cdpactra
                   tel_flgdopgd = crapope.flgdopgd
@@ -621,7 +635,7 @@ DO WHILE TRUE:
            RUN atualiza_dscomite.
            
            DISPLAY tel_nmoperad tel_nvoperad tel_flgperac tel_tpoperad 
-                   tel_flgcarta tel_flgacres tel_dssitope 
+                   tel_flgcarta tel_flgacres tel_dssitope tel_cddepart
                    tel_dsdepart tel_cdagenci tel_cdpactra
                    tel_flgdonet tel_flgdopgd tel_vlpagchq
                    tel_cdcomite WHEN crapcop.flgcmtlc
@@ -734,30 +748,44 @@ DO WHILE TRUE:
            IF  flg_altdepto  THEN
            DO:
             DO WHILE TRUE:
-              UPDATE tel_dsdepart WITH FRAME f_operad
+            
+              UPDATE tel_cddepart WITH FRAME f_operad
               EDITING:
                 READKEY.
                   IF  LASTKEY = KEYCODE("F7") THEN
                       DO:
-                          IF  FRAME-FIELD = "tel_dsdepart" THEN
+                          IF  FRAME-FIELD = "tel_cddepart" THEN
                               DO:
                                   RUN fontes/zoom_departamento.p 
                                                   (INPUT glb_cdcooper,
-                                                   OUTPUT tel_dsdepart).
-                                  DISPLAY tel_dsdepart WITH FRAME f_operad.
+                                                   OUTPUT tel_dsdepart,
+                                                   OUTPUT tel_cddepart
+                                                   ).
+                                  DISPLAY tel_dsdepart
+                                          tel_cddepart 
+                                          WITH FRAME f_operad.
                               END.
                       END.
                   ELSE
                       APPLY LASTKEY.
 
               END.  /*  Fim do EDITING  */  
-              IF tel_dsdepart <> "" THEN
+              IF tel_cddepart <> 0 THEN
               DO:
                 FIND crapdpo WHERE crapdpo.cdcooper = glb_cdcooper AND 
-                                   crapdpo.dsdepart = tel_dsdepart AND 
+                                   crapdpo.cddepart = tel_cddepart AND 
                                    crapdpo.insitdpo = 1 NO-LOCK NO-ERROR.
+                                   
                 IF AVAILABLE crapdpo THEN
+                DO:
+                  
+                  ASSIGN tel_dsdepart = crapdpo.dsdepart.
+                  
+                  DISPLAY tel_dsdepart
+                          tel_cddepart 
+                          WITH FRAME f_operad.
                   LEAVE.
+                END.  
                 ELSE
                 DO:
                   MESSAGE "DEPARTAMENTO NAO CADASTRADO OU INATIVO.".   
@@ -769,7 +797,7 @@ DO WHILE TRUE:
             END. /* fim do while*/ 
            END.
 
-           IF  crapope.dsdepart =  "SISCAIXA"  AND 
+           IF  crapope.cddepart = 17 AND /* SISCAIXA */
                tel_nvoperad     <> "OPERADOR"  THEN
                DO:
                     MESSAGE 'Nivel do Operador deve ser "OPERADOR".'.
@@ -801,7 +829,7 @@ DO WHILE TRUE:
                       crapope.tpoperad = aux_inpostip
                       crapope.cdagenci = tel_cdagenci
                       crapope.flgdonet = tel_flgdonet
-                      crapope.dsdepart = CAPS(tel_dsdepart).
+                      crapope.cddepart = tel_cddepart.
                
                IF   log_nmoperad <> tel_nmoperad   THEN
                     RUN gera_log ("Nome Completo",log_nmoperad,tel_nmoperad).
@@ -945,13 +973,23 @@ DO WHILE TRUE:
                     glb_cdcritic = 0.
                     LEAVE.
                 END.
- 
+           
+           /* Buscar descriçao do departamento */
+           FIND FIRST crapdpo
+                WHERE crapdpo.cdcooper = glb_cdcooper 
+                  AND crapdpo.cddepart = crapope.cddepart
+                  NO-LOCK NO-ERROR.
+                      
+           
            ASSIGN tel_nmoperad = crapope.nmoperad
                   tel_nvoperad = ENTRY(crapope.nvoperad,aux_nvoperad)
                   tel_flgperac = crapope.flgperac
                   tel_tpoperad = ENTRY(crapope.tpoperad,aux_tpoperad)
                   tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)
-                  tel_dsdepart = crapope.dsdepart
+                  tel_cddepart = crapope.cddepart
+                  tel_dsdepart = IF avail crapdpo THEN 
+                                     crapdpo.dsdepart 
+                                   ELSE "" 
                   tel_cdagenci = crapope.cdagenci
                   tel_cdpactra = crapope.cdpactra
                   tel_flgcarta = FALSE
@@ -1046,13 +1084,22 @@ DO WHILE TRUE:
                      glb_cdcritic = 0.
                      NEXT.
                  END.
-
+            
+            /* Buscar descriçao do departamento */
+            FIND FIRST crapdpo 
+                WHERE crapdpo.cdcooper = glb_cdcooper 
+                  AND crapdpo.cddepart = crapope.cddepart
+                   NO-LOCK NO-ERROR.
+            
             ASSIGN tel_nmoperad = crapope.nmoperad
                    tel_nvoperad = ENTRY(crapope.nvoperad,aux_nvoperad)
                    tel_flgperac = crapope.flgperac
                    tel_tpoperad = ENTRY(crapope.tpoperad,aux_tpoperad)
                    tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)
-                   tel_dsdepart = crapope.dsdepart
+                   tel_cddepart = crapope.cddepart
+                   tel_dsdepart = IF avail crapdpo THEN 
+                                     crapdpo.dsdepart 
+                                   ELSE "" 
                    tel_cdagenci = crapope.cdagenci
                    tel_cdpactra = crapope.cdpactra
                    tel_flgdopgd = crapope.flgdopgd
@@ -1067,8 +1114,8 @@ DO WHILE TRUE:
             RUN atualiza_dscomite.
             
             DISPLAY tel_nmoperad tel_nvoperad tel_flgperac tel_tpoperad 
-                    tel_dssitope tel_dsdepart tel_cdagenci tel_cdpactra
-                    tel_flgdopgd tel_flgacres
+                    tel_dssitope tel_cddepart tel_dsdepart tel_cdagenci 
+                    tel_cdpactra tel_flgdopgd tel_flgacres
                     tel_vlpagchq tel_vllimted
                     tel_flgdonet
                     tel_cdcomite WHEN crapcop.flgcmtlc
@@ -1101,6 +1148,7 @@ DO WHILE TRUE:
                    tel_flgdopgd = FALSE
                    tel_flgacres = FALSE
                    tel_flgdonet = TRUE
+                   tel_cddepart = 0
                    tel_dsdepart = ""
                    tel_vlapvcap = 0
                    aux_inposniv = 1
@@ -1219,32 +1267,48 @@ DO WHILE TRUE:
                        APPLY LASTKEY.
            
                END.  /*  Fim do EDITING  */
+              
+               UPDATE tel_flgdopgd WITH FRAME f_operad.
+               
+               IF   tel_flgdopgd = TRUE  THEN
+                    UPDATE tel_flgacres WITH FRAME f_operad.
 
                DO  WHILE TRUE:
-                  UPDATE tel_dsdepart WITH FRAME f_operad
+                  UPDATE tel_cddepart WITH FRAME f_operad
                   EDITING:
                     READKEY.
                       IF  LASTKEY = KEYCODE("F7") THEN
                           DO:
-                              IF  FRAME-FIELD = "tel_dsdepart" THEN
+                              IF  FRAME-FIELD = "tel_cddepart" THEN
                                   DO:
                                       RUN fontes/zoom_departamento.p 
                                                       (INPUT glb_cdcooper,
-                                                       OUTPUT tel_dsdepart).
-                                      DISPLAY tel_dsdepart WITH FRAME f_operad.
+                                                       OUTPUT tel_dsdepart,
+                                                       OUTPUT tel_cddepart).
+                                      DISPLAY tel_dsdepart 
+                                              tel_cddepart  
+                                              WITH FRAME f_operad.
                                   END.
                           END.
                       ELSE
                           APPLY LASTKEY.
 
                   END.  /*  Fim do EDITING  */    
-                  IF tel_dsdepart <> "" THEN
+                  IF tel_cddepart <> 0 THEN
                   DO:
                     FIND crapdpo WHERE crapdpo.cdcooper = glb_cdcooper AND 
-                                       crapdpo.dsdepart = tel_dsdepart AND 
+                                       crapdpo.cddepart = tel_cddepart AND 
                                        crapdpo.insitdpo = 1 NO-LOCK NO-ERROR.
                     IF AVAILABLE crapdpo THEN
+                    DO:
+                  
+                      ASSIGN tel_dsdepart = crapdpo.dsdepart.
+                      
+                      DISPLAY tel_dsdepart
+                              tel_cddepart 
+                              WITH FRAME f_operad.
                       LEAVE.
+                    END. 
                     ELSE
                     DO:
                       MESSAGE "DEPARTAMENTO NAO CADASTRADO OU INATIVO.".   
@@ -1268,11 +1332,6 @@ DO WHILE TRUE:
                         BELL.
                         NEXT.
                    END. 
-               
-               UPDATE tel_flgdopgd WITH FRAME f_operad.
-               
-               IF   tel_flgdopgd = TRUE  THEN
-                    UPDATE tel_flgacres WITH FRAME f_operad.
                
                UPDATE tel_vlapvcap WITH FRAME f_operad.
 
@@ -1321,7 +1380,7 @@ DO WHILE TRUE:
                          crapope.flgdopgd = tel_flgdopgd
                          crapope.flgacres = tel_flgacres
                          crapope.flgdonet = tel_flgdonet
-                         crapope.dsdepart = CAPS(tel_dsdepart)
+                         crapope.cddepart = tel_cddepart
                          crapope.vlapvcap = tel_vlapvcap.
 
                   IF   CAN-DO("1,3",STRING(crapope.tpoperad))   THEN 
@@ -1645,13 +1704,22 @@ DO WHILE TRUE:
                     glb_cdcritic = 0.
                     LEAVE.
                  END.
-
+            
+            /* Buscar descriçao do departamento */
+            FIND FIRST crapdpo
+                 WHERE crapdpo.cdcooper = glb_cdcooper 
+                   AND crapdpo.cddepart = crapope.cddepart
+                    NO-LOCK NO-ERROR.
+            
             ASSIGN tel_nmoperad = crapope.nmoperad
                    tel_nvoperad = ENTRY(crapope.nvoperad,aux_nvoperad)
                    tel_flgperac = crapope.flgperac
                    tel_tpoperad = ENTRY(crapope.tpoperad,aux_tpoperad)
                    tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)
-                   tel_dsdepart = crapope.dsdepart
+                   tel_cddepart = crapope.cddepart
+                   tel_dsdepart = IF avail crapdpo THEN 
+                                     crapdpo.dsdepart 
+                                  ELSE ""   
                    tel_cdagenci = crapope.cdagenci
                    tel_cdpactra = crapope.cdpactra
                    tel_flgdopgd = crapope.flgdopgd
@@ -1665,7 +1733,8 @@ DO WHILE TRUE:
             RUN atualiza_dscomite.
             
             DISPLAY tel_nmoperad tel_nvoperad tel_flgperac 
-                    tel_tpoperad tel_dssitope tel_dsdepart 
+                    tel_tpoperad tel_dssitope 
+                    tel_cddepart tel_dsdepart 
                     tel_cdagenci tel_cdpactra
                     tel_flgdopgd tel_flgacres
                     tel_vlpagchq tel_flgdonet
@@ -1745,13 +1814,22 @@ DO WHILE TRUE:
                           glb_cdcritic = 0.
                           LEAVE.
                       END.
-                       
+              
+              /* Buscar descriçao do departamento */
+              FIND FIRST crapdpo
+                   WHERE crapdpo.cdcooper = glb_cdcooper 
+                     AND crapdpo.cddepart = crapope.cddepart
+                      NO-LOCK NO-ERROR.
+              
               ASSIGN tel_nmoperad = crapope.nmoperad
                      tel_nvoperad = ENTRY(crapope.nvoperad,aux_nvoperad)
                      tel_flgperac = crapope.flgperac
                      tel_tpoperad = ENTRY(crapope.tpoperad,aux_tpoperad)
-                     tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)
-                     tel_dsdepart = crapope.dsdepart
+                     tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)                     
+                     tel_cddepart = crapope.cddepart
+                     tel_dsdepart = IF avail crapdpo THEN 
+                                       crapdpo.dsdepart 
+                                    ELSE ""   
                      tel_cdagenci = crapope.cdagenci
                      tel_cdpactra = crapope.cdpactra
                      tel_flgdopgd = crapope.flgdopgd
@@ -1766,7 +1844,8 @@ DO WHILE TRUE:
               RUN atualiza_dscomite.
               
               DISPLAY tel_nmoperad tel_nvoperad tel_flgperac tel_tpoperad 
-                      tel_dssitope tel_dsdepart tel_cdagenci tel_cdpactra
+                      tel_dssitope tel_cdagenci tel_cdpactra
+                      tel_cddepart tel_dsdepart
                       tel_flgdopgd tel_flgacres
                       tel_vlpagchq tel_vllimted
                       tel_flgdonet
@@ -2044,12 +2123,21 @@ DO WHILE TRUE:
                      NEXT.
                   END.
 
+             /* Buscar descriçao do departamento */
+             FIND FIRST crapdpo
+                  WHERE crapdpo.cdcooper = glb_cdcooper 
+                    AND crapdpo.cddepart = crapope.cddepart
+                     NO-LOCK NO-ERROR.
+
              ASSIGN tel_nmoperad = crapope.nmoperad
                     tel_nvoperad = ENTRY(crapope.nvoperad,aux_nvoperad)
                     tel_flgperac = crapope.flgperac
                     tel_tpoperad = ENTRY(crapope.tpoperad,aux_tpoperad)
                     tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)
-                    tel_dsdepart = crapope.dsdepart
+                    tel_cddepart = crapope.cddepart
+                    tel_dsdepart = IF avail crapdpo THEN 
+                                     crapdpo.dsdepart 
+                                   ELSE ""
                     tel_cdagenci = crapope.cdagenci
                     tel_cdpactra = crapope.cdpactra
                     tel_flgdopgd = crapope.flgdopgd
@@ -2063,7 +2151,8 @@ DO WHILE TRUE:
              RUN atualiza_dscomite.
              
              DISPLAY tel_nmoperad tel_nvoperad tel_flgperac tel_tpoperad 
-                     tel_dssitope tel_dsdepart tel_cdagenci tel_cdpactra
+                     tel_dssitope tel_cdagenci tel_cdpactra
+                     tel_cddepart tel_dsdepart
                      tel_flgdopgd tel_flgacres
                      tel_vlpagchq tel_flgdonet
                      tel_cdcomite WHEN crapcop.flgcmtlc
@@ -2109,13 +2198,22 @@ DO WHILE TRUE:
                           glb_cdcritic = 0.
                           LEAVE.
                       END.
-                      
+              
+              /* Buscar descriçao do departamento */
+              FIND FIRST crapdpo
+                   WHERE crapdpo.cdcooper = glb_cdcooper 
+                     AND crapdpo.cddepart = crapope.cddepart
+                      NO-LOCK NO-ERROR.
+              
               ASSIGN tel_nmoperad = crapope.nmoperad
                      tel_nvoperad = ENTRY(crapope.nvoperad,aux_nvoperad)
                      tel_flgperac = crapope.flgperac
                      tel_tpoperad = ENTRY(crapope.tpoperad,aux_tpoperad)
                      tel_dssitope = ENTRY(crapope.cdsitope,aux_dssitope)
-                     tel_dsdepart = crapope.dsdepart
+                     tel_cddepart = crapope.cddepart
+                     tel_dsdepart = IF avail crapdpo THEN 
+                                      crapdpo.dsdepart 
+                                    ELSE ""
                      tel_cdagenci = crapope.cdagenci
                      tel_cdpactra = crapope.cdpactra
                      tel_flgdopgd = crapope.flgdopgd
@@ -2129,7 +2227,8 @@ DO WHILE TRUE:
               RUN atualiza_dscomite.
               
               DISPLAY tel_nmoperad tel_nvoperad tel_flgperac tel_tpoperad 
-                      tel_dssitope tel_dsdepart tel_cdagenci tel_cdpactra
+                      tel_dssitope tel_cdagenci tel_cdpactra
+                      tel_cddepart tel_dsdepart
                       tel_flgdopgd tel_flgacres
                       tel_vlpagchq tel_flgdonet
                       tel_cdcomite WHEN crapcop.flgcmtlc
@@ -2180,6 +2279,7 @@ PROCEDURE limpa:
            tel_flgperac = FALSE
            tel_nvoperad = ""
            tel_dssitope = ""
+           tel_cddepart = 0
            tel_dsdepart = ""
            tel_flgcarta = FALSE
            tel_cdagenci = 0
@@ -2192,7 +2292,7 @@ PROCEDURE limpa:
     RUN atualiza_dscomite.
     
     DISPLAY tel_nmoperad tel_tpoperad tel_nvoperad tel_flgperac
-            tel_dssitope tel_dsdepart tel_flgcarta
+            tel_dssitope tel_cddepart tel_dsdepart tel_flgcarta
             tel_vlpagchq tel_flgdonet
             tel_cdcomite WHEN crapcop.flgcmtlc
             tel_dscomite WHEN crapcop.flgcmtlc

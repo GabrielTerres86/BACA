@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes   
-   Data    : Fevereiro/2004                    Ultima Atualizacao: 08/01/2014
+   Data    : Fevereiro/2004                    Ultima Atualizacao: 30/11/2016
                         
    Dados referentes ao programa:
 
@@ -37,6 +37,9 @@
                             (David Kruger).
                             
                08/01/2014 - Ajustes para homologacao (Adriano).
+               
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                             
 .............................................................................*/
 
@@ -224,11 +227,11 @@ DO WHILE TRUE:
 
    IF CAN-DO("A,E,I",glb_cddopcao)  THEN
       DO:
-         IF glb_dsdepart <> "TI"                    AND
-            glb_dsdepart <> "COORD.ADM/FINANCEIRO"  AND
-            glb_dsdepart <> "COORD.PRODUTOS"        AND
-            glb_dsdepart <> "COMPE"                 THEN
-            DO:
+         IF  glb_cddepart <> 20  AND   /* TI */                    
+             glb_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */  
+             glb_cddepart <> 9   AND   /* COORD.PRODUTOS       */   
+             glb_cddepart <> 4   THEN  /* COMPE                */   
+             DO:
                 ASSIGN glb_cdcritic = 36.
                 RUN fontes/critic.p.
                 ASSIGN glb_cdcritic = 0.
@@ -261,7 +264,7 @@ DO WHILE TRUE:
                                       INPUT glb_cdagenci,
                                       INPUT 0 /* nrdcaixa */,
                                       INPUT glb_cdoperad,
-                                      INPUT glb_dsdepart,
+                                      INPUT glb_cddepart,
                                       INPUT glb_nmdatela,
                                       INPUT 1, /* AYLLOS */
                                       INPUT glb_cddopcao,
@@ -325,7 +328,7 @@ DO WHILE TRUE:
                                                  INPUT glb_cdagenci,
                                                  INPUT 0, /*_nrdcaixa*/
                                                  INPUT glb_cdoperad,
-                                                 INPUT glb_dsdepart,
+                                                 INPUT glb_cddepart,
                                                  INPUT glb_nmdatela,
                                                  INPUT 1, /*ayllos*/ 
                                                  INPUT tel_cdageban,
@@ -455,7 +458,7 @@ DO WHILE TRUE:
                                                   INPUT glb_cdagenci,
                                                   INPUT 0, /* nrdcaixa */
                                                   INPUT glb_cdoperad,
-                                                  INPUT glb_dsdepart,
+                                                  INPUT glb_cddepart,
                                                   INPUT glb_nmdatela,
                                                   INPUT 1, /* AYLLOS */
                                                   INPUT glb_cddopcao,
@@ -518,7 +521,7 @@ DO WHILE TRUE:
                                                  INPUT glb_cdagenci,
                                                  INPUT 0, /*nrdcaixa*/
                                                  INPUT glb_cdoperad,
-                                                 INPUT glb_dsdepart,
+                                                 INPUT glb_cddepart,
                                                  INPUT glb_nmdatela,
                                                  INPUT 1, /*idorigem*/ 
                                                  INPUT tel_cdageban,
@@ -665,7 +668,7 @@ DO WHILE TRUE:
                                                  INPUT glb_cdagenci,
                                                  INPUT 0, /*nrdcaixa*/
                                                  INPUT glb_cdoperad,
-                                                 INPUT glb_dsdepart,
+                                                 INPUT glb_cddepart,
                                                  INPUT glb_nmdatela,
                                                  INPUT 1, /*ayllos*/ 
                                                  INPUT tel_cdageban,
@@ -781,7 +784,7 @@ DO WHILE TRUE:
                                                   INPUT glb_cdagenci,
                                                   INPUT 0, /* nrdcaixa */
                                                   INPUT glb_cdoperad,
-                                                  INPUT glb_dsdepart,
+                                                  INPUT glb_cddepart,
                                                   INPUT glb_nmdatela,
                                                   INPUT 1, /* AYLLOS */
                                                   INPUT glb_cddopcao,
@@ -848,7 +851,7 @@ DO WHILE TRUE:
                                                  INPUT glb_cdagenci,
                                                  INPUT 0, /*nrdcaixa*/
                                                  INPUT glb_cdoperad,
-                                                 INPUT glb_dsdepart,
+                                                 INPUT glb_cddepart,
                                                  INPUT glb_nmdatela,
                                                  INPUT 1, /*ayllos*/
                                                  INPUT tel_cdageban,
@@ -965,7 +968,7 @@ DO WHILE TRUE:
                                                 INPUT glb_cdagenci,
                                                 INPUT 0, /* nrdcaixa */
                                                 INPUT glb_cdoperad,
-                                                INPUT glb_dsdepart,
+                                                INPUT glb_cddepart,
                                                 INPUT glb_nmdatela,
                                                 INPUT 1, /* AYLLOS */
                                                 INPUT glb_cddopcao,

@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme/Supero
-    Data    : Fevereiro/2010                   Ultima atualizacao: 21/06/2016
+    Data    : Fevereiro/2010                   Ultima atualizacao: 06/12/2016
 
     Dados referentes ao programa:
 
@@ -156,9 +156,12 @@
        
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
 
-			   21/06/2016 - Ajuste para utilizar o pacote transabbc ao chamar o script
-						    de comunicação com a ABBC, ao invés de deixar o IP fixo
-							(Adriano - SD 468880).
+			         21/06/2016 - Ajuste para utilizar o pacote transabbc ao chamar o script
+						                de comunicação com a ABBC, ao invés de deixar o IP fixo
+							              (Adriano - SD 468880).
+               
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 
 ..............................................................................*/
 
@@ -755,13 +758,13 @@ DO WHILE TRUE:
             aux_cddopcao = glb_cddopcao.
         END.
 
-   IF  glb_cdcooper <> 3                       OR
-      (glb_dsdepart <> "TI"                   AND       
-       glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-       glb_dsdepart <> "FINANCEIRO"           AND
-       glb_dsdepart <> "COORD.PRODUTOS"       AND
-       glb_dsdepart <> "CONTABILIDADE"        AND
-       glb_dsdepart <> "COMPE")               THEN
+   IF  glb_cdcooper <> 3   OR
+      (glb_cddepart <> 20  AND   /* TI"                  */
+       glb_cddepart <>  8  AND   /* COORD.ADM/FINANCEIRO */
+       glb_cddepart <> 11  AND   /* FINANCEIRO           */
+       glb_cddepart <>  9  AND   /* COORD.PRODUTOS       */
+       glb_cddepart <>  6  AND   /* CONTABILIDADE        */
+       glb_cddepart <>  4 )THEN  /* COMPE                */
         DO:
             BELL.
             MESSAGE "Operador sem autorizacao para processar arquivos"
@@ -816,7 +819,7 @@ DO WHILE TRUE:
                 END.
 
                 /* Alteração Data Referencia para TI - Jonatas*/  
-                IF  glb_dsdepart = "TI"                 AND 
+                IF  glb_cddepart = 20 /* TI */          AND 
                     NOT CAN-DO("CUSTODIA",tel_nmprgexe) AND 
                     NOT CAN-DO("TIC",tel_nmprgexe)      AND 
                     NOT CAN-DO("DEVDOC",tel_nmprgexe) THEN 

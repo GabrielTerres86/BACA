@@ -24,7 +24,7 @@
   | obtem_fault_packet                     | INSS0001.pc_obtem_fault_packet                   |
   | elimina_arquivos_requisicao            | INSS0001.pc_elimina_arquivos_requis              |
   | retorna_linha_log                      | INSS0001.pc_retorna_linha_log                    |
-  | busca_crapttl                          | INSS0001.pc_busca_crapttl                        |
+  | busca_crapttl                          | INSS0001.pc_busca_crapttl                        |
   | busca_crapdbi                          | INSS0001.pc_busca_crapdbi                        |
   | busca_cdorgins                         | INSS0001.pc_busca_cdorgins                       |
   | gera_termo_troca_domicilio             | INSS0001.pc_gera_termo_troca_domic               |
@@ -55,7 +55,7 @@
 
    Programa: b1wgen0091.p                  
    Autora  : André - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 23/03/2015
+   Data    : 16/05/2011                        Ultima atualizacao: 06/12/2016
     
    Dados referentes ao programa:
    
@@ -358,7 +358,10 @@
                             - solicita_consulta_beneficiario
                             - beneficios_inss_solicitacao_creditos
                             (Adriano).
-             
+               
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
  ............................................................................*/
 
 /*................................ DEFINICOES ...............................*/ 
@@ -3230,7 +3233,7 @@ PROCEDURE processa_arquivos_inss:
     DEF  INPUT        PARAM par_cdcoopss AS INTE                    NO-UNDO.
     DEF  INPUT        PARAM par_cdagenss AS INTE                    NO-UNDO.
     DEF  INPUT        PARAM par_ncaixass AS INTE                    NO-UNDO.
-    DEF  INPUT        PARAM par_dsdepart AS CHAR                    NO-UNDO.
+    DEF  INPUT        PARAM par_cddepart AS INTE                    NO-UNDO.
     DEF  INPUT        PARAM par_dtmvtolt AS DATE                    NO-UNDO.
     DEF  INPUT        PARAM par_cdoperad AS CHAR                    NO-UNDO.
     DEF  INPUT        PARAM par_concilia AS CHAR                    NO-UNDO.
@@ -3299,7 +3302,7 @@ PROCEDURE processa_arquivos_inss:
                                       INPUT par_cdoperad,
                                       INPUT crapcop.nmrescop,
                                       INPUT crapcop.dsdircop,
-                                      INPUT par_dsdepart,
+                                      INPUT par_cddepart,
                                       INPUT par_concilia).
 
         /* Remove o arquivo extraido  */
@@ -3505,7 +3508,7 @@ PROCEDURE gera_arquivos_inss:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
 
@@ -4743,7 +4746,7 @@ END PROCEDURE. /* carrega_cooperativas */
 
 PROCEDURE gera_relatorio_diferencas_importacao:
 
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM TABLE FOR tt-dif-import.
     DEF OUTPUT PARAM par_nomedarq AS CHAR                           NO-UNDO.
@@ -5352,7 +5355,7 @@ PROCEDURE pi_processa_arquivo_inss:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmrescop AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dsdircop AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_concilia AS CHAR                           NO-UNDO.
     
     EMPTY TEMP-TABLE tt-craplbi.

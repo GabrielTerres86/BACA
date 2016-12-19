@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima alteracao: 22/04/2013
+   Data    : Abril/2004                        Ultima alteracao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -24,7 +24,10 @@
                            
               22/04/2013 - Incluido o parametro "Dias atraso para 
                            inadimplência:" (Adriano).
-                             
+              
+              07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -187,7 +190,7 @@ DO WHILE TRUE:
                                                        INPUT glb_dtmvtolt, 
                                                        INPUT TRUE, /* Gerar log */
                                                        INPUT aux_dstextab,
-                                                       INPUT glb_dsdepart,
+                                                       INPUT glb_cddepart,
                                                        INPUT tel_vllimite,
                                                        INPUT tel_vlsalmin,
                                                        INPUT tel_diasatrs,

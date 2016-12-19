@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano/CECRED 
-   Data    : Abril/2011                          Ultima alteracao:  20/04/2015
+   Data    : Abril/2011                          Ultima alteracao:  07/12/2016
 
    Dados referentes ao programa:
 
@@ -21,6 +21,9 @@
                02/06/2015 - Adicionado campo percentual na tela.
                             Projeto Portabilidade (Lombardi)
 
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -142,9 +145,9 @@ DO WHILE TRUE:
      IF glb_cddopcao = "A" THEN      
         DO TRANSACTION:
 
-            IF   glb_dsdepart <> "TI"                   AND
-                 glb_dsdepart <> "COORD.PRODUTOS"       AND
-                 glb_dsdepart <> "PRODUTOS"             THEN
+            IF   glb_cddepart <> 20  AND  /* TI             */
+                 glb_cddepart <>  9  AND  /* COORD.PRODUTOS */
+                 glb_cddepart <> 14  THEN /* PRODUTOS       */
                  DO:
                     glb_cdcritic = 36.
                     NEXT.

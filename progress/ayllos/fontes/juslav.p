@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : HENRIQUE
-   Data    : MAIO/2011                          Ultima Atualizacao: 06/12/2013
+   Data    : MAIO/2011                          Ultima Atualizacao: 02/12/2016
 
    Dados referentes ao programa:
 
@@ -12,6 +12,10 @@
    Objetivo  : Listar justificativas de suspeitas de lavagem de dinheiro.
    
    Alteracoes: 06/12/2013 - Inclusao de VALIDATE craptab (Carlos)
+   
+               02/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -100,10 +104,10 @@ DO WHILE TRUE:
         
         UPDATE glb_cddopcao WITH FRAME f_juslav.
 
-        IF  (glb_cddopcao =  "A"            OR
-             glb_cddopcao =  "I")           AND
-            glb_dsdepart <> "TI"            AND
-            glb_dsdepart <> "CONTABILIDADE" THEN
+        IF  (glb_cddopcao =  "A"   OR
+             glb_cddopcao =  "I")  AND
+            glb_dsdepart <> 20     AND    /* TI            */
+            glb_dsdepart <>  6     THEN   /* CONTABILIDADE */
             DO:
                 MESSAGE "Acesso nao permitido.".
                 NEXT.    
