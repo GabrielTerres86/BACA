@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   nmextcop crapcop.nmextcop%TYPE,
                   nmcidade crapcop.nmcidade%TYPE,
                   nmoperad crapope.nmoperad%TYPE,
-                  dsopecoo crapope.nmoperad%TYPE);
+                  dsopecoo VARCHAR2(100)); 
   TYPE typ_tab_dados_itens_bordero IS TABLE OF typ_rec_dados_itens_bordero
        INDEX BY PLS_INTEGER;        
        
@@ -3065,7 +3065,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --  Sistema  : Cred
     --  Sigla    : DSCT0002
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Agosto/2016.                   Ultima atualizacao: 25/08/2016
+    --  Data     : Agosto/2016.                   Ultima atualizacao: 16/12/2016
     --
     --  Dados referentes ao programa:
     --
@@ -3075,6 +3075,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Alteração : 05/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
 	--
 	--               24/11/2016 - Ajustes nome do avalista2. (Odirlei-AMcom)
+    --           
+    --               16/12/2016 - Ajuste declaracao variavel dsopecoo.
+    --                            SD570869 (Odirlei-AMcom)
     -- .........................................................................*/
     
     ---------->> CURSORES <<--------   
@@ -3273,7 +3276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_rel_txmensal    NUMBER;
     vr_rel_nmextcop    VARCHAR2(100);
     vr_rel_vlmedbol    NUMBER;
-    vr_rel_dsopecoo    crapope.nmoperad%TYPE;
+    vr_rel_dsopecoo    VARCHAR2(100);
         
     
   BEGIN
