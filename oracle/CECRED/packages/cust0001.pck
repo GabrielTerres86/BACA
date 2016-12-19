@@ -1,4 +1,4 @@
- CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
+CREATE OR REPLACE PACKAGE CECRED.CUST0001 IS
 
 ---------------------------------------------------------------------------------------------------------------
 --
@@ -201,7 +201,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --  Sistema  : Rotinas genericas focando nas funcionalidades da custodia de cheque
 --  Sigla    : CUST
 --  Autor    : Daniel Zimmermann
---  Data     : Abril/2014.                   Ultima atualizacao: 11/01/2016
+--  Data     : Abril/2014.                   Ultima atualizacao: 25/04/2016
 --
 -- Dados referentes ao programa:
 --
@@ -263,6 +263,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 --                           no arquivo de retorno 'pc_gerar_arquivo_retorno' (Douglas - Chamado 397933)
 --
 --              17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+--
+--              25/04/2016 - Incluido chamada à procedure TARI0001.pc_verifica_tarifa_operacao em 
+--                           pc_custodias_cheques, alteração feita para o Projeto de Tarifas - 218 fase 2 
+--                           (Reinert).
 ---------------------------------------------------------------------------------------------------------------
 
   -- Descricao e codigo da critica 
@@ -346,7 +350,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 15/05/2015                        Ultima atualizacao: 09/03/2016
+    Data    : 15/05/2015                        Ultima atualizacao: 22/06/2016
 
     Dados referentes ao programa:
 
@@ -365,6 +369,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
 
                 09/03/2016 - Adicionar validacao para nao permitir a liberacao de custodia de cheque
                              no ultimo dia util do ano (Douglas - Chamado 391928)
+                             
+                22/06/2016 - Ajustadar a mensagem de erro Agencia Invalido (21,16)
+                             (Douglas - Chamado 417655)
     ............................................................................. */
     DECLARE
       vr_exc_saida EXCEPTION;
@@ -538,7 +545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
         ELSE
           -- (21,16) Agencia Invalido 
           pr_cdtipmvt := nvl(pr_cdtipmvt,21);
-          pr_cdocorre := nvl(pr_cdocorre,'01');  
+          pr_cdocorre := nvl(pr_cdocorre,'16');  
         END IF;
         -- Se possui critica de Tipo de Movimentação e Ocorrencia
         -- Executa RAISE para sair das validações
@@ -3068,8 +3075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                ,crapdcc.nrctachq
                ,crapdcc.nrcheque
                ,crapdcc.vlcheque
-               ,crapdcc.dsdocmc7
-               ,crapdcc.nrdconta
+						   ,crapdcc.dsdocmc7
+						   ,crapdcc.nrdconta
                ,crapdcc.cdbccxlt
                ,crapdcc.cdagenci
                ,crapdcc.nrseqarq
@@ -3221,6 +3228,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
        vr_nrqtddcc INTEGER := 0;
        vr_rowid    ROWID;
      
+			 vr_qtacobra INTEGER;
+       vr_fliseope INTEGER;
+			 
        BEGIN
          -- Leitura do calendario da cooperativa
          OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -3311,7 +3321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
          END IF;
          
          CLOSE cr_craphcc_2;
-
+         
          -- Somente Gerar as informações de retorno quando o tipo de movimentaçã o for 1 - Remessa
          IF rw_craphcc_2.intipmvt = 1 THEN
          
@@ -3439,7 +3449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                            ,pr_nrremret => pr_nrremret
                                            ,pr_dtlibera => rw_crapdcc_1.dtlibera
                                            ,pr_intipmvt => pr_intipmvt) LOOP
-
+                                           
              vr_nrseqdig := vr_nrseqdig + 1;  
              vr_nrqtddcc := vr_nrqtddcc + 1;
              
@@ -3788,6 +3798,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
          -- O valor sera baseado na quantidade(crapdcc) de cheques, multiplicado pelo valor da tarifa
          vr_vltottar := vr_vltarifa * vr_nrqtddcc;
 
+				 /* Efetua verificacao para cobrancas de tarifas sobre operacoes */
+				 tari0001.pc_verifica_tarifa_operacao(pr_cdcooper => pr_cdcooper              --> Codigo da Cooperativa
+																						 ,pr_cdoperad => '1'                      --> Codigo Operador
+																						 ,pr_cdagenci => 1                        --> Codigo Agencia
+																						 ,pr_cdbccxlt => 100                      --> Codigo banco caixa
+																						 ,pr_dtmvtolt => rw_crapdat.dtmvtolt      --> Data Lancamento
+																						 ,pr_cdprogra => 'CUST0001'               --> Nome do Programa que chama a rotina
+																						 ,pr_idorigem => pr_idorigem              --> Identificador Origem(1-AYLLOS,2-CAIXA,3-INTERNET,4-TAA,5-AYLLOS WEB,6-URA)
+																						 ,pr_nrdconta => pr_nrdconta              --> Numero da Conta
+																						 ,pr_tipotari => 3                        --> Tipo de Tarifa(1-Saque,2-Consulta)
+																						 ,pr_tipostaa => 0                        --> Tipo de TAA que foi efetuado a operacao(1-BB, 2-Banco 24h, 3-Banco 24h compartilhado, 4-Rede Cirrus)
+																						 ,pr_qtoperac => vr_nrqtddcc              --> Quantidade de registros da operação (Custódia, contra-ordem, folhas de cheque)
+																						 ,pr_qtacobra => vr_qtacobra              --> Quantidade de registros a cobrar tarifa na operação
+																						 ,pr_fliseope => vr_fliseope              --> Flag indica se ira isentar tarifa:0-Não isenta,1-Isenta
+																						 ,pr_cdcritic => vr_cdcritic              --> Codigo da critica
+																						 ,pr_dscritic => vr_dscritic);            --> Descricao da critica
+																										 
+				 -- Se ocorreu erro
+				 IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
+					 -- Levantar Excecao
+					 RAISE vr_exc_erro;
+				 END IF;
+																										 
+         -- Se não isenta tarifa
+         IF vr_fliseope <> 1 THEN
+		
+		       -- Se a quantidade de registros a cobrar tarifa na operação for maior que 0
+		       IF vr_qtacobra > 0 THEN
+						  -- Atribui novo valor total a cobrar
+							vr_vltottar := vr_qtacobra * vr_vltarifa;
+					 END IF;																
+					 						 
          -- Criar Lancamento automatico tarifa
          TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => pr_cdcooper
                                          ,pr_nrdconta      => pr_nrdconta
@@ -3828,6 +3870,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
            RAISE vr_exc_erro;
          END IF;
 
+         END IF;
+					
          -- Inicializar variaveis
          vr_qtdconfi := 0;
          vr_qtdrejei := 0;	
@@ -4043,7 +4087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              RAISE vr_exc_erro;
              
          END;
-         
+
          -- Gerar o arquivo de retorno apenas quando o tipo de movimento for 1 (Remessa)
          IF vr_intipmvt = 1 THEN
            -- Gerar Arquivo de Retorno (.RET)
@@ -4085,10 +4129,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
        -- Salva Alterações                      
        COMMIT;                      			 
                              
-     EXCEPTION
+       EXCEPTION
        WHEN vr_exc_erro THEN
          pr_cdcritic := NVL(vr_cdcritic,0) ;
-         pr_dscritic := vr_dscritic;
+         pr_dscritic := vr_dscritic; 
          ROLLBACK;
        WHEN OTHERS THEN
          pr_cdcritic := 0;
