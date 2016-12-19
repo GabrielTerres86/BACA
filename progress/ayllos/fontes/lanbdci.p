@@ -125,6 +125,9 @@
                             de cheques de bancos que nao participam da COMPE
                             Utilizar apenas BANCO e FLAG ativo
                             (Douglas - Chamado 417655)
+
+			   19/12/2016 - Tratamento para Migracao Transulcred - bloquear 
+                            liberacao de cheque (Daniel).
 ............................................................................. */
 
 { includes/var_online.i }
@@ -370,6 +373,18 @@ DO WHILE TRUE:
                         NEXT-PROMPT tel_dtlibera WITH FRAME f_lanbdc.
                         NEXT.
                     END.
+
+			   /*  Tratamento especifico para Incorporacao Transulcred para Transpocred */
+               IF   glb_cdcooper = 17          AND
+                    tel_dtlibera >= 11/25/2016 AND
+                    tel_dtlibera <= 12/30/2016 THEN
+                    DO:
+                        MESSAGE "Data de Liberacao Errado. Data Reservada para Incorporacao.".
+                        NEXT-PROMPT tel_dtlibera WITH FRAME f_lanbdc.
+                        NEXT.
+                    END. 	
+
+
                     
                IF   tel_dtlibera >= (glb_dtmvtolt + tab_qtdiamax)   THEN
                     DO:
