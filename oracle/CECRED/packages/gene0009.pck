@@ -111,7 +111,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
     --
     --              03/10/2016 - Tratar linhas com quantidade de colunas diferente do layout, quando
     --                           "com delimitador" (Guilherme/SUPERO)
-    --
+	--
+    --				16/12/2016 - Correcao para o campo DSUSOEMP usado no arquivo de remessa.
+	--							 Chamado 552897 (Gil - Mout's)
     -- ..........................................................................*/
     
       ------------------> CURSORES <----------------
@@ -298,7 +300,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0009 AS
                       vr_tab_linhas(vr_contlin)(vr_nmcampo).numero := nvl(to_number(vr_textarq) / to_number(vr_tab_layouts(vr_tpregistro)(i).vldivisao),0); --dividir para obter decimais
                     ELSE
                       -- Tratar texto 
-                      vr_tab_linhas(vr_contlin)(vr_nmcampo ).texto := trim(vr_textarq);  
+                      IF(vr_nmcampo = 'DSUSOEMP') THEN
+                         vr_tab_linhas(vr_contlin)(vr_nmcampo ).texto := vr_textarq;
+                      ELSE 
+                         vr_tab_linhas(vr_contlin)(vr_nmcampo ).texto := trim(vr_textarq);
+                      END IF;  
                   END CASE;
                 EXCEPTION 
                   WHEN OTHERS THEN
