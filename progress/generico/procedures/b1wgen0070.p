@@ -819,7 +819,7 @@ PROCEDURE gerenciar-telefone:
                                           AND craptfc.nrdconta = par_nrdconta
                                           AND craptfc.idseqttl = par_idseqttl
                                           AND craptfc.nrtelefo = par_nrtelefo
-                                      EXCLUSIVE-LOCK NO-ERROR.
+                                      NO-LOCK NO-ERROR.
 
                                     RUN critica-lock
                                             (INPUT RECID(craptfc),
