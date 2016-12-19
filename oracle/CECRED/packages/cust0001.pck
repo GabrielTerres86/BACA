@@ -4655,7 +4655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
        ELSIF pr_cdbanchq = rw_crapcop.cdbcoctl  AND
             ((pr_cdagechq = 101  AND  pr_cdcooper = 16)  OR
              (pr_cdagechq = 102  AND  pr_cdcooper = 1)   OR
-			 (pr_cdagechq = 116  AND  pr_cdcooper = 9 AND ( SYSDATE > to_date('30/12/2016','DD/MM/YYYY') )   OR
+			 (pr_cdagechq = 116  AND  pr_cdcooper = 9 AND ( SYSDATE > to_date('30/12/2016','DD/MM/YYYY') ) )   OR
              (pr_cdagechq = 103  AND  pr_cdcooper = 1)   OR    /* Incorporacao Concredi */
              (pr_cdagechq = 114  AND  pr_cdcooper = 13)) THEN  /* Incorporacao Credimilsul */
        
@@ -4713,7 +4713,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
              FETCH cr_crapfdc 
               INTO rw_crapfdc;                                                                
          ELSIF (pr_cdcooper = 1  AND pr_cdagechq = 103) OR  /* incorporacao */              
-               (pr_cdcooper = 9  AND pr_cdagechq = 116 AND ( SYSDATE > to_date('30/12/2016','DD/MM/YYYY') ) OR
+               (pr_cdcooper = 9  AND pr_cdagechq = 116 AND ( SYSDATE > to_date('30/12/2016','DD/MM/YYYY') )) OR
 			   (pr_cdcooper = 13 AND pr_cdagechq = 114) THEN
 
              OPEN cr_crapfdc(pr_cdcooper => pr_cdcooper,
