@@ -6,6 +6,10 @@
  * OBJETIVO     : Rotina para gerar o arquivo de GRAVAMES
  * --------------
  * ALTERAÇÕES   : 14/07/2016 - Ajuste para corrigir mensagem de sucesso (Andrei - RKAM).
+                  
+                  19/12/2016 - Inclusao da validacao dos bens e caso esteja invalido
+                               gera um alerta na tela, conforme solicitado no chamado 
+                               533529 (Kelvin).
  */
 ?> 
 
@@ -48,15 +52,38 @@
 	$xmlResult = mensageria($xml, "TELA_GRAVAM", "GERAARQ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 	
+	$dsbemerr = $xmlObj->roottag->tags[0]->tags[0]->cdata;
+	
+	$mensagens = explode(";", $dsbemerr);
+	
+	foreach($mensagens as $mensagem) {
+		if ($msgAlerta == ''){
+			$msgAlerta = $mensagem;
+		}else{
+			$msgAlerta .= '</br>' . $mensagem;
+		}	
+	}
+	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFiltroArquivo();',false);		
+		
+		$mensagens = explode(";", $msgErro);
+	
+		foreach($mensagens as $mensagem) {
+			if ($msgAlerta == ''){
+				$msgAlerta = $mensagem;
+			}else{
+				$msgAlerta .= '</br>' . $mensagem;
+			}	
+		}
+		
+		exibirErro('error',$msgAlerta,'Alerta - Ayllos','formataFiltroArquivo();',false);		
 					
 	} 
 		
-	echo "showError('inform','Gera&ccedil;&atilde;o do arquivo de ".$tparquiv." efetuado com sucesso.','Notifica&ccedil;&atilde;o - Ayllos','formataFiltroArquivo();');";	
+	echo "showError('inform','Gera&ccedil;&atilde;o do arquivo de ".$tparquiv." efetuado com sucesso. <br>" . $msgAlerta . "','Notifica&ccedil;&atilde;o - Ayllos','formataFiltroArquivo();');";	
 	
 	function validaDados(){		
 		
