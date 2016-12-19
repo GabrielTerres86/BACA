@@ -602,7 +602,7 @@ function carregaOpcoes() {
             $('#cdcopmig', '#frmLogSPB').append("<option value='2' >ACREDI</option>");
             $('#cdcopmig', '#frmLogSPB').append("<option value='4' >CONCREDI</option>");
             $('#cdcopmig', '#frmLogSPB').append("<option value='15'>CREDIMILSUL</option>");
-            $('#cdcopmig', '#frmLogSPB').append("<option value='9' >TRANSULCRED</option>");
+            $('#cdcopmig', '#frmLogSPB').append("<option value='17'>TRANSULCRED</option>");
         } else
             if (cdcooper == 13) {
                 $('#cdcopmig', '#frmLogSPB').append("<option value='15'>CREDIMILSUL</option>");
@@ -613,7 +613,7 @@ function carregaOpcoes() {
                 }
                 else{
                     if (cdcooper ==  9) {
-                        $('#cdcopmig', '#frmLogSPB').append("<option value='9' >TRANSULCRED</option>");
+                        $('#cdcopmig', '#frmLogSPB').append("<option value='17'>TRANSULCRED</option>");
                     }
                     else {
                         $('#cdcopmig', '#frmLogSPB').append("<option value='" + cdcooper + "'>" + nmcooper + "</option>");
