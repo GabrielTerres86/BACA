@@ -1372,7 +1372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --  Sistema  : Cred
     --  Sigla    : COBR0007
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 11/01/2016
+    --  Data     : Novembro/2013.                   Ultima atualizacao: 12/12/2016
     --
     --  Dados referentes ao programa:
     --
@@ -1386,6 +1386,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                             Faltou ';' ao concatenar os campos da sequence feito
     --                             pelo Marcos na versão anterior. (Rafael)
     --
+    --                12/12/2016 - Adicionar LOOP para buscar o numero do convenio de protesto
+    --                             (Douglas - Chamado 564039)
     -- ...........................................................................................
 
 
@@ -1433,24 +1435,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
            AND ceb.nrconven = pr_nrconven
          ORDER BY ceb.progress_recid DESC;
       rw_crapceb cr_crapceb%ROWTYPE;
-
-      --Selecionar Cadastro Emissao Bloqueto
-      CURSOR cr_crapceb2 (pr_cdcooper IN crapceb.cdcooper%type
-                         ,pr_nrconven IN crapceb.nrconven%type) IS
-        SELECT nvl(max(nvl(ceb.nrcnvceb,0)),0) nrcnvceb
+      
+      --Selecionar Ultimo Convenio de Protesto para Cobranca
+      CURSOR cr_crapceb_protesto (pr_cdcooper IN crapceb.cdcooper%type
+                                 ,pr_nrconven IN crapceb.nrconven%type
+                                 ,pr_nrcnvceb IN crapceb.nrcnvceb%type) IS
+        SELECT ceb.nrcnvceb
           FROM crapceb ceb
          WHERE ceb.cdcooper = pr_cdcooper
-           AND ceb.nrconven = pr_nrconven;
-      rw_crapceb2 cr_crapceb2%ROWTYPE;
+           AND ceb.nrconven = pr_nrconven
+           AND ceb.nrcnvceb = pr_nrcnvceb;
+      rw_crapceb_protesto cr_crapceb_protesto%ROWTYPE;
       
       --Variaveis Locais
       vr_nrremret INTEGER;
       vr_nrseqreg INTEGER;
       vr_nrdocmto INTEGER;
-      vr_nrcnvceb INTEGER;
+      vr_nrcnvceb INTEGER := 0;
       vr_qtdregdda INTEGER;
       vr_dsmotivo VARCHAR2(100);
       vr_rowid_ret ROWID;
+      -- Controle do convenio CEB que deve ser gerado
+      vr_ultnrceb INTEGER := 0;
+      vr_nrcnvceb_max CONSTANT INTEGER := 9999;
+      
       --Tabelas de Memoria de Remessa
       vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
       vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
@@ -1556,18 +1564,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       ELSE
         --Fechar Cursor
         CLOSE cr_crapceb;
-        --Selecionar cadastro emissao bloquetos
-        OPEN cr_crapceb2 (pr_cdcooper => rw_bcrapcob.cdcooper
-                         ,pr_nrconven => rw_crapcco.nrconven);
-        FETCH cr_crapceb2 INTO rw_crapceb2;
-        --Se nao encontrou
-        IF cr_crapceb2%NOTFOUND THEN
-          vr_nrcnvceb:= 1;
-        ELSE
-          vr_nrcnvceb:= nvl(rw_crapceb2.nrcnvceb,0) + 1;
+        IF NVL(vr_nrcnvceb, 0) = 0 THEN
+          -- Loop para encontrar numero valido de convenio de protesto
+          FOR i IN 1..vr_nrcnvceb_max LOOP
+            OPEN cr_crapceb_protesto(pr_cdcooper => rw_bcrapcob.cdcooper
+                                    ,pr_nrconven => rw_crapcco.nrconven
+                                    ,pr_nrcnvceb => i);
+            FETCH cr_crapceb_protesto INTO rw_crapceb_protesto;
+            IF cr_crapceb_protesto%NOTFOUND THEN
+              -- Fecha cursor
+              CLOSE cr_crapceb_protesto;
+              vr_nrcnvceb := i;
+              -- Terminar LOOP
+              EXIT;
+            END IF;
+            -- Fecha cursor
+            CLOSE cr_crapceb_protesto;
+            vr_ultnrceb := i;
+          END LOOP;
         END IF;
-        --Fechar Cursor
-        CLOSE cr_crapceb2;
+        
+        -- Verificar se é o ultimo convenio de protesto
+        IF vr_ultnrceb = vr_nrcnvceb_max THEN
+          -- Deixar mensagem de erro no log do boleto quando Protesto for por arquivo
+          vr_dsmotivo:= 'Erro: numero CEB excedeu o limite de ' || 
+                        to_char(vr_nrcnvceb_max) ||
+                        '. Instrucao de protesto cancelada.';
+
+          PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_idregcob   --ROWID da Cobranca
+                                       ,pr_cdoperad => pr_cdoperad   --Operador
+                                       ,pr_dtmvtolt => pr_dtmvtolt   --Data movimento
+                                       ,pr_dsmensag => vr_dsmotivo   --Descricao Mensagem
+                                       ,pr_des_erro => vr_des_erro   --Indicador erro
+                                       ,pr_dscritic => vr_dscritic); --Descricao erro
+                    
+          vr_cdcritic:= 0;
+          vr_dscritic:= vr_dsmotivo;
+                        
+          --Levantar Excecao
+          RAISE vr_exc_erro;  
+        END IF;
+        
         --Inserir Cadastro Emissao Bloqueto
         BEGIN
           INSERT INTO crapceb
