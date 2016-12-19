@@ -13,6 +13,9 @@
 				  17/12/2012 - Ajuste para layout padrao (Daniel).
 
 				  14/08/2013 - Alteração da sigla PAC para PA (Carlos).
+
+				  30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+                               código do departamento ao invés da descrição (Renato Darosci - Supero)
 	                                                                  
 	***********************************************************************/
 
@@ -54,7 +57,7 @@
 	$xmlCarregaDados .= "	 <nrregist>".$nrregist."</nrregist>";
 	$xmlCarregaDados .= "	 <nriniseq>".$nriniseq."</nriniseq>";
 	$xmlCarregaDados .= "	 <flgpagin>".$flgpagin."</flgpagin>";
-	$xmlCarregaDados .= "	 <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xmlCarregaDados .= "	 <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";
 	

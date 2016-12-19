@@ -7,7 +7,8 @@
 	                                                                   
 	  Objetivo  : Validar a nova senha.              
 	                                                                 
-	  Alterações: 										   			  
+	  Alterações: 05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                               departamento como parametros e passar o o código (Renato Darosci)		
 	                                                                  
 	***********************************************************************/
 
@@ -47,7 +48,7 @@
 	$xmlCarregaDados .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";	
 	$xmlCarregaDados .= "	<flgerlog>TRUE</flgerlog>";
 	$xmlCarregaDados .= "	<dstextab>".$dstextab."</dstextab>";
-	$xmlCarregaDados .= "   <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xmlCarregaDados .= "   <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";
 	

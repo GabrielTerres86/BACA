@@ -41,6 +41,9 @@
                23/04/2014 - Remover a parte de tarifas da tela, e incluir
                             Central de Risco com campos Origem do Recurso,
                             Modalidade e Submodalidade (Guilherme/SUPERO)
+
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................. */
 
 TRANS_A:
@@ -145,9 +148,9 @@ ELSE
            END.
 
       /* Descricao so pode ser alterada pela Central */
-      IF   glb_dsdepart = "PRODUTOS"               OR
-           glb_dsdepart = "COORD.ADM/FINANCEIRO"   OR
-           glb_dsdepart = "TI"                     THEN
+      IF   glb_cddepart = 14  OR    /* PRODUTOS             */
+           glb_cddepart = 8   OR    /* COORD.ADM/FINANCEIRO */
+           glb_cddepart = 20  THEN  /* TI                   */
            DO:
                UPDATE tel_dsdlinha WITH FRAME f_descricao.
 
@@ -156,9 +159,9 @@ ELSE
                DISPLAY tel_dsdlinha WITH FRAME f_descricao.
            END.
                     
-      IF   glb_dsdepart <> "PRODUTOS"             AND
-           glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-           glb_dsdepart <> "TI"                   THEN
+      IF   glb_cddepart <> 14  AND    /* PRODUTOS             */
+           glb_cddepart <> 8   AND	  /* COORD.ADM/FINANCEIRO */
+           glb_cddepart <> 20  THEN	  /* TI                   */
            DO:
               UPDATE tel_qtvezcap    tel_vllimmax 
                      WITH FRAME f_lrotat
@@ -176,7 +179,7 @@ ELSE
                              APPLY LASTKEY.
 
                      END.  /*  Fim do EDITING  */
-           END. /* Fim - IF   glb_dsdepart <> "PRODUTOS"... */
+           END. /* Fim - IF   glb_cddepart <>  14 .. "PRODUTOS"... */
       ELSE
            DO:
               UPDATE tel_qtvezcap    tel_vllimmax  
@@ -202,11 +205,11 @@ ELSE
 
                      END.  /*  Fim do EDITING  */
                      
-           END. /* Fim - ELSE IF   glb_dsdepart <> "PRODUTOS"... */
+           END. /* Fim - ELSE IF   glb_cddepart <>  14 .. "PRODUTOS"... */
 
-      IF   glb_dsdepart <> "PRODUTOS"             AND
-           glb_dsdepart <> "COORD.ADM/FINANCEIRO" AND
-           glb_dsdepart <> "TI"                   AND
+      IF   glb_cddepart <> 14  AND    /* PRODUTOS             */
+           glb_cddepart <> 8   AND	  /* COORD.ADM/FINANCEIRO */
+           glb_cddepart <> 20  AND 	  /* TI                   */
            tel_vllimmax  > tel_vllmaxce           THEN
            DO:
                MESSAGE "Valor Limite maximo Operacional maior que Valor " +
@@ -214,10 +217,10 @@ ELSE
                NEXT.
            END.
 
-      IF  (glb_dsdepart = "PRODUTOS"               OR
-           glb_dsdepart = "COORD.ADM/FINANCEIRO"   OR
-           glb_dsdepart = "TI")                    AND
-           tel_vllmaxce < tel_vllimmax             THEN
+      IF  (glb_cddepart = 14    OR   /* PRODUTOS             */
+           glb_cddepart = 8     OR	 /* COORD.ADM/FINANCEIRO */
+           glb_cddepart = 20 ) AND	 /* TI                   */
+           tel_vllmaxce < tel_vllimmax     THEN
            DO:
                MESSAGE "Valor Limite maximo CECRED menor que Valor " +
                        "Limite maximo Operacional.".
@@ -259,9 +262,9 @@ ELSE
 
    DISPLAY tel_txmensal WITH FRAME f_lrotat.
 
-   IF glb_dsdepart = "PRODUTOS"               OR
-      glb_dsdepart = "COORD.ADM/FINANCEIRO"   OR
-      glb_dsdepart = "TI"                     THEN
+   IF glb_cddepart = 14   OR    /* PRODUTOS             */
+      glb_cddepart = 8    OR    /* COORD.ADM/FINANCEIRO */
+      glb_cddepart = 20   THEN  /* TI                   */
       DO:
          DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
         

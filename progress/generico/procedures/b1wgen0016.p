@@ -30,11 +30,11 @@
 
 *******************************************************************************/
 
-/*..............................................................................
+/*.....................................................................................................
 
     Programa: b1wgen0016.p
     Autor   : Evandro/David
-    Data    : Abril/2006                     Ultima Atualizacao: 21/07/2016
+    Data    : Abril/2006                     Ultima Atualizacao: 27/09/2016
     
     Dados referentes ao programa:
 
@@ -440,7 +440,24 @@
 			  21/07/2016 - Ajuste para utilizar campos corretos na rotina aprova_trans_pend para o  
 						   tipo de transacao TED
 						  (Adriano).
+			  
+			  28/07/2016 - #483548 Merge da PROD. Correcao de cpf passado para procedure 
+                           pc_verifica_operacao_prog nas operacoes de transferencias (Carlos)
 
+              01/09/2016 - Alteracao da procedure aprova_trans_pend para aprovacao de
+						   transacoes com quantidade minima de assinaturas, SD 514239 (Jean Michel).
+			
+			  06/09/2016 - Ajuste no horario de permissao de cancelamento de agendamento de TED
+						   (Adriano - SD 509480).
+              
+			  15/09/2016 - Caso for agendamento de GPS alterar aux_incancel para passar 3 (Lucas Ranghetti #501845)
+			               
+              26/09/2016 - Ajuste para enviar mais de um email para monitoracao de fraude
+                           qdo o corpo do email ultrapassar 25 titulos pois estava
+                           acarretando em problemas no IB (Tiago/Elton SD 521667).
+						   
+			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                           departamento passando a considerar o código (Renato Darosci)             
  .............................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -477,6 +494,9 @@ DEF TEMP-TABLE tt-tbcapt_trans_pend   NO-UNDO LIKE tbcapt_trans_pend.
 DEF TEMP-TABLE tt-tbconv_trans_pend   NO-UNDO LIKE tbconv_trans_pend.
 DEF TEMP-TABLE tt-tbfolha_trans_pend  NO-UNDO LIKE tbfolha_trans_pend.
 DEF TEMP-TABLE tt-tbtarif_pacote_trans_pend NO-UNDO LIKE tbtarif_pacote_trans_pend.
+DEF TEMP-TABLE tt-pagtos-mon NO-UNDO
+    FIELD nrsequen AS INTE
+    FIELD dslinhas AS CHAR.
 
 DEF VAR aux_tab_limite AS LONGCHAR                                  NO-UNDO.
 DEF VAR xml_dsmsgerr   AS CHAR                                      NO-UNDO.
@@ -1413,7 +1433,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                         
                         ASSIGN aux_dtdebito = "Mes atual"
                                aux_vllantra = tbtarif_pacote_trans_pend.vlpacote
-                               aux_dscedent = "PACOTE DE TARIFAS".
+                               aux_dscedent = "SERVICOS COOPERATIVOS".
                     END.
                 
                 CREATE tt-criticas_transacoes_oper.
@@ -1447,7 +1467,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                                                 "Folha de Pagamento"
                                                               ELSE
                                                               IF tbgen_trans_pend.tptransacao = 10 THEN /*OK*/
-                                                                "Pacote de Tarifas"
+                                                                "Servicos Cooperativos"
                                                               ELSE
                                                                 "Transacao"
                        tt-criticas_transacoes_oper.flgtrans = par_aprovada
@@ -2828,6 +2848,8 @@ PROCEDURE paga_titulo:
     DEFINE VARIABLE aux_nrcpfpre AS DECIMAL     NO-UNDO.
     DEFINE VARIABLE aux_nmprepos AS CHARACTER   NO-UNDO.
 
+    DEFINE VARIABLE aux_nrsequen AS INTEGER     NO-UNDO.
+
     DEFINE BUFFER cra2ass FOR crapass.
     DEFINE BUFFER crabavt FOR crapavt.
 
@@ -3602,6 +3624,8 @@ PROCEDURE paga_titulo:
          ** envia email.                                                  **
          ** ------------------------------------------------------------- **/
         
+		EMPTY TEMP-TABLE tt-pagtos-mon.
+
         IF  aux_cdagenci  = 90    AND 
             par_idtitdda  = 0     AND 
             NOT par_flgagend      THEN
@@ -3613,7 +3637,8 @@ PROCEDURE paga_titulo:
                 IF  aux_flgemail  THEN
                     DO:
                         ASSIGN aux_vlpagtos = 0
-                               aux_dspagtos = "".
+                               aux_dspagtos = ""
+                               aux_nrsequen = 0.
 
                         FOR EACH crappro WHERE crappro.cdcooper = crapcop.cdcooper AND 
                                                crappro.nrdconta = par_nrdconta     AND
@@ -3675,19 +3700,27 @@ PROCEDURE paga_titulo:
                                             DO:
                                            
                                                 ASSIGN aux_vlpagtos = aux_vlpagtos + craptit.vldpagto
-                                                       aux_dspagtos = aux_dspagtos +
-                                                           "Valor do Pagamento: R$ " + 
+                                                       aux_nrsequen = aux_nrsequen + 1.
+
+                                                CREATE tt-pagtos-mon.
+                                                ASSIGN tt-pagtos-mon.nrsequen = aux_nrsequen
+                                                       tt-pagtos-mon.dslinhas = "Valor do Pagamento: R$ " + 
                                                            TRIM(STRING(craptit.vldpagto,"zzz,zzz,zzz,zz9.99")) + 
                                                            " - Cod.Barras: " + craptit.dscodbar + "\n\n".
+                                                VALIDATE tt-pagtos-mon.
                                             END.
                                         END.
                                     ELSE
                                     DO:
                                         ASSIGN aux_vlpagtos = aux_vlpagtos + craptit.vldpagto
-                                               aux_dspagtos = aux_dspagtos +
-                                                   "Valor do Pagamento: R$ " + 
-                                                   TRIM(STRING(craptit.vldpagto,"zzz,zzz,zz9.99")) + 
+                                               aux_nrsequen = aux_nrsequen + 1.
+
+                                        CREATE tt-pagtos-mon.
+                                        ASSIGN tt-pagtos-mon.nrsequen = aux_nrsequen
+                                               tt-pagtos-mon.dslinhas = "Valor do Pagamento: R$ " + 
+                                                                        TRIM(STRING(craptit.vldpagto,"zzz,zzz,zzz,zz9.99")) + 
                                                    " - Cod.Barras: " + craptit.dscodbar + "\n\n".
+                                        VALIDATE tt-pagtos-mon.
                                     END.
                                 END.
                         
@@ -3851,13 +3884,45 @@ PROCEDURE paga_titulo:
 
                         END.
 
-                        ASSIGN aux_conteudo = aux_conteudo + "\n" + aux_dspagtos.
-                                                
+                        /* Envia email para monitoracao de fraude com 25 titulos por email
+                           pois estava estourando a variavel do corpo do email*/
                         RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT
                             SET h-b1wgen0011.
 
                         IF  VALID-HANDLE(h-b1wgen0011)  THEN
                             DO:
+                                ASSIGN aux_nrsequen = 0.
+
+                                FOR EACH tt-pagtos-mon NO-LOCK BY tt-pagtos-mon.nrsequen:
+
+                                    ASSIGN aux_dspagtos = aux_dspagtos + tt-pagtos-mon.dslinhas
+                                           aux_nrsequen = aux_nrsequen + 1.
+
+                                    IF  aux_nrsequen = 25 THEN
+                                        DO:   
+											RUN enviar_email_completo IN h-b1wgen0011
+											  (INPUT par_cdcooper,
+											   INPUT "INTERNETBANK",
+											   INPUT "cpd@cecred.coop.br",
+											   INPUT "monitoracaodefraudes@cecred.coop.br",
+											   INPUT "PAGTO " +
+													 crapcop.nmrescop + " " +
+													 TRIM(STRING(par_nrdconta,
+																 "zzzz,zzz,9")) + " R$ " +
+													 TRIM(STRING(par_vllanmto,
+																 "zzz,zzz,zzz,zz9.99")),
+											   INPUT "",
+											   INPUT "",
+											   INPUT aux_conteudo + "\n" + aux_dspagtos,
+											   INPUT TRUE).
+
+                                            ASSIGN aux_dspagtos = ""
+                                                   aux_nrsequen = 0.
+                                        END.               
+                                END.
+
+                                IF  aux_nrsequen > 0 THEN
+                                DO:
                                 RUN enviar_email_completo IN h-b1wgen0011
                                   (INPUT par_cdcooper,
                                    INPUT "INTERNETBANK",
@@ -3871,11 +3936,16 @@ PROCEDURE paga_titulo:
                                                      "zzz,zzz,zzz,zz9.99")),
                                    INPUT "",
                                    INPUT "",
-                                   INPUT aux_conteudo,
+                                       INPUT aux_conteudo + "\n" + aux_dspagtos,
                                    INPUT TRUE).
+
+                                    ASSIGN aux_dspagtos = ""
+                                           aux_nrsequen = 0.
+                                END.
 
                                 DELETE PROCEDURE h-b1wgen0011.
                             END.
+                            /*Fim do envio de email*/
                     END.
                     
             END.
@@ -4218,14 +4288,27 @@ PROCEDURE obtem-agendamentos:
                           ASSIGN aux_incancel = 1.
                         ELSE
                         DO:
-                          /*O cancelamento de TED dever ser permitido somente ate as 7:30 pois
-                            o programa pr_crps705 (Responsavel pelo debito de agendamentos de TED)
-                            sera iniciado as 8:00.
+						    FIND FIRST crapprm WHERE crapprm.cdcooper = par_cdcooper AND
+							 					     crapprm.nmsistem = 'CRED'       AND
+							 						 crapprm.cdacesso = 'HORARIO_CANCELAMENTO_TED'
+							 						 NO-LOCK NO-ERROR.
+
+							IF  NOT AVAILABLE crapprm THEN
+								DO:
+									ASSIGN par_dscritic = "Nao foi encontrado horario limite para " +
+													      "cancelamento de TED.".
+									RETURN "NOK".
+									
+								END.
+							
+                          /*O cancelamento de TED dever ser permitido somente ate as 8:30 (Horario
+						    parametrizado atraves da tabela crapprm) pois o programa pr_crps705 
+							(Responsavel pelo debito de agendamentos de TED) sera iniciado as 8:40.
                             Qualquer mudanca na condicao abaixo devera ser previamente discutida com
-                            a equipe do financeiro (Juliana), do canais de atendimento (Jefferson) e
-                            de sistemas (Adriano, Rosangela).*/
+                            a equipe do financeiro (Juliana), do canais de atendimento (Jefferson),
+							Seguranca Corporativa (Maicon) e de sistemas (Adriano, Rosangela).*/
                           IF craplau.dtmvtopg = aux_datdodia AND 
-                             TIME < 27000  THEN /* 27000 = (7,5 * 3600) */
+                             TIME < INT(crapprm.dsvlrprm)  THEN 
                             ASSIGN aux_incancel = 1.
                           ELSE
                             ASSIGN aux_incancel = 2.
@@ -4256,9 +4339,9 @@ PROCEDURE obtem-agendamentos:
 
                         /** Se for GPS, nao permite cancelar na tela de Agendamentos **/
                         IF  craplau.dscedent MATCHES "*GPS IDENTIFICADOR*" THEN
-                            ASSIGN aux_incancel = 2.
+                            ASSIGN aux_incancel = 3. /* Indicador eh 3 para mudar a mensagem de exibicao caso for gps */
                 END.
-                END.
+                END.                
                 ELSE
                     ASSIGN aux_incancel = 2. 
                                           
@@ -4566,17 +4649,31 @@ PROCEDURE cancelar-agendamento:
                                       "estar PENDETE.".
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
+
+			FIND FIRST crapprm WHERE crapprm.cdcooper = par_cdcooper AND
+							 		 crapprm.nmsistem = 'CRED'       AND
+							 		 crapprm.cdacesso = 'HORARIO_CANCELAMENTO_TED'
+							 		 NO-LOCK NO-ERROR.
+
+		    IF  NOT AVAILABLE crapprm THEN
+		  	    DO:
+			 	   ASSIGN par_dscritic = "Nao foi encontrado horario limite para " +
+					 					 "cancelamento de TED.".
+
+				   UNDO TRANSACAO, LEAVE TRANSACAO.
+									
+            END.
             
-            /*O cancelamento de TED dever ser permitido somente ate as 7:30 pois
-             o programa pr_crps705 (Responsavel pelo debito de agendamentos de TED)
-             sera iniciado as 8:00.
-             Qualquer mudanca na condicao abaixo devera ser previamente discutida com
-             a equipe do financeiro (Juliana), do canais de atendimento (Jefferson) e
-             de sistemas (Adriano, Rosangela).*/
-            IF (craplau.dtmvtopg = aux_datdodia 
-                AND TIME > 27000) THEN
+            /*O cancelamento de TED dever ser permitido somente ate as 8:30 (Horario
+			  parametrizado atraves da tabela crapprm) pois o programa pr_crps705 
+			  (Responsavel pelo debito de agendamentos de TED) sera iniciado as 8:40.
+              Qualquer mudanca na condicao abaixo devera ser previamente discutida com
+              a equipe do financeiro (Juliana), do canais de atendimento (Jefferson),
+			  Seguranca Corporativa (Maicon) e de sistemas (Adriano, Rosangela).*/
+            IF (craplau.dtmvtopg = aux_datdodia AND
+                TIME > INT(crapprm.dsvlrprm))        THEN
             DO:
-              ASSIGN par_dscritic = "Cancelamento permitido apenas ate 7:30hrs.".
+			  ASSIGN par_dscritic = "Cancelamento permitido apenas ate " + STRING(INT(crapprm.dsvlrprm),"HH:MM") + "hrs.".
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
@@ -6088,8 +6185,8 @@ PROCEDURE consultar_parmon:
             RETURN "NOK".
         END.
 
-     IF   crapope.dsdepart <> "TI"       AND
-          crapope.dsdepart <> "SEGURANCA" THEN
+     IF   crapope.cddepart <> 20   AND   /* TI */
+          crapope.cddepart <> 15  THEN   /* SEGURANCA */
           DO:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Acesso nao autorizado.".
@@ -6213,8 +6310,8 @@ PROCEDURE alterar_parmon:
             RETURN "NOK".
         END.
 
-     IF   crapope.dsdepart <> "TI"       AND
-          crapope.dsdepart <> "SEGURANCA" THEN
+     IF   crapope.cddepart <> 20  AND   /* TI        */
+          crapope.cddepart <> 15 THEN   /* SEGURANCA */
           DO:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Acesso nao autorizado.".
@@ -6764,6 +6861,8 @@ PROCEDURE aprova_trans_pend:
     DEF VAR aux_vldifere AS LOGI                                    NO-UNDO.
     DEF VAR aux_cobregis AS LOGI                                    NO-UNDO.
     DEF VAR aux_msgalert AS CHAR                                    NO-UNDO.
+    DEF VAR aux_qtminast AS INTE                                    NO-UNDO.
+	DEF VAR aux_contapro AS INTE                                    NO-UNDO.
             
     DEF VAR h-b1wgen0015 AS HANDLE NO-UNDO.
     DEF VAR h-b1wgen0081 AS HANDLE NO-UNDO.
@@ -6781,7 +6880,7 @@ PROCEDURE aprova_trans_pend:
            aux_dscritic = ""
            aux_dstransa = "Aprovacao de Transacoes Pendentes".
 
-    FOR FIRST crapass FIELDS(idastcjt) NO-LOCK WHERE crapass.cdcooper = par_cdcooper
+    FOR FIRST crapass FIELDS(idastcjt qtminast) NO-LOCK WHERE crapass.cdcooper = par_cdcooper
                                                  AND crapass.nrdconta = par_nrdconta. END.
 
     IF NOT AVAIL crapass THEN
@@ -6812,6 +6911,8 @@ PROCEDURE aprova_trans_pend:
             
             RETURN "NOK".
         END.             
+
+	ASSIGN aux_qtminast = crapass.qtminast.
 
     FOR FIRST crapsnh FIELDS(nrcpfcgc) NO-LOCK WHERE crapsnh.cdcooper = par_cdcooper
                                                  AND crapsnh.nrdconta = par_nrdconta
@@ -6943,8 +7044,6 @@ PROCEDURE aprova_trans_pend:
                aux_auxditem = ENTRY(1,aux_auxditem,"|")
                aux_cddoitem = DECI(ENTRY(3,aux_auxditem,",")).
         
-       
-         
         FOR FIRST tbgen_trans_pend WHERE tbgen_trans_pend.cdtransacao_pendente = aux_cddoitem NO-LOCK. END.
         
         IF AVAIL tbgen_trans_pend THEN
@@ -7255,7 +7354,7 @@ PROCEDURE aprova_trans_pend:
                         ELSE
                             DO:
                                 ASSIGN aux_cdcritic = 0
-                                       aux_dscritic = "Registro de Pacote de Tarifas Pendente Inexistente.".
+                                       aux_dscritic = "Registro de Servicos Cooperativos Pendente Inexistente.".
                         
                                 RUN gera_erro (INPUT par_cdcooper,
                                                INPUT par_cdagenci,
@@ -7286,7 +7385,6 @@ PROCEDURE aprova_trans_pend:
 
     FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR NO-WAIT.
 
-    
     FOR EACH tt-tbgen_trans_pend NO-LOCK BY tt-tbgen_trans_pend.idmovimento_conta
                                          BY tt-tbgen_trans_pend.idordem_efetivacao:
 
@@ -7367,6 +7465,26 @@ PROCEDURE aprova_trans_pend:
 
                 END.
 
+				IF aux_conttran > 1 THEN
+					DO:
+						ASSIGN aux_contapro = 0. /* TOTAL APROVAÇÕES REALIZADAS */
+
+						/* Verifica quantidade de transacoes aprovadas */
+						FOR EACH tbgen_aprova_trans_pend 
+						   WHERE tbgen_aprova_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente
+							 AND tbgen_aprova_trans_pend.idsituacao_aprov = 2 NO-LOCK: 
+                    
+							ASSIGN aux_contapro = aux_contapro + 1. /* TOTAL APROVAÇÕES REALIZADAS */
+
+						END.
+
+						IF (aux_qtminast - aux_contapro) = 1 THEN
+							DO:
+								ASSIGN aux_conttran = 1.
+							END.
+
+					END.
+				
                 IF  aux_conttran = 1 AND par_indvalid = 0 THEN
                     DO:
                         RUN pc_valores_online(INPUT tt-tbgen_trans_pend.tptransacao,
@@ -7481,7 +7599,7 @@ PROCEDURE aprova_trans_pend:
                               ,INPUT  IF tt-tbgen_trans_pend.tptransacao = 3 THEN 1 ELSE tt-tbgen_trans_pend.tptransacao /* Credito Salario JDM */ /* par_tpoperac */
                               ,INPUT  1 /* par_flgvalid*/
                               ,INPUT  aux_dsorigem /* par_dsorigem */
-                              ,INPUT  tt-tbgen_trans_pend.nrcpf_operador
+                              ,INPUT  par_nrcpfope
                               ,INPUT  1      /* par_flgctrag */
                               ,INPUT  ""        /* par_nmdatela */
                               ,OUTPUT aux_dstransa
@@ -8019,7 +8137,7 @@ PROCEDURE aprova_trans_pend:
                               ,INPUT  tt-tbgen_trans_pend.tptransacao /* par_tpoperac */
                               ,INPUT  1 /* par_flgvalid*/
                               ,INPUT  aux_dsorigem /* par_dsorigem */
-                              ,INPUT  tt-tbgen_trans_pend.nrcpf_operador
+                              ,INPUT  par_nrcpfope 
                               ,INPUT  1      /* par_flgctrag */
                               ,INPUT  ""        /* par_nmdatela */
                               ,OUTPUT aux_dstransa
@@ -11568,7 +11686,7 @@ PROCEDURE aprova_trans_pend:
                                         IF  AVAIL crapcri THEN
                                             ASSIGN aux_dscritic = crapcri.dscritic.
                                         ELSE
-                                            ASSIGN aux_dscritic =  "Nao foi possivel incluir o pacote".
+                                            ASSIGN aux_dscritic =  "Nao foi possivel incluir o servico".
                                     END.
                      
                                     RUN gera_arquivo_log_ted(INPUT par_cdcooper,

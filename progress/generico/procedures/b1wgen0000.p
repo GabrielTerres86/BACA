@@ -109,6 +109,8 @@
                            ao consultar um nome de operador usando a variavel
                            cdoperad da sessao que estava em maisculo (Oscar).        
 
+			  07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                           departamento passando a considerar o código (Renato Darosci)
 ..............................................................................*/
 
 
@@ -330,7 +332,7 @@ PROCEDURE efetua_login:
 
     CREATE tt-login.
     ASSIGN tt-login.nmoperad = crapope.nmoperad
-           tt-login.dsdepart = crapope.dsdepart
+           tt-login.cddepart = crapope.cddepart
            tt-login.nmrescop = crapcop.nmrescop
            tt-login.dsdircop = crapcop.dsdircop
            tt-login.dtmvtolt = aux_dtmvtolt
@@ -349,7 +351,17 @@ PROCEDURE efetua_login:
            tt-login.nvoperad = crapope.nvoperad
            tt-login.cdoperad = crapope.cdoperad.
     
-    RETURN "OK".
+	/* Buscar o registro do departamento */
+    FIND crapdpo WHERE crapdpo.cdcooper = par_cdcooper     AND
+                       crapdpo.cddepart = crapope.cddepart NO-LOCK NO-ERROR.
+                       
+    IF  NOT AVAILABLE crapdpo  THEN
+		ASSIGN tt-login.dsdepart = "".
+	ELSE
+	    ASSIGN tt-login.dsdepart = crapdpo.dsdepart.
+
+	
+	RETURN "OK".
         
 END PROCEDURE.
 
@@ -381,7 +393,7 @@ PROCEDURE carrega_menu:
         FIND crapope WHERE crapope.cdcooper = par_cdcooper AND
                            crapope.cdoperad = par_cdoperad NO-LOCK NO-ERROR.
                                    
-        IF  crapope.dsdepart <> "TI"  THEN
+        IF  crapope.cddepart <> 20  THEN  /* "TI" */
             DO:
                 FIND FIRST crapace WHERE crapace.cdcooper = par_cdcooper     AND
                                          crapace.cdoperad = par_cdoperad     AND
@@ -460,7 +472,7 @@ PROCEDURE verifica_permissao_operacao:
             RETURN "NOK".
         END.
     
-    IF  crapope.dsdepart <> "TI"  THEN
+    IF  crapope.cddepart <> 20  THEN   /* "TI" */
         DO: 
             FIND crapace WHERE crapace.cdcooper = par_cdcooper AND
                                crapace.cdoperad = par_cdoperad AND
@@ -530,7 +542,7 @@ PROCEDURE obtem_permissao:
             RETURN "NOK".
         END.
     
-    IF  crapope.dsdepart = "TI"  THEN
+    IF  crapope.cddepart = 20  THEN  /* "TI" */
         DO:
             DO aux_contador = 1 TO NUM-ENTRIES(craptel.cdopptel,","):
             
@@ -588,7 +600,7 @@ PROCEDURE obtem_permissao:
                                    NO-LOCK             
                                    BY craptel.nrordrot:
                  
-                IF  crapope.dsdepart <> "TI"  THEN
+                IF  crapope.cddepart <> 20  THEN   /* "TI" */
                     DO:
                         FIND crapace WHERE 
                              crapace.cdcooper = par_cdcooper     AND
@@ -619,7 +631,7 @@ PROCEDURE obtem_permissao:
                                 craptel.idambtel  =  0)
                                NO-LOCK  BY craptel.nrordrot:
          
-            IF  crapope.dsdepart <> "TI"  THEN
+            IF  crapope.cddepart <> 20  THEN  /* "TI" */
                 DO:
                     FIND crapace WHERE 
                          crapace.cdcooper = par_cdcooper     AND

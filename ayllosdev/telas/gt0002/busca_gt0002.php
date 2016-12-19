@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 19/09/2013
  * OBJETIVO     : Rotina para buscar convenios por cooperativas - GT0002
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 02/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
  * -------------- 
  *
  * -------------- 
@@ -47,7 +48,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '       <dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '       <cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '       <cdcooped>'.$cdcooper.'</cdcooped>';
 	$xml .= '       <cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '       <cdconven>'.$cdconven.'</cdconven>';

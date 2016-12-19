@@ -56,7 +56,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
 																		,pr_perdctmx IN crapcco.perdctmx%TYPE --Percentual máximo de desconto manual
 																		,pr_flgapvco IN crapcco.flgapvco%TYPE --Aprovação do coordenador
 																		,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
-																		,pr_dsdepart IN VARCHAR2              --Departamento
+																		,pr_cddepart IN VARCHAR2              --Departamento
 																		,pr_cddopcao IN VARCHAR2              --Opção da tela
 																		,pr_nmdatela IN VARCHAR2              --Nome da tela                          
 																		,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -69,7 +69,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
 
 	
   PROCEDURE pc_consulta(pr_nrconven  IN crapcco.nrconven%TYPE -- Convenio
-                       ,pr_dsdepart  IN VARCHAR2              --Departamento
                        ,pr_cddopcao  IN VARCHAR2              --Opção
                        ,pr_nmdatela  IN VARCHAR2              --Nome da tela
                        ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
@@ -110,7 +109,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
 												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
-                        ,pr_dsdepart IN VARCHAR2              --Departamento
+                        ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -123,7 +122,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
   PROCEDURE pc_exclusao (pr_nrconven  IN crapcco.nrconven%TYPE   --Convenio
                         ,pr_dtmvtolt  IN VARCHAR2                --Data de movimento 
                         ,pr_cddopcao  IN VARCHAR                 --Opção
-                        ,pr_dsdepart  IN VARCHAR                 --Departamento
+                        ,pr_cddepart  IN VARCHAR                 --Departamento
                         ,pr_nmdatela  IN VARCHAR2                --Nome da tela
                         ,pr_xmllog    IN VARCHAR2                --XML com informações de LOG
                         ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
@@ -164,7 +163,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
 												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
-                        ,pr_dsdepart IN VARCHAR2              --Departamento
+                        ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -177,7 +176,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
   PROCEDURE pc_consulta_tarifas(pr_nrconven IN crapcco.nrconven%TYPE --Convenio
                                ,pr_dtmvtolt IN VARCHAR2              --Data de movimento
                                ,pr_cddbanco IN crapcco.cddbanco%TYPE --Banco                              
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_nrregist IN INTEGER               -- Número de registros
@@ -193,7 +191,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
                                ,pr_nrconven IN crapcct.nrconven%TYPE --Convenio
                                ,pr_cddbanco IN crapcct.cddbanco%TYPE --Banco
                                ,pr_cdocorre IN crapcct.cdocorre%TYPE --Ocorrencia                               
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_nrregist IN INTEGER               -- Número de registros
@@ -207,7 +204,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
   
   PROCEDURE pc_atualiza_motivos(pr_dtmvtolt IN VARCHAR2              --Data de movimento
                                ,pr_nrconven IN crapctm.nrconven%TYPE --Convenio
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_vlmotivo IN VARCHAR2              --Motivos
@@ -221,7 +217,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCCO AS
   PROCEDURE pc_atualiza_tarifas(pr_dtmvtolt IN VARCHAR2              --Data de movimento
                                ,pr_nrconven IN crapctm.nrconven%TYPE --Convenio
                                ,pr_vltarifa IN VARCHAR2              --Tarifas
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -241,7 +236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
    Sigla   : CRED
 
    Autor   : Jonathan - RKAM
-   Data    : Marco/2016                       Ultima atualizacao: 27/04/2016
+   Data    : Marco/2016                       Ultima atualizacao: 19/10/2016
 
    Dados referentes ao programa:
 
@@ -251,6 +246,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
    Alteracoes: 27/04/2016 - Ajuste para liberar acesso para departamento
                             CANAIS a tela CADCCO, conforme solicitado
                             no chamado 441903. (Kelvin)                                       
+                            
+               19/10/2016 - Remover validação de verificação se já exite um 
+                            convenio para internet na mesma cooperativa na
+                            procedure pc_valida_informacoes (Lucas Ranghetti #531199)
+                              
+               28/11/2016 - P341 - Automatização BACENJUD - Alterado o parametro PR_DSDEPART 
+                            para PR_CDDEPART e as consultas do fonte para utilizar o código 
+                            do departamento nas validações (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Variavel temporária para LOG 
@@ -439,7 +442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 																	,pr_perdctmx IN crapcco.perdctmx%TYPE --Percentual máximo de desconto manual
 																	,pr_flgapvco IN crapcco.flgapvco%TYPE --Aprovação do coordenador
 																	,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
-                                  ,pr_dsdepart IN VARCHAR2              --Departamento
+                                  ,pr_cddepart IN VARCHAR2              --Departamento
                                   ,pr_cddopcao IN VARCHAR2              --Opção da tela
                                   ,pr_nmdatela IN VARCHAR2              --Nome da tela                          
                                   ,pr_nmdbanco OUT crapcco.nmdbanco%TYPE--Nome do banco 
@@ -454,14 +457,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 19/10/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Realiza a validação das informações para cadastro/alteração do registro de convenio
     
-    Alterações : 
+    Alterações : 19/10/2016 - Remover validação de verificação se já exite um 
+                              convenio para internet na mesma cooperativa 
+                              (Lucas Ranghetti #531199)
     -------------------------------------------------------------------------------------------------------------*/                                
     
     --Cursor para encontrar o convenio
@@ -554,9 +559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
   
   BEGIN
         
-    IF pr_dsdepart <> 'TI' AND
-       pr_dsdepart <> 'SUPORTE' AND
-       pr_dsdepart <> 'CANAIS' THEN 
+    IF pr_cddepart NOT IN (1,18,20) THEN 
        
       vr_cdcritic := 36; 
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -899,33 +902,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     
     END IF;                
                         
-    IF pr_dsorgarq = 'INTERNET' AND 
-       pr_cddopcao <> 'A'       THEN
-      
-      OPEN cr_crapcco_internet(pr_cdcooper => pr_cdcooper
-                              ,pr_nrconven => pr_nrconven
-                              ,pr_flgregis => pr_flgregis
-                              ,pr_cddbanco => pr_cddbanco);
-                                     
-      FETCH cr_crapcco_internet INTO rw_crapcco_internet;
-      
-      IF cr_crapcco_internet%FOUND THEN
-        
-         --Fecha o cursor
-         CLOSE cr_crapcco_internet;
-         
-         --Monta mensagem de erro
-         vr_cdcritic := 0;
-         vr_dscritic := 'Ja existe outro convenio para Internet.';
-          
-         RAISE vr_exc_erro;            
-      
-      END IF;                                
-      
-      CLOSE cr_crapcco_internet;
-    
-    END IF;
-    
     IF pr_dsorgarq = 'EMPRESTIMO'THEN
       
       OPEN cr_crapcco_empr(pr_cdcooper => pr_cdcooper
@@ -1000,7 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 																		 ,pr_perdctmx IN crapcco.perdctmx%TYPE --Percentual máximo de desconto manual
 																		 ,pr_flgapvco IN crapcco.flgapvco%TYPE --Aprovação do coordenador
 																		 ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
-																		 ,pr_dsdepart IN VARCHAR2              --Departamento
+																		 ,pr_cddepart IN VARCHAR2              --Departamento
 																	 	 ,pr_cddopcao IN VARCHAR2              --Opção da tela
 																		 ,pr_nmdatela IN VARCHAR2              --Nome da tela                          
 																		 ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -1095,7 +1071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
 																		 ,pr_perdctmx => pr_perdctmx --Percentual máximo de desconto manual
 																		 ,pr_flgapvco => pr_flgapvco --Aprovação do coordenador
 																		 ,pr_flrecipr => pr_flrecipr --Usar reciprocidade                                     ,pr_dsdepart => pr_dsdepart --Departamento
-																		 ,pr_dsdepart => pr_dsdepart --Departamento
+																		 ,pr_cddepart => pr_cddepart --Departamento
 																		 ,pr_cddopcao => pr_cddopcao --Opção da tela
 																		 ,pr_nmdatela => pr_nmdatela --Nome da tela                        
 																		 ,pr_nmdbanco => vr_nmresbcc --Nome do banco                                     
@@ -1139,7 +1115,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
   END pc_valida_informacoes_web;                                     																		
   
   PROCEDURE pc_consulta (pr_nrconven IN crapcco.nrconven%TYPE --Convenio
-                        ,pr_dsdepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -1483,7 +1458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
 												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
-                        ,pr_dsdepart IN VARCHAR2              --Departamento
+                        ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -1499,14 +1474,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Altera cadastro de parametro de cobranca.
     
-    Alterações : 
+    Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
+                              de erro, para que seja exibido o erro correto no Ayllos WEB
+                              (Douglas - Chamado 550711)
     -------------------------------------------------------------------------------------------------------------*/ 
   
     --Busca os parametros de cobranca
@@ -1641,7 +1618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                                      ,pr_perdctmx => pr_perdctmx --Percentual máximo de desconto manual
                                      ,pr_flgapvco => pr_flgapvco --Aprovação do coordenador
                                      ,pr_flrecipr => pr_flrecipr --Usar reciprocidade   
-																		 ,pr_dsdepart => pr_dsdepart --Departamento
+																		 ,pr_cddepart => pr_cddepart --Departamento
                                      ,pr_cddopcao => pr_cddopcao --Opção da tela
                                      ,pr_nmdatela => pr_nmdatela --Nome da tela                        
                                      ,pr_nmdbanco => vr_nmresbcc --Nome do banco                                     
@@ -2184,7 +2161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                    
       -- Erro
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
+      pr_dscritic:= replace(replace(vr_dscritic,'"',''),'''','');
       pr_nmdcampo := vr_nmdcampo;
               
       -- Existe para satisfazer exigência da interface. 
@@ -2197,7 +2174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_alteracao --> '|| SQLERRM;
+      pr_dscritic:= replace(replace('Erro na pc_alteracao --> '|| SQLERRM,'"',''),'''','');
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2210,7 +2187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
   PROCEDURE pc_exclusao (pr_nrconven  IN crapcco.nrconven%TYPE --Convenio
                         ,pr_dtmvtolt  IN VARCHAR2              --Data de movimento 
                         ,pr_cddopcao  IN VARCHAR               --Opção da tela
-                        ,pr_dsdepart  IN VARCHAR               --Departamento
+                        ,pr_cddepart  IN VARCHAR               --Departamento
                         ,pr_nmdatela IN VARCHAR2               --Nome da tela                        
                         ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
                         ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
@@ -2225,14 +2202,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Exclui cadastro de parametro de cobranca.
     
-    Alterações : 
+    Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
+                              de erro, para que seja exibido o erro correto no Ayllos WEB
+                              (Douglas - Chamado 550711)
     -------------------------------------------------------------------------------------------------------------*/ 
     
     --Busca os parametros de cobranca
@@ -2291,9 +2270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       RAISE vr_exc_erro;
     END IF;
     
-    IF pr_dsdepart <> 'TI' AND
-       pr_dsdepart <> 'SUPORTE' AND 
-       pr_dsdepart <> 'CANAIS' THEN 
+    IF pr_cddepart NOT IN (1,18,20) THEN 
        
       vr_cdcritic := 36;      
       RAISE vr_exc_erro;
@@ -2401,7 +2378,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       
       -- Erro
       pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
+      pr_dscritic:= replace(replace(vr_dscritic,'"',''),'''','');
+
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2415,7 +2393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
            
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_exclusao --> '|| SQLERRM;
+      pr_dscritic:= replace(replace('Erro na pc_exclusao --> '|| SQLERRM,'"',''),'''','');
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -2456,7 +2434,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_flrecipr IN crapcco.flrecipr%TYPE --Usar reciprocidade
 												,pr_idprmrec IN crapcco.idprmrec%TYPE --Id da parametrização da reciprocidade cirada na CONFRP
                         ,pr_dslogcfg IN VARCHAR2              --Log das operações na tela CONFRP
-                        ,pr_dsdepart IN VARCHAR2              --Departamento
+                        ,pr_cddepart IN VARCHAR2              --Departamento
                         ,pr_cddopcao IN VARCHAR2              --Opção da tela
                         ,pr_nmdatela IN VARCHAR2              --Nome da tela                        
                         ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
@@ -2472,14 +2450,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jonathan - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:
+    Data     : Marco/2016                           Ultima atualizacao: 04/11/2016
     
     Dados referentes ao programa:
     
     Frequencia: -----
     Objetivo   : Inclui cadastro de parametro de cobranca.
     
-    Alterações : 
+    Alterações : 04/11/2016 - Adicionado tratamento para remover aspas duplas da mensagem 
+                              de erro, para que seja exibido o erro correto no Ayllos WEB
+                              (Douglas - Chamado 550711)
     -------------------------------------------------------------------------------------------------------------*/ 
         
     --Cursor para encontrar a cooperativa
@@ -2595,7 +2575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                                      ,pr_perdctmx => pr_perdctmx --Percentual máximo de desconto manual
                                      ,pr_flgapvco => pr_flgapvco --Aprovação do coordenador
                                      ,pr_flrecipr => pr_flrecipr --Usar reciprocidade                                     ,pr_dsdepart => pr_dsdepart --Departamento
-                                     ,pr_dsdepart => pr_dsdepart --Departamento
+                                     ,pr_cddepart => pr_cddepart --Departamento
                                      ,pr_cddopcao => pr_cddopcao --Opção da tela
                                      ,pr_nmdatela => pr_nmdatela --Nome da tela        
                                      ,pr_nmdbanco => vr_nmresbcc --Nome do banco                
@@ -2638,17 +2618,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                          ,crapcco.cdcooper
                          ,crapcco.flgregis
                          ,crapcco.flginter
-	 											 ,crapcco.flprotes
-												 ,crapcco.flserasa
-												 ,crapcco.qtdfloat
-												 ,crapcco.qtfltate
-												 ,crapcco.qtdecini
-												 ,crapcco.qtdecate
-												 ,crapcco.fldctman
-												 ,crapcco.perdctmx
-												 ,crapcco.flgapvco
-												 ,crapcco.flrecipr
-												 ,crapcco.idprmrec)
+                         ,crapcco.flprotes
+                         ,crapcco.flserasa
+                         ,crapcco.qtdfloat
+                         ,crapcco.qtfltate
+                         ,crapcco.qtdecini
+                         ,crapcco.qtdecate
+                         ,crapcco.fldctman
+                         ,crapcco.perdctmx
+                         ,crapcco.flgapvco
+                         ,crapcco.flrecipr
+                         ,crapcco.idprmrec)
                   VALUES(pr_nrconven
                         ,pr_cddbanco
                         ,vr_nmresbcc
@@ -2672,7 +2652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,vr_cdcooper
                         ,pr_flgregis
                         ,decode(pr_dsorgarq,'INTERNET',1,'PROTESTO',1,'IMPRESSO PELO SOFTWARE',1,0) 
-												,pr_flprotes
+                        ,pr_flprotes
                         ,pr_flserasa
                         ,pr_qtdfloat
                         ,pr_qtfltate
@@ -2682,7 +2662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                         ,pr_perdctmx
                         ,pr_flgapvco
                         ,pr_flrecipr
-												,pr_idprmrec);
+                        ,NVL(TRIM(pr_idprmrec),0));
                           
     EXCEPTION
       WHEN OTHERS THEN  
@@ -2973,7 +2953,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
       
       -- Erro
       pr_cdcritic:= vr_cdcritic;
-      pr_dscritic:= vr_dscritic;
+      pr_dscritic:= replace(replace(vr_dscritic,'"',''),'''','');
       pr_nmdcampo:= vr_nmdcampo;
         
       -- Existe para satisfazer exigência da interface. 
@@ -2988,7 +2968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
            
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na pc_inclusao --> '|| SQLERRM;
+      pr_dscritic:= replace(replace('Erro na pc_inclusao --> '|| SQLERRM,'"',''),'''','');
         
       -- Existe para satisfazer exigência da interface. 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -3001,7 +2981,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
   PROCEDURE pc_consulta_tarifas(pr_nrconven IN crapcco.nrconven%TYPE --Convenio
                                ,pr_dtmvtolt IN VARCHAR2              --Data de movimento
                                ,pr_cddbanco IN crapcco.cddbanco%TYPE --Banco                              
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_nrregist IN INTEGER               -- Número de registros
@@ -3251,7 +3230,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
                                ,pr_nrconven IN crapcct.nrconven%TYPE --Convenio
                                ,pr_cddbanco IN crapcct.cddbanco%TYPE --Banco
                                ,pr_cdocorre IN crapcct.cdocorre%TYPE --Ocorrencia                               
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_nrregist IN INTEGER               -- Número de registros
@@ -3461,7 +3439,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
    
   PROCEDURE pc_atualiza_motivos(pr_dtmvtolt IN VARCHAR2              --Data de movimento
                                ,pr_nrconven IN crapctm.nrconven%TYPE --Convenio
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_vlmotivo IN VARCHAR2              --Motivos
@@ -3791,7 +3768,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCCO AS
   PROCEDURE pc_atualiza_tarifas(pr_dtmvtolt IN VARCHAR2              --Data de movimento
                                ,pr_nrconven IN crapctm.nrconven%TYPE --Convenio
                                ,pr_vltarifa IN VARCHAR2              --Tarifas
-                               ,pr_dsdepart IN VARCHAR2              --Departamento
                                ,pr_cddopcao IN VARCHAR2              --Opção
                                ,pr_nmdatela IN VARCHAR2              --Nome da tela
                                ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG

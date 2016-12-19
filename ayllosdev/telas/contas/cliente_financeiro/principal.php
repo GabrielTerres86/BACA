@@ -12,7 +12,8 @@
  * 003 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar a opcao @.
  * 004 [05/08/2015] Gabriel (RKAM)        : Reformulacao cadastral. 
  * 005 [14/06/2016] Kelvin (CECRED) 	  : Removendo validação de permissão para corrigir problema no chamado 468177.
- * 006 [14/07/2016] Carlos R. : Correcao na validacao de dados retornados via XML. SD 479874. 
+ * 006 [14/07/2016] Carlos R. (CECRED)    : Correcao na validacao de dados retornados via XML. SD 479874.
+ * 007 [01/12/2016] Renato Darosci(Supero): Alterado para passar como parametro o código do departamento ao invés da descrição. 
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -67,7 +68,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<nrseqdig>'.$nrseqdig.'</nrseqdig>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';

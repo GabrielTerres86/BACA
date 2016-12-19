@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 03/12/2015
+   Data    : Marco/2004                        Ultima Atualizacao: 18/07/2016
    
    Dados referentes ao programa:
 
@@ -139,7 +139,9 @@
                03/12/2015 - Ajuste de homologacao referente a conversao
                             realizada pela DB1
                             (Adriano).              
-                                          
+               
+               18/07/2016 - Incluido campo tel_nrtelvoz.
+                            PRJ229 - Melhorias OQS (Odirlei - AMcom)
 ............................................................................. */
                   
 ASSIGN tel_nmextage    = ""
@@ -197,6 +199,7 @@ ASSIGN tel_nmextage    = ""
        tel_hhlimcan    = 0
        tel_mmlimcan    = 0
        tel_nrtelfax    = ""
+       tel_nrtelvoz    = ""
        tel_qtddaglf    = 0
        tel_qtmesage    = 0
        tel_qtddlslf    = 0
@@ -272,6 +275,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
            tel_mmlimcan    = INTE(SUBSTR(STRING(crapage.hrcancel,
                                                 "HH:MM:SS"),4,2))
            tel_nrtelfax    = crapage.nrtelfax
+           tel_nrtelvoz    = crapage.nrtelvoz
            tel_qtddaglf    = crapage.qtddaglf
            tel_qtmesage    = crapage.qtmesage
            tel_qtddlslf    = crapage.qtddlslf
@@ -314,6 +318,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
            log_dsinform[3] = tel_dsinform[3]
            log_hrcancel    = crapage.hrcancel
            log_nrtelfax    = tel_nrtelfax
+           log_nrtelvoz    = tel_nrtelvoz
            log_qtddaglf    = tel_qtddaglf
            log_qtmesage    = tel_qtmesage
            log_qtddlslf    = tel_qtddlslf
@@ -546,7 +551,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                tel_cdbandoc
                tel_cdagedoc
                tel_flgdsede 
-               tel_cdagepac WHEN glb_dsdepart = "COMPE"
+               tel_cdagepac WHEN glb_cddepart = 4
                WITH FRAME f_pac01.
 
         IF log_cdagepac <> 0 AND
@@ -698,6 +703,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                     tel_mmenvelo
                     tel_hhlimcan
                     tel_mmlimcan
+                    tel_nrtelvoz
                     tel_nrtelfax
                     tel_qtddaglf
                     tel_qtmesage
@@ -732,8 +738,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                                                  "(00:00 a 23:00).".
 
                       
-                      IF  glb_dsdepart = "TI"     OR
-                          glb_dsdepart = "COMPE"  THEN
+                      IF  glb_cddepart = 20   OR  /* TI */
+                          glb_cddepart = 4  THEN  /* COMPE */ 
                           DO:
                               DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                   
@@ -1559,9 +1565,15 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                          IF KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                             LEAVE.
 
-                         IF  glb_dsdepart = "TI"     OR
-                             glb_dsdepart = "COMPE"  THEN
+                         IF  glb_cddepart = 20   OR   /* TI */    
+                             glb_cddepart = 4  THEN	  /* COMPE */
                              DO:
+                             
+                                 DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                                    UPDATE tel_nrtelvoz WITH FRAME f_pac03.
+                                    LEAVE.
+                                 END.
+                             
                                  DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                
                                    UPDATE tel_hhsiccan
@@ -1599,7 +1611,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                              END.
                          ELSE
                              DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                                UPDATE tel_nrtelfax WITH FRAME f_pac03.
+                                UPDATE tel_nrtelvoz 
+                                       tel_nrtelfax WITH FRAME f_pac03.
                                 LEAVE.
                              END.
                              
@@ -1648,8 +1661,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                   END.
             ELSE
                DO:
-                   IF  glb_dsdepart = "TI"     OR
-                       glb_dsdepart = "COMPE"  THEN
+                   IF  glb_cddepart = 20   OR  /* TI */
+                       glb_cddepart = 4  THEN  /* COMPE */
                        DO:
                            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                            
@@ -1750,9 +1763,14 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                   IF KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                      LEAVE.
 
-                  IF  glb_dsdepart = "TI"     OR
-                      glb_dsdepart = "COMPE"  THEN
+                  IF  glb_cddepart = 20    OR  /* TI */
+                      glb_cddepart = 4   THEN  /* COMPE */
                       DO:
+                          DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                             UPDATE tel_nrtelvoz WITH FRAME f_pac03.
+                             LEAVE.
+                          END.
+                          
                           DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                         
                             UPDATE tel_hhsiccan
@@ -1791,7 +1809,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                       END.
                   ELSE
                       DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                         UPDATE tel_nrtelfax WITH FRAME f_pac03.
+                         UPDATE tel_nrtelvoz
+                                tel_nrtelfax WITH FRAME f_pac03.
                          LEAVE.
                       END.
                  
@@ -2087,6 +2106,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
            crapage.flgdsede    = tel_flgdsede  
            crapage.cdagepac    = tel_cdagepac
            crapage.nrtelfax    = tel_nrtelfax
+           crapage.nrtelvoz    = tel_nrtelvoz
            crapage.qtmesage    = tel_qtmesage
            crapage.vlminsgr    = tel_vlminsgr
            crapage.vlmaxsgr    = tel_vlmaxsgr.

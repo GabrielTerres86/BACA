@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes   
-   Data    : Marco/2004                       Ultima Atualizacao: 03/12/2015
+   Data    : Marco/2004                       Ultima Atualizacao: 18/07/2016
                                                             
    Dados referentes ao programa:    
 
@@ -132,7 +132,13 @@
                              
                03/12/2015 - Ajuste de homologacao referente a conversao
                             realizada pela DB1
-                            (Adriano).              
+                            (Adriano).         
+                            
+               18/07/2016 - Incluido campo tel_nrtelvoz.
+                            PRJ229 - Melhorias OQS (Odirlei - AMcom)   
+							
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)          
 ............................................................................. */
                
 IF tel_cdagenci = 0  THEN
@@ -225,6 +231,7 @@ ASSIGN tel_nmextage    = ""
        tel_hhlimcan    = 0
        tel_mmlimcan    = 0
        tel_nrtelfax    = ""
+       tel_nrtelvoz    = ""
        tel_qtddaglf    = 0
        tel_hhsicini    = 0
        tel_mmsicini    = 0
@@ -301,6 +308,7 @@ ASSIGN tel_nmextage    = ""
        log_hhsicfim    = ""
        log_hhsiccan    = ""
        log_nrtelfax    = tel_nrtelfax
+       log_nrtelvoz    = tel_nrtelvoz
        log_qtddaglf    = tel_qtddaglf
        log_qtddlslf    = tel_qtddlslf
        log_flsgproc    = tel_flsgproc
@@ -456,6 +464,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                        tel_mmenvelo
                        tel_hhlimcan
                        tel_mmlimcan
+                       tel_nrtelvoz
                        tel_nrtelfax
                        tel_qtddaglf
                        tel_qtddlslf
@@ -481,8 +490,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                       tel_hhenvelo:HELP = "Informe a hora limite" + 
                                               " (00:00 a 23:00).".
 
-               IF  glb_dsdepart = "TI"     OR
-                   glb_dsdepart = "COMPE"  THEN
+               IF  glb_cddepart = 20   OR  /* TI */
+                   glb_cddepart = 4  THEN  /* COMPE */
                    DO:
                        DO WHILE TRUE ON ENDKEY UNDO, LEAVE:          
                           
@@ -1305,9 +1314,14 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                         IF KEYFUNCTION(LASTKEY) = "END-ERROR"  THEN
                            LEAVE.
 
-                        IF  glb_dsdepart = "TI"     OR
-                            glb_dsdepart = "COMPE"  THEN
+                        IF  glb_cddepart = 20   OR  /* TI */
+                            glb_cddepart = 4  THEN  /* COMPE */
                             DO:
+                                DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                                   UPDATE tel_nrtelvoz WITH FRAME f_pac03.
+                                   LEAVE.
+                                END.
+                                
                                 DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                               
                                   UPDATE tel_hhsiccan
@@ -1345,7 +1359,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                             END.
                         ELSE
                             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                               UPDATE tel_nrtelfax WITH FRAME f_pac03.
+                               UPDATE tel_nrtelvoz
+                                      tel_nrtelfax WITH FRAME f_pac03.
                                LEAVE.
                             END.
                     
@@ -1376,9 +1391,14 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                   END. /* Fim PAC 90,91 */
              ELSE
                 DO:
-                    IF  glb_dsdepart = "TI"     OR
-                        glb_dsdepart = "COMPE"  THEN
+                    IF  glb_cddepart = 20   OR  /* TI */
+                        glb_cddepart = 4  THEN  /* COMPE */
                         DO:
+                            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                               UPDATE tel_nrtelvoz WITH FRAME f_pac03.
+                               LEAVE.
+                            END.
+                            
                             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                           
                               UPDATE tel_hhsiccan
@@ -1416,7 +1436,8 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
                         END.
                     ELSE
                         DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                           UPDATE tel_nrtelfax WITH FRAME f_pac03.
+                           UPDATE tel_nrtelvoz
+                                  tel_nrtelfax WITH FRAME f_pac03.
                            LEAVE.
                         END.
                 END.
@@ -1539,6 +1560,7 @@ DO TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
            crapage.flgdsede    = tel_flgdsede 
            crapage.cdagepac    = tel_cdagepac
            crapage.nrtelfax    = tel_nrtelfax
+           crapage.nrtelvoz    = tel_nrtelvoz
            crapage.tpageins    = tel_tpageins
            crapage.cdorgins    = tel_cdorgins
            crapage.vlminsgr    = tel_vlminsgr

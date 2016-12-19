@@ -6,8 +6,11 @@
  * OBJETIVO     : Mostrar opcao Principal da rotina de INFORMATIVOS da tela de CONTAS
  *
  * ALTERACOES   : 20/12/2010 - Adicionado chamada validaPermissao (Gabriel - DB1). 
- *								11/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
- *								14/07/2016 - Correcao no carregamento de variaveis para o Javascript. SD 479874. Carlos R.
+ *                11/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
+ *                14/07/2016 - Correcao no carregamento de variaveis para o Javascript. SD 479874. Carlos R.
+ *
+ *                02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  */
 
     session_start();
@@ -80,7 +83,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '		<nrdrowid>'.$nrdrowid.'</nrdrowid>';

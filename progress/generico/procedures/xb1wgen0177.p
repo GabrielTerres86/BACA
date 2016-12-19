@@ -6,7 +6,9 @@
 
      Objetivo  : BO de Comunicacao XML x BO - Tela GT0003
 
-     Alteracoes: 
+     Alteracoes: 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+	                          da descrição do departamento como parametro e 
+							  passar o o código (Renato Darosci)
 
 ............................................................................*/
 
@@ -19,7 +21,7 @@ DEF VAR aux_nrdcaixa AS INTE                                         NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                         NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                         NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                         NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                         NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cddopcao AS CHAR                                         NO-UNDO.
 DEF VAR aux_cdconven AS INTE                                         NO-UNDO.
@@ -59,7 +61,7 @@ PROCEDURE valores_entrada:
              WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
              WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
              WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
-             WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+             WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
              WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
              WHEN "cdconven" THEN aux_cdconven = INTE(tt-param.valorCampo).
              WHEN "cdcooped" THEN aux_cdcooped = INTE(tt-param.valorCampo).
@@ -92,7 +94,7 @@ PROCEDURE Busca_Dados:
                      INPUT aux_cdoperad,
                      INPUT aux_nmdatela,
                      INPUT aux_idorigem,
-                     INPUT aux_dsdepart,
+                     INPUT aux_cddepart,
                      INPUT aux_cddopcao,
                      INPUT aux_dtmvtola,
                      INPUT aux_cdconven,

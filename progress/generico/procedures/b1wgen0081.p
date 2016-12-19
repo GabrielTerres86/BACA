@@ -124,7 +124,7 @@
                 07/10/2014 - Inclusao da chamada para PLSQL da procedure
                              convertida obtem-resgates-aplicacao.(Jean Michel) 
                  
-                                                                21/08/2014 - Incluido as procedures consulta-agendamento e
+                21/08/2014 - Incluido as procedures consulta-agendamento e
                              incluir-novo-agendamento (Tiago/Gielow).
                              
                 12/09/2014 - Incluido a procedure atualiza-status-agendmto
@@ -186,7 +186,10 @@
                              (Jean Michel).
                              
                 25/05/2015 - Incluido o BY crapdtc.tpaplica DESC na procedure
-                             obtem-tipos-aplicacao (Jean Michel)             
+                             obtem-tipos-aplicacao (Jean Michel)      
+							 
+				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -5633,11 +5636,11 @@ PROCEDURE consulta-extrato-rdca.
         END.
 
     IF  par_cdcooper = 3  THEN
-        aux_lsoperad = aux_lsoperad + "," + crapope.dsdepart.
+        aux_lsoperad = aux_lsoperad + "," + crapope.cddepart.
 
     IF  par_nmdatela = "EXTRDA" THEN
         DO:
-            IF  CAN-DO(aux_lsoperad,crapope.dsdepart) THEN 
+            IF  CAN-DO(aux_lsoperad,STRING(crapope.cddepart)) THEN 
                 aux_listahis = "113,116,117,118,119,121,124,125,126,143,144," +
                 "176,178,179,180,181,182,183,861,862,866,868,871,492,493,494," +
                 "495,875,877,876,527,528,529,530,531,533,534,532,472,473,474," +
@@ -5651,7 +5654,7 @@ PROCEDURE consulta-extrato-rdca.
     ELSE
     IF  par_nmdatela = "IMPRES"  THEN
         DO:
-            IF  NOT CAN-DO(aux_lsoperad,crapope.dsdepart)   THEN
+            IF  NOT CAN-DO(aux_lsoperad,STRING(crapope.cddepart))   THEN
                 aux_listahis = "113,116,118,119,121,126,143,144,176,178,179," +
                                "183,861,862,868,871,492,493,494,495,875,876," +
                                "877,923,924,527,528,529,530,531,533,534,532," +
@@ -5666,7 +5669,7 @@ PROCEDURE consulta-extrato-rdca.
         END.
     ELSE
         DO: 
-            IF  NOT CAN-DO(aux_lsoperad,crapope.dsdepart) THEN  
+            IF  NOT CAN-DO(aux_lsoperad,STRING(crapope.cddepart)) THEN  
                 aux_listahis = "113,116,118,119,121,126,143,144,176,178,179," +
                            "183,861,862,868,871,492,493,494,495,875,876,877," +
                            "472,473,474,475,463,478,476,477,527,528,529,530," +
@@ -5679,7 +5682,7 @@ PROCEDURE consulta-extrato-rdca.
         END.
     
     /* Nao lista aplicacoes resgatadas a mais de 1 ano */
-    IF (NOT CAN-DO("SUPORTE",crapope.dsdepart)) AND
+    IF (crapope.cddepart <> 18)   AND
         par_nmdatela <> "EXTRDA"  THEN
         IF  craprda.insaqtot = 1                    AND
             craprda.dtsaqtot < (par_dtmvtolt - 365) THEN
@@ -5769,7 +5772,7 @@ PROCEDURE consulta-extrato-rdca.
         
         IF  NOT CAN-DO("999",STRING(craphis.cdhistor))  THEN
             DO:
-                IF  CAN-DO(aux_lsoperad,crapope.dsdepart) AND   
+                IF  CAN-DO(aux_lsoperad,STRING(crapope.cddepart)) AND   
                    (craphis.cdhistor = 116                OR
                     craphis.cdhistor = 179)               THEN
                     .

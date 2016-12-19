@@ -32,6 +32,10 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                          Projeto 229 - Melhorias OQS (Lombardi)
 						 
 		    03/06/2016 - Retirada a janela de aguade por showMsgAguardo e ajustes (Vanessa)
+
+            06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			             do departamento para que a mesma seja feita através
+						 do código e não da descrição (Renato Darosci)
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -956,7 +960,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                 /* Implementa a segurança por Cooperativa */
                                 IF gnapses.nvoperad <> 0 AND
                                    gnapses.cdcooper <> crapcop.cdcooper AND
-                                   (AVAIL crapope AND crapope.dsdepart <> "TI") THEN 
+                                   (AVAIL crapope AND crapope.cddepart <> 20) THEN    /* "TI" */ 
                                   NEXT.
                                   
                                 IF aux_cdcooper = crapcop.cdcooper THEN

@@ -121,7 +121,12 @@
                              (Douglas - Chamado 408688)
 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+                
+                07/09/2016 - Incluido historico 863 no extrato da poupanca programada da ATENDA
+                             Andrey (RKAM) - Chamado 507087
 
+				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ..............................................................................*/
 
 
@@ -727,14 +732,14 @@ PROCEDURE consulta-extrato-poupanca:
     
     IF  par_nmdatela = "ATENDA"  THEN
         DO:
-            IF  crapope.dsdepart = "TI"  THEN  /** SUPER-USUARIO **/
-                ASSIGN aux_listahis = "150,151,152,154,155,158,496,925,1115".
+            IF  crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
+                ASSIGN aux_listahis = "150,151,152,154,155,158,496,863,925,1115".
             ELSE
-                ASSIGN aux_listahis = "150,151,158,496,925,1115".
+                ASSIGN aux_listahis = "150,151,158,496,863,925,1115".
         END.
     ELSE
         DO:
-            IF  crapope.dsdepart = "TI"  THEN  /** SUPER-USUARIO **/
+            IF  crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
                 ASSIGN aux_listahis = 
                        "150,151,152,154,155,158,496,863,869,870,925,1115".
             ELSE

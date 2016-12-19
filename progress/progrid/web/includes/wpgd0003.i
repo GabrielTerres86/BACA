@@ -32,9 +32,16 @@
     
     25/11/2015 - Reordenado a ordem de exibição das telas no menu (Jean Michel).
     
-	27/04/2016 - Correcao na forma de filtro das telas validando a flag
-				 flgtelbl igual a TRUE para apresentar os itens do menu
-				 (Lombardi, Vanessa, Carlos R.)
+	  27/04/2016 - Correcao na forma de filtro das telas validando a flag
+                 flgtelbl igual a TRUE para apresentar os itens do menu
+                 Lombardi, Vanessa, Carlos R.)
+                 
+    20/06/2016 - Inclusao do ano agenda para passar por parametro para as
+                 telas PHP (Jean Michel).
+
+    06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
+			     do departamento para que a mesma seja feita através
+				 do código e não da descrição (Renato Darosci)
 
  ******************************************************************************/
 
@@ -46,6 +53,7 @@
 	DEF VAR v-lis-topico    AS LOG  NO-UNDO.
 	DEF VAR v-lis-subtopico AS LOG  NO-UNDO.
 	DEF VAR aux_contador    AS INT  NO-UNDO.
+  DEF VAR aux_dtanoage    AS INT  NO-UNDO.
     
    ASSIGN v-identificacao = get-cookie("cookie-usuario-em-uso").
 
@@ -56,12 +64,13 @@
 
   {&out} "<script language='JavaScript'>" SKIP.
   {&out} "foldersTree = gFld('<B>&nbsp;&nbsp;&nbsp;&nbsp;</B>', '')" SKIP.   
-   
-   IF   v-identificacao <> ""   AND
-        AVAIL gnapses           THEN 
+
+  IF v-identificacao <> "" AND
+    AVAIL gnapses THEN 
         DO:
-            FIND crapope WHERE crapope.cdcooper = gnapses.cdcooper   AND 
-                               crapope.cdoperad = gnapses.cdoperad   NO-LOCK NO-ERROR.
+                                                           
+      FIND crapope WHERE crapope.cdcooper = gnapses.cdcooper AND 
+                         crapope.cdoperad = gnapses.cdoperad NO-LOCK NO-ERROR.
                                                            
             /* Verifica em quais telas do sistema o operador tem permissão pra poder montar o menu */
                         FOR EACH craptel WHERE craptel.cdcooper = gnapses.cdcooper   AND
@@ -71,7 +80,7 @@
                                    BREAK BY craptel.idevento
                                            BY craptel.nrmodulo
                                        BY craptel.tlrestel:
-                IF   FIRST-OF(craptel.idevento)   THEN 
+      IF FIRST-OF(craptel.idevento) THEN 
       
       
                      ASSIGN v-lis-topico    = NO 
@@ -83,14 +92,14 @@
                                 
                                 DO aux_contador = 1 TO NUM-ENTRIES(craptel.cdopptel):
            
-                   FIND crapace WHERE crapace.cdcooper = craptel.cdcooper                       AND
-                                      crapace.nmdatela = craptel.nmdatela                       AND 
-                                      crapace.nmrotina = craptel.nmrotina                       AND
-                                                                          crapace.cddopcao = ENTRY(aux_contador,craptel.cdopptel)   AND
+        FIND crapace WHERE crapace.cdcooper = craptel.cdcooper                     AND
+                           crapace.nmdatela = craptel.nmdatela                     AND 
+                           crapace.nmrotina = craptel.nmrotina                     AND
+                           crapace.cddopcao = ENTRY(aux_contador,craptel.cdopptel) AND
                            crapace.cdoperad = crapope.cdoperad NO-LOCK NO-ERROR.
                                                                                  
                    /* Tendo qualquer permissão, já carrega a tela no menu */
-                                  IF   AVAILABLE crapace   THEN
+        IF AVAILABLE crapace THEN
                                         DO:
                                                     ASSIGN v-permissoes = YES.
                                                         LEAVE.
@@ -98,27 +107,34 @@
                             END.
 
                 /* verifica super usuário */
-                IF   crapope.dsdepart = "TI"   THEN
+      IF crapope.cddepart = 20 THEN    /*  "TI"  */
                      ASSIGN v-permissoes = YES.
                
-                IF   v-permissoes   THEN 
+      IF v-permissoes THEN 
                      DO:
+          FOR LAST gnpapgd FIELDS(dtanoage) WHERE gnpapgd.idevento = craptel.idevento
+                                               AND gnpapgd.cdcooper = gnapses.cdcooper
+                                               AND gnpapgd.dtanoage <> ?. END.
+                                               
+          IF AVAILABLE gnpapgd THEN                                     
+            ASSIGN aux_dtanoage = INT(gnpapgd.dtanoage).
+        
                          FIND crapeve WHERE crapeve.idevento = craptel.idevento NO-LOCK NO-ERROR.
                                                  
-                         FIND crapmod WHERE crapmod.nrmodulo = craptel.nrmodulo   AND
-                                                                    crapmod.idsistem = craptel.idsistem   NO-LOCK NO-ERROR.
+          FIND crapmod WHERE crapmod.nrmodulo = craptel.nrmodulo AND
+                             crapmod.idsistem = craptel.idsistem NO-LOCK NO-ERROR.
                
-                                     IF   NOT AVAIL crapeve   OR
-                                                      NOT AVAIL crapmod   THEN   
+          IF NOT AVAIL crapeve OR
+             NOT AVAIL crapmod THEN   
                                                       NEXT.
                    
-                         IF   NOT v-lis-topico   THEN 
+          IF NOT v-lis-topico   THEN 
                               DO:
                                   RUN IncluiTopico(crapeve.nmevento).
                                   ASSIGN v-lis-topico = yes.
                               END. /* Fim IF NOT v-lis-topico */
 
-                         IF   NOT v-lis-subtopico   THEN
+          IF NOT v-lis-subtopico THEN
                                                       DO:
                                   RUN IncluiSubTopico(crapmod.nmmodulo).
                                   ASSIGN v-lis-subtopico = YES.
@@ -136,7 +152,7 @@
 
 PROCEDURE IncluiTopico:
     
-    DEF INPUT PARAM p-topico AS CHAR FORM "x(20)"           NO-UNDO.
+    DEF INPUT PARAM p-topico AS CHAR FORM "x(20)" NO-UNDO.
     ASSIGN p-topico = p-topico.
     {&out} "aux1 = insFld(foldersTree, gFld(setNivel('" + TRIM(p-topico) + "','http://" + aux_srvprogrid + "/cecred/images/icones/ico_lupa.gif','Clique aqui no PROGRID','linkMenuAdmin'), ''))" SKIP.
 
@@ -144,7 +160,7 @@ END PROCEDURE.  /* End IncluiTopico */
 
 PROCEDURE IncluiSubTopico:
     
-    DEF INPUT PARAM p-subtopico AS CHAR FORM "x(20)"        NO-UNDO.
+    DEF INPUT PARAM p-subtopico AS CHAR FORM "x(20)" NO-UNDO.
     ASSIGN p-subtopico = p-subtopico.
     {&out} "aux2 = insFld(aux1, gFld(setNivel('" + TRIM(p-subtopico) + "','http://" + aux_srvprogrid + "/cecred/images/icones/ico_historico.gif','',''),''))" SKIP.
 
@@ -156,7 +172,7 @@ PROCEDURE Incluicdprogra:
     
 		/* aux_cdcopope = é a cooperativa logada*/
 		IF INT(SUBSTR(p-cdprogra,(R-INDEX(p-cdprogra,"d") + 1))) >= 100 THEN
-			{&out} "insDoc(aux2, gLnk(0,'" + TRIM(p-labelcdprogra) + "','" + aux_srvprogrid + "/telas/" + p-cdprogra + "/" + p-cdprogra + ".php?cdcooper=" + string(gnapses.cdcooper) + "&cdoperad=" + string(gnapses.cdoperad) + "&nmdatela=" + string(p-cdprogra) + "&idevento=" + STRING(craptel.idevento) + "&idcokses=" + string(v-identificacao) + "&tlrestel=" + craptel.tlrestel + "&tldatela=" + craptel.tldatela + "'))" SKIP. 
+			{&out} "insDoc(aux2, gLnk(0,'" + TRIM(p-labelcdprogra) + "','" + aux_srvprogrid + "/telas/" + p-cdprogra + "/" + p-cdprogra + ".php?cdcooper=" + string(gnapses.cdcooper) + "&cdoperad=" + string(gnapses.cdoperad) + "&nmdatela=" + string(p-cdprogra) + "&idevento=" + STRING(craptel.idevento) + "&idcokses=" + string(v-identificacao) + "&tlrestel=" + craptel.tlrestel + "&tldatela=" + craptel.tldatela + "&dtanoage=" + STRING(aux_dtanoage) + "'))" SKIP. 
 		ELSE /* aux_cdcopope = é a cooperativa logada*/
     	{&out} "insDoc(aux2, gLnk(0,'" + TRIM(p-labelcdprogra) + "','" + p-cdprogra + ".w?aux_idevento=" + string(craptel.idevento) + "&aux_cdcopope=" + string(gnapses.cdcooper) + "&aux_cdcooper=" + string(gnapses.cdcooper) + "&aux_cdoperad="string(gnapses.cdoperad)"'))" SKIP. 
     /*END.*/

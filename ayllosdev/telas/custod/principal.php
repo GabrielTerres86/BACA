@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 19/01/2012
  * OBJETIVO     : Capturar dados para tela CUSTOD
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  * -------------- 
  */
 
@@ -75,7 +76,6 @@ $xml .= '		<nmdatela>' . $glbvars['nmdatela'] . '</nmdatela>';
 $xml .= '		<idorigem>' . $glbvars['idorigem'] . '</idorigem>';
 $xml .= '		<dtmvtolt>' . $glbvars['dtmvtolt'] . '</dtmvtolt>';
 $xml .= '		<dtmvtoan>' . $glbvars['dtmvtoan'] . '</dtmvtoan>';
-$xml .= '		<dsdepart>' . $glbvars['dsdepart'] . '</dsdepart>';
 $xml .= '		<nrdconta>' . $nrdconta . '</nrdconta>';
 $xml .= '		<nrcpfcgc>' . $nrcpfcgc . '</nrcpfcgc>';
 $xml .= '		<tpcheque>' . $tpcheque . '</tpcheque>';

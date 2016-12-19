@@ -6,6 +6,10 @@
  * OBJETIVO     : Rotina para busca de agencias da tela AGENCI
  * --------------
  * ALTERAÇÕES   : 08/01/2014 - Ajustes para homologação (Adriano).
+ *
+ *                29/11/2016 - P341-Automatização BACENJUD - Alterado para que 
+ *                             seja enviado o cddepart, ao invés do dsdepart para 
+ *                             a rotina b1wgen0149. (Renato Darosci - Supero)
  * -------------- 
  */
 ?> 
@@ -26,7 +30,7 @@
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
-
+	
 	// Monta o xml dinâmico de acordo com a operação 
 	$xml  = '';
 	$xml .= '<Root>';
@@ -42,7 +46,7 @@
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';
 	$xml .= '		<cdageban>'.$cdageban.'</cdageban>';	
 	$xml .= '		<cddbanco>'.$cddbanco.'</cddbanco>';			
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';

@@ -61,7 +61,7 @@
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';	
 	$xml .= '		<cdageban>'.$cdageban.'</cdageban>';	
 	$xml .= '		<cddbanco>'.$cddbanco.'</cddbanco>';	

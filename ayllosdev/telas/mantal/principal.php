@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 21/06/2011
  * OBJETIVO     : Capturar dados para tela MANTAL
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                             pois a BO não utiliza o mesmo (Renato Darosci)
  * -------------- 
  */ 
 ?>
@@ -47,7 +48,6 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '	</Dados>';

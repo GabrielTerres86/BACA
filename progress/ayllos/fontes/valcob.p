@@ -23,6 +23,9 @@
                             
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).    
    
+               08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
+
 ............................................................................. */
 
 { includes/var_online.i }
@@ -90,7 +93,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
    
       UPDATE glb_cddopcao WITH FRAME f_moldura.
       
-      IF   NOT CAN-DO("TI",glb_dsdepart)   THEN
+	  IF glb_cddepart <> 20 THEN
            DO:
                glb_cdcritic = 36.
                RUN fontes/critic.p.

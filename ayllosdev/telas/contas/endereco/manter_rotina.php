@@ -12,6 +12,8 @@
  * 003: [22/07/2015] Gabriel	       (RKAM) Reformulacao Cadastral.
  * 004: [14/07/2016] Carlos R. Corrigi o tratamento da variavel tpendass que era string e estava sendo comparada 
  *									        como int e passei a mesma para a funcao validaDados que ha usava como sendo global.SD 479874.
+ * 005: [01/12/2016] Renato Darosci (Supero): P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                                            pois a BO não utiliza o mesmo.
  */
 
     session_start();
@@ -80,7 +82,6 @@
 	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
 	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
 	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-	$xml .= "		<dsdepart>".$glbvars["dsdepart"]."</dsdepart>";	
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";				
 	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";	            
 	$xml .= "		<incasprp>".$incasprp."</incasprp>";                

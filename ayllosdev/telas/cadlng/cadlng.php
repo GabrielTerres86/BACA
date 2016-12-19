@@ -7,7 +7,8 @@
 	                                                                  
 	 Objetivo  : Mostrar tela CADLNG.                                 
 	                                                                  
-	 Alterações: 										   			   
+	 Alterações: 30/11/2016 - P341-Automatização BACENJUD - Alterado para passar como parametro o  
+                              código do departamento ao invés da descrição (Renato Darosci - Supero)										   			   
 	                                                                  
 	************************************************************************/
 	
@@ -26,9 +27,8 @@
 	// Carrega permissões do operador
 	include("../../includes/carrega_permissoes.php");	
 	
-	
-	if ($glbvars["dsdepart"] != "TI" &&
-		$glbvars["dsdepart"] != "CONTROLADORIA"){ 
+    // VAlidação $glbvars["dsdepart"] != "CONTROLADORIA", foi retirada por não existir cadastro CONTROLADORIA
+	if ($glbvars["cddepart"] != 20){ 
 		
 		if ($glbvars["redirect"] == "html") {
 				redirecionaErro($glbvars["redirect"],$UrlSite."principal.php","_self",$msgError);

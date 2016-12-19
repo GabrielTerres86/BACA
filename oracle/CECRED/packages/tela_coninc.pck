@@ -114,16 +114,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONINC IS
   -- Objetivo  : Centralizar rotinas relacionadas a tela CONINC
   --
   -- Alteracoes:
+  --              25/11/2016 - Alterado cursor cr_crapope, para ler o departamento
+  --                           do operador a partir da tabela CRAPDPO (Renato Darosci - Supero)
   --
   ---------------------------------------------------------------------------
 
   -- Busca operador
   CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                    ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-    SELECT dsdepart
-      FROM crapope
-     WHERE cdcooper = pr_cdcooper
-       AND UPPER(cdoperad) = UPPER(pr_cdoperad);
+    SELECT dpo.dsdepart
+      FROM crapdpo  dpo
+         , crapope  ope
+     WHERE dpo.cdcooper = ope.cdcooper
+       AND dpo.cddepart = ope.cddepart
+       AND ope.cdcooper = pr_cdcooper
+       AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);
   rw_crapope cr_crapope%ROWTYPE;
 
   PROCEDURE pc_busca_departamento(pr_cdcooper IN crapdpo.cdcooper%TYPE --> Cooperativa

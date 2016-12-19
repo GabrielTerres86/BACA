@@ -8,7 +8,9 @@
 
     Alteracoes: 15/06/2016 - Correcao da paginacao para filtro que tras apenas 
                              um registro (Carlos)
-        
+         
+		        06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -84,7 +86,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtola AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_cdconven AS INTE                           NO-UNDO.

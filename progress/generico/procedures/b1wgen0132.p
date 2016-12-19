@@ -8,7 +8,8 @@
    
     Objetivo  : BO referente a tela TAB007
                  
-    Alteracoes: 
+    Alteracoes: 06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 
 .............................................................................*/
 
@@ -32,7 +33,7 @@ PROCEDURE permiss_tab007:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
    
     DEF  OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -43,8 +44,8 @@ PROCEDURE permiss_tab007:
 
     Permiss:
     DO:
-        IF  par_dsdepart <> "COORD.ADM/FINANCEIRO"   AND   
-           /* par_dsdepart <> "COORD.PRODUTOS" */ par_dsdepart <> "TI" THEN
+        IF  par_cddepart <> 8   AND   /* COORD.ADM/FINANCEIRO */
+            par_cddepart <> 20 THEN   /* TI */
             DO:
                 aux_cdcritic = 36.
                 LEAVE Permiss.
@@ -143,7 +144,7 @@ PROCEDURE altera_tab007:
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     
     DEF  INPUT PARAM par_vlmaidep AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vlmaiapl AS DECI                           NO-UNDO.

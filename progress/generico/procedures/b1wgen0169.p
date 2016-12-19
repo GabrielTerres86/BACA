@@ -11,6 +11,9 @@
                  
     Alteracoes: 12/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)
 
+	            06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
+
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0169tt.i }
@@ -297,8 +300,8 @@ PROCEDURE valida_operad_depto:
             RETURN "NOK".
         END.
 
-     IF   crapope.dsdepart <> "TI"       AND
-          crapope.dsdepart <> "PRODUTOS" THEN
+     IF   crapope.cddepart <> 20  AND  /* TI */
+          crapope.cddepart <> 14 THEN  /* PRODUTOS */
           DO:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Voce nao tem permissao para realizar " 

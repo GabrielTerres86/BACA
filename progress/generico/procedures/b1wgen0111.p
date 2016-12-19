@@ -11,7 +11,8 @@
    Alteracoes: 05/02/2013 - Ajustes referente ao projeto Cadastro Restritivo
                             (Adriano).
    
-   
+               07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                            departamento passando a considerar o código (Renato Darosci)
    
 ..............................................................................*/
 
@@ -33,7 +34,7 @@ PROCEDURE consulta_tab:
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdcopalt AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_dstextab AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -130,7 +131,7 @@ PROCEDURE altera_tab:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dstextab AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdcopalt AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 

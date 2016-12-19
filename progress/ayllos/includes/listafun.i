@@ -17,13 +17,16 @@
                
                02/06/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM).
+
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................ */
 
 DEF VAR aux_server   AS CHAR                                    NO-UNDO.
 
 IF   (CAN-DO("11,50",STRING(aux_cdempres)))  AND 
      (glb_nmoperad <> crapass.nmprimtl)      AND
-     (glb_dsdepart <> "TI")                 THEN
+     (glb_cddepart <> 20)   /* TI */         THEN
      DO:
          DEF VAR aux_terminal AS CHAR FORMAT "x(20)".
 

@@ -84,7 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
   --  Sigla    : GENE
   --  Autor    : Petter R. Villa Real  - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 28/06/2016
+  --  Data     : Maio/2013.                   Ultima atualizacao: 03/11/2016
   --
   --  Dados referentes ao programa:
   --
@@ -128,6 +128,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   --                           procedure pc_valida_acesso_sistema.(Carlos Rafael Tanholi).
   --
   --              10/06/2016 - Criada procedure pc_reagenda_job SD402010 (Tiago/Thiago).
+  --
+  --              03/11/2016 - Ajuste na procedure pc_reagenda_job para reagendar o job com
+  --                           o fusohorario do servidor que esta executando GMT (Tiago/Thiago SD532302)
+  --
+  --              29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar o departamento à partir
+  --                           do código e não mais pela descrição (Renato Darosci - Supero)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedures/functions de uso privado */
@@ -139,7 +146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                                     ,pr_nmdatela IN craptel.nmdatela%TYPE      --> Nome da tela
                                     ,pr_nmrotina IN craptel.nmrotina%TYPE      --> Nome da rotina
                                     ,pr_inproces IN crapdat.inproces%TYPE      --> Indicador do processo
-                                    ,pr_dsdepart OUT crapope.dsdepart%TYPE     --> Descrição do departamento
+                                    ,pr_cddepart OUT crapope.cddepart%TYPE     --> Descrição do departamento
                                     ,pr_cdcritic OUT PLS_INTEGER               --> Código de retorno
                                     ,pr_dscritic OUT VARCHAR2) IS              --> Descrição do retorno
     -- ..........................................................................
@@ -148,7 +155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --  Sistema  : Rotinas de tratamento e interface para intercambio de dados com sistema Web
     --  Sigla    : GENE
     --  Autor    : Petter R. Villa Real  - Supero
-    --  Data     : Maio/2014.                   Ultima atualizacao: 06/06/2016
+    --  Data     : Maio/2014.                   Ultima atualizacao: 21/10/2016
     --
     --  Dados referentes ao programa:
     --
@@ -169,7 +176,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --                            alguma melhora na performance das chamadas, visto que estavam sendo 
     --                            feitas muitas chamadas da função. Dúvidas sobre a alteração podem ser 
     --                            tratadas também com o Rodrigo Siewerdt. (Renato Darosci - Supero)
-
+	--
+	--				 21/10/2016 - Ajustado cursor da craptel para não executar função desnecessariamente
+	--							  (Rodrigo)
     -- .............................................................................
   BEGIN
     DECLARE
@@ -196,10 +205,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       -- Busca dados do cadastro dos operadores
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE      --> Código da cooperativa
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS  --> Código do operador
-      SELECT pe.dsdepart
+      SELECT pe.cddepart
         FROM crapope pe
-       WHERE pe.cdcooper = pr_cdcooper
-         AND UPPER(pe.cdoperad) = UPPER(pr_cdoperad);
+       WHERE UPPER(pe.cdoperad) = UPPER(pr_cdoperad)
+         AND pe.cdcooper        = pr_cdcooper;
       rw_crapope cr_crapope%ROWTYPE;
 
       -- Busca dados do cadastro de telas
@@ -213,7 +222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         FROM craptel el
        WHERE el.cdcooper = pr_cdcooper
          AND UPPER(el.nmdatela) = UPPER(pr_nmdatela)
-         AND NVL(UPPER(el.nmrotina), ' ') = NVL(UPPER(pr_nmrotina), ' ')
+         AND UPPER(el.nmrotina) = UPPER(pr_nmrotina)
          AND el.idsistem = pr_idsistem;
       rw_craptel cr_craptel%ROWTYPE;
 
@@ -256,12 +265,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
         RAISE vr_exc_saida;
       ELSE
-        pr_dsdepart := rw_crapope.dsdepart;
+        pr_cddepart := rw_crapope.cddepart;
         CLOSE cr_crapope;
       END IF;
 
       -- Verifica se a tela está cadastrada no sistema
-      OPEN cr_craptel(pr_cdcooper, pr_nmdatela, pr_nmrotina, pr_idsistem);
+      OPEN cr_craptel(pr_cdcooper, pr_nmdatela, NVL(pr_nmrotina, ' '), pr_idsistem);
       FETCH cr_craptel INTO rw_craptel;
 
       -- Verifica se a tela foi encontrada
@@ -399,7 +408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
   BEGIN
     DECLARE
       vr_exc_saida   EXCEPTION;             --> Controle de erros
-      vr_dsdepart    crapope.dsdepart%TYPE; --> Descrição do departamento
+      vr_cddepart    crapope.cddepart%TYPE; --> Descrição do departamento
 
       -- Busca dados do cadastro com permissoes de acesso as telas do sistema
       CURSOR cr_crapace(pr_cdcooper IN crapace.cdcooper%TYPE
@@ -424,7 +433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nmrotina => pr_nmrotina
                               ,pr_inproces => pr_inproces
-                              ,pr_dsdepart => vr_dsdepart
+                              ,pr_cddepart => vr_cddepart
                               ,pr_cdcritic => pr_cdcritic
                               ,pr_dscritic => pr_dscritic);
 
@@ -434,7 +443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       END IF;
 
       -- Verifica qual é o departamento de operação
-      IF vr_dsdepart <> 'TI' THEN
+      IF vr_cddepart <> 20 THEN
         -- Verifica as permissões de execução no cadastro
         OPEN cr_crapace(pr_cdcooper, pr_cdoperad, pr_nmdatela, pr_nmrotina, pr_cddopcao);
         FETCH cr_crapace
@@ -482,19 +491,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
       vr_dscritic VARCHAR2(1000);
       
       vr_dscomando VARCHAR2(4000);
-      vr_dtagenda  DATE;
+      vr_dtagenda  TIMESTAMP;
       
     BEGIN
       
-      vr_dtagenda := to_date(to_char(pr_dtagenda,'DD/MM/RRRR')||' '||to_char(pr_hragenda,'00')||':'
-                     ||to_char(pr_mmagenda,'00')||':'||'00','dd/mm/yyyy hh24:mi:ss');
+      vr_dtagenda := TO_TIMESTAMP_TZ(to_char(pr_dtagenda,'DD/MM/RRRR')||' '||to_char(pr_hragenda,'00')||':'
+                     ||to_char(pr_mmagenda,'00')||':'||'00 ' || to_char( SYSTIMESTAMP, 'TZH:TZM' ),'dd/mm/yyyy hh24:mi:ss TZH:TZM');
     
       FOR rw_job IN cr_job(pr_job_name => pr_job_name) LOOP    
       
         vr_dscomando := 'BEGIN 
                             DBMS_SCHEDULER.SET_ATTRIBUTE(NAME => ''' || 'CECRED' || '.' || rw_job.job_name || ''', 
                                                          attribute => ''start_date'', 
-                                                         VALUE => to_date(''' || to_char(vr_dtagenda, 'dd/mm/yyyy hh24:mi:ss') || ''',''DD/MM/RRRR HH24:MI:SS''));
+                                                         VALUE => TO_TIMESTAMP_TZ(''' || to_char(vr_dtagenda, 'dd/mm/yyyy hh24:mi:ss') || ' ' || to_char( SYSTIMESTAMP, 'TZH:TZM' )  || ''',''DD/MM/RRRR HH24:MI:SS TZH:TZM''));
                          END;';
         EXECUTE IMMEDIATE vr_dscomando;  
         
@@ -942,7 +951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0004 IS
     --   Alteracoes: 30/04/2014 - Implementação do cadastro de ações para execução (Petter - Supero).
     --   
     --               03/03/2015 - Alteracao do tamanho da variavel vr_sql para o max
-    --                            do tipo varchar2 (Tiago).                                       
+    --                            do tipo varchar2 (Tiago).    
     --
     --               06/06/2016 - Ajustes realizados:
     --                            -> Incluido upper nos campos que são indice da tabela craprdr

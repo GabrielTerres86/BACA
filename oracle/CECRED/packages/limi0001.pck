@@ -16,6 +16,75 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   -- Alteracoes:
   --
   ---------------------------------------------------------------------------------------------------------------
+  --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
+  TYPE typ_rec_dados_ctr 
+       IS RECORD (nmextcop crapcop.nmextcop%TYPE,
+                  nmrescop crapcop.nmrescop%TYPE,
+                  nrdocnpj VARCHAR2(50),
+                  dsendcop VARCHAR2(1000),
+                  nrdconta crapass.nrdconta%TYPE,
+                  nmprimtl crapass.nmprimtl%TYPE,
+                  inpessoa crapass.inpessoa%TYPE,
+                  dsendass VARCHAR2(1000),
+                  cdagenci crapass.cdagenci%TYPE,
+                  cdageori craplim.cdageori%TYPE,
+                  nmcidpac crapage.nmcidade%TYPE,
+                  nrctrlim craplim.nrctrlim%TYPE,
+                  dsctrlim VARCHAR2(100),
+                  vllimite craplim.vllimite%TYPE,
+                  qtdiavig craplim.qtdiavig%TYPE,
+                  dtinivig craplim.dtinivig%TYPE,
+                  dtfimvig craplim.dtfimvig%TYPE,
+                  dtrenova craplim.dtrenova%TYPE,
+                  cddlinha craplim.cddlinha%TYPE,
+                  dsencfin VARCHAR2(1000),
+                  dsvllimi VARCHAR2(1000),
+                  dsemsctr VARCHAR2(1000),
+                  nmoperad VARCHAR2(1000),
+                  ddmvtolt VARCHAR2(100),
+                  aamvtolt VARCHAR2(100),
+                  dsdtmvto VARCHAR2(1000),
+                  dsvlnpr1 VARCHAR2(1000),
+                  dsmesref VARCHAR2(1000),
+                  dsdmoeda VARCHAR2(10),
+                  txcetano NUMBER,
+                  txcetmes NUMBER,
+                  nrgarope craplim.nrgarope%TYPE,
+                  nrinfcad craplim.nrinfcad%TYPE,
+                  nrliquid craplim.nrliquid%TYPE,
+                  nrpatlvr craplim.nrpatlvr%TYPE,
+                  vltotsfn craplim.vltotsfn%TYPE,
+                  perfatcl crapjfn.perfatcl%TYPE,
+                  nrcpfcgc VARCHAR2(100),
+                  nrdrgass VARCHAR2(100));
+                  
+  TYPE typ_tab_dados_ctr IS TABLE OF typ_rec_dados_ctr
+       INDEX BY PLS_INTEGER;
+  
+  -- Armazenar dados dos representantes/socios do cooperado antigo tt-repres-ctr
+  TYPE typ_rec_repres_ctr
+       IS RECORD (nmrepres crapavt.nmdavali%TYPE,
+                  nrcpfrep VARCHAR2(100),
+                  dsdocrep crapavt.nrdocava%TYPE,
+                  cdoedrep crapavt.cdoeddoc%TYPE);
+       
+  TYPE typ_tab_repres_ctr IS TABLE OF typ_rec_repres_ctr
+    INDEX BY PLS_INTEGER;
+  
+  --> Armqzenar dados do avalista antigo tt-avais-ctr
+  TYPE typ_rec_avais_ctr
+       IS RECORD (nmdavali crapavt.nmdavali%TYPE,
+                  dsdocava VARCHAR2(100),
+                  nmconjug crapavt.nmconjug%TYPE,
+                  nrcpfcjg VARCHAR2(100),       
+                  dsdoccjg VARCHAR2(100),
+                  cpfavali VARCHAR2(100),
+                  dsendava VARCHAR2(1000)
+       );
+  TYPE typ_tab_avais_ctr IS TABLE OF typ_rec_avais_ctr 
+       INDEX BY PLS_INTEGER;
+  
+  
   -- Rotina referente a consulta da tela CADLIM
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -58,9 +127,47 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                          ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                          ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
 
+  -- Rotina para geração do contrato de limite de credito
+  PROCEDURE pc_impres_contrato_limite(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                     ,pr_cdagecxa IN crapage.cdagenci%TYPE  --> Código da agencia
+                                     ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                     ,pr_cdopecxa IN crapope.cdoperad%TYPE  --> Código do Operador
+                                     ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
+                                     ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                     ,pr_cdprogra IN crapprg.cdprogra%TYPE  --> Codigo do programa
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
+                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                                     ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --> Data do proximo Movimento 
+                                     ,pr_inproces IN crapdat.inproces%TYPE  --> Indicador do processo
+                                     ,pr_idimpres IN INTEGER                --> Indicador de impresao
+                                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
+                                     ,pr_dsiduser IN VARCHAR2               --> id do usuario
+                                     ,pr_flgimpnp IN INTEGER                --> indica se deve gerar nota promissoria(0-nao 1-sim)
+                                     ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
+                                     ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     --------> OUT <--------
+                                     ,pr_nmarqpdf  OUT VARCHAR2             --> Retornar quantidad de registros                           
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica 
+                                     
+  --> Rotina para geração do contrato de limite de credito  - Ayllos Web
+  PROCEDURE pc_impres_contrato_limite_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
+                                         ,pr_idseqttl   IN crapttl.idseqttl%TYPE  --> Titular da Conta
+                                         ,pr_idimpres   IN INTEGER                --> Indicador de impresao
+                                         ,pr_nrctrlim   IN craplim.nrctrlim%TYPE  --> Contrato
+                                         ,pr_dsiduser   IN VARCHAR2               --> id do usuario
+                                         ,pr_flgimpnp   IN INTEGER                --> indica se deve gerar nota promissoria(0-nao 1-sim)
+                                         ,pr_flgemail   IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)                                         
+                                         ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                         ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                         ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                         ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
+
 END LIMI0001;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
@@ -107,6 +214,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Observacao: -----
      Alteracoes: 
+                 25/11/2016 - Alteração para que o fonte realize a avaliação do departamento
+                              pelo campo CDDEPART ao invés do DSDEPART. (Renato Darosci - Supero)
+           
      ..............................................................................*/ 
     DECLARE
 
@@ -129,7 +239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope
          WHERE crapope.cdcooper = pr_cdcooper
            AND upper(crapope.cdoperad) = upper(pr_cdoperad);
@@ -181,7 +291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         END IF;
           
         -- Somente o departamento credito irá ter acesso para alterar as informacoes
-        IF rw_crapope.dsdepart <> 'PRODUTOS' AND rw_crapope.dsdepart <> 'TI'  THEN
+        IF rw_crapope.cddepart NOT IN (14,20) THEN
           vr_cdcritic := 36;
           vr_dscritic := NULL;
           RAISE vr_exc_saida;          
@@ -280,6 +390,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
      Observacao: -----
      Alteracoes: 
+                 25/11/2016 - Alteração para que o fonte realize a avaliação do departamento
+                              pelo campo CDDEPART ao invés do DSDEPART. (Renato Darosci - Supero)
      ..............................................................................*/ 
     DECLARE
 
@@ -302,7 +414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT dsdepart
+        SELECT cddepart
           FROM crapope
          WHERE crapope.cdcooper = pr_cdcooper
            AND upper(crapope.cdoperad) = upper(pr_cdoperad);
@@ -358,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       END IF;
         
       -- Somente o departamento credito irá ter acesso para alterar as informacoes
-      IF rw_crapope.dsdepart <> 'PRODUTOS' AND rw_crapope.dsdepart <> 'TI'  THEN
+      IF rw_crapope.cddepart NOT IN (14,20) THEN
         vr_cdcritic := 36;
         vr_dscritic := NULL;
         RAISE vr_exc_saida;          
@@ -725,7 +837,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              cdopelib = pr_cdoperad
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
-         AND nrctrlim = pr_nrctrlim;
+         AND nrctrlim = pr_nrctrlim
+         AND tpctrlim = 1;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao renovar o limite de credito: ' || SQLERRM;
@@ -807,6 +920,1470 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
   END pc_renovar_limite_cred_manual;
   
+  
+  PROCEDURE pc_carrega_dados_avais (pr_cdcooper          IN crapcop.cdcooper%TYPE, --> Cooperativa do avalista
+                                    pr_nrdconta          IN crapass.nrdconta%TYPE, --> Numero da conta do avalista
+                                    pr_nrctrlim          IN craplim.nrctrlim%TYPE, --> Numero do contrato de limite
+                                    pr_tab_avais_ctr IN OUT typ_tab_avais_ctr,     --> Retorna dados dos avalistas
+                                    pr_cdcritic         OUT PLS_INTEGER,           --> Código da crítica
+                                    pr_dscritic         OUT VARCHAR2) IS           --> Descrição da crít
+  /* .............................................................................
+
+     Programa: pc_carrega_dados_avais
+     Sistema : Rotinas referentes ao limite de credito
+     Sigla   : LIMI
+     Autor   : Odirlei Busana - AMcom
+     Data    : Agosto/16.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia:
+     Objetivo  : Rotina para buscar dados doa avalistas do contrato de limite de credito
+     Alteracoes: -----
+    ..............................................................................*/
+    
+    ---------->> CURSORES <<--------   
+    --> Buscar dados associado
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE )IS
+      SELECT ass.nrcpfcgc,
+             ass.nmprimtl,
+             ass.cdagenci,
+             ass.inpessoa,
+             ass.nrdconta,
+             ass.nrdocptl,
+             ass.cdoedptl,
+             ass.tpdocptl,
+             ass.cdufdptl
+             
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    --> Buscar conjuge do cooperado
+    CURSOR cr_crapcje ( pr_cdcooper crapcje.cdcooper%TYPE,
+                        pr_nrdconta crapcje.nrdconta%TYPE )IS
+      SELECT cje.nrdconta,
+             cje.nrctacje,
+             cje.cdcooper,
+             cje.nmconjug,
+             cje.nrcpfcjg,
+             cje.tpdoccje,
+             cje.nrdoccje
+        FROM crapcje cje
+       WHERE cje.cdcooper = pr_cdcooper
+         AND cje.nrdconta = pr_nrdconta
+         AND cje.idseqttl = 1;
+    rw_crapcje cr_crapcje%ROWTYPE;
+    
+    --> Busca as informaçoes do titular da conta 
+    CURSOR cr_crapttl (pr_cdcooper crapcje.cdcooper%TYPE,
+                       pr_nrdconta crapcje.nrdconta%TYPE )IS
+      SELECT ttl.nrdconta,
+             ttl.nmextttl,
+             ttl.nrcpfcgc,
+             ttl.tpdocttl,
+             ttl.nrdocttl
+        FROM crapttl ttl
+       WHERE ttl.cdcooper = pr_cdcooper
+         AND ttl.nrdconta = pr_nrdconta
+         AND ttl.idseqttl = 1;
+    rw_crapttl cr_crapttl%ROWTYPE; 
+        
+    --> Buscar endereço
+    CURSOR cr_crapenc (pr_cdcooper crapcje.cdcooper%TYPE,
+                       pr_nrdconta crapcje.nrdconta%TYPE ) IS
+      SELECT enc.nrdconta,
+             enc.dsendere,
+             enc.nrcepend,
+             enc.nmbairro,
+             enc.nmcidade,
+             enc.nrendere,
+             enc.cdufende
+        FROM crapenc enc
+       WHERE enc.cdcooper = pr_cdcooper
+         AND enc.nrdconta = pr_nrdconta
+         AND enc.idseqttl = 1
+         AND enc.cdseqinc = 1;
+    rw_crapenc cr_crapenc%ROWTYPE;
+    
+    --> Avalistas que possuem conta na cooperativa
+    CURSOR cr_craplin_ava (pr_cdcooper crapavt.cdcooper%TYPE,
+                           pr_nrdconta crapavt.nrdconta%TYPE,
+                           pr_nrctrlim craplim.nrctrlim%TYPE) IS
+    SELECT MAX nrdconta
+      FROM craplim 
+       --> Converter as duas colunas em linha para o for
+       UNPIVOT ( MAX FOR conta IN (nrctaav1, nrctaav2) )
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctrlim = pr_nrctrlim;
+    
+    --> Buscar avalistas terceiros
+    CURSOR cr_crapavt (pr_cdcooper crapavt.cdcooper%TYPE,
+                       pr_nrdconta crapavt.nrdconta%TYPE,
+                       pr_nrctremp crapavt.nrctremp%TYPE  )IS
+      SELECT avt.nrdconta
+            ,avt.nmdavali
+            ,avt.nrcpfcgc
+            ,avt.nmconjug
+            ,avt.nrcpfcjg
+            ,avt.dsendres##1 dsendres
+            ,avt.nrcepend
+            ,avt.nrendere
+            ,avt.nmbairro
+            ,avt.nmcidade
+            ,avt.cdufresd
+            ,avt.tpdocava
+            ,avt.nrdocava
+            ,avt.tpdoccjg
+            ,avt.nrdoccjg
+        FROM crapavt avt
+       WHERE avt.cdcooper = pr_cdcooper
+         AND avt.nrdconta = pr_nrdconta
+         AND avt.nrctremp = pr_nrctremp
+         AND avt.tpctrato = 3;
+    
+    ----------->>> VARIAVEIS <<<-------- 
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
+    
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+    
+    vr_idxavais       PLS_INTEGER;
+    vr_tab_avais_ctr  typ_tab_avais_ctr;
+    
+     
+  BEGIN
+    
+    
+    --> Avalistas que possuem conta na cooperativa
+    FOR rw_craplin_ava IN  cr_craplin_ava (pr_cdcooper => pr_cdcooper,
+                                           pr_nrdconta => pr_nrdconta,
+                                           pr_nrctrlim => pr_nrctrlim) LOOP
+      -- Se estiver zerado, pode ir para o proximo
+      IF nvl(rw_craplin_ava.nrdconta,0) = 0 THEN
+        continue;
+      END IF;
+      vr_idxavais := vr_tab_avais_ctr.count() + 1; 
+    
+      --> Buscar conta do cooperado avalista
+      OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => rw_craplin_ava.nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      IF cr_crapass%FOUND THEN 
+        CLOSE cr_crapass;
+        vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapass.nmprimtl;
+        vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapass.tpdocptl ||': '|| rw_crapass.nrdocptl;
+        
+        IF rw_crapass.inpessoa = 1 THEN
+        
+          vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
+                                                                                        pr_inpessoa => rw_crapass.inpessoa );
+          
+          --> Buscar conjuge do cooperado
+          OPEN cr_crapcje ( pr_cdcooper => pr_cdcooper,
+                            pr_nrdconta => rw_crapass.nrdconta);
+          FETCH cr_crapcje INTO rw_crapcje;
+          IF cr_crapcje%FOUND THEN
+            CLOSE cr_crapcje;
+            --> Verificar se existe o numero da conta do conjuge 
+            IF rw_crapcje.nrctacje > 0 THEN
+              --> Busca as informaçoes do titular da conta
+              OPEN cr_crapttl ( pr_cdcooper => rw_crapcje.cdcooper,
+                                pr_nrdconta => rw_crapcje.nrctacje);
+              FETCH cr_crapttl INTO rw_crapttl;
+              IF cr_crapttl%FOUND THEN
+                CLOSE cr_crapttl;
+                vr_tab_avais_ctr(vr_idxavais).nmconjug := rw_crapttl.nmextttl;
+                vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapttl.nrcpfcgc, 
+                                                                                              pr_inpessoa => 1 );                       
+                vr_tab_avais_ctr(vr_idxavais).dsdoccjg := rw_crapttl.tpdocttl ||': '|| rw_crapttl.nrdocttl;
+                
+                
+              ELSE
+                CLOSE cr_crapttl;              
+              END IF; 
+            
+            ELSE
+              vr_tab_avais_ctr(vr_idxavais).nmconjug := rw_crapcje.nmconjug;
+              vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcje.nrcpfcjg, 
+                                                                                            pr_inpessoa => 1 );                       
+              vr_tab_avais_ctr(vr_idxavais).dsdoccjg := rw_crapcje.tpdoccje ||': '|| rw_crapcje.nrdoccje;          
+            END IF;
+            
+          ELSE
+            CLOSE cr_crapcje;
+            vr_tab_avais_ctr(vr_idxavais).nmconjug := lpad('_',40,'_');
+            vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: ' || lpad('_',35,'_');
+            vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: '  || lpad('_',36,'_');
+            
+          END IF;
+          
+        ELSE
+          vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CNPJ: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
+                                                                                         pr_inpessoa => rw_crapass.inpessoa );
+                  
+          vr_tab_avais_ctr(vr_idxavais).nmconjug := lpad('_',40,'_');
+          vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: ' || lpad('_',35,'_');
+          vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: '  || lpad('_',36,'_');
+          
+        END IF; --> Fim IF rw_crapass.inpessoa = 1
+        
+        --> Buscar endereço do avalista
+        OPEN cr_crapenc ( pr_cdcooper => pr_cdcooper,
+                          pr_nrdconta => rw_crapass.nrdconta);      
+        FETCH cr_crapenc INTO rw_crapenc;
+        IF cr_crapenc%FOUND THEN
+          CLOSE cr_crapenc;
+          
+          vr_tab_avais_ctr(vr_idxavais).dsendava := substr(rw_crapenc.dsendere,1,32) || ', ' || to_char(rw_crapenc.nrendere,'fm999G999G999')||', '||
+                                                    rw_crapenc.nmbairro || ', ' || gene0002.fn_mask_cep(rw_crapenc.nrcepend) ||' - '||
+                                                    rw_crapenc.nmcidade || '/'  || rw_crapenc.cdufende || '.';
+                                          
+        ELSE
+          CLOSE cr_crapenc;
+        END IF;      
+        
+      ELSE
+        CLOSE cr_crapass;
+        vr_tab_avais_ctr(vr_idxavais).nmdavali := '*** NAO CADASTRADO ***';
+        vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| lpad('_',35,'_');
+        vr_tab_avais_ctr(vr_idxavais).dsdocava := 'CI: ' || lpad('_',36,'_');
+        vr_tab_avais_ctr(vr_idxavais).nmconjug := lpad('_',40,'_'); 
+        vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| lpad('_',35,'_');
+        vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: ' || lpad('_',36,'_');
+        vr_tab_avais_ctr(vr_idxavais).dsendava := lpad('_',40,'_');
+        
+        
+      END IF; 
+    END LOOP;
+        
+     --> Avalistas Terceiros do contrado
+    FOR rw_crapavt IN  cr_crapavt (pr_cdcooper => pr_cdcooper,
+                                   pr_nrdconta => pr_nrdconta,
+                                   pr_nrctremp => pr_nrctrlim) LOOP
+    
+      vr_idxavais := vr_tab_avais_ctr.count() + 1; 
+	  vr_tab_avais_ctr(vr_idxavais).nmdavali := rw_crapavt.nmdavali;
+      vr_tab_avais_ctr(vr_idxavais).cpfavali := 'CPF: '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcjg, 
+                                                                                    pr_inpessoa => 1 );                       
+      vr_tab_avais_ctr(vr_idxavais).dsdocava := rw_crapavt.tpdocava ||': '|| rw_crapavt.nrdocava;  
+      IF rw_crapavt.nrendere > 0 THEN
+      
+        vr_tab_avais_ctr(vr_idxavais).dsendava := substr(rw_crapavt.dsendres,1,32) || ', ' || to_char(rw_crapavt.nrendere,'fm999G999G999')||', '||
+                                                  rw_crapavt.nmbairro || ', ' || gene0002.fn_mask_cep(rw_crapavt.nrcepend) ||' - '||
+                                                  rw_crapavt.nmcidade || '/'  || rw_crapavt.cdufresd || '.';
+      END IF;
+      
+      vr_tab_avais_ctr(vr_idxavais).nmconjug := nvl(TRIM(rw_crapavt.nmconjug),lpad('_',40,'_'));
+      vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: '|| nvl(TRIM(gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcjg, 
+                                                                                             pr_inpessoa => 1 )),lpad('_',35,'_'));            
+      IF TRIM(rw_crapavt.tpdoccjg) IS NOT NULL AND 
+         TRIM(rw_crapavt.nrdoccjg) IS NOT NULL THEN
+        vr_tab_avais_ctr(vr_idxavais).dsdoccjg := rw_crapavt.tpdoccjg ||': '|| rw_crapavt.nrdoccjg;
+      ELSE
+        vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: '|| lpad('_',36,'_');
+      END IF;
+    
+    END LOOP;                                       
+        
+    pr_tab_avais_ctr := vr_tab_avais_ctr;
+     
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+      END IF;
+      
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := replace(replace('Erro ao buscar dados do avalista: ' || SQLERRM, chr(13)),chr(10));       
+  END pc_carrega_dados_avais;
+  
+  --> Rotina para buscar dados para impressao do contrato de limite de credito
+  PROCEDURE pc_obtem_dados_contrato (  pr_cdcooper        IN crapcop.cdcooper%TYPE  --> Código da Cooperativa 
+                                      ,pr_cdagenci        IN crapage.cdagenci%TYPE  --> Código da agencia
+                                      ,pr_nrdcaixa        IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                      ,pr_cdoperad        IN crapope.cdoperad%TYPE  --> Código do Operador
+                                      ,pr_idorigem        IN INTEGER                --> Identificador de Origem
+                                      ,pr_nrdconta        IN crapass.nrdconta%TYPE  --> Número da Conta
+                                      ,pr_dtmvtolt        IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                                      ,pr_nrctrlim        IN craplim.nrctrlim%TYPE  --> Contrato
+                                      ,pr_tab_dados_ctr  OUT typ_tab_dados_ctr      --> Dados do contrato 
+                                      ,pr_tab_avais_ctr  OUT typ_tab_avais_ctr      --> Dados do avalista
+                                      ,pr_tab_repres_ctr OUT typ_tab_repres_ctr     --> Dados do representantes/socios                                      
+                                      ,pr_cdcritic       OUT PLS_INTEGER            --> Código da crítica
+                                      ,pr_dscritic       OUT VARCHAR2) IS           --> Descrição da crít
+                                      
+    /* .............................................................................
+
+     Programa: pc_obtem_dados_contrato  (antiga: b1wgen0019.p/obtem-dados-contrato)
+     Sistema : Rotinas referentes ao limite de credito
+     Sigla   : LIMI
+     Autor   : Odirlei Busana - AMcom
+     Data    : Agosto/16.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia:
+     Objetivo  : Rotina para buscar dados para impressao do contrato de limite de credito
+     Alteracoes: -----
+    ..............................................................................*/
+    
+    ---------->> CURSORES <<--------   
+    --> Buscar dados associado
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_nrdconta crapass.nrdconta%TYPE )IS
+      SELECT ass.nrcpfcgc,
+             ass.nmprimtl,
+             ass.cdagenci,
+             ass.inpessoa,
+             ass.nrdconta,
+             ass.nrdocptl,
+             ass.cdoedptl,
+             ass.tpdocptl,
+             ass.cdufdptl
+             
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    rw_crabass cr_crapass%ROWTYPE;
+    
+    -- Busca dos dados da cooperativa
+    CURSOR cr_crapcop IS
+      SELECT cop.nmrescop
+            ,cop.nmextcop
+            ,cop.nrdocnpj
+            ,cop.dsendcop
+            ,cop.nrendcop
+            ,cop.nmbairro
+            ,cop.nmcidade
+            ,cop.cdufdcop
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE; 
+    
+    --> Buscar Contrato de limite
+    CURSOR cr_craplim IS
+      SELECT lim.nrdconta,
+             lim.cdageori,
+             lim.vllimite,
+             lim.cddlinha,
+             lim.nrctrlim,
+             lim.dtrenova,
+             lim.dtinivig,
+             lim.qtdiavig,
+             lim.dtfimvig,
+             lim.dsencfin##1,
+             lim.dsencfin##2,
+             lim.dsencfin##3,
+             lim.nrgarope,
+             lim.nrinfcad,
+             lim.nrliquid,
+             lim.nrpatlvr,
+             lim.vltotsfn,
+             lim.nrctaav1,
+             lim.nrctaav2
+        FROM craplim lim
+       WHERE lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.nrctrlim = pr_nrctrlim
+         AND lim.tpctrlim = 1;
+    rw_craplim cr_craplim%ROWTYPE;     
+    
+    --> Buscar enderecos do cooperado.
+    CURSOR cr_crapenc IS
+      SELECT enc.nrdconta,
+             enc.dsendere,
+             enc.nrcepend,
+             enc.nmbairro,
+             enc.nmcidade,
+             enc.nrendere,
+             enc.cdufende
+        FROM crapenc enc
+       WHERE enc.cdcooper = pr_cdcooper
+         AND enc.nrdconta = pr_nrdconta
+         AND enc.idseqttl = 1
+         AND enc.cdseqinc = 1;
+    rw_crapenc cr_crapenc%ROWTYPE;
+    
+    --> buscar operador
+    CURSOR cr_crapope IS
+      SELECT ope.cdoperad
+            ,ope.nmoperad
+        FROM crapope ope
+       WHERE ope.cdcooper = pr_cdcooper
+         AND ope.cdoperad = pr_cdoperad;
+    rw_crapope cr_crapope%ROWTYPE;
+    
+    --> Buscar Dados agencia
+    CURSOR cr_crapage(pr_cdcooper crapage.cdcooper%TYPE,
+                      pr_cdagenci crapage.cdagenci%TYPE) IS
+      SELECT age.nmcidade
+        FROM crapage age
+       WHERE age.cdcooper = pr_cdcooper
+         AND age.cdagenci = pr_cdagenci;
+    rw_crapage cr_crapage%ROWTYPE;
+    
+    --> Para pessoa juridica - faturamento unico cliente 
+    CURSOR cr_crapjfn (pr_cdcooper crapjfn.cdcooper%TYPE,
+                       pr_nrdconta crapjfn.nrdconta%TYPE )IS
+      SELECT jfn.cdcooper,
+             jfn.perfatcl
+        FROM crapjfn jfn
+       WHERE jfn.cdcooper = pr_cdcooper
+         AND jfn.nrdconta = pr_nrdconta;
+    rw_crapjfn cr_crapjfn%ROWTYPE;     
+
+    --> Buscar Linhas de Credito Rotativo
+    CURSOR cr_craplrt (pr_cdcooper craplrt.cdcooper%TYPE,
+                       pr_cddlinha craplrt.cddlinha%TYPE) IS
+      SELECT lrt.cdcooper,
+             lrt.txmensal
+        FROM craplrt lrt
+       WHERE lrt.cdcooper = pr_cdcooper
+         AND lrt.cddlinha = pr_cddlinha;
+    rw_craplrt cr_craplrt%ROWTYPE;
+        
+    --> Buscar avalistas
+    CURSOR cr_crapavt IS
+      SELECT avt.cdcooper,
+             avt.nrdctato,
+             avt.nrcpfcgc,
+             avt.nmdavali,
+             avt.nrdocava,
+             avt.cdoeddoc
+             
+        FROM crapavt avt
+       WHERE avt.cdcooper = pr_cdcooper
+         AND avt.tpctrato = 6
+         AND avt.nrdconta = pr_nrdconta;
+    
+    ----------->>> VARIAVEIS <<<--------   
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
+    
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+    vr_idxctr          PLS_INTEGER;
+    vr_idxrepre        PLS_INTEGER;
+    vr_tab_dados_ctr   typ_tab_dados_ctr;
+    vr_tab_repres_ctr  typ_tab_repres_ctr;
+    vr_tab_avais_ctr   typ_tab_avais_ctr;
+    
+    vr_vllimite_ext    VARCHAR2(200);
+    vr_desdoano_ext    VARCHAR2(200);
+    vr_dtmvtolt_ext    VARCHAR2(200);
+    vr_dtmvtolt_ass    VARCHAR2(200);
+    
+    vr_txcetano        NUMBER;
+    vr_txcetmes        NUMBER;
+    
+    vr_dsendcop        VARCHAR2(1000);
+    vr_dsendass        VARCHAR2(1000);
+    
+  BEGIN
+  
+    -- Verifica se a cooperativa esta cadastrada
+    OPEN cr_crapcop;
+    FETCH cr_crapcop INTO rw_crapcop;
+    -- Se não encontrar
+    IF cr_crapcop%NOTFOUND THEN   
+      CLOSE cr_crapcop;
+      -- Montar mensagem de critica
+      vr_cdcritic := 651;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapcop;
+    END IF;
+    
+    --> Buscar cooperado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    IF cr_crapass%NOTFOUND THEN 
+      CLOSE cr_crapass;
+      vr_cdcritic := 9; -- 009 - Associado nao cadastrado.
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapass;
+    END IF;  
+    
+    --> Buscar Contrato de limite
+    OPEN cr_craplim;
+    FETCH cr_craplim INTO rw_craplim;
+    IF cr_craplim%NOTFOUND THEN
+      CLOSE cr_craplim;
+      vr_cdcritic := 105; -- 105 - Associado nao tem limite de credito.
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplim;
+    END IF;
+    
+    --> Buscar endereço do cooperado
+    OPEN cr_crapenc;
+    FETCH cr_crapenc INTO rw_crapenc;
+    IF cr_crapenc%NOTFOUND THEN
+      CLOSE cr_crapenc;
+      vr_dscritic := 'Endereco nao cadastrado.';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapenc;
+    END IF;
+    
+    --> buscar dados do operador                                              
+    OPEN cr_crapope; 
+    FETCH cr_crapope INTO rw_crapope;    
+    IF cr_crapope%NOTFOUND THEN
+      CLOSE cr_crapope;
+      vr_dscritic := 'Operador nao cadastrado.';
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_crapope;
+    END IF;
+    
+    --> Buscar Dados agencia
+    OPEN cr_crapage(pr_cdcooper => pr_cdcooper ,
+                    pr_cdagenci => rw_crapass.cdagenci);
+    FETCH cr_crapage INTO rw_crapage;
+    CLOSE cr_crapage;        
+    
+    --> Para pessoa juridica - faturamento unico cliente 
+    OPEN cr_crapjfn (pr_cdcooper => pr_cdcooper,
+                     pr_nrdconta => pr_nrdconta );   
+    FETCH cr_crapjfn INTO rw_crapjfn;
+    CLOSE cr_crapjfn;
+
+    --> Buscar Linhas de Credito Rotativo
+    OPEN cr_craplrt (pr_cdcooper => pr_cdcooper,
+                     pr_cddlinha => rw_craplim.cddlinha);
+    FETCH cr_craplrt INTO rw_craplrt;
+    IF cr_craplrt%NOTFOUND THEN
+      CLOSE cr_craplrt;
+      vr_dscritic := 'Linhas de Credito Rotativo nao encotrada.'; 
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplrt;
+    END IF;
+    
+    --Gerar valor em extenso
+    vr_vllimite_ext := gene0002.fn_valor_extenso(pr_idtipval => 'M', 
+                                                 pr_valor    => rw_craplim.vllimite);
+                                                 
+    IF to_char(pr_dtmvtolt,'DD') > 1 THEN
+      --Gerar valor em extenso
+      -- DIA
+      vr_dtmvtolt_ext := gene0002.fn_valor_extenso(pr_idtipval => 'I', 
+                                                   pr_valor    => to_char(pr_dtmvtolt,'DD'));
+      vr_dtmvtolt_ext := vr_dtmvtolt_ext ||' DIAS ';
+        
+    ELSE
+      vr_dtmvtolt_ext := 'PRIMEIRO DIA ';
+    END IF;
+    
+    --> Ano
+    vr_desdoano_ext := gene0002.fn_valor_extenso(pr_idtipval => 'I', 
+                                                 pr_valor    => to_char(pr_dtmvtolt,'RRRR'));                                             
+                                                   
+    vr_dtmvtolt_ext := vr_dtmvtolt_ext ||' DO MÊS DE '||
+                       gene0001.vr_vet_nmmesano(to_char(pr_dtmvtolt,'MM')) ||
+                       ' DE ' || vr_desdoano_ext;
+    
+    
+    --> Calcular cet
+    ccet0001.pc_calculo_cet_limites (pr_cdcooper  => pr_cdcooper -- Cooperativa
+                                    ,pr_dtmvtolt  => pr_dtmvtolt -- Data Movimento
+                                    ,pr_cdprogra  => 'atenda' -- Programa chamador
+                                    ,pr_nrdconta  => pr_nrdconta -- Conta/dv
+                                    ,pr_inpessoa  => rw_crapass.inpessoa -- Indicativo de pessoa
+                                    ,pr_cdusolcr  => 1 -- Codigo de uso da linha de credito
+                                    ,pr_cdlcremp  => rw_craplim.cddlinha -- Linha de credio
+                                    ,pr_tpctrlim  => 1 -- Tipo da operacao -- 1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit
+                                    ,pr_nrctrlim  => rw_craplim.nrctrlim -- Contrato 
+                                    ,pr_dtinivig  => coalesce(rw_craplim.dtrenova,rw_craplim.dtinivig,pr_dtmvtolt) -- Data liberacao
+                                    ,pr_qtdiavig  => rw_craplim.qtdiavig -- Dias de vigencia                                      
+                                    ,pr_vlemprst  => rw_craplim.vllimite -- Valor emprestado
+                                    ,pr_txmensal  => rw_craplrt.txmensal -- Taxa mensal                                                               
+                                    ,pr_txcetano  => vr_txcetano  -- Taxa cet ano
+                                    ,pr_txcetmes  => vr_txcetmes  -- Taxa cet mes 
+                                    ,pr_cdcritic  => vr_cdcritic  --> Código da crítica
+                                    ,pr_dscritic  => vr_dscritic);--> Descrição da crítica
+    
+    
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+    
+    --> Montar string endereço cooper    
+    vr_dsendcop := rw_crapcop.dsendcop || ', ' || to_char(rw_crapcop.nrendcop,'fm999G999G999')||', '||
+                   rw_crapcop.nmbairro || ', ' || rw_crapcop.nmcidade ||', '||
+                   rw_crapcop.cdufdcop || '.';
+    
+    vr_dsendass := rw_crapenc.dsendere || ', ' || to_char(rw_crapenc.nrendere,'fm999G999G999')||', '||
+                   rw_crapenc.nmbairro || ', ' || gene0002.fn_mask_cep(rw_crapenc.nrcepend) ||' - '||
+                   rw_crapenc.nmcidade || '/'  || rw_crapenc.cdufende || '.';               
+    
+    
+    vr_dtmvtolt_ass := SUBSTR(rw_crapage.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(pr_dtmvtolt);
+    
+    --> Carregar temptable do contrato
+    vr_idxctr := vr_tab_dados_ctr.count() + 1;
+    vr_tab_dados_ctr(vr_idxctr).nmextcop := rw_crapcop.nmextcop;
+    vr_tab_dados_ctr(vr_idxctr).nmrescop := rw_crapcop.nmrescop;
+    vr_tab_dados_ctr(vr_idxctr).nrdocnpj := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapcop.nrdocnpj, pr_inpessoa => 2);
+    vr_tab_dados_ctr(vr_idxctr).dsendcop := vr_dsendcop;
+    vr_tab_dados_ctr(vr_idxctr).nrdconta := rw_crapass.nrdconta;
+    vr_tab_dados_ctr(vr_idxctr).nmprimtl := rw_crapass.nmprimtl;
+    vr_tab_dados_ctr(vr_idxctr).inpessoa := rw_crapass.inpessoa;
+    vr_tab_dados_ctr(vr_idxctr).dsendass := vr_dsendass;
+    vr_tab_dados_ctr(vr_idxctr).cdagenci := rw_crapass.cdagenci;
+    vr_tab_dados_ctr(vr_idxctr).cdageori := rw_craplim.cdageori;    
+    vr_tab_dados_ctr(vr_idxctr).nmcidpac := nvl(rw_crapage.nmcidade,'____________________');
+    vr_tab_dados_ctr(vr_idxctr).nrctrlim := rw_craplim.nrctrlim;
+    vr_tab_dados_ctr(vr_idxctr).dsctrlim := TRIM(gene0002.fn_mask_contrato(rw_craplim.nrctrlim)) || '/001';
+    vr_tab_dados_ctr(vr_idxctr).vllimite := rw_craplim.vllimite;
+    vr_tab_dados_ctr(vr_idxctr).qtdiavig := rw_craplim.qtdiavig;
+    vr_tab_dados_ctr(vr_idxctr).dtinivig := rw_craplim.dtinivig;
+    vr_tab_dados_ctr(vr_idxctr).dtfimvig := rw_craplim.dtfimvig;
+    vr_tab_dados_ctr(vr_idxctr).dtrenova := rw_craplim.dtrenova;
+    vr_tab_dados_ctr(vr_idxctr).cddlinha := rw_craplim.cddlinha;
+    vr_tab_dados_ctr(vr_idxctr).dsencfin := rw_craplim.dsencfin##1 || rw_craplim.dsencfin##2 ||
+                                            rw_craplim.dsencfin##3;
+    vr_tab_dados_ctr(vr_idxctr).dsvllimi := vr_vllimite_ext;
+    vr_tab_dados_ctr(vr_idxctr).dsemsctr := vr_dtmvtolt_ass;
+    vr_tab_dados_ctr(vr_idxctr).nmoperad := 'Operador: '|| rw_crapope.nmoperad;
+    vr_tab_dados_ctr(vr_idxctr).ddmvtolt := to_char(pr_dtmvtolt,'DD');
+    vr_tab_dados_ctr(vr_idxctr).aamvtolt := to_char(pr_dtmvtolt,'RRRR');
+    vr_tab_dados_ctr(vr_idxctr).dsdtmvto := vr_dtmvtolt_ext;
+    vr_tab_dados_ctr(vr_idxctr).dsvlnpr1 := vr_vllimite_ext;
+    vr_tab_dados_ctr(vr_idxctr).dsmesref := gene0001.vr_vet_nmmesano(to_char(pr_dtmvtolt,'MM'));
+    vr_tab_dados_ctr(vr_idxctr).dsdmoeda := 'R$';
+    vr_tab_dados_ctr(vr_idxctr).txcetano := vr_txcetano;
+    vr_tab_dados_ctr(vr_idxctr).txcetmes := vr_txcetmes;
+         
+    --> Campos para o Rating 
+    vr_tab_dados_ctr(vr_idxctr).nrgarope := rw_craplim.nrgarope;
+    vr_tab_dados_ctr(vr_idxctr).nrinfcad := rw_craplim.nrinfcad;
+    vr_tab_dados_ctr(vr_idxctr).nrliquid := rw_craplim.nrliquid;
+    vr_tab_dados_ctr(vr_idxctr).nrpatlvr := rw_craplim.nrpatlvr;
+    vr_tab_dados_ctr(vr_idxctr).vltotsfn := rw_craplim.vltotsfn;
+    vr_tab_dados_ctr(vr_idxctr).perfatcl := rw_crapjfn.perfatcl;
+    
+    IF rw_crapass.inpessoa = 1 THEN
+      vr_tab_dados_ctr(vr_idxctr).nrcpfcgc := 'CPF ';
+    ELSE
+      vr_tab_dados_ctr(vr_idxctr).nrcpfcgc := 'CNPJ ';
+    END IF;
+    vr_tab_dados_ctr(vr_idxctr).nrcpfcgc := vr_tab_dados_ctr(vr_idxctr).nrcpfcgc ||
+                                            gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc,
+                                                                      pr_inpessoa => rw_crapass.inpessoa);
+    
+    IF rw_crapass.inpessoa > 1 THEN
+      --Listar representantes/socios
+      FOR rw_crapavt IN cr_crapavt LOOP
+        vr_idxrepre := vr_tab_repres_ctr.count() + 1;
+        
+        IF rw_crapavt.nrdctato <> 0  THEN
+          --> Buscar conta do cooperado avalista
+          OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                          pr_nrdconta => rw_crapavt.nrdctato);
+          FETCH cr_crapass INTO rw_crabass;
+          IF cr_crapass%FOUND THEN 
+            CLOSE cr_crapass;
+            vr_tab_repres_ctr(vr_idxrepre).nmrepres := rw_crabass.nmprimtl;
+            vr_tab_repres_ctr(vr_idxrepre).nrcpfrep := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crabass.nrcpfcgc, 
+                                                                                pr_inpessoa => rw_crabass.inpessoa );
+            vr_tab_repres_ctr(vr_idxrepre).dsdocrep := rw_crabass.nrdocptl;
+            vr_tab_repres_ctr(vr_idxrepre).cdoedrep := rw_crabass.cdoedptl;
+            
+          ELSE
+            CLOSE cr_crapass;
+          END IF; 
+        
+        ELSE
+          vr_tab_repres_ctr(vr_idxrepre).nmrepres := rw_crapavt.nmdavali;
+          vr_tab_repres_ctr(vr_idxrepre).nrcpfrep := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapavt.nrcpfcgc, 
+                                                                               pr_inpessoa => 1 );
+          vr_tab_repres_ctr(vr_idxrepre).dsdocrep := rw_crapavt.nrdocava;
+          vr_tab_repres_ctr(vr_idxrepre).cdoedrep := rw_crapavt.cdoeddoc;
+          
+        END IF;
+        
+      END LOOP;
+    ELSE
+      vr_tab_dados_ctr(vr_idxctr).nrdrgass := rw_crapass.tpdocptl || ' '  || 
+                                              rw_crapass.nrdocptl || ' - '||
+                                              rw_crapass.cdoedptl || '/'  ||
+                                              rw_crapass.cdufdptl ;
+    END IF; 
+    
+    vr_tab_avais_ctr.delete;
+    
+    --> Verificar se proposta possui conta avalista    
+    pc_carrega_dados_avais (pr_cdcooper      => pr_cdcooper,         --> Cooperativa do avalista
+                            pr_nrdconta      => pr_nrdconta,         --> Numero da conta do avalista
+                            pr_nrctrlim      => pr_nrctrlim,         --> Numero do contrato de limite de credito
+                            pr_tab_avais_ctr => vr_tab_avais_ctr,    --> Retorna dados dos avalistas
+                            pr_cdcritic      => vr_cdcritic,         --> Código da crítica
+                            pr_dscritic      => vr_dscritic);        --> Descrição da crítica  
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;   
+    
+    --> Retornar dados encontrados
+    pr_tab_dados_ctr  := vr_tab_dados_ctr;
+    pr_tab_avais_ctr  := vr_tab_avais_ctr;
+    pr_tab_repres_ctr := vr_tab_repres_ctr;
+    
+    
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+      END IF;
+      
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := replace(replace('Erro ao buscar dados para impressao: ' || SQLERRM, chr(13)),chr(10));   
+  END pc_obtem_dados_contrato;
+  
+  -- Rotina para geração do contrato de limite de credito
+  PROCEDURE pc_impres_contrato_limite(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                     ,pr_cdagecxa IN crapage.cdagenci%TYPE  --> Código da agencia
+                                     ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                     ,pr_cdopecxa IN crapope.cdoperad%TYPE  --> Código do Operador
+                                     ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
+                                     ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                     ,pr_cdprogra IN crapprg.cdprogra%TYPE  --> Codigo do programa
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> Titular da Conta
+                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de Movimento
+                                     ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE  --> Data do proximo Movimento 
+                                     ,pr_inproces IN crapdat.inproces%TYPE  --> Indicador do processo
+                                     ,pr_idimpres IN INTEGER                --> Indicador de impresao
+                                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE  --> Contrato
+                                     ,pr_dsiduser IN VARCHAR2               --> id do usuario
+                                     ,pr_flgimpnp IN INTEGER                --> indica se deve gerar nota promissoria(0-nao 1-sim)
+                                     ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
+                                     ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     --------> OUT <--------
+                                     ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
+    /* .............................................................................
+
+     Programa: pc_impres_contrato_limite  (antiga: b1wgen0019.p/gera-impressao-limite(parte contrato))
+     Sistema : Rotinas referentes ao limite de credito
+     Sigla   : LIMI
+     Autor   : Odirlei Busana - AMcom
+     Data    : Agosto/16.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia:
+     Objetivo  : Rotina para geração do contrato de limite de credito
+     Alteracoes: -----
+    ..............................................................................*/
+    
+    ---------->>> CURSORES  <<<---------
+    CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE,
+                       pr_cddlinha IN craplrt.cddlinha%TYPE) IS
+      SELECT txmensal
+        FROM craplrt 
+       WHERE craplrt.cdcooper = pr_cdcooper 
+         AND craplrt.cddlinha = pr_cddlinha;
+    rw_craplrt cr_craplrt%ROWTYPE;
+    
+    --> Buscar os emails para envio
+    CURSOR cr_craprel (pr_cdcooper craprel.cdcooper%TYPE,
+                       pr_cdrelato craprel.cdrelato%TYPE)IS
+      SELECT rel.dsdemail
+        FROM craprel rel
+       WHERE rel.cdcooper = pr_cdcooper
+         AND rel.cdrelato = pr_cdrelato;
+    rw_craprel cr_craprel%ROWTYPE;
+    
+    --> Buscar dados agencia
+    CURSOR cr_crapage (pr_cdcooper crapage.cdcooper%TYPE,
+                       pr_cdagenci crapage.cdagenci%TYPE)IS
+      SELECT age.cdagenci,
+             age.nmresage
+        FROM crapage age
+       WHERE age.cdcooper = pr_cdcooper
+         AND age.cdagenci = pr_cdagenci;
+    rw_crapage cr_crapage%ROWTYPE;
+    
+    ----------->>> VARIAVEIS <<<--------   
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro    
+    vr_des_reto        VARCHAR2(100);
+    vr_tab_erro        GENE0001.typ_tab_erro;
+    
+    -- Tratamento de erros
+    vr_exc_erro        EXCEPTION;
+    
+    vr_dsorigem        craplgm.dsorigem%TYPE;
+    vr_dstransa        craplgm.dstransa%TYPE;
+    vr_nrdrowid        ROWID;
+    
+    vr_dstextab        craptab.dstextab%TYPE; 
+    vr_tpdocged        INTEGER;
+    vr_qrcode          VARCHAR2(100);
+    vr_cdageqrc        INTEGER;
+    
+    vr_dsdireto        VARCHAR2(4000);
+    vr_nmendter        VARCHAR2(4000);     
+    vr_dscomand        VARCHAR2(4000);
+    vr_typsaida        VARCHAR2(100);    
+    
+    vr_tab_dados_ctr   typ_tab_dados_ctr;
+    vr_tab_repres_ctr  typ_tab_repres_ctr;
+    vr_tab_avais_ctr   typ_tab_avais_ctr;    
+    
+    vr_idxctr          PLS_INTEGER;
+    vr_dscetano        VARCHAR2(1000);
+    
+    vr_dsextmail       VARCHAR2(3);
+    vr_dsmailcop       VARCHAR2(4000);
+    vr_dsassmail       VARCHAR2(200);
+    vr_dscormail       VARCHAR2(50);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml   CLOB;
+    vr_txtcompl  VARCHAR2(32600);
+    
+    --> CET
+    vr_desxml_CET      CLOB;
+    vr_nmarqimp_CET    varchar2(60);
+    
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_txtcompl, pr_des_dados, pr_fecha_xml);
+    END;
+    
+  BEGIN    
+    --> Definir transação
+    IF pr_flgerlog = 1 THEN
+      vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
+    
+      CASE pr_idimpres
+        WHEN 1 THEN
+          vr_dstransa := 'Gerar impressao da proposta e contrato do limite de credito';
+        WHEN 2 THEN
+          vr_dstransa := 'Gerar impressao do contrato do limite de credito';        
+        ELSE
+          vr_dscritic := 'Tipo de impressao invalida.';
+          RAISE vr_exc_erro;
+      END CASE;
+    END IF; 
+    
+    --Buscar diretorio da cooperativa
+    vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', --> cooper 
+                                         pr_cdcooper => pr_cdcooper);
+                                         
+    vr_nmendter := vr_dsdireto ||'/rl/crrl580_'||pr_dsiduser;
+    
+    vr_dscomand := 'rm '||vr_nmendter||'* 2>/dev/null';
+    
+    --Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => vr_dscomand
+                         ,pr_typ_saida   => vr_typsaida
+                         ,pr_des_saida   => vr_dscritic);
+    --Se ocorreu erro dar RAISE
+    IF vr_typsaida = 'ERR' THEN
+      vr_dscritic:= 'Nao foi possivel remover arquivos: '||vr_dscomand||'. Erro: '||vr_dscritic;
+      RAISE vr_exc_erro;
+    END IF; 
+    
+    --> Montar nome do arquivo
+    pr_nmarqpdf := 'crrl580_'||pr_dsiduser || gene0002.fn_busca_time || '.pdf';
+      
+    --> Buscar dados para impressao do contrato de limite de credito
+    pc_obtem_dados_contrato (  pr_cdcooper        => pr_cdcooper  --> Código da Cooperativa 
+                              ,pr_cdagenci        => pr_cdagecxa  --> Código da agencia
+                              ,pr_nrdcaixa        => pr_nrdcaixa  --> Numero do caixa do operador
+                              ,pr_cdoperad        => pr_cdopecxa  --> Código do Operador
+                              ,pr_idorigem        => pr_idorigem  --> Identificador de Origem
+                              ,pr_nrdconta        => pr_nrdconta  --> Número da Conta
+                              ,pr_dtmvtolt        => pr_dtmvtolt  --> Data de Movimento
+                              ,pr_nrctrlim        => pr_nrctrlim  --> Contrato
+                              ,pr_tab_dados_ctr   => vr_tab_dados_ctr    --> Dados do contrato 
+                              ,pr_tab_avais_ctr   => vr_tab_avais_ctr    --> Dados do avalista
+                              ,pr_tab_repres_ctr  => vr_tab_repres_ctr   --> Dados do representantes/socios                                      
+                              ,pr_cdcritic        => vr_cdcritic         --> Código da crítica
+                              ,pr_dscritic        => vr_dscritic);         --> Descrição da crít
+                                      
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;   
+    
+    
+    vr_idxctr := vr_tab_dados_ctr.first;
+    --> Verificar se retornou informacao
+    IF vr_idxctr IS NULL THEN
+      vr_dscritic := 'Nao foi possivel gerar a impressao.';
+      RAISE vr_exc_erro;
+    END IF;
+    
+    --> calculo do cet por extenso
+    vr_dscetano := gene0002.fn_valor_extenso(pr_idtipval => 'M', 
+                                             pr_valor    => vr_tab_dados_ctr(vr_idxctr).txcetano);
+    
+    vr_dscetano := to_char(vr_tab_dados_ctr(vr_idxctr).txcetano,'fm990D00')||
+                   '% ('|| vr_dscetano ||') ao ano; (' ||
+                   to_char(vr_tab_dados_ctr(vr_idxctr).txcetmes,'fm90D00') ||
+                   ' % ao mes), conforme planilha demonstrativa';
+    
+    vr_dstextab :=  TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper, 
+                                               pr_nmsistem => 'CRED'      , 
+                                               pr_tptabela => 'GENERI'    , 
+                                               pr_cdempres => 00          , 
+                                               pr_cdacesso => 'DIGITALIZA' , 
+                                               pr_tpregist => 19 ); --> Contrato limite de credito (GED)
+     
+    vr_tpdocged :=  gene0002.fn_busca_entrada(pr_postext => 3, 
+                                              pr_dstext  => vr_dstextab, 
+                                              pr_delimitador => ';');
+    
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    
+    vr_txtcompl := NULL;
+    
+    --Incluir no QRcode a agencia onde foi criado o contrato.
+    IF nvl(vr_tab_dados_ctr(vr_idxctr).cdageori,0) = 0 THEN
+      vr_cdageqrc := vr_tab_dados_ctr(vr_idxctr).cdagenci;
+    ELSE
+      vr_cdageqrc := vr_tab_dados_ctr(vr_idxctr).cdageori;
+    END IF;
+        
+    vr_qrcode := pr_cdcooper ||'_'||
+                 vr_cdageqrc ||'_'||
+                 TRIM(gene0002.fn_mask_conta(pr_nrdconta))    ||'_'||
+                 0           ||'_'||
+                 TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'_'||
+                 0           ||'_'||
+                 vr_tpdocged;
+    
+    --> INICIO
+    pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz><contrato>
+                    
+                    <inpessoa>'|| vr_tab_dados_ctr(vr_idxctr).inpessoa ||'</inpessoa>                    
+                    <nmprimtl>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl ||'</nmprimtl>
+                    <nmextcop>'|| vr_tab_dados_ctr(vr_idxctr).nmextcop ||'</nmextcop>
+                    <nmoperad>'|| vr_tab_dados_ctr(vr_idxctr).nmoperad ||'</nmoperad>
+                    <dsemsctr>'|| vr_tab_dados_ctr(vr_idxctr).dsemsctr ||'</dsemsctr>'); 
+    
+    pc_escreve_xml('<dados>'||   
+                     '<dsqrcode>'|| vr_qrcode                            ||'</dsqrcode>'||     
+                     '<nrctrlim>'|| pr_nrctrlim                          ||'</nrctrlim>'||
+                     '<nmextcop>'|| vr_tab_dados_ctr(vr_idxctr).nmextcop ||'</nmextcop>'||
+                     '<nmprimtl>'|| vr_tab_dados_ctr(vr_idxctr).nmprimtl ||'</nmprimtl>'||
+                     '<nrdocnpj>'|| vr_tab_dados_ctr(vr_idxctr).nrdocnpj ||'</nrdocnpj>'||
+                     '<cdagenci>'|| vr_tab_dados_ctr(vr_idxctr).cdagenci ||'</cdagenci>'|| 
+                     '<dsendcop>'|| vr_tab_dados_ctr(vr_idxctr).dsendcop ||'</dsendcop>'||
+                     '<nrcpfcgc>'|| vr_tab_dados_ctr(vr_idxctr).nrcpfcgc ||'</nrcpfcgc>'||
+                     '<nrdconta>'|| vr_tab_dados_ctr(vr_idxctr).nrdconta ||'</nrdconta>'|| 
+                     '<dsendass>'|| vr_tab_dados_ctr(vr_idxctr).dsendass ||'</dsendass>'||
+                     '<vllimite>'|| to_char(vr_tab_dados_ctr(vr_idxctr).vllimite,'FM999G999G990D00') ||'</vllimite>'||
+                     '<dsvlnprp>'|| vr_tab_dados_ctr(vr_idxctr).dsvlnpr1 ||'</dsvlnprp>'||
+                     '<dsencfin>'|| vr_tab_dados_ctr(vr_idxctr).dsencfin ||'</dsencfin>'|| 
+                     '<dscetano>'|| vr_dscetano                          ||'</dscetano>'|| 
+                     '<qtdiavig>'|| vr_tab_dados_ctr(vr_idxctr).qtdiavig ||'</qtdiavig>'||
+                     '<nrdrgass>'|| vr_tab_dados_ctr(vr_idxctr).nrdrgass ||'</nrdrgass>'
+                     
+                     );
+    
+    --> Listar representantes/socios
+    pc_escreve_xml('<representantes>');
+    IF vr_tab_repres_ctr.count() > 0 THEN
+      FOR idx IN vr_tab_repres_ctr.first..vr_tab_repres_ctr.last LOOP
+        pc_escreve_xml('<repres>'||
+                          '<nmrepres>' ||   vr_tab_repres_ctr(idx).nmrepres ||'</nmrepres>' ||  
+                          '<nrcpfrep>' ||   vr_tab_repres_ctr(idx).nrcpfrep ||'</nrcpfrep>' ||
+                          '<dsdocrep>' ||   vr_tab_repres_ctr(idx).dsdocrep ||'</dsdocrep>' || 
+                          '<cdoedrep>' ||   vr_tab_repres_ctr(idx).cdoedrep ||'</cdoedrep>' ||
+                       '</repres>');  
+      END LOOP;
+    END IF;
+    pc_escreve_xml('</representantes></dados>');
+    
+    --> Listar avalistas
+    pc_escreve_xml('<avalistas>');
+    IF vr_tab_avais_ctr.count() > 0 THEN
+      FOR idx IN vr_tab_avais_ctr.first..vr_tab_avais_ctr.last LOOP
+        pc_escreve_xml('<avallim>'||
+                           '<nrsequen>'|| idx                              ||'</nrsequen>'||
+                           '<nmdavali>'|| vr_tab_avais_ctr(idx).nmdavali   ||'</nmdavali>'||
+                           '<cpfavali>'|| vr_tab_avais_ctr(idx).cpfavali   ||'</cpfavali>'||
+                           '<dsdocava>'|| vr_tab_avais_ctr(idx).dsdocava   ||'</dsdocava>'||
+                           '<nmconjug>'|| vr_tab_avais_ctr(idx).nmconjug   ||'</nmconjug>'||
+                           '<nrcpfcjg>'|| vr_tab_avais_ctr(idx).nrcpfcjg   ||'</nrcpfcjg>'||
+                           '<dsdoccjg>'|| vr_tab_avais_ctr(idx).dsdoccjg   ||'</dsdoccjg>'|| 
+                       '</avallim>');  
+      END LOOP;
+    END IF;
+                     
+    pc_escreve_xml('</avalistas>');             
+    
+    IF pr_idimpres <> 6 THEN
+      --> Tratamento da impressao da nota promissoria
+      IF pr_flgimpnp = 1 THEN             
+        pc_escreve_xml('<Promissoria>'||
+                         '<tpctrlim>'|| 1                                       ||'</tpctrlim>'||  
+                         '<nmrescop>'||  vr_tab_dados_ctr(vr_idxctr).nmrescop   ||'</nmrescop>'||
+                         '<nmextcop>'||  vr_tab_dados_ctr(vr_idxctr).nmextcop   ||'</nmextcop>'||
+                         '<nrdocnpj>'||  vr_tab_dados_ctr(vr_idxctr).nrdocnpj   ||'</nrdocnpj>'||
+                         '<ddmvtolt>'||  vr_tab_dados_ctr(vr_idxctr).ddmvtolt   ||'</ddmvtolt>'||
+                         '<dsmesref>'||  vr_tab_dados_ctr(vr_idxctr).dsmesref   ||'</dsmesref>'||
+                         '<aamvtolt>'||  vr_tab_dados_ctr(vr_idxctr).aamvtolt   ||'</aamvtolt>'||
+                         '<dsctremp>'||  vr_tab_dados_ctr(vr_idxctr).dsctrlim   ||'</dsctremp>'||
+                         '<dsdmoeda>'||  vr_tab_dados_ctr(vr_idxctr).dsdmoeda   ||'</dsdmoeda>'||
+                         '<vlpreemp>'||  to_char(vr_tab_dados_ctr(vr_idxctr).vllimite,'FM999G999G990D00')  ||'</vlpreemp>'||
+                         '<dsmvtolt>'||  upper(vr_tab_dados_ctr(vr_idxctr).dsdtmvto)   ||'</dsmvtolt>'||
+                         '<dspreemp>'||  vr_tab_dados_ctr(vr_idxctr).dsvlnpr1   ||'</dspreemp>'||
+                         '<nmprimtl>'||  vr_tab_dados_ctr(vr_idxctr).nmprimtl   ||'</nmprimtl>'||
+                         '<dscpfcgc>'||  vr_tab_dados_ctr(vr_idxctr).nrcpfcgc   ||'</dscpfcgc>'||
+                         '<nrdconta>'||  vr_tab_dados_ctr(vr_idxctr).nrdconta   ||'</nrdconta>'||
+                         '<nmcidpac>'||  'Págavel em '|| vr_tab_dados_ctr(vr_idxctr).nmcidpac   ||'</nmcidpac>'||
+                         '<dsemsnot>'||  vr_tab_dados_ctr(vr_idxctr).dsemsctr    ||'</dsemsnot>'||
+                         '<dsendass>'||  vr_tab_dados_ctr(vr_idxctr).dsendass   ||'</dsendass>');
+                        
+        IF vr_tab_avais_ctr.COUNT > 0 THEN
+
+          pc_escreve_xml('<avalistas>');
+
+          FOR vr_idx IN vr_tab_avais_ctr.FIRST..vr_tab_avais_ctr.LAST LOOP 
+            pc_escreve_xml('<aval>'||
+                             '<nmdavali>'|| vr_tab_avais_ctr(vr_idx).nmdavali ||'</nmdavali>'||
+                             '<nmconjug>'|| vr_tab_avais_ctr(vr_idx).nmconjug ||'</nmconjug>'||
+                             '<cpfavali>'|| vr_tab_avais_ctr(vr_idx).cpfavali ||'</cpfavali>'||
+                             '<nrcpfcjg>'|| vr_tab_avais_ctr(vr_idx).nrcpfcjg ||'</nrcpfcjg>'||
+                             '<dsendava><![CDATA['|| vr_tab_avais_ctr(vr_idx).dsendava ||']]></dsendava>'||
+                           '</aval>');
+          END LOOP;
+
+          pc_escreve_xml('</avalistas>');
+
+        END IF;
+        pc_escreve_xml('</Promissoria>');
+      END IF;
+    END IF;
+    
+    
+    IF pr_idimpres IN (1,       --> Completa 
+                       2)  THEN --> Contrato 
+      
+      --> GERAR CONTRATO DO CET
+      OPEN cr_craplrt (pr_cdcooper => pr_cdcooper, 
+                       pr_cddlinha => vr_tab_dados_ctr(vr_idxctr).cddlinha);
+      FETCH cr_craplrt INTO rw_craplrt;
+      IF cr_craplrt%NOTFOUND THEN
+        CLOSE cr_craplrt;
+        vr_dscritic := 'Linha de credito do contrato nao encontrada.';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craplrt;
+      END IF;     
+                     
+      --> Gerar XML para dados do relatorio de CET   
+      CCET0001.pc_imprime_limites_cet( pr_cdcooper  => pr_cdcooper                 -- Cooperativa
+                                      ,pr_dtmvtolt  => pr_dtmvtolt                 -- Data Movimento
+                                      ,pr_cdprogra  => 'ATENDA'                    -- Programa chamador
+                                      ,pr_nrdconta  => pr_nrdconta                 -- Conta/dv
+                                      ,pr_inpessoa  => vr_tab_dados_ctr(vr_idxctr).inpessoa         -- Indicativo de pessoa
+                                      ,pr_cdusolcr  => 1                           -- Codigo de uso da linha de credito
+                                      ,pr_cdlcremp  =>vr_tab_dados_ctr(vr_idxctr).cddlinha         -- Linha de credio
+                                      ,pr_tpctrlim  => 1                           --> Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
+                                      ,pr_nrctrlim  => pr_nrctrlim                 -- Contrato
+                                      ,pr_dtinivig  => nvl(nvl(vr_tab_dados_ctr(vr_idxctr).dtrenova,
+                                                               vr_tab_dados_ctr(vr_idxctr).dtinivig),
+                                                           pr_dtmvtolt)         -- Data liberacao
+                                      
+                                      ,pr_qtdiavig  => vr_tab_dados_ctr(vr_idxctr).qtdiavig -- Dias de vigencia                                      
+                                      ,pr_vlemprst  => vr_tab_dados_ctr(vr_idxctr).vllimite -- Valor emprestado
+                                      ,pr_txmensal  => rw_craplrt.txmensal         -- Taxa mensal                                                               
+                                      ,pr_flretxml  => 1                           -- Indicador se deve apenas retornar o XML da impressao
+                                      ,pr_des_xml   => vr_desxml_CET               -- XML
+                                      ,pr_nmarqimp  => vr_nmarqimp_CET             -- Nome do arquivo
+                                      ,pr_cdcritic  => vr_cdcritic                 --> Código da crítica
+                                      ,pr_dscritic  => vr_dscritic);               --> Descrição da crítica
+    
+      IF nvl(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    
+    END IF;
+    
+    --> Descarregar buffer    
+    pc_escreve_xml(' ',TRUE); 
+    
+    IF vr_desxml_CET IS NOT NULL THEN  
+      -- concatena xml retornado CCET com xml contratos
+      dbms_lob.append(vr_des_xml, vr_desxml_CET);
+      dbms_lob.freetemporary(vr_desxml_CET);
+    END IF;
+        
+    --> Descarregar buffer    
+    pc_escreve_xml('</contrato></raiz>',TRUE); 
+    
+    -- Se foi solicitado para enviar email
+    IF pr_flgemail = 1 THEN
+
+      --> Buscar os emails para envio
+      OPEN cr_craprel(pr_cdcooper => pr_cdcooper,
+                      pr_cdrelato => 517);
+      FETCH cr_craprel INTO rw_craprel;
+      IF cr_craprel%NOTFOUND THEN 
+        CLOSE cr_craprel;
+        vr_cdcritic := 0;
+        vr_dscritic := 'Relatorio nao cadastrado - 517.';
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craprel;
+      END IF;
+      -- Se nao possui email informado
+      IF TRIM(rw_craprel.dsdemail) IS NULL THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Necessario cadastro de e-mail. Tela PAMREL.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      --> Buscar dados agencia
+      OPEN cr_crapage(pr_cdcooper => pr_cdcooper,
+                      pr_cdagenci => vr_tab_dados_ctr(vr_idxctr).cdagenci);
+      FETCH cr_crapage INTO rw_crapage;
+      IF cr_crapage%NOTFOUND THEN 
+        CLOSE cr_crapage;
+        vr_cdcritic := 962;
+        RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_crapage;
+      END IF;
+
+      vr_dsmailcop := REPLACE(rw_craprel.dsdemail, ',', ';');
+      vr_dscormail := 'SEGUE ARQUIVO EM ANEXO.';
+      vr_dsassmail := 'crrl580 - Conta/dv: ' ||
+                      TRIM(GENE0002.fn_mask_conta(pr_nrdconta)) || ' - PA ' ||
+                      rw_crapage.cdagenci || ' ' || rw_crapage.nmresage;
+    ELSE
+      
+      vr_dsmailcop := NULL;
+      vr_dscormail := NULL;
+      vr_dsassmail := NULL;
+    END IF;
+    
+    
+    --> Solicita geracao do PDF
+    gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
+                               , pr_cdprogra  => pr_cdprogra
+                               , pr_dtmvtolt  => pr_dtmvtolt
+                               , pr_dsxml     => vr_des_xml
+                               , pr_dsxmlnode => '/raiz/contrato'
+                               , pr_dsjasper  => 'crrl580_contrato_limite.jasper'
+                               , pr_dsparams  => null
+                               , pr_dsarqsaid => vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                               , pr_flg_gerar => 'S'
+                               , pr_qtcoluna  => 234
+                               , pr_cdrelato  => 280
+                               , pr_sqcabrel  => 1
+                               , pr_flg_impri => 'N'
+                               , pr_nmformul  => ' '
+                               , pr_nrcopias  => 1
+                               , pr_nrvergrl  => 1
+                               , pr_dsextmail => NULL
+                               , pr_dsmailcop => vr_dsmailcop
+                               , pr_dsassmail => vr_dsassmail
+                               , pr_dscormail => vr_dscormail
+                               , pr_des_erro  => vr_dscritic);
+    
+    IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
+      RAISE vr_exc_erro; -- encerra programa
+    END IF;        
+    
+    IF pr_idorigem = 5 THEN
+      -- Copia contrato PDF do diretorio da cooperativa para servidor WEB
+      GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdagenci => NULL
+                                  ,pr_nrdcaixa => NULL
+                                  ,pr_nmarqpdf => vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                                  ,pr_des_reto => vr_des_reto
+                                  ,pr_tab_erro => vr_tab_erro);
+      -- Se retornou erro
+      IF NVL(vr_des_reto,'OK') <> 'OK' THEN
+        IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
+          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
+          RAISE vr_exc_erro; -- encerra programa
+        END IF;
+      END IF;
+
+      -- Remover relatorio do diretorio padrao da cooperativa
+      gene0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => 'rm '||vr_dsdireto ||'/rl/'||pr_nmarqpdf
+                           ,pr_typ_saida   => vr_typsaida
+                           ,pr_des_saida   => vr_dscritic);
+      -- Se retornou erro
+      IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
+        -- Concatena o erro que veio
+        vr_dscritic := 'Erro ao remover arquivo: '||vr_dscritic;
+        RAISE vr_exc_erro; -- encerra programa
+      END IF;
+    END IF;        
+    
+    --> Gerar log de sucesso
+    IF pr_flgerlog = 1 THEN
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                           pr_cdoperad => pr_cdopecxa, 
+                           pr_dscritic => NULL, 
+                           pr_dsorigem => vr_dsorigem, 
+                           pr_dstransa => vr_dstransa, 
+                           pr_dttransa => trunc(SYSDATE),
+                           pr_flgtrans =>  1, -- True
+                           pr_hrtransa => gene0002.fn_busca_time, 
+                           pr_idseqttl => pr_idseqttl, 
+                           pr_nmdatela => pr_nmdatela, 
+                           pr_nrdconta => pr_nrdconta, 
+                           pr_nrdrowid => vr_nrdrowid);
+                             
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                pr_nmdcampo => 'nrctrlim', 
+                                pr_dsdadant => NULL, 
+                                pr_dsdadatu => pr_nrctrlim);
+    END IF;
+    
+    COMMIT;
+    
+  EXCEPTION    
+    WHEN vr_exc_erro THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := replace(replace(vr_dscritic,chr(13)),chr(10));
+      END IF;
+      
+      IF pr_flgerlog = 1 THEN
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                             pr_cdoperad => pr_cdopecxa, 
+                             pr_dscritic => pr_dscritic, 
+                             pr_dsorigem => vr_dsorigem, 
+                             pr_dstransa => vr_dstransa, 
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans =>  0, --FALSE
+                             pr_hrtransa => gene0002.fn_busca_time, 
+                             pr_idseqttl => pr_idseqttl, 
+                             pr_nmdatela => pr_nmdatela, 
+                             pr_nrdconta => pr_nrdconta, 
+                             pr_nrdrowid => vr_nrdrowid);
+                             
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'nrctrlim', 
+                                  pr_dsdadant => NULL, 
+                                  pr_dsdadatu => pr_nrctrlim);
+      END IF;
+      
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := replace(replace('Erro ao gerar impressao do contrato: ' || SQLERRM, chr(13)),chr(10));   
+  
+      IF pr_flgerlog = 1 THEN
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                             pr_cdoperad => pr_cdopecxa, 
+                             pr_dscritic => pr_dscritic, 
+                             pr_dsorigem => vr_dsorigem, 
+                             pr_dstransa => vr_dstransa, 
+                             pr_dttransa => trunc(SYSDATE),
+                             pr_flgtrans =>  0, --FALSE
+                             pr_hrtransa => gene0002.fn_busca_time, 
+                             pr_idseqttl => pr_idseqttl, 
+                             pr_nmdatela => pr_nmdatela, 
+                             pr_nrdconta => pr_nrdconta, 
+                             pr_nrdrowid => vr_nrdrowid);
+                             
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                  pr_nmdcampo => 'nrctrlim', 
+                                  pr_dsdadant => NULL, 
+                                  pr_dsdadatu => pr_nrctrlim);
+      END IF; 
+      
+  END pc_impres_contrato_limite;
+  
+  --> Rotina para geração do contrato de limite de credito  - Ayllos Web
+  PROCEDURE pc_impres_contrato_limite_web(pr_nrdconta   IN crapass.nrdconta%TYPE  --> Número da Conta
+                                         ,pr_idseqttl   IN crapttl.idseqttl%TYPE  --> Titular da Conta
+                                         ,pr_idimpres   IN INTEGER                --> Indicador de impresao
+                                         ,pr_nrctrlim   IN craplim.nrctrlim%TYPE  --> Contrato
+                                         ,pr_dsiduser   IN VARCHAR2               --> id do usuario
+                                         ,pr_flgimpnp   IN INTEGER                --> indica se deve gerar nota promissoria(0-nao 1-sim)
+                                         ,pr_flgemail   IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
+                                         ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
+                                         ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
+                                         ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
+                                         ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
+                                         ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
+                                         ,pr_des_erro  OUT VARCHAR2) IS           --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_impres_contrato_limite_web
+    Sistema : Ayllos Web
+    Autor   : Odirlei - AMcom
+    Data    : Setembro/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para chamar as impressoes pelo Ayllos Web
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+      -- Cursor da data
+      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+      -- Variaveis gerais
+      vr_nmarqpdf VARCHAR2(1000);
+
+    BEGIN
+      -- Incluir nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'pc_gera_impressao'
+                                ,pr_action => NULL);
+
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Busca a data do sistema
+      OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+
+      pc_impres_contrato_limite(pr_cdcooper => vr_cdcooper  --> Código da Cooperativa
+                               ,pr_cdagecxa => vr_cdagenci  --> Código da agencia
+                               ,pr_nrdcaixa => vr_nrdcaixa  --> Numero do caixa do operador
+                               ,pr_cdopecxa => vr_cdoperad  --> Código do Operador
+                               ,pr_nmdatela => vr_nmdatela  --> Nome da Tela
+                               ,pr_idorigem => vr_idorigem  --> Identificador de Origem
+                               ,pr_cdprogra => vr_nmdatela  --> Codigo do programa
+                               ,pr_nrdconta => pr_nrdconta  --> Número da Conta
+                               ,pr_idseqttl => pr_idseqttl  --> Titular da Conta
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --> Data de Movimento
+                               ,pr_dtmvtopr => rw_crapdat.dtmvtopr  --> Data do proximo Movimento 
+                               ,pr_inproces => rw_crapdat.inproces  --> Indicador do processo
+                               ,pr_idimpres => pr_idimpres  --> Indicador de impresao
+                               ,pr_nrctrlim => pr_nrctrlim  --> Contrato
+                               ,pr_dsiduser => pr_dsiduser  --> id do usuario
+                               ,pr_flgimpnp => pr_flgimpnp  --> indica se deve gerar nota promissoria(0-nao 1-sim)
+                               ,pr_flgemail => pr_flgemail
+                               ,pr_flgerlog => 1            --> True 
+                               --------> OUT <--------
+                               ,pr_nmarqpdf => vr_nmarqpdf       --> Retornar quantidad de registros                           
+                               ,pr_cdcritic => vr_cdcritic       --> Código da crítica
+                               ,pr_dscritic => vr_dscritic);     --> Descrição da crítica
+
+      -- Se retornou erro
+      IF NVL(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'nmarqpdf'
+                            ,pr_tag_cont => vr_nmarqpdf
+                            ,pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela pc_impres_contrato_limite_web: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_impres_contrato_limite_web;
+  
 END LIMI0001;
 /
-

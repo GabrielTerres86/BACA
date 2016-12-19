@@ -4,6 +4,9 @@
  * CRIAÇÃO      : Rodolpho Telmo (DB1)
  * DATA CRIAÇÃO : 23/06/2010 
  * OBJETIVO     : Entrada principal para a rotina de parcelamento da tela MATRIC
+ *
+ * ALTERAÇÃO    : 05/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento 
+ *                             como parametros pois a BO não utiliza o mesmo (Renato Darosci)
  */
 ?>
 <?
@@ -37,7 +40,6 @@
 		$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 		$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-		$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 		$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 		$xml .= '		<dtdebito>'.$dtdebito.'</dtdebito>';
 		$xml .= '		<qtparcel>'.$qtparcel.'</qtparcel>';

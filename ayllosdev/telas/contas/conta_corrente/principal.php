@@ -12,6 +12,9 @@
  *                 11/08/2015 - Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi).
  *				   02/11/2015 - Melhoria 126 - Encarteiramento de cooperados (Heitor - RKAM)
  *				   14/04/2016 - Correcao no uso do array de opcoestela indefinido. SD 479874. Carlos R.
+ *			       15/07/2016 - Incluir rotina para buscar o flg de devolução automatica - Melhoria 69 (Lucas Ranghetti #484923)
+ *                 01/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
+ *                              pois a BO não utiliza o mesmo (Renato Darosci)
  */
 	session_start();
 	require_once('../../../includes/config.php');
@@ -80,7 +83,6 @@
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	$xml .= '	</Dados>';
@@ -111,6 +113,21 @@
 	$cdbcoctl = getByTagName($registro,'cdbcoctl');
 	$flgrestr = getByTagName($registro,'flgrestr');
 
+	// Melhoria 69
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "FLGDEVOLU_AUTOM", 'VERIFICA_SIT_DEV_XML', $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"],  "</Root>");
+	$xmlObjeto1 = getObjectXML($xmlResult);
+	
+	$flgdevolu_autom = getByTagName($xmlObjeto1->roottag->tags[0]->tags, 'flgdevolu_autom');		
+	
 	// Melhoria 126
 	$nmdeacao = "CADCON_CONSULTA_CONTA";
 
@@ -146,6 +163,7 @@
 <script type="text/javascript">
 	var msgAlert   = '<? echo $msgAlert; ?>';
 	var operacao   = '<? echo $operacao; ?>';
+	var flgdevolu_autom = '<? echo $flgdevolu_autom; ?>';
 
 	cdtipcta = '<? echo $cdtipcta ?>';
 	cdbcoctl = '<? echo $cdbcoctl ?>';

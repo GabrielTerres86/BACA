@@ -20,6 +20,8 @@
                 22/07/2014 - Alterado atribuicao do campo tt-fichacad.cdagedet
                              na procedure Busca_Impressao. (Reinert)
    
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -55,7 +57,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_tpregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrseqdig AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-dadoscf.
     DEF OUTPUT PARAM TABLE FOR tt-crapsfn.
@@ -124,10 +126,10 @@ PROCEDURE Busca_Dados:
         END.
 
         /* Garantir a informacao do departamento do operador, sugestao David */
-        FOR FIRST crapope FIELDS(dsdepart)
+        FOR FIRST crapope FIELDS(cddepart)
                           WHERE crapope.cdcooper = par_cdcooper AND
                                 crapope.cdoperad = par_cdoperad NO-LOCK:
-            ASSIGN par_dsdepart = crapope.dsdepart.
+            ASSIGN par_cddepart = crapope.cddepart.
         END.
 
         /* 1 = DADOS, 2 = FICHA CADASTRAL */
@@ -168,8 +170,8 @@ PROCEDURE Busca_Dados:
                    CASE par_cddopcao:
                        WHEN "A" THEN DO:
                            IF  tt-crapsfn.dtmvtolt <> par_dtmvtolt        AND
-                               par_dsdepart     <> "TI"                   AND
-                               par_dsdepart     <> "COORD.ADM/FINANCEIRO" THEN
+                               par_cddepart  <> 20   AND   /* TI */
+                               par_cddepart  <> 8   THEN   /* COORD.ADM/FINANCEIRO */ 
                                DO:
                                   aux_dscritic = "Somente eh permitido alterar"
                                                + " registros gerados hoje!".
@@ -268,7 +270,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_nminsfin AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtosf AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtdenvio AS DATE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -310,10 +312,10 @@ PROCEDURE Valida_Dados:
             END.
         
         /* Garantir a informacao do departamento do operador, sugestao David */
-        FOR FIRST crapope FIELDS(dsdepart)
+        FOR FIRST crapope FIELDS(cddepart)
                           WHERE crapope.cdcooper = par_cdcooper AND
                                 crapope.cdoperad = par_cdoperad NO-LOCK:
-            ASSIGN par_dsdepart = crapope.dsdepart.
+            ASSIGN par_cddepart = crapope.cddepart.
         END.
         
         /* D = DADOS SISTEMA FINANCEIRO */
@@ -348,8 +350,8 @@ PROCEDURE Valida_Dados:
                            END.
 
                        IF  par_dtmvtosf <> par_dtmvtolt            AND
-                           par_dsdepart <> "TI"                    AND
-                           par_dsdepart <> "COORD.ADM/FINANCEIRO"  THEN
+                           par_cddepart <> 20   AND  /* TI */
+                           par_cddepart <> 8   THEN  /* COORD.ADM/FINANCEIRO */
                            DO:
                               aux_dscritic = "Somente eh permitido alterar " + 
                                              "registros gerados hoje!".

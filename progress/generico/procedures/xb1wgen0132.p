@@ -9,7 +9,9 @@
 
    Objetivo  : BO de Comunicacao XML VS BO132 (b1wgen0132.p) [TAB007]
 
-   Alteracoes: 
+   Alteracoes: 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+                            da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)
 
 ..............................................................................*/
 
@@ -19,7 +21,7 @@ DEF VAR aux_nrdcaixa AS INTE                                       NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                       NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                       NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                       NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                       NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                       NO-UNDO.
 DEF VAR aux_cddopcao AS CHAR                                       NO-UNDO.
 DEF VAR aux_flgerlog AS LOGI                                       NO-UNDO.
 DEF VAR aux_vlmaidep AS DECI                                       NO-UNDO.
@@ -51,7 +53,7 @@ PROCEDURE valores_entrada:
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
             WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
             WHEN "vlmaidep" THEN aux_vlmaidep = DEC(tt-param.valorCampo).
             WHEN "vlmaiapl" THEN aux_vlmaiapl = DEC(tt-param.valorCampo).
@@ -75,7 +77,7 @@ PROCEDURE permiss_tab007:
                                    INPUT aux_cdagenci,
                                    INPUT aux_nrdcaixa,
                                    INPUT aux_cdoperad,
-                                   INPUT aux_dsdepart,
+                                   INPUT aux_cddepart,
                                    OUTPUT TABLE tt-erro).
                                  
 
@@ -161,7 +163,7 @@ PROCEDURE altera_tab007:
                               INPUT aux_idorigem,
                               INPUT aux_dtmvtolt,
                               INPUT TRUE,
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                               INPUT aux_vlmaidep,
                               INPUT aux_vlmaiapl,
                               INPUT aux_vlmaicot,

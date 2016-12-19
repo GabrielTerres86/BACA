@@ -6,7 +6,10 @@
  * OBJETIVO     : Mostrar tela LROTAT
  * --------------
  * ALTERAÇÕES   :  12/07/2016 - Ajustes para finzaliZação da conversáo 
-                                (Andrei - RKAM)
+ *                              (Andrei - RKAM)
+ *
+ *                 05/12/2016 - P341-Automatização BACENJUD - inicializar a variável com
+ *                              o código do departamento (Renato Darosci)
  * --------------
  */
 
@@ -23,6 +26,7 @@ $nometela = str_replace(".php", "", basename($_SERVER['PHP_SELF']));
 ?>
 
 <script>
+	var cddepart = '<? echo $glbvars['cddepart']?>';
 	var dsdepart = '<? echo $glbvars['dsdepart']?>';
 </script>
 

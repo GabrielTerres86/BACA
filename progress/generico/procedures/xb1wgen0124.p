@@ -8,7 +8,9 @@
 
    Objetivo  : BO de Comunicacao XML VS BO124 (b1wgen0124.p) [TAB036]
 
-   Alteracoes: 
+   Alteracoes: 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+			                da descrição do departamento como parametro e 
+							passar o código (Renato Darosci)
 
 ..............................................................................*/
 
@@ -20,7 +22,7 @@ DEF VAR aux_nmdatela AS CHAR                                       NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                       NO-UNDO.
 DEF VAR aux_flgerlog AS LOGI                                       NO-UNDO.
 DEF VAR aux_dstextab AS CHAR                                       NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                       NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                       NO-UNDO.
 DEF VAR aux_vlrating AS DECI                                       NO-UNDO.
 DEF VAR aux_vlgrecon AS DECI                                       NO-UNDO.
  
@@ -45,7 +47,7 @@ PROCEDURE valores_entrada:
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo).
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
             WHEN "dstextab" THEN aux_dstextab = tt-param.valorCampo.
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
             WHEN "vlrating" THEN aux_vlrating = DEC(tt-param.valorCampo).
             WHEN "vlgrecon" THEN aux_vlgrecon = DEC(tt-param.valorCampo).
 
@@ -66,7 +68,7 @@ PROCEDURE permiss_tab036:
                                    INPUT aux_cdagenci,
                                    INPUT aux_nrdcaixa,
                                    INPUT aux_cdoperad,
-                                   INPUT aux_dsdepart,
+                                   INPUT aux_cddepart,
                                    OUTPUT TABLE tt-erro).
                                  
         IF  RETURN-VALUE = "NOK"  THEN
@@ -143,7 +145,7 @@ PROCEDURE altera_tab036:
                               INPUT aux_dtmvtolt,
                               INPUT TRUE,
                               INPUT aux_dstextab,
-                              INPUT aux_dsdepart,
+                              INPUT aux_cddepart,
                               INPUT aux_vlrating,
                               INPUT aux_vlgrecon,
                               OUTPUT TABLE tt-erro).

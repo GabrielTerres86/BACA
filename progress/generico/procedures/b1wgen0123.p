@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0123.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Novembro/2011                     Ultima atualizacao: 05/08/2015
+    Data    : Novembro/2011                     Ultima atualizacao: 27/07/2016
 
     Objetivo  : Tranformacao BO tela CASH
 
@@ -64,6 +64,11 @@
                             passando cdcooper, pois no ayllos web nao fica setado
                             a variavel EMPRESA, utilizado em BuscaArquivoTAA.sh.
                             (Jorge/Elton) - SD 300929
+
+               27/07/2016 - Criacao da opcao 'S'. (Jaison/Anderson)
+
+			   06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                            departamento passando a considerar o código (Renato Darosci)
 
 ............................................................................*/
 
@@ -192,7 +197,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtopr AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrterfin AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flsistaa AS LOGI                           NO-UNDO.
@@ -246,8 +251,8 @@ PROCEDURE Busca_Dados:
         EMPTY TEMP-TABLE tt-erro.
 
         IF  CAN-DO("A,I",par_cddopcao) AND
-            par_dsdepart <> "TI"       AND
-            par_dsdepart <> "SUPORTE"  THEN
+            par_cddepart <> 20   AND  /* TI */
+            par_cddepart <> 18  THEN  /* SUPORTE */
             DO:
                 ASSIGN aux_dscritic = "Apenas CONSULTA esta liberada para" +
                                       " esta tela.".
@@ -431,12 +436,31 @@ PROCEDURE Busca_Dados:
                                                craptfn.vlsaqnot,"zzz,zz9.99")).
                     
                 END. /* par_cddopcao = A */
+            WHEN "S" THEN
+                DO:
+                    FOR FIRST craptfn WHERE 
+                              craptfn.cdcooper = par_cdcooper AND
+                              craptfn.nrterfin = par_nrterfin NO-LOCK: END.
+
+                    IF  NOT AVAIL craptfn THEN
+                        DO:
+                            ASSIGN aux_dscritic = "Terminal financeiro nao " +
+                                                  "cadastrado!".
+                            LEAVE Busca.
+                        END.
+
+                    CREATE tt-terminal.
+                    ASSIGN tt-terminal.nmterfin = craptfn.nmterfin
+                           tt-terminal.dsterfin = " - " + craptfn.nmterfin
+                           tt-terminal.cdagenci = craptfn.cdagenci.
+                    
+                END. /* par_cddopcao = S */
             WHEN "B" THEN
                 DO:
                     /* Liberacao apenas para TI, SUPORTE e operador do SUPORTE TECNICO */
-                    IF  par_dsdepart <> "TI"      AND
-                        par_dsdepart <> "SUPORTE" AND
-                        par_cdoperad <> "200"     THEN 
+                    IF  par_cddepart <> 20     AND  /* TI */ 
+                        par_cddepart <> 18     AND  /* SUPORTE */
+                        par_cdoperad <> "200" THEN 
                         DO:
                            ASSIGN aux_dscritic = "Apenas CONSULTA esta " +
                                                  "liberada para esta tela.".
@@ -661,8 +685,8 @@ PROCEDURE Busca_Dados:
                 END. /* par_cddopcao = M */
             WHEN "L" THEN
                 DO:
-                    IF (par_dsdepart <> "TI"        AND
-                        par_dsdepart <> "SUPORTE")  THEN
+                    IF (par_cddepart <> 20   AND   /* TI */
+                        par_cddepart <> 18) THEN   /* SUPORTE */
                         DO:
                             ASSIGN aux_dscritic = "Opcao nao liberada para" +
                                                   " esta tela.".
@@ -2593,7 +2617,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtopr AS DATE                           NO-UNDO.
@@ -2860,7 +2884,7 @@ PROCEDURE Grava_Dados:
                                               INPUT par_dtmvtolt,
                                               INPUT par_dtmvtopr,
                                               INPUT par_nmdatela,
-                                              INPUT par_dsdepart,
+                                              INPUT par_cddepart,
                                               INPUT par_cddopcao,
                                               INPUT par_nrterfin,
                                               INPUT NO, /* flsistaa */

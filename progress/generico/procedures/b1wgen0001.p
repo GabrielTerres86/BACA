@@ -22,6 +22,8 @@
   | b1wgen0001.fgetdssitdct	           | CADA0004.fn_dssitdct               |
   | b1wgen0001.completa-cabecalho      | CADA0004.pc_completa_cab_atenda    |
   | b1wgen0001.carrega_dep_vista       | CADA0004.pc_carrega_dep_vista      |
+  | b1wgen0001.pc_obtem_medias         | EXTR0001.obtem-medias              |
+  | b1wgen0001.pc_carrega_medias       | EXTR0001.carrega_medias            |
   +------------------------------------+------------------------------------+
   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -40,7 +42,7 @@
 
    Programa: b1wgen0001.p                  
    Autora  : Mirtes.
-   Data    : 12/09/2005                      Ultima atualizacao: 27/05/2016
+   Data    : 12/09/2005                      Ultima atualizacao: 03/10/2016
 
    Dados referentes ao programa:
 
@@ -360,8 +362,8 @@
                              Remover procedure obtem-saldo-dia (rev. 10034)
                              (Douglas - Chamado 285228)
                 
-                10/12/2015 - Ajustes na gera_extrato_tarifas (Dionathan)   
-				
+                10/12/2015 - Ajustes na gera_extrato_tarifas (Dionathan)              
+
                 13/05/2016 - Ajuste na carrega_medias para leitura da crapsda utilizando a 
                              chave primaria, pois devida mah interpretacao da query pelo 
                              DataServer a leitura esta sendo feita sem o filtro de data 
@@ -370,6 +372,34 @@
                 27/05/2016 - Incluido verificacao de origem na procedure valida-impressao-extrato
 							 antes da chamada da procedure pc_verifica_pacote_tarifas,
 							 para verificacao do tipo de servico, Prj. Tarifas Fase 2 (Jean Michel).
+                             
+				29/07/2016 - Ajuste na leitura da tabela craptex para utilizar o 
+				             index craptex1 (Daniel)   
+
+				02/08/2016 - Nao tratar parametro de isencao de extrato na cooperativa
+                             quando cooperado possuir servico de extrato no pacote de 
+                             tarifas (Diego).
+                             
+                23/08/2016 - Alteracao da procedure obtem-saldo para uso da procedure 
+                             Oracle pc_obtem_saldo_car criada para tratar e retornar
+                             os dados da pc_obtem_saldo para rotinas PROGRESS. 
+                             (Carlos Rafael Tanholi. SD 513352)
+                             
+                31/08/2016 - Correcao na forma de calculo da procedure carrega_medias
+                             agora levando em consideracao apenas as datas validas para
+                             consultar os dados que formam a media. 
+                             (Carlos Rafael Tanholi. SD 513352)
+
+                05/09/2016 - Correcao no comando usado para consulta do campo dtmvtoan 
+							 da CRAPDAT e na logica usada para calculo da media
+							 procedute carrega_medias.(Carlos Rafael Tanholi. SD 513352).
+
+                03/10/2016 - Correcao no carregamento da TEMP TABLE da procedure obtem-saldo
+							 com formato invalido. (Carlos Rafael Tanholi - SD 531031)
+
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                             departamento passando a considerar o código (Renato Darosci)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1304,7 +1334,8 @@ PROCEDURE gera-tarifa-extrato:
     DEF VAR aux_contador    AS INTE                                 NO-UNDO.
     DEF VAR aux_tipotari    AS INTE                                 NO-UNDO.
     DEF VAR aux_fliseope    AS INTE                                 NO-UNDO.
-
+    DEF VAR aux_qtacobra    AS INTEGER                              NO-UNDO.
+     
     EMPTY TEMP-TABLE tt-msg-confirma.
     EMPTY TEMP-TABLE tt-erro.
     
@@ -1416,47 +1447,47 @@ PROCEDURE gera-tarifa-extrato:
     IF  aux_inisenta = 0 AND par_inproces < 3  THEN
         DO:
             IF par_dtrefere < ( crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-              DO:
-                  IF par_nrterfin <> 0 THEN /* TAA */ 
-                      DO:
+            DO:
+                IF par_nrterfin <> 0 THEN /* TAA */ 
+                    DO:
 						  ASSIGN aux_tipotari = 9.
 
-                          IF crapass.inpessoa = 1 THEN /* Fisica */
-                              ASSIGN aux_cdbattar = "EXTPETAAPF".
-                          ELSE
-                              ASSIGN aux_cdbattar = "EXTPETAAPJ".
-                      END.
-                  ELSE
-                      DO:
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTPETAAPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTPETAAPJ".
+                    END.
+                ELSE
+                    DO:
 						  ASSIGN aux_tipotari = 8.
 
-						  IF crapass.inpessoa = 1 THEN /* Fisica */
-                              ASSIGN aux_cdbattar = "EXTPEPREPF".
-                          ELSE
-                              ASSIGN aux_cdbattar = "EXTPEPREPJ".
-                      END. 
-              END.
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTPEPREPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTPEPREPJ".
+                    END. 
+            END.
             ELSE
-              DO:
-                  IF par_nrterfin <> 0 THEN /* TAA */ 
-                      DO:
+            DO:
+                IF par_nrterfin <> 0 THEN /* TAA */ 
+                    DO:
 						  ASSIGN aux_tipotari = 7.
 
-                          IF crapass.inpessoa = 1 THEN /* Fisica */
-                              ASSIGN aux_cdbattar = "EXTMETAAPF".
-                          ELSE
-                              ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                      END.
-                  ELSE
-                      DO:
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTMETAAPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTMETAAPJ".
+                    END.
+                ELSE
+                    DO:
 						  ASSIGN aux_tipotari = 6.
 
-                          IF crapass.inpessoa = 1 THEN /* Fisica */
-                              ASSIGN aux_cdbattar = "EXTMEPREPF".
-                          ELSE
-                              ASSIGN aux_cdbattar = "EXTMEPREPJ".
-                      END.
-              END.
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTMEPREPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTMEPREPJ".
+                    END.
+            END.
             
                 
             IF  NOT VALID-HANDLE(h-b1wgen0153) THEN 
@@ -1536,7 +1567,7 @@ PROCEDURE gera-tarifa-extrato:
                           ASSIGN aux_cdbattar = "EXTMETAAPF".
                       ELSE
                           ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                  END.
+        END.
               ELSE
                   DO:
 					  ASSIGN aux_tipotari = 6. 
@@ -1610,7 +1641,9 @@ PROCEDURE gera-tarifa-extrato:
                  aux_dscritic = pc_verifica_tarifa_operacao.pr_dscritic
                                  WHEN pc_verifica_tarifa_operacao.pr_dscritic <> ?
                  aux_fliseope = pc_verifica_tarifa_operacao.pr_fliseope
-                                 WHEN pc_verifica_tarifa_operacao.pr_fliseope <> ?.
+                                 WHEN pc_verifica_tarifa_operacao.pr_fliseope <> ?
+                 aux_qtacobra = pc_verifica_tarifa_operacao.pr_qtacobra
+                                 WHEN pc_verifica_tarifa_operacao.pr_qtacobra <> ?.
             
             IF aux_cdcritic <> 0   OR
                aux_dscritic <> ""  THEN
@@ -1649,13 +1682,24 @@ PROCEDURE gera-tarifa-extrato:
                                 
              END.
              
-            IF aux_fliseope = 1 THEN
+            /* Possui pacote de tarifas, e utilizou operacao isenta disponivel*/ 
+            IF   aux_fliseope = 1 THEN
                 ASSIGN aux_inisenta = 1.
+            ELSE
+                 /*Possui pacote de tarifas, e excedeu qtd.isenta do servico "extrato"*/ 
+                 IF   aux_qtacobra > 0 THEN
+                    /* Essa atribuicao eh necessaria devido a chamada da procedure 
+                      'verifica-tarifacao-extrato' anteriormente, que retorna na 
+                      variavel 'aux_inisenta' se o cooperado possui extrato isento 
+                      oferecido pela cooperativa. Porem, quando o cooperado possuir
+                      o servico "extrato" no pacote de tarifas, nao devera receber
+                      mais isencao pela cooperativa.*/ 
+                      ASSIGN aux_inisenta = 0. 
 
             /*FIM VERIFICACAO TARIFAS DE OPERACAO*/
 
             DO TRANSACTION ON ERROR UNDO, LEAVE:
-                
+    
                             
                 CREATE crapext.
                 ASSIGN crapext.cdcooper = par_cdcooper
@@ -1782,6 +1826,7 @@ PROCEDURE valida-impressao-extrato:
     DEF VAR aux_inisenta AS INTE                                    NO-UNDO.
     DEF VAR aux_qtopdisp AS INTE                                    NO-UNDO.
     DEF VAR aux_tpservic AS INTE                                    NO-UNDO.
+    DEF VAR aux_flservic AS INTEGER                                 NO-UNDO.
 
     EMPTY TEMP-TABLE tt-msg-confirma.
     EMPTY TEMP-TABLE tt-erro.
@@ -1923,15 +1968,22 @@ PROCEDURE valida-impressao-extrato:
     IF aux_cdcritic <> 0   OR
        aux_dscritic <> ""  THEN
          DO:
-             RETURN "NOK".
-         END.
-                                               
-    aux_qtopdisp = pc_verifica_pacote_tarifas.pr_qtopdisp.
+            RETURN "NOK".
+        END.
+    
+    ASSIGN /* retorna qtd. de extratos isentos que ainda possui disponivel no pacote de tarifas */
+           aux_qtopdisp = pc_verifica_pacote_tarifas.pr_qtopdisp
+           /* retorna pr_flservic = 1 quando existir o servico "extrato" no pacote */
+           aux_flservic = pc_verifica_pacote_tarifas.pr_flservic.
 
     IF aux_qtopdisp > 0 THEN
       RETURN "OK".
     /*JMD*/
 
+    /* Quando o cooperado NAO possuir o servico "extrato" contemplado no pacote de tarifas,
+       devera validar a qtd. de extratos isentos oferecidos pela cooperativa(parametro). 
+       Caso contrario, o cooperado tera direito apenas a qtd. disponibilizada no pacote */
+    IF   aux_flservic = 0 THEN
     /* Verifica se isento da tarifacao do extrato */
     RUN verifica-tarifacao-extrato (INPUT  par_cdcooper,
                                     INPUT  par_nrdconta,
@@ -2096,7 +2148,7 @@ PROCEDURE obtem-impressao-extrato:
                 
                 IF  CAN-DO("11,50",STRING(aux_cdempres))  AND 
                     crapope.nmoperad <> crapass.nmprimtl  AND
-                    crapope.dsdepart <> "TI"              THEN
+                    crapope.cddepart <> 20               THEN   /* TI */
                     DO:              
                         IF  par_idorigem = 1  THEN
                             DO:
@@ -2644,101 +2696,163 @@ PROCEDURE obtem-saldo:
     DEF OUTPUT       PARAM TABLE FOR tt-erro.
     DEF OUTPUT       PARAM TABLE FOR tt-saldos. 
 
+    /* Variaveis para o XML */ 
+    DEF VAR xDoc          AS HANDLE                                 NO-UNDO.   
+    DEF VAR xRoot         AS HANDLE                                 NO-UNDO.  
+    DEF VAR xRoot2        AS HANDLE                                 NO-UNDO.  
+    DEF VAR xField        AS HANDLE                                 NO-UNDO. 
+    DEF VAR xText         AS HANDLE                                 NO-UNDO. 
+    DEF VAR aux_cont_raiz AS INTEGER                                NO-UNDO. 
+    DEF VAR aux_cont      AS INTEGER                                NO-UNDO. 
+    DEF VAR ponteiro_xml  AS MEMPTR                                 NO-UNDO. 
+    DEF VAR xml_req       AS LONGCHAR                               NO-UNDO.	
+	
+	
     EMPTY TEMP-TABLE tt-saldos.
     EMPTY TEMP-TABLE tt-erro.
       
-    ASSIGN aux_sequen = 0.
         
-    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
    
-    IF  NOT AVAIL crapdat  THEN
-        DO:
-            ASSIGN aux_cdcritic = 1
-                   aux_dscritic = "".
+    RUN STORED-PROCEDURE pc_obtem_saldo_car 
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper, /* Cooperativa */
+                          INPUT par_cdagenci, /* Agencia */
+                          INPUT par_nrdcaixa, /* Nr. Caixa */
+                          INPUT par_cdoperad, /* Operador */
+                          INPUT par_nrdconta, /* Nr. Conta */
+                          INPUT par_dtrefere, /* Dt. Referencia */
+                         OUTPUT "", /* (OK|NOK) */
+                         OUTPUT ?). /* Tabela Extrato da Conta */
             
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).      
+    CLOSE STORED-PROC pc_obtem_saldo_car 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-            RETURN "NOK".
-        END. 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                       crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+    ASSIGN aux_dscritic = pc_obtem_saldo_car.pr_des_reto
+                          WHEN pc_obtem_saldo_car.pr_des_reto <> ?.
 
-    IF  NOT AVAILABLE crapass  THEN
+    IF  aux_dscritic <> ""  THEN
         DO:
-            ASSIGN aux_cdcritic = 9
-                   aux_dscritic = "".
+        CREATE tt-erro.
+        ASSIGN tt-erro.dscritic = aux_dscritic.
             
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).      
-
             RETURN "NOK".
         END.
-
-    FIND LAST crapsda WHERE crapsda.cdcooper = par_cdcooper AND
-                            crapsda.dtmvtolt < par_dtrefere AND
-                            crapsda.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
-   
-    IF  NOT AVAIL crapsda  THEN
-        FIND FIRST crapsda WHERE crapsda.cdcooper  = par_cdcooper AND
-                                 crapsda.dtmvtolt >= par_dtrefere AND
-                                 crapsda.nrdconta  = par_nrdconta 
-                                 NO-LOCK NO-ERROR.
-
-    IF  AVAIL crapsda  THEN
-        DO: 
-            
-            ASSIGN aux_vlblqjud = 0
-                   aux_vlresblq = 0.
-
-            /*** Busca Saldo Bloqueado Judicial ***/
-            FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
-                               NO-LOCK NO-ERROR.
-        
-            RUN sistema/generico/procedures/b1wgen0155.p 
-                           PERSISTENT SET h-b1wgen0155.
-        
-            RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
-                                                     INPUT par_nrdconta,
-                                                     INPUT 0, /* nrcpfcgc */
-                                                     INPUT 1, /* 1 - Bloqueio */
-                                                     INPUT 1, /* 1 - Dep.Vista*/
-                                                     INPUT crapdat.dtmvtolt,
-                                                     OUTPUT aux_vlblqjud,
-                                                     OUTPUT aux_vlresblq).
-        
-            DELETE PROCEDURE h-b1wgen0155.
-            /*** Fim Busca Saldo Bloqueado Judicial ***/
-
-            CREATE tt-saldos.
-            ASSIGN tt-saldos.vlblqjud = aux_vlblqjud.
-            BUFFER-COPY crapsda to tt-saldos.
-        END.   
     ELSE
         DO:
-            ASSIGN aux_cdcritic = 853
-                   aux_dscritic = "".
-            
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).      
 
-            RETURN "NOK".
+      CREATE tt-saldos.
+   
+      EMPTY TEMP-TABLE tt-saldos.
+
+      /*Leitura do XML de retorno da proc e criacao dos registros na tt-extrato_conta
+       para visualizacao dos registros na tela */
+
+      /* Buscar o XML na tabela de retorno da procedure Progress */ 
+      ASSIGN xml_req = pc_obtem_saldo_car.pr_clob_ret. 
+
+      /* Efetuar a leitura do XML*/ 
+      SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+      PUT-STRING(ponteiro_xml,1) = xml_req. 
+
+      /* Inicializando objetos para leitura do XML */ 
+      CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+      CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+      CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+      CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+      CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+
+      IF ponteiro_xml <> ? THEN
+        DO: 
+              xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+              xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+            
+              DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+
+                  xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+        
+                  IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                      NEXT. 
+
+                  IF xRoot2:NUM-CHILDREN > 0 THEN
+                      CREATE tt-saldos.
+
+                  DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+
+                      xRoot2:GET-CHILD(xField,aux_cont).
+
+                      IF xField:SUBTYPE <> "ELEMENT" THEN 
+                          NEXT. 
+
+                      xField:GET-CHILD(xText,1).
+        
+                      ASSIGN tt-saldos.nrdconta = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "nrdconta".
+                      ASSIGN tt-saldos.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt".
+                      ASSIGN tt-saldos.vlsddisp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsddisp".
+                      ASSIGN tt-saldos.vlsdchsl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdchsl".
+                      ASSIGN tt-saldos.vlsdbloq = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdbloq".
+                      ASSIGN tt-saldos.vlsdblpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdblpr".
+                      ASSIGN tt-saldos.vlsdblfp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdblfp".
+                      ASSIGN tt-saldos.vlsdindi = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdindi".
+                      ASSIGN tt-saldos.vllimcre = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimcre".
+                      ASSIGN tt-saldos.cdcooper = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "cdcooper".
+                      ASSIGN tt-saldos.vlsdeved = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdeved".
+                      ASSIGN tt-saldos.vldeschq = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vldeschq".
+                      ASSIGN tt-saldos.vllimutl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimutl".
+                      ASSIGN tt-saldos.vladdutl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vladdutl".
+                      ASSIGN tt-saldos.vlsdrdca = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdrdca".
+                      ASSIGN tt-saldos.vlsdrdpp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdrdpp".
+                      ASSIGN tt-saldos.vllimdsc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimdsc".
+                      ASSIGN tt-saldos.vlprepla = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprepla".
+                      ASSIGN tt-saldos.vlprerpp = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlprerpp".
+                      ASSIGN tt-saldos.vlcrdsal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlcrdsal".
+                      ASSIGN tt-saldos.qtchqliq = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "vlcrdsal".
+                      ASSIGN tt-saldos.qtchqass = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "vlcrdsal".
+                      ASSIGN tt-saldos.dtdsdclq = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdsdclq".
+                      ASSIGN tt-saldos.vltotpar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vltotpar".
+                      ASSIGN tt-saldos.vlopcdia = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlopcdia".
+                      ASSIGN tt-saldos.vlavaliz = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlavaliz".
+                      ASSIGN tt-saldos.vlavlatr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlavlatr".
+                      ASSIGN tt-saldos.qtdevolu = INT(xText:NODE-VALUE) WHEN xField:NAME 	= "qtdevolu".
+                      ASSIGN tt-saldos.vltotren = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vltotren". 
+                      ASSIGN tt-saldos.vldestit = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vldestit".
+                      ASSIGN tt-saldos.vllimtit = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllimtit".
+                      ASSIGN tt-saldos.vlsdempr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdempr".
+                      ASSIGN tt-saldos.vlsdfina = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdfina".
+                      ASSIGN tt-saldos.vlsrdc30 = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdc30".
+                      ASSIGN tt-saldos.vlsrdc60 = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdc60".
+                      ASSIGN tt-saldos.vlsrdcpr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdcpr".
+                      ASSIGN tt-saldos.vlsrdcpo = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsrdcpo".
+                      ASSIGN tt-saldos.vlsdcota = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsdcota".
+                      ASSIGN tt-saldos.vlblqtaa = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqtaa".
+                      ASSIGN tt-saldos.vlstotal = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlstotal".
+                      ASSIGN tt-saldos.vlsaqmax = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsaqmax".
+                      ASSIGN tt-saldos.vlacerto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlacerto".
+                      ASSIGN tt-saldos.dslimcre = xText:NODE-VALUE WHEN xField:NAME			  = "dslimcre".
+                      ASSIGN tt-saldos.vlipmfpg = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlipmfpg".
+                      ASSIGN tt-saldos.dtultlcr = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtultlcr".
+                      ASSIGN tt-saldos.vlblqjud = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlblqjud".
+        
+        END.
+
+        END.   
+            
+              SET-SIZE(ponteiro_xml) = 0. 
+
         END.
         
+      /*Elimina os objetos criados*/
+      DELETE OBJECT xDoc. 
+      DELETE OBJECT xRoot. 
+      DELETE OBJECT xRoot2. 
+      DELETE OBJECT xField. 
+      DELETE OBJECT xText.    
+        
     RETURN "OK".  
+
+    END.
 
 END PROCEDURE.
 
@@ -3602,25 +3716,40 @@ PROCEDURE carrega_medias:
                           ELSE 0.
                            
     /* Primeiro dia do mes atual */
-    ASSIGN aux_dtmvtolt = DATE("01/" + 
-                               STRING(MONTH(par_dtmvtolt)) + "/" + 
-                               STRING(YEAR(par_dtmvtolt))).
-    /* Primeiro dia do proximo mes */
-    ASSIGN aux_dtmvtfim = ADD-INTERVAL(aux_dtmvtolt,1,"months").
+    ASSIGN aux_dtmvtolt = DATE("01/" + STRING(MONTH(par_dtmvtolt)) + "/" +  STRING(YEAR(par_dtmvtolt))).
 
-    /* Loop do periodo do mes */
-    DO WHILE aux_dtmvtolt < aux_dtmvtfim :
+    /* Busca pela data do movimento do dia anterior */
+	FOR FIRST crapdat FIELDS(dtmvtoan) WHERE crapdat.cdcooper = par_cdcooper NO-LOCK: END.
+		IF AVAILABLE crapdat THEN 
+		DO:
+			ASSIGN aux_dtmvtfim = crapdat.dtmvtoan.
+		END.
+
+    /* Loop do periodo do mes, do dia 1 ate a data do movimento anterior */
+    DO WHILE aux_dtmvtolt <= aux_dtmvtfim :
+
+		/* filtra a data na tabela de feriados */
+		FOR FIRST crapfer FIELDS(dtferiad) WHERE crapfer.cdcooper = par_cdcooper AND crapfer.dtferiad = aux_dtmvtolt NO-LOCK: END.
+
+		/* Se for sabado ou domingo ou feriado */
+		IF ((weekday(aux_dtmvtolt) = 1) OR (weekday(aux_dtmvtolt) = 7) OR (AVAIL(crapfer))) THEN
+		DO:
+			ASSIGN aux_dtmvtolt = aux_dtmvtolt + 1.
+		END.
+		ELSE
+		DO:
         FIND FIRST crapsda WHERE crapsda.cdcooper = par_cdcooper 
                              AND crapsda.nrdconta = par_nrdconta 
                              AND crapsda.dtmvtolt = aux_dtmvtolt
                            NO-LOCK NO-ERROR.
         IF AVAILABLE crapsda THEN
         DO:
-        ASSIGN aux_vltsddis = aux_vltsddis + crapsda.vlsddisp
-               aux_qtdiauti = aux_qtdiauti + 1.
+				ASSIGN aux_vltsddis = aux_vltsddis + crapsda.vlsddisp.
         END.
         
-        aux_dtmvtolt = aux_dtmvtolt + 1.
+			ASSIGN aux_qtdiauti = aux_qtdiauti + 1  /* incrementa a quantidade de dias uteis */
+				   aux_dtmvtolt = aux_dtmvtolt + 1. /* atualiza a data do movimento */
+        END.
     END.
 
     CREATE tt-comp_medias.
@@ -6100,7 +6229,7 @@ PROCEDURE verifica-tarifacao-extrato:
                            craptex.nrdconta = par_nrdconta  AND
                            craptex.inisenta = 1             AND 
                            craptex.tpextrat = 51            AND 
-                           craptex.dtemiext >= aux_dtemiext:
+                           craptex.dtemiext >= aux_dtemiext USE-INDEX craptex1:
                            
                            aux_qtdisent  =  aux_qtdisent - 1.
                            

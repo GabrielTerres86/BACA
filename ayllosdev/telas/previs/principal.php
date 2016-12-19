@@ -2,12 +2,13 @@
 /*!
  * FONTE        : principal.php
  * CRIAÇÃO      : Rogerius Militão (DB1)
- * DATA CRIAÇÃO : 27/12/2011												ÚLTIMA ALTERAÇÃO: 21/03/2016
+ * DATA CRIAÇÃO : 27/12/2011												ÚLTIMA ALTERAÇÃO: 22/08/2012
  * OBJETIVO     : Capturar dados para tela PREVIS
  * --------------
  * ALTERAÇÕES   : 01/08/2012 - Incluido variavel de parametro 'cdmovmto' (Tiago).
  *				  22/08/2012 - Ajustes referente ao projeto Fluxo Financeiro (Adriano).
-				  21/03/2016 - Ajuste layout, valores negativos (Adriano)
+ *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
  * -------------- 
  */ 
 ?>
@@ -50,7 +51,7 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';	
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
-	$xml .= '		<dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '		<cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '		<dtmvtolx>'.$dtmvtolx.'</dtmvtolx>';
 	$xml .= '		<cdcoopex>'.$cdcoopex.'</cdcoopex>';
@@ -153,6 +154,8 @@
 
 	}
 			
+	include('form_cabecalho.php');
+
 	if ( $cddopcao == 'A' or $cddopcao == 'C' or $cddopcao == 'I' ) {
 	
 		$registro = $xmlObjeto->roottag->tags[0]->tags[0]->tags;  
@@ -310,6 +313,7 @@
 				
 </script>
 
+
 <?	
 	if($cddopcao == "F" && $glbvars["dtmvtolt"] == $dtmvtolx){
 	
@@ -338,8 +342,6 @@
 	}
 	
 ?>
-
-
 
 
 

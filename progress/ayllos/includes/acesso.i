@@ -51,7 +51,10 @@
                             campo crapace.idambace e craptel.idambtel. (Jorge)
                             
                18/09/2014 - Alteracao adicionado FIND FIRST na crapace 
-                            Chamado: 191758 - (Jonathan - RKAM).                            
+                            Chamado: 191758 - (Jonathan - RKAM).     
+							
+			   08/12/2016 - P341-Automatização BACENJUD - Realizar a validação 
+			                do departamento pelo código do mesmo (Renato Darosci)
 ............................................................................. */
 
 INPUT THROUGH hostname NO-ECHO.
@@ -61,7 +64,7 @@ SET glb_dscritic.
 INPUT CLOSE.       
 IF   glb_dscritic <> "l1000"   THEN
                   
-IF   glb_dsdepart <> "TI" THEN
+IF   glb_cddepart <> 20 THEN  /* TI */
      DO:
          FIND FIRST crapace WHERE crapace.cdcooper = glb_cdcooper   AND
                                   crapace.nmdatela = glb_nmdatela   AND

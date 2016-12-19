@@ -6,6 +6,9 @@
  * OBJETIVO     : Realiza as impressões da tela MOVTOS.	
  * --------------
  * ALTERAÇÕES   : 03/12/2014 - Ajustes para liberação (Adriano).
+ *
+ *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
  * -------------- 
  */
 ?>
@@ -71,7 +74,7 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
 	$xml .= '       <inproces>'.$glbvars['inproces'].'</inproces>';	
-	$xml .= '       <dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';		
+	$xml .= '       <cddepart>'.$glbvars['cddepart'].'</cddepart>';		
 	$xml .= '		<cddopcao>'.$cddopcao.'</cddopcao>';	
 	$xml .= '		<cdagenca>'.$cdagenci.'</cdagenca>';
 	$xml .= '		<tpdopcao>'.$tpdopcao.'</tpdopcao>';	

@@ -58,6 +58,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
+																,pr_inenvcob  IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança																
                                 ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -108,6 +109,28 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_COBRAN IS
                              ,pr_nmdcampo OUT VARCHAR2             --Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);           --Erros do processo
 
+  --> Rotina para ativar convenio
+  PROCEDURE pc_ativar_convenio( pr_nrdconta  IN crapceb.nrdconta%TYPE --> Conta
+                               ,pr_nrconven  IN crapceb.nrconven%TYPE --> Convenio
+                               ,pr_nrcnvceb  IN crapceb.nrcnvceb%TYPE --> Ceb
+                               ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                               ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
+
+  --> Retornar lista com os log do convenio ceb
+  PROCEDURE pc_consulta_log_conv_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
+                                    ,pr_nrconven IN crapceb.nrconven%TYPE --> Nr. do convenio
+                                    ,pr_nrcnvceb IN crapceb.nrcnvceb%TYPE --> Nr. do ceb
+                                    ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);           --> Erros do processo                               
+                                        
 END TELA_ATENDA_COBRAN;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
@@ -116,14 +139,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
   --  Programa : TELA_ATENDA_COBRAN
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Fevereiro - 2016                 Ultima atualizacao:
+  --  Data     : Fevereiro - 2016                 Ultima atualizacao: 14/09/2016
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela Cobranca dentro da ATENDA
   --
-  -- Alteracoes:
+  -- Alteracoes: 04/08/2016 - Adicionado parametro pr_inenvcob na procedure 
+  -- 						  pc_habilita_convenio (Reinert).
   --
+  --             14/09/2016 - Adicionado validacao de convenio ativo na procedure
+  --                          pc_habilita_convenio (Douglas - Chamado 502770)
+  -- 
+  --             25/11/2016 - Alterado cursor cr_crapope, para ler o departamento
+  --                          do operador a partir da tabela CRAPDPO. O setor de 
+  --                          COBRANCA foi removido da validação, pois o mesmo não 
+  --                          existe na CRAPDPO (Renato Darosci - Supero)
   ---------------------------------------------------------------------------
 
 
@@ -293,7 +324,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
     Objetivo  : Rotina para excluir o convenio.
 
-    Alteracoes: 
+    Alteracoes: 25/04/2016 - Atualizar convenio na cabine e gerar log cip
+                             PRJ318 Plataforma cobrança (Odirlei-AMcom)
+                          
     ..............................................................................*/
     DECLARE
 
@@ -325,6 +358,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
            AND crapope.cdoperad = pr_cdoperad;
       rw_crapope cr_crapope%ROWTYPE;
 
+      --> Busca associado
+      CURSOR cr_crapass (pr_cdcooper IN crapcco.cdcooper%TYPE,
+                         pr_nrdconta IN crapass.nrdconta%TYPE)IS
+        SELECT ass.inpessoa,
+               to_char(ass.nrcpfcgc) nrcpfcgc,
+               to_char(ass.nrdconta) nrdconta,
+               decode(ass.inpessoa,1,lpad(ass.nrcpfcgc,11,'0'),
+                                         lpad(ass.nrcpfcgc,14,'0')) dscpfcgc,
+               decode(ass.inpessoa,1,'F','J') dspessoa,
+               to_char(cop.cdagectl) cdagectl
+          FROM crapass ass,
+               crapcop cop
+         WHERE ass.cdcooper = cop.cdcooper
+           AND ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+      
+      -- Cadastro de Bloquetos
+      CURSOR cr_crapceb(pr_cdcooper IN crapceb.cdcooper%TYPE
+                       ,pr_nrdconta IN crapceb.nrdconta%TYPE
+                       ,pr_nrconven IN crapceb.nrconven%TYPE) IS
+        SELECT crapceb.insitceb
+          FROM crapceb
+         WHERE crapceb.cdcooper = pr_cdcooper
+           AND crapceb.nrdconta = pr_nrdconta
+           AND crapceb.nrconven = pr_nrconven;
+      rw_crapceb cr_crapceb%ROWTYPE;
+      
+      -- Cursor generico de calendario
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;       
+      
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -337,6 +401,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       vr_qtbolcob NUMBER;
       vr_nrdrowid ROWID;
       vr_dstransa VARCHAR2(1000);
+      vr_dtfimrel VARCHAR2(8);
+      vr_nrconven VARCHAR2(10);
 
       -- Variaveis de log
       vr_cdcooper INTEGER;
@@ -362,6 +428,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       -- Seta a descricao da transacao
       vr_dstransa := 'Validar cancelamento do convenio de cobranca.';
 
+      -- Verificacao do calendario
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
       -- Verifica se possui boletos
       OPEN cr_crapcob(pr_cdcooper => vr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -402,6 +473,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         vr_cdcritic := 67;
         RAISE vr_exc_saida;
       END IF;
+
+      -- Cadastro de bloquetos
+      OPEN cr_crapceb(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrconven => pr_nrconven);
+      FETCH cr_crapceb INTO rw_crapceb;
+      CLOSE cr_crapceb;
 
       -- Seta a descricao da transacao
       vr_dstransa := 'Efetuar o cancelamento do convenio de cobranca.';
@@ -475,6 +553,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                ,pr_dsdadant => pr_nrcnvceb
                                ,pr_dsdadatu => NULL);
 
+      --> Busca associado
+      OPEN cr_crapass (pr_cdcooper => vr_cdcooper,
+                       pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      IF cr_crapass%NOTFOUND THEN
+        vr_cdcritic := 9; -- associado nao cadastrado
+        CLOSE cr_crapass;
+      ELSE
+        CLOSE cr_crapass;
+      END IF;      
+      
+      --> Gravar o log de adesao ou bloqueio do convenio
+      COBR0008.pc_gera_log_ceb ( pr_idorigem  => vr_idorigem,
+                                 pr_cdcooper  => vr_cdcooper,
+                                 pr_cdoperad  => vr_cdoperad,
+                                 pr_nrdconta  => pr_nrdconta,
+                                 pr_nrconven  => pr_nrconven,
+                                 pr_insitceb_ant => nvl(rw_crapceb.insitceb,0),
+                                 pr_insitceb  => 2, -- 'INATIVO'
+                                 pr_dscritic  => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Atualizar convenio na CIP  
+      BEGIN      
+        vr_dtfimrel := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
+        vr_nrconven := to_char(pr_nrconven);
+        UPDATE TBJDDDABNF_Convenio@jdbnfsql
+           SET TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'E',
+               TBJDDDABNF_Convenio."DtFimRelctConv"     = vr_dtfimrel
+         WHERE TBJDDDABNF_Convenio."ISPB_IF"            = '5463212'
+           AND TBJDDDABNF_Convenio."TpPessoaBenfcrio" = rw_crapass.dspessoa
+           AND TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio" = rw_crapass.dscpfcgc
+           AND TBJDDDABNF_Convenio."CodCli_Conv"      = vr_nrconven
+           AND TBJDDDABNF_Convenio."AgDest"           = rw_crapass.cdagectl
+           AND TBJDDDABNF_Convenio."CtDest"           = rw_crapass.nrdconta;
+      
+      EXCEPTION 
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel atualizar convenio na CIP: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
       COMMIT;
 
     EXCEPTION
@@ -959,6 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                 ,pr_idrecipr  IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                 ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
+																,pr_inenvcob  IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança
                                 ,pr_xmllog    IN VARCHAR2 --> XML com informacoes de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
                                 ,pr_dscritic OUT VARCHAR2 --> Descricao da critica
@@ -972,7 +1095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
     Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
     Sistema : Ayllos Web
     Autor   : Jaison Fernando
-    Data    : Fevereiro/2016                 Ultima atualizacao: 
+    Data    : Fevereiro/2016                 Ultima atualizacao: 03/11/2016
 
     Dados referentes ao programa:
 
@@ -980,18 +1103,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
 
     Objetivo  : Rotina para habilitar o convenio do cooperado.
 
-    Alteracoes: 
+    Alteracoes: 26/04/2016 - Ajustes projeto PRJ318 - Nova Plataforma cobrança
+                             (Odirlei-AMcom)
+
+				24/08/2016 - Ajuste emergencial pós-liberação do projeto 318. (Rafael)
+                             
+                14/09/2016 - Adicionado validacao de convenio ativo 
+                             (Douglas - Chamado 502770)
+
+                03/11/2016 - Ajustado as validacoes de situacao do convenio na conta do 
+                             cooperado quando alterar os dados (Douglas - Chamado 547082)
     ..............................................................................*/
     DECLARE
 
       -- Cadastro de associados
       CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-        SELECT crapass.nrdconta
+        SELECT to_char(crapass.nrdconta) nrdconta
               ,crapass.inpessoa
-              ,crapass.nrcpfcgc
-          FROM crapass
-         WHERE crapass.cdcooper = pr_cdcooper
+              ,decode(crapass.inpessoa,1,'F','J') dspessoa
+              ,crapass.nmprimtl
+              ,decode(crapass.inpessoa,1,lpad(crapass.nrcpfcgc,11,'0'),
+                                         lpad(crapass.nrcpfcgc,14,'0')) dscpfcgc
+              ,decode(crapass.inpessoa,1,to_char(crapass.nrcpfcgc)
+                                        ,to_char(crapass.nrcpfcgc)) nrcpfcgc
+              ,to_char(crapcop.cdagectl) cdagectl
+          FROM crapass,
+               crapcop 
+         WHERE crapass.cdcooper = crapcop.cdcooper
+           AND crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
 
@@ -1003,6 +1143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapcco.dsorgarq
               ,crapcco.flgregis
               ,crapcco.flgutceb
+              ,crapcco.flgativo
           FROM crapcco 
          WHERE crapcco.cdcooper = pr_cdcooper
            AND crapcco.nrconven = pr_nrconven;
@@ -1011,7 +1152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       -- Busca o operador
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
-        SELECT crapope.dsdepart
+        SELECT crapope.cddepart
               ,crapope.nmoperad
           FROM crapope 
          WHERE crapope.cdcooper = pr_cdcooper
@@ -1052,6 +1193,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flprotes
               ,crapceb.qtdecprz
               ,crapceb.qtdfloat
+							,crapceb.inenvcob
           FROM crapceb
          WHERE crapceb.cdcooper = pr_cdcooper
            AND crapceb.nrdconta = pr_nrdconta
@@ -1111,6 +1253,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
          WHERE air.idindicador = idr.idindicador
            AND air.idapuracao_reciproci = pr_idapuracao_reciproci;
 
+      --> Cursor para verificar se ja existe o beneficiario na cip
+      CURSOR cr_DDA_Benef (pr_dspessoa VARCHAR2,
+                           pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS      
+        SELECT 1
+          FROM TBJDDDABNF_BeneficiarioIF@jdbnfsql b
+         WHERE b.ISPB_IF = '5463212'
+           AND "TpPessoaBenfcrio" = pr_dspessoa
+           AND "CNPJ_CPFBenfcrio" = pr_nrcpfcgc;
+      rw_DDA_Benef cr_DDA_Benef%ROWTYPE;
+      
+      --> Cursor para verificar se ja existe o convenio na cip
+      CURSOR cr_DDA_Conven (pr_dspessoa VARCHAR2,
+                            pr_nrcpfcgc crapass.nrcpfcgc%TYPE,
+                            pr_nrconven VARCHAR2) IS      
+        SELECT 1
+          FROM TBJDDDABNF_Convenio@jdbnfsql b
+         WHERE b."ISPB_IF" = '5463212'
+           AND b."TpPessoaBenfcrio" = pr_dspessoa
+           AND b."CNPJ_CPFBenfcrio" = pr_nrcpfcgc
+           AND b."CodCli_Conv"      = pr_nrconven;
+      rw_DDA_Conven cr_DDA_Conven%ROWTYPE;      
+      
+      --> Buscar dados pessoa juridica
+      CURSOR cr_crapjur (pr_cdcooper crapjur.cdcooper%TYPE,
+                         pr_nrdconta crapjur.nrdconta%TYPE) IS
+        SELECT jur.nmfansia
+          FROM crapjur  jur
+         WHERE jur.cdcooper = pr_cdcooper
+           AND jur.nrdconta = pr_nrdconta; 
+      rw_crapjur cr_crapjur%ROWTYPE;
+      
       -- Cursor generico de calendario
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -1125,6 +1298,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       -- Variaveis
       vr_blnfound BOOLEAN;
       vr_blnewreg BOOLEAN;
+      vr_flDDA_Sit_Ben BOOLEAN;
       vr_flgimpri INTEGER;
       vr_qtccoceb NUMBER;
       vr_nrdrowid ROWID;
@@ -1137,6 +1311,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       vr_cdcatego tbcobran_categ_tarifa_conven.cdcatego%TYPE; 
       vr_percdesc tbcobran_categ_tarifa_conven.perdesconto%TYPE;
       vr_flgatingido CHAR(1);
+      vr_insitceb crapceb.insitceb%TYPE;
+      vr_sitifcnv VARCHAR2(10);
+      vr_dsdtmvto VARCHAR2(10);
+      vr_insitif  VARCHAR2(10);
+      vr_insitcip VARCHAR2(10);
+      vr_nrconven VARCHAR2(10);
+      vr_dtfimrel VARCHAR2(10) := NULL;
 
       -- Variaveis de log
       vr_cdcooper INTEGER;
@@ -1147,6 +1328,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
 
+      
+      ------------> SUB-Programas <------------
+      
+      
     BEGIN
       -- Extrai os dados vindos do XML
       GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -1177,6 +1362,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         vr_cdcritic := 9;
         RAISE vr_exc_saida;
       END IF;
+
+      vr_insitceb := pr_insitceb;
 
       -- Monta a mensagem da operacao para envio no e-mail
       vr_dsoperac := 'Tentativa de habilitacao de cobranca na conta ' ||
@@ -1244,7 +1431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       
       -- NAO pode haver dois convenios INTERNET ativos do mesmo banco
       -- para o mesmo cooperado - cob. sem registro
-      IF pr_insitceb = 1 THEN
+      IF vr_insitceb = 1 THEN
         -- Se a origem arquivo for INTERNET
         IF rw_crapcco.dsorgarq = 'INTERNET' THEN
           -- Verifica se existe convenio INTERNET habilitado
@@ -1327,9 +1514,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       END LOOP;
 
       -- Permitir a reativacao de convenios de cobranca sem registro (Renato - Supero - SD 194301)
-      IF rw_crapope.dsdepart NOT IN ('SUPORTE','COBRANCA') THEN
+      IF rw_crapope.cddepart NOT IN (18) THEN
         -- Regra para nao permitir ativar um convenio sem registro do BB inativo
-        IF  pr_insitceb = 1
+        IF  vr_insitceb = 1
         AND rw_crapceb.insitceb = 2
         AND rw_crapcco.flgregis = 0
         AND rw_crapcco.cddbanco = 1 
@@ -1339,6 +1526,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         END IF;
       END IF;
 
+			/* Se forma de envio de arquivo de cobrança for por FTP e origem do convênio 
+			   não for "IMPRESSO PELO SOFTWARE", gerar crítica*/
+			IF pr_inenvcob = 2 AND rw_crapcco.dsorgarq <> 'IMPRESSO PELO SOFTWARE' THEN
+				  -- Atribuir descrição da crítica
+          vr_dscritic := 'Forma de envio de arquivo de cobrança não permitido para esta origem de convênio.';
+					-- Levantar exceção
+          RAISE vr_exc_saida;				
+			END IF;
       -- Seta como registro existente
       vr_blnewreg := FALSE;
 
@@ -1353,6 +1548,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       CLOSE cr_crapceb;
       -- Se NAO encontrou
       IF NOT vr_blnfound THEN
+        
+        -- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
+        IF rw_crapcco.flgativo = 0 AND pr_insitceb = 1 THEN
+          vr_cdcritic := 949;
+          RAISE vr_exc_saida;
+        END IF;
+      
         BEGIN
           INSERT INTO crapceb
                      (cdcooper
@@ -1369,7 +1571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                      ,vr_nrcnvceb
                      ,vr_cdoperad
                      ,vr_cdoperad
-                     ,NVL(vr_cdagenci, 0)
+                     ,vr_cdagenci
                      ,SYSDATE);
           -- Seta como registro novo
           vr_blnewreg := TRUE;
@@ -1380,6 +1582,287 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         END;
       END IF;
 
+      -- Verificar se o convenio esta sendo atualizado 
+      IF NOT vr_blnewreg THEN
+        -- Se convenio esta desativado, e a situacao que esta sendo alterada eh para ativa-lo
+        IF rw_crapcco.flgativo = 0 AND  -- Convenio Inativo
+           rw_crapceb.insitceb = 2 AND  -- Convenio na conta do cooperado Inativo
+           pr_insitceb <> 2        THEN -- Alterando a situacao do convenio para qualquer outra situacao
+          vr_cdcritic := 949;
+          RAISE vr_exc_saida;
+        END IF;
+      END IF;
+
+      /**** - Tratamento CIP ****/
+      
+      --> Buscar situacao do benificiario na cip
+      vr_insitif  := NULL;
+      vr_insitcip := NULL;
+      DDDA0001.pc_ret_sit_beneficiario( pr_inpessoa  => rw_crapass.inpessoa,  --> Tipo de pessoa
+                                        pr_nrcpfcgc  => rw_crapass.nrcpfcgc,  --> CPF/CNPJ do beneficiario
+                                        pr_insitif   => vr_insitif,           --> Retornar situação IF
+                                        pr_insitcip  => vr_insitcip,          --> Retorna situação na CIP
+                                        pr_dscritic  => vr_dscritic);         --> Retorna critica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      --> Se foi inclusao 
+      IF vr_blnewreg AND 
+         (nvl(vr_insitif,'A') <> 'I' AND (vr_insitcip IS NULL OR vr_insitcip = 'A')) THEN
+        
+        vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');      
+        
+        --> Verificar se ja existe o beneficiario na cip
+        OPEN cr_DDA_Benef (pr_dspessoa => rw_crapass.dspessoa,
+                           pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+        FETCH cr_DDA_Benef INTO rw_DDA_Benef;
+        IF cr_DDA_Benef%NOTFOUND THEN
+          IF rw_crapass.inpessoa = 2 THEN
+            --> Buscar dados pessoa juridica
+            OPEN cr_crapjur (pr_cdcooper => vr_cdcooper,
+                             pr_nrdconta => pr_nrdconta);
+            FETCH cr_crapjur INTO rw_crapjur;
+            CLOSE cr_crapjur;
+          END IF;              
+                    
+      BEGIN
+            INSERT INTO TBJDDDABNF_BeneficiarioIF@jdbnfsql
+                  ( "ISPB_IF",
+                    "TpPessoaBenfcrio",
+                    "CNPJ_CPFBenfcrio",
+                    "Nom_RzSocBenfcrio", 
+                    "Nom_FantsBenfcrio", 
+                    "DtInicRelctPart",    
+                    "DtFimRelctPart")
+            VALUES ('5463212'            -- ISPB_IF
+                   ,rw_crapass.dspessoa  -- TpPessoaBenfcrio
+                   ,rw_crapass.dscpfcgc  -- CNPJ_CPFBenfcrio
+                   ,rw_crapass.nmprimtl  -- Nom_RzSocBenfcrio 
+                   ,rw_crapjur.nmfansia  -- Nom_FantsBenfcrio 
+                   ,vr_dsdtmvto          -- DtInicRelctPart    
+                   ,NULL);               -- DtFimRelctPart    
+            
+          EXCEPTION 
+            WHEN OTHERS THEN
+              vr_dscritic := 'Nao foi possivel cadastrar Beneficiario na CIP: ' || SQLERRM;
+              RAISE vr_exc_saida;              
+          END;
+        END IF;
+        CLOSE cr_DDA_Benef;
+                
+        --> Verificar se situacao permite continuar        
+        IF  VR_INSITIF IN ('A') OR 
+           -- ou não houver sit IF porem ativo na CIP
+           (VR_INSITIF IS NULL AND VR_INSITCIP = 'A') OR
+           -- Ou ativo no IF e sem sit na CIP
+           (VR_INSITIF = 'A' AND VR_INSITCIP IS NULL) OR
+           -- Ou ainda nao existir situacao
+           (VR_INSITIF IS NULL AND VR_INSITCIP IS NULL) THEN                      
+          
+          --> Gravar o log de adesao ou bloqueio do convenio
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_insitceb  => 1, --'ATIVO'
+                           pr_dscritic  => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF; 
+          
+          vr_sitifcnv := 'A'; -- Apto
+          
+        --SITIF => “I”, bloquear convênio de cobrança mostrando a mensagem no final: “Cobrança não liberada”;                          
+        ELSIF VR_INSITIF = 'I' THEN
+
+          --> Gravar o log de adesao ou bloqueio do convenio
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_insitceb  => 4, -- 'BLOQUEADO'
+                           pr_dscritic  => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          vr_cdcritic := 0;
+          vr_dscritic := 'Convênio de cobrança não liberado.';
+          RAISE vr_exc_saida;
+          
+          -- Guardar variavel para atualizar crapceb
+          --vr_insitceb := 4; -- Bloqueado
+          --vr_sitifcnv := 'I'; -- Inativo
+          --vr_dtfimrel := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
+          
+        --> SITCIP => “I” ou “E” ou SITIF = "E", realizar o cadastro do convênio do cooperado com status “PENDENTE”;
+        ELSIF VR_INSITCIP IN ('I','E') OR
+              VR_INSITIF IN ('E') THEN        
+        
+          --> Gravar o log de adesao ou bloqueio do convenio
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_insitceb  => 3, -- 'PENDENTE'
+                           pr_dscritic  => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          -- Guardar variavel para atualizar crapceb
+          vr_insitceb := 3; -- PENDENTE
+          vr_sitifcnv := 'A'; -- Ativo
+          vr_dtfimrel := NULL;
+          vr_flgimpri := 0;
+        ELSE
+          vr_dscritic := 'Situacao invalida do Beneficiario na JDBNF.';
+          RAISE vr_exc_saida;  
+        END IF;   
+        
+
+        --> Verificar se ja existe o convenio na cip
+        OPEN cr_DDA_Conven (pr_dspessoa => rw_crapass.dspessoa,
+                            pr_nrcpfcgc => rw_crapass.nrcpfcgc,
+                            pr_nrconven => to_char(pr_nrconven));
+        FETCH cr_DDA_Conven INTO rw_DDA_Conven;
+        IF cr_DDA_Conven%NOTFOUND THEN
+          --> Gerar informação de adesão de convênio ao JDBNF                            
+          BEGIN
+            INSERT INTO TBJDDDABNF_Convenio@jdbnfsql 
+                       ("ISPB_IF",
+                        "ISPBPartIncorpd",
+                        "TpPessoaBenfcrio",
+                        "CNPJ_CPFBenfcrio",
+                        "CodCli_Conv",
+                        "SitConvBenfcrioPar",
+                        "DtInicRelctConv",
+                        "DtFimRelctConv",
+                        "TpAgDest",
+                        "AgDest",
+                        "TpCtDest",
+                        "CtDest",
+                        "TpProdtConv",
+                        "TpCartConvCobr" )
+                 VALUES(5463212,                                -- ISPB_IF
+                        NULL,                                   -- ISPBPartIncorpd
+                        rw_crapass.dspessoa,                    -- TpPessoaBenfcrio
+                        rw_crapass.dscpfcgc,                    -- CNPJ_CPFBenfcrio
+                        pr_nrconven,                            -- CodCli_Conv
+                        vr_sitifcnv,                            -- SitConvBenfcrioPar
+                        vr_dsdtmvto,                            -- DtInicRelctConv
+                        vr_dtfimrel,                            -- DtFimRelctConv
+                        'F',                                    -- TpAgDest (F=Fisica)
+                        rw_crapass.cdagectl,                    -- AgDest
+                        'CC',                                   -- TpCtDest
+                        rw_crapass.nrdconta,                    -- CtDest
+                        '01', -- boleto de cobranca             -- TpProdtConv
+                        '1' );-- com registro                   -- TpCartConvCobr
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Nao foi possivel registrar convenio na CIP: ' || SQLERRM;
+              RAISE vr_exc_saida;              
+          END;
+      ELSE
+        BEGIN
+          vr_nrconven := to_char(pr_nrconven);
+          vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');          
+          UPDATE TBJDDDABNF_Convenio@jdbnfsql a
+             SET a."SitConvBenfcrioPar" = vr_sitifcnv
+                ,a."DtInicRelctConv"    = vr_dsdtmvto
+                ,a."DtFimRelctConv"     = vr_dtfimrel
+           WHERE a."ISPB_IF"            = '5463212'
+             AND a."TpPessoaBenfcrio"   = rw_crapass.dspessoa
+             AND a."CNPJ_CPFBenfcrio"   = rw_crapass.dscpfcgc
+             AND a."CodCli_Conv"        = vr_nrconven;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Nao foi possivel atualizar convenio na CIP: ' || SQLERRM;
+              RAISE vr_exc_saida;              
+          END;            
+      END IF;
+      CLOSE cr_DDA_Conven;
+      
+      
+      --> senao é manutencao  
+      ELSE
+        --> Verificar se situacao permite continuar
+        --A=Apto, I=Inapto, E=Em análise
+        IF VR_INSITIF IN ('A','E') THEN
+          --> Gravar o log de adesao ou bloqueio do convenio
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_dstransa  => 'Manutencao do convenio de cobranca',
+                           pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                           pr_insitceb  => 1, -- 'ATIVO'
+                           pr_dscritic  => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+        --> SITIF => “I”, convênio de cobrança inapto; Deverá ser bloqueado;
+        ELSIF VR_INSITIF = 'I' THEN
+          --> Gravar o log de adesao ou bloqueio do convenio
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_dstransa  => 'Manutencao do convenio de cobranca',
+                           pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                           pr_insitceb  => 4 , -- 'Bloqueado'
+                           pr_dscritic  => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          vr_cdcritic := 0;
+          vr_dscritic := 'Convênio de cobrança não liberado.';
+          RAISE vr_exc_saida;
+          
+          -- Guardar variavel para atualizar crapceb
+          -- vr_insitceb := 4; -- Bloqueado
+          
+        ELSIF (VR_INSITCIP IN ('I','E') OR VR_INSITCIP IS NULL) THEN
+          --> Gravar o log de adesao ou bloqueio do convenio
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_dstransa  => 'Manutencao do convenio de cobranca',
+                           pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                           pr_insitceb  => 1, -- 'ATIVO'
+                           pr_dscritic  => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+                    
+          
+          vr_flgimpri := 0; -- nao imprimir o termo de adesao
+          
+        ELSE
+          vr_dscritic := 'Situacao invalida do Beneficiario na JDBNF.';
+          RAISE vr_exc_saida;        
+        END IF;
+      
+      END IF;  
+      
+      /**** Fim Tratamento CIP ****/
+      
       BEGIN
         UPDATE crapceb
            SET crapceb.dtcadast = rw_crapdat.dtmvtolt
@@ -1390,12 +1873,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
               ,crapceb.flcooexp = pr_flcooexp
               ,crapceb.flceeexp = pr_flceeexp
               ,crapceb.flserasa = pr_flserasa
-              ,crapceb.insitceb = pr_insitceb
+              ,crapceb.insitceb = vr_insitceb
               ,crapceb.cdhomolo = vr_cdoperad
               ,crapceb.qtdfloat = pr_qtdfloat
               ,crapceb.flprotes = pr_flprotes
               ,crapceb.qtdecprz = pr_qtdecprz
               ,crapceb.idrecipr = pr_idrecipr
+							,crapceb.inenvcob = pr_inenvcob
          WHERE crapceb.cdcooper = vr_cdcooper
            AND crapceb.nrdconta = pr_nrdconta
            AND crapceb.nrconven = pr_nrconven;
@@ -1404,6 +1888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
           vr_dscritic := 'Erro ao alterar o registro na CRAPCEB: ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
+
 
       -- Remove os registros para depois incluir
       BEGIN
@@ -1612,6 +2097,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                  ,pr_dsdadatu => CASE WHEN pr_flgcruni = 1 THEN 'SIM' ELSE 'NAO' END);
       END IF;
       
+      -- Se alterou Forma de envio de arquivo de cobrança
+      IF rw_crapceb.inenvcob <> pr_inenvcob THEN
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'inenvcob'
+                                 ,pr_dsdadant => CASE WHEN rw_crapceb.inenvcob = 1 THEN 'INTERNET BANK' ELSE 'FTP' END
+                                 ,pr_dsdadatu => CASE WHEN pr_inenvcob = 1 THEN 'INTERNET BANK' ELSE 'FTP' END);
+      END IF;
+
+      
       -- Gera log das categorias e percentual de desconto
       FOR vr_idx IN 1..vr_lstdados.COUNT LOOP
         vr_lstdado2 := GENE0002.fn_quebra_string(pr_string => vr_lstdados(vr_idx), pr_delimit => '#');
@@ -1653,6 +2147,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                                  ,pr_nmdcampo => 'insitceb'
                                  ,pr_dsdadant => CASE WHEN rw_crapceb.insitceb = 1 THEN 'ATIVO' ELSE 'INATIVO' END
                                  ,pr_dsdadatu => CASE WHEN pr_insitceb = 1 THEN 'ATIVO' ELSE 'INATIVO' END);
+      END IF;
+      
+      --> Verificar se esta bloqueada
+      IF vr_insitceb = 4 THEN
+        vr_dsdmesag := 'Cobrança não liberada';
+      --> Pendente  
+      ELSIF vr_insitceb = 3 THEN
+        --> Enviar email de convenio pendente
+        DDDA0001.pc_email_alert_JDBNF ( pr_cdcooper  => vr_cdcooper,
+                                        pr_nrdconta  => pr_nrdconta,
+                                        pr_nrconven  => pr_nrconven,
+                                        pr_nrcnvceb  => vr_nrcnvceb,
+                                        pr_tpalerta  => 1, --> Convenio pendente
+                                        pr_cdcritic  => vr_cdcritic,
+                                        pr_dscritic  => vr_dscritic);
+        vr_cdcritic := 0;
+        vr_dscritic := 0;
+        vr_dsdmesag := 'Adesão do produto em análise na CECRED. Dúvidas, entre em contato ' || 
+                       'com a área de cobrança bancária.';
       END IF;
       
       -- Criar cabecalho do XML
@@ -1708,6 +2221,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_nmdatela => 'COBRANCA'
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
+                            
+        IF cr_DDA_Benef%ISOPEN THEN CLOSE cr_DDA_Benef; END IF;
+        IF cr_DDA_Conven%ISOPEN THEN CLOSE cr_DDA_Conven; END IF;
+        
         COMMIT;
 
       WHEN OTHERS THEN
@@ -1717,6 +2234,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         -- Carregar XML padrão para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+                                       
+        IF cr_DDA_Benef%ISOPEN THEN CLOSE cr_DDA_Benef; END IF;
+        IF cr_DDA_Conven%ISOPEN THEN CLOSE cr_DDA_Conven; END IF;
+                                       
         ROLLBACK;
     END;
 
@@ -1877,7 +2398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                             ,pr_tag_nova => 'flprotes'
                             ,pr_tag_cont => rw_cco_prc.flprotes
                             ,pr_des_erro => vr_dscritic);
-                            
+
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
@@ -2615,6 +3136,557 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
         ROLLBACK;
 
   END pc_gera_arq_ajuda;
+
+  --> Rotina para ativar convenio
+  PROCEDURE pc_ativar_convenio( pr_nrdconta  IN crapceb.nrdconta%TYPE --> Conta
+                               ,pr_nrconven  IN crapceb.nrconven%TYPE --> Convenio
+                               ,pr_nrcnvceb  IN crapceb.nrcnvceb%TYPE --> Ceb
+                               ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                               ,pr_dscritic OUT VARCHAR2              --> Descricao da critica
+                               ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
+  
+
+  /* .............................................................................
+
+    Programa: pc_ativar_convenio          
+    Sistema : Ayllos Web
+    Autor   : Odirlei Busana - AMcom
+    Data    : Abril/2016                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para ativar convenio.
+
+    Alteracoes:
+  ..............................................................................*/
+    
+    ------------> CURSORES <------------
+    
+    -- Cadastro de associados
+    CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT to_char(crapass.nrdconta) nrdconta
+            ,crapass.inpessoa
+            ,decode(crapass.inpessoa,1,lpad(crapass.nrcpfcgc,11,'0'),
+                                       lpad(crapass.nrcpfcgc,14,'0')) dscpfcgc
+            ,decode(crapass.inpessoa,1,'F','J') dspessoa
+            ,crapass.nmprimtl
+            ,to_char(crapass.nrcpfcgc) nrcpfcgc
+            ,to_char(crapcop.cdagectl) cdagectl
+        FROM crapass,
+             crapcop 
+       WHERE crapass.cdcooper = crapcop.cdcooper
+         AND crapass.cdcooper = pr_cdcooper
+         AND crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    
+    -- Cadastro de Bloquetos
+    CURSOR cr_crapceb(pr_cdcooper IN crapceb.cdcooper%TYPE
+                     ,pr_nrdconta IN crapceb.nrdconta%TYPE
+                     ,pr_nrconven IN crapceb.nrconven%TYPE
+                     ,pr_nrcnvceb IN crapceb.nrcnvceb%TYPE) IS
+      SELECT crapceb.insitceb
+        FROM crapceb
+       WHERE crapceb.cdcooper = pr_cdcooper
+         AND crapceb.nrdconta = pr_nrdconta
+         AND crapceb.nrconven = pr_nrconven
+         AND crapceb.nrcnvceb = pr_nrcnvceb;
+    rw_crapceb cr_crapceb%ROWTYPE;
+    
+    --> Cursor para verificar se ja existe o beneficiario na cip
+    CURSOR cr_DDA_Benef (pr_dspessoa VARCHAR2,
+                         pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS      
+      SELECT 1
+        FROM TBJDDDABNF_BeneficiarioIF@jdbnfsql b
+       WHERE b.ISPB_IF = '5463212'
+         AND "TpPessoaBenfcrio" = pr_dspessoa
+         AND "CNPJ_CPFBenfcrio" = pr_nrcpfcgc;
+    rw_DDA_Benef cr_DDA_Benef%ROWTYPE;    
+    
+    --> Cursor para verificar se ja existe o convenio na cip
+    CURSOR cr_DDA_Conven (pr_dspessoa VARCHAR2,
+                          pr_nrcpfcgc crapass.nrcpfcgc%TYPE,
+                          pr_nrconven VARCHAR2) IS      
+      SELECT 1
+        FROM TBJDDDABNF_Convenio@jdbnfsql b
+       WHERE b."ISPB_IF" = '5463212'
+         AND b."TpPessoaBenfcrio" = pr_dspessoa
+         AND b."CNPJ_CPFBenfcrio" = pr_nrcpfcgc
+         AND b."CodCli_Conv"      = pr_nrconven;
+    rw_DDA_Conven cr_DDA_Conven%ROWTYPE;      
+    
+    --> Buscar dados pessoa juridica
+    CURSOR cr_crapjur (pr_cdcooper crapjur.cdcooper%TYPE,
+                       pr_nrdconta crapjur.nrdconta%TYPE) IS
+      SELECT jur.nmfansia
+        FROM crapjur  jur
+       WHERE jur.cdcooper = pr_cdcooper
+         AND jur.nrdconta = pr_nrdconta; 
+    rw_crapjur cr_crapjur%ROWTYPE;        
+    
+    -- Cursor generico de calendario
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
+    ------------> VARIAVEIS <-----------  
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(2000);
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    vr_nrdrowid ROWID;
+    vr_dstransa VARCHAR2(1000);
+    vr_dsdmesag VARCHAR2(1000);
+    vr_flgimpri PLS_INTEGER;
+    
+    vr_dtativac VARCHAR2(8);
+    vr_nrconven VARCHAR2(10);
+    vr_sitifcnv VARCHAR2(10) := 'A';
+    vr_dsdtmvto VARCHAR2(10);
+    vr_insitif  VARCHAR2(10);
+    vr_insitcip VARCHAR2(10);
+    vr_dtfimrel VARCHAR2(10) := NULL;
+    
+    
+  BEGIN
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+  
+    -- Seta a descricao da transacao
+    vr_dstransa := 'Ativar convenio de cobranca.';
+    
+    -- Cadastro de associados
+    OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    -- Se NAO encontrou
+    IF cr_crapass%NOTFOUND THEN
+      vr_cdcritic := 9;
+      CLOSE cr_crapass;
+      RAISE vr_exc_saida;
+    END IF;
+    CLOSE cr_crapass;
+    
+    -- Verificacao do calendario
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+    
+    -- Cadastro de bloquetos
+    OPEN cr_crapceb(pr_cdcooper => vr_cdcooper
+                   ,pr_nrdconta => pr_nrdconta
+                   ,pr_nrconven => pr_nrconven
+                   ,pr_nrcnvceb => pr_nrcnvceb);
+    FETCH cr_crapceb INTO rw_crapceb;
+    CLOSE cr_crapceb;
+      
+    --> Atualizar convenio
+    BEGIN
+      UPDATE crapceb 
+         SET insitceb = 1 -- ATIVO
+	   WHERE cdcooper = vr_cdcooper
+	     AND nrdconta = pr_nrdconta
+	     AND nrconven = pr_nrconven
+         AND nrcnvceb = pr_nrcnvceb;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Nao foi possivel atualizar crapceb: '||SQLERRM;
+        RAISE vr_exc_saida;     
+    END; 
+    
+    --> Gravar o log de adesao ou bloqueio do convenio
+    COBR0008.pc_gera_log_ceb 
+                    (pr_idorigem  => vr_idorigem,
+                     pr_cdcooper  => vr_cdcooper,
+                     pr_cdoperad  => vr_cdoperad,
+                     pr_nrdconta  => pr_nrdconta,
+                     pr_nrconven  => pr_nrconven,
+                     pr_dstransa  => vr_dstransa,
+                     pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                     pr_insitceb  => 1, -- 'ATIVO'
+                     pr_dscritic  => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF; 
+    
+    --> Verificar se ja existe o beneficiario na cip
+    OPEN cr_DDA_Benef (pr_dspessoa => rw_crapass.dspessoa,
+                       pr_nrcpfcgc => rw_crapass.nrcpfcgc);
+    FETCH cr_DDA_Benef INTO rw_DDA_Benef;
+    IF cr_DDA_Benef%NOTFOUND THEN
+      IF rw_crapass.inpessoa = 2 THEN
+        --> Buscar dados pessoa juridica
+        OPEN cr_crapjur (pr_cdcooper => vr_cdcooper,
+                         pr_nrdconta => pr_nrdconta);
+        FETCH cr_crapjur INTO rw_crapjur;
+        CLOSE cr_crapjur;
+      END IF;  
+            
+      vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
+                    
+      BEGIN
+        INSERT INTO TBJDDDABNF_BeneficiarioIF@jdbnfsql
+              ( "ISPB_IF",
+                "TpPessoaBenfcrio",
+                "CNPJ_CPFBenfcrio",
+                "Nom_RzSocBenfcrio", 
+                "Nom_FantsBenfcrio", 
+                "DtInicRelctPart",    
+                "DtFimRelctPart")
+        VALUES ('5463212'            -- ISPB_IF
+               ,rw_crapass.dspessoa  -- TpPessoaBenfcrio
+               ,rw_crapass.dscpfcgc  -- CNPJ_CPFBenfcrio
+               ,rw_crapass.nmprimtl  -- Nom_RzSocBenfcrio 
+               ,rw_crapjur.nmfansia  -- Nom_FantsBenfcrio 
+               ,vr_dsdtmvto          -- DtInicRelctPart    
+               ,NULL);               -- DtFimRelctPart    
+            
+      EXCEPTION 
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel cadastrar Beneficiario na CIP: ' || SQLERRM;
+          RAISE vr_exc_saida;              
+      END;
+
+    ELSE    
+    
+      -- Atualizar convenio na CIP  
+      BEGIN      
+        vr_dtativac := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');
+        vr_nrconven := to_char(pr_nrconven);
+        UPDATE TBJDDDABNF_Convenio@jdbnfsql
+           SET TBJDDDABNF_Convenio."SitConvBenfcrioPar" = 'A',
+               TBJDDDABNF_Convenio."DtInicRelctConv"    = vr_dtativac
+         WHERE TBJDDDABNF_Convenio."ISPB_IF" = '5463212'
+           AND TBJDDDABNF_Convenio."TpPessoaBenfcrio" = rw_crapass.dspessoa
+           AND TBJDDDABNF_Convenio."CNPJ_CPFBenfcrio" = rw_crapass.dscpfcgc
+           AND TBJDDDABNF_Convenio."CodCli_Conv"      = vr_nrconven
+           AND TBJDDDABNF_Convenio."AgDest"           = rw_crapass.cdagectl
+           AND TBJDDDABNF_Convenio."CtDest"           = rw_crapass.nrdconta;
+        
+      EXCEPTION 
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel atualizar convenio na CIP: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+    END IF;
+    
+    CLOSE cr_DDA_Benef;
+    
+    --> Verificar se ja existe o convenio na cip
+    OPEN cr_DDA_Conven (pr_dspessoa => rw_crapass.dspessoa,
+                        pr_nrcpfcgc => rw_crapass.nrcpfcgc,
+                        pr_nrconven => to_char(pr_nrconven));
+    FETCH cr_DDA_Conven INTO rw_DDA_Conven;
+    IF cr_DDA_Conven%NOTFOUND THEN
+      --> Gerar informação de adesão de convênio ao JDBNF                            
+      BEGIN
+        INSERT INTO TBJDDDABNF_Convenio@jdbnfsql 
+                   ("ISPB_IF",
+                    "ISPBPartIncorpd",
+                    "TpPessoaBenfcrio",
+                    "CNPJ_CPFBenfcrio",
+                    "CodCli_Conv",
+                    "SitConvBenfcrioPar",
+                    "DtInicRelctConv",
+                    "DtFimRelctConv",
+                    "TpAgDest",
+                    "AgDest",
+                    "TpCtDest",
+                    "CtDest",
+                    "TpProdtConv",
+                    "TpCartConvCobr" )
+             VALUES(5463212,                                -- ISPB_IF
+                    NULL,                                   -- ISPBPartIncorpd
+                    rw_crapass.dspessoa,                    -- TpPessoaBenfcrio
+                    rw_crapass.dscpfcgc,                    -- CNPJ_CPFBenfcrio
+                    pr_nrconven,                            -- CodCli_Conv
+                    vr_sitifcnv,                            -- SitConvBenfcrioPar
+                    vr_dsdtmvto,                            -- DtInicRelctConv
+                    vr_dtfimrel,                            -- DtFimRelctConv
+                    'F',                                    -- TpAgDest (F=Fisica)
+                    rw_crapass.cdagectl,                    -- AgDest
+                    'CC',                                   -- TpCtDest
+                    rw_crapass.nrdconta,                    -- CtDest
+                    '01', -- boleto de cobranca             -- TpProdtConv
+                    '1' );-- com registro                   -- TpCartConvCobr
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Nao foi possivel registrar convenio na CIP: ' || SQLERRM;
+          RAISE vr_exc_saida;              
+      END;
+    ELSE
+      BEGIN
+        vr_nrconven := to_char(pr_nrconven);
+        vr_dsdtmvto := to_char(rw_crapdat.dtmvtolt,'RRRRMMDD');          
+        UPDATE TBJDDDABNF_Convenio@jdbnfsql a
+           SET a."SitConvBenfcrioPar" = vr_sitifcnv
+              ,a."DtInicRelctConv"    = vr_dsdtmvto
+              ,a."DtFimRelctConv"     = vr_dtfimrel
+         WHERE a."ISPB_IF"            = '5463212'
+           AND a."TpPessoaBenfcrio"   = rw_crapass.dspessoa
+           AND a."CNPJ_CPFBenfcrio"   = rw_crapass.dscpfcgc
+           AND a."CodCli_Conv"        = vr_nrconven;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Nao foi possivel atualizar convenio na CIP: ' || SQLERRM;
+            RAISE vr_exc_saida;              
+        END;            
+    END IF;
+    CLOSE cr_DDA_Conven;    
+    
+    --> Tratar retorno
+    vr_dsdmesag := gene0007.fn_acento_xml('Convênio ativado com sucesso.');
+    -- sempre gerar impressao na ativacao
+    vr_flgimpri := 1;     
+    
+    -- Criar cabecalho do XML
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'flgimpri'
+                          ,pr_tag_cont => vr_flgimpri
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'dsdmesag'
+                          ,pr_tag_cont => vr_dsdmesag
+                          ,pr_des_erro => vr_dscritic); 
+                          
+    IF cr_DDA_Benef%ISOPEN THEN CLOSE cr_DDA_Benef; END IF;
+    IF cr_DDA_Conven%ISOPEN THEN CLOSE cr_DDA_Conven; END IF;                          
+    
+    COMMIT;
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF cr_DDA_Benef%ISOPEN THEN CLOSE cr_DDA_Benef; END IF;
+      IF cr_DDA_Conven%ISOPEN THEN CLOSE cr_DDA_Conven; END IF;
+    
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+      -- Gerar informacoes do log
+      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                          ,pr_cdoperad => vr_cdoperad
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => GENE0001.vr_vet_des_origens(vr_idorigem)
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 0 --> FALSE
+                          ,pr_hrtransa => GENE0002.fn_busca_time
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'COBRANCA'
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      COMMIT;
+
+    WHEN OTHERS THEN
+      
+      IF cr_DDA_Benef%ISOPEN THEN CLOSE cr_DDA_Benef; END IF;
+      IF cr_DDA_Conven%ISOPEN THEN CLOSE cr_DDA_Conven; END IF;
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina pc_ativar_convenio: ' || SQLERRM;
+
+      -- Carregar XML padrão para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+  END pc_ativar_convenio;    
+  
+  --> Retornar lista com os log do convenio ceb
+  PROCEDURE pc_consulta_log_conv_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
+                                   ,pr_nrconven IN crapceb.nrconven%TYPE --> Nr. do convenio
+                                   ,pr_nrcnvceb IN crapceb.nrcnvceb%TYPE --> Nr. do ceb
+                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+    /* .............................................................................
+    
+        Programa: pc_consulta_log_ceb_web
+        Sistema : CECRED
+        Sigla   : COBRAN
+        Autor   : Odirlei Busana - AMcom
+        Data    : Maio/16.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Retornar lista com os log do convenio ceb
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+    ---------> CURSORES <--------
+    --> Buscar logs
+    CURSOR cr_TBCOBRAN_LOG_CONV ( pr_cdcooper crapceb.cdcooper%TYPE,
+                                  pr_nrdconta crapceb.nrdconta%TYPE,
+                                  pr_nrconven crapceb.nrconven%TYPE) IS
+      SELECT to_char(log.dhlog,'DD/MM/RRRR HH24:MI:SS') dthorlog
+            ,log.dslog
+            ,ope.nmoperad
+        FROM TBCOBRAN_LOG_CONV log
+            ,crapope   ope
+       WHERE log.cdcooper = pr_cdcooper
+         AND log.nrdconta = pr_nrdconta
+         AND log.nrconven = pr_nrconven
+         AND ope.cdcooper = log.cdcooper
+         AND ope.cdoperad = log.cdoperad
+         ORDER BY log.dhlog DESC;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    
+    -- Variáveis para armazenar as informações em XML
+    vr_des_xml         CLOB;
+    -- Variável para armazenar os dados do XML antes de incluir no CLOB
+    vr_texto_completo  VARCHAR2(32600);
+      
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2,
+                             pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
+    END;
+  BEGIN
+    
+    pr_des_erro := 'OK';
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+    
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Levanta exceção
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Leitura da PL/Table e geração do arquivo XML
+    -- Inicializar o CLOB
+    vr_des_xml := NULL;
+    dbms_lob.createtemporary(vr_des_xml, TRUE);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    -- Inicilizar as informações do XML
+    vr_texto_completo := NULL;
+    pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1"?><root><dados>');
+    
+    --> buscar logs ceb
+    FOR rw_log IN cr_TBCOBRAN_LOG_CONV ( pr_cdcooper => vr_cdcooper,
+                                         pr_nrdconta => pr_nrdconta,
+                                         pr_nrconven => pr_nrconven) LOOP
+      pc_escreve_xml('<inf>'||
+                        '<dthorlog>' || rw_log.dthorlog ||'</dthorlog>' ||
+                        '<dscdolog>' || rw_log.dslog    ||'</dscdolog>' ||
+                        '<nmoperad>' || rw_log.nmoperad ||'</nmoperad>' ||
+                     '</inf>');
+    END LOOP;
+    
+    pc_escreve_xml('</dados></root>',TRUE);    
+    
+    pr_retxml := XMLType.createXML(vr_des_xml);
+    
+    
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+      
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+
+  END pc_consulta_log_conv_web;     
 
 END TELA_ATENDA_COBRAN;
 /

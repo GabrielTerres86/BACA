@@ -14,7 +14,10 @@
                               
                  27/05/2014 - Incluido a informação de espécie de deposito e
                             relatório do mesmo. (Andre Santos - SUPERO)             
-                                                            
+                 
+				 06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+				              da descrição do departamento como parametro e 
+							  passar o código (Renato Darosci)
 .............................................................................*/
 
 
@@ -27,7 +30,7 @@ DEF VAR aux_cdoperad  AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdprogra  AS CHAR                                           NO-UNDO.                      
 DEF VAR aux_idorigem  AS INTE                                           NO-UNDO.
 DEF VAR aux_nmdatela  AS CHAR                                           NO-UNDO.
-DEF VAR aux_dsdepart  AS CHAR                                           NO-UNDO.  
+DEF VAR aux_cddepart  AS INTE                                           NO-UNDO.  
 
 DEF VAR aux_cddopcao  AS CHAR                                           NO-UNDO.  
 DEF VAR aux_nrterfin  AS INTE                                           NO-UNDO.   
@@ -94,7 +97,7 @@ DEF VAR aux_opreldep  AS CHAR                                           NO-UNDO.
              WHEN "dtmvtopr"  THEN aux_dtmvtopr = DATE(tt-param.valorCampo).
              WHEN "idorigem"  THEN aux_idorigem = INTE(tt-param.valorCampo).
              WHEN "nmdatela"  THEN aux_nmdatela = tt-param.valorCampo.
-             WHEN "dsdepart"  THEN aux_dsdepart = tt-param.valorCampo.
+             WHEN "cddepart"  THEN aux_cddepart = INTE(tt-param.valorCampo).
                               
              WHEN "cddopcao"  THEN aux_cddopcao = tt-param.valorCampo.
              WHEN "nrterfin"  THEN aux_nrterfin = INTE(tt-param.valorCampo).
@@ -164,7 +167,7 @@ PROCEDURE Busca_Dados:
                     INPUT aux_dtmvtolt,
                     INPUT aux_dtmvtopr,
                     INPUT aux_nmdatela,
-                    INPUT aux_dsdepart,
+                    INPUT aux_cddepart,
                     INPUT aux_cddopcao,
                     INPUT aux_nrterfin,
                     INPUT aux_flsistaa,
@@ -619,7 +622,7 @@ PROCEDURE Grava_Dados:
                     INPUT aux_cdoperad,
                     INPUT aux_cdprogra,
                     INPUT aux_nmdatela,
-                    INPUT aux_dsdepart,
+                    INPUT aux_cddepart,
                     INPUT aux_idorigem,
                     INPUT aux_dtmvtolt,
                     INPUT aux_dtmvtopr,

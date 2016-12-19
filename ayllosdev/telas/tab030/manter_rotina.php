@@ -11,6 +11,9 @@
 							  
 				 22/04/2013 - Ajuste para a inslusao do parametro "Dias atraso para inadimplencia"
 							  (Adriano).
+
+			     05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                              departamento como parametros e passar o o código (Renato Darosci)
 							  
 	********************************************************************************/
 	
@@ -65,7 +68,7 @@
 	$xml .= "    <idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xml .= "    <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xml .= "    <dstextab>".$dstextab."</dstextab>"; 
-	$xml .= "    <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml .= "    <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml .= "    <vllimite>".$vllimite."</vllimite>";
 	$xml .= "    <vlsalmin>".$vlsalmin."</vlsalmin>";
 	$xml .= "    <diasatrs>".$diasatrs."</diasatrs>";

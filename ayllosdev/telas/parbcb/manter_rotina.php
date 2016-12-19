@@ -6,7 +6,8 @@
  * OBJETIVO     : Rotina para manter as operações da tela PARBCB
  * PROJETO		: Projeto de Novos Cartões Bancoob
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 05/12/2016 - P341-Automatização BACENJUD - Utilizar o código 
+ *                             do departamento no lugar da descrição (R.Darosci)
  * -------------- 
  */
 	
@@ -67,7 +68,8 @@
 			echo '$("#nrseqarq","#frmCab").removeAttr("disabled");';
 			echo '$("#nrseqarq","#frmCab").removeAttr("readonly");';
 			
-			if ($hdndepar == "TI"){
+			// Se departamento for 20 - TI
+			if ($hdndepar == 20){
 				echo '$("#dsdirarq","#frmCab").removeAttr("disabled");';
 				echo '$("#dsdirarq","#frmCab").removeAttr("readonly");';
 			}

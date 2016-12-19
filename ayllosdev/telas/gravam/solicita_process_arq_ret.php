@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : Agosto/2016 
  * OBJETIVO     : Rotina para solicitar o processamento de arquivos de retorno enviado pela CETIP
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   : 02/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
  */
 ?> 
 
@@ -40,7 +41,7 @@
 	$xml 	   .= "     <cdcoptel>".$cdcooper."</cdcoptel>";
 	$xml 	   .= "     <tparquiv>".$tparquiv."</tparquiv>";	
 	$xml 	   .= "     <cddopcao>".$cddopcao."</cddopcao>";
-	$xml       .= "     <dsdepart>".$glbvars["dsdepart"]."</dsdepart>";
+	$xml       .= "     <cddepart>".$glbvars["cddepart"]."</cddepart>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	

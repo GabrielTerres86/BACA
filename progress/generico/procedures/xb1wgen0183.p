@@ -2,14 +2,16 @@
 
    Programa: xb1wgen0153.p
    Autor   : Tiago Machado 
-   Data    : Fevereiro/2014                   Ultima atualizacao: 25/02/2014
+   Data    : Fevereiro/2014                   Ultima atualizacao: 11/10/2016
 
    Dados referentes ao programa:
 
    Objetivo  : BO de Comunicacao XML VS BO183 (b1wgen0183.p) 
 
-   Alteracoes: 
+   Alteracoes: 11/10/2016 - Acesso da tela HRCOMP em todas cooperativas SD381526 (Tiago/Elton)
 
+               06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+                            departamento como parametro e passar o código (Renato Darosci)
 ..............................................................................*/
 
 DEF VAR aux_cdcooper AS INTE                                        NO-UNDO.
@@ -18,7 +20,7 @@ DEF VAR aux_nrdcaixa AS INTE                                        NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                        NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                        NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                        NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                        NO-UNDO.
 DEF VAR aux_cdcoopex AS INTE                                        NO-UNDO.
 DEF VAR aux_flgativo AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmproces AS CHAR                                        NO-UNDO.
@@ -26,7 +28,7 @@ DEF VAR aux_ageinihr AS INTE                                        NO-UNDO.
 DEF VAR aux_ageinimm AS INTE                                        NO-UNDO.
 DEF VAR aux_agefimhr AS INTE                                        NO-UNDO.
 DEF VAR aux_agefimmm AS INTE                                        NO-UNDO.
-
+DEF VAR aux_cddopcao AS CHAR										NO-UNDO.
 
 { sistema/generico/includes/b1wgen0183tt.i }
 { sistema/generico/includes/var_internet.i }
@@ -50,7 +52,7 @@ PROCEDURE valores_entrada:
             WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
             WHEN "dtmvtolt" THEN aux_dtmvtolt = DATE(tt-param.valorCampo). 
-            WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+            WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
             WHEN "cdcoopex" THEN aux_cdcoopex = INTE(tt-param.valorCampo).
             WHEN "nmproces" THEN aux_nmproces = tt-param.valorCampo.
             WHEN "flgativo" THEN aux_flgativo = tt-param.valorCampo.
@@ -58,6 +60,7 @@ PROCEDURE valores_entrada:
             WHEN "ageinimm" THEN aux_ageinimm = INTE(tt-param.valorCampo).
             WHEN "agefimhr" THEN aux_agefimhr = INTE(tt-param.valorCampo).
             WHEN "agefimmm" THEN aux_agefimmm = INTE(tt-param.valorCampo).
+			WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
         END CASE.
                                                                     
     END. /** Fim do FOR EACH tt-param **/
@@ -74,7 +77,7 @@ PROCEDURE busca_dados:
                            INPUT  aux_nrdcaixa,
                            INPUT  aux_cdoperad,
                            INPUT  aux_nmdatela,
-                           INPUT  aux_dsdepart,
+                           INPUT  aux_cddepart,
                            INPUT  aux_idorigem,
                            INPUT  aux_dtmvtolt,
                            INPUT  aux_cdcoopex,
@@ -113,7 +116,7 @@ PROCEDURE carrega_cooperativas:
                            INPUT  aux_nrdcaixa,
                            INPUT  aux_cdoperad,
                            INPUT  aux_nmdatela,
-                           INPUT  aux_dsdepart,
+                           INPUT  aux_cddepart,
                            INPUT  aux_idorigem,
                            INPUT  aux_dtmvtolt,
                            OUTPUT TABLE tt-coop,
@@ -160,7 +163,7 @@ PROCEDURE grava_dados:
                            INPUT  aux_nrdcaixa,
                            INPUT  aux_cdoperad,
                            INPUT  aux_nmdatela,
-                           INPUT  aux_dsdepart,
+                           INPUT  aux_cddepart,
                            INPUT  aux_idorigem,
                            INPUT  aux_dtmvtolt,
                            INPUT  aux_cdcoopex,
@@ -191,6 +194,40 @@ PROCEDURE grava_dados:
             RUN piXmlNew.
             RUN piXmlExport (INPUT TEMP-TABLE tt-processos:HANDLE,
                              INPUT "Processos").
+            RUN piXmlSave.
+        END.         
+
+END PROCEDURE.
+
+
+/******************************************************************************/
+/* verificar o acesso  as opcoes da tela por departamento                     */
+/******************************************************************************/
+PROCEDURE acesso_opcao:
+
+    RUN acesso_opcao IN hBO(INPUT  aux_cdcooper,
+                            INPUT  aux_cdagenci,                            
+							INPUT  aux_cddepart,
+							INPUT  aux_cddopcao,
+                            OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "ERRO").
+        END.
+    ELSE
+        DO:
+            RUN piXmlNew.
             RUN piXmlSave.
         END.         
 

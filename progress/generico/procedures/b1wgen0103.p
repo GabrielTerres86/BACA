@@ -36,7 +36,10 @@
                             
                10/03/2015 - Inclusao de parametro na procedure
                             pc_busca_extrato_aplicacao_car (Jean Michel).
-                                         
+                        
+			   07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                            departamento passando a considerar o código (Renato Darosci)   
+							              
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -927,7 +930,7 @@ PROCEDURE Busca_Extrato:
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtinimov AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtfimmov AS DATE                           NO-UNDO.
@@ -1080,7 +1083,7 @@ PROCEDURE Busca_Extrato:
                       INPUT par_nrdcaixa,
                       INPUT par_cdoperad,
                       INPUT par_nmoperad,
-                      INPUT par_dsdepart,
+                      INPUT par_cddepart,
                       INPUT par_dtmvtolt,
                       INPUT par_nrdconta,
                       INPUT par_dsiduser,
@@ -2316,7 +2319,7 @@ PROCEDURE ListaFun:
     DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nmoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dsdepart AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cddepart AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
@@ -2383,7 +2386,7 @@ PROCEDURE ListaFun:
       
         IF  (CAN-DO("11,50",STRING(aux_cdempres)))  AND 
             (par_nmoperad <> crabass.nmprimtl)      AND
-            (par_dsdepart <> "TI")                 THEN
+            (par_cddepart <> 20)  /* TI */         THEN
             DO:
              
                 UNIX SILENT VALUE("echo " +

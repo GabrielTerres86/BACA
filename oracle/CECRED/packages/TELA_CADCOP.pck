@@ -1,9 +1,9 @@
 CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : XXXX0001
+  --  Programa : TELA_CADCOP
   --  Sistema  : Rotina acessada pela tela CADCOP
-  --  Sigla    : XXXX
+  --  Sigla    : TELA_CADCOP
   --  Autor    : Andrei - RKAM
   --  Data     : Agosto/2016.                   Ultima atualizacao: --/--/----
   --
@@ -45,7 +45,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCOP is
                                 ,pr_des_erro  OUT VARCHAR2);             --> Descrição do erro
 
   PROCEDURE pc_alterar_cooperativa(pr_cddopcao IN VARCHAR2              --> Código da opção
-                                  ,pr_dsdepart IN VARCHAR2              --> Departamento do operador
+                                  ,pr_cddepart IN VARCHAR2              --> Departamento do operador
                                   ,pr_dtmvtolt IN VARCHAR2              --> Data de movimento
                                   ,pr_nmrescop IN crapcop.nmrescop%TYPE --> Nome resumido da cooperativa
                                   ,pr_nrdocnpj IN crapcop.nrdocnpj%TYPE --> Número do CNPJ
@@ -182,9 +182,9 @@ END TELA_CADCOP;
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : XXXX0001
+  --  Programa : TELA_CADCOP
   --  Sistema  : Rotina acessada pela tela CADCOP
-  --  Sigla    : XXXX
+  --  Sigla    : TELA_CADCOP
   --  Autor    : Andrei - RKAM
   --  Data     : Agosto/2016.                   Ultima atualizacao: 10/11/2016
   --
@@ -198,6 +198,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --                          (Adriano)
   --
   --             17/11/2016 - M172 - Atualização Telefone - Inclusão novo campo tela (Guilherme/SUPERO)
+  --
+  --             28/11/2016 - P341 - Automatização BACENJUD - Alterado o parametro PR_DSDEPART 
+  --                          para PR_CDDEPART e as consultas do fonte para utilizar o código 
+  --                          do departamento nas validações (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Funcao para validacao dos caracteres */
@@ -990,7 +994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   END pc_consulta_cooperativa;
 
   PROCEDURE pc_alterar_cooperativa(pr_cddopcao IN VARCHAR2              --> Código da opção
-                                  ,pr_dsdepart IN VARCHAR2              --> Departamento do operador
+                                  ,pr_cddepart IN VARCHAR2              --> Departamento do operador
                                   ,pr_dtmvtolt IN VARCHAR2              --> Data de movimento
                                   ,pr_nmrescop IN crapcop.nmrescop%TYPE --> Nome resumido da cooperativa
                                   ,pr_nrdocnpj IN crapcop.nrdocnpj%TYPE --> Número do CNPJ
@@ -1363,15 +1367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     END IF;
 
     /* critica para permitir somente os seguintes operadores  */
-    IF pr_dsdepart <> 'TI'                    AND
-       pr_dsdepart <> 'COORD.ADM/FINANCEIRO'  AND
-       pr_dsdepart <> 'COMPE'                 AND
-       pr_dsdepart <> 'SUPORTE'               AND
-       pr_dsdepart <> 'COORD.PRODUTOS'        AND
-       pr_dsdepart <> 'CONTABILIDADE'         AND
-       pr_dsdepart <> 'CONTROLE'              AND
-       pr_dsdepart <> 'PRODUTOS'              AND
-       pr_dsdepart <> 'CANAIS'                THEN
+    IF pr_cddepart NOT IN  (1,4,6,7,8,9,14,18,20) THEN
 
       vr_cdcritic := 36;
       RAISE vr_exc_saida;
@@ -2347,7 +2343,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
 
     END IF;
 
-    IF pr_dsdepart <> 'TI' THEN
+    -- Se não for do Departamento 20 - TI
+    IF pr_cddepart <> 20 THEN
 
       IF rw_crapcop.qttmpsgr <> to_number(to_char(to_date(pr_qttmpsgr,'hh24:mi:ss'),'sssss'))THEN
 
@@ -2578,7 +2575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.hrfimgps = to_number(to_char(to_date(pr_hrfimgps,'hh24:mi'),'sssss'))
             ,crapcop.hrlimsic = to_number(to_char(to_date(pr_hrlimsic,'hh24:mi'),'sssss'))
             ,crapcop.flgkitbv = pr_flgkitbv
-            ,crapcop.qttmpsgr = CASE WHEN pr_dsdepart = 'TI' THEN to_number(to_char(to_date(pr_qttmpsgr,'hh24:mi'),'sssss')) ELSE crapcop.qttmpsgr END
+            ,crapcop.qttmpsgr = CASE WHEN pr_cddepart = 20 THEN to_number(to_char(to_date(pr_qttmpsgr,'hh24:mi'),'sssss')) ELSE crapcop.qttmpsgr END
             ,crapcop.hriniatr = to_number(to_char(to_date(pr_hriniatr,'hh24:mi'),'sssss'))
             ,crapcop.hrfimatr = to_number(to_char(to_date(pr_hrfimatr,'hh24:mi'),'sssss'))
             ,crapcop.flgofatr = pr_flgofatr

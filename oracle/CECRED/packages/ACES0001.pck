@@ -53,6 +53,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
   --
   -- Alteracoes: 28/03/2016 - Criacao da procedure pc_exclui_permis_ope (Tiago SD414193)
   --             
+  --             28/11/2016 - P341 - Automatização BACENJUD - Alterado para buscar o nome do departamento
+  --                          na tabela CRAPDPO, e não mais diretamente da CRAPOPE (Renato Darosci - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Procedure que gera uma lista de operadores em determinada pasta */
@@ -75,7 +77,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
       SELECT * FROM crapcop;
   
     CURSOR cr_crapope(pr_cdcooper crapcop.cdcooper%TYPE) IS
-      SELECT * FROM crapope WHERE crapope.cdcooper = pr_cdcooper;
+      SELECT crapope.cdoperad
+           , crapope.nmoperad
+           , crapope.nvoperad
+           , crapope.flgperac
+           , crapope.tpoperad
+           , crapope.cdagenci
+           , crapope.cdpactra
+           , crapope.flgdonet
+           , crapope.flgdopgd
+           , crapope.flgacres
+           , crapope.cdsitope
+           , crapope.vlpagchq
+           , crapope.vllimted
+           , crapope.cdcomite
+           , crapope.vlapvcre
+           , crapope.vlapvcap
+           , crapdpo.dsdepart
+        FROM crapdpo
+           , crapope 
+       WHERE crapdpo.cddepart(+) = crapope.cddepart
+         AND crapdpo.cdcooper(+) = crapope.cdcooper
+         AND crapope.cdcooper = pr_cdcooper;
   
     vr_linha    VARCHAR2(4000);
     vr_arq_path VARCHAR2(1000); --> Diretorio que sera criado o relatorio
@@ -236,13 +259,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
     --  Sistema  : Cred
     --  Sigla    : ACES0001
     --  Autor    : Tiago
-    --  Data     : Fevereiro/2016.                   Ultima atualizacao: --/--/----
+    --  Data     : Fevereiro/2016.                   Ultima atualizacao: 19/07/2016
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedures que gera uma lista com operadores e suas permissoes
     --               de acesso no sistema ayllos
+    --
+    --   Alteracoes: 19/07/2016 - Adicionado LOWER na comparação para ajustar o problema
+    --                            do chamado 478321. (Kelvin)
+    --
     -------------------------------------------------------------------------------
   
     CURSOR cr_crapcop IS
@@ -343,7 +370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ACES0001 AS
     
     FOR rw_crapace IN cr_crapace LOOP
       
-        vr_indice := LPAD(rw_crapace.cdcooper, 3, '0')||LPAD(rw_crapace.nmdatela, 10, ' ')||LPAD(rw_crapace.nmrotina, 25, ' ')||LPAD(rw_crapace.cddopcao, 7, ' ');
+        vr_indice := LPAD(rw_crapace.cdcooper, 3, '0')||LPAD(LOWER(rw_crapace.nmdatela), 10, ' ')||LPAD(rw_crapace.nmrotina, 25, ' ')||LPAD(rw_crapace.cddopcao, 7, ' ');
     
         IF vr_tab_tela.EXISTS(vr_indice) THEN
         
