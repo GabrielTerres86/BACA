@@ -10386,14 +10386,17 @@ END pc_gera_titulos_iptu_prog;
 	  Sistema  : Conta-Corrente - Cooperativa de Credito
 	  Sigla    : CRED
 	  Autor    : Kelvin Souza Ott 
-	  Data     : Setembro/2016.                   Ultima atualizacao: --/--/----
+	  Data     : Setembro/2016.                   Ultima atualizacao: 14/12/2016
 	
 	  Dados referentes ao programa:
 	
 	  Frequencia: Sempre que for chamado
 	  Objetivo  : Procedure para calcular valor do titulo vencido
 	
-	  Alteração :
+	  Alteração : 14/12/2016 - Parametro de retorno pr_vlrmulta_calc e pr_vlrjuros_calc
+                             não eram inicializados causando problema na gravação da crapret
+                             com vljurmul nulo. Impacto no relatório 601 e no arquivo
+                             de retorno de cobrança ao cooperado (AJFink - SD#571733)
 
 	...........................................................................*/
   PROCEDURE pc_calcula_vlr_titulo_vencido(pr_vltitulo      IN crapcob.vltitulo%TYPE  -- Valor do titulo em cobrança
@@ -10413,7 +10416,8 @@ END pc_gera_titulos_iptu_prog;
   BEGIN            
     
     pr_vlfatura := pr_vltitulo;
-    -- MULTA PARA ATRASO 
+    -- MULTA PARA ATRASO
+    pr_vlrmulta_calc := 0; --SD#571733
     IF pr_tpdmulta = 1  THEN -- Valor 
       --Multa
       pr_vlrmulta_calc := pr_vlrmulta;
@@ -10427,6 +10431,7 @@ END pc_gera_titulos_iptu_prog;
     END IF;
 
     -- MORA PARA ATRASO 
+    pr_vlrjuros_calc := 0; --SD#571733
     IF pr_tpjurmor = 1  THEN -- dias 
       --Juros
       pr_vlrjuros_calc:= APLI0001.fn_round((pr_vljurdia * pr_qtdiavenc),2);
