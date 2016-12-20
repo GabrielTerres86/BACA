@@ -400,6 +400,10 @@
                 07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
+                20/12/2016 - obtem-cheques-deposito - Exibir cheque no extrato somente quando
+                             cheque da própria cooperativa estiver com agencia destino e
+							 conta destino igual a zero (AJFink) (SD#572650)
+							 
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -836,8 +840,10 @@ PROCEDURE obtem-cheques-deposito:
                            crapchd.cdbccxlt <> 700          AND
                            crapchd.dtmvtolt >= par_dtiniper AND
                            crapchd.dtmvtolt <= par_dtfimper AND
-                           crapchd.nrdocmto >  0            
-                           NO-LOCK BREAK BY crapchd.dtmvtolt
+                           crapchd.nrdocmto >  0            AND
+						   crapchd.cdagedst  = 0            AND
+						   crapchd.nrctadst  = 0            
+						   NO-LOCK BREAK BY crapchd.dtmvtolt
                                             BY crapchd.nrdocmto
                                                BY crapchd.cdbanchq
                                                   BY crapchd.cdagechq
