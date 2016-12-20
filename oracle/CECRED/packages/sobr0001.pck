@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.sobr0001 AS  
+CREATE OR REPLACE PACKAGE CECRED.sobr0001 AS
   
   -- Constantes dos lotes de lançamentos em capital
   vr_cdagenci CONSTANT crapass.cdagenci%TYPE := 1;    -- Codigo da agencia
@@ -70,37 +70,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
            vlcretot NUMBER(17,2));
   TYPE typ_tab_crrl412 IS
     TABLE OF typ_reg_crrl412
-    INDEX BY VARCHAR2(15); 
-    
+    INDEX BY VARCHAR2(15);
+
   -- Definicao do tipo de tabela para o processo definitivo. Eh a copia do arquivo CRRL048.DAT
   TYPE typ_reg_crrl048 IS
     RECORD(dsrowid  ROWID
           ,nrdconta crapass.nrdconta%TYPE
           ,inpessoa NUMBER(17,2)
-          
+
           ,flraimfx NUMBER(1)
           ,qtraimfx crapcot.qtraimfx%TYPE
           ,vldcotas crapcot.vldcotas%TYPE
-          
+																	 
           ,vljurcap NUMBER(17,2)
           ,vldeirrf NUMBER(17,2)
-          
+
           ,vlretcrd NUMBER(17,2)
           ,vlretcrd_cot NUMBER(17,2)
           ,vlretcrd_cta NUMBER(17,2)
-          
+
           ,vljurapl NUMBER(17,2)
           ,vljurapl_cot NUMBER(17,2)
           ,vljurapl_cta NUMBER(17,2)
-          
+
           ,vljursdm NUMBER(17,2)
           ,vljursdm_cot NUMBER(17,2)
           ,vljursdm_cta NUMBER(17,2)
-          
+
           ,vljurtar NUMBER(17,2)
           ,vljurtar_cot NUMBER(17,2)
           ,vljurtar_cta NUMBER(17,2)
-          
+
           ,vljuraut NUMBER(17,2)
           ,vljuraut_cot NUMBER(17,2)
           ,vljuraut_cta NUMBER(17,2));
@@ -110,9 +110,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 
   -- Procedure para calculo e credito do retorno de sobras e juros sobre o capital. Emissao do relatorio CRRL043
   PROCEDURE pc_calculo_retorno_sobras(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
-                                     ,pr_cdprogra IN crapprg.cdprogra%TYPE   --> Programa chamador
-                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                                     ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+                                   ,pr_cdprogra IN crapprg.cdprogra%TYPE   --> Programa chamador
+                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                   ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
 
 
 /* .............................................................................
@@ -121,7 +121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Sidnei - Precise
-   Data    : Abril/2008                        Ultima atualizacao: 28/07/2016
+   Data    : Abril/2008                        Ultima atualizacao: 14/12/2016
    Dados referentes ao programa:
 
    Frequencia: Anual (Batch)
@@ -205,21 +205,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                14/01/2015 - Ajustade no relatorio Resumo retorno sobras para listar 
                             os lançamentos segregados do retorno de sobras. 
                             (Carlos Rafael Tanholi - 243124)
-                            
-               09/02/2015 - Ajuste para manter a data informada na limpeza dos 
-                            parametros utilizados para calcular o retorno de 
-                            sobras. (Reinert)
-                            
-               28/10/2015 - Adição do cálculo de sobras sobre tarifas pagas
+														
+							 09/02/2015 - Ajuste para manter a data informada na limpeza dos 
+							              parametros utilizados para calcular o retorno de 
+														sobras. (Reinert)
+														
+							 28/10/2015 - Adição do cálculo de sobras sobre tarifas pagas
                             (Dionathan)
-                            
-               08/12/2015 - Remoção do percentual fixo de IRRF para ler da tabela
+														
+							 08/12/2015 - Remoção do percentual fixo de IRRF para ler da tabela
                             TBCOTAS_FAIXAS_IRRF (Dionathan)
                             
                28/07/2016 - M360 - Inclusão das Sobras por Auto Atendimento
                                  - Fracionamento das distribuição entre CC e Cotas
                                  - Separação dos lançaemntos de DEP a Vista e a Prazo
                                  - Ajustes nos relatórios para os novos campos (Marcos-Supero)           
+
+               14/12/2016 - Adicao de funcionalidade para carregar uma pltable com
+                            contas que nao devem receber juros sobre o capital e nem
+                            retorno de sobras. No momento, necessario devido a incorporacao
+                            Transulcred -> Transpocred, posteriormente a estrutura podera 
+                            ser utilizada para outros casos de contas proibidas. (Anderson)
                             
 ............................................................................. */
 
@@ -351,7 +357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       vr_txt      VARCHAR2(32767);
       vr_xml_tot  CLOB;
       vr_txt_tot  VARCHAR2(32767);      
-      
+
       -- Variaveis utilizada no total do PA do relatorio
       vr_pac_qtassoci PLS_INTEGER  :=0;
       vr_pac_vlmedcap NUMBER(17,2) :=0;
@@ -515,7 +521,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       -- Estrutura para armazenagem dos valores pagos em tarifas
       TYPE vr_typ_tarifa IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
       vr_tab_tarifa vr_typ_tarifa;
-       
+
       -- BUsca da quantidade de operações de auto atendimento do cooperador
       CURSOR cr_qtd_autoatendi(pr_dtrefere_ini DATE
                               ,pr_dtrefere_fim DATE) IS
@@ -551,8 +557,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         SELECT crapljt.nrdconta
               ,nvl(SUM(vldjuros),0) vldjuros
           FROM crapljt
-         WHERE crapljt.cdcooper = pr_cdcooper
-           AND crapljt.dtrefere > pr_dtrefere_ini
+          WHERE crapljt.cdcooper = pr_cdcooper
+            AND crapljt.dtrefere > pr_dtrefere_ini
            AND crapljt.dtrefere < pr_dtrefere_fim
          GROUP BY crapljt.nrdconta;
       -- Estrutura para armazenagem dos valores de juros sobre desconto titulos
@@ -586,6 +592,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
          WHERE cdcooper = pr_cdcooper
            AND cdagenci = pr_cdagenci;
       rw_crapage cr_crapage%ROWTYPE;
+
+      -- Cursor de contas migradas
+      CURSOR cr_craptco IS
+        SELECT nrdconta -- Conta nova na cooperativa migrada.
+          FROM craptco
+         WHERE cdcooper = 9   --Transpocred
+           and cdcopant = 17; --Transulcred
+      rw_craptco cr_craptco%ROWTYPE;
+      
+      /* Estrutura para armazenagem de contas que nao devem receber retorno de sobras 
+         e nem juros sobre o capital - Incorporacao Transulcred -> Transpocred */
+      TYPE vr_typ_cta_proibidas IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
+      vr_tab_cta_proibidas vr_typ_cta_proibidas;
       
       -- Vetor para armazenar os dados para o processo definitivo
       vr_tab_crrl048 typ_tab_crrl048;
@@ -601,7 +620,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                                    || vr_cdprogra || ' --> '
                                                    || vr_dscritic );
       END;
-      
+
       --Procedure que escreve linha no arquivo CLOB
       PROCEDURE pc_escreve_xml(pr_destino   IN INTEGER
                               ,pr_des_dados IN VARCHAR2
@@ -612,14 +631,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                  ,pr_texto_completo => vr_txt
                                  ,pr_texto_novo => pr_des_dados
                                  ,pr_fecha_xml => pr_flg_fecha);
-        ELSE
+          ELSE
           gene0002.pc_escreve_xml(pr_xml => vr_xml_tot
                                  ,pr_texto_completo => vr_txt_tot
                                  ,pr_texto_novo => pr_des_dados
                                  ,pr_fecha_xml => pr_flg_fecha);
-        END IF;
+          END IF;
       END pc_escreve_xml;
-      
+
       /* Distribuir as cotas em Conta Capital e/ou CC conforme parametrização */
       PROCEDURE pc_distribui_cotas_cc(pr_vlretorn NUMBER
                                      ,pr_inpessoa NUMBER
@@ -630,14 +649,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         IF pr_inpessoa = 1 THEN                  
           -- Percentual PF
           pr_vlretcot := round(pr_vlretorn * vr_perpfcot,2);
-        ELSE  
+          ELSE
           -- Percentual PJ
           pr_vlretcot := round(pr_vlretorn * vr_perpjcot,2);                   
-        END IF;
+          END IF;
         -- O restante (sobra do que será lançado em Cota) vai para C/C
         pr_vlretcta := pr_vlretorn - pr_vlretcot;
       END;         
-      
+
       /* Busca da faixa e calculo do IR a pagar */
       PROCEDURE pc_calcula_irrf(pr_inpessoa IN crapass.inpessoa%TYPE
                                ,pr_vljurcap IN NUMBER
@@ -662,13 +681,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 vr_existe := TRUE;
                 -- Sair do loop
                 EXIT;
-              END IF;
+        END IF;
             END LOOP;
           ELSE
             -- Se não há faixas não haverá aplicação de IR
             RETURN;
-          END IF;  
-        ELSE
+            END IF;
+          ELSE
           -- Se existirem faixas cadastradas
           IF vr_tab_fairrf_pj.count() > 1 THEN
             -- Buscar na tab de faixas para PJ
@@ -680,13 +699,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 vr_existe := TRUE;                
                 -- Sair do loop
                 EXIT;
-              END IF;
+            END IF;
             END LOOP;          
-          ELSE
+            ELSE
             -- Se não há faixas não haverá aplicação de IR
             RETURN;
-          END IF;  
-        END IF;
+            END IF;
+          END IF;
         -- Se chegamos neste ponto existe faixa cadastrada para o tipo de pessoa solicitada
         -- Mas se não encontramos nenhuma faixa em que o valor se enquadra, devemos gerar erro
         IF NOT vr_existe THEN
@@ -697,7 +716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           -- Efetuaremos o calculo 
           pr_vldeirrf := GREATEST(TRUNC((vr_vljurcap * (vr_regist.vlpercent/100)) - vr_regist.vldeducao, 2),0);
           pr_vlprirrf := vr_regist.vlpercent;
-        END IF;  
+        END IF;
       EXCEPTION
         WHEN OTHERS THEN
           pr_vldeirrf := -1;  -- Rotinas chamadoras tratarão -1 como retorno com erro
@@ -756,18 +775,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       /*  Carrega tabela de execucao do programa lockando o registro para evitar execuções paralelas */
       BEGIN 
         OPEN cr_craptab(pr_cdcooper => pr_cdcooper
-                       ,pr_nmsistem => 'CRED'
-                       ,pr_tptabela => 'GENERI'
-                       ,pr_cdempres => 0
-                       ,pr_cdacesso => 'EXEICMIRET'
-                       ,pr_tpregist => 1);
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'EXEICMIRET'
+                                               ,pr_tpregist => 1);
         FETCH cr_craptab
          INTO vr_dstextab;
         -- Se não encontrar      
-        IF vr_dstextab IS NULL THEN  
-          vr_cdcritic := 283;
-          RAISE vr_exc_saida;
-        END IF;      
+      IF vr_dstextab IS NULL THEN
+        vr_cdcritic := 283;
+        RAISE vr_exc_saida;
+      END IF;
       EXCEPTION
         WHEN vr_exc_saida THEN
           -- Propagar erro
@@ -801,7 +820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       rl_txdretor := SUBSTR(vr_dstextab,05,12);
       rl_txretdsc := SUBSTR(vr_dstextab,05,12);
       rl_txrettit := SUBSTR(vr_dstextab,05,12);
-      
+
       -- Textos para relatorio
       IF vr_indemiti = 0 THEN 
         tt_dsdemiti := 'NAO';
@@ -846,6 +865,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       FOR rw_aut IN cr_qtd_autoatendi(vr_dtliminf,vr_dtlimsup) LOOP
         vr_tab_autoate(rw_aut.nrdconta) := rw_aut.nrsequen;
       END LOOP;
+      
+      /* Carregar pltable das contas que NAO devem ter retorno de sobras e juros sobre o capital.
+         Pode ser carregado sempre que houver necessidade de ignorar algumas contas. */
+      vr_tab_cta_proibidas.delete;      
+      /* Incorporacao Transulcred -> Transpocred e ano referencia = 2016 */
+      IF (pr_cdcooper = 9) and (extract(year from vr_dtmvtaan) = 2016) THEN
+        FOR rw_craptco IN cr_craptco LOOP
+          vr_tab_cta_proibidas(rw_craptco.nrdconta) := rw_craptco.nrdconta;
+        END LOOP;
+      END IF;
       
       -- Se haverá calculo de Juros sobre capital
       IF vr_txjurcap > 0 THEN
@@ -893,12 +922,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         vr_nom_direto_copia_412 := NULL;
         vr_dsextcop             := NULL;
       END IF;
-      
+
       -- Busca do diretorio base da cooperativa para os relatorios
       vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => 'rl'); --> Utilizaremos o contab
-      
+
       -- Sair se não foi selecionado o processo completo
       IF vr_txdretor = 0 AND vr_increret = 1 THEN
         vr_cdcritic := 0;
@@ -920,7 +949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       FOR rw_crapass_carga IN cr_crapass_carga(vr_dtmvtaan) LOOP
         vr_tab_crapass(rw_crapass_carga.nrdconta) := rw_crapass_carga;
       END LOOP;
-      
+
       -- Varredura das informações de Cotas dos Cooperados
       OPEN cr_crapcot(vr_dtmvtaan);
       LOOP 
@@ -929,23 +958,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Leitura da porção lida em memória
         FOR idx IN 1 .. vr_tab_crapcot.COUNT LOOP  
 
+          -- Verificar se a conta está na lista de contas proibidas
+          IF vr_tab_cta_proibidas.exists(vr_tab_crapcot(idx).nrdconta) THEN
+            CONTINUE;
+          END IF;
+          
           -- Garantir que haja o associado
           IF NOT vr_tab_crapass.exists(vr_tab_crapcot(idx).nrdconta) THEN
-            vr_cdcritic := 251;
+          vr_cdcritic := 251;
             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) || ' CONTA = '||vr_tab_crapcot(idx).nrdconta;
-            pc_controle_critica;
-            RAISE vr_exc_saida;
-          END IF;
+          pc_controle_critica;
+          RAISE vr_exc_saida;
+        END IF;
 
           -- Atualiza flag que indica se deve ser considerada conta
           -- demitida no calculo - vr_indemiti = 0 - NAO = 1 - SIM 
-          IF vr_indemiti = 1                                    OR
+        IF vr_indemiti = 1                                    OR
             (vr_indemiti = 0 AND (vr_tab_crapcot(idx).dtdemiss IS NULL   OR
              to_char(vr_tab_crapcot(idx).dtdemiss,'YYYY') >= to_char(vr_dtmvtolt,'YYYY') - 1))  THEN
-            vr_flgdemit := 1;
-          ELSE
-            vr_flgdemit := 0;
-          END IF;
+          vr_flgdemit := 1;
+        ELSE
+          vr_flgdemit := 0;
+        END IF;
 
           -- Busca base de titulos e cheques
           IF vr_tab_titulos.exists(vr_tab_crapcot(idx).nrdconta) THEN
@@ -955,10 +989,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           END IF;
           IF vr_tab_cheques.exists(vr_tab_crapcot(idx).nrdconta) THEN
             vr_vlbasdsc := vr_tab_cheques(vr_tab_crapcot(idx).nrdconta);
-          ELSE
+        ELSE
             vr_vlbasdsc := 0;
-          END IF;                  
-
+        END IF;
+        
           -- Para juridico e fisico, sem data de eliminaçao e solicitado os demitidos
           IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
             vr_qtraimfx := vr_tab_crapcot(idx).qtraimfx;
@@ -1043,10 +1077,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 
             /* Juros ao capital | IRRF s/ juros ao capita */
             IF vr_txjurcap > 0  THEN
-                  
+              
               vr_vljurcap := ROUND(vr_vlmedcap * vr_txjurcap,2);
               tt_vljurcap := tt_vljurcap + vr_vljurcap;
-
+              
               /* Busca percentual de IRRF baseado na faixa do valor */
               pc_calcula_irrf(vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
                              ,vr_vljurcap
@@ -1058,7 +1092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                              ' Cooperativa: ' || pr_cdcooper || '. Conta: ' || vr_tab_crapcot(idx).nrdconta || '. Tipo Pessoa: ' || vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa || '. Valor: ' || vr_vljurcap;
                 RAISE vr_exc_saida;
               END IF;
-                  
+              
             ELSE
               vr_vlbasjur := 0;
               vr_vljurcap := 0;
@@ -1096,31 +1130,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlmedcap := 0;
             vr_vldeirrf := 0;
           END IF;
-              
+          
           /* Calcula retorno sobre TARIFAS PAGAS...........................*/
           vr_vlbastar := 0;
           vr_vljurtar := 0;
-              
+          
           IF vr_txjurtar > 0 THEN
             IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
               -- Busca da quantidade de operações de auto atendimento se existir
               IF vr_tab_tarifa.exists(vr_tab_crapcot(idx).nrdconta) THEN
                 vr_vlbastar := vr_tab_tarifa(vr_tab_crapcot(idx).nrdconta);
                 vr_vljurtar := TRUNC(vr_vlbastar * vr_txjurtar,2);
-                tt_vljurtar := tt_vljurtar + vr_vljurtar;  
+                tt_vljurtar := tt_vljurtar + vr_vljurtar;
               ELSE
                 vr_vlbastar := 0;
                 vr_vljurtar := 0;
-              END IF; 
-            END IF;
           END IF;
-              
+        END IF;
+            END IF;
+
           /********* M360 - Calculo retorno sobre Auto Atendimento ****************/
           IF vr_tab_autoate.exists(vr_tab_crapcot(idx).nrdconta) THEN
             vr_vlbasaut := vr_tab_autoate(vr_tab_crapcot(idx).nrdconta);
           ELSE
             vr_vlbasaut := 0;
-          END IF; 
+            END IF;
           vr_vljuraut := 0;
           -- Havendo taxa de juros a aplicar        
           IF vr_txjuraut > 0 THEN                    
@@ -1128,18 +1162,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             IF vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa IN (1,2) AND vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).dtelimin IS NULL AND vr_flgdemit = 1 THEN
               vr_vljuraut := ROUND(vr_vlbasaut * vr_txjuraut,2);
               tt_vljuraut := tt_vljuraut + vr_vljuraut;  
-            END IF;
-          END IF;
+        END IF;
+        END IF;
           /********* M360 - Calculo retorno sobre Auto Atendimento ****************/
-          
-          -- efetua os acumuladores dos calculos
-          tt_vlbasret := tt_vlbasret + vr_vlbasret;
-          tt_vldretor := tt_vldretor + vr_vldretor;
-          tt_vlbasdsc := tt_vlbasdsc + vr_vlbasdsc;
-          tt_vlretdsc := tt_vlretdsc + vr_vlretdsc;
-          tt_vlbastit := tt_vlbastit + vr_vlbastit;
-          tt_vlrettit := tt_vlrettit + vr_vlrettit;
-          tt_vlbastar := tt_vlbastar + vr_vlbastar;
+
+        -- efetua os acumuladores dos calculos
+        tt_vlbasret := tt_vlbasret + vr_vlbasret;
+        tt_vldretor := tt_vldretor + vr_vldretor;
+        tt_vlbasdsc := tt_vlbasdsc + vr_vlbasdsc;
+        tt_vlretdsc := tt_vlretdsc + vr_vlretdsc;
+        tt_vlbastit := tt_vlbastit + vr_vlbastit;
+        tt_vlrettit := tt_vlrettit + vr_vlrettit;
+        tt_vlbastar := tt_vlbastar + vr_vlbastar;
           tt_vlbasaut := tt_vlbasaut + vr_vlbasaut;
           
           -- Contagem de associados com retorno de Capital
@@ -1150,79 +1184,79 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           IF vr_vljurcap > 0 THEN
             tt_qtcrecap := tt_qtcrecap + 1;
           END IF;
-          
+
           -- Contagem de associados com sobras
-          IF vr_vldretor > 0 THEN
-            tt_qtassret := tt_qtassret + 1; -- Quantidade de associados com retorno
-          END IF;
+        IF vr_vldretor > 0 THEN
+          tt_qtassret := tt_qtassret + 1; -- Quantidade de associados com retorno
+        END IF;
 
-          IF vr_vlretdsc > 0 THEN
-            tt_qtassdsc := tt_qtassdsc + 1; -- Quantidade de associados com retorno creditado
-          END IF;
+        IF vr_vlretdsc > 0 THEN
+          tt_qtassdsc := tt_qtassdsc + 1; -- Quantidade de associados com retorno creditado
+        END IF;
 
-          IF vr_vlrettit > 0 THEN
-            tt_qtasstit := tt_qtasstit + 1; -- Quantidade de associados com desconto de titulos
-          END IF;
+        IF vr_vlrettit > 0 THEN
+          tt_qtasstit := tt_qtasstit + 1; -- Quantidade de associados com desconto de titulos
+        END IF;
 
           -- Se houve lançamento de juros sobre as operações de credito
           IF vr_vldretor + vr_vlretdsc + vr_vlrettit > 0 THEN
             tt_qtretcrd := tt_qtretcrd + 1;
-            tt_qtcredit := tt_qtcredit + 1;            
-          END IF;
-            
-          -- Armazena o valor total de retorno sobre operacoes de credito
+          tt_qtcredit := tt_qtcredit + 1;
+        END IF;
+        
+        -- Armazena o valor total de retorno sobre operacoes de credito
           tt_vlretcrd := tt_vlretcrd + vr_vldretor + vr_vlretdsc + vr_vlrettit;
           
-          
+
           -- Para os retornos de depositos unificados
           IF vr_indivdep = 1 THEN
             -- Se houve juros sobre aplicações
-            IF vr_vljurapl > 0 THEN
+        IF vr_vljurapl > 0 THEN
               tt_qtassapl := tt_qtassapl + 1;
-            END IF;
-            
+        END IF;
+
             -- Se houve juros sobre deposito a vista
-            IF vr_vljursdm > 0 THEN
+        IF vr_vljursdm > 0 THEN
               tt_qtasssdm := tt_qtasssdm + 1;
-            END IF;
-            
+        END IF;
+
             -- Se houve juros sobre aplicações + saldo medio
             IF vr_vljurapl + vr_vljursdm > 0 THEN
               tt_qtretdep := tt_qtretdep + 1;
-              tt_qtcredit := tt_qtcredit + 1;
-            END IF;            
-            
+          tt_qtcredit := tt_qtcredit + 1;
+        END IF;
+        
           ELSE  
             -- Se houve juros sobre aplicações 
             IF vr_vljurapl > 0 THEN
               tt_qtassapl := tt_qtassapl + 1;
               tt_qtretdep := tt_qtretdep + 1;
               tt_qtcredit := tt_qtcredit + 1;
-            END IF;
-            
+        END IF;
+        
             -- Se houve juros sobre deposito a vista
             IF vr_vljursdm > 0 THEN
               tt_qtasssdm := tt_qtasssdm + 1;
               tt_qtretdep := tt_qtretdep + 1;
-              tt_qtcredit := tt_qtcredit + 1;
-            END IF;
+          tt_qtcredit := tt_qtcredit + 1;
+        END IF;
           END IF;  
 
           -- Armazena o valor total de retorno sobre depositos (aplicacoes e saldo médio C/C) 
           tt_vlretdep := tt_vlretdep + vr_vljurapl + vr_vljursdm;
-            
+
           -- Se houve juros sobre Tarifas pagas
           IF vr_vljurtar > 0 THEN
             tt_qtasstar := tt_qtasstar + 1;            
             tt_qtcredit := tt_qtcredit + 1;
           END IF;
-            
+
           -- Se houve juros sobre AutoAtendimento
           IF vr_vljuraut > 0 THEN
             tt_qtassaut := tt_qtassaut + 1;
             tt_qtcredit := tt_qtcredit + 1;
           END IF;
-          
+
           -- Calcula o valor do Retorno total
           vr_vlcredit := vr_vldretor + vr_vlretdsc + vr_vlrettit
                        + vr_vljurapl + vr_vljursdm
@@ -1232,29 +1266,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           tt_vlcredit := tt_vlcredit + vr_vlcredit; 
           tt_vlcrecot := tt_vlcrecot + vr_vlcrecot; 
           tt_vlcrecta := tt_vlcrecta + vr_vlcrecta; 
-          
+
           -- Calcula o valor do retorno total
           vr_vlcretot := vr_vlcredit + vr_vljurcap;
-          
+
           -- Acumular valor do retorno total
           tt_vlcretot := tt_vlcretot + vr_vlcretot;
 
-          -- Se for processo definitivo, entao popula a temp-table
-          IF vr_inprvdef = 1 THEN
+        -- Se for processo definitivo, entao popula a temp-table
+        IF vr_inprvdef = 1 THEN
             
             -- Criação do índice
-            vr_indice := vr_indice + 1;
+          vr_indice := vr_indice + 1;
             -- Copia das informações para as colunas
             vr_tab_crrl048(vr_indice).dsrowid := vr_tab_crapcot(idx).nrrowid;
             vr_tab_crrl048(vr_indice).nrdconta := vr_tab_crapcot(idx).nrdconta;
             vr_tab_crrl048(vr_indice).inpessoa := vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa;
             
             vr_tab_crrl048(vr_indice).flraimfx := 0;
-            vr_tab_crrl048(vr_indice).qtraimfx := vr_qtraimfx;            
+          vr_tab_crrl048(vr_indice).qtraimfx := vr_qtraimfx;
             vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crapcot(idx).vldcotas;
             
             /* Juros e IR sobre Cotas */
-            vr_tab_crrl048(vr_indice).vljurcap := vr_vljurcap;
+          vr_tab_crrl048(vr_indice).vljurcap := vr_vljurcap;
             vr_tab_crrl048(vr_indice).vldeirrf := vr_vldeirrf;
             
             /* Efetuar a mesma divisão da Cotas e CC para que o relatório possua o mesmo arredondamento dos lançamentos */
@@ -1271,7 +1305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecta := vr_vlcrecta + vr_tab_crrl048(vr_indice).vlretcrd_cta;
             
             /* Aplicacoes */
-            vr_tab_crrl048(vr_indice).vljurapl := vr_vljurapl;
+          vr_tab_crrl048(vr_indice).vljurapl := vr_vljurapl;
             pc_distribui_cotas_cc(vr_tab_crrl048(vr_indice).vljurapl
                                  ,vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
                                  ,vr_tab_crrl048(vr_indice).vljurapl_cot
@@ -1280,7 +1314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecta := vr_vlcrecta + vr_tab_crrl048(vr_indice).vljurapl_cta;
             
             /* Saldo Medio */
-            vr_tab_crrl048(vr_indice).vljursdm := vr_vljursdm;
+          vr_tab_crrl048(vr_indice).vljursdm := vr_vljursdm;
             pc_distribui_cotas_cc(vr_tab_crrl048(vr_indice).vljursdm
                                  ,vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
                                  ,vr_tab_crrl048(vr_indice).vljursdm_cot
@@ -1289,7 +1323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecta := vr_vlcrecta + vr_tab_crrl048(vr_indice).vljursdm_cta;
             
             /* Tarifas aplicadas */
-            vr_tab_crrl048(vr_indice).vljurtar := vr_vljurtar;
+          vr_tab_crrl048(vr_indice).vljurtar := vr_vljurtar;
             pc_distribui_cotas_cc(vr_tab_crrl048(vr_indice).vljurtar
                                  ,vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).inpessoa
                                  ,vr_tab_crrl048(vr_indice).vljurtar_cot
@@ -1353,10 +1387,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_vlcrecot := vr_vlcrecot + vr_vlcrecot_tmp;
             vr_vlcrecta := vr_vlcrecta + vr_vlcrecta_tmp;
             
-          END IF;
+        END IF;
 
-          -- Atualiza o registro abaixo para utilizacao no relatorio CRRL412
-          -- Se todos os valores forem zeros, nao deve imprimir no relatorio
+        -- Atualiza o registro abaixo para utilizacao no relatorio CRRL412
+        -- Se todos os valores forem zeros, nao deve imprimir no relatorio
           IF vr_vlcretot + vr_vlmedcap + vr_vlbasjur + vr_vlbasret + vr_vlrendim
            + vr_vlbassdm + vr_vldeirrf + vr_vlbastar + vr_vlbasaut > 0  THEN
             -- Criação do registro
@@ -1365,31 +1399,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_tab_crrl412(vr_indice_412).cdagenci := vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).cdagenci;
             vr_tab_crrl412(vr_indice_412).nrdconta := vr_tab_crapcot(idx).nrdconta;
             vr_tab_crrl412(vr_indice_412).nmprimtl := substr(vr_tab_crapass(vr_tab_crapcot(idx).nrdconta).nmprimtl,1,30);
-            vr_tab_crrl412(vr_indice_412).vlmedcap := vr_vlmedcap;
-            vr_tab_crrl412(vr_indice_412).vlbascap := vr_vlbasjur;
-            vr_tab_crrl412(vr_indice_412).vlretcap := vr_vljurcap;
-            vr_tab_crrl412(vr_indice_412).vlbasopc := vr_vlbasret + vr_vlbasdsc + vr_vlbastit;
-            vr_tab_crrl412(vr_indice_412).vlretopc := vr_vldretor + vr_vlretdsc + vr_vlrettit;
-            vr_tab_crrl412(vr_indice_412).vlbasapl := vr_vlrendim;
-            vr_tab_crrl412(vr_indice_412).vlretapl := vr_vljurapl;
-            vr_tab_crrl412(vr_indice_412).vlbassdm := vr_vlbassdm;
-            vr_tab_crrl412(vr_indice_412).vlretsdm := vr_vljursdm;
-            vr_tab_crrl412(vr_indice_412).vldeirrf := vr_vldeirrf;
+          vr_tab_crrl412(vr_indice_412).vlmedcap := vr_vlmedcap;
+          vr_tab_crrl412(vr_indice_412).vlbascap := vr_vlbasjur;
+          vr_tab_crrl412(vr_indice_412).vlretcap := vr_vljurcap;
+          vr_tab_crrl412(vr_indice_412).vlbasopc := vr_vlbasret + vr_vlbasdsc + vr_vlbastit;
+          vr_tab_crrl412(vr_indice_412).vlretopc := vr_vldretor + vr_vlretdsc + vr_vlrettit;
+          vr_tab_crrl412(vr_indice_412).vlbasapl := vr_vlrendim;
+          vr_tab_crrl412(vr_indice_412).vlretapl := vr_vljurapl;
+          vr_tab_crrl412(vr_indice_412).vlbassdm := vr_vlbassdm;
+          vr_tab_crrl412(vr_indice_412).vlretsdm := vr_vljursdm;
+          vr_tab_crrl412(vr_indice_412).vldeirrf := vr_vldeirrf;
             vr_tab_crrl412(vr_indice_412).percirrf := vr_vlprirrf;
-            vr_tab_crrl412(vr_indice_412).vlbastar := vr_vlbastar;
-            vr_tab_crrl412(vr_indice_412).vlrettar := vr_vljurtar;
+          vr_tab_crrl412(vr_indice_412).vlbastar := vr_vlbastar;
+          vr_tab_crrl412(vr_indice_412).vlrettar := vr_vljurtar;
             vr_tab_crrl412(vr_indice_412).vlbasaut := vr_vlbasaut;
             vr_tab_crrl412(vr_indice_412).vlretaut := vr_vljuraut;
-            vr_tab_crrl412(vr_indice_412).vlcredit := vr_vlcredit;
+          vr_tab_crrl412(vr_indice_412).vlcredit := vr_vlcredit;
             vr_tab_crrl412(vr_indice_412).vlcrecot := vr_vlcrecot;
             vr_tab_crrl412(vr_indice_412).vlcrecta := vr_vlcrecta;
-            vr_tab_crrl412(vr_indice_412).vlcretot := vr_vlcretot;
-          END IF;
+          vr_tab_crrl412(vr_indice_412).vlcretot := vr_vlcretot;
+        END IF;
         END LOOP;/* Fim do LOOP -- leitura da pltabe vr_tab_crapcot */ 
       END LOOP; /*  Fim do LOOP --  Leitura do crapcot  */
 
       CLOSE cr_crapcot;      
-      
+
       -- Se for processo definitivo e existirem informações na pltable      
       IF vr_inprvdef = 1 AND vr_tab_crrl048.count > 0 THEN 
         -- busca os dados da capa do lote
@@ -1406,7 +1440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic) || ' LOTE = ' ||to_char(vr_nrdolote,'000000');
           pc_controle_critica;
           RAISE vr_exc_saida;
-        ELSE
+      ELSE
           CLOSE cr_craplot;
           -- Iniciar variaveis para gravação posterior de lote
           rw_craplot.vlinfocr := 0;
@@ -1416,22 +1450,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           rw_craplot.qtinfoln := 0;
           rw_craplot.qtcompln := 0;
           rw_craplot.nrseqdig := 0;
-        END IF;  
-        
+      END IF;
+
         -- Perceorre a tabela que foi populada para o processo definitivo
         vr_indice := vr_tab_crrl048.first;
         WHILE vr_indice IS NOT NULL LOOP
-          
+
           /*  Credito do retorno  */
           IF vr_increret = 1 THEN           
 
             /*  Sobras sobre Operações de Crédito */
             IF vr_tab_crrl048(vr_indice).vlretcrd > 0 THEN
-              
+
               /* Operacores de credito integralizadas */  
               vr_tab_crrl048(vr_indice).qtraimfx := 0;
               vr_tab_crrl048(vr_indice).flraimfx := 1; -- Deve atualizar
-            
+
               -- Insere dados na tabela de lancamentos de cota / capital
               IF vr_tab_crrl048(vr_indice).vlretcrd_cot > 0 THEN              
                 BEGIN
@@ -1446,7 +1480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                      vllanmto,
                      nrseqdig,
                      cdcooper)
-                  VALUES
+                   VALUES
                     (vr_dtmvtolt,
                      vr_cdagenci,
                      vr_cdbccxlt,
@@ -1468,25 +1502,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                 -- Atualiza o valor das cotas na conta
                 vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vlretcrd_cot;                
-              END IF;  
-                
+              END IF;
+
               -- Lançamento em C/C  
               IF vr_tab_crrl048(vr_indice).vlretcrd_cta > 0 THEN
-                BEGIN
+                  BEGIN
                   INSERT INTO craplcm
-                    (dtmvtolt,
-                     cdagenci,
-                     cdbccxlt,
-                     nrdolote,
-                     nrdconta,
+                      (dtmvtolt,
+                       cdagenci,
+                       cdbccxlt,
+                       nrdolote,
+                       nrdconta,
                      nrdctabb,
                      nrdctitg,
-                     nrdocmto,
-                     cdhistor,
-                     vllanmto,
-                     nrseqdig,
-                     cdcooper)
-                  VALUES
+                       nrdocmto,
+                       cdhistor,
+                       vllanmto,
+                       nrseqdig,
+                       cdcooper)
+                     VALUES
                     (vr_dtmvtolt,
                      vr_cdagenci,
                      vr_cdbccxlt,
@@ -1498,14 +1532,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                      vr_cdhisopc_cta,
                      vr_tab_crrl048(vr_indice).vlretcrd_cta,
                      rw_craplot.nrseqdig + 1,
-                     pr_cdcooper);
-                EXCEPTION
-                  WHEN OTHERS THEN
+                       pr_cdcooper);
+                  EXCEPTION
+                    WHEN OTHERS THEN
                     vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
-                    RAISE vr_exc_saida;
-                END;
+                      RAISE vr_exc_saida;
+                  END;
                 -- Incrementar sequencia no lote e quantidades
-                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                 rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
               END IF;
@@ -1513,7 +1547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vlretcrd;
               rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vlretcrd;
             END IF; -- vlretcrd > 0
-            
+
             /* Se foi solicitado o retorno das sobras sobre depósitos unificada */ 
             IF vr_indivdep = 1 THEN
               /* Haverá um único lançamento */
@@ -1523,8 +1557,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 /* Operacores de credito integralizadas */  
                 vr_tab_crrl048(vr_indice).qtraimfx := 0;
                 vr_tab_crrl048(vr_indice).flraimfx := 1; -- Deve atualizar
-                  
-                -- Insere dados na tabela de lancamentos de cota / capital
+
+                  -- Insere dados na tabela de lancamentos de cota / capital
                 IF vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot > 0 THEN
                   BEGIN
                     INSERT INTO craplct
@@ -1561,7 +1595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   -- Atualiza o valor das cotas na conta
                   vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljursdm_cot + vr_tab_crrl048(vr_indice).vljurapl_cot;
                 END IF;
-                  
+
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljursdm_cta + vr_tab_crrl048(vr_indice).vljurapl_cta > 0 THEN
                   BEGIN
@@ -1597,7 +1631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                       RAISE vr_exc_saida;
                   END;
                   -- Incrementar sequencia no lote e quantidades
-                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                 END IF;
@@ -1605,7 +1639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljursdm + vr_tab_crrl048(vr_indice).vljurapl;
                 rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljursdm + vr_tab_crrl048(vr_indice).vljurapl;
               END IF; -- vljursdm + vljurapl > 0
-              
+                
             ELSE   
               /* verifica se ha saldo sobre depositos a vista */
               IF vr_tab_crrl048(vr_indice).vljursdm > 0 THEN
@@ -1616,19 +1650,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   
                 -- Insere dados na tabela de lancamentos de cota / capital
                 IF vr_tab_crrl048(vr_indice).vljursdm_cot > 0 THEN
-                  BEGIN
-                    INSERT INTO craplct
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdconta,
-                       nrdocmto,
-                       cdhistor,
-                       vllanmto,
-                       nrseqdig,
-                       cdcooper)
-                    VALUES
+                BEGIN
+                  INSERT INTO craplct
+                    (dtmvtolt,
+                     cdagenci,
+                     cdbccxlt,
+                     nrdolote,
+                     nrdconta,
+                     nrdocmto,
+                     cdhistor,
+                     vllanmto,
+                     nrseqdig,
+                     cdcooper)
+                  VALUES
                       (vr_dtmvtolt,
                        vr_cdagenci,
                        vr_cdbccxlt,
@@ -1638,37 +1672,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdhisdpa_cot,
                        vr_tab_crrl048(vr_indice).vljursdm_cot,
                        rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
-                  EXCEPTION
-                    WHEN OTHERS THEN
+                     pr_cdcooper);
+                EXCEPTION
+                  WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
-                      RAISE vr_exc_saida;
-                  END;
+                    RAISE vr_exc_saida;
+                END;
                   -- Incrementar sequencia no lote e quantidades
-                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   -- Atualiza o valor das cotas na conta
                   vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljursdm_cot;
-                END IF;
-                  
+              END IF;
+
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljursdm_cta > 0 THEN
-                  BEGIN
+                BEGIN
                     INSERT INTO craplcm
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdconta,
+                    (dtmvtolt,
+                     cdagenci,
+                     cdbccxlt,
+                     nrdolote,
+                     nrdconta,
                        nrdctabb,
                        nrdctitg,
-                       nrdocmto,
-                       cdhistor,
-                       vllanmto,
-                       nrseqdig,
-                       cdcooper)
-                    VALUES
+                     nrdocmto,
+                     cdhistor,
+                     vllanmto,
+                     nrseqdig,
+                     cdcooper)
+                  VALUES
                       (vr_dtmvtolt,
                        vr_cdagenci,
                        vr_cdbccxlt,
@@ -1680,44 +1714,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdhisdpa_cta,
                        vr_tab_crrl048(vr_indice).vljursdm_cta,
                        rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
-                  EXCEPTION
-                    WHEN OTHERS THEN
+                     pr_cdcooper);
+                EXCEPTION
+                  WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
-                      RAISE vr_exc_saida;
-                  END;
+                    RAISE vr_exc_saida;
+                END;
                   -- Incrementar sequencia no lote e quantidades
-                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
-                END IF;
+              END IF;
                 -- Atualizar informações do lote  
                 rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljursdm;
                 rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljursdm;
               END IF; -- vljursdm > 0
-                
+
               /* verifica se ha saldo sobre depositos de aplicações */
               IF vr_tab_crrl048(vr_indice).vljurapl > 0 THEN
 
                 /* Operacores de credito integralizadas */  
                 vr_tab_crrl048(vr_indice).qtraimfx := 0;
                 vr_tab_crrl048(vr_indice).flraimfx := 1; -- Deve atualizar
-                  
+
                 -- Insere dados na tabela de lancamentos de cota / capital
                 IF vr_tab_crrl048(vr_indice).vljurapl_cot > 0 THEN
-                  BEGIN
+                BEGIN
                     INSERT INTO craplct
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
+                    (dtmvtolt,
+                     cdagenci,
+                     cdbccxlt,
+                     nrdolote,
                        nrdconta,
                        nrdocmto,
                        cdhistor,
                        vllanmto,
                        nrseqdig,
-                       cdcooper)
-                    VALUES
+                     cdcooper)
+                  VALUES
                       (vr_dtmvtolt,
                        vr_cdagenci,
                        vr_cdbccxlt,
@@ -1727,37 +1761,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdhisdpp_cot,
                        vr_tab_crrl048(vr_indice).vljurapl_cot,
                        rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
-                  EXCEPTION
-                    WHEN OTHERS THEN
+                     pr_cdcooper);
+                EXCEPTION
+                  WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCT: '||SQLERRM;
-                      RAISE vr_exc_saida;
-                  END;
+                    RAISE vr_exc_saida;
+                END;
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   -- Atualiza o valor das cotas na conta
                   vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurapl_cot;
-                END IF;
-                  
+              END IF;
+
                 -- Lançamento em C/C  
                 IF vr_tab_crrl048(vr_indice).vljurapl_cta > 0 THEN
-                  BEGIN
+                BEGIN
                     INSERT INTO craplcm
-                      (dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdconta,
+                    (dtmvtolt,
+                     cdagenci,
+                     cdbccxlt,
+                     nrdolote,
+                     nrdconta,
                        nrdctabb,
                        nrdctitg,
-                       nrdocmto,
-                       cdhistor,
-                       vllanmto,
-                       nrseqdig,
-                       cdcooper)
-                    VALUES
+                     nrdocmto,
+                     cdhistor,
+                     vllanmto,
+                     nrseqdig,
+                     cdcooper)
+                  VALUES
                       (vr_dtmvtolt,
                        vr_cdagenci,
                        vr_cdbccxlt,
@@ -1769,42 +1803,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                        vr_cdhisdpp_cta,
                        vr_tab_crrl048(vr_indice).vljurapl_cta,
                        rw_craplot.nrseqdig + 1,
-                       pr_cdcooper);
-                  EXCEPTION
-                    WHEN OTHERS THEN
+                     pr_cdcooper);
+                EXCEPTION
+                  WHEN OTHERS THEN
                       vr_dscritic := 'Erro no insert da CRAPLCM: '||SQLERRM;
-                      RAISE vr_exc_saida;
-                  END;
+                    RAISE vr_exc_saida;
+                END;
                   -- Incrementar sequencia no lote e quantidades
-                  rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;            
-                END IF;
+              END IF;
 
                 -- Atualizar informações do lote  
                 rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljurapl;
                 rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljurapl;
               END IF; -- vljurapl > 0
-            END IF;  
-              
+            END IF;
+
           END IF; --vr_increret = 1
 
           /* Juros ao capital */
           IF vr_tab_crrl048(vr_indice).vljurcap > 0  THEN
-            -- Insere dados na tabela de lancamentos de cota / capital
-            BEGIN
-              INSERT INTO craplct
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdocmto,
-                 cdhistor,
-                 vllanmto,
-                 nrseqdig,
-                 cdcooper)
-              VALUES
+                -- Insere dados na tabela de lancamentos de cota / capital
+                BEGIN
+                  INSERT INTO craplct
+                    (dtmvtolt,
+                     cdagenci,
+                     cdbccxlt,
+                     nrdolote,
+                     nrdconta,
+                     nrdocmto,
+                     cdhistor,
+                     vllanmto,
+                     nrseqdig,
+                     cdcooper)
+                  VALUES
                 (vr_dtmvtolt,
                  vr_cdagenci,
                  vr_cdbccxlt,
@@ -1813,41 +1847,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                  8005||lpad(vr_cdhisjur_cot,4,'0'),
                  vr_cdhisjur_cot,
                  vr_tab_crrl048(vr_indice).vljurcap,
-                 rw_craplot.nrseqdig + 1,
-                 pr_cdcooper);
-            EXCEPTION
-              WHEN OTHERS THEN
+                     rw_craplot.nrseqdig + 1,
+                     pr_cdcooper);
+                EXCEPTION
+                  WHEN OTHERS THEN
                 vr_dscritic := 'Erro insert da CRAPLCT (5): '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
+                    RAISE vr_exc_saida;
+                END;
 
-            -- Atualiza o valor das cotas na conta
+                -- Atualiza o valor das cotas na conta
             vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurcap;
 
             -- Atualizar informações do lote  
-            rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
             rw_craplot.vlinfocr := rw_craplot.vlinfocr + vr_tab_crrl048(vr_indice).vljurcap;
             rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljurcap;
             rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
             rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
           END IF; -- vr_tab_crrl048(vr_indice).vljurcap > 0
-
+              
           -------IRRF sobre rendimentos capital------
           IF vr_tab_crrl048(vr_indice).vldeirrf > 0 THEN
               
-            BEGIN
-              INSERT INTO craplct
-                (dtmvtolt,
-                 cdagenci,
-                 cdbccxlt,
-                 nrdolote,
-                 nrdconta,
-                 nrdocmto,
-                 cdhistor,
-                 vllanmto,
-                 nrseqdig,
-                 cdcooper)
-              VALUES
+                BEGIN
+                  INSERT INTO craplct
+                    (dtmvtolt,
+                     cdagenci,
+                     cdbccxlt,
+                     nrdolote,
+                     nrdconta,
+                     nrdocmto,
+                     cdhistor,
+                     vllanmto,
+                     nrseqdig,
+                     cdcooper)
+                  VALUES
                 (vr_dtmvtolt,
                  vr_cdagenci,
                  vr_cdbccxlt,
@@ -1856,29 +1890,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                  8005||lpad(vr_cdhisirr_cot,4,'0'),
                  vr_cdhisirr_cot,
                  vr_tab_crrl048(vr_indice).vldeirrf,
-                 rw_craplot.nrseqdig + 1,
-                 pr_cdcooper);
-            EXCEPTION
-              WHEN OTHERS THEN
+                     rw_craplot.nrseqdig + 1,
+                     pr_cdcooper);
+                EXCEPTION
+                  WHEN OTHERS THEN
                 vr_dscritic := 'Erro insert da CRAPLCT (6): '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
+                    RAISE vr_exc_saida;
+                END;
 
-            -- Atualiza o valor das cotas na conta
+                -- Atualiza o valor das cotas na conta
             vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas - vr_tab_crrl048(vr_indice).vldeirrf;
 
             -- Atualizar informações do lote  
-            rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
+                rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
             rw_craplot.vlinfodb := rw_craplot.vlinfodb + vr_tab_crrl048(vr_indice).vldeirrf;
             rw_craplot.vlcompdb := rw_craplot.vlcompdb + vr_tab_crrl048(vr_indice).vldeirrf;
             rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
             rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
           END IF;  --vr_tab_crrl048(vr_indice).vldeirrf > 0
-          
+              
           /* ---------------TARIFAS PAGAS--------------- */
           IF vr_tab_crrl048(vr_indice).vljurtar > 0  THEN
-           
-            -- Insere dados na tabela de lancamentos de cota / capital
+
+              -- Insere dados na tabela de lancamentos de cota / capital
             IF vr_tab_crrl048(vr_indice).vljurtar_cot > 0 THEN
               BEGIN
                 INSERT INTO craplct
@@ -1915,7 +1949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               -- Atualiza o valor das cotas na conta
               vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljurtar_cot;
             END IF;  
-              
+
             -- Lançamento em C/C  
             IF vr_tab_crrl048(vr_indice).vljurtar_cta > 0 THEN
               BEGIN
@@ -1951,7 +1985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   RAISE vr_exc_saida;
               END;
               -- Incrementar sequencia no lote e quantidades
-              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
+              rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
             END IF;
@@ -1960,10 +1994,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             rw_craplot.vlcompcr := rw_craplot.vlcompcr + vr_tab_crrl048(vr_indice).vljurtar;
           END IF;
           /* -------------FIM TARIFAS PAGAS------------- */
-            
+
           /* ---------------AUTO ATENDIMENTO--------------- */
           IF vr_tab_crrl048(vr_indice).vljuraut > 0  THEN
-                  
+
             -- Insere dados na tabela de lancamentos de cota / capital
             IF vr_tab_crrl048(vr_indice).vljuraut_cot > 0 THEN  
               -- Insere dados na tabela de lancamentos de cota / capital
@@ -2003,7 +2037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               vr_tab_crrl048(vr_indice).vldcotas := vr_tab_crrl048(vr_indice).vldcotas + vr_tab_crrl048(vr_indice).vljuraut_cot;
 
             END IF;  
-              
+          
             -- Lançamento em C/C  
             IF vr_tab_crrl048(vr_indice).vljuraut_cta > 0 THEN
               BEGIN
@@ -2057,19 +2091,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
             vr_tab_crrl048(vr_indice).qtraimfx := 0;
             vr_tab_crrl048(vr_indice).flraimfx := 1; -- Deve atualizar
           END IF; --vr_tab_crrl048(vr_indice).inpessoa = 3
-          
+
           -- Enfim, fazemos a atualização da CRAPCOT
-          BEGIN
-            UPDATE crapcot
+              BEGIN
+                UPDATE crapcot
                SET qtraimfx = decode(vr_tab_crrl048(vr_indice).flraimfx,1,vr_tab_crrl048(vr_indice).qtraimfx,qtraimfx)
                   ,vldcotas = vr_tab_crrl048(vr_indice).vldcotas
              WHERE ROWID = vr_tab_crrl048(vr_indice).dsRowid;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro update da CRAPCOT: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
-          
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := 'Erro update da CRAPCOT: '||SQLERRM;
+                  RAISE vr_exc_saida;
+              END;
+
           -- Busca do próximo registro
           vr_indice := vr_tab_crrl048.next(vr_indice);
         END LOOP;
@@ -2077,7 +2111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Se há informações para gravação do lote
         IF rw_craplot.nrseqdig > 0 THEN
           -- Insere a capa do lote
-          BEGIN
+              BEGIN
             INSERT INTO craplot (dtmvtolt
                                 ,cdagenci
                                 ,cdbccxlt
@@ -2104,13 +2138,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                 ,rw_craplot.qtinfoln
                                 ,rw_craplot.qtcompln
                                 ,rw_craplot.nrseqdig);
-          EXCEPTION
-            WHEN OTHERS THEN
+              EXCEPTION
+                WHEN OTHERS THEN
               vr_dscritic := 'Erro insert da CRAPLOT: '||SQLERRM;
-              RAISE vr_exc_saida;
-          END;
+                  RAISE vr_exc_saida;
+              END;
         END IF;
-      END IF;
+            END IF;
       
       ----------- Emissão dos relatórios --------
       
@@ -2180,7 +2214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                                '<qtcretot>'||to_char(tt_qtcredit + tt_qtcrecap,'fm999999999G990')           ||'</qtcretot>'||
                                              '</crrl043>'
                                              ,pr_fecha_xml => TRUE);
-      
+          
       -- Chamada do iReport para gerar o arquivo de saida
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper,                    --> Cooperativa conectada
                                   pr_cdprogra  => vr_cdprogra,                    --> Programa chamador
@@ -2206,9 +2240,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                                   pr_des_erro  => vr_dscritic);                   --> Saida com erro
       -- Libera a memoria do clob
       dbms_lob.close(vr_xml);
-      
+
       IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
+                RAISE vr_exc_saida;
       END IF;
 
       
@@ -2405,7 +2439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
 
         -- Vai para a proxima linha do temp-table
         vr_indice_412 := vr_tab_crrl412.next(vr_indice_412);
-      END LOOP;
+        END LOOP;
       
       -- Copiar blob pendente
       pc_escreve_xml(1,'',TRUE);
@@ -2468,7 +2502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-
+      
       -- Zera taxa de retorno apos o credito 
       BEGIN
         UPDATE craptab
@@ -2531,51 +2565,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Efetuar rollback
         ROLLBACK;
     END pc_calculo_retorno_sobras;
-  
+		
   /* Resumo das informações cota capital */  
   PROCEDURE pc_verifica_conta_capital (pr_cdcooper IN crapcop.cdcooper%TYPE      --> Cód. cooperativa
-                                      ,pr_nrdconta IN craplct.nrdconta%TYPE     --> Número da conta
-                                      ,pr_flgconsu OUT INTEGER                  --> Flag para indicar se encontrou lançamentos de cotas/capita
-                                      ,pr_vltotsob OUT craplct.vllanmto%TYPE    --> Valor total de sobras
-                                      ,pr_vlliqjur OUT craplct.vllanmto%TYPE    --> Valor liquido do crédito de juros sobre capital
-                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE    --> Cód. da crítica
-                                      ,pr_dscritic OUT crapcri.dscritic%TYPE)IS --> Descrição da crítica
+			                                 ,pr_nrdconta IN craplct.nrdconta%TYPE     --> Número da conta
+                                       ,pr_flgconsu OUT INTEGER                  --> Flag para indicar se encontrou lançamentos de cotas/capita
+                                       ,pr_vltotsob OUT craplct.vllanmto%TYPE    --> Valor total de sobras
+                                       ,pr_vlliqjur OUT craplct.vllanmto%TYPE    --> Valor liquido do crédito de juros sobre capital
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE    --> Cód. da crítica
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE)IS --> Descrição da crítica
   BEGIN    
-    /* ..........................................................................
+	/* ..........................................................................
 
-     Procedure : pc_verifica_conta_capital 
-     Sistema : Conta-Corrente - Cooperativa de Credito
-     Sigla   : CRED
-     Autor   : Lucas Reinert
+   Procedure : pc_verifica_conta_capital 
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : Lucas Reinert
      Data    : Fevereiro/2015                      Ultima atualizacao: 03/08/2016
 
-     Dados referentes ao programa:
+   Dados referentes ao programa:
 
-     Frequencia: Sempre que for chamado
-     
-     Objetivo  : Procedure para verificar a data em que o cooperado deve ser 
-                 informado sobre os créditos que recebeu na conta capital 
-                 referente a juros sobre capital e retorno de sobras.
-                 
-     Alterações: 05/02/2015 - Alterado para mostrar o valor bruto do crédito de juros 
-                              sobre capital, ao invés de líquido. (Reinert)
-                              
-                 02/03/2015 - Ajuste para caso houver erro na conversao da data
-                              de comunicacao nao gere rollback, apenas aborte o
-                              programa com os valores nulos. Ajustos feitos para
-                              finalizar a solicitação do chamado 396732. (Kelvin)
-                              
-                 16/05/2016 - Removido o cursor da craptab e utilizado a chamada da 
-                              TABE0001.fn_busca_dstextab que possui os tratamentos
-                              para utilizacao do indice da tabela
-                              (Douglas - Chamado 452286)
+   Frequencia: Sempre que for chamado
+	 
+   Objetivo  : Procedure para verificar a data em que o cooperado deve ser 
+	             informado sobre os créditos que recebeu na conta capital 
+							 referente a juros sobre capital e retorno de sobras.
+							 
+	 Alterações: 05/02/2015 - Alterado para mostrar o valor bruto do crédito de juros 
+	                          sobre capital, ao invés de líquido. (Reinert)
+                            
+               02/03/2015 - Ajuste para caso houver erro na conversao da data
+                            de comunicacao nao gere rollback, apenas aborte o
+                            programa com os valores nulos. Ajustos feitos para
+                            finalizar a solicitação do chamado 396732. (Kelvin)
+                            
+                16/05/2016 - Removido o cursor da craptab e utilizado a chamada da 
+                             TABE0001.fn_busca_dstextab que possui os tratamentos
+                             para utilizacao do indice da tabela
+                             (Douglas - Chamado 452286)
                               
                  03/08/2016 - Busca dos lançamentos de Sobra em CC e novos historicos
                               (Marcos-Supero)             
                               
-    ............................................................................. */
+	............................................................................. */
   DECLARE  
-    
+		
     -- Cursor de lançamento de cotas/capital
     CURSOR cr_craplct (pr_dtmvtocd crapdat.dtmvtocd%TYPE) IS
       SELECT sum(decode(craplct.cdhistor,vr_cdhisjur_cot,craplct.vllanmto,0)) vlliqjur
@@ -2589,7 +2623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
          AND craplct.nrdolote  = vr_nrdolote
          AND craplct.cdhistor IN (vr_cdhisopc_cot,vr_cdhisdep_cot,vr_cdhisdpp_cot,vr_cdhisdpa_cot,vr_cdhistar_cot,vr_cdhisaut_cot,vr_cdhisjur_cot);
     rw_craplct cr_craplct%ROWTYPE;
-
+    								
     -- Cursor de lançamento de cotas em CC
     CURSOR cr_craplcm (pr_dtmvtocd crapdat.dtmvtocd%TYPE) IS
       SELECT sum(craplcm.vllanmto) vltotsob
@@ -2606,62 +2640,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     vr_dtcomuni DATE; -- Data de comunicação 
-            
+    				
     -- Tratamento de erros
-    vr_exc_saida  EXCEPTION;        
+    vr_exc_saida  EXCEPTION;				
     vr_cdcritic   crapcri.cdcritic%TYPE;
     vr_dscritic   crapcri.dscritic%TYPE;
-    
+					
     -- Busca na CRAPTAB      
     vr_dstextab   craptab.dstextab%TYPE;
-          
-  BEGIN
-      
+					
+    BEGIN
+			
     -- Iniciar variaveis de retorno
     pr_flgconsu := 0; -- Flag de consulta de lançamentos de cotas/capital
     pr_vltotsob := 0; -- Valor total das sobras
     pr_vlliqjur := 0; -- Valor liquido do crédito de juros sobre capital
       
-    -- Leitura do calendário da cooperativa
-    OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-    FETCH btch0001.cr_crapdat
-     INTO rw_crapdat;
-    -- Se não encontrar
-    IF btch0001.cr_crapdat%NOTFOUND THEN
-      -- Fechar o cursor pois efetuaremos raise
-      CLOSE btch0001.cr_crapdat;
-      -- Montar mensagem de critica
-      vr_cdcritic := 1;
-      RAISE vr_exc_saida;
-    ELSE
-      -- Apenas fechar o cursor
-      CLOSE btch0001.cr_crapdat;
-    END IF;
-    
-    -- Busca os valores de juros da tabela de parametros
-    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => 0
-                                             ,pr_cdacesso => 'EXEICMIRET'
-                                             ,pr_tpregist => 1);
-    -- Se nao encontrou parametro cancela o programa
-    IF TRIM(vr_dstextab) IS NULL THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Tabela de parametrizacao nao encontrada';
-      RAISE vr_exc_saida;
-    END IF;        
-    
-    BEGIN
-      -- Captura data de comunicação a partir do resultado da consulta
-      vr_dtcomuni := to_date(SUBSTR(vr_dstextab,67,10), 'dd/mm/rrrr');  
-    EXCEPTION
-      WHEN OTHERS THEN
+			-- Leitura do calendário da cooperativa
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+       INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+			
+      -- Busca os valores de juros da tabela de parametros
+      vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'EXEICMIRET'
+                                               ,pr_tpregist => 1);
+      -- Se nao encontrou parametro cancela o programa
+      IF TRIM(vr_dstextab) IS NULL THEN
+				 vr_cdcritic := 0;
+         vr_dscritic := 'Tabela de parametrizacao nao encontrada';
+				 RAISE vr_exc_saida;
+      END IF;				
+			
+		  BEGIN
+        -- Captura data de comunicação a partir do resultado da consulta
+		vr_dtcomuni := to_date(SUBSTR(vr_dstextab,67,10), 'dd/mm/rrrr');  
+        EXCEPTION
+          WHEN OTHERS THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Erro ao capturar data de comunicacao: ' || SQLERRM;    
         RAISE vr_exc_saida;
-    END;
-      
+      END;
+        
     /* Enviar a comunicação até 15 dias após a data parametrizada */
     IF rw_crapdat.dtmvtolt BETWEEN vr_dtcomuni AND (vr_dtcomuni + gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTDIAS_BANNER_SOBRAS')) THEN
       -- Busca lançamentos de cotas
@@ -2688,33 +2722,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         pr_vltotsob := pr_vltotsob + nvl(rw_craplcm.vltotsob,0);
       ELSE
         CLOSE cr_craplcm;
-      END IF;   
+						END IF;            
       -- Se houve valor das Sobras
       IF pr_vlliqjur + pr_vltotsob > 0 THEN
         pr_flgconsu := 1;
-      END IF;
-    END IF;
-    
-  EXCEPTION
-    WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas código
-      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descrição
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      END IF;
-      -- Devolvemos código e critica encontradas das variaveis locais
-      pr_cdcritic := NVL(vr_cdcritic,0);
+						END IF;
+			END IF;
+			
+			EXCEPTION
+			  WHEN vr_exc_saida THEN
+					-- Se foi retornado apenas código
+					IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+						-- Buscar a descrição
+						vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+					END IF;
+					-- Devolvemos código e critica encontradas das variaveis locais
+					pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := 'SOBR0001.pc_verifica_conta_capital --> '|| vr_dscritic;
-      -- Efetuar rollback
-      ROLLBACK;
+					-- Efetuar rollback
+					ROLLBACK;
       
-    WHEN OTHERS THEN
-      -- Efetuar retorno do erro não tratado
-      pr_cdcritic := 0;
+				WHEN OTHERS THEN
+					-- Efetuar retorno do erro não tratado
+					pr_cdcritic := 0;
       pr_dscritic :=  'SOBR0001.pc_verifica_conta_capital --> '||sqlerrm;
-      -- Efetuar rollback
-      ROLLBACK;      
-    END;      
+					-- Efetuar rollback
+					ROLLBACK;			
+    END;
   END pc_verifica_conta_capital;
 
 END sobr0001;

@@ -352,7 +352,7 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                  ,pr_cddbanco IN crapcti.cddbanco%TYPE  --Codigo banco
                                  ,pr_cdageban IN crapcti.cdageban%TYPE  --Codigo Agencia
                                  ,pr_nrctatrf IN crapcti.nrctatrf%TYPE  --Numero Conta Transferencia
-                                 ,pr_cdtiptra IN INTEGER  /* 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED*/
+                                 ,pr_cdtiptra IN INTEGER  /* 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED */
                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --Codigo Operador
                                  ,pr_tpoperac IN INTEGER  /* 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca / 4 - TED / 5 - Transferencia intercooperativa / 10 - DARF */
                                  ,pr_flgvalid IN BOOLEAN                --Indicador validacoes
@@ -485,12 +485,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --             06/05/2016 - Ajuste para validar o banco e agencia da conta destino em operações
   --			    	              de TED (Adriano - M117).
   --
-  --		         10/05/2016 - Ajuste para retirar a criação do xml com as informações consultas. O 
+  --		     10/05/2016 - Ajuste para retirar a criação do xml com as informações consultas. O 
   --						              xml será criado pela rotina origem (Adriano - M117).
   --
   --             13/05/2016 - Projeto 117 No procedimento pc_con_contas_cadastradas, passagem de upper() 
-  --                          e trim() (campo nmtitula) para a consulta de crapcti diretamente na chamada 
-  --                          do cursor (Carlos)
+  --                      e trim() (campo nmtitula) para a consulta de crapcti diretamente na chamada 
+  --                      do cursor (Carlos)
   --
   --            17/05/2016 - Ajuste na mensagem de retorno ao validar o saldo limite
   --                        (Adriano - M117).   
@@ -503,11 +503,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                         --> Ajustado tamanhdo do index e tamanho do campo nmitutla na pltable
   --                          (Adriano - M117).
   --
-  --            27/05/2016 - Correção do tamanho do campo nmtitul2 no type typ_reg_contas_cadastradas
-  --                         para ficar do tamanho do campo crapass.nmsentl;
-  --                         - Retirada a validação de existência de agência. (Carlos)
+  --              27/05/2016 - Correção do tamanho do campo nmtitul2 no type typ_reg_contas_cadastradas
+  --                           para ficar do tamanho do campo crapass.nmsentl;
+  --                          - Retirada a validação de existência de agência. (Carlos)
   --
-  --			      31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
+  --			  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
   --
   --            18/07/2016 - Incluido pr_tpoperac = 11 -> DARF, Prj. 338, nas procedure
   --                         pc_horario_operacao, pc_busca_limites e pc_verifica_operacao
@@ -600,13 +600,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   rw_crapcti cr_crapcti%ROWTYPE;
 
   /* Procedure para verificar horario permitido para transacoes*/
-  PROCEDURE pc_horario_operacao (pr_cdcooper IN crapcop.cdcooper%TYPE      --C¿digo Cooperativa
-                                ,pr_cdagenci IN crapage.cdagenci%type      --Agencia do Associado
-                                ,pr_tpoperac IN INTEGER                    --Tipo de Operacao (0=todos)
-                                ,pr_inpessoa IN crapass.inpessoa%type      --Tipo de Pessoa
-                                ,pr_tab_limite OUT INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
-                                ,pr_cdcritic   OUT INTEGER                 --Código do erro
-                                ,pr_dscritic   OUT VARCHAR2) IS            --Descricao do erro
+  PROCEDURE pc_horario_operacao (pr_cdcooper IN crapcop.cdcooper%TYPE        --C¿digo Cooperativa
+                                ,pr_cdagenci IN crapage.cdagenci%type        --Agencia do Associado
+                                ,pr_tpoperac IN INTEGER                      --Tipo de Operacao (0=todos)
+                                ,pr_inpessoa IN crapass.inpessoa%type        --Tipo de Pessoa
+                                ,pr_tab_limite OUT INET0001.typ_tab_limite   --Tabelas de retorno de horarios limite
+                                ,pr_cdcritic   OUT INTEGER     --Código do erro
+                                ,pr_dscritic   OUT VARCHAR2) IS --Descricao do erro
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : pc_horario_operacao           Antigo: b1wgen0015.p/horario_operacao
@@ -994,23 +994,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                vr_hrfimpag := rw_crapcop.fimopstr; 
          
                /**
-              IF rw_crapcop.iniopstr <= vr_hratual AND rw_crapcop.fimopstr >= vr_hratual THEN
+               IF rw_crapcop.iniopstr <= vr_hratual AND rw_crapcop.fimopstr >= vr_hratual THEN
                   vr_flgutstr := TRUE; -- Esta dentro do horario cadastrado para STR
-            END IF;          
+               END IF;
                **/
             ELSE
-            -- Operando com mensagens PAG  
-            IF rw_crapcop.flgoppag = 1 THEN -- TRUE
+                 -- Operando com mensagens PAG  
+                 IF rw_crapcop.flgoppag = 1 THEN -- TRUE
                     vr_hrinipag := rw_crapcop.inioppag;
                     vr_hrfimpag := rw_crapcop.fimoppag;
          
                   /**
-              IF rw_crapcop.inioppag <= vr_hratual AND rw_crapcop.fimoppag >= vr_hratual THEN
+                  IF rw_crapcop.inioppag <= vr_hratual AND rw_crapcop.fimoppag >= vr_hratual THEN
                      vr_flgutpag := TRUE; -- Esta dentro do horario cadastrado para PAG 
-              END IF;
+                  END IF;
                   **/
+                  END IF;
             END IF;    
-            END IF;            
           END IF;
 
           --Se for feriado ou final semana
@@ -1968,7 +1968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                  ,pr_cddbanco IN crapcti.cddbanco%TYPE  --Codigo banco
                                  ,pr_cdageban IN crapcti.cdageban%TYPE  --Codigo Agencia
                                  ,pr_nrctatrf IN crapcti.nrctatrf%TYPE  --Numero Conta Transferencia
-                                 ,pr_cdtiptra IN INTEGER  /* 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED*/
+                                 ,pr_cdtiptra IN INTEGER  /* 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED */
                                  ,pr_cdoperad IN crapope.cdoperad%TYPE  --Codigo Operador
                                  ,pr_tpoperac IN INTEGER  /* 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca / 4 - TED / 5 - Transferencia intercooperativa / 11 - DARF/DAS */
                                  ,pr_flgvalid IN BOOLEAN                --Indicador validacoes
@@ -2024,9 +2024,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                      
               28/01/2016 - Ajustes para permitir TED no ultimo dia do ano (Tiago/Elton)
 
-			        17/02/2016 - Excluido validacao de conta nao cadastrada para TED (Jean Michel).
+			  17/02/2016 - Excluido validacao de conta nao cadastrada para TED (Jean Michel).
 
-			        06/05/2016 - Ajuste para validar o banco e agencia da conta destino em operações
+			  06/05/2016 - Ajuste para validar o banco e agencia da conta destino em operações
 						               de TED (Adriano - M117).
 
               10/05/2016 - Adicionado validacao de conta cadastrada no cr_crapcti.
@@ -2038,7 +2038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 						  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
 
               18/07/2016 - Incluido pr_tpoperac = 10 -> DARF/DAS, Prj. 338 (Jean Michel).
-
+						   
 			  31/05/2016 - Ajuste para colocar a validação de saldo disponível (Adriano).
 						            
 
@@ -2408,7 +2408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           RAISE vr_exc_erro;
         END IF;
         /** Bloquear agendamentos para conta migrada **/
-        IF vr_datdodia >= to_date(vr_dsblqage,'DD/MM/YYYY') AND rw_craptco.cdcopant NOT IN (4,15) THEN
+        IF vr_datdodia >= to_date(vr_dsblqage,'DD/MM/YYYY') AND rw_craptco.cdcopant NOT IN (4,15,17) THEN
           vr_cdcritic:= 0;
           vr_dscritic:= 'Operacao de agendamento bloqueada. Entre em contato com seu PA.';
           --Fechar Cursor
@@ -2548,6 +2548,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
             END IF;
       
+		  -- Nao permitir transf. intercooperativa para contas da Transulcred, durante e apos a migracao
+          IF pr_tpoperac IN (5) AND vr_datdodia >= to_date('31/12/2016','dd/mm/RRRR') AND
+             vr_cdcopctl = 17 THEN						  
+              vr_cdcritic := 0;
+              vr_dscritic := 'Conta destino nao habilitada para receber valores da transferencia.';
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+            END IF;
+      
           /** Verifica se a conta que ira receber o valor esta   **/
           /** cadastrada para a conta que ira transferir o valor **/
           OPEN cr_crapcti (pr_cdcooper => pr_cdcooper
@@ -2618,7 +2627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           END IF;
           
           --Fechar Cursor
-          CLOSE cr_crapcti;
+          CLOSE cr_crapcti;      
 
         END IF;
       ELSE
@@ -2847,7 +2856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END IF;        
 
         /** Verifica se data de debito e uma data futura **/
-        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
+        IF  pr_dtmvtopg <= Trunc(vr_datdodia)  THEN
           IF pr_tpoperac = 10 THEN --DARF/DAS            
             --Montar mensagem erro
             vr_cdcritic:= 0;            
@@ -2858,11 +2867,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                vr_dscritic:= 'A data mínima para agendamento deve ser '||To_Char(rw_crapdat.dtmvtopr,'DD/MM/YYYY')||'.';
             END IF;
           ELSE
-            --Montar mensagem erro
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';            
+          --Montar mensagem erro
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
           END IF;
-          --Levantar Excecao          
+          --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
         /** Agendamento normal **/

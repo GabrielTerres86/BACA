@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Novembro/2009.                   Ultima atualizacao: 22/09/2016
+   Data    : Novembro/2009.                   Ultima atualizacao: 10/10/2016
 
    Dados referentes ao programa:
 
@@ -293,9 +293,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
                22/09/2016 - Ajuste nos cursores e alteração da lógica para obtenção de títulos (Rodrigo)
 
-               10/10/2016 - Alteração do diretório para geração de arquivo contábil.
+			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
 
+               11/10/2016 - Ajustes referente ao processo de REPROC do arquivo COB615 (Renato Darosci)
    .............................................................................*/
 
      DECLARE
@@ -542,46 +543,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
          AND   crapcob.nrdocmto = pr_nrdocmto;
        rw_crapcob cr_crapcob%ROWTYPE;
        rw_crabcob cr_crapcob%ROWTYPE;
-/* ----- RODRIGO - Eliminado cursor e utilizado cr_crapcob -----
-       --Selecionar Cobranca
-       CURSOR cr_crapcob_pagto (pr_cdcooper IN crapcob.cdcooper%TYPE
-                               ,pr_cdbandoc IN crapcco.cddbanco%TYPE
-                               ,pr_nrcnvcob IN crapcob.nrcnvcob%type
-                               ,pr_nrdconta IN crapcob.nrdconta%type
-                               ,pr_nrdocmto IN crapcob.nrdocmto%type) IS
-         SELECT crapcob.cdcooper
-               ,crapcob.flgregis
-               ,crapcob.incobran
-               ,crapcob.insitcrt
-               ,crapcob.cdtitprt
-               ,crapcob.nrdconta
-               ,crapcob.nrinssac
-               ,crapcob.dsdoccop
-               ,crapcob.dtvencto
-               ,crapcob.vltitulo
-               ,crapcob.vldescto
-               ,crapcob.vlabatim
-               ,crapcob.cdmensag
-               ,crapcob.tpdmulta
-               ,crapcob.tpjurmor
-               ,crapcob.nrcnvcob
-               ,crapcob.nrdocmto
-               ,crapcob.vlrmulta
-               ,crapcob.vljurdia
-               ,crapcob.indpagto
-               ,crapcob.dtmvtolt
-               ,crapcob.rowid
-               ,crapcob.inemiten
-               ,crapcob.nrctremp
-               ,crapcob.vldpagto
-               ,crapcob.inserasa
-         FROM crapcob
-         WHERE crapcob.cdcooper = pr_cdcooper
-         AND   crapcob.cdbandoc = pr_cdbandoc
-         AND   crapcob.nrcnvcob = pr_nrcnvcob
-         AND   crapcob.nrdconta = pr_nrdconta
-         AND   crapcob.nrdocmto = pr_nrdocmto;
--- ----- RODRIGO - Fim alteração */
 
        --Selecionar informacoes Retorno
        CURSOR cr_crapret (pr_cdcooper IN crapret.cdcooper%type
@@ -608,6 +569,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
          AND   crapsab.nrdconta = pr_nrdconta
          AND   crapsab.nrinssac = pr_nrinssac;
        rw_crapsab cr_crapsab%ROWTYPE;
+
+       -- RETIRADO O PROCESSAMENTO DE LIQUIDAÇÃO INTRABANCÁRIA (Renato Darosci - 11/10/2016)
+       --Selecionar informacoes para liquidacao
+       /*CURSOR cr_crapcco_liquida (pr_cdcooper IN crapcop.cdcooper%type
+                                 ,pr_cdbcoctl IN crapcop.cdbcoctl%type
+                                 ,pr_dtmvtolt IN crapdat.dtmvtolt%type) IS
+         SELECT crapcob.rowid
+         FROM crapcob
+             ,crapcco
+         WHERE crapcco.cdcooper = pr_cdcooper
+         AND   crapcco.cddbanco = pr_cdbcoctl
+         AND   crapcco.flgregis = 1
+         AND   crapcob.cdcooper = crapcco.cdcooper
+         AND   crapcob.nrcnvcob = crapcco.nrconven
+         AND   crapcob.incobran = 5 -- pagos 
+         AND   crapcob.dtdpagto = pr_dtmvtolt
+         AND   crapcob.cdbanpag = pr_cdbcoctl
+         AND   crapcob.flgcbdda = 1;*/
 
        --Selecionar informacoes convenios ativos
        CURSOR cr_crapcco_ativo (pr_cdcooper IN crapcco.cdcooper%type
@@ -859,6 +838,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
        vr_descorpo     VARCHAR2(3900);
        vr_flamenor     BOOLEAN := FALSE;
 
+       -- Variáveis relacionadas ao processo de REPROC
+       vr_inreproc     BOOLEAN;
+       vr_dsarqrep     VARCHAR2(100);
+       
        --Variaveis para retorno de erro
        vr_des_erro     VARCHAR2(3);
        vr_cdcritic     INTEGER:= 0;
@@ -1365,7 +1348,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                                ,pr_cdcooper => pr_cdcooper
                                                ,pr_nmsubdir => 'rl');
 
+         -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
+         -- para evitar sobrepor arquivos de outras execuções
+         IF vr_inreproc THEN
+           vr_nmarqimp:= 'crrl686_REP_'||GENE0002.fn_busca_time()||'.lst';
+         ELSE   
          vr_nmarqimp:= 'crrl686.lst';
+         END IF;
+
 
          -- Efetuar solicitacao de geracao de relatorio crrl686 --
          gene0002.pc_solicita_relato (pr_cdcooper  => pr_cdcooper                  --> Cooperativa conectada
@@ -1625,9 +1615,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            vr_qtregrec:= 0;
            vr_qtregicd:= 0;
            vr_vlregicd:= 0;
-           --Nome arquivo impressao
+           
+           -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
+           -- para evitar sobrepor arquivos de outras execuções
+           IF vr_inreproc THEN
+             -- Nome arquivo impressao
            vr_nmarqimp:= 'crrl605_'|| gene0002.fn_mask(rw_crapcco.nrconven,'9999999') ||
+                         '_'|| gene0002.fn_mask(vr_contador,'99')|| 
+                         '_REP_'||GENE0002.fn_busca_time||'.lst';
+           ELSE   
+             -- Nome arquivo impressao
+             vr_nmarqimp:= 'crrl605_'|| gene0002.fn_mask(rw_crapcco.nrconven,'9999999') ||
                          '_'|| gene0002.fn_mask(vr_contador,'99')|| '.lst';
+           END IF;
+           
            --Incrementar contador
            vr_contador:= vr_contador + 1;
            --Marcar como nao rejeitado
@@ -1709,7 +1710,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            END LOOP;
 
            -- Se possuir conteudo de critica no CLOB
-           IF LENGTH(vr_clobcri) = 0 THEN
+           IF LENGTH(vr_clobcri) > 0 THEN
              -- Busca o diretório para contabilidade
              vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
              vr_dircon := vr_dircon || vc_dircon;
@@ -2114,9 +2115,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              dbms_lob.createtemporary(vr_des_xml, TRUE);
              dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
              vr_dstexto:= NULL;
+             
+             -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
+             -- para evitar sobrepor arquivos de outras execuções
+             IF vr_inreproc THEN
+               -- Nome arquivo impressao
+               vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
+                             gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || 
+                           '_REP_'||GENE0002.fn_busca_time||'.lst';
+             ELSE   
              --Nome arquivo Impressao
              vr_nmarqimp:= 'crrl618_'|| rw_crapcop.dsdircop ||'_'||
                            gene0002.fn_mask(vr_tab_rel618(vr_index_rel618).cddbanco,'999') || '.lst';
+             END IF;
 
              --Descricao da Origem
              vr_nmorigem:= gene0002.fn_mask(rw_crapcop.cdbcoctl,'999')||' - ' ||
@@ -2222,8 +2233,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              dbms_lob.createtemporary(vr_des_xml, TRUE);
              dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
              vr_dstexto:= NULL;
-             --Nome arquivo Impressao
+             
+             -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
+             -- para evitar sobrepor arquivos de outras execuções
+             IF vr_inreproc THEN
+               -- Nome arquivo impressao
+               vr_nmarqimp:= 'crrl706_REP_'||GENE0002.fn_busca_time||'.lst';
+             ELSE   
+               -- Nome arquivo Impressao
              vr_nmarqimp:= 'crrl706.lst';
+             END IF;
+           
 
              --Descricao da Origem
              vr_nmorigem:= '';
@@ -2466,8 +2486,29 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
          END IF;
          /*  Fim da verificacao se deve executar  */
 
+         -- Se for execução pela COMPEFORA, deve criticar caso seja encontrado 
+         -- mais de um arquivo para processamento, de forma a evitar que um arquivo 
+         -- normal e um REPROC sejam reprocessados juntos  ( Renato Darosci - Supero)
+         IF pr_nmtelant = 'COMPEFORA' THEN
+           -- Se encontrou mais de um arquivos
+           IF vr_tab_nmarqtel.COUNT > 1 THEN
+             -- Montar mensagem de critica
+             vr_cdcritic := 0;
+             vr_dscritic := 'Mais de um arquivo encontrado para processamento.';
+             -- Envio centralizado de log de erro
+             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                       ,pr_ind_tipo_log => 2 -- Erro tratato
+                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                         || vr_cdprogra || ' --> '||vr_dscritic
+                                                         || ' - Arquivo: integra/'||vr_nmarqret );
+             --Levantar excecao pois nesse caso deveria ter apenas um arquivo para processar
+             RAISE vr_exc_final;
+           END IF;
+         END IF;
+         
          -- Buscar parametro de valor mínimo
-         vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper,
+         vr_dstextab := TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper,
                          pr_nmsistem => 'CRED',
                          pr_tptabela => 'GENERI',
                          pr_cdempres => 0,
@@ -2486,8 +2527,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            --Inicializar variaveis
            vr_lgdetail:= FALSE;
            vr_cdcritic:= 0;
+           vr_inreproc:= FALSE;
+           
+           /*  REMOVIDO PORQUE NÃO ESTAVA VALIDANDO DA FORMA CORRETA, POIS O "TAIL -2" CONSIDERAVA A LINHA ERRADA */
            /* Verificar se o arquivo esta completo. A ultima linha do arquivo deve conter o chr(26) */
-           vr_comando:= 'tail -2 '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx);
+           /*vr_comando:= 'tail -2 '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx);
 
            --Executar o comando no unix
            GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -2513,7 +2557,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                                          || ' - Arquivo: integra/'||vr_tab_nmarqtel(idx) );
              --Zerar variavel critica
              vr_cdcritic:= 0;
-           END IF;
+           END IF;*/
 
            /* Verificar o Header */
            -- Comando para listar a primeira linha do arquivo
@@ -2559,6 +2603,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              vr_cdcritic:= 0;
              --Ir para proximo arquivo
              CONTINUE;
+           END IF;
+
+           -- Verificar se o arquivo é um REPROC  (Renato Darosci - 11/10/2016)
+           IF TRIM(SUBSTR(vr_setlinha,99,3)) = 'REP' THEN
+             -- Indica que o arquivo é de reprocessamento
+             vr_inreproc := TRUE;
            END IF;
 
            --Escrever mensagem de integracao no log
@@ -2620,6 +2670,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                    RAISE vr_exc_sair;
                END;
 
+               /* Trailer do lote do arquivo - Quanto encontrar a sequencia 
+                  especifica, deve ignorar a linha ( Renato Darosci - 11/10/2016) */
+               IF SUBSTR(vr_setlinha,1,31) = '0180859999999999999999999999999' THEN
+                 CONTINUE; -- Passa para o processamento da Próxima linha do arquivo
+               END IF;
+               
                /* Trailer - Se encontrar essa seq., terminou o arquivo */
                IF SUBSTR(vr_setlinha,1,10) = '9999999999' THEN
                  EXIT;
@@ -4394,9 +4450,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
            --Se processou
            IF vr_lgdetail THEN
+             -- Verifica se é um arquivo REPROC, e neste caso renomeia o arquivo que vai ser gravado 
+             -- na pasta salvar, evitando dessa forma que o arquivo anterior seja sobrescrito
+             IF vr_inreproc THEN
+               -- Montar o nome do arquivo de REPROC
+               vr_dsarqrep := SUBSTR(vr_tab_nmarqtel(idx),0,(INSTR(vr_tab_nmarqtel(idx),'.',-1)-1)) -- Nome do arquivo
+                              ||'_REP_'||GENE0002.fn_busca_time                                 -- Sufixo: REP + Time
+                              ||SUBSTR(vr_tab_nmarqtel(idx),INSTR(vr_tab_nmarqtel(idx),'.',-1));    -- Extensão do arquivo
+               /*  Move arquivo integrado para o diretorio salvar  */
+               vr_comando:= 'mv '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx)||' '||vr_caminho_salvar||'/'||vr_dsarqrep;
+             ELSE
              --Move Arquivo diretorio salvar
              vr_comando:= 'mv '||vr_caminho_integra||'/'||vr_tab_nmarqtel(idx)||' '||vr_caminho_salvar||' 2> /dev/null';
 
+             END IF;
+             
              /* Não deve mais executar o comando neste momento!!!
              --Executar o comando no unix
              GENE0001.pc_OScommand(pr_typ_comando => 'S'
@@ -4633,6 +4701,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
          END LOOP;
 
+         -- Não deve executar o 2o processamento quando for execução de arquivo REPROC (Renato Darosci - 11/10/2016)
+         IF NOT vr_inreproc THEN
          -- 2o processamento
          /* Busca todos os convenios da IF CECRED que foram gerados pela internet */
          FOR rw_crapcco IN cr_crapcco_ativo (pr_cdcooper => rw_crapcop.cdcooper
@@ -4866,6 +4936,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
             END IF;
          END LOOP;
 
+         END IF; -- Fim REPROC
+         
+         /*  RETIRADO O PROCESSAMENTO DE LIQUIDAÇÃO INTRABANCÁRIA (Renato Darosci - 11/10/2016)
          --Verificar nome da tela
          IF pr_nmtelant = 'COMPEFORA' THEN
            vr_dtmvtaux:= rw_crapdat.dtmvtoan;
@@ -4877,6 +4950,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            vr_dtdpagto:= rw_crapdat.dtmvtolt;
          END IF;
 
+      -- Processar liquidacao intrabancaria de boletos DDA
+         FOR rw_liquida IN cr_crapcco_liquida (pr_cdcooper => rw_crapcop.cdcooper
+                                              ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                                              ,pr_dtmvtolt => vr_dtdpagto) LOOP
+           -- processar liquidacao intrabancaria de titulos DDA pagos nas cooperativas
+           DDDA0001.pc_liquid_intrabancaria_dda (pr_rowid_cob => rw_liquida.rowid --ROWID da Cobranca
+                                                ,pr_cdcritic  => vr_cdcritic      --Codigo de Erro
+                                                ,pr_dscritic  => vr_dscritic);    --Descricao de Erro
+           --Se ocorreu erro escreve no log
+           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                       ,pr_ind_tipo_log => 2 -- Erro tratato
+                                       ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '||
+                                                           vr_cdprogra || ' --> '||vr_dscritic ||
+                                                           ' Liquidacao Intrabancaria nao processada. '||
+                                                           ' ROWID crapcob: '||rw_crapcob.rowid);
+             --Limpar variaveis erro
+             vr_cdcritic:= NULL;
+             vr_dscritic:= NULL;
+           END IF;
+         END LOOP; --rw_liquida
+         *******************************************************************************************************/
+
+         /**************************************************************/
          /*************TRATAMENTO P/ COBRANCA REGISTRADA****************/
          /**************************************************************/
 
@@ -4886,7 +4984,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
 
          /* gerar relatorio somente se for coop 3 */
          IF pr_cdcooper = 3 THEN
+           
+           -- Quando for REPROC deve montar o nome do arquivo de forma diferenciada, 
+           -- para evitar sobrepor arquivos de outras execuções
+           IF vr_inreproc THEN
+             vr_nmarqimp:= 'crrl574_REP_'||GENE0002.fn_busca_time()||'.lst';
+           ELSE   
            vr_nmarqimp:= 'crrl574.lst';
+           END IF;
 
            -- Inicializar o CLOB
            dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -5001,7 +5106,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
          END IF;
        EXCEPTION
          WHEN vr_exc_final THEN
-           --Nao tem arquivo para processar
+           -- Nao tem arquivo para processar ou foi encontrado mais de um arquivo
            pr_cdcritic:= NULL;
            pr_dscritic:= NULL;
          WHEN vr_exc_saida THEN
@@ -5069,6 +5174,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
            --Levantar Excecao
            RAISE vr_exc_saida;
          END IF;
+         
          --Montar vetor com nomes dos arquivos
          vr_tab_nmarqtel:= GENE0002.fn_quebra_string(pr_string => vr_listadir);
 
@@ -5167,6 +5273,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
              WHEN OTHERS THEN
                vr_cdcritic:= 173;
            END;
+           
            --Se ocorreu algum erro na validacao
            IF vr_cdcritic <> 0 THEN
              --Buscar descricao da critica
@@ -5779,7 +5886,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538 (pr_cdcooper IN crapcop.cdcooper%T
                                                     || 'Inicio Processo Lancamento Tarifas' );
 
 
-       --Lancamento Tarifas
+       -- Lancamento Tarifas
        PAGA0001.pc_efetua_lancto_tarifas_lat (pr_cdcooper => pr_cdcooper         --Codigo Cooperativa
                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt --Data Movimento
                                              ,pr_tab_lat_consolidada  => vr_tab_lat_consolidada --Tabela Lancamentos
