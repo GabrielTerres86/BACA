@@ -691,19 +691,19 @@ PROCEDURE horario_operacao:
 					        aux_hrfimpag = crapcop.fimopstr.
                      
 					 /**
-					 IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
+                     IF crapcop.iniopstr <= TIME AND crapcop.fimopstr >= TIME THEN
                         ASSIGN aux_flgutstr = TRUE.
 				     **/
 			    ELSE
 				     DO:
-                         /*-- Operando com mensagens PAG --*/
+                 /*-- Operando com mensagens PAG --*/
                          IF   crapcop.flgoppag  THEN 
 						      ASSIGN aux_hrinipag = crapcop.inioppag
 							         aux_hrfimpag = crapcop.fimoppag.
 
 				              /**
-                              IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
-                                 ASSIGN aux_flgutpag = TRUE.
+                     IF crapcop.inioppag <= TIME AND crapcop.fimoppag >= TIME THEN  
+                        ASSIGN aux_flgutpag = TRUE.
 				              **/
 				     END.
 			  END.
@@ -858,7 +858,7 @@ PROCEDURE horario_operacao:
             ELSE
                 ASSIGN tt-limite.iddiauti = 1.  /* Dia util */
         END.
-         
+
     RETURN "OK".
 
 END.
@@ -1504,7 +1504,8 @@ PROCEDURE verifica_operacao:
             /** Bloquear agendamentos para conta migrada **/
             IF  aux_datdodia >= 12/25/2013  AND
                 craptco.cdcopant <> 4       AND  /* Exceto Concredi    */
-                craptco.cdcopant <> 15      THEN /* Exceto Credimilsul */
+                craptco.cdcopant <> 15      AND  /* Exceto Credimilsul */
+                craptco.cdcopant <> 17      THEN /* Exceto Transulcred */
                 DO:                                                  
                     ASSIGN par_dscritic = "Operacao de agendamento bloqueada." +
                                           " Entre em contato com seu PA.".
@@ -1640,6 +1641,19 @@ PROCEDURE verifica_operacao:
                                                            "transferencia.".
                                      RETURN "NOK".
                                  END.
+                         END.
+                        
+                     /* Nao permitir transf. intercooperativa para
+                        contas da Transulcred, durante
+                        e apos a migracao */
+                     IF  par_tpoperac     = 5           AND
+                         aux_datdodia    >= 12/31/2016  AND
+                         crabcop.cdcooper = 17          THEN                         
+                         DO:
+                             ASSIGN par_dscritic = "Conta destino nao habilitada " +
+                                                   "para receber valores da " +
+                                                   "transferencia.".
+                             RETURN "NOK".
                          END.
                  END.      
             ELSE        /* TED */
@@ -10690,7 +10704,7 @@ PROCEDURE gera-termo-responsabilidade:
                                          "DE  SETEMBRO DE","DE  OUTUBRO  DE",
                                          "DE  NOVEMBRO DE","DE  DEZEMBRO DE"]
                                                                      NO-UNDO.
-																	   
+
     DEF VAR aux_qtminast AS INTE NO-UNDO.
 
     FORM  

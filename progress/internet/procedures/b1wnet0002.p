@@ -147,7 +147,7 @@
                
                06/09/2016 - Removido a busca do preposto pelo proprio CPF do titular (Pessoa Jurídica)
 							              (Andrey - RKAM)
-
+               
                09/09/2016 - Alterado procedure Busca_Dados, retorno do parametro
 						    aux_qtminast referente a quantidade minima de assinatura
 						    conjunta, procedure carrega_titulares SD 514239 (Jean Michel).
@@ -391,6 +391,32 @@ PROCEDURE carrega-titulares.
                                       "novamente mais tarde!".
                 LEAVE.
             END.
+        
+        /* Bloqueio internet Transulcred durante e apos incorporacoes */
+        IF  par_cdcooper = 17           AND
+            aux_datdodia >= 12/31/2016  THEN
+            DO:
+                ASSIGN aux_dscritic = "Sistema indisponivel. Tente " +
+                                      "novamente mais tarde!".
+                LEAVE.
+            END.
+            
+        /* impedir acesso de contas que serao migradas */
+        IF par_cdcooper = 9           AND    /* Transpocred */
+           aux_datdodia <= 12/31/2016 THEN  /* Antes e durante a migraçao */
+           DO:           
+              FIND craptco WHERE craptco.cdcooper = par_cdcooper AND
+                                 craptco.nrdconta = par_nrdconta AND
+                                 craptco.tpctatrf = 1            
+                                 NO-LOCK NO-ERROR.
+                                 
+              IF  AVAILABLE craptco AND craptco.cdcopant = 17 /* Transulcred */ THEN
+                  DO:
+                      ASSIGN aux_dscritic = "Sistema indisponivel. Tente " +
+                                            "novamente mais tarde!".
+                      LEAVE. 
+            END.
+           END.
         
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
