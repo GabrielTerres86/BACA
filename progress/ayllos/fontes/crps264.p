@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 05/12/2016
+    Data    : Marco/07.                       Ultima atualizacao: 16/12/2016
     
     Dados referentes ao programa:
 
@@ -195,9 +195,14 @@
               
               28/11/2016 - Alterar parametro da busca da tabela crapcst que estava errado 
                            (Lucas Ranghetti/Elton)
+
+			        02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
                            
               05/12/2016 - Ajuste para criar lançamento com o historico 399 para a Diurna e Noturna.
                            Também validar alinea 35 - Melhoria 69 (Lucas Ranghetti/Elton)
+                           
+              16/12/2016 - Substituido o histórico 399 pelo 351 na devoluçao de 
+                           cheques de custódia para a conta do beneficiario (Elton).             
 ..............................................................................*/
 
 DEF INPUT  PARAM p-cdcooper AS INT                                   NO-UNDO.
@@ -570,9 +575,9 @@ PROCEDURE gera_lancamento:
             /* VIACON - Se for conta migrada das cooperativas 4 ou 15 devera
             tratar aux_nrctalcm para receber a nova conta. O campo
             crapdev.nrdctabb contem o numero da conta cheque */ 
-            IF p-cdcooper = 1 OR     /* Viacredi */
-               p-cdcooper = 13 THEN  /* Scrcred  */
-            DO:
+            IF  p-cdcooper = 1  OR    /* Viacredi    */
+                p-cdcooper = 13 OR    /* Scrcred     */
+                p-cdcooper = 9  THEN  /* Transulcred */ DO:
 
                 RUN verifica_incorporacao(INPUT  p-cdcooper,
                                           INPUT  crapdev.nrdconta,
@@ -1109,7 +1114,7 @@ PROCEDURE gera_lancamento:
                    caso seja devmos criar outro com o 399 - DEVOLUCAO DE CHEQUE DESCONTADO */
                 IF  crapdev.cdhistor = 47 AND 
                    (p-cddevolu = 5 OR p-cddevolu = 6) THEN
-                           DO:
+                    DO:                     
                        
                        FIND CURRENT craplot NO-LOCK NO-ERROR.                        
                        RELEASE craplot.
@@ -1256,7 +1261,7 @@ PROCEDURE gera_lancamento:
                         
                               IF  AVAILABLE crapcst THEN
                                   DO:
-                                      /* criar lancamento com o historico 399 e historico 10119 */
+                                      /* criar lancamento com o historico 351 e lote 10119 */
                                       DO  WHILE TRUE:
                                 
                                           FIND craplot WHERE craplot.cdcooper = aux_cdcooper AND
@@ -1345,7 +1350,7 @@ PROCEDURE gera_lancamento:
                                              craplcm.nrdconta = crapcst.nrdconta
                                              craplcm.nrdctabb = aux_nrctalcm
                                              craplcm.nrdocmto = crapcst.nrcheque
-                                             craplcm.cdhistor = 399
+                                             craplcm.cdhistor = 351  
                                              craplcm.nrseqdig = craplot.nrseqdig + 1
                                              craplcm.vllanmto = crapdev.vllanmto
                                              craplcm.cdoperad = crapdev.cdoperad
@@ -2476,9 +2481,9 @@ PROCEDURE gera_arquivo_cecred:
 
        END.
 
-       IF p-cdcooper = 1 OR     /* Viacredi */
-          p-cdcooper = 13 THEN  /* Scrcred  */
-       DO:
+       IF  p-cdcooper = 1  OR    /* Viacredi    */
+           p-cdcooper = 13 OR    /* Scrcred     */
+           p-cdcooper = 9  THEN  /* Transulcred */ DO:
 
             RUN verifica_incorporacao(INPUT  p-cdcooper,
                                       INPUT  crapdev.nrdconta,
@@ -2486,7 +2491,6 @@ PROCEDURE gera_arquivo_cecred:
                                       OUTPUT aux_cdcopant,
                                       OUTPUT aux_nrdconta_tco,
                                       OUTPUT aux_cdagectl).
-
         END.
 
 
@@ -3882,20 +3886,24 @@ PROCEDURE verifica_incorporacao:
                        craptco.flgativo = TRUE
                        NO-LOCK NO-ERROR.
 
-    IF AVAILABLE craptco THEN 
-    DO:
+    IF  AVAILABLE craptco THEN DO:
 
-        IF par_cdcooper = 1 THEN
-            aux_cdagechq = 103.
-        ELSE
-            aux_cdagechq = 114.
+        CASE par_cdcooper:
+            WHEN 1  THEN            /* VIACREDI       */
+               aux_cdagechq = 103.  /* -> CONCREDI    */
+            WHEN 13 THEN            /* SCRCRED        */
+               aux_cdagechq = 114.  /* -> CREDIMILSUL */
+            WHEN 9  THEN            /* TRANSPOCRED    */
+               aux_cdagechq = 116.  /* -> TRANSULCRED */
+        END CASE.
 
-
-        FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper      AND
-                           crapfdc.cdbanchq = 085               AND
-                           crapfdc.cdagechq = aux_cdagechq      AND 
-                           crapfdc.nrctachq = craptco.nrctaant  AND
-                           crapfdc.nrcheque = INT(SUBSTR(STRING(par_nrcheque,"9999999"),1,6))
+        FIND FIRST crapfdc
+             WHERE crapfdc.cdcooper = par_cdcooper
+               AND crapfdc.cdbanchq = 085
+               AND crapfdc.cdagechq = aux_cdagechq
+               AND crapfdc.nrctachq = craptco.nrctaant
+               AND crapfdc.nrcheque = INT(SUBSTR
+                                        (STRING(par_nrcheque,"9999999"),1,6))
                            USE-INDEX crapfdc1
                            NO-LOCK NO-ERROR NO-WAIT.
 
