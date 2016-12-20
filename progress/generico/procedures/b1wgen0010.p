@@ -42,7 +42,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 02/12/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 12/12/2016
 
    Dados referentes ao programa:
 
@@ -376,11 +376,15 @@
 
 			   25/11/2016 - Correção no calculo de multa e juros da Melhoria 271
 			                (Douglas Quisinski - Chamado 562804)
-							
+			       				
 			   02/12/2016 - Ajuste realizado para nao gerar em branco o relatorio		
 							da tela COBRAN, incluido tambem logs para identificar
 							erros futuros dessa mesma rotina, conforme solicitado
 							no chamado 563327. (Kelvin)
+							
+			   12/12/2016 - Correcao do relatorio da tela cobran que estavam sendo
+							gerado em branco, onde no chamado 563327 incluimos logs
+							para que futuramente podessemos identifcar o problema (Kelvin)
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -2504,6 +2508,7 @@ PROCEDURE consulta-bloqueto.
                             IF  NOT AVAIL crapoco THEN NEXT.
                             
                             IF  crapret.nrdocmto <> 0 THEN
+								DO:
                                 RUN p_grava_bloqueto(INPUT p-cdcooper,
                                                      INPUT p-cod-agencia,
                                                      INPUT p-nro-caixa,
@@ -2512,7 +2517,18 @@ PROCEDURE consulta-bloqueto.
                                                      INPUT p-ini-sequencia,
                                               INPUT-OUTPUT par_qtregist,
                                                     OUTPUT TABLE tt-consulta-blt).
+									
+									IF RETURN-VALUE = "NOK" THEN
+									    DO:
+									    	FOR EACH tt-consulta-blt NO-LOCK:
+										        DELETE tt-consulta-blt.
+										    END.
+											LEAVE.
+									    END.
+									
+								END.
                             ELSE
+								DO:
                                 RUN p_grava_bloqueto_rej (INPUT p-cdcooper,
                                                      INPUT p-cod-agencia,
                                                      INPUT p-nro-caixa,
@@ -2522,6 +2538,14 @@ PROCEDURE consulta-bloqueto.
                                               INPUT-OUTPUT par_qtregist,
                                                     OUTPUT TABLE tt-consulta-blt).
     
+									IF RETURN-VALUE = "NOK" THEN
+									    DO:
+									    	FOR EACH tt-consulta-blt NO-LOCK:
+										        DELETE tt-consulta-blt.
+										    END.
+											LEAVE.
+									    END.
+								END.
                             ASSIGN aux_nrregist = aux_nrregist + 1.
     
                             /* Reatualiza tt-consulta-blt */                     
@@ -2885,14 +2909,17 @@ PROCEDURE consulta-bloqueto.
     /*Bloco para tratamento de erro do create da lcm try catch*/
     CATCH eSysError AS Progress.Lang.SysError:
       /*eSysError:GetMessage(1) Pegar a mensagem de erro do sistema*/
-      /*Definindo minha propria critica*/            
-      ASSIGN aux_dscritic = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(eSysError:GetMessage(1),'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').                           
+      
+      ASSIGN aux_dscritic = eSysError:GetMessage(1).
+     
+      RUN valida_caracteres(INPUT aux_dscritic,
+		 				    OUTPUT aux_dscritic).
       
       FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
       
       UNIX SILENT VALUE("echo " +  STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.consulta-bloqueto ' --> '" + aux_dscritic  +                          
                         " >> /usr/coop/" + TRIM(crapcop.dsdircop) + "/log/proc_message.log").
-      
+      RETURN "NOK".
     END CATCH.
     
 END PROCEDURE. /* consulta-bloqueto */
@@ -2927,8 +2954,12 @@ PROCEDURE p_grava_bloqueto:
                                           INPUT par_dtlimite,
                                          OUTPUT TABLE tt-consulta-blt).
 
+				IF RETURN-VALUE = "NOK" THEN
+					RETURN RETURN-VALUE.
             END.
     
+		
+			
         ASSIGN aux_nrregis1 = aux_nrregis1 - 1.
     
         LEAVE Cria.
@@ -2967,6 +2998,9 @@ PROCEDURE p_grava_bloqueto_rej:
                                               INPUT par_nrdcaixa,
                                               INPUT par_dtlimite,
                                              OUTPUT TABLE tt-consulta-blt).
+
+				IF RETURN-VALUE = "NOK" THEN
+					RETURN RETURN-VALUE.
 
             END.
     
@@ -3572,7 +3606,8 @@ PROCEDURE cria_tt-consulta-blt.
        
        ASSIGN aux_msgerora = ERROR-STATUS:GET-MESSAGE(ERROR-STATUS:NUM-MESSAGES).
 
-       ASSIGN aux_msgerora = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(aux_msgerora,'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').
+       RUN valida_caracteres(INPUT aux_msgerora,
+						     OUTPUT aux_msgerora).
        
        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
        
@@ -3580,6 +3615,8 @@ PROCEDURE cria_tt-consulta-blt.
                          STRING(TIME,"HH:MM:SS") + " - B1WGEN0010 Run pc_busca_nome_imp_blt  ' --> '" + aux_msgerora +                          
                          " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                          "/log/proc_message.log").       
+	   
+	   RETURN "NOK".
    END.
                        
    CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
@@ -3600,7 +3637,8 @@ PROCEDURE cria_tt-consulta-blt.
    IF  aux_des_erro <> "OK" OR
        aux_dscritic <> ""   THEN DO: 
 
-       ASSIGN aux_dscritic = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(aux_dscritic,'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').
+       RUN valida_caracteres(INPUT aux_dscritic,
+						     OUTPUT aux_dscritic).
        
        IF  aux_dscritic = "" THEN DO:   
            ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
@@ -3608,11 +3646,10 @@ PROCEDURE cria_tt-consulta-blt.
       
        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
        
-       UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.cria_tt-consulta-blt1 ' --> ' ERRO >> /usr/coop/" + TRIM(crapcop.dsdircop) +
-                         "/log/proc_message.log").       
-                         
        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.cria_tt-consulta-blt2 ' --> '" + aux_dscritic +                          
                          " >> /usr/coop/" + TRIM(crapcop.dsdircop) + "/log/proc_message.log").
+						 
+	   RETURN "NOK".
    END.
    
    DO TRANSACTION:
@@ -3658,7 +3695,8 @@ PROCEDURE cria_tt-consulta-blt.
        
                  ASSIGN aux_msgerora = ERROR-STATUS:GET-MESSAGE(ERROR-STATUS:NUM-MESSAGES).
                  
-                 ASSIGN aux_msgerora = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(aux_msgerora,'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').
+                 RUN valida_caracteres(INPUT aux_msgerora,
+									   OUTPUT aux_msgerora).
                  
                  FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
                  
@@ -3666,6 +3704,8 @@ PROCEDURE cria_tt-consulta-blt.
                                    STRING(TIME,"HH:MM:SS") + " - B1WGEN0010 Run pc_busca_emails_pagador  ' --> '" + aux_msgerora +                          
                                    " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                                    "/log/proc_message.log").       
+			     RETURN "NOK".
+				 
              END.
              
              CLOSE STORED-PROC pc_busca_emails_pagador
@@ -3690,7 +3730,8 @@ PROCEDURE cria_tt-consulta-blt.
                       ASSIGN aux_dscritic =  "Nao foi possivel buscar o email do pagador para ser impresso no boleto".
                   END.
                   
-                  ASSIGN aux_dscritic = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(aux_dscritic,'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').
+                  RUN valida_caracteres(INPUT aux_dscritic,
+										OUTPUT aux_dscritic).
                   
                   FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
                    
@@ -3698,9 +3739,7 @@ PROCEDURE cria_tt-consulta-blt.
                                     STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.cria_tt-consulta-blt3 ' --> '" + aux_dscritic +                          
                                     " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                                     "/log/proc_message.log").
-
-                  
-                  
+                  RETURN "NOK".
                END.
               
               ASSIGN tt-consulta-blt.dsdemail = aux_dsdemail
@@ -4092,14 +4131,17 @@ PROCEDURE cria_tt-consulta-blt.
    /*Bloco para tratamento de erro do create da lcm try catch*/
    CATCH eSysError AS Progress.Lang.SysError:
      /*eSysError:GetMessage(1) Pegar a mensagem de erro do sistema*/
-     /*Definindo minha propria critica*/            
-     ASSIGN aux_dscritic = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(eSysError:GetMessage(1),'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').                           
+     ASSIGN aux_dscritic = eSysError:GetMessage(1).
+     
+     RUN valida_caracteres(INPUT aux_dscritic,
+						   OUTPUT aux_dscritic).
       
      FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
       
      UNIX SILENT VALUE("echo " +  STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.cria_tt-consulta-blt geral' --> '" + aux_dscritic  +                          
                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) + "/log/proc_message.log").
       
+	 RETURN "NOK".
    END CATCH.
   
 END PROCEDURE. /* cria_tt-consulta-blt */
@@ -4172,8 +4214,8 @@ PROCEDURE cria_tt-consulta-blt_rej.
 
    RUN STORED-PROCEDURE pc_busca_nome_imp_blt
      aux_handproc = PROC-HANDLE NO-ERROR
-                        (INPUT deci(crapcob.cdcooper),
-                         INPUT deci(crapcob.nrdconta),
+                        (INPUT deci(crapret.cdcooper),
+                         INPUT deci(crapret.nrdconta),
                          OUTPUT "",
                          OUTPUT "",
                          OUTPUT "").
@@ -4182,7 +4224,8 @@ PROCEDURE cria_tt-consulta-blt_rej.
        
        ASSIGN aux_msgerora = ERROR-STATUS:GET-MESSAGE(ERROR-STATUS:NUM-MESSAGES).
 
-       ASSIGN aux_msgerora = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(aux_msgerora,'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').
+       RUN valida_caracteres(INPUT aux_msgerora,
+						     OUTPUT aux_msgerora).
        
        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
        
@@ -4190,6 +4233,7 @@ PROCEDURE cria_tt-consulta-blt_rej.
                          STRING(TIME,"HH:MM:SS") + " - B1WGEN0010 Run pc_busca_nome_imp_blt  ' --> '" + aux_msgerora +                          
                          " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                          "/log/proc_message.log").       
+	   RETURN "NOK".
    END. 
                        
    CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
@@ -4216,12 +4260,14 @@ PROCEDURE cria_tt-consulta-blt_rej.
       
        FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
        
-       ASSIGN aux_dscritic = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(aux_dscritic,'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').                           
+       RUN valida_caracteres(INPUT aux_dscritic,
+						     OUTPUT aux_dscritic).
        
        UNIX SILENT VALUE("echo " + 
                          STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.cria_tt-consulta-blt_rej ' --> '" + aux_dscritic +                          
                          " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                          "/log/proc_message.log").
+       RETURN "NOK".
    END.
    
    DO TRANSACTION:
@@ -4373,15 +4419,19 @@ PROCEDURE cria_tt-consulta-blt_rej.
   
    /*Bloco para tratamento de erro do create da lcm try catch*/
    CATCH eSysError AS Progress.Lang.SysError:
+     
      /*eSysError:GetMessage(1) Pegar a mensagem de erro do sistema*/
-     /*Definindo minha propria critica*/            
-     ASSIGN aux_dscritic = REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(eSysError:GetMessage(1),'(',''),')',''),'"',''),'-',''),'\n',''),'\r','').                           
+     ASSIGN aux_dscritic = eSysError:GetMessage(1).
+     
+     RUN valida_caracteres(INPUT aux_dscritic,
+						   OUTPUT aux_dscritic).
+	 
      
      FIND FIRST crapcop WHERE crapcop.cdcooper = p-cdcooper NO-LOCK NO-ERROR.
      
      UNIX SILENT VALUE("echo " +  STRING(TIME,"HH:MM:SS") + " - B1WGEN0010.cria_tt-consulta-blt_rej geral ' --> '" + aux_dscritic  +                          
                        " >> /usr/coop/" + TRIM(crapcop.dsdircop) + "/log/proc_message.log").
-    
+     RETURN "NOK".
    END CATCH.
   
 END PROCEDURE. /* cria_tt-consulta-blt_rej */
@@ -8604,4 +8654,42 @@ PROCEDURE calcula_multa_juros_boleto:
     ASSIGN par_cridatut = aux_critdata.
 
     RETURN "OK".
+END PROCEDURE.
+
+PROCEDURE valida_caracteres:
+    /* Rotina de validacao de caracteres com base parametros informados */
+
+    /*  - par_validar  : Campo a ser validado.
+        - par_validado : Retorna campo sem caracteres especiais. */
+
+    DEF INPUT  PARAM par_validar     AS CHAR            NO-UNDO.
+    DEF OUTPUT PARAM par_validado    AS CHAR            NO-UNDO.
+
+    DEF VAR aux_numeros             AS CHAR             NO-UNDO.
+    DEF VAR aux_letras              AS CHAR             NO-UNDO.
+    DEF VAR aux_caracteres          AS CHAR             NO-UNDO.
+    DEF VAR aux_contador            AS INTE             NO-UNDO.
+    DEF VAR aux_posicao             AS CHAR             NO-UNDO.
+	DEF VAR aux_especial			AS CHAR 			NO-UNDO.
+ 
+    ASSIGN aux_especial = ".,-_ "
+		   aux_numeros  = "1234567890"
+		   aux_letras   = "ABCDEFGHIJKLMNOPQRSTUVWXYZÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÇabcdefghijklmnopqrstuvwxyzáàäâãéèëêíìïîóòöôõúùüûç".
+   
+    aux_caracteres = aux_caracteres + aux_numeros.
+
+    aux_caracteres = aux_caracteres + aux_letras.
+
+    aux_caracteres = aux_caracteres + aux_especial.
+
+    DO aux_contador = 1 TO LENGTH(par_validar):
+    
+        ASSIGN aux_posicao = SUBSTRING(par_validar,aux_contador,1).
+
+        IF INDEX(aux_caracteres,aux_posicao) > 0 THEN DO:
+		  par_validado = par_validado + aux_posicao.
+		END.
+
+    END.
+
 END PROCEDURE.
