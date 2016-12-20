@@ -568,7 +568,7 @@ PROCEDURE verifica_cartao:
                   ASSIGN par_dscritic = "Conta nao habilitada para acesso".
                   RETURN "NOK". 
               END.
-    END.
+       END.
       
     RETURN "OK".
 
@@ -1893,7 +1893,7 @@ PROCEDURE verifica_transferencia:
                                   "transferencia.".
             RETURN "NOK".
         END.
-
+       
     IF  par_flagenda THEN
         DO:
             RUN calcula_dia_util(INPUT  par_cdcooper,
@@ -6097,8 +6097,10 @@ PROCEDURE busca_numero_conta:
     DEFINE OUTPUT PARAM par_nrdconta AS INT                 NO-UNDO.
     DEFINE OUTPUT PARAM par_dscritic AS CHAR                NO-UNDO.
 
-    FOR FIRST crapcrd FIELDS(nrdconta) 
+    FOR FIRST crapcrd, crapcop FIELDS(nrdconta) 
                       WHERE crapcrd.nrcrcard = par_nrcrcard
+          AND crapcop.cdcooper = crapcrd.cdcooper
+          AND crapcop.flgativo = TRUE
                             NO-LOCK: END.
     
     /* Cartao de credito CECRED */
