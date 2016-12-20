@@ -3,7 +3,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Junho/2006                   Ultima Atualizacao: 28/10/2016
+   Data    : Junho/2006                   Ultima Atualizacao: 08/12/2016
    Dados referentes ao programa:
    Frequencia: Diario (internet)
    Objetivo  : Gerar arquivo XML para a tela wcrm0004 - historico do cooperado
@@ -23,6 +23,8 @@
 			   28/10/2016 - Inclusão da chamada da procedure pc_informa_acesso_progrid
 							para gravar log de acesso. (Jean Michel)	
 														
+               08/12/2016 - Ajustes para exibir os eventos mesmo quando o primeiro registro
+                            nao possuir frequencia necessaria. PRJ342. (Odirlei-AMcom)											
 ..............................................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -41,6 +43,7 @@ DEFINE VARIABLE aux_nrctaant AS INTE                           		  NO-UNDO.
 DEFINE VARIABLE aux_cdcopant AS INTE                          		  NO-UNDO.
 DEFINE VARIABLE aux_nmevento AS CHAR                          		  NO-UNDO.
 DEFINE VARIABLE aux_lsmesctb AS CHAR                          		  NO-UNDO.
+DEFINE VARIABLE aux_flininom AS INTE                          		  NO-UNDO.
 
 /* Variaveis de controle do XML */
 DEFINE VARIABLE xDoc         AS HANDLE                                NO-UNDO.
@@ -126,8 +129,14 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
                    AND crapedp.dtanoage = crapidp.dtanoage
                    AND crapedp.cdevento = crapidp.cdevento NO-LOCK NO-ERROR.
                                
+    /* Nome do inscrito */
+    IF   FIRST-OF(crapidp.nminseve)   THEN
+      ASSIGN aux_flininom = 0.
+            
+    
     IF FIRST-OF(crapidp.nrseqeve) THEN
         DO:                               
+                         
             /* Se percentual de faltas passar do percentual mínimo exigido, nao pode considerar */
             IF ((crapidp.qtfaleve * 100) / crapadp.qtdiaeve) > (100 - crapedp.prfreque)   THEN
                  NEXT.
@@ -144,8 +153,9 @@ FOR EACH crapidp WHERE (crapidp.cdcooper =  par_cdcooper 	   AND
                  aux_dtfineve = "Indefinido".
 				 
             /* Nome do inscrito */
-            IF   FIRST-OF(crapidp.nminseve)   THEN
+            IF   aux_flininom = 0 THEN
                  DO:
+                     aux_flininom = 1.
                      xDoc:CREATE-NODE( xRoot2, "ASSOCIADO", "ELEMENT" ).
                      xRoot:APPEND-CHILD( xRoot2 ).
                      xRoot2:SET-ATTRIBUTE("NMINSEVE",crapidp.nminseve).
