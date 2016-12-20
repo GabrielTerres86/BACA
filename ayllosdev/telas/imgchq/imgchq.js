@@ -12,6 +12,7 @@
  *                28/08/2015 - Criado funcao cobraTariva() para cobranca automática das tarifas ao imprimir uma imagem de cheque. (Lombardi) - Projeto Tarifas
  *                15/03/2016 - Projeto 316 - Buscar "certificado" e novo botão para gerar zip para download
  *                           - Passado 'cdcooper' para cobra_tarifa.php. (Guilherme/SUPERO)
+ *                01/12/2016 - Incorporacao Transulcred - Novo campo CDAGECHQ quando SR (Guilherme/SUPERO)
  *
  * --------------
  */
@@ -23,18 +24,19 @@ var rNmrescop, rTiporeme, rDtcompen, rCompechq, rBancochq, rAgencchq, rContachq,
 
 
 var lstCooperativas = new Array();
-var lstCmc7         = new Array();
+var lstCmc7 = new Array();
 var cdcooper;
 
 var nmrescop, tremessa, compechq, bancochq, agencchq, contachq, numerchq, datacomp;
 
 var bGerarPdf, bSalvarImgs;
 
-var imgchqF  = false;
-var imgchqV  = false;
+var imgchqF = false;
+var imgchqV = false;
 var flgerpdf = false;
 var flbaiarq = false;
 var selbaixa = '';
+var aux_cdagechq = '';
 
 $(document).ready(function () {
 
@@ -127,6 +129,8 @@ function mostraCamposChq() {
     if ($('#tiporeme', '#frmConsultaImagem').val() == "N") {
         $('#divDadosChq').css({ 'display': 'block' });
 
+        cAgencchq.val('');
+
         cCompechq.css({ 'display': 'block' });
         cBancochq.css({ 'display': 'block' });
         cAgencchq.css({ 'display': 'block' });
@@ -137,20 +141,29 @@ function mostraCamposChq() {
 
         cCartaoAs.css({ 'display': 'none' });
 
+        rAgencchq.addClass('rotulo-linha').removeClass('rotulo').css({ 'width': '248px' });
+        cAgencchq.css({ 'width': '100px' });
+
         cDtcompen.focus();
     } else
         if ($('#tiporeme', '#frmConsultaImagem').val() == "S") {
+
+            buscaAgeCtl(0);
+
             $('#divDadosChq').css({ 'display': 'block' });
 
             cCompechq.css({ 'display': 'none' });
             cBancochq.css({ 'display': 'none' });
-            cAgencchq.css({ 'display': 'none' });
 
             rCompechq.css({ 'display': 'none' });
             rBancochq.css({ 'display': 'none' });
-            rAgencchq.css({ 'display': 'none' });
 
             cCartaoAs.css({ 'display': 'block' });
+            cAgencchq.css({ 'display': 'block' });
+            rAgencchq.css({ 'display': 'block' });
+
+            rAgencchq.addClass('rotulo').removeClass('rotulo-linha').css({ 'width': '150px' });
+            cAgencchq.css({ 'width': '100px' });
 
             cDtcompen.focus();
         } else {
@@ -191,6 +204,53 @@ function buscaCooperativas() {
         }
     });
 
+
+}
+
+function buscaAgeCtl(flag) {
+
+    var cdcooper;
+
+    if (cooploga == "3") {
+        aux_cdcooper = cNmrescop.val();
+    } else {
+        aux_cdcooper = cooploga;
+    }
+
+    if (flag == 1) {
+        //veio pela mudanca de Coop entao limpa
+        aux_cdagechq = '';
+    }
+
+    if (aux_cdagechq == '') {
+        $.ajax({
+            type: 'POST',
+            async: false,
+            url: UrlSite + 'telas/imgchq/busca_agectl.php',
+            data: {
+                cdcooper: aux_cdcooper,
+                redirect: 'script_ajax'
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            },
+            success: function (response) {
+
+                try {
+                    eval(response);
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                }
+            }
+        });
+    }
+
+    cAgencchq.val(aux_cdagechq);
+
+    return false;
 
 }
 
@@ -313,10 +373,19 @@ function consultaCheque() {
         return false;
     }
 
+
+    cdagechq = retiraCaracteres(cAgencchq.val(), "0123456789", true);
+
+    if ((!validaNumero(cdagechq, true, 0, 0)) || (cdagechq == "")) {
+        hideMsgAguardo();
+        showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Ayllos", "$('#agencchq','#frmConsultaImagem').focus();");
+        return false;
+    }
+
+
     if (tpremess == "N") {
         cdcmpchq = retiraCaracteres(cCompechq.val(), "0123456789", true);
         cdbanchq = retiraCaracteres(cBancochq.val(), "0123456789", true);
-        cdagechq = retiraCaracteres(cAgencchq.val(), "0123456789", true);
 
         if ((!validaNumero(cdcmpchq, true, 0, 0)) || (cdcmpchq == "")) {
             hideMsgAguardo();
@@ -329,13 +398,6 @@ function consultaCheque() {
             showError("error", "Banco inv&aacute;lido.", "Alerta - Ayllos", "$('#bancochq','#frmConsultaImagem').focus();");
             return false;
         }
-
-        if ((!validaNumero(cdagechq, true, 0, 0)) || (cdagechq == "")) {
-            hideMsgAguardo();
-            showError("error", "Ag&ecirc;ncia inv&aacute;lida.", "Alerta - Ayllos", "$('#agencchq','#frmConsultaImagem').focus();");
-            return false;
-        }
-
     } else
         if (tpremess == "S") {
             cdbanchq = 85;
