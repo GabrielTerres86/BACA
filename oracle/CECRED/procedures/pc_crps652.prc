@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 30/11/2016
+   Data    : AGOSTO/2013                      Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -142,27 +142,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             Melhoria 155 (Heitor - RKAM)
 
                15/01/2016 - Alteracoes para o Prj. 131 - Assinatura conjunta (Jean Michel)
-
+			   
                01/02/2016 - Melhoria 147 - Adicionar Campos e Aprovacao de
                             Transferencia entre PAs (Heitor - RKAM)
 
                23/02/2016 - Chamado 374738 - Alteracao na busca das informacoes de pagamentos em
                             conta corrente. Estava buscando indevidamente da tabela craplem, quando
                             o correto deveria ser craplcm (Heitor - RKAM)
-
+               
                18/03/2016 - Chamado 374738 - Alteracao na busca das informacoes de pagamentos de
                             multa e juros de mora em emprestimos. Estava buscando indevidamente da
                             tabela craplem, quando o correto deveria ser craplcm (Heitor - RKAM)
 
                             
                26/07/2016 - Correção não estava trazendo o nome da acessoria de cobrança
-                            na manutenção cadastral. (Oscar)
+                            na manutenção cadastral. (Oscar)             
                27/09/2016 - Correcao na chamada da gene0007 para remocao de caracteres especiais.
 			                Nao deve remover o @ devido ao campo de email.
 							Heitor (RKAM) - Chamado 521909
 
                10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
                             do cyber. (Gil - Mouts)
+                            
+               06/12/2016 - Incorporação alteração no cursor "cr_crapcop" para retirar o filtro
+                            das cooperativas ativas campo "flgativo". (Oscar)
+
 			   
 			   30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
 			                Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
@@ -254,7 +258,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcop.nrdocnpj
        FROM crapcop crapcop
        WHERE crapcop.cdcooper <> pr_cdcooper
-         AND crapcop.flgativo = 1
        ORDER BY crapcop.cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
 
@@ -384,7 +387,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
                   and crapcyb.cdorigem IN (2,3)
-                  and x.inliquid = 0) vlmtapar
+				  and x.inliquid = 0) vlmtapar
              ,(select sum(x.vlmrapar)
                  from crappep x
                 where x.cdcooper = crapcyb.cdcooper
@@ -3454,7 +3457,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            vr_cddbloco     crapenc.cddbloco%TYPE;
            vr_nrcxapst     crapenc.nrcxapst%TYPE;
            vr_cdorigem     crapcyc.cdorigem%TYPE;
-
+           
            /* Cursores Locais */
            --Selecionar Cadastro Cyber
            CURSOR cr_crapcyc (pr_cdcooper IN crapcyc.cdcooper%type
