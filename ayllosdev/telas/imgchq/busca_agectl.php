@@ -19,10 +19,6 @@
     isPostMethod();
 
 
-    if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
-        exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-    }
-
     $cdcooper = ( isset($_POST["cdcooper"]) ) ? $_POST["cdcooper"] : '';
     
 
