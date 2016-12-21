@@ -186,8 +186,8 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
                                       
-  -- Rotina referente ao desbloqueio do limite de descondo de cheque
-  PROCEDURE pc_desbloq_lim_desc_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+  -- Rotina referente ao desbloqueio para inclusao de novos borderos
+  PROCEDURE pc_desblq_inclusao_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato                            
                                       ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Número do Caixa
@@ -2505,7 +2505,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   DECLARE
   
     -- Variável para consulta de limite
-    vr_tab_lim_desconto TELA_TAB019.typ_tab_lim_desconto;      
+    vr_tab_lim_desconto dscc0001.typ_tab_lim_desconto;      
     
     --Variaveis auxiliares
     vr_vllimite craplim.vllimite%TYPE;
@@ -2677,7 +2677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     END IF;    
     
     -- Consulta o limite de desconto por tipo de pessoa
-    TELA_TAB019.pc_busca_limite_desconto( pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa 
+    DSCC0001.pc_busca_tab_limdescont(pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa 
                                          ,pr_inpessoa => rw_crapass.inpessoa          --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
                                          ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                                          ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
@@ -2811,8 +2811,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
   END pc_renovar_lim_desc_cheque;
   
-  -- Rotina referente ao desbloqueio do limite de descondo de cheque
-  PROCEDURE pc_desbloq_lim_desc_cheque(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+  -- Rotina referente ao desbloqueio para inclusao de novos borderos
+  PROCEDURE pc_desblq_inclusao_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Número da Conta
                                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Contrato                            
                                       ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Número do Caixa
@@ -2825,7 +2825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       
     /* .............................................................................
 
-     Programa: pc_desbloq_lim_desc_cheque
+     Programa: pc_desblq_inclusao_bordero
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : Ricardo Linhares
@@ -2834,7 +2834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Dados referentes ao programa:
 
      Frequencia: Sempre que chamada. 
-     Objetivo  : Rotina referente ao desbloqueio do limite de desconto de cheque
+     Objetivo  : Rotina referente ao desbloqueio para inclusao de novos borderos
      Alteracoes:  
     ..............................................................................*/    
                                       
@@ -3039,7 +3039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         ROLLBACK;
       END;
   
-    END pc_desbloq_lim_desc_cheque;
+    END pc_desblq_inclusao_bordero;
     
 END LIMI0001;
 /
