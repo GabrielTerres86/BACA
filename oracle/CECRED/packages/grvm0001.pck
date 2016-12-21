@@ -1429,9 +1429,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
            AND NVL(LENGTH(TRIM(bpr.dschassi)),0) > 0 /*chassi*/
            AND NVL(bpr.tpchassi,0)               > 0 /*tipo do chassi*/
            AND NVL(LENGTH(TRIM(bpr.uflicenc)),0) > 0 /*uf de licenciamento*/
-           AND NVL(LENGTH(TRIM(bpr.ufdplaca)),0) > 0 /*uf da placa*/
+           AND ((NVL(LENGTH(TRIM(bpr.ufdplaca)),0) > 0 /*uf da placa*/
            AND NVL(LENGTH(TRIM(bpr.nrdplaca)),0) > 0 /*numero da placa*/
            AND NVL(LENGTH(TRIM(bpr.nrrenava)),0) > 0 /*renavam*/
+           AND TRIM(UPPER(NVL(bpr.dstipbem,'#'))) <> 'ZERO KM')
+            OR (TRIM(UPPER(NVL(bpr.dstipbem,'#')))  = 'ZERO KM')) 
            AND NVL(bpr.nranobem,0)               > 0 /*ano de fabricação*/
            AND NVL(bpr.nrmodbem,0)               > 0 /*ano do modelo*/
            AND bpr.cdcooper = pr_cdcooper
