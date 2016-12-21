@@ -50,7 +50,7 @@
 
    Programa: sistema/internet/procedures/b1wgen0088.p
    Autor   : Guilherme/Supero
-   Data    : 15/03/2011                        Ultima atualizacao: 16/12/2016
+   Data    : 15/03/2011                        Ultima atualizacao: 07/06/2016
 
    Dados referentes ao programa:
 
@@ -239,9 +239,6 @@
                08/11/2016 - Considerar periodo de carencia parametrizado na regra de bloqueio de baixa
                             de titulos descontados
                             Heitor (Mouts) - Chamado 527557
-
-	           12/12/2016 - Adicionar LOOP para buscar o numero do convenio de protesto 
-			                (Douglas - Chamado 564039)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0087tt.i }
@@ -2966,7 +2963,6 @@ PROCEDURE enviar-tit-protesto:
     DEF          VAR aux_nrdocmto AS INT                             NO-UNDO.
     DEF          VAR aux_contador AS INT                             NO-UNDO.
     DEF          VAR aux_nrcnvceb AS INTE                            NO-UNDO.
-	DEF          VAR aux_nrcebnov AS INTE                            NO-UNDO.
 
     DEF          VAR aux_ponteiro AS INTE                            NO-UNDO.
     DEF          VAR aux_nrsequen AS INTE                            NO-UNDO.
@@ -3096,28 +3092,14 @@ PROCEDURE enviar-tit-protesto:
             aux_nrcnvceb = crapceb.nrcnvceb.
         ELSE
             DO:
-                DO aux_nrcebnov = 1 TO 9999:
-                
-                    FIND FIRST crapceb 
-                         WHERE crapceb.cdcooper = bcrapcob.cdcooper
-                           AND crapceb.nrconven = crapcco.nrconven
-                           AND crapceb.nrcnvceb = aux_nrcebnov
-                           NO-LOCK NO-ERROR.
-                           
-                    IF NOT AVAIL crapceb THEN 
-                       DO:
-                          ASSIGN aux_nrcnvceb = aux_nrcebnov.
-                          LEAVE.
-                       END.
-                    
-                END.
+                FIND LAST crapceb WHERE crapceb.cdcooper = bcrapcob.cdcooper AND
+                                        crapceb.nrconven = crapcco.nrconven
+                                        USE-INDEX crapceb3 NO-LOCK NO-ERROR.
 
-                IF aux_nrcnvceb = 0 THEN
-                DO:
-                   ret_dsinserr = "Erro: numero CEB excedeu o limite de 9999. " +
-				                  "Instrucao de protesto cancelada.".        
-                   RETURN "NOK".
-                END.
+                IF   NOT AVAIL crapceb   THEN
+                     ASSIGN aux_nrcnvceb = 1.
+                ELSE
+                     ASSIGN aux_nrcnvceb = crapceb.nrcnvceb + 1.
     
                 CREATE crapceb.
                 ASSIGN crapceb.cdcooper = bcrapcob.cdcooper
