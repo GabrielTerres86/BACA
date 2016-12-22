@@ -171,7 +171,10 @@
                             no chamado 512411. (Kelvin)
                             
                05/12/2016 - Alterado campo dsdepart para cddepart.
-                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)   
+						
+			   22/12/2016 - Ajustar bloqueio dos departamentos para VIACREDI e CECRED, conforme
+			                solicitação feita no chamado 549118 (Renato Darosci - Supero)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -443,13 +446,24 @@ DO WHILE TRUE:
                  
    RUN fontes/inicia.p.
 
-   IF   glb_cddepart = 18  OR   /* SUPORTE  */
-        glb_cddepart =  7  OR   /* CONTROLE */
-        glb_cddepart =  1  OR   /* CANAIS   */
-        glb_cddepart = 20  THEN /* TI       */
-        ASSIGN flg_altdepto = YES.
-   ELSE 
-        ASSIGN flg_altdepto = NO.
+   IF   glb_cdcooper <> 1 AND 
+        glb_cdcooper <> 3 THEN DO:
+
+       IF glb_cddepart = 18  OR   /* SUPORTE  */
+          glb_cddepart =  7  OR   /* CONTROLE */
+          glb_cddepart =  1  OR   /* CANAIS   */
+          glb_cddepart = 20  THEN /* TI       */
+           ASSIGN flg_altdepto = YES.
+       ELSE 
+           ASSIGN flg_altdepto = NO.
+   END.
+   ELSE DO:
+       IF glb_cddepart = 18  OR   /* SUPORTE  */
+          glb_cddepart = 20  THEN /* TI       */
+           ASSIGN flg_altdepto = YES.
+       ELSE 
+           ASSIGN flg_altdepto = NO.
+   END.
            
    NEXT-PROMPT tel_cdoperad WITH FRAME f_operad.
 
@@ -562,28 +576,50 @@ DO WHILE TRUE:
                     glb_cdcritic = 0.
                     LEAVE.
                 END.
-                          
-           /* Nao permitir filiadas alterar operadores cecred */
-           IF   glb_cddepart <> 20  AND   /* TI                  */
-                glb_cddepart <> 18  AND   /* SUPORTE             */
-                glb_cddepart <>  1  AND   /* CANAIS              */
-                glb_cddepart <>  8  AND   /* COORD.ADM/FINANCEIRO*/
-                glb_cddepart <>  9  THEN  /* COORD.PRODUTOS      */
-                DO:
-                    IF   AVAIL crapope THEN                
-                         IF   crapope.cddepart = 20 OR    /* TI                  */
-                              crapope.cddepart = 18 OR    /* SUPORTE             */
-                              crapope.cddepart =  1 OR    /* CANAIS              */
-                              crapope.cddepart =  8 OR    /* COORD.ADM/FINANCEIRO*/
-                              crapope.cddepart =  9 THEN  /* COORD.PRODUTOS      */
-                              DO:
-                                  ASSIGN glb_cdcritic = 527.
-                                  RUN fontes/critic.p.
-                                  MESSAGE glb_dscritic.
-                                  glb_cdcritic = 0.
-                                  LEAVE.
-                              END.
-                END.
+           
+		   /* Se não for cooperativa 1, nem 3 ... */
+		   IF   glb_cdcooper <> 1 AND 
+                glb_cdcooper <> 3 THEN DO:
+		                  
+               /* Nao permitir filiadas alterar operadores cecred */
+               IF   glb_cddepart <> 20  AND   /* TI                  */
+                    glb_cddepart <> 18  AND   /* SUPORTE             */
+                    glb_cddepart <>  1  AND   /* CANAIS              */
+                    glb_cddepart <>  8  AND   /* COORD.ADM/FINANCEIRO*/
+                    glb_cddepart <>  9  THEN  /* COORD.PRODUTOS      */
+                    DO:
+                         IF   AVAIL crapope THEN                
+                             IF   crapope.cddepart = 20 OR    /* TI                  */
+                                  crapope.cddepart = 18 OR    /* SUPORTE             */
+                                  crapope.cddepart =  1 OR    /* CANAIS              */
+                                  crapope.cddepart =  8 OR    /* COORD.ADM/FINANCEIRO*/
+                                  crapope.cddepart =  9 THEN  /* COORD.PRODUTOS      */
+                                  DO:
+                                      ASSIGN glb_cdcritic = 527.
+                                      RUN fontes/critic.p.
+                                      MESSAGE glb_dscritic.
+                                      glb_cdcritic = 0.
+                                      LEAVE.
+                                  END.
+                    END.
+		   END.
+		   ELSE DO:
+		       /* Nao permitir filiadas alterar operadores cecred */
+               IF   glb_cddepart <> 20  AND   /* TI                  */
+                    glb_cddepart <> 18  THEN  /* SUPORTE             */
+                    DO:
+                         IF   AVAIL crapope THEN                
+                             IF   crapope.cddepart = 20 OR    /* TI                  */
+                                  crapope.cddepart = 18 THEN  /* SUPORTE             */
+                                  DO:
+                                      ASSIGN glb_cdcritic = 527.
+                                      RUN fontes/critic.p.
+                                      MESSAGE glb_dscritic.
+                                      glb_cdcritic = 0.
+                                      LEAVE.
+                                  END.
+                    END.
+		   END.
            
            /* Buscar descriçao do departamento */
            FIND FIRST crapdpo 
