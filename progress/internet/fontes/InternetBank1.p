@@ -1210,33 +1210,35 @@ IF  CAN-DO("1,2,6,7,8,9,10,11,12,16",STRING(par_cdcooper))  AND
 END.
 
 
+/* M172 - Atualizacao Tefefone - SO FAZ SE FOR Pessoa Fisica */
+IF  aux_inpessoa = 1 THEN DO:
 
-/** VERIFICACAO DA ATUALIZACAO TELEFONE **/
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    /** VERIFICACAO DA ATUALIZACAO TELEFONE **/
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
 
-RUN STORED-PROCEDURE pc_ib_verif_atualiz_fone
-    aux_handproc = PROC-HANDLE NO-ERROR
-                     (INPUT par_cdcooper,
-                      INPUT par_nrdconta,
-                      INPUT aux_inpessoa,
-                      INPUT par_idseqttl,
-                      OUTPUT 0,
-                      OUTPUT "").
+    RUN STORED-PROCEDURE pc_ib_verif_atualiz_fone
+        aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT aux_inpessoa,
+                          INPUT par_idseqttl,
+                          OUTPUT 0,
+                          OUTPUT "").
 
-CLOSE STORED-PROC pc_ib_verif_atualiz_fone
-      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    CLOSE STORED-PROC pc_ib_verif_atualiz_fone
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-ASSIGN aux_cdcritic = 0
-       aux_dscritic = ""
-       aux_cdcritic = pc_ib_verif_atualiz_fone.pr_cdcritic
-                      WHEN pc_ib_verif_atualiz_fone.pr_cdcritic <> ?
-       aux_dscritic = pc_ib_verif_atualiz_fone.pr_dscritic
-                      WHEN pc_ib_verif_atualiz_fone.pr_dscritic <> ?.
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_ib_verif_atualiz_fone.pr_cdcritic
+                          WHEN pc_ib_verif_atualiz_fone.pr_cdcritic <> ?
+           aux_dscritic = pc_ib_verif_atualiz_fone.pr_dscritic
+                          WHEN pc_ib_verif_atualiz_fone.pr_dscritic <> ?.
 
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-/** VERIFICACAO DA ATUALIZACAO TELEFONE **/
-
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    /** VERIFICACAO DA ATUALIZACAO TELEFONE **/
+END.
 
 
 CREATE xml_operacao.
