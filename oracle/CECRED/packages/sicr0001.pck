@@ -5,7 +5,7 @@ create or replace package cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 28/10/2016
+     Data    : Abril/2013                       Ultima atualizacao: 23/12/2016
 
      Dados referentes ao programa:
 
@@ -42,13 +42,17 @@ create or replace package cecred.SICR0001 is
 
                  28/10/2016 - SD509982 - Atualiza critica LAU - pc_efetua_debito_automatico
                               para DEBCON (Guilherme/SUPERO)
+
+				22/12/2016 - Alterado o tipo do campo dscooper
+                             (Adriano - SD 582204).
+  
   ..............................................................................*/
 
   -- Chave = dsorigem||fldebito||fltiptra||fltipdoc||lpad(cdcooper,5,'0')||lpad(cdagenci,3,'0')||lpad(nrdconta,9,'0')||ROWID
   TYPE typ_reg_agendamentos IS
   RECORD ( nrchave VARCHAR2(100) --
           ,cdcooper NUMBER(2)    --  FORMAT "z9"
-          ,dscooper VARCHAR2(11) --  FORMAT "x(11)"
+          ,dscooper crapcop.nmrescop%TYPE
           ,cdagenci NUMBER(3)    --  FORMAT "zz9"
           ,nrdconta NUMBER       --  FORMAT "zzzz,zzz,9"
           ,nmprimtl crapass.nmprimtl%TYPE --  FORMAT "x(40)"
@@ -1488,7 +1492,7 @@ create or replace package body cecred.SICR0001 is
     
       -- definir savepoint
       SAVEPOINT TRANS1;
-    
+
       --> Verificar a execução da DEBNET/DEBSIC
       SICR0001.pc_controle_exec_deb(pr_cdcooper => pr_cdcooper --> Código da coopertiva
                                    ,pr_cdtipope => 'C' --> Tipo de operacao I-incrementar e C-Consultar
@@ -1600,7 +1604,7 @@ create or replace package body cecred.SICR0001 is
           ELSIF rw_crapatr.dtfimatr IS NOT NULL
              OR rw_crapatr.dtfimsus >= pr_dtmvtolt THEN
             vr_cdcritic := 447; -- AUTORIZACAO CANCELADA
-          END IF;
+        END IF;
         END IF;
       
         -- Validar cooperado demitido
@@ -1736,7 +1740,7 @@ create or replace package body cecred.SICR0001 is
                 vr_cdcritic := vr_aux_cdcritic;
                 RAISE vr_exc_erro;
               END IF;
-            
+
               BEGIN
               
                 -- Atualiza registros de lancamentos automaticos
@@ -2074,7 +2078,7 @@ create or replace package body cecred.SICR0001 is
           IF vr_dscritic IS NOT NULL
           OR vr_des_erro IS NOT NULL THEN
             --Levantar Excecao
-            RAISE vr_exc_erro;
+              RAISE vr_exc_erro;
           END IF;
         
           --> Armazena protocolo na autenticacao
@@ -2124,7 +2128,7 @@ create or replace package body cecred.SICR0001 is
                   RAISE vr_exc_erro;
               END;
             END IF;
-          END IF;
+            END IF;
         
         END IF;
       

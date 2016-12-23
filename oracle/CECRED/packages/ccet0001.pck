@@ -171,7 +171,7 @@ create or replace package body cecred.CCET0001 is
   --  Sistema  : Rotinas referentes ao calculo do CET (Custo Efetivo Total)
   --  Sigla    : CCET
   --  Autor    : Lucas Ranghetti
-  --  Data     : Julho/2014.                   Ultima atualizacao: 05/05/2015
+  --  Data     : Julho/2014.                   Ultima atualizacao: 23/12/2016
   --
   -- Dados referentes ao programa:
   --
@@ -191,6 +191,11 @@ create or replace package body cecred.CCET0001 is
   --
   --              17/11/2015 - Criacao do parametro cdfinemp na pc_calcula_cet_emprestimos, para tratamento
   --                           do IOF sobre emprestimos de Portabilidade.(Carlos Rafael Tanholi - Projeto Portabilidade).
+  --
+  --              23/12/2016 - Ajuste para aumentar o tamanho do campo que recebe o nome da cooperativa
+  --                           pois estava estourando o format
+  --                          (Adriano - SD 582204).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   pr_cdcritic NUMBER;
@@ -1276,7 +1281,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 13/09/2016
+  Data    : Julho/2014                        Ultima atualizacao: 23/12/2016
 
   Dados referentes ao programa:
 
@@ -1292,6 +1297,10 @@ create or replace package body cecred.CCET0001 is
               13/09/2016 - Incluido parametros para permitir retornar o XML de geração do relatorio
                            para ser adicionado em outros relatorios. 
                            PRJ314-Indexação centralizada (Odirlei-AMcom)             
+                           
+              23/12/2016 - Ajuste para aumentar o tamanho do campo que recebe o nome da cooperativa
+                           pois estava estourando o format
+                           (Adriano - SD 582204).                                       
   ............................................................................. */
     DECLARE
     
@@ -1325,7 +1334,7 @@ create or replace package body cecred.CCET0001 is
       vr_txjurrem NUMBER := 0;                -- Taxa de juros remunerados
       vr_dsdprazo VARCHAR2(20);               -- Prazo do contrato
       
-      vr_dscooper VARCHAR2(65);               -- Descrição da cooperativa
+      vr_dscooper VARCHAR2(70);               -- Descrição da cooperativa
             
       -- Variavel exceção
       vr_exc_erro EXCEPTION;      
@@ -1557,7 +1566,7 @@ create or replace package body cecred.CCET0001 is
       END IF;
       
       pc_escreve_xml('<cet>');
-      
+
       -- informacoes para impressao
       pc_escreve_xml('<cdcooper>' || pr_cdcooper || '</cdcooper>' ||
                      '<nrdconta>' || gene0002.fn_mask_conta(pr_nrdconta) || '</nrdconta>' ||
@@ -1669,7 +1678,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 07/11/2016
+  Data    : Julho/2014                        Ultima atualizacao: 23/12/2016
 
   Dados referentes ao programa:
 
@@ -1692,6 +1701,9 @@ create or replace package body cecred.CCET0001 is
                            alienado não fechava o valor da tarifa cobrada na conta e impressa no CET.
                            (SD#551769 - AJFink)
 
+              23/12/2016 - Ajuste para aumentar o tamanho do campo que recebe o nome da cooperativa
+                           pois estava estourando o format
+                           (Adriano - SD 582204).
   ............................................................................. */
     DECLARE
     
@@ -1726,7 +1738,7 @@ create or replace package body cecred.CCET0001 is
       vr_cdhistor NUMBER := 0;                -- Historico
       vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
       
-      vr_dscooper VARCHAR2(65);               -- Descrição da cooperativa
+      vr_dscooper VARCHAR2(70);               -- Descrição da cooperativa
       
       -- Variavel exceção
       vr_exc_erro EXCEPTION;      
