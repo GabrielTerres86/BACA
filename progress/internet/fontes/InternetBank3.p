@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 16/02/2016
+   Data    : Marco/2007                        Ultima atualizacao: 14/12/2016
 
    Dados referentes ao programa:
 
@@ -42,6 +42,11 @@
 
                16/02/2016 - Criacao do campo flprotes no XML. (Jaison/Marcos)
 
+			   14/12/2016 Retirado limitacao de resultados aqui
+                          pois qdo atinigia o limite nao mostrava nada na tela
+						  mas mesmo assim levava todo o tempo como se tivesse 
+						  carregado, validacao agora esta dentro da b1wnet0001.seleciona-sacados
+						  (Tiago/Ademir SD566906)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -334,6 +339,12 @@ ASSIGN xml_operacao.dslinxml = "</nrdconta></EMPRESTIMOS_INTERNET>".
    24/06/2011 carregar dados até 2000
    caso ultrapasse, nao carreca SD 292432 
    (Kelviin)
+
+   14/12/2016 Retirado limitacao de resultados aqui
+   pois qdo atingia o limite nao mostrava nada na tela
+   mas mesmo assim levava todo o tempo como se tivesse 
+   carregado, validacao agora esta dentro da b1wnet0001.seleciona-sacados
+   (Tiago/Ademir SD566906)
    */
 
 
@@ -345,8 +356,6 @@ CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<SACADOS qttotsac='" + 
                                 STRING(aux_contador) + "'>".
 
-IF aux_contador < 2000 THEN
-DO:
     FOR EACH tt-sacados-blt NO-LOCK BY tt-sacados-blt.nmdsacad:
         CREATE xml_operacao.
         ASSIGN xml_operacao.dslinxml = "<DADOS><nmdsacad>" +
@@ -366,7 +375,6 @@ DO:
                                            "0") +
                                        "</flgemail></DADOS>".
                                          
-    END.         
 END.
          
 CREATE xml_operacao.
