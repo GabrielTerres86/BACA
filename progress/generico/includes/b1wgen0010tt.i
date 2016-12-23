@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 05/01/2016
+   Data    : Marco/2008                        Ultima atualizacao: 29/08/2016
      
    Dados referentes ao programa:
 
@@ -89,6 +89,8 @@
                             
                05/01/2016 - Incluso os campos inserasa ,dsserasa, qtdianeg na
                             tt-consulta-blt (Projeto Negativacao Serasa - Daniel)
+  
+			        29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
   
 .............................................................................*/
 
@@ -187,7 +189,7 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD vltdscti AS DECI
     FIELD nrctrlim LIKE craptdb.nrctrlim
     FIELD nrctrlim_ativo LIKE craptdb.nrctrlim
-    FIELD dsdemail LIKE crapsab.dsdemail
+    FIELD dsdemail AS CHAR
     FIELD flgemail AS LOGI
     FIELD inemiten LIKE crapcob.inemiten
     FIELD dsemiten AS CHAR
@@ -196,7 +198,11 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD inserasa AS CHAR
     FIELD dsserasa AS CHAR
     FIELD flserasa AS LOGI
-    FIELD qtdianeg AS INTE.
+    FIELD qtdianeg AS INTE
+   	FIELD dtvencto_atualizado AS DATE
+    FIELD vltitulo_atualizado AS DECI
+	  FIELD vlmormul_atualizado AS DECI
+    FIELD flg2viab AS INTE.
 
 DEF TEMP-TABLE tt-arq-cobranca  
     FIELD cdseqlin AS INTEGER
