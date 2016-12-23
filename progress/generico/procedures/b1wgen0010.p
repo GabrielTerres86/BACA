@@ -42,7 +42,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 12/12/2016
+   Data    : 12/09/2005                     Ultima atualizacao: 23/12/2016
 
    Dados referentes ao programa:
 
@@ -385,6 +385,10 @@
 			   12/12/2016 - Correcao do relatorio da tela cobran que estavam sendo
 							gerado em branco, onde no chamado 563327 incluimos logs
 							para que futuramente podessemos identifcar o problema (Kelvin)	
+							
+			   23/12/2016 - Realizado ajustes na rotina consulta-bloqueto e consulta-boleto-2via
+							para aumentar o desempenho na tela de manutencao do internet bank,
+							conforme solicitado no chamado 573538 (Kelvin).
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -533,6 +537,8 @@ PROCEDURE consulta-boleto-2via.
     DEF VAR aux_vlmormut_atualizado    AS DECI             NO-UNDO.
     DEF VAR aux_vldescut               AS DECI             NO-UNDO.
     DEF VAR aux_cdmensut               AS INTE             NO-UNDO.
+	DEF VAR aux_nmdobnfc			   AS CHAR			   NO-UNDO.
+	DEF VAR aux_des_erro			   AS CHAR			   NO-UNDO.
 
     DEF VAR h-b2crap14                 AS HANDLE           NO-UNDO.
     DEF VAR h-b1wgen0089               AS HANDLE           NO-UNDO.
@@ -545,7 +551,7 @@ PROCEDURE consulta-boleto-2via.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-consulta-blt. 
-
+	
     /* verificar se conta nao eh migracao/incorporada */
     IF  p-nrdconta > 0 AND p-nrcpfcgc > 0 THEN DO:                  
         FOR FIRST craptco FIELDS (nrdconta) WHERE 
@@ -733,7 +739,47 @@ PROCEDURE consulta-boleto-2via.
                                       "dados do pagador.".
             RETURN "NOK".
         END.
+	
+	{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
+    RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+      aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT deci(p-cdcooper),
+                          INPUT deci(p-nrdconta),
+                          OUTPUT "",
+                          OUTPUT "",
+                          OUTPUT "").
+                          
+                         
+    CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    ASSIGN aux_nmdobnfc = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                          WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+           aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                          WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+           aux_nmdobnfc = pc_busca_nome_imp_blt.pr_nmprimtl
+                          WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_des_erro <> "OK" OR
+        aux_dscritic <> ""   THEN 
+		DO: 
+			IF  aux_dscritic = "" THEN 
+			DO:   
+				ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
+			END.
+			
+			CREATE tt-erro.
+            ASSIGN tt-erro.dscritic = aux_dscritic.
+			
+            RETURN "NOK".
+        END.
+	
     RUN proc_nosso_numero(INPUT p-cdcooper,
                           INPUT 90,
                           INPUT 900,
@@ -807,7 +853,8 @@ PROCEDURE consulta-boleto-2via.
            tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
            tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
            tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
-
+		   tt-consulta-blt.nmprimtl 			= aux_nmdobnfc										
+		   
            tt-consulta-blt.nrdconta = crapcob.nrdconta
            tt-consulta-blt.vldocmto = crapcob.vltitulo
            tt-consulta-blt.dtvctori = aux_dtvencut
@@ -863,7 +910,9 @@ PROCEDURE consulta-bloqueto.
     DEF VAR aux_cdmensut               AS INTE             NO-UNDO.
     DEF VAR aux_critdata               AS LOGI             NO-UNDO.
     DEF VAR aux_dscritic               AS CHAR             NO-UNDO.
-
+	DEF VAR aux_nmdobnfc			   AS CHAR			   NO-UNDO.
+	DEF VAR aux_des_erro			   AS CHAR			   NO-UNDO.
+	
  /******************************** CONSULTAS *********************************/
  /*                                                                          */
  /* p-tipo-consulta > 1-NAO COBRADOS/2-COBRADOS/3-TODOS                      */
@@ -959,8 +1008,50 @@ PROCEDURE consulta-bloqueto.
         
             IF  crapass.inpessoa > 1  THEN
                 ASSIGN aux_nmprimtl = REPLACE(crapass.nmprimtl,"&","%26").
+        END.    
+	
+	{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_nome_imp_blt
+      aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT deci(p-cdcooper),
+                          INPUT deci(p-nro-conta),
+                          OUTPUT "",
+                          OUTPUT "",
+                          OUTPUT "").
+                          
+                         
+    CLOSE STORED-PROC pc_busca_nome_imp_blt aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    ASSIGN aux_nmdobnfc = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_des_erro = pc_busca_nome_imp_blt.pr_des_erro
+                          WHEN pc_busca_nome_imp_blt.pr_des_erro <> ?
+           aux_dscritic = pc_busca_nome_imp_blt.pr_dscritic
+                          WHEN pc_busca_nome_imp_blt.pr_dscritic <> ?
+           aux_nmdobnfc = pc_busca_nome_imp_blt.pr_nmprimtl
+                          WHEN pc_busca_nome_imp_blt.pr_nmprimtl <> ?.         
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    IF  aux_des_erro <> "OK" OR
+        aux_dscritic <> ""   THEN 
+		DO: 
+			IF  aux_dscritic = "" THEN 
+			DO:   
+				ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
+			END.
+			
+			 ASSIGN i-cod-erro = 0 
+					c-dsc-erro = aux_dscritic.
+           
+			{sistema/generico/includes/b1wgen0001.i}
+
+			RETURN "NOK".
         END.
-    
+	
     CASE p-consulta:
          WHEN 1 THEN                                   /* Por Conta */
                 DO:                    
@@ -1138,7 +1229,8 @@ PROCEDURE consulta-bloqueto.
                                  ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.                               
+                                        tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0. 
+										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.										
                                  END.
                                           
                              END.
@@ -1328,10 +1420,11 @@ PROCEDURE consulta-bloqueto.
                              ASSIGN tt-consulta-blt.dtvencto_atualizado = aux_dtvencut_atualizado
                                     tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                     tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
-                                    tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+                                    tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0
+									tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
                                  END.
                              END.    
-
+								
                              FIND LAST tt-consulta-blt EXCLUSIVE-LOCK NO-ERROR.
             
                              IF   AVAILABLE tt-consulta-blt  THEN
@@ -1520,6 +1613,7 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
                                 END.
                                 END.
                              END.
@@ -1714,6 +1808,7 @@ PROCEDURE consulta-bloqueto.
                                         tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                         tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                         tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+										tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
                                  
                                 END.
                                 END.
@@ -2086,6 +2181,7 @@ PROCEDURE consulta-bloqueto.
                                       tt-consulta-blt.vltitulo_atualizado = aux_vltituut_atualizado
                                       tt-consulta-blt.vlmormul_atualizado = aux_vlmormut_atualizado
                                       tt-consulta-blt.flg2viab            = IF aux_critdata = YES THEN 1 ELSE 0.
+									  tt-consulta-blt.nmprimtl 			= aux_nmdobnfc.
                                 END.
                             END.
 
@@ -4487,7 +4583,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
        aux_dscritic <> ""   THEN DO: 
 
        IF  aux_dscritic = "" THEN DO:   
-           ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+           ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
        END.
       
        RETURN "NOK".
@@ -4837,7 +4933,7 @@ PROCEDURE proc_nosso_numero.
         DO:
             IF AVAIL crapass THEN
                ASSIGN aux_nmprimtl = REPLACE(crapass.nmprimtl,"&","%26"). 
-        END.*/
+        END.
     
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 
@@ -4869,11 +4965,11 @@ PROCEDURE proc_nosso_numero.
         aux_dscritic <> ""   THEN DO: 
 
         IF  aux_dscritic = "" THEN DO:   
-            ASSIGN aux_dscritic =  "Nao foi possivel concluir a busca da configuracao".
+            ASSIGN aux_dscritic =  "Nao foi possivel buscar o nome do beneficiario para ser impresso no boleto".
         END.
         
         RETURN "NOK".
-        END.
+        END.*/
     
     DO TRANSACTION:
 
@@ -4954,7 +5050,7 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.qtdianeg = crapcob.qtdianeg.
 
         ASSIGN tt-consulta-blt.nossonro = aux_nossonro
-               tt-consulta-blt.nmprimtl = aux_nmprimtl
+               /*tt-consulta-blt.nmprimtl = aux_nmprimtl*/
                tt-consulta-blt.nmdsacad = REPLACE(aux_na_nmdsacad,"&","%26")
                tt-consulta-blt.nrinssac = crapcob.nrinssac
                tt-consulta-blt.cdtpinsc = (IF crapcob.nrinssac = 0 THEN

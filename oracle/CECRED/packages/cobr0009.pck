@@ -47,13 +47,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     Programa : COBR0009
     Sigla    : CRED
     Autor    : Kelvin Souza Ott
-    Data     : Setembro/2016.                   Ultima atualizacao: --/--/----
+    Data     : Setembro/2016.                   Ultima atualizacao: 23/12/2016
   
    Dados referentes ao programa:
   
    Frequencia: -----
    Objetivo  : Englobar procedures referente configurações para emissão de boleto.
-
+   
+   Alteração : Ajuste realizado para melhorar o desempenho na busca da configuracao
+               e na busca do nome do beneficiario, conforme solicitado no chamado 573538
+               (Kelvin).
   ---------------------------------------------------------------------------------------------------------------*/
          
   PROCEDURE pc_busca_config_nome_blt(pr_cdcooper IN crapass.cdcooper%TYPE -- Cód. cooperativa
@@ -88,28 +91,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
          AND cob.nrdconta = p_nrdconta;     
     rw_config cr_config%ROWTYPE;
     
-    --Busca informações da cooperativa
-    CURSOR cr_crapcop (p_cdcooper IN crapcop.cdcooper%TYPE) IS -- Cód. cooperativa
-      SELECT cop.cdcooper
-            ,cop.nmextcop
-        FROM crapcop cop
-       WHERE cop.cdcooper = p_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
-    
     --Busca informações do associado 
-    CURSOR cr_crapass (p_cdcooper IN crapass.cdcooper%TYPE     -- Cód. cooperativa
+    CURSOR cr_crapjur (p_cdcooper IN crapass.cdcooper%TYPE     -- Cód. cooperativa
                       ,p_nrdconta IN crapass.nrdconta%TYPE) IS -- Nr da conta  
-      SELECT ass.cdcooper
-            ,ass.nrdconta
-            ,ass.nmprimtl
-            ,DECODE(trim(jur.nmfansia),NULL,1,2) tpfansia
-        FROM crapass ass
-        JOIN crapjur jur
-          ON jur.cdcooper = ass.cdcooper
-         AND jur.nrdconta = ass.nrdconta
-       WHERE ass.cdcooper = p_cdcooper
-         AND ass.nrdconta = p_nrdconta;     
-    rw_crapass cr_crapass%ROWTYPE;  
+      SELECT DECODE(TRIM(jur.nmfansia),NULL,1,2) tpfansia
+        FROM crapjur jur
+       WHERE jur.cdcooper = p_cdcooper
+         AND jur.nrdconta = p_nrdconta;     
+    rw_crapjur cr_crapjur%ROWTYPE;  
+    
+    --Variaveis
+    vr_tpnome_emissao tbcobran_config_boleto.tpnome_emissao%TYPE;
     
     --Variaveis de erro
     vr_dscritic  VARCHAR2(1000);
@@ -119,31 +111,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     vr_xml_temp VARCHAR2(32767);
     
   BEGIN
-    
-    --Validando se a cooperativa existe
-    OPEN cr_crapcop(pr_cdcooper);
-      FETCH cr_crapcop
-       INTO rw_crapcop;
+    --Inicializar variáveis
+    vr_tpnome_emissao := NULL;  
       
-      IF cr_crapcop%NOTFOUND THEN
-        CLOSE cr_crapcop;
-        vr_dscritic := 'Cooperativa não encontrada.';
-        RAISE vr_exc_saida;
-      END IF;
-    CLOSE cr_crapcop;  
-    
-    --Validando se o cooperado existe
-    OPEN cr_crapass(pr_cdcooper
+    --Buscando informacao do associado
+    OPEN cr_crapjur(pr_cdcooper
                    ,pr_nrdconta);
-      FETCH cr_crapass
-       INTO rw_crapass;
+      FETCH cr_crapjur
+       INTO rw_crapjur;
       
-      IF cr_crapass%NOTFOUND THEN
-        CLOSE cr_crapass;
+      IF cr_crapjur%NOTFOUND THEN
+        CLOSE cr_crapjur;
         vr_dscritic := 'Cooperado não encontrado.';
         RAISE vr_exc_saida;
       END IF;
-    CLOSE cr_crapass;
+    CLOSE cr_crapjur;
     
     --Buscando as configurações do cooperado
     OPEN cr_config(pr_cdcooper
@@ -152,8 +134,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
        INTO rw_config;
       
       --Caso não encontre, cria configuração com padrão "1"
-      IF cr_config%NOTFOUND THEN        
-        BEGIN 
+      IF cr_config%NOTFOUND THEN
+        BEGIN
+          
+          vr_tpnome_emissao := 1;  
+         
           --Insere a configuração  
           INSERT INTO tbcobran_config_boleto
             (cdcooper
@@ -164,48 +149,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
             ,pr_nrdconta
             ,1);--Nome Razao
          
-         COMMIT;
          CLOSE cr_config;
-         
-         /*Se tentou encontrar a configuração e não encontrou
-           é inserido com default "1" e em seguida chama a procedure 
-           recursivamente.*/
-         pc_busca_config_nome_blt(pr_cdcooper
-                                 ,pr_nrdconta
-                                 ,pr_clobxmlc
-                                 ,pr_des_erro 
-                                 ,pr_dscritic); 
-         RETURN;
          
         EXCEPTION
           WHEN OTHERS THEN
             CLOSE cr_config;
-            ROLLBACK;
-            vr_dscritic := 'Erro ao inserir na tabela tbcobran_config_boleto: ' || SQLERRM
-                           || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+            vr_dscritic := 'Erro ao inserir na tabela tbcobran_config_boleto: ' || SQLERRM; 
             RAISE vr_exc_saida;
         END;
-        
+      ELSE
+        vr_tpnome_emissao := rw_config.tpnome_emissao;    
       END IF;
-    CLOSE cr_config;
-    
+
     /*Caso esteja com configuração para Nome fantasia,
       porém o nome não esta cadastrado, seta para tipo 1*/
-    IF rw_config.tpnome_emissao = 2 AND
-       rw_crapass.tpfansia = 1 /*Nome fantasia está vazio*/THEN
+    IF vr_tpnome_emissao = 2 AND
+       rw_crapjur.tpfansia = 1 /*Nome fantasia está vazio*/THEN
       BEGIN  
         
+        vr_tpnome_emissao := 1;
+      
         UPDATE tbcobran_config_boleto con
            SET con.tpnome_emissao = 1 
          WHERE con.cdcooper = pr_cdcooper
            AND con.nrdconta = pr_nrdconta;
-        COMMIT;
           
       EXCEPTION
         WHEN OTHERS THEN
-        ROLLBACK;
-        vr_dscritic := 'Erro ao atualizar a tabela tbcobran_config_boleto: ' || SQLERRM
-                       || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+        vr_dscritic := 'Erro ao atualizar a tabela tbcobran_config_boleto: ' || SQLERRM;
         RAISE vr_exc_saida;     
       END;
     
@@ -223,11 +194,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     
     gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                            ,pr_texto_completo => vr_xml_temp 
-                           ,pr_texto_novo     => '<tpnome_emissao>' || rw_config.tpnome_emissao || '</tpnome_emissao>');
+                           ,pr_texto_novo     => '<tpnome_emissao>' || vr_tpnome_emissao || '</tpnome_emissao>');
                            
     gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
                            ,pr_texto_completo => vr_xml_temp 
-                           ,pr_texto_novo     => '<tpfansia>' || rw_crapass.tpfansia || '</tpfansia>');
+                           ,pr_texto_novo     => '<tpfansia>' || rw_crapjur.tpfansia || '</tpfansia>');
     
     -- Encerrar a tag raiz
     gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
@@ -241,12 +212,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_des_erro := 'NOK';
-      pr_dscritic := vr_dscritic;
+      pr_dscritic := vr_dscritic;      
 
     WHEN OTHERS THEN
       pr_des_erro := 'NOK';
-      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_busca_config_nome_blt: ' || SQLERRM 
-                     || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;  
+      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_busca_config_nome_blt: ' || SQLERRM;
     
   END pc_busca_config_nome_blt;
 
@@ -350,16 +320,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
             (pr_cdcooper
             ,pr_nrdconta
             ,pr_tpnome_emissao);
-         
-         COMMIT;
+
          CLOSE cr_config;
          
         EXCEPTION
           WHEN OTHERS THEN
             CLOSE cr_config;
-            ROLLBACK;
-            vr_dscritic := 'Erro ao inserir na tabela tbcobran_config_boleto: ' || SQLERRM
-                           || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+            vr_dscritic := 'Erro ao inserir na tabela tbcobran_config_boleto: ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
       ELSE
@@ -372,15 +339,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
              AND con.nrdconta = pr_nrdconta;
           
           CLOSE cr_config;
-          COMMIT;
           
         EXCEPTION
           WHEN OTHERS THEN
-          CLOSE cr_config;
-          ROLLBACK;
-          vr_dscritic := 'Erro ao atualizar a tabela tbcobran_config_boleto: ' || SQLERRM
-                         || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
-          RAISE vr_exc_saida;     
+            CLOSE cr_config;
+            vr_dscritic := 'Erro ao atualizar a tabela tbcobran_config_boleto: ' || SQLERRM;
+            RAISE vr_exc_saida;     
         END;
            
       END IF;
@@ -390,12 +354,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
   EXCEPTION
     WHEN vr_exc_saida THEN
       pr_des_erro := 'NOK';
-      pr_dscritic := vr_dscritic;
-
+      pr_dscritic := vr_dscritic;      
+      
     WHEN OTHERS THEN
       pr_des_erro := 'NOK';
-      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_grava_config_nome_blt: ' || SQLERRM 
-                     || ' Linha: ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;  
+      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_grava_config_nome_blt: ' || SQLERRM;
+      
   END pc_grava_config_nome_blt;
   
   /* ..........................................................................
@@ -421,88 +385,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
                                  ,pr_des_erro       OUT VARCHAR2                                  -- Indicador erro OK/NOK
                                  ,pr_dscritic       OUT VARCHAR2) IS                              -- Descrição da crítica  
   
-    --Busca informações da cooperativa
-    CURSOR cr_crapcop (p_cdcooper IN crapcop.cdcooper%TYPE) IS -- Cód. cooperativa
-      SELECT cop.cdcooper
-            ,cop.nmextcop
-        FROM crapcop cop
-       WHERE cop.cdcooper = p_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
-    
-    --Busca informações do associado 
-    CURSOR cr_crapass (p_cdcooper IN crapass.cdcooper%TYPE     -- Cód. cooperativa
-                      ,p_nrdconta IN crapass.nrdconta%TYPE) IS -- Nr da conta  
-      SELECT ass.cdcooper
-            ,ass.nrdconta
-            ,ass.nmprimtl
-        FROM crapass ass
-       WHERE ass.cdcooper = p_cdcooper
-         AND ass.nrdconta = p_nrdconta;     
-    rw_crapass cr_crapass%ROWTYPE; 
-    
-    CURSOR cr_nmvistit(p_cdcooper IN crapass.cdcooper%TYPE     -- Cód. cooperativa
-                      ,p_nrdconta IN crapass.nrdconta%TYPE) IS -- Nr da conta        
-      SELECT CASE ass.inpessoa
-               WHEN 1 THEN
-                 ass.nmprimtl
-               ELSE
-                 DECODE(cob.tpnome_emissao, 1, jur.nmextttl, jur.nmfansia) 
-             END nmvistit
-            ,cob.tpnome_emissao
+    CURSOR cr_config(p_cdcooper IN tbcobran_config_boleto.cdcooper%TYPE     -- Cód. cooperativa
+                    ,p_nrdconta IN tbcobran_config_boleto.nrdconta%TYPE) IS
+      SELECT con.tpnome_emissao
+        FROM tbcobran_config_boleto con
+       WHERE con.cdcooper = p_cdcooper
+         AND con.nrdconta = p_nrdconta;
+    rw_config cr_config%ROWTYPE;
+  
+    CURSOR cr_nome_benef(p_cdcooper IN crapass.cdcooper%TYPE     -- Cód. cooperativa
+                        ,p_nrdconta IN crapass.nrdconta%TYPE) IS -- Nr da conta        
+      SELECT ass.nmprimtl
+            ,ass.inpessoa
+            ,jur.nmfansia
             ,jur.nmextttl
-        FROM tbcobran_config_boleto cob
-        LEFT JOIN crapass ass
-          ON ass.cdcooper = cob.cdcooper
-         AND ass.nrdconta = cob.nrdconta
+        FROM crapass ass 
         LEFT JOIN crapjur jur
-          ON jur.cdcooper = cob.cdcooper
-         AND jur.nrdconta = cob.nrdconta
-       WHERE cob.cdcooper = pr_cdcooper
-         AND cob.nrdconta = pr_nrdconta;     
-    rw_nmvistit cr_nmvistit%ROWTYPE;
+          ON jur.cdcooper = ass.cdcooper
+         AND jur.nrdconta = ass.nrdconta
+       WHERE jur.cdcooper = p_cdcooper
+         AND jur.nrdconta = p_nrdconta ;     
+    rw_nome_benef cr_nome_benef%ROWTYPE;
     
     --Variaveis de erro
     vr_dscritic  VARCHAR2(1000);
     vr_exc_saida EXCEPTION; 
     
-    -- Variaveis de XML 
-    vr_xml_temp VARCHAR2(32767);
-    
+    --Variaveis
     vr_nmvistit VARCHAR(150);
-  BEGIN            
-    --Validando se a cooperativa existe
-    OPEN cr_crapcop(pr_cdcooper);
-      FETCH cr_crapcop
-       INTO rw_crapcop;
-      
-      IF cr_crapcop%NOTFOUND THEN
-        CLOSE cr_crapcop;
-        vr_dscritic := 'Cooperativa não encontrada.';
-        RAISE vr_exc_saida;
-      END IF;
-    CLOSE cr_crapcop;  
+    vr_tpnome_emissao tbcobran_config_boleto.tpnome_emissao%TYPE;
     
-    --Validando se o cooperado existe
-    OPEN cr_crapass(pr_cdcooper
-                   ,pr_nrdconta);
-      FETCH cr_crapass
-       INTO rw_crapass;
+  BEGIN
+    --Inicializando variaveis
+    vr_tpnome_emissao := NULL;
+    vr_nmvistit := NULL;
+    vr_dscritic := NULL;
+                
+    --Buscando as configurações do cooperado
+    OPEN cr_config(pr_cdcooper
+                  ,pr_nrdconta);
+      FETCH cr_config
+       INTO rw_config;
       
-      IF cr_crapass%NOTFOUND THEN
-        CLOSE cr_crapass;
-        vr_dscritic := 'Cooperado não encontrado.';
-        RAISE vr_exc_saida;
-      END IF;
-    CLOSE cr_crapass;
-    
-    --Buscando nome que irá parecer no boleto
-    OPEN cr_nmvistit(pr_cdcooper
-                    ,pr_nrdconta);
-      FETCH cr_nmvistit
-       INTO rw_nmvistit;
-      
-      IF cr_nmvistit%NOTFOUND THEN
-        BEGIN 
+      --Caso não encontre, cria configuração com padrão "1"
+      IF cr_config%NOTFOUND THEN
+        BEGIN
+          
+          vr_tpnome_emissao := 1;  
+         
           --Insere a configuração  
           INSERT INTO tbcobran_config_boleto
             (cdcooper
@@ -512,54 +442,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
             (pr_cdcooper
             ,pr_nrdconta
             ,1);--Nome Razao
-            
-          COMMIT;
-          CLOSE cr_nmvistit;
-          
-          /*Caso não encontre a configuração, insere e 
-          chama a procedure recursivamente para buscar novamente
-          o nome correto.*/
-          
-          pc_busca_nome_imp_blt(pr_cdcooper
-                               ,pr_nrdconta
-                               ,pr_nmprimtl
-                               ,pr_des_erro
-                               ,pr_dscritic);
-          RETURN;                               
-          
+         
+         CLOSE cr_config;
+         
         EXCEPTION
           WHEN OTHERS THEN
-            CLOSE cr_nmvistit;
-            ROLLBACK;
-            vr_dscritic := 'Erro ao inserir na tabela tbcobran_config_boleto: ' || SQLERRM
-                           || ' Linha: ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+            CLOSE cr_config;
+            vr_dscritic := 'Erro ao inserir na tabela tbcobran_config_boleto: ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
+      ELSE
+        vr_tpnome_emissao := rw_config.tpnome_emissao;    
       END IF;
-    CLOSE cr_nmvistit;
+      
+      OPEN cr_nome_benef(pr_cdcooper
+                        ,pr_nrdconta);
+        FETCH cr_nome_benef
+         INTO rw_nome_benef;
+      CLOSE cr_nome_benef;
     
-    IF TRIM(rw_nmvistit.nmvistit) IS NULL AND
-       rw_nmvistit.tpnome_emissao = 2 THEN /*Nome fantasia*/ 
-     
-     BEGIN  
+      --Pessoa física
+      IF rw_nome_benef.inpessoa = 1 THEN
+        vr_nmvistit := rw_nome_benef.nmprimtl;      
+      --Pessoa juridica
+      ELSE
+        --Nome razao social
+        IF vr_tpnome_emissao = 1 THEN
+          vr_nmvistit := rw_nome_benef.nmextttl;
+        --Nome fantasia
+        ELSE
+          vr_nmvistit := rw_nome_benef.nmfansia;
+        END IF;
+      END IF;
+
+    --Se esta configurado para nome fantasia mas o mesmo nao esta cadastrado
+    IF TRIM(vr_nmvistit) IS NULL AND      
+      vr_tpnome_emissao = 2 THEN --Nome fantasia
+       
+      BEGIN  
         
+        vr_tpnome_emissao := 1;
+               
         UPDATE tbcobran_config_boleto con
            SET con.tpnome_emissao = 1 
          WHERE con.cdcooper = pr_cdcooper
            AND con.nrdconta = pr_nrdconta;
-        COMMIT;
           
       EXCEPTION
         WHEN OTHERS THEN
-        ROLLBACK;
-        vr_dscritic := 'Erro ao atualizar a tabela tbcobran_config_boleto: ' || SQLERRM
-                       || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+        vr_dscritic := 'Erro ao atualizar a tabela tbcobran_config_boleto: ' || SQLERRM; 
         RAISE vr_exc_saida;     
       END; 
        
-      vr_nmvistit := rw_nmvistit.nmextttl;
-    ELSE
-      vr_nmvistit := rw_nmvistit.nmvistit;
+      vr_nmvistit := rw_nome_benef.nmextttl;
+      
     END IF;
                           
     pr_nmprimtl := vr_nmvistit;
@@ -573,9 +509,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
 
    WHEN OTHERS THEN
      pr_des_erro := 'NOK';
-     pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_grava_config_nome_blt: ' || SQLERRM 
-                    || ' Linha: ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;  
-                     
+     pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_grava_config_nome_blt: ' || SQLERRM;
+                            
   END pc_busca_nome_imp_blt;    
   
   /* ..........................................................................
@@ -615,12 +550,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
          AND ema.nrdconta = p_nrdconta
          AND ema.nrinssac = p_nrinssac;
 
-    --Variaveis de erro
-    vr_dscritic  VARCHAR2(1000);
-    vr_des_erro  VARCHAR2(3);
-    
+    --Variaveis
     vr_dsdemail VARCHAR2(5000); 
-
+    
   BEGIN
     
     --Busca emails do pagador
@@ -645,11 +577,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
     pr_des_erro := 'OK';
     
   EXCEPTION   
-     WHEN OTHERS THEN
+     WHEN OTHERS THEN       
        pr_des_erro := 'NOK';
        
-       pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_busca_emails_pagador: ' || SQLERRM 
-                      || ' Linha: ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+       pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_busca_emails_pagador: ' || SQLERRM;
        
        --Caso de erro, retorna emails vazio
        pr_dsdemail := '';
@@ -705,7 +636,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
       
     --Variaveis de erro
     vr_dscritic  VARCHAR2(1000);
-    vr_des_erro  VARCHAR2(3);
     vr_exc_saida EXCEPTION;
     
   BEGIN
@@ -743,12 +673,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
       EXCEPTION
         WHEN OTHERS THEN
           CLOSE cr_tbcobran_email_pagador;
-          vr_dscritic := 'Erro ao inserir na tabela tbcobran_email_pagador: ' || SQLERRM
-                         || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+          vr_dscritic := 'Erro ao inserir na tabela tbcobran_email_pagador: ' || SQLERRM;
           RAISE vr_exc_saida;  
       END;
     
     END IF;
+
+    pr_des_erro := 'OK';
     
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -761,19 +692,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
                                                    'hh24:mi:ss') ||
                                                    ' - ' || 'COBR0009' ||
                                                    ' --> ' || pr_dscritic);                                       
-    WHEN OTHERS THEN
-      pr_des_erro := 'NOK';
-       
-      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_insere_email_pagador: ' || SQLERRM 
-                     || ' Linha: ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
-
+                                                         
+    WHEN OTHERS THEN     
+      pr_des_erro := 'NOK';       
+      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_insere_email_pagador: ' || SQLERRM;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                 ,pr_des_log      => to_char(SYSDATE,
                                                    'hh24:mi:ss') ||
                                                    ' - ' || 'COBR0009' ||
-                                                   ' --> ' || pr_dscritic);                                  
+                                                   ' --> ' || pr_dscritic); 
+      
+                                       
   END pc_grava_email_pagador;
   
   PROCEDURE pc_atualiza_email_pagador(pr_cdcooper  IN  tbcobran_email_pagador.cdcooper%TYPE
@@ -791,8 +722,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
         ORDER BY dsdemail;
       
     --Variaveis de erro
-    vr_dscritic  VARCHAR2(1000);
-    vr_des_erro  VARCHAR2(3);
+    vr_dscritic  VARCHAR2(1000);    
     vr_exc_saida EXCEPTION;
     
   BEGIN
@@ -841,8 +771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
       
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao atualizar na tabela tbcobran_email_pagador: ' || SQLERRM
-                       || ' ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
+        vr_dscritic := 'Erro ao atualizar na tabela tbcobran_email_pagador: ' || SQLERRM; 
         RAISE vr_exc_saida;  
     END; 
     pr_des_erro := 'OK';
@@ -858,11 +787,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
                                                    ' - ' || 'COBR0009' ||
                                                    ' --> ' || pr_dscritic);                                       
     WHEN OTHERS THEN
-      pr_des_erro := 'NOK';
-       
-      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_insere_email_pagador: ' || SQLERRM 
-                     || ' Linha: ' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE; 
-
+      pr_des_erro := 'NOK';       
+      pr_dscritic := 'Erro nao tratado na procedure COBR0009.pc_insere_email_pagador: ' || SQLERRM;
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                 ,pr_ind_tipo_log => 2 
                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
