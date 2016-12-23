@@ -9,7 +9,7 @@ Objetivo : Tela para informar o tipo do Telefone alterado
 Autor    : Guilherme/SUPERO
 Data     : Novembro/2016
 
-Ultima alteração: 
+Ultima alteração:
 
 ............................................................................... */
 
@@ -17,9 +17,9 @@ Ultima alteração:
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
 
-/* Create an unnamed pool to store all the widgets created 
+/* Create an unnamed pool to store all the widgets created
      by this procedure. This is a good default which assures
-     that this procedure's triggers and internal procedures 
+     that this procedure's triggers and internal procedures
      will execute in this procedure's storage, and that proper
      cleanup will occur on deletion of the procedure. */
 
@@ -137,14 +137,14 @@ DEFINE RECTANGLE RECT-103
 /* ************************  Frame Definitions  *********************** */
 
 DEFINE FRAME f_cartao_atualiza_telefone_tipo
-     ed_mensagem AT ROW 7.05 COL 139 RIGHT-ALIGNED NO-LABEL WIDGET-ID 164 NO-TAB-STOP 
+     ed_mensagem AT ROW 6.76 COL 139 RIGHT-ALIGNED NO-LABEL WIDGET-ID 164 NO-TAB-STOP 
      Btn_B AT ROW 14.1 COL 6 WIDGET-ID 178
      Btn_F AT ROW 14.1 COL 94.4 WIDGET-ID 130
      Btn_C AT ROW 19.1 COL 6 WIDGET-ID 184
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 132
-     "  ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
+     "    ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
           SIZE 122 BY 3.33 AT ROW 1.48 COL 21 WIDGET-ID 128
-          FGCOLOR 1 FONT 10
+          FGCOLOR 1 FONT 13
      RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-102 AT ROW 5.52 COL 19.6 WIDGET-ID 120
      RECT-103 AT ROW 5.29 COL 19.6 WIDGET-ID 116
@@ -300,53 +300,38 @@ DO:
 
     par_continua = TRUE.
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 1 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                  " Continua? " + STRING(par_continua)).
-
-    
     IF  NOT aux_flgderro  THEN DO:
         /* puxa o frame principal pra frente */
 /*         h_principal:MOVE-TO-TOP(). */
-         
+
         RUN procedures/atualiza_telefone.p (INPUT  par_nrdoddd,
                                             INPUT  par_nrdofone,
                                             INPUT  aux_tptelefo,
                                             OUTPUT aux_flgderro).
         IF  aux_flgderro   THEN DO:
             par_continua = FALSE.
-            RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 2 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                          " Continua? " + STRING(par_continua)).
             w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
-    
+
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
             RETURN "NOK".
         END.
         ELSE DO:
-            RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 3 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                          " Continua? " + STRING(par_continua)).
-
             /* puxa o frame principal pra frente */
 /*             h_principal:MOVE-TO-TOP(). */
         END.
-    
+
         w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
 
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
     END.
     ELSE DO:
-        
+
         w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
         par_continua = FALSE.
-        RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 4 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                      " Continua? " + STRING(par_continua)).
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
-    END.     
+    END.
 
 END.
 
@@ -375,53 +360,38 @@ DO:
 
     par_continua = TRUE.
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 1 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                  " Continua? " + STRING(par_continua)).
-
-    
     IF  NOT aux_flgderro  THEN DO:
         /* puxa o frame principal pra frente */
 /*         h_principal:MOVE-TO-TOP(). */
-         
+
         RUN procedures/atualiza_telefone.p (INPUT  par_nrdoddd,
                                             INPUT  par_nrdofone,
                                             INPUT  aux_tptelefo,
                                             OUTPUT aux_flgderro).
         IF  aux_flgderro   THEN DO:
             par_continua = FALSE.
-            RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 2 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                          " Continua? " + STRING(par_continua)).
             w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
-    
+
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
             RETURN "NOK".
         END.
         ELSE DO:
-            RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 3 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                          " Continua? " + STRING(par_continua)).
-
             /* puxa o frame principal pra frente */
 /*             h_principal:MOVE-TO-TOP(). */
         END.
-    
+
         w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
 
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
     END.
     ELSE DO:
-        
+
         w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
         par_continua = FALSE.
-        RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 4 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                      " Continua? " + STRING(par_continua)).
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
-    END.     
+    END.
 
 END.
 
@@ -450,53 +420,38 @@ DO:
 
     par_continua = TRUE.
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 1 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                  " Continua? " + STRING(par_continua)).
-
-    
     IF  NOT aux_flgderro  THEN DO:
         /* puxa o frame principal pra frente */
 /*         h_principal:MOVE-TO-TOP(). */
-         
+
         RUN procedures/atualiza_telefone.p (INPUT  par_nrdoddd,
                                             INPUT  par_nrdofone,
                                             INPUT  aux_tptelefo,
                                             OUTPUT aux_flgderro).
         IF  aux_flgderro   THEN DO:
             par_continua = FALSE.
-            RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 2 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                          " Continua? " + STRING(par_continua)).
             w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
-    
+
             APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
             RETURN "NOK".
         END.
         ELSE DO:
-            RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 3 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                          " Continua? " + STRING(par_continua)).
-
             /* puxa o frame principal pra frente */
 /*             h_principal:MOVE-TO-TOP(). */
         END.
-    
+
         w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
 
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
     END.
     ELSE DO:
-        
+
         w_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
         par_continua = FALSE.
-        RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo 4 - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                      " Continua? " + STRING(par_continua)).
         APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
         RETURN "OK".
-    END.     
+    END.
 
 END.
 
@@ -518,15 +473,11 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_atualiza_telefone_tipo
 ON CHOOSE OF Btn_H IN FRAME f_cartao_atualiza_telefone_tipo /* VOLTAR */
 DO:
-    
-    par_continua = FALSE.
-    
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_tipo - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                       " Continua? " + STRING(par_continua)).
 
-    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-    RETURN "NOK".
+    par_continua = FALSE.
+
+    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
+/*     RETURN "NOK". */
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -551,12 +502,12 @@ END PROCEDURE.
 /* ***************************  Main Block  *************************** */
 
 /* Set CURRENT-WINDOW: this will parent dialog-boxes and frames.        */
-ASSIGN CURRENT-WINDOW                = {&WINDOW-NAME} 
+ASSIGN CURRENT-WINDOW                = {&WINDOW-NAME}
        THIS-PROCEDURE:CURRENT-WINDOW = {&WINDOW-NAME}.
 
 /* The CLOSE event can be used from inside or outside the procedure to  */
 /* terminate it.                                                        */
-ON CLOSE OF THIS-PROCEDURE 
+ON CLOSE OF THIS-PROCEDURE
    RUN disable_UI.
 
 /* Best default for GUI applications is...                              */
@@ -576,7 +527,7 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = glb_nrtempor.
 
     /* coloca o foco na senha */
-   /* APPLY "ENTRY" TO ed_nr_doddd.*/
+    APPLY "ENTRY" TO Btn_H.
 
     IF  NOT THIS-PROCEDURE:PERSISTENT  THEN
         WAIT-FOR CLOSE OF THIS-PROCEDURE.
@@ -671,9 +622,9 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE limpa w_cartao_atualiza_telefone_tipo 
 PROCEDURE limpa :
 /*------------------------------------------------------------------------------
-  Purpose:     
+  Purpose:
   Parameters:  <none>
-  Notes:       
+  Notes:
 ------------------------------------------------------------------------------*/
 
 END PROCEDURE.
@@ -683,17 +634,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE tecla w_cartao_atualiza_telefone_tipo 
 PROCEDURE tecla :
-ASSIGN chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = 0
-           aux_flagsair = NO.
-
-    /* ---------- */
-    RUN procedures/verifica_autorizacao.p (OUTPUT aux_flgderro).
-    
-    IF  aux_flgderro   THEN
-        DO:
-            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-            RETURN NO-APPLY.
-        END.
+ASSIGN chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = 0.
 
     IF  KEY-FUNCTION(LASTKEY) = "B"               AND
         Btn_B:SENSITIVE IN FRAME f_cartao_atualiza_telefone_tipo  THEN
@@ -709,48 +650,11 @@ ASSIGN chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = 0
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "H"               AND
         Btn_H:SENSITIVE IN FRAME f_cartao_atualiza_telefone_tipo  THEN
-        DO:
-            aux_flagsair = YES.
-            APPLY "CHOOSE" TO Btn_H.
-        END.
+        APPLY "CHOOSE" TO Btn_H.
     ELSE
         RETURN NO-APPLY.
 
-
     chtemporizador:t_cartao_atualiza_telefone_tipo:INTERVAL = glb_nrtempor.
-
-
-    /* Se utilizou alguma opcao, fecha a tela */
-    IF  RETURN-VALUE = "OK"  THEN
-        APPLY "CHOOSE" TO Btn_H.
-    ELSE
-        DO:
-            /* joga o frame frente */
-            FRAME f_cartao_atualiza_telefone_tipo:MOVE-TO-TOP().
-
-            APPLY "ENTRY" TO Btn_H.
-        END.
-
-END PROCEDURE.
-
-/* _UIB-CODE-BLOCK-END */
-&ANALYZE-RESUME
-
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE valida_grava_telefone w_cartao_atualiza_telefone_tipo 
-PROCEDURE valida_grava_telefone :
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
-DEF INPUT PARAM par_nrdddfon AS INTE NO-UNDO.
-DEF INPUT PARAM par_nrtelefo AS INTE NO-UNDO.
-DEF INPUT PARAM par_tptelefo AS INTE NO-UNDO.
-
-
-
-    
-RETURN "OK".
 
 END PROCEDURE.
 

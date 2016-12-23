@@ -1,6 +1,6 @@
 /* ..............................................................................
 
-Procedure: atualiza_data_telefone.p 
+Procedure: atualiza_data_telefone.p
 Objetivo : Atualiza a data de Atualizacao do telefone no Auto Atendimento - Operacao 66
 Autor    : Guilherme/SUPERO
 Data     : Novembro 2016
@@ -14,14 +14,14 @@ DEFINE OUTPUT PARAM par_flgderro     AS LOGI        INIT NO         NO-UNDO.
 { includes/var_taa.i }
 
 
-DEFINE         VARIABLE aux_dsdtoday    AS CHAR                     NO-UNDO.     
+DEFINE         VARIABLE aux_dsdtoday    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_dsmvtolt    AS CHAR                     NO-UNDO.
 DEFINE         VARIABLE aux_hrtransa    AS INT                      NO-UNDO.
-  
+
 
 DEFINE         VARIABLE xml_req         AS CHAR                     NO-UNDO.
-DEFINE         VARIABLE xDoc            AS HANDLE                   NO-UNDO.  
-DEFINE         VARIABLE xRoot           AS HANDLE                   NO-UNDO. 
+DEFINE         VARIABLE xDoc            AS HANDLE                   NO-UNDO.
+DEFINE         VARIABLE xRoot           AS HANDLE                   NO-UNDO.
 DEFINE         VARIABLE xField          AS HANDLE                   NO-UNDO.
 DEFINE         VARIABLE xText           AS HANDLE                   NO-UNDO.
 
@@ -49,13 +49,13 @@ RUN mensagem.w (INPUT NO,
 /* para garantir a mensagem mesmo que a operacao seja rapida */
 PAUSE 1 NO-MESSAGE.
 
-/* Conexao com o Firebird 
+/* Conexao com o Firebird
    1-Conexao ODBC criada em Ferramentas ADM do Windows
    2-Usuario
    3-Senha */
 
 CREATE "ADODB.Connection" conexao.
-conexao:OPEN("data source=TAA;server=localhost", "taa", "taa", 0) NO-ERROR. 
+conexao:OPEN("data source=TAA;server=localhost", "taa", "taa", 0) NO-ERROR.
 
 IF  ERROR-STATUS:NUM-MESSAGES > 0  THEN
     DO:
@@ -112,7 +112,7 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
                               STRING(aux_hrtransa)  + ", " +
                               aux_dsdtoday          + ", " +
                               STRING(aux_hrtransa)  + ", " +
-                              "64"                  + ", " + 
+                              "64"                  + ", " +
                               STRING(glb_nrcartao)  + ", " +
                               "0"                   + ", " +
                               "0)".
@@ -120,9 +120,9 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
 resultado = comando:EXECUTE(,,) NO-ERROR.
 
 IF  resultado = ?  THEN
-    DO: 
+    DO:
         RUN procedures/grava_log.p (INPUT "Erro no comando SQL.").
-        
+
         /* fechar e liberar a conexao */
         conexao:CLOSE()          NO-ERROR.
         RELEASE OBJECT conexao   NO-ERROR.
@@ -138,12 +138,12 @@ IF  resultado = ?  THEN
 REQUISICAO:
 DO:
     DEFINE VARIABLE ponteiro_xml AS MEMPTR      NO-UNDO.
-    
+
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
     CREATE X-NODEREF  xField.
     CREATE X-NODEREF  xText.
-    
+
     /* ---------- */
     xDoc:CREATE-NODE(xRoot,"TAA","ELEMENT").
     xDoc:APPEND-CHILD(xRoot).
@@ -151,7 +151,7 @@ DO:
     /* ---------- */
     xDoc:CREATE-NODE(xField,"CDCOPTFN","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_cdcoptfn).
     xField:APPEND-CHILD(xText).
@@ -159,7 +159,7 @@ DO:
     /* ---------- */
     xDoc:CREATE-NODE(xField,"CDAGETFN","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_cdagetfn).
     xField:APPEND-CHILD(xText).
@@ -167,7 +167,7 @@ DO:
     /* ---------- */
     xDoc:CREATE-NODE(xField,"NRTERFIN","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_nrterfin).
     xField:APPEND-CHILD(xText).
@@ -175,23 +175,23 @@ DO:
     /* ------ OPERACAO ----- */
     xDoc:CREATE-NODE(xField,"OPERACAO","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "66".    
+    xText:NODE-VALUE = "66".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
     xDoc:CREATE-NODE(xField,"CDCOOPER","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_cdcooper).
     xField:APPEND-CHILD(xText).
-    
+
     /* ---------- */
     xDoc:CREATE-NODE(xField,"NRCARTAO","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_nrcartao).
     xField:APPEND-CHILD(xText).
@@ -199,7 +199,7 @@ DO:
     /* ---------- */
     xDoc:CREATE-NODE(xField,"DTMVTOLT","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_dtmvtolt).
     xField:APPEND-CHILD(xText).
@@ -207,7 +207,7 @@ DO:
     /* ---------- */
     xDoc:CREATE-NODE(xField,"TPUSUCAR","ELEMENT").
     xRoot:APPEND-CHILD(xField).
-    
+
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(glb_tpusucar).
     xField:APPEND-CHILD(xText).
@@ -216,12 +216,12 @@ DO:
 
 
     xDoc:SAVE("MEMPTR",ponteiro_xml).
-    
+
     DELETE OBJECT xDoc.
     DELETE OBJECT xRoot.
     DELETE OBJECT xField.
     DELETE OBJECT xText.
-    
+
     xml_req = GET-STRING(ponteiro_xml,1).
 
     /* Em requisicao HTML nao usa " ", "=" e quebra de linha */
@@ -238,7 +238,7 @@ END. /* Fim REQUISICAO */
 RESPOSTA:
 DO:
     DEFINE VARIABLE aux_contador  AS INTEGER     NO-UNDO.
-    
+
     CREATE X-DOCUMENT xDoc.
     CREATE X-NODEREF  xRoot.
     CREATE X-NODEREF  xField.
@@ -247,19 +247,19 @@ DO:
     DO  WHILE TRUE:
 
         xDoc:LOAD("FILE","http://" + glb_nmserver + ".cecred.coop.br/" +
-                         "cgi-bin/cgiip.exe/WService=" + glb_nmservic + "/" + 
+                         "cgi-bin/cgiip.exe/WService=" + glb_nmservic + "/" +
                          "TAA_autorizador.p?xml=" + xml_req,FALSE) NO-ERROR.
 
         /* limpa a mensagem de aguarde.. */
         h_mensagem:HIDDEN = YES.
-                           
+
         xDoc:GET-DOCUMENT-ELEMENT(xRoot) NO-ERROR.
-    
+
         IF  xDoc:NUM-CHILDREN = 0  OR
             xRoot:NAME <> "TAA"    THEN
             DO:
                 RUN procedures/grava_log.p (INPUT "Atualizacao Data de Telefone - Sem comunicação com o servidor.").
-                
+
                 RUN mensagem.w (INPUT YES,
                                 INPUT "      ERRO!",
                                 INPUT "",
@@ -270,24 +270,24 @@ DO:
 
                 PAUSE 3 NO-MESSAGE.
                 h_mensagem:HIDDEN = YES.
-    
+
                 par_flgderro = YES.
                 LEAVE.
             END.
-    
+
         DO  aux_contador = 1 TO xRoot:NUM-CHILDREN:
-            
+
             xRoot:GET-CHILD(xField,aux_contador).
-            
+
             IF  xField:SUBTYPE <> "ELEMENT"  THEN
                 NEXT.
-    
+
             xField:GET-CHILD(xText,1).
 
             IF  xField:NAME = "DSCRITIC"  THEN DO:
 
                 RUN procedures/grava_log.p (INPUT "Atualizacao Data de Telefone - " + xText:NODE-VALUE).
-                
+
                 RUN mensagem.w (INPUT YES,
                                 INPUT "      ERRO!",
                                 INPUT "",
@@ -295,10 +295,10 @@ DO:
                                 INPUT "",
                                 INPUT "",
                                 INPUT "").
-    
+
                 PAUSE 3 NO-MESSAGE.
                 h_mensagem:HIDDEN = YES.
-    
+
                 par_flgderro = YES.
             END.
             ELSE
@@ -309,7 +309,7 @@ DO:
 
         LEAVE.
     END. /* Fim WHILE */
-        
+
     DELETE OBJECT xDoc.
     DELETE OBJECT xRoot.
     DELETE OBJECT xField.
@@ -340,9 +340,9 @@ resultado = comando:EXECUTE(,,) NO-ERROR.
 
 
 IF  resultado = ?  THEN
-    DO: 
+    DO:
         RUN procedures/grava_log.p (INPUT "Erro no comando SQL.").
-        
+
         /* fechar e liberar a conexao */
         conexao:CLOSE()          NO-ERROR.
         RELEASE OBJECT conexao   NO-ERROR.

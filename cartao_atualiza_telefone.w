@@ -9,7 +9,7 @@ Objetivo : Tela para Atualizar telefone cooperado
 Autor    : Guilherme/SUPERO
 Data     : Novembro 2016
 
-Ultima alteração: 
+Ultima alteração:
 
 ............................................................................... */
 
@@ -17,9 +17,9 @@ Ultima alteração:
 /*          This .W file was created with the Progress AppBuilder.      */
 /*----------------------------------------------------------------------*/
 
-/* Create an unnamed pool to store all the widgets created 
+/* Create an unnamed pool to store all the widgets created
      by this procedure. This is a good default which assures
-     that this procedure's triggers and internal procedures 
+     that this procedure's triggers and internal procedures
      will execute in this procedure's storage, and that proper
      cleanup will occur on deletion of the procedure. */
 
@@ -28,7 +28,6 @@ CREATE WIDGET-POOL.
 /* ***************************  Definitions  ************************** */
 
 /* Parameters Definitions ---                                           */
-
 DEFINE OUTPUT PARAM par_continua    AS LOGICAL              NO-UNDO.
 
 /* Local Variable Definitions ---                                       */
@@ -88,7 +87,7 @@ DEFINE VARIABLE ed_mensagem AS CHARACTER INITIAL "Informe seu número de telefone
      SIZE 61 BY 4.05
      BGCOLOR 7 FGCOLOR 14 FONT 14 NO-UNDO.
 
-DEFINE VARIABLE ed_nrdofone AS CHARACTER FORMAT "x(9)":U 
+DEFINE VARIABLE ed_nrdofone AS CHARACTER FORMAT "9(9)":U 
      VIEW-AS FILL-IN 
      SIZE 44.2 BY 2.14
      FGCOLOR 1 FONT 13 NO-UNDO.
@@ -142,18 +141,18 @@ DEFINE FRAME f_cartao_atualiza_telefone
      ed_mensagem AT ROW 18.29 COL 12 NO-LABEL WIDGET-ID 164 NO-TAB-STOP 
      Btn_G AT ROW 19.1 COL 94.4 WIDGET-ID 130
      Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 132
-     "TELEFONE:" VIEW-AS TEXT
-          SIZE 40 BY 2.05 AT ROW 12.91 COL 70 RIGHT-ALIGNED WIDGET-ID 150
-          FGCOLOR 1 FONT 13
      "     DDD:" VIEW-AS TEXT
           SIZE 40 BY 2.38 AT ROW 9.62 COL 31 WIDGET-ID 152
+          FGCOLOR 1 FONT 13
+     "    ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
+          SIZE 122 BY 3.33 AT ROW 1.48 COL 21 WIDGET-ID 128
           FGCOLOR 1 FONT 13
      "Para continuar, tecle ENTRA" VIEW-AS TEXT
           SIZE 63.4 BY 1.67 AT ROW 24.81 COL 16 WIDGET-ID 154
           FGCOLOR 0 FONT 8
-     "  ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
-          SIZE 122 BY 3.33 AT ROW 1.48 COL 21 WIDGET-ID 128
-          FGCOLOR 1 FONT 10
+     "TELEFONE:" VIEW-AS TEXT
+          SIZE 40 BY 2.05 AT ROW 12.91 COL 70 RIGHT-ALIGNED WIDGET-ID 150
+          FGCOLOR 1 FONT 13
      RECT-3 AT ROW 9.57 COL 71.8 WIDGET-ID 136
      RECT-4 AT ROW 12.67 COL 71.8 WIDGET-ID 138
      RECT-2 AT ROW 24.1 COL 12 WIDGET-ID 160
@@ -317,61 +316,56 @@ ON CHOOSE OF Btn_G IN FRAME f_cartao_atualiza_telefone /* CONTINUAR */
 DO:
 
     /* Verifica se usuario informou o DDD */
-    IF LENGTH(ed_nr_doddd:SCREEN-VALUE) < 2 THEN
-        DO:
-           RUN mensagem.w (INPUT NO,
-                           INPUT "    ATENÇÃO  ",
-                           INPUT "",
-                           INPUT "",
-                           INPUT "DDD inválido.",
-                           INPUT "",
-                           INPUT "").
-    
-           PAUSE 3 NO-MESSAGE.
-           h_mensagem:HIDDEN = YES.
-    
-           APPLY "ENTRY" TO ed_nr_doddd.
-           RETURN NO-APPLY.
-       END.
+    IF  LENGTH(ed_nr_doddd:SCREEN-VALUE) < 2 THEN DO:
+        RUN mensagem.w (INPUT YES,
+                        INPUT "    ATENÇÃO  ",
+                        INPUT "",
+                        INPUT "",
+                        INPUT "DDD inválido.",
+                        INPUT "",
+                        INPUT "").
 
+        PAUSE 3 NO-MESSAGE.
+        h_mensagem:HIDDEN = YES.
+
+        APPLY "ENTRY" TO ed_nr_doddd.
+
+        aux_flgderro = YES.
+    END.
+    ELSE
     /* Verifica se usuario informou o Nr Telefone */
-    IF LENGTH(ed_nrdofone:SCREEN-VALUE) < 8 THEN
-        DO:
-           RUN mensagem.w (INPUT NO,
-                           INPUT "    ATENÇÃO  ",
-                           INPUT "",
-                           INPUT "",
-                           INPUT "Telefone inválido.",
-                           INPUT "",
-                           INPUT "").
-    
-            PAUSE 3 NO-MESSAGE.
-            h_mensagem:HIDDEN = YES.
+    IF  LENGTH(ed_nrdofone:SCREEN-VALUE) < 8 THEN DO:
+        RUN mensagem.w (INPUT YES,
+                        INPUT "    ATENÇÃO  ",
+                        INPUT "",
+                        INPUT "",
+                        INPUT "Telefone inválido.",
+                        INPUT "",
+                        INPUT "").
 
-            aux_flgderro = YES.
-       END.
+        PAUSE 3 NO-MESSAGE.
+        h_mensagem:HIDDEN = YES.
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone -  "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                      " antes TIPO - Continua? " + STRING(par_continua)).
+        aux_flgderro = YES.
+    END.
+
+
+    IF  aux_flgderro  THEN DO:
+        aux_flgderro = NO.
+        RETURN NO-APPLY.
+    END.
 
     RUN cartao_atualiza_telefone_tipo.w ( INPUT ed_nr_doddd:SCREEN-VALUE
                                         , INPUT ed_nrdofone:SCREEN-VALUE
                                         ,OUTPUT par_continua).
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone -  "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                      " depois TIPO - Continua? " + STRING(par_continua)).
-
-
-    IF  aux_flgderro  THEN DO:
-        RUN limpa.
+    IF  NOT par_continua THEN DO:
+        w_cartao_atualiza_telefone:MOVE-TO-TOP().
         RETURN NO-APPLY.
     END.
+    ELSE
+        RETURN "OK".
 
-     w_cartao_atualiza_telefone:MOVE-TO-TOP().
-    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-    RETURN "NOK".
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -397,12 +391,8 @@ DO:
     par_continua = FALSE.
 
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone -  "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                      " Continua? " + STRING(par_continua)).
-
-    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-    RETURN "OK".
+    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
+    RETURN NO-APPLY.
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -448,30 +438,27 @@ ON ANY-KEY OF ed_nr_doddd IN FRAME f_cartao_atualiza_telefone
 DO:
     RUN tecla.
 
-    IF  KEY-FUNCTION(LASTKEY) = "RETURN"  THEN
-        DO:
-            IF LENGTH(ed_nr_doddd:SCREEN-VALUE) < 2 THEN
-                DO:
-                   RUN mensagem.w (INPUT NO,
-                                   INPUT "    ATENÇÃO  ",
-                                   INPUT "",
-                                   INPUT "",
-                                   INPUT "DDD inválido.",
-                                   INPUT "",
-                                   INPUT "").
-        
-                   PAUSE 3 NO-MESSAGE.
-                   h_mensagem:HIDDEN = YES.
-        
-                   APPLY "ENTRY" TO ed_nr_doddd.
-                   RETURN NO-APPLY.
-               END.
-             ELSE
-                DO:
-                    APPLY "ENTRY" TO ed_nrdofone.
-                    RETURN NO-APPLY.
-                END.
+    IF  KEY-FUNCTION(LASTKEY) = "RETURN"  THEN DO:
+        IF  LENGTH(ed_nr_doddd:SCREEN-VALUE) < 2 THEN DO:
+            RUN mensagem.w (INPUT YES,
+                            INPUT "    ATENÇÃO  ",
+                            INPUT "",
+                            INPUT "",
+                            INPUT "DDD inválido.",
+                            INPUT "",
+                            INPUT "").
+
+            PAUSE 3 NO-MESSAGE.
+            h_mensagem:HIDDEN = YES.
+
+            APPLY "ENTRY" TO ed_nr_doddd.
+            RETURN NO-APPLY.
         END.
+        ELSE DO:
+            APPLY "ENTRY" TO ed_nrdofone.
+            RETURN NO-APPLY.
+        END.
+    END.
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "BACKSPACE"  THEN
         DO:
@@ -501,6 +488,7 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_cartao_atualiza_telefone OCX.Tick
 PROCEDURE temporizador.t_cartao_atualiza_telefone.Tick .
 APPLY "CHOOSE" TO Btn_H IN FRAME f_cartao_atualiza_telefone.
+
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -515,12 +503,12 @@ END PROCEDURE.
 /* ***************************  Main Block  *************************** */
 
 /* Set CURRENT-WINDOW: this will parent dialog-boxes and frames.        */
-ASSIGN CURRENT-WINDOW                = {&WINDOW-NAME} 
+ASSIGN CURRENT-WINDOW                = {&WINDOW-NAME}
        THIS-PROCEDURE:CURRENT-WINDOW = {&WINDOW-NAME}.
 
 /* The CLOSE event can be used from inside or outside the procedure to  */
 /* terminate it.                                                        */
-ON CLOSE OF THIS-PROCEDURE 
+ON CLOSE OF THIS-PROCEDURE
    RUN disable_UI.
 
 /* Best default for GUI applications is...                              */
@@ -537,9 +525,10 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     /* deixa o mouse transparente */
     FRAME f_cartao_atualiza_telefone:LOAD-MOUSE-POINTER("blank.cur").
 
+
     chtemporizador:t_cartao_atualiza_telefone:INTERVAL = glb_nrtempor.
 
-    /* coloca o foco na senha */
+    /* coloca o foco no DDD */
     APPLY "ENTRY" TO ed_nr_doddd.
 
     IF  NOT THIS-PROCEDURE:PERSISTENT  THEN
@@ -635,9 +624,9 @@ END PROCEDURE.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE limpa w_cartao_atualiza_telefone 
 PROCEDURE limpa :
 /*------------------------------------------------------------------------------
-  Purpose:     
+  Purpose:
   Parameters:  <none>
-  Notes:       
+  Notes:
 ------------------------------------------------------------------------------*/
     ASSIGN  ed_nr_doddd:SCREEN-VALUE IN FRAME f_cartao_atualiza_telefone = ""
             ed_nrdofone:SCREEN-VALUE IN FRAME f_cartao_atualiza_telefone = "".
@@ -652,7 +641,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE tecla w_cartao_atualiza_telefone 
 PROCEDURE tecla :
-chtemporizador:t_cartao_atualiza_telefone:INTERVAL = 0.
+ASSIGN chtemporizador:t_cartao_atualiza_telefone:INTERVAL = 0.
 
     IF  KEY-FUNCTION(LASTKEY) = "G"                      AND
         Btn_G:SENSITIVE IN FRAME f_cartao_atualiza_telefone  THEN
@@ -665,6 +654,13 @@ chtemporizador:t_cartao_atualiza_telefone:INTERVAL = 0.
         RETURN NO-APPLY.
 
     chtemporizador:t_cartao_atualiza_telefone:INTERVAL = glb_nrtempor.
+
+    /* repassa o retorno */
+    IF  RETURN-VALUE = "OK"  THEN
+        DO:
+            APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
+            RETURN "OK".
+        END.
 
 END PROCEDURE.
 

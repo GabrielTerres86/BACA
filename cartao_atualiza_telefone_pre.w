@@ -133,14 +133,14 @@ DEFINE RECTANGLE RECT-104
 /* ************************  Frame Definitions  *********************** */
 
 DEFINE FRAME f_cartao_atualiza_telefone_pre
-     ed_mensagem_1 AT ROW 9.91 COL 146 RIGHT-ALIGNED NO-LABEL WIDGET-ID 198 NO-TAB-STOP 
-     ed_mensagem_2 AT ROW 11.48 COL 146 RIGHT-ALIGNED NO-LABEL WIDGET-ID 188 NO-TAB-STOP 
-     ed_mensagem_3 AT ROW 13.05 COL 146 RIGHT-ALIGNED NO-LABEL WIDGET-ID 192 NO-TAB-STOP 
+     ed_mensagem_1 AT ROW 10 COL 146 RIGHT-ALIGNED NO-LABEL WIDGET-ID 198 NO-TAB-STOP 
+     ed_mensagem_2 AT ROW 11.52 COL 146 RIGHT-ALIGNED NO-LABEL WIDGET-ID 188 NO-TAB-STOP 
+     ed_mensagem_3 AT ROW 13.1 COL 146 RIGHT-ALIGNED NO-LABEL WIDGET-ID 192 NO-TAB-STOP 
      Btn_D AT ROW 24.1 COL 6 WIDGET-ID 194
-     Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 196
-     "  ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
+     Btn_H AT ROW 24.29 COL 94.4 WIDGET-ID 196
+     "    ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
           SIZE 124 BY 3.33 AT ROW 1.48 COL 19 WIDGET-ID 128
-          FGCOLOR 1 FONT 10
+          FGCOLOR 1 FONT 13
      RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-102 AT ROW 5.52 COL 19.6 WIDGET-ID 120
      RECT-103 AT ROW 5.29 COL 19.6 WIDGET-ID 116
@@ -316,11 +316,6 @@ DO:
     /* CONFIRMAR          */
     par_continua = TRUE.
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - "
-                                      + self:NAME + " - " +  SELF:LABEL + 
-                                      " - Continua: " + STRING(par_continua)).
-
-
     IF Btn_D:LABEL = 'CONFIRMAR' THEN DO:
 
         RUN procedures/verifica_autorizacao.p (OUTPUT aux_flgderro).
@@ -330,10 +325,6 @@ DO:
             h_principal:MOVE-TO-TOP().
 
             RUN procedures/atualiza_data_telefone.p (OUTPUT aux_flgderro).
-            RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - "
-                                              + self:NAME + " - " +  SELF:LABEL + 
-                                              " - atualiza_data_telefone Erro? " + 
-                                                STRING(aux_flgderro) + " Continua: " + STRING(par_continua)).
 
             IF  aux_flgderro   THEN DO:
                 w_cartao_atualiza_telefone_pre:MOVE-TO-TOP().
@@ -362,7 +353,7 @@ DO:
 
     /** APENAS ENVIA COMANDO PARA RETORNAR PARA TELA ANTERIOR */
     APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-    RETURN NO-APPLY. /* "NOK". */
+    RETURN NO-APPLY. /*"OK".*/ /* "NOK". */
 END.
 
 /* _UIB-CODE-BLOCK-END */
@@ -391,34 +382,21 @@ DO:
        SE FOR ZERO, É PQ CLICOU NO BOTAO, ENTAO, CONTINUA, TRUE     */
     par_continua = (chtemporizador:t_cartao_atualiza_telefone_pre:INTERVAL = 0).
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - "
-                                       + self:NAME + " - " +  SELF:LABEL + 
-                                       " - Continua? " + STRING(par_continua)).
-
     /* Se foi por CLIQUE chama tela atualizacao telefone.
        Caso contrario, apenas fecha a tela e retorna.   */
     IF  par_continua THEN DO:
 
-        RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - "
-                                          + self:NAME + " - " +  SELF:LABEL + 
-                                          " - Chama Atualiza_Telefone.w").
-
         RUN cartao_atualiza_telefone.w (OUTPUT par_continua).
-
-        RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - "
-                                          + self:NAME + " - " +  SELF:LABEL + 
-                                          " - RETORNO Continua: " + STRING(par_continua) ).
-
-        RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - "
-                                          + self:NAME + " - " +  SELF:LABEL + 
-                                          " Voltou Atualiza_Telefone.w").
-
-        APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
-        RETURN NO-APPLY.
 
     END.
 
-    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
+    IF  NOT par_continua THEN DO:
+        w_cartao_atualiza_telefone_pre:MOVE-TO-TOP().
+        RETURN NO-APPLY.
+    END.
+    ELSE
+        APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.
+
     RETURN NO-APPLY. /* "NOK". */
 END.
 
@@ -429,7 +407,13 @@ END.
 &Scoped-define SELF-NAME temporizador
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_cartao_atualiza_telefone_pre OCX.Tick
 PROCEDURE temporizador.t_cartao_atualiza_telefone_pre.Tick .
-APPLY "CHOOSE" TO Btn_H IN FRAME f_cartao_atualiza_telefone_pre.
+/* APPLY "CHOOSE" TO Btn_H IN FRAME f_cartao_atualiza_telefone_pre. */
+
+    
+    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
+    RETURN "NOK".
+
+
 
 END PROCEDURE.
 
@@ -469,8 +453,6 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
 
     chtemporizador:t_cartao_atualiza_telefone_pre:INTERVAL = glb_nrtempor.
 
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - MAIN - TEM FONE? " + STRING(par_fltemfon) + " / " + par_nrdofone ).
-
     IF  par_fltemfon THEN DO:
         /** Tem telefone */
         ed_mensagem_1:SCREEN-VALUE = "Cooperado, seu número de telefone precisa ser atualizado.".
@@ -483,15 +465,12 @@ DO  ON ERROR   UNDO MAIN-BLOCK, LEAVE MAIN-BLOCK
     ELSE DO:
         /** NAO Tem telefone */
         ed_mensagem_1:SCREEN-VALUE = "Cooperado,".
-        ed_mensagem_2:SCREEN-VALUE = "Você não possui nenhum número de telefone cadastrado.".
+        ed_mensagem_2:SCREEN-VALUE = "você não possui nenhum número de telefone cadastrado.".
         ed_mensagem_3:SCREEN-VALUE = "".
 
         Btn_D:LABEL = 'LEMBRAR MAIS TARDE'.
         Btn_H:LABEL = 'CADASTRAR'.
     END.
-
-    RUN procedures/grava_log.p (INPUT "cartao_atualiza_telefone_pre - MAIN - TEM FONE? " + STRING(par_fltemfon) + " / " + par_nrdofone ).
-
 
     /* coloca o foco no botao H */
     APPLY "ENTRY" TO Btn_H.

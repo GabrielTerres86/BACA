@@ -343,7 +343,6 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_A w_cartao_opcoes
 ON CHOOSE OF Btn_A IN FRAME f_cartao_opcoes /* SAQUE */
 DO:
-
     /** VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
     RUN procedures/verifica_autorizacao.p (OUTPUT aux_flgderro).
 
@@ -370,7 +369,6 @@ DO:
         END.
 
     END.
-
     /** FIM - VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
 
 
@@ -395,7 +393,6 @@ END.
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_B w_cartao_opcoes
 ON CHOOSE OF Btn_B IN FRAME f_cartao_opcoes /* PAGAMENTO/TRANSFERÊNCIA */
 DO:
-
     /** VERIFICACAO DA ATUALIZACAO DE TELEFONE **/
     RUN procedures/verifica_autorizacao.p (OUTPUT aux_flgderro).
 
@@ -476,7 +473,11 @@ ON CHOOSE OF Btn_C IN FRAME f_cartao_opcoes /* ATUALIZAÇÃO DE TELEFONE */
 DO:
 
     RUN cartao_atualiza_telefone.w (OUTPUT aux_continua).
-    
+
+    IF  NOT aux_continua THEN DO:
+        RETURN "NOK".
+    END.
+
 END.
 
 /* _UIB-CODE-BLOCK-END */
