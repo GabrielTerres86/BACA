@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 04/10/2016
+   Data    : 14/07/2006                        Ultima atualizacao: 16/12/2016
 
    Dados referentes ao programa:
 
@@ -260,6 +260,9 @@
                             semelhante ao que acontece para SERASA, assumindo valor
                             TRUE se algum dos convenios possuir a opcao de protesto
                             habilitada. Heitor (Mouts) - Chamado 554656
+
+               16/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
 
 .............................................................................*/
 
@@ -918,6 +921,10 @@ PROCEDURE gravar-boleto:
     /* Serasa */
     DEF  INPUT PARAM par_flserasa AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_qtdianeg AS INTE                           NO-UNDO.
+
+    DEF  INPUT PARAM par_inenvcip AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inpagdiv AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlminimo AS DECI                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-consulta-blt.
@@ -1861,6 +1868,10 @@ PROCEDURE gravar-boleto:
                                    /* Serasa */
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
+                                   
+                                   INPUT par_inenvcip,
+                                   INPUT par_inpagdiv,
+                                   INPUT par_vlminimo,
 
                                    INPUT TABLE tt-dados-sacado-blt,
                                    INPUT-OUTPUT aux_lsdoctos,
@@ -2102,6 +2113,8 @@ PROCEDURE gera-dados:
     DEF VAR aux_valormin         AS DEC                             NO-UNDO.
     DEF VAR aux_textodia         AS CHAR                            NO-UNDO.
     DEF VAR aux_flprotes         AS LOG                             NO-UNDO.
+    DEF VAR aux_flgregon         AS LOG                             NO-UNDO.
+    DEF VAR aux_flgpgdiv         AS LOG                             NO-UNDO.
             
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados-blt.
@@ -2304,7 +2317,9 @@ PROCEDURE gera-dados:
                            OUTPUT aux_intipemi).
 
     ASSIGN aux_flserasa = FALSE
-	       aux_flprotes = FALSE.
+	       aux_flprotes = FALSE
+	       aux_flgregon = FALSE
+	       aux_flgpgdiv = FALSE.
 
     FOR EACH  crapceb WHERE crapceb.cdcooper = par_cdcooper     AND 
                              crapceb.nrdconta = par_nrdconta     AND
@@ -2316,6 +2331,12 @@ PROCEDURE gera-dados:
 
     IF aux_flprotes = FALSE THEN
        aux_flprotes = crapceb.flprotes.
+
+    IF aux_flgregon = FALSE THEN
+       aux_flgregon = crapceb.flgregon.
+
+    IF aux_flgpgdiv = FALSE THEN
+       aux_flgpgdiv = crapceb.flgpgdiv.
 
 		IF aux_flserasa = FALSE THEN
         ASSIGN aux_nrconven = crapcco.nrconven
@@ -2401,6 +2422,9 @@ PROCEDURE gera-dados:
            tt-dados-blt.dtmvtolt = aux_datdodia
            tt-dados-blt.nrdctabb = crapcco.nrdctabb
            tt-dados-blt.nrconven = crapcco.nrconven
+           tt-dados-blt.cddbanco = crapcco.cddbanco
+           tt-dados-blt.flgregon = INT(aux_flgregon)
+           tt-dados-blt.flgpgdiv = INT(aux_flgpgdiv)
 
         /* tt-dados-blt.cdcartei = crapcco.nrvarcar*/
            tt-dados-blt.cdcartei = crapcco.cdcartei
@@ -4262,6 +4286,10 @@ PROCEDURE p_cria_titulo:
      /* Serasa */
     DEF INPUT   PARAM p-flserasa    LIKE crapcob.flserasa   NO-UNDO.
     DEF INPUT   PARAM p-qtdianeg    LIKE crapcob.qtdianeg   NO-UNDO.
+    
+    DEF INPUT   PARAM p-inenvcip    LIKE crapcob.inenvcip   NO-UNDO.
+    DEF INPUT   PARAM p-inpagdiv    LIKE crapcob.inpagdiv   NO-UNDO.
+    DEF INPUT   PARAM p-vlminimo    LIKE crapcob.vlminimo   NO-UNDO.
 
     DEF INPUT   PARAM TABLE FOR tt-dados-sacado-blt.
     DEF INPUT-OUTPUT  PARAM p-lsdoctos       AS CHAR        NO-UNDO.
@@ -4456,6 +4484,10 @@ PROCEDURE p_cria_titulo:
            /* Serasa */
            crapcob.flserasa = p-flserasa
            crapcob.qtdianeg = p-qtdianeg
+           
+           crapcob.inenvcip = p-inenvcip
+           crapcob.inpagdiv = p-inpagdiv
+           crapcob.vlminimo = p-vlminimo
 
            crapcob.indiaprt = p-indiaprt
            crapcob.vljurdia = p-vljurdia

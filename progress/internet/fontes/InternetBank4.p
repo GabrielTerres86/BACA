@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 08/01/2016
+   Data    : Marco/2007                        Ultima atualizacao: 22/12/2016
 
    Dados referentes ao programa:
 
@@ -49,6 +49,10 @@
                08/01/2016 - Ajustes referente Projeto Negativacao Serasa (Daniel)
                
                28/10/2016 - Ajustes realizados referente a melhoria 271. (Kelvin)
+
+               22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -102,6 +106,10 @@ DEF  INPUT PARAM par_nrdiavct AS INTE                                  NO-UNDO.
 /* Parametros Negativacao Serasa */
 DEF  INPUT PARAM par_flserasa AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_qtdianeg AS INTE                                  NO-UNDO.
+
+DEF  INPUT PARAM par_inenvcip AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_inpagdiv AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_vlminimo AS DECI                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -242,6 +250,10 @@ RUN gravar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                    /* Serasa */
                                    INPUT par_flserasa,
                                    INPUT par_qtdianeg,
+
+                                   INPUT par_inenvcip,
+                                   INPUT par_inpagdiv,
+                                   INPUT par_vlminimo,
 
                                   OUTPUT TABLE tt-erro,
                                   OUTPUT TABLE tt-consulta-blt,
@@ -419,6 +431,31 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    (IF tt-consulta-blt.flserasa = TRUE 
                                    THEN "S" ELSE "N") + "</flserasa>" +
                                    "<qtdianeg>" +  STRING(tt-consulta-blt.qtdianeg) + "</qtdianeg>" +
+                                   
+                                   /* Aviso SMS*/
+                                   "<inavisms>" + 
+                                   STRING(tt-consulta-blt.inavisms) + 
+                                   "</inavisms>" +
+                                   "<insmsant>" + 
+                                   STRING(tt-consulta-blt.insmsant) + 
+                                   "</insmsant>" +
+                                   "<insmsvct>" + 
+                                   STRING(tt-consulta-blt.insmsvct) + 
+                                   "</insmsvct>" +
+                                   "<insmspos>" + 
+                                   STRING(tt-consulta-blt.insmspos) + 
+                                   "</insmspos>" +
+                                   
+                                   "<inenvcip>" + 
+                                   STRING(tt-consulta-blt.inenvcip) + 
+                                   "</inenvcip>" +
+                                   "<inpagdiv>" + 
+                                   STRING(tt-consulta-blt.inpagdiv) + 
+                                   "</inpagdiv>" +
+                                   "<vlminimo>" + 
+                                   STRING(tt-consulta-blt.vlminimo) + 
+                                   "</vlminimo>" +
+                                   
                                    "</boleto>".
 
 

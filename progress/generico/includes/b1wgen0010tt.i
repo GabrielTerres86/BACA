@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 29/08/2016
+   Data    : Marco/2008                        Ultima atualizacao: 22/12/2016
      
    Dados referentes ao programa:
 
@@ -91,7 +91,10 @@
                             tt-consulta-blt (Projeto Negativacao Serasa - Daniel)
   
 			        29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
-  
+
+              22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                           (Jaison/Cechet)
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-consulta-blt
@@ -202,7 +205,10 @@ DEF TEMP-TABLE tt-consulta-blt
    	FIELD dtvencto_atualizado AS DATE
     FIELD vltitulo_atualizado AS DECI
 	  FIELD vlmormul_atualizado AS DECI
-    FIELD flg2viab AS INTE.
+    FIELD flg2viab AS INTE
+    FIELD inenvcip LIKE crapcob.inenvcip
+    FIELD inpagdiv LIKE crapcob.inpagdiv
+    FIELD vlminimo LIKE crapcob.vlminimo.
 
 DEF TEMP-TABLE tt-arq-cobranca  
     FIELD cdseqlin AS INTEGER

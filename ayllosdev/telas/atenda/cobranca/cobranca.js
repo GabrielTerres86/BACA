@@ -1,7 +1,7 @@
 /***********************************************************************
       Fonte: cobranca.js
       Autor: Gabriel
-      Data : Dezembro/2010             Ultima atualizacao : 04/08/2016
+      Data : Dezembro/2010             Ultima atualizacao : 13/12/2016
 
       Objetivo  : Biblioteca de funcoes da rotina CONBRANCA tela ATENDA.
 
@@ -52,6 +52,8 @@
                                
 
                   18/08/2016  - Adicionado função controlaFoco.(Evandro - RKAM).
+
+				  13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
 
  ***********************************************************************/
 
@@ -152,7 +154,7 @@ function habilitaSetor(setorLogado) {
  }
  
 // Destacar convenio selecinado e setar valores do item selecionado
-function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
+function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtcadast, cdoperad, inarqcbr, cddemail, dsdemail, flgcruni, flgcebhm, flgregis, flgregon, flgpgdiv, flcooexp, flceeexp, cddbanco, flserasa, flsercco, qtdfloat, flprotes, qtdecprz, idrecipr, inenvcob) {
 
     var qtConvenios = $("#qtconven", "#divConteudoOpcao").val();
 
@@ -168,6 +170,8 @@ function selecionaConvenio(idLinha, nrconven, dsorgarq, nrcnvceb, insitceb, dtca
     $("#flgcruni", "#divConteudoOpcao").val(flgcruni);
     $("#flgcebhm", "#divConteudoOpcao").val(flgcebhm);
     $("#flgregis", "#divConteudoOpcao").val(flgregis);
+    $("#flgregon", "#divConteudoOpcao").val(flgregon);
+    $("#flgpgdiv", "#divConteudoOpcao").val(flgpgdiv);
     $("#flcooexp", "#divConteudoOpcao").val(flcooexp);
     $("#flceeexp", "#divConteudoOpcao").val(flceeexp);
     $("#flserasa", "#divConteudoOpcao").val(flserasa);
@@ -243,6 +247,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
     var qtTitulares = $("#qtTitulares", "#divConteudoOpcao").val();
     var titulares = $("#titulares", "#divConteudoOpcao").val();
     var dsdmesag = $("#dsdmesag", "#divConteudoOpcao").val();
+    var flgregon = $("#flgregon", "#divConteudoOpcao").val();
+    var flgpgdiv = $("#flgpgdiv", "#divConteudoOpcao").val();
     var flcooexp = $("#flcooexp", "#divConteudoOpcao").val();
     var flceeexp = $("#flceeexp", "#divConteudoOpcao").val();
     var flserasa = $("#flserasa", "#divConteudoOpcao").val();
@@ -328,6 +334,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
             flgcruni: flgcruni,
             flgcebhm: flgcebhm,
             flgregis: flgregis,
+            flgregon: flgregon,
+            flgpgdiv: flgpgdiv,
             flcooexp: flcooexp,
             flceeexp: flceeexp,
             flserasa: flserasa,
@@ -634,6 +642,16 @@ function realizaHabilitacao() {
     qtdfloat = normalizaNumero(qtdfloat);
     qtdecprz = normalizaNumero(qtdecprz);
 		
+    if ($("#flgregon", "#divOpcaoConsulta").prop("checked") == true) {
+		var flgregon = 1;
+    } else {
+		var flgregon = 0;
+	}
+    if ($("#flgpgdiv", "#divOpcaoConsulta").prop("checked") == true) {
+		var flgpgdiv = 1;
+    } else {
+		var flgpgdiv = 0;
+	}
     if ($("#flcooexp", "#divOpcaoConsulta").prop("checked") == true) {
 		var flcooexp = 1;
     } else {
@@ -681,6 +699,8 @@ function realizaHabilitacao() {
 			flgcebhm: flgcebhm,
 			dsdregis: dsdregis,
 			flgregis: flgregis,
+            flgregon: flgregon,
+            flgpgdiv: flgpgdiv,
 			flcooexp: flcooexp,
 			flceeexp: flceeexp,
 			flserasa: flserasa,
@@ -901,6 +921,8 @@ function controlaLayout(nomeForm) {
         var Ldsorgarq = $('label[for="dsorgarq"]', '#' + nomeForm);
         var Linsitceb = $('label[for="insitceb"]', '#' + nomeForm);
         var Lflgregis = $('label[for="flgregis"]', '#' + nomeForm);
+        var Lflgregon = $('label[for="flgregon"]', '#' + nomeForm);
+        var Lflgpgdiv = $('label[for="flgpgdiv"]', '#' + nomeForm);
         var Lflcooexp = $('label[for="flcooexp"]', '#' + nomeForm);
         var Lflceeexp = $('label[for="flceeexp"]', '#' + nomeForm);
         var Lflserasa = $('label[for="flserasa"]', '#' + nomeForm);
@@ -931,6 +953,8 @@ function controlaLayout(nomeForm) {
         Ldsorgarq.addClass('rotulo').css('width', '210px');
         Linsitceb.addClass('rotulo').css('width', '210px');
         Lflgregis.addClass('rotulo').css('width', '210px');
+        Lflgregon.addClass('rotulo').css('width', '210px');
+        Lflgpgdiv.addClass('rotulo').css('width', '210px');
         Lflcooexp.addClass('rotulo').css('width', '210px');
         Lflceeexp.addClass('rotulo').css('width', '210px');
         Lflserasa.addClass('rotulo').css('width', '210px');

@@ -2,7 +2,7 @@
 
    Programa: b1wnet0001tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 11/10/2016
+   Data    : Marco/2008                        Ultima atualizacao: 16/12/2016
 
    Dados referentes ao programa:
 
@@ -41,6 +41,9 @@
 
                11/10/2016 - Ajustes para permitir Aviso cobrança por SMS.
                             PRJ319 - SMS Cobrança(Odirlei-AMcom)             
+
+               16/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                            (Jaison/Cechet)
 
 ..............................................................................*/
 
@@ -82,7 +85,10 @@ DEF TEMP-TABLE tt-dados-blt NO-UNDO
     FIELD textodia AS CHAR
     FIELD flprotes AS INT
     FIELD flpersms AS INT
-    FIELD fllindig AS INT.
+    FIELD fllindig AS INT
+    FIELD cddbanco AS INT
+    FIELD flgregon AS INT
+    FIELD flgpgdiv AS INT.
 
 DEF TEMP-TABLE tt-sacados-blt NO-UNDO
     FIELD nmdsacad LIKE crapsab.nmdsacad
