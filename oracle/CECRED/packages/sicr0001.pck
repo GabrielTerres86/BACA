@@ -5,7 +5,7 @@ create or replace package cecred.SICR0001 is
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Lucas Lunelli
-     Data    : Abril/2013                       Ultima atualizacao: 28/10/2016
+     Data    : Abril/2013                       Ultima atualizacao: 23/12/2016
 
      Dados referentes ao programa:
 
@@ -42,13 +42,17 @@ create or replace package cecred.SICR0001 is
 
                  28/10/2016 - SD509982 - Atualiza critica LAU - pc_efetua_debito_automatico
                               para DEBCON (Guilherme/SUPERO)
+
+				22/12/2016 - Alterado o tipo do campo dscooper
+                             (Adriano - SD 582204).
+  
   ..............................................................................*/
 
   -- Chave = dsorigem||fldebito||fltiptra||fltipdoc||lpad(cdcooper,5,'0')||lpad(cdagenci,3,'0')||lpad(nrdconta,9,'0')||ROWID
   TYPE typ_reg_agendamentos IS
   RECORD ( nrchave VARCHAR2(100) --
           ,cdcooper NUMBER(2)    --  FORMAT "z9"
-          ,dscooper VARCHAR2(11) --  FORMAT "x(11)"
+          ,dscooper crapcop.nmrescop%TYPE
           ,cdagenci NUMBER(3)    --  FORMAT "zz9"
           ,nrdconta NUMBER       --  FORMAT "zzzz,zzz,9"
           ,nmprimtl crapass.nmprimtl%TYPE --  FORMAT "x(40)"

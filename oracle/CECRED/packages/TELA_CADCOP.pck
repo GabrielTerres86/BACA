@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --  Sistema  : Rotina acessada pela tela CADCOP
   --  Sigla    : TELA_CADCOP
   --  Autor    : Andrei - RKAM
-  --  Data     : Agosto/2016.                   Ultima atualizacao: 10/11/2016
+  --  Data     : Agosto/2016.                   Ultima atualizacao: 22/12/2016
   --
   -- Dados referentes ao programa:
   --
@@ -202,6 +202,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
   --             28/11/2016 - P341 - Automatização BACENJUD - Alterado o parametro PR_DSDEPART 
   --                          para PR_CDDEPART e as consultas do fonte para utilizar o código 
   --                          do departamento nas validações (Renato Darosci - Supero)
+  --
+  --             22/12/2016 - Ajuste para gravar o nome resumido da cooperativa em maiusculo
+  --                          (Adriano - SD 582204).
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Funcao para validacao dos caracteres */
@@ -2475,7 +2479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
             ,crapcop.dscomple = UPPER(pr_dscomple)
             ,crapcop.nmbairro = UPPER(pr_nmbairro)
             ,crapcop.nmcidade = UPPER(pr_nmcidade)
-            ,crapcop.nmrescop = pr_nmrescop
+            ,crapcop.nmrescop = UPPER(pr_nmrescop)
             ,crapcop.nrdocnpj = pr_nrdocnpj
             ,crapcop.dtcdcnpj = vr_dtcdcnpj
             ,crapcop.nrendcop = pr_nrendcop
