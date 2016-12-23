@@ -29,6 +29,8 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0002 AS
   --             06/12/2016 - Tratado cursor cr_crapcrd para buscar apenas o cartao na
   --                          cooperativa que esta ativa (Incorporacao Transposul). 
   --                          (Fabricio)
+  --
+  --             14/12/2016 - Ajustes nos tratamentos para incorporacao/migracao. (Fabricio)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina tratar as mensagens referente ao CABAL 
@@ -176,6 +178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
   SELECT crd.cdcooper
         ,crd.nrdconta
         ,crd.nrctrcrd
+        ,crd.nrcrcard
     FROM crapcrd crd,
          crapcop cop
    WHERE cop.cdcooper = crd.cdcooper
@@ -184,6 +187,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
      AND crd.cdadmcrd <= 80  --Bancoob
      AND cop.flgativo = 1;
   rw_crapcrd cr_crapcrd%ROWTYPE;
+  
+  -- Cursor para encontrar as informações do cartão migrado
+  CURSOR cr_crapcrd_mig (pr_cdcooper IN crapcrd.cdcooper%TYPE
+                        ,pr_nrcrcard IN crapcrd.nrcrcard%TYPE) IS
+  SELECT crd.cdcooper
+        ,crd.nrdconta
+        ,crd.nrctrcrd
+        ,crd.nrcrcard
+    FROM crapcrd crd,
+         crapcop cop
+   WHERE cop.cdcooper = crd.cdcooper
+     AND crd.cdcooper = pr_cdcooper
+     AND crd.nrcrcard = pr_nrcrcard
+     AND crd.cdadmcrd >= 10  --Bancoob 
+     AND crd.cdadmcrd <= 80  --Bancoob
+     AND cop.flgativo = 1;
+     
+  -- Cursor para buscar a conta migrada na coop antiga
+  CURSOR cr_craptco_old (pr_cdcooper IN craptco.cdcooper%TYPE
+                        ,pr_nrdconta IN craptco.nrdconta%TYPE) IS
+  SELECT tco.cdcopant, tco.nrctaant FROM craptco tco, crapcop cop
+   WHERE cop.cdcooper = tco.cdcopant
+     AND tco.cdcooper = pr_cdcooper
+     AND tco.nrdconta = pr_nrdconta
+     AND cop.flgativo = 1;
+  rw_craptco_old cr_craptco_old%ROWTYPE;
+     
+  -- Cursor para buscar a conta migrada na coop nova
+  CURSOR cr_craptco_new (pr_cdcooper IN craptco.cdcooper%TYPE
+                        ,pr_nrdconta IN craptco.nrdconta%TYPE) IS
+  SELECT tco.cdcooper, tco.nrdconta FROM craptco tco
+   WHERE tco.cdcopant = pr_cdcooper
+     AND tco.nrctaant = pr_nrdconta;
+  rw_craptco_new cr_craptco_new%ROWTYPE;
    
   -- Cursor para buscar as informações do associado
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
@@ -590,7 +627,87 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
           
         ELSE
           -- Apenas fecha o cursor
-          CLOSE cr_crapcrd;         
+          CLOSE cr_crapcrd;
+          
+          -- verifica se precisa olhar o saldo na coop antiga (migracao/incorporacao)
+          IF rw_crapcrd.cdcooper = 9 AND to_date(SYSDATE, 'dd/mm/RRRR') = '31/12/2016' THEN
+                        
+            OPEN cr_craptco_old(pr_cdcooper => rw_crapcrd.cdcooper
+                               ,pr_nrdconta => rw_crapcrd.nrdconta);
+            FETCH cr_craptco_old INTO rw_craptco_old;
+            
+            IF cr_craptco_old%FOUND THEN              
+              CLOSE cr_craptco_old;              
+              -- busca as informacoes do cartao na cooperativa migrada (antiga)
+              OPEN cr_crapcrd_mig(pr_cdcooper => rw_craptco_old.cdcopant
+                                 ,pr_nrcrcard => rw_crapcrd.nrcrcard);
+              FETCH cr_crapcrd_mig INTO rw_crapcrd;
+              
+              -- Se não encontrar
+              IF cr_crapcrd_mig%NOTFOUND THEN
+                
+                -- Fecha o cursor pois haverá RAISE
+                CLOSE cr_crapcrd_mig;
+                
+                -- Mensagem de cancelamento
+                IF vr_tpmensag IN ('9080','9085') THEN
+                  vr_cdrespos := '00';
+                ELSE  
+                  vr_cdrespos := '76'; -- Conta Corrente com problemas
+                  
+                END IF;
+                
+                -- Gera mensagem de retorno
+                pc_gera_retorno_cabal(pr_tpmensag => vr_tpmsgres
+                                     ,pr_nrcrcard => vr_nrcrcard
+                                     ,pr_cdproces => vr_cdproces
+                                     ,pr_vldtrans => vr_vldtrans 
+                                     ,pr_nrnsucap => vr_nrnsucap                               
+                                     ,pr_dtorigem => vr_dtorigem
+                                     ,pr_hrorigem => vr_hrorigem
+                                     ,pr_cdredorg => vr_cdredorg
+                                     ,pr_idtrterm => vr_idtrterm
+                                     ,pr_cddmoeda => vr_cddmoeda
+                                     ,pr_cdhislan => vr_infbit62
+                                     ,pr_cdrespos => vr_cdrespos
+                                     ,pr_res_xml  => pr_res_xml
+                                     ,pr_cdgerred => vr_cdgerred
+                                     ,pr_vlsddisp => vr_vlsddisp
+                                     ,pr_dtdtrgmt => vr_dtdtrgmt
+                                     ,pr_cdautori => vr_cdautori
+                                     ,pr_des_reto => pr_dsretorn
+                                     ,pr_cdcritic => pr_pcdcriti
+                                     ,pr_dscritic => pr_pdscriti);
+                          
+                -- Se houve retorno não Ok
+                IF pr_dsretorn <> 'OK' THEN
+                   pr_res_xml := NULL;
+                  -- Monta mensagem de critica
+                  IF pr_pcdcriti = 0 AND pr_pdscriti IS NULL THEN
+                    pr_pdscriti := 'Nao foi possivel gerar mensagem de retorno (' || vr_tpmsgres || ') - CABAL.';
+                  END IF;
+                  
+                  -- Gera exceção
+                  RAISE vr_exc_erro;
+                END IF;
+                
+                -- Mensagem de cancelamento
+                IF vr_tpmensag IN ('9080','9085') THEN
+                  RAISE vr_exc_sair;
+                ELSE
+                  -- Monta a mensagem de critica
+                  pr_pcdcriti := 546;
+                  pr_pdscriti := gene0001.fn_busca_critica(pr_cdcritic => pr_pcdcriti);   
+                           
+                  -- Gera exceção
+                  RAISE vr_exc_erro;          
+                END IF;
+              END IF;
+              CLOSE cr_crapcrd_mig;              
+            ELSE
+              CLOSE cr_craptco_old;                       
+            END IF;                        
+          END IF;
         END IF;
         
         -- Busca dados do associado
@@ -665,9 +782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
           -- Apenas fechar o cursor
           CLOSE cr_crapcop;
         END IF;
-            
-
-   
+               
         -- Verificacao do calendario
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapass.cdcooper);       
         FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -811,7 +926,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
               -- Gera exceção
               RAISE vr_exc_erro; 
            END IF;
+           
+           -- tratamento para efetuar o lancamento na coop nova (incorporadora)
+           IF rw_crapcrd.cdcooper = 17 AND to_date(SYSDATE, 'dd/mm/RRRR') = '31/12/2016' THEN
+             OPEN cr_craptco_new(pr_cdcooper => rw_crapcrd.cdcooper
+                                ,pr_nrdconta => rw_crapcrd.nrdconta);
+             FETCH cr_craptco_new INTO rw_craptco_new;
+             
+             IF cr_craptco_new%FOUND THEN
+                CLOSE cr_craptco_new;
+                
+                -- Busca dados do associado
+                OPEN cr_crapass(pr_cdcooper => rw_craptco_new.cdcooper
+                               ,pr_nrdconta => rw_craptco_new.nrdconta);            
+                FETCH cr_crapass INTO rw_crapass;
+                          
+                IF cr_crapass%NOTFOUND THEN
+                  -- Fecha o cursor pois havera RAISE
+                  CLOSE cr_crapass;
+                  
+                  -- Gera mensagem de retorno Conta Corrente com problemas
+                  pc_gera_retorno_cabal(pr_tpmensag => vr_tpmsgres
+                                       ,pr_nrcrcard => vr_nrcrcard
+                                       ,pr_cdproces => vr_cdproces
+                                       ,pr_vldtrans => vr_vldtrans 
+                                       ,pr_nrnsucap => vr_nrnsucap
+                                       ,pr_dtorigem => vr_dtorigem
+                                       ,pr_hrorigem => vr_hrorigem
+                                       ,pr_cdredorg => vr_cdredorg
+                                       ,pr_idtrterm => vr_idtrterm
+                                       ,pr_cddmoeda => vr_cddmoeda
+                                       ,pr_cdhislan => vr_infbit62
+                                       ,pr_cdrespos => 76
+                                       ,pr_res_xml  => pr_res_xml
+                                       ,pr_cdgerred => vr_cdgerred
+                                       ,pr_vlsddisp => vr_vlsddisp
+                                       ,pr_dtdtrgmt => vr_dtdtrgmt
+                                       ,pr_cdautori => vr_cdautori
+                                       ,pr_des_reto => pr_dsretorn
+                                       ,pr_cdcritic => pr_pcdcriti
+                                       ,pr_dscritic => pr_pdscriti);          
+                                       
+                   -- Se houve retorno não Ok
+                  IF pr_dsretorn <> 'OK' THEN
+                    -- Monta a mensagem de critica
+                    pr_res_xml := NULL;
+                    IF pr_pcdcriti = 0 AND pr_pdscriti IS NULL THEN
+                      pr_pdscriti := 'Nao foi possivel gerar mensagem de retorno (' || vr_tpmsgres || ') - CABAL.';
+                    END IF;
+                    
+                    -- Gera exceção
+                    RAISE vr_exc_erro;
+                  END IF;
 
+                  -- Monta a mensagem de critica
+                  pr_pcdcriti := 9;
+                  pr_pdscriti := gene0001.fn_busca_critica(pr_cdcritic => pr_pcdcriti);
+                      
+                  -- Gera exceção
+                  RAISE vr_exc_erro;
+                ELSE
+                  -- Apenas fecha o cursor
+                  CLOSE cr_crapass;
+                END IF;
+             ELSE
+               CLOSE cr_craptco_new;               
+             END IF;  
+           END IF;
+           
            /* Somente gerar o lancamento de se não existir lancamento feito */  
            OPEN cr_craplcm(pr_cdcooper => rw_crapass.cdcooper,
                            pr_cdagenci => rw_crapass.cdagenci,
