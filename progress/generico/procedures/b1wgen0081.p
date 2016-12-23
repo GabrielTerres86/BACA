@@ -5636,7 +5636,7 @@ PROCEDURE consulta-extrato-rdca.
         END.
 
     IF  par_cdcooper = 3  THEN
-        aux_lsoperad = aux_lsoperad + "," + crapope.cddepart.
+        aux_lsoperad = aux_lsoperad + "," + STRING(crapope.cddepart).
 
     IF  par_nmdatela = "EXTRDA" THEN
         DO:

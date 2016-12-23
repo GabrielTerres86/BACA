@@ -4414,7 +4414,7 @@ PROCEDURE consulta-extrato-rdca.
         END.
 
     IF  p-cdcooper = 3  THEN
-        aux_lsoperad = aux_lsoperad + "," + crapope.cddepart.
+        aux_lsoperad = aux_lsoperad + "," + STRING(crapope.cddepart).
 
     IF  NOT CAN-DO(aux_lsoperad,crapope.dsdepar)  THEN  
         aux_listahis = "113,116,118,119,121,126,143,144,176,178,179," +

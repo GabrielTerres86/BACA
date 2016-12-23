@@ -174,7 +174,7 @@ DO WHILE TRUE:
         END. 
 
    IF  glb_cddopcao = "H"  AND 
-       NOT CAN-DO(20,glb_cddepart)/*TI*/  THEN 
+       NOT CAN-DO("20",STRING(glb_cddepart)) /*TI*/  THEN 
        DO:
            BELL.
            MESSAGE "Operador sem autorizacao para alterar horario".
