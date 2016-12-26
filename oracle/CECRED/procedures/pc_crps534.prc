@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 10/10/2016
+   Data    : Dezembro/2009.                  Ultima atualizacao: 05/12/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -108,12 +108,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
                31/08/2016 - Adicionar validação para o campo de CPF recebido no arquivo ser
                             diferente do CPF do titular da conta (Douglas - Chamado 476269)
-
+                
                06/10/2016 - Ajuste na leitura do CPF do destintario quando processar a linha
                             do arquivo (Douglas - Chamado 533206)
 
 			   10/10/2016 - Alteração do diretório para geração de arquivo contábil.
                             P308 (Ricardo Linhares).
+
+			   02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
   ............................................................................ */
 
 
@@ -1779,7 +1781,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             -- Ler as informações e tratar possíveis excessões de leitura
             BEGIN
               
-
               vr_cdagearq := to_number(SUBSTR(vr_dslinha,7,4));
               vr_nrcpfemi := to_number(SUBSTR(vr_dslinha,182,14));
               vr_nrdconta := to_number(SUBSTR(vr_dslinha,17,08));
@@ -2692,13 +2693,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
             -- Se há critica dif TCO
             IF vr_cdcritic <> 999 THEN
               -- Para arquivo de incorporação
-              IF rw_crapcop_incorp.cdcooper IS NOT NULL AND pr_tbarquiv(vr_nrindice) LIKE '3'|| TO_CHAR(rw_crapcop_incorp.cdagectl,'FM0009') || '%.RET' THEN
+              IF  rw_crapcop_incorp.cdcooper IS NOT NULL
+              AND pr_tbarquiv(vr_nrindice) LIKE '3'|| TO_CHAR(rw_crapcop_incorp.cdagectl,'FM0009') || '%.RET' THEN
+
                 -- Adicionar a descrição cfme coop integrada
-                IF rw_crapcop_incorp.cdcooper = 4 THEN
+                CASE rw_crapcop_incorp.cdcooper
+                  WHEN 4  THEN 
                   vr_dsobserv := 'Ass. Concredi';
-                ELSE
+                  WHEN 15 THEN
                   vr_dsobserv := 'Ass. Credimilsul';  
-                END IF;
+                  WHEN 17 THEN
+                    vr_dsobserv := 'Ass. Transulcred';
+                END CASE;
+
               -- PAra transferências entre Cooperativas
               ELSIF pr_cdcooper IN (1,2) THEN
                 -- Busca informações de contas transferidas
@@ -2845,7 +2852,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                              ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                              ,pr_flg_gerar => 'N'                      --> Apenas submeter
                                              ,pr_dspathcop => vr_dircon            --> Copiar para a Micros
-                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos                                             
+                                             ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
                                              ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                              ,pr_des_erro  => vr_des_erro);            --> Saída com erro
                                      
@@ -3135,14 +3142,18 @@ BEGIN -- Principal
   END IF;
   
   -- Buscar informações das Cooperativas Incorporadas a 
-  -- Viacredi (Concredi) e ScrCred (Credimilsul)
-  IF pr_cdcooper IN(1,13) THEN
+  -- Viacredi (Concredi) e ScrCred (Credimilsul) e Transpocred (Transulcred)
+  IF pr_cdcooper IN(1,9,13) THEN
     -- Buscar informações da cooperativa Incorporada
-    IF pr_cdcooper = 1 THEN
+    CASE pr_cdcooper
+      WHEN  1 THEN
       OPEN cr_crapcop(pr_cdcooper => 4); --> Incorporação Concredi
-    ELSE 
+      WHEN 13 THEN
       OPEN cr_crapcop(pr_cdcooper => 15); --> Incorporação CredimilSul
-    END IF;  
+      WHEN  9 THEN
+        OPEN cr_crapcop(pr_cdcooper => 17);  -- TRANSPOCRED --> TRANSULCRED
+    END CASE;
+
     -- Buscar informações da mesma
     FETCH cr_crapcop INTO rw_crapcop_incorp;
     CLOSE cr_crapcop;
@@ -3337,5 +3348,6 @@ EXCEPTION
     pr_dscritic := sqlerrm;
     -- Efetuar rollback
     ROLLBACK;
+
 END pc_crps534;
 /

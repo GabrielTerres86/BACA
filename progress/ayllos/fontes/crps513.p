@@ -4,8 +4,8 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Junho/2008.                       Ultima atualizacao: 29/09/2014.
-                                                                          
+   Data    : Junho/2008.                       Ultima atualizacao: 05/12/2016.
+
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -14,24 +14,27 @@
                Rodar na cadeia da Cecred.
 
    Alteracoes: 27/08/2008 - Incluir tratamento de Integrar Transferencia (Ze).
-     
+
                05/11/2008 - Alteracao para atender as agencias diferentes da
                             3420 (Ze).
-                            
+
                19/03/2009 - Ajuste para unificacao dos bancos de dados
                             (Evandro).
-               
+
                22/06/2012 - Substituido gncoper por crapcop (Tiago).   
-               
+
                09/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
-               
+
                13/01/2014 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)
-                            
+
                29/09/2014 - Incluso tratamento para incorporacao cooperativa 
-                            Concred pela Viacredi (Daniel).                                
+                            Concred pela Viacredi (Daniel).
+
+               05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ............................................................................ */
 
 { includes/var_batch.i }
@@ -379,29 +382,37 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
            END.
 
       /* Tratamento para incorporacao */
-      IF gnctace.cdcooper = 4 THEN
+      IF  gnctace.cdcooper = 4 THEN  /* CONCREDI */
           /* Busca Numero da Conta na CECRED (cadastrado na crapass) */ 
-          FIND crapcop WHERE crapcop.cdcooper = 1 NO-LOCK NO-ERROR.
+          FIND FIRST crapcop
+               WHERE crapcop.cdcooper = 1 NO-LOCK NO-ERROR.
       ELSE
-      IF gnctace.cdcooper = 15 THEN
+      IF  gnctace.cdcooper = 15 THEN /* CREDIMILSUL */
           /* Busca Numero da Conta na CECRED (cadastrado na crapass) */ 
-          FIND crapcop WHERE crapcop.cdcooper = 13 NO-LOCK NO-ERROR.
+          FIND FIRST crapcop
+               WHERE crapcop.cdcooper = 13 NO-LOCK NO-ERROR.
+      ELSE
+      IF  gnctace.cdcooper = 17 THEN /* TRANSULCRED */
+          /* Busca Numero da Conta na CECRED (cadastrado na crapass) */ 
+          FIND FIRST crapcop
+               WHERE crapcop.cdcooper = 9 NO-LOCK NO-ERROR.
       ELSE
           /* Busca Numero da Conta na CECRED (cadastrado na crapass) */ 
-          FIND crapcop WHERE crapcop.cdcooper = gnctace.cdcooper NO-LOCK NO-ERROR.
-      
-      IF   NOT AVAILABLE crapcop THEN
-           DO:
-               glb_cdcritic = 651.
-               RUN fontes/critic.p.
-               UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") + " - " +
-                                  glb_cdprogra +  "' --> '" + glb_dscritic + 
-                                  " >> log/proc_batch.log").
-               UNDO TRANS_1, RETURN.
-           END.
-      
+          FIND FIRST crapcop
+               WHERE crapcop.cdcooper = gnctace.cdcooper
+             NO-LOCK NO-ERROR.
+
+      IF  NOT AVAILABLE crapcop THEN DO:
+          glb_cdcritic = 651.
+          RUN fontes/critic.p.
+          UNIX SILENT VALUE ("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                             glb_cdprogra +  "' --> '" + glb_dscritic + 
+                             " >> log/proc_batch.log").
+          UNDO TRANS_1, RETURN.
+      END.
+
       ASSIGN aux_nrdconta = crapcop.nrctactl.
-      
+
       FIND crapass WHERE crapass.cdcooper = glb_cdcooper  AND
                          crapass.nrdconta = crapcop.nrctactl NO-LOCK NO-ERROR.
 
@@ -411,23 +422,23 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                    (INPUT "Conta/dv nao cadastrada na Cooperativa.").
 
                NEXT.
-           END.
+      END.
       
       IF   aux_nrdctabb <> 50482 THEN
            DO:
                RUN cria_rejeitado 
                   (INPUT "Somente lancamento da conta 5.048.2").
                NEXT.           
-           END.
-      
+      END.
+
       IF   gnctace.cdcooper = 3 THEN   /* Central */     
            DO:
                RUN cria_rejeitado 
                    (INPUT "Para este hist. Conta CECRED nao integrado.").
                NEXT.           
-           END.
-      
-      
+      END.
+
+
       IF   CAN-DO(aux_lshsttrf,SUBSTR(aux_dshistor,01,04))  THEN
            DO:
                /* gnctace.flgintrf criado para distinguir das contas de 
@@ -446,8 +457,8 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                            (INPUT "Somente para lancamentos de Debito.").
                         NEXT.
                     END.                    
-           END.
-           
+      END.
+
       
       /* Criar Lote no primeiro Lancamento */ 
       IF   aux_flgfirst  THEN
@@ -467,7 +478,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                             DO:
                                 PAUSE 2 NO-MESSAGE.
                                 NEXT.
-                            END.
+                       END.
                        ELSE
                             DO:
                                 glb_cdcritic = 472.
@@ -478,7 +489,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                                                    "' --> '" + glb_dscritic + 
                                                    " >> log/proc_batch.log").
                                 UNDO TRANS_1, RETURN.
-                            END.
+                       END.
                   LEAVE.
                END.    /*  Fim do DO WHILE TRUE  */
    
@@ -514,7 +525,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
                ASSIGN aux_flgfirst = FALSE.
                
                RELEASE craptab.
-           END.           
+      END.           
     
       FIND craplot WHERE craplot.cdcooper = glb_cdcooper AND
                          craplot.dtmvtolt = glb_dtmvtolt AND
@@ -571,7 +582,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
       ASSIGN craplot.qtinfoln = craplot.qtinfoln + 1
              craplot.qtcompln = craplot.qtcompln + 1
              craplot.nrseqdig = craplcm.nrseqdig.
-      
+
 
              IF   aux_indebcre = "D" THEN
                   ASSIGN craplot.vlinfodb = craplot.vlinfodb + craplcm.vllanmto
@@ -617,9 +628,9 @@ VIEW STREAM str_2 FRAME f_cabrel132_2.
 DISPLAY STREAM str_2 aux_nmarquiv WITH FRAME f_arquivo.
                            
 FOR EACH w-processa BREAK BY w-processa.cdsituac
-                             BY w-processa.nrdconta
-                                BY w-processa.vllancre
-                                   BY w-processa.vllandeb:
+                          BY w-processa.nrdconta
+                          BY w-processa.vllancre
+                          BY w-processa.vllandeb:
                             
     IF   FIRST-OF(w-processa.cdsituac)  THEN
          DO:
@@ -629,7 +640,7 @@ FOR EACH w-processa BREAK BY w-processa.cdsituac
                                        WITH FRAME f_cab_integrados.
              ELSE  /* Rejeitado */ 
                   DISPLAY STREAM str_2 WITH FRAME f_cab_rejeitados.
-         END.
+    END.
 
     IF   w-processa.cdsituac = 1  THEN   
          DO:
@@ -670,7 +681,7 @@ FOR EACH w-processa BREAK BY w-processa.cdsituac
 
                       ASSIGN sub_vllancre = 0
                              sub_vllandeb = 0.
-                  END.
+             END.
                   
              IF   LAST-OF(w-processa.cdsituac) THEN
                   DO:
@@ -679,8 +690,8 @@ FOR EACH w-processa BREAK BY w-processa.cdsituac
 
                       ASSIGN tot_vllancre = 0
                              tot_vllandeb = 0.
-                  END.
-         END.
+             END.
+    END.
     ELSE
          DO:
              DISPLAY STREAM str_2 w-processa.dshistor w-processa.indebcre
@@ -692,7 +703,7 @@ FOR EACH w-processa BREAK BY w-processa.cdsituac
 
              ASSIGN tot_rejeitad = tot_rejeitad + 1
                     vlr_rejeitad = vlr_rejeitad + w-processa.vllanmto.
-         END.
+    END.
          
     ASSIGN tot_recebido = tot_recebido + 1
            vlr_recebido = vlr_recebido + w-processa.vllanmto.

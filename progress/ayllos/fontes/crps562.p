@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Marco/2010                        Ultima atualizacao: 10/12/2014
+   Data    : Marco/2010                        Ultima atualizacao: 29/11/2016
 
    Dados referentes ao programa:
 
@@ -15,34 +15,36 @@
 
    Alteracoes: 05/04/2010 - Alterado para processar todas cooperativas, nao
                             mais por cooperativa Singular (Guilherme/Supero)
-                            
+
                01/06/2010 - Acertos gerais (Guilherme).
-               
+
                06/07/2010 - Alterar nomenclatura dos arquivos (Guilherme).
-               
+
                16/09/2010 - Utilizar o imprim_unif (Guilherme).
 
                02/08/2012 - Ajuste do format no campo nmrescop (David Kruger).
-               
+
                28/08/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
-                            
+
                06/11/2013 - Alterado totalizador de PAs de 99 para 999.
                             (Reinert)     
-                            
+
                20/06/2014 - Corrigida utilizacao do codigo da cooperativa
                             no arquivo de LOG (Diego).
-               
+
                10/12/2014 - Ajustes incorporação credimilsul/concredi
                             verificar se conta cheque é uma conta migrada
                             e buscar crapcch pelo numero da conta do cheque
-                            (Odirlei/AMcom)                
-                                                          
+                            (Odirlei/AMcom)
+
+               29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ..............................................................................*/
 
 { includes/var_batch.i }
 
-DEF   VAR b1wgen0011   AS HANDLE                                     NO-UNDO.
+DEF   VAR b1wgen0011   AS HANDLE                                       NO-UNDO.
 
 DEF STREAM str_1.
 DEF STREAM str_2.
@@ -51,7 +53,7 @@ DEF STREAM str_3. /* arquivo anexo para enviar via email */
 DEF BUFFER crabcch FOR crapcch.
 DEF BUFFER crabtab FOR craptab.
 
-DEF TEMP-TABLE cratrej                                                  NO-UNDO
+DEF TEMP-TABLE cratrej                                                 NO-UNDO
     FIELD cdcooper LIKE crapcop.cdcooper
     FIELD nrdconta LIKE crapass.nrdconta
     FIELD cdagenci LIKE crapass.cdagenci
@@ -65,7 +67,7 @@ DEF TEMP-TABLE cratrej                                                  NO-UNDO
     FIELD dtocorre AS DATE    
     FIELD cdderros AS CHAR.
     
-DEF TEMP-TABLE crawarq                                                  NO-UNDO
+DEF TEMP-TABLE crawarq                                                 NO-UNDO
     FIELD nmarquiv AS CHAR
     FIELD nrsequen AS INTEGER
     INDEX crawarq1 AS PRIMARY
@@ -530,17 +532,19 @@ PROCEDURE proc_processa_arquivo.
                        
                 ASSIGN aux_cdagectl = INT(SUBSTR(aux_setlinha,6,4)).
                 /* tratar cooperativas incorporadas*/
-                IF aux_cdagectl = 103 THEN /* se era concredi*/
-                  ASSIGN aux_cdagectl = 101. /* vira viacredi*/
-                ELSE IF aux_cdagectl = 114 THEN /* se era credimilsul*/
-                  ASSIGN aux_cdagectl = 112.    /* vira scrcred*/
+                IF  aux_cdagectl = 103 THEN      /* se era CONCREDI    */
+                    ASSIGN aux_cdagectl = 101.    /* vira VIACREDI      */
+                ELSE IF aux_cdagectl = 114 THEN /* se era CREDIMILSUL */
+                    ASSIGN aux_cdagectl = 112.    /* vira SCRCRED       */
+                ELSE IF aux_cdagectl = 116 THEN /* se era TRANSULCRED */
+                    ASSIGN aux_cdagectl = 108.    /* vira TRANSPOCRED   */
                 
                 FIND crapcop WHERE 
                      crapcop.cdagectl = aux_cdagectl
                      NO-LOCK NO-ERROR.
 
-                IF  NOT AVAIL crapcop  THEN
-                DO:
+                IF  NOT AVAIL crapcop  THEN DO:
+
                     ASSIGN glb_cdcritic = 651.
                     RUN fontes/critic.p.
 
@@ -564,20 +568,23 @@ PROCEDURE proc_processa_arquivo.
                                    crapass.nrdconta = aux_nrdconta 
                                    NO-LOCK NO-ERROR.
                                  
-                /* verificar se é uma conta migrada da credimilsul
-                  ou concredi */
+                /* INCORPORACAO/MIGRACAO
+				   verificar se é uma conta migrada da credimilsul
+                   ou concredi, transulcred/transpocred */
                 RELEASE craptco.
 
-                IF crapcop.cdcooper = 1 OR 
-                   crapcop.cdcooper = 13  THEN
-                DO:
-                  FIND FIRST craptco 
-                       WHERE craptco.cdcooper = crapcop.cdcooper
-                         AND craptco.nrctaant = aux_nrdconta
-                         AND (craptco.cdcopant = 4 OR
-                              craptco.cdcopant = 15) 
-                         AND craptco.flgativo = TRUE
-                         NO-LOCK NO-ERROR.
+                IF  crapcop.cdcooper = 1  OR 
+                    crapcop.cdcooper = 13 OR 
+                    crapcop.cdcooper = 9  THEN DO:
+                 
+                    FIND FIRST craptco 
+                         WHERE craptco.cdcooper = crapcop.cdcooper
+                           AND craptco.nrctaant = aux_nrdconta
+                           AND (craptco.cdcopant = 4  OR
+                                craptco.cdcopant = 15 OR
+                                craptco.cdcopant = 17) 
+                           AND craptco.flgativo = TRUE
+                       NO-LOCK NO-ERROR.
                 END.
                                 
 

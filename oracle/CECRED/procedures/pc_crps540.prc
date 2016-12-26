@@ -12,8 +12,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcoope
    Programa: PC_CRPS540           Antigo: Fontes/crps540.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Guilherme / Precise
-   Data    : Dezembro/2009.                      Ultima atualizacao: 17/09/2014
+   Autor   : Guilherme/SUPERO
+   Data    : Dezembro/2009.                      Ultima atualizacao: 02/12/2016
 
    Dados referentes ao programa:
 
@@ -66,6 +66,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcoope
 			   
 			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
 							da rotina padrão. (Rodrigo)
+
+               02/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
 ............................................................................. */
 
   -- CURSORES
@@ -185,7 +188,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS540" (pr_cdcooper  IN craptab.cdcoope
   -- quando ocorre uma incorporação de cooperativa
   vr_cdcooper       NUMBER;
   vr_nrdconta       NUMBER;
-  vr_dstextab		craptab.dstextab%TYPE;
+  vr_dstextab       craptab.dstextab%TYPE;
 
 BEGIN
 
@@ -216,13 +219,13 @@ BEGIN
   FETCH cr_crapcop INTO rw_crapcop;
 
   -- Tratamento para buscar dados cooperativa incorporada
-  IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+  IF pr_cdcooper IN (1,9,13) THEN
 
-    IF pr_cdcooper = 1 THEN
-      vr_cdcooper := 4;
-    ELSE
-      vr_cdcooper := 15;
-    END IF;
+    CASE pr_cdcooper
+      WHEN 1   THEN vr_cdcooper := 4;  --    VIACREDI --> CONCREDI
+      WHEN 13  THEN vr_cdcooper := 15; --     SCRCRED --> CREDIMILSUL
+      WHEN 9   THEN vr_cdcooper := 17; -- TRANSPOCRED --> TRANSULCRED
+    END CASE;
 
     -- Buscar os dados da cooperativa
     OPEN  cr_crabcop(vr_cdcooper);
@@ -351,7 +354,7 @@ BEGIN
       END IF;
 
       -- VIACON Tratamento para cooperativa incorporada
-      IF pr_cdcooper = 1 OR pr_cdcooper = 13 THEN
+      IF pr_cdcooper IN (1,9,13) THEN
 
         -- Verifica através da extensão do arquivo a qual grupo o mesmo pertence
         IF    vr_array_arquivo(ind) LIKE ('1'||rw_crabcop.cdagectl||'%.DVD') THEN
@@ -597,8 +600,8 @@ BEGIN
               vr_nrdconta := TO_NUMBER(SUBSTR(vr_file(vr_nrlinha), 70, 9));
 
               /* VIACON - gravar nova conta */
-              IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
-                vr_arquivos(ind).idarquivo > 3 THEN
+                IF (pr_cdcooper IN (1,9,13) )
+                AND vr_arquivos(ind).idarquivo > 3 THEN
 
                 -- Busca por contas transferidas entre cooperativas
                 OPEN  cr_crabtco(vr_nrdconta); -- Conta
@@ -843,8 +846,9 @@ BEGIN
                                substr(rv_xml_craprej.cdpesqbb,59,4)||' '||
                                substr(rv_xml_craprej.cdpesqbb,79,3);
 
-            IF (pr_cdcooper = 1 OR pr_cdcooper = 13) AND
-              vr_arquivos(ind).idarquivo > 3 THEN
+              /** VIACON - Tratamento Incorporacao */
+              IF  (pr_cdcooper IN (1,9,13))
+              AND vr_arquivos(ind).idarquivo > 3 THEN
               vr_xml_dscritic := vr_xml_dscritic || ' - INCORPORADA';
             END IF;
 
@@ -983,4 +987,3 @@ EXCEPTION
     ROLLBACK;
 END PC_CRPS540;
 /
-

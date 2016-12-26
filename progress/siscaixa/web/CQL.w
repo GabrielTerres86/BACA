@@ -7,7 +7,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Maio/2012.                      Ultima atualizacao: 27/03/2015
+   Data    : Maio/2012.                      Ultima atualizacao: 06/12/2016
       
    Dados referentes ao programa:
 
@@ -20,6 +20,9 @@
                             (Carlos)
                             
                27/03/2015 - Removido a criacao do arquivo a.txt. (James)
+
+               06/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
 /*----------------------------------------------------------------------*/
@@ -359,6 +362,9 @@ PROCEDURE process-web-request :
                      ELSE
                      IF crapcop.cdcooper = 15 THEN /** Credimilsul **/
                         aux_cdcooper = 13.
+                     ELSE
+                     IF crapcop.cdcooper = 17 THEN /** Transulcred **/
+                        aux_cdcooper = 9. /* Transpocred */
                      ELSE
                         aux_cdcooper = crapcop.cdcooper.
 
