@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 05/07/2016
+   Data    : Setembro/2009.                     Ultima atualizacao: 01/12/2016
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -161,13 +161,18 @@
                             
                30/05/2016 - Adicionar tipo de pessoa juridica na pesquisa de contas
                             da verifica_conta (Douglas - Chamado 406267)
-
-			   05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
-							juridicas
-			                (Adriano - SD 480514).
-			
                
-                          #######################################################
+			   05/07/2016 - Ajuste para considerar inpessoa > 1 ao validar contas
+							juridicas (Adriano - SD 480514).
+               
+               
+			   14/09/2016 - Ajuste para utilizar uma sequence na geracao do numero
+			                de controle, garantindo sua unicidade
+						   (Adriano - SD 518645).
+    
+	           01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
+
+             #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
              #######################################################
@@ -252,6 +257,7 @@ DEF VAR aux_CNPJ_CPFCred2 AS CHAR                                   NO-UNDO.
 DEF VAR aux_NomCliCredtd  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCodBarras  AS CHAR                                   NO-UNDO.
 DEF VAR aux_NUPortdd      AS CHAR                                   NO-UNDO.
+DEF VAR aux_CodProdt      AS CHAR                                   NO-UNDO.  
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -277,7 +283,6 @@ DEF VAR aux_cdbanpag      AS INT                                    NO-UNDO.
 DEF VAR aux_dsmotivo      AS CHAR                                   NO-UNDO.
 DEF VAR aux_nrretcoo      AS INT                                    NO-UNDO.
 DEF VAR aux_cdageinc      AS INT                                    NO-UNDO.
-DEF VAR aux_nrctainc      AS INT                                    NO-UNDO.
 DEF VAR aux_nrctremp      AS DECI                                   NO-UNDO.
 DEF VAR aux_tpemprst      AS INT                                    NO-UNDO.
 DEF VAR aux_qtregist      AS INTE                                   NO-UNDO.
@@ -341,6 +346,7 @@ DEF BUFFER crablot FOR craplot.
 DEF BUFFER b-craplot FOR craplot. /* Credito conta corrente Portabilidade */
 DEF BUFFER b-crabcop FOR crapcop. /* Portabilidade */ 
 DEF BUFFER b-crabdat FOR crapdat. /* Portabilidade */ 
+DEF BUFFER m-crabcop FOR crapcop. /* Incorporacao */
 
 DEFINE TEMP-TABLE crawarq                                           NO-UNDO
        FIELD nrsequen AS INTEGER
@@ -537,7 +543,6 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
            aux_flgderro      = FALSE
            aux_nrctrole      = ""
            aux_cdageinc      = 0  /* Agencia antiga incorporada */
-           aux_nrctainc      = 0  /* Conta antiga incorporada */ 
            aux_nrctremp      = 0
            aux_tpemprst      = 2
            aux_qtregist      = 0
@@ -1012,11 +1017,6 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
     IF   CAN-DO("PAG0101,STR0018,STR0019",aux_CodMsg)   THEN
          DO:
              
-             RUN verifica_processo.
-
-             IF   RETURN-VALUE <> "OK"   THEN
-                  NEXT.
-
              RUN sistema/generico/procedures/b1wgen0046.p
                  PERSISTENT SET b1wgen0046.
                                      
@@ -1036,10 +1036,26 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
              RUN log_mqcecred.
 
              IF   aux_CodMsg = "PAG0101"  THEN
-                  RUN proc_pag0101 IN b1wgen0046 (INPUT glb_cdprogra,
-                                                  INPUT aux_nmarqxml,
-                                                  INPUT aux_nmarqlog,
-                                                  INPUT TABLE tt-situacao-if).
+                  DO:
+                    IF CAPS(aux_CodProdt) = "TED" THEN
+                      DO:
+                          RUN proc_pag0101 IN b1wgen0046 (INPUT glb_cdprogra,
+                                                          INPUT aux_nmarqxml,
+                                                          INPUT aux_nmarqlog,
+                                                          INPUT TABLE tt-situacao-if).
+                                                          
+                          IF  RETURN-VALUE = "OK"  THEN
+                              RUN gera_logspb (INPUT "PAG0101",
+                                               INPUT "",
+                                               INPUT TIME).
+                      END.
+             ELSE
+                  DO:
+                         RUN salva_arquivo.
+                         RUN deleta_objetos.
+                         NEXT.
+                      END.
+                    END.
              ELSE
                   DO:
                  
@@ -1118,7 +1134,21 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                      NO-LOCK NO-ERROR.
                                         
              IF   NOT AVAIL crabcop   THEN
-                  ASSIGN aux_flgderro = TRUE.
+			      DO:
+				      /* Tratamento incorporacao TRANSULCRED */ 
+                      IF   INT(aux_AgCredtd) = 116 and
+					       TODAY < 03/21/2017 THEN   /* Data de corte */ 
+						   DO:
+                               ASSIGN aux_cdageinc = INT(aux_AgCredtd)
+                                      aux_AgCredtd = "0108".
+
+							   /* Busca cooperativa de destino (nova) */ 
+                               FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
+							        NO-LOCK NO-ERROR.
+					       END.		    
+				      ELSE
+					       ASSIGN aux_flgderro = TRUE.
+				  END.
              
              IF  aux_flestcri > 0  THEN
                  DO:
@@ -1473,7 +1503,8 @@ PROCEDURE gera_erro_xml:
                          + STRING(MONTH(TODAY),"99") + STRING(DAY(TODAY),"99")
                          + STRING(TIME,"99999") + 
                          /* para evitar duplicidade devido paralelismo */
-                         SUBSTRING(STRING(NOW),21,3) + ".xml"
+                         SUBSTRING(STRING(NOW),21,3) + 
+						 STRING(NEXT-VALUE(SEQ_TEDENVIO),"999") + ".xml"
                         
          aux_VlrLanc   = REPLACE(aux_VlrLanc,",",".")
          aux_CdLegado  = STRING(aux_cdagectl)
@@ -1487,7 +1518,7 @@ PROCEDURE gera_erro_xml:
                          STRING(aux_cdagectl,"9999")  + 
                          STRING(TIME,"99999") + 
                          /* para evitar duplicidade devido paralelismo */
-                         SUBSTRING(STRING(NOW),21,3) /*milesimo de segundos*/ + 
+                         STRING(NEXT-VALUE(SEQ_TEDENVIO),"999") +
                          "A". /* origem AYLLOS */ 
          aux_dsarqenv = "". 
                               
@@ -1585,12 +1616,10 @@ PROCEDURE gera_erro_xml:
   ASSIGN aux_VlrLanc  = REPLACE(aux_VlrLanc,".",",").
 
 
-  /*** IFs incorporadas foram desativadas (crapcop.flgativo = FALSE
+  /*** Tratamento incorporação Transposul ***/
   /* Necessario retornar os valores originais para apresentar no LOG */ 
   IF   aux_cdageinc > 0 THEN /* Agencia incorporada */ 
-       ASSIGN aux_AgCredtd = STRING(aux_cdageinc,"9999")
-              aux_CtCredtd = STRING(aux_nrctainc).
-  *****************************************************************/
+       ASSIGN aux_AgCredtd = STRING(aux_cdageinc,"9999").
   
   RUN gera_logspb (INPUT "RECEBIDA",
                    INPUT log_msgderro,
@@ -1868,97 +1897,120 @@ PROCEDURE verifica_conta.
                END.
            *************************************************************/
 
+		   /* Incorporada Transulcred */ 
+		   IF   aux_cdageinc > 0  THEN
+		        DO:
+				    /* identifica cooperativa antiga */ 
+					FIND m-crabcop WHERE m-crabcop.cdagectl = aux_cdageinc NO-LOCK NO-ERROR. 
 
-           /* -----  VALIDA CONTA MIGRADA ------- */
+				    FIND craptco WHERE 
+                         craptco.cdcooper = val_cdcooper  AND
+                         craptco.nrctaant = val_nrdconta  AND
+                         craptco.cdcopant = m-crabcop.cdcooper  NO-LOCK NO-ERROR.
 
-           FIND craptco WHERE craptco.cdcopant = val_cdcooper AND
-                              craptco.nrctaant = val_nrdconta AND
-                              craptco.flgativo = TRUE         AND
-                              craptco.tpctatrf = 1   
-                              NO-LOCK NO-ERROR.
+                   IF   AVAIL craptco THEN
+                        /*Nova conta*/
+                        ASSIGN val_nrdconta = craptco.nrdconta.
+                   ELSE
+                        DO:
+                            ASSIGN aux_codierro = 2 /*Conta invalida*/
+                                   aux_dsdehist = "Conta informada invalida.".
+
+                            RETURN "NOK".
+                        END.
+			    END.
+           ELSE
+		        DO:
+				   /* -----  VALIDA CONTA MIGRADA ------- */
+
+				   FIND craptco WHERE craptco.cdcopant = val_cdcooper AND
+									  craptco.nrctaant = val_nrdconta AND
+									  craptco.flgativo = TRUE         AND
+									  craptco.tpctatrf = 1   
+									  NO-LOCK NO-ERROR.
             
-           IF  AVAIL(craptco) THEN
-           DO:  
-               /* Verificar se conta foi migrada ACREDI >> VIACREDI */
-               IF  craptco.cdcooper = 1 AND   /* VIACREDI */
-                   craptco.cdcopant = 2 THEN  /* ACREDI */
-               DO:
-                   ASSIGN aux_codierro = 1. /* Conta encerrada */
-                   RETURN "NOK".
-               END.
+				   IF  AVAIL(craptco) THEN
+				   DO:  
+					   /* Verificar se conta foi migrada ACREDI >> VIACREDI */
+					   IF  craptco.cdcooper = 1 AND   /* VIACREDI */
+						   craptco.cdcopant = 2 THEN  /* ACREDI */
+					   DO:
+						   ASSIGN aux_codierro = 1. /* Conta encerrada */
+						   RETURN "NOK".
+					   END.
  
-               /* Verificar se conta foi migrada VIACREDI >> ALTO VALE */
-               IF  craptco.cdcooper = 16 AND   /* ALTO VALE */
-                   craptco.cdcopant = 1  THEN  /* VIACREDI */
-               DO:
-                   ASSIGN aux_codierro = 1. /* Conta encerrada */
-                   RETURN "NOK".
-               END.
+					   /* Verificar se conta foi migrada VIACREDI >> ALTO VALE */
+					   IF  craptco.cdcooper = 16 AND   /* ALTO VALE */
+						   craptco.cdcopant = 1  THEN  /* VIACREDI */
+					   DO:
+						   ASSIGN aux_codierro = 1. /* Conta encerrada */
+						   RETURN "NOK".
+					   END.
 
-               /* validacao da conta migrada */
-               ASSIGN val_cdcooper = craptco.cdcooper
-                      val_nrdconta = craptco.nrdconta.
+					   /* validacao da conta migrada */
+					   ASSIGN val_cdcooper = craptco.cdcooper
+							  val_nrdconta = craptco.nrdconta.
 
-               /* Busca cooperativa onde a conta foi transferida */ 
-               FIND b-crapcop WHERE b-crapcop.cdcooper = val_cdcooper
-                                    NO-LOCK NO-ERROR.
+					   /* Busca cooperativa onde a conta foi transferida */ 
+					   FIND b-crapcop WHERE b-crapcop.cdcooper = val_cdcooper
+											NO-LOCK NO-ERROR.
 
-               IF  NOT AVAIL(b-crapcop) THEN
-               DO:
-                   ASSIGN aux_codierro = 99
-                          aux_dsdehist = "Cooperativa migrada nao encontrada.".
-                   RETURN "NOK".
-               END.
+					   IF  NOT AVAIL(b-crapcop) THEN
+					   DO:
+						   ASSIGN aux_codierro = 99
+								  aux_dsdehist = "Cooperativa migrada nao encontrada.".
+						   RETURN "NOK".
+					   END.
                
-               /* Busca data na cooperativa onde a conta foi transferida */ 
-               FIND b-crapdat WHERE b-crapdat.cdcooper = val_cdcooper
-                                    NO-LOCK NO-ERROR.
+					   /* Busca data na cooperativa onde a conta foi transferida */ 
+					   FIND b-crapdat WHERE b-crapdat.cdcooper = val_cdcooper
+											NO-LOCK NO-ERROR.
     
-               IF  NOT AVAIL(b-crapdat) THEN
-               DO:
-                   ASSIGN aux_codierro = 99
-                          aux_dsdehist = "Data da cooperativa migrada " +
-                                         "nao encontrada.".
-                   RETURN "NOK".
-               END.
+					   IF  NOT AVAIL(b-crapdat) THEN
+					   DO:
+						   ASSIGN aux_codierro = 99
+								  aux_dsdehist = "Data da cooperativa migrada " +
+												 "nao encontrada.".
+						   RETURN "NOK".
+					   END.
 
-               /* Verifica se conta transferida existe */ 
-               FIND crapass WHERE crapass.cdcooper = val_cdcooper  AND
-                                  crapass.nrdconta = val_nrdconta
-                                  NO-LOCK NO-ERROR.
+					   /* Verifica se conta transferida existe */ 
+					   FIND crapass WHERE crapass.cdcooper = val_cdcooper  AND
+										  crapass.nrdconta = val_nrdconta
+										  NO-LOCK NO-ERROR.
     
-               IF   NOT AVAIL crapass THEN
-               DO:
-                   ASSIGN aux_codierro = 99
-                           aux_dsdehist = "Conta migrada nao encontrada.".
-                   RETURN "NOK".
-               END.
+					   IF   NOT AVAIL crapass THEN
+					   DO:
+						   ASSIGN aux_codierro = 99
+								   aux_dsdehist = "Conta migrada nao encontrada.".
+						   RETURN "NOK".
+					   END.
 
-               ASSIGN val_tppessoa = IF crapass.inpessoa = 1 THEN "F" ELSE "J"
-                      val_nrcpfcgc = crapass.nrcpfcgc.
+					   ASSIGN val_tppessoa = IF crapass.inpessoa = 1 THEN "F" ELSE "J"
+							  val_nrcpfcgc = crapass.nrcpfcgc.
                
-               /* Verifica cpf da TED com o cpf da conta */
-               FIND FIRST b-crapttl WHERE b-crapttl.cdcooper = val_cdcooper
-                                      AND b-crapttl.nrdconta = val_nrdconta
-                                      AND b-crapttl.nrcpfcgc = val_nrcpfcgc
-                                      NO-LOCK NO-ERROR.
-               /* Se nao achar, verifica novamente na conta */ 
-               IF NOT AVAIL b-crapttl THEN
-               DO:
-                   FIND b-crapass WHERE b-crapass.cdcooper = val_cdcooper
-                                    AND b-crapass.nrdconta = val_nrdconta
-                                    AND b-crapass.nrcpfcgc = val_nrcpfcgc
-                                    NO-LOCK NO-ERROR.
-                   IF  NOT AVAIL b-crapass THEN
-                   DO:
-                       ASSIGN aux_codierro = 3. /*CPF divergente*/
-                       RETURN "NOK". 
-                   END.
-               END. 
-           END. /* IF avail craptco */
+					   /* Verifica cpf da TED com o cpf da conta */
+					   FIND FIRST b-crapttl WHERE b-crapttl.cdcooper = val_cdcooper
+											  AND b-crapttl.nrdconta = val_nrdconta
+											  AND b-crapttl.nrcpfcgc = val_nrcpfcgc
+											  NO-LOCK NO-ERROR.
+					   /* Se nao achar, verifica novamente na conta */ 
+					   IF NOT AVAIL b-crapttl THEN
+					   DO:
+						   FIND b-crapass WHERE b-crapass.cdcooper = val_cdcooper
+											AND b-crapass.nrdconta = val_nrdconta
+											AND b-crapass.nrcpfcgc = val_nrcpfcgc
+											NO-LOCK NO-ERROR.
+						   IF  NOT AVAIL b-crapass THEN
+						   DO:
+							   ASSIGN aux_codierro = 3. /*CPF divergente*/
+							   RETURN "NOK". 
+						   END.
+					   END. 
+				   END. /* IF avail craptco */
            
-           /*-----  FIM CONTA MIGRADA -------*/
-
+				   /*-----  FIM CONTA MIGRADA -------*/
+				END.
                
                /* Pessoa Fisica */
            IF   val_tppessoa = "F" OR CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg) THEN
@@ -2765,7 +2817,14 @@ PROCEDURE gera_logspb.
                           "Arquivo " + STRING(aux_nmarqxml,"x(40)") + ". " +
                           par_msgderro + " => ISPB " + STRING(aux_nrispbif) + 
                           '"' + ". >> " + aux_nmarqlog).  
-
+   ELSE
+   IF  par_tipodlog = "PAG0101"  THEN
+       UNIX SILENT VALUE ("echo " + '"' + STRING(TODAY,"99/99/9999") + 
+                          " - " + STRING(TIME,"HH:MM:SS") + " - " +
+                          glb_cdprogra + " - " + STRING(aux_CodMsg,"x(18)") +
+                          " --> "  +
+                          "Arquivo " + STRING(aux_nmarqxml,"x(40)") + " " +                          
+                          '"' + ". >> " + aux_nmarqlog).  
 
 END PROCEDURE.
 
@@ -2887,6 +2946,9 @@ PROCEDURE trata_IFs.
 
                  IF   hSubNode:NAME = "CodMsg"  THEN
                       ASSIGN aux_CodMsg = aux_descrica.
+                 ELSE
+                 IF   hSubNode:NAME = "CodProdt"  THEN
+                      ASSIGN aux_CodProdt = aux_descrica.
                  ELSE
                  IF   hSubNode:NAME = "ISPBPartIncld_Altd"  OR
                       hSubNode:NAME = "ISPBPartExcl"  THEN
@@ -3931,154 +3993,150 @@ PROCEDURE trata_lancamentos.
             
             ASSIGN aux_flgcriti = FALSE.
            
-            RUN processa_conta_transferida(INPUT crabcop.cdcooper,
-                                           INPUT aux_nrctacre,
-                                           INPUT DEC(aux_VlrLanc),
-                                           OUTPUT aux_flgcriti).
+		    /* Se existir craptco eh uma conta incorporada ou migrada,
+			   conforme validacao efetuada na procedure verifica_conta. */ 
+            IF   AVAIL craptco  THEN
+			     DO:
+					 RUN processa_conta_transferida(INPUT crabcop.cdcooper,
+							                        INPUT aux_nrctacre,
+										            INPUT DEC(aux_VlrLanc)).
            
-            IF   RETURN-VALUE = "OK" THEN 
-                 DO:
-                     RUN deleta_objetos.
-                     NEXT.
-                 END.
+				     RUN deleta_objetos.
+			         NEXT.
+				 END.
             ELSE
-                 IF   aux_flgcriti = TRUE  THEN 
-                      DO:
-                          RUN deleta_objetos.
-                          NEXT.
-                      END.
-                 
-            /* Verificar se ja existe Lancamento*/
-            FIND craplcm WHERE craplcm.cdcooper = crabcop.cdcooper AND
-                               craplcm.dtmvtolt = craplot.dtmvtolt AND
-                               craplcm.cdagenci = craplot.cdagenci AND
-                               craplcm.cdbccxlt = craplot.cdbccxlt AND
-                               craplcm.nrdolote = craplot.nrdolote AND
-                               craplcm.nrdctabb = aux_nrctacre     AND
-                               craplcm.nrdocmto = aux_nrdocmto
-                               NO-LOCK NO-ERROR.
+			     DO:
+                    /* Verificar se ja existe Lancamento*/
+					FIND craplcm WHERE craplcm.cdcooper = crabcop.cdcooper AND
+									   craplcm.dtmvtolt = craplot.dtmvtolt AND
+									   craplcm.cdagenci = craplot.cdagenci AND
+									   craplcm.cdbccxlt = craplot.cdbccxlt AND
+									   craplcm.nrdolote = craplot.nrdolote AND
+									   craplcm.nrdctabb = aux_nrctacre     AND
+									   craplcm.nrdocmto = aux_nrdocmto
+									   NO-LOCK NO-ERROR.
              
-            IF  AVAIL craplcm  THEN
-                DO:
-                    IF  CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg)  OR 
-                        aux_tagCABInf  THEN
-                        DO:
-                            ASSIGN log_msgderro = 
-                                   "Lancamento ja existe! Conta: " +
-                                   STRING(aux_nrctacre) + 
-                                   ", Valor: " + 
-                                   STRING(craplcm.vllanmto,"zzz,zzz,zz9.99")
-                                   + ", Lote: " + STRING(craplot.nrdolote) +
-                                   ", Doc.: " + STRING(aux_nrdocmto). 
+					IF  AVAIL craplcm  THEN
+						DO:
+							IF  CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg)  OR 
+								aux_tagCABInf  THEN
+								DO:
+									ASSIGN log_msgderro = 
+										   "Lancamento ja existe! Conta: " +
+										   STRING(aux_nrctacre) + 
+										   ", Valor: " + 
+										   STRING(craplcm.vllanmto,"zzz,zzz,zz9.99")
+										   + ", Lote: " + STRING(craplot.nrdolote) +
+										   ", Doc.: " + STRING(aux_nrdocmto). 
                         
-                            IF  aux_tagCABInf  THEN
-                                DO:
-                                    RUN gera_logspb 
-                                        (INPUT "REJEITADA NAO OK",
-                                         INPUT log_msgderro,
-                                         INPUT TIME).
+									IF  aux_tagCABInf  THEN
+										DO:
+											RUN gera_logspb 
+												(INPUT "REJEITADA NAO OK",
+												 INPUT log_msgderro,
+												 INPUT TIME).
                                          
-                                    ASSIGN aux_CodMsg = "ERROREJ".
-                                END.
-                            ELSE
-                                RUN gera_logspb (INPUT "RETORNO SPB",
-                                                 INPUT log_msgderro,
-                                                 INPUT TIME).
+											ASSIGN aux_CodMsg = "ERROREJ".
+										END.
+									ELSE
+										RUN gera_logspb (INPUT "RETORNO SPB",
+														 INPUT log_msgderro,
+														 INPUT TIME).
 
-                            /* Cria registro das movimentacoes no SPB */
-                            RUN cria_gnmvcen (INPUT crabcop.cdagectl,
-                                              INPUT aux_dtmvtolt,
-                                              INPUT aux_CodMsg,
-                                              INPUT "C",
-                                              INPUT DEC(aux_VlrLanc)).
-                        END.
-                    ELSE
-                        DO:
-                            /* Cria registro das movimentacoes no SPB */
-                            RUN cria_gnmvcen (INPUT crabcop.cdagectl,
-                                              INPUT aux_dtmvtolt,
-                                              INPUT aux_CodMsg,
-                                              INPUT "C",
-                                              INPUT DEC(aux_VlrLanc)).
+									/* Cria registro das movimentacoes no SPB */
+									RUN cria_gnmvcen (INPUT crabcop.cdagectl,
+													  INPUT aux_dtmvtolt,
+													  INPUT aux_CodMsg,
+													  INPUT "C",
+													  INPUT DEC(aux_VlrLanc)).
+								END.
+							ELSE
+								DO:
+									/* Cria registro das movimentacoes no SPB */
+									RUN cria_gnmvcen (INPUT crabcop.cdagectl,
+													  INPUT aux_dtmvtolt,
+													  INPUT aux_CodMsg,
+													  INPUT "C",
+													  INPUT DEC(aux_VlrLanc)).
                           
-                            ASSIGN log_msgderro = 
-                            "Lancamento ja existe! Lote: " + 
-                            STRING(craplot.nrdolote) +
-                            ", Doc.: " + STRING(aux_nrdocmto).
+									ASSIGN log_msgderro = 
+									"Lancamento ja existe! Lote: " + 
+									STRING(craplot.nrdolote) +
+									", Doc.: " + STRING(aux_nrdocmto).
                            
-                            RUN gera_logspb (INPUT "RECEBIDA",
-                                             INPUT log_msgderro,
-                                             INPUT TIME).
-                        END.
+									RUN gera_logspb (INPUT "RECEBIDA",
+													 INPUT log_msgderro,
+													 INPUT TIME).
+								END.
                                         
-                    RUN salva_arquivo.  
-                    RUN deleta_objetos.
-                    NEXT.
-                END.
+							RUN salva_arquivo.  
+							RUN deleta_objetos.
+							NEXT.
+						END.
 
-            ASSIGN aux_hrtransa = TIME.
+					ASSIGN aux_hrtransa = TIME.
    
-            CREATE craplcm.
-            ASSIGN craplcm.cdcooper = crabcop.cdcooper
-                   craplcm.dtmvtolt = craplot.dtmvtolt
-                   craplcm.cdagenci = craplot.cdagenci
-                   craplcm.cdbccxlt = craplot.cdbccxlt
-                   craplcm.nrdolote = craplot.nrdolote
-                   craplcm.nrdconta = aux_nrctacre
-                   craplcm.nrdctabb = craplcm.nrdconta
-                   craplcm.nrdocmto = aux_nrdocmto
+					CREATE craplcm.
+					ASSIGN craplcm.cdcooper = crabcop.cdcooper
+						   craplcm.dtmvtolt = craplot.dtmvtolt
+						   craplcm.cdagenci = craplot.cdagenci
+						   craplcm.cdbccxlt = craplot.cdbccxlt
+						   craplcm.nrdolote = craplot.nrdolote
+						   craplcm.nrdconta = aux_nrctacre
+						   craplcm.nrdctabb = craplcm.nrdconta
+						   craplcm.nrdocmto = aux_nrdocmto
           
-                   craplcm.cdhistor = 
-                               /* Estorno TED */ 
-                          IF   CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg) THEN 
-                               600
-                          ELSE /* Estorno TED Rejeitada*/
-                          IF   aux_tagCABInf  THEN
-                               887
-                          ELSE
-                               /* Credito TEC */ 
-                          IF   CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg)  THEN
-                               799
-                          ELSE 
-                          IF   aux_CodMsg = "STR0047R2"  THEN
-                               1921
-                          ELSE
-                              /* Credito TED */ 
-                               578
+						   craplcm.cdhistor = 
+									   /* Estorno TED */ 
+								  IF   CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg) THEN 
+									   600
+								  ELSE /* Estorno TED Rejeitada*/
+								  IF   aux_tagCABInf  THEN
+									   887
+								  ELSE
+									   /* Credito TEC */ 
+								  IF   CAN-DO("STR0037R2,PAG0137R2",aux_CodMsg)  THEN
+									   799
+								  ELSE 
+								  IF   aux_CodMsg = "STR0047R2"  THEN
+									   1921
+								  ELSE
+									  /* Credito TED */ 
+									   578
           
-                   craplcm.vllanmto = DEC(aux_VlrLanc)
-                   craplcm.nrseqdig = craplot.nrseqdig + 1
-                   craplcm.cdpesqbb = 
-                         IF  CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg)  THEN
-                             aux_CodDevTransf /*Cod. estorno*/
-                         ELSE 
-                         IF  aux_tagCABInf  THEN
-                             "TED/TEC rejeitado coop"
-                         ELSE
-                         IF  aux_CodMsg = "STR0047R2" THEN
-                             "CRED TED PORT"
-                         ELSE
-                             aux_dadosdeb /* Dados do Remetente */
-                   craplcm.cdoperad = "1"
-                   craplcm.hrtransa = aux_hrtransa.
+						   craplcm.vllanmto = DEC(aux_VlrLanc)
+						   craplcm.nrseqdig = craplot.nrseqdig + 1
+						   craplcm.cdpesqbb = 
+								 IF  CAN-DO("STR0010R2,PAG0111R2",aux_CodMsg)  THEN
+									 aux_CodDevTransf /*Cod. estorno*/
+								 ELSE 
+								 IF  aux_tagCABInf  THEN
+									 "TED/TEC rejeitado coop"
+								 ELSE
+								 IF  aux_CodMsg = "STR0047R2" THEN
+									 "CRED TED PORT"
+								 ELSE
+									 aux_dadosdeb /* Dados do Remetente */
+						   craplcm.cdoperad = "1"
+						   craplcm.hrtransa = aux_hrtransa.
 
-            VALIDATE craplcm.
+					VALIDATE craplcm.
                          
-            ASSIGN craplot.vlcompcr = craplot.vlcompcr + 
-                                      craplcm.vllanmto
-                   craplot.vlinfocr = craplot.vlinfocr +
-                                      craplcm.vllanmto.
+					ASSIGN craplot.vlcompcr = craplot.vlcompcr + 
+											  craplcm.vllanmto
+						   craplot.vlinfocr = craplot.vlinfocr +
+											  craplcm.vllanmto.
             
-            IF   aux_tagCABInf THEN
-                 ASSIGN aux_CodMsg = "MSGREJ".
+					IF   aux_tagCABInf THEN
+						 ASSIGN aux_CodMsg = "MSGREJ".
             
-            /* Cria registro das movimentacoes no SPB */
-            RUN cria_gnmvcen (INPUT crabcop.cdagectl,
-                              INPUT aux_dtmvtolt,
-                              INPUT aux_CodMsg,
-                              INPUT "C",
-                              INPUT DEC(aux_VlrLanc)).
-
+					/* Cria registro das movimentacoes no SPB */
+					RUN cria_gnmvcen (INPUT crabcop.cdagectl,
+									  INPUT aux_dtmvtolt,
+									  INPUT aux_CodMsg,
+									  INPUT "C",
+									  INPUT DEC(aux_VlrLanc)).
+                 END.
         END.
             
    ASSIGN craplot.nrseqdig = craplot.nrseqdig + 1
@@ -4331,7 +4389,6 @@ PROCEDURE processa_conta_transferida:
     DEFINE INPUT  PARAM par_cdcopant AS INTEGER          NO-UNDO.
     DEFINE INPUT  PARAM par_nrctaant AS INTEGER          NO-UNDO.
     DEFINE INPUT  PARAM par_vlrlanct AS DECIMAL          NO-UNDO.
-    DEFINE OUTPUT PARAM par_flgcriti AS LOG              NO-UNDO.
 
     DEFINE VARIABLE aux_contlock    AS INTEGER           NO-UNDO.
     DEFINE VARIABLE aux_nmarqimp    AS CHARACTER         NO-UNDO.
@@ -4355,7 +4412,19 @@ PROCEDURE processa_conta_transferida:
                        craptco.flgativo = TRUE         AND
                        craptco.tpctatrf = 1
                        NO-LOCK NO-ERROR.
-    
+
+    IF  NOT AVAIL(craptco)  THEN
+	    DO:
+		    /* No caso de TED destinada a uma IF incorporada,
+			   o parametro par_cdcopant contera o codigo da 
+			   nova IF */ 
+		    FIND craptco WHERE craptco.cdcooper = par_cdcopant AND
+						       craptco.nrctaant = par_nrctaant AND
+						       craptco.flgativo = TRUE         AND
+                               craptco.tpctatrf = 1
+                               NO-LOCK NO-ERROR.
+		END.
+
     IF  AVAIL(craptco) THEN
         DO:                                 
             /* Busca cooperativa onde a conta foi transferida */ 
@@ -4364,7 +4433,6 @@ PROCEDURE processa_conta_transferida:
 
             IF  NOT AVAIL(b-crapcop) THEN
                 DO:
-                    ASSIGN par_flgcriti = TRUE.
                     RETURN "NOK".
                 END.
 
@@ -4373,7 +4441,6 @@ PROCEDURE processa_conta_transferida:
 
             IF  NOT AVAIL(b-crapdat) THEN
                 DO:
-                    ASSIGN par_flgcriti = TRUE.
                     RETURN "NOK".
                 END.
                      
@@ -4385,7 +4452,6 @@ PROCEDURE processa_conta_transferida:
             IF   TODAY > aux_dtmvtolt AND
                  aux_flestcri = 0     THEN    
                  DO: 
-                      ASSIGN par_flgcriti = TRUE.
                       RETURN "NOK".
                  END.     
                          
@@ -4420,7 +4486,6 @@ PROCEDURE processa_conta_transferida:
                           ("mv " + crawarq.nmarquiv + " /usr/coop/" + b-crapcop.dsdircop
                            + "/salvar/" + aux_nmarqxml). 
                      
-                     ASSIGN par_flgcriti = TRUE.
                      RETURN "NOK".
                  END.
 
@@ -4455,7 +4520,6 @@ PROCEDURE processa_conta_transferida:
 
     IF  NOT AVAIL crablot   THEN
         DO:
-            ASSIGN par_flgcriti = TRUE.
             RETURN "NOK".
         END.
 
@@ -4549,25 +4613,28 @@ PROCEDURE processa_conta_transferida:
                                 INPUT " ",
                                 INPUT aux_hrtransa).
     
-    IF par_cdcopant = 1 OR     /* Migracao VIACREDI >> Alto Vale */
-       par_cdcopant = 2 OR     /* Migracao ACREDI >> VIACREDI */
-       par_cdcopant = 4 OR     /* Incorporação CONCREDI >> VIACREDI */
-       par_cdcopant = 15  THEN /* Incorporação CREDIMILSUL >>  SCRCRED */
+    IF craptco.cdcopant = 1 OR     /* Migracao VIACREDI >> Alto Vale */
+       craptco.cdcopant = 2 OR     /* Migracao ACREDI >> VIACREDI */
+       craptco.cdcopant = 4 OR     /* Incorporação CONCREDI >> VIACREDI */
+       craptco.cdcopant = 15 OR    /* Incorporação CREDIMILSUL >>  SCRCRED */
+	   craptco.cdcopant = 17 THEN  /* Incorporação TRANSULCRED >>  TRANSPOCRED */
     DO: 
         
-        IF  par_cdcopant = 1 THEN
+        IF  craptco.cdcopant = 1 THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: VIACREDI --> VIACREDI AV".
-        ELSE IF  par_cdcopant = 2 THEN
+        ELSE IF  craptco.cdcopant = 2 THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: ACREDI --> VIACREDI".
-        ELSE IF par_cdcopant = 4   THEN
+        ELSE IF craptco.cdcopant = 4   THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: CONCREDI --> VIACREDI".
-        ELSE IF par_cdcopant = 15  THEN
+        ELSE IF craptco.cdcopant = 15  THEN
             ASSIGN aux_strmigra = "TEDs MIGRADAS: CREDIMILSUL --> SCRCRED".
+	    ELSE IF craptco.cdcopant = 17  THEN
+		    ASSIGN aux_strmigra = "TEDs MIGRADAS: TRANSULCRED --> TRANSPOCRED".
         
         ASSIGN aux_horario = STRING(TIME, "HH:MM:SS").
     
         ASSIGN aux_nmarqimp = "/usr/coop/cecred/log/teds_migradas" +
-                               STRING(par_cdcopant, "99")     +
+                               STRING(craptco.cdcopant, "99")     +
                                STRING(DAY(aux_dtmvtolt), "99")     +
                                STRING(MONTH(aux_dtmvtolt), "99")   +
                                STRING(YEAR(aux_dtmvtolt), "9999")  +
@@ -4663,9 +4730,15 @@ PROCEDURE log_mqcecred:
                            ELSE
                                 crapcop.dsdircop.
 
-            aux_nmarqlog = "/usr/coop/" + 
-                           aux_dsdircop + "/log/" + "mqcecred_processa_" +
-                          STRING(crabdat.dtmvtolt,"999999") + ".log".
+     /* Para estas mensagens nao e necessario aguardar processo */
+     IF   CAN-DO("PAG0101,STR0018,STR0019",aux_CodMsg)   THEN
+       ASSIGN aux_nmarqlog = "/usr/coop/" + 
+                            aux_dsdircop + "/log/" + "mqcecred_processa_" +
+                            STRING(TODAY,"999999") + ".log".
+     ELSE
+       ASSIGN aux_nmarqlog = "/usr/coop/" + 
+                            aux_dsdircop + "/log/" + "mqcecred_processa_" +
+                            STRING(crabdat.dtmvtolt,"999999") + ".log".
 
 END PROCEDURE.
 
