@@ -241,6 +241,9 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                20/07/2016 - Ajustes referentes a Melhoria 69 - Devolucao automatica de cheques
                             (Lucas Ranghetti #484923)
                             
+               07/10/2016 - Alteração do diretório para geração de arquivo contábil.
+                            P308 (Ricardo Linhares).
+                            
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
                             cada conta do arquivo - Melhoria 69 (Lucas Ranghetti/Elton)
                             
@@ -249,6 +252,13 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
      ............................................................................. */
 
      DECLARE
+
+      -- variáveis para controle de arquivos
+       vr_dircon VARCHAR2(200);
+       vr_arqcon VARCHAR2(200);
+       vc_dircon CONSTANT VARCHAR2(30) := 'arquivos_contabeis/ayllos';
+       vc_cdacesso CONSTANT VARCHAR2(24) := 'ROOT_SISTEMAS';
+       vc_cdtodascooperativas INTEGER := 0;
 
        /* Declaracao dos registros e vetores */
 
@@ -419,7 +429,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        
        --Selecionar Saldos Negativos e Devolucoes de Cheque
        CURSOR cr_crapneg_2 (pr_cdcooper IN crapneg.cdcooper%TYPE,
-                            pr_nrdconta IN crapneg.nrdconta%TYPE,
+                                  pr_nrdconta IN crapneg.nrdconta%TYPE,
                             pr_nrdocmto IN crapneg.nrdocmto%TYPE) IS
          SELECT /*+ index (crapneg crapneg##crapneg7) */
                 crapneg.nrdconta
@@ -452,7 +462,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_typ_saida       VARCHAR2(3);
        vr_dircop_imp      VARCHAR2(200);
        vr_nom_direto      VARCHAR2(200);
-       vr_nom_dirmic      VARCHAR2(200);
        vr_dircop_salvar   VARCHAR2(200);
        vr_dircop_rlnsv    VARCHAR2(200);
        vr_email_dest      VARCHAR2(500);
@@ -460,7 +469,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        vr_comando         VARCHAR2(4000);
        vr_des_erro        VARCHAR2(4000);
        vr_nmarquiv        VARCHAR2(4000);
-       vr_nmarquiv_cri    VARCHAR2(4000);
        vr_lstdarqv        VARCHAR2(4000);
        vr_nmarquiv_incorp VARCHAR2(4000);
        vr_lstdarqv_incorp VARCHAR2(4000);
@@ -3900,11 +3908,11 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                   -- Caso encontre registro de devolucao automatica com alinea 11
                                   IF cr_crapneg_reg%FOUND THEN
                                     CLOSE cr_crapneg_reg;  
-                                    vr_cdalinea := 12;
-                                  ELSE
-                                    CLOSE cr_crapneg_reg;  
-                                    vr_cdalinea := 49;
-                                  END IF;
+                                  vr_cdalinea := 12;
+                                ELSE
+                                   CLOSE cr_crapneg_reg;  
+                                  vr_cdalinea := 49;
+                                END IF;
                                 END IF;
                               ELSE
                                 CLOSE cr_crapneg_2;  
@@ -4754,10 +4762,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                                       ,pr_cdcooper => pr_cdcooper);
 
-                -- busca o diretorio micros contab
-                vr_nom_dirmic := gene0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
-                                                      ,pr_cdcooper => pr_cdcooper
-                                                      ,pr_nmsubdir => 'contab');
 
                 -- Inicializar o CLOB
                 dbms_lob.createtemporary(vr_xml_rel, true);
@@ -4957,21 +4961,25 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                 -- Se possuir conteudo de critica no CLOB
                 IF LENGTH(vr_clobcri) > 0 THEN
-                  -- Arquivo de saida
-                  vr_nmarquiv_cri := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD') || '_CRITICAS.txt';
+
+                  -- Busca o diretório para contabilidade
+                  vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+                  vr_dircon := vr_dircon || vc_dircon;
+                  vr_arqcon := TO_CHAR(rw_crapdat.dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS.txt';
                   
                   -- Chama a geracao do TXT
                   GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
                                                      ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
                                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt      --> Data do movimento atual
                                                      ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                                     ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_nmarquiv_cri    --> Arquivo final com o path
+                                                     ,pr_dsarqsaid => vr_nom_direto || '/contab/' || vr_arqcon    --> Arquivo final com o path
                                                      ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
                                                      ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                                     ,pr_dspathcop => vr_nom_dirmic            --> Copiar para a Micros
-                                                     ,pr_fldoscop  => 'S'                      --> Efetuar cópia com Ux2Dos
+                                                     ,pr_dspathcop => vr_dircon
+                                                     ,pr_fldoscop  => 'S'
                                                      ,pr_flappend  => 'S'                      --> Indica que a solicitação irá incrementar o arquivo
                                                      ,pr_des_erro  => vr_des_erro);            --> Saída com erro
+
                 END IF;
 
                 -- Liberando a memória alocada pro CLOB
@@ -4984,7 +4992,7 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                             ,pr_ind_tipo_log => 2 -- Erro tratato
                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                             || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_nmarquiv_cri || ': '
+                                                             || vr_cdprogra || ' --> ERRO NA GERACAO DO ' || vr_arqcon || ': '
                                                              || vr_des_erro );
                 END IF;
 
