@@ -3,7 +3,7 @@
    Programa: fontes/crps545.p
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Dezembro/2009.                     Ultima atualizacao: 23/05/2016
+   Data    : Dezembro/2009.                     Ultima atualizacao: 26/12/2016
                                                                           
    Dados referentes ao programa:
 
@@ -78,6 +78,9 @@
                23/05/2016 - Ajustado tratamento para validacao das contas
                             migradas VIACREDI >> VIACREDI ALTO VALE
                             (Douglas - Chamado 406267)
+
+			   26/12/2016 - Tratamento incorporação Transposul (Diego).
+			    	
 ............................................................................. */
 
 { includes/var_batch.i } 
@@ -353,13 +356,12 @@ FOR EACH crawarq NO-LOCK:
                         IF  AVAIL crapass  THEN
                             DO:
                                 ASSIGN aux_cdagenci = crapass.cdagenci.
-
-                                IF   SUBSTR(aux_setlinha,20,1) = "C"  THEN
-                                     RUN verifica_conta_transferida.
-
                             END.
                         ELSE
                             ASSIGN aux_cdagenci = 0.
+
+                        IF  SUBSTR(aux_setlinha,20,1) = "C"  THEN
+						    RUN verifica_conta_transferida.
                     END.
 
                            
@@ -564,8 +566,8 @@ PROCEDURE verifica_conta_transferida.
         END.
 
    IF   aux_ctavalid = TRUE /*** OR Tratamento incorporadas
-        aux_cdcooper = 4    OR
-        aux_cdcooper = 15 ***/ THEN
+        aux_cdcooper = 4 OR aux_cdcooper = 15 ***/  OR
+		aux_cdcooper = 9 OR aux_cdcooper = 17 THEN
         DO:
             /* De-Para das incorporadas foi desativado em 25/08/2015.
                Os registros continuarao sendo criados na gnmvspb para
@@ -574,14 +576,24 @@ PROCEDURE verifica_conta_transferida.
                 .
             ELSE
                 DO:
-                   /* Verifica se eh conta transferida */ 
+				   
+				   /* Verifica se eh conta transferida */ 
                    FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
                                       craptco.nrctaant = aux_nrdconta AND
                                       craptco.flgativo = TRUE         AND
                                       craptco.tpctatrf = 1
                                       NO-LOCK NO-ERROR.
              
-                   IF  AVAIL craptco THEN
+                   IF  NOT AVAIL craptco  THEN
+				       /* Verifica se eh conta transferida. 
+					      Mensagem recebida para Agencia Nova e conta Antiga */ 
+                       FIND craptco WHERE craptco.cdcooper = aux_cdcooper AND
+                                          craptco.nrctaant = aux_nrdconta AND
+                                          craptco.flgativo = TRUE         AND
+                                          craptco.tpctatrf = 1
+                                          NO-LOCK NO-ERROR. 
+				   
+				   IF  AVAIL craptco THEN
                        DO:
                            /* Verificar se a conta migrada ACREDI >> VIACREDI */
                            IF  craptco.cdcooper = 1 AND craptco.cdcopant = 2 THEN 
