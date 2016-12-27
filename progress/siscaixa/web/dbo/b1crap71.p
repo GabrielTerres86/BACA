@@ -56,10 +56,12 @@
                             
                19/05/2015 - Aumento do campo de Nr.Docmto (Lunelli SD 285059)
                
-               18/11/2016 - Ajuste realizado para corrigir problema que nao permitia
-                            estornar lancamentos de cheques, conforme solicitado
-                            no chamado 525940. (Kelvin)
-               
+               18/11/2016 - Ajuste realizado para corrigir problema que nao
+                            permitia estornar lancamentos de cheques, conforme
+                            solicitado no chamado 525940. (Kelvin)
+
+               06/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ...........................................................................*/
                              
 {dbo/bo-erro1.i}
@@ -1241,8 +1243,13 @@ PROCEDURE verifica-crapchd:
                             (crapchd.cdcooper = 13               AND
                              crapchd.cdbanchq = crapcop.cdbcoctl AND  
                              crapchd.cdagechq = 0114)  /* Incorporação Credimilsul */
-                           THEN 
-                             DO:
+                            OR
+                            (crapchd.cdcooper = 9                AND
+                             crapchd.cdbanchq = crapcop.cdbcoctl AND
+                             crapchd.cdagechq = 0116             AND
+							 TODAY > 12/30/2016)  /* Incorporação Transulcred */
+                           THEN DO:
+
                                  IF   CAN-DO(aux_lsconta3,
                                              STRING(crapchd.nrctachq)) THEN
                                       DO:

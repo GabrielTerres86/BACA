@@ -21,6 +21,9 @@
                             (Elton).
                 
                 09/09/2014 - #198254 Incorporacao concredi e credimilsul (Carlos)
+
+                06/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+
 ------------------------------------------------------------------------------*/
 
 PROCEDURE ver_cheque:
@@ -226,8 +229,13 @@ PROCEDURE ver_cheque:
              (i-p-cdbanchq     = crapcop.cdbcoctl AND
               i-p-cdagechq     = 0114             AND
               crapcop.cdcooper = 13)
-              THEN  
-              DO:      
+             OR
+             /* Incorporacao TRANSULCRED */
+             (i-p-cdbanchq     = crapcop.cdbcoctl AND
+              i-p-cdagechq     = 0116             AND
+              crapcop.cdcooper =  9               AND
+			  TODAY > 12/30/2016) THEN DO:
+
                   IF   CAN-DO(aux_lsconta3,STRING(i-p-nrctabdb))   THEN 
                        DO:
                            /* Formata conta integracao */
@@ -306,9 +314,11 @@ PROCEDURE ver_cheque:
                            
                            IF  AVAIL b-crapcop THEN
                                DO:
-                                    FIND craptco WHERE craptco.cdcooper = crapcop.cdcooper AND
-                                                       craptco.nrctaant = i-p-nrctabdb     AND
-                                                       craptco.cdcopant = b-crapcop.cdcooper 
+                                    FIND FIRST craptco
+                                         WHERE craptco.cdcooper = crapcop.cdcooper
+                                           AND craptco.nrctaant = i-p-nrctabdb
+                                           AND craptco.cdcopant = b-crapcop.cdcooper
+                                           AND craptco.flgativo = TRUE
                                                        NO-LOCK NO-ERROR.
                                     
                                     IF  AVAIL craptco THEN

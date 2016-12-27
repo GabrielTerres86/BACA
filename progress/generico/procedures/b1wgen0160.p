@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0160.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 16/07/2013                     Ultima atualizacao: 07/07/2016
+    Data    : 16/07/2013                     Ultima atualizacao: 28/11/2016
 
     Objetivo  : Tranformacao BO tela PESQSR.
 
@@ -18,6 +18,10 @@
                 07/07/2016 - #442054 Correcao do proc Busca_Opcao_C para
                              pegar os dados do favorecido do cheque (cdbancdep,
                              cdagedep e nrctadep) (Carlos)
+
+                28/11/2016 - Incorporacao Transulcred
+                             Correcao do FIND da TCO, estava errado
+                             (Guilherme/SUPERO)
 
 ............................................................................*/
 
@@ -106,7 +110,9 @@ PROCEDURE Busca_Dados:
                 LEAVE Busca.
             END.
 
-        FOR FIRST crapcop FIELDS(cdcooper cdagebcb cdagectl cdageitg) WHERE crapcop.cdcooper = par_cdcooper NO-LOCK: END.
+        FOR FIRST crapcop FIELDS(cdcooper cdagebcb cdagectl cdageitg)
+            WHERE crapcop.cdcooper = par_cdcooper NO-LOCK:
+        END.
 
         IF  NOT AVAILABLE crapcop  THEN
             DO: 
@@ -307,19 +313,27 @@ PROCEDURE Busca_Opcao_C:
 
         CASE par_cdbaninf:
             WHEN 756 THEN ASSIGN aux_cdagechq = crapcop.cdagebcb.
-            WHEN  85 THEN 
-            DO:
            
+            WHEN  85 THEN DO:
                 ASSIGN aux_cdagechq = crapcop.cdagectl.
-                FIND FIRST craptco WHERE craptco.cdcooper = par_cdcooper AND /*VERIFICA SE É CONTA MIGRADA*/
-                                         craptco.nrctaant = aux_cdagechq NO-LOCK NO-ERROR.
-                IF   AVAILABLE craptco  THEN
-                    DO:
-                        IF craptco.cdcopant = 4 OR craptco.cdcopant = 15 THEN
-                            DO:
-                                ASSIGN aux_ctamigra = TRUE. /* PESQUISA A AGENCIA DA CONTA MIGRADA*/
-                                FIND crapcop WHERE crapcop.cdcooper = craptco.cdcopant NO-LOCK NO-ERROR.
+
+                /*VERIFICA SE É CONTA MIGRADA*/
+                FIND FIRST craptco
+                     WHERE craptco.cdcooper = par_cdcooper
+                       AND craptco.nrctaant = par_nrdctabb
+					   AND craptco.flgativo = TRUE
+                   NO-LOCK NO-ERROR.
+
+                IF  AVAILABLE craptco  THEN DO:
+                    IF  craptco.cdcopant = 4   /* CONCREDI    */
+                    OR  craptco.cdcopant = 15  /* CREDIMILSUL */
+                    OR  craptco.cdcopant = 17  /* TRANSULCRED */ THEN DO:
+                        ASSIGN aux_ctamigra = TRUE.
                                  
+                        /* PESQUISA A AGENCIA DA CONTA MIGRADA*/
+                        FIND FIRST crapcop
+                             WHERE crapcop.cdcooper = craptco.cdcopant
+                           NO-LOCK NO-ERROR.
                             END.
                     END.
             END.
