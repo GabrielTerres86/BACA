@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 07/11/2016
+    Data     : Novembro/2015.                   Ultima atualizacao: 02/12/2016
   
    Dados referentes ao programa:
   
@@ -431,11 +431,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 efetuar tratamento para os segmentos R,S;
                               > Ajuste para enviar o nome original do arquivo para emissao do protocolo;
                              (Andrei - RKAM).
-                             
+                                           
                 26/10/2016 - Ajuste na validacao do nome do sacado (pc_trata_segmento_q_240_85)
                              para considerar o caracter ':' como valido.
                              (Chamado 535830) - (Fabricio)
-                                           
+
 				01/11/2016 - Incluido tratamento NVL no campo QTDIAPRT ao inserir na CRAPCOB.
 				             Alterado local de atribuicao de valores nos campos da pc_rec_cobranca
 							 na rotina pc_trata_detalhe_cnab400. Estava gerando erro nas instrucoes
@@ -451,6 +451,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              cdacesso = "QTD_DIAS_EMISSAO_RETR" para armazenar o valor.
                              Sera alterado de 90 para 365 dias. (Douglas - Chamado 523329)
 
+               02/12/2016 - Ajustes efetuados:
+						                 > Levantar exception (NOK) quando for encontrado registro de rejeição;
+                             > Tratar nome da cidade, nome do bairro e uf nulos ; 
+							              (Andrei - RKAM).
+                            
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -731,7 +736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       --Variaveis de exceção
       vr_exc_erro EXCEPTION;
       vr_nrsequence crapsqu.nrseqatu%TYPE;
-      
+
     BEGIN
 
       --Busca o tipo de serviço
@@ -1444,7 +1449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Frequencia: Sempre que chamado
        Objetivo  : Gravar as informacoes do sacado
 
-       Alteracoes: 
+       Alteracoes: 25/11/2016 - Remover caracteres especial no nome do sacado (Gil Furtado - MOUTS)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1460,7 +1465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_tab_sacado(vr_index).cdcooper := pr_rec_cobranca.cdcooper;
     pr_tab_sacado(vr_index).nrdconta := pr_rec_cobranca.nrdconta;
-    pr_tab_sacado(vr_index).nmdsacad := pr_rec_cobranca.nmdsacad;
+    pr_tab_sacado(vr_index).nmdsacad := gene0007.fn_caract_acento(pr_rec_cobranca.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
     pr_tab_sacado(vr_index).cdtpinsc := pr_rec_cobranca.cdtpinsc;
     pr_tab_sacado(vr_index).nrinssac := pr_rec_cobranca.nrinssac;
     pr_tab_sacado(vr_index).dsendsac := pr_rec_cobranca.dsendsac;
@@ -1776,7 +1781,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 07/01/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 02/12/2016
 
        Dados referentes ao programa:
 
@@ -1785,6 +1790,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    remessa
 
        Alteracoes: 07/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+       
+                   02/12/2016 - Ajuste para tratar nome da cidade, nome do bairro e uf nulos 
+  						               		(Andrei - RKAM).
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1948,9 +1956,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).nrinssac,
                 pr_tab_crapcob(vr_idx_cob).nmdsacad,
                 pr_tab_crapcob(vr_idx_cob).dsendsac,
-                pr_tab_crapcob(vr_idx_cob).nmbaisac,
-                pr_tab_crapcob(vr_idx_cob).nmcidsac,
-                pr_tab_crapcob(vr_idx_cob).cdufsaca,
+                nvl(trim(pr_tab_crapcob(vr_idx_cob).nmbaisac),' '),
+                nvl(trim(pr_tab_crapcob(vr_idx_cob).nmcidsac),' '),
+                nvl(trim(pr_tab_crapcob(vr_idx_cob).cdufsaca),' '),
                 pr_tab_crapcob(vr_idx_cob).nrcepsac,
                 nvl(trim(pr_tab_crapcob(vr_idx_cob).nmdavali),' '),
                 nvl(pr_tab_crapcob(vr_idx_cob).nrinsava,0),
@@ -3063,7 +3071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 27/01/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 02/12/2016
 
        Dados referentes ao programa:
 
@@ -3071,6 +3079,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Atualizar as informacoes dos sacados
 
        Alteracoes: 27/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+				   
+                   25/11/2016 - Correção dos caracteres invelidos no nome do sacado (Gil Furtado - MOUTS)     
+           
+                   02/12/2016 - Ajuste para tratar nome da cidade, nome do bairro e uf nulos 
+  						               		(Andrei - RKAM).     
+          
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3092,6 +3106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_sacado  typ_rec_sacado;
     ------------------------------- VARIAVEIS --------------------------------
     vr_nrendsac INTEGER;
+	vr_nmdsacad crapsab.nmdsacad%type;
 
   BEGIN
   
@@ -3104,6 +3119,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                       ,pr_nrdconta =>  vr_sacado.nrdconta
                       ,pr_nrinssac => vr_sacado.nrinssac);
       FETCH cr_crapsab INTO rw_crapsab;
+	  -- Limpar Variavel vr_nmdsacad
+      vr_nmdsacad := '';
+      -- remover caracter especial vr_nmdsacad
+      vr_nmdsacad := gene0007.fn_caract_acento(vr_sacado.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
       -- Verifica se encontrou
       IF cr_crapsab%NOTFOUND THEN
         -- Fecha cursor
@@ -3124,14 +3143,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            ,dtmvtolt)
                     VALUES(vr_sacado.cdcooper
                           ,vr_sacado.nrdconta
-                          ,vr_sacado.nmdsacad
+                          ,vr_nmdsacad
                           ,vr_sacado.cdtpinsc
                           ,vr_sacado.nrinssac
                           ,vr_sacado.dsendsac
                           ,0
-                          ,vr_sacado.nmbaisac
-                          ,vr_sacado.nmcidsac
-                          ,vr_sacado.cdufsaca
+                          ,nvl(trim(vr_sacado.nmbaisac),' ')
+                          ,nvl(trim(vr_sacado.nmcidsac),' ')
+                          ,nvl(trim(vr_sacado.cdufsaca),' ')
                           ,vr_sacado.nrcepsac
                           ,vr_sacado.cdoperad
                           ,vr_sacado.dtmvtolt);
@@ -3147,13 +3166,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
         -- Se o sacado existir, Efetua atualizacao dados do sacado
         UPDATE crapsab
-           SET crapsab.nmdsacad = vr_sacado.nmdsacad
+           SET crapsab.nmdsacad = vr_nmdsacad
               ,crapsab.dsendsac = vr_sacado.dsendsac
               ,crapsab.nrendsac = vr_nrendsac
-              ,crapsab.nmbaisac = vr_sacado.nmbaisac
+              ,crapsab.nmbaisac = nvl(trim(vr_sacado.nmbaisac),' ')
               ,crapsab.nrcepsac = vr_sacado.nrcepsac
-              ,crapsab.nmcidsac = vr_sacado.nmcidsac
-              ,crapsab.cdufsaca = vr_sacado.cdufsaca
+              ,crapsab.nmcidsac = nvl(trim(vr_sacado.nmcidsac),' ')
+              ,crapsab.cdufsaca = nvl(trim(vr_sacado.cdufsaca),' ')
               ,crapsab.cdoperad = vr_sacado.cdoperad
               ,crapsab.dtmvtolt = vr_sacado.dtmvtolt
          WHERE crapsab.rowid = rw_crapsab.rowid;
@@ -3862,14 +3881,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 02/12/2016 
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Realiza a validação dos arquivos de cobranca
 
-       Alteracoes: 
+       Alteracoes: 02/12/2016 - Ajuste para levantar exception (NOK) quando for encontrado registro de rejeição
+                                (Andrei - RKAM).
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -3935,7 +3955,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        
     END IF;
     
-    IF vr_des_reto <> 'OK' THEN
+    IF vr_des_reto <> 'OK'        OR 
+       pr_rec_rejeita.count() > 1 THEN
       
       RAISE vr_exc_erro; 
         
@@ -5001,7 +5022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     --Negativar Serasa e possui convenio serasa
     IF pr_rec_cobranca.cdprotes = 2 AND  
       pr_rec_header.flserasa    = 1   THEN  
-      pr_rec_cobranca.qtdiaprt := pr_tab_linhas('QTDIAPRT').numero;      
+      pr_rec_cobranca.qtdiaprt := pr_tab_linhas('QTDIAPRT').numero;
     END IF;
     
     pr_des_reto := 'OK';
@@ -5104,7 +5125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 		           27/05/2016 - Ajuste para considerar o caracter ":" ao chamar
 								a rotina de validação de caracteres para endereços
-								(Andrei).
+								(Andrei). 
                 
                26/10/2016 - Ajuste na validacao do nome do sacado para considerar 
                             o caracter ':' como valido.
