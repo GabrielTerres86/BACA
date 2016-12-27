@@ -161,7 +161,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                dtocorre crapret.dtocorre%TYPE,
                nrnosnum crapret.nrnosnum%TYPE,
                dsdoccop crapret.dsdoccop%TYPE,
-               nrremass crapret.nrremass%TYPE,
+               nrremass crapret.nrremret%TYPE,
                dtvencto crapret.dtvencto%TYPE);
   TYPE typ_tab_rejeitado IS TABLE OF typ_rec_rejeitado
     INDEX BY PLS_INTEGER;
