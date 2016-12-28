@@ -576,22 +576,37 @@ PROCEDURE verifica_conta_transferida.
                 .
             ELSE
                 DO:
+				   /* - Verifica se eh conta transferida */ 
 				   
-				   /* Verifica se eh conta transferida */ 
+				   /* - Mensagem recebida para Agencia Antiga e conta Antiga.
+					  - Neste caso ocorre DE-PARA do credito para coop NOVA, e a 
+					    centralizacao deve ocorrer na conta da coop. NOVA  */  
                    FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
                                       craptco.nrctaant = aux_nrdconta AND
                                       craptco.flgativo = TRUE         AND
                                       craptco.tpctatrf = 1
                                       NO-LOCK NO-ERROR.
              
-                   IF  NOT AVAIL craptco  THEN
-				       /* Verifica se eh conta transferida. 
-					      Mensagem recebida para Agencia Nova e conta Antiga */ 
-                       FIND craptco WHERE craptco.cdcooper = aux_cdcooper AND
-                                          craptco.nrctaant = aux_nrdconta AND
+                   IF  NOT AVAIL craptco  THEN DO:
+				       /* - Mensagem recebida para Agencia Antiga e conta Nova.
+						  - Neste caso ocorre DE-PARA do credito para coop. NOVA, e a 
+							centralizacao deve ocorrer na conta da coop. NOVA */ 
+					   FIND craptco WHERE craptco.cdcopant = aux_cdcooper AND
+                                          craptco.nrdconta = aux_nrdconta AND
                                           craptco.flgativo = TRUE         AND
                                           craptco.tpctatrf = 1
                                           NO-LOCK NO-ERROR. 
+
+		               IF  NOT AVAIL craptco  THEN
+					       /* - Mensagem recebida para Agencia Nova e conta Antiga.
+							  - Neste caso ocorre DEVOLUCAO da mensagem na coop. NOVA, e a 
+							    centralizacao deve ocorrer na conta da coop. NOVA */ 
+					       FIND craptco WHERE craptco.cdcooper = aux_cdcooper AND
+                                              craptco.nrctaant = aux_nrdconta AND
+                                              craptco.flgativo = TRUE         AND
+                                              craptco.tpctatrf = 1
+                                              NO-LOCK NO-ERROR. 
+                   END.
 				   
 				   IF  AVAIL craptco THEN
                        DO:
@@ -601,7 +616,9 @@ PROCEDURE verifica_conta_transferida.
                            /* Verificar se a conta migrada VIACREDI >> ALTO VALE*/
                            ELSE IF craptco.cdcooper = 16 AND craptco.cdcopant = 1 THEN 
                                .
-                           ELSE
+                           ELSE IF craptco.cdcopant = 17 AND glb_dtmvtolt > 03/20/2017  THEN
+						       .
+						   ELSE
                                DO:
                                    FIND b-crapcop WHERE 
                                         b-crapcop.cdcooper = craptco.cdcooper
