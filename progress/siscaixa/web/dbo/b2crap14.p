@@ -43,7 +43,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 23/03/2016
+   Data    : Marco/2001                      Ultima atualizacao: 24/08/2016
 
    Dados referentes ao programa:
 
@@ -314,6 +314,9 @@
                             titulos na procedure identifica-titulo-coop para calcular
                             conforme a rotina do caixa online de estorno MOD11
                             (Lucas Ranghetti #421963,#410478 ).
+                            
+               24/08/2016 - #456682 Atualizacao do campo crapcbf.dscodbar para 
+                            dsfraude e inclusao do campo crapcbf.tpfraude (Carlos)
 ............................................................................ */
 
 /*---------------------------------------------------------------------*/
@@ -765,7 +768,9 @@ PROCEDURE retorna-valores-titulo-iptu.
               END. 
               
            /* Verificar se o codigo de barras eh fraudulento - (Andrino-RKAM) */
-           FIND crapcbf WHERE crapcbf.dscodbar = p-codigo-barras NO-LOCK NO-ERROR.
+           FIND crapcbf WHERE crapcbf.tpfraude = 1 AND 
+                              crapcbf.dsfraude = p-codigo-barras NO-LOCK NO-ERROR.
+
            IF avail crapcbf THEN
               DO:
 
@@ -2763,7 +2768,7 @@ PROCEDURE identifica-titulo-coop:
           aux-bloqueto2 = DECIMAL(SUBSTR(p-codbarras, 34, 9))  /* ALPES */
           aux-bloqueto3 = DECIMAL(SUBSTR(p-codbarras, 33, 10)) /* 10 dígitos */
           aux-bloqueto4 = DECIMAL(SUBSTR(p-codbarras, 37, 6)) /*6 dígitos CEB*/
-          aux-nrdconta  = INTEGER(SUBSTR(p-codbarras, 26, 8))  /* ALPES */
+          aux-nrdconta  = INTEGER(SUBSTR(p-codbarras, 26, 8))  /* ALPES */          
           p-insittit    = 4
           p-intitcop    = 0
           p-convenio    = 0
@@ -2775,14 +2780,14 @@ PROCEDURE identifica-titulo-coop:
    /* Validar digito geral do codigo de barras - titulos */ 
    RUN dbo/pcrap05.p(INPUT DEC(p-codbarras),
                     OUTPUT aux-retorno).    
-
+   
    IF  aux-retorno = NO  THEN 
        DO:
            ASSIGN i-cod-erro  = 8           
                   c-desc-erro = " ".
            RUN cria-erro (INPUT p-cooper,
-                                                INPUT p-cod-agencia,
-                                                INPUT p-nro-caixa,
+                          INPUT p-cod-agencia,
+                          INPUT p-nro-caixa,
                           INPUT i-cod-erro,
                           INPUT c-desc-erro,
                           INPUT YES).
