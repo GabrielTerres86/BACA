@@ -4,8 +4,8 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 28/11/2016
-    
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 13/12/2016
+     
     Dados referente ao programa:
     
     Frequencia : Diario (Batch). 
@@ -56,7 +56,7 @@
                               de debitos sicredi e criado novo relatorio
                               crrl674 (Lucas R.)
 							  
-				 29/04/2014 - Ajuste migracao Oracle (Elton).
+				         29/04/2014 - Ajuste migracao Oracle (Elton).
                  
                  21/10/2014 - Ajustado crrl674 e geracao do registro "B"
                               (Lucas R.)
@@ -132,9 +132,12 @@
 				                 
                  21/11/2016 - Efetuar replace de '-' por nada no nrdocmto da crapndb (Lucas Ranghetti #560620)
 
-				 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
+				         28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
                               colocando zeros a esquerda (Projeto 338 - Lucas Lunelli)
-
+                              
+                 13/12/2016 - Ajustes referente a incorporaçao da Transulcred pela Transpocred. 
+                              Os agendamentos recebidos antes da incorporaçao com vencimento após 
+                              a incorporaçao serao gravados no arquivo da cooperativa antiga (Elton).             
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -278,6 +281,10 @@ DEF VAR aux_nrdgrupo LIKE crapcns.nrdgrupo                            NO-UNDO.
 
 DEF VAR aux_conteudo AS CHAR                                          NO-UNDO.
 DEF VAR h-b1wgen0011 AS HANDLE                                        NO-UNDO.
+
+
+DEF BUFFER crablau FOR craplau.
+
 
 DEF TEMP-TABLE tt-arquiv NO-UNDO
     FIELD cdcooper  LIKE crapcop.cdcooper
@@ -506,6 +513,7 @@ IF  glb_cdcritic > 0 THEN
     RETURN.
 
 ASSIGN  glb_dtmvtolt = crapdat.dtmvtolt
+        glb_dtmvtoan = crapdat.dtmvtoan 
         glb_dtmvtopr = crapdat.dtmvtopr
         aux_dtproxim = glb_dtmvtopr + 1.
 
@@ -955,9 +963,11 @@ FOR EACH crapcop NO-LOCK.
                 NEXT.
             END.
 
+
         /* retornar o valor do documento formatado corretamente */
         IF  craplcm.cdhistor = 1019 THEN
             DO:
+                            
                 FIND crapscn WHERE crapscn.cdempres = aux_emprelau 
                                    NO-LOCK NO-ERROR NO-WAIT.
 
@@ -988,6 +998,33 @@ FOR EACH crapcop NO-LOCK.
 
                     END.
                
+                               
+                /***** Se for lançamento de conta incorporada aonde o agendamento ocorreu antes 
+                da incorporaçao, ou seja, na cooperativa anterior, nao será gerado o retorno na 
+                cooperativa em que ocorreu o débito. O retorno ocorrerá através da cooperativa 
+                que recebeu o agendamento. *****/
+                FIND FIRST craptco WHERE craptco.cdcooper = crapcop.cdcooper AND
+                                         craptco.nrdconta = craplcm.nrdconta AND
+                                         craptco.flgativo = TRUE 
+                                         NO-LOCK NO-ERROR.
+
+                IF AVAIL craptco THEN
+                   DO:
+                      IF  craplau.cdcritic = 951 THEN
+                          DO:
+                              CREATE tt-rel674-lancamentos.
+                              ASSIGN tt-rel674-lancamentos.cdcooper = craplcm.cdcooper
+                                     tt-rel674-lancamentos.cdagenci = INT(aux_cdagenci)
+                                     tt-rel674-lancamentos.nrdconta = craplcm.nrdconta
+                                     tt-rel674-lancamentos.nrctacns = aux_nrctacns
+                                     tt-rel674-lancamentos.dsnomcnv = crapscn.dsnomcnv + " - Conta Migrada"
+                                     tt-rel674-lancamentos.nrdocmto = craplcm.nrdocmto
+                                     tt-rel674-lancamentos.vllanmto = craplcm.vllanmto.
+                              NEXT.
+                           END.   
+                   END. 
+
+                                             
                 /* Se for o convenio 045 - 14 BRT CELULAR - FEBRABAN, devemos completar com um hifen
                    para completar 12 posicoes ex:(40151016407-) chamado 453337 */
                 IF  crapscn.cdempres = "045" THEN
@@ -1186,8 +1223,295 @@ FOR EACH crapcop NO-LOCK.
             END.
         ELSE
             DO:
+                           
+                
                 FIND FIRST crapscn WHERE crapscn.cdempres = TRIM(SUBSTR(aux_dslinreg,148,10))
                                          NO-LOCK NO-ERROR.
+
+                IF  NOT AVAIL crapscn THEN
+                    DO:
+                        glb_cdcritic = 563.
+                        RUN fontes/critic.p.
+                        UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") +
+                        " - " + STRING(TIME,"HH:MM:SS") + " - "                 + 
+                        glb_cdprogra + "' --> '" + glb_dscritic                 + 
+                        " Cooperativa: " + STRING(crapndb.cdcooper)             +
+                        " Conta: " + STRING(crapndb.nrdconta,"zzzz,zzz,9")      +
+                        " Historico: " + STRING(crapndb.cdhistor)               +
+                        " Documento: " + STRING(SUBSTR(aux_dslinreg,2,25))      +
+                        " Convenio: " + TRIM(SUBSTR(aux_dslinreg,148,10))       +
+                        " >> log/prccon.log").
+
+                        aux_dsnomcnv = "".
+                    END.
+                ELSE
+                    aux_dsnomcnv = crapscn.dsnomcnv.
+
+
+                /***** Se for lançamento de conta incorporada aonde o agendamento ocorreu antes 
+                da incorporaçao, ou seja, na cooperativa anterior, nao será gerado o retorno na 
+                cooperativa em que ocorreu  a crítica. O retorno ocorrerá através da cooperativa 
+                que recebeu o agendamento. *****/
+                FIND FIRST craptco WHERE craptco.cdcooper = crapcop.cdcooper AND
+                                         craptco.nrdconta = crapndb.nrdconta AND
+                                         craptco.flgativo = TRUE 
+                                         NO-LOCK NO-ERROR.
+
+                IF AVAIL craptco THEN
+                   DO:       
+                        /*** Nao sera utilizado o cdcritic 951 da craplau para esse caso porque ele é 
+                             substituido quando gravado no crapndb da cooperativa nova. ****/            
+                        FIND FIRST craplau WHERE  craplau.cdcooper = craptco.cdcopant                 AND      
+                                                  craplau.nrdconta = craptco.nrctaant                 AND 
+                                                  craplau.cdhistor = crapndb.cdhistor                 AND
+                                                  craplau.nrdocmto = DECI(SUBSTR(aux_dslinreg,2,25))  AND
+                                                  craplau.dtmvtopg  > glb_dtmvtoan                    AND
+                                                  craplau.dtmvtopg <= glb_dtmvtolt                    AND
+                                                  craplau.insitlau = 1 NO-LOCK NO-ERROR.
+                   
+                        IF  AVAIL craplau THEN
+                            DO:
+                                 CREATE tt-rel674-lancamentos.
+                                 ASSIGN tt-rel674-lancamentos.cdcooper = crapndb.cdcooper
+                                        tt-rel674-lancamentos.cdagenci = INT(SUBSTR(aux_dslinreg,146,2))
+                                        tt-rel674-lancamentos.nrdconta = crapndb.nrdconta
+                                        tt-rel674-lancamentos.nrctacns = DEC(SUBSTR(aux_dslinreg,31,7))
+                                        tt-rel674-lancamentos.dsnomcnv = aux_dsnomcnv
+                                        tt-rel674-lancamentos.vllanmto = (DEC(SUBSTR(aux_dslinreg,53,15)) / 100).
+                                        tt-rel674-lancamentos.dscritic = "Conta Migrada".
+                                 NEXT.
+                            END.
+                   END. 
+
+
+                CREATE tt-rel674-lancamentos.
+                ASSIGN tt-rel674-lancamentos.cdcooper = crapndb.cdcooper
+                       tt-rel674-lancamentos.cdagenci = INT(SUBSTR(aux_dslinreg,146,2))
+                       tt-rel674-lancamentos.nrdconta = crapndb.nrdconta
+                       tt-rel674-lancamentos.nrctacns = DEC(SUBSTR(aux_dslinreg,31,7))
+                       tt-rel674-lancamentos.dsnomcnv = aux_dsnomcnv
+                       tt-rel674-lancamentos.vllanmto = (DEC(SUBSTR(aux_dslinreg,53,15)) / 100).
+                        
+                IF  SUBSTR(aux_dslinreg,68,2) = "15" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "15 - conta corrente invalida".
+                                                         
+                IF  SUBSTR(aux_dslinreg,68,2) = "30" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "30" +
+                           " - Sem contrato de debito automatico".
+                
+                IF  SUBSTR(aux_dslinreg,68,2) = "01" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "01 - Insuficiencia de fundos".
+                
+                IF  SUBSTR(aux_dslinreg,68,2) = "97" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "97 - Cacelamento - Nao encontrato".
+
+                IF  SUBSTR(aux_dslinreg,68,2) = "99" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "99 - Cancelado conforme solicitacao".
+
+                IF  SUBSTR(aux_dslinreg,68,2) = "04" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "04 - Outras restricoes".
+                    
+                IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
+                    ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
+
+                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(REPLACE(SUBSTR(aux_dslinreg,2,25),"-","")) NO-ERROR.
+            END.
+
+        PUT STREAM str_2 aux_dslinreg FORMAT "x(160)" SKIP.
+        
+        ASSIGN aux_flgvazio = FALSE
+               aux_nrseqndb = aux_nrseqndb + 1
+               aux_vllanmto = DECIMAL(SUBSTRING(crapndb.dstexarq,53,15))
+               aux_vllanmto = aux_vllanmto / 100
+               aux_vlfatndb = aux_vlfatndb + aux_vllanmto.
+
+    END. /*fim do crapndb*/
+
+
+
+    /**** Leitura dos agendamentos importados para as contas incorporadas antes da data da incorporaçao 
+          com data de débito para depois da incorporaçao, aonde o lançamento ocorre na cooperativa nova 
+          e o retorno deverá ser feito na cooperativa anterior. O insitlau lido será 1 porque na cooperativa 
+          anterior o agendamento ficará pendente e nao será atualizado por nao haver processo.  ****/
+    FOR EACH craplau WHERE  craplau.cdcooper = crapcop.cdcooper AND     
+                            craplau.dtmvtopg >  glb_dtmvtoan    AND  
+		                  	    craplau.dtmvtopg <= glb_dtmvtolt    AND
+			                      craplau.insitlau = 1		            AND
+                            craplau.cdhistor = 1019             NO-LOCK:  
+             
+
+        FIND FIRST craptco WHERE craptco.cdcopant = craplau.cdcooper AND
+                                 craptco.nrctaant = craplau.nrdconta AND
+              	                 craptco.flgativo = TRUE 
+				                         NO-LOCK NO-ERROR.
+
+        IF  NOT AVAIL craptco THEN          
+            NEXT.
+           
+        /*** Leitura principal parte da cooperativa antiga, se nao tiver o 
+             agendamento na cooperativa atual ocorre NEXT ***/
+        FIND crablau WHERE crablau.cdcooper = craptco.cdcooper  AND    
+                           crablau.nrdconta = craptco.nrdconta  AND
+                           crablau.dtdebito = glb_dtmvtolt      AND
+                           crablau.dtmvtolt = craplau.dtmvtolt  AND  
+                           crablau.nrdocmto = craplau.nrdocmto  AND
+                           crablau.cdhistor = craplau.cdhistor 
+                           NO-LOCK NO-ERROR.
+
+        IF  NOT AVAIL crablau THEN
+            NEXT.
+
+
+        FIND FIRST craplcm WHERE craplcm.cdcooper = craptco.cdcooper AND
+                                 craplcm.dtmvtolt = glb_dtmvtolt     AND
+                                 craplcm.cdhistor = craplau.cdhistor AND
+                                 craplcm.nrdconta = craptco.nrdconta AND
+                                 craplcm.nrdocmto = craplau.nrdocmto 
+                                 NO-LOCK NO-ERROR.  
+        IF AVAIL craplcm THEN
+    	     DO:
+              ASSIGN aux_dtmvtolt_lcm = STRING(YEAR(craplcm.dtmvtolt),"9999") +
+                                        STRING(MONTH(craplcm.dtmvtolt),"99")  +
+                                        STRING(DAY(craplcm.dtmvtolt),"99").
+                                 
+              FIND FIRST crapass WHERE crapass.cdcooper = craptco.cdcopant AND
+                                       crapass.nrdconta = craptco.nrctaant 
+                                       NO-LOCK NO-ERROR NO-WAIT.
+                                            
+              IF  AVAIL crapass THEN
+                  ASSIGN aux_cdagenci = STRING(crapass.cdagenci,"999")
+                         aux_nrctacns = crapass.nrctacns.
+              ELSE
+                  ASSIGN aux_cdagenci = "000"
+                               aux_nrctacns = 0.
+
+
+              IF  craplau.cdseqtel <> "" THEN
+                  ASSIGN aux_cdseqtel = SUBSTR(craplau.cdseqtel,1,60).
+              ELSE
+                  ASSIGN aux_cdseqtel = FILL(" ",60).
+              
+              IF  craplau.cdempres <> "" THEN
+                  ASSIGN aux_emprelau = craplau.cdempres.
+              ELSE
+                  ASSIGN aux_emprelau = "0".
+
+                            
+              FIND crapscn WHERE crapscn.cdempres = aux_emprelau 
+                                 NO-LOCK NO-ERROR NO-WAIT.
+
+              IF  NOT AVAIL crapscn THEN
+                  DO: /* Se nao existir empresa cadastrada para o lacanemto nao permite
+                         seguir normalmente o programa, gera critica no log e no relatorio */
+                      glb_cdcritic = 563.
+                      RUN fontes/critic.p.
+                      UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999")              +
+                      " - " + STRING(TIME,"HH:MM:SS") + " - "   + glb_cdprogra + "' --> '" +
+                      glb_dscritic + 
+                      " Cooperativa: " + STRING(craplau.cdcooper)        +
+                      " Conta: " + STRING(craplau.nrdconta,"zzzz,zzz,9") +
+                      " Historico: " + STRING(craplau.cdhistor)          +
+                      " Documento: " + STRING(craplau.nrdocmto)          +
+                      " >> log/prccon.log").
+
+                      CREATE tt-rel674-lancamentos.
+                      ASSIGN tt-rel674-lancamentos.cdcooper = craplau.cdcooper 
+                             tt-rel674-lancamentos.cdagenci = INT(aux_cdagenci)
+                             tt-rel674-lancamentos.nrdconta = craplau.nrdconta 
+                             tt-rel674-lancamentos.nrctacns = aux_nrctacns
+                             tt-rel674-lancamentos.dsnomcnv = ""
+                             tt-rel674-lancamentos.nrdocmto = craplau.nrdocmto 
+                             tt-rel674-lancamentos.vllanmto = craplau.vllanaut 
+                             tt-rel674-lancamentos.dscritic = glb_dscritic.
+                      NEXT.
+                  END.
+
+
+
+             /* Se for o convenio 045 - 14 BRT CELULAR - FEBRABAN, devemos completar com um hifen
+                 para completar 12 posicoes ex:(40151016407-) chamado 453337 */
+              IF  crapscn.cdempres = "045" THEN
+                  DO:
+                      IF  LENGTH(STRING(craplcm.nrdocmto)) = 11 THEN
+                          aux_cdrefere = STRING(craplcm.nrdocmto) + "-" + FILL(" ",13).
+                      ELSE 
+                          RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
+                                                       INPUT 25,
+                                                       INPUT crapscn.tppreenc,
+                                                       INPUT craplcm.nrdocmto,
+                                                      OUTPUT aux_cdrefere).
+                  END.
+              ELSE 
+              RUN retorna_valor_formatado (INPUT crapscn.qtdigito,
+                                           INPUT 25,
+                                           INPUT crapscn.tppreenc,
+                                           INPUT craplcm.nrdocmto,
+                                          OUTPUT aux_cdrefere).
+
+              /* formatar codigo da empresa */
+              RUN retorna_valor_formatado (INPUT 10, /* max. de digitos na variavel */                                 
+                                           INPUT 10, /* quantidade max characteres a completar */ 
+                                           INPUT 0,                        
+                                           INPUT craplau.cdempres,         
+                                          OUTPUT aux_cdempres).           
+
+
+             /* Registro F referente aos consorcios SICREDI, lista antes de todos */
+              ASSIGN aux_dslinreg = 
+                          "F" +
+                          SUBSTRING(aux_cdrefere,1,25)                     +
+                          STRING(crapcop.cdagesic,"9999")                  +
+                          STRING(aux_nrctacns,"999999")                    +
+                          FILL(" ", 8)                                     +
+                          STRING(aux_dtmvtolt_lcm, "x(8)")                 +
+                          STRING(craplcm.vllanmto * 100,"999999999999999") +
+                          "00"                                             +
+                          aux_cdseqtel                                     +
+                          FILL(" ", 16)                                    +
+                          SUBSTRING(aux_cdagenci,2,2)                      +
+                          aux_cdempres                                     +
+                          "0".
+
+              PUT STREAM str_2 aux_dslinreg FORMAT "x(160)" SKIP.
+
+
+              CREATE tt-rel674-lancamentos.
+              ASSIGN tt-rel674-lancamentos.cdcooper = craplcm.cdcooper
+                     tt-rel674-lancamentos.cdagenci = INT(aux_cdagenci)
+                     tt-rel674-lancamentos.nrdconta = craplcm.nrdconta
+                     tt-rel674-lancamentos.nrctacns = aux_nrctacns
+                     tt-rel674-lancamentos.dsnomcnv = crapscn.dsnomcnv + " - Conta Migrada"
+                     tt-rel674-lancamentos.nrdocmto = craplcm.nrdocmto
+                     tt-rel674-lancamentos.vllanmto = craplcm.vllanmto.
+           
+
+              /* Somatoria dos registros e valor de lancamento 
+                 Nao deve contabilizar se ocorreu critica */
+              ASSIGN aux_nrseqlcm = aux_nrseqlcm + 1
+                     aux_vlfatlcm = aux_vlfatlcm + craplcm.vllanmto
+                     aux_flgvazio = FALSE.      
+
+           END. /*** Fim IF craplcm ***/
+      ELSE
+           DO:   /*** Le rejeitados da cooperativa atual para ser lançado no arquivo da anterior ***/
+                FIND FIRST crapndb WHERE crapndb.cdcooper = craptco.cdcooper and
+                                         crapndb.nrdconta = craptco.nrdconta and
+                                         crapndb.cdhistor = 1019		         and
+                                         crapndb.dtmvtolt = glb_dtmvtolt 
+                                         NO-LOCK NO-ERROR.
+
+                IF   DECI(SUBSTR(crapndb.dstexarq,2,25)) <> craplau.nrdocmto THEN 
+                     NEXT.
+
+
+                /*** Alterado agencia do registro da leitura do crapndb dentro do arquivo 
+                     para que nao fosse necessario fazer tratamento na DEBSIC ***/
+                ASSIGN aux_dslinreg = STRING(SUBSTR(crapndb.dstexarq,1,26),"x(26)") + 
+                                      STRING(crapcop.cdagesic,"9999") + 
+                                      STRING(SUBSTR(crapndb.dstexarq,31,130),"x(130)").
+
+                FIND FIRST crapscn WHERE crapscn.cdempres = TRIM(SUBSTR(aux_dslinreg,148,10))
+                                          NO-LOCK NO-ERROR.
 
                 IF  NOT AVAIL crapscn THEN
                     DO:
@@ -1238,18 +1562,21 @@ FOR EACH crapcop NO-LOCK.
                 IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
                     ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
 
-                ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(REPLACE(SUBSTR(aux_dslinreg,2,25),"-","")) NO-ERROR.
-            END.
+                ASSIGN tt-rel674-lancamentos.dscritic = tt-rel674-lancamentos.dscritic + " - Conta migrada"
+                       tt-rel674-lancamentos.nrdocmto = DECI(SUBSTR(aux_dslinreg,2,25)) NO-ERROR.
+      
 
-        PUT STREAM str_2 aux_dslinreg FORMAT "x(160)" SKIP.
-        
-        ASSIGN aux_flgvazio = FALSE
-               aux_nrseqndb = aux_nrseqndb + 1
-               aux_vllanmto = DECIMAL(SUBSTRING(crapndb.dstexarq,53,15))
-               aux_vllanmto = aux_vllanmto / 100
-               aux_vlfatndb = aux_vlfatndb + aux_vllanmto.
+                PUT STREAM str_2 aux_dslinreg FORMAT "x(160)" SKIP.
+                
+                ASSIGN aux_flgvazio = FALSE
+                       aux_nrseqndb = aux_nrseqndb + 1
+                       aux_vllanmto = DECIMAL(SUBSTRING(crapndb.dstexarq,53,15))
+                       aux_vllanmto = aux_vllanmto / 100
+                       aux_vlfatndb = aux_vlfatndb + aux_vllanmto.
+          
+           END. /** Fim crapndb***/
+    END. /*** Fim craplau ***/
 
-    END. /*fim do crapndb*/
 
     /* Para cada convenio */
     /* Convenios diferente de debito automatico */
@@ -2041,7 +2368,7 @@ PROCEDURE exibe-rel-674:
                          "LANCAMENTOS DE DEBITOS - EFETIVADOS" SKIP(1).
 
     FOR EACH tt-rel674-lancamentos WHERE 
-             tt-rel674-lancamentos.dscritic = "" NO-LOCK
+             tt-rel674-lancamentos.dscritic = ""  NO-LOCK
                    BY tt-rel674-lancamentos.cdagenci
                    BY tt-rel674-lancamentos.nrdconta
                    BY tt-rel674-lancamentos.nrdocmto:
@@ -2079,7 +2406,7 @@ PROCEDURE exibe-rel-674:
                          "LANCAMENTOS DE DEBITOS - CRITICADOS" SKIP(1).
 
     FOR EACH tt-rel674-lancamentos WHERE 
-             tt-rel674-lancamentos.dscritic <> "" NO-LOCK
+             tt-rel674-lancamentos.dscritic <> ""  NO-LOCK
                    BY tt-rel674-lancamentos.cdagenci
                    BY tt-rel674-lancamentos.nrdconta
                    BY tt-rel674-lancamentos.nrdocmto:
