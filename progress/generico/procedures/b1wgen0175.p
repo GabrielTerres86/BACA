@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 02/12/2016
+   Data    : Setembro/2013                      Ultima atualizacao: 29/12/2016
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -89,6 +89,10 @@
    02/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
    02/12/2016 - Validar alinea zerada na marcacao do cheque (Lucas Ranghetti/Elton)
+
+   29/12/2016 - Ajustes na procedure busca-devolucoes-cheque para considerar
+                conta migrada e buscar de forma correta no PA correto
+				(Tiago/Elton SD579158)
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -893,10 +897,10 @@ PROCEDURE busca-devolucoes-cheque:
                                     AND  crapope.cdoperad = crapdev.cdoperad
                     NO-LOCK BY  crapdev.nrdconta.                
                     
-                    FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper
-                                         AND crapass.nrdconta = crapdev.nrdctabb
-                                         AND crapass.cdagenci = par_cdagenci
-                                         NO-LOCK NO-ERROR.
+					FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper
+							             AND crapass.nrdconta = crapdev.nrdctabb
+										 AND crapass.cdagenci = par_cdagenci
+										 NO-LOCK NO-ERROR.
                                          
                     IF  NOT AVAILABLE crapass THEN
                         NEXT.    
@@ -1049,11 +1053,48 @@ PROCEDURE busca-devolucoes-cheque:
                     EACH crapope WHERE  crapope.cdcooper = par_cdcooper
                                    AND  crapope.cdoperad = crapdev.cdoperad
                     NO-LOCK BY  crapdev.nrdconta.
-             
-                    FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper
-                                         AND crapass.nrdconta = crapdev.nrdctabb
-                                         AND crapass.cdagenci = par_cdagenci
-                                         NO-LOCK NO-ERROR.
+
+					/*tratamento de incorporação*/
+					FIND crapcop WHERE crapcop.cdcooper = crapdev.cdcooper
+					               AND crapcop.cdagectl = crapdev.cdagechq
+								   NO-LOCK NO-ERROR.
+
+				    /*Se nao encontrou entao e de conta migrada*/
+					IF NOT AVAILABLE crapcop THEN
+					   DO:
+
+							FIND crapcop WHERE crapcop.cdagectl = crapdev.cdagechq NO-LOCK NO-ERROR.
+
+							IF AVAILABLE crapcop THEN
+							DO:
+								FIND craptco WHERE craptco.cdcopant = crapcop.cdcooper
+								               AND craptco.nrctaant = crapdev.nrdctabb
+											   NO-LOCK NO-ERROR.
+
+                                IF AVAILABLE craptco THEN
+								DO:
+
+									FIND FIRST crapass WHERE crapass.cdcooper = craptco.cdcooper
+														 AND crapass.nrdconta = craptco.nrdconta
+														 AND crapass.cdagenci = par_cdagenci
+														 NO-LOCK NO-ERROR.
+
+								END.
+								ELSE
+								  NEXT.
+							END.
+							ELSE
+							  NEXT.
+
+					   END.
+                    ELSE
+					   DO:
+							FIND FIRST crapass WHERE crapass.cdcooper = crapdev.cdcooper
+							                     AND crapass.nrdconta = crapdev.nrdctabb
+												 AND crapass.cdagenci = par_cdagenci
+												 NO-LOCK NO-ERROR.
+					   END.
+
                                          
                     IF  NOT AVAILABLE crapass THEN
                         NEXT.                
