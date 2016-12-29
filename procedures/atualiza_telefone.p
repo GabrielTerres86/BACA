@@ -1,11 +1,11 @@
 /* ..............................................................................
 
 Procedure: atualiza_telefone.p
-Objetivo : Atualizacao telefone no Auto Atendimento - Operacao 64
+Objetivo : Atualizacao telefone no Auto Atendimento - Operacao 65
 Autor    : Guilherme/SUPERO
 Data     : Novembro 2016
 
-Ultima alteração:
+Ultima alteração: 29/12/2016 - Ajustado codigo da operacao apos merge com PRINCIPAL (Diego).
 
 ............................................................................... */
 
@@ -115,7 +115,7 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
                               STRING(aux_hrtransa)  + ", " +
                               aux_dsdtoday          + ", " +
                               STRING(aux_hrtransa)  + ", " +
-                              "64"                  + ", " +
+                              "65"                  + ", " +
                               STRING(glb_nrcartao)  + ", " +
                               "0"                   + ", " +
                               "0)".
@@ -180,7 +180,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
 
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "64".
+    xText:NODE-VALUE = "65".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
@@ -360,7 +360,7 @@ comando:CommandText = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                                   "NRDOCMTO = " + STRING(aux_hrtransa)  + " AND " +
                                   "DTTRANSA = " + aux_dsdtoday          + " AND " +
                                   "HRTRANSA = " + STRING(aux_hrtransa)  + " AND " +
-                                  "TPDTRANS = 64 "                      + " AND " +
+                                  "TPDTRANS = 65 "                      + " AND " +
                                   "NRCARTAO = " + STRING(glb_nrcartao)  + " AND " +
                                   "VLLANMTO = 0 "                       + " AND " +
                                   "CDSITATU = 0".

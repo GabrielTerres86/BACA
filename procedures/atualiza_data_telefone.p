@@ -1,11 +1,11 @@
 /* ..............................................................................
 
 Procedure: atualiza_data_telefone.p
-Objetivo : Atualiza a data de Atualizacao do telefone no Auto Atendimento - Operacao 66
+Objetivo : Atualiza a data de Atualizacao do telefone no Auto Atendimento - Operacao 67
 Autor    : Guilherme/SUPERO
 Data     : Novembro 2016
 
-Ultima alteração: 
+Ultima alteração: 29/12/2016 - Ajustado codigo da operacao, apos merge com PRINCIPAL (Diego).
 
 ............................................................................... */
 
@@ -112,7 +112,7 @@ comando:CommandText = "INSERT INTO CRAPLTL ( " +
                               STRING(aux_hrtransa)  + ", " +
                               aux_dsdtoday          + ", " +
                               STRING(aux_hrtransa)  + ", " +
-                              "64"                  + ", " +
+                              "65"                  + ", " +
                               STRING(glb_nrcartao)  + ", " +
                               "0"                   + ", " +
                               "0)".
@@ -177,7 +177,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
 
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "66".
+    xText:NODE-VALUE = "67".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
@@ -330,7 +330,7 @@ comando:CommandText = "UPDATE CRAPLTL SET CDSITATU = 1 " +
                                   "NRDOCMTO = " + STRING(aux_hrtransa)  + " AND " +
                                   "DTTRANSA = " + aux_dsdtoday          + " AND " +
                                   "HRTRANSA = " + STRING(aux_hrtransa)  + " AND " +
-                                  "TPDTRANS = 64 "                      + " AND " +
+                                  "TPDTRANS = 65 "                      + " AND " +
                                   "NRCARTAO = " + STRING(glb_nrcartao)  + " AND " +
                                   "VLLANMTO = 0 "                       + " AND " +
                                   "CDSITATU = 0".

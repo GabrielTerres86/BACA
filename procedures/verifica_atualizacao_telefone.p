@@ -1,12 +1,12 @@
 /* ..............................................................................
 
 Procedure: verifica_atualizacao_telefone.p
-Objetivo : Verificar a necessidade do cooperado atualizar telefone - Operacao 65
+Objetivo : Verificar a necessidade do cooperado atualizar telefone - Operacao 66
 Autor    : Guilherme/SUPERO
 Data     : Novembro 2016
 
 
-Ultima alteração:
+Ultima alteração: 29/12/2016 - Ajustado codigo da operacao apos merge com PRINCIPAL (Diego).
 
 ............................................................................... */
 
@@ -68,7 +68,7 @@ DO:
     xRoot:APPEND-CHILD(xField).
 
     xDoc:CREATE-NODE(xText,"","TEXT").
-    xText:NODE-VALUE = "65".
+    xText:NODE-VALUE = "66".
     xField:APPEND-CHILD(xText).
 
     /* ---------- */
