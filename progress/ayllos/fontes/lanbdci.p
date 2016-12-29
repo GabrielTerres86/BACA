@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Marco/2003.                       Ultima atualizacao: 20/06/2016
+   Data    : Marco/2003.                       Ultima atualizacao: 29/12/2016
 
    Dados referentes ao programa:
 
@@ -120,6 +120,18 @@
                20/06/2016 - Adicionado validacao para nao permitir o recebimento 
                             de cheques de bancos que nao participam da COMPE
                             (Douglas - Chamado 417655)
+                            
+               27/07/2016 - Alterado validacao para nao permitir o recebimento 
+                            de cheques de bancos que nao participam da COMPE
+                            Utilizar apenas BANCO e FLAG ativo
+                            (Douglas - Chamado 417655)
+
+			   19/12/2016 - Tratamento para Migracao Transulcred - bloquear 
+                            liberacao de cheque (Daniel).
+
+               29/12/2016 - Ajuste para utilizar leitura com find ao inves
+						    de can-find
+							(Adriano - SD 585728).
 ............................................................................. */
 
 { includes/var_online.i }
@@ -365,6 +377,18 @@ DO WHILE TRUE:
                         NEXT-PROMPT tel_dtlibera WITH FRAME f_lanbdc.
                         NEXT.
                     END.
+
+			   /*  Tratamento especifico para Incorporacao Transulcred para Transpocred */
+               IF   glb_cdcooper = 17          AND
+                    tel_dtlibera >= 11/25/2016 AND
+                    tel_dtlibera <= 12/30/2016 THEN
+                    DO:
+                        MESSAGE "Data de Liberacao Errado. Data Reservada para Incorporacao.".
+                        NEXT-PROMPT tel_dtlibera WITH FRAME f_lanbdc.
+                        NEXT.
+                    END. 	
+
+
                     
                IF   tel_dtlibera >= (glb_dtmvtolt + tab_qtdiamax)   THEN
                     DO:
@@ -675,17 +699,14 @@ DO WHILE TRUE:
 
                      /* Buscar os dados da agencia do cheque */
                      FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(tel_dsdocmc7,2,3))
-                                          AND crapagb.cdageban = INT(SUBSTRING(tel_dsdocmc7,5,4))
+                                          AND crapagb.cdsitagb = "S"
                                         NO-LOCK NO-ERROR.
-                     IF AVAILABLE crapagb THEN
+                     IF NOT AVAILABLE crapagb THEN
                      DO:
-                        /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
-                           por isso rejeitamos o cheque */
-                        IF crapagb.cdsitagb = "N" THEN
-                        DO:
-                            ASSIGN glb_cdcritic = 956.
-                            NEXT.
-                        END.
+                        /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
+                            por isso rejeitamos o cheque */
+                        ASSIGN glb_cdcritic = 956.
+                        NEXT.
                      END.
 
                      RUN mostra_dados.
@@ -762,17 +783,14 @@ DO WHILE TRUE:
 
                         /* Buscar os dados da agencia do cheque */
                         FIND FIRST crapagb WHERE crapagb.cddbanco = INT(SUBSTRING(tel_dsdocmc7,2,3))
-                                             AND crapagb.cdageban = INT(SUBSTRING(tel_dsdocmc7,5,4))
+                                             AND crapagb.cdsitagb = "S"
                                            NO-LOCK NO-ERROR.
-                        IF AVAILABLE crapagb THEN
+                        IF NOT AVAILABLE crapagb THEN
                         DO:
-                           /* Se a situacao do agencia  eh "N" ela nao participa da COMPE
-                              por isso rejeitamos o cheque */
-                           IF crapagb.cdsitagb = "N" THEN
-                           DO:
-                               ASSIGN glb_cdcritic = 956.
-                               NEXT.
-                        END.
+                           /* Se nao existir agencia com a flag ativa igual a "S" ela nao participa da COMPE
+                               por isso rejeitamos o cheque */
+                           ASSIGN glb_cdcritic = 956.
+                           NEXT.
                         END.
 
                         RUN mostra_dados.
@@ -838,7 +856,7 @@ DO WHILE TRUE:
                      NEXT.
                  END.
 
-            IF   CAN-FIND(crapcdb WHERE crapcdb.cdcooper = glb_cdcooper   AND 
+		    FIND crapcdb WHERE crapcdb.cdcooper = glb_cdcooper   AND  
                                         crapcdb.cdagenci = tel_cdagenci   AND
                                         crapcdb.cdbccxlt = tel_cdbccxlt   AND
                                         crapcdb.cdcmpchq = tel_cdcmpchq   AND
@@ -847,7 +865,10 @@ DO WHILE TRUE:
                                         crapcdb.nrctachq = tel_nrctachq   AND
                                         crapcdb.nrcheque = tel_nrcheque   AND
                                         crapcdb.dtdevolu = ?              AND
-                                        crapcdb.insitchq = 0)  THEN
+                               crapcdb.insitchq = 0
+							   NO-LOCK NO-ERROR.
+
+            IF AVAIL crapcdb THEN
                  DO:
                      /* cheque para desconto */
                      MESSAGE "811 - cheque para desconto no bordero " + 
