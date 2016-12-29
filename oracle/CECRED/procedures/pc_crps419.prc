@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps419 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro/Diego
-     Data    : Abril/2006                     Ultima atualizacao: 04/02/2016
+     Data    : Abril/2006                     Ultima atualizacao: 13/12/2016
 
      Dados referentes ao programa:
 
@@ -81,6 +81,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps419 (pr_cdcooper IN crapcop.cdcooper%T
                  
                  04/02/2016 - Fechar o cursor cr_craplau que nao era fechado
                               (Douglas - Chamado 398079)
+                              
+                 13/12/2016 - Ajuste tratamento conta migrada para casos onde ainda
+                              nao ocorreu a migracao (ex: Transulcred).
+                              (Chamado 575434) - (Fabricio)
+                              
   ............................................................................ */
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
@@ -142,7 +147,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps419 (pr_cdcooper IN crapcop.cdcooper%T
        ORDER BY ass.cdcooper, ass.nrdconta;
 
     /* Tratar contas migradas*/
-    /* Nao é necessario enviar informacoes se é uma conta migrada*/
+    /* Nao é necessario enviar informacoes se é uma conta migrada ativa */
     CURSOR cr_craptco (pr_cdcooper craptco.cdcopant%TYPE,
                        pr_nrdconta craptco.nrctaant%TYPE) IS
       SELECT craptco.nrdconta,
@@ -155,6 +160,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps419 (pr_cdcooper IN crapcop.cdcooper%T
        WHERE craptco.cdcopant = pr_cdcooper
          AND craptco.nrctaant = pr_nrdconta
          AND craptco.tpctatrf <> 3
+         AND craptco.flgativo = 1
          AND craptco.cdcooper = crapass.cdcooper
          AND craptco.nrdconta = crapass.nrdconta;
     rw_craptco cr_craptco%ROWTYPE;
@@ -612,7 +618,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps419 (pr_cdcooper IN crapcop.cdcooper%T
       -- se for a primeira vez que a conta aparece
       IF rw_crawcrd.nrseqass = 1 THEN -- simula First-of
 
-        /* Nao é necessario enviar informacoes se é uma conta migrada */
+        /* Nao é necessario enviar informacoes se é uma conta migrada ativa */
         OPEN cr_craptco (pr_cdcooper => pr_cdcooper,
                          pr_nrdconta => rw_crawcrd.nrdconta);
         FETCH cr_craptco INTO rw_craptco;

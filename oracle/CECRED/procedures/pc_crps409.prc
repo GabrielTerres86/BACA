@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps409 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Setembro/2004                   Ultima atualizacao: 11/06/2015
+     Data    : Setembro/2004                   Ultima atualizacao: 13/12/2016
 
      Dados referentes ao programa:
 
@@ -65,6 +65,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps409 (pr_cdcooper IN crapcop.cdcooper%T
                  20/01/2015 - Ajuste para completar a linha do arquivo com espaço
                               até o tamanho do layout(70pos) SD389759 (Odirlei-AMcom)
                               
+                 13/12/2016 - Ajuste tratamento conta migrada para casos onde ainda
+                              nao ocorreu a migracao (ex: Transulcred).
+                              (Chamado 575434) - (Fabricio)
+                              
   ............................................................................ */
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
 
@@ -114,7 +118,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps409 (pr_cdcooper IN crapcop.cdcooper%T
         FROM craptco
        WHERE craptco.cdcopant = pr_cdcooper
          AND craptco.nrctaant = pr_nrdconta
-         AND craptco.tpctatrf <> 3;
+         AND craptco.tpctatrf <> 3
+         AND craptco.flgativo = 1;
     rw_craptco cr_craptco%ROWTYPE;
 
     -- Verificar se conta foi migrada
@@ -399,7 +404,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps409 (pr_cdcooper IN crapcop.cdcooper%T
 
       vr_vlsddisp := rw_crapass.vllimcre;
 
-      /* Nao é necessario enviar informacoes se é uma conta migrada */
+      /* Nao é necessario enviar informacoes se é uma conta migrada ativa */
       OPEN cr_craptco (pr_cdcooper => pr_cdcooper,
                        pr_nrdconta => rw_crapass.nrdconta);
       FETCH cr_craptco INTO rw_craptco;
@@ -537,4 +542,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps409 (pr_cdcooper IN crapcop.cdcooper%T
       ROLLBACK;
   END pc_crps409;
 /
-
