@@ -1621,6 +1621,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     --
     --               23/11/2016 - Tratamento na montagem do XML para alterar caracteres
     --                            nao permitidos no XML(ex. &). (Odirlei-AMcom) 
+    --               
+    --               22/12/2016 - Alteracao no relatorio de desconto de cheque.
+    --                            Projeto 300 (Lombardi)
+    --               
     -- .........................................................................*/
 
     ----------->>> CURSORES  <<<--------
@@ -1633,6 +1637,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND crapbdc.nrborder = pr_nrborder;
          
     rw_crapbdc cr_crapbdc%ROWTYPE;
+    
+    -- Linha de Desconto
+    CURSOR cr_crapldc (pr_cddlinha IN crapldc.cddlinha%TYPE) IS
+      SELECT cddlinha
+            ,dsdlinha
+        FROM crapldc
+       WHERE cdcooper = pr_cdcooper
+         AND tpdescto = 2
+         AND cddlinha = pr_cddlinha;
+    rw_crapldc cr_crapldc%ROWTYPE;
+
+    -- Cursor Cadastro de Aditivos Contratuais
+    CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
+                     ,pr_nrdconta IN craplim.nrdconta%TYPE) IS
+      SELECT lim.nrdconta
+            ,lim.qtrenova
+            ,lim.vllimite
+            ,NVL(ass.inpessoa,0) inpessoa
+            ,lim.nrctrlim
+            ,lim.cddlinha
+            ,lim.dtinivig
+            ,lim.qtdiavig
+       FROM craplim lim
+           ,crapass ass
+      WHERE lim.cdcooper = pr_cdcooper
+        AND lim.nrdconta = pr_nrdconta
+        AND lim.tpctrlim = 2 -- Desconto de Cheque             
+        AND lim.insitlim = 2 -- Ativo 
+        AND ass.cdcooper (+) = lim.cdcooper
+        AND ass.nrdconta (+) = lim.nrdconta;
+    rw_craplim cr_craplim%ROWTYPE;
 
     ----------->>> TEMPTABLE <<<--------
     vr_tab_dados_avais         DSCT0002.typ_tab_dados_avais;
@@ -1680,6 +1715,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_vlmedchq        NUMBER;
     vr_qtdiaprz        INTEGER;
 
+    
+    vr_lstarifa VARCHAR2(100);
+    vr_cdhistor craphis.cdhistor%TYPE;
+    vr_cdhisest craphis.cdhistor%TYPE;
+    vr_dtdivulg DATE;
+    vr_dtvigenc DATE;
+    vr_cdfvlcop crapfco.cdfvlcop%TYPE;
+    vr_vltarifa crapfco.vltarifa%TYPE;
+    vr_vltarbor crapfco.vltarifa%TYPE;
+    vr_vltarcus crapfco.vltarifa%TYPE;
+    vr_vltarctr crapfco.vltarifa%TYPE;
+    vr_cdbattar VARCHAR2(10);
+    vr_qtacobra INTEGER;
+    vr_fliseope INTEGER;
+    vr_txcetano NUMBER;
+    vr_txcetmes NUMBER;
+    
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
@@ -1820,6 +1872,117 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         vr_cdageqrc := rw_crapbdc.cdageori;
       END IF;
       
+      -- Busca Linha de Desconto
+      OPEN cr_crapldc (rw_crapbdc.cddlinha);
+      FETCH cr_crapldc INTO rw_crapldc;
+      IF cr_crapldc%NOTFOUND THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Linha de desconto não encontrada.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      -- Tarifas
+      OPEN cr_craplim(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_craplim INTO rw_craplim;
+      
+      IF cr_craplim%NOTFOUND THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Contrato de Limite de credito não encontrado.';
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE cr_craplim;
+      
+      -- Se não encontrou associado
+      IF rw_craplim.inpessoa = 0 THEN
+        vr_cdcritic:= 9; 
+        vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic)||
+                      gene0002.fn_mask(rw_craplim.nrdconta,'zzzz.zzz.9');
+        RAISE vr_exc_erro;
+      END IF;
+      
+      FOR ind IN 1..3 LOOP
+        -- Pessoa Fisica
+        IF rw_craplim.inpessoa = 1 THEN
+          IF ind = 1 THEN
+            vr_cdbattar := 'DSCCHQBOPF';
+          ELSIF ind = 2 THEN
+            vr_cdbattar := 'CUSTDCTOPF';
+          ELSIF ind = 3 THEN
+            vr_cdbattar := 'DSCCHQCTPF';
+          END IF;
+        ELSE -- Pessoa Juridica
+          IF ind = 1 THEN
+            vr_cdbattar := 'DSCCHQBOPJ';
+          ELSIF ind = 2 THEN
+            vr_cdbattar := 'CUSTDCTOPJ';
+          ELSIF ind = 3 THEN
+            vr_cdbattar := 'DSCCHQCTPJ';
+          END IF;
+        END IF;
+
+        -- Busca valor da tarifa
+        TARI0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdbattar => vr_cdbattar
+                                             ,pr_vllanmto => rw_craplim.vllimite
+                                             ,pr_cdprogra => 'DSCC0001'
+                                             ,pr_cdhistor => vr_cdhistor
+                                             ,pr_cdhisest => vr_cdhisest
+                                             ,pr_vltarifa => vr_vltarifa
+                                             ,pr_dtdivulg => vr_dtdivulg
+                                             ,pr_dtvigenc => vr_dtvigenc
+                                             ,pr_cdfvlcop => vr_cdfvlcop
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic
+                                             ,pr_tab_erro => vr_tab_erro);
+                                                            
+        -- Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Se possui erro no vetor
+          IF vr_tab_erro.Count() > 0 THEN
+            vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+            vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
+          END IF;
+          RAISE vr_exc_erro;
+        END IF;
+        
+        IF ind = 1 THEN
+          vr_vltarbor := vr_vltarifa;
+        ELSIF ind = 2 THEN
+          vr_vltarcus := vr_vltarifa;
+        ELSIF ind = 3 THEN
+          vr_vltarctr := vr_vltarifa;
+        END IF;
+        
+      END LOOP;
+      
+      -- Chamar rorina para calcular o cet
+      CCET0001.pc_calculo_cet_limites(pr_cdcooper => pr_cdcooper
+                                     ,pr_dtmvtolt => pr_dtmvtolt
+                                     ,pr_cdprogra => 'DSCC0001'
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_inpessoa => rw_craplim.inpessoa
+                                     ,pr_cdusolcr => 1
+                                     ,pr_cdlcremp => rw_craplim.cddlinha
+                                     ,pr_tpctrlim => 2
+                                     ,pr_nrctrlim => rw_craplim.nrctrlim
+                                     ,pr_dtinivig => rw_craplim.dtinivig
+                                     ,pr_qtdiavig => rw_craplim.qtdiavig                               
+                                     ,pr_vlemprst => rw_craplim.vllimite
+                                     ,pr_txmensal => rw_crapbdc.txmensal
+                                     ,pr_txcetano => vr_txcetano
+                                     ,pr_txcetmes => vr_txcetmes
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                                     
+      IF nvl(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
       vr_qrcode   := pr_cdcooper ||'_'||
                      vr_cdageqrc ||'_'||
                      TRIM(gene0002.fn_mask_conta(   pr_nrdconta)) ||'_'||
@@ -1832,6 +1995,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
 
       pc_escreve_xml('<Bordero>'||
+                         '<taxadcet>'||vr_txcetmes||'</taxadcet>'||
+                         '<vltarctr>'|| TO_CHAR(vr_vltarctr,'fm999G999G999G990D00')||'</vltarctr>'||
+                         '<vltarbor>'|| TO_CHAR(vr_vltarbor,'fm999G999G999G990D00')||'</vltarbor>'||
+                         '<vltarcus>'|| TO_CHAR(vr_vltarcus,'fm999G999G999G990D00')||'</vltarcus>'||
+                         '<dsperiod>'||'MENSAL'||'</dsperiod>'||
+                         '<cddlinha>'|| rw_crapldc.cddlinha ||'</cddlinha>'||
+                         '<dsdlinha>'|| rw_crapldc.dsdlinha ||'</dsdlinha>'||
                          '<tpctrlim>2</tpctrlim>'||
                          '<nmextcop>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmextcop ||'</nmextcop>'||
                          '<dstitulo>'|| vr_dstitulo ||'</dstitulo>'||
@@ -1848,9 +2018,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                          '<dsmvtolt>'|| vr_dsmvtolt ||'</dsmvtolt>'||  
                          '<nmoperad>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmoperad ||'</nmoperad>'||
                          '<dsopecoo>'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'</dsopecoo>'||
+                         '<idorigem>'|| pr_idorigem ||'</idorigem>'||
                          '<cheques>');
 
       FOR idx IN vr_tab_chq_bordero.FIRST..vr_tab_chq_bordero.LAST LOOP
+        -- se o borderô estiver liberado e o cheque estiver aprovado ou
+        -- se o borderô estiver em estudo ou análise.
+        IF rw_crapbdc.insitbdc >= 3 AND vr_tab_chq_bordero(idx).insitana = 1 OR
+           rw_crapbdc.insitbdc < 3 THEN
+           
         -- Seta os totais
         vr_qttotchq := NVL(vr_qttotchq,0) + 1;
         vr_vltotchq := NVL(vr_vltotchq,0) + vr_tab_chq_bordero(idx).vlcheque;
@@ -1875,29 +2051,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  '<nmcheque>'|| gene0007.fn_caract_controle(SUBSTR(vr_tab_chq_bordero(idx).nmcheque,0,23)) ||'</nmcheque>'||
                                  '<dscpfcgc>'|| vr_tab_chq_bordero(idx).dscpfcgc ||'</dscpfcgc>'||
                                  '<restricoes>');
+          IF pr_idorigem <> 3 THEN
+            -- Percorre as restricoes
+            IF vr_tab_bordero_restri.COUNT > 0 THEN
+              FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
+                -- Se for restricao do cheque em questao
+                IF vr_tab_bordero_restri(idx2).nrcheque = vr_tab_chq_bordero(idx).nrcheque THEN
+                  -- Seta o total
+                  vr_qtrestri := NVL(vr_qtrestri, 0) + 1;
 
-        -- Percorre as restricoes
-        IF vr_tab_bordero_restri.COUNT > 0 THEN
-          FOR idx2 IN vr_tab_bordero_restri.FIRST..vr_tab_bordero_restri.LAST LOOP
-            -- Se for restricao do cheque em questao
-            IF vr_tab_bordero_restri(idx2).nrcheque = vr_tab_chq_bordero(idx).nrcheque THEN
-              -- Seta o total
-              vr_qtrestri := NVL(vr_qtrestri, 0) + 1;
-
-              pc_escreve_xml(          '<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
-              -- Se foi aprovado pelo coordenador
-              IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
-                -- Se NAO existir na PLTABLE
-                IF NOT vr_tab_restri_apr_coo.EXISTS(vr_tab_bordero_restri(idx2).dsrestri) THEN
-                  vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
+                  pc_escreve_xml(          '<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
+                  -- Se foi aprovado pelo coordenador
+                  IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
+                    -- Se NAO existir na PLTABLE
+                    IF NOT vr_tab_restri_apr_coo.EXISTS(vr_tab_bordero_restri(idx2).dsrestri) THEN
+                      vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
+                    END IF;
+                  END IF;
                 END IF;
-              END IF;
+              END LOOP;
             END IF;
-          END LOOP;
+          END IF;
+          pc_escreve_xml(        '</restricoes>');
+          pc_escreve_xml(      '</cheque>');
         END IF;
-
-        pc_escreve_xml(          '</restricoes>'||
-                             '</cheque>');
       END LOOP;
 
       -- Calcula a media
@@ -1913,7 +2090,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  '<vlmedchq>'|| TO_CHAR(vr_vlmedchq,'fm999G999G999G990D00') ||'</vlmedchq>'||
                              '</total>'||
                          '</totais>');
-
+      IF pr_idorigem <> 3 THEN
       -- Se possui restricoes aprovadas pelo coordenador
       IF vr_tab_restri_apr_coo.COUNT > 0 THEN
          pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| TRIM(vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo) ||'">');
@@ -1935,7 +2112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
         END LOOP;
       END IF;
       pc_escreve_xml(  '</restricoes_gerais>');
-
+      END IF;
       pc_escreve_xml( '</Bordero></raiz>',TRUE);
 
       --> Solicita geracao do PDF
@@ -1944,7 +2121,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  , pr_dtmvtolt  => pr_dtmvtolt
                                  , pr_dsxml     => vr_des_xml
                                  , pr_dsxmlnode => '/raiz/Bordero'
-                                 , pr_dsjasper  => 'crrl519_bordero.jasper'
+                                 , pr_dsjasper  => 'crrl519_bordero_cheques.jasper'
                                  , pr_dsparams  => null
                                  , pr_dsarqsaid => vr_dsdireto||'/'||pr_nmarqpdf
                                  , pr_cdrelato => 519
@@ -1991,7 +2168,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           RAISE vr_exc_erro; -- encerra programa
         END IF;
 
-      END IF; -- pr_idorigem = 5
+      ELSIF pr_idorigem = 3 THEN
+        
+        GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper
+                                       ,pr_nmarqpdf => vr_dsdireto ||'/'|| pr_nmarqpdf
+                                       ,pr_des_erro => vr_dscritic);
+        -- Testar se houve erro
+        IF vr_dscritic IS NOT NULL THEN
+          vr_cdcritic := 0;
+          -- Gerar excecao
+          RAISE vr_exc_erro;
+        END IF;
+
+        -- Remove o arquivo XML fisico de envio
+        GENE0001.pc_OScommand (pr_typ_comando => 'S'
+                              ,pr_des_comando => 'rm '||vr_dsdireto || '/' || vr_nmarquiv||' 2> /dev/null'
+                              ,pr_typ_saida   => vr_des_reto
+                              ,pr_des_saida   => vr_dscritic);
+        -- Se ocorreu erro dar RAISE
+        IF vr_des_reto = 'ERR' THEN
+          vr_cdcritic := 0;
+          RAISE vr_exc_erro;
+        END IF;
+
+      END IF; -- pr_idorigem
 
     END IF; -- pr_idimpres = 7
 

@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Dezembro/2014                     Ultima atualizacao: 11/08/2016
+       Data    : Dezembro/2014                     Ultima atualizacao: 01/12/2016
 
        Dados referentes ao programa:
 
@@ -24,6 +24,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                    17/08/2015 - Ajuste para buscar o pior Risco, Projeto de Provisao. (James)
                    
                    11/08/2016 - Adicionado novo filtro por tipo de limite de crédito (Linhares)
+
+                   01/12/2016 - Fazer tratamento para incorporação. (Oscar)
     ............................................................................ */
 
     DECLARE
@@ -109,7 +111,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
            AND craplim.nrdconta = crapass.nrdconta
            AND craplim.cdcooper = pr_cdcooper
            AND craplim.insitlim = 2
-           AND craplim.tpctrlim = 1
+           AND craplim.tpctrlim = 1 -- Limite de Credito
            AND crapass.inpessoa = pr_inpessoa
            -- Vencimento no Final de Semana
            AND ((nvl(craplim.dtfimvig, craplim.dtinivig + craplim.qtdiavig) > pr_dtmvtoan   AND
@@ -175,6 +177,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                 crapage.nmresage
            FROM crapage
           WHERE crapage.cdcooper = pr_cdcooper;
+
+      /* Conta incorporada */    
+      CURSOR cr_craptco(pr_cdcooper IN craptco.cdcooper%TYPE,
+                        pr_nrdconta IN craptco.nrdconta%TYPE)  IS
+         SELECT 1
+           FROM craptco 
+          WHERE craptco.cdcooper = pr_cdcooper                 
+            AND craptco.nrdconta = pr_nrdconta;
+      rw_craptco cr_craptco%ROWTYPE;
+            
 
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -666,7 +678,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
             CONTINUE;
           END IF;
             
+          /* Procura se é uma conta incorporada */  
+          OPEN cr_craptco(rw_craplim_crapass.cdcooper, 
+                          rw_craplim_crapass.nrdconta);
+          FETCH cr_craptco 
+           INTO rw_craptco;
+
+          /* Só considera se não for conta incorporada */
+          IF cr_craptco%NOTFOUND THEN
+
+             CLOSE cr_craptco;
+
           vr_dtmincta := ADD_MONTHS(rw_crapdat.dtmvtolt, - (rw_craprli.qtmincta));
+      
           -- Verificar o tempo de conta
           IF rw_craplim_crapass.dtadmiss > vr_dtmincta THEN
             -- Atualiza na tabela de limite de credito a descricao pelo qual nao foi renovado o limite de credito
@@ -674,6 +698,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
                                           pr_dsnrenov        => 'Tempo de Conta',
                                           pr_dsvlrmot        => to_char(rw_craplim_crapass.dtadmiss,'DD/MM/RRRR'));
             CONTINUE;
+          END IF;          
+          ELSE
+             CLOSE cr_craptco;
           END IF;          
           
           -- Risco com divida (Valor Arrasto)
@@ -881,4 +908,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
     END;
 
   END pc_crps692;
-  /
+/

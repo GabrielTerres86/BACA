@@ -659,7 +659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                       ,pr_des_text => vr_dsclinha);
         
       END IF;
-        
+      
      
       IF rw_craprli.qtdialiq <> pr_qtdialiq THEN
 
@@ -2678,10 +2678,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
     -- Consulta o limite de desconto por tipo de pessoa
     DSCC0001.pc_busca_tab_limdescont(pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa 
-                                         ,pr_inpessoa => rw_crapass.inpessoa          --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
-                                         ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
-                                         ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
-                                         ,pr_dscritic => vr_dscritic);                --> Descrição da crítica                
+                                    ,pr_inpessoa => rw_crapass.inpessoa          --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
+                                    ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
+                                    ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
+                                    ,pr_dscritic => vr_dscritic);                --> Descrição da crítica                
     
     -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic,0) > 0 THEN
