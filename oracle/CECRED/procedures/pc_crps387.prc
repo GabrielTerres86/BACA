@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 28/11/2016
+   Data    : Abril/2004                        Ultima atualizacao: 28/12/2016
 
    Dados referentes ao programa:
 
@@ -358,8 +358,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                28/10/2016 - Adicionar validação para quando recebermos referencia nula
                             (Lucas Ranghetti #542656)
                             
+               11/11/2016 - Incluir validação de cooperativa dentro do if da casan agencia
+                            1294 (Lucas Ranghetti #551176)
+                          - Incluir tratamento para não incluir crapndb para registro do tipo 'C'
+                            (Lucas Ranghetti #545443)
+               
+                            
                28/11/2016 - Ajustes para quando rodar na Cecred tratar quase que exclusivamente apenas
                             a situacao de Agencia Invalida. (Chamados 564779/565655) - (Fabricio)
+                            
+               28/12/2016 - Ajustes para incorporação da Credimilsul (SD585459 Tiago/Elton)             
 ............................................................................ */
 
 
@@ -635,7 +643,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            AND nrdconta = pr_nrdconta
            AND nrdocmto = pr_nrdocmto;
       rw_craplau_2 cr_craplau_2%ROWTYPE;
-
+      
+      /*Busca a cooperativa pelo cdagectl*/
+      CURSOR cr_cdcooper(pr_cdagectl IN crapcop.cdagectl%TYPE) IS
+        SELECT crapcop.cdcooper
+          FROM crapcop
+         WHERE crapcop.cdagectl = pr_cdagectl;         
+      rw_cdcooper cr_cdcooper%ROWTYPE;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
       -- Criacao de temp/table para os dados do relatorio
@@ -2186,6 +2200,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_cdcritic := 564; -- Conta nao cadastrada.
                       vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
+                          -- Não devemos criar crapndb para registro C
+                          IF vr_tpregist <> 'C' THEN
                       -- Para cada regitro D rejeitado, retornamos o H        
                       IF vr_tpregist = 'D' THEN
                         vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2213,6 +2229,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
                           RAISE vr_exc_saida;
                       END;
+                          END IF;
                       
                       -- monta a chave para a pl_table vr_tab_relato
                       vr_nrseq := vr_nrseq + 1;
@@ -2259,6 +2276,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_cdcritic := 15; --  Agencia nao cadastrada.               
                         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
+                        -- Não devemos criar crapndb para registro C
+                        IF vr_tpregist <> 'C' THEN
                         -- Para cada regitro D rejeitado, retornamos o H        
                         IF vr_tpregist = 'D' THEN
                           vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2286,6 +2305,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
                             RAISE vr_exc_saida;
                         END;
+                        END IF;
                         -- monta a chave para a pl_table vr_tab_relato
                         vr_nrseq := vr_nrseq + 1;
                         vr_ind := lpad(vr_cdcritic,5,'0')||'00003'|| lpad(vr_nrdconta,10,'0') ||
@@ -2315,6 +2335,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                         vr_cdcritic := 453; -- Autorizacao nao encontrada.
                         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
                           
+                        -- Não devemos criar crapndb para registro C
+                        IF vr_tpregist <> 'C' THEN
                         -- Para cada regitro D rejeitado, retornamos o H
                         IF vr_tpregist = 'D' THEN
                           vr_dstexarq := 'H' || SUBSTR(vr_setlinha,2,68) || RPAD(vr_dscritic,80) || SUBSTR(vr_setlinha,150,1);
@@ -2343,7 +2365,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
                             RAISE vr_exc_saida;
                         END;
-
+                        END IF;
                         -- monta a chave para a pl_table vr_tab_relato
                         vr_nrseq := vr_nrseq + 1;
                         vr_ind := lpad(vr_cdcritic,5,'0')||'00003'|| lpad(vr_nrdconta,10,'0') ||
@@ -2444,7 +2466,40 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                     -- Se a agencia de debito for diferente da agencia de controle da central ignora a linha
                     IF vr_cdagedeb <> rw_crapcop.cdagectl THEN
-                      continue;
+                    
+                      OPEN cr_cdcooper(pr_cdagectl => vr_cdagedeb);
+                      FETCH cr_cdcooper INTO rw_cdcooper;
+                      
+                      IF cr_cdcooper%NOTFOUND THEN
+                         CLOSE cr_cdcooper;
+                         CONTINUE;
+                      ELSE
+                         vr_cdcooper := rw_cdcooper.cdcooper;
+                      END IF;
+                      
+                      CLOSE cr_cdcooper;                   
+                    
+                     /**** Tratamento incorporacao ****/
+                      IF cr_craptco_conta_incorporada%ISOPEN THEN
+                        CLOSE cr_craptco_conta_incorporada;
+                      END IF;
+
+                      OPEN cr_craptco_conta_incorporada(pr_cdcooper => pr_cdcooper,
+                                                        pr_cdcopant => vr_cdcooper,
+                                                        pr_nrdconta => vr_nrdconta);
+                      FETCH cr_craptco_conta_incorporada INTO rw_craptco_conta_incorporada;
+                      
+                      IF cr_craptco_conta_incorporada%FOUND THEN -- Se for uma conta transferida
+                        CLOSE cr_craptco_conta_incorporada;
+                        vr_flg_ctamigra := TRUE;
+                        vr_nrdconta := rw_craptco_conta_incorporada.nrdconta;
+                        vr_cdcooper := pr_cdcooper;
+                        vr_nrdolote := vr_dstextab;
+                      ELSE
+                         CLOSE cr_craptco_conta_incorporada;
+                         continue; /* Nao pertence a Cooperativa que estou rodando...*/
+                      END IF;                    
+
                     ELSE /* Max.Int */
                       IF vr_nro_conta_dec >= 2147483647 THEN
                         vr_nrdconta := 0;
@@ -2553,6 +2608,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                     
                      -- Verificacao especifica da casan
                     IF vr_cdagedeb = 1294 THEN                    
+                      
+                      -- processar registros da casan somente na cooperativa em questao
+                      IF vr_cdcooper <> rw_crapcop.cdcooper THEN
+                        continue;
+                      END IF;    
+                                
                       -- Abre o cursor de associados
                       IF cr_crapass%ISOPEN THEN
                         CLOSE cr_crapass;
@@ -2691,6 +2752,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                           vr_cdcritic := 95;                                                    -- TITULAR DA CONTA BLOQUEADO
                           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
 
+                          -- Não devemos criar crapndb para registro C
+                          IF vr_tpregist <> 'C' THEN                          
                           vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
                           
                           -- Para cada regitro D rejeitado, retornamos o H
@@ -2721,7 +2784,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                               vr_dscritic := 'Erro ao inserir crapndb: '||SQLERRM;
                               RAISE vr_exc_saida;
                           END;
-
+                          END IF;
                           -- monta a chave para a pl_table vr_tab_relato
                           vr_nrseq := vr_nrseq + 1;
                           vr_ind := lpad(vr_cdcritic,5,'0')||'00003'|| lpad(vr_nrdconta,10,'0') ||
