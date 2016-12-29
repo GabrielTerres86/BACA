@@ -8985,6 +8985,7 @@ create or replace package body cecred.PAGA0002 is
 
       SELECT ass.cdcooper
             ,ass.nrdconta
+			,ass.nmprimtl
       FROM crapass ass                
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
@@ -9324,13 +9325,14 @@ create or replace package body cecred.PAGA0002 is
             CLOSE cr_crabass;
             CONTINUE;
           ELSE
+		    FETCH cr_crabass INTO rw_crabass;
             -- Fecha cursor
             CLOSE cr_crabass;
           END IF;
 
           vr_dsageban := LPAD(rw_crabcop.cdagectl,4,'0') || ' - ' || rw_crabcop.nmrescop;
           vr_nrctadst := TRIM(GENE0002.fn_mask_conta(rw_craplau.nrctadst));
-          vr_nrctadst := vr_nrctadst ||  ' - ' || rw_crapass.nmprimtl;                      
+          vr_nrctadst := vr_nrctadst ||  ' - ' || rw_crabass.nmprimtl;                      
                     
         ELSIF rw_craplau.cdtiptra = 4 THEN -- TED
 
