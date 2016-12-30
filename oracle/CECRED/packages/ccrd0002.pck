@@ -630,7 +630,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
           CLOSE cr_crapcrd;
           
           -- verifica se precisa olhar o saldo na coop antiga (migracao/incorporacao)
-          IF rw_crapcrd.cdcooper = 9 AND to_date(SYSDATE, 'dd/mm/RRRR') = '31/12/2016' THEN
+          IF rw_crapcrd.cdcooper = 9 AND 
+            to_date(SYSDATE, 'dd/mm/RRRR') = to_date('31/12/2016', 'dd/mm/RRRR') THEN
                         
             OPEN cr_craptco_old(pr_cdcooper => rw_crapcrd.cdcooper
                                ,pr_nrdconta => rw_crapcrd.nrdconta);
@@ -928,7 +929,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
            END IF;
            
            -- tratamento para efetuar o lancamento na coop nova (incorporadora)
-           IF rw_crapcrd.cdcooper = 17 AND to_date(SYSDATE, 'dd/mm/RRRR') = '31/12/2016' THEN
+           IF rw_crapcrd.cdcooper = 17 AND 
+             to_date(SYSDATE, 'dd/mm/RRRR') = to_date('31/12/2016', 'dd/mm/RRRR') THEN
              OPEN cr_craptco_new(pr_cdcooper => rw_crapcrd.cdcooper
                                 ,pr_nrdconta => rw_crapcrd.nrdconta);
              FETCH cr_craptco_new INTO rw_craptco_new;
