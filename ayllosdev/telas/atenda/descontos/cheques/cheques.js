@@ -1312,7 +1312,7 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,qtcta
 					   ,"telaOperacaoNaoEfetuada()"
 					   ,"sim.gif","nao.gif");
 	else if (mensagem_02 != '')
-		showConfirmacao('<center>' + (mensagem_02 + "<br>Deseja ccnfirmar esta operação?") + '</center>'
+		showConfirmacao('<center>' + (mensagem_02 + "<br>Deseja confirmar esta operação?") + '</center>'
 					   ,"Confirma&ccedil;&atilde;o - Ayllos"
 					   ,"verificaMensagens('','','" + mensagem_03 + "','" + mensagem_04 + "','" + qtctarel + "','" + grupo + "','" + vlutiliz + "','" + vlexcedi + "')"
 					   ,"telaOperacaoNaoEfetuada()"
@@ -1386,7 +1386,7 @@ function formataMensagem03() {
 	ordemInicial = [[0,0]];	
 	
 	var arrayLargura = new Array();
-	arrayLargura[0] = '100x';
+	arrayLargura[0] = '230px';
 	
 		
 	var arrayAlinha = new Array();

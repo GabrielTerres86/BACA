@@ -643,7 +643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DESCTO IS
       vr_flgfound := cr_craplim%FOUND;
       CLOSE cr_craplim;
       IF vr_flgfound THEN
-        vr_dscritic:= 'O contrato' ||rw_craplim.nrctrlim || 'deve ser cancelado primeiro.';
+        vr_dscritic:= 'O contrato ' ||rw_craplim.nrctrlim || ' deve ser cancelado primeiro.';
         RAISE vr_exc_saida;
       END IF;
         

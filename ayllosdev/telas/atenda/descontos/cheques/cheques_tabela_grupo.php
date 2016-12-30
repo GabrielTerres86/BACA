@@ -63,9 +63,9 @@
 										
 										<br style="clear:both" />
 										
-											<fieldset style="margin: 3px; padding: 0px 3px 5px 3px; border: 1px solid #bbb; width:210px" >
+											<fieldset style="margin: 3px; padding: 0px 3px 5px 3px; border: 1px solid #bbb; width:260px" >
 												<legend>Grupo Possui <? echo $qtctarel;?> Contas Relacionadas</legend>
-												<div style="width:200px">
+												<div style="width:250px">
 													<div id="divGrupoEconomico" class="divRegistros" style="width:210px">
 														<table>
 															<thead>

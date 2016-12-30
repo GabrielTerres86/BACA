@@ -57,8 +57,8 @@
 	$xmlRenovaLimite .= "<Root>";
 	$xmlRenovaLimite .= "   <Dados>";
 	$xmlRenovaLimite .= "	   <nrdconta>".$nrdconta."</nrdconta>";
-	$xmlRenovaLimite .= "	   <vllimite>".$vllimite."</vllimite>";
 	$xmlRenovaLimite .= "	   <nrctrlim>".$nrctrlim."</nrctrlim>";
+	$xmlRenovaLimite .= "	   <vllimite>".$vllimite."</vllimite>";
 	$xmlRenovaLimite .= "	   <cddopera>".$cddopera."</cddopera>";
 	$xmlRenovaLimite .= "   </Dados>";
 	$xmlRenovaLimite .= "</Root>";
@@ -102,8 +102,8 @@
 	}
 	else
 	{
-		if ($xmlObjRenovaLimite->roottag->tags[0]->tags[0]->cdata == 'OK') {
-			echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		if ($xmlObjRenovaLimite->roottag->tags[0]->cdata == 'OK') {
+			echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesCheques();");';
 		}
 	}	
 	
