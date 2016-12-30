@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/92.                         Ultima atualizacao: 08/10/2009
+   Data    : Outubro/92.                         Ultima atualizacao: 30/12/2016
 
    Dados referentes ao programa:
 
@@ -46,6 +46,9 @@
                             for BANCOOB (Evandro).
                             
                08/10/2009 - Adaptacoes projeto IF CECRED (Guilherme).
+
+			   30/12/2016 - Ajuste para logar a operacao de liberacao
+							(Adriano - SD 559724).
 
 ............................................................................. */
 
@@ -360,6 +363,14 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
 
    IF   aux_flgerros   THEN
         DO:
+		    UNIX SILENT VALUE("echo "                                          +
+							  STRING(glb_dtmvtolt,"99/99/9999")                +
+							  " " + STRING(TIME,"HH:MM:SS") + "' -->'"         +
+							  " Operador " + glb_cdoperad                      +
+							  " efetuou a liberacao do pedido "                + 
+							  string(tel_nrpedido,"zzzzz9") + " com problemas. " +                       
+							  " >> log/pedido.log").
+
             glb_cdcritic = 225.
             RUN fontes/critic.p.
             BELL.
@@ -372,10 +383,19 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
             HIDE FRAME f_pedido.
             HIDE FRAME f_lanctos.
             HIDE FRAME f_moldura.
-            RETURN.
+
+			RETURN.
         END.
    ELSE
         DO:
+			UNIX SILENT VALUE("echo "                                          +
+							  STRING(glb_dtmvtolt,"99/99/9999")                +
+							  " " + STRING(TIME,"HH:MM:SS") + "' -->'"         +
+							  " Operador " + glb_cdoperad                      +
+							  " efetuou a liberacao do pedido "                + 
+							  string(tel_nrpedido,"zzzzz9") + " com sucesso. " +                       
+							  " >> log/pedido.log").
+
             CLEAR FRAME f_lanctos ALL NO-PAUSE.
 
             glb_cdcritic = 226.
