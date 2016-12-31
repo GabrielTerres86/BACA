@@ -485,7 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                          par_dtrefere,
                                          par_cdmodali) LOOP
 
-      IF par_cdcooper IN ( 1, 13 ,16 ) THEN
+      IF par_cdcooper IN ( 1, 13 ,16, 09) THEN
         IF NOT fn_verifica_conta_migracao(rw_crapris_jur.cdcooper,
                                           rw_crapris_jur.nrdconta,
                                           rw_crapris_jur.dtrefere) THEN
@@ -1266,7 +1266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     FOR rw_crapris IN cr_crapris(pr_cdcooper,
                                  vr_dtrefere) LOOP
 
-      IF pr_cdcooper IN ( 1, 13 ,16 ) THEN
+      IF pr_cdcooper IN ( 1, 13 ,16, 09) THEN
 
         IF NOT fn_verifica_conta_migracao(rw_crapris.cdcooper,
                                           rw_crapris.nrdconta,
@@ -1804,7 +1804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     FOR rw_crapris_lnu IN cr_crapris_lnu(pr_cdcooper,
                                          vr_dtrefere) LOOP
 
-      IF pr_cdcooper IN ( 1, 13 ,16 ) THEN
+      IF pr_cdcooper IN ( 1, 13 ,16, 09) THEN
 
         IF NOT fn_verifica_conta_migracao(rw_crapris_lnu.cdcooper,
                                           rw_crapris_lnu.nrdconta,
