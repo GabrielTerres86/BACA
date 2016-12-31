@@ -166,12 +166,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     --  Sistema  : Rotinas genericas para RISCO
     --  Sigla    : RISC
     --  Autor    : ?????
-    --  Data     : ?????                         Ultima atualizacao: ??/??/????
+    --  Data     : ?????                         Ultima atualizacao: 31/12/2016
     --
     --  Dados referentes ao programa:
     --
-    --   Objetivo  :
-    --
+    --   Objetivo  : 31/12/2016 - Incorporação Transulcred -> Transpocred (Oscar).
+    --     
     -- .............................................................................
 
   vr_return BOOLEAN := FALSE;
@@ -264,6 +264,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END IF;
 
     END IF;
+    
+    
+    -- Migracao Transulcred -> Transpocred
+    IF par_cdcooper = 09 AND
+       par_dtrefere <= to_date('31/12/2016', 'dd/mm/YYYY') THEN
+
+      OPEN cr_craptco(09, 17, par_nrdconta);
+      FETCH cr_craptco
+        INTO rw_craptco;
+        vr_return := cr_craptco%FOUND;
+      CLOSE cr_craptco;
+      IF vr_return THEN
+        RETURN FALSE;
+      END IF;
+
+    END IF;
+
 
     RETURN TRUE;
 
