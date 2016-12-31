@@ -2,7 +2,7 @@
    Programa: Fontes/risco.p
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : Margarete                       Ultima Alteracao: 07/03/2016
+   Autor   : Margarete                       Ultima Alteracao: 31/12/2016
    Data    : Junho/2001
 
    Dados referentes ao programa:
@@ -135,6 +135,8 @@
                             (Guilherme/SUPERO)
                             
                07/03/2016 - Projeto 306 - Provisao cartao de credito. (James)
+               
+               31/12/2016 - Incorporaçao Transulcred -> Transpocred.  (Oscar)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1449,6 +1451,21 @@ PROCEDURE verifica_conta_migracao_risco:
             IF  AVAIL craptco THEN
                 RETURN "NOK".
         END.
+        
+        
+    /*Migracao Transulcred -> Transpocred */
+    IF  par_cdcooper  = 09         AND
+        par_dtrefere <= 12/31/2016 THEN
+        DO:
+            FIND craptco WHERE craptco.cdcooper = par_cdcooper AND
+                               craptco.cdcopant = 17           AND
+                               craptco.nrdconta = par_nrdconta AND
+                               craptco.tpctatrf <> 3
+                               NO-LOCK NO-ERROR.
+
+            IF  AVAIL craptco THEN
+                RETURN "NOK".
+        END.    
 
     /*Migracao Credimilsul -> Scrcred */
     IF  par_cdcooper  = 13         AND
