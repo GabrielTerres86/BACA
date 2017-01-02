@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    JOB: PC_JOB_AGENDEBTED
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Adriano 
-   Data    : Maio/2016.                     Ultima atualizacao: 15/09/2016
+   Data    : Maio/2016.                     Ultima atualizacao: 02/01/2017
 
    Dados referentes ao programa:
 
@@ -20,6 +20,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    Alteracoes:
    
    15/09/2016 - #519637 Criação de log de controle de início, erros e fim de execução do job (Carlos)
+   
+   02/01/2017 - Adição de filtro para não agendar o job para cooperativas inativas (Anderson).
    
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -56,7 +58,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
            ,cop.dsdircop
            ,cop.nrctactl
      FROM crapcop cop
-     WHERE cop.cdcooper <> 3;
+     WHERE cop.cdcooper <> 3
+       AND cop.flgativo = 1;
     
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
