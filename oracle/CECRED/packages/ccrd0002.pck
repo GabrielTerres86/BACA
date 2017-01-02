@@ -187,7 +187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
      AND crd.cdadmcrd <= 80  --Bancoob
      AND cop.flgativo = 1;
   rw_crapcrd cr_crapcrd%ROWTYPE;
-   
+  
   -- Cursor para encontrar as informações do cartão migrado
   CURSOR cr_crapcrd_mig (pr_cdcooper IN crapcrd.cdcooper%TYPE
                         ,pr_nrcrcard IN crapcrd.nrcrcard%TYPE) IS
@@ -627,10 +627,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
           
         ELSE
           -- Apenas fecha o cursor
-          CLOSE cr_crapcrd;         
+          CLOSE cr_crapcrd;
           
           -- verifica se precisa olhar o saldo na coop antiga (migracao/incorporacao)
-          IF rw_crapcrd.cdcooper = 9 AND to_date(SYSDATE, 'dd/mm/RRRR') = '31/12/2016' THEN
+          IF rw_crapcrd.cdcooper = 9 AND 
+            to_date(SYSDATE, 'dd/mm/RRRR') = to_date('31/12/2016', 'dd/mm/RRRR') THEN
                         
             OPEN cr_craptco_old(pr_cdcooper => rw_crapcrd.cdcooper
                                ,pr_nrdconta => rw_crapcrd.nrdconta);
@@ -782,7 +783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
           -- Apenas fechar o cursor
           CLOSE cr_crapcop;
         END IF;
-            
+               
         -- Verificacao do calendario
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_crapass.cdcooper);       
         FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -926,9 +927,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0002 AS
               -- Gera exceção
               RAISE vr_exc_erro; 
            END IF;
-
+           
            -- tratamento para efetuar o lancamento na coop nova (incorporadora)
-           IF rw_crapcrd.cdcooper = 17 AND to_date(SYSDATE, 'dd/mm/RRRR') = '31/12/2016' THEN
+           IF rw_crapcrd.cdcooper = 17 AND 
+             to_date(SYSDATE, 'dd/mm/RRRR') = to_date('31/12/2016', 'dd/mm/RRRR') THEN
              OPEN cr_craptco_new(pr_cdcooper => rw_crapcrd.cdcooper
                                 ,pr_nrdconta => rw_crapcrd.nrdconta);
              FETCH cr_craptco_new INTO rw_craptco_new;
