@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --
 --    Programa: SSPB0002
 --    Autor   : Douglas Quisinski
---    Data    : Julho/2015                      Ultima Atualizacao: 10/11/2016
+--    Data    : Julho/2015                      Ultima Atualizacao: 12/12/2016
 --
 --    Dados referentes ao programa:
 --
@@ -60,6 +60,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
 --
 --                10/11/2016 - Ajustado a conciliação das mensagens de VR Boleto
 --                             (Douglas - Chamado 503347)
+--
+--                12/12/2016 - Ajustar conciliação para que durante o periodo de 01/01/2017 até 21/03/2017
+--                             (mesmo período em que o DE->PARA ira ocorrer no crps531_1 que processa as 
+--                             mensagens de TED) (Douglas - Chamado 570148)
 ---------------------------------------------------------------------------------------------------------------
   -- Tipo de registro para conter as informações das linhas do arquivo
   TYPE typ_recdados IS RECORD (nrdlinha INTEGER
@@ -107,7 +111,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Douglas Quisinski
-    Data    : 04/08/2015                        Ultima atualizacao: 08/08/2016
+    Data    : 04/08/2015                        Ultima atualizacao: 12/12/2016
 
     Dados referentes ao programa:
 
@@ -148,6 +152,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
     Alteracoes: 08/08/2016 - Ajustado a busca do valor de conciliação da linha do arquivo
                              para que seja tratado o valor com ou sem a separação de 
                              milhares e decimais (Douglas - Chamado 501071)
+                             
+                12/12/2016 - Ajustar conciliação para que durante o periodo de 
+                             01/01/2017 até 21/03/2017 (mesmo período em que o DE->PARA 
+                             ira ocorrer no crps531_1 que processa as  mensagens de TED) 
+                             (Douglas - Chamado 570148)                             
     ............................................................................. */
     DECLARE
       -- Exceção
@@ -191,6 +200,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
       vr_nrdconta_deb INTEGER;
       vr_cdagenci_deb INTEGER;
       vr_tpconta_deb  VARCHAR2(5);
+      --Informações para DE -> PARA
+      vr_nrdconta_cre_concil INTEGER;
+      vr_cdagenci_cre_concil INTEGER;
+      
       -- Dados da Transação
       vr_vlconcil  NUMBER(25,2);
       vr_vlconsul  NUMBER(25,2);
@@ -314,6 +327,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
           FROM crapban 
          WHERE crapban.cdbccxlt > 0 
            AND crapban.nrispbif > 0;
+           
+      -- Cursor para buscar as informações da conta incorporada
+      CURSOR cr_craptco (pr_cdcopant IN craptco.cdcopant%TYPE
+                        ,pr_nrctaant IN craptco.nrctaant%TYPE) IS
+        SELECT tco.nrdconta
+          FROM craptco tco
+         WHERE tco.cdcopant = pr_cdcopant
+           AND tco.nrctaant = pr_nrctaant
+           AND tco.flgativo = 1;
+      rw_craptco cr_craptco%ROWTYPE;
            
       -- Registro de Cooperativas/Agência
       TYPE typ_tbagenci_coop IS TABLE OF INTEGER INDEX BY BINARY_INTEGER;
@@ -489,6 +512,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             vr_dssitmen  := TRIM(vr_arr_concil(26));
             vr_nrcontro  := TRIM(vr_arr_concil(27));
 
+            -- Dados do arquivo -> Padrao ira utilizar agencia e conta que estao no arquivo
+            vr_nrdconta_cre_concil := vr_nrdconta_cre;
+            vr_cdagenci_cre_concil := vr_cdagenci_cre;
+            
+            -- INICIO - Validacao para DE -> PARA daa Transulcred -> Transpocred
+            -- Agencia Creditada eh a Transulcred 
+            IF vr_cdagenci_cre = 116 THEN
+              -- Data da mensagem eh entre o periodo de 01/01/2017 e 21/03/2017
+              IF vr_dtmensag >= to_date('01/01/2017','DD/MM/YYYY') AND
+                 vr_dtmensag <= to_date('21/03/2017','DD/MM/YYYY') THEN
+                
+                -- SE status for "efetivado", será feito o DE-> PARA
+                -- mensagens devolvidas ou rejeitadas não irão possuir DE -> PARA
+                IF UPPER(vr_dssitmen) LIKE UPPER('%EFETIVADO%') THEN
+                  -- Buscamos a conta nova 
+                  OPEN cr_craptco (pr_cdcopant => 17 -- Transulcred
+                                  ,pr_nrctaant => vr_nrdconta_cre);
+                  FETCH cr_craptco INTO rw_craptco;
+                  -- Encontrou a conta incorporada
+                  IF cr_craptco%FOUND THEN
+                    -- Se encontrou a conta incorporada, utilizamos a conta nova para montar a chave de conciliacao
+                    vr_nrdconta_cre_concil := rw_craptco.nrdconta;
+                    vr_cdagenci_cre_concil := 108; -- Transpocred
+                  END IF;
+                  -- Fecha cursor
+                  CLOSE cr_craptco;
+                END IF;
+              END IF;
+            END IF;
+            -- FIM - Validacao para DE -> PARA daa Transulcred -> Transpocred
+            
             -- Armazenar a data da mensagem
             vr_tbdatas(TO_CHAR(vr_dtmensag,'DDMMRRRR')) := vr_dtmensag;
 
@@ -505,16 +559,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
               vr_banco_cre:= vr_tbbanco_ispb(vr_ispbif_cre);
             END IF;
             -- Indice das linhas que foram processadas
-            vr_index_proc:= 'ARQUIVO'                     || -- Identificacao Arquivo JD
-                            TO_CHAR(vr_ispbif_deb)        || -- Banco Debitada
-                            TO_CHAR(vr_cdagenci_deb)      || -- Agencia Debitada
-                            TO_CHAR(vr_nrdconta_deb)      || -- Conta Debitada
-                            TO_CHAR(vr_nrcpfcgc_deb_pesq) || -- CPF/CNPJ Debitado
-                            TO_CHAR(vr_ispbif_cre)        || -- Banco Creditado
-                            TO_CHAR(vr_cdagenci_cre)      || -- Agencia Creditada 
-                            TO_CHAR(vr_nrdconta_cre)      || -- Conta Creditada
-                            TO_CHAR(vr_nrcpfcgc_cre_pesq) || -- CPF/CNPJ Creditado
-                            TO_CHAR(vr_vlconsul * 100);      -- Valor (MULTIPLICAR POR 100 PARA TIRAR DECIMAIS)
+            vr_index_proc:= 'ARQUIVO'                       || -- Identificacao Arquivo JD
+                            TO_CHAR(vr_ispbif_deb)          || -- Banco Debitada
+                            TO_CHAR(vr_cdagenci_deb)        || -- Agencia Debitada
+                            TO_CHAR(vr_nrdconta_deb)        || -- Conta Debitada
+                            TO_CHAR(vr_nrcpfcgc_deb_pesq)   || -- CPF/CNPJ Debitado
+                            TO_CHAR(vr_ispbif_cre)          || -- Banco Creditado
+                            TO_CHAR(vr_cdagenci_cre_concil) || -- Agencia Creditada 
+                            TO_CHAR(vr_nrdconta_cre_concil) || -- Conta Creditada
+                            TO_CHAR(vr_nrcpfcgc_cre_pesq)   || -- CPF/CNPJ Creditado
+                            TO_CHAR(vr_vlconsul * 100);        -- Valor (MULTIPLICAR POR 100 PARA TIRAR DECIMAIS)
                              
             -- Verificar se a opcao eh para listar apenas as duplicidades
             IF pr_dsdopcao = 'OI' THEN
@@ -570,14 +624,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
             ELSE
               -- Realiza a conciliacao 
               -- Indice para identificação das criticas PADRAO
-              vr_chave_conciliar:= TO_CHAR(vr_nrcontro)          || -- Numero de Controle
-                                   TO_CHAR(vr_cdagenci_deb)      || -- Agencia Debitada
-                                   TO_CHAR(vr_nrdconta_deb)      || -- Conta Debitada
-                                   TO_CHAR(vr_nrcpfcgc_deb_pesq) || -- CPF/CNPJ Debitado
-                                   TO_CHAR(vr_cdagenci_cre)      || -- Agencia Creditada 
-                                   TO_CHAR(vr_nrdconta_cre)      || -- Conta Creditada
-                                   TO_CHAR(vr_nrcpfcgc_cre_pesq) || -- CPF/CNPJ Creditado
-                                   TO_CHAR(vr_vlconsul * 100);      -- Valor 
+              vr_chave_conciliar:= TO_CHAR(vr_nrcontro)            || -- Numero de Controle
+                                   TO_CHAR(vr_cdagenci_deb)        || -- Agencia Debitada
+                                   TO_CHAR(vr_nrdconta_deb)        || -- Conta Debitada
+                                   TO_CHAR(vr_nrcpfcgc_deb_pesq)   || -- CPF/CNPJ Debitado
+                                   TO_CHAR(vr_cdagenci_cre_concil) || -- Agencia Creditada 
+                                   TO_CHAR(vr_nrdconta_cre_concil) || -- Conta Creditada
+                                   TO_CHAR(vr_nrcpfcgc_cre_pesq)   || -- CPF/CNPJ Creditado
+                                   TO_CHAR(vr_vlconsul * 100);        -- Valor 
                               
               
               -- Verifica se a duplicidade existe
@@ -677,9 +731,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                 vr_conciliar    := 1;
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
                 vr_chave_conciliar:= vr_dsmensag || '_' ||
-                                     TO_CHAR(vr_cdagenci_cre) || '_' || 
-                                     TO_CHAR(vr_nrdconta_cre) || '_' ||
-                                     TO_CHAR(vr_nrcpfcgc_cre_pesq) || '_' ||
+                                     TO_CHAR(vr_cdagenci_cre_concil) || '_' || 
+                                     TO_CHAR(vr_nrdconta_cre_concil) || '_' ||
+                                     TO_CHAR(vr_nrcpfcgc_cre_pesq)   || '_' ||
                                      TO_CHAR(vr_vlconsul * 100);
 
 
@@ -718,9 +772,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                 vr_conciliar    := 1;
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
                 vr_chave_conciliar:= vr_dsmensag || '_' ||
-                                     TO_CHAR(vr_cdagenci_cre) || '_' || 
-                                     TO_CHAR(vr_nrdconta_cre) || '_' ||
-                                     TO_CHAR(vr_nrcpfcgc_deb_pesq) || '_' ||
+                                     TO_CHAR(vr_cdagenci_cre_concil) || '_' || 
+                                     TO_CHAR(vr_nrdconta_cre_concil) || '_' ||
+                                     TO_CHAR(vr_nrcpfcgc_deb_pesq)   || '_' ||
                                      TO_CHAR(vr_vlconsul * 100);
               
               -- TED por esta finalidade não credita automaticamente a conta corrente. 
@@ -743,8 +797,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                 vr_conciliar    := 1;
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
                 vr_chave_conciliar:= vr_dsmensag || '_' ||
-                                     TO_CHAR(vr_cdagenci_cre) || '_' || 
-                                     TO_CHAR(vr_nrdconta_cre) || '_' ||
+                                     TO_CHAR(vr_cdagenci_cre_concil) || '_' || 
+                                     TO_CHAR(vr_nrdconta_cre_concil) || '_' ||
                                      TO_CHAR(vr_vlconsul * 100);
                                      
               -- Mensagem é enviada através da Cabine JD.
@@ -770,12 +824,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPB0002 AS
                 -- Montar a chave de acordo com os campos que sao comparados para conciliar
                 -- Não validar o CPF/Agencia Debitados
                 vr_chave_conciliar:= vr_dsmensag || '_' ||
-                                     TO_CHAR(vr_nrdconta_deb) || '_' || -- Conta Debitada
-                                     TO_CHAR(vr_cdagenci_cre) || '_' || -- Agencia Creditada
-                                     TO_CHAR(vr_nrdconta_cre) || '_' || -- Conta Creditada
-                                     TO_CHAR(vr_nrcpfcgc_cre_pesq) || '_' || -- CPF/CNPJ Creditado
-                                     TO_CHAR(vr_ispbif_deb) || '_' || -- ISPB IF Debitada
-                                     TO_CHAR(vr_vlconsul * 100); -- Valor do Documento
+                                     TO_CHAR(vr_nrdconta_deb)        || '_' || -- Conta Debitada
+                                     TO_CHAR(vr_cdagenci_cre_concil) || '_' || -- Agencia Creditada
+                                     TO_CHAR(vr_nrdconta_cre_concil) || '_' || -- Conta Creditada
+                                     TO_CHAR(vr_nrcpfcgc_cre_pesq)   || '_' || -- CPF/CNPJ Creditado
+                                     TO_CHAR(vr_ispbif_deb)          || '_' || -- ISPB IF Debitada
+                                     TO_CHAR(vr_vlconsul * 100);               -- Valor do Documento
                 
               -- Mensagem eh enviada atraves da internet, mobile e caixa online. 
               -- Conciliar lançamento JD com lançamento em especie/conta corrente/LOGSPB. 
