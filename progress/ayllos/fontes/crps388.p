@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                          Ultima atualizacao: 15/08/2016
+   Data    : Abril/2004                          Ultima atualizacao: 28/12/2016
 
    Dados referentes ao programa:
 
@@ -219,6 +219,8 @@
 
 			   05/10/2016 - Incluir tratamento para a CASAN enviar a angecia 1294 para autorizacoes
 							mais antigas (Lucas Ranghetti ##534110)
+              
+              28/12/2016 - Ajustes para incorporaçao da Credimilsul (SD585459 Tiago/Elton) 
 ............................................................................. */
  
 { includes/var_batch.i {1} }
@@ -712,7 +714,7 @@ FOR EACH gncvcop NO-LOCK WHERE
             IF  (gnconve.cdcooper = crabcop.cdcooper  OR
                  crabcop.cdcooper = 1                 OR
                  gnconve.flgagenc = TRUE              OR
-				 crapatr.dtiniatr > date("01/09/2013")) AND
+        				 crapatr.dtiniatr > date("01/09/2013")) AND
                  gnconve.cdconven <> 22               AND
                  gnconve.cdconven <> 32               AND  /*UNIODONTO*/ 
                  gnconve.cdconven <> 38               AND  /*UNIM.PLAN.NORTE*/
@@ -745,8 +747,13 @@ FOR EACH gncvcop NO-LOCK WHERE
                                  gnconve.cdconven <> 58               THEN /*PORTO SEGURO*/
                                  ASSIGN aux_cdcooperativa = " ".
                            ELSE
-                                 ASSIGN aux_cdcooperativa = "9" + 
-                                                            STRING(craptco.cdcopant,"999"). 
+                                 IF gnconve.flgagenc = TRUE THEN
+                                    DO:
+                                      ASSIGN aux_cdcooperativa = " ".
+                                    END.
+                                 ELSE 
+                                   ASSIGN aux_cdcooperativa = "9" + 
+                                                              STRING(craptco.cdcopant,"999"). 
                            ASSIGN aux_dsobserv = "Debito migrado.".
 
                             /*** Verifica agencia na Cecred da coop. da conta migrada ***/
