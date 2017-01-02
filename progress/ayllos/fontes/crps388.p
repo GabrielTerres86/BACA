@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                          Ultima atualizacao: 15/08/2016
+   Data    : Abril/2004                          Ultima atualizacao: 28/12/2016
 
    Dados referentes ao programa:
 
@@ -219,6 +219,8 @@
 
 			   05/10/2016 - Incluir tratamento para a CASAN enviar a angecia 1294 para autorizacoes
 							mais antigas (Lucas Ranghetti ##534110)
+              
+              28/12/2016 - Ajustes para incorporaçao da Credimilsul (SD585459 Tiago/Elton) 
 ............................................................................. */
  
 { includes/var_batch.i {1} }
@@ -485,7 +487,7 @@ FOR EACH gncvcop NO-LOCK WHERE
                          NO-LOCK NO-ERROR.
 
 				    IF  AVAIL crapatr THEN
-                ASSIGN aux_nragenci = '1294'.
+					    ASSIGN aux_nragenci = '1294'.
 				END.
                 
 
@@ -745,6 +747,11 @@ FOR EACH gncvcop NO-LOCK WHERE
                                  gnconve.cdconven <> 58               THEN /*PORTO SEGURO*/
                                  ASSIGN aux_cdcooperativa = " ".
                            ELSE
+                                 IF gnconve.flgagenc = TRUE THEN
+                                    DO:
+                                      ASSIGN aux_cdcooperativa = " ".
+                                    END.
+                                 ELSE 
                                  ASSIGN aux_cdcooperativa = "9" + 
                                                             STRING(craptco.cdcopant,"999"). 
                            ASSIGN aux_dsobserv = "Debito migrado.".
