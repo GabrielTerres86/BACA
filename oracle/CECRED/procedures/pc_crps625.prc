@@ -5,14 +5,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
                                              ,pr_infimsol OUT PLS_INTEGER           --> Saída de termino da solicitação
                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                                              ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
-  BEGIN
+  BEGIN   
+  
     /* .............................................................................
 
        Programa: pc_crps625 (Fontes/crps625.p)
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : André Santos/Supero
-       Data    : Agosto/2012                     Ultima atualizacao: 22/07/2016
+       Data    : Agosto/2012                     Ultima atualizacao: 02/01/2017
 
        Dados referentes ao programa:
 
@@ -34,6 +35,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
                    29/05/2015 - Conversao Progress >> Oracle (Jean Michel).
                    
                    22/07/2016 - Finalização do conversão PLSQL (Jonata-Rkam)
+                   
+                   02/01/2017 - #530616 Corrigido o programa para verificar se há mais informações na pltable além das 
+                                linhas de cabeçalho e trailler do arquivo, para não gerar o mesmo desnecessariamente (Carlos)
                    
     ............................................................................ */
 
@@ -432,6 +436,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
               vr_dsdocmc7 := ''; 
             EXCEPTION
               WHEN OTHERS THEN
+                
+                btch0001.pc_log_internal_exception(pr_cdcooper);
+                
                 vr_cdcritic := 86;
                 vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
                 -- Próximo arquivo
@@ -652,10 +659,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps625(pr_cdcooper  IN crapcop.cdcooper%T
         vr_dscritic := 'Erro ao limpar diretorio ARQ. Erro: ' || vr_dscritic;
         RAISE vr_exc_saida;
       END IF;
-      
-      -- Se há informações na pltable
-      IF vr_tab_tic606.count() > 0 THEN
-        -- 
+
+      -- Se há mais informações na pltable além das linhas de cabeçalho e trailler do arquivo, 
+      -- para não gerar o mesmo desnecessariamente
+      IF vr_tab_tic606.count() > 2 THEN
         vr_cdcritic := 339;
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         -- Gerar em LOG
