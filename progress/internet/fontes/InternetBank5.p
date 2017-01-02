@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 04/02/2016
+   Data    : Marco/2007                        Ultima atualizacao: 02/01/2017
 
    Dados referentes ao programa:
 
@@ -45,6 +45,16 @@
                             do XML. (Projeto Boleto formato carne - Douglas)
 
                04/02/2016 - Ajustes Projeto Negativação Serasa (Daniel) 
+			   
+			   15/08/2016 - Removido validacao de convenio na consulta da tela
+							manutencao, conforme solicitado no chamado 497079.
+							(Kelvin)
+
+			   03/10/2016 - Ajustes referente a melhoria M271. (Kelvin)
+
+               02/01/2017 - Melhorias referentes a performance no IB na parte 
+			                de cobrança, incluido flprotes no xml de retorno
+							(Tiago/Ademir SD573538).  			   
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -71,6 +81,7 @@ DEF  INPUT PARAM par_fimpagto AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_iniemiss AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_fimemiss AS DATE                                  NO-UNDO.
 DEF  INPUT PARAM par_flgregis AS INTE                                  NO-UNDO.
+DEF  INPUT PARAM par_dsdoccop AS CHAR                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -180,8 +191,7 @@ RUN consultar-boleto IN h-b1wnet0001 (INPUT par_cdcooper,
                                       INPUT par_iniemiss,
                                       INPUT par_fimemiss,
                                       INPUT TRUE,           /** Logar      **/
-
-                                      INPUT "", /* par_dsdoccop - Rafael Cechet 29/03/11 */
+                                      INPUT par_dsdoccop, /* par_dsdoccop - Rafael Cechet 29/03/11 */
                                       INPUT aux_flgregis,
                                       INPUT 0, /* par_inserasa 0 - Todos */
 
@@ -236,14 +246,6 @@ RUN verifica-convenios IN h-b1wnet0001 (INPUT par_cdcooper,
                                        OUTPUT par_intipcob,
                                        OUTPUT par_intipemi).
 DELETE PROCEDURE h-b1wnet0001.
-
-IF par_intipcob = 0 THEN
-DO:
-    ASSIGN aux_dscritic = "Convenio nao cadastrado.".
-           xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
-            
-    RETURN "NOK".
-END.
 
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<DADOS><intipcob>" + 
@@ -402,6 +404,11 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     "<flserasa>" + (IF (tt-consulta-blt.flserasa = TRUE) THEN 
                                        "S" ELSE "N") + "</flserasa>" +
                                     "<qtdianeg>" + STRING(tt-consulta-blt.qtdianeg) + "</qtdianeg>" +
+                                    "<dtvencto_atualizado>" + STRING(tt-consulta-blt.dtvencto_atualizado,"99/99/9999") + "</dtvencto_atualizado>" +
+                                    "<vltitulo_atualizado>" + STRING(tt-consulta-blt.vltitulo_atualizado,"zzzzzzzzz9.99") + "</vltitulo_atualizado>" +
+                                    "<vlmormul_atualizado>" + STRING(tt-consulta-blt.vlmormul_atualizado,"zzzzzzzzz9.99") + "</vlmormul_atualizado>" +
+                                    "<flg2viab>" + STRING(tt-consulta-blt.flg2viab) + "</flg2viab>" +
+									"<flprotes>" + STRING(tt-consulta-blt.flprotes) + "</flprotes>" +
                                     
                                    "</BOLETO>".
 
@@ -434,4 +441,5 @@ ASSIGN xml_operacao.dslinxml = "<DADOS_BENEFICIARIO><nmprimtl>" +
 RETURN "OK".
 
 /*............................................................................*/
+
 
