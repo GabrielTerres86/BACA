@@ -546,30 +546,6 @@ PROCEDURE verifica_cartao:
         
     END.
       
-    /* Impedir acesso contas Transpocred durante e apos data migraçao */
-    IF  par_cdcooper = 17           AND
-        par_dtmvtocd >= 12/31/2016  THEN
-        DO:
-            ASSIGN par_dscritic = "Conta nao habilitada para acesso".
-            RETURN "NOK".
-        END.
-       
-    /* impedir acesso de contas que serao migradas da Transulcred para a Transpocred */
-    IF par_cdcooper = 9           AND    /* Transpocred */
-       aux_datdodia <= 12/31/2016 THEN  /* Antes e durante a migraçao */
-       DO:           
-          FIND craptco WHERE craptco.cdcooper = par_cdcooper AND
-                             craptco.nrdconta = par_nrdconta AND
-                             craptco.tpctatrf = 1            
-                             NO-LOCK NO-ERROR.
-                             
-          IF  AVAILABLE craptco AND craptco.cdcopant = 17 /* Transulcred */ THEN
-              DO:
-                  ASSIGN par_dscritic = "Conta nao habilitada para acesso".
-                  RETURN "NOK". 
-              END.
-       END.
-      
     RETURN "OK".
 
 END PROCEDURE.
@@ -1203,17 +1179,6 @@ PROCEDURE entrega_envelope:
     DEFINE     VARIABLE aux_dsinform                AS CHAR     EXTENT  3       NO-UNDO.
     
     DO TRANSACTION ON ERROR UNDO, LEAVE: 
-    
-        /* Se a cooper de destino for Transulcred e data 30-31/12/2016, a conta será migrada */
-        IF  par_cdcopdst = 17          AND 
-           (TODAY = 12/30/2016  OR 
-            TODAY = 12/31/2016) THEN
-            DO:
-                ASSIGN par_dscritic = "Conta destino nao habilitada " +
-                                      "para receber valores de " +
-                                      "deposito.".
-                RETURN "NOK".
-            END.
     
         FIND craptfn WHERE craptfn.cdcooper = par_cdcoptfn  AND
                            craptfn.nrterfin = par_nrterfin
