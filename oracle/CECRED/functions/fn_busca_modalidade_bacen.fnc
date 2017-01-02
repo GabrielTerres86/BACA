@@ -42,6 +42,10 @@ create or replace function cecred.
     --                         - Inclusão de outras modalidades para o calculo de capital de giro
     --                           0215 ou 0216 cfme prazo da operação (Marcos-Supero)
     --
+    --              13/12/2016 - Ajustado para alterar modadilade de 0215(capital de Giro) ou 0216(capital de Giro)
+    --                           para 0203(Credito pessoal) quando for pessoa fisica, isto que pessoa fisica não poderia contrtar esta modalidade.
+    --                           SD567319 (Odirlei-AMcom)
+    --
     -- .............................................................................
 
   --Dados Emprestimo BNDES
@@ -161,7 +165,7 @@ begin
       vr_cdmodali := lpad(pr_cdmodali,4,'0');
     end if;
     -- Somente para capital de giro de pessoa física
-    if pr_inpessoa = 1 and vr_cdmodali = '0206' then -- capital de giro
+    if pr_inpessoa = 1 and vr_cdmodali IN ('0206','0215','0216') THEN -- capital de giro
       vr_cdmodali := '0203';
     -- Para Pessoa Juridica, Origem 3 e Modalidades 0203, 0205, 0205, 0215 e 0216
     elsif pr_inpessoa = 2 and pr_cdorigem = 3 AND vr_cdmodali IN('0203','0205','0206','0215','0216') then
