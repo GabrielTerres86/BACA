@@ -405,7 +405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 02/12/2016
+    Data     : Novembro/2015.                   Ultima atualizacao: 22/12/2016
   
    Dados referentes ao programa:
   
@@ -459,6 +459,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              > Tratar nome da cidade, nome do bairro e uf nulos ; 
 							              (Andrei - RKAM).
                             
+               22/12/2016 - Ajuste para utilizar a sequence na geração do registro na craprtc 
+                            (Douglas - Chamado 547357)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -2824,20 +2826,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        ORDER BY rtc.progress_recid DESC;
     rw_craprtc cr_craprtc%ROWTYPE;
     
-    -- Buscar Controle de Remessa/Retorno de Titulos do Cooperado
-    CURSOR cr_craprtc2 (pr_cdcooper  craprtc.cdcooper%TYPE,
-                        pr_nrdconta  craprtc.nrdconta%TYPE,
-                        pr_nrcnvcob  craprtc.nrcnvcob%TYPE,
-                        pr_intipmvt  craprtc.intipmvt%TYPE) IS
-      SELECT rtc.nrremret
-        FROM craprtc rtc
-       WHERE rtc.cdcooper = pr_cdcooper 
-         AND rtc.nrdconta = pr_nrdconta 
-         AND rtc.nrcnvcob = pr_nrcnvcob 
-         AND rtc.intipmvt = pr_intipmvt
-       ORDER BY rtc.progress_recid DESC;
-    rw_craprtc2 cr_craprtc2%ROWTYPE;
-
     -- Buscar Controle de Remessa/Retorno de Titulos Bancarios
     CURSOR cr_crapcre (pr_cdcooper  crapcre.cdcooper%TYPE,
                        pr_nrcnvcob  crapcre.nrcnvcob%TYPE,
@@ -2892,23 +2880,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         -- Fecha o cursor
         CLOSE cr_craprtc;
         
-        -- Localiza ultima sequencia
-        OPEN cr_craprtc2(pr_cdcooper => vr_rejeitado.cdcooper
-                        ,pr_nrdconta => vr_rejeitado.nrdconta
-                        ,pr_nrcnvcob => vr_rejeitado.nrcnvcob
-                        ,pr_intipmvt => 2);
-                        
-        FETCH cr_craprtc2 INTO rw_craprtc2;
-        
-        -- Verifica se encontrou 
-        IF cr_craprtc2%NOTFOUND THEN 
-          vr_nrremrtc := 1;
-        ELSE
-          vr_nrremrtc := rw_craprtc2.nrremret + 1;
-        END IF;
-        
-        -- Fecha o cursor
-        CLOSE cr_craprtc2;
+        -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
+        vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
+                                  ,pr_nmdcampo => 'NRREMRET'
+                                  ,pr_dsdchave => vr_rejeitado.cdcooper || ';' || 
+                                                  vr_rejeitado.nrdconta || ';' || 
+                                                  vr_rejeitado.nrcnvcob || ';2');
         
         -- Insere registro
         INSERT INTO craprtc(cdcooper
@@ -6647,25 +6624,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF cr_craprtc%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_craprtc;
-        /***** Localiza ultima sequencia *****/
-        OPEN cr_craprtc (pr_cdcooper => rw_crapcob.cdcooper
-                        ,pr_nrcnvcob => rw_crapcob.nrcnvcob
-                        ,pr_nrdconta => rw_crapcob.nrdconta
-                        ,pr_dtmvtolt => pr_dtmvtolt
-                        ,pr_intipmvt => 2
-                        ,pr_tipo     => 2);
-        --Posicionar no proximo registro
-        FETCH cr_craprtc INTO rw_craprtc;
-        --Se nao encontrar
-        IF cr_craprtc%NOTFOUND THEN
-          --Numero remessa recebe 1
-          vr_nrremrtc:= 1;
-        ELSE
-          --Numero remessa
-          vr_nrremrtc:= rw_craprtc.nrremret+1;
-        END IF;
-        --Fechar Cursor
-        CLOSE cr_craprtc;
+        
+        -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
+        vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
+                                  ,pr_nmdcampo => 'NRREMRET'
+                                  ,pr_dsdchave => rw_crapcob.cdcooper || ';' || 
+                                                  rw_crapcob.nrdconta ||';' || 
+                                                  rw_crapcob.nrcnvcob || ';2');
 
         --Criar retorno titulo cooperado
         BEGIN
