@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    JOB: PC_JOB_AGENDEBTED
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Adriano 
-   Data    : Maio/2016.                     Ultima atualizacao: 
+   Data    : Maio/2016.                     Ultima atualizacao: 15/09/2016
 
    Dados referentes ao programa:
 
@@ -19,9 +19,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
               
    Alteracoes:
    
+   15/09/2016 - #519637 Criação de log de controle de início, erros e fim de execução do job (Carlos)
+   
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
     vr_cdprogra    VARCHAR2(40) := 'PC_JOB_AGENDEBTED';
+    vr_nomdojob    VARCHAR2(40) := 'JBCOMPE_AGENDAMENTO_TED';
+    vr_flgerlog    BOOLEAN := FALSE;
+      
     vr_infimsol    PLS_INTEGER;                     
     vr_stprogra    PLS_INTEGER;
     
@@ -37,7 +42,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
     
     vr_email_dest  VARCHAR2(1000); 
     vr_conteudo    VARCHAR2(4000);
-    vr_tempo       NUMBER;
     
     -- Variáveis de controle de calendário
     rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;    
@@ -54,63 +58,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
      FROM crapcop cop
      WHERE cop.cdcooper <> 3;
     
-    --> LOG de execuaco dos programas prcctl
-    PROCEDURE pc_gera_log_execucao(pr_nmprgexe  IN VARCHAR2,
-                                   pr_indexecu  IN VARCHAR2,
-                                   pr_cdcooper  IN INTEGER, 
-                                   pr_tpexecuc  IN VARCHAR2,
-                                   pr_idtiplog  IN VARCHAR2, -- I - inicio, E - erro ou F - Fim
-                                   pr_dtmvtolt  IN DATE) IS
-      vr_nmarqlog VARCHAR2(500);
-      vr_desdolog VARCHAR2(2000);
+    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
+                                    pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN    
       
-      --> Definir nome do log
-      vr_nmarqlog := 'prcctl_'||to_char(pr_dtmvtolt,'RRRRMMDD')||'.log';
-      
-      --> Definir descrição do log
-      vr_desdolog := 'Automatizado - '||to_char(SYSDATE,'HH24:MI:SS')||
-                     ' --> Coop.:'|| pr_cdcooper ||' '|| 
-                     pr_tpexecuc ||' - '||pr_nmprgexe|| ': '|| pr_indexecu;
-      
-        
-      btch0001.pc_gera_log_batch(pr_cdcooper     => 3, 
-                                 pr_ind_tipo_log => 1, 
-                                 pr_des_log      => vr_desdolog, 
-                                 pr_nmarqlog     => vr_nmarqlog);
-      
+      --> Controlar geração de log de execução dos jobs 
+      BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
+                               ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
+                               ,pr_nomdojob  => vr_nomdojob    --> Nome do job
+                               ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
+                               ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
+                               ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
                                 
-      -- Incluir log no proc_batch.log
-      IF pr_idtiplog = 'I' THEN --> Inicio
-        -- inicializar o tempo
-        vr_tempo := to_char(SYSDATE,'SSSSS'); 
+    END pc_controla_log_batch;
         
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                       ' --> Inicio da execucao.';
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                   pr_ind_tipo_log => 1, 
-                                   pr_des_log      => vr_desdolog); 
-                                   
-      ELSIF pr_idtiplog = 'E' THEN --> ERRO             
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                       ' --> ERRO:'||pr_indexecu;
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                   pr_ind_tipo_log => 1, 
-                                   pr_des_log      => vr_desdolog);
-                                   
-      ELSIF pr_idtiplog = 'F' THEN --> Fim         
-        vr_desdolog := to_char(SYSDATE,'HH24:MI:SS')||' - '|| vr_cdprogra ||
-                       ' --> Stored Procedure rodou em '|| 
-                       -- calcular tempo de execução
-                       to_char(to_date(to_char(SYSDATE,'SSSSS') - vr_tempo,'SSSSS'),'HH24:MI:SS');
-        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper, 
-                                   pr_ind_tipo_log => 1, 
-                                   pr_des_log      => vr_desdolog); 
-      END IF; 
-                                                                           
-    END pc_gera_log_execucao;
-    
-         
   BEGIN
     
     vr_dtdiahoje := TRUNC(SYSDATE);
@@ -208,12 +170,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         END IF;
         
         -- Log de inicio de execucao
-        pc_gera_log_execucao(pr_nmprgexe  => pr_cdprogra,
-                             pr_indexecu  => 'Inicio execucao',
-                             pr_cdcooper  => pr_cdcooper, 
-                             pr_tpexecuc  => NULL,
-                             pr_dtmvtolt  => rw_crapdat.dtmvtolt,
-                             pr_idtiplog  => 'I');
+        pc_controla_log_batch(pr_dstiplog => 'I');
                              
         --> Executar programa
         pc_crps705 (pr_cdcooper => pr_cdcooper, 
@@ -227,25 +184,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         IF vr_cdcritic > 0 OR
            vr_dscritic IS NOT NULL THEN 
              
-          pc_gera_log_execucao(pr_nmprgexe  => pr_cdprogra,
-                               pr_indexecu  => 'Fim execucao com critica: '||vr_dscritic ,
-                               pr_cdcooper  => pr_cdcooper, 
-                               pr_tpexecuc  => NULL,
-                               pr_dtmvtolt  => rw_crapdat.dtmvtolt,
-                               pr_idtiplog  => 'E');
+          pc_controla_log_batch(pr_dstiplog => 'E',
+                                pr_dscritic => vr_dscritic);
                                 
           RAISE vr_exc_email;    
                     
         END IF;   
           
         --> Log de fim de execucao
-        pc_gera_log_execucao(pr_nmprgexe  => pr_cdprogra,
-                             pr_indexecu  => 'Fim execucao',
-                             pr_cdcooper  => pr_cdcooper, 
-                             pr_tpexecuc  => NULL,
-                             pr_dtmvtolt  => rw_crapdat.dtmvtolt,
-                             pr_idtiplog  => 'F');
-        
+        pc_controla_log_batch(pr_dstiplog => 'F');
         
       ELSE 
         RAISE vr_exc_email;
