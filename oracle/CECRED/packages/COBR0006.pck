@@ -4577,6 +4577,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
                                 quantidade de dias seja parametrizada. Sera alterado 
                                 de 90 para 365 dias. (Douglas - Chamado 523329)
+
+                   23/12/2016 - Validar nulo na data de vencimento, emissão e valor do
+                                título. (AJFink - SD#581070)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4759,7 +4763,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_rec_cobranca.cdocorre = 01  OR    -- 01 - Remessa
        pr_rec_cobranca.cdocorre = 06  THEN  -- 06 - Alteracao Vencimento
         
-      IF pr_rec_cobranca.dtvencto < TRUNC(SYSDATE) OR 
+      IF pr_rec_cobranca.dtvencto IS NULL THEN --SD#581070
+        --Data de Vencimento Invalida
+        vr_rej_cdmotivo := '16';
+        RAISE vr_exc_reje;
+      ELSIF pr_rec_cobranca.dtvencto < TRUNC(SYSDATE) OR 
          pr_rec_cobranca.dtvencto > to_date('13/10/2049','dd/mm/RRRR')  THEN 
         -- Vencimento Fora do Prazo de Operacao
         vr_rej_cdmotivo := '18';
@@ -4779,7 +4787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- 21.3P Valida Valor do Titulo
     -- O valor do titulo sempre sera validado independente de ter gerado erro anteriormente
-    IF pr_rec_cobranca.vltitulo = 0 THEN
+    IF nvl(pr_rec_cobranca.vltitulo,0) = 0 THEN --SD#581070
       -- Valor do Titulo Invalido
       vr_rej_cdmotivo := '20';
       RAISE vr_exc_reje;
@@ -4822,7 +4830,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
     
     -- 26.3P Valida Data de Emissao
-    IF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
+    IF pr_rec_cobranca.dtemscob IS NULL THEN --SD#581070
+      -- Data de emissao inválida
+      vr_rej_cdmotivo := '24';
+      RAISE vr_exc_reje;
+    ELSIF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
        TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob    THEN
 
       -- Data de documento superior ao limite 13/10/2049 ou
@@ -7199,6 +7211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 quantidade de dias seja parametrizada. Sera alterado 
                                 de 90 para 365 dias. (Douglas - Chamado 523329)
 
+                   23/12/2016 - Validar nulo no valor do título. (AJFink - SD#581070)
+
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -7559,7 +7573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   
     -- 24.7 Valor do titulo
     -- O valor do titulo sempre sera validado independente de ter gerado erro anteriormente
-    IF pr_rec_cobranca.vltitulo = 0 THEN
+    IF nvl(pr_rec_cobranca.vltitulo,0) = 0 THEN --SD#581070
       
       -- Valor do Titulo Invalido
       vr_rej_cdmotivo := '20';
