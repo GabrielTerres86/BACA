@@ -243,11 +243,27 @@ CREATE OR REPLACE PACKAGE CECRED.ddda0001 AS
   em PLSQL através da rotina Progress via DataServer */
   PROCEDURE pc_retorno_operacao_tit_DDA(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                        ,pr_dscritic OUT VARCHAR2);
-
+  
   /* Procedure para chamar a rotina pc_remessa_titulos_dda
   em PLSQL através da rotina Progress via DataServer */
   PROCEDURE pc_remessa_titulos_dda(pr_cdcritic OUT crapcri.cdcritic%TYPE
                                   ,pr_dscritic OUT VARCHAR2);
+
+  /* Procedure para Executar retorno operacao Titulos DDA diretamente do ORACLE
+  --> Foi criado uma rotina para fazer o meio de campo pois não é permitido ter 
+      sobrecarga de método, pois estraga o schema holder                     */
+  PROCEDURE pc_retorno_tit_tab_DDA(pr_tab_remessa_dda  IN DDDA0001.typ_tab_remessa_dda  -- Remessa dda
+                                  ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda  -- Retorno dda
+                                  ,pr_cdcritic        OUT crapcri.cdcritic%type         -- Codigo de Erro
+                                  ,pr_dscritic        OUT VARCHAR2);                    -- Descricao de Erro
+ 
+  /* Procedure para Executar retorno da remessa da títulos da DDA diretamente do ORACLE
+  --> Foi criado uma rotina para fazer o meio de campo pois não é permitido ter 
+      sobrecarga de método, pois estraga o schema holder    */
+  PROCEDURE pc_remessa_tit_tab_dda(pr_tab_remessa_dda IN OUT DDDA0001.typ_tab_remessa_dda -- Remessa dda
+                                  ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda    -- Retorno dda
+                                  ,pr_cdcritic        OUT crapcri.cdcritic%type           -- Codigo de Erro
+                                  ,pr_dscritic        OUT VARCHAR2);                      -- Descricao de Erro
 
   --> Rotina para enviar email de alertas sobre beneficiarios/convenios
   PROCEDURE pc_email_alert_JDBNF( pr_cdcooper  IN crapceb.cdcooper%TYPE, --> Codigo da cooperativa
@@ -310,6 +326,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
   --                          alterando filtro de data na busca dos novos titulos, e ajustado mensagem para
   --                          exibir corretamente no Internetbank
   --                          SD388026 (Odirlei-AMcom) 
+  --
+  --             22/11/2016 - Alterado para torcar a chamada das procedures PC_RETORNO_OPERACAO_TIT_DDA 
+  --                          (pc_remessa_tit_tab_dda) e PC_REMESSA_TITULOS_DDA (pc_remessa_tit_tab_dda) 
+  --                          como públicas. (Renato Darosci - Supero)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -2723,7 +2744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
     END LOOP; -- Fim da busca pelos titulos
   
   END pc_grava_congpr_dda; /* Procedure para retorno remessa DDA */
-
+  
   /* Procedure para Executar retorno operacao Titulos DDA */
   PROCEDURE pc_retorno_operacao_tit_DDA(pr_tab_remessa_dda IN DDDA0001.typ_tab_remessa_dda --Remessa dda
                                        ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda --Retorno dda
@@ -3118,7 +3139,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ddda0001 AS
                        SQLERRM;
     END;
   END pc_remessa_titulos_dda;
+  
+  --###########################################################################################################--
+  -- PROCEDIMENTO PARA CHAMAR A ROTINA PC_RETORNO_OPERACAO_TIT_DDA DIRETAMENTE NO ORACLE
+  PROCEDURE pc_retorno_tit_tab_DDA(pr_tab_remessa_dda  IN DDDA0001.typ_tab_remessa_dda  -- Remessa dda
+                                  ,pr_tab_retorno_dda OUT DDDA0001.typ_tab_retorno_dda  -- Retorno dda
+                                  ,pr_cdcritic        OUT crapcri.cdcritic%type         -- Codigo de Erro
+                                  ,pr_dscritic        OUT VARCHAR2) IS                  -- Descricao de Erro
+  
+  BEGIN
+    
+    -- Chamar a rotina interna
+    pc_retorno_operacao_tit_DDA(pr_tab_remessa_dda => pr_tab_remessa_dda
+                               ,pr_tab_retorno_dda => pr_tab_retorno_dda
+                               ,pr_cdcritic        => pr_cdcritic
+                               ,pr_dscritic        => pr_dscritic);
+                                
+  END pc_retorno_tit_tab_DDA;
+  --###########################################################################################################--
+  -- PROCEDIMENTO PARA CHAMAR A ROTINA PC_RETORNO_OPERACAO_TIT_DDA DIRETAMENTE NO ORACLE
+  PROCEDURE pc_remessa_tit_tab_dda(pr_tab_remessa_dda IN OUT DDDA0001.typ_tab_remessa_dda  -- Remessa dda
+                                  ,pr_tab_retorno_dda    OUT DDDA0001.typ_tab_retorno_dda  -- Retorno dda
+                                  ,pr_cdcritic           OUT crapcri.cdcritic%type         -- Codigo de Erro
+                                  ,pr_dscritic           OUT VARCHAR2) IS                  -- Descricao de Erro
+  
+  BEGIN
+    
+    -- Chamar a rotina interna
+    pc_remessa_titulos_dda(pr_tab_remessa_dda => pr_tab_remessa_dda
+                          ,pr_tab_retorno_dda => pr_tab_retorno_dda
+                          ,pr_cdcritic        => pr_cdcritic
+                          ,pr_dscritic        => pr_dscritic);
 
+  END pc_remessa_tit_tab_dda;
+  --###########################################################################################################--
+  
   /* SubRotina para converter as informações da global temporary table
   wt_retorno_dda para PLTABLE e vice-versa */
   PROCEDURE pc_converte_retorno_ddda(pr_tporigem        IN VARCHAR2 --> Tipo da Origem: T[tb para pltable] OU P[pltable para tb]
