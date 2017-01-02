@@ -12,7 +12,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps681(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago
-   Data    : Marco/2014.                  Ultima atualizacao: 10/11/2015
+   Data    : Marco/2014.                  Ultima atualizacao: 05/12/2016
+
    Dados referentes ao programa: Projeto automatiza compe.
 
    Frequencia : Diario (Batch).
@@ -30,6 +31,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps681(pr_cdcooper IN crapcop.cdcooper%TY
 							
 			   13/10/2016 - Alterada leitura da tabela de parâmetros para utilização
 							da rotina padrão. (Rodrigo)                             
+
+                05/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
   ............................................................................ */
 
 
@@ -242,15 +246,14 @@ BEGIN -- Principal
   END IF;
 
   -- Para cooperativas com Incorporação
-  IF pr_cdcooper in(1,13) THEN
+  IF pr_cdcooper in(1,9,13) THEN
     -- Buscar dados da cooperativa incorporada
-    IF pr_cdcooper = 1 THEN
-      -- Para Viacredi >> Concredi
-      OPEN cr_crapcop(4);
-    ELSE
-      -- Para ScrCred >> Credimilsul
-      OPEN cr_crapcop(15);
-    END IF;
+    CASE pr_cdcooper
+      WHEN 1   THEN OPEN cr_crapcop(4);  --    VIACREDI --> CONCREDI
+      WHEN 13  THEN OPEN cr_crapcop(15); --     SCRCRED --> CREDIMILSUL
+      WHEN 9   THEN OPEN cr_crapcop(17); -- TRANSPOCRED --> TRANSULCRED
+    END CASE;    
+
     -- Retornar as informações
     FETCH cr_crapcop
      INTO rw_crapcop_incorp;
@@ -372,7 +375,8 @@ BEGIN -- Principal
 
           vr_conteudo := vr_conteudo || 
                          'Nao foi possível processar arquivo <b>'||vr_vet_arquivos(ind)||':'||
-                         '</b><br>&nbsp&nbsp&nbsp&nbsp - '||to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||
+                         '</b><br>'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||CHR(38)||'nbsp'||
+                         ' - '||to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||
                          ' --> '|| pr_dscritic ||'<br><br>';
           
           -- Reinicializa a variável de críticas

@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                                        ,pr_nmtelant IN VARCHAR2
                                        ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
@@ -234,7 +234,6 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
          31/03/2016 - Ajuste para nao deixar alinea zerada na validação de historicos
                (Adriano - SD 426308).
 
-
                26/04/2016 - Ajuste para evitar geracao de raise quando tiver erro de 
                             conversao para numerico (vr_cdcritic:= 843) (Daniel) 
                             
@@ -246,8 +245,10 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                             
                24/11/2016 - Limpar variavel de critica auxiliar vr_cdcritic_aux para 
                             cada conta do arquivo - Melhoria 69 (Lucas Ranghetti/Elton)
-                            
-               07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
+
+               03/12/2016 - Incorporação Transulcred (Guilherme/SUPERO)
+
+			   07/12/2016 - Ajustes referentes a M69, alinea 49 e leitura da crapneg
                             (Lucas Ranghetti/Elton)
      ............................................................................. */
 
@@ -4833,12 +4834,14 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
                     IF vr_cdcritic <> 999 THEN
                       -- Lógica para adição de sufixo para cooperativas incorporadas / migradas
-                      IF pr_cdcooper IN (1,2,13) THEN
+                      IF pr_cdcooper IN (1,2,13,9) THEN
                         -- Se houve incorporação
                         IF vr_cdcooper_incorp = 4 THEN
                           vr_dscritic:= LTrim(RTRIM(vr_dscritic)) || ' - Ass. CONCREDI ';
                         ELSIF vr_cdcooper_incorp = 15 THEN
                           vr_dscritic:= LTrim(RTRIM(vr_dscritic)) || ' - Ass. CREDIMILSUL ';
+                        ELSIF vr_cdcooper_incorp = 17 THEN
+                          vr_dscritic:= LTrim(RTRIM(vr_dscritic)) || ' - Ass. TRANSULCRED ';
                         ELSE
                           -- Testar migração comum
                           OPEN cr_craptco (pr_cdcopant => pr_cdcooper
@@ -5328,14 +5331,18 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        END IF;
 
        -- Buscar informações das Cooperativas Incorporadas a
-       -- Viacredi (Concredi) e ScrCred (Credimilsul)
-       IF pr_cdcooper IN(1,13) THEN
+       -- 1-Viacredi (4-Concredi) e 13-ScrCred (15-Credimilsul) 9-Transpocred(17-Transulcred)
+       IF pr_cdcooper IN(1,9,13) THEN
          -- Buscar informações da cooperativa Incorporada
-         IF pr_cdcooper = 1 THEN
+         CASE pr_cdcooper
+            WHEN  1 THEN -- Viacredi
            vr_cdcooper_incorp := 4;  --> Concredi
-         ELSE
+            WHEN  9 THEN -- Transpocred
+              vr_cdcooper_incorp := 17; --> Transulcred
+            WHEN 13 THEN -- ScrCred
            vr_cdcooper_incorp := 15; --> CredimilSul
-         END IF;
+         END CASE;
+
          -- Buscar informações da mesma
          OPEN cr_crapcop(pr_cdcooper => vr_cdcooper_incorp);
          FETCH cr_crapcop INTO rw_crapcop_incorp;
@@ -5440,13 +5447,13 @@ CREATE OR REPLACE PROCEDURE cecred.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        IF rw_crapcop.cdcooper = 3 THEN
          vr_nmarquiv        := '1%.RET';
          vr_nmarquiv_incorp := NULL;
-       -- Validar incorporação Concredi > Via e Credimilsul > SCRCred
-       ELSIF rw_crapcop.cdcooper IN(1,13) THEN
-         vr_nmarquiv       := '1'|| TO_CHAR(vr_cdagectl,'FM0009') || '%.RET';
+       -- Validar incorporação: 1-Viacredi (4-Concredi) e 13-ScrCred (15-Credimilsul) 9-Transpocred(17-Transulcred)
+       ELSIF rw_crapcop.cdcooper IN(1,9,13) THEN
+         vr_nmarquiv        := '1'|| TO_CHAR(vr_cdagectl,'FM0009')        || '%.RET';
          vr_nmarquiv_incorp := '1'|| TO_CHAR(vr_cdagectl_incorp,'FM0009') || '%.RET';
        ELSE
          -- As demais cooperativas, executa o processo atual (Guilherme/Supero)
-         vr_nmarquiv       := '1'|| TO_CHAR(vr_cdagectl,'FM0009') || '%.RET';
+         vr_nmarquiv        := '1'|| TO_CHAR(vr_cdagectl,'FM0009') || '%.RET';
          vr_nmarquiv_incorp := NULL;
        END IF;
 

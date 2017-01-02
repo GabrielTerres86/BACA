@@ -166,12 +166,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     --  Sistema  : Rotinas genericas para RISCO
     --  Sigla    : RISC
     --  Autor    : ?????
-    --  Data     : ?????                         Ultima atualizacao: ??/??/????
+    --  Data     : ?????                         Ultima atualizacao: 31/12/2016
     --
     --  Dados referentes ao programa:
     --
-    --   Objetivo  :
-    --
+    --   Objetivo  : 31/12/2016 - Incorporação Transulcred -> Transpocred (Oscar).
+    --     
     -- .............................................................................
 
   vr_return BOOLEAN := FALSE;
@@ -264,6 +264,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END IF;
 
     END IF;
+    
+    
+    -- Migracao Transulcred -> Transpocred
+    IF par_cdcooper = 09 AND
+       par_dtrefere <= to_date('31/12/2016', 'dd/mm/YYYY') THEN
+
+      OPEN cr_craptco(09, 17, par_nrdconta);
+      FETCH cr_craptco
+        INTO rw_craptco;
+        vr_return := cr_craptco%FOUND;
+      CLOSE cr_craptco;
+      IF vr_return THEN
+        RETURN FALSE;
+      END IF;
+
+    END IF;
+
 
     RETURN TRUE;
 
@@ -468,7 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                          par_dtrefere,
                                          par_cdmodali) LOOP
 
-      IF par_cdcooper IN ( 1, 13 ,16 ) THEN
+      IF par_cdcooper IN ( 1, 13 ,16, 09) THEN
         IF NOT fn_verifica_conta_migracao(rw_crapris_jur.cdcooper,
                                           rw_crapris_jur.nrdconta,
                                           rw_crapris_jur.dtrefere) THEN
@@ -1249,7 +1266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     FOR rw_crapris IN cr_crapris(pr_cdcooper,
                                  vr_dtrefere) LOOP
 
-      IF pr_cdcooper IN ( 1, 13 ,16 ) THEN
+      IF pr_cdcooper IN ( 1, 13 ,16, 09) THEN
 
         IF NOT fn_verifica_conta_migracao(rw_crapris.cdcooper,
                                           rw_crapris.nrdconta,
@@ -1787,7 +1804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     FOR rw_crapris_lnu IN cr_crapris_lnu(pr_cdcooper,
                                          vr_dtrefere) LOOP
 
-      IF pr_cdcooper IN ( 1, 13 ,16 ) THEN
+      IF pr_cdcooper IN ( 1, 13 ,16, 09) THEN
 
         IF NOT fn_verifica_conta_migracao(rw_crapris_lnu.cdcooper,
                                           rw_crapris_lnu.nrdconta,
