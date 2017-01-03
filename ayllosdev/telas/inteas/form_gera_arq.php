@@ -32,6 +32,29 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
 $registros = $xmlObj->roottag->tags[0]->tags;
 
+/* Temporario para forcar a cooperativa Transulcred na lista */
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <cdcooper>17</cdcooper>";
+$xml .= "   <flgativo>0</flgativo>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "CADA0001", "LISTA_COOPERATIVAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObj = getObjectXML($xmlResult);
+
+if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+    $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+    if ($msgErro == "") {
+        $msgErro = $xmlObj->roottag->tags[0]->cdata;
+    }
+
+    exibeErroNew($msgErro);
+    exit();
+}
+
+$transulcred = $xmlObj->roottag->tags[0]->tags;
+
 function exibeErroNew($msgErro) {
     echo 'hideMsgAguardo();';
     echo 'showError("error","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");';
@@ -49,7 +72,16 @@ function exibeErroNew($msgErro) {
         <option value="0"><? echo utf8ToHtml(' Todas') ?></option> 
 		<?php
 		foreach ($registros as $r) {
+			if ( getByTagName($r->tags, 'cdcooper') <> '' ) {
+		?>
+			<option value="<?= getByTagName($r->tags, 'cdcooper'); ?>"><?= getByTagName($r->tags, 'nmrescop'); ?></option> 
 			
+			<?php
+			}
+		}
+		?>
+		<?php
+		foreach ($transulcred as $r) {
 			if ( getByTagName($r->tags, 'cdcooper') <> '' ) {
 		?>
 			<option value="<?= getByTagName($r->tags, 'cdcooper'); ?>"><?= getByTagName($r->tags, 'nmrescop'); ?></option> 

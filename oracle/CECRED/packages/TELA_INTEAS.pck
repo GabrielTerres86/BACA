@@ -148,6 +148,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                e a conta ainda possui saldos, já dtelimin é apos a conta não possuir mais movimentação
                                e os saldos zerados. (Odirlei-AMcom)
                                
+                  29/12/2016 - Criado funcao fn_ignora_conta para identificar contas que foram migradas da
+                               Transulcred - Transpocred e se o periodo final for ate final de 2016. Na cooperativa
+                               9 - Transpocred, soh devemos exportar essas contas apos 2016. Ajustado buscas
+                               de cooperativas para trazer alem daquelas ativas, trazer tambem a transulcred. Isso
+                               se faz necessario, pois a exportacao da Transulcred ainda ocorrera em janeiro 2017,
+                               buscando dados de 2016.
+                               Nas proximas alteracoes, remover essas funcoes para evitar deixar lixo no codigo.
+                               
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
   FUNCTION fn_nrcpfcgc_easy (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE,
@@ -176,6 +184,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                                                  '                  ')
                           ,'[^a-zA-Z0-9Ç@:._ +,();=-]+',' ');
   END fn_remove_caract_espec;
+
+  /* Funcao responsavel por verificar se a conta eh migrada da TRANSULCRED - TRANSPOCRED,
+     e se o ano de referencia eh 2016. Apos a geracao deste periodo, devemos apagar
+     essa funcao e os locais de utilizacao. 
+     
+     Quando retornar verdadeiro, a conta nao sera gerada nos arquivos txt. */
+  FUNCTION fn_ignorar_conta(pr_cdcooper IN crapass.cdcooper%TYPE,
+                            pr_nrdconta IN crapass.nrdconta%TYPE,
+                            pr_dtiniger IN DATE,
+                            pr_dtfimger IN DATE) RETURN BOOLEAN IS
+    
+    vr_idx PLS_INTEGER;
+    CURSOR cr_craptco(pr_cdcooper craptco.cdcooper%TYPE,
+                      pr_nrdconta craptco.nrdconta%TYPE) IS
+     SELECT 1
+       FROM craptco tco
+      WHERE tco.cdcooper = 9  /* Transpocred */
+        AND tco.cdcopant = 17 /* Transulcred */
+        AND tco.cdcooper = pr_cdcooper
+        AND tco.nrdconta = pr_nrdconta;
+        
+  BEGIN
+   /* Se nao for Transpocred */
+   IF (pr_cdcooper <> 9 ) THEN
+     RETURN FALSE;
+   END IF;
+   
+   /* Se o periodo final for menor ou igual a 2016, vamos buscar a conta na CRAPTCO,
+      se existir o registro, a conta nao deve ser exportada */
+   IF (extract(year from pr_dtfimger) <= 2016) THEN
+       
+       /* Vamos verificar se a conta foi migrada */
+       OPEN cr_craptco (pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta);
+       FETCH cr_craptco INTO vr_idx;
+       IF cr_craptco%NOTFOUND THEN
+         CLOSE cr_craptco;
+         RETURN FALSE;
+       ELSE
+         CLOSE cr_craptco;
+         RETURN TRUE;
+       END IF;
+   ELSE
+     RETURN FALSE;
+   END IF;
+  END fn_ignorar_conta;
   
   --> Gerar log da easyway
   PROCEDURE pc_gera_log_easyway (pr_nmarqlog IN VARCHAR2,
@@ -242,7 +296,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper
-         AND cop.flgativo = 1
+             /* Ou a cooperativa esta ativa ou eh a Transulcred */
+         AND (cop.flgativo = 1 or cop.cdcooper = 17)
        ORDER BY cop.cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
      
@@ -890,6 +945,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                                    pr_dtiniger => pr_dtiniger,
                                                    pr_dtfimger => pr_dtfimger) LOOP
       
+      /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
+         o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
+      IF (fn_ignorar_conta(pr_cdcooper => rw_crapass_nrcpfcgc.cdcooper,
+                           pr_nrdconta => rw_crapass_nrcpfcgc.nrdconta,
+                           pr_dtiniger => pr_dtiniger,
+                           pr_dtfimger => pr_dtfimger)) THEN
+        CONTINUE;
+      END IF;
+    
       -- loop para garantir que todas as pessoas sejam enviadas para o arquivo.
       -- Visto que os dados principais do associado devem ser os da conta mais atualizada
       -- caso exista mais de uma conta, assim o loop força que primeiro seja enviado a conta mais atualizada
@@ -955,7 +1019,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
     FOR rw_crapass_nrcpfcgc IN cr_crapass_nrcpfcgc(pr_nrdconta => pr_nrdconta,
                                                    pr_dtiniger => pr_dtiniger,
                                                    pr_dtfimger => pr_dtfimger) LOOP
-
+        
+        /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
+         o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
+        IF (fn_ignorar_conta(pr_cdcooper => rw_crapass_nrcpfcgc.cdcooper,
+                             pr_nrdconta => rw_crapass_nrcpfcgc.nrdconta,
+                             pr_dtiniger => pr_dtiniger,
+                             pr_dtfimger => pr_dtfimger)) THEN
+          CONTINUE;
+        END IF;
+        
         --->>> TERCEIROS DOS ASSOCIADOS (PROCURADORES E SOCIOS) <<<---
         IF rw_crapass_nrcpfcgc.inpessoa = 1 THEN
           -- Buscar procuradoes e responsaveis legais da conta
@@ -1219,7 +1292,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
-         AND cop.flgativo = 1
+             /* Ou a cooperativa esta ativa ou eh a Transulcred */
+         AND (cop.flgativo = 1 or cop.cdcooper = 17)
        ORDER BY cop.cdcooper;
           
     --> Buscar informacoes dos cooperados
@@ -1450,6 +1524,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                    pr_dtiniger => pr_dtiniger,
                                    pr_dtfimger => pr_dtfimger) LOOP
                                     
+        /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
+         o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
+        IF (fn_ignorar_conta(pr_cdcooper => rw_crapass.cdcooper,
+                             pr_nrdconta => rw_crapass.nrdconta,
+                             pr_dtiniger => pr_dtiniger,
+                             pr_dtfimger => pr_dtfimger)) THEN
+          CONTINUE;
+        END IF;
+        
         --> Tratativa para não enviar os dados da propria cooperativa                            
         IF rw_crapass.nrcpfcgc = rw_crapcop.nrdocnpj THEN
           continue;
@@ -1631,7 +1714,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
-         AND cop.flgativo = 1
+             /* Ou a cooperativa esta ativa ou eh a Transulcred */
+         AND (cop.flgativo = 1 or cop.cdcooper = 17)
        ORDER BY cop.cdcooper;
  
     /* Buscar o ultimo dia de cada mes do periodo*/
@@ -1775,7 +1859,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                       pr_dtiniger => pr_dtiniger,
                                       pr_dtfimger => pr_dtfimger) LOOP
                                        
-                                       
+          
+          /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
+           o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
+          IF (fn_ignorar_conta(pr_cdcooper => rw_crapsda.cdcooper,
+                               pr_nrdconta => rw_crapsda.nrdconta,
+                               pr_dtiniger => pr_dtiniger,
+                               pr_dtfimger => pr_dtfimger)) THEN
+            CONTINUE;
+          END IF;
+                                     
           --> Tratativa para não enviar os dados da propria cooperativa                            
           IF rw_crapsda.nrcpfcgc = rw_crapcop.nrdocnpj THEN
             continue;
@@ -1915,7 +2008,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
-         AND cop.flgativo = 1
+             /* Ou a cooperativa esta ativa ou eh a Transulcred */
+         AND (cop.flgativo = 1 or cop.cdcooper = 17)
        ORDER BY cop.cdcooper;
                      
     --> Buscar titulares
@@ -2101,6 +2195,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_dtiniger => pr_dtiniger,
                                     pr_dtfimger => pr_dtfimger) LOOP
                                        
+        /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
+           o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
+        IF (fn_ignorar_conta(pr_cdcooper => rw_crapttl.cdcooper,
+                             pr_nrdconta => rw_crapttl.nrdconta,
+                             pr_dtiniger => pr_dtiniger,
+                             pr_dtfimger => pr_dtfimger)) THEN
+          CONTINUE;
+        END IF;
+        
         --> Tratativa para não enviar os dados da propria cooperativa                            
         IF rw_crapttl.nrcpfcgc = rw_crapcop.nrdocnpj THEN
           continue;
@@ -2157,6 +2260,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_dtfimger => pr_dtfimger) LOOP
                                        
                                        
+        /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
+           o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
+        IF (fn_ignorar_conta(pr_cdcooper => rw_crapass.cdcooper,
+                             pr_nrdconta => rw_crapass.nrdconta,
+                             pr_dtiniger => pr_dtiniger,
+                             pr_dtfimger => pr_dtfimger)) THEN
+          CONTINUE;
+        END IF;
+        
         -- Montar a linha conforme layout easyway
         pc_escreve_linha_layout(pr_cdcooper => rw_crapass.cdcooper,
                                 pr_nrcpfcgc => rw_crapass.nrcpfcgc,
@@ -2296,7 +2408,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
              cop.nrdocnpj
         FROM crapcop cop
        WHERE cop.cdcooper = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper) 
-         AND cop.flgativo = 1
+             /* Ou a cooperativa esta ativa ou eh a Transulcred */
+         AND (cop.flgativo = 1 or cop.cdcooper = 17)
        ORDER BY cop.cdcooper;
  
     --> Buscar informacoes dos cooperados
@@ -2387,13 +2500,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
          AND avt.tpctrato = 6
          /* Nao exportar repetir se o CPF já conter como rep. legal */
          AND NOT EXISTS (SELECT 1
-                           FROM crapcrl crl,
-                                crapass ass
-                          WHERE crl.cdcooper = ass.cdcooper
+                           FROM crapcrl crl
+                      LEFT JOIN crapass ass
+                             ON crl.cdcooper = ass.cdcooper
                             AND crl.nrdconta = ass.nrdconta
-                            AND crl.cdcooper = avt.cdcooper
+                          WHERE crl.cdcooper = avt.cdcooper
                             AND crl.nrctamen = avt.nrdconta
-                            AND nvl(ass.nrcpfcgc,crl.nrcpfcgc) = avt.nrcpfcgc);
+                            AND nvl(ass.nrcpfcgc,crl.nrcpfcgc) = avt.nrcpfcgc)
+         /* Nao exportar como terceiro se o procurador for um titular daquela conta. */
+         AND NOT EXISTS (SELECT 1
+                           FROM crapttl ttl
+                          WHERE ttl.cdcooper = avt.cdcooper
+                            AND ttl.nrdconta = avt.nrdconta
+                            AND ttl.nrcpfcgc = avt.nrcpfcgc);
     
     --> Pessoa juridica
     CURSOR cr_crapavt (pr_cdcooper crapcop.cdcooper%TYPE,
@@ -2516,7 +2635,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                     pr_nrdconta => pr_nrdconta,
                                     pr_dtiniger => pr_dtiniger,
                                     pr_dtfimger => pr_dtfimger) LOOP
-                                       
+        
+        /* Se for conta migrada na incorporacao Transulcred -> Transpocred e 
+           o periodo final for igual ou menor que 2016, vamos ignorar a conta. */
+        IF (fn_ignorar_conta(pr_cdcooper => rw_crapass.cdcooper,
+                             pr_nrdconta => rw_crapass.nrdconta,
+                             pr_dtiniger => pr_dtiniger,
+                             pr_dtfimger => pr_dtfimger)) THEN
+          CONTINUE;
+        END IF;                               
                                        
         --> Tratativa para não enviar os dados da propria cooperativa                            
         IF rw_crapass.nrcpfcgc = rw_crapcop.nrdocnpj THEN
