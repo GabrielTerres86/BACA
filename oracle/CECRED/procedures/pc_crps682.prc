@@ -928,7 +928,7 @@ BEGIN
                              '          COTAS ' || '       DESCONTO ' ||
                              '        CREDITO ' || ' PARCELA VENCER ' ||
                              '     RENDIMENTO ' || ' PARCELA MAXIMA' ||
-                             '     CELULAR '    || ' BLOQUEADO' || chr(13));
+                             '      CELULAR '    || ' BLOQUEADO' || chr(13));
 
             END IF;
 
