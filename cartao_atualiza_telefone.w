@@ -50,8 +50,8 @@ DEFINE VARIABLE aux_flgderro        AS LOGICAL              NO-UNDO.
 &Scoped-define FRAME-NAME f_cartao_atualiza_telefone
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS RECT-3 RECT-4 RECT-2 IMAGE-40 IMAGE-41 ~
-ed_nr_doddd ed_nrdofone ed_mensagem Btn_G Btn_H 
+&Scoped-Define ENABLED-OBJECTS RECT-3 RECT-4 IMAGE-41 IMAGE-43 ed_nr_doddd ~
+ed_nrdofone ed_mensagem Btn_D Btn_H 
 &Scoped-Define DISPLAYED-OBJECTS ed_nr_doddd ed_nrdofone ed_mensagem 
 
 /* Custom List Definitions                                              */
@@ -72,22 +72,22 @@ DEFINE VARIABLE temporizador AS WIDGET-HANDLE NO-UNDO.
 DEFINE VARIABLE chtemporizador AS COMPONENT-HANDLE NO-UNDO.
 
 /* Definitions of the field level widgets                               */
-DEFINE BUTTON Btn_G 
-     LABEL "CONTINUAR" 
-     SIZE 61 BY 3.33
-     FONT 8.
-
-DEFINE BUTTON Btn_H AUTO-END-KEY 
+DEFINE BUTTON Btn_D AUTO-END-KEY 
      LABEL "VOLTAR" 
      SIZE 61 BY 3.33
      FONT 8.
 
-DEFINE VARIABLE ed_mensagem AS CHARACTER INITIAL "Informe seu número de telefone atualizado." 
-     VIEW-AS EDITOR
-     SIZE 61 BY 4.05
-     BGCOLOR 7 FGCOLOR 14 FONT 14 NO-UNDO.
+DEFINE BUTTON Btn_H 
+     LABEL "CONTINUAR" 
+     SIZE 61 BY 3.33
+     FONT 8.
 
-DEFINE VARIABLE ed_nrdofone AS CHARACTER FORMAT "9(9)":U 
+DEFINE VARIABLE ed_mensagem AS CHARACTER INITIAL "                                                                                                             Informe seu número de telefone atualizado." 
+     VIEW-AS EDITOR
+     SIZE 119 BY 4.43
+     BGCOLOR 7 FGCOLOR 14 FONT 8 NO-UNDO.
+
+DEFINE VARIABLE ed_nrdofone AS CHARACTER FORMAT "x(9)":U 
      VIEW-AS FILL-IN 
      SIZE 44.2 BY 2.14
      FGCOLOR 1 FONT 13 NO-UNDO.
@@ -97,12 +97,12 @@ DEFINE VARIABLE ed_nr_doddd AS CHARACTER FORMAT "x(2)":U
      SIZE 11.2 BY 2.14
      FGCOLOR 1 FONT 13 NO-UNDO.
 
-DEFINE IMAGE IMAGE-40
+DEFINE IMAGE IMAGE-41
      FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
-DEFINE IMAGE IMAGE-41
-     FILENAME "Imagens/seta_dir.gif":U TRANSPARENT
+DEFINE IMAGE IMAGE-43
+     FILENAME "Imagens/seta_esq.gif":U TRANSPARENT
      SIZE 5 BY 3.05.
 
 DEFINE RECTANGLE RECT-101
@@ -120,10 +120,6 @@ DEFINE RECTANGLE RECT-103
      SIZE 123 BY .24
      BGCOLOR 2 .
 
-DEFINE RECTANGLE RECT-2
-     EDGE-PIXELS 6 GRAPHIC-EDGE  NO-FILL   
-     SIZE 71 BY 3.33.
-
 DEFINE RECTANGLE RECT-3
      EDGE-PIXELS 4 GRAPHIC-EDGE  NO-FILL   
      SIZE 13.2 BY 2.62.
@@ -138,29 +134,25 @@ DEFINE RECTANGLE RECT-4
 DEFINE FRAME f_cartao_atualiza_telefone
      ed_nr_doddd AT ROW 9.81 COL 70.8 COLON-ALIGNED NO-LABEL WIDGET-ID 142
      ed_nrdofone AT ROW 12.91 COL 70.8 COLON-ALIGNED NO-LABEL WIDGET-ID 146
-     ed_mensagem AT ROW 18.29 COL 12 NO-LABEL WIDGET-ID 164 NO-TAB-STOP 
-     Btn_G AT ROW 19.1 COL 94.4 WIDGET-ID 130
-     Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 132
-     "     DDD:" VIEW-AS TEXT
-          SIZE 40 BY 2.38 AT ROW 9.62 COL 31 WIDGET-ID 152
-          FGCOLOR 1 FONT 13
+     ed_mensagem AT ROW 17.33 COL 139 RIGHT-ALIGNED NO-LABEL WIDGET-ID 188 NO-TAB-STOP 
+     Btn_D AT ROW 24.1 COL 6 WIDGET-ID 132
+     Btn_H AT ROW 24.1 COL 94.4 WIDGET-ID 130
      "    ATUALIZAÇÃO TELEFONE" VIEW-AS TEXT
           SIZE 122 BY 3.33 AT ROW 1.48 COL 21 WIDGET-ID 128
           FGCOLOR 1 FONT 13
-     "Para continuar, tecle ENTRA" VIEW-AS TEXT
-          SIZE 63.4 BY 1.67 AT ROW 24.81 COL 16 WIDGET-ID 154
-          FGCOLOR 0 FONT 8
      "TELEFONE:" VIEW-AS TEXT
           SIZE 40 BY 2.05 AT ROW 12.91 COL 70 RIGHT-ALIGNED WIDGET-ID 150
           FGCOLOR 1 FONT 13
+     "     DDD:" VIEW-AS TEXT
+          SIZE 40 BY 2.38 AT ROW 9.62 COL 31 WIDGET-ID 152
+          FGCOLOR 1 FONT 13
      RECT-3 AT ROW 9.57 COL 71.8 WIDGET-ID 136
      RECT-4 AT ROW 12.67 COL 71.8 WIDGET-ID 138
-     RECT-2 AT ROW 24.1 COL 12 WIDGET-ID 160
      RECT-101 AT ROW 5.05 COL 19.6 WIDGET-ID 118
      RECT-102 AT ROW 5.52 COL 19.6 WIDGET-ID 120
      RECT-103 AT ROW 5.29 COL 19.6 WIDGET-ID 116
-     IMAGE-40 AT ROW 24.24 COL 156 WIDGET-ID 174
-     IMAGE-41 AT ROW 19.24 COL 156 WIDGET-ID 176
+     IMAGE-41 AT ROW 24.19 COL 156 WIDGET-ID 176
+     IMAGE-43 AT ROW 24.33 COL 1 WIDGET-ID 186
     WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
          SIDE-LABELS NO-UNDERLINE THREE-D 
          AT COL 1 ROW 1
@@ -220,7 +212,10 @@ ASSIGN w_cartao_atualiza_telefone = CURRENT-WINDOW.
   VISIBLE,,RUN-PERSISTENT                                               */
 /* SETTINGS FOR FRAME f_cartao_atualiza_telefone
    NOT-VISIBLE FRAME-NAME                                               */
+/* SETTINGS FOR EDITOR ed_mensagem IN FRAME f_cartao_atualiza_telefone
+   ALIGN-R                                                              */
 ASSIGN 
+       ed_mensagem:AUTO-INDENT IN FRAME f_cartao_atualiza_telefone      = TRUE
        ed_mensagem:READ-ONLY IN FRAME f_cartao_atualiza_telefone        = TRUE.
 
 /* SETTINGS FOR RECTANGLE RECT-101 IN FRAME f_cartao_atualiza_telefone
@@ -300,9 +295,9 @@ END.
 &ANALYZE-RESUME
 
 
-&Scoped-define SELF-NAME Btn_G
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_atualiza_telefone
-ON ANY-KEY OF Btn_G IN FRAME f_cartao_atualiza_telefone /* CONTINUAR */
+&Scoped-define SELF-NAME Btn_D
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_atualiza_telefone
+ON ANY-KEY OF Btn_D IN FRAME f_cartao_atualiza_telefone /* VOLTAR */
 DO:
     RUN tecla.
 END.
@@ -311,8 +306,35 @@ END.
 &ANALYZE-RESUME
 
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_G w_cartao_atualiza_telefone
-ON CHOOSE OF Btn_G IN FRAME f_cartao_atualiza_telefone /* CONTINUAR */
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_D w_cartao_atualiza_telefone
+ON CHOOSE OF Btn_D IN FRAME f_cartao_atualiza_telefone /* VOLTAR */
+DO:
+
+    /* NAO DEIXAR SEGUIR A DIANTE SE CLICOU EM VOLTAR */
+    par_continua = FALSE.
+
+
+    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
+    RETURN NO-APPLY.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME Btn_H
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_atualiza_telefone
+ON ANY-KEY OF Btn_H IN FRAME f_cartao_atualiza_telefone /* CONTINUAR */
+DO:
+    RUN tecla.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_atualiza_telefone
+ON CHOOSE OF Btn_H IN FRAME f_cartao_atualiza_telefone /* CONTINUAR */
 DO:
 
     /* Verifica se usuario informou o DDD */
@@ -346,6 +368,8 @@ DO:
         PAUSE 3 NO-MESSAGE.
         h_mensagem:HIDDEN = YES.
 
+        APPLY "ENTRY" TO ed_nrdofone.  
+
         aux_flgderro = YES.
     END.
 
@@ -372,42 +396,34 @@ END.
 &ANALYZE-RESUME
 
 
-&Scoped-define SELF-NAME Btn_H
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_atualiza_telefone
-ON ANY-KEY OF Btn_H IN FRAME f_cartao_atualiza_telefone /* VOLTAR */
-DO:
-    RUN tecla.
-END.
-
-/* _UIB-CODE-BLOCK-END */
-&ANALYZE-RESUME
-
-
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL Btn_H w_cartao_atualiza_telefone
-ON CHOOSE OF Btn_H IN FRAME f_cartao_atualiza_telefone /* VOLTAR */
-DO:
-
-    /* NAO DEIXAR SEGUIR A DIANTE SE CLICOU EM VOLTAR */
-    par_continua = FALSE.
-
-
-    APPLY "WINDOW-CLOSE" TO CURRENT-WINDOW.  
-    RETURN NO-APPLY.
-END.
-
-/* _UIB-CODE-BLOCK-END */
-&ANALYZE-RESUME
-
-
 &Scoped-define SELF-NAME ed_nrdofone
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL ed_nrdofone w_cartao_atualiza_telefone
 ON ANY-KEY OF ed_nrdofone IN FRAME f_cartao_atualiza_telefone
 DO:
     RUN tecla.
 
-    IF  KEY-FUNCTION(LASTKEY) = "G"  THEN
+    IF  KEY-FUNCTION(LASTKEY) = "H"  THEN
+DO:
+           IF  LENGTH(ed_nrdofone:SCREEN-VALUE) < 8 THEN 
+               DO:
+                   RUN mensagem.w (INPUT YES,
+                                   INPUT "    ATENÇÃO  ",
+                                   INPUT "",
+                                   INPUT "",
+                                   INPUT "Telefone inválido.",
+                                   INPUT "",
+                                   INPUT "").
+
+                   PAUSE 3 NO-MESSAGE.
+                   h_mensagem:HIDDEN = YES.
+
+                   APPLY "ENTRY" TO ed_nrdofone.
+    RETURN NO-APPLY.
+END.
+           ELSE 
         DO:
-            APPLY "CHOOSE" TO Btn_G.
+                   APPLY "CHOOSE" TO Btn_H.
+               END.
         END.
     ELSE
     IF  KEY-FUNCTION(LASTKEY) = "BACKSPACE"  THEN
@@ -487,7 +503,7 @@ END.
 &Scoped-define SELF-NAME temporizador
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL temporizador w_cartao_atualiza_telefone OCX.Tick
 PROCEDURE temporizador.t_cartao_atualiza_telefone.Tick .
-APPLY "CHOOSE" TO Btn_H IN FRAME f_cartao_atualiza_telefone.
+APPLY "CHOOSE" TO Btn_D IN FRAME f_cartao_atualiza_telefone.
 
 END PROCEDURE.
 
@@ -611,8 +627,8 @@ PROCEDURE enable_UI :
   RUN control_load.
   DISPLAY ed_nr_doddd ed_nrdofone ed_mensagem 
       WITH FRAME f_cartao_atualiza_telefone.
-  ENABLE RECT-3 RECT-4 RECT-2 IMAGE-40 IMAGE-41 ed_nr_doddd ed_nrdofone 
-         ed_mensagem Btn_G Btn_H 
+  ENABLE RECT-3 RECT-4 IMAGE-41 IMAGE-43 ed_nr_doddd ed_nrdofone ed_mensagem 
+         Btn_D Btn_H 
       WITH FRAME f_cartao_atualiza_telefone.
   {&OPEN-BROWSERS-IN-QUERY-f_cartao_atualiza_telefone}
   VIEW w_cartao_atualiza_telefone.
@@ -643,13 +659,13 @@ END PROCEDURE.
 PROCEDURE tecla :
 ASSIGN chtemporizador:t_cartao_atualiza_telefone:INTERVAL = 0.
 
-    IF  KEY-FUNCTION(LASTKEY) = "G"                      AND
-        Btn_G:SENSITIVE IN FRAME f_cartao_atualiza_telefone  THEN
-        APPLY "CHOOSE" TO Btn_G.
-    ELSE
     IF  KEY-FUNCTION(LASTKEY) = "H"                      AND
         Btn_H:SENSITIVE IN FRAME f_cartao_atualiza_telefone  THEN
         APPLY "CHOOSE" TO Btn_H.
+    ELSE
+    IF  KEY-FUNCTION(LASTKEY) = "D"                      AND
+        Btn_D:SENSITIVE IN FRAME f_cartao_atualiza_telefone  THEN
+        APPLY "CHOOSE" TO Btn_D.
     ELSE
         RETURN NO-APPLY.
 
