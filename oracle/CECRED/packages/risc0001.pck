@@ -870,7 +870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                              WHERE t.cdcooper = ris.cdcooper
                                AND t.nrdconta = ris.nrdconta
                                AND t.cdcopant = pr_cdcopant) OR
-                TO_DATE(pr_dtrefere, 'dd/mm/YYYY') > TO_DATE(pr_dtincorp, 'dd/mm/YYYY'))
+               pr_dtrefere > pr_dtincorp)
           GROUP BY ris.inpessoa
                   ,ris.innivris
           HAVING SUM(ris.vljura60) > 0
