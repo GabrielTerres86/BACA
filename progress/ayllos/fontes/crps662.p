@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 24/10/2016
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 03/01/2017
 
    Dados referentes ao programa:
 
@@ -65,12 +65,15 @@
                              e nao mais no proc_batch.log SD402939 (Odirlei-AMcom)
                 
                 
-				21/06/2016 - Ajuste para utilizar o pacote transabbc ao chamar o script
-						     de comunicação com a ABBC, ao invés de deixar o IP fixo
-							 (Adriano - SD 468880).
+                21/06/2016 - Ajuste para utilizar o pacote transabbc ao chamar o script
+                             de comunicação com a ABBC, ao invés de deixar o IP fixo
+                            (Adriano - SD 468880).
 
-				24/10/2016 - Ajustes para terceira execucao dos proocessos
-				             DEBSIC, DEBCNS, DEBNET - Melhoria349 (Tiago/Elton).
+                24/10/2016 - Ajustes para terceira execucao dos proocessos
+                             DEBSIC, DEBCNS, DEBNET - Melhoria349 (Tiago/Elton).
+                             
+                03/01/2017 - Ajuste incorporacao no envio de arquivos (Diego).
+                
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -2855,6 +2858,30 @@ PROCEDURE carrega_tabela_envio.
                            aux_tparquiv = "DOCTOS".
                        
                     RUN verifica_arquivos.
+            
+                    /*** Procura arquivos DEVOLU ***/
+                    ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
+                                          "/abbc/1" + STRING(b-crapcop.cdagectl,"9999") +
+                                          "*.DV*"
+                           aux_tparquiv = "DEVOLU".
+                       
+                    RUN verifica_arquivos.
+                    
+                    /*** Procura arquivos DEVOLU ***/
+                    ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
+                                          "/abbc/5" + STRING(b-crapcop.cdagectl,"9999") +
+                                          "*.DVS"
+                           aux_tparquiv = "DEVOLU".
+                       
+                    RUN verifica_arquivos.
+                END.
+
+            END.
+        ELSE IF  crabcop.cdcooper = 9 THEN  /* Transulcred */ 
+            DO:
+                /*TRANSPOSUL*/
+                FOR EACH b-crapcop WHERE b-crapcop.cdcooper = 9 OR
+                                         b-crapcop.cdcooper = 17 NO-LOCK:
             
                     /*** Procura arquivos DEVOLU ***/
                     ASSIGN aux_nmarquiv = "/micros/"   + crabcop.dsdircop + 
