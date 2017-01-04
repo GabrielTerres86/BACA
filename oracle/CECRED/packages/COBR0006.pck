@@ -15,6 +15,9 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --  Alteracoes: 06/07/2016 - Ajuste para definir rotinas como publicas (Andrei - RKAM).
   --
   --              17/08/2016 - Ajuste para inclusao de campo na pltable typ_rec_crawaux (Andrei - RKAM).
+  --
+  --              28/12/2016 - Ajuste da validacao dos caracteres especiais e da definicao do registro de 
+  --                           rejeitados (Rodrigo - 550849 / 583172)
   ---------------------------------------------------------------------------------------------------------------
     
   --> type para armazenar arquivos a serem processados b1wgen0010tt.i/crawaux
@@ -161,7 +164,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                dtocorre crapret.dtocorre%TYPE,
                nrnosnum crapret.nrnosnum%TYPE,
                dsdoccop crapret.dsdoccop%TYPE,
-               nrremass crapret.nrremass%TYPE,
+               nrremass crapret.nrremret%TYPE,
                dtvencto crapret.dtvencto%TYPE);
   TYPE typ_tab_rejeitado IS TABLE OF typ_rec_rejeitado
     INDEX BY PLS_INTEGER;
@@ -402,7 +405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 02/12/2016
+    Data     : Novembro/2015.                   Ultima atualizacao: 22/12/2016
   
    Dados referentes ao programa:
   
@@ -456,6 +459,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                              > Tratar nome da cidade, nome do bairro e uf nulos ; 
 							              (Andrei - RKAM).
                             
+               22/12/2016 - Ajuste para utilizar a sequence na geração do registro na craprtc 
+                            (Douglas - Chamado 547357)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -557,7 +562,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_numeros  VARCHAR2(10) := '0123456789';
 	--Necessario acrescentar esta variavel por causa da 
     --funcao CAN-DO do Progress, que permite simbolos como "(" e ")";
-    vr_simbolos VARCHAR2(10) := '()';
+    vr_simbolos VARCHAR2(10) := '().,/-_:';
     vr_letras   VARCHAR2(49) := 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÀÄÂÃÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÇ';
     vr_validar  VARCHAR2(30000);
     vr_caracter VARCHAR2(1);
@@ -1709,7 +1714,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       -- Validar os caracteres do endereco do sacado
       IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                               pr_flgletra => TRUE,   -- Validar Letras
-                              pr_listaesp => './-_:', -- Lista Caracteres Validos
+                              pr_listaesp => '',     -- Lista Caracteres Validos (incluir caracteres que sao validos apenas para este campo)
                               pr_dsvalida => REPLACE(pr_tab_linhas('DSENDSAC').texto,',','') ) THEN -- Endereco
         -- Endereco do Sacado Nao Informado
         pr_cdmotivo := '47';
@@ -2821,20 +2826,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        ORDER BY rtc.progress_recid DESC;
     rw_craprtc cr_craprtc%ROWTYPE;
     
-    -- Buscar Controle de Remessa/Retorno de Titulos do Cooperado
-    CURSOR cr_craprtc2 (pr_cdcooper  craprtc.cdcooper%TYPE,
-                        pr_nrdconta  craprtc.nrdconta%TYPE,
-                        pr_nrcnvcob  craprtc.nrcnvcob%TYPE,
-                        pr_intipmvt  craprtc.intipmvt%TYPE) IS
-      SELECT rtc.nrremret
-        FROM craprtc rtc
-       WHERE rtc.cdcooper = pr_cdcooper 
-         AND rtc.nrdconta = pr_nrdconta 
-         AND rtc.nrcnvcob = pr_nrcnvcob 
-         AND rtc.intipmvt = pr_intipmvt
-       ORDER BY rtc.progress_recid DESC;
-    rw_craprtc2 cr_craprtc2%ROWTYPE;
-
     -- Buscar Controle de Remessa/Retorno de Titulos Bancarios
     CURSOR cr_crapcre (pr_cdcooper  crapcre.cdcooper%TYPE,
                        pr_nrcnvcob  crapcre.nrcnvcob%TYPE,
@@ -2889,23 +2880,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         -- Fecha o cursor
         CLOSE cr_craprtc;
         
-        -- Localiza ultima sequencia
-        OPEN cr_craprtc2(pr_cdcooper => vr_rejeitado.cdcooper
-                        ,pr_nrdconta => vr_rejeitado.nrdconta
-                        ,pr_nrcnvcob => vr_rejeitado.nrcnvcob
-                        ,pr_intipmvt => 2);
-                        
-        FETCH cr_craprtc2 INTO rw_craprtc2;
-        
-        -- Verifica se encontrou 
-        IF cr_craprtc2%NOTFOUND THEN 
-          vr_nrremrtc := 1;
-        ELSE
-          vr_nrremrtc := rw_craprtc2.nrremret + 1;
-        END IF;
-        
-        -- Fecha o cursor
-        CLOSE cr_craprtc2;
+        -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
+        vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
+                                  ,pr_nmdcampo => 'NRREMRET'
+                                  ,pr_dsdchave => vr_rejeitado.cdcooper || ';' || 
+                                                  vr_rejeitado.nrdconta || ';' || 
+                                                  vr_rejeitado.nrcnvcob || ';2');
         
         -- Insere registro
         INSERT INTO craprtc(cdcooper
@@ -4597,6 +4577,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    07/11/2016 - Ajustado a validacao de Data de Emissao, para que a 
                                 quantidade de dias seja parametrizada. Sera alterado 
                                 de 90 para 365 dias. (Douglas - Chamado 523329)
+
+                   23/12/2016 - Validar nulo na data de vencimento, emissão e valor do
+                                título. (AJFink - SD#581070)
+
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4779,7 +4763,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_rec_cobranca.cdocorre = 01  OR    -- 01 - Remessa
        pr_rec_cobranca.cdocorre = 06  THEN  -- 06 - Alteracao Vencimento
         
-      IF pr_rec_cobranca.dtvencto < TRUNC(SYSDATE) OR 
+      IF pr_rec_cobranca.dtvencto IS NULL THEN --SD#581070
+        --Data de Vencimento Invalida
+        vr_rej_cdmotivo := '16';
+        RAISE vr_exc_reje;
+      ELSIF pr_rec_cobranca.dtvencto < TRUNC(SYSDATE) OR 
          pr_rec_cobranca.dtvencto > to_date('13/10/2049','dd/mm/RRRR')  THEN 
         -- Vencimento Fora do Prazo de Operacao
         vr_rej_cdmotivo := '18';
@@ -4799,7 +4787,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- 21.3P Valida Valor do Titulo
     -- O valor do titulo sempre sera validado independente de ter gerado erro anteriormente
-    IF pr_rec_cobranca.vltitulo = 0 THEN
+    IF nvl(pr_rec_cobranca.vltitulo,0) = 0 THEN --SD#581070
       -- Valor do Titulo Invalido
       vr_rej_cdmotivo := '20';
       RAISE vr_exc_reje;
@@ -4842,7 +4830,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;
     
     -- 26.3P Valida Data de Emissao
-    IF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
+    IF pr_rec_cobranca.dtemscob IS NULL THEN --SD#581070
+      -- Data de emissao inválida
+      vr_rej_cdmotivo := '24';
+      RAISE vr_exc_reje;
+    ELSIF pr_rec_cobranca.dtemscob > to_date('13/10/2049','dd/mm/RRRR') OR
        TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob    THEN
 
       -- Data de documento superior ao limite 13/10/2049 ou
@@ -4963,7 +4955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                             pr_flgletra => TRUE,   -- Validar Letras
-                            pr_listaesp => '.,/,-,_', -- Lista Caracteres Validos
+                            pr_listaesp => '',     -- Lista Caracteres Validos
                             pr_dsvalida => pr_rec_cobranca.dsdoccop ) THEN -- Documento
       -- Seu Numero Invalido
       vr_rej_cdmotivo := '86';
@@ -5282,7 +5274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Validar os caracteres do nome do sacado
     IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                             pr_flgletra => TRUE,   -- Validar Letras
-                            pr_listaesp => '.,/,-,_:', -- Lista Caracteres Validos
+                            pr_listaesp => '',     -- Lista Caracteres Validos
                             pr_dsvalida => pr_rec_cobranca.nmdsacad ) THEN -- Nome do Sacado
       -- Nome do Sacado Nao Informado
       vr_rej_cdmotivo := '45';
@@ -5299,7 +5291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Validar os caracteres do endereco do sacado
     IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                             pr_flgletra => TRUE,   -- Validar Letras
-                            pr_listaesp => '.,/,-,_:', -- Lista Caracteres Validos
+                            pr_listaesp => '',     -- Lista Caracteres Validos
                             pr_dsvalida => REPLACE(pr_rec_cobranca.dsendsac,',','') ) THEN -- Endereco do Sacado
       -- Endereco do Sacado Nao Informado
       vr_rej_cdmotivo := '47';
@@ -5389,7 +5381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       -- Validar os caracteres do endereco do sacado
       IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                               pr_flgletra => TRUE,   -- Validar Letras
-                              pr_listaesp => '.,/,-,_:', -- Lista Caracteres Validos
+                              pr_listaesp => '',     -- Lista Caracteres Validos
                               pr_dsvalida => pr_rec_cobranca.nmdavali ) THEN -- Nome do Sacado/Avalista
         -- Sacado/Avalista Nao Informado
         vr_rej_cdmotivo := '54';
@@ -6644,25 +6636,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF cr_craprtc%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_craprtc;
-        /***** Localiza ultima sequencia *****/
-        OPEN cr_craprtc (pr_cdcooper => rw_crapcob.cdcooper
-                        ,pr_nrcnvcob => rw_crapcob.nrcnvcob
-                        ,pr_nrdconta => rw_crapcob.nrdconta
-                        ,pr_dtmvtolt => pr_dtmvtolt
-                        ,pr_intipmvt => 2
-                        ,pr_tipo     => 2);
-        --Posicionar no proximo registro
-        FETCH cr_craprtc INTO rw_craprtc;
-        --Se nao encontrar
-        IF cr_craprtc%NOTFOUND THEN
-          --Numero remessa recebe 1
-          vr_nrremrtc:= 1;
-        ELSE
-          --Numero remessa
-          vr_nrremrtc:= rw_craprtc.nrremret+1;
-        END IF;
-        --Fechar Cursor
-        CLOSE cr_craprtc;
+        
+        -- Utilizar a SEQUENCE para gerar o numero de remessa do cooperado
+        vr_nrremrtc := fn_sequence(pr_nmtabela => 'CRAPRTC'
+                                  ,pr_nmdcampo => 'NRREMRET'
+                                  ,pr_dsdchave => rw_crapcob.cdcooper || ';' || 
+                                                  rw_crapcob.nrdconta ||';' || 
+                                                  rw_crapcob.nrcnvcob || ';2');
 
         --Criar retorno titulo cooperado
         BEGIN
@@ -7231,6 +7211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 quantidade de dias seja parametrizada. Sera alterado 
                                 de 90 para 365 dias. (Douglas - Chamado 523329)
 
+                   23/12/2016 - Validar nulo no valor do título. (AJFink - SD#581070)
+
     ............................................................................ */   
     
     --> Buscar dados do associado
@@ -7555,7 +7537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   
     IF fn_valida_caracteres(pr_flgnumer => TRUE   -- Validar Numeros
                            ,pr_flgletra => TRUE   -- Validar Letras
-                           ,pr_listaesp => '.,/,-,_' -- Lista Caracteres Validos
+                           ,pr_listaesp => ''     -- Lista Caracteres Validos
                            ,pr_dsvalida => pr_rec_cobranca.dsdoccop ) THEN -- Documento
       
       -- Seu Numero Invalido
@@ -7591,7 +7573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   
     -- 24.7 Valor do titulo
     -- O valor do titulo sempre sera validado independente de ter gerado erro anteriormente
-    IF pr_rec_cobranca.vltitulo = 0 THEN
+    IF nvl(pr_rec_cobranca.vltitulo,0) = 0 THEN --SD#581070
       
       -- Valor do Titulo Invalido
       vr_rej_cdmotivo := '20';
@@ -7869,7 +7851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Validar os caracteres do nome do sacado
     IF fn_valida_caracteres(pr_flgnumer => TRUE   -- Validar Numeros
                            ,pr_flgletra => TRUE   -- Validar Letras
-                           ,pr_listaesp => '.,/,-,_' -- Lista Caracteres Validos
+                           ,pr_listaesp => ''     -- Lista Caracteres Validos
                            ,pr_dsvalida => pr_rec_cobranca.nmdsacad ) THEN -- Nome do Sacado
                             
       -- Nome do Sacado Nao Informado
@@ -7890,7 +7872,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Validar os caracteres do endereco do sacado
     IF fn_valida_caracteres(pr_flgnumer => TRUE   -- Validar Numeros
                            ,pr_flgletra => TRUE   -- Validar Letras
-                           ,pr_listaesp => '.,/,-,_:' -- Lista Caracteres Validos
+                           ,pr_listaesp => ''     -- Lista Caracteres Validos
                            ,pr_dsvalida => pr_rec_cobranca.dsendsac ) THEN -- Nome do Sacado
                             
       -- Endereco do Sacado Nao Informado

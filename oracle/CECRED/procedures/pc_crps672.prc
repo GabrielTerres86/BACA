@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 05/12/2016
+       Data    : Abril/2014.                     Ultima atualizacao: 02/01/2017
 
        Dados referentes ao programa:
 
@@ -110,6 +110,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                    05/12/2016 - Correcao no cursor cr_crapcrd para buscar cartoes atraves do indice da tabela
                                 e inclusao da validacao da existencia de cartoes sem proposta gerando log 
                                 no proc_message. SD 569619 (Carlos Rafael Tanholi)
+                                
+                   02/01/2017 - Ajuste na leitura dos registros de cartoes ja existentes.
+                                (Fabricio)
     ............................................................................ */
 
     DECLARE
@@ -1485,7 +1488,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                 END IF;                
 
                 -- faz associação da variavel cod cooperativa;
-                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;
+                vr_cdcooper := rw_crapcop_cdagebcb.cdcooper;                
                 
                 -- Caso o numero da conta for igual a 0, vamos buscar o numero da conta pelo CPF
                 IF NVL(vr_nrctatp2,0) = 0 THEN
@@ -1786,6 +1789,22 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS672 ( pr_cdcooper IN crapcop.cdcooper%
                               vr_flgdebcc         := rw_crawcrd_cdgrafin_conta.flgdebcc;                          
                             ELSE
                               CLOSE cr_crawcrd_cdgrafin_conta;
+                              
+                              IF cr_crawcrd_cdgrafin%ISOPEN THEN
+                                CLOSE cr_crawcrd_cdgrafin;
+                              END IF;
+                              
+                              OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                                       ,vr_nrdconta                 -- pr_nrdconta
+                                                       ,substr(vr_des_text,25,13)   -- pr_nrcctitg
+                                                       ,NULL                        -- pr_nrcpftit
+                                                       ,NULL                        -- pr_insitcrd -- EM USO
+                                                       ,1);                         -- pr_flgprcrd
+                              FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                           , vr_dddebito
+                                                           , vr_vllimcrd
+                                                           , vr_tpdpagto
+                                                           , vr_flgdebcc;                                                                                         
                             END IF;
                             
                           ELSE

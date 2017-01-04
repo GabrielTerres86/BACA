@@ -4234,7 +4234,10 @@ create or replace package body cecred.INSS0001 as
                               (Adriano - SD 398214).
                               
                  05/12/2016 - Ajustes Incorporação Transulcred -> Transpocred.
-                              PRJ342 (Odirlei-AMcom)              
+                              PRJ342 (Odirlei-AMcom)         
+                              
+                 03/01/2017 - Ajustes Incorporação Transulcred -> Transpocred.
+                              Alterar o numero da conta antiga para a nova. (Aline)                    
     -------------------------------------------------------------------------------------------------------------*/
 
       -- Busca dos dados da cooperativa
@@ -4371,28 +4374,27 @@ create or replace package body cecred.INSS0001 as
         rw_crapcop.cdcooper:= pr_tab_cdagesic(pr_tab_creditos(pr_index_creditos).cdagesic);
               
         /*Verifica se o beneficiario eh um cooperado com conta migrada.*/
-        IF TO_NUMBER(pr_tab_creditos(pr_index_creditos).cdorgins) IN (775431,775448,       --> Concredi
-                                                                      801241, 787028) THEN --> Transulcred
+        IF TO_NUMBER(pr_tab_creditos(pr_index_creditos).cdorgins) IN (801241, 787028) THEN --> Transulcred
               
-          IF rw_crapcop.cdcooper = 4 THEN
-            vr_cdcooper_aux := 1;
-          ELSIF rw_crapcop.cdcooper = 17 THEN
+          IF rw_crapcop.cdcooper IN (9,17) THEN
             vr_cdcooper_aux := 9;
-          END IF;
-              
-          /* Verifica se o beneficiario eh um cooperado com conta migrada. */
-          OPEN cr_craptco (pr_cdcooper => vr_cdcooper_aux
-                          ,pr_cdcopant => rw_crapcop.cdcooper
-                          ,pr_nrctaant => pr_tab_creditos(pr_index_creditos).nrdconta);
-                              
-          FETCH cr_craptco INTO rw_craptco;
-              
-          -- Verificar se encontrou transferencia
-          vr_craptco:= cr_craptco%FOUND;
-              
-          --Fechar Cursor
-          CLOSE cr_craptco;
-              
+            rw_crapcop.cdcooper := 17;
+          
+            IF pr_tab_creditos(pr_index_creditos).nrdconta IN (11240,620,5525,329,345) THEN  
+            /* Verifica se o beneficiario eh um cooperado com conta migrada. */
+              OPEN cr_craptco (pr_cdcooper => vr_cdcooper_aux
+                              ,pr_cdcopant => rw_crapcop.cdcooper
+                              ,pr_nrctaant => pr_tab_creditos(pr_index_creditos).nrdconta);
+                                  
+              FETCH cr_craptco INTO rw_craptco;
+                  
+              -- Verificar se encontrou transferencia
+              vr_craptco:= cr_craptco%FOUND;
+                  
+              --Fechar Cursor
+              CLOSE cr_craptco;
+             END IF; 
+          END IF;    
           --Se encontrou conta migrada
           IF vr_craptco THEN
                 
