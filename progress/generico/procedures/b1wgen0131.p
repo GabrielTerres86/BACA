@@ -91,7 +91,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0131.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 29/11/2016
+    Data    : Dezembro/2011                     Ultima atualizacao: 14/12/2016
 
     Objetivo  : Tranformacao BO tela PREVIS
 
@@ -139,9 +139,13 @@
                             obtem-log-cecred pela pi_sr_ted_f (Jonata-RKAM)        
                         
 				07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)                        
-                        
+
 				29/11/2016 - Ajuste para gravar corretamente os movimentos de
 						     entrada referente as TED - SICREDI (Adriano - M211).   
+                        
+				14/12/2016 - Ajuste para gravar corretamente os movimentos de
+						     saida referente as TED - SICREDI 
+							 (Adriano - SD 577067).   
                         
 ............................................................................*/
 
@@ -2100,26 +2104,19 @@ PROCEDURE pi_tedtec_nr_f:
 
 		END. /* Fim Lancamentos */
 
-		DO aux_contador = 1 TO NUM-ENTRIES(aux_cdbccxlt,","):
-          
 		   RUN grava-movimentacao 
 						  (INPUT par_cdcoopex,
 						   INPUT par_cdoperad,
 						   INPUT par_dtmvtolt,
 						   INPUT 2,
-						   INPUT INT(ENTRY(aux_contador,aux_cdbccxlt)),
+						INPUT 100,
 						   INPUT 3,
-						   INPUT (IF ENTRY(aux_contador,aux_cdbccxlt) = "100" THEN
-									 aux_vlrtednr
-								  ELSE
-									 0)).
+						INPUT aux_vlrtednr).
        
 		   IF RETURN-VALUE <> "OK" THEN
 			  RETURN "NOK".
 
 		END.
-
-	END.
 
     RETURN "OK".
 
@@ -2688,14 +2685,14 @@ PROCEDURE pi_sr_ted_f:
        ASSIGN aux_vlrtedsr = tt-logspb-totais.vlrrecok.
     ELSE
        ASSIGN aux_vlrtedsr = 0.
-
+	   
     IF VALID-HANDLE(h-b1wgen0050) THEN
        DELETE OBJECT h-b1wgen0050.
     
     RUN atualiza_tabela_erros (INPUT par_cdcooper,
                                INPUT TRUE).
 
-       RUN grava-movimentacao 
+    RUN grava-movimentacao 
                       (INPUT par_cdcoopex,
                        INPUT par_cdoperad,
                        INPUT par_dtmvtolt,
@@ -2704,8 +2701,8 @@ PROCEDURE pi_sr_ted_f:
                        INPUT 3,
                        INPUT aux_vlrtedsr).
        
-       IF RETURN-VALUE <> "OK" THEN
-          RETURN "NOK".
+    IF RETURN-VALUE <> "OK" THEN
+       RETURN "NOK".
 
     RETURN "OK".
 

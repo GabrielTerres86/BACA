@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   --
   --  Programa: FLXF0001                        Antiga: sistema/generico/procedures/b1wgen0131.p
   --  Autor   : Odirlei-AMcom Capoia (DB1)
-  --  Data    : Dezembro/2011                     Ultima Atualizacao: 07/11/2016
+  --  Data    : Dezembro/2011                     Ultima Atualizacao: 14/12/2016
   --
   --  Dados referentes ao programa:
   --
@@ -205,6 +205,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   --  Alteracoes: 30/09/2013 - Conversao Progress para oracle (Odirlei-AMcom).
   --
   --			  07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
+  --
+  --              14/12/2016 - Ajuste para gravar movimentação de TED - SICREDI corretamente (Adriano - SD 577067)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Procedure para gravar movimentação de fluxo financeiro
@@ -4415,7 +4417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 07/11/2016
+    --  Data     : novembro/2013.                   Ultima atualizacao: 14/12/2016
     --
     --  Dados referentes ao programa:
     --
@@ -4425,7 +4427,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --
     --                28/09/2016 - Passar novos parämetros na chamada a sspb0001 (Jonata-RKAM)
 	--
-	--				  07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
+  	--				        07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
+    --
+    --                14/12/2016 - Ajuste para gravar movimentação de TED - SICREDI corretamente (Adriano - SD 577067)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -4457,7 +4461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                                  ,pr_nrsequen  => 0             -- Sequencia
                                  ,pr_nriniseq  => 1             -- numero inicial da sequencia
                                  ,pr_nrregist  => 99999         -- numero de registros
-                                 ,pr_cdifconv  => 3             -- IF Da TED - Todas
+                                 ,pr_cdifconv  => 0             -- IF Da TED - Somente CECRED
                                  ,pr_vlrdated  => 0             -- Valor da ted
                                  ,pr_dscritic  => pr_dscritic
                                  ,pr_tab_logspb         => vr_tab_logspb         --> TempTable para armazenar o valor
@@ -4541,27 +4545,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
       vr_vlrtedsr := 0;
     END IF;
 
-    vr_tab_cdbccxlt := gene0002.fn_quebra_string('01,85,756,100',',');
-
-    FOR idx IN vr_tab_cdbccxlt.first..vr_tab_cdbccxlt.last LOOP
       FLXF0001.pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                     ,pr_cdoperad => pr_cdoperad   -- Codigo do operador
                                     ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
                                     ,pr_tpdmovto => 1             -- Tipo de movimento
-                                    ,pr_cdbccxlt => vr_tab_cdbccxlt(idx) -- Codigo do banco/caixa.
-                                    ,pr_tpdcampo => 3 /*VLTOTTED*/       -- Tipo de campo
-                                    ,pr_vldcampo => (case vr_tab_cdbccxlt(idx)
-                                                     when '85' then vr_vlrtedsr
-                                                     else 0
-                                                     end)         -- Valor do campo
+                                  ,pr_cdbccxlt => 100           -- Codigo do banco/caixa.
+                                  ,pr_tpdcampo => 3 /*VLTOTTED*/-- Tipo de campo
+                                  ,pr_vldcampo => vr_vlrtedsr   -- Valor do campo
                                     ,pr_dscritic => pr_dscritic);
 
       IF pr_dscritic <> 'OK' THEN
         RAISE vr_exc_erro;
       END IF;
 
-    END LOOP;--Fim loop bancos
-    
     pr_dscritic := 'OK';
 
   EXCEPTION
@@ -4590,7 +4586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 07/11/2016
+    --  Data     : novembro/2013.                   Ultima atualizacao: 14/12/2016
     --
     --  Dados referentes ao programa:
     --
@@ -4598,7 +4594,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --
     --   Atualizacao: 21/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
 	--
-	--				  07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
+	  --				        07/11/2016 - Ajuste para contabilizar as TED - SICREDI (Adriano - M211)
+    --
+    --				        14/12/2016 - Ajuste para gravar movimentação de TED - SICREDI corretamente (Adriano - SD 577067)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -4714,25 +4712,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
       END LOOP;
       
-      FOR idx IN vr_tab_cdbccxlt.first..vr_tab_cdbccxlt.last LOOP
         FLXF0001.pc_grava_movimentacao(pr_cdcooper => pr_cdcooper   -- Codigo da Cooperativa
                                       ,pr_cdoperad => pr_cdoperad   -- Codigo do operador
                                       ,pr_dtmvtolt => pr_dtmvtolt   -- Data de movimento
                                       ,pr_tpdmovto => 2             -- Tipo de movimento
-                                      ,pr_cdbccxlt => vr_tab_cdbccxlt(idx)     -- Codigo do banco/caixa.
+                                    ,pr_cdbccxlt => 100           -- Codigo do banco/caixa.
                                       ,pr_tpdcampo => 3/*VLTOTTED*/ -- Tipo de campo
-                                      ,pr_vldcampo => (case vr_tab_cdbccxlt(idx)
-                                                       when '100' then vr_vlrtednr
-                                                       else 0
-                                                       end)         -- Valor do campo
+                                    ,pr_vldcampo => vr_vlrtednr   -- Valor do campo
                                       ,pr_dscritic => pr_dscritic);
 
         IF pr_dscritic <> 'OK' THEN
           RAISE vr_exc_erro;
         END IF;
 
-      END LOOP;--Fim loop bancos      
-      
     END IF;
 
     pr_dscritic := 'OK';
