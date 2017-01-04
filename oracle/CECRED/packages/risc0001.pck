@@ -4469,7 +4469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_dtincorp := NULL;
     IF (pr_cdcooper = 09) THEN /* Transpocred */
        vr_cdcopant := 17; /* Transulcred */
-       vr_dtincorp := '31/12/2016'; /* Data da Incorporação */
+       vr_dtincorp := to_date('31/12/2016','DD/MM/RRRR'); /* Data da Incorporação */
     END IF;
 
     -- Juros +60 Microcrédito
@@ -4731,6 +4731,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     Alterações:   06/10/2016 - Alteração do diretório para geração de arquivo contábil.
                                P308 (Ricardo Linhares).
+                               
+                  04/01/2016 - Ajustes para desprezar as contas migradas antes da
+                               incorporação.
+                               PRJ342 - Incorporação Transulcred(Odirlei-AMcom)             
   ............................................................................. */
     DECLARE
       -- Buscar todos os percentual de cada nivel de risco
@@ -4918,6 +4922,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       -- Percorrer todos os dados de risco
       FOR rw_crapris IN cr_crapris(pr_cdcooper => pr_cdcooper,
                                    pr_dtrefere => vr_dtrefere) LOOP
+        
+        -- Tratar incorporação 17 -> 9
+        --> Desprezar contas migradas antes da data de incorporação
+        --> contas nao devem ser enviadas no arquivo
+        IF pr_cdcooper IN (9) THEN        
+          IF NOT fn_verifica_conta_migracao(rw_crapris.cdcooper,
+                                            rw_crapris.nrdconta,
+                                            rw_crapris.dtrefere) THEN
+            CONTINUE;
+          END IF;  
+        END IF;
                                    
         -- Calculo do % de provisao do Risco
         IF vr_tab_percentual.exists(rw_crapris.innivris) THEN
