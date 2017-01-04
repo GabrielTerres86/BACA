@@ -20556,13 +20556,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                        ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
         SELECT crapope.cdagenci
-             , crapdpo.dsdepart
-          FROM crapdpo
-             , crapope
-         WHERE crapdpo.cddepart(+) = crapope.cddepart
-           AND crapdpo.cdcooper(+) = crapope.cdcooper
-           AND crapope.cdcooper    = pr_cdcooper
-           AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
+              ,crapope.dsdepart
+        FROM crapope crapope
+        WHERE crapope.cdcooper = pr_cdcooper
+        AND   UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
       rw_crapope cr_crapope%ROWTYPE; 
       -- Busca do tipo de captacao
       CURSOR cr_crapdtc(pr_cdcooper IN crapdtc.cdcooper%TYPE

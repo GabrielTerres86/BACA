@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 20/01/2015
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 25/11/2016
   --
   -- Dados referentes ao programa:
   --
@@ -75,6 +75,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 17/11/2015 - Na verificação da IMUT0001.pc_verifica_imunidade_trib trocado log para
   --              proc_message na procedure pc_calc_poupanca (Lucas Ranghetti #314905)
+  --
+  -- 25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
+  --              (Lucas Ranghetti/Elton)                             
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -1613,7 +1616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
      Programa: pc_consul_saldo_aplic_rdca30 (Antigo b1wgen0004.i)
      Autora  : Junior.
-     Data    : 24/10/2005                     Ultima atualizacao: 05/01/2015
+     Data    : 24/10/2005                     Ultima atualizacao: 25/11/2016
 
      Dados referentes ao programa:
 
@@ -1658,6 +1661,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                  05/01/2015 - Ajustar o nome das telas e a adicionar o Internet Bank na 
                               segunda validação do inproces (Douglas - Chamado 191876)
 
+                 25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
+                              (Lucas Ranghetti/Elton)
     .................................................................................... */
 
     DECLARE
@@ -1841,8 +1846,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF pr_inproces > 2 AND pr_cdprogra NOT IN('CRPS011','CRPS109','CRPS110','CRPS113','CRPS128'
                                                ,'CRPS175','CRPS176','CRPS168','CRPS140','CRPS169'
                                                ,'CRPS210','CRPS323','CRPS349','CRPS414','CRPS445'
-                                               ,'CRPS563','CRPS029','CRPS688','ATENDA','ANOTA'
-                                               ,'IMPRES','INTERNETBANK') THEN
+                                               ,'CRPS563','CRPS029','CRPS688','CRPS005','ATENDA'
+                                               ,'ANOTA','IMPRES','INTERNETBANK') THEN
         -- Buscar a taxa da RDCA
         OPEN cr_craptrd(rw_craprda.dtiniper);
         FETCH cr_craptrd
@@ -2263,7 +2268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF pr_inproces > 2 AND pr_cdprogra NOT IN('CRPS011','CRPS105','CRPS109','CRPS110','CRPS113','CRPS117',
                         'CRPS128','CRPS175','CRPS176','CRPS168','CRPS135','CRPS431','CRPS140','CRPS169',
                         'CRPS210','CRPS323','CRPS349','CRPS414','CRPS445','CRPS563','CRPS029','CRPS688',
-                        'ATENDA','ANOTA','IMPRES','INTERNETBANK') THEN
+                        'CRPS005','ATENDA','ANOTA','IMPRES','INTERNETBANK') THEN
 
         IF pr_cdprogra = 'CRPS103' THEN                     /*  MENSAL  */
           vr_dtdolote := pr_dtmvtolt;
@@ -4451,6 +4456,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_vlsdrdca NUMBER(18,4); --> Valor dos rendimentos
       vr_flgimune boolean;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
       -- Buscar as taxas contratadas
       CURSOR cr_craplap IS
         SELECT /*+ Index (cp CRAPLAP##CRAPLAP5) */
@@ -4613,6 +4620,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         CLOSE cr_craplap;
       END IF;
 
+
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      IF rw_crapdat.inproces > 1 THEN
       -- Se o vetor de dias uteis ainda não possuir informacoes
       IF vr_tab_qtdiaute.COUNT = 0 THEN
         -- Buscar os dias uteis
@@ -4635,6 +4647,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper => pr_cdcooper) LOOP
+          -- MOntar a chave do registro com o tipo + data
+          vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
+          -- Atribuir o valor selecionado ao vetor
+          vr_tab_moedatx(vr_idx_moeda).vlmoefix := rw_crapmfx.vlmoefix;
+          -- Para moeda 6 - CDI
+          IF rw_crapmfx.tpmoefix = 6 THEN
+            -- Calcular a taxa de aplicacao
+            vr_tab_moedatx(vr_idx_moeda).txaplmes := (POWER((1 + rw_crapmfx.vlmoefix / 100),(1 / 252)) - 1) * 100;
+          END IF;
+        END LOOP;
+      END IF;
+      ELSE
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                 ,craptrd.qtdiaute
+                                 ,count(*) over (partition by craptrd.dtiniper
+                                                     order by craptrd.progress_recid) registro
+                             FROM craptrd
+                            WHERE craptrd.cdcooper = pr_cdcooper
+                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+          END IF;
+        END LOOP;
+
+        -- Buscar todos os registros das moedas do tipo 6 e 8
+        FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
+                                 ,CRAPMFX.TPMOEFIX
+                                 ,CRAPMFX.VLMOEFIX 
+                             FROM CRAPMFX
+                            WHERE CRAPMFX.CDCOOPER = pr_cdcooper 
+                              AND CRAPMFX.DTMVTOLT > vr_dtiniper -35
+                              AND CRAPMFX.DTMVTOLT <= vr_dtfimper
+                              AND CRAPMFX.TPMOEFIX IN(6,8,20)) LOOP
           -- MOntar a chave do registro com o tipo + data
           vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
           -- Atribuir o valor selecionado ao vetor
@@ -6880,8 +6927,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
            WHERE cp1.cdcooper = pr_cdcooper
              AND cp1.nrdconta = pr_nrdconta
              AND cp1.nraplica = pr_nraplica
-             AND cp1.cdhistor IN (529, 531) --retirado hist 532, pois nao utiliza valor carregado
              AND cp1.dtmvtolt >= pr_dtmvtolt 
+             AND cp1.cdhistor IN (529, 531) --retirado hist 532, pois nao utiliza valor carregado 
            GROUP BY cp1.cdhistor;
 
         -- Cursor sobre a tabela CRAPLAP, criado novamente pois o campo do anterior CDHISTOR
@@ -7375,6 +7422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       vr_exc_saida  EXCEPTION;
       vr_flgimune   BOOLEAN;
       vr_datlibpr DATE; --> Data de liberacao de projeto sobre novo indexador de poupanca
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+      
       -- Cadastro do lancamento de aplicacões
       CURSOR cr_craplap (pr_cdcooper   IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta   IN craprda.nrdconta%TYPE
@@ -7412,7 +7461,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
               ,cx.dtmvtolt
               ,cx.vlmoefix
         FROM crapmfx cx
-        WHERE cx.cdcooper = pr_cdcooper;
+        WHERE cx.cdcooper = pr_cdcooper
+          AND cx.tpmoefix IN(6,8,20);
 
     BEGIN
       -- Inicializacão de variaveis
@@ -7486,6 +7536,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         vr_dtfimtax := pr_dtfimtax;
       END IF;
 
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+
+      IF rw_crapdat.inproces > 1 THEN        
       -- Se o vetor de dias uteis ainda não possuir informacões
       IF vr_tab_qtdiaute.COUNT = 0 THEN
         -- Buscar os dias uteis
@@ -7501,6 +7556,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF vr_tab_moedatx.COUNT = 0 THEN
         -- Buscar todos os registros das moedas do tipo 6 e 8
         FOR rw_crapmfx IN cr_crapmfx(pr_cdcooper) LOOP
+          -- MOntar a chave do registro com o tipo + data
+          vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
+          -- Atribuir o valor selecionado ao vetor
+          vr_tab_moedatx(vr_idx_moeda).vlmoefix := rw_crapmfx.vlmoefix;
+          -- Para moeda 6 - CDI
+          IF rw_crapmfx.tpmoefix = 6 THEN
+            -- Calcular a taxa de aplicacao
+            vr_tab_moedatx(vr_idx_moeda).txaplmes := (POWER((1 + rw_crapmfx.vlmoefix / 100),(1 / 252)) - 1) * 100;
+          END IF;
+        END LOOP;
+      END IF;
+      ELSE
+        -- Buscar os dias uteis
+        FOR rw_craptrd IN (SELECT craptrd.dtiniper
+                                 ,craptrd.qtdiaute
+                                 ,count(*) over (partition by craptrd.dtiniper
+                                                     order by craptrd.progress_recid) registro
+                             FROM craptrd
+                            WHERE craptrd.cdcooper = pr_cdcooper
+                              AND craptrd.dtiniper > vr_dtiniper -1) LOOP
+          -- Atribuir o valor selecionado ao vetor somente para a primeira data encontrada (mais antiga)
+          IF rw_craptrd.registro = 1 THEN
+            vr_tab_qtdiaute(to_char(rw_craptrd.dtiniper,'YYYYMMDD')):= rw_craptrd.qtdiaute;
+          END IF;
+        END LOOP;
+
+        -- Buscar todos os registros das moedas do tipo 6 e 8
+        FOR rw_crapmfx IN (SELECT CRAPMFX.DTMVTOLT
+                                 ,CRAPMFX.TPMOEFIX
+                                 ,CRAPMFX.VLMOEFIX 
+                             FROM CRAPMFX
+                            WHERE CRAPMFX.CDCOOPER = pr_cdcooper 
+                              AND CRAPMFX.DTMVTOLT > vr_dtiniper -35
+                              AND CRAPMFX.DTMVTOLT <= vr_dtfimper
+                              AND CRAPMFX.TPMOEFIX IN(6,8,20)) LOOP
           -- MOntar a chave do registro com o tipo + data
           vr_idx_moeda := LPAD(rw_crapmfx.tpmoefix,2,'0')||To_Char(rw_crapmfx.dtmvtolt,'YYYYMMDD');
           -- Atribuir o valor selecionado ao vetor
@@ -9505,12 +9595,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       CURSOR cr_crapspp (pr_cdcooper IN crapspp.cdcooper%TYPE
                         ,pr_nrdconta IN crapspp.nrdconta%TYPE
                         ,pr_nrctrrpp IN crapspp.nrctrrpp%TYPE) IS
-        SELECT crapspp.dtsldrpp
+          SELECT MIN(crapspp.dtsldrpp) dtsldrpp
         FROM crapspp crapspp
         WHERE crapspp.cdcooper = pr_cdcooper
         AND   crapspp.nrdconta = pr_nrdconta
-        AND   crapspp.nrctrrpp = pr_nrctrrpp
-        ORDER BY crapspp.progress_recid ASC;
+             AND crapspp.nrctrrpp = pr_nrctrrpp;
       rw_crapspp cr_crapspp%ROWTYPE;
 
 
@@ -10661,7 +10750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Novembro/94.                    Ultima atualizacao: 05/09/2013
+     Data    : Novembro/94.                    Ultima atualizacao: 25/11/2016
 
      Dados referentes ao programa:
 
@@ -10773,6 +10862,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                              R$ 1,00 (Ze).
 
                 05/09/2013 - Conversão Progress >> Oracle PL/SQL (Daniel - Supero)
+                
+                25/11/2016 - Incluir CRPS005 nas excessoes da procedure - Melhoria 69 
+                             (Lucas Ranghetti/Elton)
   ............................................................................. */
     -- Aplicação RDCA
     cursor cr_craprda is
@@ -11150,8 +11242,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        pr_cdprogra not in ('CRPS011', 'CRPS109', 'CRPS110', 'CRPS113', 'CRPS128',
                            'CRPS175', 'CRPS176', 'CRPS168', 'CRPS140', 'CRPS169',
                            'CRPS210', 'CRPS323', 'CRPS349', 'CRPS414', 'CRPS445',
-                           'CRPS563', 'CRPS029', 'CRPS688', 'ATENDA', 'ANOTA',
-                           'INTERNETBANK') then
+                           'CRPS563', 'CRPS029', 'CRPS688', 'CRPS005', 'ATENDA', 
+                           'ANOTA','INTERNETBANK') then
       vr_incalcul := 1;
       if pr_cdprogra = 'CRPS103' then -- mensal
         vr_dtmvtolt := pr_dtmvtolt + 1;
@@ -11391,8 +11483,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
        pr_cdprogra not in ('CRPS011', 'CRPS105', 'CRPS109', 'CRPS110', 'CRPS113', 'CRPS117',
                            'CRPS128', 'CRPS175', 'CRPS176', 'CRPS168', 'CRPS135', 'CRPS431',
                            'CRPS140', 'CRPS169', 'CRPS210', 'CRPS323', 'CRPS349', 'CRPS414',
-                           'CRPS445', 'CRPS563', 'CRPS029', 'CRPS688', 'ATENDA', 'ANOTA',
-                           'INTERNETBANK') then
+                           'CRPS445', 'CRPS563', 'CRPS029', 'CRPS688', 'CRPS005', 'ATENDA', 
+                           'ANOTA', 'INTERNETBANK') then
       if pr_cdprogra = 'CRPS103' then  -- MENSAL
         vr_dtdolote := pr_dtmvtolt;
         vr_nrdolote := 8380;
