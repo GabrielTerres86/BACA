@@ -698,15 +698,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            no batch ou online na chamada da função fn_inpessoa_nrdconta 
                            (Kelvin - Chamado 459346)
 
-			  02/06/2016 - Adicionado validações Para melhorar desempenho da 
-						   rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
+              02/06/2016 - Adicionado validações Para melhorar desempenho da 
+                           rotina pc_obtem_saldo_dia (Kelvin - SD 459346)
                            
               20/06/2016 - Correcao para o uso correto do indice da CRAPTAB em  varias procedures 
                            desta package.(Carlos Rafael Tanholi).                              
                            
               21/06/2016 - Ajuste para utilizar o cursor cr_crapsda_pk para encontrar o saldo
-                           (Adriano).             
-                           
+                           (Adriano). 
+               
               30/06/2016 - Alterado parametro (pr_flgcrass), para false, na função fn_inpessoa_nrdconta.
                            Busca de saldo para popular a uma temp/table, chamando o conteudo da temp/table 
                            dentro do loop de saldo, evitando uma nova chamada dentro do loop de consulta de saldo. (Evandro)
@@ -769,7 +769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
        AND ( pr_lsthistor_ret = ' ' OR ','||pr_lsthistor_ret||',' LIKE ('%,'||lcm.cdhistor||',%') );     --> Retornar quando passado         
   rw_craplcm_olt cr_craplcm_olt%ROWTYPE;    
           
-         
+
 
   -- Busca de lançamentos no periodo para a conta do associado
   CURSOR cr_craplcm_ign(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
@@ -834,11 +834,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           ,epr.qtmesdec
       FROM crapepr epr
      WHERE epr.cdcooper = pr_cdcooper
-       AND epr.inliquid = NVL(pr_inliquid,epr.inliquid)
-       AND epr.inprejuz = NVL(pr_inprejuz,epr.inprejuz)
-       AND epr.nrdconta = nvl(pr_nrdconta,epr.nrdconta)
-       AND epr.nrctremp = nvl(pr_nrctremp,epr.nrctremp);
-
+       AND epr.nrdconta = pr_nrdconta
+       AND epr.nrctremp = pr_nrctremp;
   rw_crapepr cr_crapepr%ROWTYPE;
 
   -- Gurdar o Progress Recid da tabela de saldo
@@ -2006,14 +2003,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
       END CASE;
 
-        -- Busca do Saldo da conta pela PK
-        OPEN cr_crapsda_pk(pr_cdcooper => pr_cdcooper
-                          ,pr_dtmvtolt => vr_dtmvtaux
-                          ,pr_nrdconta => pr_nrdconta);
-        FETCH cr_crapsda_pk INTO rw_crapsda;
-        vr_crapsda:= cr_crapsda_pk%FOUND;
-        --Fechar Cursor
-        CLOSE cr_crapsda_pk;
+      -- Busca do Saldo da conta pela PK
+      OPEN cr_crapsda_pk(pr_cdcooper => pr_cdcooper
+                        ,pr_dtmvtolt => vr_dtmvtaux
+                        ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_crapsda_pk INTO rw_crapsda;
+      vr_crapsda:= cr_crapsda_pk%FOUND;
+      --Fechar Cursor
+      CLOSE cr_crapsda_pk;
 
       -- Se não encontrou crapsda
       IF NOT vr_crapsda THEN
@@ -2156,7 +2153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- 1110 DB.CESSAO
         -- 1009 TRANSF.INTERC
         -- 1011 CR.TRF.INTERC
-        
+
         -- Busca o inpessoa da conta
         vr_inpessoa := fn_inpessoa_nrdconta(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
@@ -2275,7 +2272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       END LOOP;
 
       -- Chegou ao final sem problemas
-      pr_des_reto := 'OK';      
+      pr_des_reto := 'OK';
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -3005,7 +3002,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         FROM craplcm lcm
             ,craphis his
         WHERE lcm.cdcooper = his.cdcooper
-        AND   lcm.cdhistor = his.cdhistor
+        AND   lcm.cdhistor = his.cdhistor         
         AND   lcm.rowid    = pr_rowid;
 
       --Tipo de Registro de Lancamento
@@ -3054,8 +3051,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
            AND craplmt.vldocmto = pr_vllanmto;
 
       -- Tipo de registro do Log do SPB
-      rw_craplmt cr_craplmt%ROWTYPE;  
-      
+      rw_craplmt cr_craplmt%ROWTYPE;     
+
       --Busca o inprocess na crapdat
       CURSOR cr_crapdat(pr_cdcooper IN crapdat.cdcooper%TYPE) IS --> Cooperativa
         SELECT dat.inproces
@@ -3069,18 +3066,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Busca do tipo de pessoa do associado
       vr_inpessoa crapass.inpessoa%TYPE;
       -- Index para a temptable de tarifa
-      vr_tariidx varchar2(11);      
+      vr_tariidx varchar2(11);
      --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
       
     BEGIN
-      
+
       -- Selecionar Informacoes do Lancamento
       OPEN cr_craplcm (pr_rowid => pr_rowid);
       FETCH cr_craplcm INTO rw_craplcm;
       --Fechar Cursor
       CLOSE cr_craplcm;
-
+      
       rw_crapatr := NULL;
       --> Verificar se convenio é de debito automatico
       OPEN cr_crapatr (pr_cdcooper => rw_craplcm.cdcooper   --> Cooperativa
@@ -3304,8 +3301,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         -- Buscar destalhes do empréstimo
         rw_crapepr := NULL;
         OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
-                       ,pr_inliquid => NULL
-                       ,pr_inprejuz => NULL
                        ,pr_nrdconta => rw_craplcm.nrdconta
                        ,pr_nrctremp => TRIM(REPLACE(rw_craplcm.cdpesqbb,'.','')));
         FETCH cr_crapepr
@@ -3549,7 +3544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
         vr_dstransa := 'Consultar dados Dep. Vista.';
       END IF;
-      
+
       
       -- Verificar se o BATCH esta rodando
       IF pr_rw_crapdat.inproces <> 1 THEN
@@ -3562,7 +3557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         vr_flgcrass := FALSE;
 
       END IF;
-      
+
       
       -- Busca do tipo de pessoa do associado
       vr_inpessoa := fn_inpessoa_nrdconta(pr_cdcooper => pr_cdcooper
@@ -4077,7 +4072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_des_reto := 'NOK';
         -- Limpa vetor de saldo
         pr_tab_extrato.DELETE;
-      WHEN OTHERS THEN
+      WHEN OTHERS THEN      
 
         btch0001.pc_log_internal_exception(pr_cdcooper);
       
@@ -6494,7 +6489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
      Alteracoes: 19/10/2015 - Conversão Progress -> Oracle (Odirlei/AMcom)
 
-	             03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
+                 03/08/2016 - Retirado campo 'flgcrdpa' do cursor "cr_crapass'.
                               Projeto 299/3 - Pre Aprovado (Lombardi)
     ..............................................................................*/
 
