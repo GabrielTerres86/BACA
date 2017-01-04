@@ -84,6 +84,11 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0002 is
            
   TYPE typ_tab_crapcop IS TABLE OF typ_reg_crapcop INDEX BY VARCHAR2(10); 
   
+  PROCEDURE pc_verifica_envio_email(pr_tab_crapcop IN RISC0002.typ_tab_crapcop --> Temp-Table Cooperativas
+                                   ,pr_dtrefere    IN DATE                     --> Data de Referencia
+                                   ,pr_cdcritic    OUT PLS_INTEGER             --> Código da crítica
+                                   ,pr_dscritic    OUT VARCHAR2);              --> Descrição da crítica
+                                   
   -- Procedure para busar os arquivos que serao importados
   PROCEDURE pc_lista_arquivos(pr_cdagebcb IN crapcop.cdagebcb%TYPE --> Agencia do Bancoob
                              ,pr_dsdirarq IN crapscb.dsdirarq%TYPE --> Diretorio que contem os arquivos
@@ -130,14 +135,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
     --  Sistema  : Ayllos
     --  Sigla    : CRED
     --  Autor    : James Prust Junior
-    --  Data     : Fevereiro/2016.                   Ultima atualizacao:
+    --  Data     : Fevereiro/2016.                   Ultima atualizacao: 03/01/2016
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Envio de email para a area responsavel
     --
-    -- Alterações
+    -- Alterações 03/01/2016 - Ajustes para ignorar cartões das coops inatvas(Migração/Incorporacao)
+    --                         (Odirlei-AMcom) 
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       CURSOR cr_crawcrd IS
@@ -209,17 +215,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
       WHILE vr_indice IS NOT NULL LOOP
         vr_indice_cop := LPAD(vr_tab_arquivos(vr_indice).cdcooper,10,'0');
       
-        -- Texto do e-mail
-        vr_desemail := vr_desemail || 
-                       pr_tab_crapcop(vr_indice_cop).nmrescop ||' - ' ||
-                       vr_tab_arquivos(vr_indice).nmbandeira  || ': ';
+        --> Apenas tratar coops ativas, pois podem existir dados de cartao
+        --> de coops migradas/incorporadas        
+        IF pr_tab_crapcop.exists(vr_indice_cop) THEN        
+        
+          -- Texto do e-mail
+          vr_desemail := vr_desemail || 
+                         pr_tab_crapcop(vr_indice_cop).nmrescop ||' - ' ||
+                         vr_tab_arquivos(vr_indice).nmbandeira  || ': ';
                        
-        IF vr_tab_arquivos(vr_indice).cdsituacao = 0 THEN
-          vr_desemail := vr_desemail || 'Arquivo nao importado <br />';
-        ELSIF vr_tab_arquivos(vr_indice).cdsituacao = 1 THEN
-          vr_desemail := vr_desemail || 'Arquivo importado com sucesso <br />';
-        ELSIF vr_tab_arquivos(vr_indice).cdsituacao = 2 THEN
-          vr_desemail := vr_desemail || 'Arquivo importado com criticas <br />';
+          IF vr_tab_arquivos(vr_indice).cdsituacao = 0 THEN
+            vr_desemail := vr_desemail || 'Arquivo nao importado <br />';
+          ELSIF vr_tab_arquivos(vr_indice).cdsituacao = 1 THEN
+            vr_desemail := vr_desemail || 'Arquivo importado com sucesso <br />';
+          ELSIF vr_tab_arquivos(vr_indice).cdsituacao = 2 THEN
+            vr_desemail := vr_desemail || 'Arquivo importado com criticas <br />';
+          END IF;
         END IF;
         -- Proxima linha
         vr_indice := vr_tab_arquivos.next(vr_indice);
@@ -518,14 +529,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
     --  Sistema  : Ayllos
     --  Sigla    : CRED
     --  Autor    : James Prust Junior
-    --  Data     : Fevereiro/2016.                   Ultima atualizacao:
+    --  Data     : Fevereiro/2016.                   Ultima atualizacao: 03/01/2016
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
     -- Objetivo  : Importa o arquivo de layout
     --
-    -- Alterações
+    -- Alterações: 03/01/2016 - Incluido tratamento para fechar arquivo ao fim da importação(Odirlei-AMcom)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       CURSOR cr_tbcrd_arq_risco (pr_cdcooper   IN tbcrd_arq_risco.cdcooper%TYPE
@@ -646,6 +657,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
           
         -- Footer
         IF vr_tipo_registro = '9' THEN
+          --> Fechar arquivo
+          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file);
           EXIT;          
         END IF;
         
@@ -662,7 +675,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0002 IS
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
         -- Descricao do erro
-        pr_dscritic := 'Erro nao tratado na RISC0002.pc_importa_arq_layout ' || SQLERRM;
+        pr_dscritic := 'Erro nao tratado na RISC0002.pc_importa_arq_layout( '||pr_cdagebcb||')' || SQLERRM;
     END;
     
   END pc_importa_arq_layout;
