@@ -12,14 +12,17 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Adriano
-   Data    : Maio/2016                        Ultima atualizacao: 
+   Data    : Maio/2016                        Ultima atualizacao: 02/01/2017
 
    Dados referentes ao programa:
 
    Frequencia: Diario.
    Objetivo  : Realizado a efetivação de agendamentos de TED
 
-   Alteracoes: 
+   Alteracoes: 02/01/2017 - Adição de filtro por cooperativa ativa na leitura da 
+               crapcop, por precaução. Já foi ajustado na pc_job_agendebted também
+               para gerar os jobs desse crps apenas para cooperativas ativas.
+			   
    ............................................................................. */
 
    DECLARE
@@ -37,7 +40,8 @@ BEGIN
              ,cop.dsdircop
              ,cop.nrctactl
        FROM crapcop cop
-       WHERE cop.cdcooper = pr_cdcooper;
+       WHERE cop.cdcooper = pr_cdcooper
+         AND cop.flgativo = 1;
      rw_crapcop cr_crapcop%ROWTYPE;
 
      --Registro do tipo calendario
