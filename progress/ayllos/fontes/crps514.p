@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Agosto/2008                      Ultima atualizacao: 09/09/2015.
+   Data    : Agosto/2008                      Ultima atualizacao: 03/01/2017.
 
    Dados referentes ao programa:
 
@@ -28,6 +28,9 @@
                             
                09/09/2015 - Retirada verificacao dos arquivos bancoob 
                             SD331188 (Odirlei-AMcom)
+
+               03/01/2017 - Ajustado para apenas efetuar leitura das cooperativas
+			                ativas quando for Cecred (Daniel)     
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -82,7 +85,8 @@ IF   glb_cdcooper = 3 THEN
            
             ASSIGN aux_flgproce = TRUE.
 
-            FOR EACH crabcop WHERE crabcop.cdcooper <> 3 NO-LOCK:
+            FOR EACH crabcop WHERE crabcop.cdcooper <> 3 
+			                   AND crabcop.flgativo = TRUE NO-LOCK: /* Somente cooperativas ativas */
                 
                 ASSIGN aux_nmarquiv = "/usr/coop/" + TRIM(LC(crabcop.dsdircop))
                                       + "/controles/Proc_Diario.Ok"
