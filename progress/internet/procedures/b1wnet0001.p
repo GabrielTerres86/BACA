@@ -261,6 +261,8 @@
                             TRUE se algum dos convenios possuir a opcao de protesto
                             habilitada. Heitor (Mouts) - Chamado 554656
 
+		       23/12/2016 - Ajustes referentes a melhoria de performance na cobrança 
+			                do IB (Tiago/Ademir SD566906).
 .............................................................................*/
 
 
@@ -2516,6 +2518,8 @@ PROCEDURE seleciona-sacados:
 
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
 
+	DEF VAR aux_qtregcon AS INTEGER									NO-UNDO.
+
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-sacados-blt.
 
@@ -2577,10 +2581,29 @@ PROCEDURE seleciona-sacados:
             RETURN "NOK".
         END.
         
+    ASSIGN aux_qtregcon = 0.
+
     FOR EACH crapsab WHERE crapsab.cdcooper = par_cdcooper AND
                            crapsab.nrdconta = par_nrdconta AND
                            crapsab.nmdsacad MATCHES "*" + par_nmdsacad + "*" 
                            NO-LOCK BY crapsab.nmdsacad:
+        
+		/* Se nao foi passado nada para a pesquisa limito os resultados a 400 senao 2000 */
+		IF TRIM(par_nmdsacad) = "" AND
+		   aux_qtregcon >= 400     THEN
+		   DO:			   
+			   LEAVE.
+			END.
+		ELSE
+			DO:
+				IF TRIM(par_nmdsacad) <> "" AND
+		           aux_qtregcon >= 2000     THEN
+				   DO:
+						LEAVE.
+				   END.
+			END.
+
+        ASSIGN aux_qtregcon = aux_qtregcon + 1.
         
         IF  par_flsitsac AND crapsab.cdsitsac = 2  THEN
             NEXT.
