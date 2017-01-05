@@ -661,7 +661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Felipe Oliveira
-  Data    : Dezembro/2014                       Ultima Alteracao: 07/10/2016
+  Data    : Dezembro/2014                       Ultima Alteracao: 02/01/2017
 
   Dados referentes ao programa:
 
@@ -694,7 +694,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
      06/10/2016 - Alteração do diretório para geração de arquivo contábil.
                    P308 (Ricardo Linhares).
-
+                   
+     02/01/2017 - Ajustes da incorporação Transulcred -> Transpocred, no projeto
+                  214 foi implementado para gerar os juros+60 separadamente, porém não foi 
+                  tratado a incorporação, estava somando a incorporação na nova cooperativa
+                  no fechamento do mes. (Oscar).
 
   ............................................................................. */
 
@@ -850,7 +854,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     -- Valores de juros+60 para os empréstimos/financiamentos
     --por tipo de pessoa e nível de risco
     CURSOR cr_crapris_60(pr_cdcooper IN crapris.cdcooper%TYPE
-                       ,pr_dtrefere IN crapris.dtrefere%TYPE) IS
+                        ,pr_dtrefere IN crapris.dtrefere%TYPE
+                        ,pr_cdcopant IN craptco.cdcopant%TYPE
+                        ,pr_dtincorp IN crapdat.dtmvtolt%TYPE) IS
         SELECT ris.inpessoa
                ,ris.innivris
                ,SUM(ris.vljura60) vljura60
@@ -859,6 +865,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
            AND ris.dtrefere = pr_dtrefere --Data atual da cooperativa
            AND ris.inddocto = 1           --Contratos ativos
            AND ris.cdorigem = 3           --Empréstimos / Financiamentos
+           AND (NOT EXISTS (SELECT 1
+                              FROM craptco t
+                             WHERE t.cdcooper = ris.cdcooper
+                               AND t.nrdconta = ris.nrdconta
+                               AND t.cdcopant = pr_cdcopant) OR
+               pr_dtrefere > pr_dtincorp)
           GROUP BY ris.inpessoa
                   ,ris.innivris
           HAVING SUM(ris.vljura60) > 0
@@ -1063,6 +1075,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_dscomando         VARCHAR2(4000);
     -- Saida da OS Command
     vr_typ_saida         VARCHAR2(4000);
+    -- Cooperativas incorporadas
+    vr_dtincorp crapdat.dtmvtolt%TYPE;
+    vr_cdcopant craptco.cdcopant%TYPE;
 
     -- Escrever linha no arquivo
     PROCEDURE pc_gravar_linha(pr_linha IN VARCHAR2) IS
@@ -4448,10 +4463,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       pc_gravar_linha(vr_linhadet);
     END IF;
+   
+    -- Incorporação Transulcred -> Transpocred
+    vr_cdcopant := 0;
+    vr_dtincorp := NULL;
+    IF (pr_cdcooper = 09) THEN /* Transpocred */
+       vr_cdcopant := 17; /* Transulcred */
+       vr_dtincorp := to_date('31/12/2016','DD/MM/RRRR'); /* Data da Incorporação */
+    END IF;
 
     -- Juros +60 Microcrédito
     FOR rw_crapris_60 IN cr_crapris_60(pr_cdcooper
-                                      ,vr_dtrefere) LOOP
+                                      ,vr_dtrefere
+                                      ,vr_cdcopant
+                                      ,vr_dtincorp) LOOP
+                                      
+       
+                                      
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                        TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',' ||
                        vr_tab_contas(vr_price_atr)(rw_crapris_60.inpessoa)(vr_price_deb)(to_char(rw_crapris_60.innivris)).nrdconta || ',' ||
@@ -4703,6 +4731,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     Alterações:   06/10/2016 - Alteração do diretório para geração de arquivo contábil.
                                P308 (Ricardo Linhares).
+                               
+                  04/01/2016 - Ajustes para desprezar as contas migradas antes da
+                               incorporação.
+                               PRJ342 - Incorporação Transulcred(Odirlei-AMcom)             
   ............................................................................. */
     DECLARE
       -- Buscar todos os percentual de cada nivel de risco
@@ -4890,6 +4922,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       -- Percorrer todos os dados de risco
       FOR rw_crapris IN cr_crapris(pr_cdcooper => pr_cdcooper,
                                    pr_dtrefere => vr_dtrefere) LOOP
+        
+        -- Tratar incorporação 17 -> 9
+        --> Desprezar contas migradas antes da data de incorporação
+        --> contas nao devem ser enviadas no arquivo
+        IF pr_cdcooper IN (9) THEN        
+          IF NOT fn_verifica_conta_migracao(rw_crapris.cdcooper,
+                                            rw_crapris.nrdconta,
+                                            rw_crapris.dtrefere) THEN
+            CONTINUE;
+          END IF;  
+        END IF;
                                    
         -- Calculo do % de provisao do Risco
         IF vr_tab_percentual.exists(rw_crapris.innivris) THEN
