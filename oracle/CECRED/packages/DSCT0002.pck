@@ -396,7 +396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --              titulos.
   --
   --  Alteracoes: 05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
-  --  
+  --  Alteracoes: 05/01/2016 - Add SUBSTR na variavel vr_rel_dsopecoo, estava estourando o limite de caracter.
   --------------------------------------------------------------------------------------------------------------*/
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -3764,7 +3764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           12) - 1) * 100,6);
       vr_rel_txmensal := vr_tab_dados_border(vr_idxborde).txmensal;
       vr_rel_nmextcop := rw_crapcop.nmextcop;
-      vr_rel_dsopecoo := vr_tab_dados_border(vr_idxborde).dsopecoo;
+      vr_rel_dsopecoo := SUBSTR(vr_tab_dados_border(vr_idxborde).dsopecoo, 0, 40);
       
      
       --> Informacoes da Carteira de Cobranca
