@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 06/12/2016
+   Data    : AGOSTO/2013                      Ultima atualizacao: 05/01/2017
 
    Dados referentes ao programa:
 
@@ -168,9 +168,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             das cooperativas ativas campo "flgativo". (Oscar)
 
 			   
-			   30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
-			                Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
-							Gil (Mouts)
+               30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
+                            Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
+                    Gil (Mouts)
+              
+               05/01/2017 - Ajuste para força o uso do indice 2 da tabela craplcm problemas
+                           de performance  Oracle usa o indice 1. (Oscar)
      ............................................................................. */
 
      DECLARE
@@ -488,7 +491,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrdconta  IN crapcyb.nrdconta%type
                                        ,pr_nrctremp  IN crapcyb.nrctremp%type
                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%type) IS
-         SELECT SUM(craplem.vllanmto) vllanmto
+         SELECT /*+ index (craplcm CRAPLCM##CRAPLCM2) */   
+               SUM(craplem.vllanmto) vllanmto
                ,craplem.cdhistor
                ,craphis.dshistor
            FROM craplem, craphis
