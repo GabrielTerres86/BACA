@@ -7,7 +7,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Janeiro/2006.                    Ultima atualizacao: 23/06/2015
+   Data    : Janeiro/2006.                    Ultima atualizacao: 10/10/2016
       
    Dados referentes ao programa:
 
@@ -70,6 +70,8 @@
                23/06/2015 - Ajustado a pesquisa do saldo da conta para utilizar 
                             a procedure pc_obtem_saldo_dia_prog
                             (Douglas - Chamado 285228 - obtem-saldo-dia)
+
+			   10/10/2016 - Ajuste referente Projeto 291 (Daniel)	
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -654,11 +656,20 @@ PROCEDURE p_validasenha:
    ELSE                    
         DO: 
             IF   INTEGER(crapsnh.cddsenha) = INTEGER(aux_dsdsenha) THEN
-                 {&OUT} "ok".
+            DO:
+				FIND FIRST crapass WHERE crapass.cdcooper = crapsnh.cdcooper  AND
+										 crapass.nrdconta = crapsnh.nrdconta
+									     NO-LOCK NO-ERROR.
+
+			   IF   NOT AVAILABLE crapass THEN
+					{&OUT} "falso". 
+			   ELSE
+					{&OUT} "ok|" + STRING(crapass.cdcooper) + "|" + STRING(crapass.nrdconta) + "|" + STRING(crapass.cdagenci). 
+			END.
             ELSE
             /* Conta Teste */
             IF   aux_nmprimtl = "CONTA  TESTE"   THEN
-                 {&OUT} "ok".
+                 {&OUT} "ok|1|999|1".
             ELSE
                  {&OUT} "falso".
         END.
