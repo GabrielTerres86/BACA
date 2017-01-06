@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 06/12/2016
+   Data    : AGOSTO/2013                      Ultima atualizacao: 05/01/2017
 
    Dados referentes ao programa:
 
@@ -163,7 +163,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
                10/10/2016 - 449436 - Alterações Envio Cyber - Alterado para acrescetar a mora e juros ao valor devedor
                             do cyber. (Gil - Mouts)
-                            
+			   
                06/12/2016 - Incorporação alteração no cursor "cr_crapcop" para retirar o filtro
                             das cooperativas ativas campo "flgativo". (Oscar)
 
@@ -171,6 +171,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 			   30/11/2016 - Ajuste na busca de multa e juros de mora para so trazer o valor caso a origem seja 2 ou 3.
 			                Antes, poderia causar problema se um numero de contrato tiver a mesma numeracao da conta.
 							Gil (Mouts)
+              
+               05/01/2017 - Ajuste para força o uso do indice 2 da tabela craplcm problemas
+                           de performance  Oracle usa o indice 1. (Oscar)
      ............................................................................. */
 
      DECLARE
@@ -387,7 +390,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                   and x.nrdconta = crapcyb.nrdconta
                   and x.nrctremp = crapcyb.nrctremp
                   and crapcyb.cdorigem IN (2,3)
-				  and x.inliquid = 0) vlmtapar
+                  and x.inliquid = 0) vlmtapar
              ,(select sum(x.vlmrapar)
                  from crappep x
                 where x.cdcooper = crapcyb.cdcooper
@@ -488,7 +491,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrdconta  IN crapcyb.nrdconta%type
                                        ,pr_nrctremp  IN crapcyb.nrctremp%type
                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%type) IS
-         SELECT SUM(craplem.vllanmto) vllanmto
+         SELECT /*+ index (craplcm CRAPLCM##CRAPLCM2) */   
+               SUM(craplem.vllanmto) vllanmto
                ,craplem.cdhistor
                ,craphis.dshistor
            FROM craplem, craphis
