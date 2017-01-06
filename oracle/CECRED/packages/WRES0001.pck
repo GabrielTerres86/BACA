@@ -87,6 +87,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
   END;
   
   PROCEDURE pc_log_rest(pr_requisicao   IN typ_http_request
+                       ,pr_endereco     IN VARCHAR2
                        ,pr_dtrequisicao IN DATE
                        ,pr_resposta     IN typ_http_response
                        ,pr_dtresposta   IN DATE
@@ -118,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
                                      ,cdcritic)
                 VALUES (pr_dtrequisicao
                        ,pr_dtresposta
-                       ,pr_requisicao.endereco
+                       ,pr_endereco
                        ,pr_requisicao.verbo
                        ,vr_clob_cabecalho_requisicao
                        ,pr_requisicao.conteudo
@@ -274,6 +275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
     
     -- log da requisição
     pc_log_rest(pr_requisicao   => pr_requisicao
+               ,pr_endereco     => vr_endereco
                ,pr_dtrequisicao => vr_dtrequisicao
                ,pr_resposta     => pr_resposta
                ,pr_dtresposta   => vr_dtresposta
