@@ -3283,7 +3283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                     pr_nrdconta => rw_crapass.nrdconta,
                                     pr_vldtrans => vr_vldtrans,
                                     pr_nrseqarq => vr_nrseqarq,
-                                    pr_dtdtrgmt => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'));
+                                    pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'));
                     FETCH cr_crapdcb INTO rw_crapdcb;
 
                     IF cr_crapdcb%NOTFOUND THEN
@@ -3331,7 +3331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                       pr_nrdconta => rw_crapass.nrdconta,
                                                       pr_vldtrans => vr_vldtrans,
                                                       pr_nrseqarq => vr_nrseqarq,
-                                                      pr_dtdtrgmt => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy')
+                                                      pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd')
                                                       ) LOOP
 
                          vr_tpmensag := rw_crapdcb.tpmensag;
@@ -3555,7 +3555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                    pr_nrdolote  => vr_nrdolote,
                                                    pr_nrdctabb  => nvl(trim(substr(vr_des_text,171,12)),0),
                                                    pr_nrdocmto  => vr_nrdocmto,
-                                                   pr_dtrefere  => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
+                                                   pr_dtrefere  => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                                    pr_hrtransa  => nvl(trim(substr(vr_des_text,208,6)),0),
                                                    pr_vllanmto  => (nvl(trim(substr(vr_des_text,55,11)),0) / 100),
                                                    pr_nrdconta  => nvl(rw_crapass_dest.nrdconta,0), -- nrdconta
@@ -3582,7 +3582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                    pr_nrdolote  => vr_nrdolote,
                                                    pr_nrdctabb  => nvl(trim(substr(vr_des_text,171,12)),0),
                                                    pr_nrdocmto  => vr_nrdocmto,
-                                                   pr_dtrefere  => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
+                                                   pr_dtrefere  => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                                    pr_hrtransa  => nvl(trim(substr(vr_des_text,208,6)),0),
                                                    pr_vllanmto  => (nvl(trim(substr(vr_des_text,55,11)),0) / 100),
                                                    pr_nrdconta  => nvl(rw_crapass.nrdconta,0), -- nrdconta
@@ -3702,7 +3702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                  -- verifica se já existe debito de cartão bancoob msg 0200
                OPEN cr_crapdcb_200 (pr_nrnsucap => substr(vr_des_text,198,6),
-                                     pr_dtdtrgmt => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
+                                     pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                      pr_hrdtrgmt => substr(vr_des_text,208,6),
                                      pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
                                      pr_nrdconta => rw_crapass.nrdconta,
@@ -3716,7 +3716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       vr_tpmensag := '0400';
                       -- verifica se já existe Credito de cartão bancoob msg 0200
                       OPEN cr_crapdcb_400 (pr_nrnsucap => substr(vr_des_text,198,6),
-                                           pr_dtdtrgmt => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
+                                           pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                            pr_hrdtrgmt => substr(vr_des_text,208,6),
                                            pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
                                            pr_nrdconta => rw_crapass.nrdconta,
@@ -3737,7 +3737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       IF rw_crapcop_cdagebcb.flgativo = 0 THEN
                         pc_insert_crapdcb(pr_tpmensag => vr_tpmensag,
                                           pr_nrnsucap => nvl(trim(substr(vr_des_text,198,6)),0),
-                                          pr_dtdtrgmt => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
+                                          pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                           pr_hrdtrgmt => nvl(substr(vr_des_text,208,6),0),
                                           pr_cdcooper => rw_crapass_dest.cdcooper,
                                           pr_nrdconta => nvl(rw_crapass_dest.nrdconta,0), -- nrdconta
@@ -3777,7 +3777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                       ELSE
                         pc_insert_crapdcb(pr_tpmensag => vr_tpmensag,
                                           pr_nrnsucap => nvl(trim(substr(vr_des_text,198,6)),0),
-                                          pr_dtdtrgmt => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
+                                          pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                           pr_hrdtrgmt => nvl(substr(vr_des_text,208,6),0),
                                           pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
                                           pr_nrdconta => nvl(rw_crapass.nrdconta,0), -- nrdconta
@@ -3826,7 +3826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- se ja existe o registro deve atualizar a mensagem 200
                   pc_insert_crapdcb(pr_tpmensag => '0200',
                                     pr_nrnsucap => nvl(trim(substr(vr_des_text,198,6)),0),
-                                    pr_dtdtrgmt => to_date(trim(substr(vr_des_text,39,8)),'ddmmyyyy'),
+                                    pr_dtdtrgmt => to_date(trim(substr(vr_des_text,204,4)),'mmdd'),
                                     pr_hrdtrgmt => nvl(substr(vr_des_text,208,6),0),
                                     pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
                                     pr_nrdconta => nvl(rw_crapass.nrdconta,0), -- nrdconta
