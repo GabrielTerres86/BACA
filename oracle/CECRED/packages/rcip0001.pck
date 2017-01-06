@@ -369,21 +369,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
                           AND vr_dat_fim
          AND INCOBRAN = 5;
        
-    -- Valor dos pagamentos efetuados pelo cooperado
+    -- Quantidade de pagamentos
     CURSOR cr_indica03 IS
-			SELECT (SELECT nvl(SUM(tit.vldpagto),0)
-							FROM craptit tit        
-						 WHERE tit.cdcooper = pr_cdcooper
-							 AND tit.nrdconta = pr_nrdconta
-							 AND tit.dtdpagto BETWEEN vr_dat_ini 
-																		AND vr_dat_fim) +
-						(SELECT nvl(SUM(lft.vllanmto),0)
-							FROM craplft lft
-						 WHERE lft.cdcooper = pr_cdcooper
-							 AND lft.nrdconta = pr_nrdconta
-							 AND lft.dtmvtolt BETWEEN vr_dat_ini 
-																		AND vr_dat_fim
-																		) FROM dual;
+      SELECT AVG(COUNT(1))
+        FROM crapcob 
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+         AND DTDPAGTO BETWEEN vr_dat_ini 
+                          AND vr_dat_fim
+         AND INCOBRAN = 5 
+         AND cdbandoc IN(85,1) -- SR[Sua remessa] e NR[Nossa remessa]         
+       GROUP BY TRUNC(dtmvtolt,'mm');
+
        
     -- Saldo Médio Mensal:
     CURSOR cr_indica04 IS
