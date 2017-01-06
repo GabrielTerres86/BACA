@@ -605,11 +605,11 @@ PROCEDURE grava-autenticacao:
             
 									IF  AVAILABLE crapaut  THEN 
 										DO:
-											ASSIGN i-seq-aut = crapaut.nrsequen.           
-										END.
+                                ASSIGN i-seq-aut = crapaut.nrsequen.           
+                        END.
 								END.
                         END.
-            
+
                     CREATE crapaut.
                     ASSIGN crapaut.cdcooper = crapcop.cdcooper
                            crapaut.cdagenci = p-cod-agencia
