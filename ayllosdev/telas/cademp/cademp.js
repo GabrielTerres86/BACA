@@ -47,6 +47,13 @@
 
      01/09/2016 - Ajuste substring do response na consulta de empresas (Douglas - EMERGENCIAL)
 
+     18/10/2016 - Remocao dos caracteres invalidos na inserção/alteração dos dados. (SD 520605 - Kelvin)
+
+     25/10/2016 - SD542975 - Tratamento correto do Nrdconta e validação (Guilherme/SUPERO)
+
+	 06/01/2017 - SD588833 - No cadastro das empresas, não pode haver outra empresa na mesma 
+				  cooperativa com a mesma NRDCONTA. A validação não estava funcionando quando 
+				  a conta era selecionada via opção zoom. Ajuste realizado! (Renato - Supero)
 ************************************************************************************************/
 
 
@@ -879,16 +886,14 @@ function controlaFocoFormulariosEmpresa() {
                 return false;
             }
         });
-        cNrdconta.unbind('keypress').bind('keypress', function(e) {
-            if (e.keyCode == 9 || e.keyCode == 13) {
+        
                     cNrdconta.unbind('change').bind('change', function(e) {
+
                         if (normalizaNumero(cNrdconta.val()) > 0){
                             buscaContaEmp(1);
                         }
-                    });
                 cNmcontat.focus();
                 return false;
-            }
         });
         cNmcontat.unbind('keypress').bind('keypress', function(e) {
             if (e.keyCode == 9 || e.keyCode == 13) {
@@ -1175,8 +1180,11 @@ function btnVoltar() {
 
 
 function alteraInclui() {
-
-    var cnpj;
+	
+	//Variaveis para tratamento de caracteres invalidos
+    var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrfonemp, nrfaxemp, dsdemail;
+		
+	var cnpj;
 
     /* Altera valor nos campos Checkbox */
     cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
@@ -1187,8 +1195,20 @@ function alteraInclui() {
 
     cNrdocnpj = $('#nrdocnpj', '#frmInfEmpresa');
     cnpj = normalizaNumero(cNrdocnpj.val());
-
-
+	
+	//Substitui/Remove os caracteres invalidos dos campos ao inserer ou alterar
+	nmextemp = removeCaracteresInvalidos(cNmextemp.val().toUpperCase()); // Razao social
+	nmresemp = removeCaracteresInvalidos(cNmresemp.val().toUpperCase()); // Nome fantazia
+	nmcontat = removeCaracteresInvalidos(cNmcontat.val().toUpperCase()); // Contato
+	dsendemp = removeCaracteresInvalidos(cDsendemp.val().toUpperCase()); // Endereço
+	dscomple = removeCaracteresInvalidos(cDscomple.val().toUpperCase()); // Complemento
+	nmbairro = removeCaracteresInvalidos(cNmbairro.val().toUpperCase()); // Bairro
+	nmcidade = removeCaracteresInvalidos(cNmcidade.val().toUpperCase()); // Cidade
+	cdufdemp = removeCaracteresInvalidos(cCdufdemp.val());				 // UF
+	nrfonemp = removeCaracteresInvalidos(cNrfonemp.val());				 // Telefone
+	nrfaxemp = removeCaracteresInvalidos(cNrfaxemp.val());				 // Fax
+	dsdemail = removeCaracteresInvalidos(cDsdemail.val());				 // Email
+	
     /* Altera valor nos campos Checkbox */
     if (cddopcao == "A") {
         showMsgAguardo("Aguarde, alterando empresa...");
@@ -1204,22 +1224,22 @@ function alteraInclui() {
             cddopcao: cddopcao,
             //campos tela empresa
             cdempres: cCdempres.val(),
-            nmextemp: cNmextemp.val().toUpperCase(),
+            nmextemp: nmextemp,
             idtpempr: cIdtpempr.val().toUpperCase(),
-            nmresemp: cNmresemp.val().toUpperCase(),
+            nmresemp: nmresemp,
             nrdconta: cNrdconta.val().toUpperCase(),
-            nmcontat: cNmcontat.val().toUpperCase(),
-            dsendemp: cDsendemp.val().toUpperCase(),
+            nmcontat: nmcontat,
+            dsendemp: dsendemp,
             nrendemp: normalizaNumero(cNrendemp.val()),
-            dscomple: cDscomple.val().toUpperCase(),
-            nmbairro: cNmbairro.val().toUpperCase(),
-            nmcidade: cNmcidade.val().toUpperCase(),
-            cdufdemp: cCdufdemp.val(),
+            dscomple: dscomple,
+            nmbairro: nmbairro,
+            nmcidade: nmcidade,
+            cdufdemp: cdufdemp,
             nrcepend: normalizaNumero(cNrcepend.val()),
             nrdocnpj: normalizaNumero(cNrdocnpj.val()),
-            nrfonemp: cNrfonemp.val(),
-            nrfaxemp: cNrfaxemp.val(),
-            dsdemail: cDsdemail.val(),
+            nrfonemp: nrfonemp,
+            nrfaxemp: nrfaxemp,
+            dsdemail: dsdemail,
             //valores old tela empresa
             old_nmextemp: old_cNmextemp,
             old_idtpempr: old_cIdtpempr,
@@ -1935,7 +1955,8 @@ function selecionaAvalista() {
                 cNrdconta.val( $('#nrdconta', $(this) ).val() );
                 cNmextttl.val( $('#nmfuncio', $(this) ).val() );
                 cNrdconta.trigger('blur');
-                buscaDadosCooperado();
+                //buscaDadosCooperado();
+				buscaContaEmp(1);
                 return false;
             }
         });
