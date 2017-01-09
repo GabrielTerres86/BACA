@@ -1,13 +1,10 @@
-/*
- *
- * Programa wpgd0035b.p - Listagem de certificados, impressão dos usuários selecionados
- *                        (chamado a partir dos dados de wpgd0035a)
- *
- */
 /* .............................................................................
 
-Alterações:  03/11/2008 - Inclusao widget-pool (martin)
+  Programa wpgd0035b.p - Listagem de certificados, impressão dos usuários selecionados
+                         (chamado a partir dos dados de wpgd0035a)
          
+  Alterações: 03/11/2008 - Inclusao widget-pool (martin)
+
              11/11/2008 - Tratamento na impressão do Certificado (Diego).
 
              10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
@@ -17,26 +14,25 @@ Alterações:  03/11/2008 - Inclusao widget-pool (martin)
                           
              19/07/2012 - Removido o campo de assinatura do Ministrante (Lucas).
 
-             28/11/2012 - Substituir tabela "gncoper" por "crapcop"
-                          (David Kruger).
+              28/11/2012 - Substituir tabela "gncoper" por "crapcop" (David Kruger).
                           
-             04/04/2013 - Alteração no layout dos certificados
-                          (David Kruger).
+              04/04/2013 - Alteração no layout dos certificados (David Kruger).
                           
              22/09/2014 - Incluir crapass na busca pelos incritos (Softdesk 201275 - Lucas R.) 
              
              23/10/2014 - Incluir inpessoa = 1 na busca da crapass (Lucas R.)
             
+              10/08/2016 - Alterações para Prj. 229 (Jean Michel)
                           
+              26/10/2016 - Alterações para Prj. 229-Melhorias, Inclusao da imagem 
+                           de assinatura (Jean Michel)
+
 ............................................................................. */
+
+{ sistema/generico/includes/var_log_progrid.i }
 
 create widget-pool.
 
-/*****************************************************************************/
-/*                                                                           */
-/*   Bloco de variaveis                                                      */
-/*                                                                           */
-/*****************************************************************************/
 DEFINE VARIABLE cookieEmUso           AS CHARACTER.
 DEFINE VARIABLE permiteExecutar       AS CHARACTER.
 DEFINE VARIABLE IdentificacaoDaSessao AS CHARACTER.
@@ -88,23 +84,7 @@ DEFINE VARIABLE h-b1wpgd0009          AS HANDLE              NO-UNDO.
                            
 DEFINE TEMP-TABLE cratidp   NO-UNDO   LIKE crapidp.
 
-/*****************************************************************************/
-/*                                                                           */
-/*   Bloco de includes                                                       */
-/*                                                                           */
-/*****************************************************************************/
-
 {src/web/method/wrap-cgi.i}
-
-
-
-
-/*****************************************************************************/
-/*                                                                           */
-/*   Bloco de funçoes                                                        */
-/*                                                                           */
-/*****************************************************************************/
-    
 
 FUNCTION erroNaValidacaoDoLogin RETURNS LOGICAL (opcao AS CHARACTER).
 
@@ -131,28 +111,25 @@ ASSIGN corEmUso = "#000066".
 
 FUNCTION montaTela RETURNS LOGICAL ().
 
-    /** ATENÇÃO: A fonte que está sendo usada atualmente não é padrão do windows
-                 o computador que for imprimir estes certificados deverá ter estas 
-                 fontes devidamente instaladas, caso contrario a pegará a fonte 
-                 padrão do sistema operacional, assim desconfigurando todo o layout
-                 do certificado. 
-    **/
+  /** ATENÇÃO: A fonte que está sendo usada atualmente não é padrão do windows o computador que for imprimir estes certificados deverá ter estas
+  fontes devidamente instaladas, caso contrario a pegará a fonte padrão do sistema operacional, assim desconfigurando todo o layout do certificado. **/
 
     {&out} '<html>' SKIP
            '<head>' SKIP
            '<title>Progrid - Emissão de Certificados</title>' SKIP.
     
     {&out} '<style>' SKIP
-           '   body         ~{ background-color: #FFFFFF; }' SKIP 
-           '   .inputFreq   ~{ height: 18px; font-size: 10px ; color:#000066}' SKIP
-           '   .a3          ~{ font-family: DIN-BLACK, sans-serif; color:#2d5495;font-size: 32px; font-weight: bold;}' SKIP
-           '   .a4          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 23px; font-weight: bold;}' SKIP
-           '   .a5          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 32px; font-weight: bold;}' SKIP
-           '</style>' SKIP.  
+  'body ~{ background-color: #FFFFFF; size: landscape;' SKIP
+  '   .inputFreq     ~{ height: 18px; font-size: 10px ; color:#000066}' SKIP
+  '   .a3            ~{ font-family: DIN-BLACK, sans-serif; color:#2d5495;font-size: 40px; font-weight: bold;}' SKIP
+  '   .a4            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 23px; font-weight: bold;}' SKIP
+  '   .a5            ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 40px; font-weight: bold;}' SKIP
+  '   .data          ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 32px; font-weight: bold;}' SKIP
+  '   .assinatura    ~{ font-family: DIN-REGULAR, sans-serif; color:#2d5495;font-size: 32px; font-weight: bold;}' SKIP
+    '</style><style type="text/css" media="print">@page ~{size: landscape;    }    body ~{         writing-mode: tb-rl;    }</style' SKIP.
 
     {&out} '</head>' SKIP
            '<body bgcolor="#FFFFFF" topmargin="0" marginwidth="0" marginheight="0">' SKIP
-           '<div align="center">' SKIP
            '<form name="form" action="' programaEmUso '" method="post">' SKIP
            '   <input type="hidden" name="parametro1" value="' idEvento '">' SKIP 
            '   <input type="hidden" name="parametro2" value="' cdCooper '">' SKIP 
@@ -165,28 +142,30 @@ FUNCTION montaTela RETURNS LOGICAL ().
            '   <input type="hidden" name="assinar2" value="' assinar2 '">' SKIP.
     
     IF msgsDeErro <> "" THEN
+    DO:
        {&out} '<h2>Atenção</h2>'      SKIP
               '<b>' msgsDeErro '</b>' SKIP.
+    END.
        ELSE
            DO:
               ASSIGN conta = 0.
 
-              FOR EACH Crapidp WHERE crapidp.cdcooper = cdCooper AND
-                                     Crapidp.NrSeqEve = nrSeqEve AND
-                                     Crapidp.IdStaIns = idStaIns NO-LOCK,
-                  EACH crapass WHERE crapass.cdcooper = crapidp.cdcooper AND
-                                     crapass.nrdconta = crapidp.nrdconta AND
-                                     crapass.inpessoa = 1 NO-LOCK 
-                                     BY Crapidp.NmInsEve:
+      {&out} '<div id="conteudo" name="conteudo" align="center" style="height:100%; width:100%; border: 0px solid black;text-align: center; ">' SKIP.
 
+      FOR EACH Crapidp WHERE crapidp.cdcooper = cdCooper
+                         AND Crapidp.NrSeqEve = nrSeqEve
+                         AND Crapidp.IdStaIns = idStaIns NO-LOCK,
+        EACH crapass WHERE crapass.cdcooper = crapidp.cdcooper
+                       AND crapass.nrdconta = crapidp.nrdconta
+                       AND crapass.inpessoa = 1 NO-LOCK
+                        BREAK BY crapidp.nminseve:
+        
                   ASSIGN conta = conta + 1.
                   
-                  IF LOOKUP(STRING(conta),registros,"I") > 0
-                     THEN
+        IF LOOKUP(STRING(conta),registros,"I") > 0 THEN
                          DO:              
-
                             /* Verifica se ainda não foi impresso certificado, para preencher a data de impressão */
-                            IF   crapidp.dtemcert = ?   THEN
+            IF crapidp.dtemcert = ? THEN
                                  DO:
                                     /* Instancia a BO para executar as procedures */
                                     RUN dbo/b1wpgd0009.p PERSISTENT SET h-b1wpgd0009.
@@ -209,111 +188,95 @@ FUNCTION montaTela RETURNS LOGICAL ().
                                       END.
                                  END.
 
-                            /* Espaçamento entre o texto e o cabeçalho do certificado */
+            /* DIV CERTIFICADO COMPLETO */
+            {&out} '<div id="certificado" name="certificado" style="height:1240px; width:100%; position:relative;" >' SKIP.          
 
-                            {&out} '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP
-                                   '</br>' SKIP.
+            /* DIV IMAGEM FUNDO */
+            {&out} '<div id="fundoCertificado" name="fundoCertificado" style="position: absolute; height:1240px; float:left; z-index:1; text-align:center; margin-top: 10px; padding-left: 30px; ">' SKIP.
+            {&out} '<img style="height:1240px;" src="/cecred/images/certificados/' + (IF nomeDaCooperativa <> 'VIACREDI AV' THEN LOWER(nomeDaCooperativa) ELSE 'altovale') + '.jpg"/>' SKIP.
+            {&out} '</div>' SKIP.
+            /* FIM DIV IMAGEM FUNDO */
                 
-                            {&out} '      <p>'
-                                   '         <a class="a5">Certificamos que </a>' 
-                                   '         <a class="a3">' Crapidp.NmInsEve '</a>' 
-                                   '         <a class="a5"> participou ' IF tipoDoEvento = "evento" THEN ' do evento' ELSE IF tipoDoEvento = "palestra" THEN ' da palestra' ELSE (' do ' + LC(tipoDoEvento)) ' de </a>'
-                                   '      </p>' SKIP.
+            /* DIV TEXTO */
+            {&out} '<div id="texto" name="texto" style="padding-left: 50px; position: absolute; padding-top:420px; float:left; text-align:center; z-index:2; width:1754px;" >' SKIP.
 
-                            {&out} '      <p>'
-                                   '         <a class="a3">' Crapedp.NmEvento '</a>'
-                                   '         <a CLASS="a5"> conduzido por </a>'
-                                   '         <a CLASS="a3">' assinar2  '.</a>'
-                                   '      </p>' SKIP.
+            {&out} '<p>'
+                   '  <a class="a5">Certificamos que&nbsp;</a>'
+                   '  <a class="a3">' Crapidp.NmInsEve '</a>'
+                   '  <a class="a5">&nbsp;participou&nbsp;</a>'
+                   '  <a class="a5">' IF tipoDoEvento = "evento" THEN 'do evento' ELSE IF tipoDoEvento = "palestra" THEN 'da palestra' ELSE ('do ' + LC(tipoDoEvento)) ' </a>'
+                   '</p>' SKIP.
 
-                            /* Verifica se o curso foi em um único dia, se foi
-                               coloca apenas dia, mes, ano e a duração senão,
-                               mostra o periodo em que o evento foi realizado */
+            {&out} '<p>'
+                   '  <a class="a3">' Crapedp.NmEvento '</a>'
+                   '  <a CLASS="a5">, conduzido por </a>'
+                   '  <a CLASS="a3">' assinar2  '.</a>'
+                   '</p>' SKIP.
 
-                            IF (Crapadp.DtFinEve - Crapadp.DtIniEve) = 0
-                               THEN
-                                   {&out} '      <p>'
-                                          '         <a class="a5">O evento foi realizado em ' DAY(Crapadp.DtIniEve) ' de ' ENTRY(MONTH(Crapadp.DtIniEve),mes) ' de ' YEAR(Crapadp.DtIniEve) ',</a>'.
+            /* Verifica se o curso foi em um único dia, se foi coloca apenas dia, mes, ano e a duração senão, mostra o periodo em que o evento foi realizado */
+            {&out} '<p>' SKIP.
                 
+            IF (Crapadp.DtFinEve - Crapadp.DtIniEve) = 0 THEN
+              {&out} '<a class="a5">O evento foi realizado em ' DAY(Crapadp.DtIniEve) ' de ' ENTRY(MONTH(Crapadp.DtIniEve),mes) ' de ' YEAR(Crapadp.DtIniEve) ',</a>'.
                             ELSE
-                                   {&out} '      <p>'
-                                          '         <a class="a5">O evento foi realizado no período de</a>'
-                                          '         <a class="a5">' DAY(Crapadp.DtIniEve) ' de ' ENTRY(MONTH(Crapadp.DtIniEve),mes) ' a ' DAY(Crapadp.DtFinEve) ' de ' ENTRY(MONTH(Crapadp.DtFinEve),mes) ' de ' YEAR(Crapadp.DtFinEve) ',</a></br></br>'. 
+              {&out} '<a class="a5">O evento foi realizado no período de&nbsp;</a>'
+                     '<a class="a5">' DAY(Crapadp.DtIniEve) ' de ' ENTRY(MONTH(Crapadp.DtIniEve),mes) ' a ' DAY(Crapadp.DtFinEve) ' de ' ENTRY(MONTH(Crapadp.DtFinEve),mes) ' de ' YEAR(Crapadp.DtFinEve) ',</a></br></br>'.
 
-                            /* Verifica se foi mais de 1 hora mostrando um 's'
-                               após a hora de duração */
+            /* Verifica se foi mais de 1 hora mostrando um 's' após a hora de duração */
 
-                            IF   INT(ENTRY(2,horario,",")) <> 0  THEN
-                                 {&out} '           <a class="a5">com duração de ' ENTRY(1,horario,",") 'h' ENTRY(2,horario,",") 'min.</a>'
-                                        '        </p>' SKIP.
+            IF INT(ENTRY(2,horario,",")) <> 0  THEN
+              {&out} '<a class="a5">com duração de ' ENTRY(1,horario,",") 'h' ENTRY(2,horario,",") 'min.</a>'SKIP.
                             ELSE
-                                 {&out} '           <a class="a5">com duração de ' ENTRY(1,horario,",") ' hora(s).</a>'
-                                        '        </p>' SKIP.
+              {&out} '<a class="a5">com duração de ' ENTRY(1,horario,",") ' hora(s).</a>'SKIP.
 
-                            /* Verifica se a data do evento foi concluido em
-                               um unico dia para ajusta os espaçamentos entre 
-                               o texto e a assinatura.
+            {&out} '</p>' SKIP.
+            {&out} '</div>' SKIP.              
+            /* FIM DIV TEXTO */            
                                
-                               Obs: primeira situação do if é que foi realizado
-                                    em um unico dia */
+            /*
+              Verifica se a data do evento foi concluido em um unico dia para ajusta os espaçamentos entre o texto e a assinatura.
+              Obs: primeira situação do if é que foi realizado em um unico dia
+            */
                            
-                            IF (Crapadp.DtFinEve - Crapadp.DtIniEve) = 0
-                               THEN
-                                   {&out} '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP   
-                                          '      </br>' SKIP 
-                                          '      </br>' SKIP.
-                               ELSE
-                                   {&out} '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP.
+            {&out} '<div style="clear:both"></div>' SKIP. /* DIV DE LIMPEZA */
                                          
-                            IF assinar1 = assinar2 
-                               THEN
-                                   {&out} '      <p>' 
-                                          '         <a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _____________________________________________________________ </a>'
-                                          '         </br>'
-                                          '         <a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' assinar1 ' - Presidente</a>' 
-                                          '         <a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'nomeDaCooperativa '</a>' 
-                                          '      </p>' .
-                               ELSE
-                                   {&out} '      <p>' 
-                                          '         <a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; _____________________________________________________________ </a>' 
-                                          '         </br>' 
-                                          '         <a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' assinar1 ' - Presidente</a>'  
-                                          '         <a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'nomeDaCooperativa '</a>' 
-                                          '      </p>'.
+            /* DIV DE ASSINATURA */
+            {&out} '<div id="assinatura" style="border: 0px solid orange; position:relative; padding-left: 280px; padding-top: 580px; float:left; z-index:6;">' SKIP.
+            /* DIV IMAGEM ASSINATURA */
+            {&out} '<div id="assinatura_imagem" name="assinatura_imagem" style="border: 0px solid blue; position: absolute; float:left; margin-left:350; z-index:7;">' SKIP.
+            {&out} '<img style=" height:400px;" src="/cecred/images/assinaturas/moacir_krambeck.png"/>' SKIP.
+            {&out} '</div>' SKIP.
+            /* FIM DIV IMAGEM ASSINATURA */
+            {&out} '</br>' SKIP. /* QUEBRA DE LINHA */
+            /* DIV NOME PRESIDENTE */
+            {&out} '<div id="assinatura_texto" name="assinatura_texto" style="border: 0px solid green; position: absolute; margin-left: 150px; margin-top:200px; float:left; z-index:5;">' SKIP.
+            {&out} '<a align="center" class="a4">_____________________________________________________________</a></br>' SKIP.
+            {&out} '<a align="center" class="a4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Moacir Krambeck - Presidente Sistema CECRED</a>' SKIP.
+            {&out} '</div>' SKIP.
+            /* FIM DIV NOME PRESIDENTE */
+            {&out} '</div>' SKIP.
+            /* FIM DIV DE ASSINATURA */              
 
-                                   {&out} '      </br>' SKIP
-                                          '      </br>' SKIP
-                                          '      </br>' SKIP.
+            /* DIV DATA */  
+            {&out} '<div style="clear:both"></div>' SKIP. /* DIV DE LIMPEZA */
+            {&out} '<div id="data" name="data" style="border: 0px solid red; position: relative; margin-left: 350px; margin-top:490px; z-index:4;">' SKIP.
+            {&out} '<p align="left"> <a class="data">' nomedacidade ', ' DAY(TODAY) ' de ' ENTRY(MONTH(TODAY),mes) ' de ' YEAR(TODAY) '.</a> </p>' SKIP.
+            {&out} '</div>' SKIP.
+            {&out} '<div style="clear:both"></div>' SKIP.
+            /* FIM DIV DATA */
 
-                                   {&out} '      <div style="margin-left:120px; margin-top:80px;">' 
-                                          '         <p align="LEFT"> <a CLASS="a4">' nomedacidade ', ' DAY(TODAY) ' de ' ENTRY(MONTH(TODAY),mes) ' de ' YEAR(TODAY) '.</a> </p>' 
-                                          '      </div>' SKIP.
+            {&out} '</div>' SKIP. /* FIM DIV CERTIFICADO COMPLETO */
                         
-                            {&out} '<br style="page-break-after: always">' SKIP.
+            {&out} '<br style="page-break: always">' SKIP. /* QUEBRA DE PAGINA AUTOMATICA */    
 
                          END. /* IF INDEX(registros,"I" + (STRING(conta))) > 0 */
+            
               END. /* for each */
-           END.
-    {&out} '</form>' SKIP
-           '</div>' SKIP.
+          
+      {&out} '</div>' SKIP.
+          
+    END. /* FIM ELSE msgsDeErro */
+    {&out} '</form>' SKIP.
 
     {&out} '<script language="Javascript">' SKIP
            '   print();' SKIP
@@ -325,14 +288,6 @@ FUNCTION montaTela RETURNS LOGICAL ().
     RETURN TRUE.
 
 END FUNCTION. /* montaTela RETURNS LOGICAL () */
-
-
-/*****************************************************************************/
-/*                                                                           */
-/*   Bloco de principal do programa                                          */
-/*                                                                           */
-/*****************************************************************************/
-
 
 output-content-type("text/html").
 
@@ -361,18 +316,25 @@ IF permiteExecutar = "1" OR permiteExecutar = "2" THEN
                  registros = GET-VALUE("registros")
                  idStaIns  = 2.
 
-          IF registros = "" 
-             THEN
+      RUN insere_log_progrid("WPGD0008.w",STRING(idEvento) + "|" + STRING(cdCooper) + "|" +
+                STRING(cdAgenci) + "|" + STRING(dtAnoAge)  + "|" + 
+                STRING(cdEvento) + "|" + STRING(nrSeqEve)  + "|" + 
+                STRING(registro) + "|" + STRING(assinar1)  + "|" +
+                STRING(assinar2) + "|" + STRING(registros)).
+
+      IF registros = "" THEN
                  ASSIGN msgsDeErro = msgsDeErro + "-> Não foi selecionado nenhum participante do evento.<br>".
-             ELSE
-                 ASSIGN registros = SUBSTRING(registros,1,LENGTH(registros)).
+          ELSE ASSIGN registros = SUBSTRING(registros,1,LENGTH(registros)).
              
           /* *** 1-Pendente,2-Confirmado,3-Desistente,4-Excedente,5-Cancelado *** */
           ASSIGN situacao = "Pendente,Confirmado,Desistente,Excedente,Cancelado".
 
+        /*Dados Cooperativa*/
+        /*FIND FIRST crapcop FIELDS(nmrescop) WHERE crapcop.cdcooper = cdCooper NO-LOCK NO-ERROR NO-WAIT.*/
+        
           /* *** Dados do PAC *** */
-          FIND Crapage WHERE Crapage.CdCooper = cdCooper AND 
-                             Crapage.CdAgenci = cdAgenci NO-LOCK NO-ERROR.
+        FIND Crapage WHERE Crapage.CdCooper = cdCooper
+        AND Crapage.CdAgenci = cdAgenci NO-LOCK NO-ERROR.
           
           IF AVAILABLE Crapage THEN
              DO:
@@ -383,47 +345,44 @@ IF permiteExecutar = "1" OR permiteExecutar = "2" THEN
              ASSIGN nomeDaAgencia = "Agencia " + STRING(cdAgenci,"999")
                     nomedacidade  = "".
 
-          /* ***  Informações da Agenda do Progrid por PAC *** */
+        /* Informações da Agenda do Progrid por PAC */
           FIND Crapadp WHERE Crapadp.NrSeqDig = nrSeqEve NO-LOCK NO-ERROR.
-          IF NOT AVAILABLE Crapadp 
-             THEN
-                 ASSIGN msgsDeErro = msgsDeErro + "-> Registro Crapadp não esta disponivel.<br>".
+        
+        IF NOT AVAILABLE Crapadp THEN
+          ASSIGN msgsDeErro = msgsDeErro + "-> Registro CRAPADP não esta disponivel.<br>".
              ELSE
                  ASSIGN dataInicial = Crapadp.DtIniEve
                         dataFinal   = Crapadp.DtFinEve
                         cdEvento    = Crapadp.CdEvento.
 
           /* *** Localiza evento *** */
-          FIND Crapedp WHERE Crapedp.IdEvento = idEvento AND
-                             Crapedp.CdCooper = cdCooper AND
-                             Crapedp.DtAnoAge = dtAnoAge AND
-                             Crapedp.CdEvento = cdEvento NO-LOCK NO-ERROR.
-          IF NOT AVAILABLE Crapedp
-             THEN
-                 ASSIGN msgsDeErro = msgsDeErro + "-> Registro Crapedp não esta disponivel.<br>".
+        FIND Crapedp WHERE crapedp.idevento = idevento
+                       AND crapedp.cdcooper = cdcooper
+                       AND crapedp.dtanoage = dtanoage
+                       AND crapedp.cdevento = cdevento NO-LOCK NO-ERROR.
+        
+        IF NOT AVAILABLE Crapedp THEN
+          ASSIGN msgsDeErro = msgsDeErro + "-> Registro CRAPEDP não esta disponivel.<br>".
              ELSE
                  DO:
-                    FIND Craptab WHERE Craptab.cdcooper = 0             AND
-                                       Craptab.NmSistem = "CRED"        AND
-                                       Craptab.TpTabela = "CONFIG"      AND 
-                                       Craptab.CdEmpres = 0             AND 
-                                       Craptab.CdAcesso = "PGTPEVENTO"  AND
-                                       Craptab.TpRegist = 0 
+            FIND craptab WHERE craptab.cdcooper = 0
+                           AND craptab.nmsistem = "CRED"
+                           AND craptab.tptabela = "CONFIG"
+                           AND craptab.cdempres = 0
+                           AND craptab.cdacesso = "PGTPEVENTO"
+                           AND craptab.tpregist = 0
                                        NO-LOCK NO-ERROR.
-                    IF AVAILABLE CrapTab
-                       THEN
-                           IF Craptab.DsTexTab = "" 
-                              THEN
+            
+            IF AVAILABLE craptab THEN
+              IF craptab.DsTexTab = "" THEN
                                   ASSIGN tipoDoEvento = "evento".
-                              ELSE
-                                  IF NUM-ENTRIES(Craptab.DsTexTab) >= 2
-                                     THEN
+              ELSE IF NUM-ENTRIES(craptab.DsTexTab) >= 2 THEN
                                          DO:
                                             ASSIGN tipoDoEvento = "evento".
-                                            DO conta = 2 TO NUM-ENTRIES(Craptab.DsTexTab) BY 2:
-                                               IF INTEGER(ENTRY(conta,Craptab.DsTexTab)) = Crapedp.TpEvento
+                  DO conta = 2 TO NUM-ENTRIES(craptab.DsTexTab) BY 2:
+                    IF INTEGER(ENTRY(conta,craptab.DsTexTab)) = Crapedp.TpEvento
                                                   THEN
-                                                      ASSIGN tipoDoEvento = ENTRY(conta - 1,Craptab.DsTexTab).
+                    ASSIGN tipoDoEvento = ENTRY(conta - 1,craptab.DsTexTab).
                                             END.
                                          END.
                                      ELSE
@@ -433,54 +392,41 @@ IF permiteExecutar = "1" OR permiteExecutar = "2" THEN
                  END.
 
           /* *** Localiza custo do evento *** */
-          FIND Crapcdp WHERE Crapcdp.IdEvento = idEvento            AND
-                             Crapcdp.CdCooper = cdCooper            AND
-                             Crapcdp.CdAgenci = cdAgenci            AND
-                             Crapcdp.DtAnoAge = dtAnoAge            AND
-                             Crapcdp.TpCusEve  = 1                  AND       /* direto */
-                             Crapcdp.CdEvento = cdEvento            AND
-                             Crapcdp.CdCusEve = 1 /* honorários */  NO-LOCK NO-ERROR.
-          IF NOT AVAILABLE Crapcdp
-             THEN
-                 ASSIGN msgsDeErro = msgsDeErro + "-> Registro Crapcdp não esta disponivel.<br>".
+        FIND crapcdp WHERE crapcdp.idevento = idevento
+                       AND crapcdp.cdcooper = cdcooper
+                       AND crapcdp.cdagenci = cdagenci
+                       AND crapcdp.dtanoage = dtanoage
+                       AND crapcdp.tpcuseve = 1             /* direto */
+                       AND crapcdp.cdevento = cdevento
+                       AND crapcdp.cdcuseve = 1 /* honorários */  NO-LOCK NO-ERROR.
+        
+        IF NOT AVAILABLE Crapcdp THEN
+          ASSIGN msgsDeErro = msgsDeErro + "-> Registro CRAPCDP não esta disponivel.<br>".
 
           /* *** Localiza proposta do evento *** */
-          FIND Gnappdp WHERE Gnappdp.IdEvento = idEvento            AND
-                             Gnappdp.CdCooper = 0                   AND
-                             Gnappdp.NrCpfCgc = Crapcdp.NrCpfCgc    AND
-                             Gnappdp.NrPropos = Crapcdp.NrPropos    NO-LOCK NO-ERROR.
-          IF NOT AVAILABLE Gnappdp
-             THEN
-                 ASSIGN msgsDeErro = msgsDeErro + "-> Registro Gnappdp não esta disponivel.<br>".
+        FIND Gnappdp WHERE Gnappdp.IdEvento = idEvento
+                       AND Gnappdp.CdCooper = 0
+                       AND Gnappdp.NrCpfCgc = Crapcdp.NrCpfCgc
+                       AND Gnappdp.NrPropos = Crapcdp.NrPropos NO-LOCK NO-ERROR.
+        
+        IF NOT AVAILABLE Gnappdp THEN
+          ASSIGN msgsDeErro = msgsDeErro + "-> Registro GNAPPDP não esta disponivel.<br>".
                   ELSE
                        ASSIGN horario = STRING(Gnappdp.Qtcarhor,"zzz9.99").          
 
-          FIND crapcop WHERE crapcop.cdcooper = cdCooper            NO-LOCK NO-ERROR.
-          IF NOT AVAILABLE crapcop 
-             THEN
-                 ASSIGN msgsDeErro = msgsDeErro + "-> Registro crapcop não esta disponivel.<br>".
+        FIND crapcop WHERE crapcop.cdcooper = cdCooper NO-LOCK NO-ERROR.
+        
+        IF NOT AVAILABLE crapcop THEN
+          ASSIGN msgsDeErro = msgsDeErro + "-> Registro CRAPCOP não esta disponivel.<br>".
              ELSE
                  ASSIGN nomeDaCooperativa = crapcop.nmrescop.
 
-          IF assinar2 = "" 
-             THEN
+        IF assinar2 = "" THEN
                  ASSIGN assinar2 = assinar1.
 
           montaTela().
        END.
 
-
-
-
-/*****************************************************************************/
-/*                                                                           */
-/*   Bloco de procdures                                                      */
-/*                                                                           */
-/*****************************************************************************/
-
-PROCEDURE PermissaoDeAcesso :
-
+  PROCEDURE PermissaoDeAcesso:
     {includes/wpgd0009.i}
-
 END PROCEDURE.
-

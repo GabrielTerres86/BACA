@@ -1,14 +1,9 @@
+/* ..............................................................................................
 
+  Programa wpgd0035a.p - Listagem de certificados, seleção de usuários para impressão
+                         (chamado a partir dos dados de wpgd0035)
 
-/*
- *
- * Programa wpgd0035a.p - Listagem de certificados, seleção de usuários para impressão
- *                        (chamado a partir dos dados de wpgd0035)
- *
- */
-/* .............................................................................
-
-Alterações:  03/11/2008 - Inclusao widget-pool (martin)
+  Alterações: 03/11/2008 - Inclusao widget-pool (martin)
 
              10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			 
@@ -23,7 +18,10 @@ Alterações:  03/11/2008 - Inclusao widget-pool (martin)
                           
              13/07/2015 - Adicionar variavel conta na funcao imprimir(), pois o for
                           estava no loop até o registro 100 (Lucas Ranghetti #307054)
-............................................................................. */
+
+              15/12/2016 - Removido campo de assinatura, Prj. 229 Melhorias Progrid (Jean Michel).
+              
+...................................................................................................*/
 
 create widget-pool.
 
@@ -261,9 +259,10 @@ FUNCTION montaTela RETURNS LOGICAL ().
            '         </td>' SKIP
            '      </tr>' SKIP
            '      <tr>' SKIP                                                                                                      
-           '         <td colspan="7" class="tdDados">Assinatura: <input type="text" class="inputFreq" name="assinar1" value="' nmdircop '" size="30" maxlength="50">' SKIP
+/*           '         <td colspan="7" class="tdDados">Assinatura: <input type="text" class="inputFreq" name="assinar1" value="' nmdircop '" size="30" maxlength="50">' SKIP
            '                                        Ministrante: <input type="text" class="inputFreq" name="assinar2" value="' nmminist '" size="30" maxlength="50">' SKIP
-           '         </td>' SKIP
+           '         </td>' SKIP*/
+           '         <td colspan="7" class="tdDados">Ministrante: <input type="text" class="inputFreq" name="assinar2" value="' nmminist '" size="30" maxlength="50"></td>' SKIP
            '      </tr>' SKIP
            '   </table>' SKIP.
 
@@ -289,7 +288,7 @@ FUNCTION montaTela RETURNS LOGICAL ().
            '                alert("-> Não foi selecionado nenhum participante.");' SKIP
            '            else ' SKIP
            '                ~{' SKIP
-           '                   linha = "' linha '" + "&assinar1=" + document.form.assinar1.value + "&assinar2=" + document.form.assinar2.value + "&registros=" + lista;' SKIP
+           '                   linha = "' linha '" + "&assinar1=0&assinar2=" + document.form.assinar2.value + "&registros=" + lista;' SKIP
            '                   impC = window.open(linha,"impC","toolbar=no,location=no,diretories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,top=10,left=10,width=640,height=400");' SKIP
            '                }' SKIP
            '      } ' SKIP.
