@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 13/12/2016
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 04/01/2017
     
     Dados referente ao programa:
     
@@ -129,7 +129,7 @@
                               PRJ320 - Oferta Debaut (Odirlei-AMcom)
                               
                  24/08/2016 - Incluir tratamento para autorizações suspensas (Lucas Ranghetti #499496)
-                 
+				                 
                  21/11/2016 - Efetuar replace de '-' por nada no nrdocmto da crapndb (Lucas Ranghetti #560620)
 
 				 28/11/2016 - Alteraçao na composiçao do CPF/CNPJ do arquivo .ARF, 
@@ -138,6 +138,10 @@
                  13/12/2016 - Ajustes referente a incorporaçao da Transulcred pela Transpocred. 
                               Os agendamentos recebidos antes da incorporaçao com vencimento após 
                               a incorporaçao serao gravados no arquivo da cooperativa antiga (Elton).             
+
+                 04/01/2017 - Ajustar meio de coleta para codigo '3' quando 
+				              for DARF 0385 paga em canal digital (David).
+							  
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -1266,18 +1270,18 @@ FOR EACH crapcop NO-LOCK.
                    
                         IF  AVAIL craplau THEN
                             DO:
-                CREATE tt-rel674-lancamentos.
-                ASSIGN tt-rel674-lancamentos.cdcooper = crapndb.cdcooper
-                       tt-rel674-lancamentos.cdagenci = INT(SUBSTR(aux_dslinreg,146,2))
-                       tt-rel674-lancamentos.nrdconta = crapndb.nrdconta
-                       tt-rel674-lancamentos.nrctacns = DEC(SUBSTR(aux_dslinreg,31,7))
-                       tt-rel674-lancamentos.dsnomcnv = aux_dsnomcnv
-                       tt-rel674-lancamentos.vllanmto = (DEC(SUBSTR(aux_dslinreg,53,15)) / 100).
+                                 CREATE tt-rel674-lancamentos.
+                                 ASSIGN tt-rel674-lancamentos.cdcooper = crapndb.cdcooper
+                                        tt-rel674-lancamentos.cdagenci = INT(SUBSTR(aux_dslinreg,146,2))
+                                        tt-rel674-lancamentos.nrdconta = crapndb.nrdconta
+                                        tt-rel674-lancamentos.nrctacns = DEC(SUBSTR(aux_dslinreg,31,7))
+                                        tt-rel674-lancamentos.dsnomcnv = aux_dsnomcnv
+                                        tt-rel674-lancamentos.vllanmto = (DEC(SUBSTR(aux_dslinreg,53,15)) / 100).
                                         tt-rel674-lancamentos.dscritic = "Conta Migrada".
                                  NEXT.
                             END.
                    END. 
-                        
+
 
                 CREATE tt-rel674-lancamentos.
                 ASSIGN tt-rel674-lancamentos.cdcooper = crapndb.cdcooper
@@ -1308,7 +1312,7 @@ FOR EACH crapcop NO-LOCK.
                     
                 IF  SUBSTR(aux_dslinreg,68,2) = "05" THEN
                     ASSIGN tt-rel674-lancamentos.dscritic = "05 - Valor debito excede limite aprovado".    
- 
+
                 ASSIGN tt-rel674-lancamentos.nrdocmto = DECI(REPLACE(SUBSTR(aux_dslinreg,2,25),"-","")) NO-ERROR.
             END.
 
@@ -1961,7 +1965,7 @@ PROCEDURE gera-linha-arquivo-exp-conv:
                                              IF crapscn.cdempres = 'K0'  THEN crapstn.cdtransa = '0XY' ELSE TRUE
                                              AND
                                              IF crapscn.cdempres = '147' THEN crapstn.cdtransa = '1CK' ELSE TRUE
-                               NO-LOCK NO-ERROR.
+                               				 NO-LOCK NO-ERROR.
         
                     IF  AVAIL crapstn THEN
                         ASSIGN aux_cdtransa = crapstn.cdtransa
@@ -2535,7 +2539,7 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                                            craplft.vlrjuros + 
                                                            craplft.vlrmulta)
                             tot_vltarint = tot_vltarint + aux_vltrfuni
-                            aux_dsmeicol = "8".
+                            aux_dsmeicol = IF craplft.cdempcon = 385 AND craplft.cdsegmto = 5 THEN "3" ELSE "8".
                 END.
             ELSE                    
             IF  craplft.cdagenci = 91 THEN  /** TAA **/
@@ -2558,7 +2562,7 @@ PROCEDURE gera-linha-arquivo-exp-darf:
                                                            craplft.vlrjuros + 
                                                            craplft.vlrmulta)
                             tot_vltartaa = tot_vltartaa + aux_vltrfuni
-                            aux_dsmeicol = "8".
+                            aux_dsmeicol = IF craplft.cdempcon = 385 AND craplft.cdsegmto = 5 THEN "3" ELSE "8".
                 END.
             ELSE                            /** Caixa **/
                 DO:
