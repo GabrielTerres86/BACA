@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 04/01/2017
+       Data    : Agosto/2010                       Ultima atualizacao: 01/08/2016
 
        Dados referentes ao programa:
 
@@ -277,16 +277,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     24/05/2016 - Ajuste para enviar o "Ente Consignante" como 1502. (James)
                     
                     24/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.(Carlos Rafael Tanholi).
-
+                    
                     20/07/2016 - Resolucao dos chamados 491068, 488220 e 486570. (James)
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
 
-			          		26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+			        26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
                                  da data de vencimento e quantidade de dias atraso.
                                  SD488220 (Odirlei-AMcom)
-                              
-                    24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+
+					24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
                                  ( Renato Darosci - Supero )
                                  
                     03/11/2016 - Alterada a função de classificação do porte de pessoa física, para que sejam considerados
@@ -295,7 +295,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  cadastradas com rendimento igual a 0.01 estavam sendo enviadas com código de porte igual
                                  a 2 - ATÉ 1 SALÁRIO MÍNIMO. (Renato Darosci - Supero)
                                  
-                    04/01/2017 - Resolucao do chamado 583258 para criar arquivo especifico para as operacoes do BNDES. (James)
 .............................................................................................................................*/
 
     DECLARE
@@ -643,7 +642,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            WHERE crapbpr.cdcooper = pr_cdcooper
              AND crapbpr.nrdconta = pr_nrdconta
              AND crapbpr.nrctrpro = pr_nrctremp
-             AND crapbpr.tpctrpro = pr_tpctrpro
+             AND crapbpr.tpctrpro = pr_tpctrpro             
              AND crapbpr.flgalien = 1;
 
 
@@ -928,13 +927,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       ------------------------------- VARIAVEIS -------------------------------
       -- Variaveis de nomenclatura de arquivos
       vr_dtrefere DATE;
-      -- Variaveis para criar o arquivo 3040
-      vr_xml_3040            CLOB;
-      vr_xml_3040_temp       VARCHAR2(32767);
-      -- Variaveis para criar o arquivo 3040 especifico do BNDES
-      vr_xml_3040_BNDES      CLOB;
-      vr_xml_3040_BNDES_temp VARCHAR2(32767);
+
       -- Variaveis de XML
+      vr_xml_3040      CLOB;
+      vr_xml_3040_temp VARCHAR2(32767);
       vr_xml_566       CLOB;
       vr_xml_566_temp  VARCHAR2(32767);
       vr_xml_567       CLOB;
@@ -1020,7 +1016,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       vr_qtregarq_3040   PLS_INTEGER := 50000; -- Quantidade de clientes por arquivo no 3040
       vr_flgfimaq        BOOLEAN     := FALSE; -- Variavel de controle para informar qual sera o ultimo arquivo
       vr_nmarqsai_tot VARCHAR2(1000) := NULL;
-      vr_flgbndes        BOOLEAN;
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
 	    
@@ -1206,59 +1201,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Retornar
         RETURN vr_nrmodalidade;
         
-      END fn_formata_numero_contrato;
-      
-      -- Funcao para verificar se o contrato eh do BNDES
-      FUNCTION fn_verifica_contrato_bndes(pr_nrdconta IN crapass.nrdconta%TYPE
-                                         ,pr_nrctremp IN crapepr.nrctremp%TYPE
-                                         ,pr_cdmodali IN crapris.cdmodali%TYPE
-                                         ,pr_cdorigem IN crapris.cdorigem%TYPE
-                                         ,pr_dsinfaux IN crapris.dsinfaux%TYPE) RETURN BOOLEAN IS
-        vr_indice VARCHAR(20);
-      BEGIN
-        -- Condicao para verificar se eh emprestimo
-        IF pr_cdmodali in(0299,0499) AND pr_cdorigem = 3 THEN
-
-          -- Condicao para verificar se a operacao eh do FINAMI
-          IF pr_dsinfaux = 'BNDES' THEN
-            RETURN TRUE;
-          END IF;
-
-          -- Monta a chave para buscar o numero do contrato
-          vr_indice := lpad(pr_nrdconta,10,'0') || lpad(pr_nrctremp,10,'0');  
-          -- Somente se existir linha de credito
-          IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_indice).cdlcremp) THEN
-            -- Se Origem Recurso BNDES, altera para '0202'
-            IF vr_tab_craplcr(vr_tab_crapepr(vr_indice).cdlcremp).dsorgrec LIKE '%BNDES%' THEN
-              RETURN TRUE;
-            END IF;
-            
-          END IF; -- IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) THEN
-  
-        END IF; -- IF pr_cdmodali in(0299,0499) AND pr_cdorigem = 3 THEN
-        
-        RETURN FALSE;
-			  
-      END fn_verifica_contrato_bndes;
-      
-      -- Subrotina para escrever texto na variável CLOB do XML
-      PROCEDURE pc_escreve_xml_3040(pr_texto_novo     in varchar2,              --> Texto a incluir no CLOB
-                                    pr_fecha_xml      in boolean default false, --> Flag indicando se é o último texto no CLOB
-                                    pr_flgbndes       IN BOOLEAN DEFAULT FALSE) is --> Flag para verificar se carrega o arquivo 3040
-      BEGIN
-        GENE0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                               ,pr_texto_completo => vr_xml_3040_temp
-                               ,pr_texto_novo     => pr_texto_novo
-                               ,pr_fecha_xml      => pr_fecha_xml);
-               
-        -- Condicao para verificar se cria a operacao no arquivo 3040 especifico para o BNDES                
-        IF pr_flgbndes THEN
-          GENE0002.pc_escreve_xml(pr_xml            => vr_xml_3040_BNDES
-                                 ,pr_texto_completo => vr_xml_3040_BNDES_temp
-                                 ,pr_texto_novo     => pr_texto_novo
-                                 ,pr_fecha_xml      => pr_fecha_xml);
-        END IF;
-      END;      
+      END fn_formata_numero_contrato;      
 
       -- Carregar a base de risco, separando os contratos em individuais e agregados 
       PROCEDURE pc_carrega_base_risco(pr_dtrefere DATE) IS
@@ -2169,14 +2112,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_nrctaav2  crapass.nrdconta%TYPE; -- Avalista 02
         vr_cpfcgcav crapass.nrcpfcgc%TYPE; -- Testes no cpgcgc
         vr_vlperbem VARCHAR2(50);           -- Percentual do bem
-        vr_flgbndes BOOLEAN := FALSE;       -- Flg responsável para criar operacoes no arquivo especifico do BNDES
       BEGIN
         -- Limpar variaveis auxiliares
         vr_nrctaav1 := 0;
         vr_nrctaav2 := 0;
         vr_cpfcgcav := 0;
         vr_vlperbem := '';
-        vr_flgbndes := FALSE;
         
         -- Busca dos avalistas conforme origem e Modalidade
         -- Para Origem 1 - Conta e Modalidade 2012 - Cheque Especial ou 1901 - Limite não Utilizado
@@ -2243,11 +2184,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               END IF;
                 
               -- Enviar Garantidor
-              pc_escreve_xml_3040(pr_texto_novo     => '            <Gar Tp="09' || to_char(vr_inpessoa,'fm00') 
-                                                       || '" Ident="' || vr_nrdocnpj 
-                                                       || '" PercGar="'
-                                                       ||  vr_vlperbem || '"/>' || chr(10)
-                                 ,pr_flgbndes       => TRUE);
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Gar Tp="09' || to_char(vr_inpessoa,'fm00') 
+                                                        || '" Ident="' || vr_nrdocnpj 
+                                                        || '" PercGar="'
+                                                        ||  vr_vlperbem || '"/>' || chr(10));
 
               -- Descricao dos bens da proposta de emprestimo do cooperado.
               OPEN cr_crapbpr(vr_tab_individ(vr_idx_individ).nrdconta,
@@ -2272,11 +2214,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
               IF vr_nrdocnpj <> vr_nrdocnpj2 THEN
                 -- Enviar garantidor
-                pc_escreve_xml_3040(pr_texto_novo     => '            <Gar Tp="09' ||to_char(vr_inpessoa,'fm00')
-                                                         || '" Ident="' || vr_nrdocnpj2 
-                                                         || '" PercGar="' 
-                                                         || vr_vlperbem ||'"/>' ||chr(10)
-                                   ,pr_flgbndes       => TRUE);
+                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                       ,pr_texto_completo => vr_xml_3040_temp
+                                       ,pr_texto_novo     => '            <Gar Tp="09' ||to_char(vr_inpessoa,'fm00')
+                                                          || '" Ident="' || vr_nrdocnpj2 
+                                                          || '" PercGar="' 
+                                                          || vr_vlperbem ||'"/>' ||chr(10));
               END IF;
             END IF; --cr_crapbpr%FOUND
             -- Se o cursor ainda estiver aberto, fecha o mesmo
@@ -2286,16 +2229,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           ELSE
             -- Buscaremos do cadastro de empréstimos
             vr_ind_epr := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')||
-                          lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
+                        lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
             vr_nrctaav1 := vr_tab_crapepr(vr_ind_epr).nrctaav1;
             vr_nrctaav2 := vr_tab_crapepr(vr_ind_epr).nrctaav2;
-            
-            -- Condicao para verificar se a operacao eh do BNDES
-            vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
-                                                     ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp
-                                                     ,pr_cdmodali => vr_tab_individ(vr_idx_individ).cdmodali
-                                                     ,pr_cdorigem => vr_tab_individ(vr_idx_individ).cdorigem
-                                                     ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux);
           END IF; -- Se BNDES
         -- Desconto Titulos
         ELSIF vr_tab_individ(vr_idx_individ).cdorigem = 4  THEN    
@@ -2342,10 +2278,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                         ,pr_inpessoa => vr_inpessoa);
             
             -- Enviar Garantidor
-            pc_escreve_xml_3040(pr_texto_novo     => '            <Gar Tp="09' || to_char(vr_inpessoa,'fm00') 
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                  ,pr_texto_novo     => '            <Gar Tp="09' || to_char(vr_inpessoa,'fm00') 
                                                      || '" Ident="' ||vr_nrdocnpj  
-                                                     || '" PercGar="100.00"/>' || chr(10)
-                               ,pr_flgbndes       => vr_flgbndes);
+                                                     || '" PercGar="100.00"/>' || chr(10));
           END IF;
           CLOSE cr_crapass;
         END IF;
@@ -2371,10 +2308,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                         ,pr_inpessoa => vr_inpessoa);
           
             -- Enviar Garantidor
-            pc_escreve_xml_3040(pr_texto_novo     => '            <Gar Tp="09' || to_char(vr_inpessoa,'fm00') 
-                                                     || '" Ident="' ||vr_nrdocnpj  
-                                                     || '" PercGar="100.00"/>' || chr(10)
-                               ,pr_flgbndes       => vr_flgbndes);
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '            <Gar Tp="09' || to_char(vr_inpessoa,'fm00') 
+                                                      || '" Ident="' ||vr_nrdocnpj  
+                                                      || '" PercGar="100.00"/>' || chr(10));
           END IF;
           CLOSE cr_crapass;
 
@@ -2385,24 +2323,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       PROCEDURE pc_garantia_alienacao_fid IS
         -- Tipo do atributo cfme descrição do bem
         vr_tpatribu INTEGER;
-        vr_flgbndes BOOLEAN;
       BEGIN
-        vr_flgbndes := FALSE;
-        
+
         -- Se emprestimo (0299) ou financiamento (0499).  
         IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
           -- Descricao dos bens da proposta de emprestimo do cooperado.
           vr_ind_ebn := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0') ||
                         lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
           IF NOT vr_tab_crapebn.exists(vr_ind_ebn) THEN
-            
-            -- Funcao para verificar se o contrato eh da origem BNDES
-            vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
-                                                     ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp
-                                                     ,pr_cdmodali => vr_tab_individ(vr_idx_individ).cdmodali
-                                                     ,pr_cdorigem => vr_tab_individ(vr_idx_individ).cdorigem
-                                                     ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux);
-                                                     
             -- Pesquisar os bens alienados dos contratos e caso exista gravar como garantia da operaçao.
             FOR rw_crapbpr IN cr_crapbpr_2(vr_tab_individ(vr_idx_individ).nrdconta,
                                            vr_tab_individ(vr_idx_individ).nrctremp,
@@ -2429,10 +2357,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 vr_tpatribu := 0499;
               END IF;
               -- Enviar Garantidor
-              pc_escreve_xml_3040(pr_texto_novo     => '            <Gar Tp="' || to_char(vr_tpatribu,'fm0000')
-                                                       || '" VlrOrig="' ||replace(to_char(rw_crapbpr.vlmerbem,'fm99999999999990D00'),',','.') 
-                                                       || '"/>' ||CHR(10)
-                                 ,pr_flgbndes       => vr_flgbndes);
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Gar Tp="' || to_char(vr_tpatribu,'fm0000')
+                                                        || '" VlrOrig="' ||replace(to_char(rw_crapbpr.vlmerbem,'fm99999999999990D00'),',','.') 
+                                                        || '"/>' ||CHR(10));
             END LOOP;
           ELSE --cr_crapebn%FOUND
             FOR rw_crapbpr IN cr_crapbpr_3(vr_tab_individ(vr_idx_individ).nrdconta,
@@ -2451,14 +2380,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 vr_tpatribu := 0499;
               END IF;
               -- Enviar Garantidor
-              pc_escreve_xml_3040(pr_texto_novo     => '            <Gar Tp="' || to_char(vr_tpatribu,'fm0000')  
-                                                       || '" VlrOrig="' || replace(to_char(rw_crapbpr.vlmerbem,'fm999999999999990D00'),',','.') || '"/>' 
-                                                       || chr(10)
-                                 ,pr_flgbndes       => TRUE);
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Gar Tp="' || to_char(vr_tpatribu,'fm0000')  
+                                                        || '" VlrOrig="' || replace(to_char(rw_crapbpr.vlmerbem,'fm999999999999990D00'),',','.') || '"/>' 
+                                                        || chr(10));
             END LOOP;
           END IF; --cr_crapebn%notfound
         END IF;
       END pc_garantia_alienacao_fid;
+
 
       -- Imprime o tipo informando que eh aplicacao regulatoria, quando o emprestimo possuir linhas de credito
       PROCEDURE pc_inf_aplicacao_regulatoria(pr_nrdconta crapris.nrdconta%TYPE,
@@ -2466,9 +2397,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                              pr_cdmodali crapris.cdmodali%TYPE,
                                              pr_cdorigem crapris.cdorigem%TYPE,
                                              pr_dsinfaux crapris.dsinfaux%TYPE) IS
-        vr_flgbndes BOOLEAN;                                             
       BEGIN
-        vr_flgbndes := FALSE;
         -- Para origem 3 - Empr/Financ
         -- E modalidade 0299 - Emprest / 0499 - Financ
         IF pr_cdorigem = 3 AND pr_cdmodali IN(0299,0499) THEN 
@@ -2478,16 +2407,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_ind_epr := lpad(pr_nrdconta,10,'0')||lpad(pr_nrctremp,10,'0');
             -- Somente se encontrou linha de credito e origem DIM
             IF vr_tab_craplcr.EXISTS(vr_tab_crapepr(vr_ind_epr).cdlcremp) AND vr_tab_craplcr(vr_tab_crapepr(vr_ind_epr).cdlcremp).dsorgrec LIKE '%DIM%' THEN
-              -- Vamos verificar se o contrato eh do BNDES
-              vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => pr_nrdconta
-                                                       ,pr_nrctremp => pr_nrctremp
-                                                       ,pr_cdmodali => pr_cdmodali
-                                                       ,pr_cdorigem => pr_cdorigem
-                                                       ,pr_dsinfaux => pr_dsinfaux);
-            
               -- Enviar Informação do Financiamento
-              pc_escreve_xml_3040(pr_texto_novo => '            <Inf Tp="1408" />' ||chr(10)
-                                 ,pr_flgbndes   => vr_flgbndes);
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Inf Tp="1408" />' ||chr(10));
             END IF;
           END IF;
         END IF;
@@ -2499,19 +2422,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                        pr_cdmodali crapris.cdmodali%TYPE,
                                        pr_cdorigem crapris.cdorigem%TYPE,
                                        pr_dsinfaux crapris.dsinfaux%TYPE) IS
-        vr_flgbndes BOOLEAN;                                       
       BEGIN
-        vr_flgbndes := FALSE;
-        
         -- Para Emprst ou Financ
         IF pr_cdmodali IN(0299,0499) THEN
-          -- Vamos verificar se o contrato eh do BNDES
-          vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => pr_nrdconta
-                                                   ,pr_nrctremp => pr_nrctremp
-                                                   ,pr_cdmodali => pr_cdmodali
-                                                   ,pr_cdorigem => pr_cdorigem
-                                                   ,pr_dsinfaux => pr_dsinfaux);        
-        
           -- Busca a descricao dos bens da proposta de emprestimo
           FOR rw_crapbpr IN cr_crapbpr_4(pr_nrdconta, pr_nrctremp, 90) LOOP
             IF (rw_crapbpr.dschassi <> ' ') AND UPPER(rw_crapbpr.dscatbem) IN ('AUTOMOVEL','MOTO','CAMINHAO') THEN
@@ -2525,9 +2438,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                    -- Condicao para verificar se o bem estah baixado ou cancelado
                    IF rw_crapbpr.flgbaixa = 0 AND rw_crapbpr.flcancel = 0 THEN
                      -- Informação do Empréstimo
-                     pc_escreve_xml_3040(pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
-                                                              || rw_crapbpr.dschassi || '" />' || chr(10)
-                                        ,pr_flgbndes       => vr_flgbndes);
+                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                            ,pr_texto_completo => vr_xml_3040_temp
+                                            ,pr_texto_novo     => '            <Inf Tp="0401" Cd="'  
+                                                               || rw_crapbpr.dschassi || '" />' || chr(10));
                    ELSE
                      
                      /*********************************************************************************
@@ -2535,10 +2449,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      ** Renato Darosci - Supero
                      ** 24/10/2016
                      *********************************************************************************/
-                                        
+                   
                    	 -- Informação do Empréstimo
-                     pc_escreve_xml_3040(pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10)
-                                        ,pr_flgbndes       => vr_flgbndes);
+                     gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                            ,pr_texto_completo => vr_xml_3040_temp
+                                            ,pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10));
                    END IF;
                 END IF;
               END IF;  
@@ -2594,9 +2509,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                         ,pr_nrseqctr IN crapris.nrseqctr%type
                                         ,pr_dtprxpar IN crapris.dtprxpar%type
                                         ,pr_vlprxpar IN crapris.vlprxpar%type
-                                        ,pr_qtparcel IN crapris.qtparcel%type
-                                        ,pr_cdorigem IN crapris.cdorigem%type
-                                        ,pr_dsinfaux IN crapris.dsinfaux%type) IS
+                                        ,pr_qtparcel IN crapris.qtparcel%type) IS
         -- Observações: Estes campos compreendem a necessidade da Circular 
         -- 3.649, de 09 de abril de 2014, onde os seguintes atributos referentes 
         -- ao fluxo financeiro esperado da operação de crédito deverão ser preenchidos a 
@@ -2649,11 +2562,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              -- Somente de prejuizo
              AND vri.cdvencto >= 310 AND vri.cdvencto <= 330;
         vr_inprejuz PLS_INTEGER := 0;
-        vr_flgbndes BOOLEAN;
         
       BEGIN
-        vr_flgbndes := FALSE;
-        
         -- A Circular preve que as informações de Fluxo sejam enviadas somente
         -- a partir de Agostro de 2014
         IF pr_dtrefere < to_date('01/08/2014','dd/mm/yyyy') THEN
@@ -2699,25 +2609,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             RETURN;
           END IF;
         END IF;
-        
-        -- Vamos verificar se o contrato eh do BNDES
-        vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => pr_nrdconta
-                                                 ,pr_nrctremp => pr_nrctremp
-                                                 ,pr_cdmodali => pr_cdmodali
-                                                 ,pr_cdorigem => pr_cdorigem
-                                                 ,pr_dsinfaux => pr_dsinfaux);                                                     
         -- Se chegamos até este pont, então todas as condições foram
         -- aceitas e utilizaremos as informações já preenchidas no risco
         -- para enviarmos ao Fluxo Financeiro - Desde que existam
         IF pr_dtprxpar IS NOT NULL AND NVL(pr_vlprxpar,0) > 0 THEN
-          pc_escreve_xml_3040(pr_texto_novo     => ' DtaProxParcela="' || to_char(pr_dtprxpar,'YYYY-MM-DD')||'"'
-                                                   || ' VlrProxParcela="' || replace(to_char(pr_vlprxpar,'fm99999999999999990D00'),',','.')||'"'
-                             ,pr_flgbndes       => vr_flgbndes);
-        END IF;
-        
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => ' DtaProxParcela="' || to_char(pr_dtprxpar,'YYYY-MM-DD')||'"'
+                                                    || ' VlrProxParcela="' || replace(to_char(pr_vlprxpar,'fm99999999999999990D00'),',','.')||'"');
+        END IF;        
         IF NVL(pr_qtparcel,0) > 0 THEN
-          pc_escreve_xml_3040(pr_texto_novo     => ' QtdParcelas="' || to_char(pr_qtparcel,'fm9990')||'"'
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => ' QtdParcelas="' || to_char(pr_qtparcel,'fm9990')||'"');
         END IF;        
       END;
       
@@ -2725,8 +2629,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       PROCEDURE pc_inf_ente_consignante(pr_nrdconta IN crapris.nrdconta%type
                                        ,pr_nrctremp IN crapris.nrctremp%type
                                        ,pr_cdmodali IN crapris.cdmodali%type
-                                       ,pr_dsinfaux IN crapris.dsinfaux%type
-                                       ,pr_cdorigem IN crapris.cdorigem%type) IS
+                                       ,pr_dsinfaux IN crapris.dsinfaux%TYPE) IS
         -- Observações: Informação do ente consignante atrelado à operação de crédito
         --
         --  Atributos de <Inf>: Tp, Ident e Cd.
@@ -2772,10 +2675,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              AND lcr.tpdescto = 2; --> 2-Consig. Folha
         rw_consigna cr_consigna%ROWTYPE;
         
-        vr_flgbndes BOOLEAN;
       BEGIN
-        vr_flgbndes := FALSE;
-        
         -- Empréstimos BNDES não são contemplados
         IF pr_dsinfaux = 'BNDES' THEN
           RETURN;
@@ -2791,24 +2691,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            INTO rw_consigna;
           -- Se encontrou, é consignação
           IF cr_consigna%FOUND THEN
-            CLOSE cr_consigna;            
-            -- Verificar se o contrato é do BNDES
-            vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => pr_nrdconta
-                                                     ,pr_nrctremp => pr_nrctremp
-                                                     ,pr_cdmodali => pr_cdmodali
-                                                     ,pr_cdorigem => pr_cdorigem
-                                                     ,pr_dsinfaux => pr_dsinfaux);
-            
+            CLOSE cr_consigna;
             -- Para casos de empréstimos em prejuizo
             IF rw_consigna.inprejuz = 1 THEN
               -- Enviavmos a informação adicional com Cd=1, que significa que a operação foi desconsignada
-              pc_escreve_xml_3040(pr_texto_novo     => '            <Inf Tp="1502" Cd="1"/>'|| chr(10)
-                                 ,pr_flgbndes       => vr_flgbndes);  
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Inf Tp="1502" Cd="1"/>'|| chr(10));  
             
             ELSE
               -- Devemos enviar a informação adicional com o CNPJ do Ente Consignante
-              pc_escreve_xml_3040(pr_texto_novo     => '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10)
-                                 ,pr_flgbndes       => vr_flgbndes);
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
             END IF;
           ELSE
             CLOSE cr_consigna;
@@ -2870,25 +2765,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                 ,pr_idxsaida IN VARCHAR2) IS
         vr_dtvencop DATE := NULL;
         vr_stdtvenc VARCHAR(100);
-        vr_flgbndes BOOLEAN;
       BEGIN
         vr_stdtvenc := '';
-        
-        -- Verificar se o contrato é do BNDES
-        vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
-                                                 ,pr_nrctremp => vr_tab_saida(pr_idxsaida).nrctremp
-                                                 ,pr_cdmodali => vr_tab_saida(pr_idxsaida).cdmodali
-                                                 ,pr_cdorigem => vr_tab_saida(pr_idxsaida).cdorigem
-                                                 ,pr_dsinfaux => vr_tab_saida(pr_idxsaida).dsinfaux);
-        
         -- Iniciar nova Operação
-        pc_escreve_xml_3040(pr_texto_novo     => '        <Op'
-                           ,pr_flgbndes       => vr_flgbndes);
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '        <Op');
         
         -- Para juridica, enviar CNPJ completo
         IF vr_tab_saida(pr_idxsaida).inpessoa <> 1 THEN 
-          pc_escreve_xml_3040(pr_texto_novo     => ' DetCli="' || to_char(vr_tab_saida(pr_idxsaida).nrcpfcgc,'fm00000000000000')||'"'
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => ' DetCli="' || to_char(vr_tab_saida(pr_idxsaida).nrcpfcgc,'fm00000000000000')||'"');
         END IF;
           
         -- Trecho comum      
@@ -2967,23 +2855,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                         ,pr_cdmodali => vr_cdmodali);
         
         -- Enviar detalhes do contrato
-        pc_escreve_xml_3040(pr_texto_novo     => ' Contrt="' || TRIM(vr_nrcontrato_3040) || '"' 
-                                                 || ' Mod="' || to_char(vr_cdmodali,'fm0000') || '"' 
-                                                 || ' Cosif="' || vr_ctacosif || '"' 
-                                                 || ' OrigemRec="' || vr_dsorgrec || '"' -- Era fixo '0199', agora, retorna do pc_busca_modalidade
-                                                 || ' Indx="' || vr_coddindx || '"' 
-                                                 || vr_stperidx 
-                                                 || ' VarCamb="790"' 
-                                                 || ' CEP="' || rw_crapcop.nrcepend || '"' 
-                                                 || ' VlrContr="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
-                                                 || ' TaxEft="' || replace(to_char(vr_txeanual,'fm990D00'),',','.') || '"' 
-                                                 || ' DtContr="' || to_char(vr_tab_saida(pr_idxsaida).dtinictr,'yyyy-mm-dd') || '"' 
-                                                 || ' NatuOp="01"'
-                                                 || vr_stdtvenc
-                                                 || ' ClassOp="' || vr_cloperis || '"' 
-                                                 || ' CaracEspecial="' || vr_caracesp ||'"'
-                           ,pr_flgbndes       => vr_flgbndes);
-                           
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => ' Contrt="' || TRIM(vr_nrcontrato_3040) || '"' 
+                                                  || ' Mod="' || to_char(vr_cdmodali,'fm0000') || '"' 
+                                                  || ' Cosif="' || vr_ctacosif || '"' 
+                                                  || ' OrigemRec="' || vr_dsorgrec || '"' -- Era fixo '0199', agora, retorna do pc_busca_modalidade
+                                                  || ' Indx="' || vr_coddindx || '"' 
+                                                  || vr_stperidx 
+                                                  || ' VarCamb="790"' 
+                                                  || ' CEP="' || rw_crapcop.nrcepend || '"' 
+                                                  || ' VlrContr="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
+                                                  || ' TaxEft="' || replace(to_char(vr_txeanual,'fm990D00'),',','.') || '"' 
+                                                  || ' DtContr="' || to_char(vr_tab_saida(pr_idxsaida).dtinictr,'yyyy-mm-dd') || '"' 
+                                                  || ' NatuOp="01"'
+                                                  || vr_stdtvenc
+                                                  || ' ClassOp="' || vr_cloperis || '"' 
+                                                  || ' CaracEspecial="' || vr_caracesp ||'"');
         -- Tratar campos do Fluxo Financeiro
         pc_gera_fluxo_financeiro(pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
                                 ,pr_dtrefere => vr_dtrefere
@@ -2994,13 +2882,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                 ,pr_nrseqctr => vr_tab_saida(pr_idxsaida).nrseqctr
                                 ,pr_dtprxpar => vr_tab_saida(pr_idxsaida).dtprxpar
                                 ,pr_vlprxpar => vr_tab_saida(pr_idxsaida).vlprxpar
-                                ,pr_qtparcel => vr_tab_saida(pr_idxsaida).qtparcel
-                                ,pr_cdorigem => vr_tab_saida(pr_idxsaida).cdorigem
-                                ,pr_dsinfaux => vr_tab_saida(pr_idxsaida).dsinfaux);                                  
-
+                                ,pr_qtparcel => vr_tab_saida(pr_idxsaida).qtparcel);                                 
+                                  
+          
         -- Fechar a tah Op                                          
-        pc_escreve_xml_3040(pr_texto_novo     => '>' || chr(10)
-                           ,pr_flgbndes       => vr_flgbndes);
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '>' || chr(10));
 
         IF vr_tab_saida(vr_indice_crapris).cdinfadi = '0305' THEN
           -- Busca a identificacao da sub-modalidade do emprestimo
@@ -3026,28 +2914,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                           ,pr_cdmodali => vr_cdmodali);
 
           -- Enviar informação adicional do contrato
-          pc_escreve_xml_3040(pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '"' 
-                                                   || ' Cd="' ||vr_nrcontrato_3040 || '"'  
-                                                   || ' Ident="' || to_char(vr_iddident,'fm0000') || '"' 
-                                                   || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
-                                                   || ' />' || chr(10)
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '"' 
+                                                    || ' Cd="' ||vr_nrcontrato_3040 || '"'  
+                                                    || ' Ident="' || to_char(vr_iddident,'fm0000') || '"' 
+                                                    || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
+                                                    || ' />' || chr(10));
         ELSE
           -- Enviar informação adicional do contrato
-          pc_escreve_xml_3040(pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '" />' ||chr(10)
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '" />' ||chr(10));
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
                                ,pr_nrctremp => vr_tab_saida(pr_idxsaida).nrctremp
                                ,pr_cdmodali => vr_tab_saida(pr_idxsaida).cdmodali
-                               ,pr_dsinfaux => vr_tab_saida(pr_idxsaida).dsinfaux
-                               ,pr_cdorigem => vr_tab_saida(pr_idxsaida).cdorigem);
-                               
+                               ,pr_dsinfaux => vr_tab_saida(pr_idxsaida).dsinfaux);
         -- Fechar tag da operação de credito
-        pc_escreve_xml_3040(pr_texto_novo     => '        </Op>' || chr(10)
-                           ,pr_flgbndes       => vr_flgbndes);
-                           
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '        </Op>' || chr(10));
       END pc_imprime_saida;
 
       -- Com base na temp-table vr_tab_saida eh gerado os dados e impresso no arquivo XML 3040
@@ -3262,7 +3150,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                        ,pr_numparte      IN OUT INTEGER           	   -- Numero da parte do arquivo
                                        ,pr_xml_3040      IN OUT NOCOPY CLOB            -- XML do arquivo 3040
                                        ,pr_xml_3040_temp IN OUT VARCHAR2               -- XML do arquivo 3040
-                                       ,pr_flgbndes      IN BOOLEAN DEFAULT FALSE     -- Flag para definir se gera o arquivo 3040 para o BNDES
                                        ,pr_cdcritic      OUT crapcri.cdcritic%TYPE     -- Codigo da critica
                                        ,pr_dscritic      OUT crapcri.dscritic%TYPE) IS -- Descricao da critica
                                        
@@ -3272,23 +3159,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_nmarqsai             VARCHAR2(50);    -- Nome do arquivo 3040
       BEGIN
         pr_numparte := pr_numparte + 1;
+        -- Definicao dos nomes dos arquivos de saida
+        vr_nmarqsai := '3040' || LPAD(TO_CHAR(pr_numparte),2,'0') || to_char(pr_dtrefere,'MMYY')||'.xml';        
         
-        -- Condicao para verificar se eh para gerar o arquivo 3040 para o BNDES
-        IF pr_flgbndes THEN
-          vr_nmarqsai := '3040_BNDES_' || to_char(pr_dtrefere,'MMYY')||'.xml';
+        -- Armazenar todos os arquivos gerados
+        IF vr_nmarqsai_tot IS NULL THEN
+          vr_nmarqsai_tot := pr_nom_dirmic||'/'||vr_nmarqsai;
         ELSE
-          -- Definicao dos nomes dos arquivos de saida
-          vr_nmarqsai := '3040' || LPAD(TO_CHAR(pr_numparte),2,'0') || to_char(pr_dtrefere,'MMYY')||'.xml';        
-          
-          -- Armazenar todos os arquivos gerados
-          IF vr_nmarqsai_tot IS NULL THEN
-            vr_nmarqsai_tot := pr_nom_dirmic||'/'||vr_nmarqsai;
-          ELSE
-            vr_nmarqsai_tot := vr_nmarqsai_tot||chr(10)||
-                               pr_nom_dirmic||'/'||vr_nmarqsai;
-          END IF;
-          
-        END IF;        
+          vr_nmarqsai_tot := vr_nmarqsai_tot||chr(10)||
+                             pr_nom_dirmic||'/'||vr_nmarqsai;
+        END IF;
         
         -- Armazenar o CNPJ da Cooperativa
         vr_coopcnpj := substr(lpad(pr_nrdocnpj,14,'0'),1,8);        
@@ -3337,7 +3217,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                            ,pr_dsxml     => vr_xml_rel_parte
                                            ,pr_dsarqsaid => pr_nom_direto || '/' || vr_nmarqsai
                                            ,pr_cdrelato  => null
-                                           ,pr_flg_gerar => 'S'              --> Apenas submeter
+                                           ,pr_flg_gerar => 'N'              --> Apenas submeter
                                            ,pr_dspathcop => pr_nom_dirmic    --> Copiar para a Micros
                                            ,pr_fldoscop  => 'S'              --> Efetuar cópia com Ux2Dos
                                            ,pr_dscmaxcop => '| tr -d "\032"'
@@ -3487,10 +3367,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       dbms_lob.createtemporary(vr_xml_3040, TRUE);
       dbms_lob.open(vr_xml_3040, dbms_lob.lob_readwrite);
       
-      -- Inicializar o CLOB 3040 BNDES
-      dbms_lob.createtemporary(vr_xml_3040_BNDES, TRUE);
-      dbms_lob.open(vr_xml_3040_BNDES, dbms_lob.lob_readwrite);
-      
       -- Carrega as tabelas temporarias de vencimentos de risco
       FOR rw_crapvri_b IN cr_crapvri_b(vr_dtrefere) LOOP
         vr_crapvri := vr_crapvri + 1;
@@ -3580,14 +3456,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_vlrrendi := 0;
         vr_portecli := 0;
         vr_stgpecon := '';
-        
-        -- Verificar se o contrato é do BNDES
-        vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
-                                                 ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp
-                                                 ,pr_cdmodali => vr_tab_individ(vr_idx_individ).cdmodali
-                                                 ,pr_cdorigem => vr_tab_individ(vr_idx_individ).cdorigem
-                                                 ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux);
-                                                 
         -- Informacoes do Cliente 
         IF vr_tab_individ.prior(vr_idx_individ) IS NULL OR  -- Se for o primeiro registro
            vr_tab_individ(vr_idx_individ).nrcpfcgc <> vr_tab_individ(vr_tab_individ.prior(vr_idx_individ)).nrcpfcgc THEN -- Se o CGC/CPF for diferente do anterior
@@ -3620,7 +3488,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           ELSE
             vr_classcli := 'A';
           END IF;
-          
           -- Se for pessoa fisica
           IF vr_tab_individ(vr_idx_individ).inpessoa = 1 THEN
             -- Busca o titular da conta
@@ -3641,19 +3508,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
             IF vr_tab_individ(vr_idx_individ).nrdgrupo > 0 THEN
               vr_stgpecon := ' CongEcon="' || To_CHAR(vr_tab_individ(vr_idx_individ).nrdgrupo) || '"';              
-            END IF;
-            
+            END IF;              
+
             -- Enviar detalhes do cliente fisico
-            pc_escreve_xml_3040(pr_texto_novo     => '    <Cli Cd="' || lpad(vr_tab_individ(vr_idx_individ).nrcpfcgc,11,'0') || '"' 
-                                                     || ' Tp="1"' 
-                                                     || ' Autorzc="S"' 
-                                                     || ' PorteCli="' || TRIM(vr_portecli) || '"' 
-                                                     || ' IniRelactCli="' ||to_char(vr_dtabtcct,'YYYY-MM-DD') || '"' 
-                                                     || ' FatAnual="' || replace(to_char(vr_vlrrendi,'fm9999999999990D00'),',','.') || '"' 
-                                                     || vr_stgpecon
-                                                     || ' ClassCli="' || vr_classcli || '">' ||chr(10)
-                               ,pr_flgbndes       => vr_flgbndes);
-                               
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                      ,pr_texto_completo => vr_xml_3040_temp
+                                      ,pr_texto_novo     => '    <Cli Cd="' || lpad(vr_tab_individ(vr_idx_individ).nrcpfcgc,11,'0') || '"' 
+                                                         || ' Tp="1"' 
+                                                         || ' Autorzc="S"' 
+                                                         || ' PorteCli="' || TRIM(vr_portecli) || '"' 
+                                                         || ' IniRelactCli="' ||to_char(vr_dtabtcct,'YYYY-MM-DD') || '"' 
+                                                         || ' FatAnual="' || replace(to_char(vr_vlrrendi,'fm9999999999990D00'),',','.') || '"' 
+                                                         || vr_stgpecon
+                                                         || ' ClassCli="' || vr_classcli || '">' ||chr(10));
           ELSE -- Se for pessoa juridica
             -- busca o valor de faturamento
             OPEN cr_crapjfn(vr_tab_individ(vr_idx_individ).nrdconta);
@@ -3670,19 +3537,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             
             -- Classifica o porte do PJ
             vr_portecli := fn_classifi_porte_pj(vr_fatanual);
-            
             -- Enviar detalhes do cliente Juridico
-            pc_escreve_xml_3040(pr_texto_novo     => '    <Cli Cd="' || lpad(vr_tab_individ(vr_idx_individ).nrcpfcgc,8,'0') || '"' 
-                                                     || ' Tp="2"' 
-                                                     || ' Autorzc="S"' 
-                                                     || ' PorteCli="' || TRIM(vr_portecli) || '"' 
-                                                     || ' TpCtrl="01"' 
-                                                     || ' IniRelactCli="' || to_char(vr_dtabtcct,'YYYY-MM-DD') || '"' 
-                                                     || ' FatAnual="' || replace(to_char(vr_fatanual, 'fm99999999999999990D00'),',','.') || '"' 
-                                                     || vr_stgpecon
-                                                     || ' ClassCli="' || vr_classcli ||'">' ||chr(10)
-                               ,pr_flgbndes       => vr_flgbndes);
-                                                     
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '    <Cli Cd="' || lpad(vr_tab_individ(vr_idx_individ).nrcpfcgc,8,'0') || '"' 
+                                                      || ' Tp="2"' 
+                                                      || ' Autorzc="S"' 
+                                                      || ' PorteCli="' || TRIM(vr_portecli) || '"' 
+                                                      || ' TpCtrl="01"' 
+                                                      || ' IniRelactCli="' || to_char(vr_dtabtcct,'YYYY-MM-DD') || '"' 
+                                                      || ' FatAnual="' || replace(to_char(vr_fatanual, 'fm99999999999999990D00'),',','.') || '"' 
+                                                      || vr_stgpecon
+                                                      || ' ClassCli="' || vr_classcli ||'">' ||chr(10));
           END IF; -- Validacao de pessoa fisica ou jurisica
         END IF; -- Validacao do primeiro cpj/cnpj do cliente
         -- Limpar variaveis temporarias
@@ -3831,16 +3697,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           vr_vlpercen := vr_tab_percentual(vr_tab_individ(vr_idx_individ).innivris).percentual / 100;
           vr_vlpreatr := ROUND(( (vr_vldivida - vr_tab_individ(vr_idx_individ).vljura60) * vr_vlpercen),2);
         END IF;
-        
         -- Inicio da TAG de operacoes de credito <Op> 
-        pc_escreve_xml_3040(pr_texto_novo     => '        <Op'
-                           ,pr_flgbndes       => vr_flgbndes);
-        
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '        <Op');
         -- Se for pessoa juridica
         IF vr_tab_individ(vr_idx_individ).inpessoa = 2 THEN
           -- Imprime o numero do CNPJ
-          pc_escreve_xml_3040(pr_texto_novo     => ' DetCli="' || lpad(vr_tab_individ(vr_idx_individ).nrdocnpj,14,'0') || '"'
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => ' DetCli="' || lpad(vr_tab_individ(vr_idx_individ).nrdocnpj,14,'0') || '"');
         END IF;
         -- Tratamento para Dias de Atraso da Parcela mais Atrasada 
         vr_flgatras := 0;
@@ -3985,25 +3851,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                         ,pr_cdmodali => vr_cdmodali);
                                                         
         -- Enviar detalhes da operação
-        pc_escreve_xml_3040(pr_texto_novo     => ' Contrt="' || TRIM(vr_nrcontrato_3040) || '"' 
-                                                 || ' Mod="' || to_char(vr_cdmodali,'fm0000') || '"' 
-                                                 || ' Cosif="' || vr_ctacosif || '"' 
-                                                 || ' OrigemRec="' || vr_dsorgrec || '"'  -- Era fixo '0199', agora, retorna do pc_busca_modalidade
-                                                 || ' Indx="' || vr_coddindx || '"' 
-                                                 || vr_stperidx 
-                                                 || ' VarCamb="790"' 
-                                                 || ' CEP="' || rw_crapcop.nrcepend || '"' 
-                                                 || ' TaxEft="' || replace(to_char(vr_txeanual,'fm990D00'),',','.') || '"' 
-                                                 || ' DtContr="' || to_char(vr_tab_individ(vr_idx_individ).dtinictr,'yyyy-mm-dd') || '"' 
-                                                 || vr_dsvlrctd
-                                                 || ' NatuOp="' || TRIM(vr_cdnatuop) || '"' 
-                                                 || ' DtVencOp="' || NVL(to_char(vr_dtfimctr,'YYYY-MM-DD'),'0000-00-00') || '"'  
-                                                 || ' ClassOp="' || vr_cloperis || '"' 
-                                                 || ' ProvConsttd="' ||replace(to_char(vr_vlpreatr,'fm99999999999999990D00'),',','.')||'"'
-                                                 || vr_stdiasat 
-                                                 || ' CaracEspecial="' || vr_caracesp ||'"'
-                           ,pr_flgbndes       => vr_flgbndes);
-                                                  
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => ' Contrt="' || TRIM(vr_nrcontrato_3040) || '"' 
+                                                  || ' Mod="' || to_char(vr_cdmodali,'fm0000') || '"' 
+                                                  || ' Cosif="' || vr_ctacosif || '"' 
+                                                  || ' OrigemRec="' || vr_dsorgrec || '"'  -- Era fixo '0199', agora, retorna do pc_busca_modalidade
+                                                  || ' Indx="' || vr_coddindx || '"' 
+                                                  || vr_stperidx 
+                                                  || ' VarCamb="790"' 
+                                                  || ' CEP="' || rw_crapcop.nrcepend || '"' 
+                                                  || ' TaxEft="' || replace(to_char(vr_txeanual,'fm990D00'),',','.') || '"' 
+                                                  || ' DtContr="' || to_char(vr_tab_individ(vr_idx_individ).dtinictr,'yyyy-mm-dd') || '"' 
+                                                  || vr_dsvlrctd
+                                                  || ' NatuOp="' || TRIM(vr_cdnatuop) || '"' 
+                                                  || ' DtVencOp="' || NVL(to_char(vr_dtfimctr,'YYYY-MM-DD'),'0000-00-00') || '"'  
+                                                  || ' ClassOp="' || vr_cloperis || '"' 
+                                                  || ' ProvConsttd="' ||replace(to_char(vr_vlpreatr,'fm99999999999999990D00'),',','.')||'"'
+                                                  || vr_stdiasat 
+                                                  || ' CaracEspecial="' || vr_caracesp ||'"');
         -- Tratar campos do Fluxo Financeiro
         pc_gera_fluxo_financeiro(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
                                 ,pr_dtrefere => vr_dtrefere
@@ -4014,15 +3880,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                 ,pr_nrseqctr => vr_tab_individ(vr_idx_individ).nrseqctr
                                 ,pr_dtprxpar => vr_tab_individ(vr_idx_individ).dtprxpar
                                 ,pr_vlprxpar => vr_tab_individ(vr_idx_individ).vlprxpar
-                                ,pr_qtparcel => vr_tab_individ(vr_idx_individ).qtparcel
-                                ,pr_cdorigem => vr_tab_individ(vr_idx_individ).cdorigem
-                                ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux);
-                                
+                                ,pr_qtparcel => vr_tab_individ(vr_idx_individ).qtparcel); 
         -- Fechar a Tag Op                                         
-        pc_escreve_xml_3040(pr_texto_novo     => '>' || chr(10) 
-                                                 ||'            <Venc'
-                           ,pr_flgbndes       => vr_flgbndes);
-                           
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '>' || chr(10) 
+                                                  ||'            <Venc');
         -- Inicializar valores em atraso  
         vr_vlpreatr := 0;
         -- tratamento de normalizacao de juros com cdvencto >=230 ou <=290
@@ -4082,18 +3945,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           END IF;
           -- Acumular
           vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);          
-          
           -- Enviar vencimento
-          pc_escreve_xml_3040(pr_texto_novo     => ' v' || vr_tab_venc(vr_indice_venc).cdvencto 
-                                                   || '="' || replace(to_char(vr_vldivnor,'fm99999999990D00'),',','.') 
-                                                   || '"'
-                             ,pr_flgbndes       => vr_flgbndes);
-                             
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => ' v' || vr_tab_venc(vr_indice_venc).cdvencto 
+                                                    || '="' || replace(to_char(vr_vldivnor,'fm99999999990D00'),',','.') 
+                                                    || '"');
           vr_indice_venc := vr_tab_venc.next(vr_indice_venc);
         END LOOP;
         -- Finaliza a TAG <Venc> 
-        pc_escreve_xml_3040(pr_texto_novo     => '/>'||chr(10)
-                           ,pr_flgbndes       => vr_flgbndes);
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '/>'||chr(10));
         -- Quando existir mais de um contrato de origem = 1 (Conta)
         -- os garantidores devem ir preferencialmente no limite não utilizado (1901),
         -- então testamos a flag que é ativa quando já foram enviados os garantidores no CPF
@@ -4144,32 +4007,32 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_idcpfcgc := substr(lpad(rw_crapcop_2.nrdocnpj,14,'0'),1,8);
           END IF;
           -- Enviar informação adicional da operação
-          pc_escreve_xml_3040(pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
-                                                   || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
-                                                   || '"/>' || chr(10)
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
+                                                    || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
+                                                    || '"/>' || chr(10));
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
                                ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp
                                ,pr_cdmodali => vr_tab_individ(vr_idx_individ).cdmodali
-                               ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux
-                               ,pr_cdorigem => vr_tab_individ(vr_idx_individ).cdorigem);
+                               ,pr_dsinfaux => vr_tab_individ(vr_idx_individ).dsinfaux);
         
         -- Finaliza a TAG <Op>
-        pc_escreve_xml_3040(pr_texto_novo     => '        </Op>' ||chr(10)
-                           ,pr_flgbndes       => vr_flgbndes);
-        
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '        </Op>' ||chr(10));
         -- Verifica se eh o ultimo registro da conta
         IF vr_tab_individ.next(vr_idx_individ) IS NULL OR vr_tab_individ(vr_idx_individ).nrcpfcgc <> vr_tab_individ(vr_tab_individ.next(vr_idx_individ)).nrcpfcgc THEN -- Se o CGC/CPF for diferente do proximo
           -- Imprimir as saidas deste cliente
           pc_busca_saidas(vr_tab_individ(vr_idx_individ).nrcpfcgc,
                           vr_tab_individ(vr_idx_individ).innivris,
                           vr_tab_individ(vr_idx_individ).inpessoa);
-                          
           -- Finaliza a tag do cliente
-          pc_escreve_xml_3040(pr_texto_novo     => '    </Cli>' ||chr(10)
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => '    </Cli>' ||chr(10));
         END IF;
         
         IF vr_tab_individ.prior(vr_idx_individ) IS NULL OR  -- Se for o primeiro registro
@@ -4226,14 +4089,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_fatanual := 0;
         vr_vlrrendi := 0;
         vr_portecli := 0;
-        
-        -- Verificar se o contrato é do BNDES
-        vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => vr_tab_saida(vr_indice_crapris).nrdconta
-                                                 ,pr_nrctremp => vr_tab_saida(vr_indice_crapris).nrctremp
-                                                 ,pr_cdmodali => vr_tab_saida(vr_indice_crapris).cdmodali
-                                                 ,pr_cdorigem => vr_tab_saida(vr_indice_crapris).cdorigem
-                                                 ,pr_dsinfaux => vr_tab_saida(vr_indice_crapris).dsinfaux);
-                                                     
         -- Infos do Cliente
         IF vr_indice_crapris = vr_tab_saida.first OR -- Se for o primeiro registro
            vr_tab_saida(vr_indice_crapris).sbcpfcgc <> vr_tab_saida(vr_tab_saida.prior(vr_indice_crapris)).sbcpfcgc THEN -- Se o cpf/cnpj anterior for diferente do atual
@@ -4276,14 +4131,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             END IF;
               
             -- Gerar tag do Cliente Fisico
-            pc_escreve_xml_3040(pr_texto_novo     => '    <Cli Cd="' || to_char(vr_tab_saida(vr_indice_crapris).nrcpfcgc,'fm00000000000') || '"' 
-                                                     || ' Tp="1"' 
-                                                     || ' Autorzc="S"' 
-                                                     || ' PorteCli="' || vr_portecli || '"' 
-                                                     || ' IniRelactCli="' || to_char(vr_dtabtcct,'yyyy-mm-dd') || '"' 
-                                                     || ' FatAnual="' || replace(to_char(vr_vlrrendi,'fm9999999999990D00'),',','.') || '"' 
-                                                     || ' ClassCli="' || vr_classcli || '">' || chr(10)
-                               ,pr_flgbndes       => vr_flgbndes);
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '    <Cli Cd="' || to_char(vr_tab_saida(vr_indice_crapris).nrcpfcgc,'fm00000000000') || '"' 
+                                                      || ' Tp="1"' 
+                                                      || ' Autorzc="S"' 
+                                                      || ' PorteCli="' || vr_portecli || '"' 
+                                                      || ' IniRelactCli="' || to_char(vr_dtabtcct,'yyyy-mm-dd') || '"' 
+                                                      || ' FatAnual="' || replace(to_char(vr_vlrrendi,'fm9999999999990D00'),',','.') || '"' 
+                                                      || ' ClassCli="' || vr_classcli || '">' || chr(10));
           ELSE --vr_tab_saida(vr_indice_crapris).inpessoa <> 1
             OPEN cr_crapjfn(vr_tab_saida(vr_indice_crapris).nrdconta);
             FETCH cr_crapjfn INTO vr_fatanual;
@@ -4297,15 +4153,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Formatar cnpj
             vr_nrdocnpj := to_char(vr_tab_saida(vr_indice_crapris).nrcpfcgc,'fm00000000000000');
             -- Gerar Tag do cliente Juridico
-            pc_escreve_xml_3040(pr_texto_novo     => '    <Cli Cd="' || substr(vr_nrdocnpj,1,8) || '"' 
-                                                     || ' Tp="2"' 
-                                                     || ' Autorzc="S"' 
-                                                     || ' PorteCli="' || vr_portecli || '"' 
-                                                     || ' TpCtrl="01"' 
-                                                     || ' IniRelactCli="' ||to_char(vr_dtabtcct,'yyyy-mm-dd') || '"' 
-                                                     || ' FatAnual="' || replace(to_char(vr_fatanual,'fm99999999999999990D00'),',','.') ||'"' 
-                                                     || ' ClassCli="' || vr_classcli || '">' || chr(10)
-                               ,pr_flgbndes       => vr_flgbndes);
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '    <Cli Cd="' || substr(vr_nrdocnpj,1,8) || '"' 
+                                                      || ' Tp="2"' 
+                                                      || ' Autorzc="S"' 
+                                                      || ' PorteCli="' || vr_portecli || '"' 
+                                                      || ' TpCtrl="01"' 
+                                                      || ' IniRelactCli="' ||to_char(vr_dtabtcct,'yyyy-mm-dd') || '"' 
+                                                      || ' FatAnual="' || replace(to_char(vr_fatanual,'fm99999999999999990D00'),',','.') ||'"' 
+                                                      || ' ClassCli="' || vr_classcli || '">' || chr(10));
           END IF; -- vr_tab_saida(vr_indice_crapris).inpessoa = 1
         END IF; -- Primeiro CPF / CNPF diferente
         
@@ -4316,8 +4173,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Se for o ultimo registro
         IF vr_tab_saida.next(vr_indice_crapris) IS NULL OR vr_tab_saida(vr_indice_crapris).sbcpfcgc <> vr_tab_saida(vr_tab_saida.next(vr_indice_crapris)).sbcpfcgc THEN -- Se o cpf/cnpj posterior for diferente do atual
           -- Encerrar a tag do cliente
-          pc_escreve_xml_3040(pr_texto_novo     => '    </Cli>' || chr(10)
-                             ,pr_flgbndes       => vr_flgbndes);
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '    </Cli>' || chr(10));
         END IF;
         vr_indice_crapris := vr_tab_saida.next(vr_indice_crapris);
       END LOOP;
@@ -4330,12 +4188,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_innivris := vr_tab_agreg(vr_indice_agreg).innivris;
         -- Com base no indicador de risco, eh retornardo a classe de operacao de risco
         vr_cloperis := fn_classifica_risco(pr_innivris => vr_innivris);
-        -- Verificar se o contrato é do BNDES
-        vr_flgbndes := fn_verifica_contrato_bndes(pr_nrdconta => vr_tab_agreg(vr_indice_agreg).nrdconta
-                                                 ,pr_nrctremp => vr_tab_agreg(vr_indice_agreg).nrctremp
-                                                 ,pr_cdmodali => vr_tab_agreg(vr_indice_agreg).cdmodali
-                                                 ,pr_cdorigem => vr_tab_agreg(vr_indice_agreg).cdorigem
-                                                 ,pr_dsinfaux => vr_tab_agreg(vr_indice_agreg).dsinfaux);                                                     
         -- Calcular a provisao 
         -- Para risco <> 10 soma as variveis de provisao 
         -- LImite não contratado (1901) também não calculará provisão
@@ -4358,22 +4210,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                         ,vr_tab_agreg(vr_indice_agreg).cdorigem
                                         ,vr_tab_agreg(vr_indice_agreg).dsinfaux);                              
         -- Enviar a informação agregada
-        pc_escreve_xml_3040(pr_texto_novo     => '    <Agreg' 
-                                                 || ' NatuOp="' || vr_tab_agreg(vr_indice_agreg).cdnatuop || '"' 
-                                                 || ' Mod="' || to_char(vr_cdmodali,'fm0000') || '"' 
-                                                 || ' OrigemRec="0100"' 
-                                                 || ' VincME="N"' 
-                                                 || ' ClassOp="' || vr_cloperis || '"' 
-                                                 || ' FaixaVlr="' || vr_tab_agreg(vr_indice_agreg).cddfaixa || '"' 
-                                                 || ' Localiz="' || fn_localiza_uf(pr_sig_UF => rw_crapcop.cdufdcop) || '"' 
-                                                 || ' TpCli="' || vr_tab_agreg(vr_indice_agreg).inpessoa || '"' 
-                                                 || ' TpCtrl="01"' 
-                                                 || ' DesempOp="' || to_char(vr_tab_agreg(vr_indice_agreg).cddesemp,'fm00') || '"' 
-                                                 || ' ProvConsttd="' || replace(to_char(vr_vlpreatr,'fm999999990D00'),',','.') || '"' 
-                                                 || ' QtdOp="' || vr_tab_agreg(vr_indice_agreg).qtoperac || '"' 
-                                                 || ' QtdCli="' || vr_tab_agreg(vr_indice_agreg).qtcooper || '">' ||chr(10) 
-                                                 || '        <Venc'
-                           ,pr_flgbndes       => vr_flgbndes);
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '    <Agreg' 
+                                                  || ' NatuOp="' || vr_tab_agreg(vr_indice_agreg).cdnatuop || '"' 
+                                                  || ' Mod="' || to_char(vr_cdmodali,'fm0000') || '"' 
+                                                  || ' OrigemRec="0100"' 
+                                                  || ' VincME="N"' 
+                                                  || ' ClassOp="' || vr_cloperis || '"' 
+                                                  || ' FaixaVlr="' || vr_tab_agreg(vr_indice_agreg).cddfaixa || '"' 
+                                                  || ' Localiz="' || fn_localiza_uf(pr_sig_UF => rw_crapcop.cdufdcop) || '"' 
+                                                  || ' TpCli="' || vr_tab_agreg(vr_indice_agreg).inpessoa || '"' 
+                                                  || ' TpCtrl="01"' 
+                                                  || ' DesempOp="' || to_char(vr_tab_agreg(vr_indice_agreg).cddesemp,'fm00') || '"' 
+                                                  || ' ProvConsttd="' || replace(to_char(vr_vlpreatr,'fm999999990D00'),',','.') || '"' 
+                                                  || ' QtdOp="' || vr_tab_agreg(vr_indice_agreg).qtoperac || '"' 
+                                                  || ' QtdCli="' || vr_tab_agreg(vr_indice_agreg).qtcooper || '">' ||chr(10) 
+                                                  || '        <Venc');
         -- tratamento de normalizacao de juros com cdvencto >=230 ou <=290
         vr_indice_venc_agreg := vr_tab_venc_agreg.first;
         WHILE vr_indice_venc_agreg IS NOT NULL LOOP
@@ -4460,16 +4313,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Acumular
             vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);                      
             -- Enviar o vencimento
-            pc_escreve_xml_3040(pr_texto_novo     => ' v' || vr_tab_venc_agreg(vr_indice_venc_agreg).cdvencto 
-                                                     ||'="' || replace(to_char(vr_vldivnor, 'fm999999990D00'),',','.') || '"'
-                               ,pr_flgbndes       => vr_flgbndes);
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => ' v' || vr_tab_venc_agreg(vr_indice_venc_agreg).cdvencto 
+                                                      ||'="' || replace(to_char(vr_vldivnor, 'fm999999990D00'),',','.') || '"');
           END IF;
           vr_indice_venc_agreg := vr_tab_venc_agreg.next(vr_indice_venc_agreg);
         END LOOP;
         -- Finaliza a TAG <Venc> 
-        pc_escreve_xml_3040(pr_texto_novo     => '/>' || chr(10) || '    </Agreg>' || chr(10)
-                           ,pr_flgbndes       => vr_flgbndes);
-        
+        gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                               ,pr_texto_completo => vr_xml_3040_temp
+                               ,pr_texto_novo     => '/>' || chr(10) || '    </Agreg>' || chr(10));
         vr_indice_agreg := vr_tab_agreg.next(vr_indice_agreg);
       END LOOP;
       
@@ -4499,30 +4353,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       END IF;      
       
       END IF; /* END IF NOT vr_flgfimaq THEN */
-      
-      -- Solicita para gerar o arquivo 3040 do BNDES
-      pc_solicita_relato_3040(pr_nrdocnpj      => rw_crapcop.nrdocnpj
-                             ,pr_dsnomscr      => rw_crapcop.dsnomscr
-                             ,pr_dsemascr      => rw_crapcop.dsemascr
-                             ,pr_dstelscr      => rw_crapcop.dstelscr
-                             ,pr_cdprogra      => vr_cdprogra
-                             ,pr_dtmvtolt      => rw_crapdat.dtmvtolt
-                             ,pr_dtrefere      => vr_dtrefere
-                             ,pr_flgfimaq      => TRUE
-                             ,pr_totalcli      => vr_totalcli
-                             ,pr_nom_direto    => vr_nom_dirsal
-                             ,pr_nom_dirmic    => vr_nom_dirmic
-                             ,pr_numparte      => vr_numparte
-                             ,pr_xml_3040      => vr_xml_3040_BNDES
-                             ,pr_xml_3040_temp => vr_xml_3040_BNDES_temp
-                             ,pr_flgbndes      => TRUE
-                             ,pr_cdcritic      => vr_cdcritic
-                             ,pr_dscritic      => vr_dscritic);
-                                    
-      -- Condicao para verificar se houve erro
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
       
       -- Impressao Relatorios -566 - RISCO 9(Tambem acumula p/rel 566)---- 
       -- Instanciar o CLOB
@@ -4752,7 +4582,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                   pr_dsjasper  => 'crrl566.jasper',               --> Arquivo de layout do iReport
                                   pr_dsparams  => null,                           --> Nao enviar parametro
                                   pr_dsarqsaid => vr_nom_direto||'/crrl566.lst',  --> Arquivo final
-                                  pr_flg_gerar => 'S',                            --> Nao gerar o arquivo na hora
+                                  pr_flg_gerar => 'N',                            --> Nao gerar o arquivo na hora
                                   pr_qtcoluna  => 234,                            --> Quantidade de colunas
                                   pr_nmformul  => '234dh',                        --> Nome do formulario
                                   pr_sqcabrel  => 1,                              --> Sequencia do cabecalho
@@ -4848,7 +4678,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                   pr_dsjasper  => 'crrl567.jasper',               --> Arquivo de layout do iReport
                                   pr_dsparams  => null,                           --> Nao enviar parametro
                                   pr_dsarqsaid => vr_nom_direto||'/crrl567.lst',  --> Arquivo final
-                                  pr_flg_gerar => 'S',                            --> Nao gerar o arquivo na hora
+                                  pr_flg_gerar => 'N',                            --> Nao gerar o arquivo na hora
                                   pr_qtcoluna  => 80,                             --> Quantidade de colunas
                                   pr_nmformul  => '80col',                        --> Nome do formulario
                                   pr_sqcabrel  => 3,                              --> Sequencia do cabecalho
