@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Sidnei (Precise)
-   Data    : Outubro/2008                 Ultima Atualizacao: 16/09/2014  
+   Data    : Outubro/2008                 Ultima Atualizacao: 31/11/2016
 
    Dados referentes ao programa:
 
@@ -26,7 +26,10 @@
                            b1wgen9999.p procedure acha-lock, que identifica qual 
                            é o usuario que esta prendendo a transaçao. (Vanessa)
 
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
                
+                            
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -187,7 +190,7 @@ DO WHILE TRUE:
              END.
 
         /*critica para permitir somente o departamento: TI */
-        IF   glb_dsdepart <> "TI"      THEN
+        IF   glb_cddepart <> 20 THEN
              DO:
                  glb_cdcritic = 36.
                  RUN fontes/critic.p.

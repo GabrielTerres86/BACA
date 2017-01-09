@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme Luis Maba
-    Data    : Maio/2012                   Ultima atualizacao: 14/10/2016
+    Data    : Maio/2012                   Ultima atualizacao: 06/12/2016
 
     Dados referentes ao programa:
 
@@ -47,7 +47,10 @@
                 
                 14/10/2016 - Retirar validacao que desabilitava o batimento do credito para a Viacredi 
                              (Lucas Ranghetti #510032)
-        
+                
+                06/12/2016 - Alterado campo dsdepart para cddepart.
+                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+                             
 .............................................................................*/
 
 { includes/var_online.i }
@@ -211,8 +214,8 @@ DO WHILE TRUE:
    IF  glb_cddopcao = "B"   THEN
    DO:
       /* verifica permissão para rotina de batimento */
-      IF glb_cdcooper =  3           AND
-                 glb_dsdepart <> "TI" THEN
+      IF glb_cdcooper =  3   AND
+         glb_cddepart <> 20  THEN /*TI*/
         DO:
                     BELL.
             MESSAGE "Sem autorizacao para opcao 'B'.".

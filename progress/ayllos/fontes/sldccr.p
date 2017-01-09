@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/97.                          Ultima atualizacao: 28/07/2014
+   Data    : Marco/97.                          Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -108,6 +108,9 @@
                             
                28/07/2014 - Novo tratamento para exibição parcial do
                             número do cartão (Lunelli).
+                                                      
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
                                                       
 .............................................................................*/
 
@@ -745,7 +748,7 @@ IF  par_flgtecla  THEN
                                             /* Bloqueio de alteracao de limite para cartoes cecred visa por 
                                               setor diferente de CARTOES */
                                             IF  aux_flgadmbb  = FALSE AND 
-                                                glb_dsdepart <> "CARTOES" THEN
+                                                glb_cddepart <> 2     THEN /* CARTOES */
                                                 DO:
                                                     glb_dscritic = "Administradora de cartoes CECRED VISA bloqueada.".
                                                     MESSAGE glb_dscritic.

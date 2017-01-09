@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : GATI (Eder J. Venancio)
-   Data    : Abril/2011                      Ultima atualizacao: 25/03/2016
+   Data    : Abril/2011                      Ultima atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -27,6 +27,10 @@
                             para "962 - PA nao cadastrado". (Reinert) 
                             
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+               
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -169,7 +173,8 @@ DO WHILE TRUE:
             aux_cddopcao = glb_cddopcao.
         END. 
 
-   IF  glb_cddopcao = "H"  AND NOT CAN-DO("TI",glb_dsdepart)  THEN 
+   IF  glb_cddopcao = "H"  AND 
+       NOT CAN-DO(20,glb_cddepart)/*TI*/  THEN 
        DO:
            BELL.
            MESSAGE "Operador sem autorizacao para alterar horario".

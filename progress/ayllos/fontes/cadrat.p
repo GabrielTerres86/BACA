@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes   
-   Data    : Julho/2004                     Ultima Atualizacao: 05/02/2010    
+   Data    : Julho/2004                     Ultima Atualizacao: 31/11/2016
 
    Dados referentes ao programa:
 
@@ -22,6 +22,10 @@
                
                05/02/2010 - Considerar somente Ratings Antigos na hora de
                             excluir itens  (Gabriel)
+                            
+               30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i } 
@@ -274,8 +278,8 @@ DO WHILE TRUE:
 
         IF   CAN-DO("A,E,I",INPUT glb_cddopcao)   THEN 
              DO:
-                 IF   glb_dsdepart <> "TI"            AND
-                      glb_dsdepart <> "PRODUTOS"      THEN  
+                 IF   glb_cddepart <> 20 AND   /* TI       */    
+                      glb_cddepart <> 14 THEN  /* PRODUTOS */    
                       DO:
                           glb_cdcritic = 327.
                           RUN fontes/critic.p.

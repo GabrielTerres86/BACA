@@ -22,6 +22,9 @@
                             e alterado label da coluna do prazo maximo de 
                             estorno. (Reinert)
                                                                  
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
+                                                                 
 ............................................................................. */
 
 { includes/var_online.i }
@@ -179,9 +182,9 @@ DO WHILE TRUE:
      IF glb_cddopcao = "A" THEN      
         DO TRANSACTION:
 
-            IF   glb_dsdepart <> "TI"                   AND
-                 glb_dsdepart <> "COORD.PRODUTOS"       AND
-                 glb_dsdepart <> "PRODUTOS"             THEN
+            IF   glb_cddepart <> 20  AND  /* TI             */
+                 glb_cddepart <>  9  AND  /* COORD.PRODUTOS */
+                 glb_cddepart <> 14  THEN /* PRODUTOS       */
                  DO:
                     glb_cdcritic = 36.
                     NEXT.

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 18/07/2016
+   Data    : Marco/2004                        Ultima Atualizacao: 30/11/2016
    
    Dados referentes ao programa:
 
@@ -153,6 +153,9 @@
 
                 18/07/2016 - Incluido campo tel_nrtelvoz.
                              PRJ229 - Melhorias OQS (Odirlei - AMcom)
+                             
+                30/11/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -767,12 +770,12 @@ ON LEAVE OF tel_cdagecbn DO:
                 END.
         END.
             
-    IF  glb_dsdepart <> "TI"                      AND
-        glb_dsdepart <> "COMPE"                   AND
-        glb_dsdepart <> "SUPORTE"                 AND
-        glb_dsdepart <> "COORD.ADM/FINANCEIRO"    AND
-        glb_dsdepart <> "DESENVOLVIMENTO CECRED"  AND 
-        glb_dsdepart <> "CANAIS"                  THEN
+    IF  glb_cddepart <> 20 AND  /* TI                     */
+        glb_cddepart <>  4 AND  /* COMPE                  */
+        glb_cddepart <> 18 AND  /* SUPORTE                */
+        glb_cddepart <>  8 AND  /* COORD.ADM/FINANCEIRO   */
+        glb_cddepart <> 10 AND  /* DESENVOLVIMENTO CECRED */
+        glb_cddepart <> 1  THEN /* CANAIS                 */
         DISABLE tel_vercoban WITH FRAME f_pac01.
        
 END.
@@ -903,13 +906,14 @@ DO WHILE TRUE:
 
         END.
     
-    IF (tel_cdagenci = 90 OR tel_cdagenci = 91)  AND
-        glb_cddopcao <> "C"                      AND
-        glb_dsdepart <> "TI"                     AND
-        glb_dsdepart <> "SUPORTE"                AND
-        glb_dsdepart <> "COORD.ADM/FINANCEIRO"   AND
-        glb_dsdepart <> "COORD.PRODUTOS"         AND
-        glb_dsdepart <> "COMPE"                 THEN
+    IF (tel_cdagenci = 90 OR 
+        tel_cdagenci = 91)    AND
+        glb_cddopcao <> "C"   AND
+        glb_cddepart <> 20    AND  /* TI                   */
+        glb_cddepart <> 18    AND  /* SUPORTE              */
+        glb_cddepart <>  8    AND  /* COORD.ADM/FINANCEIRO */
+        glb_cddepart <>  9    AND  /* COORD.PRODUTOS       */
+        glb_cddepart <>  4   THEN  /* COMPE                */
         DO:
             BELL.
             MESSAGE "PA 90 ou PA 91 podem ser alterados pelos deptos. TI,".

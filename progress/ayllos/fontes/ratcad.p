@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Fernando   
-   Data    : Setembro/2009                    Ultima Atualizacao: 02/03/2011    
+   Data    : Setembro/2009                    Ultima Atualizacao: 06/12/2016
 
    Dados referentes ao programa:
 
@@ -20,6 +20,9 @@
                02/03/2011 - Inclusao do campo "Avaliacao" que indicara se o
                             item pertence a nota do cooperado ou a nota da
                             operacao. (Fabricio)
+                                             
+               06/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)             
                                              
    Alteracoes: 
 ............................................................................. */
@@ -289,9 +292,9 @@ DO WHILE TRUE:
 
    IF   CAN-DO("A,E,I",INPUT glb_cddopcao)   THEN 
         DO:
-            IF   glb_dsdepart <> "TI"         AND
-                 glb_dsdepart <> "PRODUTOS"   AND
-                 glb_dsdepart <> "FINANCEIRO" THEN  
+            IF   glb_cddepart <> 20 AND   /* TI         */
+                 glb_cddepart <> 14 AND   /* PRODUTOS   */
+                 glb_cddepart <> 11 THEN  /* FINANCEIRO */
                  DO:
                      glb_cdcritic = 327.
                      RUN fontes/critic.p.

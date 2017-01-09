@@ -23,6 +23,9 @@
                             todos os planos disponíveis na tela ALTSEG.
                             SoftDesk 232489 (Felipe)
  
+              05/12/2016 -  Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+ 
                          !!!!!!!!!!! ATENCAO !!!!!!!!!!!
                                 
   ==> ANTES DE RODAR:
@@ -358,18 +361,19 @@ assign aux_direxpor = "/usr/coop/sistema/equipe/diego/novacoop/transulcred/" +
 
    /* Copia todos os operadores da CECRED para nova coop */ 
    for each crapope where crapope.cdcooper = aux_ult_coop and
-                         (crapope.dsdepart = "CARTOES"               or
-                          crapope.dsdepart = "COMPE"                 or
-                          crapope.dsdepart = "CONTABILIDADE"         or
-                          crapope.dsdepart = "COORD.PRODUTOS"         or
-                          crapope.dsdepart = "DESENVOLVIMENTO CECRED" or
-                          crapope.dsdepart = "FINANCEIRO"            or
-                          crapope.dsdepart = "INTERNET"              or
-                          crapope.dsdepart = "TI"                    or
-                          crapope.dsdepart = "SISCAIXA"              or
-                          crapope.dsdepart = "PRODUTOS"              or
-                          crapope.dsdepart = "COORD.ADM/FINANCEIRO"  or
-                          crapope.dsdepart = "SUPORTE") no-lock:
+                         (crapope.cddepart = 2  OR   /* CARTOES               */
+                          crapope.cddepart = 4  OR   /* COMPE                 */
+                          crapope.cddepart = 6  OR   /* CONTABILIDADE         */
+                          crapope.cddepart = 9  OR   /* COORD.PRODUTOS        */
+                          crapope.cddepart = 10 OR   /* DESENVOLVIMENTO CECRED*/
+                          crapope.cddepart = 11 OR   /* FINANCEIRO            */
+                          crapope.cddepart = 12 OR   /* INTERNET              */
+                          crapope.cddepart = 20 OR   /* TI                    */
+                          crapope.cddepart = 17 OR   /* SISCAIXA              */
+                          crapope.cddepart = 14 OR   /* PRODUTOS              */
+                          crapope.cddepart =  8 OR   /* COORD.ADM/FINANCEIRO  */
+                          crapope.cddepart = 18      /* SUPORTE               */
+                          ) no-lock:
 
        create crabope.
        buffer-copy crapope except crapope.cdcooper TO crabope.

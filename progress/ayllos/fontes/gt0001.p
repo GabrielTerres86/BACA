@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Marco/2004                        Ultima Atualizacao: 14/09/2016
+   Data    : Marco/2004                        Ultima Atualizacao: 01/12/2016
 
    Dados referentes ao programa:
                      
@@ -116,6 +116,10 @@
                18/09/2015 - Inclusão do campo tel_nrctdbfl PRJ 214 (Vanessa)
  
                14/09/2016 - Incluir chamada da rotina var_oracle.i (Lucas Ranghetti #484556)
+               
+               01/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
 ............................................................................. */
 
 { includes/var_online.i  }
@@ -364,10 +368,10 @@ DO WHILE TRUE:
                tel_cdconven WITH FRAME f_convenio.
            
            IF   glb_cddopcao <> "C"      THEN
-                IF   glb_dsdepart <> "TI"            AND
-                     glb_dsdepart <> "FINANCEIRO"    AND 
-                     glb_dsdepart <> "CONTABILIDADE" AND 
-                     glb_dsdepart <> "COMPE"         AND
+                IF   glb_cddepart <> 20              AND  /* TI"           */
+                     glb_cddepart <> 11              AND  /* FINANCEIRO"   */
+                     glb_cddepart <>  6              AND  /* CONTABILIDADE"*/
+                     glb_cddepart <>  4              AND  /* COMPE"        */
                      glb_cdoperad <> "979"           AND
                      glb_cdoperad <> "126"           AND
               UPPER(glb_cdoperad) <> "F0030503"      AND

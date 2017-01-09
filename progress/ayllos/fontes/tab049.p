@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Fevereiro/2008                     Ultima alteracao: 25/03/2016
+   Data    : Fevereiro/2008                     Ultima alteracao: 07/12/2016
 
    Dados referentes ao programa:
 
@@ -26,6 +26,9 @@
                            é o usuario que esta prendendo a transaçao. (Vanessa)
                            
                25/03/2016 - Ajustes de permissao conforme solicitado no chamado 358761 (Kelvin).
+               
+               07/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom)
 ..............................................................................*/
 
 
@@ -180,8 +183,8 @@ DO WHILE TRUE:
    IF   glb_cddopcao = "A"   THEN
         DO: 
             /* Critica para permitir somente os operadores 1, 996 e 997 */  
-            IF   glb_dsdepart <> "TI"             AND                 
-                 glb_dsdepart <> "COORD.PRODUTOS" THEN
+            IF   glb_cddepart <> 20 AND   /*TI             */
+                 glb_cddepart <>  9 THEN  /*COORD.PRODUTOS */
                  DO:
                      glb_cdcritic = 36.
                      RUN fontes/critic.p.
