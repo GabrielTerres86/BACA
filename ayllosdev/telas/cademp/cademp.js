@@ -51,6 +51,9 @@
 
      25/10/2016 - SD542975 - Tratamento correto do Nrdconta e validação (Guilherme/SUPERO)
 
+	 06/01/2017 - SD588833 - No cadastro das empresas, não pode haver outra empresa na mesma 
+				  cooperativa com a mesma NRDCONTA. A validação não estava funcionando quando 
+				  a conta era selecionada via opção zoom. Ajuste realizado! (Renato - Supero)
 ************************************************************************************************/
 
 
@@ -1177,11 +1180,11 @@ function btnVoltar() {
 
 
 function alteraInclui() {
-	
+
 	//Variaveis para tratamento de caracteres invalidos
     var nmextemp, nmresemp, nmcontat, dsendemp, dscomple, nmbairro, nmcidade, cdufdemp, nrfonemp, nrfaxemp, dsdemail;
 		
-	var cnpj;
+    var cnpj;
 
     /* Altera valor nos campos Checkbox */
     cIndescsg.is(':checked') ? cIndescsg.val(2) : cIndescsg.val(1);
@@ -1192,7 +1195,7 @@ function alteraInclui() {
 
     cNrdocnpj = $('#nrdocnpj', '#frmInfEmpresa');
     cnpj = normalizaNumero(cNrdocnpj.val());
-	
+
 	//Substitui/Remove os caracteres invalidos dos campos ao inserer ou alterar
 	nmextemp = removeCaracteresInvalidos(cNmextemp.val().toUpperCase()); // Razao social
 	nmresemp = removeCaracteresInvalidos(cNmresemp.val().toUpperCase()); // Nome fantazia
@@ -1205,7 +1208,7 @@ function alteraInclui() {
 	nrfonemp = removeCaracteresInvalidos(cNrfonemp.val());				 // Telefone
 	nrfaxemp = removeCaracteresInvalidos(cNrfaxemp.val());				 // Fax
 	dsdemail = removeCaracteresInvalidos(cDsdemail.val());				 // Email
-	
+
     /* Altera valor nos campos Checkbox */
     if (cddopcao == "A") {
         showMsgAguardo("Aguarde, alterando empresa...");
@@ -1952,7 +1955,8 @@ function selecionaAvalista() {
                 cNrdconta.val( $('#nrdconta', $(this) ).val() );
                 cNmextttl.val( $('#nmfuncio', $(this) ).val() );
                 cNrdconta.trigger('blur');
-                buscaDadosCooperado();
+                //buscaDadosCooperado();
+				buscaContaEmp(1);
                 return false;
             }
         });
