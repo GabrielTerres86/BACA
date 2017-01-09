@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 01/12/2016
+   Data    : Setembro/2009.                     Ultima atualizacao: 05/01/2017
    
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -172,6 +172,9 @@
     
 	           01/12/2016 - Tratamento credito TED/TEC Transposul (Diego). 
 
+			   05/01/2017 - Ajuste para retirada de caracterer especiais
+							(Adriano - SD 556053)
+							
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento, 
              lembrar de tratar a procedure gera_erro_xml.
@@ -1682,7 +1685,11 @@ PROCEDURE importa_xml.
         
         /* Substituir caracter especial 216 e 248 por "O" */
         ASSIGN aux_setlinha = REPLACE(REPLACE(aux_setlinha,CHR(216),"O"),CHR(248),"o").
-        ASSIGN aux_setlinh2 = aux_setlinh2 + aux_setlinha.
+		
+		/* Substituir caracter especial 230 e 207 por "" */
+        ASSIGN aux_setlinha = REPLACE(REPLACE(aux_setlinha,CHR(230),""),CHR(207),"").
+        
+		ASSIGN aux_setlinh2 = aux_setlinh2 + aux_setlinha.
         
    END.  
    
