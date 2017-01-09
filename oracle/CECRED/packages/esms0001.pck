@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE cecred.esms0001 AS
+CREATE OR REPLACE PACKAGE CECRED.esms0001 AS
   
   PROCEDURE pc_cria_lote_sms(pr_cdproduto   IN tbgen_sms_lote.cdproduto%TYPE
                             ,pr_idtpreme    IN tbgen_sms_lote.idtpreme%TYPE
@@ -324,7 +324,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     
         Objetivo  : Rotina para gerar o arquivo de remessa SMS e enviar para a ZENVIA
     
-        Alteracoes:
+        Alteracoes: 05/01/2017 - Alteração para que os arquivos gerados gravem o horário correto de 
+                                 envio, obedecendo o horário cadastrado na tela PARMDA.
+                                 Corrigido o tipo de layout utilizado. Parametrizado horário limite
+                                 de envio para as 21:00h. SoftDesk 588454 (Aline).
     ..............................................................................*/
     
     -- Variável de críticas
@@ -334,8 +337,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     vr_exc_saida EXCEPTION;
     
     -- Variaveis da procedure
-    vr_dhenvio   DATE;
-    vr_linha VARCHAR2(1000);
+    vr_dhenvio     DATE;
+    vr_horalimite  VARCHAR2(10);
+    vr_horaatual   VARCHAR2(10);
+    vr_horacoop    VARCHAR2(10);
+    vr_linha       VARCHAR2(1000);
     
     -- Declarando handle do Arquivo
     vr_nmarquiv    VARCHAR2(100);
@@ -366,7 +372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
           ,crapcop            cop
      WHERE sms.cdcooper = cop.cdcooper
        AND sms.idlote_sms = pr_idlote_sms;
-    
+    rw_sms cr_sms%ROWTYPE;
   BEGIN
     
     FOR rw_lote IN cr_lote LOOP
@@ -377,6 +383,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                     ,pr_idlote_sms => rw_lote.idlote_sms
                                     ,pr_idtpreme   => rw_lote.idtpreme
                                     ,pr_idoperac   => idoperac_envio); -- Arquivo de envio
+      
+      --Verifica a hora    
+     vr_horalimite  :=  to_char(to_date('21:00', 'hh24:mi'), 'SSSSS');--Horário limite 21:00h
+     vr_horaatual := to_char(to_date(to_char(SYSDATE, 'hh24:mi'), 'hh24:mi'), 'SSSSS');
+  
+     OPEN cr_sms(pr_idlote_sms => rw_lote.idlote_sms);
+     FETCH cr_sms
+     INTO rw_sms;
+     CLOSE cr_sms;   
+      
+     vr_horacoop := to_char(to_date(to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'hh24:mi'), 'SSSSS');
+     
+     --Se o horário no momento for menor que a hora parametrizada na cooperativa, envia no horário da cooperativa.
+     IF TO_NUMBER(vr_horaatual) < TO_NUMBER(vr_horacoop) THEN
+        vr_dhenvio := to_date(to_char(trunc(sysdate), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
+     --Se o horário no momento for maior que 21:00h, envia amanhã no horário parametrizado pela cooperativa.   
+     ELSE IF TO_NUMBER(vr_horaatual) > TO_NUMBER(vr_horalimite) THEN
+             vr_dhenvio := to_date(to_char(trunc(sysdate+1), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
+          END IF;
+     END IF;
       
       -- criar arquivo .cfg
       -- Abre arquivo em modo de escrita (W)
@@ -389,10 +415,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       -- gravar linha no arquivo
       gene0001.pc_escr_linha_arquivo(vr_arquivo_cfg
                                     ,'1;' || vr_nmarquiv || '.txt' || CHR(13) || CHR(10) ||
-                                     '2;' || 'D' || CHR(13) || CHR(10) ||
-                                     '3;' || to_char(vr_dhenvio, 'DD/MM/RRRR;HH24:MI:SS') || CHR(13) || CHR(10) ||
+                                     '2;' || 'E' || CHR(13) || CHR(10) ||
+                                     '3;' || to_char(vr_dhenvio, 'DD/MM/RRRR;HH24:MI') || CHR(13) || CHR(10) ||
                                      '5;' || rw_lote.dsagrupador || CHR(13) || CHR(10) ||
-                                     '6;' || to_char(vr_dhenvio + (60 / 60 / 24), 'DD/MM/RRRR;HH24:MI:SS') || CHR(13) || CHR(10) ||
+                                     '6;' || to_char(vr_dhenvio + (60 / 60 / 24), 'DD/MM/RRRR;HH24:MI') || CHR(13) || CHR(10) ||
                                      '7;' || vr_nmarquiv || '_ret.txt' || CHR(13) || CHR(10));
       
       -- criar arquivo .txt
@@ -412,8 +438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                     TRIM(RPAD(REPLACE(rw_sms.dsmensagem,';','.'), 160-LENGTH(rw_sms.nmrescop),' ')) || ';' || -- mensagem de texto (deve possuir no maximo 160 caracteres considerando o remetente)
                     rw_sms.idsms || ';' || -- Id interno (Lote/SMS)
                     rw_sms.nmrescop || ';' || -- Remetente
-                    to_char(rw_sms.dhenvio_sms, 'dd/mm/yyyy hh24:mm:ss') || CHR(13); -- Data do envio
-        
+                   -- to_char(rw_sms.dhenvio_sms, 'dd/mm/yyyy hh24:mi:ss') || CHR(13); -- Data do envio
+                    to_char(vr_dhenvio, 'DD/MM/RRRR HH24:MI:SS') || CHR(13);
         -- Gravar linha no arquivo                    
         GENE0001.pc_escr_linha_arquivo(vr_arquivo_rem,vr_linha);
       
@@ -443,7 +469,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       
       -- Se enviou com sucesso
       IF vr_dscritic IS NULL THEN
-        
+        vr_dhenvio := SYSDATE;
         UPDATE tbgen_sms_lote lot
            SET lot.idsituacao = 'E' -- Em espera de Retorno
               ,lot.dtmvtolt = vr_dhenvio
@@ -496,6 +522,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         Objetivo  : Rotina para buscar os arquivos de retorno de SMS no ftp da ZENVIA
     
         Alteracoes:
+        
+              26/10/2016 - Incluso verificação de existencia do arquivo, antes da abertura
+                           do mesmo. Estavam ocorrendo erros no log de produção por tentar
+                           abrir arquivos ainda não recebidos. (Renato Darosci - Supero)
+                           
     ..............................................................................*/
     
     -- Variável de críticas
@@ -579,6 +610,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                              ,pr_dslogeve => 'Retorno do lote '||vr_nmarquiv||' cancelado por movito de erro em '||to_char(SYSDATE,'dd/mm/yyyy')||' as '||to_char(SYSDATE,'hh24:mi:ss') ||': '||vr_dscritic
                                              ,pr_dscritic => pr_dscritic); --> Retorno de crítica
         vr_dscritic := NULL;
+        CONTINUE;
+      END IF;
+      
+      -- Deve verificar se o arquivo foi encontrado antes de tentar abrir o mesmo
+      -- O arquivo não ser encontrado não caracteriza erro necessariamente, pois pode
+      -- ser apenas que ele ainda não tenha sido disponibilizado devido ao horário
+      IF vr_nmarqenc IS NULL THEN
+        -- Neste caso, deve pular para o próximo
         CONTINUE;
       END IF;
       
