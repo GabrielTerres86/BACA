@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 05/01/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 06/01/2017
 
    Dados referentes ao programa:
 
@@ -174,6 +174,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
               
                05/01/2017 - Ajuste para força o uso do indice 2 da tabela craplcm problemas
                            de performance  Oracle usa o indice 1. (Oscar)
+                           
+               06/01/2017 - Ajuste no hint da craplcm, retirar espaço entre o index. 
+                Voltar a flgativo nos cursor da cooperativas.(Oscar)            
+                           
      ............................................................................. */
 
      DECLARE
@@ -261,6 +265,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              ,crapcop.nrdocnpj
        FROM crapcop crapcop
        WHERE crapcop.cdcooper <> pr_cdcooper
+         AND crapcop.flgativo = 1
        ORDER BY crapcop.cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
 
@@ -491,7 +496,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_nrdconta  IN crapcyb.nrdconta%type
                                        ,pr_nrctremp  IN crapcyb.nrctremp%type
                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%type) IS
-         SELECT /*+ index (craplcm CRAPLCM##CRAPLCM2) */   
+         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */
                SUM(craplem.vllanmto) vllanmto
                ,craplem.cdhistor
                ,craphis.dshistor
