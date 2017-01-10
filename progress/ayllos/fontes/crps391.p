@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                      Ultima atualizacao: 07/10/2016
+   Data    : Abril/2004                      Ultima atualizacao: 10/01/2017
 
    Dados referentes ao programa:
 
@@ -140,7 +140,9 @@
               07/10/2016 - Alteração do diretório para geração de arquivo contábil.
                            P308 (Ricardo Linhares).                            
                             
-                           
+                       
+			  10/01/2017 - Ajuste para enviar TED somente se o valor for maior que zero 
+						  (Adriano  - SD 597906).		       
 .............................................................................*/
                         
 { includes/var_batch.i}
@@ -884,7 +886,8 @@ PROCEDURE processa_convenios_deb_cred.
                        DOWN STREAM str_2  WITH FRAME f_movtos_dom.
 
                        IF aux_tpdcontr_1 = 1 AND 
-                          aux_tpdcontr_2 = 4 THEN
+                          aux_tpdcontr_2 = 4 AND 
+						  aux_vlrrepas > 0   THEN /*Somente enviar a TED se valor for maior que zero (SD  567906)*/
                        DO:
                            IF UPPER(SUBSTRING(aux_dsccdrcb2, 9, 1)) = "X" THEN
                                ASSIGN aux_dsccdrcb2 = 
