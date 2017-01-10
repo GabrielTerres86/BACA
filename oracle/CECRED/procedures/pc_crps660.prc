@@ -11,7 +11,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 25/08/2016
+     Data    : Outubro/9999                     Ultima atualizacao: 06/01/2017
 
      Dados referentes ao programa:
 
@@ -66,6 +66,10 @@ BEGIN
                               
                  25/08/2016 - Ajuste na rotina pc_verifica_motivo_saida ao definir modalidade 
                               SD498470 (Odirlei-AMcom)              
+                              
+                 06/01/2016 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
+                              PRJ342 - Incorporação Transulcred (Odirlei-AMcom)                          
+                              
   ............................................................................ */
 
   DECLARE
@@ -280,8 +284,8 @@ BEGIN
     FUNCTION fn_verifica_conta_migracao(pr_nrdconta  IN crapass.nrdconta%TYPE) --> Número da conta
                                                                                RETURN BOOLEAN IS
     BEGIN
-      -- Validamos Apenas Via, AV e SCR   
-      IF NOT pr_cdcooper IN(1,13,16) THEN
+      -- Validamos Apenas Via, AV, SCR e Tranpocred
+      IF NOT pr_cdcooper IN(1,13,16,9) THEN
         -- OK
         RETURN TRUE;
       ELSE
@@ -1090,6 +1094,12 @@ BEGIN
     ELSIF pr_cdcooper = 13 AND vr_dtrefere <= TO_DATE('30/11/2014', 'DD/MM/RRRR') THEN
       -- Vindas da Credimil
       FOR regs IN cr_craptco_inc(15) LOOP
+        vr_tab_craptco(LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
+      END LOOP;
+    -- Incorporação da Transulcred >> Transpocred
+    ELSIF pr_cdcooper = 9 AND vr_dtrefere <= TO_DATE('31/12/2016', 'DD/MM/RRRR') THEN
+      -- Vindas da Transulcred
+      FOR regs IN cr_craptco_inc(17) LOOP
         vr_tab_craptco(LPAD(regs.nrdconta, 15, '0')) := regs.nrctaant;
       END LOOP;
     END IF;
