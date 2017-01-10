@@ -137,6 +137,7 @@ IF  ({1}nrdolote > 1350   AND       /* CMC-7 e Codigo de Barras */
      {1}nrdolote = 8506   OR        /* Crédito de provisão de aplicação     */
      {1}nrdolote = 6651   OR        /*Debitos nao efetuados no processo noturno (e efetuados pela DEBCON)*/
      {1}nrdolote = 7050   OR        /*Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
-     {1}nrdolote = 650001 THEN      /* Acordos do CYBER */
+     {1}nrdolote = 650001 OR		/* Acordos do CYBER */
+	 {1}nrdolote = 650002 THEN      /* Acordos do CYBER */
      glb_cdcritic = 261.
 

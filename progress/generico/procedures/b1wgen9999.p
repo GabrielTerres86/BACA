@@ -4832,7 +4832,8 @@ PROCEDURE critica_numero_lote:
          par_nrdolote = 8506   OR    /* Credito de provisão de aplicacao     */
          par_nrdolote = 6651   OR    /* Debitos nao efetuados no processo noturno (e efetuados pela DEBCON) */
          par_nrdolote = 7050   OR    /* Debitos automaticos nao efetuados no processo noturno (apenas convenios CECRED; efetuados pela DEBNET).*/
-         par_nrdolote = 650001 THEN  /* Acordos do CYBER */
+         par_nrdolote = 650001 OR
+		 par_nrdolote = 650002 THEN  /* Acordos do CYBER */
          DO:
              ASSIGN aux_cdcritic = 261
                     aux_dscritic = "".

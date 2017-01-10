@@ -638,7 +638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                    ,pr_cdoperad => pr_cdoperad       -- Operador
                                    ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
                                    ,pr_tplotmov => 5                 -- Tipo movimento
-                                   ,pr_nrdolote => 650001            -- Numero Lote
+                                   ,pr_nrdolote => 650002            -- Numero Lote
                                    ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
                                    ,pr_cdhistor => 382               -- Codigo Historico
                                    ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
@@ -778,7 +778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                    ,pr_cdoperad => pr_cdoperad       -- Operador
                                    ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
                                    ,pr_tplotmov => 5                 -- Tipo movimento
-                                   ,pr_nrdolote => 650001            -- Numero Lote
+                                   ,pr_nrdolote => 650002            -- Numero Lote
                                    ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
                                    ,pr_cdhistor => 391               -- Codigo Historico
                                    ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
