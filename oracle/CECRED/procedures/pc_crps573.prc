@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 01/08/2016
+       Data    : Agosto/2010                       Ultima atualizacao: 06/01/2017
 
        Dados referentes ao programa:
 
@@ -295,6 +295,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  cadastradas com rendimento igual a 0.01 estavam sendo enviadas com código de porte igual
                                  a 2 - ATÉ 1 SALÁRIO MÍNIMO. (Renato Darosci - Supero)
                                  
+                    06/01/2016 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
+                                 PRJ342 - Incorporação Transulcred (Odirlei-AMcom)
 .............................................................................................................................*/
 
     DECLARE
@@ -1120,6 +1122,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             RETURN true;
           END IF;
           CLOSE cr_craptco;
+        --> Incorporação Tranculcred -> Tranpocred
+        ELSIF pr_cdcooper = 9 AND pr_dtrefere <= to_date('31/12/2016','dd/mm/yyyy') THEN
+          -- Verifica se a conta eh de transferencia entre cooperativas
+          OPEN cr_craptco(pr_nrdconta, 17);
+          FETCH cr_craptco INTO rw_craptco;
+          IF cr_craptco%FOUND THEN
+            CLOSE cr_craptco;
+            RETURN true;
+          END IF;
+          CLOSE cr_craptco;
         END IF;
         -- Não é migracao
         RETURN false;
@@ -1268,8 +1280,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       BEGIN
         -- Efetua loop sobre os dados da central de risco (Exceto 301 - Dsc Titulos)
         FOR rw_crapris IN cr_crapris_geral(vr_dtrefere) LOOP
-          -- Se a coooperativa for AltoVale ou Viacredi verifica se a conta eh de migracao
-          IF pr_cdcooper IN (1,16) THEN
+          -- Se a coooperativa for AltoVale ou Viacredi ou tranpocred verifica se a conta eh de migracao
+          IF pr_cdcooper IN (1,16,9) THEN
             -- Se for uma conta migrada nao deve processar
             IF fn_eh_conta_migracao_573(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => rw_crapris.nrdconta
@@ -1287,8 +1299,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         
         -- Efetua loop sobre os dados da central de risco de Dsc Titulos
         FOR rw_crapris_dsctit IN cr_crapris_dsctit(vr_dtrefere) LOOP
-          -- Se a coooperativa for AltoVale ou Viacredi
-          IF pr_cdcooper IN (1,16) THEN
+          -- Se a coooperativa for AltoVale ou Viacredi ou tranpocred
+          IF pr_cdcooper IN (1,16,9) THEN
             -- Se for uma conta migrada nao deve processar
             IF fn_eh_conta_migracao_573(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => rw_crapris_dsctit.nrdconta
@@ -4383,15 +4395,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              vr_nrcpfcgc := SUBSTR(lpad(rw_crapris.nrcpfcgc,14,'0'),1,8);
           end if;
         end if;
-        -- Se a coooperativa for AltoVale ou Viacredi verifica se a conta eh de migracao
-        IF pr_cdcooper IN (1,16) THEN
+        -- Se a coooperativa for AltoVale ou Viacredi ou tranpocred verifica se a conta eh de migracao
+        IF pr_cdcooper IN (1,16,9) THEN
           -- Se for uma conta migrada nao deve processar
           IF fn_eh_conta_migracao_573(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => rw_crapris.nrdconta
                                      ,pr_dtrefere => rw_crapris.dtrefere) THEN
             continue; -- Volta para o inicio do for
           END IF;
-        end if;
+        END IF;
         -- Efetua o loop sobre o os vencimentos do risco
         vr_indice_crapvri_b := lpad(rw_crapris.nrdconta,10,'0') ||
                                lpad(rw_crapris.innivris,5,'0') ||
@@ -4498,15 +4510,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              vr_nrcpfcgc := SUBSTR(lpad(rw_crapris.nrcpfcgc,14,'0'),1,8);
           end if;
         end if;
-        -- Se a coooperativa for AltoVale ou Viacredi verifica se a conta eh de migracao
-        IF pr_cdcooper IN (1,16) THEN
+        -- Se a coooperativa for AltoVale ou Viacredi ou tranpocred verifica se a conta eh de migracao
+        IF pr_cdcooper IN (1,16,9) THEN
           -- Se for uma conta migrada nao deve processar
           IF fn_eh_conta_migracao_573(pr_cdcooper => pr_cdcooper
                                      ,pr_nrdconta => rw_crapris.nrdconta
                                      ,pr_dtrefere => rw_crapris.dtrefere) THEN
             continue; -- Volta para o inicio do for
           END IF;
-        end if;
+        END IF;
         -- Efetua o loop sobre o os vencimentos do risco
         vr_indice_crapvri_b := lpad(rw_crapris.nrdconta,10,'0') ||
                                lpad(rw_crapris.innivris,5,'0') ||
