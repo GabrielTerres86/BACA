@@ -13,6 +13,10 @@ Ultima alteração: 25/11/2014 - Efetuado tratamento na procedure
                                inicializa_cooperativas para nao mostrar as 
                                cooperativas Concredi e Credimilsul a partir do dia
                                29/11/2014. (Reinert)
+                               
+                  10/01/2017 - #588325 Ajuste da flgregis em inicializa_cooperativas
+                               para mostrar corretamente todas as cooperativas
+                               disponiveis (Carlos)
 
 ............................................................................... */
 
@@ -865,9 +869,12 @@ FOR EACH tt-crapcop WHERE tt-crapcop.cdagectl <> glb_agctltfn AND
     ASSIGN aux_contador = aux_contador + 1.
 
     /* Desconsiderar as Cooperativas ja exibidas */
-    IF   NOT aux_contador >= aux_novacoop   AND 
+    IF   aux_contador < aux_novacoop   AND 
          NOT aux_flgcondi                   THEN
          NEXT.         
+
+    /* Se chegar neste ponto eh pq encontrou um registro */
+    ASSIGN aux_flgregis = TRUE.
 
     /* Alimentar primeiro botao somente quanto click em OUTRAS COOPERATIVAS */
     IF   aux_contador = aux_novacoop THEN 
@@ -879,9 +886,7 @@ FOR EACH tt-crapcop WHERE tt-crapcop.cdagectl <> glb_agctltfn AND
                     aux_contador = 1.
             NEXT.
          END.        
-
-    ASSIGN aux_flgregis = TRUE.
-       
+ 
     CASE aux_contador:
                         
         WHEN 2 THEN Btn_B:LABEL IN FRAME f_cooperativa_deposito
