@@ -37,6 +37,7 @@
  * 027: [23/11/2015] Carlos Rafael Tanholi: Merge de implementacoes de Portabilidade.
  * 028: [04/01/2016] Heitor             (RKAM): Inclusao do tipo de risco na tela de prejuizo
  * 029:  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+ * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestações pois nao carrega dados corretamente(SD531549)
  */
 
     session_start();
@@ -112,7 +113,13 @@
             $xml .= "    <cdprogra>".$glbvars["nmdatela"]."</cdprogra>";
             $xml .= "    <flgcondc>1</flgcondc>";
             $xml .= "	 <nrregist>".$nrregist."</nrregist>";
+            
+                      if($nrctremp == '0'){
             $xml .= "    <nriniseq>".$nriniseq."</nriniseq>";
+                      }else{
+                          $xml .= "    <nriniseq>1</nriniseq>";
+                      }
+
             $xml .= "  </Dados>";
             $xml .= "</Root>";
             
@@ -178,6 +185,7 @@
                         str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar')));
 		
 			?><script type="text/javascript">
+        
 			var arrayRegistros = new Object();
 
 			arrayRegistros['inpessoa'] = '<? echo getByTagName($registros,'inpessoa'); ?>';
