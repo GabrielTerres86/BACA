@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TABE0001 AS
 
     Programa: TABE0001
     Autor   : Marcos (Supero)
-    Data    : Março/2012                     Ultima Atualizacao: 10/10/2016
+    Data    : Março/2012                     Ultima Atualizacao: 06/01/2017
 
     Dados referentes ao programa:
 
@@ -23,6 +23,9 @@ CREATE OR REPLACE PACKAGE CECRED.TABE0001 AS
 
 				10/10/2016 - Ajuste na rotina genérica de busca das informações da craptab 
 							 para minimizar a quantidade de leituras (Rodrigo)
+
+				06/01/2017 - Criação de nova rotina para busca de informações da craptab 
+							 com tratamento de tabelas que podem conter NULOS (Rodrigo)
 ..............................................................................*/
 
   /* Função para busca do dstextab cfme parâmetros */
@@ -32,6 +35,16 @@ CREATE OR REPLACE PACKAGE CECRED.TABE0001 AS
                             ,pr_cdempres IN craptab.cdempres%TYPE
                             ,pr_cdacesso IN craptab.cdacesso%TYPE
                             ,pr_tpregist IN craptab.tpregist%TYPE) RETURN craptab.dstextab%TYPE;
+
+  /* Função para busca do dstextab cfme parâmetros */
+  PROCEDURE pc_busca_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+                            ,pr_nmsistem IN craptab.nmsistem%TYPE
+                            ,pr_tptabela IN craptab.tptabela%TYPE
+                            ,pr_cdempres IN craptab.cdempres%TYPE
+                            ,pr_cdacesso IN craptab.cdacesso%TYPE
+                            ,pr_tpregist IN craptab.tpregist%TYPE
+                            ,pr_flgfound OUT BOOLEAN                  --> Indicador de verificacao existencia craptab
+                            ,pr_dstextab OUT craptab.dstextab%TYPE);
 
   /* Carregar os dados gravados na TAB030 */
   PROCEDURE pc_busca_tab030(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Coop
@@ -58,7 +71,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TABE0001 AS
 
     Programa: TABE0001
     Autor   : Marcos (Supero)
-    Data    : Março/2012                     Ultima Atualizacao: 10/10/2016
+    Data    : Março/2012                     Ultima Atualizacao: 06/01/2017
 
     Dados referentes ao programa:
 
@@ -66,6 +79,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TABE0001 AS
 
 				10/10/2016 - Ajuste na rotina genérica de busca das informações da craptab 
 							 para minimizar a quantidade de leituras (Rodrigo)
+
+				06/01/2017 - Criação de nova rotina para busca de informações da craptab 
+							 com tratamento de tabelas que podem conter NULOS (Rodrigo)
   ..............................................................................*/
   
   /* Cursor genérico e padrão para busca da craptab */
@@ -154,6 +170,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TABE0001 AS
                        ,pr_tpregist => pr_tpregist);
         FETCH cr_craptab
          INTO rw_craptab;
+         
+        IF cr_craptab%NOTFOUND THEN
+          vr_des_erro := 'NOTFOUND';
+        END IF;
+         
         CLOSE cr_craptab;
       ELSE
         -- Efetuar busca no cursor com tratamento especial para nulos
@@ -165,6 +186,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TABE0001 AS
                         ,pr_tpregist => pr_tpregist);
         FETCH cr_craptab2
          INTO rw_craptab;
+         
+        IF cr_craptab2%NOTFOUND THEN
+          vr_des_erro := 'NOTFOUND';
+        END IF;
+         
         CLOSE cr_craptab2;
       END IF;
 
@@ -339,6 +365,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TABE0001 AS
     END;
   END pc_carrega_ctablq;
 
+  /* Função para busca do dstextab cfme parâmetros */
+  PROCEDURE pc_busca_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+                            ,pr_nmsistem IN craptab.nmsistem%TYPE
+                            ,pr_tptabela IN craptab.tptabela%TYPE
+                            ,pr_cdempres IN craptab.cdempres%TYPE
+                            ,pr_cdacesso IN craptab.cdacesso%TYPE
+                            ,pr_tpregist IN craptab.tpregist%TYPE
+                            ,pr_flgfound OUT BOOLEAN                --> Indicador de verificacao existencia craptab
+                            ,pr_dstextab OUT craptab.dstextab%TYPE) IS
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : pc_busca_craptab
+    --  Sistema  : Rotinas genéricas
+    --  Sigla    : TABE
+    --  Autor    : Rodrigo Siewerdt
+    --  Data     : Janeiro/2017.              Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Carregar os dados gravados na craptab, verificando a existência
+    --               do registro que está sendo pesquisado
+    -- .............................................................................
+    BEGIN
+      vr_des_erro := '';
+      pr_flgfound := TRUE;
+      
+      -- Buscar configuração na tabela
+      pr_dstextab := fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                      ,pr_nmsistem => pr_nmsistem
+                                      ,pr_tptabela => pr_tptabela
+                                      ,pr_cdempres => pr_cdempres
+                                      ,pr_cdacesso => pr_cdacesso
+                                      ,pr_tpregist => pr_tpregist);
+      -- Se não encontrou nada
+      IF vr_des_erro = 'NOTFOUND' THEN
+        pr_flgfound := FALSE;
+      END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Retorno não OK
+        pr_flgfound := FALSE;
+    END;
+  END pc_busca_craptab;
 
 END TABE0001;
 /

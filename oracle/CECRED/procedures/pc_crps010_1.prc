@@ -60,7 +60,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
                  12/03/2013 - Conversão Progress -> Oracle - Alisson (AMcom)
 
                  21/06/2016 - Correcao para o uso correto do indice da CRAPTAB nesta rotina.
-                              SD 470740.(Carlos Rafael Tanholi).     
+                              SD 470740.(Carlos Rafael Tanholi).  
+							  
+		         05/01/2017 - Ajustado para não parar o processo em caso de parâmetro
+							  nulo. (Rodrigo - 586601)   
   ............................................................................. */
     DECLARE
 
@@ -87,6 +90,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
       vr_exc_erro     EXCEPTION;
       -- Guardar registro dstextab
       vr_dstextab craptab.dstextab%TYPE;
+	  vr_flgfound BOOLEAN := TRUE;
 
     BEGIN
       
@@ -196,59 +200,61 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS010_1" (pr_cdcooper         IN crapco
 
       --Se o mes de atualização for Junho ou Dezembro
       IF To_Number(To_Char(pr_dtmvtolt,'MM')) IN (6,12) THEN
-
-         -- Buscar configuração na tabela
-         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                         ,pr_nmsistem => 'CRED'
-                         ,pr_tptabela => 'GENERI'
-                         ,pr_cdempres => 0
-                         ,pr_cdacesso => 'VALORBAIXA'
-                         ,pr_tpregist => 0);
+	  
+	     -- Buscar configuração na tabela
+         TABE0001.pc_busca_craptab(pr_cdcooper => pr_cdcooper
+                                  ,pr_nmsistem => 'CRED'
+                                  ,pr_tptabela => 'GENERI'
+                                  ,pr_cdempres => 0
+                                  ,pr_cdacesso => 'VALORBAIXA'
+                                  ,pr_tpregist => 0
+                                  ,pr_flgfound => vr_flgfound
+                                  ,pr_dstextab => vr_dstextab);
          
          --Se nao encontrou entao
-         IF TRIM(vr_dstextab) IS NULL THEN
+         IF NOT vr_flgfound THEN
            -- Montar mensagem de critica
            pr_cdcritic := 409;
            vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic => 409);
            RAISE vr_exc_erro;
-         ELSE
-           --Valor Capital recebe valor tabela
-           pr_res_vlcapcrz_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,001,016));
-           --Valor Cota CMI recebe valor tabela
-           pr_res_vlcmicot_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,018,016));
-           --Valor cota CMM recebe valor tabela
-           pr_res_vlcmmcot_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,035,016));
-           --Valor Capital moeda fixa recebe valor tabela
-           pr_res_vlcapmfx_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,052,016));
-           --Valor Capital recebe valor tabela por PF
-           pr_res_vlcapexc_fis:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,069,016));
-           --Valor Capital recebe valor tabela por PJ
-           pr_res_vlcapexc_jur:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,086,016));           
-           --Quantidade Cotistas excluidos recebe total associados excluidos
-           pr_res_qtcotist_exc:= pr_tot_qtassexc;
-           --Quantidade Cotistas excluidos recebe total associados excluidos por PF
-           pr_res_qtcotexc_fis:= pr_tot_qtasexpf;
-           --Quantidade Cotistas excluidos recebe total associados excluidos por PJ
-           pr_res_qtcotexc_jur:= pr_tot_qtasexpj;
-           --Valor Capital Total recebe valor capital excluido
-           pr_res_vlcapcrz_tot:= pr_res_vlcapcrz_exc;
-           --Valor Capital Total recebe valor capital excluido por PF
-           pr_res_vlcaptot_fis:= pr_res_vlcapexc_fis;
-           --Valor Capital Total recebe valor capital excluido por PJ
-           pr_res_vlcaptot_jur:= pr_res_vlcapexc_jur;
-           --Valor Cota CMI Total recebe valor cmicot excluido
-           pr_res_vlcmicot_tot:= pr_res_vlcmicot_exc;
-           --Valor Cota CMM Total recebe valor cmmcot excluido
-           pr_res_vlcmmcot_tot:= pr_res_vlcmmcot_exc;
-           --Valor Capital moeda fixa Total recebe valor capital moeda fixa excluido
-           pr_res_vlcapmfx_tot:= pr_res_vlcapmfx_exc;
-           --Quantidade Total Cotistas recebe total associados excluidos
-           pr_res_qtcotist_tot:= pr_tot_qtassexc;
-           --Quantidade Total Cotistas recebe total associados excluidos por PF
-           pr_res_qtcottot_fis:= pr_tot_qtasexpf;
-           --Quantidade Total Cotistas recebe total associados excluidos por PJ
-           pr_res_qtcottot_jur:= pr_tot_qtasexpj;
-         END IF;
+         ELSE                
+		   --Valor Capital recebe valor tabela
+		   pr_res_vlcapcrz_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,001,016));
+		   --Valor Cota CMI recebe valor tabela
+		   pr_res_vlcmicot_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,018,016));
+		   --Valor cota CMM recebe valor tabela
+		   pr_res_vlcmmcot_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,035,016));
+		   --Valor Capital moeda fixa recebe valor tabela
+		   pr_res_vlcapmfx_exc:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,052,016));
+		   --Valor Capital recebe valor tabela por PF
+		   pr_res_vlcapexc_fis:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,069,016));
+		   --Valor Capital recebe valor tabela por PJ
+		   pr_res_vlcapexc_jur:= GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,086,016));           
+		   --Quantidade Cotistas excluidos recebe total associados excluidos
+		   pr_res_qtcotist_exc:= pr_tot_qtassexc;
+		   --Quantidade Cotistas excluidos recebe total associados excluidos por PF
+		   pr_res_qtcotexc_fis:= pr_tot_qtasexpf;
+		   --Quantidade Cotistas excluidos recebe total associados excluidos por PJ
+		   pr_res_qtcotexc_jur:= pr_tot_qtasexpj;
+		   --Valor Capital Total recebe valor capital excluido
+		   pr_res_vlcapcrz_tot:= pr_res_vlcapcrz_exc;
+		   --Valor Capital Total recebe valor capital excluido por PF
+		   pr_res_vlcaptot_fis:= pr_res_vlcapexc_fis;
+		   --Valor Capital Total recebe valor capital excluido por PJ
+		   pr_res_vlcaptot_jur:= pr_res_vlcapexc_jur;
+		   --Valor Cota CMI Total recebe valor cmicot excluido
+		   pr_res_vlcmicot_tot:= pr_res_vlcmicot_exc;
+		   --Valor Cota CMM Total recebe valor cmmcot excluido
+		   pr_res_vlcmmcot_tot:= pr_res_vlcmmcot_exc;
+		   --Valor Capital moeda fixa Total recebe valor capital moeda fixa excluido
+		   pr_res_vlcapmfx_tot:= pr_res_vlcapmfx_exc;
+		   --Quantidade Total Cotistas recebe total associados excluidos
+		   pr_res_qtcotist_tot:= pr_tot_qtassexc;
+		   --Quantidade Total Cotistas recebe total associados excluidos por PF
+		   pr_res_qtcottot_fis:= pr_tot_qtasexpf;
+		   --Quantidade Total Cotistas recebe total associados excluidos por PJ
+		   pr_res_qtcottot_jur:= pr_tot_qtasexpj;
+		END IF;
       ELSE
         --Valor Capital recebe zero
         pr_res_vlcapcrz_exc:= 0;
