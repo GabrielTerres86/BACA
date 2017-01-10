@@ -32,7 +32,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             09/06/2016 - Ajustado para exibir na lista de recursos apenas os 
                          recursos que possuem tipo definido(gnaprdp.cdtiprec <> 0).
                          PRJ229 - Melhorias OQS (Odirlei-AMcom)
-
+						 
             27/06/2018 - Ajustes para RF05/RF06, inclusao de novas abas, 
                          PRJ229 - Melhorias OQS (Jean Michel).
 			
@@ -41,7 +41,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
 ...............................................................................*/
 
-{ includes/var_progrid.i }
+{ sistema/generico/includes/var_log_progrid.i }
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
@@ -586,7 +586,7 @@ DEFINE FRAME Web-Frame
 /* _RUN-TIME-ATTRIBUTES-END */
 &ANALYZE-RESUME
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-html 
 
 /* ************************  Main Code Block  ************************* */
 
@@ -1543,7 +1543,7 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_dsurlphp    = aux_srvprogrid + "-" + v-identificacao
        ab_unmap.aux_nrseqpdp = GET-VALUE("aux_nrseqpdp")
        ab_unmap.aux_nrseqpap = GET-VALUE("aux_nrseqpap").
-	     
+
 FIND crapope WHERE crapope.cdcooper = gnapses.cdcooper
                AND crapope.cdoperad = gnapses.cdoperad NO-LOCK NO-ERROR.
 
@@ -1596,10 +1596,13 @@ ELSE
    ASSIGN ab_unmap.aux_dtanoage = "". 
 /**********************/
  
+RUN insere_log_progrid("WPGD0008.w",STRING(ab_unmap.aux_idevento) + "|" + STRING(ab_unmap.aux_cdcooper) + "|" +
+					  STRING(ab_unmap.aux_dtanoage) + "|" + STRING(ab_unmap.aux_cdevento)).
+ 
 /* método POST */
 IF   REQUEST_METHOD = "POST":U   THEN 
      DO:
-
+               
         RUN inputFields.
         
         CASE opcao:
@@ -1834,8 +1837,8 @@ IF   REQUEST_METHOD = "POST":U   THEN
         
         ASSIGN ab_unmap.aux_idrespub = IF STRING(GET-VALUE("aux_idrespub")) <> "S" THEN "N" ELSE "S".
         
-        RUN CriaLista.                
-        RUN CriaListaRecursos.        
+        RUN CriaLista.        
+        RUN CriaListaRecursos.
         RUN CriaListaPublicoAlvo.        
         RUN CriaListaProdutoSugerido.
         
